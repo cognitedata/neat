@@ -1,0 +1,75 @@
+[tool.poetry]
+name = "neat"
+version = "0.10.3"
+description = "Knowledge graph transformation"
+authors = ["Nikola Vasiljevic <nikola.vasiljevic@cognite.com>",
+    "Anders Albert <anders.albert@cognite.com>",
+    "Aleksandrs Livincovs <aleksandrs.livincovs@cognite.com>"]
+packages = [
+    { include="cognite", from="." },
+]
+exclude = [
+    "cognite/neat/explorer-ui/neat-app/public/**",
+    "cognite/neat/explorer-ui/neat-app/src/**",
+    "cognite/neat/explorer-ui/neat-app/node_modules/**",
+    "cognite/neat/explorer-ui/neat-app/*.json",
+]
+
+
+[tool.black]
+line-length = 120
+target_version = ['py311']
+include = '\.py$'
+
+[tool.isort]
+line_length=120                # corresponds to -w  flag
+multi_line_output=3            # corresponds to -m  flag
+include_trailing_comma=true    # corresponds to -tc flag
+skip_glob = '^((?!py$).)*$'    # this makes sort all Python files
+known_third_party = []
+
+[tool.poetry.scripts]
+neat = "cognite.neat.main:run"
+
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.12"
+pandas = "*"
+rdflib = "*"
+openpyxl = "*"
+pydantic = "*"
+gspread = "*"
+google-api-python-client = "*"
+google-auth-oauthlib = "*"
+PyYAML = "*"
+requests = "*"
+urllib3 = "^1.26"
+uvicorn = {extras = ["standard"], version = "^0.21.0"}
+prometheus-client = "^0.16.0"
+cognite-sdk = "^6"
+deepdiff = "*"
+fastapi = "^0.95"
+schedule = "^1"
+python-multipart = "^0.0.6"
+oxrdflib = {version = "^0.3.3", extras = ["oxigraph"]}
+
+[tool.poetry.dev-dependencies]
+pytest = "*"
+pre-commit = "*"
+safety = "*"
+bandit = "*"
+jupyter = "*"
+mkdocs = "*"
+mkdocs-jupyter = "*"
+mkdocs-material-extensions = "*"
+mkdocs-git-revision-date-localized-plugin = "*"
+mkdocs-git-authors-plugin = "*"
+mkdocs-gitbook = "*"
+pytest-regressions = "*"
+memray = [{version = "^1.7", platform = "darwin"},
+            {version = "^1.7", platform = "linux"}]
+httpx = "*"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

@@ -1,0 +1,80 @@
+name: Check Quality and Test
+
+
+on:
+  pull_request:
+
+jobs:
+  checks:
+    permissions:
+      id-token: write
+      contents: read
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      - name: Set up cache
+        uses: actions/cache@v3.3.1
+        with:
+          path: .venv
+          key: venv-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('poetry.lock') }}
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.3.1
+
+      - run: poetry install --sync
+
+      - name: Run linting
+        run: poetry run pre-commit run --all-files
+
+      - name: Git diff (in case linting fails, prints why)
+        if: always()
+        run: git diff .
+
+      - name: Run tests
+        run: export PYTHONPATH=$PYTHONPATH:$(pwd); poetry run pytest
+
+      - name: Run security checks
+        run: poetry check
+
+  build-image:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      # Poetry is required to export requirements.txt
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.3.1
+
+      - name: Build Image
+        run: make build-docker
+
+      - name: Run and Verify
+        run: |
+          cp cognite/neat/examples/config.yaml config.yaml
+          # To verify config.yaml
+          echo "================================"
+          echo "config file:"
+          cat config.yaml
+          echo "================================"
+          make compose-up-d
+          # Give the application time to startup
+          sleep 10s
+          curl --fail  http://localhost:8000/static/index.html
+
+      - name: Shutdown containers
+        if: always()
+        working-directory: ./docker
+        run: docker compose down

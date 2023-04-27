@@ -1,0 +1,42 @@
+version: '3'
+name: neat
+services:
+  graphdb:
+    image: ontotext/graphdb:10.1.3
+    command: -Dgraphdb.home=/opt/graphdb/home -Dgraphdb.workbench.importDirectory=/root -Xss5M
+    ports:
+      - "7201:7200"
+    volumes:
+      - graphdb:/opt/graphdb/home
+      - ./vol_shared:/root
+    networks:
+      - neat-net
+  neat:
+    image: cognite/neat:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./vol_data:/app/data
+      - ./vol_shared:/app/shared
+    networks:
+      - neat-net
+    depends_on:
+      - graphdb
+    environment:
+      - NEAT_CDF_PROJECT=get-power-grid
+      - NEAT_CDF_CLIENT_NAME=neat-test-service
+      - NEAT_CDF_CLIENT_ID=623c2450-cfc2-43d6-9036-10e14dad8ccf
+      - NEAT_CDF_CLIENT_SECRET=
+      - NEAT_CDF_BASE_URL=https://az-power-no-northeurope.cognitedata.com
+      - NEAT_CDF_TOKEN_URL=https://login.microsoftonline.com/e55e1701-82f8-4c52-af10-28e4d942c589/oauth2/v2.0/token
+      - NEAT_CDF_SCOPES=https://az-power-no-northeurope.cognitedata.com/.default
+      - NEAT_CDF_DEFAULT_DATASET_ID=2626756768281823
+      - NEAT_LOG_LEVEL=DEBUG
+
+volumes:
+  graphdb: {}
+
+networks:
+  neat-net:
+    driver: bridge
+    external: false

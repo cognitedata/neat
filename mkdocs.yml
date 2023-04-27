@@ -1,0 +1,24 @@
+site_name: Neat Docs
+docs_dir: docs
+theme:
+    name: gitbook
+nav:
+    - Home: index.md
+    - Transformation Rules: transformation-rules.md
+    - Rule Types: rule-types.md
+    - Data Exploration: ui-data-exploration.md
+    - Workflow Examples:
+        - Sheet to CDF: workflow-examples/sheet2cdf.md
+        - In-Memory RDF Store: workflow-examples/in-memory-nordic44.md
+        - GraphDB Store: workflow-examples/graphdb-nordic44.md
+    - blog:
+        - Why RDF?: blog/posts/why-rdf.md
+        - Review of Rules and Terminology: blog/posts/review_of_rules_and_terminology.ipynb
+        - Knowledge Graph Transformation: blog/posts/Knowledge Graph Transformation.ipynb
+        - Generate Mock Graph: blog/posts/Generate Mock Graph.ipynb
+
+plugins:
+  - mkdocs-jupyter:
+      execute: false
+      ignore_h1_titles: True
+      include_source: True

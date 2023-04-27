@@ -1,0 +1,324 @@
+configs:
+-   group: source_rdf_store
+    label: null
+    name: source_rdf_store.type
+    options: null
+    required: false
+    type: null
+    value: memory
+-   group: source_rdf_store
+    label: null
+    name: source_rdf_store.file
+    options: null
+    required: false
+    type: null
+    value: Knowledge-Graph-Nordic44.xml
+-   group: source_rdf_store
+    label: null
+    name: source_rdf_store.disk_store_dir
+    options: null
+    required: false
+    type: null
+    value:
+-   group: solution_rdf_store
+    label: null
+    name: solution_rdf_store.type
+    options: null
+    required: false
+    type: null
+    value: memory
+-   group: solutione_rdf_store
+    label: null
+    name: solution_rdf_store.disk_store_dir
+    options: null
+    required: false
+    type: null
+    value:
+-   group: rules
+    label: null
+    name: rules.store_type
+    options: null
+    required: false
+    type: null
+    value: file
+-   group: rules
+    label: null
+    name: rules.file
+    options: null
+    required: false
+    type: null
+    value: Rules-Nordic44-to-TNT.xlsx
+-   group: rules
+    label: null
+    name: rules.version
+    options: null
+    required: false
+    type: null
+    value: ''
+description: null
+groups:
+-   description: null
+    id: grid_management_system
+    label: Grid management system
+    transition_to:
+    - rdf_xml_file
+    ui_config:
+        pos_x: 171
+        pos_y: 6
+-   description: null
+    id: rdf_xml_file
+    label: RDF XML File
+    transition_to:
+    - graph_db_store
+    ui_config:
+        pos_x: 170
+        pos_y: 103
+-   description: null
+    id: graph_db_store
+    label: GraphDB source graph_store
+    transition_to:
+    - transformer
+    ui_config:
+        pos_x: 240
+        pos_y: 177
+-   description: null
+    id: in_memmory_store
+    label: In-memory source graph_store
+    transition_to: null
+    ui_config:
+        pos_x: 73
+        pos_y: 175
+-   description: null
+    id: transformation_rules
+    label: Transformation rules
+    transition_to:
+    - transformer
+    ui_config:
+        pos_x: 413
+        pos_y: 195
+-   description: null
+    id: cdf_raw_table
+    label: Cdf raw lookup table
+    transition_to:
+    - transformer
+    ui_config:
+        pos_x: 586
+        pos_y: 195
+-   description: null
+    id: transformer
+    label: Transformer
+    transition_to:
+    - solution_graph
+    ui_config:
+        pos_x: 237
+        pos_y: 329
+-   description: null
+    id: solution_graph
+    label: Solution graph
+    transition_to:
+    - cdf_classic_exporter
+    ui_config:
+        pos_x: 237
+        pos_y: 405
+-   description: null
+    id: cdf_classic_exporter
+    label: CDF Classic exporter
+    transition_to:
+    - cdf_classic
+    ui_config:
+        pos_x: 181
+        pos_y: 498
+-   description: null
+    id: cdf_fdm_exporter
+    label: CDF FDM exporter
+    transition_to:
+    - cdf_fdm
+    ui_config:
+        pos_x: 345
+        pos_y: 498
+-   description: null
+    id: cdf_classic
+    label: CDF Classic (Asset,Relationships)
+    transition_to: null
+    ui_config:
+        pos_x: 182
+        pos_y: 586
+-   description: null
+    id: cdf_fdm
+    label: CDF FDM
+    transition_to: null
+    ui_config:
+        pos_x: 347
+        pos_y: 586
+implementation_module: null
+name: default
+steps:
+-   description: null
+    enabled: true
+    group_id: null
+    id: load_transformation_rules
+    label: Loading transformation rules
+    method: null
+    params: null
+    stype: pystep
+    transition_to:
+    - configuring_stores
+    trigger: false
+    ui_config:
+        pos_x: 123
+        pos_y: 123
+-   description: null
+    enabled: true
+    group_id: null
+    id: configuring_stores
+    label: Configuring graph stores
+    method: null
+    params: null
+    stype: pystep
+    transition_to:
+    - load_source_graph
+    trigger: false
+    ui_config:
+        pos_x: 120
+        pos_y: 229
+-   description: null
+    enabled: true
+    group_id: null
+    id: load_source_graph
+    label: Loading source graph
+    method: null
+    params: null
+    stype: pystep
+    transition_to:
+    - run_transformation
+    trigger: false
+    ui_config:
+        pos_x: 121
+        pos_y: 315
+-   description: null
+    enabled: true
+    group_id: null
+    id: run_transformation
+    label: Run transformation
+    method: null
+    params: null
+    stype: pystep
+    transition_to:
+    - create_cdf_labels
+    trigger: false
+    ui_config:
+        pos_x: 121
+        pos_y: 384
+-   description: null
+    enabled: true
+    group_id: null
+    id: prepare_cdf_assets
+    label: Preparing CDF assets
+    method: null
+    params: null
+    stype: pystep
+    transition_to:
+    - upload_cdf_assets
+    trigger: false
+    ui_config:
+        pos_x: 248
+        pos_y: 571
+-   description: null
+    enabled: true
+    group_id: null
+    id: upload_cdf_assets
+    label: Uploading CDF assets to CDF
+    method: null
+    params: null
+    stype: pystep
+    transition_to:
+    - prepare_cdf_relationships
+    trigger: false
+    ui_config:
+        pos_x: 117
+        pos_y: 662
+-   description: null
+    enabled: true
+    group_id: null
+    id: prepare_cdf_relationships
+    label: Preparing CDF relationships
+    method: null
+    params: null
+    stype: pystep
+    transition_to:
+    - upload_cdf_relationships
+    trigger: false
+    ui_config:
+        pos_x: 115
+        pos_y: 768
+-   description: Uploading CDF relationships to CDF
+    enabled: true
+    group_id: null
+    id: upload_cdf_relationships
+    label: Uploading CDF relationships to CDF
+    method: null
+    params: null
+    stype: pystep
+    transition_to:
+    - cleanup
+    trigger: false
+    ui_config:
+        pos_x: 114
+        pos_y: 874
+-   description: Upload CDF labels
+    enabled: true
+    group_id: null
+    id: create_cdf_labels
+    label: Upload CDF labels
+    method: null
+    params: null
+    stype: pystep
+    transition_to:
+    - prepare_cdf_assets
+    trigger: false
+    ui_config:
+        pos_x: 117
+        pos_y: 482
+-   description: null
+    enabled: true
+    group_id: null
+    id: cleanup
+    label: Cleanup
+    method: null
+    params: null
+    stype: pystep
+    transition_to: []
+    trigger: false
+    ui_config:
+        pos_x: 112
+        pos_y: 967
+-   description: null
+    enabled: true
+    group_id: null
+    id: http_trigger
+    label: Http trigger
+    method: null
+    params:
+        interval: every 2 minutes
+    stype: http_trigger
+    transition_to:
+    - load_transformation_rules
+    trigger: true
+    ui_config:
+        pos_x: 124
+        pos_y: 32
+-   description: null
+    enabled: false
+    group_id: null
+    id: step_time_trigger
+    label: Time trigger
+    method: null
+    params:
+        interval: every 2 minutes
+    stype: time_trigger
+    transition_to:
+    - load_transformation_rules
+    trigger: true
+    ui_config:
+        pos_x: 321
+        pos_y: 31
