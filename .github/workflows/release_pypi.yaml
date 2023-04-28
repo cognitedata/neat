@@ -5,8 +5,6 @@ on:
   push:
     branches:
       - main
-      # Temp while fixing the workflow.
-      - fix-failing-release-workflow
 
 env:
   PYTHON_VERSION: '3.11'
@@ -47,9 +45,8 @@ jobs:
       - name: Build package
         run: poetry build
 
-# Comment in when token is added and ready for release
-#      - name: Release to PyPI
-#        env:
-#          TWINE_USERNAME: __token__
-#          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-#        run: twine upload --verbose dist/* || echo 'Version exists'
+      - name: Release to PyPI
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: twine upload --verbose dist/* || echo 'Version exists'
