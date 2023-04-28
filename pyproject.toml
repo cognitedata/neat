@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "neat"
+name = "cognite-neat"
 version = "0.10.3"
 description = "Knowledge graph transformation"
 authors = ["Nikola Vasiljevic <nikola.vasiljevic@cognite.com>",
