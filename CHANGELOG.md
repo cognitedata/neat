@@ -13,13 +13,19 @@ Changes are grouped as follows
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.10.4] - 28-04-24
+- Added readme to publish process on pypi.org.
+
+
 ## [0.10.3] - 26-04-24
 - Handling edge case in graph that results in decommissioned relationships
+
 ## [0.10.2] - 23-04-24
 - Fix issue with duplicated labels for relationships
 
 ## [0.10.1] - 20-04-24
 - Fix for issue of creation of relationships for assets that do not exist
+
 ## [0.10.0] - 17-04-24
 - Refactor `rdf_to_asset` to use micro batching
 - Refactor `rdf_to_relationships` to use micro batching
