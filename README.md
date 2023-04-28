@@ -44,7 +44,6 @@ your CDF credentials to allow `neat` access CDF.
 
 
 ## Documentation
-[Sprint planning document](https://docs.google.com/document/d/10AYSdZS4YZJdM69lZqLliaZZsbHbnPkjbNnOOjH4tK8/edit#)
 
 [Documentation](https://neat-docs.app.cogniteapp.com/)
 
