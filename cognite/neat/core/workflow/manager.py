@@ -14,12 +14,19 @@ from cognite.neat.core.workflow.tasks import WorkflowTaskBuilder
 
 
 class WorkflowManager:
+    """ Workflow manager is responsible for loading, saving and managing workflows 
+        client: CogniteClient
+        registry_storage_type: str = "file"
+        workflows_storage_path: Path = Path("workflows")
+        rules_storage_path: Path = Path("rules")
+        data_set_id: int = None,
+    """
     def __init__(
         self,
-        client: CogniteClient,
-        registry_storage_type: str,
-        workflows_storage_path: Path,
-        rules_storage_path: Path,
+        client: CogniteClient = None,
+        registry_storage_type: str = "file",
+        workflows_storage_path: Path = Path("workflows"),
+        rules_storage_path: Path = Path("rules"),
         data_set_id: int = None,
     ):
         self.client = client
@@ -31,6 +38,12 @@ class WorkflowManager:
         self.rules_storage_path = str(rules_storage_path)
         self.task_builder = WorkflowTaskBuilder(client, self)
 
+    def update_cdf_client(self, client: CogniteClient):
+        self.client = client
+        self.task_builder = WorkflowTaskBuilder(client, self)
+        self.workflow_registry = {}
+        self.load_workflows_from_storage_v2()
+    
     def get_list_of_workflows(self):
         return list(self.workflow_registry.keys())
 
@@ -65,6 +78,7 @@ class WorkflowManager:
                 )
 
     def load_workflows_from_storage_v2(self, dir_path: str = None):
+        """Loads workflows from disk/storage into memory , initializes and register them in the workflow registry"""
         if not dir_path:
             dir_path = self.workflows_storage_path
         sys.path.append(dir_path)

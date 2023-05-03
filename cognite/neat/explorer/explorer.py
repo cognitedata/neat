@@ -15,14 +15,11 @@ from prometheus_client import REGISTRY, Counter, make_asgi_app
 from cognite import neat
 from cognite.neat import constants
 from cognite.neat.core import loader, parser, query_generator
+from cognite.neat.core.app import NeatApp
 from cognite.neat.core.data_classes.config import Config, configure_logging
 from cognite.neat.core.loader.config import copy_examples_to_directory
-from cognite.neat.core.utils import get_cognite_client_from_config
 from cognite.neat.core.workflow import WorkflowFullStateReport, utils
 from cognite.neat.core.workflow.base import WorkflowDefinition
-from cognite.neat.core.workflow.cdf_store import CdfStore
-from cognite.neat.core.workflow.manager import WorkflowManager
-from cognite.neat.core.workflow.triggers import TriggerManager
 from cognite.neat.explorer.data_classes.rest import (
     DownloadFromCdfRequest,
     NodesAndEdgesRequest,
@@ -54,12 +51,14 @@ if config.load_examples:
 configure_logging(config.log_level, config.log_format)
 logging.info(f" Starting NEAT version {neat.__version__}")
 logging.debug(f" Config: {config.dict(exclude={'cdf_client': {'client_secret': ...}})}")
-cdf_client = get_cognite_client_from_config(config.cdf_client)
-
 
 prom_app = make_asgi_app()
 
 app = FastAPI(title="Neat")
+
+neat_app = NeatApp(config, app)
+neat_app.start()
+
 app.mount("/metrics", prom_app)
 
 origins = [
@@ -75,44 +74,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# UI cache store
 cache_store = {}
 
-cdf_store = CdfStore(
-    cdf_client,
-    config.cdf_default_dataset_id,
-    workflows_storage_path=config.workflows_store_path,
-    rules_storage_path=config.rules_store_path,
-)
 
-if config.workflow_downloader_filter:
-    cdf_store.load_workflows_from_cfg_by_filter(config.workflow_downloader_filter)
-
-workflow_manager = WorkflowManager(
-    cdf_client,
-    config.workflows_store_type,
-    config.workflows_store_path,
-    config.rules_store_path,
-    config.cdf_default_dataset_id,
-)
-workflow_manager.load_workflows_from_storage_v2()
-
-triggers_manager = TriggerManager(workflow_manager=workflow_manager)
-triggers_manager.start_http_listeners(app)
-triggers_manager.start_time_schedulers()
-
-
-def signal_handler(sig, frame):
-    print("You pressed Ctrl+C!")
-    triggers_manager.stop_scheduler_main_loop()
-    exit(0)
-
-
-# signal.signal(signal.SIGINT, signal_handler)
-# signal.signal(signal.SIGTERM, signal_handler)
 @app.on_event("shutdown")
 def shutdown_event():
     logging.info("FastApi shutdown event")
-    triggers_manager.stop_scheduler_main_loop()
+    neat_app.stop()
 
 
 counter = Counter("started_workflows", "Description of counter")
@@ -154,7 +123,7 @@ def get_rules(
     file_name: str | None = None,
     version: str | None = None,
 ):
-    workflow = workflow_manager.get_workflow(workflow_name)
+    workflow = neat_app.workflow_manager.get_workflow(workflow_name)
     if not file_name:
         version = workflow.get_config_item("rules.version").value
         file_name = workflow.get_config_item("rules.file").value
@@ -168,10 +137,10 @@ def get_rules(
     elif path.exists() and version:
         hash = utils.get_file_hash(path)
         if hash != version:
-            cdf_store.load_rules_file_from_cdf(file_name, version)
+            neat_app.cdf_store.load_rules_file_from_cdf(file_name, version)
             src = "cdf"
     else:
-        cdf_store.load_rules_file_from_cdf(file_name, version)
+        neat_app.cdf_store.load_rules_file_from_cdf(file_name, version)
         src = "cdf"
 
     tables = loader.rules.excel_file_to_table_by_name(path)
@@ -230,7 +199,7 @@ def get_data_from_graph(sparq_query: str, graph_name: str = "source", workflow_n
     try:
         logging.info(f"Preparing query :{sparq_query} ")
         start_time = time.perf_counter()
-        workflow = workflow_manager.get_workflow(workflow_name)
+        workflow = neat_app.workflow_manager.get_workflow(workflow_name)
         try:
             if not workflow.source_graph or not workflow.solution_graph:
                 workflow.step_load_transformation_rules()
@@ -287,7 +256,7 @@ def execute_rule(request: RuleRequest):
         f"Executing rule type: { request.rule_type } rule : {request.rule} , workflow : {request.workflow_name} , graph : {request.graph_name}"
     )
     # TODO : add support for other graphs
-    workflow = workflow_manager.get_workflow(request.workflow_name)
+    workflow = neat_app.workflow_manager.get_workflow(request.workflow_name)
     if not workflow.source_graph or not workflow.solution_graph:
         workflow.step_load_transformation_rules()
         workflow.step_configuring_stores()
@@ -416,7 +385,7 @@ def get_nodes_and_edges(request: NodesAndEdgesRequest):
 @app.post("/api/workflow/start")
 def start_workflow(request: RunWorkflowRequest):
     logging.info("Starting workflow endpoint")
-    workflow = workflow_manager.get_workflow(request.name)
+    workflow = neat_app.workflow_manager.get_workflow(request.name)
     result = workflow.start(sync=request.sync)
     return {"result": result}
 
@@ -425,55 +394,55 @@ def start_workflow(request: RunWorkflowRequest):
 def get_workflow_stats(
     workflow_name: str,
 ) -> WorkflowFullStateReport:
-    workflow = workflow_manager.get_workflow(workflow_name)
+    workflow = neat_app.workflow_manager.get_workflow(workflow_name)
     return workflow.get_state()
 
 
 @app.get("/api/workflow/workflows")
 def get_workflows():
-    return {"workflows": workflow_manager.get_list_of_workflows()}
+    return {"workflows": neat_app.workflow_manager.get_list_of_workflows()}
 
 
 @app.get("/api/workflow/executions")
 def get_list_of_workflow_executions():
-    return {"executions": cdf_store.get_list_of_workflow_executions_from_cdf()}
+    return {"executions": neat_app.cdf_store.get_list_of_workflow_executions_from_cdf()}
 
 
 @app.get("/api/workflow/detailed-execution-report/{execution_id}")
 def get_detailed_execution(execution_id: str):
-    return {"report": cdf_store.get_detailed_workflow_execution_report_from_cdf(execution_id)}
+    return {"report": neat_app.cdf_store.get_detailed_workflow_execution_report_from_cdf(execution_id)}
 
 
 @app.post("/api/workflow/reload-workflows")
 def reload_workflows():
-    workflow_manager.load_workflows_from_storage_v2()
-    triggers_manager.reload_all_triggers()
-    return {"result": "ok", "workflows": workflow_manager.get_list_of_workflows()}
+    neat_app.workflow_manager.load_workflows_from_storage_v2()
+    neat_app.triggers_manager.reload_all_triggers()
+    return {"result": "ok", "workflows": neat_app.workflow_manager.get_list_of_workflows()}
 
 
 @app.get("/api/workflow/workflow-definition/{workflow_name}")
 def get_workflow_definition(workflow_name: str):
-    workflow = workflow_manager.get_workflow(workflow_name)
+    workflow = neat_app.workflow_manager.get_workflow(workflow_name)
     return {"definition": workflow.get_workflow_definition()}
 
 
 @app.post("/api/workflow/workflow-definition/{workflow_name}")
 def update_workflow_definition(workflow_name: str, request: WorkflowDefinition):
-    workflow_manager.update_workflow(workflow_name, request)
-    workflow_manager.save_workflow_to_storage(workflow_name)
+    neat_app.workflow_manager.update_workflow(workflow_name, request)
+    neat_app.workflow_manager.save_workflow_to_storage(workflow_name)
     return {"result": "ok"}
 
 
 @app.post("/api/workflow/upload-wf-to-cdf/{workflow_name}")
 def upload_workflow_to_cdf(workflow_name: str, request: UploadToCdfRequest):
-    cdf_store.save_workflow_to_cdf(workflow_name, changed_by=request.author, comments=request.comments, tag=request.tag)
+    neat_app.cdf_store.save_workflow_to_cdf(workflow_name, changed_by=request.author, comments=request.comments, tag=request.tag)
     return {"result": "ok"}
 
 
 @app.post("/api/workflow/upload-rules-cdf/{workflow_name}")
 def upload_rules_to_cdf(workflow_name: str, request: UploadToCdfRequest):
     file_path = Path(config.rules_store_path, request.file_name)
-    cdf_store.save_resource_to_cdf(
+    neat_app.cdf_store.save_resource_to_cdf(
         workflow_name, "neat-wf-rules", file_path, changed_by=request.author, comments=request.comments
     )
     return {"result": "ok"}
@@ -481,19 +450,19 @@ def upload_rules_to_cdf(workflow_name: str, request: UploadToCdfRequest):
 
 @app.post("/api/workflow/download-wf-from-cdf")
 def download_wf_from_cdf(request: DownloadFromCdfRequest):
-    cdf_store.load_workflows_from_cdf(request.file_name, request.version)
+    neat_app.cdf_store.load_workflows_from_cdf(request.file_name, request.version)
     return {"result": "ok"}
 
 
 @app.post("/api/workflow/download-rules-from-cdf")
 def download_rules_to_cdf(request: DownloadFromCdfRequest):
-    cdf_store.load_rules_file_from_cdf(request.file_name, request.version)
+    neat_app.cdf_store.load_rules_file_from_cdf(request.file_name, request.version)
     return {"file_name": request.file_name, "hash": request.version}
 
 
 @app.get("/api/workflow/pre-cdf-assets/{workflow_name}")
 def get_pre_cdf_assets(workflow_name: str):
-    workflow = workflow_manager.get_workflow(workflow_name)
+    workflow = neat_app.workflow_manager.get_workflow(workflow_name)
     if workflow is None:
         return {"assets": []}
     return {"assets": workflow.categorized_assets}
@@ -507,14 +476,14 @@ def get_metrics():
 
 @app.get("/api/cdf/neat-resources")
 def get_neat_resources(resource_type: str = None):
-    result = cdf_store.get_list_of_resources_from_cdf(resource_type=resource_type)
+    result = neat_app.cdf_store.get_list_of_resources_from_cdf(resource_type=resource_type)
     logging.debug(f"Got {len(result)} resources")
     return {"result": result}
 
 
 @app.post("/api/cdf/init-neat-resources")
 def init_neat_cdf_resources(resource_type: str = None):
-    cdf_store.init_cdf_resources(resource_type=resource_type)
+    neat_app.cdf_store.init_cdf_resources(resource_type=resource_type)
     return {"result": "ok"}
 
 
