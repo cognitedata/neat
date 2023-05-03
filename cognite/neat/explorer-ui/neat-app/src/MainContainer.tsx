@@ -11,6 +11,8 @@ import ConfigView from './views/ConfigView';
 import TransformationTable from './views/TransformationView';
 import WorkflowView from './views/WorkflowView';
 import ExecutionsTable from 'views/ExecutionsView';
+import BuildRoundedIcon from '@mui/icons-material/BuildRounded';
+import GlobalConfigView from 'views/GlobalConfigView';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -62,6 +64,7 @@ export default function BasicTabs() {
           <Tab label="Transformation rules" {...a11yProps(3)} />
           <Tab label="Data explorer" {...a11yProps(4)} />
           <Tab label="Statistics" {...a11yProps(5)} />
+          <Tab icon={<BuildRoundedIcon />} aria-label="Global config" {...a11yProps(6)} />
         </Tabs>
       </Box>
       <TabPanel value={value} index={0}>
@@ -81,6 +84,9 @@ export default function BasicTabs() {
       </TabPanel>
       <TabPanel value={value} index={5}>
         <MetricsTable />
+      </TabPanel>
+      <TabPanel value={value} index={6}>
+        <GlobalConfigView />
       </TabPanel>
 
     </Box>

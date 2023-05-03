@@ -99,17 +99,22 @@ def get_about():
     return {"version": neat.__version__}
 
 
-@app.get("/api/configs")
+@app.get("/api/configs/global")
 def get_configs():
     return config.dict()
 
 
-@app.post("/api/configs")
+@app.post("/api/configs/global")
 def set_configs(request: Config):
+    logging.info(f"Updating global config: {request}")
     global config
     global cache_store
+    global neat_app
     config = request
+    config.to_yaml(config_path)
     cache_store = {}
+    neat_app.stop()
+    neat_app.start(config=config)
     return config
 
 
@@ -435,7 +440,9 @@ def update_workflow_definition(workflow_name: str, request: WorkflowDefinition):
 
 @app.post("/api/workflow/upload-wf-to-cdf/{workflow_name}")
 def upload_workflow_to_cdf(workflow_name: str, request: UploadToCdfRequest):
-    neat_app.cdf_store.save_workflow_to_cdf(workflow_name, changed_by=request.author, comments=request.comments, tag=request.tag)
+    neat_app.cdf_store.save_workflow_to_cdf(
+        workflow_name, changed_by=request.author, comments=request.comments, tag=request.tag
+    )
     return {"result": "ok"}
 
 

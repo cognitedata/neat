@@ -43,7 +43,7 @@ class CdfStore:
         self.rules_storage_path = str(rules_storage_path)
         self.workflows_storage_type = "file"
 
-    def init_cdf_resources(self):
+    def init_cdf_resources(self, resource_type="all"):
         if self.client and self.data_set_id:
             try:
                 list = self.client.labels.list(external_id_prefix="neat-")

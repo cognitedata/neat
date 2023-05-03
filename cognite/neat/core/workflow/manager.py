@@ -14,19 +14,20 @@ from cognite.neat.core.workflow.tasks import WorkflowTaskBuilder
 
 
 class WorkflowManager:
-    """ Workflow manager is responsible for loading, saving and managing workflows 
-        client: CogniteClient
-        registry_storage_type: str = "file"
-        workflows_storage_path: Path = Path("workflows")
-        rules_storage_path: Path = Path("rules")
-        data_set_id: int = None,
+    """Workflow manager is responsible for loading, saving and managing workflows
+    client: CogniteClient
+    registry_storage_type: str = "file"
+    workflows_storage_path: Path = Path("workflows")
+    rules_storage_path: Path = Path("rules")
+    data_set_id: int = None,
     """
+
     def __init__(
         self,
         client: CogniteClient = None,
         registry_storage_type: str = "file",
-        workflows_storage_path: Path = Path("workflows"),
-        rules_storage_path: Path = Path("rules"),
+        workflows_storage_path: str = "workflows",
+        rules_storage_path: str = "rules",
         data_set_id: int = None,
     ):
         self.client = client
@@ -43,7 +44,7 @@ class WorkflowManager:
         self.task_builder = WorkflowTaskBuilder(client, self)
         self.workflow_registry = {}
         self.load_workflows_from_storage_v2()
-    
+
     def get_list_of_workflows(self):
         return list(self.workflow_registry.keys())
 

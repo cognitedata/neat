@@ -1,25 +1,27 @@
-from cognite.neat.core.data_classes.config import Config
-from cognite.client import CogniteClient
 import logging
+
+from cognite.client import CogniteClient
 from fastapi import FastAPI
+
+from cognite.neat.core.data_classes.config import Config
 from cognite.neat.core.utils import get_cognite_client_from_config
 from cognite.neat.core.workflow.cdf_store import CdfStore
 from cognite.neat.core.workflow.manager import WorkflowManager
 from cognite.neat.core.workflow.triggers import TriggerManager
 
 
-class NeatApp :
-    def __init__(self, config : Config, fast_api_app: FastAPI = None) :
+class NeatApp:
+    def __init__(self, config: Config, fast_api_app: FastAPI = None):
         self.config = config
-        self.cdf_client : CogniteClient = None
-        self.cdf_store : CdfStore = None
-        self.workflow_manager : WorkflowManager = None
-        self.triggers_manager : TriggerManager = None
+        self.cdf_client: CogniteClient = None
+        self.cdf_store: CdfStore = None
+        self.workflow_manager: WorkflowManager = None
+        self.triggers_manager: TriggerManager = None
         self.fast_api_app = fast_api_app
-    
-    def start(self, config : Config = None) :
+
+    def start(self, config: Config = None):
         logging.info("Starting NeatApp")
-        if config :
+        if config:
             self.config = config
         logging.info("Initializing global objects")
         self.cdf_client = get_cognite_client_from_config(self.config.cdf_client)
@@ -43,9 +45,9 @@ class NeatApp :
         )
         self.workflow_manager.load_workflows_from_storage_v2()
         self.triggers_manager = TriggerManager(workflow_manager=self.workflow_manager)
-        if self.fast_api_app :
+        if self.fast_api_app:
             self.triggers_manager.start_http_listeners(self.fast_api_app)
-        self.triggers_manager.start_time_schedulers() 
+        self.triggers_manager.start_time_schedulers()
         logging.info("NeatApp started")
 
     def stop(self):
@@ -55,4 +57,4 @@ class NeatApp :
         self.cdf_store = None
         self.workflow_manager = None
         self.triggers_manager = None
-        logging.info("NeatApp stopped")   
+        logging.info("NeatApp stopped")
