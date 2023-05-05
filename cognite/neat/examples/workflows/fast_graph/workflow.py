@@ -78,7 +78,7 @@ class FastGraphNeatWorkflow(BaseWorkflow):
         source_store_dir = Path(source_store_dir) if source_store_dir else None
         solution_store_dir = Path(solution_store_dir) if solution_store_dir else None
         if clean_start:
-            drop_graph_store(self.source_graph , source_store_dir)
+            drop_graph_store(self.source_graph, source_store_dir)
             drop_graph_store(self.solution_graph, solution_store_dir)
 
         self.source_graph = loader.NeatGraphStore(
@@ -90,7 +90,7 @@ class FastGraphNeatWorkflow(BaseWorkflow):
             self.get_config_item_value("source_rdf_store.query_url"),
             self.get_config_item_value("source_rdf_store.update_url"),
             "neat-tnt",
-            internal_storage_dir=source_store_dir
+            internal_storage_dir=source_store_dir,
         )
         self.solution_graph = loader.NeatGraphStore(prefixes=self.transformation_rules.prefixes)
         self.solution_graph.init_graph(
@@ -98,7 +98,7 @@ class FastGraphNeatWorkflow(BaseWorkflow):
             self.get_config_item_value("solution_rdf_store.query_url"),
             self.get_config_item_value("solution_rdf_store.update_url"),
             "tnt-solution",
-            internal_storage_dir=solution_store_dir
+            internal_storage_dir=solution_store_dir,
         )
 
         self.solution_graph.graph_db_rest_url = self.get_config_item_value("solution_rdf_store.api_root_url")
