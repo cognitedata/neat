@@ -46,17 +46,20 @@ class CdfStore:
     def init_cdf_resources(self, resource_type="all"):
         if self.client and self.data_set_id:
             try:
-                list = self.client.labels.list(external_id_prefix="neat-")
-                if len(list) == 0:
-                    labels = [
-                        LabelDefinition(
-                            external_id="neat-workflow", name="neat-workflow", data_set_id=self.data_set_id
-                        ),
-                        LabelDefinition(external_id="neat-latest", name="neat-latest", data_set_id=self.data_set_id),
-                    ]
-                    self.client.labels.create(labels)
-                else:
-                    logging.debug("Labels already exists.")
+                if resource_type == "all" or resource_type == "labels":
+                    list = self.client.labels.list(external_id_prefix="neat-")
+                    if len(list) == 0:
+                        labels = [
+                            LabelDefinition(
+                                external_id="neat-workflow", name="neat-workflow", data_set_id=self.data_set_id
+                            ),
+                            LabelDefinition(
+                                external_id="neat-latest", name="neat-latest", data_set_id=self.data_set_id
+                            ),
+                        ]
+                        self.client.labels.create(labels)
+                    else:
+                        logging.debug("Labels already exists.")
             except Exception as e:
                 logging.debug(f"Failed to create labels.{e}")
 

@@ -26,8 +26,8 @@ class WorkflowManager:
         self,
         client: CogniteClient = None,
         registry_storage_type: str = "file",
-        workflows_storage_path: str = "workflows",
-        rules_storage_path: str = "rules",
+        workflows_storage_path: Path = None,
+        rules_storage_path: Path = None,
         data_set_id: int = None,
     ):
         self.client = client
@@ -35,8 +35,8 @@ class WorkflowManager:
         self.workflow_registry: dict[str, BaseWorkflow] = {}
         self.workflows_storage_type = registry_storage_type
         # todo use pathlib
-        self.workflows_storage_path = str(workflows_storage_path)
-        self.rules_storage_path = str(rules_storage_path)
+        self.workflows_storage_path = workflows_storage_path if workflows_storage_path else Path("workflows")
+        self.rules_storage_path = rules_storage_path if rules_storage_path else Path("rules")
         self.task_builder = WorkflowTaskBuilder(client, self)
 
     def update_cdf_client(self, client: CogniteClient):
@@ -69,7 +69,7 @@ class WorkflowManager:
     def save_workflow_to_storage(self, name: str, custom_implementation_module: str = None):
         """Save workflow from memory to storage"""
         if self.workflows_storage_type == "file":
-            full_path = os.path.join(self.workflows_storage_path, name, "workflow.yaml")
+            full_path = self.workflows_storage_path / name / "workflow.yaml"
             wf = self.workflow_registry[name]
             with open(full_path, "w") as f:
                 f.write(
@@ -80,16 +80,18 @@ class WorkflowManager:
 
     def load_workflows_from_storage_v2(self, dir_path: str = None):
         """Loads workflows from disk/storage into memory , initializes and register them in the workflow registry"""
-        if not dir_path:
+        if dir_path:
+            dir_path = Path(dir_path)
+        else:
             dir_path = self.workflows_storage_path
-        sys.path.append(dir_path)
+        sys.path.append(str(dir_path))
         for wf_module_name in os.listdir(dir_path):
-            wf_module_full_path = os.path.join(dir_path, wf_module_name)
-            if Path(wf_module_full_path).is_dir():
+            wf_module_full_path = dir_path / wf_module_name
+            if wf_module_full_path.is_dir():
                 try:
                     logging.info(f"Loading workflow {wf_module_name} from {wf_module_full_path}")
                     # metadata_file = f"{dir_path}//{module_name}.yaml"
-                    metadata_file = os.path.join(dir_path, wf_module_name, "workflow.yaml")
+                    metadata_file = dir_path / wf_module_name / "workflow.yaml"
                     logging.info(f"Loading workflow {wf_module_name} metadata from {metadata_file}")
                     if os.path.exists(metadata_file):
                         with open(metadata_file, "r") as f:

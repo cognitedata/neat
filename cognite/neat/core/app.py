@@ -11,12 +11,17 @@ from cognite.neat.core.workflow.triggers import TriggerManager
 
 
 class NeatApp:
-    def __init__(self, config: Config, fast_api_app: FastAPI = None):
+    def __init__(self, config: Config, cdf_client: CogniteClient = None):
         self.config = config
         self.cdf_client: CogniteClient = None
         self.cdf_store: CdfStore = None
         self.workflow_manager: WorkflowManager = None
         self.triggers_manager: TriggerManager = None
+        self.fast_api_app: FastAPI = None
+        self.cdf_client = cdf_client
+
+    def set_http_server(self, fast_api_app: FastAPI):
+        """Set the http server to be used by the triggers manager"""
         self.fast_api_app = fast_api_app
 
     def start(self, config: Config = None):
@@ -24,7 +29,8 @@ class NeatApp:
         if config:
             self.config = config
         logging.info("Initializing global objects")
-        self.cdf_client = get_cognite_client_from_config(self.config.cdf_client)
+        if not self.cdf_client:
+            self.cdf_client = get_cognite_client_from_config(self.config.cdf_client)
         self.cdf_store = CdfStore(
             self.cdf_client,
             self.config.cdf_default_dataset_id,

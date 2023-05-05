@@ -3,6 +3,7 @@ import os
 import shutil
 import time
 import traceback
+from contextlib import asynccontextmanager
 from logging import getLogger
 from pathlib import Path
 
@@ -52,14 +53,20 @@ configure_logging(config.log_level, config.log_format)
 logging.info(f" Starting NEAT version {neat.__version__}")
 logging.debug(f" Config: {config.dict(exclude={'cdf_client': {'client_secret': ...}})}")
 
-prom_app = make_asgi_app()
+neat_app = NeatApp(config)
 
-app = FastAPI(title="Neat")
 
-neat_app = NeatApp(config, app)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+    logging.info("FastApi shutdown event")
+    neat_app.stop()
+
+
+app = FastAPI(title="Neat", lifespan=lifespan)
+
+neat_app.set_http_server(app)
 neat_app.start()
-
-app.mount("/metrics", prom_app)
 
 origins = [
     "http://localhost:8000",
@@ -78,14 +85,10 @@ app.add_middleware(
 cache_store = {}
 
 
-@app.on_event("shutdown")
-def shutdown_event():
-    logging.info("FastApi shutdown event")
-    neat_app.stop()
-
-
 counter = Counter("started_workflows", "Description of counter")
 
+prom_app = make_asgi_app()
+app.mount("/metrics", prom_app)
 app.mount("/static", StaticFiles(directory=constants.UI_PATH), name="static")
 
 
