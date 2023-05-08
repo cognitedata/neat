@@ -4,6 +4,8 @@ theme:
     name: gitbook
 nav:
     - Home: index.md
+    - Getting Started: getting-started.md
+    - Neat workflows : workflows.md
     - Transformation Rules: transformation-rules.md
     - Rule Types: rule-types.md
     - Data Exploration: ui-data-exploration.md

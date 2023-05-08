@@ -68,3 +68,7 @@ compose-up-d:
 compose-neat-up:
 	@echo "Running docker-compose for neat only"
 	cd ./docker ; mkdir -p vol_data vol_shared ; docker compose up neat
+
+run-docs:
+	@echo "Running mkdocs"
+	mkdocs serve --dev-addr 127.0.0.1:8010
