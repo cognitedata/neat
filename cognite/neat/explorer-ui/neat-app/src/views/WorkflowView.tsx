@@ -88,7 +88,7 @@ export default function WorkflowView() {
   const [selectedStep, setSelectedStep] = useState<WorkflowStepDefinition>();
 
   useEffect(() => {
-    loadConfigs();
+    // loadConfigs();
     loadListOfWorkflows();
     loadWorkflowDefinitions(getSelectedWorkflowName());
   }, []);
@@ -112,15 +112,15 @@ export default function WorkflowView() {
   }
 
 
-  const loadConfigs = () => {
-    const url = neatApiRootUrl+"/api/configs";
-    fetch(url).then((response) => response.json()).then((data) => {
-      console.dir(data)
+  // const loadConfigs = () => {
+  //   const url = neatApiRootUrl+"/api/configs";
+  //   fetch(url).then((response) => response.json()).then((data) => {
+  //     console.dir(data)
 
-    }).catch((error) => {
-      console.error('Error:', error);
-    }).finally(() => { });
-  }
+  //   }).catch((error) => {
+  //     console.error('Error:', error);
+  //   }).finally(() => { });
+  // }
 
   const loadListOfWorkflows = () => {
     const url = neatApiRootUrl+"/api/workflow/workflows";

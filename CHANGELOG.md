@@ -13,6 +13,11 @@ Changes are grouped as follows
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.11.0] - 11-05-24
+- Refactored application bootrap procese and core application functions aggregated into NeatApp class.
+- Small bug fixes.
+- Fixed global configurations via UI and API.
+
 ## [0.10.4] - 28-04-24
 - Added readme to publish process on pypi.org.
 
