@@ -1,4 +1,5 @@
 import pytest
+from starlette.testclient import TestClient
 
 from cognite.neat.constants import EXAMPLE_WORKFLOWS
 from cognite.neat.core.workflow import BaseWorkflow
@@ -20,7 +21,7 @@ def workflow_names() -> list[str]:
     return [example.name for example in EXAMPLE_WORKFLOWS.iterdir()]
 
 
-def test_load_example_workflows_loaded(workflow_names: list[str], fastapi_client):
+def test_load_example_workflows_loaded(workflow_names: list[str], fastapi_client: TestClient):
     # Act
     response = fastapi_client.get("/api/workflow/workflows")
 
@@ -29,7 +30,7 @@ def test_load_example_workflows_loaded(workflow_names: list[str], fastapi_client
     assert sorted(result["workflows"]) == sorted(workflow_names)
 
 
-def test_load_rules(transformation_rules, fastapi_client):
+def test_load_rules(transformation_rules, fastapi_client: TestClient):
     response = fastapi_client.get("/api/rules")
 
     # Assert
