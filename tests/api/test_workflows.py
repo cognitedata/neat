@@ -6,6 +6,7 @@ from cognite.neat.constants import EXAMPLE_WORKFLOWS
 from cognite.neat.core.workflow import BaseWorkflow
 from cognite.neat.core.workflow.model import WorkflowDefinition
 from cognite.neat.explorer.data_classes.rest import RunWorkflowRequest
+from tests.api.memory_cognite_client import MemoryClient
 
 
 @pytest.fixture(scope="session")
@@ -42,7 +43,7 @@ def test_load_rules(transformation_rules, fastapi_client: TestClient):
     assert len(transformation_rules.properties) == len(rules["properties"])
 
 
-def test_run_default_workflow(cognite_client: CogniteClient, fastapi_client: TestClient):
+def test_run_default_workflow(cognite_client: CogniteClient, fastapi_client: TestClient, data_regression):
     response = fastapi_client.post(
         "/api/workflow/start",
         json=RunWorkflowRequest(name="default", sync=True, config={}, start_step="Not used").dict(),
@@ -51,3 +52,8 @@ def test_run_default_workflow(cognite_client: CogniteClient, fastapi_client: Tes
     assert response.status_code == 200
     result = response.json()["result"]
     assert result["error_text"] is None
+    data = {}
+    for resource_name in ["assets", "relationships", "labels"]:
+        memory: MemoryClient = getattr(cognite_client, resource_name)
+        data[resource_name] = memory.dump(ordered=True, exclude={"metadata.start_time", "metadata.update_time"})
+    data_regression.check(data, basename="default_workflow")

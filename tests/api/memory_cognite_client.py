@@ -1,4 +1,4 @@
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from typing import Any, Iterator, List, Literal, Optional, Sequence, Type, TypeVar, Union
 
 from cognite.client._constants import LIST_LIMIT_DEFAULT
@@ -33,11 +33,13 @@ T = TypeVar("T")
 class MemoryClient:
     _RESOURCE_PATH: str
 
-    def __init__(self, *_, **__) -> None:
+    def __init__(self, list_cls: Type[T_CogniteResourceList], cls: Type[T_CogniteResource]) -> None:
         self.store: dict[ExternalId | ID, T_CogniteResource] = {}
         self._next_id = 1
         self._CREATE_LIMIT = 10_000
         self._RESOURCE_PATH = "assets"
+        self.cls = cls
+        self.list_cls = list_cls
 
         class Config:
             max_workers = 10
@@ -56,8 +58,6 @@ class MemoryClient:
 
     def _retrieve_multiple(
         self,
-        list_cls: Type[T_CogniteResourceList],
-        resource_cls: Type[T_CogniteResource],
         identifiers: Union[SingletonIdentifierSequence, IdentifierSequence],
         resource_path: Optional[str] = None,
         ignore_unknown_ids: Optional[bool] = None,
@@ -65,14 +65,12 @@ class MemoryClient:
         other_params: Optional[dict[str, Any]] = None,
     ) -> Union[T_CogniteResourceList, Optional[T_CogniteResource]]:
         if identifiers.is_singleton():
-            return self._retrieve(identifier=identifiers[0], cls=Asset)
-        return list_cls([self._retrieve(identifier, cls=Asset) for identifier in identifiers])
+            return self._retrieve(identifier=identifiers[0], cls=self.cls)
+        return self.list_cls([self._retrieve(identifier, cls=self.cls) for identifier in identifiers])
 
     def _list(
         self,
         method: Literal["POST", "GET"],
-        list_cls: Type[T_CogniteResourceList],
-        resource_cls: Type[T_CogniteResource],
         resource_path: Optional[str] = None,
         url_path: Optional[str] = None,
         limit: Optional[int] = None,
@@ -83,11 +81,35 @@ class MemoryClient:
         headers: Optional[dict] = None,
         initial_cursor: Optional[str] = None,
     ) -> T_CogniteResourceList:
-        return list_cls(self.list_unique_in_store(list_cls))
+        return self.list_cls(self._list_unique_in_store())
 
-    def list_unique_in_store(self, list_cls: Type[T_CogniteResourceList]) -> T_CogniteResourceList:
+    def _list_unique_in_store(self) -> T_CogniteResourceList:
         unique_ids = {id(item): item for item in self.store.values()}
-        return list_cls(unique_ids.values())
+        return self.list_cls(unique_ids.values())
+
+    def dump(self, ordered: bool = False, exclude: Optional[set[str]] = None) -> list[dict]:
+        exclude = exclude or set()
+        iterable = (self._dump_item(item, ordered, exclude) for item in self._list_unique_in_store())
+        if ordered:
+            return sorted(iterable, key=lambda x: x["external_id"])
+        return list(iterable)
+
+    @classmethod
+    def _dump_item(cls, item: T_CogniteResource, ordered: bool, exclude: set[str]) -> dict[str, Any]:
+        dump = item.dump()
+        if "labels" in dump:
+            # Labels are not properly dumped to dict.
+            iterable = (label.dump() if hasattr(label, "dump") else label for label in dump["labels"])
+            dump["labels"] = sorted(iterable, key=lambda x: x["externalId"]) if ordered else list(iterable)
+        if exclude:
+            for to_exclude in exclude:
+                keys = to_exclude.split(".")
+                dump_from = dump
+                with suppress(KeyError):
+                    for key in keys[:-1]:
+                        dump_from = dump_from[key]
+                    dump_from.pop(keys[-1])
+        return dump
 
     def _aggregate(
         self,
@@ -104,8 +126,6 @@ class MemoryClient:
     def _create_multiple(
         self,
         items: Sequence[T_CogniteResource] | Sequence[dict[str, Any]] | T_CogniteResource | dict[str, Any],
-        list_cls: Type[T_CogniteResourceList],
-        resource_cls: Type[T_CogniteResource],
         resource_path: Optional[str] = None,
         params: Optional[dict] = None,
         headers: Optional[dict] = None,
@@ -115,16 +135,14 @@ class MemoryClient:
         is_single = not isinstance(items, Sequence)
         create_items = [items] if is_single else items
         for item in create_items:
-            if hasattr(item, "id") and item.id is None:
-                item.id = self._next_id
-                self._next_id += 1
-                self.store[item.id] = item
-            if hasattr(item, "external_id") and item.external_id is not None:
-                self.store[item.external_id] = item
+            self.store[item.external_id] = item
         return create_items
 
 
 class AssetsMemory(MemoryClient):
+    def __init__(self):
+        super().__init__(AssetList, Asset)
+
     def __call__(
         self,
         chunk_size: int = None,
@@ -150,14 +168,12 @@ class AssetsMemory(MemoryClient):
         return iter(
             self._list(
                 method="POST",
-                list_cls=AssetList,
-                resource_cls=Asset,
             )
         )
 
     def retrieve(self, id: Optional[int] = None, external_id: Optional[str] = None) -> Optional[Asset]:
         identifier = IdentifierSequence.load(ids=id, external_ids=external_id).as_singleton()
-        return self._retrieve_multiple(list_cls=AssetList, resource_cls=Asset, identifiers=identifier)
+        return self._retrieve_multiple(identifiers=identifier)
 
     def retrieve_multiple(
         self,
@@ -166,9 +182,7 @@ class AssetsMemory(MemoryClient):
         ignore_unknown_ids: bool = False,
     ) -> AssetList:
         identifiers = IdentifierSequence.load(ids=ids, external_ids=external_ids)
-        return self._retrieve_multiple(
-            list_cls=AssetList, resource_cls=Asset, identifiers=identifiers, ignore_unknown_ids=ignore_unknown_ids
-        )
+        return self._retrieve_multiple(identifiers=identifiers, ignore_unknown_ids=ignore_unknown_ids)
 
     def list(
         self,
@@ -193,12 +207,10 @@ class AssetsMemory(MemoryClient):
     ) -> AssetList:
         return self._list(
             method="POST",
-            list_cls=AssetList,
-            resource_cls=Asset,
         )
 
     def aggregate(self, filter: Union[AssetFilter, dict] = None) -> List[AssetAggregate]:
-        return [AssetAggregate(count=len(self.list_unique_in_store(AssetList)))]
+        return [AssetAggregate(count=len(self._list_unique_in_store()))]
 
     def aggregate_metadata_keys(self, filter: Union[AssetFilter, dict] = None) -> Sequence[AggregateBucketResult]:
         raise NotImplementedError()
@@ -209,7 +221,7 @@ class AssetsMemory(MemoryClient):
         raise NotImplementedError()
 
     def create(self, asset: Union[Asset, Sequence[Asset]]) -> Union[Asset, AssetList]:
-        return self._create_multiple(list_cls=AssetList, resource_cls=Asset, items=asset)
+        return self._create_multiple(items=asset)
 
     def create_hierarchy(
         self,
@@ -250,6 +262,9 @@ class AssetsMemory(MemoryClient):
 
 
 class RelationshipsMemory(MemoryClient):
+    def __init__(self):
+        super().__init__(RelationshipList, Relationship)
+
     def _create_filter(
         self,
         source_external_ids: Sequence[str] = None,
@@ -302,8 +317,6 @@ class RelationshipsMemory(MemoryClient):
     ) -> Union[Iterator[Relationship], Iterator[RelationshipList]]:
         return iter(
             self._list(
-                list_cls=RelationshipList,
-                resource_cls=Relationship,
                 method="POST",
             )
         )
@@ -311,16 +324,12 @@ class RelationshipsMemory(MemoryClient):
     def retrieve(self, external_id: str, fetch_resources: bool = False) -> Optional[Relationship]:
         identifiers = IdentifierSequence.load(ids=None, external_ids=external_id).as_singleton()
         return self._retrieve_multiple(
-            list_cls=RelationshipList,
-            resource_cls=Relationship,
             identifiers=identifiers,
         )
 
     def retrieve_multiple(self, external_ids: Sequence[str], fetch_resources: bool = False) -> RelationshipList:
         identifiers = IdentifierSequence.load(ids=None, external_ids=external_ids)
         return self._retrieve_multiple(
-            list_cls=RelationshipList,
-            resource_cls=Relationship,
             identifiers=identifiers,
         )
 
@@ -344,8 +353,6 @@ class RelationshipsMemory(MemoryClient):
         fetch_resources: bool = False,
     ) -> RelationshipList:
         return self._list(
-            list_cls=RelationshipList,
-            resource_cls=Relationship,
             method="POST",
         )
 
@@ -357,7 +364,7 @@ class RelationshipsMemory(MemoryClient):
         else:
             relationship = relationship._validate_resource_types()
 
-        return self._create_multiple(list_cls=RelationshipList, resource_cls=Relationship, items=relationship)
+        return self._create_multiple(items=relationship)
 
     def update(
         self, item: Union[Relationship, RelationshipUpdate, Sequence[Union[Relationship, RelationshipUpdate]]]
@@ -379,6 +386,9 @@ class RelationshipsMemory(MemoryClient):
 class LabelsMemory(MemoryClient):
     _RESOURCE_PATH = "/labels"
 
+    def __init__(self):
+        super().__init__(LabelDefinitionList, LabelDefinition)
+
     def __call__(
         self,
         name: str = None,
@@ -390,8 +400,6 @@ class LabelsMemory(MemoryClient):
     ) -> Union[Iterator[LabelDefinition], Iterator[LabelDefinitionList]]:
         return iter(
             self._list(
-                list_cls=LabelDefinitionList,
-                resource_cls=LabelDefinition,
                 method="POST",
             )
         )
@@ -404,7 +412,7 @@ class LabelsMemory(MemoryClient):
         data_set_external_ids: Union[str, Sequence[str]] = None,
         limit: int = LIST_LIMIT_DEFAULT,
     ) -> LabelDefinitionList:
-        return self._list(list_cls=LabelDefinitionList, resource_cls=LabelDefinition, method="POST", limit=limit)
+        return self._list(method="POST", limit=limit)
 
     def create(
         self, label: Union[LabelDefinition, Sequence[LabelDefinition]]
@@ -414,7 +422,7 @@ class LabelsMemory(MemoryClient):
                 raise TypeError("'label' must be of type LabelDefinition or Sequence[LabelDefinition]")
         elif not isinstance(label, LabelDefinition):
             raise TypeError("'label' must be of type LabelDefinition or Sequence[LabelDefinition]")
-        return self._create_multiple(list_cls=LabelDefinitionList, resource_cls=LabelDefinition, items=label)
+        return self._create_multiple(items=label)
 
     def delete(self, external_id: Union[str, Sequence[str]] = None) -> None:
         raise NotImplementedError()
