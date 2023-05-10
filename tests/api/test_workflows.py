@@ -50,4 +50,4 @@ def test_run_default_workflow(cognite_client: CogniteClient, fastapi_client: Tes
 
     assert response.status_code == 200
     result = response.json()["result"]
-    assert result["step_execution_status"] == "COMPLETED"
+    assert result["error_text"] is None
