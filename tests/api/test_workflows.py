@@ -1,9 +1,11 @@
 import pytest
+from cognite.client import CogniteClient
 from starlette.testclient import TestClient
 
 from cognite.neat.constants import EXAMPLE_WORKFLOWS
 from cognite.neat.core.workflow import BaseWorkflow
 from cognite.neat.core.workflow.model import WorkflowDefinition
+from cognite.neat.explorer.data_classes.rest import RunWorkflowRequest
 
 
 @pytest.fixture(scope="session")
@@ -38,3 +40,12 @@ def test_load_rules(transformation_rules, fastapi_client: TestClient):
     rules = response.json()
     assert len(transformation_rules.classes) == len(rules["classes"])
     assert len(transformation_rules.properties) == len(rules["properties"])
+
+
+def test_run_workflow(cognite_client: CogniteClient, fastapi_client: TestClient):
+    response = fastapi_client.post(
+        "/api/workflow/start",
+        json=RunWorkflowRequest(name="default", sync=True, config={}, start_step="Not used").dict(),
+    )
+
+    assert response.status_code == 200
