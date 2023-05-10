@@ -42,10 +42,12 @@ def test_load_rules(transformation_rules, fastapi_client: TestClient):
     assert len(transformation_rules.properties) == len(rules["properties"])
 
 
-def test_run_workflow(cognite_client: CogniteClient, fastapi_client: TestClient):
+def test_run_default_workflow(cognite_client: CogniteClient, fastapi_client: TestClient):
     response = fastapi_client.post(
         "/api/workflow/start",
         json=RunWorkflowRequest(name="default", sync=True, config={}, start_step="Not used").dict(),
     )
 
     assert response.status_code == 200
+    result = response.json()["result"]
+    assert result["step_execution_status"] == "COMPLETED"
