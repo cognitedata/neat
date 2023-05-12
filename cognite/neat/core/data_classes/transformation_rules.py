@@ -7,6 +7,7 @@ from datetime import datetime
 from typing import Dict, List, Optional, Self, Union
 
 import pandas as pd
+from graphql import GraphQLBoolean, GraphQLFloat, GraphQLInt, GraphQLString
 from pydantic import BaseModel, Field, HttpUrl, ValidationError, root_validator, validator
 from rdflib import XSD, Literal, Namespace, URIRef
 
@@ -15,20 +16,18 @@ from cognite.neat.core.data_classes.rules import Entity, RuleType, parse_rule
 
 # mapping of XSD types to Python and GraphQL types
 DATA_TYPE_MAPPING = {
-    "boolean": {"python": "bool", "GraphQL": "Boolean"},
-    "float": {"python": "float", "GraphQL": "Float"},
-    "integer": {"python": "int", "GraphQL": "Int"},
-    "nonPositiveInteger": {"python": "int", "GraphQL": "Int"},
-    "nonNegativeInteger": {"python": "int", "GraphQL": "Int"},
-    "negativeInteger": {"python": "int", "GraphQL": "Int"},
-    "long": {"python": "int", "GraphQL": "Int"},
-    "string": {"python": "str", "GraphQL": "String"},
-    "anyURI": {"python": "str", "GraphQL": "String"},
-    "normalizedString": {"python": "str", "GraphQL": "String"},
-    "token": {"python": "str", "GraphQL": "String"},
-    "enumeration": {"python": "list", "GraphQL": "Enum"},
+    "boolean": {"python": "bool", "GraphQL": GraphQLBoolean},
+    "float": {"python": "float", "GraphQL": GraphQLFloat},
+    "integer": {"python": "int", "GraphQL": GraphQLInt},
+    "nonPositiveInteger": {"python": "int", "GraphQL": GraphQLInt},
+    "nonNegativeInteger": {"python": "int", "GraphQL": GraphQLInt},
+    "negativeInteger": {"python": "int", "GraphQL": GraphQLInt},
+    "long": {"python": "int", "GraphQL": GraphQLInt},
+    "string": {"python": "str", "GraphQL": GraphQLString},
+    "anyURI": {"python": "str", "GraphQL": GraphQLString},
+    "normalizedString": {"python": "str", "GraphQL": GraphQLString},
+    "token": {"python": "str", "GraphQL": GraphQLString},
 }
-
 METADATA_VALUE_MAX_LENGTH = 5120
 
 
