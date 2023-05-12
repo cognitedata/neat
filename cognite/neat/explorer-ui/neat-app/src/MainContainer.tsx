@@ -60,11 +60,8 @@ export default function BasicTabs() {
         <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
           <Tab label="Workflows" {...a11yProps(0)} />
           <Tab label="Execution history" {...a11yProps(1)} />
-          <Tab label="Configurations" {...a11yProps(2)} />
-          <Tab label="Transformation rules" {...a11yProps(3)} />
-          <Tab label="Data explorer" {...a11yProps(4)} />
-          <Tab label="Statistics" {...a11yProps(5)} />
-          <Tab icon={<BuildRoundedIcon />} aria-label="Global config" {...a11yProps(6)} />
+          <Tab label="Statistics" {...a11yProps(2)} />
+          <Tab icon={<BuildRoundedIcon />} aria-label="Global config" {...a11yProps(3)} />
         </Tabs>
       </Box>
       <TabPanel value={value} index={0}>
@@ -74,18 +71,9 @@ export default function BasicTabs() {
         <ExecutionsTable />
       </TabPanel>
       <TabPanel value={value} index={2}>
-        <ConfigView/>
-      </TabPanel>
-      <TabPanel value={value} index={3}>
-        <TransformationTable/>
-      </TabPanel>
-      <TabPanel value={value} index={4}>
-        <QDataTable />
-      </TabPanel>
-      <TabPanel value={value} index={5}>
         <MetricsTable />
       </TabPanel>
-      <TabPanel value={value} index={6}>
+      <TabPanel value={value} index={3}>
         <GlobalConfigView />
       </TabPanel>
 

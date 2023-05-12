@@ -24,3 +24,7 @@ plugins:
       execute: false
       ignore_h1_titles: True
       include_source: True
+  - glightbox:
+       width: 100%
+       height: auto
+      

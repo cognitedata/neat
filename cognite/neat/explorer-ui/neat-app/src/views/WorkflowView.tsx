@@ -44,6 +44,9 @@ import CdfPublisher from 'components/CdfPublisher';
 import CdfDownloader from 'components/CdfDownloader';
 import NJsonViewer from 'components/JsonViewer';
 import WorkflowExecutionReport from 'components/WorkflowExecutionReport';
+import ConfigView from './ConfigView';
+import TransformationTable from './TransformationView';
+import QDataTable from './ExplorerView';
 
 
 export interface ExecutionLog {
@@ -366,7 +369,7 @@ export default function WorkflowView() {
   }
 
   return (
-    <div style={{ height: '85vh', width: '100vw' }}>
+    <div style={{ height: '85vh', width: '97vw' }}>
       <Box>
         <FormControl sx={{ width: 300, marginBottom: 2 }}>
           <InputLabel id="workflowSelectorLabel">Workflow selector</InputLabel>
@@ -394,9 +397,12 @@ export default function WorkflowView() {
           onChange={handleViewTypeChange}
           aria-label="View type"
         >
-          <ToggleButton value="system">System</ToggleButton>
-          <ToggleButton value="steps">Steps</ToggleButton>
-          <ToggleButton value="combined">Combined</ToggleButton>
+          <ToggleButton value="system">System view</ToggleButton>
+          <ToggleButton value="steps">Steps view</ToggleButton>
+          <ToggleButton value="configurations">Configurations</ToggleButton>
+          <ToggleButton value="transformations">Transformation rules</ToggleButton>
+          <ToggleButton value="data_explorer">Data explorer</ToggleButton>
+          
         </ToggleButtonGroup>
         <Dialog open={dialogOpen} onClose={handleDialogClose}>
           <DialogTitle>Step configurator</DialogTitle>
@@ -438,9 +444,11 @@ export default function WorkflowView() {
           </DialogActions>
         </Dialog>
       </Box>
+      { (viewType == "system" || viewType == "steps") &&(
       <Stack direction="row" spacing={1} justifyContent="left"
         alignItems="left">
         <Item>
+        
           <div style={{ height: '75vh', width: '70vw' }}>
             <ReactFlow
               nodes={nodes}
@@ -458,6 +466,7 @@ export default function WorkflowView() {
               <Background />
               <Panel position="bottom-center"><Button variant="outlined" onClick={onAddStep}>Add step</Button></Panel>
             </ReactFlow>
+
             <Button variant="contained" onClick={startWorkflow} sx={{ marginTop: 2, marginRight: 1 }}>Start workflow</Button>
             <Button variant="contained" onClick={saveWorkflow} sx={{ marginTop: 2, marginRight: 1 }}>Save workflow</Button>
             <Button variant="contained" onClick={reloadWorkflows} sx={{ marginTop: 2 , marginRight: 1 }} >Reload local workflows</Button>
@@ -465,13 +474,24 @@ export default function WorkflowView() {
               <CdfPublisher type="workflow"/>
               <CdfDownloader type="workflow-package" onDownloadSuccess={onDownloadSuccess} />
             </Box>
-
           </div>
+
         </Item>
         <Item >
         <WorkflowExecutionReport report={workflowStats} />
         </Item>
       </Stack>
+       )}
+      { viewType == "configurations" &&(
+            <ConfigView></ConfigView>
+      )}
+      { viewType == "transformations" &&(
+          <TransformationTable/>
+      )}
+      { viewType == "data_explorer" &&(
+        <QDataTable />
+      )}
+
     </div>
 
 

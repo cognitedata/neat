@@ -10,6 +10,7 @@ from cognite.client import CogniteClient
 from prometheus_client import Gauge
 
 from cognite.neat.core.data_classes.config import ClientConfig, Config
+from cognite.neat.core.data_stores.metrics import NeatMetricsCollector
 from cognite.neat.core.workflow import cdf_store
 from cognite.neat.core.workflow.model import (
     FlowMessage,
@@ -63,7 +64,8 @@ class BaseWorkflow:
             if self.default_dataset_id
             else None
         )
-
+        self.metrics = NeatMetricsCollector(self.name, self.cdf_client)
+        
     def start(self, sync=False, **kwargs) -> FlowMessage | None:
         """Starts workflow execution.sync=True will block until workflow is completed and return last workflow flow message,
         sync=False will start workflow in a separate thread and return None"""
@@ -74,7 +76,7 @@ class BaseWorkflow:
         self.thread = threading.Thread(target=self._run_workflow, kwargs=kwargs)
         self.thread.start()
         return None
-
+    
     def _run_workflow(self, **kwargs) -> FlowMessage | None:
         """Run workflow and return last workflow flow message"""
         summary_metrics.labels(wf_name=self.name, name="steps_count").set(len(self.workflow_steps))

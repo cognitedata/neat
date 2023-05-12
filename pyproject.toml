@@ -15,6 +15,9 @@ exclude = [
     "cognite/neat/explorer-ui/neat-app/node_modules/**",
     "cognite/neat/explorer-ui/neat-app/*.json",
 ]
+[tool.poetry.group.dev.dependencies]
+mkdocs-glightbox = "^0.3.4"
+
 
 
 [tool.black]
