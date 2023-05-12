@@ -45,8 +45,25 @@ def test_load_rules(transformation_rules, fastapi_client: TestClient):
 
 @pytest.mark.parametrize("workflow_name", ["default", "fast_graph", "sheet2cdf"])
 def test_run_default_workflow(
-    workflow_name: str, cognite_client: CogniteClient, fastapi_client: TestClient, data_regression
+    workflow_name: str,
+    cognite_client: CogniteClient,
+    fastapi_client: TestClient,
+    data_regression,
+    tmp_path,
 ):
+    # Arrange
+    if workflow_name == "fast_graph":
+        # When running this test in GitHub actions, you get permission issues with the default disk_store_dir.
+        response = fastapi_client.get("/api/workflow/workflow-definition/fast_graph")
+        definition = WorkflowDefinition(**response.json()["definition"])
+        disk_store_dir = next(
+            config for config in definition.configs if config.name == "source_rdf_store.disk_store_dir"
+        )
+        disk_store_dir.value = str(tmp_path)
+        response = fastapi_client.post("/api/workflow/workflow-definition/fast_graph", json=definition.dict())
+        assert response.status_code == 200
+
+    # Act
     response = fastapi_client.post(
         "/api/workflow/start",
         json=RunWorkflowRequest(name=workflow_name, sync=True, config={}, start_step="Not used").dict(),
