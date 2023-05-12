@@ -56,9 +56,9 @@ def test_run_default_workflow(
         # When running this test in GitHub actions, you get permission issues with the default disk_store_dir.
         response = fastapi_client.get("/api/workflow/workflow-definition/fast_graph")
         definition = WorkflowDefinition(**response.json()["definition"])
-        source = next(config for config in definition.configs if config.name == "source_rdf_store.disk_store_dir")
+        source = next(c for c in definition.configs if c.name == "source_rdf_store.disk_store_dir")
         source.value = str(tmp_path / "source")
-        solution = next(filter(lambda c: c.name == "solution_rdf_store.disk_store_dir", definition.configs))
+        solution = next(c for c in definition.configs if c.name == "solution_rdf_store.disk_store_dir")
         solution.value = str(tmp_path / "solution")
         response = fastapi_client.post("/api/workflow/workflow-definition/fast_graph", json=definition.dict())
         assert response.status_code == 200
