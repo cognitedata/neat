@@ -100,6 +100,7 @@ class NeatGraphStore:
             logging.info("Initializing Oxigraph store")
             # Adding support for both in-memory and file-based storage
             oxstore = None
+            self.internal_storage_dir.mkdir(parents=True, exist_ok=True)
             for i in range(4):
                 try:
                     oxstore = pyoxigraph.Store(

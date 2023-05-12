@@ -43,10 +43,30 @@ def test_load_rules(transformation_rules, fastapi_client: TestClient):
     assert len(transformation_rules.properties) == len(rules["properties"])
 
 
-def test_run_default_workflow(cognite_client: CogniteClient, fastapi_client: TestClient, data_regression):
+@pytest.mark.parametrize("workflow_name", ["default", "fast_graph", "sheet2cdf"])
+def test_run_default_workflow(
+    workflow_name: str,
+    cognite_client: CogniteClient,
+    fastapi_client: TestClient,
+    data_regression,
+    tmp_path,
+):
+    # Arrange
+    if workflow_name == "fast_graph":
+        # When running this test in GitHub actions, you get permission issues with the default disk_store_dir.
+        response = fastapi_client.get("/api/workflow/workflow-definition/fast_graph")
+        definition = WorkflowDefinition(**response.json()["definition"])
+        source = next(c for c in definition.configs if c.name == "source_rdf_store.disk_store_dir")
+        source.value = str(tmp_path / "source")
+        solution = next(c for c in definition.configs if c.name == "solution_rdf_store.disk_store_dir")
+        solution.value = str(tmp_path / "solution")
+        response = fastapi_client.post("/api/workflow/workflow-definition/fast_graph", json=definition.dict())
+        assert response.status_code == 200
+
+    # Act
     response = fastapi_client.post(
         "/api/workflow/start",
-        json=RunWorkflowRequest(name="default", sync=True, config={}, start_step="Not used").dict(),
+        json=RunWorkflowRequest(name=workflow_name, sync=True, config={}, start_step="Not used").dict(),
     )
 
     assert response.status_code == 200
@@ -56,4 +76,4 @@ def test_run_default_workflow(cognite_client: CogniteClient, fastapi_client: Tes
     for resource_name in ["assets", "relationships", "labels"]:
         memory: MemoryClient = getattr(cognite_client, resource_name)
         data[resource_name] = memory.dump(ordered=True, exclude={"metadata.start_time", "metadata.update_time"})
-    data_regression.check(data, basename="default_workflow")
+    data_regression.check(data, basename=f"{workflow_name}_workflow")
