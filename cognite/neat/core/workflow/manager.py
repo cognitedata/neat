@@ -50,7 +50,7 @@ class WorkflowManager:
 
     def get_workflow(self, name: str) -> BaseWorkflow:
         return self.workflow_registry[name]
-
+    
     def start_workflow(self, name: str, sync=False, **kwargs):
         workflow = self.get_workflow(name)
         workflow.start(sync, kwargs=kwargs)

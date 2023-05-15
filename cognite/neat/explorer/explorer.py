@@ -11,6 +11,7 @@ from fastapi import FastAPI, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from prometheus_client import REGISTRY, Counter, make_asgi_app
 
 from cognite import neat
@@ -90,6 +91,7 @@ counter = Counter("started_workflows", "Description of counter")
 prom_app = make_asgi_app()
 app.mount("/metrics", prom_app)
 app.mount("/static", StaticFiles(directory=constants.UI_PATH), name="static")
+app.mount("/data", StaticFiles(directory=config.data_store_path), name="data")
 
 
 @app.get("/")
@@ -432,6 +434,11 @@ def reload_workflows():
 def get_workflow_definition(workflow_name: str):
     workflow = neat_app.workflow_manager.get_workflow(workflow_name)
     return {"definition": workflow.get_workflow_definition()}
+
+@app.get("/api/workflow/workflow-src/{workflow_name}/{file_name}")
+def get_workflow_src(workflow_name: str, file_name: str):
+    src = neat_app.workflow_manager.get_workflow_src(workflow_name, file_name=file_name)
+    return FileResponse(src, media_type="text/plain")
 
 
 @app.post("/api/workflow/workflow-definition/{workflow_name}")

@@ -14,16 +14,9 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import Button from '@mui/material/Button';
 import { useState, useEffect } from 'react';
-import Timeline from '@mui/lab/Timeline';
-import TimelineItem, { timelineItemClasses } from '@mui/lab/TimelineItem';
-import TimelineSeparator from '@mui/lab/TimelineSeparator';
-import TimelineConnector from '@mui/lab/TimelineConnector';
-import TimelineContent from '@mui/lab/TimelineContent';
-import TimelineDot from '@mui/lab/TimelineDot';
 import Stack from '@mui/material/Stack';
 import { styled } from '@mui/material/styles';
 import Paper from '@mui/material/Paper';
-import CircularProgress from '@mui/material/CircularProgress';
 import { UIConfig, WorkflowDefinition, WorkflowStepDefinition } from 'types/WorkflowTypes';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
@@ -36,18 +29,16 @@ import { getNeatApiRootUrl, getSelectedWorkflowName, setSelectedWorkflowName } f
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
 import DialogActions from '@mui/material/DialogActions';
 import TextField from '@mui/material/TextField';
 import { Checkbox, FormControlLabel, FormGroup } from '@mui/material';
 import CdfPublisher from 'components/CdfPublisher';
 import CdfDownloader from 'components/CdfDownloader';
-import NJsonViewer from 'components/JsonViewer';
 import WorkflowExecutionReport from 'components/WorkflowExecutionReport';
 import ConfigView from './ConfigView';
 import TransformationTable from './TransformationView';
 import QDataTable from './ExplorerView';
-
+import Editor, { DiffEditor, useMonaco, loader } from '@monaco-editor/react';
 
 export interface ExecutionLog {
   id: string;
@@ -89,12 +80,23 @@ export default function WorkflowView() {
   const [viewType, setViewType] = useState<string>("system");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedStep, setSelectedStep] = useState<WorkflowStepDefinition>();
+  const [fileContent, setFileContent] = useState('');
 
   useEffect(() => {
     // loadConfigs();
     loadListOfWorkflows();
     loadWorkflowDefinitions(getSelectedWorkflowName());
   }, []);
+
+  const fetchFileContent = async () => {
+    try {
+      const response = await fetch(neatApiRootUrl+'/data/workflows/'+selectedWorkflow+'/workflow.py'); // Replace with your server URL and file path
+      const content = await response.text();
+      setFileContent(content);
+    } catch (error) {
+      console.error('Error fetching file:', error);
+    }
+  };
 
   useEffect(() => {
     renderView(viewType);
@@ -241,6 +243,8 @@ export default function WorkflowView() {
     setSelectedWorkflowName(event.target.value);
     setSelectedWorkflow(event.target.value);
     loadWorkflowDefinitions(event.target.value);
+    setViewType("system");
+    renderView("system");
 
   };
 
@@ -250,6 +254,9 @@ export default function WorkflowView() {
   ) => {
     setViewType(viewType);
     renderView(viewType);
+    if (viewType == "src") {
+      fetchFileContent();
+    }
   };
 
   const renderView = (viewType: string) => {
@@ -397,9 +404,10 @@ export default function WorkflowView() {
           onChange={handleViewTypeChange}
           aria-label="View type"
         >
-          <ToggleButton value="system">System view</ToggleButton>
-          <ToggleButton value="steps">Steps view</ToggleButton>
+          <ToggleButton value="system">Overview</ToggleButton>
+          <ToggleButton value="steps">Steps</ToggleButton>
           <ToggleButton value="configurations">Configurations</ToggleButton>
+          <ToggleButton value="src">Source</ToggleButton>
           <ToggleButton value="transformations">Transformation rules</ToggleButton>
           <ToggleButton value="data_explorer">Data explorer</ToggleButton>
           
@@ -490,6 +498,9 @@ export default function WorkflowView() {
       )}
       { viewType == "data_explorer" &&(
         <QDataTable />
+      )}
+      { viewType == "src" &&(
+        <Editor height="90vh" defaultLanguage="python" value={fileContent} />
       )}
 
     </div>
