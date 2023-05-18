@@ -132,17 +132,11 @@ def rules2graphql_schema(
 
             # Node edge
             else:
-                # Case: one to one edge
-                if row.min_count and row.max_count == 1:
-                    gql_field_definitions[property_name] = GraphQLField(
-                        gql_type_definitions[repair_name(row.value_type, "class", fix_casing=fix_casing)]
-                    )
-
-                # Case: one to many edge
-                else:
-                    gql_field_definitions[property_name] = GraphQLField(
-                        GraphQLList(gql_type_definitions[repair_name(row.value_type, "class", fix_casing=fix_casing)])
-                    )
+                value = gql_type_definitions[repair_name(row.value_type, "class", fix_casing=fix_casing)]
+                is_one_to_many_edge = not (row.min_count and row.max_count == 1)
+                if is_one_to_many_edge:
+                    value = GraphQLList(value)
+                gql_field_definitions[property_name] = GraphQLField(value)
 
         return gql_field_definitions
 
