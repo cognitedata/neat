@@ -72,7 +72,7 @@ def simple_rules():
 
 
 @pytest.fixture(scope="function")
-def graphql_schema():
+def grid_graphql_schema():
     return """type CountryGroup {
   name: String!
 }
