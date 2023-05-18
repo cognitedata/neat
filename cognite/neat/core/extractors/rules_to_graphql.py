@@ -54,7 +54,7 @@ def repair_name(name: str, entity_type: str, fix_casing: bool = False) -> str:
 
 
 def _remove_query_type(schema_string: str) -> str:
-    """Removes unnecessary Query type to conform to Cognite's GraphQL API"""
+    """Removes unnecessary Query types to conform to Cognite's GraphQL API"""
     lines = schema_string.split("\n")
 
     for _i, line in enumerate(lines):
