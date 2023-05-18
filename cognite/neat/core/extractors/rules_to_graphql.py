@@ -114,21 +114,18 @@ def rules2graphql_schema(
 
                 # Case: Mandatory, single value
                 if row.min_count and row.max_count == 1:
-                    gql_field_definitions[property_name] = GraphQLField(GraphQLNonNull(value_type_gql))
-
+                    value = GraphQLNonNull(value_type_gql)
                 # Case: Mandatory, multiple value
                 elif row.min_count and row.max_count != 1:
-                    gql_field_definitions[property_name] = GraphQLField(
-                        GraphQLNonNull(GraphQLList(GraphQLNonNull(value_type_gql)))
-                    )
-
+                    value = GraphQLNonNull(GraphQLList(GraphQLNonNull(value_type_gql)))
                 # Case: Optional, single value
                 elif row.max_count == 1:
-                    gql_field_definitions[property_name] = GraphQLField(value_type_gql)
-
+                    value = value_type_gql
                 # Case: Optional, multiple value
                 else:
-                    gql_field_definitions[property_name] = GraphQLField(GraphQLList(value_type_gql))
+                    value = GraphQLList(value_type_gql)
+                    
+                gql_field_definitions[property_name] = GraphQLField(value)
 
             # Node edge
             else:
