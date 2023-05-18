@@ -22,7 +22,17 @@ def get_invalid_names(entity_names: set) -> set:
 
 
 def repair_name(name: str, entity_type: str, fix_casing: bool = False) -> str:
-    """Repairs an entity name to conform to GraphQL naming convention"""
+    """
+    Repairs an entity name to conform to GraphQL naming convention
+    >>> repair_name("wind-speed", "property")
+    'windspeed'
+    >>> repair_name("Wind.Speed", "property", True)
+    'windSpeed'
+    >>> repair_name("windSpeed", "class", True)
+    'WindSpeed'
+    >>> repair_name("22windSpeed", "class")
+    '_22windSpeed'
+    """
 
     # Remove any non GraphQL compliant characters
     repaired_string = re.sub(r"[^_a-zA-Z0-9/_]", "", name)
