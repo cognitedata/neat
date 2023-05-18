@@ -425,6 +425,18 @@ class TransformationRules(BaseModel):
 
         return class_property_pairs
 
+    def check_data_model_definitions(self):
+        """Check if data model definitions are valid."""
+        issues = set()
+        for class_, properties in self.get_classes_with_properties().items():
+            analyzed_properties = []
+            for property in properties:
+                if property.property_name not in analyzed_properties:
+                    analyzed_properties.append(property.property_name)
+                else:
+                    issues.add(f"Property {property.property_name} of class {class_} has been defined more than once!")
+        return issues
+
     def reduce_data_model(self, desired_classes: set, skip_validation: bool = False) -> TransformationRules:
         """Reduce the data model to only include desired classes and their properties.
 

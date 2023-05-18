@@ -2,12 +2,11 @@ import logging
 import re
 import warnings
 
-import pandas as pd
 from graphql import GraphQLError, GraphQLField, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLSchema
 from graphql import assert_name as assert_graphql_name
 from graphql import print_schema
 
-from cognite.neat.core.data_classes.transformation_rules import DATA_TYPE_MAPPING, TransformationRules
+from cognite.neat.core.data_classes.transformation_rules import DATA_TYPE_MAPPING, Property, TransformationRules
 
 
 def get_invalid_names(entity_names: set) -> set:
@@ -69,7 +68,9 @@ def _get_graphql_schema_string(schema: GraphQLSchema) -> str:
 
 
 def rules2graphql_schema(
-    transformation_rules: TransformationRules, fix_names: bool = True, fix_casing: bool = False
+    transformation_rules: TransformationRules,
+    stop_on_exception: bool = False,
+    fix_casing: bool = False,
 ) -> str:
     """Generates a GraphQL schema from an instance of TransformationRules
 
@@ -77,8 +78,8 @@ def rules2graphql_schema(
     ----------
     transformation_rules : TransformationRules
         TransformationRules object
-    fix_names : bool, optional
-        Whether to attempt to repair invalid entity names, by default True
+    stop_on_exception : bool, optional
+        Stop on any exception, by default False
     fix_casing : bool, optional
         Whether to attempt to fix casing of entity names, by default False
 
@@ -89,12 +90,13 @@ def rules2graphql_schema(
     """
     gql_type_definitions: dict = {}
     invalid_names: set = get_invalid_names(transformation_rules.get_entity_names())
+    data_model_issues: set = transformation_rules.check_data_model_definitions()
 
-    if invalid_names and not fix_names:
+    if invalid_names and stop_on_exception:
         msg = "Entity names must only contain [_a-zA-Z0-9] characters and can start only with [_a-zA-Z]"
         logging.error(f"{msg}, following entities {invalid_names} do not follow these rules!")
         raise GraphQLError(f"{msg}, following entities {invalid_names} do not follow these rules!")
-    elif invalid_names and fix_names:
+    elif invalid_names and not stop_on_exception:
         msg = "Entity names must only contain [_a-zA-Z0-9] characters and can start only with [_a-zA-Z]"
         logging.warn(
             f"{msg}, following entities {invalid_names} do not follow these rules! Attempting to repair names..."
@@ -104,40 +106,59 @@ def rules2graphql_schema(
             stacklevel=2,
         )
 
-    def _define_fields(property_definitions: pd.DataFrame) -> dict[str, GraphQLField]:
+    if data_model_issues and stop_on_exception:
+        msg = " ".join(data_model_issues)
+        logging.error(msg)
+        raise ValueError(msg)
+    elif data_model_issues and not stop_on_exception:
+        msg = " ".join(data_model_issues)
+        msg += " Redefinitions will be skipped!"
+        logging.warn(msg)
+        warnings.warn(
+            msg,
+            stacklevel=2,
+        )
+
+    def _define_fields(property_definitions: list[Property]) -> dict[str, GraphQLField]:
         gql_field_definitions = {}
-        for property_, row in property_definitions.iterrows():
-            property_name = repair_name(property_, "property", fix_casing=fix_casing)  # type: ignore
+        for property_ in property_definitions:
+            property_name = repair_name(property_.property_name, "property", fix_casing=fix_casing)  # type: ignore
+
+            if property_name in gql_field_definitions:
+                logging.warn(f"Property {property_name} being redefined... skipping!")
+                warnings.warn(f"Property {property_name} being redefined... skipping!", stacklevel=2)
+                continue
+
             # Node attribute
-            if row.property_type == "DatatypeProperty":
-                value_type_gql = DATA_TYPE_MAPPING[row.value_type]["GraphQL"]
+            if property_.property_type == "DatatypeProperty":
+                value_type_gql = DATA_TYPE_MAPPING[property_.expected_value_type]["GraphQL"]
 
                 # Case: Mandatory, single value
-                if row.min_count and row.max_count == 1:
+                if property_.min_count and property_.max_count == 1:
                     value = GraphQLNonNull(value_type_gql)
                 # Case: Mandatory, multiple value
-                elif row.min_count and row.max_count != 1:
+                elif property_.min_count and property_.max_count != 1:
                     value = GraphQLNonNull(GraphQLList(GraphQLNonNull(value_type_gql)))
                 # Case: Optional, single value
-                elif row.max_count == 1:
+                elif property_.max_count == 1:
                     value = value_type_gql
                 # Case: Optional, multiple value
                 else:
                     value = GraphQLList(value_type_gql)
-                    
+
                 gql_field_definitions[property_name] = GraphQLField(value)
 
             # Node edge
             else:
-                value = gql_type_definitions[repair_name(row.value_type, "class", fix_casing=fix_casing)]
-                is_one_to_many_edge = not (row.min_count and row.max_count == 1)
+                value = gql_type_definitions[repair_name(property_.expected_value_type, "class", fix_casing=fix_casing)]
+                is_one_to_many_edge = not (property_.min_count and property_.max_count == 1)
                 if is_one_to_many_edge:
                     value = GraphQLList(value)
                 gql_field_definitions[property_name] = GraphQLField(value)
 
         return gql_field_definitions
 
-    for class_, properties in transformation_rules.to_dataframe().items():
+    for class_, properties in transformation_rules.get_classes_with_properties().items():
         gql_type_definitions[repair_name(class_, "class", fix_casing=fix_casing)] = GraphQLObjectType(
             repair_name(class_, "class", fix_casing=fix_casing),
             lambda properties=properties: _define_fields(properties),
