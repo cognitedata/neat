@@ -13,11 +13,18 @@ Changes are grouped as follows
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.11.3] - 19-05-23
+### Fixed
+* When running `neat` with two different datasets without an external_id prefix, the creation of an orphanage asset
+  caused a DuplicationError. This is now fixed by suffixing the dataset to the orphanage asset.
+
+
 ## [0.11.2] - 15-05-23
 ### Added
 * Generation of GraphQL schema from transformation rules
 * Fixing names of classes/properties to be aligned to GraphQL allowed characters
 * Allowing pure data modeling transformation rules, i.e. no data on mapping rules
+
 ## [0.11.1] - 08-05-23
 
 ### Fixed
