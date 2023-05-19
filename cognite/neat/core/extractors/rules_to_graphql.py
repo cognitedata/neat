@@ -145,7 +145,6 @@ def rules2graphql_schema(
                 else:
                     value = GraphQLList(value_type_gql)
 
-                gql_field_definitions[property_name] = GraphQLField(value)
 
             # Node edge
             else:
@@ -153,7 +152,7 @@ def rules2graphql_schema(
                 is_one_to_many_edge = not (property_.min_count and property_.max_count == 1)
                 if is_one_to_many_edge:
                     value = GraphQLList(value)
-                gql_field_definitions[property_name] = GraphQLField(value)
+            gql_field_definitions[property_name] = GraphQLField(value)
 
         return gql_field_definitions
 
