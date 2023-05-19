@@ -15,7 +15,7 @@ def test_asset_hierarchy_ordering(mock_rdf_assets):
         "Substation-0",
         "Terminal-0",
         "Terminal-1",
-        "orphanage",
+        "orphanage-2626756768281823",
     ]
 
 
@@ -31,7 +31,7 @@ def test_asset_hierarchy_ordering_orphan(mock_rdf_assets):
         "SubGeographicalRegion-0",
         "Terminal-0",
         "Terminal-1",
-        "orphanage",
+        "orphanage-2626756768281823",
     ]
 
 

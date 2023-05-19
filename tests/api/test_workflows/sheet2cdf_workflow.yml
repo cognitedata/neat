@@ -155,7 +155,7 @@ assets:
   parent_external_id: playground_Nordics.Norway
 - data_set_id: 2626756768281823
   description: Used to store all assets which parent does not exist
-  external_id: playground_orphanage
+  external_id: playground_orphanage-2626756768281823
   labels:
   - externalId: Orphanage
   - externalId: non-historic

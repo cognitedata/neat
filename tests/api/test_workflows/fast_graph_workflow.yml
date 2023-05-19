@@ -7802,6 +7802,18 @@ assets:
     type: Orphanage
   name: Orphanage
 - data_set_id: 2626756768281823
+  description: Used to store all assets which parent does not exist
+  external_id: orphanage-2626756768281823
+  labels:
+  - externalId: Orphanage
+  - externalId: non-historic
+  metadata:
+    active: 'true'
+    cdfResourceType: Asset
+    identifier: orphanage
+    type: Orphanage
+  name: Orphanage
+- data_set_id: 2626756768281823
   external_id: root-node
   labels:
   - externalId: RootCIMNode
