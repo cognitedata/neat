@@ -7,6 +7,7 @@ from datetime import datetime
 from typing import Dict, List, Optional, Self, Union
 
 import pandas as pd
+from graphql import GraphQLBoolean, GraphQLFloat, GraphQLInt, GraphQLString
 from pydantic import BaseModel, Field, HttpUrl, ValidationError, root_validator, validator
 from rdflib import XSD, Literal, Namespace, URIRef
 
@@ -15,20 +16,18 @@ from cognite.neat.core.data_classes.rules import Entity, RuleType, parse_rule
 
 # mapping of XSD types to Python and GraphQL types
 DATA_TYPE_MAPPING = {
-    "boolean": {"python": "bool", "GraphQL": "Boolean"},
-    "float": {"python": "float", "GraphQL": "Float"},
-    "integer": {"python": "int", "GraphQL": "Int"},
-    "nonPositiveInteger": {"python": "int", "GraphQL": "Int"},
-    "nonNegativeInteger": {"python": "int", "GraphQL": "Int"},
-    "negativeInteger": {"python": "int", "GraphQL": "Int"},
-    "long": {"python": "int", "GraphQL": "Int"},
-    "string": {"python": "str", "GraphQL": "String"},
-    "anyURI": {"python": "str", "GraphQL": "String"},
-    "normalizedString": {"python": "str", "GraphQL": "String"},
-    "token": {"python": "str", "GraphQL": "String"},
-    "enumeration": {"python": "list", "GraphQL": "Enum"},
+    "boolean": {"python": "bool", "GraphQL": GraphQLBoolean},
+    "float": {"python": "float", "GraphQL": GraphQLFloat},
+    "integer": {"python": "int", "GraphQL": GraphQLInt},
+    "nonPositiveInteger": {"python": "int", "GraphQL": GraphQLInt},
+    "nonNegativeInteger": {"python": "int", "GraphQL": GraphQLInt},
+    "negativeInteger": {"python": "int", "GraphQL": GraphQLInt},
+    "long": {"python": "int", "GraphQL": GraphQLInt},
+    "string": {"python": "str", "GraphQL": GraphQLString},
+    "anyURI": {"python": "str", "GraphQL": GraphQLString},
+    "normalizedString": {"python": "str", "GraphQL": GraphQLString},
+    "token": {"python": "str", "GraphQL": GraphQLString},
 }
-
 METADATA_VALUE_MAX_LENGTH = 5120
 
 
@@ -100,8 +99,8 @@ class Property(Resource):
     relationship_external_id_rule: str = Field(alias="Relationship ExternalID Rule", default=None)
 
     # Transformation rule (domain to solution)
-    rule_type: RuleType = Field(alias="Rule Type")
-    rule: str = Field(alias="Rule")
+    rule_type: RuleType = Field(alias="Rule Type", default=None)
+    rule: str = Field(alias="Rule", default=None)
     skip_rule: bool = Field(alias="Skip", default=False)
 
     # Specialization of cdf_resource_type to allow definition of both
@@ -112,10 +111,6 @@ class Property(Resource):
     def is_raw_lookup(self) -> bool:
         return self.rule_type == RuleType.rawlookup
 
-    @validator("rule_type", pre=True)
-    def to_lowercase(cls, value):
-        return value.casefold()
-
     @validator(
         "max_count",
         "min_count",
@@ -125,12 +120,18 @@ class Property(Resource):
         "relationship_external_id_rule",
         "resource_type_property",
         "skip_rule",
+        "rule",
+        "rule_type",
         pre=True,
     )
     def replace_float_nan_with_default(cls, value, field):
         if isinstance(value, float) and math.isnan(value):
             return field.default
         return value
+
+    @validator("rule_type", pre=True)
+    def to_lowercase(cls, value):
+        return value.casefold() if value else value
 
     @validator("skip_rule", pre=True)
     def from_string(cls, value):
@@ -170,6 +171,13 @@ class Property(Resource):
             return "DatatypeProperty"
         else:
             return "ObjectProperty"
+
+    @validator("skip_rule", pre=True, always=True)
+    def no_rule(cls, value, values):
+        if values.get("rule_type") is None:
+            return True
+        else:
+            return value
 
 
 class Metadata(BaseModel):
@@ -416,6 +424,18 @@ class TransformationRules(BaseModel):
 
         return class_property_pairs
 
+    def check_data_model_definitions(self):
+        """Check if data model definitions are valid."""
+        issues = set()
+        for class_, properties in self.get_classes_with_properties().items():
+            analyzed_properties = []
+            for property in properties:
+                if property.property_name not in analyzed_properties:
+                    analyzed_properties.append(property.property_name)
+                else:
+                    issues.add(f"Property {property.property_name} of class {class_} has been defined more than once!")
+        return issues
+
     def reduce_data_model(self, desired_classes: set, skip_validation: bool = False) -> TransformationRules:
         """Reduce the data model to only include desired classes and their properties.
 
@@ -602,6 +622,14 @@ class TransformationRules(BaseModel):
                 namespace=self.metadata.namespace,
                 relationships={},
             )
+
+    def get_entity_names(self):
+        class_names = set()
+        property_names = set()
+        for class_, properties in self.to_dataframe().items():
+            class_names.add(class_)
+            property_names = property_names.union(set(properties.index))
+        return class_names.union(property_names)
 
 
 class AssetClassMapping(BaseModel):

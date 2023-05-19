@@ -62,3 +62,34 @@ def mock_rdf_assets(mock_knowledge_graph, transformation_rules):
 @pytest.fixture(scope="function")
 def mock_cdf_assets(mock_knowledge_graph, transformation_rules):
     return extractors.rdf2assets(mock_knowledge_graph, transformation_rules)
+
+
+@pytest.fixture(scope="function")
+def simple_rules():
+    return parser.parse_transformation_rules(
+        loader.rules.excel_file_to_table_by_name(config.SIMPLE_TRANSFORMATION_RULES)
+    )
+
+
+@pytest.fixture(scope="function")
+def grid_graphql_schema():
+    return """type CountryGroup {
+  name: String!
+}
+
+type Country {
+  name: String!
+  countryGroup: CountryGroup
+  TSO: [String!]!
+}
+
+type PriceArea {
+  name: String!
+  country: Country
+  priceAreaConnection: [PriceAreaConnection]
+}
+
+type PriceAreaConnection {
+  name: String!
+  priceArea: [PriceArea]
+}"""

@@ -13,7 +13,13 @@ Changes are grouped as follows
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.11.2] - 15-05-23
+### Added
+* Generation of GraphQL schema from transformation rules
+* Fixing names of classes/properties to be aligned to GraphQL allowed characters
+* Allowing pure data modeling transformation rules, i.e. no data on mapping rules
 ## [0.11.1] - 08-05-23
+
 ### Fixed
 
 * Set the license of the package in poetry build.
