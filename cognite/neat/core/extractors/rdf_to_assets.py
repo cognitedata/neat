@@ -405,7 +405,7 @@ def rdf2assets(
                     class_instance,
                     asset_class_mapping[class_],
                     transformation_rules.metadata.data_set_id,
-                    "orphanage" if use_orphanage else None,  # we need only base external id
+                    orphanage_asset_external_id if use_orphanage else None,  # we need only base external id
                     transformation_rules.metadata.externalIdPrefix or None,
                 )
 
