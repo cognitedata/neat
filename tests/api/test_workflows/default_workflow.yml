@@ -7577,7 +7577,7 @@ assets:
     identifier: f17696b3-9aeb-11e5-91da-b8763fd99c5f
     type: SubGeographicalRegion
   name: FI1 SGR
-  parent_external_id: orphanage
+  parent_external_id: orphanage-2626756768281823
 - data_set_id: 2626756768281823
   external_id: f17696b8-9aeb-11e5-91da-b8763fd99c5f
   labels:
@@ -7787,7 +7787,7 @@ assets:
     identifier: lazarevac
     type: GeographicalRegion
   name: LA
-  parent_external_id: orphanage
+  parent_external_id: orphanage-2626756768281823
 - data_set_id: 2626756768281823
   external_id: orphanage
   labels:
@@ -7797,6 +7797,18 @@ assets:
     IdentifiedObject.description: Used to store all assets which parent does not exist
     IdentifiedObject.mRID: ''
     IdentifiedObject.name: Orphanage
+    active: 'true'
+    cdfResourceType: Asset
+    identifier: orphanage
+    type: Orphanage
+  name: Orphanage
+- data_set_id: 2626756768281823
+  description: Used to store all assets which parent does not exist
+  external_id: orphanage-2626756768281823
+  labels:
+  - externalId: Orphanage
+  - externalId: non-historic
+  metadata:
     active: 'true'
     cdfResourceType: Asset
     identifier: orphanage

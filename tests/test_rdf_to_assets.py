@@ -15,7 +15,7 @@ def test_asset_hierarchy_ordering(mock_rdf_assets):
         "Substation-0",
         "Terminal-0",
         "Terminal-1",
-        "orphanage",
+        "orphanage-2626756768281823",
     ]
 
 
@@ -31,7 +31,7 @@ def test_asset_hierarchy_ordering_orphan(mock_rdf_assets):
         "SubGeographicalRegion-0",
         "Terminal-0",
         "Terminal-1",
-        "orphanage",
+        "orphanage-2626756768281823",
     ]
 
 
@@ -39,7 +39,7 @@ def test_asset_diffing(mock_rdf_assets, mock_cdf_assets, transformation_rules):
     rdf_assets = mock_rdf_assets
     cdf_assets = mock_cdf_assets
 
-    # Create non active asset (aka decommissioned, historic)
+    # Create non-active asset (aka decommissioned, historic)
     resurrect_id = "GeographicalRegion-0"
     non_active_asset = deepcopy(rdf_assets[resurrect_id])
     non_active_asset["metadata"]["active"] = "false"

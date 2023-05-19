@@ -355,9 +355,7 @@ def rdf2assets(
     """
 
     orphanage_asset_external_id = (
-        f"{transformation_rules.metadata.externalIdPrefix}orphanage"
-        if transformation_rules.metadata.externalIdPrefix
-        else "orphanage"
+        f"{transformation_rules.metadata.externalIdPrefix or ''}orphanage-{transformation_rules.metadata.data_set_id}"
     )
 
     graph = graph_store.get_graph()
@@ -407,7 +405,7 @@ def rdf2assets(
                     class_instance,
                     asset_class_mapping[class_],
                     transformation_rules.metadata.data_set_id,
-                    "orphanage" if use_orphanage else None,  # we need only base external id
+                    orphanage_asset_external_id if use_orphanage else None,  # we need only base external id
                     transformation_rules.metadata.externalIdPrefix or None,
                 )
 
