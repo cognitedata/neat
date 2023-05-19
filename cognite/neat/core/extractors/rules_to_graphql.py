@@ -88,7 +88,6 @@ def rules2graphql_schema(
     str
         GraphQL schema string
     """
-    gql_type_definitions: dict = {}
     invalid_names: set = get_invalid_names(transformation_rules.get_entity_names())
     data_model_issues: set = transformation_rules.check_data_model_definitions()
 
@@ -158,6 +157,7 @@ def rules2graphql_schema(
 
         return gql_field_definitions
 
+    gql_type_definitions: dict = {}
     for class_, properties in transformation_rules.get_classes_with_properties().items():
         gql_type_definitions[repair_name(class_, "class", fix_casing=fix_casing)] = GraphQLObjectType(
             repair_name(class_, "class", fix_casing=fix_casing),
