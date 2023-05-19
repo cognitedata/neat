@@ -145,7 +145,6 @@ def rules2graphql_schema(
                 else:
                     value = GraphQLList(value_type_gql)
 
-
             # Node edge
             else:
                 value = gql_type_definitions[repair_name(property_.expected_value_type, "class", fix_casing=fix_casing)]
