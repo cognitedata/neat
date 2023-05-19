@@ -131,8 +131,7 @@ class Property(Resource):
 
     @validator("rule_type", pre=True)
     def to_lowercase(cls, value):
-        if value:
-            return value.casefold()
+        return value.casefold() if value else value
 
     @validator("skip_rule", pre=True)
     def from_string(cls, value):
