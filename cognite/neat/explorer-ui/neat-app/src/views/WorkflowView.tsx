@@ -17,7 +17,7 @@ import { useState, useEffect } from 'react';
 import Stack from '@mui/material/Stack';
 import { styled } from '@mui/material/styles';
 import Paper from '@mui/material/Paper';
-import { UIConfig, WorkflowDefinition, WorkflowStepDefinition } from 'types/WorkflowTypes';
+import { UIConfig, WorkflowDefinition, WorkflowStepDefinition, WorkflowStepsGroup } from 'types/WorkflowTypes';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
@@ -39,6 +39,7 @@ import ConfigView from './ConfigView';
 import TransformationTable from './TransformationView';
 import QDataTable from './ExplorerView';
 import Editor, { DiffEditor, useMonaco, loader } from '@monaco-editor/react';
+import OverviewComponentEditorDialog from 'components/OverviewComponentEditorDialog';
 
 export interface ExecutionLog {
   id: string;
@@ -73,24 +74,32 @@ export default function WorkflowView() {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [workflowStats, setWorkflowStats] = useState<WorkflowStats>();
-  let timerInterval = null;
+  const [timerInterval,setTimerInterval] =  useState(null);
   const [workflowDefinitions, setWorkflowDefinitions] = useState<WorkflowDefinition>();
   const [selectedWorkflow, setSelectedWorkflow] = useState<string>(getSelectedWorkflowName());
   const [listOfWorkflows, setListOfWorkflows] = useState<string[]>([]);
   const [viewType, setViewType] = useState<string>("system");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [openOverviewComponentEditorDialog, setOpenOverviewComponentEditorDialog] = useState(false);
   const [selectedStep, setSelectedStep] = useState<WorkflowStepDefinition>();
+  const [selectedComponent, setSelectedComponent] = useState<WorkflowStepsGroup>();
   const [fileContent, setFileContent] = useState('');
+
 
   useEffect(() => {
     // loadConfigs();
     loadListOfWorkflows();
     loadWorkflowDefinitions(getSelectedWorkflowName());
+    // startStatePolling();
+    console.log(" workflows view useEffect")
   }, []);
 
   const fetchFileContent = async () => {
     try {
-      const response = await fetch(neatApiRootUrl+'/data/workflows/'+selectedWorkflow+'/workflow.py'); // Replace with your server URL and file path
+      var myHeaders = new Headers();
+      myHeaders.append('pragma', 'no-cache');
+      myHeaders.append('cache-control', 'no-cache');
+      const response = await fetch(neatApiRootUrl+'/data/workflows/'+selectedWorkflow+'/workflow.py',{ method: "get", headers: myHeaders });
       const content = await response.text();
       setFileContent(content);
     } catch (error) {
@@ -104,16 +113,17 @@ export default function WorkflowView() {
 
   const startStatePolling = () => {
     if (!timerInterval) {
-      timerInterval = setInterval(() => {
+      let timerInterval = setInterval(() => {
         loadWorkflowStats();
       }, 2000);
+      setTimerInterval(timerInterval);  
     }
 
   }
 
   const stopStatePolling = () => {
     clearInterval(timerInterval);
-    timerInterval = null;
+    // timerInterval = null;
   }
 
 
@@ -142,6 +152,8 @@ export default function WorkflowView() {
     const url = neatApiRootUrl+"/api/workflow/workflow-definition/" + workflowName;
     fetch(url).then((response) => response.json()).then((data) => {
       const workflows = WorkflowDefinition.fromJSON(data.definition);
+      console.dir(data.definition);
+      console.log("loadWorkflowDefinitions done!")
       console.dir(workflows);
       setWorkflowDefinitions(workflows);
       loadWorkflowStats(workflowName);
@@ -178,10 +190,12 @@ export default function WorkflowView() {
       // const filteredStats = filterStats(data);
       setWorkflowStats(data);
       if (data.state == "RUNNING") {
-        startStatePolling();
+        // startStatePolling();
       } else if (data.state == "COMPLETED" || data.state == "FAILED")
-        stopStatePolling();
-
+      {
+        // stopStatePolling();
+      }
+   
     }).catch((error) => {
       console.error('Error:', error);
     })
@@ -207,9 +221,9 @@ export default function WorkflowView() {
 
   const saveWorkflow = () => {
     console.dir(nodes);
+    syncNodesAndEdges();
     let wdef = workflowDefinitions;
-    wdef.updatePositions(nodes);
-    wdef.updateStepTransitions(edges);
+   
     console.dir(wdef);
     const url = neatApiRootUrl+"/api/workflow/workflow-definition/" + selectedWorkflow;
     fetch(url, {
@@ -223,6 +237,19 @@ export default function WorkflowView() {
       console.error('Error:', error);
     })
   };
+
+  const syncNodesAndEdges = () => {
+    if (workflowDefinitions){
+      workflowDefinitions.updatePositions(nodes);
+      if (viewType == "system") 
+        workflowDefinitions.updateGroupTransitions(edges);
+      else 
+        workflowDefinitions.updateStepTransitions(edges);
+    }else {
+      console.error("workflowDefinitions is null");
+    }
+   
+  }
 
   const reloadWorkflows = () => {
     const url = neatApiRootUrl+"/api/workflow/reload-workflows";
@@ -239,7 +266,7 @@ export default function WorkflowView() {
   };
 
   const handleWorkflowSelectorChange = (event: SelectChangeEvent) => {
-    console.dir(event.target.value);
+    console.dir("Workflow changed to :"+event.target.value);
     setSelectedWorkflowName(event.target.value);
     setSelectedWorkflow(event.target.value);
     loadWorkflowDefinitions(event.target.value);
@@ -250,16 +277,18 @@ export default function WorkflowView() {
 
   const handleViewTypeChange = (
     event: React.MouseEvent<HTMLElement>,
-    viewType: string,
+    newViewType: string,
   ) => {
-    setViewType(viewType);
-    renderView(viewType);
+
+    setViewType(newViewType);
+    renderView(newViewType);
     if (viewType == "src") {
       fetchFileContent();
     }
   };
 
   const renderView = (viewType: string) => {
+    syncNodesAndEdges();
     if (!workflowDefinitions)
       return;
     switch (viewType) {
@@ -287,7 +316,7 @@ export default function WorkflowView() {
     console.log('onEdgeUpdate')
     edgeUpdateSuccessful.current = true;
     setEdges((els) => updateEdge(oldEdge, newConnection, els));
-  }, []);
+  }, [setEdges]);
 
   const onEdgeUpdateEnd = useCallback((_, edge) => {
     console.log('onEdgeUpdateEnd')
@@ -296,31 +325,44 @@ export default function WorkflowView() {
     }
 
     edgeUpdateSuccessful.current = true;
-  }, []);
+  }, [setEdges]);
 
   const onNodeClick = useCallback((event, node) => {
     console.log('onNodeClick')
     console.dir(node);
-    handleDialogClickOpen();
-    setSelectedStep(workflowDefinitions.getStepById(node.id));
-  }, [workflowDefinitions]);
+    handleDialogClickOpen(node.id,viewType);
+  }, [workflowDefinitions,viewType]);
 
-  const onAddStep = useCallback(() => {
+  const onAddStep = (() => {
     console.log('onAddStep')
     const ui_config = new UIConfig();
     ui_config.pos_x = 100;
     ui_config.pos_y = 100;
-    const step = new WorkflowStepDefinition();
-    step.id = "step_" + Math.floor(Math.random() * 1000000);
-    step.label = "New step";
-    step.ui_config = ui_config;
-    workflowDefinitions.steps.push(step);
+    if (viewType == "steps") {
+      const step = new WorkflowStepDefinition();
+      step.id = "step_" + Math.floor(Math.random() * 1000000);
+      step.label = "New step";
+      step.ui_config = ui_config;
+      workflowDefinitions.steps.push(step);
+    } else {
+      const group = new WorkflowStepsGroup();
+      group.id = "group_" + Math.floor(Math.random() * 1000000);
+      group.label = "New component";
+      group.ui_config = ui_config;
+      workflowDefinitions.groups.push(group);
+    }
     renderView(viewType);
+  });
 
-  }, [workflowDefinitions, viewType]);
-
-  const handleDialogClickOpen = () => {
-    setDialogOpen(true);
+  const handleDialogClickOpen = (id:string,viewType:string) => {
+    console.log(viewType);
+    if (viewType == "steps") {
+      setSelectedStep(workflowDefinitions.getStepById(id));
+      setDialogOpen(true);
+    }else {
+      setSelectedComponent(workflowDefinitions.getGroupById(id));
+      setOpenOverviewComponentEditorDialog(true);
+    }
   };
 
   const handleDialogClose = () => {
@@ -374,6 +416,15 @@ export default function WorkflowView() {
     console.log("onDownloadSuccess",fileName,hash)
     reloadWorkflows();
   }
+  const overviewComponentEditorDialogHandler = (component:WorkflowStepsGroup) => {
+    console.log("OverviewComponentEditorDialogHandler")
+    console.dir(component)
+    setOpenOverviewComponentEditorDialog(false);
+    workflowDefinitions.updateGroup(selectedComponent.id,component);
+    setSelectedComponent(component);
+    renderView(viewType);
+  }
+
 
   return (
     <div style={{ height: '85vh', width: '97vw' }}>
@@ -429,6 +480,7 @@ export default function WorkflowView() {
                 <MenuItem  value="pystep">Python function</MenuItem>
                 <MenuItem  value="http_trigger">HTTP trigger</MenuItem>
                 <MenuItem  value="time_trigger">Time trigger</MenuItem>
+                <MenuItem  value="wait_for_event">Wait for event</MenuItem>
                 <MenuItem  value="start_workflow_task_step">Start workflow</MenuItem>
               </Select>
 
@@ -456,7 +508,7 @@ export default function WorkflowView() {
       <Stack direction="row" spacing={1} justifyContent="left"
         alignItems="left">
         <Item>
-        
+          <OverviewComponentEditorDialog open = {openOverviewComponentEditorDialog} component={selectedComponent} onClose={overviewComponentEditorDialogHandler} />
           <div style={{ height: '75vh', width: '70vw' }}>
             <ReactFlow
               nodes={nodes}

@@ -7,6 +7,7 @@ from pydantic import BaseModel
 class WorkflowState(StrEnum):
     CREATED = "CREATED"
     RUNNING = "RUNNING"
+    RUNNING_WAITING = "RUNNING_WAITING"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
     EXPIRED = "EXPIRED"
@@ -38,6 +39,7 @@ class StepType(StrEnum):
     CLI_TASK_STEP = "cli_step"  # TODO: implement
     HTTP_TRIGGER = "http_trigger"
     TIME_TRIGGER = "time_trigger"
+    WAIT_FOR_EVENT = "wait_for_event"  # TODO: implement
     EVENT_TRIGGER = "event_trigger"  # TODO: implement
 
 

@@ -6,6 +6,7 @@ import traceback
 from contextlib import asynccontextmanager
 from logging import getLogger
 from pathlib import Path
+import pkg_resources
 
 from fastapi import FastAPI, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -101,7 +102,11 @@ def read_root():
 
 @app.get("/api/about")
 def get_about():
-    return {"version": neat.__version__}
+    response = {"version": neat.__version__}
+    installed_packages = pkg_resources.working_set
+    installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])
+    response["packages"] = installed_packages_list
+    return response
 
 
 @app.get("/api/configs/global")

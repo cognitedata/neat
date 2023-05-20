@@ -3,11 +3,10 @@ import threading
 import time
 
 import schedule
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 
 from cognite.neat.core.workflow.manager import WorkflowManager
-from cognite.neat.core.workflow.model import StepType
-from cognite.neat.explorer.data_classes.rest import RunWorkflowRequest
+from cognite.neat.core.workflow.model import FlowMessage, StepType, WorkflowState
 
 
 class TriggerManager:
@@ -27,12 +26,22 @@ class TriggerManager:
         """
         logging.info("Starting HTTP trigger endpoint")
 
-        @web_server.post("/api/workflow/http_trigger")
-        def start_workflow(request: RunWorkflowRequest):
-            logging.info("Starting workflow endpoint")
-            workflow = self.workflow_manager.get_workflow(request.name)
-            result = workflow.start()
-            return {"result": result}
+        @web_server.post("/api/workflow/{workflow_name}/http_trigger/{step_id}")
+        def start_workflow(workflow_name: str, step_id: str, request: Request):
+            logging.info(f"New HTTP trigger request for workflow {workflow_name} step {step_id}")
+            workflow = self.workflow_manager.get_workflow(workflow_name)
+            flow_msg = FlowMessage(payload=request.json())
+
+            sync = request.headers.get("Neat-Sync-Response", True)
+            if workflow.get_state() == WorkflowState.RUNNING_WAITING:
+                workflow.resume_workflow(flow_message=flow_msg)
+                return {"result": "Workflow instance resumed"}
+            else:    
+                result = workflow.start(sync=sync, flow_message=flow_msg, start_step_id=step_id)
+                if result :
+                    return result.payload
+                else:
+                    return {"result": "Workflow instance started"}
 
     def _start_scheduler_main_loop(self):
         """Starts a scheduler main loop for the workflows

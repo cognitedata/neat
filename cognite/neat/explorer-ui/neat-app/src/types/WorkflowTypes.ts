@@ -82,6 +82,25 @@ export class WorkflowDefinition {
         return step;
     }
 
+    getGroupById(id: string): WorkflowStepsGroup {
+        let group = this.groups.find(group => group.id == id);
+        return group;
+    }
+
+    updateStep(id:string,step: WorkflowStepDefinition) {
+        let index = this.steps.findIndex(s => s.id == id);
+        if (index >= 0) {
+            this.steps[index] = step;
+        }
+    }
+
+    updateGroup(id:string,group: WorkflowStepsGroup) {
+        let index = this.groups.findIndex(g => g.id == id);
+        if (index >= 0) {
+            this.groups[index] = group;
+        }
+    }
+
     convertStepsToNodes():any {
         let nodes = [];
         this.steps.forEach(step => {
@@ -178,6 +197,8 @@ export class WorkflowDefinition {
                 });
             }
         });
+        console.log("Component edges: ");
+        console.dir(edges)
         return edges;
     }
 
@@ -203,6 +224,18 @@ export class WorkflowDefinition {
         });
         edges.forEach(edge => {
             let source = this.steps.find(step => step.id == edge.source);
+            if (source) {
+                source.transition_to.push(edge.target);
+            }
+        });
+    }
+
+    updateGroupTransitions(edges:any) {
+        this.groups.forEach(group => {
+            group.transition_to = [];
+        });
+        edges.forEach(edge => {
+            let source = this.groups.find(group => group.id == edge.source);
             if (source) {
                 source.transition_to.push(edge.target);
             }

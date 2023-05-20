@@ -10,6 +10,7 @@ import LinearProgress from '@mui/material/LinearProgress';
 import { useState, useEffect } from 'react';
 import { getNeatApiRootUrl, getSelectedWorkflowName } from 'components/Utils';
 import { WorkflowConfigItem, WorkflowDefinition } from 'types/WorkflowTypes';
+import { List, ListItem, ListItemText } from '@mui/material';
 
 const Item = styled(Paper)(({ theme }) => ({
   backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -60,6 +61,16 @@ export default function ConfigView() {
     setWorkflowConfigItems(updConfigs);
   };
 
+  const addItem = () => {
+    let updConfigs = workflowConfigItems;
+    let newItem = new WorkflowConfigItem();
+    newItem.name = "new item";
+    newItem.value = "new value";
+    updConfigs.push(newItem);
+    console.dir(updConfigs);
+    setWorkflowConfigItems(updConfigs);
+  };
+
   const saveWorkflow = () => {
     let wdef = workflowDefinition;
     wdef.configs = workflowConfigItems;
@@ -75,21 +86,21 @@ export default function ConfigView() {
 };
 
   return (
-    <Box sx={{ width: 500 }}>
+    <Box sx={{ width: 800 }}>
       <Stack spacing={2}>
         <Item>
-          <h2> Workflow configurations ({workflowName})</h2>
-          <Box sx={{ minWidth: 120 }}>
-            <Stack spacing={2} direction="column">
-              {workflowConfigItems?.map((item) => (
-                     <TextField key={item.name} label={item.name} size='small' variant="outlined" value={item.value} onChange={(event) => { handleWfConfigChange(item.name, event.target.value) }} />
-              ))}
-              <Button variant="contained" onClick={saveWorkflow}>Save</Button>
-              {loading && (<LinearProgress />)}
-            </Stack>
-          </Box>
+          <h2> Workflow configurations</h2>
+          <List>
+          {workflowConfigItems?.map((item) => (
+          <ListItem>
+                <ListItemText primary={item.name} />
+                <TextField key={item.name} sx={{width:400}} size='small' variant="outlined" value={item.value} onChange={(event) => { handleWfConfigChange(item.name, event.target.value) }} />
+          </ListItem>
+          ))}
+          </List>
+          <Button variant="contained" sx={{marginRight:50}} onClick={saveWorkflow} >Save</Button>
+          {loading && (<LinearProgress />)}
         </Item>
-
       </Stack>
     </Box>
   );

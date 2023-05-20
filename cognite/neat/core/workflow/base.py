@@ -25,6 +25,7 @@ from cognite.neat.core.workflow.model import (
     WorkflowStepsGroup,
 )
 from cognite.neat.core.workflow.tasks import WorkflowTaskBuilder
+from threading import Event
 
 from . import utils
 
@@ -65,6 +66,7 @@ class BaseWorkflow:
             else None
         )
         self.metrics = NeatMetricsCollector(self.name, self.cdf_client)
+        self.resume_event = Event()
         
     def start(self, sync=False, **kwargs) -> FlowMessage | None:
         """Starts workflow execution.sync=True will block until workflow is completed and return last workflow flow message,
@@ -83,7 +85,7 @@ class BaseWorkflow:
         if self.state not in [WorkflowState.CREATED, WorkflowState.COMPLETED, WorkflowState.FAILED]:
             logging.error(f"Workflow {self.name} is already running")
             return None
-        logging.info("Starting workflow")
+        logging.info(f"Starting workflow {self.name}")
 
         if flow_message := kwargs.get("flow_message"):
             self.flow_message = flow_message
@@ -96,6 +98,8 @@ class BaseWorkflow:
         self.report_workflow_execution()
         try:
             start_step_id = kwargs.get("start_step_id")
+            logging.info(f"  starting workflow from step {start_step_id}")
+
             self.run_workflow_steps(start_step_id=start_step_id)
             if self.state == WorkflowState.RUNNING:
                 self.state = WorkflowState.COMPLETED
@@ -224,6 +228,17 @@ class BaseWorkflow:
                 else:
                     logging.error(f"Workflow step {step.id} has no task builder")
                     raise Exception(f"Workflow step {step.id} has no task builder")
+            elif step.stype == StepType.WAIT_FOR_EVENT:
+                # Pause workflow execution until event is received
+                self.workflow_state = WorkflowState.RUNNING_WAITING
+                timeout = float(step.params.get("timeout", "600"))
+                # reporting workflow execution before waiting for event
+                self.report_workflow_execution()
+                self.resume_event.wait(timeout=timeout)
+                logging.info(f"Workflow {self.name} resumed after event")
+                self.workflow_state = WorkflowState.RUNNING
+                self.resume_event.clear()
+
             else:
                 logging.error(f"Workflow step {step.id} has unsupported step type {step.stype}")
 
@@ -263,6 +278,10 @@ class BaseWorkflow:
 
         self.report_step_execution()
         return new_flow_message
+
+    def resume_workflow(self, flow_message: FlowMessage):
+        self.flow_message = flow_message
+        self.resume_event.set()
 
     def report_step_execution(self):
         pass
