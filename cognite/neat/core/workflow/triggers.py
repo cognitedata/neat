@@ -33,7 +33,8 @@ class TriggerManager:
             flow_msg = FlowMessage(payload=request.json())
 
             sync = request.headers.get("Neat-Sync-Response", True)
-            if workflow.get_state() == WorkflowState.RUNNING_WAITING:
+            logging.info(f"Workflow {workflow_name} state = {workflow.state} sync={sync}")
+            if workflow.state == WorkflowState.RUNNING_WAITING:
                 workflow.resume_workflow(flow_message=flow_msg)
                 return {"result": "Workflow instance resumed"}
             else:    

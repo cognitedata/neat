@@ -22,7 +22,7 @@ from cognite.neat.core.workflow.model import (
     WorkflowState,
     WorkflowStepDefinition,
     WorkflowStepEvent,
-    WorkflowStepsGroup,
+    WorkflowSystemComponent,
 )
 from cognite.neat.core.workflow.tasks import WorkflowTaskBuilder
 from threading import Event
@@ -55,7 +55,7 @@ class BaseWorkflow:
         self.end_time = None
         self.execution_log: list[WorkflowStepEvent] = []
         self.workflow_steps: list[WorkflowStepDefinition] = workflow_steps
-        self.workflow_step_groups: list[WorkflowStepsGroup] = []
+        self.workflow_system_components: list[WorkflowSystemComponent] = []
         self.configs: list[WorkflowConfigItem] = []
         self.flow_message: FlowMessage = None
         self.task_builder: WorkflowTaskBuilder = None
@@ -152,7 +152,7 @@ class BaseWorkflow:
                 self.execution_log.append(
                     WorkflowStepEvent(
                         id=step.id,
-                        group_id=step.group_id,
+                        system_component_id=step.system_component_id,
                         state=StepExecutionStatus.SKIPPED,
                         elapsed_time=0,
                         timestamp=utils.get_iso8601_timestamp_now_unaware(),
@@ -180,7 +180,7 @@ class BaseWorkflow:
 
     def run_step(self, step: WorkflowStepDefinition) -> FlowMessage | None:
         step_name = step.id
-        group_id = step.group_id
+        system_component_id = step.system_component_id
 
         steps_metrics.labels(wf_name=self.name, step_name=step_name, name="step_started_counter").inc()
         flow_message = self.flow_message
@@ -196,7 +196,7 @@ class BaseWorkflow:
         self.execution_log.append(
             WorkflowStepEvent(
                 id=step_name,
-                group_id=group_id,
+                system_component_id=system_component_id,
                 state=step_execution_status,
                 elapsed_time=0,
                 timestamp=utils.get_iso8601_timestamp_now_unaware(),
@@ -230,13 +230,17 @@ class BaseWorkflow:
                     raise Exception(f"Workflow step {step.id} has no task builder")
             elif step.stype == StepType.WAIT_FOR_EVENT:
                 # Pause workflow execution until event is received
-                self.workflow_state = WorkflowState.RUNNING_WAITING
-                timeout = float(step.params.get("timeout", "600"))
+                if self.state != WorkflowState.RUNNING:
+                    logging.error(f"Workflow {self.name} is not running , step {step_name} is skipped")
+                    raise Exception(f"Workflow {self.name} is not running , step {step_name} is skipped")
+                self.state = WorkflowState.RUNNING_WAITING
+                timeout = float(step.params.get("timeout", "60"))
                 # reporting workflow execution before waiting for event
-                self.report_workflow_execution()
+                # self.report_workflow_execution()
+                logging.info(f"Workflow {self.name} is waiting for event")
                 self.resume_event.wait(timeout=timeout)
                 logging.info(f"Workflow {self.name} resumed after event")
-                self.workflow_state = WorkflowState.RUNNING
+                self.state = WorkflowState.RUNNING
                 self.resume_event.clear()
 
             else:
@@ -264,7 +268,7 @@ class BaseWorkflow:
         self.execution_log.append(
             WorkflowStepEvent(
                 id=step_name,
-                group_id=group_id,
+                system_component_id=system_component_id,
                 state=step_execution_status,
                 elapsed_time=round(elapsed_time, 3),
                 timestamp=utils.get_iso8601_timestamp_now_unaware(),
@@ -319,21 +323,21 @@ class BaseWorkflow:
         return WorkflowDefinition(
             name=self.name,
             steps=self.workflow_steps,
-            groups=self.workflow_step_groups,
+            system_components=self.workflow_system_components,
             configs=self.configs,
         )
 
     def add_step(self, step: WorkflowStepDefinition):
         self.workflow_steps.append(step)
 
-    def add_group(self, group: WorkflowStepsGroup):
-        self.workflow_step_groups.append(group)
+    def add_system_component(self, system_components: WorkflowSystemComponent):
+        self.workflow_system_components.append(system_components)
 
     def serialize_workflow(self, output_format: str = "json", custom_implementation_module: str = None) -> str:
         workflow_definitions = WorkflowDefinition(
             name=self.name,
             steps=self.workflow_steps,
-            groups=self.workflow_step_groups,
+            system_components=self.workflow_system_components,
             configs=self.configs,
             implementation_module=custom_implementation_module,
         )
@@ -354,7 +358,7 @@ class BaseWorkflow:
 
     def set_metadata(self, metadata: WorkflowDefinition):
         self.workflow_steps = metadata.steps
-        self.workflow_step_groups = metadata.groups
+        self.workflow_system_components = metadata.system_components
         self.configs = metadata.configs
 
     def set_storage_path(self, storage_type: str, storage_path: str):

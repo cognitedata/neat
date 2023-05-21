@@ -65,14 +65,14 @@ class WorkflowStepDefinition(BaseModel):
     description: str = None
     method: str = None
     enabled: bool = True
-    group_id: str = None
+    system_component_id: str = None
     trigger: bool = False
     transition_to: list[str] = None
     ui_config: UIConfig = UIConfig()
     params: dict[str, str] = None
 
 
-class WorkflowStepsGroup(BaseModel):
+class WorkflowSystemComponent(BaseModel):
     # Container for steps
     id: str
     label: str
@@ -88,7 +88,7 @@ class WorkflowDefinition(BaseModel):
     description: str = None
     implementation_module: str = None
     steps: list[WorkflowStepDefinition]
-    groups: list[WorkflowStepsGroup]
+    system_components: list[WorkflowSystemComponent] = None
     configs: list[WorkflowConfigItem] = None
 
 
@@ -96,7 +96,7 @@ class WorkflowStepEvent(BaseModel):
     """Workflow step event represent a single step execution"""
 
     id: str
-    group_id: str = None
+    system_component_id: str = None
     state: StepExecutionStatus
     elapsed_time: float
     timestamp: str

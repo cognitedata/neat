@@ -6,22 +6,32 @@ import DialogTitle from "@mui/material/DialogTitle"
 import FormControl from "@mui/material/FormControl"
 import TextField from "@mui/material/TextField"
 import { useEffect, useState } from "react"
-import { WorkflowStepsGroup } from "types/WorkflowTypes"
+import { WorkflowSystemComponent } from "types/WorkflowTypes"
 
 export default function OverviewComponentEditorDialog(props: any) 
 {
     const [dialogOpen, setDialogOpen] = useState(false);
-    const [component, setComponent] = useState<WorkflowStepsGroup>(null);
-    const handleDialogClose = () => {
+    const [component, setComponent] = useState<WorkflowSystemComponent>(null);
+    const handleDialogSave = () => {
         setDialogOpen(false);
-        props.onClose(component);
+        props.onClose(component,"save");
+    };
+    const handleDialogCancel = () => {
+        setDialogOpen(false);
+        props.onClose(component,"cancel");
+    };
+    const handleDelete = () => {
+        setDialogOpen(false);
+        props.onClose(component,"delete");
     };
     const handleStepConfigChange = (name: string, value: any) => {
         console.log('handleComponentConfigChange')
-        let updComponent = Object.create(component);
+        console.dir(component);
+        let updComponent = Object.assign({},component);
         updComponent[name] = value;
+        console.log("Updateed component")
+        console.dir(updComponent);
         setComponent(updComponent);
-        // component[name] = value;
     }
     useEffect(() => {
         if (props.open){
@@ -30,16 +40,11 @@ export default function OverviewComponentEditorDialog(props: any)
             console.dir(props.component);
         }
       }, [props.open]);
+ 
 
-    // useEffect(() => {
-    //     if (dialogOpen){
-    //         setComponent(props.component);
-    //     }
-    //     //     loadCdfResources(props.type);
-
-    // }, [dialogOpen]);
+ 
 return (
-<Dialog open={dialogOpen} onClose={handleDialogClose}>
+<Dialog open={dialogOpen} onClose={handleDialogCancel}>
 <DialogTitle>Component editor</DialogTitle>
 <DialogContent>
   <FormControl sx={{ width: 300 }} >
@@ -49,8 +54,9 @@ return (
   </FormControl>
 </DialogContent>
 <DialogActions>
-  <Button onClick={handleDialogClose}>Cancel</Button>
-  <Button onClick={handleDialogClose}>Save</Button>
+  <Button onClick={handleDialogCancel}>Cancel</Button>
+  <Button onClick={handleDialogSave}>Save</Button>
+  <Button onClick={handleDelete}>Delete</Button>
 </DialogActions>
 </Dialog>
 )

@@ -440,6 +440,7 @@ def get_workflow_definition(workflow_name: str):
     workflow = neat_app.workflow_manager.get_workflow(workflow_name)
     return {"definition": workflow.get_workflow_definition()}
 
+
 @app.get("/api/workflow/workflow-src/{workflow_name}/{file_name}")
 def get_workflow_src(workflow_name: str, file_name: str):
     src = neat_app.workflow_manager.get_workflow_src(workflow_name, file_name=file_name)
@@ -480,6 +481,11 @@ def download_wf_from_cdf(request: DownloadFromCdfRequest):
 def download_rules_to_cdf(request: DownloadFromCdfRequest):
     neat_app.cdf_store.load_rules_file_from_cdf(request.file_name, request.version)
     return {"file_name": request.file_name, "hash": request.version}
+
+
+@app.post("/api/workflow/migrate-workflow")
+def migrate_workflow():
+    pass
 
 
 @app.get("/api/workflow/pre-cdf-assets/{workflow_name}")

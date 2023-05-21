@@ -63,7 +63,7 @@ class WorkflowManager:
     def update_workflow(self, name: str, workflow: WorkflowDefinition):
         self.workflow_registry[name].workflow_steps = workflow.steps
         self.workflow_registry[name].configs = workflow.configs
-        self.workflow_registry[name].workflow_step_groups = workflow.groups
+        self.workflow_registry[name].workflow_system_components = workflow.system_components
         return
 
     def save_workflow_to_storage(self, name: str, custom_implementation_module: str = None):
