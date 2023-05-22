@@ -25,7 +25,7 @@ export class WorkflowConfigItem {
     type?: string;
     required: boolean = false;
     options?: string[];
-    systemComponent?: string;
+    group?: string;
 }
 
 export class WorkflowStepDefinition {
@@ -75,6 +75,27 @@ export class WorkflowDefinition {
             steps: this.steps,
             system_components: this.system_components
         };
+    }
+
+    upsertConfigItem(config: WorkflowConfigItem) {
+        let index = this.configs.findIndex(c => c.name == config.name);
+        if (index >= 0) {
+            this.configs[index] = config;
+        }else {
+            this.configs.push(config);
+        }
+    }
+
+    addConfigItem(config: WorkflowConfigItem) {
+        this.configs.push(config);
+    }
+
+    deleteConfigItem(name: string) {
+        let index = this.configs.findIndex(c => c.name == name);
+        if (index >= 0) {
+            this.configs.splice(index, 1);
+
+        }
     }
 
     getStepById(id: string): WorkflowStepDefinition {

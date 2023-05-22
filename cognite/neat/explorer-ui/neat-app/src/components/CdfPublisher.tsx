@@ -78,7 +78,7 @@ export default function CdfPublisher(props: any) {
                 <Button onClick={handleDialogPublish}>Publish</Button>
             </DialogActions>
           </Dialog>
-          <Button variant="contained" sx={{ marginTop: 2, marginRight: 1 }} onClick={handleDialogClickOpen} >Publish to CDF </Button>
+          <Button variant="outlined" sx={{ marginTop: 2, marginRight: 1 }} onClick={handleDialogClickOpen} >Publish to CDF </Button>
         </React.Fragment>
     )
 }

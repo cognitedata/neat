@@ -95,6 +95,7 @@ class BaseWorkflow:
         self.end_time = None
         self.run_id = utils.generate_run_id()
         start_time = time.perf_counter()
+
         self.report_workflow_execution()
         try:
             start_step_id = kwargs.get("start_step_id")
@@ -130,6 +131,16 @@ class BaseWorkflow:
         if not trigger_steps:
             logging.error(f"Workflow {self.name} has no trigger steps")
             return "Workflow has no trigger steps"
+       
+        self.execution_log.append(
+            WorkflowStepEvent(
+                id=trigger_steps[0].id,
+                state=StepExecutionStatus.SUCCESS,
+                elapsed_time=0,
+                timestamp=utils.get_iso8601_timestamp_now_unaware(),
+                data=self.flow_message.payload if self.flow_message else None,
+            )
+        )
 
         step: WorkflowStepDefinition = trigger_steps[0]
 
@@ -234,7 +245,7 @@ class BaseWorkflow:
                     logging.error(f"Workflow {self.name} is not running , step {step_name} is skipped")
                     raise Exception(f"Workflow {self.name} is not running , step {step_name} is skipped")
                 self.state = WorkflowState.RUNNING_WAITING
-                timeout = float(step.params.get("timeout", "60"))
+                timeout = float(step.params.get("wait_timeout", "60"))
                 # reporting workflow execution before waiting for event
                 # self.report_workflow_execution()
                 logging.info(f"Workflow {self.name} is waiting for event")
@@ -242,7 +253,7 @@ class BaseWorkflow:
                 logging.info(f"Workflow {self.name} resumed after event")
                 self.state = WorkflowState.RUNNING
                 self.resume_event.clear()
-
+            
             else:
                 logging.error(f"Workflow step {step.id} has unsupported step type {step.stype}")
 
@@ -283,8 +294,21 @@ class BaseWorkflow:
         self.report_step_execution()
         return new_flow_message
 
-    def resume_workflow(self, flow_message: FlowMessage):
+    def resume_workflow(self, flow_message: FlowMessage, step_id : str = None):
+        if step_id:
+            if self.current_step != step_id :
+                logging.error(f"Workflow {self.name} is not in step {step_id} , resume is skipped")
+                return
         self.flow_message = flow_message
+        self.execution_log.append(
+            WorkflowStepEvent(
+                id=step_id,
+                state=StepExecutionStatus.SUCCESS,
+                elapsed_time=0,
+                timestamp=utils.get_iso8601_timestamp_now_unaware(),
+                data=self.flow_message.payload,
+            )
+        )
         self.resume_event.set()
 
     def report_step_execution(self):
@@ -392,3 +416,6 @@ class BaseWorkflow:
         Returns: CogniteClient
         """
         return CogniteClient(self.cdf_client_config)
+    
+    def get_step_by_id(self, step_id: str) -> WorkflowStepDefinition:
+        return next((step for step in self.workflow_steps if step.id == step_id), None)

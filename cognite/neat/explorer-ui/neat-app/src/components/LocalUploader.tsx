@@ -87,7 +87,7 @@ export default function LocalUploader(props: any) {
                 <Button onClick={handleDialogPublish}>Upload</Button>
             </DialogActions>
           </Dialog>
-          <Button variant="contained" sx={{ marginTop: 2, marginRight: 1 }} onClick={handleDialogClickOpen} >Upload to local storage </Button>
+          <Button variant="outlined" sx={{ marginTop: 2, marginRight: 1 }} onClick={handleDialogClickOpen} >Upload to local storage </Button>
         </React.Fragment>
     )
 }

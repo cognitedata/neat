@@ -1,5 +1,6 @@
 import Button from "@mui/material/Button"
 import Checkbox from "@mui/material/Checkbox"
+import { red } from "@mui/material/colors"
 import Dialog from "@mui/material/Dialog"
 import DialogActions from "@mui/material/DialogActions"
 import DialogContent from "@mui/material/DialogContent"
@@ -11,11 +12,15 @@ import Select from "@mui/material/Select"
 import TextField from "@mui/material/TextField"
 import { useEffect, useState } from "react"
 import { WorkflowStepDefinition, WorkflowSystemComponent } from "types/WorkflowTypes"
+import { getNeatApiRootUrl } from "./Utils"
 
 export default function StepEditorDialog(props: any) 
 {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [selectedStep, setSelectedStep] = useState<WorkflowStepDefinition>();
+    const neatApiRootUrl = getNeatApiRootUrl();
+    const [runPayload,setRunPayload] = useState<string>(JSON.stringify({"action":"approve"}))
+    
     const handleDialogSave = () => {
         setDialogOpen(false);
         props.onClose(selectedStep,"save");
@@ -28,15 +33,20 @@ export default function StepEditorDialog(props: any)
         setDialogOpen(false);
         props.onClose(selectedStep,"delete");
     };
-    const handleStepConfigChange = (name: string, value: any) => {
-        console.log('handleComponentConfigChange')
-        console.dir(selectedStep);
-        let updComponent = Object.assign({},selectedStep);
-        updComponent[name] = value;
-        console.log("Updateed component")
-        console.dir(updComponent);
-        setSelectedStep(updComponent);
-    }
+
+    const handleRunCommand = () => {
+        setDialogOpen(false);
+        // send POST request to run the step
+        fetch(neatApiRootUrl +'/api/workflow/'+props.workflowName+'/http_trigger/'+selectedStep.id, { method: 'POST', body: runPayload })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Success:', data);
+        }).catch((error) => {
+            console.error('Error:', error);
+        })
+        props.onClose(selectedStep,"run");
+    };
+   
     useEffect(() => {
         if (props.open){
             setDialogOpen(true);
@@ -44,7 +54,49 @@ export default function StepEditorDialog(props: any)
             console.dir(props.step);
         }
       }, [props.open]);
- 
+    
+      const handleStepConfigChange = (name: string, value: any) => {
+        console.log('handleStepConfigChange')
+        console.dir(selectedStep);
+        let updStep= Object.assign({},selectedStep);
+
+        if (selectedStep) {
+          if (!selectedStep.params) {
+            selectedStep.params = {}
+          }
+          if (name == "stype") {
+            switch (value) {
+              case "time_trigger":
+                updStep.params = { "interval": "every 60 minutes" }
+                break;
+              case "start_workflow_task_step":
+                updStep.params = { "workflow_name": "", "sync": "false" }
+                break;
+            }
+            updStep["stype"] = value;
+          } else {
+            switch (name) {
+              case "time-interval":
+                updStep.params["interval"] = value;
+                break;
+              case "workflow_name":
+                updStep.params["workflow_name"] = value;
+                break;
+              case "workflow_sync_run_flag":
+                value = "false"
+                if (value) {
+                  value = "true"
+                }
+                updStep.params["sync"] = value;
+                break;
+              default:
+                updStep[name] = value;
+            }
+          }
+          console.log("rendering view")
+        }
+        setSelectedStep(updStep);
+      }  
 
  
 return (
@@ -81,12 +133,20 @@ return (
             )}
             <FormControlLabel control={<Checkbox checked={selectedStep?.enabled} onChange={(event) => { handleStepConfigChange("enabled", event.target.checked) }} />} label="Is enabled" />
             <FormControlLabel control={<Checkbox checked={selectedStep?.trigger} onChange={(event) => { handleStepConfigChange("trigger", event.target.checked) }} />} label="Is trigger" />
+            {(selectedStep?.stype == "http_trigger" || selectedStep?.stype == "wait_for_event") && (
+              <TextField sx={{ marginTop: 1 }} value={runPayload} onChange={(event)=>setRunPayload(event.target.value)} id="run_payload"> </TextField>
+            )}  
           </FormControl>
+          
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleDialogCancel}>Cancel</Button>
-          <Button onClick={handleDialogSave}>Save</Button>
-          <Button onClick={handleDelete}>Delete</Button>
+          <Button variant="outlined" size="small" onClick={handleDialogSave}>Save</Button>
+          <Button variant="outlined" size="small" onClick={handleDialogCancel}>Cancel</Button>
+          <Button variant="outlined" size="small" color="error" onClick={handleDelete} >Delete</Button>
+          {(selectedStep?.stype == "http_trigger" || selectedStep?.stype == "wait_for_event") && (
+              <Button variant="outlined" size="small" color="success" onClick={handleRunCommand}>Run</Button>
+          )}
+          
         </DialogActions>
       </Dialog>
 )

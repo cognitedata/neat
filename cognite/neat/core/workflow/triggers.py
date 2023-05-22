@@ -1,12 +1,17 @@
+import json
 import logging
 import threading
 import time
 
 import schedule
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 
 from cognite.neat.core.workflow.manager import WorkflowManager
 from cognite.neat.core.workflow.model import FlowMessage, StepType, WorkflowState
+
+
+async def get_body(request: Request):
+    return await request.body()
 
 
 class TriggerManager:
@@ -27,22 +32,33 @@ class TriggerManager:
         logging.info("Starting HTTP trigger endpoint")
 
         @web_server.post("/api/workflow/{workflow_name}/http_trigger/{step_id}")
-        def start_workflow(workflow_name: str, step_id: str, request: Request):
+        def start_workflow(workflow_name: str, step_id: str, request: Request, body: bytes = Depends(get_body)):
             logging.info(f"New HTTP trigger request for workflow {workflow_name} step {step_id}")
             workflow = self.workflow_manager.get_workflow(workflow_name)
-            flow_msg = FlowMessage(payload=request.json())
+            json_payload = None
+            try: 
+                # TODO: Add support for other content types
+                json_payload = json.loads(body)
+            except Exception as e:
+                logging.info(f"Error parsing json body {e}")
+            logging.debug(f"Request object = {json_payload}")
 
+            flow_msg = FlowMessage(payload=json_payload)
             sync = request.headers.get("Neat-Sync-Response", True)
             logging.info(f"Workflow {workflow_name} state = {workflow.state} sync={sync}")
             if workflow.state == WorkflowState.RUNNING_WAITING:
-                workflow.resume_workflow(flow_message=flow_msg)
+                workflow.resume_workflow(flow_message=flow_msg, step_id=step_id)
                 return {"result": "Workflow instance resumed"}
-            else:    
+            elif workflow.state != WorkflowState.RUNNING:   
                 result = workflow.start(sync=sync, flow_message=flow_msg, start_step_id=step_id)
                 if result :
-                    return result.payload
-                else:
-                    return {"result": "Workflow instance started"}
+                    if result.payload:
+                        logging.info(f"Workflow resule payload = {result.payload}")
+                        return result.payload
+            else:
+                logging.info(f"Workflow {workflow_name} is already running")
+                return {"result": "Workflow instance already running"}        
+            return {"result": "Workflow instance started"}
 
     def _start_scheduler_main_loop(self):
         """Starts a scheduler main loop for the workflows

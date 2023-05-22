@@ -54,9 +54,9 @@ return (
   </FormControl>
 </DialogContent>
 <DialogActions>
-  <Button onClick={handleDialogCancel}>Cancel</Button>
-  <Button onClick={handleDialogSave}>Save</Button>
-  <Button onClick={handleDelete}>Delete</Button>
+  <Button variant="outlined" size="small" onClick={handleDialogSave}>Save</Button>
+  <Button variant="outlined" size="small" onClick={handleDialogCancel}>Cancel</Button>
+  <Button variant="outlined" size="small" color="error" onClick={handleDelete}>Delete</Button>
 </DialogActions>
 </Dialog>
 )

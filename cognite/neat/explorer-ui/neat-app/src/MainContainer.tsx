@@ -12,7 +12,9 @@ import TransformationTable from './views/TransformationView';
 import WorkflowView from './views/WorkflowView';
 import ExecutionsTable from 'views/ExecutionsView';
 import BuildRoundedIcon from '@mui/icons-material/BuildRounded';
+import HelpIcon from '@mui/icons-material/Help';
 import GlobalConfigView from 'views/GlobalConfigView';
+import AboutView from 'views/AboutView';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -58,10 +60,11 @@ export default function BasicTabs() {
     <Box sx={{ width: '100%' }}>
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
-          <Tab label="Workflows" {...a11yProps(0)} />
+          <Tab label="Solutions" {...a11yProps(0)} />
           <Tab label="Execution history" {...a11yProps(1)} />
           <Tab label="Statistics" {...a11yProps(2)} />
           <Tab icon={<BuildRoundedIcon />} aria-label="Global config" {...a11yProps(3)} />
+          <Tab icon={<HelpIcon />} aria-label="Global config" {...a11yProps(4)} />
         </Tabs>
       </Box>
       <TabPanel value={value} index={0}>
@@ -75,6 +78,9 @@ export default function BasicTabs() {
       </TabPanel>
       <TabPanel value={value} index={3}>
         <GlobalConfigView />
+      </TabPanel>
+      <TabPanel value={value} index={4}>
+        <AboutView />
       </TabPanel>
 
     </Box>

@@ -33,6 +33,7 @@ from cognite.neat.explorer.data_classes.rest import (
 )
 from cognite.neat.explorer.utils.data_mapping import rdf_result_to_api_response
 from cognite.neat.explorer.utils.query_templates import query_templates
+from cognite.neat.migration.wf_manifests import migrate_wf_manifest
 
 logger = getLogger(__name__)  # temporary logger before config is loaded
 config_path = Path(os.environ.get("NEAT_CONFIG_PATH", "config.yaml"))
@@ -485,7 +486,7 @@ def download_rules_to_cdf(request: DownloadFromCdfRequest):
 
 @app.post("/api/workflow/migrate-workflow")
 def migrate_workflow():
-    pass
+    return migrate_wf_manifest(config.data_store_path)
 
 
 @app.get("/api/workflow/pre-cdf-assets/{workflow_name}")

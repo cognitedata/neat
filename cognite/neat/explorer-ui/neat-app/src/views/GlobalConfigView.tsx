@@ -42,7 +42,8 @@ export default function GlobalConfigView() {
     "log_format": "%(asctime)s.%(msecs)03d %(levelname)-8s %(message)s",
     "stop_on_error": false
   });
-
+  
+  let initCdfResourcesResult:string = "";
 
   const [neatApiRootUrl, setNeatApiRootUrl] = useState(getNeatApiRootUrl());
 
@@ -94,12 +95,27 @@ export default function GlobalConfigView() {
     setConfigs(new_config);
   };
 
+  const initCdfResources = () => {
+    setLoading(true);
+    let url = neatApiRootUrl+"/api/cdf/init-neat-resources";
+    // send post request 
+    fetch(url, {
+      method: "post"})
+      .then((response) => response.json())
+      .then((data) => {
+        console.dir(data)
+        initCdfResourcesResult = data.result;
+      }).catch((error) => {
+        console.error('Error:', error);
+        initCdfResourcesResult = "Error: "+error;
+      }).finally(() => { setLoading(false); });
+  }
 
   return (
     <Box sx={{ width: "70%" }}>
       <Stack spacing={2}>
         <Item>
-          <h2>Global Configuration</h2>
+          <h3>Global Configuration</h3>
           <Box sx={{ minWidth: 200 }}>
             <Stack spacing={2} direction="column">
               <h3>CDF configuration</h3>
@@ -121,13 +137,17 @@ export default function GlobalConfigView() {
               {loading && (<LinearProgress />)}
             </Stack>
           </Box>
-          <h2>NEAT UI configuration</h2>
+          <h3>NEAT UI configuration</h3>
           <Box sx={{ minWidth: 120 }}>
             <Stack spacing={2} direction="column">
               <TextField id="neat_api_root_url" label="API root url" size='small' variant="outlined" value={neatApiRootUrl} onChange={(event) => { handleConfigChange("neatApiRootUrl", event.target.value) }} />
               <Button variant="contained" onClick={saveNeatApiConfigButtonHandler}>Save</Button>
             </Stack>
           </Box>
+          <h3> CDF resources</h3>
+          
+          <Button variant="contained" onClick={initCdfResources}>Init CDF resources</Button>
+          
         </Item>
 
       </Stack>
