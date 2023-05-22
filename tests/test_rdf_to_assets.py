@@ -74,16 +74,25 @@ def test_asset_diffing(mock_rdf_assets, mock_cdf_assets, transformation_rules):
 
         client_mock.assets.list = list_assets
 
-    categorized_assets = categorize_assets(client_mock, rdf_assets, transformation_rules.metadata.data_set_id)
+    categorized_assets, report = categorize_assets(client_mock, rdf_assets, transformation_rules.metadata.data_set_id)
     assert len(categorized_assets["create"]) == 1
+    assert len(report["create"]) == 1
     assert create_id == categorized_assets["create"][0].external_id
+    assert create_id in report["create"]
 
     assert len(categorized_assets["update"]) == 1
+    assert len(report["update"]) == 1
     assert update_id == categorized_assets["update"][0].external_id
+    assert update_id in report["update"]
     assert categorized_assets["update"][0].name == "Deus Ex Machina"
+    assert report["update"][update_id] == {
+        "values_changed": {"root['name']": {"new_value": "Deus Ex Machina", "old_value": "RootCIMNode 0"}}
+    }
 
     assert len(categorized_assets["decommission"]) == 1
+    assert len(report["decommission"]) == 1
     assert decommission_id == categorized_assets["decommission"][0].external_id
+    assert decommission_id in report["decommission"]
     assert {label["externalId"] for label in categorized_assets["decommission"][0].labels} == {
         "SubGeographicalRegion",
         "historic",
@@ -91,7 +100,9 @@ def test_asset_diffing(mock_rdf_assets, mock_cdf_assets, transformation_rules):
     assert categorized_assets["decommission"][0].metadata["active"] == "false"
 
     assert len(categorized_assets["resurrect"]) == 1
+    assert len(report["resurrect"]) == 1
     assert resurrect_id == categorized_assets["resurrect"][0].external_id
+    assert resurrect_id in report["resurrect"]
     assert {label["externalId"] for label in categorized_assets["resurrect"][0].labels} == {
         "GeographicalRegion",
         "non-historic",
