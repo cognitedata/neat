@@ -621,6 +621,8 @@ def _assets_to_update(
         Candidate assets to be updated
     exclude_paths : list, optional
         Paths not to be checked when diffing rdf and cdf assets, by default EXCLUDE_PATHS
+    stop_on_exception: bool, optional
+        Whether to stop on exception or not, by default False
 
     Returns
     -------
@@ -747,7 +749,7 @@ def _assets_to_decommission(cdf_assets, asset_ids) -> list[Asset]:
 
 
 def categorize_assets(
-    client: CogniteClient, rdf_assets: dict, data_set_id: int, partitions: int = 40
+    client: CogniteClient, rdf_assets: dict, data_set_id: int, partitions: int = 40, stop_on_exception: bool = False
 ) -> tuple[dict, dict]:
     """Categorize assets on those that are to be created, updated and decommissioned
 
@@ -761,6 +763,8 @@ def categorize_assets(
         Dataset id to which assets are to be/are stored
     partitions : int, optional
         Number of partitions to use when fetching assets from CDF, by default 40
+    stop_on_exception : bool, optional
+        Whether to stop on exception or not, by default False
 
     Returns
     -------
@@ -800,7 +804,9 @@ def categorize_assets(
         "decommission": _assets_to_decommission(cdf_assets, decommission_ids),
     }
 
-    categorized_assets["update"], report["update"] = _assets_to_update(rdf_assets, cdf_assets, update_ids)
+    categorized_assets["update"], report["update"] = _assets_to_update(
+        rdf_assets, cdf_assets, update_ids, stop_on_exception=stop_on_exception
+    )
 
     return categorized_assets, report
 
