@@ -184,7 +184,7 @@ class Sheet2CDFNeatWorkflow(BaseWorkflow):
         else:
             logging.info("No circular dependency among assets found, your assets hierarchy look healthy !")
 
-        self.categorized_assets, report = categorize_assets(self.cdf_client, rdf_assets, self.dataset_id)
+        self.categorized_assets = categorize_assets(self.cdf_client, rdf_assets, self.dataset_id)
 
         count_create_assets = len(self.categorized_assets["create"])
         count_update_assets = len(self.categorized_assets["update"])
@@ -245,9 +245,7 @@ class Sheet2CDFNeatWorkflow(BaseWorkflow):
             logging.info("Dry run, no CDF client available")
             return
 
-        self.categorized_relationships, report = categorize_relationships(
-            self.cdf_client, rdf_relationships, self.dataset_id
-        )
+        self.categorized_relationships = categorize_relationships(self.cdf_client, rdf_relationships, self.dataset_id)
         count_defined_relationships = len(rdf_relationships)
         count_create_relationships = len(self.categorized_relationships["create"])
         count_decommission_relationships = len(self.categorized_relationships["decommission"])

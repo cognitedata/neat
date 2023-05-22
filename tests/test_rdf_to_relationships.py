@@ -80,6 +80,7 @@ def test_relationship_diffing(mock_knowledge_graph, transformation_rules):
         client=client_mock,
         rdf_relationships=rdf_relationships,
         data_set_id=transformation_rules.metadata.data_set_id,
+        reporting=True,
     )
 
     assert len(categorized_relationships["create"]) == 1

@@ -1,7 +1,7 @@
 import logging
 import warnings
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 from warnings import warn
 
 import pandas as pd
@@ -749,8 +749,13 @@ def _assets_to_decommission(cdf_assets, asset_ids) -> list[Asset]:
 
 
 def categorize_assets(
-    client: CogniteClient, rdf_assets: dict, data_set_id: int, partitions: int = 40, stop_on_exception: bool = False
-) -> tuple[dict, dict]:
+    client: CogniteClient,
+    rdf_assets: dict,
+    data_set_id: int,
+    partitions: int = 40,
+    stop_on_exception: bool = False,
+    reporting: bool = False,
+) -> Union[tuple[dict, dict], dict]:
     """Categorize assets on those that are to be created, updated and decommissioned
 
     Parameters
@@ -765,6 +770,8 @@ def categorize_assets(
         Number of partitions to use when fetching assets from CDF, by default 40
     stop_on_exception : bool, optional
         Whether to stop on exception or not, by default False
+    reporting : bool, optional
+        Whether to report on the diffing results or not, by default False
 
     Returns
     -------
@@ -808,7 +815,7 @@ def categorize_assets(
         rdf_assets, cdf_assets, update_ids, stop_on_exception=stop_on_exception
     )
 
-    return categorized_assets, report
+    return (categorized_assets, report) if reporting else categorized_assets
 
 
 def _micro_batch_push(
