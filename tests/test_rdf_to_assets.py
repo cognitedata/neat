@@ -75,7 +75,7 @@ def test_asset_diffing(mock_rdf_assets, mock_cdf_assets, transformation_rules):
         client_mock.assets.list = list_assets
 
     categorized_assets, report = categorize_assets(
-        client_mock, rdf_assets, transformation_rules.metadata.data_set_id, reporting=True
+        client_mock, rdf_assets, transformation_rules.metadata.data_set_id, return_report=True
     )
     assert len(categorized_assets["create"]) == 1
     assert len(report["create"]) == 1

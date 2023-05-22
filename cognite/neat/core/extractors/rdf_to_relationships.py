@@ -277,7 +277,7 @@ def categorize_relationships(
     rdf_relationships: pd.DataFrame,
     data_set_id: int,
     partitions: int = 40,
-    reporting: bool = False,
+    return_report: bool = False,
 ) -> Union[
     tuple[dict[str, list[Union[Relationship, RelationshipUpdate]]], dict[str, set]],
     dict[str, list[Union[Relationship, RelationshipUpdate]]],
@@ -325,7 +325,7 @@ def categorize_relationships(
         "decommission": _relationships_to_decommission(decommission_xids),
     }
 
-    return (categorized_relationships, report) if reporting else categorized_relationships
+    return (categorized_relationships, report) if return_report else categorized_relationships
 
 
 def _micro_batch_push(

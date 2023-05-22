@@ -754,7 +754,7 @@ def categorize_assets(
     data_set_id: int,
     partitions: int = 40,
     stop_on_exception: bool = False,
-    reporting: bool = False,
+    return_report: bool = False,
 ) -> Union[tuple[dict, dict], dict]:
     """Categorize assets on those that are to be created, updated and decommissioned
 
@@ -770,7 +770,7 @@ def categorize_assets(
         Number of partitions to use when fetching assets from CDF, by default 40
     stop_on_exception : bool, optional
         Whether to stop on exception or not, by default False
-    reporting : bool, optional
+    return_report : bool, optional
         Whether to report on the diffing results or not, by default False
 
     Returns
@@ -815,7 +815,7 @@ def categorize_assets(
         rdf_assets, cdf_assets, update_ids, stop_on_exception=stop_on_exception
     )
 
-    return (categorized_assets, report) if reporting else categorized_assets
+    return (categorized_assets, report) if return_report else categorized_assets
 
 
 def _micro_batch_push(
