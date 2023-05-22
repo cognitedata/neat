@@ -13,6 +13,10 @@ Changes are grouped as follows
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.11.4] - 22-05-23
+### Added
+* Reporting on categorized assets and relationships
+* Safety gauge to skip assets which are changing asset hierarchy or to raise exception
 ## [0.11.3] - 19-05-23
 ### Fixed
 * When running `neat` with two different datasets without an external_id prefix, the creation of an orphanage asset
