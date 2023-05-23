@@ -56,7 +56,7 @@ configs:
     type: null
     value: ''
 description: null
-groups:
+system_components:
 -   description: null
     id: grid_management_system
     label: Grid management system

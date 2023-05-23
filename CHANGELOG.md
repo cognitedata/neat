@@ -13,6 +13,27 @@ Changes are grouped as follows
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.12.0] - 23-05-23
+### Added
+* Added workflow documentation.
+* Added `wait_for_event` task. This task will wait for a specific event to occur.Can be used to pause/resume workflow execution , for instance when a user needs to approve the workflow execution.
+* Added metrics helper functions. These functions can be used to create metrics for the workflow.
+* Added UI configuration editor. Now it supports all UI operations.
+* Added workflow source code viewer.
+* Added rules file download link. Now user can upload and download rules file via NEAT UI .
+* Added error reporting in UI if the rules file is not valid or not present. The same for data exploration view.
+
+
+### Improved
+* Many UI improvements and visual regrouping of UI views.
+* Improved http trigger. Now it can receive arbitrary data in json format.
+* Global configurations moved to its own view.
+* Steps and System components editor supports node removal.
+
+
+### Changed
+* Groups section was renamed to Solution/System components overview. In manifest it was renamed to `system_components`.
+
 ## [0.11.5] - 23-05-23
 ### Fixed
 * Removed `data/config.yaml` dump. This is not used.

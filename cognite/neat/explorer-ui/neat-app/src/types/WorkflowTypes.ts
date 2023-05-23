@@ -35,7 +35,7 @@ export class WorkflowStepDefinition {
     description?: string;
     method?: string;
     enabled?: boolean = true;
-    group_id?: string;
+    system_component_id?: string;
     trigger?: boolean = false;
     transition_to?: string[];
     params?:any = {}
@@ -43,7 +43,7 @@ export class WorkflowStepDefinition {
 }
 
 
-export class WorkflowStepsGroup {
+export class WorkflowSystemComponent {
     id: string;
     label: string;
     transition_to?: string[];
@@ -55,7 +55,7 @@ export class WorkflowDefinition {
     name: string;
     description?: string;
     steps: WorkflowStepDefinition[];
-    groups: WorkflowStepsGroup[];
+    system_components: WorkflowSystemComponent[];
     configs?: WorkflowConfigItem[];
     static fromJSON(json: any): WorkflowDefinition {
         let workflow = new WorkflowDefinition();
@@ -73,13 +73,53 @@ export class WorkflowDefinition {
             description: this.description,
             configs: this.configs,
             steps: this.steps,
-            groups: this.groups
+            system_components: this.system_components
         };
+    }
+
+    upsertConfigItem(config: WorkflowConfigItem) {
+        let index = this.configs.findIndex(c => c.name == config.name);
+        if (index >= 0) {
+            this.configs[index] = config;
+        }else {
+            this.configs.push(config);
+        }
+    }
+
+    addConfigItem(config: WorkflowConfigItem) {
+        this.configs.push(config);
+    }
+
+    deleteConfigItem(name: string) {
+        let index = this.configs.findIndex(c => c.name == name);
+        if (index >= 0) {
+            this.configs.splice(index, 1);
+
+        }
     }
 
     getStepById(id: string): WorkflowStepDefinition {
         let step = this.steps.find(step => step.id == id);
         return step;
+    }
+
+    getSystemComponentById(id: string): WorkflowSystemComponent {
+        let systemComponent = this.system_components.find(systemComponent => systemComponent.id == id);
+        return systemComponent;
+    }
+
+    updateStep(id:string,step: WorkflowStepDefinition) {
+        let index = this.steps.findIndex(s => s.id == id);
+        if (index >= 0) {
+            this.steps[index] = step;
+        }
+    }
+
+    updateSystemComponent(id:string,systemComponent: WorkflowSystemComponent) {
+        let index = this.system_components.findIndex(g => g.id == id);
+        if (index >= 0) {
+            this.system_components[index] = systemComponent;
+        }
     }
 
     convertStepsToNodes():any {
@@ -113,9 +153,10 @@ export class WorkflowDefinition {
         return nodes;
     }
 
-    convertGroupsToNodes():any {
+
+    convertSystemComponentsToNodes():any {
         let nodes = [];
-        this.groups.forEach(step => {
+        this.system_components?.forEach(step => {
             let style = {};
             let node = {
                 id: step.id,
@@ -143,7 +184,7 @@ export class WorkflowDefinition {
 
     convertStepsToEdges():any {
         let edges = [];
-        this.steps.forEach(step => {
+        this.steps?.forEach(step => {
             if (step.transition_to) {
                 step.transition_to.forEach(transition => {
                     let edge = {
@@ -161,9 +202,9 @@ export class WorkflowDefinition {
         return edges;
     }
 
-    convertGroupsToEdges():any {
+    convertSystemComponentsToEdges():any {
         let edges = [];
-        this.groups.forEach(step => {
+        this.system_components?.forEach(step => {
             if (step.transition_to) {
                 step.transition_to.forEach(transition => {
                     let edge = {
@@ -178,6 +219,8 @@ export class WorkflowDefinition {
                 });
             }
         });
+        console.log("Component edges: ");
+        console.dir(edges)
         return edges;
     }
 
@@ -188,15 +231,15 @@ export class WorkflowDefinition {
                 step.ui_config.pos_x = node.position.x;
                 step.ui_config.pos_y = node.position.y;
             }else {
-                let group = this.groups.find(group => group.id == node.id);
-                if (group) {
-                    group.ui_config.pos_x = node.position.x;
-                    group.ui_config.pos_y = node.position.y;
+                let systemComponent = this.system_components.find(systemComponent => systemComponent.id == node.id);
+                if (systemComponent) {
+                    systemComponent.ui_config.pos_x = node.position.x;
+                    systemComponent.ui_config.pos_y = node.position.y;
                 }
             }
         });
     }
-
+    // Update step transitions from edges
     updateStepTransitions(edges:any) {
         this.steps.forEach(step => {
             step.transition_to = [];
@@ -207,6 +250,32 @@ export class WorkflowDefinition {
                 source.transition_to.push(edge.target);
             }
         });
+    }
+    // Update systemComponent transitions from edges
+    updateSystemComponentTransitions(edges:any) {
+        this.system_components.forEach(systemComponent => {
+            systemComponent.transition_to = [];
+        });
+        edges.forEach(edge => {
+            let source = this.system_components.find(systemComponent => systemComponent.id == edge.source);
+            if (source) {
+                source.transition_to.push(edge.target);
+            }
+        });
+    }
+
+    deleteStep(id:string) {
+        let index = this.steps.findIndex(s => s.id == id);
+        if (index >= 0) {
+            this.steps.splice(index,1);
+        }
+    }
+
+    deleteSystemComponent(id:string) {
+        let index = this.system_components.findIndex(g => g.id == id);
+        if (index >= 0) {
+            this.system_components.splice(index,1);
+        }
     }
 
 

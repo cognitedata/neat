@@ -5,6 +5,8 @@ theme:
     name: gitbook
 nav:
     - Home: index.md
+    - Getting Started: getting-started.md
+    - Neat workflows : workflows.md
     - Transformation Rules: transformation-rules.md
     - Rule Types: rule-types.md
     - Data Exploration: ui-data-exploration.md
@@ -24,3 +26,6 @@ plugins:
       execute: false
       ignore_h1_titles: True
       include_source: True
+  - glightbox:
+       width: 100%
+       height: auto
