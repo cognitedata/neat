@@ -56,6 +56,16 @@ python-multipart = "^0.0.6"
 oxrdflib = {version = "^0.3.3", extras = ["oxigraph"]}
 graphql-core = "^3.2.3"
 
+mkdocs =  {version="*", optional=true}
+mkdocs-jupyter = {version="*", optional=true}
+mkdocs-material-extensions = {version="*", optional=true}
+mkdocs-git-revision-date-localized-plugin = {version="*", optional=true}
+mkdocs-git-authors-plugin = {version="*", optional=true}
+mkdocs-gitbook = {version="*", optional=true}
+
+[tool.poetry.extras]
+docs = ["mkdocs", "mkdocs-jupyter", "mkdocs-material-extensions", "mkdocs-git-revision-date-localized-plugin", "mkdocs-git-authors-plugin", "mkdocs-gitbook"]
+
 [tool.poetry.dev-dependencies]
 twine = "*"
 pytest = "*"
@@ -64,12 +74,6 @@ pre-commit = "*"
 safety = "*"
 bandit = "*"
 jupyter = "*"
-mkdocs = "*"
-mkdocs-jupyter = "*"
-mkdocs-material-extensions = "*"
-mkdocs-git-revision-date-localized-plugin = "*"
-mkdocs-git-authors-plugin = "*"
-mkdocs-gitbook = "*"
 pytest-regressions = "*"
 memray = [{version = "^1.7", platform = "darwin"},
             {version = "^1.7", platform = "linux"}]
