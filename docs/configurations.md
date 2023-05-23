@@ -1,2 +1,1 @@
-# Global configurations 
-
+# Global configurations

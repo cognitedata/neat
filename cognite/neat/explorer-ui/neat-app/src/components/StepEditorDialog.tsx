@@ -14,13 +14,13 @@ import { useEffect, useState } from "react"
 import { WorkflowStepDefinition, WorkflowSystemComponent } from "types/WorkflowTypes"
 import { getNeatApiRootUrl } from "./Utils"
 
-export default function StepEditorDialog(props: any) 
+export default function StepEditorDialog(props: any)
 {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [selectedStep, setSelectedStep] = useState<WorkflowStepDefinition>();
     const neatApiRootUrl = getNeatApiRootUrl();
     const [runPayload,setRunPayload] = useState<string>(JSON.stringify({"action":"approve"}))
-    
+
     const handleDialogSave = () => {
         setDialogOpen(false);
         props.onClose(selectedStep,"save");
@@ -46,7 +46,7 @@ export default function StepEditorDialog(props: any)
         })
         props.onClose(selectedStep,"run");
     };
-   
+
     useEffect(() => {
         if (props.open){
             setDialogOpen(true);
@@ -54,7 +54,7 @@ export default function StepEditorDialog(props: any)
             console.dir(props.step);
         }
       }, [props.open]);
-    
+
       const handleStepConfigChange = (name: string, value: any) => {
         console.log('handleStepConfigChange')
         console.dir(selectedStep);
@@ -96,9 +96,9 @@ export default function StepEditorDialog(props: any)
           console.log("rendering view")
         }
         setSelectedStep(updStep);
-      }  
+      }
 
- 
+
 return (
   <Dialog open={dialogOpen} onClose={handleDialogCancel}>
         <DialogTitle>Step configurator</DialogTitle>
@@ -135,9 +135,9 @@ return (
             <FormControlLabel control={<Checkbox checked={selectedStep?.trigger} onChange={(event) => { handleStepConfigChange("trigger", event.target.checked) }} />} label="Is trigger" />
             {(selectedStep?.stype == "http_trigger" || selectedStep?.stype == "wait_for_event") && (
               <TextField sx={{ marginTop: 1 }} value={runPayload} onChange={(event)=>setRunPayload(event.target.value)} id="run_payload"> </TextField>
-            )}  
+            )}
           </FormControl>
-          
+
         </DialogContent>
         <DialogActions>
           <Button variant="outlined" size="small" onClick={handleDialogSave}>Save</Button>
@@ -146,7 +146,7 @@ return (
           {(selectedStep?.stype == "http_trigger" || selectedStep?.stype == "wait_for_event") && (
               <Button variant="outlined" size="small" color="success" onClick={handleRunCommand}>Run</Button>
           )}
-          
+
         </DialogActions>
       </Dialog>
 )

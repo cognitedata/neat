@@ -274,7 +274,7 @@ export function FilterBar(props:{filterChangeHandler:Function}) {
       <div>
     {alertMsg != "" && (<Alert severity="warning">
           <AlertTitle>Warning</AlertTitle>
-          {alertMsg} 
+          {alertMsg}
     </Alert> )}
       <FormControl sx={{ m: 0, width: "94vw" }}>
         <InputLabel id="demo-multiple-chip-label">Filter</InputLabel>
@@ -470,11 +470,11 @@ export default function QDataTable() {
 
   return (
     <div>
-      
+
     <ExplorerContext.Provider value={{hiddenNsPrefixModeCtx:[hiddenNsPrefixMode, setHiddenNsPrefixMode],graphNameCtx:[graphName, setGraphName]}}>
     {alertMsg != "" && (<Alert severity="warning">
           <AlertTitle>Warning</AlertTitle>
-            {alertMsg} 
+            {alertMsg}
     </Alert> )}
     <QuerySelector selectedHandler={loadDataset} settingsUpdateHandler={settingsUpdateHandler}/>
     <SearchBar searchButtonHandler={searchObjects} />

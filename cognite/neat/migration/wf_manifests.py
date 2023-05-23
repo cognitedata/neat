@@ -1,7 +1,6 @@
-
+import logging
 import os
 from pathlib import Path
-import logging
 
 import yaml
 
@@ -12,7 +11,7 @@ def migrate_wf_manifest(wf_store_path: Path):
     wf_store_path = wf_store_path / "workflows"
     for wf_module_name in os.listdir(wf_store_path):
         wf_module_full_path = wf_store_path / wf_module_name
-        
+
         if wf_module_full_path.is_dir():
             metadata_file = wf_store_path / wf_module_name / "workflow.yaml"
             metadata_file_migrated = wf_store_path / wf_module_name / "workflow.yaml"
@@ -31,5 +30,5 @@ def migrate_wf_manifest(wf_store_path: Path):
                         migrated_files.append(metadata_file_migrated)
             else:
                 logging.info(f"Metadata file {metadata_file} not found, skipping")
-                continue            
+                continue
     return migrated_files

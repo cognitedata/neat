@@ -5,7 +5,7 @@ import { getNeatApiRootUrl } from 'components/Utils';
 
 const AboutView = () => {
   const [structure, setStructure] = useState(null);
-  const [neatApiRootUrl, setNeatApiRootUrl] = useState(getNeatApiRootUrl());  
+  const [neatApiRootUrl, setNeatApiRootUrl] = useState(getNeatApiRootUrl());
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -40,7 +40,7 @@ const AboutView = () => {
       </Typography>
       <Typography variant="h6" >
         License (Apache 2.0): <a href='https://github.com/cognitedata/neat/blob/main/LICENSE'> https://github.com/cognitedata/neat/blob/main/LICENSE </a>
-      </Typography>    
+      </Typography>
       <Typography variant="h5">
         3rd party packages :
       </Typography>

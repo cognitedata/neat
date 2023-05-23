@@ -3,6 +3,7 @@ import logging
 import threading
 import time
 import traceback
+from threading import Event
 
 import yaml
 from cognite.client import ClientConfig as CogniteClientConfig
@@ -25,7 +26,6 @@ from cognite.neat.core.workflow.model import (
     WorkflowSystemComponent,
 )
 from cognite.neat.core.workflow.tasks import WorkflowTaskBuilder
-from threading import Event
 
 from . import utils
 
@@ -67,7 +67,7 @@ class BaseWorkflow:
         )
         self.metrics = NeatMetricsCollector(self.name, self.cdf_client)
         self.resume_event = Event()
-        
+
     def start(self, sync=False, **kwargs) -> FlowMessage | None:
         """Starts workflow execution.sync=True will block until workflow is completed and return last workflow flow message,
         sync=False will start workflow in a separate thread and return None"""
@@ -78,7 +78,7 @@ class BaseWorkflow:
         self.thread = threading.Thread(target=self._run_workflow, kwargs=kwargs)
         self.thread.start()
         return None
-    
+
     def _run_workflow(self, **kwargs) -> FlowMessage | None:
         """Run workflow and return last workflow flow message"""
         summary_metrics.labels(wf_name=self.name, name="steps_count").set(len(self.workflow_steps))
@@ -131,7 +131,7 @@ class BaseWorkflow:
         if not trigger_steps:
             logging.error(f"Workflow {self.name} has no trigger steps")
             return "Workflow has no trigger steps"
-       
+
         self.execution_log.append(
             WorkflowStepEvent(
                 id=trigger_steps[0].id,
@@ -253,7 +253,7 @@ class BaseWorkflow:
                 logging.info(f"Workflow {self.name} resumed after event")
                 self.state = WorkflowState.RUNNING
                 self.resume_event.clear()
-            
+
             else:
                 logging.error(f"Workflow step {step.id} has unsupported step type {step.stype}")
 
@@ -294,9 +294,9 @@ class BaseWorkflow:
         self.report_step_execution()
         return new_flow_message
 
-    def resume_workflow(self, flow_message: FlowMessage, step_id : str = None):
+    def resume_workflow(self, flow_message: FlowMessage, step_id: str = None):
         if step_id:
-            if self.current_step != step_id :
+            if self.current_step != step_id:
                 logging.error(f"Workflow {self.name} is not in step {step_id} , resume is skipped")
                 return
         self.flow_message = flow_message
@@ -416,6 +416,6 @@ class BaseWorkflow:
         Returns: CogniteClient
         """
         return CogniteClient(self.cdf_client_config)
-    
+
     def get_step_by_id(self, step_id: str) -> WorkflowStepDefinition:
         return next((step for step in self.workflow_steps if step.id == step_id), None)

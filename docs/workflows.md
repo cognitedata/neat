@@ -1,22 +1,22 @@
-# Neat Workflows 
+# Neat Workflows
 
-Neat Workflow is concept that enables users to automate complex processes involving multiple steps and systems. 
+Neat Workflow is concept that enables users to automate complex processes involving multiple steps and systems.
 The workflow engine follows a modular, step-by-step process that can be customized to suit your specific data transformation needs. Each step in the workflow corresponds to a specific task, such as loading transformation rules, configuring graph stores, and loading the source graph.
 Users can customize the workflow by adding or removing steps, or by modifying the parameters in each step to match their specific data requirements.
 
 ![Execution history](./figs/wf-overview.gif)
 
-## Terminology 
+## Terminology
 
 - **Solution** - a package that contains a set of workflows, rules and other components that are used to solve a specific problem.
 - **Workflow** - a set of steps that are executed in a specific order.
-- **Step** - a single block of code (function) that is executed as part of a workflow. 
-- **Trigger** -  a special type of step that can be used to trigger workflow execution. 
+- **Step** - a single block of code (function) that is executed as part of a workflow.
+- **Trigger** -  a special type of step that can be used to trigger workflow execution.
 - **Task** - is a special type of step that has provided implementation (no need to implement it in *workflow.py*) and can be used to perform some common tasks.
 - **Flow message** - a message that is passed between steps. The message is a dictionary that contains information about the current state of the workflow.
 - **Workflow implementation class** - individual steps that make up the workflow and defined as python functions. All steps are aggregated into a single workflow class.
 - **Workflow manifest** - a YAML file that contains information about the workflow configuration , steps transitions , triggers and tasks cofiuration and other workflow related metadat.
-- **Workflow context** - all local variables that are defined in the workflow class and can be accessed by all steps.Information between steps is passed via the workflow context or flow message. 
+- **Workflow context** - all local variables that are defined in the workflow class and can be accessed by all steps.Information between steps is passed via the workflow context or flow message.
 - **Workflow Engine** - internal service that orchestrates steps execution.
 - **Configurations** - a set of configurable parameters that are separated from the workflow logic and stored in manifest file (*workflow.yaml*). Configurations can be updated by a user via UI or API.
 - **Transformation Rules** - Definition of data model and a set of rules that define how the data should be transformed from the source graph to the solution graph to the CDF resources. The rules are defined as Excel file.
@@ -24,54 +24,54 @@ Users can customize the workflow by adding or removing steps, or by modifying th
 - **Data transformation functions** - a collection of functions that define how the data should be transformed from the solution graph to the CDF resources. The functions are defined in a python module and provided by NEAT project.
 - **Workflow Execution History** - a set of records that contain information about workflow execution history. The records are stored in the CDF and can be accessed via UI or API.
 
-### Rules and conventions: 
+### Rules and conventions:
 
-- Each workflow must reside in its own folder and folder name defines workflow name. 
+- Each workflow must reside in its own folder and folder name defines workflow name.
 - Workflow class name must end with `NeatWorkflow` , for example `BasicNeatWorkflow` and must implement `BaseWorkflow` class from `from cognite.neat.core.workflow.base`
 - Workflow folder must contain at least 2 files :
     - `workflow.py` - steps/workflow implementation file
     - `workflow.yaml` - manifest and configurations
 - Each method that should be orchestrated by workflow engine must be prefixed with `step_` , each method must have single argument of `FlowMessage` type and return `FlowMessage` or `None`.
 - FlowMessage is passed from one step to another and it's captured in execution log.
-- FlowMessage can have `next_step_ids` property that defines which steps should be executed next. If `next_step_ids` is not set, next step will be executed based on execution graph defined in manifest. 
+- FlowMessage can have `next_step_ids` property that defines which steps should be executed next. If `next_step_ids` is not set, next step will be executed based on execution graph defined in manifest.
 - FlowMessage can have `output_text` property that defines what should be logged in execution log and available in UI. If `output_text` is not set, method name will be used as output text.
-- FlowMessage can have `error_text` property that defines error message that should be logged in execution log and available in UI in case of error. 
+- FlowMessage can have `error_text` property that defines error message that should be logged in execution log and available in UI in case of error.
 
-Manifest file consist of 3 main sections: 
+Manifest file consist of 3 main sections:
 
 - `configs` - workflow configuration parameters.
-- `steps` - steps metadata. 
-- `system_components` - system or solutions components, is used for documentation purpose only. 
-- `description` - short description of the workflow. 
-- `implementation_module` - alternative workflow implementation module name.If not set, `workflow.py` will be used. Can we used to reuse workflow implementation from another workflow. 
+- `steps` - steps metadata.
+- `system_components` - system or solutions components, is used for documentation purpose only.
+- `description` - short description of the workflow.
+- `implementation_module` - alternative workflow implementation module name.If not set, `workflow.py` will be used. Can we used to reuse workflow implementation from another workflow.
 
 
-### Steps 
+### Steps
 
  Step is a single block of code (method of workflow class) that is executed as part of a workflow. Multiple step methods are aggregated into workflow class (*workflow.py* file).
 
 
-### Triggers 
+### Triggers
 
-Trigger is a special type of step that can be used to trigger workflow execution. 
+Trigger is a special type of step that can be used to trigger workflow execution.
 
 Supported trigger types :
 
 - `http_trigger` - HTTP trigger that can be used to trigger workflow execution via HTTP request.Also use by UI to trigger workflow execution.
 - `time_trigger` - time trigger that can be used to trigger workflow execution on schedule.
 
-### Tasks 
+### Tasks
 
-Task is a special type of step that has provided implementation (no need to implement it in *workflow.py*) and can be used to perform some common tasks. Task are configured via `params` section in manifest file. 
+Task is a special type of step that has provided implementation (no need to implement it in *workflow.py*) and can be used to perform some common tasks. Task are configured via `params` section in manifest file.
 
-Supported task types : 
+Supported task types :
 
-- `start_workflow_task_step` - start another workflow. FlowMessage is passed to started workflow as input. The task supports synchronious and asynchronious execution. 
-- `wait_for_event` - the task pause workflow execution until event is received. 
+- `start_workflow_task_step` - start another workflow. FlowMessage is passed to started workflow as input. The task supports synchronious and asynchronious execution.
+- `wait_for_event` - the task pause workflow execution until event is received.
 
-### Flow Message 
+### Flow Message
 
-FlowMessage is a special object that is passed from one step to another and it's captured in execution log. 
+FlowMessage is a special object that is passed from one step to another and it's captured in execution log.
 
 ```python
 class FlowMessage(BaseModel):
@@ -83,11 +83,11 @@ class FlowMessage(BaseModel):
     error_text: str = None  # The error text of the step that is captured in the execution log
     next_step_ids: list[str] = None  # If set, the workflow will skip default route and go to the next step in the list
     step_execution_status: StepExecutionStatus = StepExecutionStatus.UNKNOWN  # The status of the step execution
-```    
+```
 
-`payload` property of FlowMessage is used to pass data between steps and automatically recorded in execution log. 
+`payload` property of FlowMessage is used to pass data between steps and automatically recorded in execution log.
 
-FlowMessage can have `next_step_ids` property that defines which steps should be executed next. If `next_step_ids` is not set, next step will be executed based on execution graph defined in manifest. 
+FlowMessage can have `next_step_ids` property that defines which steps should be executed next. If `next_step_ids` is not set, next step will be executed based on execution graph defined in manifest.
 
 FlowMessage can have `output_text` property that defines what should be logged in execution log and available in UI. If `output_text` is not set, method name will be used as output text. FlowMessage can have `error_text` property that defines error message that should be logged in execution log and available in UI in case of error.
 
@@ -98,10 +98,10 @@ By default, execution graph is static and defined in manifest file. It's possibl
 
 ### Workflow configuration parameters
 
-Each workflow can have configuration parameters that can be set in manifest file directly or via UI. In addition to that, workflow can have system configuration parameters that have special meaning . 
-Supported system configuration parameters : 
+Each workflow can have configuration parameters that can be set in manifest file directly or via UI. In addition to that, workflow can have system configuration parameters that have special meaning .
+Supported system configuration parameters :
 
-- `system.execution_reporting_type` - controls how workflow execution log should be reported to CDF . Supported values : `all_disabled`, `all_enabled`(default) 
+- `system.execution_reporting_type` - controls how workflow execution log should be reported to CDF . Supported values : `all_disabled`, `all_enabled`(default)
 
 Example :
 ```yaml
@@ -111,7 +111,7 @@ Example :
     label: Execution reporting type
 ```
 
-### Basic NEAT workflow definition 
+### Basic NEAT workflow definition
 
 ```python
 import logging
@@ -128,13 +128,13 @@ class BasicNeatWorkflow(BaseWorkflow):
         self.counter = 0
         self.metrics.register_metric("counter_1", "", "counter", ["step"])
         self.metrics.register_metric("gauge_1", "", "gauge", ["step"])
-   
+
     def step_run_experiment_1(self, flow_msg: FlowMessage = None):
         logging.info("Running experiment 1")
         logging.info("Done running experiment 4444")
         self.counter = self.counter + 1
         logging.info("Counter: " + str(self.counter))
-        
+
         self.metrics.get("counter_1", {"step": "run_experiment_1"}).inc()
         self.metrics.get("gauge_1", {"step": "run_experiment_1"}).set(self.counter)
 
@@ -152,7 +152,7 @@ class BasicNeatWorkflow(BaseWorkflow):
         logging.info("Error handler")
         return FlowMessage(output_text="Error handleed")
 
-``` 
+```
 
 
 
@@ -253,13 +253,13 @@ steps:
         pos_y: 300
 ```
 
-### Versioning 
+### Versioning
 
-Workflows and rule files are versioned automatically or manually. If version is not specified, NEAT will used hash of a file as version. 
+Workflows and rule files are versioned automatically or manually. If version is not specified, NEAT will used hash of a file as version.
 
-### Metrics and monitoring 
+### Metrics and monitoring
 
-Everything in measured in NEAT. 
+Everything in measured in NEAT.
 Metrics are exposed via prometheus compatible endpoint on http://<host:port>/metrics but also available in json format on http://<host:port>/api/metrics
 The neat provides a set of default metrics and each workflow can define custom metrics,first step is to register metric in workflow constructor:
 ```python
@@ -280,36 +280,36 @@ after that, metrics can be accessed in any step:
 
 To set up and configure your first  NEAT workflow , follow these steps:
 
-1. Create new workflow package or download existing workflow package from CDF or from GitHub workflow repository(not available yet) 
+1. Create new workflow package or download existing workflow package from CDF or from GitHub workflow repository(not available yet)
 2. Configure the parameters in the manifest file to match your system requirements
-3. Execute the workflow using the command line or a GUI tool or via http trigger or time schedule trigger 
+3. Execute the workflow using the command line or a GUI tool or via http trigger or time schedule trigger
 4. Monitor the progress of the workflow and any errors that may occur
 
 
-### Packaging and automatic resource loading 
+### Packaging and automatic resource loading
 
 Workflows are packaged as zip files and can be loaded from local file system or from CDF Files.
 
-### Workflow sharing and remote storage 
+### Workflow sharing and remote storage
 
-NEAT supports workflow sharing and storage via CDF. 
+NEAT supports workflow sharing and storage via CDF.
 
-### Execution history 
+### Execution history
 
-NEAT stores detailed execution history in CDF and available via NEAT UI , REST API or directly in CDF. 
+NEAT stores detailed execution history in CDF and available via NEAT UI , REST API or directly in CDF.
 
 ![Execution history](./figs/execution-history.gif)
 
-### Data lineage 
+### Data lineage
 
-NEAT stores detailed data lineage in CDF. Produced resources can be tagged with unique execution id , workflow and rules file version. 
+NEAT stores detailed data lineage in CDF. Produced resources can be tagged with unique execution id , workflow and rules file version.
 
-### REST API 
+### REST API
 
-Open API docs : http://localhost:8000/docs 
+Open API docs : http://localhost:8000/docs
 
 
-### Monitoring and metrics 
+### Monitoring and metrics
 
 
 By default NEAT exposes all metric over Prometheus compatible endpoint on http://localhost:8080/metrics

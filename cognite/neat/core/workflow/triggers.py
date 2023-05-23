@@ -14,6 +14,9 @@ async def get_body(request: Request):
     return await request.body()
 
 
+fast_api_depends = Depends(get_body)
+
+
 class TriggerManager:
     """Triggers are the way to start a workflow. They are defined in the workflow definition file."""
 
@@ -32,11 +35,11 @@ class TriggerManager:
         logging.info("Starting HTTP trigger endpoint")
 
         @web_server.post("/api/workflow/{workflow_name}/http_trigger/{step_id}")
-        def start_workflow(workflow_name: str, step_id: str, request: Request, body: bytes = Depends(get_body)):
+        def start_workflow(workflow_name: str, step_id: str, request: Request, body: bytes = fast_api_depends):
             logging.info(f"New HTTP trigger request for workflow {workflow_name} step {step_id}")
             workflow = self.workflow_manager.get_workflow(workflow_name)
             json_payload = None
-            try: 
+            try:
                 # TODO: Add support for other content types
                 json_payload = json.loads(body)
             except Exception as e:
@@ -49,15 +52,15 @@ class TriggerManager:
             if workflow.state == WorkflowState.RUNNING_WAITING:
                 workflow.resume_workflow(flow_message=flow_msg, step_id=step_id)
                 return {"result": "Workflow instance resumed"}
-            elif workflow.state != WorkflowState.RUNNING:   
+            elif workflow.state != WorkflowState.RUNNING:
                 result = workflow.start(sync=sync, flow_message=flow_msg, start_step_id=step_id)
-                if result :
+                if result:
                     if result.payload:
                         logging.info(f"Workflow resule payload = {result.payload}")
                         return result.payload
             else:
                 logging.info(f"Workflow {workflow_name} is already running")
-                return {"result": "Workflow instance already running"}        
+                return {"result": "Workflow instance already running"}
             return {"result": "Workflow instance started"}
 
     def _start_scheduler_main_loop(self):

@@ -148,7 +148,7 @@ export default function TransformationTable() {
     </Typography>
     {alertMsg != "" && (<Alert severity="warning">
       <AlertTitle>Warning</AlertTitle>
-        {alertMsg} 
+        {alertMsg}
     </Alert> )}
     <TableContainer component={Paper}>
       <Table aria-label="collapsible table">

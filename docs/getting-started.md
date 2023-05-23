@@ -1,11 +1,10 @@
-# Getting Started 
+# Getting Started
 
 ## Installation
 
-### Docker 
+### Docker
 
-### Python package 
+### Python package
 
 
-## Configuration 
-
+## Configuration

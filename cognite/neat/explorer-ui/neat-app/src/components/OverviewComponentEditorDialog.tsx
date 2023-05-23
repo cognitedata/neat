@@ -8,7 +8,7 @@ import TextField from "@mui/material/TextField"
 import { useEffect, useState } from "react"
 import { WorkflowSystemComponent } from "types/WorkflowTypes"
 
-export default function OverviewComponentEditorDialog(props: any) 
+export default function OverviewComponentEditorDialog(props: any)
 {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [component, setComponent] = useState<WorkflowSystemComponent>(null);
@@ -40,9 +40,9 @@ export default function OverviewComponentEditorDialog(props: any)
             console.dir(props.component);
         }
       }, [props.open]);
- 
 
- 
+
+
 return (
 <Dialog open={dialogOpen} onClose={handleDialogCancel}>
 <DialogTitle>Component editor</DialogTitle>

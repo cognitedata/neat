@@ -101,7 +101,7 @@ const openItemEditorDialog = (selectedConfigItem: WorkflowConfigItem) => {
             <TableCell align="right">Value</TableCell>
             <TableCell align="right">Label</TableCell>
             <TableCell align="right">Action</TableCell>
-            
+
           </TableRow>
         </TableHead>
         <TableBody>
@@ -124,8 +124,8 @@ const openItemEditorDialog = (selectedConfigItem: WorkflowConfigItem) => {
           ))}
         </TableBody>
       </Table>
-     
-    </TableContainer>      
+
+    </TableContainer>
       <Button  variant="outlined" size="small" sx={{marginRight:2,marginTop:2}} onClick={saveWorkflow} >Save</Button>
       <Button variant="outlined" size="small" sx={{marginRight:2,marginTop:2}} onClick={()=>openItemEditorDialog(null)} >Add</Button>
       <ConfigEditorDialog open={dialogOpen} onClose={configEditorDialogHandler} configItem={selectedConfigItem} />
@@ -135,7 +135,7 @@ const openItemEditorDialog = (selectedConfigItem: WorkflowConfigItem) => {
 }
 
 
-export function ConfigEditorDialog(props: any) 
+export function ConfigEditorDialog(props: any)
 {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [configItem, setConfigItem] = useState<WorkflowConfigItem>(null);
@@ -163,7 +163,7 @@ export function ConfigEditorDialog(props: any)
             console.dir(props.configItem);
         }
       }, [props.open]);
- 
+
 return (
 <Dialog open={dialogOpen} onClose={handleDialogCancel}>
 <DialogTitle>Configuration editor</DialogTitle>

@@ -42,7 +42,7 @@ export default function GlobalConfigView() {
     "log_format": "%(asctime)s.%(msecs)03d %(levelname)-8s %(message)s",
     "stop_on_error": false
   });
-  
+
   let initCdfResourcesResult:string = "";
 
   const [neatApiRootUrl, setNeatApiRootUrl] = useState(getNeatApiRootUrl());
@@ -98,7 +98,7 @@ export default function GlobalConfigView() {
   const initCdfResources = () => {
     setLoading(true);
     let url = neatApiRootUrl+"/api/cdf/init-neat-resources";
-    // send post request 
+    // send post request
     fetch(url, {
       method: "post"})
       .then((response) => response.json())
@@ -145,9 +145,9 @@ export default function GlobalConfigView() {
             </Stack>
           </Box>
           <h3>Neat internal CDF resources (used for storing files and execution history)</h3>
-          
+
           <Button variant="contained" onClick={initCdfResources}>Initialize CDF resources</Button>
-          
+
         </Item>
 
 

@@ -87,7 +87,7 @@ export default function WorkflowView() {
     loadListOfWorkflows();
     loadWorkflowDefinitions(getSelectedWorkflowName());
     startStatePolling();
-  
+
   }, []);
 
   const fetchFileContent = async () => {
