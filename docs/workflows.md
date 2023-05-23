@@ -92,9 +92,18 @@ FlowMessage can have `next_step_ids` property that defines which steps should be
 FlowMessage can have `output_text` property that defines what should be logged in execution log and available in UI. If `output_text` is not set, method name will be used as output text. FlowMessage can have `error_text` property that defines error message that should be logged in execution log and available in UI in case of error.
 
 ### Static or dynamic execution graph
-
+Execution graph defines which steps should be executed next.
 By default, execution graph is static and defined in manifest file. It's possible to define dynamic execution graph by returning `next_step_ids` property in step method.
 
+Example of dynamic routing  :
+
+```python
+def step_run_experiment_1(self, flow_msg: FlowMessage = None):
+        if flow_msg.payload["action"] == "approve":
+            return FlowMessage(next_step_ids=["cleanup"])
+        else :
+            return FlowMessage(next_step_ids=["step_45507"])
+```
 
 ### Workflow configuration parameters
 
@@ -311,8 +320,32 @@ Open API docs : http://localhost:8000/docs
 
 ### Monitoring and metrics
 
+By default NEAT exposes all metric over Prometheus compatible endpoint on http://localhost:8080/metrics and also in json format on http://localhost:8080/api/metrics or via UI .
+Metrics can be accessed and set in any step of the workflow using metrics helper methods:
+```python
+        self.metrics.get("counter_1", {"step": "run_experiment_1"}).inc()
+        self.metrics.get("gauge_1", {"step": "run_experiment_1"}).set(self.counter)
+```
 
-By default NEAT exposes all metric over Prometheus compatible endpoint on http://localhost:8080/metrics
+Complete example:
+```python
+import logging
+from cognite.client import CogniteClient
+from cognite.neat.core.workflow.base import BaseWorkflow
+from cognite.neat.core.workflow.model import FlowMessage
+
+
+class BasicNeatWorkflow(BaseWorkflow):
+    def __init__(self, name: str, client: CogniteClient):
+        super().__init__(name, client, [])
+        self.metrics.register_metric("counter_1", "", "counter", ["step"])
+        self.metrics.register_metric("gauge_1", "", "gauge", ["step"])
+
+    def step_run_experiment_1(self, flow_msg: FlowMessage = None):
+        self.counter = self.counter + 1
+        self.metrics.get("counter_1", {"step": "run_experiment_1"}).inc()
+        self.metrics.get("gauge_1", {"step": "run_experiment_1"}).set(self.counter)
+```
 
 
 ### Troubleshooting:

@@ -77,7 +77,7 @@ configs:
     type: null
     value: ''
 description: null
-groups:
+system_components:
 -   description: null
     id: source_excel_sheet
     label: Transformation Rules

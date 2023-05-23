@@ -63,7 +63,7 @@ configs:
     type: null
     value: all_disabled
 description: null
-groups:
+system_components:
 -   description: null
     id: grid_management_system
     label: Grid management system
