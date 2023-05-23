@@ -45,7 +45,7 @@ your CDF credentials to allow `neat` access CDF.
 
 ## Documentation
 
-[Documentation](https://neat-docs.app.cogniteapp.com/)
+[Documentation](https://cognite-neat.readthedocs-hosted.com/en/latest/)
 
 ![](./docs/figs/high-level-io.png)
 
