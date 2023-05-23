@@ -13,22 +13,50 @@ Changes are grouped as follows
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## [0.11.0] - 11-05-24
+## [0.11.5] - 23-05-23
+### Fixed
+* Removed `data/config.yaml` dump. This is not used.
+* If the config is not specified, the default `config.yaml` now dumps it content as yaml and not `json`.
+
+## [0.11.4] - 22-05-23
+### Added
+* Reporting on categorized assets and relationships
+* Safety gauge to skip assets which are changing asset hierarchy or to raise exception
+
+## [0.11.3] - 19-05-23
+### Fixed
+* When running `neat` with two different datasets without an external_id prefix, the creation of an orphanage asset
+  caused a DuplicationError. This is now fixed by suffixing the dataset to the orphanage asset.
+
+
+## [0.11.2] - 15-05-23
+### Added
+* Generation of GraphQL schema from transformation rules
+* Fixing names of classes/properties to be aligned to GraphQL allowed characters
+* Allowing pure data modeling transformation rules, i.e. no data on mapping rules
+
+## [0.11.1] - 08-05-23
+
+### Fixed
+
+* Set the license of the package in poetry build.
+
+## [0.11.0] - 08-05-23
 - Refactored application bootrap procese and core application functions aggregated into NeatApp class.
 - Small bug fixes.
 - Fixed global configurations via UI and API.
 
-## [0.10.4] - 28-04-24
+## [0.10.4] - 28-04-23
 - Added readme to publish process on pypi.org.
 
 
-## [0.10.3] - 26-04-24
+## [0.10.3] - 26-04-23
 - Handling edge case in graph that results in decommissioned relationships
 
-## [0.10.2] - 23-04-24
+## [0.10.2] - 23-04-23
 - Fix issue with duplicated labels for relationships
 
-## [0.10.1] - 20-04-24
+## [0.10.1] - 20-04-23
 - Fix for issue of creation of relationships for assets that do not exist
 
 ## [0.10.0] - 17-04-24
@@ -37,16 +65,16 @@ Changes are grouped as follows
 - Improved logging and performance for `rdf_to_asset` and `rdf_to_relationships`
 - Additional labels for relationships
 
-## [0.9.2] - 05-04-24
+## [0.9.2] - 05-04-23
 - Refactor TransformationRules to entail data modeling, relationship definition, label creation methods
 
-## [0.9.1] - 05-04-24
+## [0.9.1] - 05-04-23
 - Remove duplicated rules for relationships which are causing duplicated relationships
 - Improve performance of relationship categorization
 - Improve NeatGraphStore to better handle graph.drop() for in-memory store
 - Improved current example workflows
 
-## [0.9.0] - 03-04-24
+## [0.9.0] - 03-04-23
 - Created mock module
 - Added generation of mock graphs based on data model provided in transformation rules
 - DataModelingDefinition class extended with methods:

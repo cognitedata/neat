@@ -4,6 +4,7 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Literal, Self
 
+import yaml
 from pydantic import BaseModel, Field, validator
 from yaml import safe_load
 
@@ -114,7 +115,8 @@ class Config(BaseModel):
         return cls(**safe_load(filepath.read_text()))
 
     def to_yaml(self, filepath: Path):
-        filepath.write_text(self.json())
+        with filepath.open("w") as f:
+            yaml.dump(self.dict(), f)
 
     @classmethod
     def from_env(cls) -> Self:

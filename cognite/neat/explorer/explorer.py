@@ -59,7 +59,10 @@ neat_app = NeatApp(config)
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app_ref: FastAPI):
+    logging.info("Startup FastAPI server")
+    neat_app.set_http_server(app_ref)
+    neat_app.start()
     yield
     logging.info("FastApi shutdown event")
     neat_app.stop()
@@ -67,8 +70,6 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Neat", lifespan=lifespan)
 
-neat_app.set_http_server(app)
-neat_app.start()
 
 origins = [
     "http://localhost:8000",

@@ -1,5 +1,6 @@
 site_name: Neat Docs
 docs_dir: docs
+use_directory_urls: false
 theme:
     name: gitbook
 nav:
@@ -17,6 +18,7 @@ nav:
         - Why RDF?: blog/posts/why-rdf.md
         - Review of Rules and Terminology: blog/posts/review_of_rules_and_terminology.ipynb
         - Knowledge Graph Transformation: blog/posts/Knowledge Graph Transformation.ipynb
+        - Generating CDF Graph from RDF Graph: blog/posts/Generating CDF Graph from RDF Graph.ipynb
         - Generate Mock Graph: blog/posts/Generate Mock Graph.ipynb
 
 plugins:

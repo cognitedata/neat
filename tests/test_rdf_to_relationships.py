@@ -76,17 +76,24 @@ def test_relationship_diffing(mock_knowledge_graph, transformation_rules):
     mock_knowledge_graph.graph.remove((transformation_rules.metadata.namespace["Terminal-1"], None, None))
     rdf_relationships = rdf2relationships(mock_knowledge_graph, transformation_rules)
 
-    categorized_relationships = categorize_relationships(
+    categorized_relationships, report = categorize_relationships(
         client=client_mock,
         rdf_relationships=rdf_relationships,
         data_set_id=transformation_rules.metadata.data_set_id,
+        return_report=True,
     )
 
     assert len(categorized_relationships["create"]) == 1
+    assert len(report["create"]) == 1
     assert create_id == categorized_relationships["create"][0].external_id
+    assert create_id in report["create"]
 
     assert len(categorized_relationships["resurrect"]) == 1
+    assert len(report["resurrect"]) == 1
     assert resurrect_id == categorized_relationships["resurrect"][0]._external_id
+    assert resurrect_id in report["resurrect"]
 
     assert len(categorized_relationships["decommission"]) == 4
+    assert len(report["decommission"]) == 4
     assert decommission_id == {relation._external_id for relation in categorized_relationships["decommission"]}
+    assert decommission_id == report["decommission"]

@@ -1,6 +1,7 @@
 import logging
+import warnings
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 from warnings import warn
 
 import pandas as pd
@@ -355,9 +356,7 @@ def rdf2assets(
     """
 
     orphanage_asset_external_id = (
-        f"{transformation_rules.metadata.externalIdPrefix}orphanage"
-        if transformation_rules.metadata.externalIdPrefix
-        else "orphanage"
+        f"{transformation_rules.metadata.externalIdPrefix or ''}orphanage-{transformation_rules.metadata.data_set_id}"
     )
 
     graph = graph_store.get_graph()
@@ -407,7 +406,7 @@ def rdf2assets(
                     class_instance,
                     asset_class_mapping[class_],
                     transformation_rules.metadata.data_set_id,
-                    "orphanage" if use_orphanage else None,  # we need only base external id
+                    orphanage_asset_external_id if use_orphanage else None,  # we need only base external id
                     transformation_rules.metadata.externalIdPrefix or None,
                 )
 
@@ -604,8 +603,12 @@ def _assets_to_create(rdf_assets: dict, asset_ids: set) -> list[Asset]:
 
 
 def _assets_to_update(
-    rdf_assets: dict, cdf_assets: pd.DataFrame, asset_ids: set, exclude_paths: list = EXCLUDE_PATHS
-) -> list[Asset]:
+    rdf_assets: dict,
+    cdf_assets: pd.DataFrame,
+    asset_ids: set,
+    exclude_paths: list = EXCLUDE_PATHS,
+    stop_on_exception: bool = False,
+) -> tuple[list[Asset], dict[str, dict]]:
     """Return list of assets to be updated
 
     Parameters
@@ -618,17 +621,20 @@ def _assets_to_update(
         Candidate assets to be updated
     exclude_paths : list, optional
         Paths not to be checked when diffing rdf and cdf assets, by default EXCLUDE_PATHS
+    stop_on_exception: bool, optional
+        Whether to stop on exception or not, by default False
 
     Returns
     -------
-    list[Asset]
-        List of assets to be updated
+    tuple[list[Asset], dict[str, dict]]
+        List of assets to be updated and detailed report of changes per asset
     """
 
     start_time = datetime_utc_now()
     assets = []
+    report = {}
     if not asset_ids:
-        return []
+        return [], {}
     logging.info("Wrangling assets to be updated into their final form")
     cdf_asset_subset = {
         row["external_id"]: row
@@ -637,6 +643,21 @@ def _assets_to_update(
     for external_id in asset_ids:
         cdf_asset = cdf_asset_subset[external_id]
         diffing_result = DeepDiff(cdf_asset, rdf_assets[external_id], exclude_paths=exclude_paths)
+
+        if "parent_external_id" in diffing_result.affected_root_keys:
+            msg = f"Asset <{external_id}> is changing its parent from <{cdf_asset['parent_external_id']}>"
+            msg += f" to <{rdf_assets[external_id]['parent_external_id']}>! This is not allowed!"
+            if stop_on_exception:
+                logging.error(msg)
+                raise ValueError(msg)
+            else:
+                msg += " Skipping update of this asset!"
+                logging.warning(msg)
+                warnings.warn(
+                    msg,
+                    stacklevel=2,
+                )
+                continue
 
         if diffing_result and "root['metadata']['active']" not in diffing_result.affected_paths:
             asset = Asset(**rdf_assets[external_id])
@@ -647,8 +668,10 @@ def _assets_to_update(
             asset.metadata["update_time"] = str(datetime.now(timezone.utc))
             assets.append(asset)
 
+            report[external_id] = dict(diffing_result)
+
     logging.info(f"Wrangling of {len(assets)} completed in {(datetime_utc_now() - start_time).seconds} seconds")
-    return assets
+    return assets, report
 
 
 def _assets_to_resurrect(rdf_assets: dict, cdf_assets: pd.DataFrame, asset_ids: set) -> list[Asset]:
@@ -726,8 +749,13 @@ def _assets_to_decommission(cdf_assets, asset_ids) -> list[Asset]:
 
 
 def categorize_assets(
-    client: CogniteClient, rdf_assets: dict, data_set_id: int, partitions: int = 40
-) -> dict[str, list[Asset]]:
+    client: CogniteClient,
+    rdf_assets: dict,
+    data_set_id: int,
+    partitions: int = 40,
+    stop_on_exception: bool = False,
+    return_report: bool = False,
+) -> Union[tuple[dict, dict], dict]:
     """Categorize assets on those that are to be created, updated and decommissioned
 
     Parameters
@@ -740,6 +768,10 @@ def categorize_assets(
         Dataset id to which assets are to be/are stored
     partitions : int, optional
         Number of partitions to use when fetching assets from CDF, by default 40
+    stop_on_exception : bool, optional
+        Whether to stop on exception or not, by default False
+    return_report : bool, optional
+        Whether to report on the diffing results or not, by default False
 
     Returns
     -------
@@ -771,12 +803,19 @@ def categorize_assets(
     logging.info(f"Number of assets to decommission: { len(decommission_ids)}")
     logging.info(f"Number of assets to resurrect: { len(resurrect_ids)}")
 
-    return {
+    report = {"create": create_ids, "resurrect": resurrect_ids, "decommission": decommission_ids, "update": None}
+    categorized_assets = {
         "create": _assets_to_create(rdf_assets, create_ids),
-        "update": _assets_to_update(rdf_assets, cdf_assets, update_ids),
+        "update": None,
         "resurrect": _assets_to_resurrect(rdf_assets, cdf_assets, resurrect_ids),
         "decommission": _assets_to_decommission(cdf_assets, decommission_ids),
     }
+
+    categorized_assets["update"], report["update"] = _assets_to_update(
+        rdf_assets, cdf_assets, update_ids, stop_on_exception=stop_on_exception
+    )
+
+    return (categorized_assets, report) if return_report else categorized_assets
 
 
 def _micro_batch_push(

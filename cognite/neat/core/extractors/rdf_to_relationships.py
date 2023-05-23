@@ -273,8 +273,15 @@ def _relationships_to_resurrect(external_ids: list[str]) -> list[RelationshipUpd
 
 
 def categorize_relationships(
-    client: CogniteClient, rdf_relationships: pd.DataFrame, data_set_id: int, partitions: int = 40
-) -> Dict[str, list[Union[Relationship, RelationshipUpdate]]]:
+    client: CogniteClient,
+    rdf_relationships: pd.DataFrame,
+    data_set_id: int,
+    partitions: int = 40,
+    return_report: bool = False,
+) -> Union[
+    tuple[dict[str, list[Union[Relationship, RelationshipUpdate]]], dict[str, set]],
+    dict[str, list[Union[Relationship, RelationshipUpdate]]],
+]:
     """Categorize relationships on those that are to be created, decommissioned or resurrected"""
     # TODO also figure out which relationships to be deleted
 
@@ -311,11 +318,14 @@ def categorize_relationships(
     logging.info(f"Number of relationships to decommission: { len(decommission_xids)}")
     logging.info(f"Number of relationships to resurrect: { len(resurrect_xids)}")
 
-    return {
+    report = {"create": create_xids, "resurrect": resurrect_xids, "decommission": decommission_xids}
+    categorized_relationships = {
         "create": _relationship_to_create(rdf_relationships[rdf_relationships.external_id.isin(create_xids)]),
-        "decommission": _relationships_to_decommission(decommission_xids),
         "resurrect": _relationships_to_resurrect(resurrect_xids),
+        "decommission": _relationships_to_decommission(decommission_xids),
     }
+
+    return (categorized_relationships, report) if return_report else categorized_relationships
 
 
 def _micro_batch_push(

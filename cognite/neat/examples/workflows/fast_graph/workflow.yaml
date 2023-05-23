@@ -272,7 +272,7 @@ steps:
         pos_x: 114
         pos_y: 874
 -   description: Upload CDF labels
-    enabled: false
+    enabled: true
     group_id: null
     id: create_cdf_labels
     label: Upload CDF labels
