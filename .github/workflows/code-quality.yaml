@@ -63,12 +63,6 @@ jobs:
 
       - name: Run and Verify
         run: |
-          cp cognite/neat/examples/config.yaml config.yaml
-          # To verify config.yaml
-          echo "================================"
-          echo "config file:"
-          cat config.yaml
-          echo "================================"
           make compose-up-d
           # Give the application time to startup
           sleep 10s
