@@ -14,17 +14,20 @@ class NeatMetricsCollector:
     ) -> None:
         """Register metric in prometheus"""
         metric_labels = [] if metric_labels is None else metric_labels
-        metric = None
+
         metric_name = f"neat_workflow_{self.name}_{metric_name}"
         if metric_name in REGISTRY._names_to_collectors:
             self.metrics[metric_name] = REGISTRY._names_to_collectors[metric_name]
-        else:
-            if m_type == "gauge":
-                metric = Gauge(metric_name, metric_description, metric_labels)
-            elif m_type == "counter":
-                metric = Counter(metric_name, metric_description, metric_labels)
-            if metric:
-                self.metrics[metric_name] = metric
+            return
+
+        metric = None
+        if m_type == "gauge":
+            metric = Gauge(metric_name, metric_description, metric_labels)
+        elif m_type == "counter":
+            metric = Counter(metric_name, metric_description, metric_labels)
+
+        if metric:
+            self.metrics[metric_name] = metric
 
     def get(self, metric_name: str, labels: dict[str, str] = None) -> Gauge | Counter:
         """Return metric by name"""
