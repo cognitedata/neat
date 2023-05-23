@@ -105,7 +105,7 @@ def read_root():
 def get_about():
     response = {"version": neat.__version__}
     installed_packages = pkg_resources.working_set
-    installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])
+    installed_packages_list = sorted([f"{i.key}=={i.version}" for i in installed_packages])
     response["packages"] = installed_packages_list
     return response
 
