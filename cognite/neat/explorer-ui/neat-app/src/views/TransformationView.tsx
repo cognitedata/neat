@@ -107,7 +107,7 @@ export default function TransformationTable() {
     {field: 'name', headerName: 'Name', width: 130},
     {field: 'value', headerName: 'Value', type: 'number', width: 90},
   ];
-
+  const downloadUrl = neatApiRootUrl+"/data/rules/"+data.file_name
   useEffect(() => {
     loadDataset("","");
   }, []);
@@ -143,7 +143,7 @@ export default function TransformationTable() {
   return (
     <Box>
     <Typography variant="subtitle1" gutterBottom>
-        Rules file : {data.file_name}  version : {data.hash} source: {data.src}
+        Rules file : <a href={downloadUrl} >{data.file_name}</a>  version : {data.hash} source: {data.src}
         {data.error_text && <Container sx={{ color: 'red' }}>{data.error_text}</Container>}
     </Typography>
     {alertMsg != "" && (<Alert severity="warning">
