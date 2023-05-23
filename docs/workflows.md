@@ -4,8 +4,11 @@ Neat Workflow is concept that enables users to automate complex processes involv
 The workflow engine follows a modular, step-by-step process that can be customized to suit your specific data transformation needs. Each step in the workflow corresponds to a specific task, such as loading transformation rules, configuring graph stores, and loading the source graph.
 Users can customize the workflow by adding or removing steps, or by modifying the parameters in each step to match their specific data requirements.
 
+![Execution history](./figs/wf-overview.gif)
+
 ## Terminology 
 
+- **Solution** - a package that contains a set of workflows, rules and other components that are used to solve a specific problem.
 - **Workflow** - a set of steps that are executed in a specific order.
 - **Step** - a single block of code (function) that is executed as part of a workflow. 
 - **Trigger** -  a special type of step that can be used to trigger workflow execution. 
@@ -38,7 +41,7 @@ Manifest file consist of 3 main sections:
 
 - `configs` - workflow configuration parameters.
 - `steps` - steps metadata. 
-- `groups` - logical grouping of steps, it's used for component or system level documentation and UI purposes. 
+- `system_components` - system or solutions components, is used for documentation purpose only. 
 - `description` - short description of the workflow. 
 - `implementation_module` - alternative workflow implementation module name.If not set, `workflow.py` will be used. Can we used to reuse workflow implementation from another workflow. 
 
@@ -64,6 +67,7 @@ Task is a special type of step that has provided implementation (no need to impl
 Supported task types : 
 
 - `start_workflow_task_step` - start another workflow. FlowMessage is passed to started workflow as input. The task supports synchronious and asynchronious execution. 
+- `wait_for_event` - the task pause workflow execution until event is received. 
 
 ### Flow Message 
 
@@ -104,6 +108,7 @@ Example :
 -   group: system
     name: system.execution_reporting_type
     value: all_disabled
+    label: Execution reporting type
 ```
 
 ### Basic NEAT workflow definition 
@@ -164,7 +169,7 @@ configs:
     type: null
     value: graphdb
 description: null
-groups:
+system_components:
 -   description: null
     id: experimentation_system
     label: Experimentation playground
@@ -177,7 +182,7 @@ name: playground
 steps:
 -   description: null
     enabled: true
-    group_id: null
+    system_component_id: null
     id: run_experiment_1
     label: Running experiment
     method: null
@@ -192,7 +197,7 @@ steps:
         pos_y: 144
 -   description: null
     enabled: true
-    group_id: null
+    system_component_id: null
     id: cleanup
     label: Cleanup
     method: null
@@ -205,7 +210,7 @@ steps:
         pos_y: 448
 -   description: null
     enabled: true
-    group_id: null
+    system_component_id: null
     id: step_trigger
     label: HTTP trigger
     method: null
@@ -219,7 +224,7 @@ steps:
         pos_y: 44
 -   description: null
     enabled: false
-    group_id: null
+    system_component_id: null
     id: step_295076
     label: Run every 10 sec
     method: null
@@ -234,7 +239,7 @@ steps:
         pos_y: 42
 -   description: null
     enabled: true
-    group_id: null
+    system_component_id: null
     id: error_handler
     label: Error handler
     method: null
