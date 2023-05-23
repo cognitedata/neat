@@ -30,6 +30,7 @@ import Chip from '@mui/material/Chip';
 import OutlinedInput from '@mui/material/OutlinedInput';
 import { Theme, useTheme } from '@mui/material/styles';
 import GraphExplorer from './GraphView';
+import AlertTitle from '@mui/material/AlertTitle';
 
 
 function handleClick(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
@@ -219,6 +220,7 @@ export function FilterBar(props:{filterChangeHandler:Function}) {
     const [hiddenNsPrefixMode, setHiddenNsPrefixMode ] = hiddenNsPrefixModeCtx;
 
     const [filterOptions, setFilterOptions] = React.useState([]);
+    const [alertMsg, setAlertMsg] = useState("");
 
     useEffect(() => {
       loadClassSummary();
@@ -242,7 +244,10 @@ export function FilterBar(props:{filterChangeHandler:Function}) {
       const url = neatApiRootUrl+"/api/get-classes?"+new URLSearchParams({"graph_name":graphName,"cache":"false","workflow_name":workflowName}).toString();
 
       fetch(url).then((response) => response.json()).then((data) => {
-
+        if (data.error) {
+          setAlertMsg("The workflow is missing or has uninitialized graph stores. Please ensure that you add a graph store and/or run the workflow before proceeding. Error msg: "+data.error);
+          return;
+        }
         let options = [];
         data.rows.forEach((row) => {
           let vClass = "";
@@ -253,18 +258,24 @@ export function FilterBar(props:{filterChangeHandler:Function}) {
           }
 
           // vClass = row.class;
+          setAlertMsg("");
           options.push({class:vClass,ns_class:row.class});
         });
         options = options.sort((a, b) => a.class.localeCompare(b.class));
         setFilterOptions(options);
       }).catch((error) => {
         console.error('Error:', error);
+        setAlertMsg("The workflow is missing or has uninitialized graph stores. Please ensure that you add a graph store and/or run the workflow before proceeding. Error msg: "+error);
       }).finally(() => {
        });
     }
 
     return (
       <div>
+    {alertMsg != "" && (<Alert severity="warning">
+          <AlertTitle>Warning</AlertTitle>
+          {alertMsg}
+    </Alert> )}
       <FormControl sx={{ m: 0, width: "94vw" }}>
         <InputLabel id="demo-multiple-chip-label">Filter</InputLabel>
         <Select
@@ -320,6 +331,7 @@ export default function QDataTable() {
   const [data, setData] = useState({"fields": [], "rows": [] , "query": "" ,"elapsed_time_sec":0, "error": ""});
   const [columns, setColumns] = useState([]);
   const [openAlert, setOpenAlert] = React.useState(false);
+  const [alertMsg, setAlertMsg] = useState("");
 
   const [graphName, setGraphName] = React.useState("source");
   const [hiddenNsPrefixMode, setHiddenNsPrefixMode] = useState(true);
@@ -458,7 +470,12 @@ export default function QDataTable() {
 
   return (
     <div>
+
     <ExplorerContext.Provider value={{hiddenNsPrefixModeCtx:[hiddenNsPrefixMode, setHiddenNsPrefixMode],graphNameCtx:[graphName, setGraphName]}}>
+    {alertMsg != "" && (<Alert severity="warning">
+          <AlertTitle>Warning</AlertTitle>
+            {alertMsg}
+    </Alert> )}
     <QuerySelector selectedHandler={loadDataset} settingsUpdateHandler={settingsUpdateHandler}/>
     <SearchBar searchButtonHandler={searchObjects} />
     <FilterBar filterChangeHandler={handleFilterChange}/>

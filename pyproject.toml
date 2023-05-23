@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cognite-neat"
-version = "0.11.5"
+version = "0.12.0"
 readme = "README.md"
 description = "Knowledge graph transformation"
 authors = ["Nikola Vasiljevic <nikola.vasiljevic@cognite.com>",
@@ -16,6 +16,9 @@ exclude = [
     "cognite/neat/explorer-ui/neat-app/node_modules/**",
     "cognite/neat/explorer-ui/neat-app/*.json",
 ]
+[tool.poetry.group.dev.dependencies]
+mkdocs-glightbox = "^0.3.4"
+
 
 
 [tool.black]

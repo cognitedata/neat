@@ -1,6 +1,6 @@
 .PHONY: run-explorer run-tests run-linters build-ui build-python build-docker run-docker compose-up
 
-version="0.11.5"
+version="0.12.0"
 run-explorer:
 	@echo "Running explorer API server..."
 	# open "http://localhost:8000/static/index.html" || true
@@ -68,3 +68,7 @@ compose-up-d:
 compose-neat-up:
 	@echo "Running docker-compose for neat only"
 	cd ./docker ; mkdir -p vol_data vol_shared ; docker compose up neat
+
+run-docs:
+	@echo "Running mkdocs"
+	mkdocs serve --dev-addr 127.0.0.1:8010

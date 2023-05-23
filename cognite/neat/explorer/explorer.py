@@ -7,9 +7,10 @@ from contextlib import asynccontextmanager
 from logging import getLogger
 from pathlib import Path
 
+import pkg_resources
 from fastapi import FastAPI, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from prometheus_client import REGISTRY, Counter, make_asgi_app
 
@@ -31,6 +32,7 @@ from cognite.neat.explorer.data_classes.rest import (
 )
 from cognite.neat.explorer.utils.data_mapping import rdf_result_to_api_response
 from cognite.neat.explorer.utils.query_templates import query_templates
+from cognite.neat.migration.wf_manifests import migrate_wf_manifest
 
 logger = getLogger(__name__)  # temporary logger before config is loaded
 config_path = Path(os.environ.get("NEAT_CONFIG_PATH", "config.yaml"))
@@ -91,6 +93,7 @@ counter = Counter("started_workflows", "Description of counter")
 prom_app = make_asgi_app()
 app.mount("/metrics", prom_app)
 app.mount("/static", StaticFiles(directory=constants.UI_PATH), name="static")
+app.mount("/data", StaticFiles(directory=config.data_store_path), name="data")
 
 
 @app.get("/")
@@ -100,7 +103,11 @@ def read_root():
 
 @app.get("/api/about")
 def get_about():
-    return {"version": neat.__version__}
+    response = {"version": neat.__version__}
+    installed_packages = pkg_resources.working_set
+    installed_packages_list = sorted([f"{i.key}=={i.version}" for i in installed_packages])
+    response["packages"] = installed_packages_list
+    return response
 
 
 @app.get("/api/configs/global")
@@ -435,6 +442,12 @@ def get_workflow_definition(workflow_name: str):
     return {"definition": workflow.get_workflow_definition()}
 
 
+@app.get("/api/workflow/workflow-src/{workflow_name}/{file_name}")
+def get_workflow_src(workflow_name: str, file_name: str):
+    src = neat_app.workflow_manager.get_workflow_src(workflow_name, file_name=file_name)
+    return FileResponse(src, media_type="text/plain")
+
+
 @app.post("/api/workflow/workflow-definition/{workflow_name}")
 def update_workflow_definition(workflow_name: str, request: WorkflowDefinition):
     neat_app.workflow_manager.update_workflow(workflow_name, request)
@@ -469,6 +482,11 @@ def download_wf_from_cdf(request: DownloadFromCdfRequest):
 def download_rules_to_cdf(request: DownloadFromCdfRequest):
     neat_app.cdf_store.load_rules_file_from_cdf(request.file_name, request.version)
     return {"file_name": request.file_name, "hash": request.version}
+
+
+@app.post("/api/workflow/migrate-workflow")
+def migrate_workflow():
+    return migrate_wf_manifest(config.data_store_path)
 
 
 @app.get("/api/workflow/pre-cdf-assets/{workflow_name}")

@@ -3,6 +3,7 @@ import logging
 import threading
 import time
 import traceback
+from threading import Event
 
 import yaml
 from cognite.client import ClientConfig as CogniteClientConfig
@@ -10,6 +11,7 @@ from cognite.client import CogniteClient
 from prometheus_client import Gauge
 
 from cognite.neat.core.data_classes.config import ClientConfig, Config
+from cognite.neat.core.data_stores.metrics import NeatMetricsCollector
 from cognite.neat.core.workflow import cdf_store
 from cognite.neat.core.workflow.model import (
     FlowMessage,
@@ -21,7 +23,7 @@ from cognite.neat.core.workflow.model import (
     WorkflowState,
     WorkflowStepDefinition,
     WorkflowStepEvent,
-    WorkflowStepsGroup,
+    WorkflowSystemComponent,
 )
 from cognite.neat.core.workflow.tasks import WorkflowTaskBuilder
 
@@ -53,7 +55,7 @@ class BaseWorkflow:
         self.end_time = None
         self.execution_log: list[WorkflowStepEvent] = []
         self.workflow_steps: list[WorkflowStepDefinition] = workflow_steps
-        self.workflow_step_groups: list[WorkflowStepsGroup] = []
+        self.workflow_system_components: list[WorkflowSystemComponent] = []
         self.configs: list[WorkflowConfigItem] = []
         self.flow_message: FlowMessage = None
         self.task_builder: WorkflowTaskBuilder = None
@@ -63,6 +65,8 @@ class BaseWorkflow:
             if self.default_dataset_id
             else None
         )
+        self.metrics = NeatMetricsCollector(self.name, self.cdf_client)
+        self.resume_event = Event()
 
     def start(self, sync=False, **kwargs) -> FlowMessage | None:
         """Starts workflow execution.sync=True will block until workflow is completed and return last workflow flow message,
@@ -81,7 +85,7 @@ class BaseWorkflow:
         if self.state not in [WorkflowState.CREATED, WorkflowState.COMPLETED, WorkflowState.FAILED]:
             logging.error(f"Workflow {self.name} is already running")
             return None
-        logging.info("Starting workflow")
+        logging.info(f"Starting workflow {self.name}")
 
         if flow_message := kwargs.get("flow_message"):
             self.flow_message = flow_message
@@ -91,9 +95,12 @@ class BaseWorkflow:
         self.end_time = None
         self.run_id = utils.generate_run_id()
         start_time = time.perf_counter()
+
         self.report_workflow_execution()
         try:
             start_step_id = kwargs.get("start_step_id")
+            logging.info(f"  starting workflow from step {start_step_id}")
+
             self.run_workflow_steps(start_step_id=start_step_id)
             if self.state == WorkflowState.RUNNING:
                 self.state = WorkflowState.COMPLETED
@@ -125,6 +132,16 @@ class BaseWorkflow:
             logging.error(f"Workflow {self.name} has no trigger steps")
             return "Workflow has no trigger steps"
 
+        self.execution_log.append(
+            WorkflowStepEvent(
+                id=trigger_steps[0].id,
+                state=StepExecutionStatus.SUCCESS,
+                elapsed_time=0,
+                timestamp=utils.get_iso8601_timestamp_now_unaware(),
+                data=self.flow_message.payload if self.flow_message else None,
+            )
+        )
+
         step: WorkflowStepDefinition = trigger_steps[0]
 
         transition_steps = self.get_transition_step(step.transition_to)
@@ -146,7 +163,7 @@ class BaseWorkflow:
                 self.execution_log.append(
                     WorkflowStepEvent(
                         id=step.id,
-                        group_id=step.group_id,
+                        system_component_id=step.system_component_id,
                         state=StepExecutionStatus.SKIPPED,
                         elapsed_time=0,
                         timestamp=utils.get_iso8601_timestamp_now_unaware(),
@@ -174,7 +191,7 @@ class BaseWorkflow:
 
     def run_step(self, step: WorkflowStepDefinition) -> FlowMessage | None:
         step_name = step.id
-        group_id = step.group_id
+        system_component_id = step.system_component_id
 
         steps_metrics.labels(wf_name=self.name, step_name=step_name, name="step_started_counter").inc()
         flow_message = self.flow_message
@@ -190,7 +207,7 @@ class BaseWorkflow:
         self.execution_log.append(
             WorkflowStepEvent(
                 id=step_name,
-                group_id=group_id,
+                system_component_id=system_component_id,
                 state=step_execution_status,
                 elapsed_time=0,
                 timestamp=utils.get_iso8601_timestamp_now_unaware(),
@@ -222,6 +239,21 @@ class BaseWorkflow:
                 else:
                     logging.error(f"Workflow step {step.id} has no task builder")
                     raise Exception(f"Workflow step {step.id} has no task builder")
+            elif step.stype == StepType.WAIT_FOR_EVENT:
+                # Pause workflow execution until event is received
+                if self.state != WorkflowState.RUNNING:
+                    logging.error(f"Workflow {self.name} is not running , step {step_name} is skipped")
+                    raise Exception(f"Workflow {self.name} is not running , step {step_name} is skipped")
+                self.state = WorkflowState.RUNNING_WAITING
+                timeout = float(step.params.get("wait_timeout", "60"))
+                # reporting workflow execution before waiting for event
+                # self.report_workflow_execution()
+                logging.info(f"Workflow {self.name} is waiting for event")
+                self.resume_event.wait(timeout=timeout)
+                logging.info(f"Workflow {self.name} resumed after event")
+                self.state = WorkflowState.RUNNING
+                self.resume_event.clear()
+
             else:
                 logging.error(f"Workflow step {step.id} has unsupported step type {step.stype}")
 
@@ -247,7 +279,7 @@ class BaseWorkflow:
         self.execution_log.append(
             WorkflowStepEvent(
                 id=step_name,
-                group_id=group_id,
+                system_component_id=system_component_id,
                 state=step_execution_status,
                 elapsed_time=round(elapsed_time, 3),
                 timestamp=utils.get_iso8601_timestamp_now_unaware(),
@@ -261,6 +293,23 @@ class BaseWorkflow:
 
         self.report_step_execution()
         return new_flow_message
+
+    def resume_workflow(self, flow_message: FlowMessage, step_id: str = None):
+        if step_id:
+            if self.current_step != step_id:
+                logging.error(f"Workflow {self.name} is not in step {step_id} , resume is skipped")
+                return
+        self.flow_message = flow_message
+        self.execution_log.append(
+            WorkflowStepEvent(
+                id=step_id,
+                state=StepExecutionStatus.SUCCESS,
+                elapsed_time=0,
+                timestamp=utils.get_iso8601_timestamp_now_unaware(),
+                data=self.flow_message.payload,
+            )
+        )
+        self.resume_event.set()
 
     def report_step_execution(self):
         pass
@@ -298,21 +347,21 @@ class BaseWorkflow:
         return WorkflowDefinition(
             name=self.name,
             steps=self.workflow_steps,
-            groups=self.workflow_step_groups,
+            system_components=self.workflow_system_components,
             configs=self.configs,
         )
 
     def add_step(self, step: WorkflowStepDefinition):
         self.workflow_steps.append(step)
 
-    def add_group(self, group: WorkflowStepsGroup):
-        self.workflow_step_groups.append(group)
+    def add_system_component(self, system_components: WorkflowSystemComponent):
+        self.workflow_system_components.append(system_components)
 
     def serialize_workflow(self, output_format: str = "json", custom_implementation_module: str = None) -> str:
         workflow_definitions = WorkflowDefinition(
             name=self.name,
             steps=self.workflow_steps,
-            groups=self.workflow_step_groups,
+            system_components=self.workflow_system_components,
             configs=self.configs,
             implementation_module=custom_implementation_module,
         )
@@ -333,7 +382,7 @@ class BaseWorkflow:
 
     def set_metadata(self, metadata: WorkflowDefinition):
         self.workflow_steps = metadata.steps
-        self.workflow_step_groups = metadata.groups
+        self.workflow_system_components = metadata.system_components
         self.configs = metadata.configs
 
     def set_storage_path(self, storage_type: str, storage_path: str):
@@ -367,3 +416,6 @@ class BaseWorkflow:
         Returns: CogniteClient
         """
         return CogniteClient(self.cdf_client_config)
+
+    def get_step_by_id(self, step_id: str) -> WorkflowStepDefinition:
+        return next((step for step in self.workflow_steps if step.id == step_id), None)

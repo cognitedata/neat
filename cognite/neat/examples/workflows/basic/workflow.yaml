@@ -7,7 +7,7 @@ configs:
     type: null
     value: graphdb
 description: null
-groups:
+system_components:
 -   description: null
     id: experimentation_system
     label: Experimentation playground

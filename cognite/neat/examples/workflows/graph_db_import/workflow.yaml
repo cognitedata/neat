@@ -42,7 +42,7 @@ configs:
     type: null
     value: /app/shared
 description: null
-groups:
+system_components:
 -   description: null
     id: grid_management_system
     label: Grid management system

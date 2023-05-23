@@ -23,6 +23,8 @@ import CdfPublisher from 'components/CdfPublisher';
 import LocalUploader from 'components/LocalUploader';
 import Container from '@mui/material/Container';
 import CdfDownloader from 'components/CdfDownloader';
+import Alert from '@mui/material/Alert';
+import AlertTitle from '@mui/material/AlertTitle';
 
 function Row(props: { row: any,properties: any }) {
   const { row,properties } = props;
@@ -99,12 +101,13 @@ function Row(props: { row: any,properties: any }) {
 export default function TransformationTable() {
   const neatApiRootUrl = getNeatApiRootUrl();
   const [data, setData] = useState({"classes":[],"properties":[],"file_name":"","hash":"","error_text":"","src":""});
+  const [alertMsg, setAlertMsg] = useState("");
   const columns: GridColDef[] = [
     {field: 'id', headerName: 'ID', width: 70},
     {field: 'name', headerName: 'Name', width: 130},
     {field: 'value', headerName: 'Value', type: 'number', width: 90},
   ];
-
+  const downloadUrl = neatApiRootUrl+"/data/rules/"+data.file_name
   useEffect(() => {
     loadDataset("","");
   }, []);
@@ -117,7 +120,11 @@ export default function TransformationTable() {
       return response.json();
     }).then((data) => {
       // console.log(text);
+      setAlertMsg("");
       setData(data);
+    }).catch((err) => {
+      console.log(err);
+      setAlertMsg("Transformation rules file "+fileName+" is either invalid or missing. Please ensure that you have a valid data model and the necessary transformation rules file in place.");
     }
   )}
 
@@ -136,9 +143,13 @@ export default function TransformationTable() {
   return (
     <Box>
     <Typography variant="subtitle1" gutterBottom>
-        Rules file : {data.file_name}  version : {data.hash} source: {data.src}
+        Rules file : <a href={downloadUrl} >{data.file_name}</a>  version : {data.hash} source: {data.src}
         {data.error_text && <Container sx={{ color: 'red' }}>{data.error_text}</Container>}
     </Typography>
+    {alertMsg != "" && (<Alert severity="warning">
+      <AlertTitle>Warning</AlertTitle>
+        {alertMsg}
+    </Alert> )}
     <TableContainer component={Paper}>
       <Table aria-label="collapsible table">
         <TableHead>
@@ -160,8 +171,8 @@ export default function TransformationTable() {
     </TableContainer>
     <Box sx={{margin:5}}>
       <CdfPublisher type="transformation rules" fileName={data.file_name} />
-      <LocalUploader type="transformation rules" onUpload={onUpload} />
       <CdfDownloader type="neat-wf-rules" onDownloadSuccess={onDownloadSuccess} />
+      <LocalUploader type="transformation rules" onUpload={onUpload} />
     </Box>
 
 

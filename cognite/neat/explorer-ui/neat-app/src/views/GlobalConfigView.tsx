@@ -43,6 +43,7 @@ export default function GlobalConfigView() {
     "stop_on_error": false
   });
 
+  let initCdfResourcesResult:string = "";
 
   const [neatApiRootUrl, setNeatApiRootUrl] = useState(getNeatApiRootUrl());
 
@@ -94,15 +95,30 @@ export default function GlobalConfigView() {
     setConfigs(new_config);
   };
 
+  const initCdfResources = () => {
+    setLoading(true);
+    let url = neatApiRootUrl+"/api/cdf/init-neat-resources";
+    // send post request
+    fetch(url, {
+      method: "post"})
+      .then((response) => response.json())
+      .then((data) => {
+        console.dir(data)
+        initCdfResourcesResult = data.result;
+      }).catch((error) => {
+        console.error('Error:', error);
+        initCdfResourcesResult = "Error: "+error;
+      }).finally(() => { setLoading(false); });
+  }
 
   return (
     <Box sx={{ width: "70%" }}>
       <Stack spacing={2}>
         <Item>
-          <h2>Global Configuration</h2>
+          <h3>Global configurations</h3>
           <Box sx={{ minWidth: 200 }}>
             <Stack spacing={2} direction="column">
-              <h3>CDF configuration</h3>
+              <h4>CDF configurations</h4>
               <TextField id="project_name" label="Project name" size='small' variant="outlined" value={configs.cdf_client.project} onChange={(event) => { handleCdfConfigChange("project", event.target.value) }} />
               <TextField id="client_id" label="Client id" size='small' variant="outlined" value={configs.cdf_client.client_id} onChange={(event) => { handleCdfConfigChange("client_id", event.target.value) }} />
               <TextField id="client_secret" label="Client secret" type="password" size='small' variant="outlined" value={configs.cdf_client.client_secret} onChange={(event) => { handleCdfConfigChange("client_secret", event.target.value) }} />
@@ -111,7 +127,7 @@ export default function GlobalConfigView() {
               <TextField id="scopes" label="Scopes" size='small' variant="outlined" value={configs.cdf_client.scopes} onChange={(event) => { handleCdfConfigChange("scopes", event.target.value) }} />
               <TextField id="oidc_token_url" label="OIDC token url" size='small' variant="outlined" value={configs.cdf_client.token_url} onChange={(event) => { handleCdfConfigChange("token_url", event.target.value) }} />
               <TextField id="cdf_default_dataset_id" type="number"  label="Default CDF dataset id.The dataset is used as workflow and rules storage." size='small' variant="outlined" value={configs.cdf_default_dataset_id} onChange={(event) => { handleConfigChange("cdf_default_dataset_id", event.target.value) }} />
-              <h3>Storage and workflows</h3>
+              <h4>Storage and workflows</h4>
               <TextField id="data_store_path" label="Data directory.Is used as local workflow , rules and db storage." size='small' variant="outlined" value={configs.data_store_path} onChange={(event) => { handleConfigChange("data_store_path", event.target.value) }} />
               <FormControlLabel control={<Switch checked={configs.download_workflows_from_cdf} onChange={(event) => { handleConfigChange("download_workflows_from_cdf", event.target.checked) }} />} label="Automatically download workflows from CDF on startup"  />
               <TextField id="workflow_downloader_filter" label="List of workflows or filters that will be used for downloading workflows" size='small' variant="outlined" value={configs.workflow_downloader_filter} onChange={(event) => { handleConfigChange("workflow_downloader_filter", event.target.value) }} />
@@ -121,14 +137,19 @@ export default function GlobalConfigView() {
               {loading && (<LinearProgress />)}
             </Stack>
           </Box>
-          <h2>NEAT UI configuration</h2>
+          <h3>NEAT UI configuration</h3>
           <Box sx={{ minWidth: 120 }}>
             <Stack spacing={2} direction="column">
               <TextField id="neat_api_root_url" label="API root url" size='small' variant="outlined" value={neatApiRootUrl} onChange={(event) => { handleConfigChange("neatApiRootUrl", event.target.value) }} />
               <Button variant="contained" onClick={saveNeatApiConfigButtonHandler}>Save</Button>
             </Stack>
           </Box>
+          <h3>Neat internal CDF resources (used for storing files and execution history)</h3>
+
+          <Button variant="contained" onClick={initCdfResources}>Initialize CDF resources</Button>
+
         </Item>
+
 
       </Stack>
     </Box>
