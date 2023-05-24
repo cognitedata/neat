@@ -1,4 +1,4 @@
-# Workflow: From Excel Sheet to CDF
+# From Excel Sheet to CDF
 
 This workflow is purely based on [Transformation Rules](../transformation-rules.md), a specially tailored Excel template, which holds both the semantic data model and the knowledge graph definitions. The workflow is depicted in the screenshot below.
 

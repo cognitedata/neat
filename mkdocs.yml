@@ -6,7 +6,7 @@ theme:
 nav:
     - Home: index.md
     - Features:
-        - Overview: ui-overview.md
+        - Overview: feature-overview.md
         - Data Exploration: ui-data-exploration.md
     - Installation: getting-started.md
     - Fundamental Concepts:
@@ -16,13 +16,13 @@ nav:
         - Workflows : workflows.md
     - Tutorial:
         - Notebooks:
-            - From RDF to CDF Graph: tutorial/Generating CDF Graph from RDF Graph.ipynb
-            - Source to Solution Graph: tutorial/Knowledge Graph Transformation.ipynb
-            - Generate Mock Graph: tutorial/Generate Mock Graph.ipynb
+            - From RDF to CDF Graph: tutorial/notebooks/rdf-to-cdf-graph.ipynb
+            - Source to Solution Graph: tutorial/notebooks/source-to-solution-graph.ipynb
+            - Generate Mock Graph: tutorial/notebooks/mock-graph-generation.ipynb
         - Workflows:
-                - Sheet to CDF Classic: workflow-examples/sheet2cdf.md
-                - Source to Solution Graph: workflow-examples/source2solution-graph.md
-                - Data Model Generation: workflow-examples/data-model-generation.md
+                - Sheet to CDF Graph: tutorial/workflows/sheet2cdf.md
+                - Source to Solution Graph: tutorial/workflows/source2solution-graph.md
+                - Data Model Generation: tutorial/workflows/data-model-generation.md
     - Reference: reference.md
     - Changelog​: CHANGELOG.md
 
