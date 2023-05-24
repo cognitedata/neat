@@ -1,25 +1,30 @@
-site_name: Neat Docs
+site_name: NEAT
 docs_dir: docs
 use_directory_urls: false
 theme:
-    name: gitbook
+    name: material
 nav:
     - Home: index.md
-    - Getting Started: getting-started.md
-    - Neat workflows : workflows.md
-    - Transformation Rules: transformation-rules.md
-    - Rule Types: rule-types.md
-    - Data Exploration: ui-data-exploration.md
-    - Workflow Examples:
-        - Sheet to CDF: workflow-examples/sheet2cdf.md
-        - In-Memory RDF Store: workflow-examples/in-memory-nordic44.md
-        - GraphDB Store: workflow-examples/graphdb-nordic44.md
-    - blog:
-        - Why RDF?: blog/posts/why-rdf.md
-        - Review of Rules and Terminology: blog/posts/review_of_rules_and_terminology.ipynb
-        - Knowledge Graph Transformation: blog/posts/Knowledge Graph Transformation.ipynb
-        - Generating CDF Graph from RDF Graph: blog/posts/Generating CDF Graph from RDF Graph.ipynb
-        - Generate Mock Graph: blog/posts/Generate Mock Graph.ipynb
+    - Features:
+        - Overview: ui-overview.md
+        - Data Exploration: ui-data-exploration.md
+    - Installation: getting-started.md
+    - Fundamental Concepts:
+        - Transformation Rules:
+            - Overview: transformation-rules.md
+            - Rule Types: rule-types.md
+        - Workflows : workflows.md
+    - Tutorial:
+        - Notebooks:
+            - From RDF to CDF Graph: tutorial/Generating CDF Graph from RDF Graph.ipynb
+            - Source to Solution Graph: tutorial/Knowledge Graph Transformation.ipynb
+            - Generate Mock Graph: tutorial/Generate Mock Graph.ipynb
+        - Workflows:
+                - Sheet to CDF Classic: workflow-examples/sheet2cdf.md
+                - Source to Solution Graph: workflow-examples/source2solution-graph.md
+                - Data Model Generation: workflow-examples/data-model-generation.md
+    - Reference: reference.md
+    - Changelog​: CHANGELOG.md
 
 plugins:
   - mkdocs-jupyter:
