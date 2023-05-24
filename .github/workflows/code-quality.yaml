@@ -86,7 +86,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          python -m pip install --upgrade --upgrade-strategy-eager --no-cache-dir .[docs]
+          python -m pip install --upgrade --upgrade-strategy eager --no-cache-dir .[docs]
 
       - name: Build documentation
         run: |
