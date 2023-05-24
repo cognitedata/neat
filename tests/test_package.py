@@ -17,7 +17,7 @@ def test_consistent_version_variables():
     pyproject_toml = pyproject["tool"]["poetry"]["version"]
 
     changelog_version = _extract_version_from_file(
-        "CHANGELOG.md",
+        "./docs/CHANGELOG.md",
         r"\[(\d+\.\d+\.\d+)\]",
         "Failed to obtain changelog version",
     )
