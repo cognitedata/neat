@@ -1,4 +1,5 @@
-# Welcome to NEAT Docs
+# Welcome to NEAT
+[![Github](https://shields.io/badge/github-cognite/neat-green?logo=github&style=for-the-badge)](https://github.com/cognitedata/neat) [![PyPI](https://img.shields.io/pypi/v/cognite-neat?style=for-the-badge)](https://pypi.org/project/cognite-neat/) [![Docker Pulls](https://img.shields.io/docker/pulls/cognite/neat?style=for-the-badge)](https://hub.docker.com/r/cognite/neat)
 
 NEAT is a low/no code data modeling platform tailored for domain experts with or without technical or information architecture background who need a simple solution that enables agile:
 
@@ -29,4 +30,6 @@ Examples of use cases for which NEAT is not suited
 
 * Reasoning over semantic data models and knowledge graphs
 * Visual data modeling (we use Excel sheet for that)
-*
+
+
+> NEAT is an acronym derived from k**N**owl**Ed**ge gr**A**ph **T**ransformer.
