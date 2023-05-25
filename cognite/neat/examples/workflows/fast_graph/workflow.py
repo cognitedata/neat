@@ -217,7 +217,7 @@ class FastGraphNeatWorkflow(BaseWorkflow):
         else:
             logging.info("No circular dependency among assets found, your assets hierarchy look healthy !")
 
-        self.categorized_assets = categorize_assets(self.cdf_client, rdf_asset_dicts, self.dataset_id)
+        self.categorized_assets, report = categorize_assets(self.cdf_client, rdf_asset_dicts, self.dataset_id, return_report=True)
 
         count_create_assets = len(self.categorized_assets["create"])
         count_update_assets = len(self.categorized_assets["update"])
@@ -240,15 +240,23 @@ class FastGraphNeatWorkflow(BaseWorkflow):
         msg += f", { count_update_assets } to be updated"
         msg += f", { count_decommission_assets } to be decommissioned"
         msg += f", { count_resurrect_assets } to be resurrected"
-
-        return FlowMessage(output_text=msg)
+        number_of_updates = len(report["decommission"])
+        logging.info(f"Total number of updates: {number_of_updates}")
+        if number_of_updates > int(self.get_config_item_value("update_upproval_threshold", 1000)):
+            return FlowMessage(output_text=f"Very high number of updates({number_of_updates}) requeres manual approval",
+                               payload=report, next_step_ids=["asset_update_approval"])
+        return FlowMessage(output_text=msg, next_step_ids=["upload_cdf_assets"])
 
     def step_upload_cdf_assets(self, flow_msg: FlowMessage = None):
+        if flow_msg:
+            if "action" in flow_msg.payload and flow_msg.payload["action"] != "approve" :
+                raise Exception("Update not approved")
+            
         if not self.cdf_client:
             logging.error("No CDF client available")
             raise Exception("No CDF client available")
 
-        upload_assets(self.cdf_client, self.categorized_assets)
+        upload_assets(self.cdf_client, self.categorized_assets, max_retries=2, retry_delay=4)
         for _ in range(1000):
             total_assets_after = self.cdf_client.assets.aggregate(
                 filter=AssetFilter(data_set_ids=[{"id": self.dataset_id}])
@@ -304,7 +312,7 @@ class FastGraphNeatWorkflow(BaseWorkflow):
             logging.error("No CDF client available")
             raise Exception("No CDF client available")
 
-        upload_relationships(self.cdf_client, self.categorized_relationships)
+        upload_relationships(self.cdf_client, self.categorized_relationships, max_retries=2, retry_delay=4)
 
     def step_cleanup(self, flow_msg: FlowMessage):
         self.categorized_assets = None

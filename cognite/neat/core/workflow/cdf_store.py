@@ -13,6 +13,7 @@ from pydantic import BaseModel
 
 from cognite.neat.core.workflow.model import WorkflowFullStateReport, WorkflowState, WorkflowStepEvent
 from cognite.neat.core.workflow.utils import get_file_hash
+from fastapi.encoders import jsonable_encoder
 
 
 class NeatCdfResource(BaseModel):
@@ -328,7 +329,8 @@ class CdfStore:
             "workflow_name": report.workflow_name,
         }
         external_id = f"neat-wf-run-{report.run_id}"
-        serialized_execution_log = json.dumps([step.dict() for step in report.execution_log])
+        # serialized_execution_log = json.dumps([step.dict() for step in report.execution_log])
+        serialized_execution_log = json.dumps(jsonable_encoder(report.execution_log))
         execution_log_size = bytes(serialized_execution_log, "utf-8").__sizeof__()
         logging.debug(f"Serialized execution log size: {execution_log_size}")
         # logging.debug(f"Serialized execution log: {serialized_execution_log}")

@@ -1,4 +1,5 @@
 import logging
+import time
 import warnings
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple, Union
@@ -819,7 +820,8 @@ def categorize_assets(
 
 
 def _micro_batch_push(
-    client: CogniteClient, assets: list, batch_size: int = 1000, push_type: str = "update", message: str = "Updated"
+    client: CogniteClient, assets: list, batch_size: int = 1000, push_type: str = "update", message: str = "Updated",
+    max_retries: int = 1, retry_delay: int = 5
 ):
     """Updates assets in batches of 1000
 
@@ -838,18 +840,28 @@ def _micro_batch_push(
     """
     total = len(assets)
     counter = 0
-
+    if push_type not in ["update", "create"]:
+        logging.info(f"push_type {push_type} not supported")
+        raise ValueError(f"push_type {push_type} not supported")
     for batch in chunker(assets, batch_size):
         counter += len(batch)
         start_time = datetime_utc_now()
-        if push_type == "update":
-            client.assets.update(batch)
-        elif push_type == "create":
-            client.assets.create_hierarchy(batch)
-        else:
-            logging.info(f"push_type {push_type} not supported")
-            raise ValueError(f"push_type {push_type} not supported")
-
+        retry_counter = 0
+        while True:
+            try:
+                if push_type == "update":
+                    client.assets.update(batch)
+                elif push_type == "create":
+                    client.assets.create_hierarchy(batch)
+                break        
+            except Exception as e: 
+                if retry_counter >= max_retries:
+                    raise e
+                retry_counter += 1
+                logging.error(f"Error pushing {push_type} micro-batch: {e}")
+                logging.info(f"Retrying ({retry_counter})  in {retry_delay} seconds")
+                time.sleep(retry_delay)
+       
         delta_time = (datetime_utc_now() - start_time).seconds
 
         msg = f"{message} {counter} of {total} assets, batch processing time: {delta_time:.2f} "
@@ -857,7 +869,7 @@ def _micro_batch_push(
         logging.info(msg)
 
 
-def upload_assets(client: CogniteClient, categorized_assets: Dict[str, list], batch_size: int = 5000):
+def upload_assets(client: CogniteClient, categorized_assets: Dict[str, list], batch_size: int = 5000, max_retries: int = 1, retry_delay: int = 3):
     """Uploads categorized assets to CDF
 
     Parameters
@@ -872,7 +884,8 @@ def upload_assets(client: CogniteClient, categorized_assets: Dict[str, list], ba
     if batch_size:
         logging.info(f"Uploading assets in batches of {batch_size}")
         if categorized_assets["create"]:
-            _micro_batch_push(client, categorized_assets["create"], batch_size, push_type="create", message="Created")
+            _micro_batch_push(client, categorized_assets["create"], batch_size, push_type="create", message="Created",
+                              max_retries=max_retries, retry_delay=retry_delay)
 
         if categorized_assets["update"]:
             _micro_batch_push(
@@ -880,6 +893,7 @@ def upload_assets(client: CogniteClient, categorized_assets: Dict[str, list], ba
                 categorized_assets["update"],
                 batch_size,
                 message="Updated",
+                max_retries=max_retries, retry_delay=retry_delay
             )
 
         if categorized_assets["resurrect"]:
@@ -888,6 +902,7 @@ def upload_assets(client: CogniteClient, categorized_assets: Dict[str, list], ba
                 categorized_assets["resurrect"],
                 batch_size,
                 message="Resurrected",
+                max_retries=max_retries, retry_delay=retry_delay
             )
 
         if categorized_assets["decommission"]:
@@ -896,18 +911,28 @@ def upload_assets(client: CogniteClient, categorized_assets: Dict[str, list], ba
                 categorized_assets["decommission"],
                 batch_size,
                 message="Decommissioned",
+                max_retries=max_retries, retry_delay=retry_delay
             )
 
     else:
         logging.info("Batch size not set, pushing all assets to CDF in one go!")
-        if categorized_assets["create"]:
-            client.assets.create_hierarchy(categorized_assets["create"])
+        retry_counter = 0
+        try:
+            if categorized_assets["create"]:
+                client.assets.create_hierarchy(categorized_assets["create"])
 
-        if categorized_assets["update"]:
-            client.assets.create_hierarchy(categorized_assets["update"], upsert=True, upsert_mode="replace")
+            if categorized_assets["update"]:
+                client.assets.create_hierarchy(categorized_assets["update"], upsert=True, upsert_mode="replace")
 
-        if categorized_assets["resurrect"]:
-            client.assets.create_hierarchy(categorized_assets["resurrect"], upsert=True, upsert_mode="replace")
+            if categorized_assets["resurrect"]:
+                client.assets.create_hierarchy(categorized_assets["resurrect"], upsert=True, upsert_mode="replace")
 
-        if categorized_assets["decommission"]:
-            client.assets.create_hierarchy(categorized_assets["decommission"], upsert=True, upsert_mode="replace")
+            if categorized_assets["decommission"]:
+                client.assets.create_hierarchy(categorized_assets["decommission"], upsert=True, upsert_mode="replace")
+        except Exception as e:
+            if retry_counter >= max_retries:
+                raise e
+            retry_counter += 1
+            logging.error(f"Error while creating asset hierarchy: {e}")
+            logging.info(f"Retrying ({retry_counter})  in {retry_delay} seconds")
+            time.sleep(retry_delay)        

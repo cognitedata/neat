@@ -70,6 +70,8 @@ class WorkflowStepDefinition(BaseModel):
     transition_to: list[str] = None
     ui_config: UIConfig = UIConfig()
     params: dict[str, str] = None
+    max_retries: int = 0
+    retry_delay: int = 3
 
 
 class WorkflowSystemComponent(BaseModel):

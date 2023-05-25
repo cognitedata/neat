@@ -86,7 +86,7 @@ export default function WorkflowView() {
   useEffect(() => {
     loadListOfWorkflows();
     loadWorkflowDefinitions(getSelectedWorkflowName());
-    startStatePolling();
+    startStatePolling(selectedWorkflow);
 
   }, []);
 
@@ -108,24 +108,18 @@ export default function WorkflowView() {
     syncWorkflowDefToNodesAndEdges(viewType);
   }, [workflowDefinitions]);
 
-  // useEffect(() => {
-  //   console.log("node or edge changed")
-  //   syncNodesAndEdgesToWorkflowDef();
-  // }, [nodes, edges]);
-
-  const startStatePolling = () => {
-    if (!timerInterval) {
-      let timerInterval = setInterval(() => {
-        loadWorkflowStats();
-      }, 2000);
-      setTimerInterval(timerInterval);
+  const startStatePolling = (workflowName:string) => {
+    if (timerInterval) {
+      clearInterval(timerInterval);
     }
-
+    let newTimerInterval = setInterval(() => {
+      loadWorkflowStats(workflowName);
+    }, 2000);
+    setTimerInterval(newTimerInterval);
   }
 
   const stopStatePolling = () => {
     clearInterval(timerInterval);
-    // timerInterval = null;
   }
 
   const loadListOfWorkflows = () => {
@@ -198,7 +192,7 @@ const startWorkflow = () => {
   }).then((response) => response.json()).then((data) => {
     console.dir(data)
     setWorkflowStats(data);
-    startStatePolling();
+    startStatePolling(selectedWorkflow);
     loadWorkflowStats();
   }).catch((error) => {
     console.error('Error:', error);
@@ -273,6 +267,7 @@ const handleWorkflowSelectorChange = (event: SelectChangeEvent) => {
   loadWorkflowDefinitions(event.target.value);
   setViewType("system");
   syncWorkflowDefToNodesAndEdges("system");
+  startStatePolling(event.target.value);
 };
 
 const handleViewTypeChange = (

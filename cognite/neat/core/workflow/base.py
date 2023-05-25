@@ -228,7 +228,18 @@ class BaseWorkflow:
                     else:
                         logging.error(f"Workflow step {step.id} has no method {method_name}")
                         raise Exception(f"Workflow step {step.id} has no method {method_name}")
-                new_flow_message = method(flow_message)
+                retry_counter = 0
+                while True:
+                    try:
+                        new_flow_message = method(flow_message)
+                        break
+                    except Exception as e:
+                        if retry_counter >= step.max_retries:
+                            raise e
+                        retry_counter += 1
+                        logging.error(f"Workflow step {step.id} failed with error {e}. Retrying afer {step.retry_delay} seconds")
+                        time.sleep(step.retry_delay)
+                
             elif step.stype == StepType.START_WORKFLOW_TASK_STEP:
                 if self.task_builder:
                     sync_str = step.params.get("sync", "false")
