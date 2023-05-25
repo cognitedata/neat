@@ -8,12 +8,28 @@ from cognite.neat.core.data_classes.transformation_rules import TransformationRu
 
 
 def validate_if_graph_capturing_sheet_empty(graph_capturing_sheet: dict[str, pd.DataFrame]):
+    """Validate if the graph capturing sheet is empty
+
+    Parameters
+    ----------
+    graph_capturing_sheet : dict[str, pd.DataFrame]
+        Graph capturing sheet
+    """
     if all(df.empty for df in graph_capturing_sheet.values()):
         logging.error("Graph capturing sheet is empty! Aborting!")
         raise ValueError("Graph capturing sheet is empty! Aborting!")
 
 
 def validate_rules_graph_pair(graph_capturing_sheet: dict[str, pd.DataFrame], transformation_rule: TransformationRules):
+    """Validate if the graph capturing sheet is based on the transformation rules
+
+    Parameters
+    ----------
+    graph_capturing_sheet : dict[str, pd.DataFrame]
+        Graph capturing sheet
+    transformation_rule : TransformationRules
+        Transformation rules
+    """
     intersection = set(graph_capturing_sheet.keys()).intersection(set(transformation_rule.get_defined_classes()))
 
     if not intersection:
@@ -45,6 +61,17 @@ def validate_rules_graph_pair(graph_capturing_sheet: dict[str, pd.DataFrame], tr
 def sheet2graph(
     graph_capturing_sheet: dict[str, pd.DataFrame], transformation_rule: TransformationRules, separator: str = ","
 ):
+    """Converts a graph capturing sheet to an RDF graph
+
+    Parameters
+    ----------
+    graph_capturing_sheet : dict[str, pd.DataFrame]
+        Graph capturing sheet
+    transformation_rule : TransformationRules
+        Transformation rules
+    separator : str, optional
+        Multi value separator, by default ","
+    """
     # Validation that everything is in order before proceeding
     validate_if_graph_capturing_sheet_empty(graph_capturing_sheet)
     validate_rules_graph_pair(graph_capturing_sheet, transformation_rule)
