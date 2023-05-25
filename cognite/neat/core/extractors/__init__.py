@@ -15,4 +15,5 @@ __all__ = [
     "upload_labels",
     "rules2graphql_schema",
     "rules2graph_capturing_sheet",
+    "sheet2graph",
 ]

@@ -1,6 +1,5 @@
 import pandas as pd
 import pytest
-from openpyxl import load_workbook
 from rdflib import Namespace
 
 from cognite.neat.core import extractors, loader, parser
@@ -74,7 +73,8 @@ def simple_rules():
 
 @pytest.fixture(scope="function")
 def graph_capturing_sheet():
-    return load_workbook(config.GRAPH_CAPTURING_SHEET)
+    # return load_workbook(config.GRAPH_CAPTURING_SHEET)
+    return loader.graph_capturing_sheet.excel_file_to_table_by_name(config.GRAPH_CAPTURING_SHEET)
 
 
 @pytest.fixture(scope="function")
