@@ -424,6 +424,24 @@ class TransformationRules(BaseModel):
 
         return class_property_pairs
 
+    def get_class_property_pairs(self) -> dict[str, dict[str, Property]]:
+        """This method will actually consider only the first definition of given property!"""
+        class_property_pairs = {}
+
+        for class_, properties in self.get_classes_with_properties().items():
+            processed_properties = {}
+            for property_ in properties:
+                if property_.property_name in processed_properties:
+                    warnings.warn(
+                        "Property has been defined more than once! Only first definition will be considered.",
+                        stacklevel=2,
+                    )
+                    continue
+                processed_properties[property_.property_name] = property_
+            class_property_pairs[class_] = processed_properties
+
+        return class_property_pairs
+
     def check_data_model_definitions(self):
         """Check if data model definitions are valid."""
         issues = set()

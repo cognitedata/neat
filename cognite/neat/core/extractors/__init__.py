@@ -1,3 +1,4 @@
+from .graph_sheet_to_graph import sheet2graph
 from .labels import upload_labels
 from .rdf_to_assets import categorize_assets, rdf2assets, upload_assets
 from .rdf_to_relationships import categorize_relationships, rdf2relationships, upload_relationships
