@@ -1,7 +1,9 @@
 # Transformation Rules
-`Transformation Rules` is an Excel template which provides simple and intuitive way to create a semantic data model and optionally knowledge graph. As it can be shared via for example SharePoint or as Google Sheets, multiple people can jointly collaborate and work on same data model. It is a great tool for onboarding of domain experts to the semantic information modeling and knowledge graphs.
+`Transformation Rules` is an Excel template which provides simple and intuitive way to create a semantic data model and knowledge graph. Multiple people can jointly collaborate and work on same data model since the template can be shared via SharePoint or as Google Sheets.
+
 
 `Transformation Rules` contains following sheets:
+
 - `Metadata`: contains metadata about the data model
 - `Prefixes`: contains the definition of the prefixes that are used in the semantic data model and knowledge graph
 - `Classes`: contains the definition of the classes that are part of the semantic data model as mapping of those classes to CDF resources such as Assets
@@ -9,11 +11,11 @@
 - `Instances`: contains the definition of the instances of the classes that are part of the semantic data model
 
 Instead of explaining each sheet on its own we will explain how each part of the `Transformation Rules` is used to define:
+
 - semantic data model
 - semantic data model to CDF resource mapping
 - source to solution data model and knowledge graph mapping
-- semantic data model instances (aka knowledge graph)
-
+- knowledge graph (i.e., semantic data model instances)
 
 ## Semantic Data Model Definition
 First we start with the semantic data model definition. `Metadata` sheet contains metadata about data model. From the screenshot below one can see that the `Metadata` sheet is in a form of key value pairs. The `Key` column contains the name of the metadata attribute and the `Value` column contains the value of the metadata attribute. The metadata attributes are as follows:
@@ -69,11 +71,11 @@ In the screenshot above we can see that we defined:
 - `TSO` property as mandatory multi value property that holds values of type `string`
 - `priceArea` property as mandatory property which hold minimum two and maximum two values of type `PriceArea` (i.e., two references to instances of `PriceArea` class)
 
-The definitions in the sheets above are converted by `NEAT` into the semantic data model in the form of [RDF triples](https://www.oxfordsemantic.tech/fundamentals/what-is-a-triple). Specifically, `NEAT` produces [OWL](https://en.wikipedia.org/wiki/Web_Ontology_Language), which holds meaning of classes and properties, and [SHACL](https://en.wikipedia.org/wiki/SHACL) which holds structure of classes. Both `OWL` and `SHACL` are W3C standards.
+The definitions in the sheets above are converted by `NEAT` into [flexible data model](https://docs.cognite.com/cdf/data_modeling/). Optionally, the sheets can be converted to [RDF triples](https://www.oxfordsemantic.tech/fundamentals/what-is-a-triple). Specifically, `NEAT` produces [OWL](https://en.wikipedia.org/wiki/Web_Ontology_Language), which holds meaning of classes and properties, and [SHACL](https://en.wikipedia.org/wiki/SHACL) which holds structure of classes. The latter option is only available to Cognite clients via dedicated plugin.
 
 
-## Semantic Data Model to CDF Resouces Mapping
-`Classes` and `Properties` sheets contain also columns that define how semantic data model instances (aka knowledge graph) are transformed/mapped to CDF resources specifically in this example CDF `Assets` and `Relationships`.
+## Semantic Data Model to CDF Resources Mapping
+`Classes` and `Properties` sheets contain also columns that define how semantic data model instances (aka knowledge graph) are transformed/mapped to CDF resources. Currently NEAT supports mapping to CDF `Assets` and `Relationships`.
 
 ![Transformation Rules: Properties Sheet](./figs/dm2cdf-asset.png)
 ![Transformation Rules: Properties Sheet](./figs/dm2cdf-mapping.png)
