@@ -14,6 +14,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.12.1] - 25-05-23
+### Added
+* Added generation of knowledge graph capturing sheet based on data model definitions in transformation rules
+* Added generation of knowledge graph from graph capturing sheets
+
 ## [0.12.0] - 23-05-23
 ### Added
 * Added workflow documentation.
