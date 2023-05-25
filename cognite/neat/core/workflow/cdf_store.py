@@ -9,11 +9,11 @@ from typing import Dict
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import Event, FileMetadataUpdate, LabelDefinition, LabelFilter
+from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 
 from cognite.neat.core.workflow.model import WorkflowFullStateReport, WorkflowState, WorkflowStepEvent
 from cognite.neat.core.workflow.utils import get_file_hash
-from fastapi.encoders import jsonable_encoder
 
 
 class NeatCdfResource(BaseModel):

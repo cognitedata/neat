@@ -237,9 +237,11 @@ class BaseWorkflow:
                         if retry_counter >= step.max_retries:
                             raise e
                         retry_counter += 1
-                        logging.error(f"Workflow step {step.id} failed with error {e}. Retrying afer {step.retry_delay} seconds")
+                        logging.error(
+                            f"Workflow step {step.id} failed with error {e}. Retrying afer {step.retry_delay} seconds"
+                        )
                         time.sleep(step.retry_delay)
-                
+
             elif step.stype == StepType.START_WORKFLOW_TASK_STEP:
                 if self.task_builder:
                     sync_str = step.params.get("sync", "false")

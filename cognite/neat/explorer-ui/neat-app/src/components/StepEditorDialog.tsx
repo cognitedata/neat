@@ -133,10 +133,10 @@ return (
             )}
             <FormControlLabel control={<Checkbox checked={selectedStep?.enabled} onChange={(event) => { handleStepConfigChange("enabled", event.target.checked) }} />} label="Is enabled" />
             <FormControlLabel control={<Checkbox checked={selectedStep?.trigger} onChange={(event) => { handleStepConfigChange("trigger", event.target.checked) }} />} label="Is trigger" />
-            
+
             <TextField sx={{ marginTop: 1 }} id="step-config-max-retries" fullWidth label="Max retries on failure" size='small' type="number" variant="outlined" value={selectedStep?.max_retries} onChange={(event) => { handleStepConfigChange("max_retries", event.target.value) }} />
             <TextField sx={{ marginTop: 1 }} id="step-config-retry-delay" fullWidth label="Retry delay" size='small' variant="outlined" type="number" value={selectedStep?.retry_delay} onChange={(event) => { handleStepConfigChange("retry_delay", event.target.value) }} />
-              
+
             {(selectedStep?.stype == "http_trigger" || selectedStep?.stype == "wait_for_event") && (
               <TextField sx={{ marginTop: 1 }} value={runPayload} label="Run payload" onChange={(event)=>setRunPayload(event.target.value)} id="run_payload"> </TextField>
             )}

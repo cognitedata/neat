@@ -13,6 +13,13 @@ Changes are grouped as follows
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.12.2] - 25-05-23
+
+### Added retry logic to asset and relationship update micro batching
+### Added generic workflow steps retry logic
+### Added examples of how to use update safety guards and human approval steps in workflows
+### Fixed UI state polling bug.
+
 ## [0.12.0] - 23-05-23
 ### Added
 * Added workflow documentation.

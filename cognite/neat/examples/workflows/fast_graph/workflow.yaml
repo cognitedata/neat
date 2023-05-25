@@ -68,7 +68,7 @@ configs:
     options: null
     required: false
     type: null
-    value: '10'    
+    value: '10'
 description: null
 system_components:
 -   description: null

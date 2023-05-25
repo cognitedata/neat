@@ -336,7 +336,7 @@ def _micro_batch_push(
     push_type: str = "update",
     message: str = "Updated",
     max_retries: int = 1,
-    retry_delay: int = 5
+    retry_delay: int = 5,
 ):
     """Updates assets in batches of 1000
 
@@ -358,7 +358,7 @@ def _micro_batch_push(
     if push_type not in ["update", "create"]:
         logging.info(f"push_type {push_type} not supported")
         raise ValueError(f"push_type {push_type} not supported")
-    
+
     for batch in chunker(relationships, batch_size):
         counter += len(batch)
         start_time = datetime_utc_now()
@@ -376,8 +376,8 @@ def _micro_batch_push(
                 retry_counter += 1
                 logging.error(f"Error pushing {push_type} micro-batch: {e}")
                 logging.info(f"Retrying ({retry_counter})  in {retry_delay} seconds")
-                time.sleep(retry_delay)        
-       
+                time.sleep(retry_delay)
+
         delta_time = (datetime_utc_now() - start_time).seconds
 
         msg = f"{message} {counter} of {total} relationships, batch processing time: {delta_time:.2f} "
@@ -389,7 +389,8 @@ def upload_relationships(
     client: CogniteClient,
     categorized_relationships: Dict[str, list[Union[Relationship, RelationshipUpdate]]],
     batch_size: int = 5000,
-    max_retries: int = 1, retry_delay: int = 3
+    max_retries: int = 1,
+    retry_delay: int = 3,
 ):
     """Uploads categorized relationships to CDF
 
@@ -406,8 +407,13 @@ def upload_relationships(
         logging.info(f"Uploading relationships in batches of {batch_size}")
         if categorized_relationships["create"]:
             _micro_batch_push(
-                client, categorized_relationships["create"], batch_size, push_type="create", message="Created",
-                max_retries=max_retries, retry_delay=retry_delay
+                client,
+                categorized_relationships["create"],
+                batch_size,
+                push_type="create",
+                message="Created",
+                max_retries=max_retries,
+                retry_delay=retry_delay,
             )
 
         if categorized_relationships["resurrect"]:
@@ -416,7 +422,8 @@ def upload_relationships(
                 categorized_relationships["resurrect"],
                 batch_size,
                 message="Resurrected",
-                max_retries=max_retries, retry_delay=retry_delay
+                max_retries=max_retries,
+                retry_delay=retry_delay,
             )
 
         if categorized_relationships["decommission"]:
@@ -425,7 +432,8 @@ def upload_relationships(
                 categorized_relationships["decommission"],
                 batch_size,
                 message="Decommissioned",
-                max_retries=max_retries, retry_delay=retry_delay
+                max_retries=max_retries,
+                retry_delay=retry_delay,
             )
 
     else:
@@ -446,5 +454,4 @@ def upload_relationships(
             retry_counter += 1
             logging.error(f"Error while upserting relationships: {e}")
             logging.info(f"Retrying ({retry_counter})  in {retry_delay} seconds")
-            time.sleep(retry_delay)        
-        
+            time.sleep(retry_delay)

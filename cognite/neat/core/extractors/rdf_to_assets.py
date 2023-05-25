@@ -820,8 +820,13 @@ def categorize_assets(
 
 
 def _micro_batch_push(
-    client: CogniteClient, assets: list, batch_size: int = 1000, push_type: str = "update", message: str = "Updated",
-    max_retries: int = 1, retry_delay: int = 5
+    client: CogniteClient,
+    assets: list,
+    batch_size: int = 1000,
+    push_type: str = "update",
+    message: str = "Updated",
+    max_retries: int = 1,
+    retry_delay: int = 5,
 ):
     """Updates assets in batches of 1000
 
@@ -853,15 +858,15 @@ def _micro_batch_push(
                     client.assets.update(batch)
                 elif push_type == "create":
                     client.assets.create_hierarchy(batch)
-                break        
-            except Exception as e: 
+                break
+            except Exception as e:
                 if retry_counter >= max_retries:
                     raise e
                 retry_counter += 1
                 logging.error(f"Error pushing {push_type} micro-batch: {e}")
                 logging.info(f"Retrying ({retry_counter})  in {retry_delay} seconds")
                 time.sleep(retry_delay)
-       
+
         delta_time = (datetime_utc_now() - start_time).seconds
 
         msg = f"{message} {counter} of {total} assets, batch processing time: {delta_time:.2f} "
@@ -869,7 +874,13 @@ def _micro_batch_push(
         logging.info(msg)
 
 
-def upload_assets(client: CogniteClient, categorized_assets: Dict[str, list], batch_size: int = 5000, max_retries: int = 1, retry_delay: int = 3):
+def upload_assets(
+    client: CogniteClient,
+    categorized_assets: Dict[str, list],
+    batch_size: int = 5000,
+    max_retries: int = 1,
+    retry_delay: int = 3,
+):
     """Uploads categorized assets to CDF
 
     Parameters
@@ -884,8 +895,15 @@ def upload_assets(client: CogniteClient, categorized_assets: Dict[str, list], ba
     if batch_size:
         logging.info(f"Uploading assets in batches of {batch_size}")
         if categorized_assets["create"]:
-            _micro_batch_push(client, categorized_assets["create"], batch_size, push_type="create", message="Created",
-                              max_retries=max_retries, retry_delay=retry_delay)
+            _micro_batch_push(
+                client,
+                categorized_assets["create"],
+                batch_size,
+                push_type="create",
+                message="Created",
+                max_retries=max_retries,
+                retry_delay=retry_delay,
+            )
 
         if categorized_assets["update"]:
             _micro_batch_push(
@@ -893,7 +911,8 @@ def upload_assets(client: CogniteClient, categorized_assets: Dict[str, list], ba
                 categorized_assets["update"],
                 batch_size,
                 message="Updated",
-                max_retries=max_retries, retry_delay=retry_delay
+                max_retries=max_retries,
+                retry_delay=retry_delay,
             )
 
         if categorized_assets["resurrect"]:
@@ -902,7 +921,8 @@ def upload_assets(client: CogniteClient, categorized_assets: Dict[str, list], ba
                 categorized_assets["resurrect"],
                 batch_size,
                 message="Resurrected",
-                max_retries=max_retries, retry_delay=retry_delay
+                max_retries=max_retries,
+                retry_delay=retry_delay,
             )
 
         if categorized_assets["decommission"]:
@@ -911,7 +931,8 @@ def upload_assets(client: CogniteClient, categorized_assets: Dict[str, list], ba
                 categorized_assets["decommission"],
                 batch_size,
                 message="Decommissioned",
-                max_retries=max_retries, retry_delay=retry_delay
+                max_retries=max_retries,
+                retry_delay=retry_delay,
             )
 
     else:
@@ -935,4 +956,4 @@ def upload_assets(client: CogniteClient, categorized_assets: Dict[str, list], ba
             retry_counter += 1
             logging.error(f"Error while creating asset hierarchy: {e}")
             logging.info(f"Retrying ({retry_counter})  in {retry_delay} seconds")
-            time.sleep(retry_delay)        
+            time.sleep(retry_delay)
