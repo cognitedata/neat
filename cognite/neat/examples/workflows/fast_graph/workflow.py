@@ -253,8 +253,8 @@ class FastGraphNeatWorkflow(BaseWorkflow):
         return FlowMessage(output_text=msg, next_step_ids=["upload_cdf_assets"])
 
     def step_upload_cdf_assets(self, flow_msg: FlowMessage = None):
-        if flow_msg:
-            if "action" in flow_msg.payload and flow_msg.payload["action"] != "approve":
+        if flow_msg and flow_msg.payload and "action" in flow_msg.payload:
+            if flow_msg.payload["action"] != "approve":
                 raise Exception("Update not approved")
 
         if not self.cdf_client:
