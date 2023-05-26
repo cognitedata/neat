@@ -1,15 +1,16 @@
 import logging
 import uuid
-import warnings
 from pathlib import Path
 
-import xlsxwriter
+from openpyxl import Workbook
+from openpyxl.styles import Alignment, Border, Font, NamedStyle, PatternFill, Side
+from openpyxl.worksheet.datavalidation import DataValidation
 
 from cognite.neat.core.data_classes.transformation_rules import TransformationRules
 from cognite.neat.core.extractors.rules_to_graphql import repair_name as to_graphql_name
 
 
-def _get_column(column_number: int) -> str:
+def _get_column_letter(column_number: int) -> str:
     """Converts a column number to a letter"""
     dividend = column_number
     column_letter = ""
@@ -20,56 +21,55 @@ def _get_column(column_number: int) -> str:
     return column_letter
 
 
-def _get_header_style(**kwargs):
-    """Return the header style"""
-    header_cfg = {
-        "border": kwargs.get("border", 1),
-        "bg_color": kwargs.get("bg_color", "#2FB5F2"),
-        "bold": kwargs.get("bold", True),
-        "text_wrap": kwargs.get("text_wrap", False),
-        "valign": kwargs.get("valign", "vcenter"),
-        "indent": kwargs.get("indent", 1),
-        "font_size": kwargs.get("font_size", 16),
-        "font_name": kwargs.get("font_name", "Helvetica"),
-    }
-
-    identifier_header_cfg = header_cfg.copy()
-    identifier_header_cfg["bg_color"] = "#FFB202"
-
-    return header_cfg, identifier_header_cfg
-
-
-def _add_uuid_identifiers(sheets, sheet_name, no_rows):
-    """Adds UUID-based auto identifier to a sheet"""
+def _add_index_identifiers(workbook: Workbook, sheet: str, no_rows: int):
+    """Adds index-based auto identifier to a sheet identifier column"""
     for i in range(no_rows):
-        fixed_name = to_graphql_name(sheet_name, "class", True)
-        sheets[sheet_name].write_formula(f"A{i+2}", f'=IF(ISBLANK(B{i+2}), "","{fixed_name}-{uuid.uuid4()}")')
+        prefix = to_graphql_name(sheet, "class", True)
+        workbook[sheet][f"A{i+2}"] = f'=IF(ISBLANK(B{i+2}), "","{prefix}-{i+1}")'
 
 
-def _add_index_identifiers(sheets, sheet_name, no_rows):
-    """Adds index-based auto identifier to a sheet"""
+def _add_uuid_identifiers(workbook: Workbook, sheet: str, no_rows: int):
+    """Adds UUID-based auto identifier to a sheet identifier column"""
     for i in range(no_rows):
-        fixed_name = to_graphql_name(sheet_name, "class", True)
-        sheets[sheet_name].write_formula(f"A{i+2}", f'=IF(ISBLANK(B{i+2}), "","{fixed_name}-{i+1}")')
+        prefix = to_graphql_name(sheet, "class", True)
+        workbook[sheet][f"A{i+2}"] = f'=IF(ISBLANK(B{i+2}), "","{prefix}-{uuid.uuid4()}")'
 
 
-def _set_column_width(sheet, no_columns, width):
-    """Sets the width of all columns in a sheet"""
-    for i in range(no_columns + 1):
-        sheet.set_column(i, i, width)
-
-
-def _add_drop_down_list(sheets, sheet_name, column, no_rows, value_sheet, value_column):
+def _add_drop_down_list(workbook: Workbook, sheet: str, column: str, no_rows: int, value_sheet: str, value_column: str):
     """Adds a drop down list to a column"""
-    logging.info(f"Adding drop down list to <{sheet_name}!{column}> with values from <{value_sheet}!{value_column}>")
+    drop_down_list = DataValidation(type="list", formula1=f"={value_sheet}!{value_column}2:{value_column}{no_rows}")
+
+    workbook[sheet].add_data_validation(drop_down_list)
+
     for i in range(no_rows):
-        sheets[sheet_name].data_validation(
-            f"{column}{i+2}",
-            {
-                "validate": "list",
-                "source": f"={value_sheet}!{value_column}2:{value_column}{no_rows}",
-            },
-        )
+        drop_down_list.add(workbook[sheet][f"{column}{i+2}"])
+
+
+def _adjust_column_width(workbook: Workbook):
+    """Adjusts the column width based on the content"""
+    for sheet in workbook.sheetnames:
+        for column in workbook[sheet].columns:
+            if column[0].value:
+                adjusted_width = (len(str(column[0].value)) + 5) * 1.2
+                workbook[sheet].column_dimensions[column[0].column_letter].width = adjusted_width
+
+
+def _set_header_style(workbook: Workbook):
+    """Sets the header style for all sheets in the workbook"""
+    style = NamedStyle(name="header style")
+    style.font = Font(bold=True, size=16)
+    side = Side(style="thin", color="000000")
+    style.border = Border(left=side, right=side, top=side, bottom=side)
+    workbook.add_named_style(style)
+
+    for sheet in workbook.sheetnames:
+        for column in workbook[sheet].columns:
+            workbook[sheet][f"{column[0].column_letter}1"].style = style
+            if f"{column[0].column_letter}1" == "A1":
+                workbook[sheet][f"{column[0].column_letter}1"].fill = PatternFill("solid", start_color="2FB5F2")
+            else:
+                workbook[sheet][f"{column[0].column_letter}1"].fill = PatternFill("solid", start_color="FFB202")
+            workbook[sheet][f"{column[0].column_letter}1"].alignment = Alignment(horizontal="center", vertical="center")
 
 
 def rules2graph_capturing_sheet(
@@ -79,7 +79,6 @@ def rules2graph_capturing_sheet(
     use_index_id: bool = True,
     use_uuid_id: bool = False,
     add_drop_down_list: bool = True,
-    **kwargs,
 ):
     """Converts a TransformationRules object to a graph capturing sheet
 
@@ -97,8 +96,6 @@ def rules2graph_capturing_sheet(
         Number of rows for processing, by default 1000
     add_drop_down_list : bool, optional
         Add drop down selection for columns that contain linking properties, by default True
-    **kwargs : dict
-        Additional arguments to pass to the function dealing with header style
 
     Notes
     -----
@@ -107,47 +104,40 @@ def rules2graph_capturing_sheet(
 
     """
 
-    workbook = xlsxwriter.Workbook(file_path)
-    header_format = workbook.add_format(_get_header_style()[0])
-    identifier_format = workbook.add_format(_get_header_style()[1])
-    sheets = {}
+    workbook = Workbook()
 
-    for class_, properties in transformation_rules.get_classes_with_properties().items():
-        sheets[class_] = workbook.add_worksheet(class_)
-        sheets[class_].write(0, 0, "identifier", identifier_format)
-        _set_column_width(sheets[class_], len(properties), kwargs.get("column_width", 30))
+    # Remove default sheet named "Sheet"
+    workbook.remove(workbook["Sheet"])
+
+    for class_, properties in transformation_rules.get_class_property_pairs().items():
+        workbook.create_sheet(title=class_)
+
+        # Add header rows
+        workbook[class_].append(["identifier"] + list(properties.keys()))
 
         if use_index_id:  # default, easy to read
             logging.info("Configuring index-based automatic identifiers")
-            _add_index_identifiers(sheets, class_, no_rows)
+            _add_index_identifiers(workbook, class_, no_rows)
         elif use_uuid_id:
             logging.info("Configuring UUID-based automatic identifiers")
-            _add_uuid_identifiers(sheets, class_, no_rows)
+            _add_uuid_identifiers(workbook, class_, no_rows)
         else:
             logging.info("No automatic identifiers used")
 
-        processed_properties = set()
-        subtract = 0
-
-        for i, property_ in enumerate(properties):
-            if property_.property_name in processed_properties:
-                subtract += 1
-                logging.warn(f"Property {property_.property_name} being redefined... skipping!")
-                warnings.warn(f"Property {property_.property_name} being redefined... skipping!", stacklevel=2)
-                continue
-
-            processed_properties.add(property_.property_name)
-            sheets[class_].write(0, i + 1 - subtract, property_.property_name, header_format)
-
+        for i, property_ in enumerate(properties.values()):
             if property_.property_type == "ObjectProperty" and add_drop_down_list:
                 _add_drop_down_list(
-                    sheets,
+                    workbook,
                     class_,
-                    _get_column(i + 1 - subtract + 1),
+                    _get_column_letter(i + 2),
                     no_rows,
                     property_.expected_value_type,
                     "A",
                 )
 
+    _adjust_column_width(workbook)
+    _set_header_style(workbook)
+
+    logging.info(f"Graph capturing sheet generated and stored at {file_path}!")
+    workbook.save(file_path)
     workbook.close()
-    logging.info(f"Knowledge graph capturing sheet generated and stored {file_path}!")

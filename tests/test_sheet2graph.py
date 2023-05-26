@@ -15,6 +15,5 @@ def test_sheet2graph(simple_rules, graph_capturing_sheet):
             )
         )
     }
-    count_dict
     assert list(graph.query("Select ?o WHERE { neat:Country-1 neat:TSO ?o }"))[0][0] == Literal("Statnett")
     assert count_dict == {"PriceArea": 2, "CountryGroup": 1, "Country": 1, "PriceAreaConnection": 1}
