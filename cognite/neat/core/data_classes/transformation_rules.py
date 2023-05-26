@@ -410,7 +410,7 @@ class TransformationRules(BaseModel):
         """Returns classes that have been defined in the data model."""
         return {property.class_name for property in self.properties.values()}
 
-    def get_classes_with_properties(self) -> dict[str, Property]:
+    def get_classes_with_properties(self) -> dict[str, list[Property]]:
         """Returns classes that have been defined in the data model."""
         # TODO: Do not particularly like method name, find something more suitable
         class_property_pairs = {}
