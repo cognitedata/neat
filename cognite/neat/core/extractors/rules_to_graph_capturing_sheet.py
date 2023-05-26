@@ -116,13 +116,13 @@ def rules2graph_capturing_sheet(
         workbook[class_].append(["identifier"] + list(properties.keys()))
 
         if use_index_id:  # default, easy to read
-            logging.info("Configuring index-based automatic identifiers")
+            logging.debug("Configuring index-based automatic identifiers")
             _add_index_identifiers(workbook, class_, no_rows)
         elif use_uuid_id:
-            logging.info("Configuring UUID-based automatic identifiers")
+            logging.debug("Configuring UUID-based automatic identifiers")
             _add_uuid_identifiers(workbook, class_, no_rows)
         else:
-            logging.info("No automatic identifiers used")
+            logging.debug("No automatic identifiers used")
 
         for i, property_ in enumerate(properties.values()):
             if property_.property_type == "ObjectProperty" and add_drop_down_list:
