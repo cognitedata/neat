@@ -99,8 +99,8 @@ def rules2graph_capturing_sheet(
 
     Notes
     -----
-    no_rows should be set to maximum expected number of instances of any of the classes.
-    By default it is set to 1000, increase it accordingly if you have more instances.
+    no_rows should be set to the maximum expected number of instances of any of the classes.
+    By default, it is set to 1000, increase it accordingly if you have more instances.
 
     """
 
