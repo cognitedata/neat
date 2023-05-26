@@ -107,26 +107,25 @@ def validate_rules_graph_pair(graph_capturing_sheet: dict[str, pd.DataFrame], tr
     intersection = set(graph_capturing_sheet.keys()).intersection(set(transformation_rule.get_defined_classes()))
 
     if not intersection:
-        logging.error("Graph capturing sheet is not based on transformation rules! Aborting!")
-        raise ValueError("Graph capturing sheet is not based on transformation rules! Aborting!")
+        msg = "Graph capturing sheet is not based on transformation rules! Aborting!"
+        logging.error(msg)
+        raise ValueError(msg)
 
     elif len(intersection) == len(graph_capturing_sheet.keys()):
         logging.info("All classes in the graph capturing sheet are defined in the transformation rules!")
 
     elif len(intersection) < len(graph_capturing_sheet.keys()):
-        logging.warning(
-            "Graph capturing sheet contains classes that are not defined in the transformation rules! Proceeding..."
-        )
+        msg = "Graph capturing sheet contains classes that are not defined in the transformation rules! Proceeding..."
+        logging.warning(msg)
         warnings.warn(
-            "Graph capturing sheet contains classes that are not defined in the transformation rules! Proceeding...",
+            msg,
             stacklevel=2,
         )
 
     elif len(intersection) < len(transformation_rule.get_defined_classes()):
-        logging.warning(
-            "Transformation rules contain classes that are not present in the graph capturing sheet! Proceeding..."
-        )
+        msg = "Transformation rules contain classes that are not present in the graph capturing sheet! Proceeding..."
+        logging.warning(msg)
         warnings.warn(
-            "Transformation rules contain classes that are not present in the graph capturing sheet! Proceeding...",
+            msg,
             stacklevel=2,
         )
