@@ -14,10 +14,20 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## [0.12.1] - 25-05-23
+
+## [0.12.2] - 26-05-23
 ### Added
 * Added generation of knowledge graph capturing sheet based on data model definitions in transformation rules
 * Added generation of knowledge graph from graph capturing sheets
+
+## [0.12.1] - 26-05-23
+### Added
+* Added retry logic to asset and relationship update micro batching
+* Added generic workflow steps retry logic
+* Added examples of how to use update safety guards and human approval steps in workflows
+
+### Fixed
+* Fixed UI state polling bug.
 
 ## [0.12.0] - 23-05-23
 ### Added

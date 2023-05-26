@@ -62,6 +62,13 @@ configs:
     required: false
     type: null
     value: all_disabled
+-   group: safety
+    label: null
+    name: update_upproval_threshold
+    options: null
+    required: false
+    type: null
+    value: '10'
 description: null
 system_components:
 -   description: null
@@ -162,12 +169,14 @@ name: fast_graph
 steps:
 -   description: null
     enabled: true
-    group_id: null
     id: load_transformation_rules
     label: Loading transformation rules
+    max_retries: 0
     method: null
     params: null
+    retry_delay: 3
     stype: pystep
+    system_component_id: null
     transition_to:
     - configuring_stores
     trigger: false
@@ -176,12 +185,14 @@ steps:
         pos_y: 123
 -   description: null
     enabled: true
-    group_id: null
     id: configuring_stores
     label: Configuring graph stores
+    max_retries: 0
     method: null
     params: null
+    retry_delay: 3
     stype: pystep
+    system_component_id: null
     transition_to:
     - load_source_graph
     trigger: false
@@ -190,12 +201,14 @@ steps:
         pos_y: 229
 -   description: null
     enabled: true
-    group_id: null
     id: load_source_graph
     label: Loading source graph
+    max_retries: 0
     method: null
     params: null
+    retry_delay: 3
     stype: pystep
+    system_component_id: null
     transition_to:
     - run_transformation
     trigger: false
@@ -204,12 +217,14 @@ steps:
         pos_y: 315
 -   description: null
     enabled: true
-    group_id: null
     id: run_transformation
     label: Run transformation
+    max_retries: 0
     method: null
     params: null
+    retry_delay: 3
     stype: pystep
+    system_component_id: null
     transition_to:
     - create_cdf_labels
     trigger: false
@@ -218,40 +233,47 @@ steps:
         pos_y: 384
 -   description: null
     enabled: true
-    group_id: null
     id: prepare_cdf_assets
     label: Preparing CDF assets
+    max_retries: 0
     method: null
     params: null
+    retry_delay: 3
     stype: pystep
+    system_component_id: null
     transition_to:
     - upload_cdf_assets
+    - asset_update_approval
     trigger: false
     ui_config:
         pos_x: 119
         pos_y: 574
 -   description: null
     enabled: true
-    group_id: null
     id: upload_cdf_assets
     label: Uploading CDF assets to CDF
+    max_retries: 0
     method: null
     params: null
+    retry_delay: 5
     stype: pystep
+    system_component_id: null
     transition_to:
     - prepare_cdf_relationships
     trigger: false
     ui_config:
-        pos_x: 117
-        pos_y: 662
+        pos_x: 114
+        pos_y: 681
 -   description: null
     enabled: true
-    group_id: null
     id: prepare_cdf_relationships
     label: Preparing CDF relationships
+    max_retries: 0
     method: null
     params: null
+    retry_delay: 3
     stype: pystep
+    system_component_id: null
     transition_to:
     - upload_cdf_relationships
     trigger: false
@@ -260,12 +282,14 @@ steps:
         pos_y: 768
 -   description: Uploading CDF relationships to CDF
     enabled: true
-    group_id: null
     id: upload_cdf_relationships
     label: Uploading CDF relationships to CDF
+    max_retries: 0
     method: null
     params: null
+    retry_delay: 3
     stype: pystep
+    system_component_id: null
     transition_to: []
     trigger: false
     ui_config:
@@ -273,12 +297,14 @@ steps:
         pos_y: 874
 -   description: Upload CDF labels
     enabled: true
-    group_id: null
     id: create_cdf_labels
     label: Upload CDF labels
+    max_retries: 0
     method: null
     params: {}
+    retry_delay: 3
     stype: pystep
+    system_component_id: null
     transition_to:
     - prepare_cdf_assets
     trigger: false
@@ -287,12 +313,14 @@ steps:
         pos_y: 483
 -   description: null
     enabled: true
-    group_id: null
     id: cleanup
     label: Cleanup
+    max_retries: 0
     method: null
     params: null
+    retry_delay: 3
     stype: pystep
+    system_component_id: null
     transition_to: []
     trigger: false
     ui_config:
@@ -300,13 +328,15 @@ steps:
         pos_y: 993
 -   description: null
     enabled: true
-    group_id: null
     id: http_trigger
     label: Http trigger
+    max_retries: 0
     method: null
     params:
         interval: every 2 minutes
+    retry_delay: 3
     stype: http_trigger
+    system_component_id: null
     transition_to:
     - load_transformation_rules
     trigger: true
@@ -315,16 +345,34 @@ steps:
         pos_y: 32
 -   description: null
     enabled: false
-    group_id: null
     id: step_time_trigger
     label: Time trigger
+    max_retries: 0
     method: null
     params:
         interval: every 2 minutes
+    retry_delay: 3
     stype: time_trigger
+    system_component_id: null
     transition_to:
     - load_transformation_rules
     trigger: true
     ui_config:
         pos_x: 321
         pos_y: 31
+-   description: null
+    enabled: true
+    id: asset_update_approval
+    label: Asset update approval
+    max_retries: 0
+    method: null
+    params: {}
+    retry_delay: 3
+    stype: wait_for_event
+    system_component_id: null
+    transition_to:
+    - upload_cdf_assets
+    trigger: false
+    ui_config:
+        pos_x: 313
+        pos_y: 634

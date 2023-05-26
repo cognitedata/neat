@@ -248,7 +248,7 @@ class DefaultNeatWorkflow(BaseWorkflow):
             logging.error("No CDF client available")
             raise Exception("No CDF client available")
 
-        upload_assets(self.cdf_client, self.categorized_assets)
+        upload_assets(self.cdf_client, self.categorized_assets, max_retries=2, retry_delay=4)
         for _ in range(1000):
             total_assets_after = self.cdf_client.assets.aggregate(
                 filter=AssetFilter(data_set_ids=[{"id": self.dataset_id}])
@@ -304,7 +304,7 @@ class DefaultNeatWorkflow(BaseWorkflow):
             logging.error("No CDF client available")
             raise Exception("No CDF client available")
 
-        upload_relationships(self.cdf_client, self.categorized_relationships)
+        upload_relationships(self.cdf_client, self.categorized_relationships, max_retries=2, retry_delay=4)
 
     def step_cleanup(self, flow_msg: FlowMessage):
         self.categorized_assets = None

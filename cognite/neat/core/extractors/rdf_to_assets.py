@@ -15,7 +15,7 @@ from cognite.neat.core.data_classes import AssetTemplate, Property
 from cognite.neat.core.data_classes.config import EXCLUDE_PATHS
 from cognite.neat.core.data_classes.transformation_rules import TransformationRules
 from cognite.neat.core.loader.graph_store import NeatGraphStore
-from cognite.neat.core.utils import chunker, datetime_utc_now, remove_namespace
+from cognite.neat.core.utils import chunker, datetime_utc_now, remove_namespace, retry_decorator
 
 ORPHANAGE = {
     "external_id": "orphanage",
@@ -819,7 +819,13 @@ def categorize_assets(
 
 
 def _micro_batch_push(
-    client: CogniteClient, assets: list, batch_size: int = 1000, push_type: str = "update", message: str = "Updated"
+    client: CogniteClient,
+    assets: list,
+    batch_size: int = 1000,
+    push_type: str = "update",
+    message: str = "Updated",
+    max_retries: int = 1,
+    retry_delay: int = 5,
 ):
     """Updates assets in batches of 1000
 
@@ -838,17 +844,21 @@ def _micro_batch_push(
     """
     total = len(assets)
     counter = 0
-
+    if push_type not in ["update", "create"]:
+        logging.info(f"push_type {push_type} not supported")
+        raise ValueError(f"push_type {push_type} not supported")
     for batch in chunker(assets, batch_size):
         counter += len(batch)
         start_time = datetime_utc_now()
-        if push_type == "update":
-            client.assets.update(batch)
-        elif push_type == "create":
-            client.assets.create_hierarchy(batch)
-        else:
-            logging.info(f"push_type {push_type} not supported")
-            raise ValueError(f"push_type {push_type} not supported")
+
+        @retry_decorator(max_retries=max_retries, retry_delay=retry_delay, component_name="microbatch-assets")
+        def upsert_assets(batch):
+            if push_type == "update":
+                client.assets.update(batch)
+            elif push_type == "create":
+                client.assets.create_hierarchy(batch)
+
+        upsert_assets(batch)
 
         delta_time = (datetime_utc_now() - start_time).seconds
 
@@ -857,7 +867,13 @@ def _micro_batch_push(
         logging.info(msg)
 
 
-def upload_assets(client: CogniteClient, categorized_assets: Dict[str, list], batch_size: int = 5000):
+def upload_assets(
+    client: CogniteClient,
+    categorized_assets: Dict[str, list],
+    batch_size: int = 5000,
+    max_retries: int = 1,
+    retry_delay: int = 3,
+):
     """Uploads categorized assets to CDF
 
     Parameters
@@ -872,7 +888,15 @@ def upload_assets(client: CogniteClient, categorized_assets: Dict[str, list], ba
     if batch_size:
         logging.info(f"Uploading assets in batches of {batch_size}")
         if categorized_assets["create"]:
-            _micro_batch_push(client, categorized_assets["create"], batch_size, push_type="create", message="Created")
+            _micro_batch_push(
+                client,
+                categorized_assets["create"],
+                batch_size,
+                push_type="create",
+                message="Created",
+                max_retries=max_retries,
+                retry_delay=retry_delay,
+            )
 
         if categorized_assets["update"]:
             _micro_batch_push(
@@ -880,6 +904,8 @@ def upload_assets(client: CogniteClient, categorized_assets: Dict[str, list], ba
                 categorized_assets["update"],
                 batch_size,
                 message="Updated",
+                max_retries=max_retries,
+                retry_delay=retry_delay,
             )
 
         if categorized_assets["resurrect"]:
@@ -888,6 +914,8 @@ def upload_assets(client: CogniteClient, categorized_assets: Dict[str, list], ba
                 categorized_assets["resurrect"],
                 batch_size,
                 message="Resurrected",
+                max_retries=max_retries,
+                retry_delay=retry_delay,
             )
 
         if categorized_assets["decommission"]:
@@ -896,18 +924,25 @@ def upload_assets(client: CogniteClient, categorized_assets: Dict[str, list], ba
                 categorized_assets["decommission"],
                 batch_size,
                 message="Decommissioned",
+                max_retries=max_retries,
+                retry_delay=retry_delay,
             )
 
     else:
         logging.info("Batch size not set, pushing all assets to CDF in one go!")
-        if categorized_assets["create"]:
-            client.assets.create_hierarchy(categorized_assets["create"])
 
-        if categorized_assets["update"]:
-            client.assets.create_hierarchy(categorized_assets["update"], upsert=True, upsert_mode="replace")
+        @retry_decorator(max_retries=max_retries, retry_delay=retry_delay, component_name="create-assets")
+        def create_assets():
+            if categorized_assets["create"]:
+                client.assets.create_hierarchy(categorized_assets["create"])
 
-        if categorized_assets["resurrect"]:
-            client.assets.create_hierarchy(categorized_assets["resurrect"], upsert=True, upsert_mode="replace")
+            if categorized_assets["update"]:
+                client.assets.create_hierarchy(categorized_assets["update"], upsert=True, upsert_mode="replace")
 
-        if categorized_assets["decommission"]:
-            client.assets.create_hierarchy(categorized_assets["decommission"], upsert=True, upsert_mode="replace")
+            if categorized_assets["resurrect"]:
+                client.assets.create_hierarchy(categorized_assets["resurrect"], upsert=True, upsert_mode="replace")
+
+            if categorized_assets["decommission"]:
+                client.assets.create_hierarchy(categorized_assets["decommission"], upsert=True, upsert_mode="replace")
+
+        create_assets()

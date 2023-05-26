@@ -11,7 +11,7 @@ from cognite.client.data_classes import LabelFilter, Relationship, RelationshipU
 from cognite.neat.core.data_classes.transformation_rules import TransformationRules
 from cognite.neat.core.extractors.rdf_to_assets import _categorize_cdf_assets
 from cognite.neat.core.loader.graph_store import NeatGraphStore
-from cognite.neat.core.utils import chunker, datetime_utc_now, epoch_now_ms, remove_namespace
+from cognite.neat.core.utils import chunker, datetime_utc_now, epoch_now_ms, remove_namespace, retry_decorator
 
 # should be renamed to rdf2relationship_data_frame -> rdf2relationships
 
@@ -334,6 +334,8 @@ def _micro_batch_push(
     batch_size: int = 1000,
     push_type: str = "update",
     message: str = "Updated",
+    max_retries: int = 1,
+    retry_delay: int = 5,
 ):
     """Updates assets in batches of 1000
 
@@ -352,18 +354,22 @@ def _micro_batch_push(
     """
     total = len(relationships)
     counter = 0
+    if push_type not in ["update", "create"]:
+        logging.info(f"push_type {push_type} not supported")
+        raise ValueError(f"push_type {push_type} not supported")
 
     for batch in chunker(relationships, batch_size):
         counter += len(batch)
         start_time = datetime_utc_now()
-        if push_type == "update":
-            client.relationships.update(batch)
-        elif push_type == "create":
-            client.relationships.create(batch)
-        else:
-            logging.info(f"push_type {push_type} not supported")
-            raise ValueError(f"push_type {push_type} not supported")
 
+        @retry_decorator(max_retries=max_retries, retry_delay=retry_delay, component_name="microbatch-relationships")
+        def update_relationships(batch):
+            if push_type == "update":
+                client.relationships.update(batch)
+            elif push_type == "create":
+                client.relationships.create(batch)
+
+        update_relationships(batch)
         delta_time = (datetime_utc_now() - start_time).seconds
 
         msg = f"{message} {counter} of {total} relationships, batch processing time: {delta_time:.2f} "
@@ -375,6 +381,8 @@ def upload_relationships(
     client: CogniteClient,
     categorized_relationships: Dict[str, list[Union[Relationship, RelationshipUpdate]]],
     batch_size: int = 5000,
+    max_retries: int = 1,
+    retry_delay: int = 3,
 ):
     """Uploads categorized relationships to CDF
 
@@ -391,7 +399,13 @@ def upload_relationships(
         logging.info(f"Uploading relationships in batches of {batch_size}")
         if categorized_relationships["create"]:
             _micro_batch_push(
-                client, categorized_relationships["create"], batch_size, push_type="create", message="Created"
+                client,
+                categorized_relationships["create"],
+                batch_size,
+                push_type="create",
+                message="Created",
+                max_retries=max_retries,
+                retry_delay=retry_delay,
             )
 
         if categorized_relationships["resurrect"]:
@@ -400,6 +414,8 @@ def upload_relationships(
                 categorized_relationships["resurrect"],
                 batch_size,
                 message="Resurrected",
+                max_retries=max_retries,
+                retry_delay=retry_delay,
             )
 
         if categorized_relationships["decommission"]:
@@ -408,15 +424,22 @@ def upload_relationships(
                 categorized_relationships["decommission"],
                 batch_size,
                 message="Decommissioned",
+                max_retries=max_retries,
+                retry_delay=retry_delay,
             )
 
     else:
         logging.info("Batch size not set, pushing all relationships to CDF in one go!")
-        if categorized_relationships["create"]:
-            client.relationships.create(categorized_relationships["create"])
 
-        if categorized_relationships["resurrect"]:
-            client.relationships.update(categorized_relationships["resurrect"])
+        @retry_decorator(max_retries=max_retries, retry_delay=retry_delay, component_name="create-relationships")
+        def create_relationships():
+            if categorized_relationships["create"]:
+                client.relationships.create(categorized_relationships["create"])
 
-        if categorized_relationships["decommission"]:
-            client.relationships.update(categorized_relationships["decommission"])
+            if categorized_relationships["resurrect"]:
+                client.relationships.update(categorized_relationships["resurrect"])
+
+            if categorized_relationships["decommission"]:
+                client.relationships.update(categorized_relationships["decommission"])
+
+        create_relationships()
