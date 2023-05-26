@@ -14,7 +14,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## [0.12.2] - 25-05-23
+## [0.12.1] - 26-05-23
 
 ### Added
 * Added retry logic to asset and relationship update micro batching
