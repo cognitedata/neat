@@ -73,8 +73,8 @@ def _set_header_style(workbook: Workbook):
 
 
 def rules2graph_capturing_sheet(
-    file_path: Path,
     transformation_rules: TransformationRules,
+    file_path: Path,
     no_rows: int = 1000,
     use_index_id: bool = True,
     use_uuid_id: bool = False,
@@ -84,10 +84,10 @@ def rules2graph_capturing_sheet(
 
     Parameters
     ----------
-    file_path : Path
-        File path to save the sheet to
     transformation_rules : TransformationRules
         The TransformationRules object to convert to the graph capturing sheet
+    file_path : Path
+        File path to save the sheet to
     use_uuid_id : bool, optional
         Use UUID-based for automatic identifiers, by default False
     use_index_id : bool, optional
