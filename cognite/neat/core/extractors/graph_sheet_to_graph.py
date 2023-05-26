@@ -36,7 +36,7 @@ def sheet2graph(
         graph.bind(prefix, namespace)
     graph.bind(transformation_rule.metadata.prefix, transformation_rule.metadata.namespace)
 
-    # Add triples from graph capturing sheet
+    # Add triples from the capturing sheet to the graph by iterating over the capturing sheet
     # iterate over sheets
     for sheet_name, df in graph_capturing_sheet.items():
         # iterate over sheet rows
@@ -90,8 +90,9 @@ def validate_if_graph_capturing_sheet_empty(graph_capturing_sheet: dict[str, pd.
         Graph capturing sheet
     """
     if all(df.empty for df in graph_capturing_sheet.values()):
-        logging.error("Graph capturing sheet is empty! Aborting!")
-        raise ValueError("Graph capturing sheet is empty! Aborting!")
+        msg = "Graph capturing sheet is empty! Aborting!"
+        logging.error(msg)
+        raise ValueError(msg)
 
 
 def validate_rules_graph_pair(graph_capturing_sheet: dict[str, pd.DataFrame], transformation_rule: TransformationRules):
