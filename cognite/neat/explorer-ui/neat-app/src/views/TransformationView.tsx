@@ -107,7 +107,7 @@ export default function TransformationTable() {
     {field: 'name', headerName: 'Name', width: 130},
     {field: 'value', headerName: 'Value', type: 'number', width: 90},
   ];
-  const downloadUrl = neatApiRootUrl+"/data/rules/"+data.file_name
+  const downloadUrl = neatApiRootUrl+"/data/rules/"+data.file_name+"?version="+data.hash;
   useEffect(() => {
     loadDataset("","");
   }, []);

@@ -1,5 +1,4 @@
 import logging
-import time
 
 # import traceback
 from typing import Dict, List, Set, Union
@@ -12,7 +11,7 @@ from cognite.client.data_classes import LabelFilter, Relationship, RelationshipU
 from cognite.neat.core.data_classes.transformation_rules import TransformationRules
 from cognite.neat.core.extractors.rdf_to_assets import _categorize_cdf_assets
 from cognite.neat.core.loader.graph_store import NeatGraphStore
-from cognite.neat.core.utils import chunker, datetime_utc_now, epoch_now_ms, remove_namespace
+from cognite.neat.core.utils import chunker, datetime_utc_now, epoch_now_ms, remove_namespace, retry_decorator
 
 # should be renamed to rdf2relationship_data_frame -> rdf2relationships
 
@@ -362,22 +361,15 @@ def _micro_batch_push(
     for batch in chunker(relationships, batch_size):
         counter += len(batch)
         start_time = datetime_utc_now()
-        retry_counter = 0
-        while True:
-            try:
-                if push_type == "update":
-                    client.relationships.update(batch)
-                elif push_type == "create":
-                    client.relationships.create(batch)
-                break
-            except Exception as e:
-                if retry_counter >= max_retries:
-                    raise e
-                retry_counter += 1
-                logging.error(f"Error pushing {push_type} micro-batch: {e}")
-                logging.info(f"Retrying ({retry_counter})  in {retry_delay} seconds")
-                time.sleep(retry_delay)
 
+        @retry_decorator(max_retries=max_retries, retry_delay=retry_delay, component_name="microbatch-relationships")
+        def update_relationships(batch):
+            if push_type == "update":
+                client.relationships.update(batch)
+            elif push_type == "create":
+                client.relationships.create(batch)
+
+        update_relationships(batch)
         delta_time = (datetime_utc_now() - start_time).seconds
 
         msg = f"{message} {counter} of {total} relationships, batch processing time: {delta_time:.2f} "
@@ -438,8 +430,9 @@ def upload_relationships(
 
     else:
         logging.info("Batch size not set, pushing all relationships to CDF in one go!")
-        retry_counter = 0
-        try:
+
+        @retry_decorator(max_retries=max_retries, retry_delay=retry_delay, component_name="create-relationships")
+        def create_relationships():
             if categorized_relationships["create"]:
                 client.relationships.create(categorized_relationships["create"])
 
@@ -448,10 +441,5 @@ def upload_relationships(
 
             if categorized_relationships["decommission"]:
                 client.relationships.update(categorized_relationships["decommission"])
-        except Exception as e:
-            if retry_counter >= max_retries:
-                raise e
-            retry_counter += 1
-            logging.error(f"Error while upserting relationships: {e}")
-            logging.info(f"Retrying ({retry_counter})  in {retry_delay} seconds")
-            time.sleep(retry_delay)
+
+        create_relationships()

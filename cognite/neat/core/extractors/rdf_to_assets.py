@@ -1,5 +1,4 @@
 import logging
-import time
 import warnings
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple, Union
@@ -16,7 +15,7 @@ from cognite.neat.core.data_classes import AssetTemplate, Property
 from cognite.neat.core.data_classes.config import EXCLUDE_PATHS
 from cognite.neat.core.data_classes.transformation_rules import TransformationRules
 from cognite.neat.core.loader.graph_store import NeatGraphStore
-from cognite.neat.core.utils import chunker, datetime_utc_now, remove_namespace
+from cognite.neat.core.utils import chunker, datetime_utc_now, remove_namespace, retry_decorator
 
 ORPHANAGE = {
     "external_id": "orphanage",
@@ -851,21 +850,15 @@ def _micro_batch_push(
     for batch in chunker(assets, batch_size):
         counter += len(batch)
         start_time = datetime_utc_now()
-        retry_counter = 0
-        while True:
-            try:
-                if push_type == "update":
-                    client.assets.update(batch)
-                elif push_type == "create":
-                    client.assets.create_hierarchy(batch)
-                break
-            except Exception as e:
-                if retry_counter >= max_retries:
-                    raise e
-                retry_counter += 1
-                logging.error(f"Error pushing {push_type} micro-batch: {e}")
-                logging.info(f"Retrying ({retry_counter})  in {retry_delay} seconds")
-                time.sleep(retry_delay)
+
+        @retry_decorator(max_retries=max_retries, retry_delay=retry_delay, component_name="microbatch-assets")
+        def upsert_assets(batch):
+            if push_type == "update":
+                client.assets.update(batch)
+            elif push_type == "create":
+                client.assets.create_hierarchy(batch)
+
+        upsert_assets(batch)
 
         delta_time = (datetime_utc_now() - start_time).seconds
 
@@ -937,8 +930,9 @@ def upload_assets(
 
     else:
         logging.info("Batch size not set, pushing all assets to CDF in one go!")
-        retry_counter = 0
-        try:
+
+        @retry_decorator(max_retries=max_retries, retry_delay=retry_delay, component_name="create-assets")
+        def create_assets():
             if categorized_assets["create"]:
                 client.assets.create_hierarchy(categorized_assets["create"])
 
@@ -950,10 +944,5 @@ def upload_assets(
 
             if categorized_assets["decommission"]:
                 client.assets.create_hierarchy(categorized_assets["decommission"], upsert=True, upsert_mode="replace")
-        except Exception as e:
-            if retry_counter >= max_retries:
-                raise e
-            retry_counter += 1
-            logging.error(f"Error while creating asset hierarchy: {e}")
-            logging.info(f"Retrying ({retry_counter})  in {retry_delay} seconds")
-            time.sleep(retry_delay)
+
+        create_assets()
