@@ -30,10 +30,13 @@ const AboutView = () => {
         NEAT Version: {structure.version}
       </Typography>
       <Typography variant="h6" >
-        Docs URL: <a href='https://thisisneat.io/index.html'>https://thisisneat.io/index.html</a>
+        Docs URL: <a href='https://thisisneat.io'>https://thisisneat.io</a>
       </Typography>
       <Typography variant="h6" >
-        Github: <a href='https://github.com/cognitedata/neat'>hhttps://github.com/cognitedata/neat</a>
+        Docs URL: <a href='https://cognite-neat.readthedocs-hosted.com/en/latest/'>https://cognite-neat.readthedocs-hosted.com/en/latest/</a>
+      </Typography>
+      <Typography variant="h6" >
+        Github: <a href='https://github.com/cognitedata/neat'>https://github.com/cognitedata/neat</a>
       </Typography>
       <Typography variant="h6" >
         Issues tracker (Github): <a href='https://github.com/cognitedata/neat/issues'> https://github.com/cognitedata/neat/issues </a>

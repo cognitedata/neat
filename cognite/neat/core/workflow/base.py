@@ -12,6 +12,7 @@ from prometheus_client import Gauge
 
 from cognite.neat.core.data_classes.config import ClientConfig, Config
 from cognite.neat.core.data_stores.metrics import NeatMetricsCollector
+from cognite.neat.core.utils import retry_decorator
 from cognite.neat.core.workflow import cdf_store
 from cognite.neat.core.workflow.model import (
     FlowMessage,
@@ -228,7 +229,17 @@ class BaseWorkflow:
                     else:
                         logging.error(f"Workflow step {step.id} has no method {method_name}")
                         raise Exception(f"Workflow step {step.id} has no method {method_name}")
-                new_flow_message = method(flow_message)
+
+                @retry_decorator(
+                    max_retries=step.max_retries,
+                    retry_delay=step.retry_delay,
+                    component_name=f"wf step runner , step.id = {step.id}",
+                )
+                def method_runner():
+                    return method(flow_message)
+
+                new_flow_message = method_runner()
+
             elif step.stype == StepType.START_WORKFLOW_TASK_STEP:
                 if self.task_builder:
                     sync_str = step.params.get("sync", "false")

@@ -37,6 +37,8 @@ export class WorkflowStepDefinition {
     enabled?: boolean = true;
     system_component_id?: string;
     trigger?: boolean = false;
+    max_retries?: number = 0;
+    retry_delay?: number = 3;
     transition_to?: string[];
     params?:any = {}
     ui_config?: UIConfig = new UIConfig();

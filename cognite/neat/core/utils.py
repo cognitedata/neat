@@ -1,5 +1,8 @@
+import logging
+import time
 from collections import OrderedDict
 from datetime import datetime, timezone
+from functools import wraps
 
 import pandas as pd
 from cognite.client import ClientConfig, CogniteClient
@@ -105,3 +108,26 @@ def chunker(sequence, chunk_size):
 
 def datetime_utc_now():
     return datetime.now(timezone.utc)
+
+
+def retry_decorator(max_retries=2, retry_delay=3, component_name=""):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            for attempt in range(max_retries + 1):
+                try:
+                    logging.debug(f"Attempt {attempt + 1} of {max_retries + 1} for {component_name}")
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    if attempt < max_retries:
+                        logging.error(
+                            f"Retry attempt {attempt + 1} failed for {component_name} . Retrying in {retry_delay} second(s)."
+                        )
+                        logging.error(e)
+                        time.sleep(retry_delay)
+                    else:
+                        raise e
+
+        return wrapper
+
+    return decorator
