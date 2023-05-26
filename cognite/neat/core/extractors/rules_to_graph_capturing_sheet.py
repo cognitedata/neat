@@ -4,21 +4,11 @@ from pathlib import Path
 
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, NamedStyle, PatternFill, Side
+from openpyxl.utils.cell import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
 
 from cognite.neat.core.data_classes.transformation_rules import TransformationRules
 from cognite.neat.core.extractors.rules_to_graphql import repair_name as to_graphql_name
-
-
-def _get_column_letter(column_number: int) -> str:
-    """Converts a column number to a letter"""
-    dividend = column_number
-    column_letter = ""
-    while dividend > 0:
-        modulo = (dividend - 1) % 26
-        column_letter = chr(65 + modulo) + column_letter
-        dividend = int((dividend - modulo) / 26)
-    return column_letter
 
 
 def _add_index_identifiers(workbook: Workbook, sheet: str, no_rows: int):
@@ -129,7 +119,7 @@ def rules2graph_capturing_sheet(
                 _add_drop_down_list(
                     workbook,
                     class_,
-                    _get_column_letter(i + 2),
+                    get_column_letter(i + 2),
                     no_rows,
                     property_.expected_value_type,
                     "A",
