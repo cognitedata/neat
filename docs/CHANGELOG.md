@@ -14,6 +14,15 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.12.2] - 30-05-23
+
+### Fixed
+* Default `config.yaml` could not be reloaded.
+
+### Improved
+* The output messages for `load_transformation_rules_step` in all workflows by specifying which file is used.
+
+
 ## [0.12.1] - 26-05-23
 
 ### Added
