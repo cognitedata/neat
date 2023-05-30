@@ -66,7 +66,7 @@ class Sheet2CDFNeatWorkflow(BaseWorkflow):
         self.raw_tables = loader.rules.excel_file_to_table_by_name(rules_file_path)
         self.transformation_rules = parser.parse_transformation_rules(self.raw_tables)
 
-        output_text = f"Loaded {len(self.transformation_rules.properties)} rules"
+        output_text = f"Loaded {len(self.transformation_rules.properties)} rules from {rules_file_path.name!r}."
         logging.info(output_text)
         logging.info(f"Loaded prefixes {str(self.transformation_rules.prefixes)} rules")
 
