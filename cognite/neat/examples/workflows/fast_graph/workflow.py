@@ -65,7 +65,7 @@ class FastGraphNeatWorkflow(BaseWorkflow):
         tables = loader.rules.excel_file_to_table_by_name(rules_file_path)
         self.transformation_rules = parser.parse_transformation_rules(tables)
         self.dataset_id = self.transformation_rules.metadata.data_set_id
-        logging.info(f"Loaded prefixes {str(self.transformation_rules.prefixes)} rules")
+        logging.info(f"Loaded prefixes {str(self.transformation_rules.prefixes)} rules from {rules_file_path.name!r}.")
         output_text = f"Loaded {len(self.transformation_rules.properties)} rules"
         logging.info(output_text)
         return FlowMessage(output_text=output_text)

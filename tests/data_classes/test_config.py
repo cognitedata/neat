@@ -1,7 +1,9 @@
+from pathlib import Path
+
 import pytest
 from pydantic import ValidationError
 
-from cognite.neat.core.data_classes import rules, transformation_rules
+from cognite.neat.core.data_classes import Config, rules, transformation_rules
 
 nan = float("nan")
 
@@ -113,3 +115,14 @@ def generate_is_rawlookup_test_data():
 @pytest.mark.parametrize("raw_input, is_rawlookup_expected", generate_is_rawlookup_test_data())
 def test_is_rawlookup(raw_input: str, is_rawlookup_expected: bool):
     assert rules.is_rawlookup(raw_input) is is_rawlookup_expected
+
+
+def test_dump_and_load_default_config(tmp_path: Path):
+    config = Config()
+    filepath = tmp_path / "tmp_config.yaml"
+
+    config.to_yaml(filepath)
+
+    loaded_config = config.from_yaml(filepath)
+
+    assert config == loaded_config
