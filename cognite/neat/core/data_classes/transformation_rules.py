@@ -410,7 +410,7 @@ class TransformationRules(BaseModel):
         """Returns classes that have been defined in the data model."""
         return {property.class_name for property in self.properties.values()}
 
-    def get_classes_with_properties(self) -> dict[str, Property]:
+    def get_classes_with_properties(self) -> dict[str, list[Property]]:
         """Returns classes that have been defined in the data model."""
         # TODO: Do not particularly like method name, find something more suitable
         class_property_pairs = {}
@@ -421,6 +421,24 @@ class TransformationRules(BaseModel):
                 class_property_pairs[class_] += [property_]
             else:
                 class_property_pairs[class_] = [property_]
+
+        return class_property_pairs
+
+    def get_class_property_pairs(self) -> dict[str, dict[str, Property]]:
+        """This method will actually consider only the first definition of given property!"""
+        class_property_pairs = {}
+
+        for class_, properties in self.get_classes_with_properties().items():
+            processed_properties = {}
+            for property_ in properties:
+                if property_.property_name in processed_properties:
+                    warnings.warn(
+                        "Property has been defined more than once! Only first definition will be considered.",
+                        stacklevel=2,
+                    )
+                    continue
+                processed_properties[property_.property_name] = property_
+            class_property_pairs[class_] = processed_properties
 
         return class_property_pairs
 

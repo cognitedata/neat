@@ -9,10 +9,15 @@ Changes are grouped as follows:
 - `Added` for new features.
 - `Changed` for changes in existing functionality.
 - `Deprecated` for soon-to-be removed features.
-- `Improved` for transparent changes, e.g. better performance.
+- `Improved` for transparent changes, e.`g. better performance.
 - `Removed` for now removed features.
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
+
+## [0.12.3] - 30-05-23
+### Added
+* Added generation of knowledge graph capturing sheet based on data model definitions in transformation rules
+* Added generation of knowledge graph from graph capturing sheets
 
 ## [0.12.2] - 30-05-23
 
@@ -22,9 +27,7 @@ Changes are grouped as follows:
 ### Improved
 * The output messages for `load_transformation_rules_step` in all workflows by specifying which file is used.
 
-
 ## [0.12.1] - 26-05-23
-
 ### Added
 * Added retry logic to asset and relationship update micro batching
 * Added generic workflow steps retry logic
@@ -32,7 +35,6 @@ Changes are grouped as follows:
 
 ### Fixed
 * Fixed UI state polling bug.
-
 
 ## [0.12.0] - 23-05-23
 ### Added

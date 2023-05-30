@@ -72,6 +72,12 @@ def simple_rules():
 
 
 @pytest.fixture(scope="function")
+def graph_capturing_sheet():
+    # return load_workbook(config.GRAPH_CAPTURING_SHEET)
+    return loader.graph_capturing_sheet.excel_file_to_table_by_name(config.GRAPH_CAPTURING_SHEET)
+
+
+@pytest.fixture(scope="function")
 def grid_graphql_schema():
     return """type CountryGroup {
   name: String!
