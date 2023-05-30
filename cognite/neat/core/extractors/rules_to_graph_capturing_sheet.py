@@ -27,7 +27,7 @@ def _add_uuid_identifiers(workbook: Workbook, sheet: str, no_rows: int):
 
 def _add_drop_down_list(workbook: Workbook, sheet: str, column: str, no_rows: int, value_sheet: str, value_column: str):
     """Adds a drop down list to a column"""
-    drop_down_list = DataValidation(type="list", formula1=f"={value_sheet}!{value_column}2:{value_column}{no_rows}")
+    drop_down_list = DataValidation(type="list", formula1=f"={value_sheet}!{value_column}$2:{value_column}${no_rows}")
 
     workbook[sheet].add_data_validation(drop_down_list)
 

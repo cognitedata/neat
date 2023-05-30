@@ -82,6 +82,81 @@ def sheet2graph(
     return graph
 
 
+def sheet2triples(
+    graph_capturing_sheet: dict[str, pd.DataFrame], transformation_rule: TransformationRules, separator: str = ","
+) -> list[tuple]:
+    """Converts a graph capturing sheet to rdf triples
+
+    Parameters
+    ----------
+    graph_capturing_sheet : dict[str, pd.DataFrame]
+        Graph capturing sheet
+    transformation_rule : TransformationRules
+        Transformation rules
+    separator : str, optional
+        Multi value separator, by default ","
+    """
+    # Validation that everything is in order before proceeding
+    validate_if_graph_capturing_sheet_empty(graph_capturing_sheet)
+    validate_rules_graph_pair(graph_capturing_sheet, transformation_rule)
+
+    # get class property pairs
+    class_property_pairs = transformation_rule.get_class_property_pairs()
+
+    # Now create empty graph
+    triples = []
+
+    # # Add namespaces
+    # for prefix, namespace in transformation_rule.prefixes.items():
+    #     graph.bind(prefix, namespace)
+    # graph.bind(transformation_rule.metadata.prefix, transformation_rule.metadata.namespace)
+
+    # Add triples from the capturing sheet to the graph by iterating over the capturing sheet
+    # iterate over sheets
+    for sheet_name, df in graph_capturing_sheet.items():
+        # iterate over sheet rows
+        for _, row in df.iterrows():
+            if row.identifier is None:
+                msg = f"Missing identifier in sheet {sheet_name} at row {row.name}! Skipping..."
+                logging.warning(msg)
+                warnings.warn(
+                    msg,
+                    stacklevel=2,
+                )
+                continue
+
+            # iterate over sheet rows properties
+            for property_, value in row.to_dict().items():
+                if property_ == "identifier":
+                    triples.append(
+                        (
+                            transformation_rule.metadata.namespace[row.identifier],
+                            RDF.type,
+                            transformation_rule.metadata.namespace[sheet_name],
+                        )
+                    )
+
+                elif class_property_pairs[sheet_name][property_].property_type == "ObjectProperty" and value:
+                    for v in value.split(separator):
+                        triples.append(
+                            (
+                                transformation_rule.metadata.namespace[row.identifier],
+                                transformation_rule.metadata.namespace[property_],
+                                transformation_rule.metadata.namespace[v.strip()],
+                            )
+                        )
+                elif value:
+                    triples.append(
+                        (
+                            transformation_rule.metadata.namespace[row.identifier],
+                            transformation_rule.metadata.namespace[property_],
+                            Literal(value),
+                        )
+                    )
+
+    return triples
+
+
 def validate_if_graph_capturing_sheet_empty(graph_capturing_sheet: dict[str, pd.DataFrame]):
     """Validate if the graph capturing sheet is empty
 
