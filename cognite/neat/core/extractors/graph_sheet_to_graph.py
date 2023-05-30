@@ -42,9 +42,10 @@ def sheet2graph(
         # iterate over sheet rows
         for _, row in df.iterrows():
             if row.identifier is None:
-                logging.warning(f"Missing identifier in sheet {sheet_name} at row {row.name}! Skipping...")
+                msg = f"Missing identifier in sheet {sheet_name} at row {row.name}! Skipping..."
+                logging.warning(msg)
                 warnings.warn(
-                    f"Missing identifier in sheet {sheet_name} at row {row.name}! Skipping...",
+                    msg,
                     stacklevel=2,
                 )
                 continue
