@@ -42,6 +42,7 @@ class BaseWorkflow:
         client: CogniteClient,
         workflow_steps: list[WorkflowStepDefinition] = None,
         default_dataset_id: int = None,
+        run_id: str = "",
     ):
         self.name = name
         self.module_name = self.__class__.__module__
@@ -49,7 +50,7 @@ class BaseWorkflow:
         self.cdf_client_config: CogniteClientConfig = client.config
         self.default_dataset_id = default_dataset_id
         self.state = WorkflowState.CREATED
-        self.run_id = ""
+        self.run_id = run_id
         self.last_error = ""
         self.elapsed_time = 0
         self.start_time = None
@@ -72,6 +73,10 @@ class BaseWorkflow:
     def start(self, sync=False, **kwargs) -> FlowMessage | None:
         """Starts workflow execution.sync=True will block until workflow is completed and return last workflow flow message,
         sync=False will start workflow in a separate thread and return None"""
+        if self.state not in [WorkflowState.CREATED, WorkflowState.COMPLETED, WorkflowState.FAILED]:
+            logging.error(f"Workflow {self.name} is already running")
+            return None
+        self.state = WorkflowState.RUNNING
         self.execution_log = []
         if sync:
             return self._run_workflow(**kwargs)
@@ -83,18 +88,14 @@ class BaseWorkflow:
     def _run_workflow(self, **kwargs) -> FlowMessage | None:
         """Run workflow and return last workflow flow message"""
         summary_metrics.labels(wf_name=self.name, name="steps_count").set(len(self.workflow_steps))
-        if self.state not in [WorkflowState.CREATED, WorkflowState.COMPLETED, WorkflowState.FAILED]:
-            logging.error(f"Workflow {self.name} is already running")
-            return None
         logging.info(f"Starting workflow {self.name}")
-
         if flow_message := kwargs.get("flow_message"):
             self.flow_message = flow_message
-
-        self.state = WorkflowState.RUNNING
+        
         self.start_time = time.time()
         self.end_time = None
-        self.run_id = utils.generate_run_id()
+        if self.run_id == "":
+            self.run_id = utils.generate_run_id()
         start_time = time.perf_counter()
 
         self.report_workflow_execution()

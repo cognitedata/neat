@@ -47,7 +47,8 @@ class TriggerManager:
             logging.debug(f"Request object = {json_payload}")
 
             flow_msg = FlowMessage(payload=json_payload)
-            sync = request.headers.get("Neat-Sync-Response", True)
+            sync = bool(request.headers.get("Neat-Sync-Response", True))
+            max_wait_time = int(request.headers.get("Neat-Sync-Max-Wait", 30))
             logging.info(f"Workflow {workflow_name} state = {workflow.state} sync={sync}")
             if workflow.state == WorkflowState.RUNNING_WAITING:
                 workflow.resume_workflow(flow_message=flow_msg, step_id=step_id)
@@ -56,11 +57,27 @@ class TriggerManager:
                 result = workflow.start(sync=sync, flow_message=flow_msg, start_step_id=step_id)
                 if result:
                     if result.payload:
-                        logging.info(f"Workflow resule payload = {result.payload}")
+                        logging.info(f"Workflow result payload = {result.payload}")
                         return result.payload
             else:
+                # wait until workflow transition to RUNNING state and then start , set max wait time to 10 seconds
+                start_time = time.perf_counter()
+                # wait until workflow transition to RUNNING state and then start , set max wait time to 10 seconds. The operation is executed in callers thread 
+                logging.info("Existing workflow instance already running , waiting for RUNNING state")
+                while workflow.state == WorkflowState.RUNNING:
+                    elapsed_time = time.perf_counter() - start_time
+                    if elapsed_time > max_wait_time:
+                        logging.info(f"Workflow {workflow_name} wait time exceeded . elapsed time = {elapsed_time}, max wait time = {max_wait_time}")
+                        return {"result": "Workflow instance already running.Wait time exceeded"}
+                    time.sleep(0.5)
+                result = workflow.start(sync=sync, flow_message=flow_msg, start_step_id=step_id)
+                if result:
+                    if result.payload:
+                        logging.info(f"Workflow result payload = {result.payload}")
+                        return result.payload
                 logging.info(f"Workflow {workflow_name} is already running")
                 return {"result": "Workflow instance already running"}
+            
             return {"result": "Workflow instance started"}
 
     def _start_scheduler_main_loop(self):
@@ -161,3 +178,5 @@ class TriggerManager:
         self.is_running = False
         time.sleep(1)
         self.start_time_schedulers()
+
+    

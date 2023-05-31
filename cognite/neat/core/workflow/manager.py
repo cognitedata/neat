@@ -8,7 +8,7 @@ from pathlib import Path
 
 from cognite.client import CogniteClient
 
-from cognite.neat.core.workflow import BaseWorkflow
+from cognite.neat.core.workflow import BaseWorkflow, utils
 from cognite.neat.core.workflow.base import WorkflowDefinition
 from cognite.neat.core.workflow.tasks import WorkflowTaskBuilder
 
@@ -33,6 +33,7 @@ class WorkflowManager:
         self.client = client
         self.data_set_id = data_set_id
         self.workflow_registry: dict[str, BaseWorkflow] = {}
+        self.workflow_instance_registry: dict[str, BaseWorkflow] = {}
         self.workflows_storage_type = registry_storage_type
         # todo use pathlib
         self.workflows_storage_path = workflows_storage_path if workflows_storage_path else Path("workflows")
@@ -130,3 +131,20 @@ class WorkflowManager:
                 except Exception as e:
                     trace = traceback.format_exc()
                     logging.error(f"Error loading workflow {wf_module_name}: error: {e} trace : {trace}")
+
+    def create_workflow_instance(self, template_name: str, add_to_registry: bool = True) -> BaseWorkflow:
+        new_instance = self.workflow_registry[template_name].__class__(template_name, self.client, run_id=utils.generate_run_id())
+        new_instance.set_metadata(self.workflow_registry[template_name].metadata)
+        new_instance.set_task_builder(self.task_builder)
+        new_instance.set_default_dataset_id(self.data_set_id)
+        new_instance.set_storage_path("transformation_rules", self.rules_storage_path)
+        if add_to_registry:
+            self.workflow_instance_registry[new_instance.run_id] = new_instance
+        return new_instance
+
+    def get_workflow_instance(self, run_id: str) -> BaseWorkflow:
+        return self.workflow_instance_registry[run_id]
+
+    def delete_workflow_instance(self, run_id: str):
+        del self.workflow_instance_registry[run_id]
+        return

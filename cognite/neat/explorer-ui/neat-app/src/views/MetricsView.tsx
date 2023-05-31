@@ -17,6 +17,7 @@ import Paper from '@mui/material/Paper';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import { getNeatApiRootUrl } from 'components/Utils';
+import { Button } from '@mui/material';
 
 function Row(props: { row: any }) {
   const { row } = props;
@@ -121,7 +122,8 @@ export default function MetricsTable() {
       </Table>
 
     </TableContainer>
-    <a href='{neatApiRootUrl}/metrics'>Prometheus metrics endpoint</a>
+    <Button variant="outlined" sx={{ marginTop: 2, marginRight: 1 }}  onClick={loadDataset}>Reload</Button>
+    <p>  <a href='{neatApiRootUrl}/metrics'>Prometheus metrics endpoint</a> </p>
     </div>
   );
 }
