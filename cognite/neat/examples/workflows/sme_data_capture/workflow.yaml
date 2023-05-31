@@ -41,7 +41,7 @@ steps:
 -   description: null
     enabled: true
     id: load_transformation_rules
-    label: Loading transformation rules
+    label: Load transformation rules
     max_retries: 1
     method: null
     params: {}
@@ -73,15 +73,15 @@ steps:
     ui_config:
         pos_x: 337
         pos_y: 14
--   description: null
+-   description: ''
     enabled: true
     id: step_process_captured_data
-    label: Process captured data from spreadsheet
+    label: Click here to upload the data capture spreadsheet and start the process
     max_retries: 0
     method: null
     params: {}
     retry_delay: 3
-    stype: http_trigger
+    stype: file_uploader
     system_component_id: null
     transition_to:
     - step_604220
@@ -110,7 +110,7 @@ steps:
 -   description: null
     enabled: true
     id: configure_graph_store
-    label: Configuring graph store
+    label: Configure graph store
     max_retries: 0
     method: null
     params: {}
@@ -183,8 +183,8 @@ steps:
     - configure_graph_store_2
     trigger: false
     ui_config:
-        pos_x: 669
-        pos_y: 113
+        pos_x: 668
+        pos_y: 135
 -   description: null
     enabled: true
     id: configure_graph_store_2
