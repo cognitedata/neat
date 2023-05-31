@@ -8,7 +8,7 @@ from typing import Dict, List, Optional, Self, Union
 
 import pandas as pd
 from graphql import GraphQLBoolean, GraphQLFloat, GraphQLInt, GraphQLString
-from pydantic import BaseModel, Field, HttpUrl, ValidationError, root_validator, validator
+from pydantic import BaseModel, Field, HttpUrl, ValidationError, parse_obj_as, root_validator, validator
 from rdflib import XSD, Literal, Namespace, URIRef
 
 from cognite.neat.core.configuration import PREFIXES, Tables
@@ -105,7 +105,7 @@ class Property(Resource):
 
     # Specialization of cdf_resource_type to allow definition of both
     # Asset and Relationship at the same time
-    cdf_resource_type: list[str] = Field(alias="Resource Type")
+    cdf_resource_type: list[str] = Field(alias="Resource Type", default=[])
 
     @property
     def is_raw_lookup(self) -> bool:
@@ -122,6 +122,7 @@ class Property(Resource):
         "skip_rule",
         "rule",
         "rule_type",
+        "cdf_resource_type",
         pre=True,
     )
     def replace_float_nan_with_default(cls, value, field):
@@ -213,6 +214,11 @@ class Metadata(BaseModel):
     def set_namespace(cls, value, values):
         if value is None:
             return Namespace(f"http://purl.org/cognite/{values['prefix']}#")
+        try:
+            _ = parse_obj_as(HttpUrl, value)
+            return Namespace(value)
+        except ValidationError as e:
+            raise ValueError(f"Invalid namespace {value}, it must be a valid URL!") from e
 
     @validator("creator", "contributor")
     def to_list_if_comma(cls, value, field):
