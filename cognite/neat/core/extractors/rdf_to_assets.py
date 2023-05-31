@@ -752,7 +752,7 @@ def categorize_assets(
     client: CogniteClient,
     rdf_assets: dict,
     data_set_id: int,
-    partitions: int = 40,
+    partitions: int = 2,
     stop_on_exception: bool = False,
     return_report: bool = False,
 ) -> Union[tuple[dict, dict], dict]:
@@ -767,7 +767,7 @@ def categorize_assets(
     data_set_id : int
         Dataset id to which assets are to be/are stored
     partitions : int, optional
-        Number of partitions to use when fetching assets from CDF, by default 40
+        Number of partitions to use when fetching assets from CDF, by default 2
     stop_on_exception : bool, optional
         Whether to stop on exception or not, by default False
     return_report : bool, optional
