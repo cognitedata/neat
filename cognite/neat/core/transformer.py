@@ -58,8 +58,32 @@ class RuleProcessingReport(BaseModel):
     elapsed_time: float = 0
 
 
-def generate_instances_from_sheet():
-    pass
+def source2solution_graph(
+    source_knowledge_graph: Graph,
+    transformation_rules: TransformationRules,
+    solution_knowledge_graph: Graph = None,
+    client: CogniteClient = None,
+    cdf_lookup_database: str = None,
+    extra_triples: List[Tuple] = None,
+    stop_on_exception: bool = False,
+    missing_raw_lookup_value: str = "NaN",
+    processing_report: RuleProcessingReport = None,
+):
+    """Create solution graph from source graph and transformation rules"""
+
+    # TODO: This is to be improved and slowly sunset domain2app_knowledge_graph
+
+    return domain2app_knowledge_graph(
+        domain_knowledge_graph=source_knowledge_graph,
+        transformation_rules=transformation_rules,
+        app_instance_graph=solution_knowledge_graph,
+        client=client,
+        cdf_lookup_database=cdf_lookup_database,
+        extra_triples=extra_triples,
+        stop_on_exception=stop_on_exception,
+        missing_raw_lookup_value=missing_raw_lookup_value,
+        processing_report=processing_report,
+    )
 
 
 def domain2app_knowledge_graph(
