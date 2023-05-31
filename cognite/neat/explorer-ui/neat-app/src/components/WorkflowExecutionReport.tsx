@@ -61,6 +61,10 @@ export default function WorkflowExecutionReport(props: any) {
       return stats;
     }
 
+    function createMarkup(text) {
+      return {__html: text};
+    }
+
     return (
         <Timeline sx={{
             [`& .${timelineItemClasses.root}:before`]: {
@@ -79,7 +83,7 @@ export default function WorkflowExecutionReport(props: any) {
                 </TimelineSeparator>
                 <TimelineContent> {log.timestamp} - {log.state} : {log.id} in ({log.elapsed_time} sec)
                   {log.state == "FAILED" && (<div> {log.error} </div>)}
-                  {log.state == "COMPLETED" && (<div> {log.output_text} </div>)}
+                  {log.state == "COMPLETED" && (<div dangerouslySetInnerHTML={ createMarkup(log.output_text) }></div>)}
                   {log.data && ( <NJsonViewer data={log.data} />) }
                 </TimelineContent>
 

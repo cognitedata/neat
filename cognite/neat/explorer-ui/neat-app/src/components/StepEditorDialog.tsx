@@ -13,6 +13,8 @@ import TextField from "@mui/material/TextField"
 import { useEffect, useState } from "react"
 import { WorkflowStepDefinition, WorkflowSystemComponent } from "types/WorkflowTypes"
 import { getNeatApiRootUrl } from "./Utils"
+import LocalUploader from "./LocalUploader"
+import { Typography } from "@mui/material"
 
 export default function StepEditorDialog(props: any)
 {
@@ -20,6 +22,7 @@ export default function StepEditorDialog(props: any)
     const [selectedStep, setSelectedStep] = useState<WorkflowStepDefinition>();
     const neatApiRootUrl = getNeatApiRootUrl();
     const [runPayload,setRunPayload] = useState<string>(JSON.stringify({"action":"approve"}))
+    const [statusText,setStatusText] = useState<string>("")
 
     const handleDialogSave = () => {
         setDialogOpen(false);
@@ -46,6 +49,11 @@ export default function StepEditorDialog(props: any)
         })
         props.onClose(selectedStep,"run");
     };
+
+    const onUpload = (fileName:string , hash: string) => {
+      console.log("onUpload",fileName,hash)
+      setStatusText("File uplloaded "+fileName)
+    }
 
     useEffect(() => {
         if (props.open){
@@ -119,11 +127,15 @@ return (
               <MenuItem value="time_trigger">Time trigger</MenuItem>
               <MenuItem value="wait_for_event">Wait for event</MenuItem>
               <MenuItem value="start_workflow_task_step">Start workflow</MenuItem>
+              <MenuItem value="file_uploader">File uploader</MenuItem>
             </Select>
 
             <TextField sx={{ marginTop: 1 }} id="step-config-descr" fullWidth label="Description" size='small' variant="outlined" value={selectedStep?.description} onChange={(event) => { handleStepConfigChange("description", event.target.value) }} />
             {(selectedStep?.stype == "time_trigger") && (
               <TextField sx={{ marginTop: 1 }} id="step-config-time-config" fullWidth label="Time interval" size='small' variant="outlined" value={selectedStep?.params["interval"]} onChange={(event) => { handleStepConfigChange("time-interval", event.target.value) }} />
+            )}
+             {(selectedStep?.stype == "pystep") && (
+              <TextField sx={{ marginTop: 1 }} id="step-pystep-method" fullWidth label="Override function name (optional)" size='small' variant="outlined" value={selectedStep?.method} onChange={(event) => { handleStepConfigChange("method", event.target.value) }} />
             )}
             {(selectedStep?.stype == "start_workflow_task_step") && (
               <TextField sx={{ marginTop: 1 }} id="step-start_workflow_task_step" fullWidth label="Name of the workflow" size='small' variant="outlined" value={selectedStep?.params["workflow_name"]} onChange={(event) => { handleStepConfigChange("workflow_name", event.target.value) }} />
@@ -131,16 +143,26 @@ return (
             {(selectedStep?.stype == "start_workflow_task_step") && (
               <FormControlLabel control={<Checkbox checked={selectedStep?.params["sync"] == "true"} onChange={(event) => { handleStepConfigChange("workflow_sync_run_flag", event.target.checked) }} />} label="Synchronous execution" />
             )}
+            {(selectedStep?.stype == "file_uploader") && (
+               <LocalUploader fileType="staging" action="start_workflow" onUpload={onUpload} stepId={selectedStep.id} workflowName={props.workflowName} />
+            )}
+
             <FormControlLabel control={<Checkbox checked={selectedStep?.enabled} onChange={(event) => { handleStepConfigChange("enabled", event.target.checked) }} />} label="Is enabled" />
             <FormControlLabel control={<Checkbox checked={selectedStep?.trigger} onChange={(event) => { handleStepConfigChange("trigger", event.target.checked) }} />} label="Is trigger" />
-
+            {(selectedStep?.trigger == false) && (
             <TextField sx={{ marginTop: 1 }} id="step-config-max-retries" fullWidth label="Max retries on failure" size='small' type="number" variant="outlined" value={selectedStep?.max_retries} onChange={(event) => { handleStepConfigChange("max_retries", event.target.value) }} />
+            )}
+             {(selectedStep?.trigger == false) && (
             <TextField sx={{ marginTop: 1 }} id="step-config-retry-delay" fullWidth label="Retry delay" size='small' variant="outlined" type="number" value={selectedStep?.retry_delay} onChange={(event) => { handleStepConfigChange("retry_delay", event.target.value) }} />
+             )}
 
             {(selectedStep?.stype == "http_trigger" || selectedStep?.stype == "wait_for_event") && (
               <TextField sx={{ marginTop: 1 }} value={runPayload} label="Run payload" onChange={(event)=>setRunPayload(event.target.value)} id="run_payload"> </TextField>
             )}
+
+
           </FormControl>
+          <Typography> {statusText} </Typography>
 
         </DialogContent>
         <DialogActions>

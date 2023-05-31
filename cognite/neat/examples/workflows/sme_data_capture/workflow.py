@@ -1,8 +1,10 @@
 import logging
-from pathlib import Path
 import time
+from pathlib import Path
 
 from cognite.client import CogniteClient
+from cognite.client.data_classes import AssetFilter
+
 from cognite.neat.core import extractors, loader, parser
 from cognite.neat.core.data_classes.transformation_rules import TransformationRules
 from cognite.neat.core.extractors.rdf_to_assets import categorize_assets, rdf2assets, upload_assets
@@ -10,11 +12,9 @@ from cognite.neat.core.loader.graph_store import NeatGraphStore
 from cognite.neat.core.utils import add_triples
 from cognite.neat.core.validator import validate_asset_hierarchy
 from cognite.neat.core.workflow import utils
-
 from cognite.neat.core.workflow.base import BaseWorkflow
 from cognite.neat.core.workflow.cdf_store import CdfStore
 from cognite.neat.core.workflow.model import FlowMessage
-from cognite.client.data_classes import AssetFilter
 
 
 class SmeDataCaptureNeatWorkflow(BaseWorkflow):
@@ -26,18 +26,18 @@ class SmeDataCaptureNeatWorkflow(BaseWorkflow):
         self.transformation_rules: TransformationRules = None
         self.solution_graph: NeatGraphStore = None
         self.dataset_id: int = 0
-   
+
     def step_run_experiment_1(self, flow_msg: FlowMessage = None):
         logging.info("Running experiment 1")
         logging.info(flow_msg.payload)
         self.counter = self.counter + 1
         logging.info("Counter: " + str(self.counter))
-        
+
         self.metrics.get("counter_1", {"step": "run_experiment_1"}).inc()
         self.metrics.get("gauge_1", {"step": "run_experiment_1"}).set(self.counter)
         if flow_msg.payload["action"] == "approve":
             return FlowMessage(output_text=f"Running iteration {self.counter} of xperiment", next_step_ids=["cleanup"])
-        else :
+        else:
             return FlowMessage(output_text="Done running experiment", next_step_ids=["step_45507"])
 
     def step_cleanup(self, flow_msg: FlowMessage = None):
@@ -49,13 +49,13 @@ class SmeDataCaptureNeatWorkflow(BaseWorkflow):
 
     def step_file_generator(self, flow_msg: FlowMessage = None):
         logging.info("File generator")
-        # generate test file and save it to the file system 
+        # generate test file and save it to the file system
         new_file_path = self.get_config_item_value("new_file_path")
         with open(new_file_path, "w") as f:
             f.write("Hello, World!")
         link_to_file = "http://localhost:8000/data/staging/new_file_test.txt"
         return FlowMessage(output_text=f"File generated and can be downloaded here : {link_to_file}")
-    
+
     def step_load_transformation_rules(self, flow_msg: FlowMessage = None):
         # Load rules from file or remote location
         cdf_store = CdfStore(self.cdf_client, self.dataset_id, rules_storage_path=self.rules_storage_path)
@@ -80,7 +80,7 @@ class SmeDataCaptureNeatWorkflow(BaseWorkflow):
         output_text = f"Loaded {len(self.transformation_rules.properties)} rules"
         logging.info(output_text)
         return FlowMessage(output_text=output_text)
-    
+
     def step_configure_graph_store(self, flow_msg: FlowMessage = None):
         logging.info("Configure graph store")
         self.solution_graph = loader.NeatGraphStore(prefixes=self.transformation_rules.prefixes)
@@ -94,7 +94,7 @@ class SmeDataCaptureNeatWorkflow(BaseWorkflow):
         extractors.rules2graph_capturing_sheet(self.transformation_rules, data_capture_sheet_path)
         output_text = f"Data capture sheet generated and can be downloaded here : http://localhost:8000/data/rules/{sheet_name}?{time.time()}"
         return FlowMessage(output_text=output_text)
-    
+
     def step_process_data_capture_sheet(self, flow_msg: FlowMessage = None):
         logging.info("Process data capture sheet")
         sheet_name = self.get_config_item_value("data_capture.file", "data_capture.xlsx")
@@ -102,7 +102,7 @@ class SmeDataCaptureNeatWorkflow(BaseWorkflow):
         raw_sheets = loader.graph_capturing_sheet.excel_file_to_table_by_name(data_capture_sheet_path)
         triples = extractors.sheet2triples(raw_sheets, self.transformation_rules)
         add_triples(self.solution_graph, triples)
-        return FlowMessage(output_text=f"Data capture sheet processed")
+        return FlowMessage(output_text="Data capture spreadsheet processed")
 
     def step_prepare_cdf_assets(self, flow_msg: FlowMessage):
         # export graph into CDF
@@ -208,4 +208,3 @@ class SmeDataCaptureNeatWorkflow(BaseWorkflow):
         logging.info(f"Total count of assets in CDF after update: { total_assets_after }")
         self.categorized_assets = None  # free up memory after upload .
         return FlowMessage(output_text=f"Total count of assets in CDF after update: { total_assets_after }")
-

@@ -45,7 +45,7 @@ export default function LocalUploader(props: any) {
         let formData = new FormData()
         filesToUpload.forEach((file) => formData.append("files", file))
 
-        fetch(neatApiRootUrl+"/api/file/upload/"+workflowName+"/rules", {
+        fetch(neatApiRootUrl+"/api/file/upload/"+props.workflowName+"/"+props.fileType+"/"+props.stepId+"/"+props.action, {
         method: "POST",
         body: formData
         }).then((response) => {
@@ -87,7 +87,7 @@ export default function LocalUploader(props: any) {
                 <Button onClick={handleDialogPublish}>Upload</Button>
             </DialogActions>
           </Dialog>
-          <Button variant="outlined" sx={{ marginTop: 2, marginRight: 1 }} onClick={handleDialogClickOpen} >Upload to local storage </Button>
+          <Button variant="outlined" sx={{ marginTop: 2, marginRight: 1 }} onClick={handleDialogClickOpen} >Click here to Upload file to NEAT local storage </Button>
         </React.Fragment>
     )
 }
