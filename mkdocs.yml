@@ -16,9 +16,11 @@ nav:
         - Workflows : workflows.md
     - Tutorial:
         - Notebooks:
-            - From RDF to CDF Graph: tutorial/notebooks/rdf-to-cdf-graph.ipynb
-            - Source to Solution Graph: tutorial/notebooks/source-to-solution-graph.ipynb
-            - Generate Mock Graph: tutorial/notebooks/mock-graph-generation.ipynb
+            - Data Model Generation: tutorial/notebooks/data-model-generation.ipynb
+            - Graph Generation: tutorial/notebooks/knowledge-graph-generation.ipynb
+            - Graph to Asset Hierarchy: tutorial/notebooks/knowledge-graph-to-asset-hierarchy.ipynb
+            - Graph Transformation: tutorial/notebooks/knowledge-graph-transformation.ipynb
+            - Graph to FDM: tutorial/notebooks/knowledge-graph-to-fdm-instances.ipynb
         - Workflows:
                 - Sheet to CDF Graph: tutorial/workflows/sheet2cdf.md
                 - Source to Solution Graph: tutorial/workflows/source2solution-graph.md
