@@ -1,0 +1,252 @@
+configs:
+-   group: source_rdf_store
+    label: null
+    name: source_rdf_store.type
+    options: null
+    required: false
+    type: null
+    value: oxigraph
+-   group: null
+    label: null
+    name: new_file_path
+    options: null
+    required: false
+    type: null
+    value: /Users/aleksandrslivincovs/DevProject/Cognite/projects/neat/data/temp/new_file_test.txt
+-   group: null
+    label: null
+    name: rules.file
+    options: null
+    required: false
+    type: null
+    value: power-grid-example.xlsx
+-   group: null
+    label: null
+    name: data_capture.file
+    options: null
+    required: false
+    type: null
+    value: data_capture_2.xlsx
+-   group: null
+    label: null
+    name: rules.version
+    options: null
+    required: false
+    type: null
+    value: null
+description: null
+implementation_module: null
+name: sme_data_capture
+steps:
+-   description: null
+    enabled: true
+    id: load_transformation_rules
+    label: Loading transformation rules
+    max_retries: 1
+    method: null
+    params: {}
+    retry_delay: 3
+    stype: pystep
+    system_component_id: null
+    transition_to:
+    - error_handler
+    - step_45507
+    - configure_graph_store
+    trigger: false
+    ui_config:
+        pos_x: 335
+        pos_y: 124
+-   description: null
+    enabled: true
+    id: step_trigger
+    label: Start data capture sheet generation process
+    max_retries: 0
+    method: null
+    params: {}
+    retry_delay: 3
+    stype: http_trigger
+    system_component_id: null
+    transition_to:
+    - run_experiment_1
+    - load_transformation_rules
+    trigger: true
+    ui_config:
+        pos_x: 337
+        pos_y: 14
+-   description: null
+    enabled: true
+    id: step_process_captured_data
+    label: Process captured data from spreadsheet
+    max_retries: 0
+    method: null
+    params: {}
+    retry_delay: 3
+    stype: http_trigger
+    system_component_id: null
+    transition_to:
+    - step_604220
+    - file_generator
+    - load_transformation_rules_2
+    trigger: true
+    ui_config:
+        pos_x: 669
+        pos_y: 10
+-   description: null
+    enabled: true
+    id: process_data_capture_sheet
+    label: Load captured data from spreadsheet to graph
+    max_retries: 0
+    method: null
+    params: {}
+    retry_delay: 3
+    stype: pystep
+    system_component_id: null
+    transition_to:
+    - prepare_cdf_assets
+    trigger: false
+    ui_config:
+        pos_x: 668
+        pos_y: 332
+-   description: null
+    enabled: true
+    id: configure_graph_store
+    label: Configuring graph store
+    max_retries: 0
+    method: null
+    params: {}
+    retry_delay: 3
+    stype: pystep
+    system_component_id: null
+    transition_to:
+    - generate_data_capture_sheet
+    trigger: false
+    ui_config:
+        pos_x: 335
+        pos_y: 230
+-   description: null
+    enabled: true
+    id: generate_data_capture_sheet
+    label: Generate data capture sheet
+    max_retries: 0
+    method: null
+    params: {}
+    retry_delay: 3
+    stype: pystep
+    system_component_id: null
+    transition_to: []
+    trigger: false
+    ui_config:
+        pos_x: 335
+        pos_y: 341
+-   description: null
+    enabled: true
+    id: prepare_cdf_assets
+    label: Prepare CDF assets
+    max_retries: 0
+    method: null
+    params: {}
+    retry_delay: 3
+    stype: pystep
+    system_component_id: null
+    transition_to:
+    - upload_cdf_assets
+    trigger: false
+    ui_config:
+        pos_x: 668
+        pos_y: 454
+-   description: null
+    enabled: true
+    id: upload_cdf_assets
+    label: Upload Assets to CDF
+    max_retries: 0
+    method: null
+    params: {}
+    retry_delay: 3
+    stype: pystep
+    system_component_id: null
+    transition_to: []
+    trigger: false
+    ui_config:
+        pos_x: 668
+        pos_y: 544
+-   description: null
+    enabled: true
+    id: load_transformation_rules_2
+    label: Loading transformation rules
+    max_retries: 0
+    method: step_load_transformation_rules
+    params: {}
+    retry_delay: 3
+    stype: pystep
+    system_component_id: null
+    transition_to:
+    - configure_graph_store_2
+    trigger: false
+    ui_config:
+        pos_x: 669
+        pos_y: 113
+-   description: null
+    enabled: true
+    id: configure_graph_store_2
+    label: Configuring graph store
+    max_retries: 0
+    method: step_configure_graph_store
+    params: {}
+    retry_delay: 3
+    stype: pystep
+    system_component_id: null
+    transition_to:
+    - process_data_capture_sheet
+    trigger: false
+    ui_config:
+        pos_x: 668
+        pos_y: 225
+system_components:
+-   description: null
+    id: define_data_model
+    label: User defines data model
+    transition_to:
+    - group_524479
+    - run_neat_workflow
+    ui_config:
+        pos_x: 452
+        pos_y: 106
+-   description: null
+    id: run_neat_workflow
+    label: Run NEAT data capture sheet generations workflow
+    transition_to:
+    - distribute_mode
+    ui_config:
+        pos_x: 451
+        pos_y: 218
+-   description: null
+    id: distribute_mode
+    label: Send data capture sheet to domain experts
+    transition_to:
+    - system_comp_632583
+    ui_config:
+        pos_x: 450
+        pos_y: 348
+-   description: null
+    id: system_comp_632583
+    label: Upload results to NEAT
+    transition_to:
+    - system_comp_277046
+    ui_config:
+        pos_x: 450
+        pos_y: 487
+-   description: null
+    id: system_comp_277046
+    label: NEAT converts captured data to Assets
+    transition_to:
+    - system_comp_188404
+    ui_config:
+        pos_x: 448
+        pos_y: 581
+-   description: null
+    id: system_comp_188404
+    label: Upload Assets to CDF
+    transition_to: []
+    ui_config:
+        pos_x: 448
+        pos_y: 709
