@@ -299,13 +299,30 @@ class Instance(BaseModel):
             values["Property"] if isinstance(values["Property"], URIRef) else URIRef(namespace[values["Property"]])
         )
 
-        values["Value"] = cls.get_value(values["Value"], prefixes)
+        # this is safety as when we read from Excel sheet, the value type can be various
+        values["Value"] = str(values["Value"])
 
-        if not isinstance(values["Value"], URIRef):
-            datatype = (
-                XSD.integer if cls.isint(values["Value"]) else XSD.float if cls.isfloat(values["Value"]) else XSD.string
-            )
-            values["Value"] = Literal(values["Value"], datatype=datatype)
+        if isinstance(values["Value"], str):
+            values["Value"] = cls.get_value(values["Value"], prefixes)
+            if not isinstance(values["Value"], URIRef):
+                datatype = (
+                    XSD.integer
+                    if cls.isint(values["Value"])
+                    else XSD.float
+                    if cls.isfloat(values["Value"])
+                    else XSD.string
+                )
+                values["Value"] = Literal(values["Value"], datatype=datatype)
+        elif isinstance(values["Value"], float):
+            values["Value"] = Literal(values["Value"], datatype=XSD.float)
+        elif isinstance(values["Value"], int):
+            values["Value"] = Literal(values["Value"], datatype=XSD.integer)
+        elif isinstance(values["Value"], bool):
+            values["Value"] = Literal(values["Value"], datatype=XSD.boolean)
+        elif isinstance(values["Value"], datetime):
+            values["Value"] = Literal(values["Value"], datatype=XSD.dateTime)
+        else:
+            values["Value"] = Literal(values["Value"], datatype=XSD.string)
 
         return values
 
