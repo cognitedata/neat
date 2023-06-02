@@ -1,0 +1,285 @@
+configs:
+-   group: source_rdf_store
+    label: null
+    name: source_rdf_store.type
+    options: null
+    required: false
+    type: null
+    value: memory
+-   group: source_rdf_store
+    label: null
+    name: source_rdf_store.query_url
+    options: null
+    required: false
+    type: null
+    value: ''
+-   group: source_rdf_store
+    label: null
+    name: source_rdf_store.update_url
+    options: null
+    required: false
+    type: null
+    value: ''
+-   group: source_rdf_store
+    label: null
+    name: source_rdf_store.api_root_url
+    options: null
+    required: false
+    type: null
+    value: ''
+-   group: solution_rdf_store
+    label: null
+    name: solution_rdf_store.type
+    options: null
+    required: false
+    type: null
+    value: memory
+-   group: solution_rdf_store
+    label: null
+    name: solution_rdf_store.query_url
+    options: null
+    required: false
+    type: null
+    value: ''
+-   group: solution_rdf_store
+    label: null
+    name: solution_rdf_store.update_url
+    options: null
+    required: false
+    type: null
+    value: ''
+-   group: solution_rdf_store
+    label: null
+    name: solution_rdf_store.api_root_url
+    options: null
+    required: false
+    type: null
+    value: ''
+-   group: rules
+    label: null
+    name: rules.store_type
+    options: null
+    required: false
+    type: null
+    value: file
+-   group: rules
+    label: null
+    name: rules.file
+    options: null
+    required: false
+    type: null
+    value: sheet2cdf-transformation-rules.xlsx
+-   group: rules
+    label: null
+    name: rules.version
+    options: null
+    required: false
+    type: null
+    value: ''
+description: null
+system_components:
+-   description: null
+    id: source_excel_sheet
+    label: Transformation Rules
+    transition_to:
+    - excel2rdf_parser
+    - cdf_classic_exporter
+    ui_config:
+        pos_x: 170
+        pos_y: 10
+-   description: null
+    id: excel2rdf_parser
+    label: Excel to Graph Parser
+    transition_to:
+    - source_graph
+    ui_config:
+        pos_x: 0
+        pos_y: 80
+-   description: null
+    id: source_graph
+    label: Source Graph
+    transition_to:
+    - in_memmory_store
+    ui_config:
+        pos_x: 0
+        pos_y: 150
+-   description: null
+    id: in_memmory_store
+    label: In-Memory Graph Database
+    transition_to:
+    - cdf_classic_exporter
+    ui_config:
+        pos_x: 0
+        pos_y: 220
+-   description: null
+    id: cdf_classic_exporter
+    label: CDF Classic Exporter
+    transition_to:
+    - cdf_classic
+    ui_config:
+        pos_x: 170
+        pos_y: 330
+-   description: null
+    id: cdf_classic
+    label: CDF Classic (Asset,Relationships, Labels)
+    transition_to: null
+    ui_config:
+        pos_x: 170
+        pos_y: 400
+implementation_module: null
+name: sheet2cdf
+steps:
+-   description: null
+    enabled: true
+    group_id: null
+    id: load_transformation_rules
+    label: Loading transformation rules
+    method: null
+    params: null
+    stype: pystep
+    transition_to:
+    - configuring_stores
+    trigger: false
+    ui_config:
+        pos_x: 130
+        pos_y: 123
+-   description: null
+    enabled: true
+    group_id: null
+    id: configuring_stores
+    label: Configuring knowledge graph storage
+    method: null
+    params: null
+    stype: pystep
+    transition_to:
+    - parse_instances
+    trigger: false
+    ui_config:
+        pos_x: 130
+        pos_y: 229
+-   description: null
+    enabled: true
+    group_id: null
+    id: parse_instances
+    label: Parsing instance triples
+    method: null
+    params: null
+    stype: pystep
+    transition_to:
+    - load_instances_to_source_graph
+    trigger: false
+    ui_config:
+        pos_x: 130
+        pos_y: 315
+-   description: null
+    enabled: true
+    group_id: null
+    id: load_instances_to_source_graph
+    label: Loading triples to source graph
+    method: null
+    params: null
+    stype: pystep
+    transition_to:
+    - create_cdf_labels
+    trigger: false
+    ui_config:
+        pos_x: 130
+        pos_y: 384
+-   description: Upload CDF labels
+    enabled: true
+    group_id: null
+    id: create_cdf_labels
+    label: Upload CDF labels
+    method: null
+    params: null
+    stype: pystep
+    transition_to:
+    - prepare_cdf_assets
+    trigger: false
+    ui_config:
+        pos_x: 130
+        pos_y: 482
+-   description: null
+    enabled: true
+    group_id: null
+    id: prepare_cdf_assets
+    label: Preparing CDF assets
+    method: null
+    params: null
+    stype: pystep
+    transition_to:
+    - upload_cdf_assets
+    trigger: false
+    ui_config:
+        pos_x: 130
+        pos_y: 571
+-   description: null
+    enabled: true
+    group_id: null
+    id: upload_cdf_assets
+    label: Uploading assets to CDF
+    method: null
+    params: null
+    stype: pystep
+    transition_to:
+    - prepare_cdf_relationships
+    trigger: false
+    ui_config:
+        pos_x: 130
+        pos_y: 662
+-   description: null
+    enabled: true
+    group_id: null
+    id: prepare_cdf_relationships
+    label: Preparing CDF relationships
+    method: null
+    params: null
+    stype: pystep
+    transition_to:
+    - upload_cdf_relationships
+    trigger: false
+    ui_config:
+        pos_x: 130
+        pos_y: 768
+-   description: Uploading CDF relationships to CDF
+    enabled: true
+    group_id: null
+    id: upload_cdf_relationships
+    label: Uploading relationships to CDF
+    method: null
+    params: null
+    stype: pystep
+    transition_to:
+    - cleanup
+    trigger: false
+    ui_config:
+        pos_x: 130
+        pos_y: 874
+-   description: null
+    enabled: true
+    group_id: null
+    id: cleanup
+    label: Cleanup
+    method: null
+    params: null
+    stype: pystep
+    transition_to: []
+    trigger: false
+    ui_config:
+        pos_x: 130
+        pos_y: 967
+-   description: null
+    enabled: true
+    group_id: null
+    id: http_trigger
+    label: Http trigger
+    method: null
+    params:
+        interval: every 2 minutes
+    stype: http_trigger
+    transition_to:
+    - load_transformation_rules
+    trigger: true
+    ui_config:
+        pos_x: 130
+        pos_y: 32

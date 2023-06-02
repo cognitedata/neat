@@ -1,0 +1,119 @@
+configs:
+-   group: source_rdf_store
+    label: null
+    name: source_rdf_store.type
+    options: null
+    required: false
+    type: null
+    value: oxigraph
+-   group: null
+    label: null
+    name: rules.file
+    options: null
+    required: false
+    type: null
+    value: power-grid-example.xlsx
+-   group: null
+    label: null
+    name: data_capture.file
+    options: null
+    required: false
+    type: null
+    value: graph_capture_sheet.xlsx
+-   group: null
+    label: null
+    name: rules.version
+    options: null
+    required: false
+    type: null
+    value: null
+-   group: null
+    label: null
+    name: graph_capture_sheet.auto_identifier_type
+    options: null
+    required: false
+    type: null
+    value: None
+-   group: null
+    label: null
+    name: graph_capture.file
+    options: null
+    required: false
+    type: null
+    value: graph_capture_sheet.xlsx
+description: null
+implementation_module: null
+name: fdm_schema_generation
+steps:
+-   description: null
+    enabled: true
+    id: http_trigger
+    label: Http trigger
+    max_retries: 0
+    method: null
+    params:
+        interval: every 2 minutes
+    retry_delay: 3
+    stype: http_trigger
+    system_component_id: null
+    transition_to:
+    - load_transformation_rules
+    trigger: true
+    ui_config:
+        pos_x: 130
+        pos_y: 32
+-   description: null
+    enabled: true
+    id: load_transformation_rules
+    label: Loading transformation rules
+    max_retries: 0
+    method: null
+    params: null
+    retry_delay: 3
+    stype: pystep
+    system_component_id: null
+    transition_to:
+    - generate_fdm_schema
+    trigger: false
+    ui_config:
+        pos_x: 130
+        pos_y: 123
+-   description: null
+    enabled: true
+    id: generate_fdm_schema
+    label: Generate FDM Schema
+    max_retries: 0
+    method: null
+    params: null
+    retry_delay: 3
+    stype: pystep
+    system_component_id: null
+    transition_to: []
+    trigger: false
+    ui_config:
+        pos_x: 130
+        pos_y: 229
+system_components:
+-   description: null
+    id: define_data_model
+    label: User defines data model using Transformation Rules template
+    transition_to:
+    - convert_to_graphql
+    ui_config:
+        pos_x: 452
+        pos_y: 106
+-   description: null
+    id: convert_to_graphql
+    label: Convert Transformation Rules to FDM Schema
+    transition_to:
+    - download_fdm_schema
+    ui_config:
+        pos_x: 452
+        pos_y: 216
+-   description: null
+    id: download_fdm_schema
+    label: Download FDM Schema
+    transition_to: []
+    ui_config:
+        pos_x: 452
+        pos_y: 306
