@@ -89,7 +89,7 @@ system_components:
         pos_y: 103
 -   description: null
     id: graph_db_store
-    label: GraphDB source graph_store
+    label: OxiGraph source graph_store
     transition_to:
     - transformer
     ui_config:
@@ -165,7 +165,7 @@ system_components:
         pos_x: 347
         pos_y: 586
 implementation_module: null
-name: fast_graph
+name: graph_to_asset_hierarchy
 steps:
 -   description: null
     enabled: true

@@ -14,6 +14,24 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.12.4] - 30-05-23
+### Added
+* SME graph capturing workflow that make use of core method from 0.12.3
+* FDM schema generation workflow that make use of core method from 0.11.2
+* FDM schema generation notebook in docs
+* SME graph capturing notebook in docs
+
+### Improved
+* Notebooks overall
+
+### Fixed
+* Handling of Instances sheet, issue with cell datatypes
+
+### Changed
+* Renamed `fast_graph` workflow to `graph_to_asset_hierarchy`
+
+### Removed
+* Default workflow
 ## [0.12.3] - 30-05-23
 ### Added
 * Added generation of knowledge graph capturing sheet based on data model definitions in transformation rules

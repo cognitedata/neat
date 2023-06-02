@@ -25,15 +25,15 @@ from cognite.neat.core.workflow.cdf_store import CdfStore
 
 with contextlib.suppress(ValueError):
     prom_cdf_resource_stats = Gauge(
-        "neat_fast_graph_wf_cdf_resource_stats",
+        "neat_graph_to_asset_hierarchy_wf_cdf_resource_stats",
         "CDF resource stats before and after running fast_graph workflow",
         ["resource_type", "state"],
     )
 with contextlib.suppress(ValueError):
-    prom_data_issues_stats = Gauge("neat_fast_graph_wf_data_issues", "Data validation issues", ["type"])
+    prom_data_issues_stats = Gauge("neat_graph_to_asset_hierarchy_wf_data_issues", "Data validation issues", ["type"])
 
 
-class FastGraphNeatWorkflow(BaseWorkflow):
+class Graph2AssetHierarchyNeatWorkflow(BaseWorkflow):
     def __init__(self, name: str, client: CogniteClient):
         super().__init__(name, client, [])
         self.dataset_id: int = 0
