@@ -299,9 +299,6 @@ class Instance(BaseModel):
             values["Property"] if isinstance(values["Property"], URIRef) else URIRef(namespace[values["Property"]])
         )
 
-        # this is safety as when we read from Excel sheet, the value type can be various
-        values["Value"] = str(values["Value"])
-
         if isinstance(values["Value"], str):
             values["Value"] = cls.get_value(values["Value"], prefixes)
             if not isinstance(values["Value"], URIRef):
