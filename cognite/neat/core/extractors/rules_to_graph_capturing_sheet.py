@@ -66,7 +66,7 @@ def rules2graph_capturing_sheet(
     transformation_rules: TransformationRules,
     file_path: Path,
     no_rows: int = 1000,
-    auto_identifier_type: str = "index",
+    auto_identifier_type: str = "index-based",
     add_drop_down_list: bool = True,
 ):
     """Converts a TransformationRules object to a graph capturing sheet
@@ -102,14 +102,14 @@ def rules2graph_capturing_sheet(
         # Add header rows
         workbook[class_].append(["identifier"] + list(properties.keys()))
 
-        if auto_identifier_type == "index":  # default, easy to read
-            logging.debug("Configuring index-based automatic identifiers")
+        if auto_identifier_type and auto_identifier_type == "index-based":  # default, easy to read
+            logging.debug(f"Configuring index-based automatic identifiers for sheet {class_}")
             _add_index_identifiers(workbook, class_, no_rows)
-        elif auto_identifier_type == "uuid":
-            logging.debug("Configuring UUID-based automatic identifiers")
+        elif auto_identifier_type and auto_identifier_type == "uuid-based":
+            logging.debug(f"Configuring UUID-based automatic identifiers for sheet {class_}")
             _add_uuid_identifiers(workbook, class_, no_rows)
         else:
-            logging.debug(f"{auto_identifier_type} based auto identifier not supported!")
+            logging.debug(f"No automatic identifier set for sheet {class_}!")
 
         for i, property_ in enumerate(properties.values()):
             if property_.property_type == "ObjectProperty" and add_drop_down_list:
