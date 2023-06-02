@@ -7,7 +7,7 @@ import schedule
 from fastapi import Depends, FastAPI, Request
 
 from cognite.neat.core.workflow.manager import WorkflowManager
-from cognite.neat.core.workflow.model import FlowMessage, StepType, WorkflowState
+from cognite.neat.core.workflow.model import FlowMessage, InstanceStartMethod, StepType, WorkflowState
 
 
 async def get_body(request: Request):
@@ -37,48 +37,34 @@ class TriggerManager:
         @web_server.post("/api/workflow/{workflow_name}/http_trigger/{step_id}")
         def start_workflow(workflow_name: str, step_id: str, request: Request, body: bytes = fast_api_depends):
             logging.info(f"New HTTP trigger request for workflow {workflow_name} step {step_id}")
-            workflow = self.workflow_manager.get_workflow(workflow_name)
             json_payload = None
             try:
-                # TODO: Add support for other content types
                 json_payload = json.loads(body)
             except Exception as e:
                 logging.info(f"Error parsing json body {e}")
             logging.debug(f"Request object = {json_payload}")
 
             flow_msg = FlowMessage(payload=json_payload)
-            sync = bool(request.headers.get("Neat-Sync-Response", True))
-            max_wait_time = int(request.headers.get("Neat-Sync-Max-Wait", 30))
-            logging.info(f"Workflow {workflow_name} state = {workflow.state} sync={sync}")
+            return self.workflow_manager.start_workflow_instance(workflow_name=workflow_name, step_id=step_id, flow_msg=flow_msg)
+        
+        @web_server.post("/api/workflow/{workflow_name}/resume/{step_id}/{instance_id}")
+        def resume_workflow(workflow_name: str, step_id: str, instance_id: str , request: Request, body: bytes = fast_api_depends):
+            if instance_id != "default":
+                workflow = self.workflow_manager.get_workflow_instance(instance_id)
+            else :
+                workflow = self.workflow_manager.get_workflow(workflow_name)
+            
+            json_payload = None
+            try:
+                json_payload = json.loads(body)
+            except Exception as e:
+                logging.info(f"Error parsing json body {e}")
+            flow_msg = FlowMessage(payload=json_payload)    
             if workflow.state == WorkflowState.RUNNING_WAITING:
                 workflow.resume_workflow(flow_message=flow_msg, step_id=step_id)
                 return {"result": "Workflow instance resumed"}
-            elif workflow.state != WorkflowState.RUNNING:
-                result = workflow.start(sync=sync, flow_message=flow_msg, start_step_id=step_id)
-                if result:
-                    if result.payload:
-                        logging.info(f"Workflow result payload = {result.payload}")
-                        return result.payload
-            else:
-                # wait until workflow transition to RUNNING state and then start , set max wait time to 10 seconds
-                start_time = time.perf_counter()
-                # wait until workflow transition to RUNNING state and then start , set max wait time to 10 seconds. The operation is executed in callers thread 
-                logging.info("Existing workflow instance already running , waiting for RUNNING state")
-                while workflow.state == WorkflowState.RUNNING:
-                    elapsed_time = time.perf_counter() - start_time
-                    if elapsed_time > max_wait_time:
-                        logging.info(f"Workflow {workflow_name} wait time exceeded . elapsed time = {elapsed_time}, max wait time = {max_wait_time}")
-                        return {"result": "Workflow instance already running.Wait time exceeded"}
-                    time.sleep(0.5)
-                result = workflow.start(sync=sync, flow_message=flow_msg, start_step_id=step_id)
-                if result:
-                    if result.payload:
-                        logging.info(f"Workflow result payload = {result.payload}")
-                        return result.payload
-                logging.info(f"Workflow {workflow_name} is already running")
-                return {"result": "Workflow instance already running"}
             
-            return {"result": "Workflow instance started"}
+            return {"result": "Workflow instance not in RUNNING_WAITING state"}
 
     def _start_scheduler_main_loop(self):
         """Starts a scheduler main loop for the workflows

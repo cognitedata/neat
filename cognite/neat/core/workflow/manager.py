@@ -3,14 +3,19 @@ import inspect
 import logging
 import os
 import sys
+import time
 import traceback
 from pathlib import Path
 
 from cognite.client import CogniteClient
+from prometheus_client import Gauge
 
-from cognite.neat.core.workflow import BaseWorkflow, utils
+from cognite.neat.core.workflow import BaseWorkflow
 from cognite.neat.core.workflow.base import WorkflowDefinition
+from cognite.neat.core.workflow.model import FlowMessage, InstanceStartMethod, WorkflowState
 from cognite.neat.core.workflow.tasks import WorkflowTaskBuilder
+
+live_workflow_intances = Gauge("neat_workflow_live_instances", "Count of live workflow instances", ["itype"])
 
 
 class WorkflowManager:
@@ -33,7 +38,7 @@ class WorkflowManager:
         self.client = client
         self.data_set_id = data_set_id
         self.workflow_registry: dict[str, BaseWorkflow] = {}
-        self.workflow_instance_registry: dict[str, BaseWorkflow] = {}
+        self.ephemeral_instance_registry: dict[str, BaseWorkflow] = {}
         self.workflows_storage_type = registry_storage_type
         # todo use pathlib
         self.workflows_storage_path = workflows_storage_path if workflows_storage_path else Path("workflows")
@@ -133,18 +138,78 @@ class WorkflowManager:
                     logging.error(f"Error loading workflow {wf_module_name}: error: {e} trace : {trace}")
 
     def create_workflow_instance(self, template_name: str, add_to_registry: bool = True) -> BaseWorkflow:
-        new_instance = self.workflow_registry[template_name].__class__(template_name, self.client, run_id=utils.generate_run_id())
-        new_instance.set_metadata(self.workflow_registry[template_name].metadata)
+        new_instance = self.workflow_registry[template_name].__class__(template_name, self.client)
+        new_instance.workflow_steps = self.workflow_registry[template_name].workflow_steps
+        new_instance.configs = self.workflow_registry[template_name].configs
         new_instance.set_task_builder(self.task_builder)
         new_instance.set_default_dataset_id(self.data_set_id)
         new_instance.set_storage_path("transformation_rules", self.rules_storage_path)
         if add_to_registry:
-            self.workflow_instance_registry[new_instance.run_id] = new_instance
+            self.ephemeral_instance_registry[new_instance.instance_id] = new_instance
+        live_workflow_intances.labels(itype="ephemeral").set(len(self.ephemeral_instance_registry))
         return new_instance
 
-    def get_workflow_instance(self, run_id: str) -> BaseWorkflow:
-        return self.workflow_instance_registry[run_id]
+    def get_workflow_instance(self, instance_id: str) -> BaseWorkflow:
+        return self.ephemeral_instance_registry[instance_id]
 
-    def delete_workflow_instance(self, run_id: str):
-        del self.workflow_instance_registry[run_id]
+    def delete_workflow_instance(self, instance_id: str):
+        del self.ephemeral_instance_registry[instance_id]
+        live_workflow_intances.labels(itype="ephemeral").set(len(self.ephemeral_instance_registry))
         return
+
+    def start_workflow_instance(self, workflow_name: str, step_id: str, flow_msg: FlowMessage = None):
+        workflow = self.get_workflow(workflow_name)
+
+        trigger_step = workflow.get_step_by_id(step_id)
+        if not trigger_step.trigger:
+            logging.info(f"Step {step_id} is not a trigger step")
+            return {"result": "Step is not a trigger step"}
+
+        sync = True if trigger_step.params.get("sync", "true").lower() == "true" else False
+        max_wait_time = int(trigger_step.params.get("max_wait_time", "30"))
+        instance_start_method = trigger_step.params.get("workflow_start_method", InstanceStartMethod.PERSISTENT_INSTANCE_BLOCKING)
+
+        logging.info(
+            f"----- Starting workflow {workflow_name} , step_id = {step_id} , sync = {sync}, max_wait_time = {max_wait_time}, instance_start_method = {instance_start_method} -----")
+
+        if instance_start_method == InstanceStartMethod.PERSISTENT_INSTANCE_BLOCKING:
+            live_workflow_intances.labels(itype="persistent").set(len(self.workflow_registry))
+            # wait until workflow transition to RUNNING state and then start , set max wait time to 30 seconds
+            start_time = time.perf_counter()
+            # wait until workflow transition to RUNNING state and then start , set max wait time to 30 seconds. The operation is executed in callers thread
+            while workflow.state == WorkflowState.RUNNING:
+                logging.info("Existing workflow instance already running , waiting for RUNNING state")
+                elapsed_time = time.perf_counter() - start_time
+                if elapsed_time > max_wait_time:
+                    logging.info(f"Workflow {workflow_name} wait time exceeded . elapsed time = {elapsed_time}, max wait time = {max_wait_time}")
+                    return {"result": "Workflow instance already running.Wait time exceeded"}
+                time.sleep(0.5)
+            result = workflow.start(sync=sync, flow_message=flow_msg, start_step_id=step_id)
+            if result:
+                if result.payload:
+                    return result.payload
+            logging.info(f"Workflow {workflow_name} is already running")
+            return {"result": "Workflow instance already running"}
+
+        elif instance_start_method == InstanceStartMethod.PERSISTENT_INSTANCE_NON_BLOCKING:
+            live_workflow_intances.labels(itype="persistent").set(len(self.workflow_registry))
+            # start workflow if not already running , skip if already running
+            if workflow.state == WorkflowState.RUNNING:
+                return {"result": "Workflow instance already running"}
+
+            result = workflow.start(sync=sync, flow_message=flow_msg, start_step_id=step_id)
+            if result:
+                if result.payload:
+                    return result.payload
+
+        elif instance_start_method == InstanceStartMethod.EPHEMERAL_INSTANCE:
+            # start new workflow instance in new thread
+            workflow = self.create_workflow_instance(workflow_name, add_to_registry=True)
+            result = workflow.start(sync=sync, delete_after_completion=True, flow_message=flow_msg, start_step_id=step_id)
+            if sync:
+                self.delete_workflow_instance(workflow.instance_id)
+            if result:
+                if result.payload:
+                    return result.payload
+
+        return {"result": "Workflow instance started"}
