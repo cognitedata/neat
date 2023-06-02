@@ -1,0 +1,307 @@
+configs:
+-   group: source_rdf_store
+    label: null
+    name: source_rdf_store.type
+    options: null
+    required: false
+    type: null
+    value: oxigraph
+-   group: null
+    label: null
+    name: rules.file
+    options: null
+    required: false
+    type: null
+    value: power-grid-example.xlsx
+-   group: null
+    label: null
+    name: data_capture.file
+    options: null
+    required: false
+    type: null
+    value: graph_capture_sheet.xlsx
+-   group: null
+    label: null
+    name: rules.version
+    options: null
+    required: false
+    type: null
+    value: null
+-   group: null
+    label: null
+    name: graph_capture_sheet.auto_identifier_type
+    options: null
+    required: false
+    type: null
+    value: index-based
+-   group: null
+    label: null
+    name: graph_capture.file
+    options: null
+    required: false
+    type: null
+    value: graph_capture_sheet.xlsx
+description: null
+implementation_module: null
+name: sme_graph_capture
+steps:
+-   description: null
+    enabled: true
+    id: step_trigger
+    label: Start graph capture sheet generation process
+    max_retries: 0
+    method: null
+    params: {}
+    retry_delay: 3
+    stype: http_trigger
+    system_component_id: null
+    transition_to:
+    - run_experiment_1
+    - load_transformation_rules
+    trigger: true
+    ui_config:
+        pos_x: 337
+        pos_y: 14
+-   description: null
+    enabled: true
+    id: load_transformation_rules
+    label: Load transformation rules
+    max_retries: 1
+    method: null
+    params: {}
+    retry_delay: 3
+    stype: pystep
+    system_component_id: null
+    transition_to:
+    - error_handler
+    - step_45507
+    - configure_graph_store
+    trigger: false
+    ui_config:
+        pos_x: 335
+        pos_y: 124
+-   description: null
+    enabled: true
+    id: configure_graph_store
+    label: Configure graph store
+    max_retries: 0
+    method: null
+    params: {}
+    retry_delay: 3
+    stype: pystep
+    system_component_id: null
+    transition_to:
+    - generate_graph_capture_sheet
+    trigger: false
+    ui_config:
+        pos_x: 335
+        pos_y: 230
+-   description: null
+    enabled: true
+    id: generate_graph_capture_sheet
+    label: Generate graph capture sheet
+    max_retries: 0
+    method: null
+    params: {}
+    retry_delay: 3
+    stype: pystep
+    system_component_id: null
+    transition_to: []
+    trigger: false
+    ui_config:
+        pos_x: 335
+        pos_y: 341
+-   description: ''
+    enabled: true
+    id: step_process_captured_data
+    label: Click here to upload the graph capture spreadsheet and start the process
+    max_retries: 0
+    method: null
+    params: {}
+    retry_delay: 3
+    stype: file_uploader
+    system_component_id: null
+    transition_to:
+    - step_604220
+    - file_generator
+    - load_transformation_rules_2
+    trigger: true
+    ui_config:
+        pos_x: 669
+        pos_y: 10
+-   description: null
+    enabled: true
+    id: load_transformation_rules_2
+    label: Loading transformation rules
+    max_retries: 0
+    method: step_load_transformation_rules
+    params: {}
+    retry_delay: 3
+    stype: pystep
+    system_component_id: null
+    transition_to:
+    - configure_graph_store_2
+    trigger: false
+    ui_config:
+        pos_x: 668
+        pos_y: 135
+-   description: null
+    enabled: true
+    id: configure_graph_store_2
+    label: Configuring graph store
+    max_retries: 0
+    method: step_configure_graph_store
+    params: {}
+    retry_delay: 3
+    stype: pystep
+    system_component_id: null
+    transition_to:
+    - process_graph_capture_sheet
+    trigger: false
+    ui_config:
+        pos_x: 668
+        pos_y: 225
+-   description: null
+    enabled: true
+    id: process_graph_capture_sheet
+    label: Load captured graph from spreadsheet to graph
+    max_retries: 0
+    method: null
+    params: {}
+    retry_delay: 3
+    stype: pystep
+    system_component_id: null
+    transition_to:
+    - create_cdf_labels
+    trigger: false
+    ui_config:
+        pos_x: 668
+        pos_y: 332
+-   description: null
+    enabled: true
+    id: create_cdf_labels
+    label: Create missing CDF labels
+    max_retries: 0
+    method: null
+    params: {}
+    retry_delay: 3
+    stype: pystep
+    system_component_id: null
+    transition_to:
+    - prepare_cdf_assets
+    trigger: false
+    ui_config:
+        pos_x: 668
+        pos_y: 450
+-   description: null
+    enabled: true
+    id: prepare_cdf_assets
+    label: Prepare CDF assets
+    max_retries: 0
+    method: null
+    params: {}
+    retry_delay: 3
+    stype: pystep
+    system_component_id: null
+    transition_to:
+    - upload_cdf_assets
+    trigger: false
+    ui_config:
+        pos_x: 668
+        pos_y: 550
+-   description: null
+    enabled: true
+    id: upload_cdf_assets
+    label: Upload Assets to CDF
+    max_retries: 0
+    method: null
+    params: {}
+    retry_delay: 3
+    stype: pystep
+    system_component_id: null
+    transition_to:
+    - prepare_cdf_relationships
+    trigger: false
+    ui_config:
+        pos_x: 668
+        pos_y: 650
+-   description: null
+    enabled: true
+    id: prepare_cdf_relationships
+    label: Preparing CDF relationships
+    max_retries: 0
+    method: null
+    params: null
+    retry_delay: 3
+    stype: pystep
+    system_component_id: null
+    transition_to:
+    - upload_cdf_relationships
+    trigger: false
+    ui_config:
+        pos_x: 668
+        pos_y: 750
+-   description: Uploading CDF relationships to CDF
+    enabled: true
+    id: upload_cdf_relationships
+    label: Uploading relationships to CDF
+    max_retries: 0
+    method: null
+    params: null
+    retry_delay: 3
+    stype: pystep
+    system_component_id: null
+    transition_to: []
+    trigger: false
+    ui_config:
+        pos_x: 668
+        pos_y: 874
+system_components:
+-   description: null
+    id: define_data_model
+    label: User defines data model
+    transition_to:
+    - group_524479
+    - run_neat_workflow
+    ui_config:
+        pos_x: 452
+        pos_y: 106
+-   description: null
+    id: run_neat_workflow
+    label: Run NEAT graph capture sheet generations workflow
+    transition_to:
+    - distribute_mode
+    ui_config:
+        pos_x: 451
+        pos_y: 218
+-   description: null
+    id: distribute_mode
+    label: Send graph capture sheet to domain experts
+    transition_to:
+    - system_comp_632583
+    ui_config:
+        pos_x: 450
+        pos_y: 348
+-   description: null
+    id: system_comp_632583
+    label: Upload results to NEAT
+    transition_to:
+    - system_comp_277046
+    ui_config:
+        pos_x: 450
+        pos_y: 487
+-   description: null
+    id: system_comp_277046
+    label: NEAT converts captured graph to Assets
+    transition_to:
+    - system_comp_188404
+    ui_config:
+        pos_x: 448
+        pos_y: 581
+-   description: null
+    id: system_comp_188404
+    label: Upload Assets to CDF
+    transition_to: []
+    ui_config:
+        pos_x: 448
+        pos_y: 709

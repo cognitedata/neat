@@ -10,6 +10,7 @@ from cognite.client.credentials import CredentialProvider, OAuthClientCredential
 from rdflib.term import URIRef
 
 from cognite.neat.core.data_classes.config import InteractiveClient, ServiceClient
+from cognite.neat.core.loader.graph_store import NeatGraphStore
 
 
 def get_cognite_client_from_config(config: ServiceClient) -> CogniteClient:
@@ -42,6 +43,47 @@ def _get_cognite_client(config: ClientConfig, credentials: CredentialProvider) -
             debug=False,
         )
     )
+
+
+def add_triples(graph_store: NeatGraphStore, triples: list[tuple], batch_size: int = 10000):
+    """Adds triples to the graph store in batches.
+
+    Parameters
+    ----------
+    graph_store : NeatGraphStore
+        Instance of NeatGraphStore
+    triples : list[tuple]
+        list of triples to be added to the graph store
+    batch_size : int, optional
+        Batch size of triples per commit, by default 10000
+    """
+
+    commit_counter = 0
+    logging.info(f"Committing total of {len(triples)} triples to knowledge graph!")
+    total_number_of_triples = len(triples)
+    number_of_uploaded_triples = 0
+
+    def check_commit(force_commit: bool = False):
+        """Commit nodes to the graph if batch counter is reached or if force_commit is True"""
+        nonlocal commit_counter
+        nonlocal number_of_uploaded_triples
+        if force_commit:
+            number_of_uploaded_triples += commit_counter
+            graph_store.graph.commit()
+            logging.info(f"Committed {number_of_uploaded_triples} of {total_number_of_triples} triples")
+            return
+        commit_counter += 1
+        if commit_counter >= batch_size:
+            number_of_uploaded_triples += commit_counter
+            graph_store.graph.commit()
+            logging.info(f"Committed {number_of_uploaded_triples} of {total_number_of_triples} triples")
+            commit_counter = 0
+
+    for triple in triples:
+        graph_store.graph.add(triple)
+        check_commit()
+
+    check_commit(force_commit=True)
 
 
 def remove_namespace(URI: URIRef, special_separator: str = "#_") -> str:

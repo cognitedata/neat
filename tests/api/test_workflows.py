@@ -43,7 +43,7 @@ def test_load_rules(transformation_rules, fastapi_client: TestClient):
     assert len(transformation_rules.properties) == len(rules["properties"])
 
 
-@pytest.mark.parametrize("workflow_name", ["default", "fast_graph", "sheet2cdf"])
+@pytest.mark.parametrize("workflow_name", ["graph_to_asset_hierarchy", "sheet2cdf"])
 def test_run_default_workflow(
     workflow_name: str,
     cognite_client: CogniteClient,
@@ -52,15 +52,17 @@ def test_run_default_workflow(
     tmp_path,
 ):
     # Arrange
-    if workflow_name == "fast_graph":
+    if workflow_name == "graph_to_asset_hierarchy":
         # When running this test in GitHub actions, you get permission issues with the default disk_store_dir.
-        response = fastapi_client.get("/api/workflow/workflow-definition/fast_graph")
+        response = fastapi_client.get("/api/workflow/workflow-definition/graph_to_asset_hierarchy")
         definition = WorkflowDefinition(**response.json()["definition"])
         source = next(c for c in definition.configs if c.name == "source_rdf_store.disk_store_dir")
         source.value = str(tmp_path / "source")
         solution = next(c for c in definition.configs if c.name == "solution_rdf_store.disk_store_dir")
         solution.value = str(tmp_path / "solution")
-        response = fastapi_client.post("/api/workflow/workflow-definition/fast_graph", json=definition.dict())
+        response = fastapi_client.post(
+            "/api/workflow/workflow-definition/graph_to_asset_hierarchy", json=definition.dict()
+        )
         assert response.status_code == 200
 
     # Act
