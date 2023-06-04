@@ -3,6 +3,10 @@ docs_dir: docs
 use_directory_urls: false
 theme:
     name: material
+    features:
+      - content.code.copy
+      - content.tooltips
+
 nav:
     - Home: index.md
     - Features:
@@ -27,6 +31,20 @@ nav:
                 - Data Model Generation: tutorial/workflows/data-model-generation.md
     - Reference: reference.md
     - Changelog​: CHANGELOG.md
+
+markdown_extensions:
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - tables
+  - abbr
+  - attr_list
 
 plugins:
   - mkdocs-jupyter:
