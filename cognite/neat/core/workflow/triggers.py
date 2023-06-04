@@ -7,7 +7,7 @@ import schedule
 from fastapi import Depends, FastAPI, Request
 
 from cognite.neat.core.workflow.manager import WorkflowManager
-from cognite.neat.core.workflow.model import FlowMessage, InstanceStartMethod, StepType, WorkflowState
+from cognite.neat.core.workflow.model import FlowMessage, StepType, WorkflowState
 
 
 async def get_body(request: Request):
@@ -37,6 +37,8 @@ class TriggerManager:
         @web_server.post("/api/workflow/{workflow_name}/http_trigger/{step_id}")
         def start_workflow(workflow_name: str, step_id: str, request: Request, body: bytes = fast_api_depends):
             logging.info(f"New HTTP trigger request for workflow {workflow_name} step {step_id}")
+            headers = dict(request.headers)
+            logging.debug(f"Request headers = {headers}")
             json_payload = None
             try:
                 json_payload = json.loads(body)
@@ -44,7 +46,7 @@ class TriggerManager:
                 logging.info(f"Error parsing json body {e}")
             logging.debug(f"Request object = {json_payload}")
 
-            flow_msg = FlowMessage(payload=json_payload)
+            flow_msg = FlowMessage(payload=json_payload, headers=dict(headers))
             return self.workflow_manager.start_workflow_instance(workflow_name=workflow_name, step_id=step_id, flow_msg=flow_msg)
         
         @web_server.post("/api/workflow/{workflow_name}/resume/{step_id}/{instance_id}")
