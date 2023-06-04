@@ -102,6 +102,7 @@ export default function TransformationTable() {
   const neatApiRootUrl = getNeatApiRootUrl();
   const [data, setData] = useState({"classes":[],"properties":[],"file_name":"","hash":"","error_text":"","src":""});
   const [alertMsg, setAlertMsg] = useState("");
+  const [selectedWorkflow, setSelectedWorkflow] = useState<string>(getSelectedWorkflowName());
   const columns: GridColDef[] = [
     {field: 'id', headerName: 'ID', width: 70},
     {field: 'name', headerName: 'Name', width: 130},
@@ -113,8 +114,7 @@ export default function TransformationTable() {
   }, []);
 
   const loadDataset = (fileName:string,fileHash:string) => {
-    const workflowName = getSelectedWorkflowName();
-    let url = neatApiRootUrl+"/api/rules?"+new URLSearchParams({"workflow_name":workflowName,"file_name":fileName,"version":fileHash}).toString()
+    let url = neatApiRootUrl+"/api/rules?"+new URLSearchParams({"workflow_name":selectedWorkflow,"file_name":fileName,"version":fileHash}).toString()
     fetch(url)
     .then((response) => {
       return response.json();
@@ -172,7 +172,7 @@ export default function TransformationTable() {
     <Box sx={{margin:5}}>
       <CdfPublisher type="transformation rules" fileName={data.file_name} />
       <CdfDownloader type="neat-wf-rules" onDownloadSuccess={onDownloadSuccess} />
-      <LocalUploader fileType="rules" action="none" stepId="none" workflowName="global" onUpload={onUpload} />
+      <LocalUploader fileType="rules" action="none" stepId="none" workflowName={selectedWorkflow} onUpload={onUpload} />
     </Box>
 
 

@@ -9,6 +9,32 @@
 
 ### Docker
 
+**Prerequisites**: Installed Docker, see [docker.com](https://docs.docker.com/get-docker/) for installation instructions.
+
+#### Run latest `neat` version from Docker Hub
+
+``` bash
+docker run -p 8000:8000 --name neat cognite/neat:latest
+```
+
+**Run `neat` with mounted local file system**
+
+Create a directory for storing `neat` data. This directory will be mounted into the container and used `neat` as local data store. This is useful if you want to persist data between restarts of the container or if you want access to the data outside of the container.
+
+Example of creating a directory for storing `neat` data on Linux/Mac:
+
+``` bash
+mkdir /tmp/neat-data
+```
+
+Start container with volume mount :
+
+``` bash
+docker run -p 8000:8000 --name neat -v /tmp/neat-data:/app/data  cognite/neat:latest
+```
+
+Open `neat` in your browser: [http://localhost:8000](http://localhost:8000)
+
 
 ### Python package
 
