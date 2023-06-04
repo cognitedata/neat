@@ -4,11 +4,13 @@ This workflow enables you to ingest a data model with data into CDF's core data 
 
 **Required Capabilities**
 
-| Capability Type | Action                                        | Scope    | Description                                |
-|-----------------|-----------------------------------------------|----------|--------------------------------------------|
-| Assets          | `assets:read`, `assets:write`                 | Dataset  | Create and read assets                     |
-| Relationships   | `relationships:write`, `relationships:read`   | Dataset  | Create and read relationships              |
-| Labels          | `labels:write`, `labels:read`                 | Dataset  | Create and read labels used to mark assets |
+| Capability Type | Action                                        | Scope   | Description                                |
+|-----------------|-----------------------------------------------|---------|--------------------------------------------|
+| Assets          | `assets:read`, `assets:write`                 | Dataset | Create and read assets                     |
+| Relationships   | `relationships:write`, `relationships:read`   | Dataset | Create and read relationships              |
+| Labels          | `labels:write`, `labels:read`                 | **All** | Create and read labels used to mark assets |
+
+**Note** That this workflow requires access to across all datasets for labels.
 
 **Prerequisite** Created configuration with the above capabilities, [see configuration](../../getting-started.md#configuration)
 
