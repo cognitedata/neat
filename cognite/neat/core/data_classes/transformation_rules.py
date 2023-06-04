@@ -8,7 +8,7 @@ from typing import Dict, List, Optional, Self, Union
 
 import pandas as pd
 from graphql import GraphQLBoolean, GraphQLFloat, GraphQLInt, GraphQLString
-from pydantic import BaseModel, Field, HttpUrl, ValidationError, root_validator, validator
+from pydantic import BaseModel, Field, HttpUrl, ValidationError, parse_obj_as, root_validator, validator
 from rdflib import XSD, Literal, Namespace, URIRef
 
 from cognite.neat.core.configuration import PREFIXES, Tables
@@ -105,7 +105,7 @@ class Property(Resource):
 
     # Specialization of cdf_resource_type to allow definition of both
     # Asset and Relationship at the same time
-    cdf_resource_type: list[str] = Field(alias="Resource Type")
+    cdf_resource_type: list[str] = Field(alias="Resource Type", default=[])
 
     @property
     def is_raw_lookup(self) -> bool:
@@ -122,6 +122,7 @@ class Property(Resource):
         "skip_rule",
         "rule",
         "rule_type",
+        "cdf_resource_type",
         pre=True,
     )
     def replace_float_nan_with_default(cls, value, field):
@@ -213,6 +214,11 @@ class Metadata(BaseModel):
     def set_namespace(cls, value, values):
         if value is None:
             return Namespace(f"http://purl.org/cognite/{values['prefix']}#")
+        try:
+            _ = parse_obj_as(HttpUrl, value)
+            return Namespace(value)
+        except ValidationError as e:
+            raise ValueError(f"Invalid namespace {value}, it must be a valid URL!") from e
 
     @validator("creator", "contributor")
     def to_list_if_comma(cls, value, field):
@@ -293,13 +299,27 @@ class Instance(BaseModel):
             values["Property"] if isinstance(values["Property"], URIRef) else URIRef(namespace[values["Property"]])
         )
 
-        values["Value"] = cls.get_value(values["Value"], prefixes)
-
-        if not isinstance(values["Value"], URIRef):
-            datatype = (
-                XSD.integer if cls.isint(values["Value"]) else XSD.float if cls.isfloat(values["Value"]) else XSD.string
-            )
-            values["Value"] = Literal(values["Value"], datatype=datatype)
+        if isinstance(values["Value"], str):
+            values["Value"] = cls.get_value(values["Value"], prefixes)
+            if not isinstance(values["Value"], URIRef):
+                datatype = (
+                    XSD.integer
+                    if cls.isint(values["Value"])
+                    else XSD.float
+                    if cls.isfloat(values["Value"])
+                    else XSD.string
+                )
+                values["Value"] = Literal(values["Value"], datatype=datatype)
+        elif isinstance(values["Value"], float):
+            values["Value"] = Literal(values["Value"], datatype=XSD.float)
+        elif isinstance(values["Value"], int):
+            values["Value"] = Literal(values["Value"], datatype=XSD.integer)
+        elif isinstance(values["Value"], bool):
+            values["Value"] = Literal(values["Value"], datatype=XSD.boolean)
+        elif isinstance(values["Value"], datetime):
+            values["Value"] = Literal(values["Value"], datatype=XSD.dateTime)
+        else:
+            values["Value"] = Literal(values["Value"], datatype=XSD.string)
 
         return values
 
@@ -410,7 +430,7 @@ class TransformationRules(BaseModel):
         """Returns classes that have been defined in the data model."""
         return {property.class_name for property in self.properties.values()}
 
-    def get_classes_with_properties(self) -> dict[str, Property]:
+    def get_classes_with_properties(self) -> dict[str, list[Property]]:
         """Returns classes that have been defined in the data model."""
         # TODO: Do not particularly like method name, find something more suitable
         class_property_pairs = {}
@@ -421,6 +441,24 @@ class TransformationRules(BaseModel):
                 class_property_pairs[class_] += [property_]
             else:
                 class_property_pairs[class_] = [property_]
+
+        return class_property_pairs
+
+    def get_class_property_pairs(self) -> dict[str, dict[str, Property]]:
+        """This method will actually consider only the first definition of given property!"""
+        class_property_pairs = {}
+
+        for class_, properties in self.get_classes_with_properties().items():
+            processed_properties = {}
+            for property_ in properties:
+                if property_.property_name in processed_properties:
+                    warnings.warn(
+                        "Property has been defined more than once! Only first definition will be considered.",
+                        stacklevel=2,
+                    )
+                    continue
+                processed_properties[property_.property_name] = property_
+            class_property_pairs[class_] = processed_properties
 
         return class_property_pairs
 

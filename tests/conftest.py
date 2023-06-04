@@ -5,8 +5,9 @@ from rdflib import Namespace
 from cognite.neat.core import extractors, loader, parser
 from cognite.neat.core.data_classes import TransformationRules
 from cognite.neat.core.loader.graph_store import NeatGraphStore
-from cognite.neat.core.mocks.graph import add_triples, generate_triples
+from cognite.neat.core.mocks.graph import generate_triples
 from cognite.neat.core.transformer import domain2app_knowledge_graph
+from cognite.neat.core.utils import add_triples
 from tests import config
 
 
@@ -69,6 +70,12 @@ def simple_rules():
     return parser.parse_transformation_rules(
         loader.rules.excel_file_to_table_by_name(config.SIMPLE_TRANSFORMATION_RULES)
     )
+
+
+@pytest.fixture(scope="function")
+def graph_capturing_sheet():
+    # return load_workbook(config.GRAPH_CAPTURING_SHEET)
+    return loader.graph_capturing_sheet.excel_file_to_table_by_name(config.GRAPH_CAPTURING_SHEET)
 
 
 @pytest.fixture(scope="function")

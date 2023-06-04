@@ -22,6 +22,7 @@ from cognite.neat.core.data_classes.config import Config, configure_logging
 from cognite.neat.core.loader.config import copy_examples_to_directory
 from cognite.neat.core.workflow import WorkflowFullStateReport, utils
 from cognite.neat.core.workflow.base import WorkflowDefinition
+from cognite.neat.core.workflow.model import FlowMessage
 from cognite.neat.explorer.data_classes.rest import (
     DownloadFromCdfRequest,
     NodesAndEdgesRequest,
@@ -516,8 +517,8 @@ def init_neat_cdf_resources(resource_type: str = None):
     return {"result": "ok"}
 
 
-@app.post("/api/file/upload/{workflow_name}/{file_type}")
-async def file_upload_handler(files: list[UploadFile], workflow_name: str, file_type: str):
+@app.post("/api/file/upload/{workflow_name}/{file_type}/{step_id}/{action}")
+async def file_upload_handler(files: list[UploadFile], workflow_name: str, file_type: str, step_id: str, action: str):
     # get directory path
     upload_dir = config.rules_store_path
     file_name = ""
@@ -531,5 +532,13 @@ async def file_upload_handler(files: list[UploadFile], workflow_name: str, file_
         file_name = file.filename
         file_version = utils.get_file_hash(full_path)
         break  # only one file is supported for now
+
+    if action == "start_workflow":
+        logging.info("Starting workflow after file upload")
+        workflow = neat_app.workflow_manager.get_workflow(workflow_name)
+        flow_msg = FlowMessage(
+            payload={"file_name": file_name, "hash": file_version, "full_path": full_path, "file_type": file_type}
+        )
+        workflow.start(sync=False, flow_message=flow_msg, start_step_id=step_id)
 
     return {"file_name": file_name, "hash": file_version}

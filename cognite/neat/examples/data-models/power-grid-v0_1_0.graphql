@@ -1,0 +1,19 @@
+type GeographicalRegion {
+  name: String!
+}
+
+type SubGeographicalRegion {
+  name: String!
+  region: GeographicalRegion
+}
+
+type Substation {
+  name: String!
+  subGeographicalRegion: SubGeographicalRegion
+}
+
+type Terminal {
+  name: String!
+  aliasName: String!
+  substation: Substation
+}

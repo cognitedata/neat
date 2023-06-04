@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 from enum import StrEnum
@@ -115,8 +116,11 @@ class Config(BaseModel):
         return cls(**safe_load(filepath.read_text()))
 
     def to_yaml(self, filepath: Path):
+        # Parse as json to avoid Path and Enum objects
+        dump = json.loads(self.json())
+
         with filepath.open("w") as f:
-            yaml.dump(self.dict(), f)
+            yaml.safe_dump(dump, f)
 
     @classmethod
     def from_env(cls) -> Self:

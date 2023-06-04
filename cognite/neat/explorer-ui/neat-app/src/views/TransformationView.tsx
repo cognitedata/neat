@@ -172,7 +172,7 @@ export default function TransformationTable() {
     <Box sx={{margin:5}}>
       <CdfPublisher type="transformation rules" fileName={data.file_name} />
       <CdfDownloader type="neat-wf-rules" onDownloadSuccess={onDownloadSuccess} />
-      <LocalUploader type="transformation rules" onUpload={onUpload} />
+      <LocalUploader fileType="rules" action="none" stepId="none" workflowName="global" onUpload={onUpload} />
     </Box>
 
 
