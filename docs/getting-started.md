@@ -33,7 +33,7 @@
     venv\Scripts\activate.bat
     ```
     ```
-    pip intall cognite-neat
+    pip install cognite-neat
     ```
     Create `config.yaml`, see [Configuration](#configuration)
     ```
@@ -52,7 +52,7 @@
     source venv/bin/activate
     ```
     ``` bash
-    pip intall cognite-neat
+    pip install cognite-neat
     ```
     Create `config.yaml`, see [Configuration](#configuration)
     ``` bash
