@@ -85,7 +85,8 @@ to use the configuration file.
     to create a dataset.
 
     `neat` typically use multiple datasets. Each set of transformation rules typically has its own dataset, which used
-    to store the CDF resources produced by the workflow using that transformation rules.
+    to store the CDF resources produced by the workflow using that transformation rules. This dataset is set in the
+    metadata sheet in the spreadsheet.
 
     In addition, `neat` has a default dataset which is used for storing neat workflows and workflows runs. This
     dataset is set in the configuation under the key 'cdf_default_dataset_id'.

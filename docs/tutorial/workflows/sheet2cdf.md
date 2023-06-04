@@ -1,49 +1,41 @@
 # From Excel Sheet to CDF
 
-This workflow is purely based on [Transformation Rules](../../transformation-rules.md), a specially tailored Excel template, which holds both the semantic data model and the knowledge graph definitions. The workflow is depicted in the screenshot below.
+This workflow enables you to ingest a data model with data into CDF's core data model using the resources: assets, relationships, and labels.
+
+**Required Capabilities**
+
+| Capability Type | Action                                                            | Scope    | Description                                |
+|-----------------|-------------------------------------------------------------------|----------|--------------------------------------------|
+| Assets          | `assets:list`, `assets:read`, `assets:write`                      | Dataset  | Create and list assets                     |
+| Relationships   | `relationships:list`, `relationships:write`, `relationships:read` | Dataset  | Create and list relationships              |
+| Labels          | `labels:list`, `labels:write`, `labels:read`                      | Dataset  | Create and list labels used to mark assets |
+
+**Prerequisite** Created configuration with the above capabilities, [see configuration](../../getting-started.md#configuration)
+
+
+This workflow is purely based on [Transformation Rules](../../transformation-rules.md), a specially tailored Excel template,
+which holds both the semantic data model and the knowledge graph definitions. The workflow is depicted in the screenshot below.
 
 ![Sheet2CDF Workflow](../../figs/sheet2cdf-workflow.gif)
 
-As we can see `Transformation Rules` is input to two phases of the workflow. In the first phase, `Transformation Rules` is used to create knowledge graph through parsing. The parser output creates a source knowledge graph which is stored in `rdflib` in-memory graph database. The source knowledge graph and `Transformation Rules` rules are then fed to the second phase of the workflow which converts the knowledge graph to [Assets](https://docs.cognite.com/no/dev/concepts/resource_types/assets/), [Relationships](https://docs.cognite.com/no/dev/concepts/resource_types/relationships) and [Labels](https://docs.cognite.com/no/dev/concepts/resource_types/labels) which are then pushed to `CDF`.
-
-## CDF Configuration
-Before we start with the workflow, we need to configure CDF to be able to ingest the knowledge graph. One needs to create dedicated service account, i.e. client, in Azure Active Directory tenant linked to the CDF project where the knowledge graph will be ingested. The client needs to have read/write access to the CDF project. The client credentials are then used to configure `NEAT` to be able to ingest the knowledge graph into CDF. Assuming that you are running `NEAT` as a docker container on your local machine, the configuration file is located in `./docker/vol_data/core/config.yaml`, and looks like this:
-
-```yaml
-workflows_store_type: file
-workflows_store_path: /app/data/core/workflows
-rules_store_path: /app/data/core/rules
-
-cdf_client:
-    project: CDF_PROJECT
-    client_id: "CLIENT_ID"
-    client_secret: "CLIENT_SECRET"
-    client_name: your-client-name
-    base_url: https://CDF_CLUSTER.cognitedata.com
-    scopes:
-      - https://CDF_CLUSTER.cognitedata.com/.default
-    token_url: https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/token
-
-cdf_default_dataset_id: DATASET_ID
-log_level: DEBUG
-ui_static_content_path: /app/explorer-ui/neat-app/build
-```
-
-User needs to change the following attributes:
-
-- `CDF_PROJECT`: CDF project in which the knowledge graph will be stored
-- `CLIENT_ID`: client id of the service account
-- `CLIENT_SECRET`: client secret of the service account
-- `CDF_CLUSTER`: CDF cluster
-- `TENANT_ID`: Azure Active Directory tenant id
-- `DATASET_ID`: CDF dataset id in which the knowledge graph will be stored
+As we can see `Transformation Rules` is input to two phases of the workflow. In the first phase, `Transformation Rules` is used to
+create knowledge graph through parsing. The parser output creates a source knowledge graph which is stored in `rdflib` in-memory graph database.
+The source knowledge graph and `Transformation Rules` rules are then fed to the second phase of the workflow which converts
+the knowledge graph to [Assets](https://docs.cognite.com/no/dev/concepts/resource_types/assets/),
+[Relationships](https://docs.cognite.com/no/dev/concepts/resource_types/relationships)
+and [Labels](https://docs.cognite.com/no/dev/concepts/resource_types/labels) which are then pushed to `CDF`.
 
 
 ## Transformation Rules
-Details on what `Transformation Rules` are and how to use them can be found in the [Transformation Rules](../../transformation-rules.md) section. Here we will go only in the details about specific information that this workflow `Transformation Rules` holds.
+Details on what `Transformation Rules` are and how to use them can be found in the [Transformation Rules](../../transformation-rules.md) section.
+Here we will go only in the details about specific information that this workflow `Transformation Rules` holds.
 
 ### Semantic Data Model Definition
-From the `Metadata` sheet one can see that we are defining `neat` data model, which version 0.1 is the current version. This data model is used as a playground, and can be freely distributed. In our case, knowledge graph, which is the instance of the model we are defining, will be ingested into CDF under dataset `2626756768281823`, which in this case is the part of "Grid Extension Team" CDF project. As few people are using same project to play with `NEAT` we are also adding prefixes to all resulting CDF assets and relationship external ids to avoid conflicts.
+From the `Metadata` sheet one can see that we are defining `neat` data model, which version 0.1 is the current version.
+This data model is used as a playground, and can be freely distributed. In our case, knowledge graph,
+which is the instance of the model we are defining, will be ingested into CDF under dataset `2626756768281823`,
+which in this case is the part of "Grid Extension Team" CDF project. As few people are using the same project
+to play with `NEAT` we are also adding prefixes to all resulting CDF assets and relationship external ids to avoid conflicts.
 
 ![Transformation Rules: Metadata Sheet](../../figs/metadata-sheet.png)
 
@@ -101,7 +93,7 @@ In typical scenario we would already have knowledge graph, to which we would rel
 
 ![Transformation Rules: Properties Sheet](../../figs/dm-source-to-solution-mapping.png)
 
- However in this case, we are defining knowledge graph from scratch, so we are defining `Source Graph` and `Solution Graph` at the same time. In this case `Source Graph` is the same as `Solution Graph` and it is defined in the `Instances` sheet (see section below). Accordingly our mapping rules define 1-1 mapping between source and solution graph and they are only defined since `NEAT` expects to have them, otherwise validation of the input `Transformation Rules` file will fail. Future versions of `NEAT` will allow to submit `Transformation Rules` file without source-to-solution mapping rules.
+However, in this case, we are defining knowledge graph from scratch, so we are defining `Source Graph` and `Solution Graph` at the same time. In this case `Source Graph` is the same as `Solution Graph` and it is defined in the `Instances` sheet (see section below). Accordingly our mapping rules define 1-1 mapping between source and solution graph and they are only defined since `NEAT` expects to have them, otherwise validation of the input `Transformation Rules` file will fail. Future versions of `NEAT` will allow to submit `Transformation Rules` file without source-to-solution mapping rules.
 
 ### Semantic Data Model Instances Definition
 In this simple example we are actually using `Instances` sheet to define small knowledge graph. In total we define 13 instances of which:
@@ -135,7 +127,7 @@ Upon successful upload of `Transformation Rules` we get more compound view of th
 ![Transformation Rules in UI](../../figs/sheet2cdf-transformation-rules-ui.png)
 
 
-Afterwards, we can trigger the workflow :
+Afterward, we can trigger the workflow :
 ![Workflow Execution](../../figs/sheet2cdf-running-workflow.gif)
 
 The result of the workflow execution is the following CDF Asset Hierarchy:
