@@ -93,6 +93,24 @@ class WorkflowDefinition(BaseModel):
     system_components: list[WorkflowSystemComponent] = None
     configs: list[WorkflowConfigItem] = None
 
+    def get_config_item(self, name: str) -> WorkflowConfigItem:
+        for config in self.configs:
+            if config.name == name:
+                return config
+        return None
+
+    def upsert_config_item(self, config_item: WorkflowConfigItem):
+        for config in self.configs:
+            if config.name == config_item.name:
+                config.value = config_item.value
+                config.label = config_item.label
+                config.type = config_item.type
+                config.required = config_item.required
+                config.options = config_item.options
+                config.group = config_item.group
+                return
+        self.configs.append(config_item)
+
 
 class WorkflowStepEvent(BaseModel):
     """Workflow step event represent a single step execution"""

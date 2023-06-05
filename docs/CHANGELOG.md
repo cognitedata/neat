@@ -14,6 +14,12 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.12.5] - 04-06-23
+### Added
+* Automatic update (configurable) of workflow configurations (using new file name) on the rules file upload completion
+* Automatic triggering (configurable) of workflow execution on rules file upload completion
+
+
 ## [0.12.4] - 30-05-23
 ### Added
 * SME graph capturing workflow that make use of core method from 0.12.3

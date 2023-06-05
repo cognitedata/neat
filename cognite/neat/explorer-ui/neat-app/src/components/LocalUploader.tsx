@@ -7,10 +7,12 @@ import DialogTitle from '@mui/material/DialogTitle';
 import FormControl from '@mui/material/FormControl';
 import TextField from '@mui/material/TextField';
 import { Container } from '@mui/system';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useState } from 'react';
 import FileUpload from 'react-mui-fileuploader';
 import { getNeatApiRootUrl, getSelectedWorkflowName } from './Utils';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
 
 export default function LocalUploader(props: any) {
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -19,6 +21,13 @@ export default function LocalUploader(props: any) {
     const handleDialogClickOpen = () => {
         setDialogOpen(true);
     };
+    const [postUploadConfigUpdate, setPostUploadConfigUpdate] = useState<boolean>(true);
+    const [postUploadWorkflowStart , setPostUploadWorkflowStart] = useState<boolean>(false);
+
+    // props.action
+    useEffect(() => {
+        setPostUploadWorkflowStart(props.action == "start_workflow");
+    }, []);
 
     const handleDialogClose = () => {
         setDialogOpen(false);
@@ -26,9 +35,13 @@ export default function LocalUploader(props: any) {
     const handleDialogPublish = () => {
         uploadFiles();
     };
-    const handleStepConfigChange = (name: string, value: any) => {
+    const handlePostUploadActionConfig = (name: string, value: any) => {
         console.log('handleStepConfigChange')
-        data[name] = value;
+        if (name == "auto_config_update"){
+            setPostUploadConfigUpdate(value);
+        }else if (name == "auto_workflow_start"){
+            setPostUploadWorkflowStart(value);
+        }
     }
 
     const [filesToUpload, setFilesToUpload] = useState([])
@@ -42,10 +55,19 @@ export default function LocalUploader(props: any) {
         // Create a form and post it to server
         const neatApiRootUrl = getNeatApiRootUrl();
         const workflowName = getSelectedWorkflowName();
+        let action = ""
+        if (postUploadWorkflowStart && !postUploadConfigUpdate){
+            action = "start_workflow"
+        }else if (postUploadConfigUpdate && !postUploadWorkflowStart){
+            action = "update_config"
+        }else{
+            action = "update_config_and_start_workflow"
+        }
+
         let formData = new FormData()
         filesToUpload.forEach((file) => formData.append("files", file))
 
-        fetch(neatApiRootUrl+"/api/file/upload/"+props.workflowName+"/"+props.fileType+"/"+props.stepId+"/"+props.action, {
+        fetch(neatApiRootUrl+"/api/file/upload/"+props.workflowName+"/"+props.fileType+"/"+props.stepId+"/"+action, {
         method: "POST",
         body: formData
         }).then((response) => {
@@ -80,7 +102,10 @@ export default function LocalUploader(props: any) {
                 onContextReady={(context) => {}}
                 filesContainerHeight={100}
             />
-                {error && <Container sx={{ color: 'red' }}>{error}</Container>}
+            <FormControlLabel control={<Checkbox checked={postUploadConfigUpdate} onChange={(event) => { handlePostUploadActionConfig("auto_config_update", event.target.checked) }} />} label="Automatically update file name and version in the workflow config" />
+            <FormControlLabel control={<Checkbox checked={postUploadWorkflowStart} onChange={(event) => { handlePostUploadActionConfig("auto_workflow_start", event.target.checked) }} />} label="Start the workflow after the upload is completed" />
+            {error && <Container sx={{ color: 'red' }}>{error}</Container>}
+
             </DialogContent>
             <DialogActions>
                 <Button onClick={handleDialogClose}>Cancel</Button>
