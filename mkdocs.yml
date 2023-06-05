@@ -12,7 +12,7 @@ nav:
     - Features:
         - Overview: feature-overview.md
         - Data Exploration: ui-data-exploration.md
-    - Installation: getting-started.md
+    - Quick Start: getting-started.md
     - Fundamental Concepts:
         - Transformation Rules:
             - Overview: transformation-rules.md

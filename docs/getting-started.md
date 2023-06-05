@@ -101,7 +101,7 @@ to use the configuration file.
     capabilities.
 
     The requires capabilites depends on the workflow you are running. See for example, the [Sheet to CDF Graph Workflow](
-    tutorial/workflows/sheet2cdf).
+    /tutorial/workflows/sheet2cdf.html).
 
     The default dataset needs the following capabilities
 
@@ -117,7 +117,7 @@ to use the configuration file.
 When `neat` starts up it looks for `config.yaml` in the directory you start up. You can control the location
 of this file with the environmental variable `NEAT_CONFIG_PATH`.
 
-An example `config.yaml` file
+An example `config.yaml` file, which you can download [here](config.yaml)
 
 ```yaml
 cdf_client:
