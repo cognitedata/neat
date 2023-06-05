@@ -101,7 +101,7 @@ to use the configuration file.
     capabilities.
 
     The requires capabilites depends on the workflow you are running. See for example, the [Sheet to CDF Graph Workflow](
-    tutorial/workflows/sheet2cdf).
+    /tutorial/workflows/sheet2cdf.html).
 
     The default dataset needs the following capabilities
 
