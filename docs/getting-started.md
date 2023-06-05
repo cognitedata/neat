@@ -117,7 +117,7 @@ to use the configuration file.
 When `neat` starts up it looks for `config.yaml` in the directory you start up. You can control the location
 of this file with the environmental variable `NEAT_CONFIG_PATH`.
 
-An example `config.yaml` file
+An example `config.yaml` file, which you can download [here](config.yaml)
 
 ```yaml
 cdf_client:
