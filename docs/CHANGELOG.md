@@ -14,6 +14,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.12.5] - 06-06-23
+### Fixed
+* Handling assets without labels in CDF.
+
+
 ## [0.12.5] - 04-06-23
 ### Added
 * Automatic update (configurable) of workflow configurations (using new file name) on the rules file upload completion
@@ -38,6 +43,7 @@ Changes are grouped as follows:
 
 ### Removed
 * Default workflow
+
 ## [0.12.3] - 30-05-23
 ### Added
 * Added generation of knowledge graph capturing sheet based on data model definitions in transformation rules
