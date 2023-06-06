@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple, Union
 from warnings import warn
 
+import numpy as np
 import pandas as pd
 from cognite.client import CogniteClient
 from cognite.client.data_classes import Asset, AssetHierarchy, AssetList
@@ -520,13 +521,16 @@ def _categorize_cdf_assets(
 
     if cdf_assets.empty:
         return None, {"non-historic": set(), "historic": set()}
+    if "labels" not in cdf_assets:
+        # Add empty list for labels column.
+        cdf_assets["labels"] = np.empty((len(cdf_assets), 0)).tolist()
 
     cdf_columns = set(cdf_assets.columns)
     expected_columns = {"external_id", "labels", "parent_external_id", "data_set_id", "name", "description", "metadata"}
 
     cdf_assets = cdf_assets[list(expected_columns.intersection(cdf_columns))]
     cdf_assets = cdf_assets.where(pd.notnull(cdf_assets), None)
-    cdf_assets.labels = cdf_assets.labels.apply(_flatten_labels).values  # type: ignore
+    cdf_assets["labels"] = cdf_assets["labels"].apply(_flatten_labels).values  # type: ignore
     cdf_assets["is_historic"] = cdf_assets.labels.apply(_is_historic).values
 
     categorized_asset_ids = {
