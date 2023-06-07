@@ -2,7 +2,7 @@ import logging
 import warnings
 from collections.abc import Sequence
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union, overload
 from warnings import warn
 
 import numpy as np
@@ -954,17 +954,40 @@ def upload_assets(
         create_assets()
 
 
+@overload
 def remove_non_existing_labels(client: CogniteClient, assets: Sequence[Asset]) -> Sequence[Asset]:
+    ...
+
+
+@overload
+def remove_non_existing_labels(client: CogniteClient, assets: dict[str, Asset]) -> dict[str, Asset]:
+    ...
+
+
+def remove_non_existing_labels(
+    client: CogniteClient, assets: Sequence[Asset] | dict[str, Asset]
+) -> Sequence[Asset] | dict[str, Asset]:
     cdf_labels = client.labels.list(limit=-1)
     if not cdf_labels:
         # No labels, nothing to check.
         return assets
 
     available_labels = {label.external_id for label in cdf_labels}
-    cleaned_assets = []
-    for asset in assets:
-        if asset.labels:
-            asset.labels = [label for label in asset.labels if label.external_id in available_labels]
-        cleaned_assets.append(asset)
 
-    return cleaned_assets
+    if isinstance(assets, Sequence):
+        cleaned_assets: list[Asset] = []
+        for asset in assets:
+            if hasattr(asset, "labels"):
+                asset.labels = [label for label in asset.labels if label.external_id in available_labels]
+            cleaned_assets.append(asset)
+        return cleaned_assets
+
+    elif isinstance(assets, dict):
+        cleaned_assets: dict[str, Asset] = {}
+        for asset_id, asset in assets.items():
+            if hasattr(asset, "labels"):
+                asset.labels = [label for label in asset.labels if label.external_id in available_labels]
+            cleaned_assets[asset_id] = asset
+        return cleaned_assets
+
+    raise ValueError(f"Invalid format for Assets={type(assets)}")
