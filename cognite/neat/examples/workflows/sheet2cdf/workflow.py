@@ -10,7 +10,12 @@ from prometheus_client import Gauge
 from cognite.neat.core import loader, parser
 from cognite.neat.core.data_classes.transformation_rules import TransformationRules
 from cognite.neat.core.extractors.labels import upload_labels
-from cognite.neat.core.extractors.rdf_to_assets import categorize_assets, rdf2assets, upload_assets
+from cognite.neat.core.extractors.rdf_to_assets import (
+    categorize_assets,
+    rdf2assets,
+    remove_non_existing_labels,
+    upload_assets,
+)
 from cognite.neat.core.extractors.rdf_to_relationships import (
     categorize_relationships,
     rdf2relationships,
@@ -132,6 +137,8 @@ class Sheet2CDFNeatWorkflow(BaseWorkflow):
         if not self.cdf_client:
             logging.info("Dry run, no CDF client available")
             return
+
+        rdf_assets = remove_non_existing_labels(self.cdf_client, rdf_assets)
 
         # UPDATE: 2023-04-05 - correct aggregation of assets in CDF for specific dataset
         total_assets_before = self.cdf_client.assets.aggregate(

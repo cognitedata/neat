@@ -517,7 +517,11 @@ def _categorize_cdf_assets(
     Tuple[Optional[pd.DataFrame], dict]
         CDF assets as pandas dataframe and dictionary with categorized assets
     """
-    cdf_assets = client.assets.list(data_set_ids=data_set_id, limit=None, partitions=partitions).to_pandas()
+    cdf_assets = client.assets.list(data_set_ids=data_set_id, limit=None, partitions=partitions)
+
+    cdf_assets = remove_non_existing_labels(client, cdf_assets)
+
+    cdf_assets = AssetList(resources=cdf_assets).to_pandas()
 
     logging.info(f"Number of assets in CDF {len(cdf_assets)} that have been fetched")
 
