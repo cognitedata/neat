@@ -948,3 +948,19 @@ def upload_assets(
                 client.assets.create_hierarchy(categorized_assets["decommission"], upsert=True, upsert_mode="replace")
 
         create_assets()
+
+
+def remove_non_existing_labels(client: CogniteClient, assets: Sequence[Asset]) -> Sequence[Asset]:
+    cdf_labels = client.labels.list(limit=-1)
+    if not cdf_labels:
+        # No labels, nothing to check.
+        return assets
+
+    available_labels = {label.external_id for label in cdf_labels}
+    cleaned_assets = []
+    for asset in assets:
+        if asset.labels:
+            asset.labels = [label for label in asset.labels if label.external_id in available_labels]
+        cleaned_assets.append(asset)
+
+    return cleaned_assets
