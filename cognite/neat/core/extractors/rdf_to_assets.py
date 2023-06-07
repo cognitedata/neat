@@ -816,10 +816,14 @@ def categorize_assets(
     report = {"create": create_ids, "resurrect": resurrect_ids, "decommission": decommission_ids, "update": None}
     categorized_assets = {
         "create": _assets_to_create(rdf_assets, create_ids),
-        "update": (_assets_to_update(rdf_assets, cdf_assets, update_ids, stop_on_exception=stop_on_exception))[0],
+        "update": None,
         "resurrect": _assets_to_resurrect(rdf_assets, cdf_assets, resurrect_ids),
         "decommission": _assets_to_decommission(cdf_assets, decommission_ids),
     }
+
+    categorized_assets["update"], report["update"] = _assets_to_update(
+        rdf_assets, cdf_assets, update_ids, stop_on_exception=stop_on_exception
+    )
 
     return (categorized_assets, report) if return_report else categorized_assets
 
