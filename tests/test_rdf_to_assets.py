@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from cognite.client.data_classes import Asset, AssetList, LabelFilter
+from cognite.client.data_classes import Asset, AssetList, Label, LabelFilter
 from cognite.client.testing import monkeypatch_cognite_client
 
 from cognite.neat.core.extractors.rdf_to_assets import categorize_assets, order_assets
@@ -72,7 +72,12 @@ def test_asset_diffing(mock_rdf_assets, mock_cdf_assets, transformation_rules):
             else:
                 return AssetList([Asset(**non_active_asset)])
 
+        def list_labels(**_):
+            label_names = list(transformation_rules.get_labels()) + ["non-historic", "historic"]
+            return [Label(external_id=label_name, name=label_names) for label_name in label_names]
+
         client_mock.assets.list = list_assets
+        client_mock.labels.list = list_labels
 
     categorized_assets, report = categorize_assets(
         client_mock, rdf_assets, transformation_rules.metadata.data_set_id, return_report=True

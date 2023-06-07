@@ -157,7 +157,6 @@ assets:
   description: Used to store all assets which parent does not exist
   external_id: playground_orphanage-2626756768281823
   labels:
-  - externalId: Orphanage
   - externalId: non-historic
   metadata:
     active: 'true'

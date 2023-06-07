@@ -1,7 +1,8 @@
 import logging
 import warnings
+from collections.abc import Sequence
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union, overload
 from warnings import warn
 
 import numpy as np
@@ -340,7 +341,7 @@ def rdf2assets(
     transformation_rules: TransformationRules,
     stop_on_exception: bool = False,
     use_orphanage: bool = True,
-) -> Dict[str, Asset]:
+) -> dict[str, Asset]:
     """Creates assets from RDF graph
 
     Parameters
@@ -367,7 +368,7 @@ def rdf2assets(
 
     # Step 4: Get ids of classes
     logging.info("Get ids of instances of classes")
-    assets = {}
+    assets: dict[str, Asset] = {}
     class_ids = {
         class_: _get_class_instance_ids(graph, class_, transformation_rules.metadata.namespace)
         for class_ in asset_class_mapping
@@ -434,6 +435,7 @@ def rdf2assets(
     if orphanage_asset_external_id not in assets:
         _extracted_from_rdf2asset_dictionary_95(orphanage_asset_external_id, transformation_rules, assets)
     logging.info("Assets dictionary created")
+
     return assets
 
 
@@ -515,7 +517,11 @@ def _categorize_cdf_assets(
     Tuple[Optional[pd.DataFrame], dict]
         CDF assets as pandas dataframe and dictionary with categorized assets
     """
-    cdf_assets = client.assets.list(data_set_ids=data_set_id, limit=None, partitions=partitions).to_pandas()
+    cdf_assets = client.assets.list(data_set_ids=data_set_id, limit=None, partitions=partitions)
+
+    cdf_assets = remove_non_existing_labels(client, cdf_assets)
+
+    cdf_assets = AssetList(resources=cdf_assets).to_pandas()
 
     logging.info(f"Number of assets in CDF {len(cdf_assets)} that have been fetched")
 
@@ -873,7 +879,7 @@ def _micro_batch_push(
 
 def upload_assets(
     client: CogniteClient,
-    categorized_assets: Dict[str, list],
+    categorized_assets: Dict[str, Sequence[Asset]],
     batch_size: int = 5000,
     max_retries: int = 1,
     retry_delay: int = 3,
@@ -950,3 +956,42 @@ def upload_assets(
                 client.assets.create_hierarchy(categorized_assets["decommission"], upsert=True, upsert_mode="replace")
 
         create_assets()
+
+
+@overload
+def remove_non_existing_labels(client: CogniteClient, assets: Sequence[Asset]) -> Sequence[Asset]:
+    ...
+
+
+@overload
+def remove_non_existing_labels(client: CogniteClient, assets: dict[str, Asset]) -> dict[str, Asset]:
+    ...
+
+
+def remove_non_existing_labels(
+    client: CogniteClient, assets: Sequence[Asset] | dict[str, Asset]
+) -> Sequence[Asset] | dict[str, Asset]:
+    cdf_labels = client.labels.list(limit=-1)
+    if not cdf_labels:
+        # No labels, nothing to check.
+        return assets
+
+    available_labels = {label.external_id for label in cdf_labels}
+
+    if isinstance(assets, Sequence):
+        cleaned_assets: list[Asset] = []
+        for asset in assets:
+            if hasattr(asset, "labels"):
+                asset.labels = [label for label in asset.labels if label.external_id in available_labels]
+            cleaned_assets.append(asset)
+        return cleaned_assets
+
+    elif isinstance(assets, dict):
+        cleaned_assets: dict[str, Asset] = {}
+        for asset_id, asset in assets.items():
+            if hasattr(asset, "labels"):
+                asset.labels = [label for label in asset.labels if label.external_id in available_labels]
+            cleaned_assets[asset_id] = asset
+        return cleaned_assets
+
+    raise ValueError(f"Invalid format for Assets={type(assets)}")

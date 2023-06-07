@@ -14,6 +14,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.12.7] - 07-06-23
+### Fixed
+* Handling assets in CDF with non-existing labels.
+
 ## [0.12.6] - 06-06-23
 ### Fixed
 * Handling assets without labels in CDF.
