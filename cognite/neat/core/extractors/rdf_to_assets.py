@@ -1,5 +1,6 @@
 import logging
 import warnings
+from collections.abc import Sequence
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple, Union
 from warnings import warn
@@ -340,7 +341,7 @@ def rdf2assets(
     transformation_rules: TransformationRules,
     stop_on_exception: bool = False,
     use_orphanage: bool = True,
-) -> Dict[str, Asset]:
+) -> dict[str, Asset]:
     """Creates assets from RDF graph
 
     Parameters
@@ -367,7 +368,7 @@ def rdf2assets(
 
     # Step 4: Get ids of classes
     logging.info("Get ids of instances of classes")
-    assets = {}
+    assets: dict[str, Asset] = {}
     class_ids = {
         class_: _get_class_instance_ids(graph, class_, transformation_rules.metadata.namespace)
         for class_ in asset_class_mapping
@@ -434,6 +435,7 @@ def rdf2assets(
     if orphanage_asset_external_id not in assets:
         _extracted_from_rdf2asset_dictionary_95(orphanage_asset_external_id, transformation_rules, assets)
     logging.info("Assets dictionary created")
+
     return assets
 
 
@@ -810,14 +812,10 @@ def categorize_assets(
     report = {"create": create_ids, "resurrect": resurrect_ids, "decommission": decommission_ids, "update": None}
     categorized_assets = {
         "create": _assets_to_create(rdf_assets, create_ids),
-        "update": None,
+        "update": (_assets_to_update(rdf_assets, cdf_assets, update_ids, stop_on_exception=stop_on_exception))[0],
         "resurrect": _assets_to_resurrect(rdf_assets, cdf_assets, resurrect_ids),
         "decommission": _assets_to_decommission(cdf_assets, decommission_ids),
     }
-
-    categorized_assets["update"], report["update"] = _assets_to_update(
-        rdf_assets, cdf_assets, update_ids, stop_on_exception=stop_on_exception
-    )
 
     return (categorized_assets, report) if return_report else categorized_assets
 
@@ -873,7 +871,7 @@ def _micro_batch_push(
 
 def upload_assets(
     client: CogniteClient,
-    categorized_assets: Dict[str, list],
+    categorized_assets: Dict[str, Sequence[Asset]],
     batch_size: int = 5000,
     max_retries: int = 1,
     retry_delay: int = 3,
