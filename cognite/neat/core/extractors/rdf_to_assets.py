@@ -1,8 +1,8 @@
 import logging
 import warnings
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Tuple, Union, overload
+from typing import Any, Dict, List, Optional, Tuple, Union, overload
 from warnings import warn
 
 import numpy as np
@@ -341,7 +341,7 @@ def rdf2assets(
     transformation_rules: TransformationRules,
     stop_on_exception: bool = False,
     use_orphanage: bool = True,
-) -> dict[str, Asset]:
+) -> dict[str, dict[str, Any]]:
     """Creates assets from RDF graph
 
     Parameters
@@ -368,7 +368,7 @@ def rdf2assets(
 
     # Step 4: Get ids of classes
     logging.info("Get ids of instances of classes")
-    assets: dict[str, Asset] = {}
+    assets: dict[str, dict[str, Any]] = {}
     class_ids = {
         class_: _get_class_instance_ids(graph, class_, transformation_rules.metadata.namespace)
         for class_ in asset_class_mapping
@@ -959,18 +959,22 @@ def upload_assets(
 
 
 @overload
-def remove_non_existing_labels(client: CogniteClient, assets: Sequence[Asset]) -> Sequence[Asset]:
+def remove_non_existing_labels(
+    client: CogniteClient, assets: Sequence[Asset | dict[str, Any]]
+) -> Sequence[Asset | dict[str, Any]]:
     ...
 
 
 @overload
-def remove_non_existing_labels(client: CogniteClient, assets: dict[str, Asset]) -> dict[str, Asset]:
+def remove_non_existing_labels(
+    client: CogniteClient, assets: dict[str, Asset | dict[str, Any]]
+) -> dict[str, Asset] | dict[str, Any]:
     ...
 
 
 def remove_non_existing_labels(
-    client: CogniteClient, assets: Sequence[Asset] | dict[str, Asset]
-) -> Sequence[Asset] | dict[str, Asset]:
+    client: CogniteClient, assets: Sequence[Asset | dict[str, Any]] | dict[str, Asset | dict[str, Any]]
+) -> Sequence[Asset | dict[str, Any]] | dict[str, Asset | dict[str, Any]]:
     cdf_labels = client.labels.list(limit=-1)
     if not cdf_labels:
         # No labels, nothing to check.
@@ -978,20 +982,29 @@ def remove_non_existing_labels(
 
     available_labels = {label.external_id for label in cdf_labels}
 
+    def clean_asset_labels(asset: Asset | dict[str, Any]) -> Asset | dict[str, Any]:
+        if isinstance(asset, Asset):
+            asset.labels = [label for label in asset.labels if label.external_id in available_labels] or None
+        elif isinstance(asset, dict) and "labels" in asset:
+            asset["labels"] = [label for label in asset["labels"] if label in available_labels]
+        return asset
+
     if isinstance(assets, Sequence):
-        cleaned_assets: list[Asset] = []
-        for asset in assets:
-            if hasattr(asset, "labels"):
-                asset.labels = [label for label in asset.labels if label.external_id in available_labels]
-            cleaned_assets.append(asset)
-        return cleaned_assets
+        return [clean_asset_labels(a) for a in assets]
 
     elif isinstance(assets, dict):
-        cleaned_assets: dict[str, Asset] = {}
-        for asset_id, asset in assets.items():
-            if hasattr(asset, "labels"):
-                asset.labels = [label for label in asset.labels if label.external_id in available_labels]
-            cleaned_assets[asset_id] = asset
-        return cleaned_assets
+        return {external_id: clean_asset_labels(a) for external_id, a in assets.items()}
 
     raise ValueError(f"Invalid format for Assets={type(assets)}")
+
+
+def unique_asset_labels(assets: Iterable[Asset | dict[str, Any]]) -> set[str]:
+    labels = set()
+    for asset in assets:
+        if isinstance(asset, Asset):
+            labels |= {label.external_id for label in asset.labels}
+        elif isinstance(asset, dict):
+            labels |= set(asset.get("labels"))
+        else:
+            raise ValueError(f"Unsupported {type(asset)}")
+    return labels
