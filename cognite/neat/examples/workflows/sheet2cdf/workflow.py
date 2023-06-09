@@ -14,6 +14,7 @@ from cognite.neat.core.extractors.rdf_to_assets import (
     categorize_assets,
     rdf2assets,
     remove_non_existing_labels,
+    unique_asset_labels,
     upload_assets,
 )
 from cognite.neat.core.extractors.rdf_to_relationships import (
@@ -138,7 +139,18 @@ class Sheet2CDFNeatWorkflow(BaseWorkflow):
             logging.info("Dry run, no CDF client available")
             return
 
+        # Label Validation
+        labels_before = unique_asset_labels(rdf_assets.values())
+        logging.info(f"Assets have {len(labels_before)} unique labels: {', '.join(sorted(labels_before))}")
+
         rdf_assets = remove_non_existing_labels(self.cdf_client, rdf_assets)
+
+        labels_after = unique_asset_labels(rdf_assets.values())
+        removed_labels = labels_before - labels_after
+        logging.info(
+            f"Removed {len(removed_labels)} labels as these do not exists in CDF. Removed labels: {', '.join(sorted(removed_labels))}"
+        )
+        ######################
 
         # UPDATE: 2023-04-05 - correct aggregation of assets in CDF for specific dataset
         total_assets_before = self.cdf_client.assets.aggregate(
@@ -189,7 +201,7 @@ class Sheet2CDFNeatWorkflow(BaseWorkflow):
             logging.error(msg)
             raise Exception(msg)
         else:
-            logging.info("No circular dependency among assets found, your assets hierarchy look healthy !")
+            logging.info("No circular dependency among assets found, your assets hierarchy look healthy!")
 
         self.categorized_assets = categorize_assets(self.cdf_client, rdf_assets, self.dataset_id)
 
