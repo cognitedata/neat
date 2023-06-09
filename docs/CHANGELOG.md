@@ -14,6 +14,12 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.12.8] - 09-06-23
+### Fixed
+* Clean labels from assets which do not exist in CDF. This one does the cleaning correct, while `0.12.7` assumed
+  the wrong internal format for asset, and thus, did not work.
+
+
 ## [0.12.7] - 07-06-23
 ### Fixed
 * Handling assets in CDF with non-existing labels.
