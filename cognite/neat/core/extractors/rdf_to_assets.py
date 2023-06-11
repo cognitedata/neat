@@ -19,23 +19,6 @@ from cognite.neat.core.data_classes.transformation_rules import TransformationRu
 from cognite.neat.core.loader.graph_store import NeatGraphStore
 from cognite.neat.core.utils import chunker, datetime_utc_now, remove_namespace, retry_decorator
 
-ORPHANAGE = {
-    "external_id": "orphanage",
-    "name": "Orphanage",
-    "parent_external_id": None,
-    "description": "Used to store all assets which parent does not exist",
-    "metadata": {
-        "type": "Orphanage",
-        "cdfResourceType": "Asset",
-        "identifier": "orphanage",
-        "active": "true",
-        "start_time": "",
-        "update_time": "",
-    },
-    "data_set_id": None,
-    "labels": ["Orphanage", "non-historic"],
-}
-
 
 def _get_class_instance_ids(graph: Graph, class_: str, namespace: Namespace, limit: int = -1) -> List[URIRef]:
     """Get instances ids for a given class
@@ -433,7 +416,12 @@ def rdf2assets(
         logging.debug(f"Class <{class_}> processed")
 
     if orphanage_asset_external_id not in assets:
-        _extracted_from_rdf2asset_dictionary_95(orphanage_asset_external_id, transformation_rules, assets)
+        logging.warning(f"Orphanage with external id {orphanage_asset_external_id} not found in asset hierarchy!")
+        logging.warning(f"Adding default orphanage with external id {orphanage_asset_external_id}")
+        assets[orphanage_asset_external_id] = _create_orphanage(
+            orphanage_asset_external_id, transformation_rules.metadata.data_set_id
+        )
+
     logging.info("Assets dictionary created")
 
     return assets
@@ -450,18 +438,24 @@ def rdf2asset_dictionary(
     return rdf2assets(graph_store, transformation_rules, stop_on_exception, use_orphanage)
 
 
-# TODO Rename this here and in `rdf2asset_dictionary`
-def _extracted_from_rdf2asset_dictionary_95(orphanage_asset_external_id, transformation_rules, assets):
-    print(f"Orphanage with external id {orphanage_asset_external_id} not found in asset hierarchy!")
-    logging.warning(f"Orphanage with external id {orphanage_asset_external_id} not found in asset hierarchy!")
-    logging.warning(f"Adding default orphanage with external id {orphanage_asset_external_id}")
-
-    # updating default external id for orphanage in case there are additional prefix to be added
-    ORPHANAGE["external_id"] = orphanage_asset_external_id
-    ORPHANAGE["data_set_id"] = transformation_rules.metadata.data_set_id
-    ORPHANAGE["metadata"]["start_time"] = str(datetime_utc_now())
-    ORPHANAGE["metadata"]["update_time"] = str(datetime_utc_now())
-    assets[orphanage_asset_external_id] = ORPHANAGE
+def _create_orphanage(orphanage_external_id: str, dataset_id: int) -> dict:
+    now = str(datetime_utc_now())
+    return {
+        "external_id": orphanage_external_id,
+        "name": "Orphanage",
+        "parent_external_id": None,
+        "description": "Used to store all assets which parent does not exist",
+        "metadata": {
+            "type": "Orphanage",
+            "cdfResourceType": "Asset",
+            "identifier": "orphanage",
+            "active": "true",
+            "start_time": now,
+            "update_time": now,
+        },
+        "data_set_id": dataset_id,
+        "labels": ["Orphanage", "non-historic"],
+    }
 
 
 def _asset2dict(asset: Asset) -> dict:

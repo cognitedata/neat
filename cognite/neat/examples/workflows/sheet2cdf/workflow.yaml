@@ -76,6 +76,27 @@ configs:
     required: false
     type: null
     value: ''
+-   group: cdf
+    name: cdf.asset.metadata.type
+    value: type
+-   group: cdf
+    name: cdf.asset.metadata.active
+    value: active
+-   group: cdf
+    name: cdf.asset.metadata.identifier
+    value: identifier
+-   group: cdf
+    name: cdf.asset.metadata.start_time
+    value: start_time
+-   group: cdf
+    name: cdf.asset.metadata.end_time
+    value: end_time
+-   group: cdf
+    name: cdf.asset.metadata.updated_time
+    value: updated_time
+-   group: cdf
+    name: cdf.asset.metadata.resurrection_time
+    value: resurrection_time
 description: null
 system_components:
 -   description: null
