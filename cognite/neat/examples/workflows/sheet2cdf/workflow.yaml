@@ -92,8 +92,8 @@ configs:
     name: cdf.asset.metadata.end_time
     value: end_time
 -   group: cdf.asset.metadata.
-    name: cdf.asset.metadata.updated_time
-    value: updated_time
+    name: cdf.asset.metadata.update_time
+    value: update_time
 -   group: cdf.asset.metadata.
     name: cdf.asset.metadata.resurrection_time
     value: resurrection_time

@@ -25,7 +25,7 @@ from cognite.neat.core.utils import chunker, datetime_utc_now, remove_namespace,
 class NeatMetadataKeys:
     start_time: str = "start_time"
     end_time: str = "end_time"
-    updated_time: str = "updated_time"
+    update_time: str = "update_time"
     resurrection_time: str = "resurrection_time"
     identifier: str = "identifier"
     active: str = "active"
@@ -42,6 +42,9 @@ class NeatMetadataKeys:
                 logging.warning(f"Invalid key set {key}")
 
         return cls(**valid_keys)
+
+    def as_aliases(self) -> dict[str, str]:
+        return {field.default: getattr(self, field.name) for field in fields(self)}
 
 
 def _get_class_instance_ids(graph: Graph, class_: str, namespace: Namespace, limit: int = -1) -> List[URIRef]:
@@ -200,9 +203,10 @@ def _class2asset_instance(
     class_instance: dict,
     asset_class_mapping: dict,
     data_set_id: int,
+    meta_keys: NeatMetadataKeys,
     orphanage_asset_external_id: str = None,
     external_id_prefix: str = None,
-    fallback_property: str = "identifier",
+    fallback_property: str = NeatMetadataKeys.identifier,
     empty_name_default: str = "Missing Name",
     add_missing_metadata: bool = True,
 ) -> dict:
@@ -238,7 +242,7 @@ def _class2asset_instance(
     )
 
     # setting class instance type to class name
-    remapped_class_instance["type"] = class_
+    remapped_class_instance[meta_keys.type] = class_
     # This will be a default case since we want to use original identifier as external_id
     # We are though dropping namespace from the original identifier (avoiding long-tail URIs)
     if "external_id" in missing_properties or asset_class_mapping["external_id"] == []:
@@ -354,15 +358,21 @@ def rdf2assets(
 
     Parameters
     ----------
-    graph : Graph
+    graph_store : Graph
         Graph containing RDF data
     transformation_rules : TransformationRules
         Instance of TransformationRules class containing transformation rules
+    stop_on_exception : bool
+        Whether to stop upon exception.
+    use_orphanage : bool
+        Whether to use an orphanage for assets without parent_external_id
+    meta_keys : NeatMetadataKeys
+        The names of neat metadat keys to use.
 
     Returns
     -------
-    Dict[str, Asset]
-        Dictionary of assets with external_id as key
+    Dict[str, dict]
+        Dictionary representations of assets by external id.
     """
     meta_keys = NeatMetadataKeys() if meta_keys is None else meta_keys
 
@@ -384,6 +394,7 @@ def rdf2assets(
     }
     # Step 5: Create Assets based on class instances
     logging.info("Create Assets based on class instances")
+    meta_keys_aliases = meta_keys.as_aliases()
     for class_ in asset_class_mapping:
         # TODO: Rename class_id to instance_id
         class_ns = transformation_rules.metadata.namespace[class_]
@@ -417,14 +428,18 @@ def rdf2assets(
                     class_instance,
                     asset_class_mapping[class_],
                     transformation_rules.metadata.data_set_id,
+                    meta_keys,
                     orphanage_asset_external_id if use_orphanage else None,  # we need only base external id
                     transformation_rules.metadata.externalIdPrefix or None,
+                    fallback_property=meta_keys.identifier,
                 )
 
                 # adding labels and timestamps
-                asset["labels"] = [asset["metadata"]["type"], "non-historic"]
-                asset["metadata"]["start_time"] = str(datetime.now(timezone.utc))
-                asset["metadata"]["update_time"] = str(datetime.now(timezone.utc))
+                asset["labels"] = [asset["metadata"][meta_keys.type], "non-historic"]
+                now = str(datetime.now(timezone.utc))
+                asset["metadata"][meta_keys.start_time] = now
+                asset["metadata"][meta_keys.end_time] = now
+                asset["metadata"] = {meta_keys_aliases.get(k, k): v for k, v in asset["metadata"].items()}
 
                 # log every 10000 assets
                 if progress_counter % 10000 == 0:
@@ -445,7 +460,7 @@ def rdf2assets(
         logging.warning(f"Orphanage with external id {orphanage_asset_external_id} not found in asset hierarchy!")
         logging.warning(f"Adding default orphanage with external id {orphanage_asset_external_id}")
         assets[orphanage_asset_external_id] = _create_orphanage(
-            orphanage_asset_external_id, transformation_rules.metadata.data_set_id
+            orphanage_asset_external_id, transformation_rules.metadata.data_set_id, meta_keys
         )
 
     logging.info("Assets dictionary created")
@@ -464,7 +479,7 @@ def rdf2asset_dictionary(
     return rdf2assets(graph_store, transformation_rules, stop_on_exception, use_orphanage)
 
 
-def _create_orphanage(orphanage_external_id: str, dataset_id: int) -> dict:
+def _create_orphanage(orphanage_external_id: str, dataset_id: int, meta_keys: NeatMetadataKeys) -> dict:
     now = str(datetime_utc_now())
     return {
         "external_id": orphanage_external_id,
@@ -472,12 +487,12 @@ def _create_orphanage(orphanage_external_id: str, dataset_id: int) -> dict:
         "parent_external_id": None,
         "description": "Used to store all assets which parent does not exist",
         "metadata": {
-            "type": "Orphanage",
+            meta_keys.type: "Orphanage",
             "cdfResourceType": "Asset",
-            "identifier": "orphanage",
-            "active": "true",
-            "start_time": now,
-            "update_time": now,
+            meta_keys.identifier: "orphanage",
+            meta_keys.active: "true",
+            meta_keys.start_time: now,
+            meta_keys.update_time: now,
         },
         "data_set_id": dataset_id,
         "labels": ["Orphanage", "non-historic"],

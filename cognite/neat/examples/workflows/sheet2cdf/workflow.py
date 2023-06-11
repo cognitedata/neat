@@ -130,12 +130,15 @@ class Sheet2CDFNeatWorkflow(BaseWorkflow):
     def step_prepare_cdf_assets(self, flow_msg: FlowMessage):
         # export graph into CDF
         # TODO : decide on error handling and retry logic\
-        self.meta_keys = NeatMetadataKeys.load(self.get_config_group_values_by_name("cdf.assets.metadata."))
+        self.meta_keys = NeatMetadataKeys.load(
+            self.get_config_group_values_by_name("cdf.assets.metadata.", remove_group_prefix=True)
+        )
 
         rdf_assets = rdf2assets(
             self.solution_graph,
             self.transformation_rules,
             stop_on_exception=self.stop_on_error,
+            meta_keys=self.meta_keys,
         )
 
         if not self.cdf_client:

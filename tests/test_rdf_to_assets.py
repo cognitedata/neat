@@ -153,3 +153,22 @@ def test_neat_metadata_keys_load():
 
     # Arrange
     assert actual == expected
+
+
+def test_neat_metadata_keys_alias():
+    # Arrange
+    keys = NeatMetadataKeys(type="category")
+    expected = dict(
+        start_time="start_time",
+        end_time="end_time",
+        update_time="update_time",
+        resurrection_time="resurrection_time",
+        identifier="identifier",
+        active="active",
+        type="category",
+    )
+    # Act
+    aliases = keys.as_aliases()
+
+    # Assert
+    assert aliases == expected
