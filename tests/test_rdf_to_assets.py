@@ -6,6 +6,7 @@ from cognite.client.testing import monkeypatch_cognite_client
 
 from cognite.neat.core.extractors.rdf_to_assets import (
     AssetLike,
+    NeatMetadataKeys,
     categorize_assets,
     order_assets,
     remove_non_existing_labels,
@@ -140,3 +141,15 @@ def test_remove_non_existing_labels(cdf_labels: LabelDefinitionList, assets: Ass
 
     # Assert
     assert actual_assets == expected_assets
+
+
+def test_neat_metadata_keys_load():
+    # Arrange
+    input_data = {"start_time": "beginning_time", "invalid_keys": "not valid"}
+    expected = NeatMetadataKeys(start_time="beginning_time")
+
+    # Act
+    actual = NeatMetadataKeys.load(input_data)
+
+    # Arrange
+    assert actual == expected

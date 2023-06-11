@@ -1,8 +1,9 @@
 import logging
 import warnings
 from collections.abc import Iterable, Sequence
+from dataclasses import dataclass, fields
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple, Union, overload
+from typing import Any, Dict, List, Optional, Self, Tuple, Union, overload
 from warnings import warn
 
 import numpy as np
@@ -18,6 +19,29 @@ from cognite.neat.core.data_classes.config import EXCLUDE_PATHS
 from cognite.neat.core.data_classes.transformation_rules import TransformationRules
 from cognite.neat.core.loader.graph_store import NeatGraphStore
 from cognite.neat.core.utils import chunker, datetime_utc_now, remove_namespace, retry_decorator
+
+
+@dataclass
+class NeatMetadataKeys:
+    start_time: str = "start_time"
+    end_time: str = "end_time"
+    updated_time: str = "updated_time"
+    resurrection_time: str = "resurrection_time"
+    identifier: str = "identifier"
+    active: str = "active"
+    type: str = "type"
+
+    @classmethod
+    def load(cls, data: dict) -> Self:
+        cls_field_names = {f.name for f in fields(cls)}
+        valid_keys = {}
+        for key, value in data.items():
+            if key in cls_field_names:
+                valid_keys[key] = value
+            else:
+                logging.warning(f"Invalid key set {key}")
+
+        return cls(**valid_keys)
 
 
 def _get_class_instance_ids(graph: Graph, class_: str, namespace: Namespace, limit: int = -1) -> List[URIRef]:
@@ -324,6 +348,7 @@ def rdf2assets(
     transformation_rules: TransformationRules,
     stop_on_exception: bool = False,
     use_orphanage: bool = True,
+    meta_keys: NeatMetadataKeys | None = None,
 ) -> dict[str, dict[str, Any]]:
     """Creates assets from RDF graph
 
@@ -339,6 +364,7 @@ def rdf2assets(
     Dict[str, Asset]
         Dictionary of assets with external_id as key
     """
+    meta_keys = NeatMetadataKeys() if meta_keys is None else meta_keys
 
     orphanage_asset_external_id = (
         f"{transformation_rules.metadata.externalIdPrefix or ''}orphanage-{transformation_rules.metadata.data_set_id}"
