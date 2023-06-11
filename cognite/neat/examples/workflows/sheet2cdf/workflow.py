@@ -131,7 +131,7 @@ class Sheet2CDFNeatWorkflow(BaseWorkflow):
         # export graph into CDF
         # TODO : decide on error handling and retry logic\
         self.meta_keys = NeatMetadataKeys.load(
-            self.get_config_group_values_by_name("cdf.assets.metadata.", remove_group_prefix=True)
+            self.get_config_group_values_by_name("cdf.asset.metadata.", remove_group_prefix=True)
         )
 
         rdf_assets = rdf2assets(
@@ -209,7 +209,9 @@ class Sheet2CDFNeatWorkflow(BaseWorkflow):
         else:
             logging.info("No circular dependency among assets found, your assets hierarchy look healthy!")
 
-        self.categorized_assets = categorize_assets(self.cdf_client, rdf_assets, self.dataset_id)
+        self.categorized_assets = categorize_assets(
+            self.cdf_client, rdf_assets, self.dataset_id, meta_keys=self.meta_keys
+        )
 
         count_create_assets = len(self.categorized_assets["create"])
         count_update_assets = len(self.categorized_assets["update"])
