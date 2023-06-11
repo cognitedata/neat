@@ -972,9 +972,10 @@ def remove_non_existing_labels(
     ...
 
 
-def remove_non_existing_labels(
-    client: CogniteClient, assets: Sequence[Asset | dict[str, Any]] | dict[str, Asset | dict[str, Any]]
-) -> Sequence[Asset | dict[str, Any]] | dict[str, Asset | dict[str, Any]]:
+AssetLike = Sequence[Asset | dict[str, Any]] | dict[str, Asset | dict[str, Any]]
+
+
+def remove_non_existing_labels(client: CogniteClient, assets: AssetLike) -> AssetLike:
     cdf_labels = client.labels.list(limit=-1)
     if not cdf_labels:
         # No labels, nothing to check.
@@ -984,7 +985,7 @@ def remove_non_existing_labels(
 
     def clean_asset_labels(asset: Asset | dict[str, Any]) -> Asset | dict[str, Any]:
         if isinstance(asset, Asset):
-            asset.labels = [label for label in asset.labels if label.external_id in available_labels] or None
+            asset.labels = [label for label in (asset.labels or []) if label.external_id in available_labels] or None
         elif isinstance(asset, dict) and "labels" in asset:
             asset["labels"] = [label for label in asset["labels"] if label in available_labels]
         return asset

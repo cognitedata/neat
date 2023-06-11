@@ -1,9 +1,15 @@
 from copy import deepcopy
 
-from cognite.client.data_classes import Asset, AssetList, Label, LabelFilter
+import pytest
+from cognite.client.data_classes import Asset, AssetList, Label, LabelDefinition, LabelDefinitionList, LabelFilter
 from cognite.client.testing import monkeypatch_cognite_client
 
-from cognite.neat.core.extractors.rdf_to_assets import categorize_assets, order_assets
+from cognite.neat.core.extractors.rdf_to_assets import (
+    AssetLike,
+    categorize_assets,
+    order_assets,
+    remove_non_existing_labels,
+)
 
 
 def test_asset_hierarchy_ordering(mock_rdf_assets):
@@ -115,3 +121,22 @@ def test_asset_diffing(mock_rdf_assets, mock_cdf_assets, transformation_rules):
         "non-historic",
     }
     assert categorized_assets["resurrect"][0].metadata["active"] == "true"
+
+
+def generate_remove_non_existing_labels_test_data():
+    labels = LabelDefinitionList([LabelDefinition(external_id="historic", name="historic")])
+    assets = Asset(external_id="office1", name="Office 1")
+    yield pytest.param(labels, [assets], [assets], id="Asset without label")
+
+
+@pytest.mark.parametrize("cdf_labels, assets, expected_assets", list(generate_remove_non_existing_labels_test_data()))
+def test_remove_non_existing_labels(cdf_labels: LabelDefinitionList, assets: AssetLike, expected_assets: AssetLike):
+    # Arrange
+    with monkeypatch_cognite_client() as client:
+        client.labels.list.return_value = cdf_labels
+
+        # Act
+        actual_assets = remove_non_existing_labels(client, assets)
+
+    # Assert
+    assert actual_assets == expected_assets
