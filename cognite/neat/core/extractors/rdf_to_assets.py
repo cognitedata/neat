@@ -985,7 +985,7 @@ def remove_non_existing_labels(client: CogniteClient, assets: AssetLike) -> Asse
 
     def clean_asset_labels(asset: Asset | dict[str, Any]) -> Asset | dict[str, Any]:
         if isinstance(asset, Asset):
-            asset.labels = [label for label in asset.labels if label.external_id in available_labels] or None
+            asset.labels = [label for label in (asset.labels or []) if label.external_id in available_labels] or None
         elif isinstance(asset, dict) and "labels" in asset:
             asset["labels"] = [label for label in asset["labels"] if label in available_labels]
         return asset
