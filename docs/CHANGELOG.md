@@ -14,6 +14,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.12.9] - 11-06-23
+### Fixed
+* Existing CDF asset without a label caused the `sheet2cdf` workflow to fail. This is now fixed.
+
+
 ## [0.12.8] - 09-06-23
 ### Fixed
 * Clean labels from assets which do not exist in CDF. This one does the cleaning correct, while `0.12.7` assumed
