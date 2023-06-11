@@ -651,6 +651,7 @@ def _assets_to_update(
     rdf_assets: dict,
     cdf_assets: pd.DataFrame,
     asset_ids: set,
+    meta_keys: NeatMetadataKeys,
     exclude_paths: list = EXCLUDE_PATHS,
     stop_on_exception: bool = False,
 ) -> tuple[list[Asset], dict[str, dict]]:
@@ -664,6 +665,8 @@ def _assets_to_update(
         Dataframe containing assets from CDF
     asset_ids : set
         Candidate assets to be updated
+    meta_keys : NeatMetadataKeys
+        The neat meta data keys.
     exclude_paths : list, optional
         Paths not to be checked when diffing rdf and cdf assets, by default EXCLUDE_PATHS
     stop_on_exception: bool, optional
@@ -704,13 +707,13 @@ def _assets_to_update(
                 )
                 continue
 
-        if diffing_result and "root['metadata']['active']" not in diffing_result.affected_paths:
+        if diffing_result and f"root['metadata']['{meta_keys.active}']" not in diffing_result.affected_paths:
             asset = Asset(**rdf_assets[external_id])
             try:
-                asset.metadata["start_time"] = cdf_asset[external_id]["metadata"]["start_time"]
+                asset.metadata[meta_keys.start_time] = cdf_asset[external_id]["metadata"][meta_keys.start_time]
             except KeyError:
-                asset.metadata["start_time"] = str(datetime.now(timezone.utc))
-            asset.metadata["update_time"] = str(datetime.now(timezone.utc))
+                asset.metadata[meta_keys.start_time] = str(datetime.now(timezone.utc))
+            asset.metadata[meta_keys.update_time] = str(datetime.now(timezone.utc))
             assets.append(asset)
 
             report[external_id] = dict(diffing_result)
@@ -719,7 +722,9 @@ def _assets_to_update(
     return assets, report
 
 
-def _assets_to_resurrect(rdf_assets: dict, cdf_assets: pd.DataFrame, asset_ids: set) -> list[Asset]:
+def _assets_to_resurrect(
+    rdf_assets: dict, cdf_assets: pd.DataFrame, asset_ids: set, meta_keys: NeatMetadataKeys
+) -> list[Asset]:
     """Returns list of assets to be resurrected
 
     Parameters
@@ -749,20 +754,20 @@ def _assets_to_resurrect(rdf_assets: dict, cdf_assets: pd.DataFrame, asset_ids: 
         cdf_asset = cdf_asset_subset[external_id]
 
         asset = Asset(**rdf_assets[external_id])
-
+        now = str(datetime.now(timezone.utc))
         try:
-            asset.metadata["start_time"] = cdf_asset[external_id]["metadata"]["start_time"]
+            asset.metadata[meta_keys.start_time] = cdf_asset[external_id]["metadata"][meta_keys.start_time]
         except KeyError:
-            asset.metadata["start_time"] = str(datetime.now(timezone.utc))
-        asset.metadata["update_time"] = str(datetime.now(timezone.utc))
-        asset.metadata["resurrection_time"] = str(datetime.now(timezone.utc))
+            asset.metadata[meta_keys.start_time] = now
+        asset.metadata[meta_keys.update_time] = now
+        asset.metadata[meta_keys.resurrection_time] = now
         assets.append(asset)
 
     logging.info(f"Wrangling of {len(assets)} completed in {(datetime_utc_now() - start_time).seconds} seconds")
     return assets
 
 
-def _assets_to_decommission(cdf_assets, asset_ids) -> list[Asset]:
+def _assets_to_decommission(cdf_assets, asset_ids, meta_keys: NeatMetadataKeys) -> list[Asset]:
     start_time = datetime_utc_now()
 
     assets = []
@@ -777,10 +782,10 @@ def _assets_to_decommission(cdf_assets, asset_ids) -> list[Asset]:
     for external_id in asset_ids:
         cdf_asset = cdf_asset_subset[external_id]
 
-        cdf_asset["metadata"]["update_time"] = str(datetime.now(timezone.utc))
-        cdf_asset["metadata"].pop("resurrection_time", None)
-        cdf_asset["metadata"]["end_time"] = str(datetime.now(timezone.utc))
-        cdf_asset["metadata"]["active"] = "false"
+        cdf_asset["metadata"][meta_keys.update_time] = str(datetime.now(timezone.utc))
+        cdf_asset["metadata"].pop(meta_keys.resurrection_time, None)
+        cdf_asset["metadata"][meta_keys.end_time] = str(datetime.now(timezone.utc))
+        cdf_asset["metadata"][meta_keys.active] = "false"
         try:
             cdf_asset["labels"].remove("non-historic")
         except KeyError:
@@ -800,6 +805,7 @@ def categorize_assets(
     partitions: int = 2,
     stop_on_exception: bool = False,
     return_report: bool = False,
+    meta_keys: NeatMetadataKeys | None = None,
 ) -> Union[tuple[dict, dict], dict]:
     """Categorize assets on those that are to be created, updated and decommissioned
 
@@ -817,14 +823,17 @@ def categorize_assets(
         Whether to stop on exception or not, by default False
     return_report : bool, optional
         Whether to report on the diffing results or not, by default False
+    meta_keys : NeatMetadataKeys, optional
+        The metadata keys used by neat.
 
     Returns
     -------
     Dict[str, list]
         dictionary containing asset category - list of asset pairs
     """
-    # TODO: Cache categorized assets somewhere instead of creating them
+    meta_keys = NeatMetadataKeys() if meta_keys is None else meta_keys
 
+    # TODO: Cache categorized assets somewhere instead of creating them
     cdf_assets, categorized_asset_ids = _categorize_cdf_assets(client, data_set_id, partitions)
 
     rdf_asset_ids = set(rdf_assets.keys())
@@ -852,12 +861,12 @@ def categorize_assets(
     categorized_assets = {
         "create": _assets_to_create(rdf_assets, create_ids),
         "update": None,
-        "resurrect": _assets_to_resurrect(rdf_assets, cdf_assets, resurrect_ids),
-        "decommission": _assets_to_decommission(cdf_assets, decommission_ids),
+        "resurrect": _assets_to_resurrect(rdf_assets, cdf_assets, resurrect_ids, meta_keys),
+        "decommission": _assets_to_decommission(cdf_assets, decommission_ids, meta_keys),
     }
 
     categorized_assets["update"], report["update"] = _assets_to_update(
-        rdf_assets, cdf_assets, update_ids, stop_on_exception=stop_on_exception
+        rdf_assets, cdf_assets, update_ids, meta_keys=meta_keys, stop_on_exception=stop_on_exception
     )
 
     return (categorized_assets, report) if return_report else categorized_assets
