@@ -438,7 +438,7 @@ def rdf2assets(
                 asset["labels"] = [asset["metadata"][meta_keys.type], "non-historic"]
                 now = str(datetime.now(timezone.utc))
                 asset["metadata"][meta_keys.start_time] = now
-                asset["metadata"][meta_keys.end_time] = now
+                asset["metadata"][meta_keys.update_time] = now
                 asset["metadata"] = {meta_keys_aliases.get(k, k): v for k, v in asset["metadata"].items()}
 
                 # log every 10000 assets
@@ -782,9 +782,10 @@ def _assets_to_decommission(cdf_assets, asset_ids, meta_keys: NeatMetadataKeys) 
     for external_id in asset_ids:
         cdf_asset = cdf_asset_subset[external_id]
 
-        cdf_asset["metadata"][meta_keys.update_time] = str(datetime.now(timezone.utc))
+        now = str(datetime.now(timezone.utc))
+        cdf_asset["metadata"][meta_keys.update_time] = now
         cdf_asset["metadata"].pop(meta_keys.resurrection_time, None)
-        cdf_asset["metadata"][meta_keys.end_time] = str(datetime.now(timezone.utc))
+        cdf_asset["metadata"][meta_keys.end_time] = now
         cdf_asset["metadata"][meta_keys.active] = "false"
         try:
             cdf_asset["labels"].remove("non-historic")
