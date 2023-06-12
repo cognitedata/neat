@@ -1,8 +1,9 @@
 import logging
 import warnings
 from collections.abc import Iterable, Sequence
+from dataclasses import dataclass, fields
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple, Union, overload
+from typing import Any, Dict, List, Optional, Self, Tuple, Union, overload
 from warnings import warn
 
 import numpy as np
@@ -19,22 +20,31 @@ from cognite.neat.core.data_classes.transformation_rules import TransformationRu
 from cognite.neat.core.loader.graph_store import NeatGraphStore
 from cognite.neat.core.utils import chunker, datetime_utc_now, remove_namespace, retry_decorator
 
-ORPHANAGE = {
-    "external_id": "orphanage",
-    "name": "Orphanage",
-    "parent_external_id": None,
-    "description": "Used to store all assets which parent does not exist",
-    "metadata": {
-        "type": "Orphanage",
-        "cdfResourceType": "Asset",
-        "identifier": "orphanage",
-        "active": "true",
-        "start_time": "",
-        "update_time": "",
-    },
-    "data_set_id": None,
-    "labels": ["Orphanage", "non-historic"],
-}
+
+@dataclass
+class NeatMetadataKeys:
+    start_time: str = "start_time"
+    end_time: str = "end_time"
+    update_time: str = "update_time"
+    resurrection_time: str = "resurrection_time"
+    identifier: str = "identifier"
+    active: str = "active"
+    type: str = "type"
+
+    @classmethod
+    def load(cls, data: dict) -> Self:
+        cls_field_names = {f.name for f in fields(cls)}
+        valid_keys = {}
+        for key, value in data.items():
+            if key in cls_field_names:
+                valid_keys[key] = value
+            else:
+                logging.warning(f"Invalid key set {key}")
+
+        return cls(**valid_keys)
+
+    def as_aliases(self) -> dict[str, str]:
+        return {field.default: getattr(self, field.name) for field in fields(self)}
 
 
 def _get_class_instance_ids(graph: Graph, class_: str, namespace: Namespace, limit: int = -1) -> List[URIRef]:
@@ -193,9 +203,10 @@ def _class2asset_instance(
     class_instance: dict,
     asset_class_mapping: dict,
     data_set_id: int,
+    meta_keys: NeatMetadataKeys,
     orphanage_asset_external_id: str = None,
     external_id_prefix: str = None,
-    fallback_property: str = "identifier",
+    fallback_property: str = NeatMetadataKeys.identifier,
     empty_name_default: str = "Missing Name",
     add_missing_metadata: bool = True,
 ) -> dict:
@@ -231,7 +242,7 @@ def _class2asset_instance(
     )
 
     # setting class instance type to class name
-    remapped_class_instance["type"] = class_
+    remapped_class_instance[meta_keys.type] = class_
     # This will be a default case since we want to use original identifier as external_id
     # We are though dropping namespace from the original identifier (avoiding long-tail URIs)
     if "external_id" in missing_properties or asset_class_mapping["external_id"] == []:
@@ -341,21 +352,29 @@ def rdf2assets(
     transformation_rules: TransformationRules,
     stop_on_exception: bool = False,
     use_orphanage: bool = True,
+    meta_keys: NeatMetadataKeys | None = None,
 ) -> dict[str, dict[str, Any]]:
     """Creates assets from RDF graph
 
     Parameters
     ----------
-    graph : Graph
+    graph_store : Graph
         Graph containing RDF data
     transformation_rules : TransformationRules
         Instance of TransformationRules class containing transformation rules
+    stop_on_exception : bool
+        Whether to stop upon exception.
+    use_orphanage : bool
+        Whether to use an orphanage for assets without parent_external_id
+    meta_keys : NeatMetadataKeys
+        The names of neat metadat keys to use.
 
     Returns
     -------
-    Dict[str, Asset]
-        Dictionary of assets with external_id as key
+    Dict[str, dict]
+        Dictionary representations of assets by external id.
     """
+    meta_keys = NeatMetadataKeys() if meta_keys is None else meta_keys
 
     orphanage_asset_external_id = (
         f"{transformation_rules.metadata.externalIdPrefix or ''}orphanage-{transformation_rules.metadata.data_set_id}"
@@ -375,6 +394,7 @@ def rdf2assets(
     }
     # Step 5: Create Assets based on class instances
     logging.info("Create Assets based on class instances")
+    meta_keys_aliases = meta_keys.as_aliases()
     for class_ in asset_class_mapping:
         # TODO: Rename class_id to instance_id
         class_ns = transformation_rules.metadata.namespace[class_]
@@ -408,14 +428,18 @@ def rdf2assets(
                     class_instance,
                     asset_class_mapping[class_],
                     transformation_rules.metadata.data_set_id,
+                    meta_keys,
                     orphanage_asset_external_id if use_orphanage else None,  # we need only base external id
                     transformation_rules.metadata.externalIdPrefix or None,
+                    fallback_property=meta_keys.identifier,
                 )
 
                 # adding labels and timestamps
-                asset["labels"] = [asset["metadata"]["type"], "non-historic"]
-                asset["metadata"]["start_time"] = str(datetime.now(timezone.utc))
-                asset["metadata"]["update_time"] = str(datetime.now(timezone.utc))
+                asset["labels"] = [asset["metadata"][meta_keys.type], "non-historic"]
+                now = str(datetime.now(timezone.utc))
+                asset["metadata"][meta_keys.start_time] = now
+                asset["metadata"][meta_keys.update_time] = now
+                asset["metadata"] = {meta_keys_aliases.get(k, k): v for k, v in asset["metadata"].items()}
 
                 # log every 10000 assets
                 if progress_counter % 10000 == 0:
@@ -433,7 +457,12 @@ def rdf2assets(
         logging.debug(f"Class <{class_}> processed")
 
     if orphanage_asset_external_id not in assets:
-        _extracted_from_rdf2asset_dictionary_95(orphanage_asset_external_id, transformation_rules, assets)
+        logging.warning(f"Orphanage with external id {orphanage_asset_external_id} not found in asset hierarchy!")
+        logging.warning(f"Adding default orphanage with external id {orphanage_asset_external_id}")
+        assets[orphanage_asset_external_id] = _create_orphanage(
+            orphanage_asset_external_id, transformation_rules.metadata.data_set_id, meta_keys
+        )
+
     logging.info("Assets dictionary created")
 
     return assets
@@ -450,18 +479,24 @@ def rdf2asset_dictionary(
     return rdf2assets(graph_store, transformation_rules, stop_on_exception, use_orphanage)
 
 
-# TODO Rename this here and in `rdf2asset_dictionary`
-def _extracted_from_rdf2asset_dictionary_95(orphanage_asset_external_id, transformation_rules, assets):
-    print(f"Orphanage with external id {orphanage_asset_external_id} not found in asset hierarchy!")
-    logging.warning(f"Orphanage with external id {orphanage_asset_external_id} not found in asset hierarchy!")
-    logging.warning(f"Adding default orphanage with external id {orphanage_asset_external_id}")
-
-    # updating default external id for orphanage in case there are additional prefix to be added
-    ORPHANAGE["external_id"] = orphanage_asset_external_id
-    ORPHANAGE["data_set_id"] = transformation_rules.metadata.data_set_id
-    ORPHANAGE["metadata"]["start_time"] = str(datetime_utc_now())
-    ORPHANAGE["metadata"]["update_time"] = str(datetime_utc_now())
-    assets[orphanage_asset_external_id] = ORPHANAGE
+def _create_orphanage(orphanage_external_id: str, dataset_id: int, meta_keys: NeatMetadataKeys) -> dict:
+    now = str(datetime_utc_now())
+    return {
+        "external_id": orphanage_external_id,
+        "name": "Orphanage",
+        "parent_external_id": None,
+        "description": "Used to store all assets which parent does not exist",
+        "metadata": {
+            meta_keys.type: "Orphanage",
+            "cdfResourceType": "Asset",
+            meta_keys.identifier: "orphanage",
+            meta_keys.active: "true",
+            meta_keys.start_time: now,
+            meta_keys.update_time: now,
+        },
+        "data_set_id": dataset_id,
+        "labels": ["Orphanage", "non-historic"],
+    }
 
 
 def _asset2dict(asset: Asset) -> dict:
@@ -616,6 +651,7 @@ def _assets_to_update(
     rdf_assets: dict,
     cdf_assets: pd.DataFrame,
     asset_ids: set,
+    meta_keys: NeatMetadataKeys,
     exclude_paths: list = EXCLUDE_PATHS,
     stop_on_exception: bool = False,
 ) -> tuple[list[Asset], dict[str, dict]]:
@@ -629,6 +665,8 @@ def _assets_to_update(
         Dataframe containing assets from CDF
     asset_ids : set
         Candidate assets to be updated
+    meta_keys : NeatMetadataKeys
+        The neat meta data keys.
     exclude_paths : list, optional
         Paths not to be checked when diffing rdf and cdf assets, by default EXCLUDE_PATHS
     stop_on_exception: bool, optional
@@ -669,13 +707,13 @@ def _assets_to_update(
                 )
                 continue
 
-        if diffing_result and "root['metadata']['active']" not in diffing_result.affected_paths:
+        if diffing_result and f"root['metadata']['{meta_keys.active}']" not in diffing_result.affected_paths:
             asset = Asset(**rdf_assets[external_id])
             try:
-                asset.metadata["start_time"] = cdf_asset[external_id]["metadata"]["start_time"]
+                asset.metadata[meta_keys.start_time] = cdf_asset[external_id]["metadata"][meta_keys.start_time]
             except KeyError:
-                asset.metadata["start_time"] = str(datetime.now(timezone.utc))
-            asset.metadata["update_time"] = str(datetime.now(timezone.utc))
+                asset.metadata[meta_keys.start_time] = str(datetime.now(timezone.utc))
+            asset.metadata[meta_keys.update_time] = str(datetime.now(timezone.utc))
             assets.append(asset)
 
             report[external_id] = dict(diffing_result)
@@ -684,7 +722,9 @@ def _assets_to_update(
     return assets, report
 
 
-def _assets_to_resurrect(rdf_assets: dict, cdf_assets: pd.DataFrame, asset_ids: set) -> list[Asset]:
+def _assets_to_resurrect(
+    rdf_assets: dict, cdf_assets: pd.DataFrame, asset_ids: set, meta_keys: NeatMetadataKeys
+) -> list[Asset]:
     """Returns list of assets to be resurrected
 
     Parameters
@@ -714,20 +754,20 @@ def _assets_to_resurrect(rdf_assets: dict, cdf_assets: pd.DataFrame, asset_ids: 
         cdf_asset = cdf_asset_subset[external_id]
 
         asset = Asset(**rdf_assets[external_id])
-
+        now = str(datetime.now(timezone.utc))
         try:
-            asset.metadata["start_time"] = cdf_asset[external_id]["metadata"]["start_time"]
+            asset.metadata[meta_keys.start_time] = cdf_asset[external_id]["metadata"][meta_keys.start_time]
         except KeyError:
-            asset.metadata["start_time"] = str(datetime.now(timezone.utc))
-        asset.metadata["update_time"] = str(datetime.now(timezone.utc))
-        asset.metadata["resurrection_time"] = str(datetime.now(timezone.utc))
+            asset.metadata[meta_keys.start_time] = now
+        asset.metadata[meta_keys.update_time] = now
+        asset.metadata[meta_keys.resurrection_time] = now
         assets.append(asset)
 
     logging.info(f"Wrangling of {len(assets)} completed in {(datetime_utc_now() - start_time).seconds} seconds")
     return assets
 
 
-def _assets_to_decommission(cdf_assets, asset_ids) -> list[Asset]:
+def _assets_to_decommission(cdf_assets, asset_ids, meta_keys: NeatMetadataKeys) -> list[Asset]:
     start_time = datetime_utc_now()
 
     assets = []
@@ -742,10 +782,11 @@ def _assets_to_decommission(cdf_assets, asset_ids) -> list[Asset]:
     for external_id in asset_ids:
         cdf_asset = cdf_asset_subset[external_id]
 
-        cdf_asset["metadata"]["update_time"] = str(datetime.now(timezone.utc))
-        cdf_asset["metadata"].pop("resurrection_time", None)
-        cdf_asset["metadata"]["end_time"] = str(datetime.now(timezone.utc))
-        cdf_asset["metadata"]["active"] = "false"
+        now = str(datetime.now(timezone.utc))
+        cdf_asset["metadata"][meta_keys.update_time] = now
+        cdf_asset["metadata"].pop(meta_keys.resurrection_time, None)
+        cdf_asset["metadata"][meta_keys.end_time] = now
+        cdf_asset["metadata"][meta_keys.active] = "false"
         try:
             cdf_asset["labels"].remove("non-historic")
         except KeyError:
@@ -765,6 +806,7 @@ def categorize_assets(
     partitions: int = 2,
     stop_on_exception: bool = False,
     return_report: bool = False,
+    meta_keys: NeatMetadataKeys | None = None,
 ) -> Union[tuple[dict, dict], dict]:
     """Categorize assets on those that are to be created, updated and decommissioned
 
@@ -782,14 +824,17 @@ def categorize_assets(
         Whether to stop on exception or not, by default False
     return_report : bool, optional
         Whether to report on the diffing results or not, by default False
+    meta_keys : NeatMetadataKeys, optional
+        The metadata keys used by neat.
 
     Returns
     -------
     Dict[str, list]
         dictionary containing asset category - list of asset pairs
     """
-    # TODO: Cache categorized assets somewhere instead of creating them
+    meta_keys = NeatMetadataKeys() if meta_keys is None else meta_keys
 
+    # TODO: Cache categorized assets somewhere instead of creating them
     cdf_assets, categorized_asset_ids = _categorize_cdf_assets(client, data_set_id, partitions)
 
     rdf_asset_ids = set(rdf_assets.keys())
@@ -817,12 +862,12 @@ def categorize_assets(
     categorized_assets = {
         "create": _assets_to_create(rdf_assets, create_ids),
         "update": None,
-        "resurrect": _assets_to_resurrect(rdf_assets, cdf_assets, resurrect_ids),
-        "decommission": _assets_to_decommission(cdf_assets, decommission_ids),
+        "resurrect": _assets_to_resurrect(rdf_assets, cdf_assets, resurrect_ids, meta_keys),
+        "decommission": _assets_to_decommission(cdf_assets, decommission_ids, meta_keys),
     }
 
     categorized_assets["update"], report["update"] = _assets_to_update(
-        rdf_assets, cdf_assets, update_ids, stop_on_exception=stop_on_exception
+        rdf_assets, cdf_assets, update_ids, meta_keys=meta_keys, stop_on_exception=stop_on_exception
     )
 
     return (categorized_assets, report) if return_report else categorized_assets

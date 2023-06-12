@@ -11,6 +11,7 @@ from cognite.neat.core import loader, parser
 from cognite.neat.core.data_classes.transformation_rules import TransformationRules
 from cognite.neat.core.extractors.labels import upload_labels
 from cognite.neat.core.extractors.rdf_to_assets import (
+    NeatMetadataKeys,
     categorize_assets,
     rdf2assets,
     remove_non_existing_labels,
@@ -51,6 +52,7 @@ class Sheet2CDFNeatWorkflow(BaseWorkflow):
         self.triples = []
         self.instance_ids = set()
         self.count_create_assets = 0
+        self.meta_keys: NeatMetadataKeys | None = None
 
     def step_load_transformation_rules(self, flow_msg: FlowMessage = None):
         # Load rules from file or remote location
@@ -128,11 +130,15 @@ class Sheet2CDFNeatWorkflow(BaseWorkflow):
     def step_prepare_cdf_assets(self, flow_msg: FlowMessage):
         # export graph into CDF
         # TODO : decide on error handling and retry logic\
+        self.meta_keys = NeatMetadataKeys.load(
+            self.get_config_group_values_by_name("cdf.asset.metadata.", remove_group_prefix=True)
+        )
 
         rdf_assets = rdf2assets(
             self.solution_graph,
             self.transformation_rules,
             stop_on_exception=self.stop_on_error,
+            meta_keys=self.meta_keys,
         )
 
         if not self.cdf_client:
@@ -203,7 +209,9 @@ class Sheet2CDFNeatWorkflow(BaseWorkflow):
         else:
             logging.info("No circular dependency among assets found, your assets hierarchy look healthy!")
 
-        self.categorized_assets = categorize_assets(self.cdf_client, rdf_assets, self.dataset_id)
+        self.categorized_assets = categorize_assets(
+            self.cdf_client, rdf_assets, self.dataset_id, meta_keys=self.meta_keys
+        )
 
         count_create_assets = len(self.categorized_assets["create"])
         count_update_assets = len(self.categorized_assets["update"])
