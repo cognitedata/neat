@@ -32,7 +32,7 @@ def _find_circular_reference_path(asset: Asset, assets: dict[str, Asset], max_hi
         return []
 
 
-def validate_asset_hierarchy(assets: dict[str, dict]) -> Tuple[List[str], List[List[str]]]:
+def validate_asset_hierarchy(assets: dict[str, Asset]) -> Tuple[List[str], List[List[str]]]:
     """Validates asset hierarchy and reports on orphan assets and circular dependency
 
     Parameters

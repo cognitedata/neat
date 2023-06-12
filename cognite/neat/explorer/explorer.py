@@ -22,7 +22,7 @@ from cognite.neat.core.data_classes.config import Config, configure_logging
 from cognite.neat.core.loader.config import copy_examples_to_directory
 from cognite.neat.core.workflow import WorkflowFullStateReport, utils
 from cognite.neat.core.workflow.base import WorkflowDefinition
-from cognite.neat.core.workflow.model import FlowMessage
+from cognite.neat.core.workflow.model import FlowMessage, WorkflowConfigItem
 from cognite.neat.explorer.data_classes.rest import (
     DownloadFromCdfRequest,
     NodesAndEdgesRequest,
@@ -524,7 +524,9 @@ async def file_upload_handler(files: list[UploadFile], workflow_name: str, file_
     file_name = ""
     file_version = ""
     for file in files:
-        logging.info(f"Uploading file : {file.filename} , workflow : {workflow_name}")
+        logging.info(
+            f"Uploading file : {file.filename} , workflow : {workflow_name} , step_id {step_id} , action : {action}"
+        )
         # save file to disk
         full_path = os.path.join(upload_dir, file.filename)
         with open(full_path, "wb") as buffer:
@@ -533,12 +535,32 @@ async def file_upload_handler(files: list[UploadFile], workflow_name: str, file_
         file_version = utils.get_file_hash(full_path)
         break  # only one file is supported for now
 
-    if action == "start_workflow":
+    if "update_config" in action and file_type == "rules":
+        logging.info("Automatically updating workflow config")
+        workflow = neat_app.workflow_manager.get_workflow(workflow_name)
+        workflow_defintion = workflow.get_workflow_definition()
+
+        # update config item rules.file with the new file name
+        config_item = workflow_defintion.get_config_item("rules.file")
+        if config_item is None:
+            config_item = WorkflowConfigItem(name="rules.file", value=file_name, label="Rules file name", group="rules")
+        config_item.value = file_name
+        workflow_defintion.upsert_config_item(config_item)
+        # update config item rules.file with the new file name
+        config_item = workflow_defintion.get_config_item("rules.version")
+        if config_item is None:
+            config_item = WorkflowConfigItem(name="rules.version", value="", label="Rules file version", group="rules")
+            workflow_defintion.upsert_config_item(config_item)
+        neat_app.workflow_manager.save_workflow_to_storage(workflow_name)
+
+    if "start_workflow" in action:
         logging.info("Starting workflow after file upload")
         workflow = neat_app.workflow_manager.get_workflow(workflow_name)
         flow_msg = FlowMessage(
             payload={"file_name": file_name, "hash": file_version, "full_path": full_path, "file_type": file_type}
         )
-        workflow.start(sync=False, flow_message=flow_msg, start_step_id=step_id)
+        start_step_id = None if step_id == "none" else step_id
+
+        workflow.start(sync=False, flow_message=flow_msg, start_step_id=start_step_id)
 
     return {"file_name": file_name, "hash": file_version}

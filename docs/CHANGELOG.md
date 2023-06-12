@@ -14,6 +14,41 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.13.0] - 11-06-23
+### Added
+* Configuration option for metadata keys used by neat in the `sheet2cdf` workflow.
+
+## [0.12.10] - 11-06-23
+### Improved
+* `cognite-neat` package metadata.
+
+
+## [0.12.9] - 11-06-23
+### Fixed
+* Existing CDF asset without a label caused the `sheet2cdf` workflow to fail. This is now fixed.
+
+
+## [0.12.8] - 09-06-23
+### Fixed
+* Clean labels from assets which do not exist in CDF. This one does the cleaning correct, while `0.12.7` assumed
+  the wrong internal format for asset, and thus, did not work.
+
+
+## [0.12.7] - 07-06-23
+### Fixed
+* Handling assets in CDF with non-existing labels.
+
+## [0.12.6] - 06-06-23
+### Fixed
+* Handling assets without labels in CDF.
+
+
+## [0.12.5] - 04-06-23
+### Added
+* Automatic update (configurable) of workflow configurations (using new file name) on the rules file upload completion
+* Automatic triggering (configurable) of workflow execution on rules file upload completion
+
+
 ## [0.12.4] - 30-05-23
 ### Added
 * SME graph capturing workflow that make use of core method from 0.12.3
@@ -32,6 +67,7 @@ Changes are grouped as follows:
 
 ### Removed
 * Default workflow
+
 ## [0.12.3] - 30-05-23
 ### Added
 * Added generation of knowledge graph capturing sheet based on data model definitions in transformation rules

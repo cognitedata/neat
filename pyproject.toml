@@ -1,12 +1,15 @@
 [tool.poetry]
 name = "cognite-neat"
-version = "0.12.4"
+version = "0.13.0"
 readme = "README.md"
 description = "Knowledge graph transformation"
 authors = ["Nikola Vasiljevic <nikola.vasiljevic@cognite.com>",
     "Anders Albert <anders.albert@cognite.com>",
     "Aleksandrs Livincovs <aleksandrs.livincovs@cognite.com>"]
 license = "Apache-2.0"
+documentation = "https://cognite-neat.readthedocs-hosted.com/"
+homepage = "https://cognite-neat.readthedocs-hosted.com/"
+repository = "https://github.com/cognitedata/neat"
 packages = [
     { include="cognite", from="." },
 ]
@@ -16,9 +19,6 @@ exclude = [
     "cognite/neat/explorer-ui/neat-app/node_modules/**",
     "cognite/neat/explorer-ui/neat-app/*.json",
 ]
-[tool.poetry.group.dev.dependencies]
-mkdocs-glightbox = "^0.3.4"
-
 
 
 [tool.black]

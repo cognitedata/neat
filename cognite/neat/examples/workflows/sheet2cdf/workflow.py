@@ -10,7 +10,14 @@ from prometheus_client import Gauge
 from cognite.neat.core import loader, parser
 from cognite.neat.core.data_classes.transformation_rules import TransformationRules
 from cognite.neat.core.extractors.labels import upload_labels
-from cognite.neat.core.extractors.rdf_to_assets import categorize_assets, rdf2assets, upload_assets
+from cognite.neat.core.extractors.rdf_to_assets import (
+    NeatMetadataKeys,
+    categorize_assets,
+    rdf2assets,
+    remove_non_existing_labels,
+    unique_asset_labels,
+    upload_assets,
+)
 from cognite.neat.core.extractors.rdf_to_relationships import (
     categorize_relationships,
     rdf2relationships,
@@ -45,6 +52,7 @@ class Sheet2CDFNeatWorkflow(BaseWorkflow):
         self.triples = []
         self.instance_ids = set()
         self.count_create_assets = 0
+        self.meta_keys: NeatMetadataKeys | None = None
 
     def step_load_transformation_rules(self, flow_msg: FlowMessage = None):
         # Load rules from file or remote location
@@ -122,16 +130,33 @@ class Sheet2CDFNeatWorkflow(BaseWorkflow):
     def step_prepare_cdf_assets(self, flow_msg: FlowMessage):
         # export graph into CDF
         # TODO : decide on error handling and retry logic\
+        self.meta_keys = NeatMetadataKeys.load(
+            self.get_config_group_values_by_name("cdf.asset.metadata.", remove_group_prefix=True)
+        )
 
         rdf_assets = rdf2assets(
             self.solution_graph,
             self.transformation_rules,
             stop_on_exception=self.stop_on_error,
+            meta_keys=self.meta_keys,
         )
 
         if not self.cdf_client:
             logging.info("Dry run, no CDF client available")
             return
+
+        # Label Validation
+        labels_before = unique_asset_labels(rdf_assets.values())
+        logging.info(f"Assets have {len(labels_before)} unique labels: {', '.join(sorted(labels_before))}")
+
+        rdf_assets = remove_non_existing_labels(self.cdf_client, rdf_assets)
+
+        labels_after = unique_asset_labels(rdf_assets.values())
+        removed_labels = labels_before - labels_after
+        logging.info(
+            f"Removed {len(removed_labels)} labels as these do not exists in CDF. Removed labels: {', '.join(sorted(removed_labels))}"
+        )
+        ######################
 
         # UPDATE: 2023-04-05 - correct aggregation of assets in CDF for specific dataset
         total_assets_before = self.cdf_client.assets.aggregate(
@@ -182,9 +207,11 @@ class Sheet2CDFNeatWorkflow(BaseWorkflow):
             logging.error(msg)
             raise Exception(msg)
         else:
-            logging.info("No circular dependency among assets found, your assets hierarchy look healthy !")
+            logging.info("No circular dependency among assets found, your assets hierarchy look healthy!")
 
-        self.categorized_assets = categorize_assets(self.cdf_client, rdf_assets, self.dataset_id)
+        self.categorized_assets = categorize_assets(
+            self.cdf_client, rdf_assets, self.dataset_id, meta_keys=self.meta_keys
+        )
 
         count_create_assets = len(self.categorized_assets["create"])
         count_update_assets = len(self.categorized_assets["update"])

@@ -1,9 +1,16 @@
 from copy import deepcopy
 
-from cognite.client.data_classes import Asset, AssetList, LabelFilter
+import pytest
+from cognite.client.data_classes import Asset, AssetList, Label, LabelDefinition, LabelDefinitionList, LabelFilter
 from cognite.client.testing import monkeypatch_cognite_client
 
-from cognite.neat.core.extractors.rdf_to_assets import categorize_assets, order_assets
+from cognite.neat.core.extractors.rdf_to_assets import (
+    AssetLike,
+    NeatMetadataKeys,
+    categorize_assets,
+    order_assets,
+    remove_non_existing_labels,
+)
 
 
 def test_asset_hierarchy_ordering(mock_rdf_assets):
@@ -72,7 +79,12 @@ def test_asset_diffing(mock_rdf_assets, mock_cdf_assets, transformation_rules):
             else:
                 return AssetList([Asset(**non_active_asset)])
 
+        def list_labels(**_):
+            label_names = list(transformation_rules.get_labels()) + ["non-historic", "historic"]
+            return [Label(external_id=label_name, name=label_names) for label_name in label_names]
+
         client_mock.assets.list = list_assets
+        client_mock.labels.list = list_labels
 
     categorized_assets, report = categorize_assets(
         client_mock, rdf_assets, transformation_rules.metadata.data_set_id, return_report=True
@@ -110,3 +122,53 @@ def test_asset_diffing(mock_rdf_assets, mock_cdf_assets, transformation_rules):
         "non-historic",
     }
     assert categorized_assets["resurrect"][0].metadata["active"] == "true"
+
+
+def generate_remove_non_existing_labels_test_data():
+    labels = LabelDefinitionList([LabelDefinition(external_id="historic", name="historic")])
+    assets = Asset(external_id="office1", name="Office 1")
+    yield pytest.param(labels, [assets], [assets], id="Asset without label")
+
+
+@pytest.mark.parametrize("cdf_labels, assets, expected_assets", list(generate_remove_non_existing_labels_test_data()))
+def test_remove_non_existing_labels(cdf_labels: LabelDefinitionList, assets: AssetLike, expected_assets: AssetLike):
+    # Arrange
+    with monkeypatch_cognite_client() as client:
+        client.labels.list.return_value = cdf_labels
+
+        # Act
+        actual_assets = remove_non_existing_labels(client, assets)
+
+    # Assert
+    assert actual_assets == expected_assets
+
+
+def test_neat_metadata_keys_load():
+    # Arrange
+    input_data = {"start_time": "beginning_time", "invalid_keys": "not valid"}
+    expected = NeatMetadataKeys(start_time="beginning_time")
+
+    # Act
+    actual = NeatMetadataKeys.load(input_data)
+
+    # Arrange
+    assert actual == expected
+
+
+def test_neat_metadata_keys_alias():
+    # Arrange
+    keys = NeatMetadataKeys(type="category")
+    expected = dict(
+        start_time="start_time",
+        end_time="end_time",
+        update_time="update_time",
+        resurrection_time="resurrection_time",
+        identifier="identifier",
+        active="active",
+        type="category",
+    )
+    # Act
+    aliases = keys.as_aliases()
+
+    # Assert
+    assert aliases == expected

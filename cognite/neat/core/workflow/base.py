@@ -406,6 +406,13 @@ class BaseWorkflow:
     def get_config_item(self, config_name: str) -> WorkflowConfigItem:
         return next((item for item in self.configs if item.name == config_name), None)
 
+    def get_config_group_values_by_name(self, group_name: str, remove_group_prefix: bool = True) -> dict[str, str]:
+        return {
+            (item.name.removeprefix(item.group) if remove_group_prefix else item.name): item.value
+            for item in self.configs
+            if item.group == group_name
+        }
+
     def get_config_item_value(self, config_name: str, default_value=None) -> str | None:
         return config.value if (config := self.get_config_item(config_name)) else default_value
 
