@@ -19,7 +19,7 @@ configs:
     options: null
     required: false
     type: null
-    value: /app/data/source-graph
+    value: source-graph
 -   group: solution_rdf_store
     label: null
     name: solution_rdf_store.type
@@ -33,7 +33,7 @@ configs:
     options: null
     required: false
     type: null
-    value: /app/data/solution-graph
+    value: solution-graph
 -   group: rules
     label: null
     name: rules.store_type

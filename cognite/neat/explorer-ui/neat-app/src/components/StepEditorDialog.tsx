@@ -50,6 +50,19 @@ export default function StepEditorDialog(props: any)
         props.onClose(selectedStep,"run");
     };
 
+    const handleResumeCommand = () => {
+      setDialogOpen(false);
+      // send POST request to run the step
+      fetch(neatApiRootUrl +'/api/workflow/'+props.workflowName+'/resume/'+selectedStep.id+'/default', { method: 'POST', body: runPayload })
+      .then(response => response.json())
+      .then(data => {
+          console.log('Success:', data);
+      }).catch((error) => {
+          console.error('Error:', error);
+      })
+      props.onClose(selectedStep,"run");
+  };
+
     const onUpload = (fileName:string , hash: string) => {
       console.log("onUpload",fileName,hash)
       setStatusText("File uplloaded "+fileName)
@@ -169,8 +182,11 @@ return (
           <Button variant="outlined" size="small" onClick={handleDialogSave}>Save</Button>
           <Button variant="outlined" size="small" onClick={handleDialogCancel}>Cancel</Button>
           <Button variant="outlined" size="small" color="error" onClick={handleDelete} >Delete</Button>
-          {(selectedStep?.stype == "http_trigger" || selectedStep?.stype == "wait_for_event") && (
+          {(selectedStep?.stype == "http_trigger") && (
               <Button variant="outlined" size="small" color="success" onClick={handleRunCommand}>Run</Button>
+          )}
+          {(selectedStep?.stype == "wait_for_event") && (
+              <Button variant="outlined" size="small" color="success" onClick={handleResumeCommand}>Resume execution</Button>
           )}
 
         </DialogActions>
