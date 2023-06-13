@@ -117,7 +117,7 @@ class Graph2AssetHierarchyBaseWorkflow(BaseWorkflow):
         elif self.graph_source_type.lower() in ("memory", "oxigraph"):
             if source_file := self.get_config_item_value("source_rdf_store.file"):
                 # Todo avoid hard-coding adjacent path
-                graphs = Path(__file__).resolve().parent.parent.parent / "source-graphs"
+                graphs = Path(self.data_store_path) / "source-graphs"
                 self.source_graph.import_from_file(graphs / source_file)
                 logging.info(f"Loaded {source_file} into source graph.")
             else:

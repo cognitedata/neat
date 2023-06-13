@@ -62,6 +62,7 @@ class BaseWorkflow:
         self.flow_message: FlowMessage = None
         self.task_builder: WorkflowTaskBuilder = None
         self.rules_storage_path = None
+        self.data_store_path = None
         self.cdf_store = (
             cdf_store.CdfStore(self.cdf_client, data_set_id=self.default_dataset_id)
             if self.default_dataset_id
@@ -399,6 +400,8 @@ class BaseWorkflow:
     def set_storage_path(self, storage_type: str, storage_path: str):
         if storage_type == "transformation_rules":
             self.rules_storage_path = storage_path
+        elif storage_type == "data_store":
+            self.data_store_path = storage_path
 
     def set_task_builder(self, task_builder: WorkflowTaskBuilder):
         self.task_builder = task_builder

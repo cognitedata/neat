@@ -43,11 +43,12 @@ class NeatApp:
             self.cdf_store.load_workflows_from_cfg_by_filter(self.config.workflow_downloader_filter)
 
         self.workflow_manager = WorkflowManager(
-            self.cdf_client,
-            self.config.workflows_store_type,
-            self.config.workflows_store_path,
-            self.config.rules_store_path,
-            self.config.cdf_default_dataset_id,
+            client=self.cdf_client,
+            registry_storage_type=self.config.workflows_store_type,
+            workflows_storage_path=self.config.workflows_store_path,
+            rules_storage_path=self.config.rules_store_path,
+            data_store_path=self.config.data_store_path,
+            data_set_id=self.config.cdf_default_dataset_id,
         )
         self.workflow_manager.load_workflows_from_storage_v2()
         self.triggers_manager = TriggerManager(workflow_manager=self.workflow_manager)

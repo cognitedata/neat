@@ -33,10 +33,12 @@ class WorkflowManager:
         registry_storage_type: str = "file",
         workflows_storage_path: Path = None,
         rules_storage_path: Path = None,
+        data_store_path: Path = None,
         data_set_id: int = None,
     ):
         self.client = client
         self.data_set_id = data_set_id
+        self.data_store_path = data_store_path
         self.workflow_registry: dict[str, BaseWorkflow] = {}
         self.ephemeral_instance_registry: dict[str, BaseWorkflow] = {}
         self.workflows_storage_type = registry_storage_type
@@ -133,6 +135,7 @@ class WorkflowManager:
                             self.workflow_registry[wf_module_name].set_storage_path(
                                 "transformation_rules", self.rules_storage_path
                             )
+                            self.workflow_registry[wf_module_name].set_storage_path("data_store", self.data_store_path)
                 except Exception as e:
                     trace = traceback.format_exc()
                     logging.error(f"Error loading workflow {wf_module_name}: error: {e} trace : {trace}")
@@ -144,6 +147,7 @@ class WorkflowManager:
         new_instance.set_task_builder(self.task_builder)
         new_instance.set_default_dataset_id(self.data_set_id)
         new_instance.set_storage_path("transformation_rules", self.rules_storage_path)
+        new_instance.set_storage_path("data_store", self.data_store_path)
         if add_to_registry:
             self.ephemeral_instance_registry[new_instance.instance_id] = new_instance
         live_workflow_intances.labels(itype="ephemeral").set(len(self.ephemeral_instance_registry))

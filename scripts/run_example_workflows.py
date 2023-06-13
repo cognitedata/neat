@@ -3,7 +3,7 @@ from pathlib import Path
 
 from cognite.client.testing import monkeypatch_cognite_client
 
-from cognite.neat.constants import EXAMPLE_RULES, EXAMPLE_WORKFLOWS
+from cognite.neat.constants import EXAMPLE_RULES, EXAMPLE_WORKFLOWS , PACKAGE_DIRECTORY
 from cognite.neat.core.workflow.manager import WorkflowManager
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -19,6 +19,7 @@ def main():
             registry_storage_type="file",
             workflows_storage_path=EXAMPLE_WORKFLOWS,
             rules_storage_path=EXAMPLE_RULES,
+            data_storage_path=PACKAGE_DIRECTORY,
             data_set_id=0,
         )
         manager.load_workflows_from_storage_v2()

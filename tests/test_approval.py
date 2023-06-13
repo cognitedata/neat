@@ -15,6 +15,7 @@ def test_default_neat_workflow(tmp_path, data_regression):
             registry_storage_type="file",
             workflows_storage_path=tmp_path / "workflows",
             rules_storage_path=tmp_path / "rules",
+            data_store_path=tmp_path,
             data_set_id=0,
         )
         manager.load_workflows_from_storage_v2()
