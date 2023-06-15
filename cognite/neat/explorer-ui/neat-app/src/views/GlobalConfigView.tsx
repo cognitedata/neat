@@ -32,7 +32,10 @@ export default function GlobalConfigView() {
         "https://az-power-no-northeurope.cognitedata.com/.default"
       ],
       "token_url": "",
-      "client_secret": ""
+      "client_secret": "",
+      "timeout": 60,
+      "max_workers": 3,
+
     },
     "cdf_default_dataset_id": 0,
     "load_examples": true,
@@ -127,6 +130,9 @@ export default function GlobalConfigView() {
               <TextField id="scopes" label="Scopes" size='small' variant="outlined" value={configs.cdf_client.scopes} onChange={(event) => { handleCdfConfigChange("scopes", event.target.value) }} />
               <TextField id="oidc_token_url" label="OIDC token url" size='small' variant="outlined" value={configs.cdf_client.token_url} onChange={(event) => { handleCdfConfigChange("token_url", event.target.value) }} />
               <TextField id="cdf_default_dataset_id" type="number"  label="Default CDF dataset id.The dataset is used as workflow and rules storage." size='small' variant="outlined" value={configs.cdf_default_dataset_id} onChange={(event) => { handleConfigChange("cdf_default_dataset_id", event.target.value) }} />
+              <TextField id="cdf_timeout" type="number"  label="Cdf read timeout in seconds." size='small' variant="outlined" value={configs.cdf_client.timeout} onChange={(event) => { handleCdfConfigChange("timeout", event.target.value) }} />
+              <TextField id="cdf_max_workers" type="number"  label="Max number of client workers." size='small' variant="outlined" value={configs.cdf_client.max_workers} onChange={(event) => { handleCdfConfigChange("max_workers", event.target.value) }} />
+
               <h4>Storage and workflows</h4>
               <TextField id="data_store_path" label="Data directory.Is used as local workflow , rules and db storage." size='small' variant="outlined" value={configs.data_store_path} onChange={(event) => { handleConfigChange("data_store_path", event.target.value) }} />
               <FormControlLabel control={<Switch checked={configs.download_workflows_from_cdf} onChange={(event) => { handleConfigChange("download_workflows_from_cdf", event.target.checked) }} />} label="Automatically download workflows from CDF on startup"  />

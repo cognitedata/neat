@@ -14,6 +14,13 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.13.1] - 11-06-23
+### Added
+* Configurable cdf client timeout and max workers size. See [getting started](/getting-started.md) for details.
+* Additional logic for handling `CogniteReadTimeoutError` and `CogniteDuplicatedError` during retries. This is an attempt
+  to handle cases when under heavy load, requests to CDF may timeout even though the requests were processed successfully
+  in eventual consistancy manner.
+
 ## [0.13.0] - 11-06-23
 ### Added
 * Configuration option for metadata keys used by neat in the `sheet2cdf` workflow.
