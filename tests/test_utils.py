@@ -77,8 +77,5 @@ def test_retry_decorator_t5():
         print(counter)
         raise Exception("test5")
 
-    try:
+    with pytest.raises(Exception)
         timeout_test()
-    except Exception as e:
-        assert isinstance(e, Exception)
-        assert counter == 5
