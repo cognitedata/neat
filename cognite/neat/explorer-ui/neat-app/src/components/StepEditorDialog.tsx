@@ -71,8 +71,10 @@ export default function StepEditorDialog(props: any)
     useEffect(() => {
         if (props.open){
             setDialogOpen(true);
-            if (!selectedStep?.params["workflow_start_method"])
-              selectedStep.params["workflow_start_method"] = "persistent_blocking"
+            if (!props.step?.params["workflow_start_method"]){
+              props.step.params["workflow_start_method"] = "persistent_blocking"
+            }
+              
             setSelectedStep(props.step);
             console.dir(props.step);
         }
