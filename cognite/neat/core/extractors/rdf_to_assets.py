@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 from cognite.client import CogniteClient
 from cognite.client.data_classes import Asset, AssetHierarchy, AssetList
+from cognite.client.exceptions import CogniteDuplicatedError
 from deepdiff import DeepDiff
 from rdflib import Graph, Namespace
 from rdflib.term import URIRef
@@ -913,7 +914,12 @@ def _micro_batch_push(
             elif push_type == "create":
                 client.assets.create_hierarchy(batch)
 
-        upsert_assets(batch)
+        try:
+            upsert_assets(batch)
+        except CogniteDuplicatedError:
+            # this is handling of very rare case when some assets might be lost . Normally this should not happen.
+            # Last attempt to recover
+            client.assets.create_hierarchy(batch, upsert=True)
 
         delta_time = (datetime_utc_now() - start_time).seconds
 
@@ -989,7 +995,10 @@ def upload_assets(
         @retry_decorator(max_retries=max_retries, retry_delay=retry_delay, component_name="create-assets")
         def create_assets():
             if categorized_assets["create"]:
-                client.assets.create_hierarchy(categorized_assets["create"])
+                try:
+                    client.assets.create_hierarchy(categorized_assets["create"])
+                except CogniteDuplicatedError:
+                    client.assets.create_hierarchy(categorized_assets["create"], upsert=True)
 
             if categorized_assets["update"]:
                 client.assets.create_hierarchy(categorized_assets["update"], upsert=True, upsert_mode="replace")

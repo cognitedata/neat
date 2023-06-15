@@ -1,3 +1,4 @@
+import pytest
 from cognite.client.exceptions import CogniteDuplicatedError, CogniteReadTimeout
 
 from cognite.neat.core.utils import retry_decorator
@@ -10,13 +11,12 @@ def test_retry_decorator_t1():
     def timeout_test():
         nonlocal counter
         counter += 1
-        print(counter)
         if counter == 1:
             raise CogniteReadTimeout()
-        elif counter == 2:
+        elif counter > 1:
             raise CogniteDuplicatedError(duplicated=[1, 2, 3], failed=[], successful=[7, 8, 9])
 
-    with pytest.raises(CogniteDuplicatedError)
+    with pytest.raises(CogniteDuplicatedError):
         timeout_test()
 
 
@@ -27,8 +27,7 @@ def test_retry_decorator_t2():
     def timeout_test():
         nonlocal counter
         counter += 1
-        print(counter)
-        if counter == 1:
+        if counter < 2:
             raise CogniteReadTimeout()
         elif counter == 2:
             raise CogniteDuplicatedError(duplicated=[1, 2, 3], failed=[], successful=[])
@@ -43,8 +42,7 @@ def test_retry_decorator_t3():
     def timeout_test():
         nonlocal counter
         counter += 1
-        print(counter)
-        if counter >= 1 and counter <= 2:
+        if counter < 3:
             raise CogniteReadTimeout()
         elif counter == 3:
             raise CogniteDuplicatedError(duplicated=[1, 2, 3], failed=[], successful=[])
@@ -61,7 +59,7 @@ def test_retry_decorator_t4():
         counter += 1
         raise CogniteReadTimeout()
 
-    with pytest.raises(CogniteReadTimeout)
+    with pytest.raises(CogniteReadTimeout):
         timeout_test()
 
 
@@ -72,8 +70,7 @@ def test_retry_decorator_t5():
     def timeout_test():
         nonlocal counter
         counter += 1
-        print(counter)
-        raise Exception("test5")
+        if counter < 4:
+            raise Exception("test5")
 
-    with pytest.raises(Exception)
-        timeout_test()
+    timeout_test()
