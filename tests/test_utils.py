@@ -63,10 +63,8 @@ def test_retry_decorator_t4():
         counter += 1
         raise CogniteReadTimeout()
 
-    try:
+    with pytest.raises(CogniteReadTimeout)
         timeout_test()
-    except Exception as e:
-        assert isinstance(e, CogniteReadTimeout)
 
 
 def test_retry_decorator_t5():
