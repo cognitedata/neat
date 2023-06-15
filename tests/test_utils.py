@@ -16,10 +16,8 @@ def test_retry_decorator_t1():
         elif counter == 2:
             raise CogniteDuplicatedError(duplicated=[1, 2, 3], failed=[], successful=[7, 8, 9])
 
-    try:
+    with pytest.raises(CogniteDuplicatedError)
         timeout_test()
-    except Exception as e:
-        assert isinstance(e, CogniteDuplicatedError)
 
 
 def test_retry_decorator_t2():
