@@ -7,6 +7,7 @@ from warnings import warn
 import pandas as pd
 from cognite.client import CogniteClient
 from cognite.client.data_classes import LabelFilter, Relationship, RelationshipUpdate
+from cognite.client.exceptions import CogniteDuplicatedError
 
 from cognite.neat.core.data_classes.transformation_rules import TransformationRules
 from cognite.neat.core.extractors.rdf_to_assets import _categorize_cdf_assets
@@ -369,7 +370,14 @@ def _micro_batch_push(
             elif push_type == "create":
                 client.relationships.create(batch)
 
-        update_relationships(batch)
+        try:
+            update_relationships(batch)
+        except CogniteDuplicatedError as e:
+            # This situation should not happen but if it does, we need to handle it
+            exists = {d["externalId"] for d in e.duplicated}
+            missing_relationships = [t for t in batch if t.external_id not in exists]
+            client.relationships.create(missing_relationships)
+
         delta_time = (datetime_utc_now() - start_time).seconds
 
         msg = f"{message} {counter} of {total} relationships, batch processing time: {delta_time:.2f} "
@@ -442,4 +450,10 @@ def upload_relationships(
             if categorized_relationships["decommission"]:
                 client.relationships.update(categorized_relationships["decommission"])
 
-        create_relationships()
+        try:
+            create_relationships()
+        except CogniteDuplicatedError as e:
+            # This situation should not happen but if it does, the code attempts to handle it
+            exists = {d["externalId"] for d in e.duplicated}
+            missing_relationships = [t for t in categorized_relationships["create"] if t.external_id not in exists]
+            client.relationships.create(missing_relationships)
