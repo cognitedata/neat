@@ -7,6 +7,7 @@ from functools import wraps
 import pandas as pd
 from cognite.client import ClientConfig, CogniteClient
 from cognite.client.credentials import CredentialProvider, OAuthClientCredentials, OAuthInteractive
+from cognite.client.exceptions import CogniteDuplicatedError, CogniteReadTimeout
 from rdflib.term import URIRef
 
 from cognite.neat.core.data_classes.config import InteractiveClient, ServiceClient
@@ -32,14 +33,15 @@ def get_cognite_client_interactive(config: InteractiveClient) -> CogniteClient:
 
 
 def _get_cognite_client(config: ClientConfig, credentials: CredentialProvider) -> CogniteClient:
+    logging.info(f"Creating CogniteClient with parameters : {config}")
     return CogniteClient(
         ClientConfig(
             client_name=config.client_name,
             base_url=config.base_url,
             project=config.project,
             credentials=credentials,
-            timeout=60,
-            max_workers=3,
+            timeout=config.timeout,
+            max_workers=config.max_workers,
             debug=False,
         )
     )
@@ -156,11 +158,48 @@ def retry_decorator(max_retries=2, retry_delay=3, component_name=""):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
+            previous_exception = None
             for attempt in range(max_retries + 1):
                 try:
                     logging.debug(f"Attempt {attempt + 1} of {max_retries + 1} for {component_name}")
                     return func(*args, **kwargs)
+                except CogniteReadTimeout as e:
+                    previous_exception = e
+                    if attempt < max_retries:
+                        logging.error(
+                            f"""CogniteReadTimeout retry attempt {attempt + 1} failed for {component_name} .
+                            Retrying in {retry_delay} second(s). Error:"""
+                        )
+                        logging.error(e)
+                        time.sleep(retry_delay)
+                    else:
+                        raise e
+                except CogniteDuplicatedError as e:
+                    if isinstance(previous_exception, CogniteReadTimeout):
+                        # if previous exception was CogniteReadTimeout, we can't be sure if the items were created or not
+                        if len(e.successful) == 0 and len(e.failed) == 0 and len(e.duplicated) >= 0:
+                            logging.warning(
+                                f"Duplicate error for {component_name} . All items already exist in CDF. Suppressing error."
+                            )
+                            return
+                        else:
+                            # can happend because of eventual consistency. Retry with delay to allow for CDF to catch up
+                            if attempt < max_retries:
+                                logging.error(
+                                    f"""CogniteDuplicatedError retry attempt {attempt + 1} failed for {component_name} .
+                                      Retrying in {retry_delay} second(s). Error:"""
+                                )
+                                logging.error(e)
+                                # incerasing delay to allow for CDF to catch up
+                                time.sleep(retry_delay)
+                            else:
+                                raise e
+                    else:
+                        # no point in retrying duplicate error if previous exception was not a timeout
+                        raise e
+
                 except Exception as e:
+                    previous_exception = e
                     if attempt < max_retries:
                         logging.error(
                             f"Retry attempt {attempt + 1} failed for {component_name} . Retrying in {retry_delay} second(s)."

@@ -155,6 +155,9 @@ cdf_client:
     scopes:
       - https://az-power-no-northeurope.cognitedata.com/.default
     token_url: https://login.microsoftonline.com/12a3b456-789c-0d1e-2f3a-4b56c78d9e0f/oauth2/v2.0/token
+    timeout: 60
+    max_workers: 3
+
 
 workflows_store_type: file
 cdf_default_dataset_id: 3931920688237191
@@ -175,9 +178,11 @@ You can load the configuration from the environment instead of file by setting t
 | cdf_client.client_id       | NEAT_CDF_CLIENT_ID              | The service principal client ID.                               | a4b8f9c6-7d6e-4d7b-9cf3-6d4a32f8b7e1                                                     |
 | cdf_client.client_secret   | NEAT_CDF_CLIENT_SECRET          | The service principal client secret.                           | Zy7!nM4cFp9sH3gR6tB8kL0oP7eU6wD5vQ4zN9yF                                                 |
 | cdf_client.client_name     | NEAT_CDF_CLIENT_NAME            | The service principal client name.                             | neat                                                                                     |
-| cdf_client.base_url        | NEAT_CDF_CLIENT_BASE_URL        | The base URL of the CDF project                                | https://az-power-no-northeurope.cognitedata.com                                          |
-| cdf_client.scopes          | NEAT_CDF_CLIENT_SCOPES          | List of scopes                                                 | https://az-power-no-northeurope.cognitedata.com/.default                                 |
-| cdf_client.token_url       | NEAT_CDF_CLIENT_TOKEN_URL       | The service principal client ID.                               | https://login.microsoftonline.com/12a3b456-789c-0d1e-2f3a-4b56c78d9e0f/oauth2/v2.0/token |
+| cdf_client.base_url        | NEAT_CDF_BASE_URL               | The base URL of the CDF project                                | https://az-power-no-northeurope.cognitedata.com                                          |
+| cdf_client.scopes          | NEAT_CDF_SCOPES                 | List of scopes                                                 | https://az-power-no-northeurope.cognitedata.com/.default                                 |
+| cdf_client.token_url       | NEAT_CDF_TOKEN_URL              | Auth provider token URL                                        | https://login.microsoftonline.com/12a3b456-789c-0d1e-2f3a-4b56c78d9e0f/oauth2/v2.0/token |
+| cdf_client.timeout         | NEAT_CDF_CLIENT_TIMEOUT         | The timeout for the CDF client (seconds).                      | 60                                                                                       |
+| cdf_client.max_workers     | NEAT_CDF_CLIENT_MAX_WORKERS     | The maximum number of workers for the CDF client.              | 3                                                                                        |
 | workflow_store_type        | NEAT_WORKFLOWS_STORE_TYPE       | How to store workflows, file, cdf, or url                      | file                                                                                     |
 | workflow_store_path        | NEAT_DATA_PATH                  | Location for neat to store workflows, data, and configurations | /data                                                                                    |
 | cdf_default_dataset_id     | NEAT_CDF_DEFAULT_DATASET_ID     | The identifier of the dataset ID.                              | 3931920688237191                                                                         |

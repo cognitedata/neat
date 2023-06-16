@@ -51,6 +51,8 @@ class ClientConfig(BaseModel):
     client_name: str = "neat"
     base_url: str = "https://api.cognitedata.com"
     scopes: list[str] = ["project:read", "project:write"]
+    timeout: int = 60
+    max_workers: int = 3
 
     @validator("scopes", pre=True)
     def string_to_list(cls, value):
@@ -132,6 +134,8 @@ class Config(BaseModel):
             base_url=os.environ.get("NEAT_CDF_BASE_URL"),
             token_url=os.environ.get("NEAT_CDF_TOKEN_URL"),
             scopes=[os.environ.get("NEAT_CDF_SCOPES")],
+            timeout=int(os.environ.get("NEAT_CDF_CLIENT_TIMEOUT", "60")),
+            max_workers=int(os.environ.get("NEAT_CDF_CLIENT_MAX_WORKERS", "3")),
         )
 
         if workflow_downloader_filter := os.environ.get("NEAT_WORKFLOW_DOWNLOADER_FILTER", None):
