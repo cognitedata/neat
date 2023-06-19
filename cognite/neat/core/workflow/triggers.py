@@ -47,7 +47,9 @@ class TriggerManager:
             logging.debug(f"Request object = {json_payload}")
 
             flow_msg = FlowMessage(payload=json_payload, headers=dict(headers))
-            return self.workflow_manager.start_workflow_instance(workflow_name=workflow_name, step_id=step_id, flow_msg=flow_msg)
+            start_status = self.workflow_manager.start_workflow_instance(workflow_name=workflow_name, step_id=step_id, flow_msg=flow_msg)
+            if start_status.is_success:
+                return start_status.workflow_instance.flow_message
         
         @web_server.post("/api/workflow/{workflow_name}/resume/{step_id}/{instance_id}")
         def resume_workflow(workflow_name: str, step_id: str, instance_id: str , request: Request, body: bytes = fast_api_depends):

@@ -125,13 +125,13 @@ class BaseWorkflow:
         return [stp for stp in self.workflow_steps if stp.id in transitions and stp.enabled] if transitions else []
 
     def run_workflow_steps(self, start_step_id: str = None) -> str:
-        if start_step_id is None:
+        if not start_step_id:
             trigger_steps = list(filter(lambda x: x.trigger, self.workflow_steps))
         else:
             trigger_steps = list(filter(lambda x: x.id == start_step_id, self.workflow_steps))
 
         if not trigger_steps:
-            logging.error(f"Workflow {self.name} has no trigger steps")
+            logging.error(f"Workflow {self.name} has no trigger steps or start step {start_step_id} not found")
             return "Workflow has no trigger steps"
 
         self.execution_log.append(
@@ -245,9 +245,18 @@ class BaseWorkflow:
                 if self.task_builder:
                     sync_str = step.params.get("sync", "false")
                     sync = sync_str.lower() == "true" or sync_str == "1"
-                    new_flow_message = self.task_builder.start_workflow_task(
+                    start_status = self.task_builder.start_workflow_task(
                         workflow_name=step.params.get("workflow_name", ""), sync=sync, flow_message=self.flow_message
                     )
+                    if start_status.is_success and start_status.workflow_instance.state == WorkflowState.COMPLETED:
+                        new_flow_message = start_status.workflow_instance.flow_message
+                    else:
+                        logging.error(f"Workflow step {step.id} failed to start workflow task")
+                        if start_status.is_success:
+                            raise Exception(start_status.workflow_instance.last_error)
+                        else:
+                            raise Exception(start_status.status_text)
+
                 else:
                     logging.error(f"Workflow step {step.id} has no task builder")
                     raise Exception(f"Workflow step {step.id} has no task builder")
@@ -285,6 +294,7 @@ class BaseWorkflow:
             elapsed_time = stop_time - start_time
             logging.error(f"Step {step_name} failed with error : {trace}")
             error_text = str(trace)
+            self.last_error = error_text
             traceback.print_exc()
             steps_metrics.labels(wf_name=self.name, step_name=step_name, name="failed_counter").inc()
 
@@ -440,5 +450,12 @@ class BaseWorkflow:
 
     def get_step_by_id(self, step_id: str) -> WorkflowStepDefinition:
         return next((step for step in self.workflow_steps if step.id == step_id), None)
+    
+    def get_trigger_step(self, step_id: str = None) -> WorkflowStepDefinition:
+        if step_id:
+            return next((step for step in self.workflow_steps if step.id == step_id and step.enabled), None)
+        else:    
+            return next((step for step in self.workflow_steps if step.trigger and step.enabled), None)
+       
     
 

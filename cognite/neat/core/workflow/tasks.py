@@ -11,7 +11,6 @@ class WorkflowTaskBuilder:
         self.cdf_client = cdf_client
         self.workflow_manager = worflow_manager
 
-    def start_workflow_task(self, workflow_name: str, sync: bool, flow_message: FlowMessage) -> FlowMessage:
+    def start_workflow_task(self, workflow_name: str, sync: bool, flow_message: FlowMessage):
         """Call a workflow task from another workflow"""
-        workflow = self.workflow_manager.get_workflow(workflow_name)
-        return workflow.start(sync=sync, flow_message=flow_message)
+        return self.workflow_manager.start_workflow_instance(workflow_name=workflow_name, flow_msg=flow_message, sync=sync)
