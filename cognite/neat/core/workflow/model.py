@@ -27,6 +27,10 @@ class InstanceStartMethod(StrEnum):
     EPHEMERAL_INSTANCE = "ephemeral_instance"
 
 
+class WorkflowStartException(Exception):
+    pass
+
+
 class FlowMessage(BaseModel):
     """A message that can be sent between steps in a workflow.It's the only parameter step takes as input."""
 

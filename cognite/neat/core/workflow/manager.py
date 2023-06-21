@@ -151,16 +151,10 @@ class WorkflowManager:
                     logging.error(f"Error loading workflow {wf_module_name}: error: {e} trace : {trace}")
 
     def create_workflow_instance(self, template_name: str, add_to_registry: bool = True) -> BaseWorkflow:
-        new_instance = self.workflow_registry[template_name].__class__(template_name, self.client)
-        new_instance.workflow_steps = self.workflow_registry[template_name].workflow_steps
-        new_instance.configs = self.workflow_registry[template_name].configs
-        new_instance.set_task_builder(self.task_builder)
-        new_instance.set_default_dataset_id(self.data_set_id)
-        new_instance.set_storage_path("transformation_rules", self.rules_storage_path)
-        new_instance.set_storage_path("data_store", self.data_store_path)
+        new_instance = self.workflow_registry[template_name].copy()
         if add_to_registry:
             self.ephemeral_instance_registry[new_instance.instance_id] = new_instance
-        live_workflow_intances.labels(itype="ephemeral").set(len(self.ephemeral_instance_registry))
+        live_workflow_instances.labels(itype="ephemeral").set(len(self.ephemeral_instance_registry))
         return new_instance
 
     def get_workflow_instance(self, instance_id: str) -> BaseWorkflow:
@@ -168,7 +162,7 @@ class WorkflowManager:
 
     def delete_workflow_instance(self, instance_id: str):
         del self.ephemeral_instance_registry[instance_id]
-        live_workflow_intances.labels(itype="ephemeral").set(len(self.ephemeral_instance_registry))
+        live_workflow_instances.labels(itype="ephemeral").set(len(self.ephemeral_instance_registry))
         return
 
     def start_workflow_instance(
@@ -196,7 +190,7 @@ class WorkflowManager:
         )
 
         if instance_start_method == InstanceStartMethod.PERSISTENT_INSTANCE_BLOCKING:
-            live_workflow_intances.labels(itype="persistent").set(len(self.workflow_registry))
+            live_workflow_instances.labels(itype="persistent").set(len(self.workflow_registry))
             # wait until workflow transition to RUNNING state and then start , set max wait time to 30 seconds
             start_time = time.perf_counter()
             # wait until workflow transition to RUNNING state and then start , set max wait time to 30 seconds.
@@ -208,20 +202,17 @@ class WorkflowManager:
                     logging.info(
                         f"Workflow {workflow_name} wait time exceeded . elapsed time = {elapsed_time}, max wait time = {max_wait_time}"
                     )
-                    return WorkflowStartStatus(None, False, "Workflow instance already running.Wait time exceeded")
+                    return WorkflowStartStatus(
+                        workflow_instance=None,
+                        is_success=False,
+                        status_text="Workflow instance already running.Wait time exceeded",
+                    )
                 time.sleep(0.5)
-            workflow_instance = workflow.start(sync=sync, flow_message=flow_msg, start_step_id=step_id)
-            if workflow_instance:
-                return WorkflowStartStatus(workflow_instance=workflow, is_success=True, status_text="")
-            else:
-                return WorkflowStartStatus(
-                    workflow_instance=None,
-                    is_success=False,
-                    status_text="Something went wrong while starting workflow instance",
-                )
+            workflow.start(sync=sync, flow_message=flow_msg, start_step_id=step_id)
+            return WorkflowStartStatus(workflow_instance=workflow, is_success=True, status_text="")
 
         elif instance_start_method == InstanceStartMethod.PERSISTENT_INSTANCE_NON_BLOCKING:
-            live_workflow_intances.labels(itype="persistent").set(len(self.workflow_registry))
+            live_workflow_instances.labels(itype="persistent").set(len(self.workflow_registry))
             # start workflow if not already running, skip if already running
             if workflow.state == WorkflowState.RUNNING:
                 return WorkflowStartStatus(

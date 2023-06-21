@@ -21,6 +21,7 @@ from cognite.neat.core.workflow.model import (
     WorkflowConfigItem,
     WorkflowDefinition,
     WorkflowFullStateReport,
+    WorkflowStartException,
     WorkflowState,
     WorkflowStepDefinition,
     WorkflowStepEvent,
@@ -191,6 +192,17 @@ class BaseWorkflow:
     def configure(self, config: Config):
         raise NotImplementedError()
 
+    def copy(self) -> "BaseWorkflow":
+        """Create a copy of the workflow"""
+        new_instance = self.__class__(self.name, self.cdf_client)
+        new_instance.workflow_steps = self.workflow_steps
+        new_instance.configs = self.configs
+        new_instance.set_task_builder(self.task_builder)
+        new_instance.set_default_dataset_id(self.default_dataset_id)
+        new_instance.set_storage_path("transformation_rules", self.rules_storage_path)
+        new_instance.set_storage_path("data_store", self.data_store_path)
+        return new_instance
+
     def run_step(self, step: WorkflowStepDefinition) -> FlowMessage | None:
         step_name = step.id
         system_component_id = step.system_component_id
@@ -253,9 +265,9 @@ class BaseWorkflow:
                     else:
                         logging.error(f"Workflow step {step.id} failed to start workflow task")
                         if start_status.is_success:
-                            raise Exception(start_status.workflow_instance.last_error)
+                            raise WorkflowStartException(start_status.workflow_instance.last_error)
                         else:
-                            raise Exception(start_status.status_text)
+                            raise WorkflowStartException(start_status.status_text)
 
                 else:
                     logging.error(f"Workflow step {step.id} has no task builder")
