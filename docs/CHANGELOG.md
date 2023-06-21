@@ -14,6 +14,15 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.14.0] - 21-06-23
+### Added
+* Base workflow concept. Most of common functionality is moved to base workflows. Now it is possible to create custom
+  workflows by inheriting from base workflow. More infor in docs
+* Added 3 main workflow start methods . More info in docs
+### Fixed
+* Fixed error propogation from sub workflows to main workflow. Now if sub workflow fails, main workflow will fail as well.
+* Small UI improvments.
+
 ## [0.13.1] - 11-06-23
 ### Added
 * Configurable cdf client timeout and max workers size. See [getting started](/getting-started.md) for details.
