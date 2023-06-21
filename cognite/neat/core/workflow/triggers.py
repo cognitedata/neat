@@ -65,7 +65,7 @@ class TriggerManager:
             json_payload = None
             try:
                 json_payload = json.loads(body)
-            except Exception as e:
+            except ValueError as e:
                 logging.info(f"Error parsing json body {e}")
             flow_msg = FlowMessage(payload=json_payload)
             if workflow.state == WorkflowState.RUNNING_WAITING:
