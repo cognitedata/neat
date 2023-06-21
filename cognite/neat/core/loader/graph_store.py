@@ -252,8 +252,10 @@ class NeatGraphStore:
 
     def __del__(self):
         if self.rdf_store_type == RdfStoreType.OXIGRAPH:
-            self.graph.store._inner.flush()
-            self.graph.close()
+            if self.graph:
+                if self.graph.store:
+                    self.graph.store._inner.flush()
+                self.graph.close()
             # It requires more investigation os.remove(self.internal_storage_dir / "LOCK")
 
     def get_df(self) -> pd.DataFrame:
@@ -264,8 +266,13 @@ class NeatGraphStore:
         """Returns the properties of an instance."""
         return self.df_cache.loc[self.df_cache["instance"] == instance_id]
 
+    def print_triples(self):
+        """Prints the triples of the graph."""
+        for subj, pred, obj in self.graph:
+            logging.info(f"Triple: {subj} {pred} {obj}")
 
-def drop_graph_store(graph: NeatGraphStore, storage_path: Path):
+
+def drop_graph_store(graph: NeatGraphStore, storage_path: Path, force: bool = False):
     """Drops graph store by flushing in-flight data , releasing locks and completly removing all files the storage path."""
     if graph:
         if graph.rdf_store_type == RdfStoreType.OXIGRAPH and storage_path:
@@ -273,3 +280,13 @@ def drop_graph_store(graph: NeatGraphStore, storage_path: Path):
                 graph.__del__()
                 graph = None
                 shutil.rmtree(storage_path)
+                logging.info("Graph store dropped.")
+            else:
+                logging.info("Storage path does not exist. Skipping drop.")
+        else:
+            logging.info(
+                "Graph store {graph.rdf_store_type} is not Oxigraph or storage path is not provided. Skipping drop."
+            )
+    elif force and storage_path:
+        if storage_path.exists():
+            shutil.rmtree(storage_path)

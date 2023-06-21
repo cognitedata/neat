@@ -13,4 +13,6 @@ class WorkflowTaskBuilder:
 
     def start_workflow_task(self, workflow_name: str, sync: bool, flow_message: FlowMessage):
         """Call a workflow task from another workflow"""
-        return self.workflow_manager.start_workflow_instance(workflow_name=workflow_name, flow_msg=flow_message, sync=sync)
+        return self.workflow_manager.start_workflow_instance(
+            workflow_name=workflow_name, flow_msg=flow_message, sync=sync
+        )

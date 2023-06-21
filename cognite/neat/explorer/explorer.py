@@ -402,7 +402,9 @@ def get_nodes_and_edges(request: NodesAndEdgesRequest):
 @app.post("/api/workflow/start")
 def start_workflow(request: RunWorkflowRequest):
     logging.info("Starting workflow endpoint")
-    start_status = neat_app.workflow_manager.start_workflow_instance(request.name, sync=request.sync, flow_msg=FlowMessage())
+    start_status = neat_app.workflow_manager.start_workflow_instance(
+        request.name, sync=request.sync, flow_msg=FlowMessage()
+    )
     return {"result": start_status}
 
 

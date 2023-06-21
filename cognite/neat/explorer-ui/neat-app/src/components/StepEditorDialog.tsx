@@ -71,10 +71,6 @@ export default function StepEditorDialog(props: any)
     useEffect(() => {
         if (props.open){
             setDialogOpen(true);
-            if (!props.step?.params["workflow_start_method"]){
-              props.step.params["workflow_start_method"] = "persistent_blocking"
-            }
-              
             setSelectedStep(props.step);
             console.dir(props.step);
         }
@@ -115,11 +111,11 @@ export default function StepEditorDialog(props: any)
                 updStep.params["sync"] = value;
                 break;
               case "workflow_start_method":
-                updStep.params["workflow_start_method"] = value;  
+                updStep.params["workflow_start_method"] = value;
                 break;
               case "max_wait_time":
                 updStep.params["max_wait_time"] = value;
-                break;  
+                break;
               default:
                 updStep[name] = value;
             }
@@ -138,7 +134,7 @@ return (
             <TextField sx={{ marginTop: 1 }} id="step-config-id" fullWidth label="Step id" size='small' variant="outlined" value={selectedStep?.id} onChange={(event) => { handleStepConfigChange("id", event.target.value) }} />
             <TextField sx={{ marginTop: 1 }} id="step-config-label" fullWidth label="Label" size='small' variant="outlined" value={selectedStep?.label} onChange={(event) => { handleStepConfigChange("label", event.target.value) }} />
           </FormControl>
-          <FormControl sx={{ marginTop: 2 }} fullWidth >  
+          <FormControl sx={{ marginTop: 2 }} fullWidth >
             <InputLabel id="step_type_label">Step type</InputLabel>
             <Select sx={{ marginTop: 1 }}
               id="step-config-stype"
@@ -185,7 +181,7 @@ return (
              )}
             </FormControl>
             {(selectedStep?.stype == "http_trigger") && (
-                      
+
                       <FormControl fullWidth sx={{ marginTop: 2 }}>
                           <InputLabel id="workflow_start_method_label">Workflow instance start method</InputLabel>
                           <Select sx={{ marginTop: 1 }}
@@ -201,7 +197,7 @@ return (
                           <MenuItem value="persistent_non_blocking">Start single global workflow instance in non-blocking mode</MenuItem>
                           <MenuItem value="ephemeral_instance">Start ephemeral workflow instance per request</MenuItem>
                         </Select>
-                       </FormControl> 
+                       </FormControl>
             )}
             <FormControl fullWidth sx={{ marginTop: 2 }}>
             {(selectedStep?.stype == "http_trigger" || selectedStep?.stype == "wait_for_event") && (
@@ -211,7 +207,7 @@ return (
               <TextField sx={{ marginTop: 1 }} value={selectedStep?.params["max_wait_time"]}  size='small' variant="outlined"  label="Max blocking wait time" onChange={(event) => { handleStepConfigChange("max_wait_time", event.target.value) }} id="max_wait_time"> </TextField>
             )}
             </FormControl>
-         
+
           <Typography> {statusText} </Typography>
 
         </DialogContent>

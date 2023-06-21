@@ -54,9 +54,11 @@ class GraphsAndRulesBaseWorkflow(BaseWorkflow):
         solution_store_dir = self.get_config_item_value("solution_rdf_store.disk_store_dir", None)
         source_store_dir = Path(self.data_store_path) / Path(source_store_dir) if source_store_dir else None
         solution_store_dir = Path(self.data_store_path) / Path(solution_store_dir) if solution_store_dir else None
+        logging.info(f"source_store_dir={source_store_dir}")
+        logging.info(f"solution_store_dir={solution_store_dir}")
         if clean_start:
-            drop_graph_store(self.source_graph, source_store_dir)
-            drop_graph_store(self.solution_graph, solution_store_dir)
+            drop_graph_store(self.source_graph, source_store_dir, force=True)
+            drop_graph_store(self.solution_graph, solution_store_dir, force=True)
 
         self.source_graph = loader.NeatGraphStore(
             prefixes=self.transformation_rules.prefixes, base_prefix="nordic44", namespace="http://purl.org/nordic44#"

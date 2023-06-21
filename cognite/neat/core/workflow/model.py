@@ -25,7 +25,7 @@ class InstanceStartMethod(StrEnum):
     PERSISTENT_INSTANCE_NON_BLOCKING = "persistent_non_blocking"
     PERSISTENT_INSTANCE_BLOCKING = "persistent_blocking"
     EPHEMERAL_INSTANCE = "ephemeral_instance"
-    
+
 
 class FlowMessage(BaseModel):
     """A message that can be sent between steps in a workflow.It's the only parameter step takes as input."""
@@ -78,8 +78,8 @@ class WorkflowStepDefinition(BaseModel):
     params: dict[str, str] = None
     max_retries: int = 0
     retry_delay: int = 3
-    
-    
+
+
 class WorkflowSystemComponent(BaseModel):
     # Container for steps
     id: str

@@ -450,12 +450,9 @@ class BaseWorkflow:
 
     def get_step_by_id(self, step_id: str) -> WorkflowStepDefinition:
         return next((step for step in self.workflow_steps if step.id == step_id), None)
-    
+
     def get_trigger_step(self, step_id: str = None) -> WorkflowStepDefinition:
         if step_id:
             return next((step for step in self.workflow_steps if step.id == step_id and step.enabled), None)
-        else:    
+        else:
             return next((step for step in self.workflow_steps if step.trigger and step.enabled), None)
-       
-    
-

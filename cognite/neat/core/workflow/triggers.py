@@ -47,27 +47,31 @@ class TriggerManager:
             logging.debug(f"Request object = {json_payload}")
 
             flow_msg = FlowMessage(payload=json_payload, headers=dict(headers))
-            start_status = self.workflow_manager.start_workflow_instance(workflow_name=workflow_name, step_id=step_id, flow_msg=flow_msg)
+            start_status = self.workflow_manager.start_workflow_instance(
+                workflow_name=workflow_name, step_id=step_id, flow_msg=flow_msg
+            )
             if start_status.is_success:
                 return start_status.workflow_instance.flow_message
-        
+
         @web_server.post("/api/workflow/{workflow_name}/resume/{step_id}/{instance_id}")
-        def resume_workflow(workflow_name: str, step_id: str, instance_id: str , request: Request, body: bytes = fast_api_depends):
+        def resume_workflow(
+            workflow_name: str, step_id: str, instance_id: str, request: Request, body: bytes = fast_api_depends
+        ):
             if instance_id != "default":
                 workflow = self.workflow_manager.get_workflow_instance(instance_id)
-            else :
+            else:
                 workflow = self.workflow_manager.get_workflow(workflow_name)
-            
+
             json_payload = None
             try:
                 json_payload = json.loads(body)
             except Exception as e:
                 logging.info(f"Error parsing json body {e}")
-            flow_msg = FlowMessage(payload=json_payload)    
+            flow_msg = FlowMessage(payload=json_payload)
             if workflow.state == WorkflowState.RUNNING_WAITING:
                 workflow.resume_workflow(flow_message=flow_msg, step_id=step_id)
                 return {"result": "Workflow instance resumed"}
-            
+
             return {"result": "Workflow instance not in RUNNING_WAITING state"}
 
     def _start_scheduler_main_loop(self):
@@ -168,5 +172,3 @@ class TriggerManager:
         self.is_running = False
         time.sleep(1)
         self.start_time_schedulers()
-
-    

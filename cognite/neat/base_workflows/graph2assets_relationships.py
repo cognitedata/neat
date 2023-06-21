@@ -5,8 +5,8 @@ import time
 from cognite.client import CogniteClient
 from cognite.client.data_classes import AssetFilter
 from prometheus_client import Gauge
-from cognite.neat.base_workflows.graphs_and_rules import GraphsAndRulesBaseWorkflow
 
+from cognite.neat.base_workflows.graphs_and_rules import GraphsAndRulesBaseWorkflow
 from cognite.neat.core.extractors.labels import upload_labels
 from cognite.neat.core.extractors.rdf_to_assets import categorize_assets, rdf2assets, upload_assets
 from cognite.neat.core.extractors.rdf_to_relationships import (
@@ -16,6 +16,7 @@ from cognite.neat.core.extractors.rdf_to_relationships import (
 )
 from cognite.neat.core.validator import validate_asset_hierarchy
 from cognite.neat.core.workflow.model import FlowMessage
+
 with contextlib.suppress(ValueError):
     prom_cdf_resource_stats = Gauge(
         "neat_graph_to_asset_hierarchy_wf_cdf_resource_stats",
@@ -32,7 +33,7 @@ class Graph2AssetHierarchyBaseWorkflow(GraphsAndRulesBaseWorkflow):
         self.dataset_id: int = 0
         self.stop_on_error = False
         self.count_create_assets = 0
-    
+
     def step_create_cdf_labels(self, flow_msg: FlowMessage = None):
         logging.info("Creating CDF labels")
         upload_labels(self.cdf_client, self.transformation_rules, extra_labels=["non-historic", "historic"])
