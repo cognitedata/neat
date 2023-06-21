@@ -222,7 +222,7 @@ class WorkflowManager:
 
         elif instance_start_method == InstanceStartMethod.PERSISTENT_INSTANCE_NON_BLOCKING:
             live_workflow_intances.labels(itype="persistent").set(len(self.workflow_registry))
-            # start workflow if not already running , skip if already running
+            # start workflow if not already running, skip if already running
             if workflow.state == WorkflowState.RUNNING:
                 return WorkflowStartStatus(
                     workflow_instance=None, is_success=False, status_text="Workflow instance already running"
