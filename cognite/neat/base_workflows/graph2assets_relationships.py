@@ -130,13 +130,7 @@ class Graph2AssetHierarchyBaseWorkflow(GraphsAndRulesBaseWorkflow):
         msg += f", { count_resurrect_assets } to be resurrected"
         number_of_updates = len(report["decommission"])
         logging.info(f"Total number of updates: {number_of_updates}")
-        if number_of_updates > int(self.get_config_item_value("update_upproval_threshold", 1000)):
-            return FlowMessage(
-                output_text=f"Very high number of updates({number_of_updates}) requires manual approval",
-                payload=report,
-                next_step_ids=["asset_update_approval"],
-            )
-        return FlowMessage(output_text=msg, next_step_ids=["upload_cdf_assets"])
+        return FlowMessage(output_text=msg)
 
     def step_upload_cdf_assets(self, flow_msg: FlowMessage = None):
         if flow_msg and flow_msg.payload and "action" in flow_msg.payload:
