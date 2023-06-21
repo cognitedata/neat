@@ -405,7 +405,8 @@ def start_workflow(request: RunWorkflowRequest):
     start_status = neat_app.workflow_manager.start_workflow_instance(
         request.name, sync=request.sync, flow_msg=FlowMessage()
     )
-    return {"result": start_status}
+    result = {"workflow_instance": None, "is_success": start_status.is_success, "status_text": start_status.status_text}
+    return {"result": result}
 
 
 @app.get("/api/workflow/stats/{workflow_name}", response_model=WorkflowFullStateReport)
