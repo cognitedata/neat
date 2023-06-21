@@ -16,7 +16,7 @@ from cognite.neat.core.workflow.base import WorkflowDefinition
 from cognite.neat.core.workflow.model import FlowMessage, InstanceStartMethod, WorkflowState
 from cognite.neat.core.workflow.tasks import WorkflowTaskBuilder
 
-live_workflow_intances = Gauge("neat_workflow_live_instances", "Count of live workflow instances", ["itype"])
+live_workflow_instances = Gauge("neat_workflow_live_instances", "Count of live workflow instances", ["itype"])
 
 
 class WorkflowStartStatus(BaseModel):
