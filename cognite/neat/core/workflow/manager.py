@@ -183,7 +183,7 @@ class WorkflowManager:
                 workflow_instance=None, is_success=False, status_text="Step is not a trigger step"
             )
         if sync is None:
-            sync = True if trigger_step.params.get("sync", "true").lower() == "true" else False
+            sync = trigger_step.params.get("sync", "true").lower() == "true"
 
         max_wait_time = int(trigger_step.params.get("max_wait_time", "30"))
         instance_start_method = trigger_step.params.get(
