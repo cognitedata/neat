@@ -215,7 +215,7 @@ def retry_decorator(max_retries=2, retry_delay=3, component_name=""):
     return decorator
 
 
-def create_hash(string):
+def create_sha256_hash(string: str) -> str:
     # Create a SHA-256 hash object
     sha256_hash = hashlib.sha256()
 
