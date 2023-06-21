@@ -128,7 +128,7 @@ class Graph2AssetHierarchyNeatWorkflow(Graph2AssetHierarchyBaseWorkflow):
 
 ### Workflow start methods
 
-NEAT supports 3 ways to start workflow execution : persistent non-blocking , persistent blocking , ephemeral mode. The mode is defined in manifest file via `workflow_start_method` property or via UI.
+NEAT supports 3 ways to start workflow execution : persistent non-blocking, persistent blocking, ephemeral mode. The mode is defined in manifest file via `workflow_start_method` property or via UI.
 
 
 **Persistent non-blocking**
