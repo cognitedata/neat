@@ -148,6 +148,7 @@ class Config(BaseModel):
             cdf_default_dataset_id=os.environ.get("NEAT_CDF_DEFAULT_DATASET_ID", 6476640149881990),
             log_level=os.environ.get("NEAT_LOG_LEVEL", "INFO"),
             workflow_downloader_filter=workflow_downloader_filter,
+            load_examples=bool(os.environ.get("NEAT_LOAD_EXAMPLES", True)),
         )
 
 

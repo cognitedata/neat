@@ -21,6 +21,16 @@ class StepExecutionStatus(StrEnum):
     UNKNOWN = "UNKNOWN"
 
 
+class InstanceStartMethod(StrEnum):
+    PERSISTENT_INSTANCE_NON_BLOCKING = "persistent_non_blocking"
+    PERSISTENT_INSTANCE_BLOCKING = "persistent_blocking"
+    EPHEMERAL_INSTANCE = "ephemeral_instance"
+
+
+class WorkflowStartException(Exception):
+    pass
+
+
 class FlowMessage(BaseModel):
     """A message that can be sent between steps in a workflow.It's the only parameter step takes as input."""
 

@@ -188,3 +188,4 @@ You can load the configuration from the environment instead of file by setting t
 | cdf_default_dataset_id     | NEAT_CDF_DEFAULT_DATASET_ID     | The identifier of the dataset ID.                              | 3931920688237191                                                                         |
 | workflow_downloader_filter | NEAT_WORKFLOW_DOWNLOADER_FILTER | The filter used to download workflows                          | tag:grid, tag:power                                                                      |
 | log_level                  | NEAT_LOG_LEVEL                  | Log level for neat, ERROR, WARNING, INFO, or DEBUG             | INFO                                                                                     |
+| load_examples              | NEAT_LOAD_EXAMPLES              | If Trues , NEAT loads default examples during app startup      | True                                                                                     |

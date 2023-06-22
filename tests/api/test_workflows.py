@@ -56,10 +56,6 @@ def test_run_default_workflow(
         # When running this test in GitHub actions, you get permission issues with the default disk_store_dir.
         response = fastapi_client.get("/api/workflow/workflow-definition/graph_to_asset_hierarchy")
         definition = WorkflowDefinition(**response.json()["definition"])
-        source = next(c for c in definition.configs if c.name == "source_rdf_store.disk_store_dir")
-        source.value = str(tmp_path / "source")
-        solution = next(c for c in definition.configs if c.name == "solution_rdf_store.disk_store_dir")
-        solution.value = str(tmp_path / "solution")
         response = fastapi_client.post(
             "/api/workflow/workflow-definition/graph_to_asset_hierarchy", json=definition.dict()
         )
@@ -68,12 +64,12 @@ def test_run_default_workflow(
     # Act
     response = fastapi_client.post(
         "/api/workflow/start",
-        json=RunWorkflowRequest(name=workflow_name, sync=True, config={}, start_step="Not used").dict(),
+        json=RunWorkflowRequest(name=workflow_name, sync=True, config={}, start_step="").dict(),
     )
 
     assert response.status_code == 200
     result = response.json()["result"]
-    assert result["error_text"] is None
+    assert result["is_success"]
     data = {}
     for resource_name in ["assets", "relationships", "labels"]:
         memory: MemoryClient = getattr(cognite_client, resource_name)

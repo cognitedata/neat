@@ -10,6 +10,7 @@ Users can customize the workflow by adding or removing steps, or by modifying th
 
 - **Solution** - a package that contains a set of workflows, rules and other components that are used to solve a specific problem.
 - **Workflow** - a set of steps that are executed in a specific order.
+- **Base workflow** - a workflow that is provided by NEAT project (and is immutable for user) and can be used as a starting point for custom workflows.
 - **Step** - a single block of code (function) that is executed as part of a workflow.
 - **Trigger** -  a special type of step that can be used to trigger workflow execution.
 - **Task** - is a special type of step that has provided implementation (no need to implement it in *workflow.py*) and can be used to perform some common tasks.
@@ -104,6 +105,53 @@ def step_run_experiment_1(self, flow_msg: FlowMessage = None):
         else :
             return FlowMessage(next_step_ids=["step_45507"])
 ```
+
+### Base workflows and tasks/components
+A users can choose to implement workflow from scratch or use one of the base workflows provided by NEAT project. Base workflows are located in `cognite.neat.core.base_workflows` module.
+Base workflows are maintained by NEAT project and can be updated in future releases. If a user chooses to implement workflow completly from scratch, it's his/her responsibility to maintain it.
+
+![Base workflows](./figs/base-components.png)
+
+
+Example :
+
+```python
+from cognite.client import CogniteClient
+
+from cognite.neat.base_workflows.graph2assets_relationships import Graph2AssetHierarchyBaseWorkflow
+
+
+class Graph2AssetHierarchyNeatWorkflow(Graph2AssetHierarchyBaseWorkflow):
+    def __init__(self, name: str, client: CogniteClient):
+        super().__init__(name, client)
+```
+
+### Workflow start methods
+
+NEAT supports 3 ways to start workflow execution : persistent non-blocking, persistent blocking, ephemeral mode. The mode is defined in manifest file via `workflow_start_method` property or via UI.
+
+
+**Persistent non-blocking**
+
+Only one running instance of workflow is allowed. If workflow execution is already running, new execution will dropped and error state returned to caller. Workflow execution is persisted in CDF and can be monitored via UI. All internal states preserved between executions.
+
+![Persistent non-blocking](./figs/wf-persistent-non-blocking.png)
+
+**Persistent blocking(default)**
+
+Only one running instance of the workflows is allowed. If workflow execution is already running, new execution will be queued and started later or timeout after max_wait_time. Workflow execution is persisted in CDF and can be monitored via UI.All internal states preserved between executions.
+
+![Persistent blocking](./figs/wf-persistent-blocking-mode.png)
+
+**Ephemeral multi-instance mode**
+
+Multiple running instances of the workflow are allowed. Each instance is a copy of main workflow class and are executed in parallel each in its own thread . Workflow execution is persisted in CDF but can't be monitored via UI.All internal states are lost between executions (ephemeral).
+
+![Ephemeral mode](./figs/wf-ephemeral-mode.png)
+
+Configuring the mode in UI :
+
+![Start mode UI](./figs/wf-start-mode-ui.png)
 
 ### Workflow configuration parameters
 

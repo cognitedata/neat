@@ -37,31 +37,42 @@ class TriggerManager:
         @web_server.post("/api/workflow/{workflow_name}/http_trigger/{step_id}")
         def start_workflow(workflow_name: str, step_id: str, request: Request, body: bytes = fast_api_depends):
             logging.info(f"New HTTP trigger request for workflow {workflow_name} step {step_id}")
-            workflow = self.workflow_manager.get_workflow(workflow_name)
+            headers = dict(request.headers)
+            logging.debug(f"Request headers = {headers}")
             json_payload = None
             try:
-                # TODO: Add support for other content types
                 json_payload = json.loads(body)
             except Exception as e:
                 logging.info(f"Error parsing json body {e}")
             logging.debug(f"Request object = {json_payload}")
 
+            flow_msg = FlowMessage(payload=json_payload, headers=dict(headers))
+            start_status = self.workflow_manager.start_workflow_instance(
+                workflow_name=workflow_name, step_id=step_id, flow_msg=flow_msg
+            )
+            if start_status.is_success:
+                return start_status.workflow_instance.flow_message
+
+        @web_server.post("/api/workflow/{workflow_name}/resume/{step_id}/{instance_id}")
+        def resume_workflow(
+            workflow_name: str, step_id: str, instance_id: str, request: Request, body: bytes = fast_api_depends
+        ):
+            if instance_id != "default":
+                workflow = self.workflow_manager.get_workflow_instance(instance_id)
+            else:
+                workflow = self.workflow_manager.get_workflow(workflow_name)
+
+            json_payload = None
+            try:
+                json_payload = json.loads(body)
+            except ValueError as e:
+                logging.info(f"Error parsing json body {e}")
             flow_msg = FlowMessage(payload=json_payload)
-            sync = request.headers.get("Neat-Sync-Response", True)
-            logging.info(f"Workflow {workflow_name} state = {workflow.state} sync={sync}")
             if workflow.state == WorkflowState.RUNNING_WAITING:
                 workflow.resume_workflow(flow_message=flow_msg, step_id=step_id)
                 return {"result": "Workflow instance resumed"}
-            elif workflow.state != WorkflowState.RUNNING:
-                result = workflow.start(sync=sync, flow_message=flow_msg, start_step_id=step_id)
-                if result:
-                    if result.payload:
-                        logging.info(f"Workflow resule payload = {result.payload}")
-                        return result.payload
-            else:
-                logging.info(f"Workflow {workflow_name} is already running")
-                return {"result": "Workflow instance already running"}
-            return {"result": "Workflow instance started"}
+
+            return {"result": "Workflow instance not in RUNNING_WAITING state"}
 
     def _start_scheduler_main_loop(self):
         """Starts a scheduler main loop for the workflows

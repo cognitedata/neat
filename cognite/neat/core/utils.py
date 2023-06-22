@@ -1,3 +1,4 @@
+import hashlib
 import logging
 import time
 from collections import OrderedDict
@@ -212,3 +213,16 @@ def retry_decorator(max_retries=2, retry_delay=3, component_name=""):
         return wrapper
 
     return decorator
+
+
+def create_sha256_hash(string: str) -> str:
+    # Create a SHA-256 hash object
+    sha256_hash = hashlib.sha256()
+
+    # Convert the string to bytes and update the hash object
+    sha256_hash.update(string.encode("utf-8"))
+
+    # Get the hexadecimal representation of the hash
+    hash_value = sha256_hash.hexdigest()
+
+    return hash_value
