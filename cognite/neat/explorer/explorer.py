@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from prometheus_client import REGISTRY, Counter, make_asgi_app
+import rdflib
 
 from cognite import neat
 from cognite.neat import constants
@@ -310,7 +311,7 @@ def execute_rule(request: RuleRequest):
 @app.get("/api/object-properties")
 def get_object_properties(reference: str, graph_name: str = "source", workflow_name: str = "default"):
     logging.info(f"Querying object-properties from {graph_name} :")
-    query = f"SELECT ?property ?value WHERE {{ <{reference}> ?property ?value }}"
+    query = f"SELECT ?property ?value WHERE {{ <{reference}> ?property ?value }} ORDER BY ?property"
     return get_data_from_graph(query, graph_name, workflow_name=workflow_name)
 
 
@@ -357,41 +358,75 @@ def get_nodes_and_edges(request: NodesAndEdgesRequest):
     logging.info("Querying graph nodes and edges :")
     if "get_nodes_and_edges" in cache_store and request.cache:
         return cache_store["get_nodes_and_edges"]
-    nodes_filter = ""
-    edges_dst_filter = ""
-    edges_src_filter = ""
+    nodes_result = {}
+    edges_result = {}
+    query = ""
+    elapsed_time_sec = 0
+    """
+    "nodes": [
+        {
+            "node_id": "http://purl.org/nordic44#_a63ce14e-fba0-4f9e-8b59-7ef2fe887ff8",
+            "node_class": "http://entsoe.eu/CIM/SchemaExtension/3/2#RateTemperature",
+            "node_name": "-5degreeCelsius"
+        }],
+    "edges": [
+        {
+            "src_object_ref": "http://purl.org/nordic44#_f1769eaa-9aeb-11e5-91da-b8763fd99c5f",
+            "conn": "http://iec.ch/TC57/2013/CIM-schema-cim16#OperationalLimitSet.Terminal",
+            "dst_object_ref": "http://purl.org/nordic44#_2dd90186-bdfb-11e5-94fa-c8f73332c8f4"
+        },
+    """
+    if request.sparql_query:
+        mixed_result = get_data_from_graph(request.sparql_query, request.graph_name, request.workflow_name)
 
-    if len(request.node_class_filter) > 0:
-        nodes_filter = "VALUES ?node_class { " + " ".join([f"<{x}>" for x in request.node_class_filter]) + " }"
+        logging.info(f"Query result : {mixed_result}")
+        nodes_result = [{"node_id": v[rdflib.Variable('node_id')], 
+                         "node_class":v[rdflib.Variable("node_class")],
+                         "node_name":v[rdflib.Variable("node_name")]} for v in mixed_result["rows"]]
+        edges_result = [{"src_object_ref": v[rdflib.Variable("src_object_ref")],
+                         "dst_object_ref":v[rdflib.Variable("dst_object_ref")]} for v in mixed_result["rows"]]
+        query = request.sparql_query
+        elapsed_time_sec = mixed_result["elapsed_time_sec"]
+    else:
+        nodes_filter = ""
+        edges_dst_filter = ""
+        edges_src_filter = ""
 
-    node_name_property = request.node_name_property or "cim:IdentifiedObject.name"
-    nodes_query = f"SELECT DISTINCT ?node_id ?node_class ?node_name WHERE \
-    {{ {nodes_filter} \
-    ?node_id {node_name_property} ?node_name . ?node_id rdf:type ?node_class }} "
-    if len(request.src_edge_filter) > 0:
-        edges_src_filter = "VALUES ?src_object_class { " + " ".join([f"<{x}>" for x in request.src_edge_filter]) + " }"
-    if len(request.dst_edge_filter) > 0:
-        edges_dst_filter = "VALUES ?dst_object_class { " + " ".join([f"<{x}>" for x in request.dst_edge_filter]) + " }"
+        if len(request.node_class_filter) > 0:
+            nodes_filter = "VALUES ?node_class { " + " ".join([f"<{x}>" for x in request.node_class_filter]) + " }"
 
-    edges_query = f"SELECT  ?src_object_ref ?conn ?dst_object_ref \
-        WHERE {{ \
-        {edges_src_filter} \
-        {edges_dst_filter} \
-        ?src_object_ref ?conn  ?dst_object_ref . \
-        ?src_object_ref  rdf:type ?src_object_class . \
-        ?dst_object_ref  rdf:type ?dst_object_class .\
-        }} "
-    logging.info(f"Nodes query : {nodes_query}")
-    logging.info(f"Edges query : {edges_query}")
-    nodes_result = get_data_from_graph(nodes_query, request.graph_name, request.workflow_name)
-    edges_result = get_data_from_graph(edges_query, request.graph_name, request.workflow_name)
+        node_name_property = request.node_name_property or "cim:IdentifiedObject.name"
+        nodes_query = f"SELECT DISTINCT ?node_id ?node_class ?node_name WHERE \
+        {{ {nodes_filter} \
+        ?node_id {node_name_property} ?node_name . ?node_id rdf:type ?node_class }} "
+        if len(request.src_edge_filter) > 0:
+            edges_src_filter = "VALUES ?src_object_class { " + " ".join([f"<{x}>" for x in request.src_edge_filter]) + " }"
+        if len(request.dst_edge_filter) > 0:
+            edges_dst_filter = "VALUES ?dst_object_class { " + " ".join([f"<{x}>" for x in request.dst_edge_filter]) + " }"
+
+        edges_query = f"SELECT  ?src_object_ref ?conn ?dst_object_ref \
+            WHERE {{ \
+            {edges_src_filter} \
+            {edges_dst_filter} \
+            ?src_object_ref ?conn  ?dst_object_ref . \
+            ?src_object_ref  rdf:type ?src_object_class . \
+            ?dst_object_ref  rdf:type ?dst_object_class .\
+            }} "
+        logging.info(f"Nodes query : {nodes_query}")
+        logging.info(f"Edges query : {edges_query}")
+        nodes_result = get_data_from_graph(nodes_query, request.graph_name, request.workflow_name)
+        edges_result = get_data_from_graph(edges_query, request.graph_name, request.workflow_name)
+        elapsed_time_sec = nodes_result["elapsed_time_sec"] + edges_result["elapsed_time_sec"]
+        query = nodes_query + edges_query
+        nodes_result = nodes_result["rows"]
+        edges_result = edges_result["rows"]
 
     merged_result = {
-        "nodes": nodes_result["rows"],
-        "edges": edges_result["rows"],
+        "nodes": nodes_result,
+        "edges": edges_result,
         "error": "",
-        "elapsed_time_sec": nodes_result["elapsed_time_sec"] + edges_result["elapsed_time_sec"],
-        "query": nodes_query + edges_query,
+        "elapsed_time_sec": elapsed_time_sec,
+        "query": query,
     }
 
     if request.cache:

@@ -49,3 +49,4 @@ class NodesAndEdgesRequest(BaseModel):
     cache: bool = False
     limit: int = 1000
     node_name_property: str = ""
+    sparql_query: str = ""

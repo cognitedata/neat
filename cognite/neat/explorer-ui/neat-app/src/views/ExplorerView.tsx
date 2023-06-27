@@ -339,6 +339,7 @@ export default function QDataTable() {
   const [bhistory, setBhistory] = useState(Array<string>);
   const [tabValue, setTabValue] = React.useState(0);
   const [filters , setFilters] = React.useState(Array<string>);
+  const [sparqlQuery, setSparqlQuery] = React.useState("");
 
   // const {hiddenNsPrefixModeCtx, graphNameCtx} = React.useContext(ExplorerContext);
   // const [graphName, setGraphName] = graphNameCtx;
@@ -432,11 +433,13 @@ export default function QDataTable() {
   const loadDataset = (q:string,qtype:string) => {
     let query = {}
     let url = ""
+
     console.log('reseting history');
     setLoading(true);
     const workflowName = getSelectedWorkflowName();
     if (qtype == "query") {
       query = {"query":q,"graph_name":graphName,"workflow_name":workflowName}
+      setSparqlQuery(q);
       url = neatApiRootUrl+"/api/query"
     } else if (qtype == "rule") {
       query = {"rule":q,"rule_type":"rdfpath","graph_name":graphName,"workflow_name":workflowName}
@@ -501,7 +504,7 @@ export default function QDataTable() {
         </div>
       </TabPanel>
       <TabPanel value={tabValue} index={2}>
-        <GraphExplorer filters={filters} nodeNameProperty={nodeNameProperty}/>
+        <GraphExplorer filters={filters} nodeNameProperty={nodeNameProperty} sparqlQuery={sparqlQuery}/>
       </TabPanel>
       <Collapse in={openAlert}>
             <Alert

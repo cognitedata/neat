@@ -526,7 +526,16 @@ def _asset2dict(asset: Asset) -> dict:
 
 def _flatten_labels(labels: List[Dict[str, str]]) -> set[str]:
     """Flatten labels"""
-    return {label["externalId"] for label in labels}
+    result = set()
+    if labels is None:
+        return result
+    for label in labels:
+        if "externalId" in label:
+            result.add(label["externalId"])
+        else :
+            logging.warning(f"Label {label} does not have externalId")
+    return result            
+        # return {label["externalId"] for label in labels}
 
 
 def _is_historic(labels) -> bool:
