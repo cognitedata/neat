@@ -72,7 +72,8 @@ query_templates = [
     },
     {
         "name": "Get graph compatible query",
-        "query": """ SELECT ?tagValue ?tagPath (?parentName AS ?node_name)  (?parentClass AS ?node_class) ?parentPath (?parentInst AS ?node_id ) (?parentInst AS ?src_object_ref) (?parentInst2 AS ?dst_object_ref) WHERE { 
+        "query": """ SELECT (?parentName AS ?node_name)  (?parentClass AS ?node_class) ?parentPath (?parentInst AS ?node_id )
+ (?parentInst AS ?src_object_ref) (?parentInst2 AS ?dst_object_ref) WHERE {
  ?tagInst rdf:type neat:AttributeTag .
  ?tagInst neat:Path ?tagPath .
  ?tagInst neat:Value ?tagValue .
@@ -82,5 +83,5 @@ query_templates = [
  ?parentInst rdf:type ?parentClass .
  ?parentInst neat:hasParent ?parentInst2
   }  limit 100""",
-    }
+    },
 ]

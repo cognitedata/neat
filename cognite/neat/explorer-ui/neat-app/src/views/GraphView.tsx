@@ -59,10 +59,10 @@ export function LoadGraph(props:{filters:Array<string>,nodeNameProperty:string,s
         if (props.mode== "update"){
           graph = bigGraph;
         }
-        
+
         const url = neatApiRootUrl+"/api/get-nodes-and-edges";
         const workflowName = getSelectedWorkflowName();
-        
+
         const requestFilter = {
             "graph_name": graphName,
             "workflow_name":workflowName,
@@ -86,7 +86,7 @@ export function LoadGraph(props:{filters:Array<string>,nodeNameProperty:string,s
                 if (!addedNodes.includes(node.node_id)) {
                     addedNodes.push(node.node_id);
                     graph.mergeNode(node.node_id,{label:nodeLabel,x:1,y:1,color:getColor(nodeClassName), size:getSize(nodeClassName,graphSize)});
-                    
+
                 }
             });
             data.edges.forEach((edge) => {
@@ -125,11 +125,11 @@ export default function GraphExplorer(props:{filters:Array<string>,nodeNamePrope
         setNodeNameProperty(event.target.value);
         localStorage.setItem('nodeNameProperty',event.target.value);
     };
-   
+
     const reload = () => {
           setReloader(reloader+1);
     }
-    
+
     const onViewerClose = () => {
       setOpenNodeViewer(false);
     }
@@ -142,24 +142,24 @@ export default function GraphExplorer(props:{filters:Array<string>,nodeNamePrope
         // Register the events
         registerEvents({
           // node events
-          rightClickNode: (event) => { 
-            console.log("clickNode", event.event, event.node, event.preventSigmaDefault ) 
+          rightClickNode: (event) => {
+            console.log("clickNode", event.event, event.node, event.preventSigmaDefault )
             console.log("node id: "+event.node);
             setSelectedNodeId(event.node);
             setLoaderMode("update");
-            let query = `SELECT (?childName AS ?node_name) (?childType AS ?node_class) (?childInst AS ?node_id) ?src_object_ref (?childInst AS ?dst_object_ref) ?relPropery WHERE { 
-              ?childInst ?relProperty <`+event.node+`> . 
+            let query = `SELECT (?childName AS ?node_name) (?childType AS ?node_class) (?childInst AS ?node_id) ?src_object_ref (?childInst AS ?dst_object_ref) ?relPropery WHERE {
+              ?childInst ?relProperty <`+event.node+`> .
               ?childInst `+nodeNameProperty+` ?childName .
-              ?childInst rdf:type ?childType . 
+              ?childInst rdf:type ?childType .
               BIND( <`+event.node+`> AS ?src_object_ref)
               } `
             setSparqlQuery(query);
             // setOpenNodeViewer(true);
             setReloader(reloader+1);
-            
+
           },
-          doubleClickNode: (event) => { 
-            console.log("doubleClickNode", event.event, event.node, event.preventSigmaDefault) 
+          doubleClickNode: (event) => {
+            console.log("doubleClickNode", event.event, event.node, event.preventSigmaDefault)
             setSelectedNodeId(event.node);
             setOpenNodeViewer(true);
           },
@@ -180,7 +180,7 @@ export default function GraphExplorer(props:{filters:Array<string>,nodeNamePrope
               const pos = sigma.viewportToGraph(e);
               sigma.getGraph().setNodeAttribute(draggedNode, "x", pos.x);
               sigma.getGraph().setNodeAttribute(draggedNode, "y", pos.y);
-  
+
               // Prevent sigma to move camera:
               e.preventSigmaDefault();
               e.original.preventDefault();
@@ -231,7 +231,7 @@ export default function GraphExplorer(props:{filters:Array<string>,nodeNamePrope
           // updated: (event) => console.log("updated", event.x, event.y, event.angle, event.ratio),
         });
       }, [registerEvents, sigma, draggedNode]);
-  
+
       return null;
     };
     return (
@@ -278,12 +278,12 @@ export default function GraphExplorer(props:{filters:Array<string>,nodeNamePrope
         return sizeMap[nodeClass];
       } else
         // calculate size based on graph size (from 1 to 15). max size for small graphs
-        
-        if (graphSize < 15) 
+
+        if (graphSize < 15)
           return 15;
-        if (graphSize >= 15 && graphSize < 100) 
+        if (graphSize >= 15 && graphSize < 100)
           return 10;
-        else 
+        else
           return 3;
     }
 

@@ -13,19 +13,8 @@ import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import RemoveNsPrefix, { getNeatApiRootUrl, getSelectedWorkflowName } from '../components/Utils';
 import {ExplorerContext} from '../components/Context';
+import { Button, Tab } from '@mui/material';
 
-function Row(props: { row: any }) {
-  const { row } = props;
-
-  return (
-    <React.Fragment>
-      <TableRow >
-        <TableCell align="left">{row.class}</TableCell>
-        <TableCell align="left">{row.instances}</TableCell>
-      </TableRow>
-    </React.Fragment>
-  );
-}
 
 export interface OverviewRow {
   "class": string;
@@ -42,7 +31,7 @@ export interface OverviewResponse {
   };
 
 
-export default function OverviewTable() {
+export default function OverviewTable(props: {onItemClick: (class_name:string) => void}) {
   const neatApiRootUrl = getNeatApiRootUrl();
   const [data, setData] = useState( {rows:[],fields:[],query:"",error:"",elapsed_time_sec:0} as OverviewResponse );
   const [loading, setLoading] = React.useState(false);
@@ -66,6 +55,7 @@ export default function OverviewTable() {
       data.rows.forEach((row:OverviewRow) => {
         total += parseInt(row.instances);
         if (hiddenNsPrefixMode) {
+          row["original_class"] = row.class;
           row.class = RemoveNsPrefix(row.class);
         }
       });
@@ -79,6 +69,21 @@ export default function OverviewTable() {
      });
   }
 
+  function Row(iprops: { row: any }) {
+    const { row } = iprops;
+
+    return (
+      <React.Fragment>
+        <TableRow >
+          <TableCell align="left">{row.class}</TableCell>
+          <TableCell align="left">{row.instances}</TableCell>
+          <TableCell align="center"><Button onClick={ ()=> { props.onItemClick(row.original_class) } }>Open in table</Button></TableCell>
+        </TableRow>
+      </React.Fragment>
+    );
+  }
+
+
   return (
     <div>
     { loading &&( <LinearProgress />) }
@@ -87,7 +92,8 @@ export default function OverviewTable() {
         <TableHead>
           <TableRow>
             <TableCell>Class name</TableCell>
-            <TableCell align="right">Instances</TableCell>
+            <TableCell align="left">Instances</TableCell>
+            <TableCell align="left">Action</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -97,6 +103,7 @@ export default function OverviewTable() {
           <TableRow >
             <TableCell align="left">Total </TableCell>
             <TableCell align="left">{totalInstances}</TableCell>
+            <TableCell align="left"></TableCell>
           </TableRow>
         </TableBody>
       </Table>

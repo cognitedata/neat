@@ -8,12 +8,12 @@ from logging import getLogger
 from pathlib import Path
 
 import pkg_resources
+import rdflib
 from fastapi import FastAPI, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from prometheus_client import REGISTRY, Counter, make_asgi_app
-import rdflib
 
 from cognite import neat
 from cognite.neat import constants
@@ -380,11 +380,21 @@ def get_nodes_and_edges(request: NodesAndEdgesRequest):
         mixed_result = get_data_from_graph(request.sparql_query, request.graph_name, request.workflow_name)
 
         logging.info(f"Query result : {mixed_result}")
-        nodes_result = [{"node_id": v[rdflib.Variable('node_id')], 
-                         "node_class":v[rdflib.Variable("node_class")],
-                         "node_name":v[rdflib.Variable("node_name")]} for v in mixed_result["rows"]]
-        edges_result = [{"src_object_ref": v[rdflib.Variable("src_object_ref")],
-                         "dst_object_ref":v[rdflib.Variable("dst_object_ref")]} for v in mixed_result["rows"]]
+        nodes_result = [
+            {
+                "node_id": v[rdflib.Variable("node_id")],
+                "node_class": v[rdflib.Variable("node_class")],
+                "node_name": v[rdflib.Variable("node_name")],
+            }
+            for v in mixed_result["rows"]
+        ]
+        edges_result = [
+            {
+                "src_object_ref": v[rdflib.Variable("src_object_ref")],
+                "dst_object_ref": v[rdflib.Variable("dst_object_ref")],
+            }
+            for v in mixed_result["rows"]
+        ]
         query = request.sparql_query
         elapsed_time_sec = mixed_result["elapsed_time_sec"]
     else:
@@ -400,9 +410,13 @@ def get_nodes_and_edges(request: NodesAndEdgesRequest):
         {{ {nodes_filter} \
         ?node_id {node_name_property} ?node_name . ?node_id rdf:type ?node_class }} "
         if len(request.src_edge_filter) > 0:
-            edges_src_filter = "VALUES ?src_object_class { " + " ".join([f"<{x}>" for x in request.src_edge_filter]) + " }"
+            edges_src_filter = (
+                "VALUES ?src_object_class { " + " ".join([f"<{x}>" for x in request.src_edge_filter]) + " }"
+            )
         if len(request.dst_edge_filter) > 0:
-            edges_dst_filter = "VALUES ?dst_object_class { " + " ".join([f"<{x}>" for x in request.dst_edge_filter]) + " }"
+            edges_dst_filter = (
+                "VALUES ?dst_object_class { " + " ".join([f"<{x}>" for x in request.dst_edge_filter]) + " }"
+            )
 
         edges_query = f"SELECT  ?src_object_ref ?conn ?dst_object_ref \
             WHERE {{ \

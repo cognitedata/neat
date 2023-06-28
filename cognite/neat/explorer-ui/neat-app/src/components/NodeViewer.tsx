@@ -9,7 +9,7 @@ import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow
 import { ExplorerContext } from "./Context"
 
 export default function NodeViewerDialog(props: any)
-{   
+{
     const {hiddenNsPrefixModeCtx, graphNameCtx} = React.useContext(ExplorerContext);
     const [dialogOpen, setDialogOpen] = useState(false);
     const neatApiRootUrl = getNeatApiRootUrl();
@@ -17,12 +17,12 @@ export default function NodeViewerDialog(props: any)
     const [graphName, setGraphName] = graphNameCtx;
     const [hiddenNsPrefixMode, setHiddenNsPrefixMode] = hiddenNsPrefixModeCtx;
     const [data, setData] = useState([]);
-   
+
     const handleDialogCancel = () => {
         setDialogOpen(false);
         props.onClose();
     };
-    
+
     useEffect(() => {
         if (props.open){
             setNodeId(props.nodeId);
@@ -38,7 +38,7 @@ export default function NodeViewerDialog(props: any)
           .then((rdata) => {
             let result = rdata.rows.map((row:any) => {
                 let prop = row.property;
-                if(hiddenNsPrefixMode) 
+                if(hiddenNsPrefixMode)
                   prop = RemoveNsPrefix(prop);
                 return {property:prop, value:row.value}
             });
@@ -47,7 +47,7 @@ export default function NodeViewerDialog(props: any)
             console.error('Error:', error);
           });
        }
-      
+
 
 return (
   <Dialog open={dialogOpen} onClose={handleDialogCancel} fullWidth = {true} maxWidth = "lg"  >
@@ -75,7 +75,7 @@ return (
           ))}
         </TableBody>
       </Table>
-    </TableContainer> 
+    </TableContainer>
             <Typography variant="body1" gutterBottom> object : { nodeId} </Typography>
         </DialogContent>
         <DialogActions>

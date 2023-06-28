@@ -146,7 +146,7 @@ export function QuerySelector(props:{selectedHandler:Function,settingsUpdateHand
         <Box>
          <TextField id="rule" label="Rule" value = {rule} size='small' sx={{width:"80vw"}} variant="outlined" onChange={handleRuleChange}  />
          <Button sx={{ margin: "5px" }} variant="contained" onClick={()=>{ props.selectedHandler(rule,"rule") }}> Execute rule </Button>
-        </Box>
+         </Box>
         </React.Fragment>
 )}
         <Box>
@@ -471,6 +471,15 @@ export default function QDataTable() {
 
   };
 
+  const activateTable= (className:string) => {
+    setTabValue(1);
+    let sparqlQuery = `SELECT ?instance ?property ?value  WHERE {
+      ?instance rdf:type <`+className+`> .
+      ?instance ?property ?value
+     } LIMIT 10000`
+    loadDataset(sparqlQuery,"query");
+  }
+
   return (
     <div>
 
@@ -490,7 +499,7 @@ export default function QDataTable() {
         <Tab label="Graph" {...a11yProps(2)} />
       </Tabs>
       <TabPanel value={tabValue} index={0}>
-       <OverviewTable/>
+       <OverviewTable onItemClick={activateTable}/>
       </TabPanel>
       <TabPanel value={tabValue} index={1} >
         <NavBreadcrumbs bhistory={bhistory} selectedHandler={loadObjectProperties}/>
@@ -518,6 +527,7 @@ export default function QDataTable() {
             </Alert>
         </Collapse>
     </Box>
+
     </ExplorerContext.Provider>
     </div>
   );
