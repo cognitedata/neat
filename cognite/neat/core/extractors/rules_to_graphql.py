@@ -34,7 +34,7 @@ def repair_name(name: str, entity_type: str, fix_casing: bool = False) -> str:
     """
 
     # Remove any non GraphQL compliant characters
-    repaired_string = re.sub(r"[^_a-zA-Z0-9/_]", "", name)
+    repaired_string = re.sub(r"[^_a-zA-Z0-9]", "", name)
 
     # Name must start with a letter or underscore
     if repaired_string[0].isdigit():
