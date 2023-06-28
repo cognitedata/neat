@@ -16,7 +16,7 @@ Changes are grouped as follows:
 
 ## [0.14.1] - 28-06-23
 ### Fixed
-* Fixed bugs in base workflows 
+* Fixed bugs in base workflows
 ### Improved
 * Improved graph based data exploration capabilities.
 
