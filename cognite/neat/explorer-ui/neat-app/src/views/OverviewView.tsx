@@ -54,8 +54,8 @@ export default function OverviewTable(props: {onItemClick: (class_name:string) =
       let total = 0;
       data.rows.forEach((row:OverviewRow) => {
         total += parseInt(row.instances);
+        row["original_class"] = row.class;
         if (hiddenNsPrefixMode) {
-          row["original_class"] = row.class;
           row.class = RemoveNsPrefix(row.class);
         }
       });

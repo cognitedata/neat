@@ -142,6 +142,7 @@ class NeatGraphStore:
             self.base_prefix = base_prefix
 
         self.graph.bind(self.base_prefix, self.namespace)
+        logging.info("Adding prefix %s with namespace %s", self.base_prefix, self.namespace)
         logging.info("Graph initialized")
 
     def close(self):

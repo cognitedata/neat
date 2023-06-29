@@ -3,28 +3,29 @@ import {useState,useEffect, useRef, useImperativeHandle,FC} from 'react';
 import Box from '@mui/material/Box';
 import Graph from "graphology";
 import { SigmaContainer, useLoadGraph,useRegisterEvents } from "@react-sigma/core";
-import { useWorkerLayoutForceAtlas2,useLayoutForceAtlas2 } from "@react-sigma/layout-forceatlas2";
+
 import "@react-sigma/core/lib/react-sigma.min.css";
 import { ControlsContainer, useSigma } from "@react-sigma/core";
-import { useLayoutCircular } from "@react-sigma/layout-circular";
-import { LayoutForceAtlas2Control } from "@react-sigma/layout-forceatlas2";
 import { ExplorerContext } from 'components/Context';
 import RemoveNsPrefix, { getNeatApiRootUrl, getSelectedWorkflowName } from 'components/Utils';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import NodeViewer from 'components/NodeViewer';
+import LinearProgress from '@mui/material/LinearProgress';
+import { useWorkerLayoutForceAtlas2,useLayoutForceAtlas2, LayoutForceAtlas2Control } from "@react-sigma/layout-forceatlas2";
+import { useLayoutCircular } from "@react-sigma/layout-circular";
 
-
-
-export function LoadGraph(props:{filters:Array<string>,nodeNameProperty:string,sparqlQuery:string,reloader:number,mode:string}) {
+export function LoadGraph(props:{filters:Array<string>,nodeNameProperty:string,sparqlQuery:string,reloader:number,mode:string,limit:number}) {
     const neatApiRootUrl = getNeatApiRootUrl();
     const {hiddenNsPrefixModeCtx, graphNameCtx} = React.useContext(ExplorerContext);
     const [graphName, setGraphName] = graphNameCtx;
     const [hiddenNsPrefixMode, setHiddenNsPrefixMode ] = hiddenNsPrefixModeCtx;
     const loadGraph = useLoadGraph();
+    // const { positions, assign } = useLayoutForceAtlas2({settings:{strongGravityMode:true},iterations:10});
     const { positions, assign } = useLayoutCircular();
     const { start, stop,kill } = useWorkerLayoutForceAtlas2({ settings: { slowDown: 5 } });
     const [ bigGraph, setBigGraph] = useState<Graph>();
+    const [ loading, setLoading] = useState(false);
 
 
     useEffect(() => {
@@ -38,22 +39,23 @@ export function LoadGraph(props:{filters:Array<string>,nodeNameProperty:string,s
     }, [loadGraph,start,kill]);
 
     useEffect(() => {
-      if (props.reloader) {
+      if (props.reloader || props.sparqlQuery) {
         loadDataset();
       }
-    }, [props.reloader]);
+    }, [props.reloader,props.sparqlQuery]);
 
     const loadDataset = () => {
+        setLoading(true);
          console.log("loading dataset");
         //TODO - this is a hack to get the node name property for the solution graph. Make this configurable.
-        let nodeNameProperty = props.nodeNameProperty;
-        if(!props.nodeNameProperty) {
-          if (graphName == "solution") {
-              nodeNameProperty = "<http://purl.org/cognite/tnt/IdentifiedObject.name>"
-          }else {
-              nodeNameProperty = "cim:IdentifiedObject.name"
-          }
-        }
+        let nodeNameProperty = localStorage.getItem('nodeNameProperty');
+        // if(!props.nodeNameProperty) {
+        //   if (graphName == "solution") {
+        //       nodeNameProperty = ""
+        //   }else {
+        //       nodeNameProperty = ""
+        //   }
+        // }
         let graph = new Graph();
 
         if (props.mode== "update"){
@@ -72,14 +74,14 @@ export function LoadGraph(props:{filters:Array<string>,nodeNameProperty:string,s
             "node_name_property": nodeNameProperty,
             "sparql_query": props.sparqlQuery,
             "cache": false,
-            "limit": 100000
+            "limit": props.limit
         }
         fetch(url,{ method:"post",body:JSON.stringify(requestFilter),headers: {
             'Content-Type': 'application/json;charset=utf-8'
           }}).then((response) => response.json()).then((data) => {
             console.dir(data)
             const addedNodes : string[] = [];
-            let graphSize = graph.size;
+            let graphSize = graph.size+data.nodes.length;
             data.nodes.forEach((node) => {
                 let nodeClassName = RemoveNsPrefix(node.node_class);
                 const nodeLabel = node.node_name+" ("+nodeClassName+")";
@@ -88,6 +90,7 @@ export function LoadGraph(props:{filters:Array<string>,nodeNameProperty:string,s
                     graph.mergeNode(node.node_id,{label:nodeLabel,x:1,y:1,color:getColor(nodeClassName), size:getSize(nodeClassName,graphSize)});
 
                 }
+
             });
             data.edges.forEach((edge) => {
               if (props.mode== "update"){
@@ -103,35 +106,92 @@ export function LoadGraph(props:{filters:Array<string>,nodeNameProperty:string,s
             setBigGraph(graph);
             loadGraph(graph);
             assign();
+            // if (props.mode== "update"){
+            // }else {
+            //   assign();
+            // }
             console.log("graph loaded");
           }).catch((error) => {
             console.log('Error:', error);
-          }).finally(() => {  });
+          }).finally(() => {
+            setLoading(false);
+           });
     }
 
-    return null;
+    return (loading &&( <LinearProgress />) );
   };
 
 
-export default function GraphExplorer(props:{filters:Array<string>,nodeNameProperty:string,sparqlQuery:string}) {
+export default function GraphExplorer(props:{filters:Array<string>,sparqlQuery:string}) {
     const [nodeNameProperty, setNodeNameProperty] = useState(localStorage.getItem('nodeNameProperty'));
     const [reloader, setReloader] = useState(0);
     const loaderCompRef = useRef()
+    const [limitRecordsInResponse, setLimitRecordsInResponse] = useState(5000);
     const [openNodeViewer, setOpenNodeViewer] = useState(false);
     const [selectedNodeId, setSelectedNodeId] = useState("");
-    const [sparqlQuery, setSparqlQuery] = useState(props.sparqlQuery);
+    const [sparqlQuery, setSparqlQuery] = useState("");
     const [loaderMode, setLoaderMode] = useState("create");
+
     const handleNodeNameProperty = (event: React.ChangeEvent<HTMLInputElement>) => {
         setNodeNameProperty(event.target.value);
         localStorage.setItem('nodeNameProperty',event.target.value);
+        reload();
     };
 
+    const handleResponseLimitChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setLimitRecordsInResponse(parseInt(event.target.value));
+    };
     const reload = () => {
           setReloader(reloader+1);
     }
 
+    useEffect(() => {
+      console.log("sparqlQuery changed");
+      setNodeNameProperty(localStorage.getItem('nodeNameProperty'));
+      setSparqlQuery(props.sparqlQuery);
+    }, [props.sparqlQuery]);
+
+
     const onViewerClose = () => {
       setOpenNodeViewer(false);
+    }
+
+    const loadLinkedNodes = (nodeRef:string) => {
+      let query = ""
+      const nodeNameProperty = localStorage.getItem('nodeNameProperty')
+      if (!nodeNameProperty) {
+
+        query = `SELECT (?dst_object_ref AS ?node_name) (?linked_obj_type  AS ?node_class) (?dst_object_ref AS ?node_id) ?src_object_ref ?dst_object_ref WHERE {
+          BIND( <`+nodeRef+`> AS ?src_object_ref )
+          {
+           ?src_object_ref ?rel_propery ?dst_object_ref .
+           ?dst_object_ref rdf:type ?linked_obj_type
+          }
+          UNION
+          {
+           ?dst_object_ref ?rel_propery ?src_object_ref .
+           ?dst_object_ref rdf:type ?linked_obj_type .
+          }
+          }  `
+      }else {
+        query = `SELECT ?node_name (?linked_obj_type  AS ?node_class) (?dst_object_ref AS ?node_id) ?src_object_ref ?dst_object_ref WHERE {
+          BIND( <`+nodeRef+`> AS ?src_object_ref )
+          {
+           ?src_object_ref ?rel_propery ?dst_object_ref .
+           ?dst_object_ref rdf:type ?linked_obj_type .
+           ?dst_object_ref `+nodeNameProperty+` ?node_name .
+          }
+          UNION
+          {
+           ?dst_object_ref ?rel_propery ?src_object_ref .
+           ?dst_object_ref rdf:type ?linked_obj_type .
+           ?dst_object_ref `+nodeNameProperty+` ?node_name .
+          }
+          } `
+      }
+      console.log("requesting linked nodes");
+
+      setSparqlQuery(query);
     }
 
     const GraphEvents: React.FC = () => {
@@ -143,23 +203,16 @@ export default function GraphExplorer(props:{filters:Array<string>,nodeNamePrope
         registerEvents({
           // node events
           rightClickNode: (event) => {
-            console.log("clickNode", event.event, event.node, event.preventSigmaDefault )
+            // event.preventSigmaDefault();
+            console.log("clickNode", event.event, event.node )
             console.log("node id: "+event.node);
-            setSelectedNodeId(event.node);
             setLoaderMode("update");
-            let query = `SELECT (?childName AS ?node_name) (?childType AS ?node_class) (?childInst AS ?node_id) ?src_object_ref (?childInst AS ?dst_object_ref) ?relPropery WHERE {
-              ?childInst ?relProperty <`+event.node+`> .
-              ?childInst `+nodeNameProperty+` ?childName .
-              ?childInst rdf:type ?childType .
-              BIND( <`+event.node+`> AS ?src_object_ref)
-              } `
-            setSparqlQuery(query);
-            // setOpenNodeViewer(true);
-            setReloader(reloader+1);
+            setSelectedNodeId(event.node);
+            loadLinkedNodes(event.node);
+            sigma.getGraph().setNodeAttribute(event.node, "highlighted", true);
 
           },
           doubleClickNode: (event) => {
-            console.log("doubleClickNode", event.event, event.node, event.preventSigmaDefault)
             setSelectedNodeId(event.node);
             setOpenNodeViewer(true);
           },
@@ -236,10 +289,11 @@ export default function GraphExplorer(props:{filters:Array<string>,nodeNamePrope
     };
     return (
         <Box>
-            <TextField id="search" label="Property to use as node name" value={nodeNameProperty} size='small' sx={{width:500}} variant="outlined" onChange={handleNodeNameProperty}  />
+            <TextField id="propery_name" label="Property to use as node name. Examples neat:Name or <http://purl.org/cognite/tnt/IdentifiedObject.name>" value={nodeNameProperty} size='small' sx={{width:500}} variant="outlined" onChange={handleNodeNameProperty}  />
+            <TextField id="response_limit" label="Limit max nodes in response" value={limitRecordsInResponse} size='small' type='number' sx={{width:150 , marginLeft:2}} variant="outlined" onChange={handleResponseLimitChange}  />
             <Button sx={{ marginLeft: 2 }} onClick={() => reload()  } variant="contained"> Reload </Button>
             <SigmaContainer style={{ height: "70vh", width: "100%" }}>
-                <LoadGraph filters={props.filters} nodeNameProperty={nodeNameProperty} reloader={reloader} sparqlQuery={sparqlQuery} mode={loaderMode}/>
+                <LoadGraph filters={props.filters} nodeNameProperty={nodeNameProperty} reloader={reloader} sparqlQuery={sparqlQuery} mode={loaderMode} limit={limitRecordsInResponse}/>
                 <ControlsContainer position={"top-right"}>
                     <LayoutForceAtlas2Control settings={{ settings: { slowDown: 10 } }} />
                 </ControlsContainer>
@@ -278,13 +332,12 @@ export default function GraphExplorer(props:{filters:Array<string>,nodeNamePrope
         return sizeMap[nodeClass];
       } else
         // calculate size based on graph size (from 1 to 15). max size for small graphs
-
         if (graphSize < 15)
           return 15;
         if (graphSize >= 15 && graphSize < 100)
           return 10;
         else
-          return 3;
+          return 5;
     }
 
     function getColor(nodeClass:string) {

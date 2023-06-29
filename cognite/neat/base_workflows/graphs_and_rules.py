@@ -64,6 +64,7 @@ class GraphsAndRulesBaseWorkflow(BaseWorkflow):
         self.source_graph = loader.NeatGraphStore(
             prefixes=self.transformation_rules.prefixes, base_prefix="neat", namespace=PREFIXES["neat"]
         )
+
         if self.get_config_item_value("source_rdf_store.type"):
             self.source_graph.init_graph(
                 self.get_config_item_value("source_rdf_store.type", self.graph_source_type),
@@ -77,6 +78,7 @@ class GraphsAndRulesBaseWorkflow(BaseWorkflow):
             self.solution_graph = loader.NeatGraphStore(
                 prefixes=self.transformation_rules.prefixes, base_prefix="neat", namespace=PREFIXES["neat"]
             )
+
             self.solution_graph.init_graph(
                 self.get_config_item_value("solution_rdf_store.type"),
                 self.get_config_item_value("solution_rdf_store.query_url"),

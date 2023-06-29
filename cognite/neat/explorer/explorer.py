@@ -379,22 +379,32 @@ def get_nodes_and_edges(request: NodesAndEdgesRequest):
     if request.sparql_query:
         mixed_result = get_data_from_graph(request.sparql_query, request.graph_name, request.workflow_name)
 
-        logging.info(f"Query result : {mixed_result}")
-        nodes_result = [
-            {
-                "node_id": v[rdflib.Variable("node_id")],
-                "node_class": v[rdflib.Variable("node_class")],
-                "node_name": v[rdflib.Variable("node_name")],
-            }
-            for v in mixed_result["rows"]
-        ]
-        edges_result = [
-            {
-                "src_object_ref": v[rdflib.Variable("src_object_ref")],
-                "dst_object_ref": v[rdflib.Variable("dst_object_ref")],
-            }
-            for v in mixed_result["rows"]
-        ]
+        edges_result = []
+        nodes_result = []
+        try:
+            nodes_result = [
+                {
+                    "node_id": v[rdflib.Variable("node_id")],
+                    "node_class": v[rdflib.Variable("node_class")],
+                    "node_name": v[rdflib.Variable("node_name")],
+                }
+                for v in mixed_result["rows"]
+            ]
+        except Exception as e:
+            logging.error(f"Error while parsing nodes : {e}")
+
+        try:
+            edges_result = [
+                {
+                    "src_object_ref": v[rdflib.Variable("src_object_ref")],
+                    "dst_object_ref": v[rdflib.Variable("dst_object_ref")],
+                }
+                for v in mixed_result["rows"]
+                if rdflib.Variable("src_object_ref") in v and rdflib.Variable("dst_object_ref") in v
+            ]
+        except Exception as e:
+            logging.error(f"Error while parsing edges : {e}")
+
         query = request.sparql_query
         elapsed_time_sec = mixed_result["elapsed_time_sec"]
     else:
@@ -426,6 +436,8 @@ def get_nodes_and_edges(request: NodesAndEdgesRequest):
             ?src_object_ref  rdf:type ?src_object_class . \
             ?dst_object_ref  rdf:type ?dst_object_class .\
             }} "
+        nodes_query = f"{nodes_query} LIMIT {request.limit}"
+        edges_query = f"{edges_query} LIMIT {request.limit}"
         logging.info(f"Nodes query : {nodes_query}")
         logging.info(f"Edges query : {edges_query}")
         nodes_result = get_data_from_graph(nodes_query, request.graph_name, request.workflow_name)
