@@ -14,7 +14,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## [0.14.1] - 28-06-23
+## [0.14.1] - 30-06-23
 ### Fixed
 * Fixed bugs in base workflows
 ### Improved

@@ -535,7 +535,6 @@ def _flatten_labels(labels: List[Dict[str, str]]) -> set[str]:
         else:
             logging.warning(f"Label {label} does not have externalId")
     return result
-    # return {label["externalId"] for label in labels}
 
 
 def _is_historic(labels) -> bool:
