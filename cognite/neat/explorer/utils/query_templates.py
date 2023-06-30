@@ -70,4 +70,18 @@ query_templates = [
         "{ <http://neat-cog.com/#_fbf1e5dc-2ce7-ec2a-e040-1e828c9489bf> ?property1 ?value1 . "
         "OPTIONAL { ?value1 ?property2 ?value2 } }",
     },
+    {
+        "name": "Get graph compatible query",
+        "query": """ SELECT (?parentName AS ?node_name)  (?parentClass AS ?node_class) ?parentPath (?parentInst AS ?node_id )
+ (?parentInst AS ?src_object_ref) (?parentInst2 AS ?dst_object_ref) WHERE {
+ ?tagInst rdf:type neat:AttributeTag .
+ ?tagInst neat:Path ?tagPath .
+ ?tagInst neat:Value ?tagValue .
+ ?tagInst neat:hasParent+ ?parentInst .
+ ?parentInst neat:Name ?parentName .
+ ?parentInst neat:Path ?parentPath .
+ ?parentInst rdf:type ?parentClass .
+ ?parentInst neat:hasParent ?parentInst2
+  }  limit 100""",
+    },
 ]

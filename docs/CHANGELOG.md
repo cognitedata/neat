@@ -14,6 +14,12 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.14.1] - 30-06-23
+### Fixed
+* Fixed bugs in base workflows
+### Improved
+* Improved graph based data exploration capabilities.
+
 ## [0.14.0] - 21-06-23
 ### Added
 * Base workflow concept. Most of common functionality is moved to base workflows. Now it is possible to create custom

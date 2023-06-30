@@ -4,6 +4,7 @@ from pathlib import Path
 from cognite.client import CogniteClient
 
 from cognite.neat.core import loader, parser
+from cognite.neat.core.configuration import PREFIXES
 from cognite.neat.core.data_classes.transformation_rules import TransformationRules
 from cognite.neat.core.loader.graph_store import NeatGraphStore, drop_graph_store
 from cognite.neat.core.transformer import RuleProcessingReport, domain2app_knowledge_graph
@@ -61,8 +62,9 @@ class GraphsAndRulesBaseWorkflow(BaseWorkflow):
             drop_graph_store(self.solution_graph, solution_store_dir, force=True)
 
         self.source_graph = loader.NeatGraphStore(
-            prefixes=self.transformation_rules.prefixes, base_prefix="nordic44", namespace="http://purl.org/nordic44#"
+            prefixes=self.transformation_rules.prefixes, base_prefix="neat", namespace=PREFIXES["neat"]
         )
+
         if self.get_config_item_value("source_rdf_store.type"):
             self.source_graph.init_graph(
                 self.get_config_item_value("source_rdf_store.type", self.graph_source_type),
@@ -73,7 +75,10 @@ class GraphsAndRulesBaseWorkflow(BaseWorkflow):
             )
 
         if self.get_config_item_value("solution_rdf_store.type"):
-            self.solution_graph = loader.NeatGraphStore(prefixes=self.transformation_rules.prefixes)
+            self.solution_graph = loader.NeatGraphStore(
+                prefixes=self.transformation_rules.prefixes, base_prefix="neat", namespace=PREFIXES["neat"]
+            )
+
             self.solution_graph.init_graph(
                 self.get_config_item_value("solution_rdf_store.type"),
                 self.get_config_item_value("solution_rdf_store.query_url"),

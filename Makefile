@@ -1,16 +1,20 @@
 .PHONY: run-explorer run-tests run-linters build-ui build-python build-docker run-docker compose-up
 
-version="0.14.0"
+version="0.14.1"
 run-explorer:
 	@echo "Running explorer API server..."
 	# open "http://localhost:8000/static/index.html" || true
 	mkdir -p ./data
-	export NEAT_CONFIG_PATH=./data/config.yaml && \
+	export NEAT_CONFIG_PATH=./dev-data/config.yaml && \
 	poetry run uvicorn --host 0.0.0.0 cognite.neat.explorer.explorer:app
 
 run-tests:
 	@echo "Running tests..."
 	poetry run pytest
+
+run-regen-test:
+	@echo "Regenerating test data for failed test. This will overwrite the existing test data !!!!!! Use with caution !!!!!!"
+	poetry run pytest --force-regen
 
 configure:
 	@echo "Configuring..."

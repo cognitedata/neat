@@ -7,6 +7,7 @@ __pycache__/
 config.yaml
 real_data/
 data/
+dev-data/
 
 !cognite/neat/examples/config.yaml
 requirements.txt

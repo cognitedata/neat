@@ -28,6 +28,7 @@ PREFIXES = {
     "md": Namespace("http://iec.ch/TC57/61970-552/ModelDescription/1#"),
     "pti": Namespace("http://www.pti-us.com/PTI_CIM-schema-cim16#"),
     "tnt": Namespace("http://purl.org/cognite/tnt#"),
+    "neat": Namespace("http://purl.org/cognite/neat#"),
 }
 
 DEFAULT_NAMESPACE = Namespace("http://purl.org/cognite/app#")
