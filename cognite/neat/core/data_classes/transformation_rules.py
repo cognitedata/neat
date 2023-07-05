@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import math
+import re
 import warnings
 from datetime import datetime
 from typing import Dict, List, Optional, Self, Union
@@ -181,21 +182,55 @@ class Property(Resource):
             return value
 
 
+prefix_compliance_regex = r"^([a-zA-Z]+[a-zA-Z0-9]+[_-]{0,1}[a-zA-Z0-9]+)+$"
+cdf_space_name_compliance_regex = rf"(?!^(space|cdf|dms|pg3|shared|system|node|edge)$)({prefix_compliance_regex})"
+data_model_name_compliance_regex = r"^([a-zA-Z]+[a-zA-Z0-9]+[_]{0,1}[a-zA-Z0-9])+$"
+version_compliance_regex = r"^([0-9]+[_-]{1}[0-9]+[_-]{1}[0-9]+[_-]{1}[a-zA-Z0-9]+)|([0-9]+[_-]{1}[0-9]+[_-]{1}[0-9]+)|([0-9]+[_-]{1}[0-9])|([0-9]+)$"
+
+
 class Metadata(BaseModel):
-    prefix: str = Field(alias="shortName")
-    namespace: Namespace = None
-    version: str
-    isCurrentVersion: bool = True
+    prefix: str = Field(
+        alias="shortName",
+        description="This is used as prefix for generation of RDF OWL/SHACL data model representation",
+        min_length=1,
+        max_length=43,
+    )
+    cdf_space_name: str = Field(
+        description="This is used as CDF space name to which model is intend to be stored. By default it is set to 'playground'",
+        alias="cdfSpaceName",
+        min_length=1,
+        max_length=43,
+        default="playground",
+    )
+
+    namespace: Namespace = Field(
+        description="This is used as RDF namespace for generation of RDF OWL/SHACL data model representation and/or for generation of RDF graphs",
+        min_length=1,
+        max_length=2048,
+        default=None,
+    )
+    data_model_name: str = Field(
+        description="Name that uniquely identifies data model",
+        alias="dataModelName",
+        min_length=1,
+        max_length=255,
+        default=None,
+    )
+
+    version: str = Field(
+        min_length=1,
+        max_length=43,
+    )
+    is_current_version: bool = Field(alias="isCurrentVersion", default=True)
     created: datetime
     updated: datetime = Field(default_factory=lambda: datetime.utcnow())
-    title: str
-    description: Optional[str] = None
-    abstract: Optional[str] = None
+    title: str = Field(min_length=1, max_length=255)
+    description: str = Field(max_length=1024, default=None)
     creator: str | list[str]
     contributor: Optional[str | list[str]] = None
     rights: Optional[str] = "Restricted for Internal Use of Cognite"
     externalIdPrefix: str = Field(alias="externalIdPrefix", default=None)
-    data_set_id: int = Field(alias="dataSetId")
+    data_set_id: int = Field(alias="dataSetId", default=None)
 
     @validator(
         "externalIdPrefix",
@@ -210,15 +245,65 @@ class Metadata(BaseModel):
             return field.default
         return value
 
+    @validator("prefix", always=True)
+    def make_prefix_compliant(cls, value):
+        repaired_string = re.sub(r"[^-_a-zA-Z0-9]", "", value.replace(" ", "-"))
+        if not re.match(prefix_compliance_regex, repaired_string):
+            raise ValueError(
+                f"Invalid prefix/shortName {value} in Metadata sheet, it must obey regex {prefix_compliance_regex} !"
+            )
+        else:
+            return repaired_string
+
+    @validator("cdf_space_name", always=True)
+    def make_cdf_space_name_compliant(cls, value):
+        repaired_string = re.sub(r"[^-_a-zA-Z0-9]", "", value.replace(" ", "-"))
+        if not re.match(cdf_space_name_compliance_regex, repaired_string):
+            raise ValueError(
+                f"Invalid cdfSpaceName {value} in Metadata sheet, it must obey regex {cdf_space_name_compliance_regex} !"
+            )
+        else:
+            return repaired_string
+
     @validator("namespace", always=True)
-    def set_namespace(cls, value, values):
+    def set_namespace_if_none(cls, value, values):
         if value is None:
-            return Namespace(f"http://purl.org/cognite/{values['prefix']}#")
+            if values["cdf_space_name"] == "playground":
+                return Namespace(f"http://purl.org/cognite/{values['prefix']}#")
+            else:
+                return Namespace(f"http://purl.org/cognite/{values['cdf_space_name']}/{values['prefix']}#")
         try:
-            _ = parse_obj_as(HttpUrl, value)
-            return Namespace(value)
+            return Namespace(parse_obj_as(HttpUrl, value))
         except ValidationError as e:
-            raise ValueError(f"Invalid namespace {value}, it must be a valid URL!") from e
+            raise ValueError(f"Invalid namespace {value} in Metadata sheet, it must be a valid URL!") from e
+
+    @validator("namespace", always=True)
+    def fix_namespace_ending(cls, value):
+        return value if value.endswith("#") or value.endswith("/") else f"{value}#"
+
+    @validator("data_model_name", always=True)
+    def set_data_model_name_if_none(cls, value, values):
+        return values["prefix"] if value is None else value
+
+    @validator("data_model_name", always=True)
+    def make_data_model_name_compliant(cls, value):
+        repaired_string = re.sub(r"[^_a-zA-Z0-9]", "", re.sub("[- .]+", "_", value))
+        if not re.match(data_model_name_compliance_regex, repaired_string):
+            raise ValueError(
+                f"Invalid name {repaired_string} in Metadata sheet, it must obey regex {data_model_name_compliance_regex} !"
+            )
+        else:
+            return repaired_string
+
+    @validator("version", always=True)
+    def make_version_compliant(cls, value):
+        repaired_string = re.sub(r"[^-_a-zA-Z0-9]", "", re.sub("[ .]+", "_", value))
+        if not re.match(version_compliance_regex, repaired_string):
+            raise ValueError(
+                f"Invalid version {repaired_string} in Metadata sheet, it must obey regex {version_compliance_regex} !"
+            )
+        else:
+            return repaired_string
 
     @validator("creator", "contributor")
     def to_list_if_comma(cls, value, field):
@@ -231,6 +316,7 @@ class Metadata(BaseModel):
 
     class Config:
         allow_population_by_field_name = True
+        anystr_strip_whitespace = True
 
     @classmethod
     def create_from_dataframe(cls, raw_dfs) -> Self:
