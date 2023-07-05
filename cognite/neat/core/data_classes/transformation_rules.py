@@ -182,6 +182,7 @@ class Property(Resource):
             return value
 
 
+# regex expressions for compliance of Metadata sheet parsing
 prefix_compliance_regex = r"^([a-zA-Z]+[a-zA-Z0-9]+[_-]{0,1}[a-zA-Z0-9]+)+$"
 cdf_space_name_compliance_regex = rf"(?!^(space|cdf|dms|pg3|shared|system|node|edge)$)({prefix_compliance_regex})"
 data_model_name_compliance_regex = r"^([a-zA-Z]+[a-zA-Z0-9]+[_]{0,1}[a-zA-Z0-9])+$"
@@ -231,6 +232,10 @@ class Metadata(BaseModel):
     rights: Optional[str] = "Restricted for Internal Use of Cognite"
     externalIdPrefix: str = Field(alias="externalIdPrefix", default=None)
     data_set_id: int = Field(alias="dataSetId", default=None)
+    imports: str | list[str] = Field(
+        description="Placeholder in case when data model is modular, i.e. provided as set of Excel files",
+        default=None,
+    )
 
     @validator(
         "externalIdPrefix",
