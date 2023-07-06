@@ -31,7 +31,7 @@ def _wrangle_owl_properties(data_model_definition: DataModelingDefinition) -> di
         if property_.property_name != "*":
             if property_.property_name not in properties:
                 properties[property_.property_name] = {
-                    "domain": {data_model_definition.namespace[property_.class_name]},
+                    "domain": {data_model_definition.namespace[property_.class_id]},
                     "range": {
                         data_model_definition.namespace[property_.expected_value_type]
                         if property_.property_type == "ObjectProperty"
@@ -47,7 +47,7 @@ def _wrangle_owl_properties(data_model_definition: DataModelingDefinition) -> di
                     # "deprecated": {property_.deprecated or None},
                 }
             else:
-                properties[property_.property_name]["domain"].add(data_model_definition.namespace[property_.class_name])
+                properties[property_.property_name]["domain"].add(data_model_definition.namespace[property_.class_id])
                 properties[property_.property_name]["range"].add(
                     data_model_definition.namespace[property_.expected_value_type]
                     if property_.property_type == "ObjectProperty"
@@ -214,21 +214,21 @@ def _add_owl_class(ontology_graph: Graph, data_model_definition: DataModelingDef
         Class to be added to ontology graph
     """
     # TODO: Simplify by only providing namespace instead of data_model_definition
-    ontology_graph.add((data_model_definition.namespace[class_.class_name], RDF.type, OWL.Class))
-    ontology_graph.add((data_model_definition.namespace[class_.class_name], RDFS.subClassOf, OWL.Thing))
+    ontology_graph.add((data_model_definition.namespace[class_.class_id], RDF.type, OWL.Class))
+    ontology_graph.add((data_model_definition.namespace[class_.class_id], RDFS.subClassOf, OWL.Thing))
 
     # add datatype recognition
-    ontology_graph.add((data_model_definition.namespace[class_.class_name], RDFS.label, Literal(class_.class_name)))
+    ontology_graph.add((data_model_definition.namespace[class_.class_id], RDFS.label, Literal(class_.class_id)))
 
     if class_.description:
         ontology_graph.add(
-            (data_model_definition.namespace[class_.class_name], RDFS.comment, Literal(class_.description))
+            (data_model_definition.namespace[class_.class_id], RDFS.comment, Literal(class_.description))
         )
 
     if class_.parent_class:
         ontology_graph.add(
             (
-                data_model_definition.namespace[class_.class_name],
+                data_model_definition.namespace[class_.class_id],
                 RDFS.subClassOf,
                 data_model_definition.namespace[class_.parent_class],
             )
@@ -237,7 +237,7 @@ def _add_owl_class(ontology_graph: Graph, data_model_definition: DataModelingDef
     if class_.deprecated:
         ontology_graph.add(
             (
-                data_model_definition.namespace[class_.class_name],
+                data_model_definition.namespace[class_.class_id],
                 OWL.deprecated,
                 Literal(class_.deprecated, datatype=XSD.boolean),
             )
@@ -246,17 +246,17 @@ def _add_owl_class(ontology_graph: Graph, data_model_definition: DataModelingDef
     if class_.replaced_by:
         ontology_graph.add(
             (
-                data_model_definition.namespace[class_.class_name],
+                data_model_definition.namespace[class_.class_id],
                 DCTERMS.isReplacedBy,
                 data_model_definition.namespace[class_.replaced_by],
             )
         )
 
     if class_.similar_to:
-        ontology_graph.add((data_model_definition.namespace[class_.class_name], SKOS.exactMatch, class_.similar_to))
+        ontology_graph.add((data_model_definition.namespace[class_.class_id], SKOS.exactMatch, class_.similar_to))
 
     if class_.equal_to:
-        ontology_graph.add((data_model_definition.namespace[class_.class_name], OWL.equivalentClass, class_.equal_to))
+        ontology_graph.add((data_model_definition.namespace[class_.class_id], OWL.equivalentClass, class_.equal_to))
 
 
 def data_model_definition2owl(
@@ -321,8 +321,8 @@ def data_model_definition2shacl(
     for shacl_constraint in data_model_definition.properties.values():
         property_name = shacl_constraint.property_name
         if property_name != "*":
-            class_name = shacl_constraint.class_name
-            node_shape_name = f"{class_name}Shape"
+            class_id = shacl_constraint.class_id
+            node_shape_name = f"{class_id}Shape"
 
             # adds node shape to shacl graph
             if node_shape_name not in node_shapes:
@@ -332,14 +332,14 @@ def data_model_definition2shacl(
                     (
                         data_model_definition.namespace[node_shape_name],
                         RDFS.comment,
-                        Literal(data_model_definition.classes[class_name].description),
+                        Literal(data_model_definition.classes[class_id].description),
                     )
                 )
                 shacl_graph.add(
                     (
                         data_model_definition.namespace[node_shape_name],
                         SHACL.targetClass,
-                        data_model_definition.namespace[class_name],
+                        data_model_definition.namespace[class_id],
                     )
                 )
 

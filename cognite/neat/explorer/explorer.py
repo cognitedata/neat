@@ -168,8 +168,8 @@ def get_rules(
         rules = parser.parse_transformation_rules(tables)
         properties = [
             {
-                "class": value.class_name,
-                "property": value.property_name,
+                "class": value.class_id,
+                "property": value.property_id,
                 "property_description": value.description,
                 "property_type": value.expected_value_type,
                 "cdf_resource_type": value.cdf_resource_type,
@@ -182,7 +182,7 @@ def get_rules(
 
         classes = [
             {
-                "class": value.class_name,
+                "class": value.class_id,
                 "class_description": value.description,
                 "cdf_resource_type": value.cdf_resource_type,
                 "cdf_parent_resource": value.parent_asset,

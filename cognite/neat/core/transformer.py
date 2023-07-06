@@ -155,12 +155,12 @@ def domain2app_knowledge_graph(
     for sheet_row, rule_definition in transformation_rules.properties.items():
         if not rule_definition.rule or rule_definition.skip_rule:
             continue
-        msg = f"Processing {sheet_row}: class <{rule_definition.class_name}> "
+        msg = f"Processing {sheet_row}: class <{rule_definition.class_id}> "
         msg += f"property <{rule_definition.property_name}> rule <{rule_definition.rule}>"
 
         processing_report_rec = RuleProcessingReportRec(
             row_id=sheet_row,
-            rule_name=f"{rule_definition.class_name}_{rule_definition.property_name}",
+            rule_name=f"{rule_definition.class_id}_{rule_definition.property_name}",
             rule_type=rule_definition.rule_type,
             rule_expression=rule_definition.rule,
         )
@@ -180,7 +180,7 @@ def domain2app_knowledge_graph(
 
             if query_results := list(domain_knowledge_graph.query(query)):
                 # Generate URI for class and property in target namespace
-                class_URI = transformation_rules.metadata.namespace[rule_definition.class_name]
+                class_URI = transformation_rules.metadata.namespace[rule_definition.class_id]
                 property_URI = transformation_rules.metadata.namespace[rule_definition.property_name]
 
                 # Turn query results into dataframe
@@ -249,7 +249,7 @@ def domain2app_knowledge_graph(
             processing_report_rec.error_message = str(e)
             prom_total_proc_rules_g.labels(state="failed").inc()
             logging.error(
-                f" Error while processing rule {rule_definition.rule} for class {rule_definition.class_name} \
+                f" Error while processing rule {rule_definition.rule} for class {rule_definition.class_id} \
                 and property {rule_definition.property_name}"
             )
             logging.error(traceback.format_exc())

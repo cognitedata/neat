@@ -18,7 +18,8 @@ def google_to_table_by_name(sheet_id: str) -> dict[str, pd.DataFrame]:
 
 def excel_file_to_table_by_name(filepath: Path) -> dict[str, pd.DataFrame]:
     workbook: Workbook = load_workbook(filepath)
-    return {
+
+    sheets = {
         sheetname: pd.read_excel(
             filepath,
             sheet_name=sheetname,
@@ -27,3 +28,8 @@ def excel_file_to_table_by_name(filepath: Path) -> dict[str, pd.DataFrame]:
         )
         for sheetname in workbook.sheetnames
     }
+
+    for sheetname in sheets:
+        sheets[sheetname].filepath = filepath
+
+    return sheets

@@ -112,7 +112,7 @@ def _get_class_property_pairs(transformation_rules: TransformationRules) -> dict
     classes = {}
 
     for property_ in transformation_rules.properties.keys():
-        class_ = transformation_rules.properties[property_].class_name
+        class_ = transformation_rules.properties[property_].class_id
 
         if class_ in classes:
             classes[class_] += [transformation_rules.properties[property_]]
