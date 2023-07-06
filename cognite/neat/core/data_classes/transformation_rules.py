@@ -62,6 +62,8 @@ class Resource(BaseModel):
         alias="Match Type", description="Type of match between source entity and one being defined", default=None
     )
     comment: str = Field(alias="Comment", description="Comment about mapping", default=None)
+    issues: List[str] = Field(default=None, description="Storing list of pydantic validation issues")
+    valid: bool = Field(default=True, description="Indicates whether resource is valid or not")
 
     @validator(
         "deprecated",
@@ -313,6 +315,8 @@ class Metadata(BaseModel):
         description="File path to Excel file which was used to produce Transformation Rules",
         default=None,
     )
+    issues: List[str] = Field(default=None, description="Storing list of pydantic validation issues")
+    valid: bool = Field(default=True, description="Indicates whether resource is valid or not")
 
     @validator(
         "externalIdPrefix",
