@@ -93,7 +93,7 @@ class Class(Resource):
     class_id: ExternalId = Field(alias="Class", )
     class_name: ExternalId = Field(alias="Name", default=None)
     # Solution model
-    parent_class: str = Field(alias="Parent Class", min_length=1, max_length=255, default=None)
+    parent_class: ExternalId= Field(alias="Parent Class", default=None)
 
     # Solution CDF resource
     parent_asset: str = Field(alias="Parent Asset", default=None)
