@@ -15,17 +15,23 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## [0.14.1] - 07-07-23
+## [0.14.2] - 07-07-23
+
+### Added
 
 - Added additional validators to comply with CDF DM
 - Added new fields to handle request for having both entity ids and entity names
 - Added new fields to capture necessary information to resolve sheets as (f)DM
 
-### Added
+## [0.14.1] - 30-06-23
 
-- Base workflow concept. Most of common functionality is moved to base workflows. Now it is possible to create custom
-  workflows by inheriting from base workflow. More infor in docs
-- Added 3 main workflow start methods . More info in docs
+### Fixed
+
+- Fixed bugs in base workflows
+
+### Improved
+
+- Improved graph based data exploration capabilities.
 
 ## [0.14.0] - 21-06-23
 
