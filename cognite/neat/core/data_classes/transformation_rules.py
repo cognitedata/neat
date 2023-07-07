@@ -90,8 +90,8 @@ class_id_compliance_regex = r"^([a-zA-Z]+[a-zA-Z0-9]+[._-]{0,1}[a-zA-Z0-9]+)+$"
 
 
 class Class(Resource):
-    class_id: str = Field(alias="Class", min_length=1, max_length=255)
-    class_name: str = Field(alias="Name", min_length=1, max_length=255, default=None)
+    class_id: ExternalId = Field(alias="Class", )
+    class_name: ExternalId = Field(alias="Name", default=None)
     # Solution model
     parent_class: str = Field(alias="Parent Class", min_length=1, max_length=255, default=None)
 
