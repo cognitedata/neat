@@ -2,13 +2,15 @@ from __future__ import annotations
 
 import logging
 import math
+import re
 import warnings
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, List, Optional, Self, Union
 
 import pandas as pd
 from graphql import GraphQLBoolean, GraphQLFloat, GraphQLInt, GraphQLString
-from pydantic import BaseModel, Field, HttpUrl, ValidationError, parse_obj_as, root_validator, validator
+from pydantic import BaseModel, Field, HttpUrl, ValidationError, constr, parse_obj_as, root_validator, validator
 from rdflib import XSD, Literal, Namespace, URIRef
 
 from cognite.neat.core.configuration import PREFIXES, Tables
@@ -27,6 +29,8 @@ DATA_TYPE_MAPPING = {
     "anyURI": {"python": "str", "GraphQL": GraphQLString},
     "normalizedString": {"python": "str", "GraphQL": GraphQLString},
     "token": {"python": "str", "GraphQL": GraphQLString},
+    # Graphql does not have a datetime type this is CDF specific
+    "dateTime": {"python": "datetime", "GraphQL": "Timestamp"},
 }
 METADATA_VALUE_MAX_LENGTH = 5120
 
@@ -35,30 +39,44 @@ class URL(BaseModel):
     url: HttpUrl
 
 
+Description = constr(min_length=1, max_length=255)
+
+
 class Resource(BaseModel):
     # Solution model
-    class_name: str = Field(alias="Class")
-    description: str = Field(alias="Description", default="")
+    description: Description = Field(alias="Description", default=None)
 
-    # Solution CDF resource
-    cdf_resource_type: str = Field(alias="Resource Type")
+    # Solution CDF resource, it is not needed when working with FDM, this is only for
+    # Classic CDF data model
+    cdf_resource_type: str = Field(alias="Resource Type", default=None)
 
-    # Solution model advance configuration
+    # Advance data modeling: Keeping track if Resource got deprecated or not
     deprecated: bool = Field(default=False)
     deprecation_date: Optional[datetime] = Field(alias="deprecationDate", default=None)
     replaced_by: str = Field(alias="replacedBy", default=None)
-    similar_to: HttpUrl = Field(alias="similarTo", default=None)
-    similarity_score: float = Field(alias="similarityScore", default=None)
-    equal_to: HttpUrl = Field(alias="equalTo", default=None)
+
+    # Advance data modeling: Relation to existing resources for purpose of mapping
+    source: HttpUrl = Field(
+        alias="Source", description="Source of information for given entity, e.g. CIM", default=None
+    )
+    source_entity_name: str = Field(
+        alias="Source Entity Name", description="Closest entity in source, e.g. Substation", default=None
+    )
+    match_type: str = Field(
+        alias="Match Type", description="Type of match between source entity and one being defined", default=None
+    )
+    comment: str = Field(alias="Comment", description="Comment about mapping", default=None)
+    issues: List[str] = Field(default=None, description="Storing list of pydantic validation issues")
+    valid: bool = Field(default=True, description="Indicates whether resource is valid or not")
 
     @validator(
         "deprecated",
         "deprecation_date",
         "replaced_by",
-        "similar_to",
-        "similarity_score",
-        "equal_to",
-        "description",
+        "source",
+        "source_entity_name",
+        "match_type",
+        "comment",
         pre=True,
     )
     def replace_float_nan_with_default(cls, value, field):
@@ -66,13 +84,26 @@ class Resource(BaseModel):
             return field.default
         return value
 
+    class Config:
+        allow_population_by_field_name = True
+        anystr_strip_whitespace = True
+
+
+class_id_compliance_regex = r"^([a-zA-Z]+[a-zA-Z0-9]+[._-]{0,1}[a-zA-Z0-9]+)+$"
+
+ExternalId = constr(min_length=1, max_length=255)
+
 
 class Class(Resource):
+    class_id: ExternalId = Field(
+        alias="Class",
+    )
+    class_name: ExternalId = Field(alias="Name", default=None)
     # Solution model
-    parent_class: str = Field(alias="Parent Class", default=None)
+    parent_class: ExternalId = Field(alias="Parent Class", default=None)
 
     # Solution CDF resource
-    parent_asset: str = Field(alias="Parent Asset", default=None)
+    parent_asset: ExternalId = Field(alias="Parent Asset", default=None)
 
     @validator("parent_class", "parent_asset", pre=True)
     def replace_float_nan_with_default(cls, value, field):
@@ -80,11 +111,29 @@ class Class(Resource):
             return field.default
         return value
 
+    @validator("class_id", always=True)
+    def is_class_id_compliant(cls, value):
+        if not re.match(class_id_compliance_regex, value):
+            raise ValueError(
+                f"Invalid class_id {value} in Class sheet, it must obey regex {class_id_compliance_regex} !"
+            )
+        else:
+            return value
+
+    @validator("class_name", always=True)
+    def set_class_name_if_none(cls, value, values):
+        return values["class_id"] if value is None and "class_id" in values else value
+
+
+property_id_compliance_regex = r"^(\*)|(([a-zA-Z]+[a-zA-Z0-9]+[._-]{0,1}[a-zA-Z0-9]+)+)$"
+
 
 class Property(Resource):
     # Solution model
-    property_name: str = Field(alias="Property")
-    expected_value_type: str = Field(alias="Type")
+    class_id: ExternalId = Field(alias="Class")
+    property_id: ExternalId = Field(alias="Property")
+    property_name: ExternalId = Field(alias="Name", default=None)
+    expected_value_type: ExternalId = Field(alias="Type")
     min_count: Optional[int] = Field(alias="Min Count", default=0)
     max_count: Optional[int] = Field(alias="Max Count", default=None)
 
@@ -130,6 +179,37 @@ class Property(Resource):
             return field.default
         return value
 
+    @validator("class_id", always=True)
+    def is_class_id_compliant(cls, value):
+        if not re.match(class_id_compliance_regex, value):
+            raise ValueError(
+                f"Invalid class_id {value} in Property sheet, it must obey regex {class_id_compliance_regex} !"
+            )
+        else:
+            return value
+
+    @validator("property_id", always=True)
+    def is_property_id_compliant(cls, value):
+        if not re.match(property_id_compliance_regex, value):
+            raise ValueError(
+                f"Invalid property_id {value} in Property sheet, it must obey regex {property_id_compliance_regex} !"
+            )
+        else:
+            return value
+
+    @validator("expected_value_type", always=True)
+    def is_expected_value_type_compliant(cls, value):
+        if not re.match(class_id_compliance_regex, value):
+            raise ValueError(
+                f"Invalid Type {value} in Property sheet, it must obey regex {class_id_compliance_regex} !"
+            )
+        else:
+            return value
+
+    @validator("property_name", always=True)
+    def set_property_name_if_none(cls, value, values):
+        return values["property_id"] if value is None and "property_id" in values else value
+
     @validator("rule_type", pre=True)
     def to_lowercase(cls, value):
         return value.casefold() if value else value
@@ -154,7 +234,7 @@ class Property(Resource):
     @validator("label")
     def set_relationship_label(cls, value, values):
         if "Relationship" in values.get("cdf_resource_type") and not value:
-            return values.get("property_name")
+            return values.get("property_id")
         return value
 
     @validator("cdf_resource_type", pre=True)
@@ -181,21 +261,62 @@ class Property(Resource):
             return value
 
 
+# regex expressions for compliance of Metadata sheet parsing
+prefix_compliance_regex = r"^([a-zA-Z]+[a-zA-Z0-9]+[_-]{0,1}[a-zA-Z0-9]+)+$"
+cdf_space_name_compliance_regex = rf"(?!^(space|cdf|dms|pg3|shared|system|node|edge)$)({prefix_compliance_regex})"
+data_model_name_compliance_regex = r"^([a-zA-Z]+[a-zA-Z0-9]+[_]{0,1}[a-zA-Z0-9])+$"
+version_compliance_regex = r"^([0-9]+[_-]{1}[0-9]+[_-]{1}[0-9]+[_-]{1}[a-zA-Z0-9]+)|([0-9]+[_-]{1}[0-9]+[_-]{1}[0-9]+)|([0-9]+[_-]{1}[0-9])|([0-9]+)$"
+
+Prefix = constr(min_length=1, max_length=43)
+
+
 class Metadata(BaseModel):
-    prefix: str = Field(alias="shortName")
-    namespace: Namespace = None
-    version: str
-    isCurrentVersion: bool = True
+    prefix: Prefix = Field(
+        alias="shortName",
+        description="This is used as prefix for generation of RDF OWL/SHACL data model representation",
+    )
+    cdf_space_name: Prefix = Field(
+        description="This is used as CDF space name to which model is intend to be stored. By default it is set to 'playground'",
+        alias="cdfSpaceName",
+        default="playground",
+    )
+
+    namespace: Namespace = Field(
+        description="This is used as RDF namespace for generation of RDF OWL/SHACL data model representation and/or for generation of RDF graphs",
+        min_length=1,
+        max_length=2048,
+        default=None,
+    )
+    data_model_name: ExternalId = Field(
+        description="Name that uniquely identifies data model",
+        alias="dataModelName",
+        default=None,
+    )
+
+    version: str = Field(
+        min_length=1,
+        max_length=43,
+    )
+    is_current_version: bool = Field(alias="isCurrentVersion", default=True)
     created: datetime
     updated: datetime = Field(default_factory=lambda: datetime.utcnow())
-    title: str
-    description: Optional[str] = None
-    abstract: Optional[str] = None
+    title: str = Field(min_length=1, max_length=255)
+    description: Description
     creator: str | list[str]
     contributor: Optional[str | list[str]] = None
     rights: Optional[str] = "Restricted for Internal Use of Cognite"
     externalIdPrefix: str = Field(alias="externalIdPrefix", default=None)
-    data_set_id: int = Field(alias="dataSetId")
+    data_set_id: int = Field(alias="dataSetId", default=None)
+    imports: list[str] = Field(
+        description="Placeholder in case when data model is modular, i.e. provided as set of Excel files",
+        default=None,
+    )
+    source: str | Path = Field(
+        description="File path to Excel file which was used to produce Transformation Rules",
+        default=None,
+    )
+    issues: List[str] = Field(default=None, description="Storing list of pydantic validation issues")
+    valid: bool = Field(default=True, description="Indicates whether resource is valid or not")
 
     @validator(
         "externalIdPrefix",
@@ -210,15 +331,65 @@ class Metadata(BaseModel):
             return field.default
         return value
 
+    @validator("prefix", always=True)
+    def make_prefix_compliant(cls, value):
+        repaired_string = re.sub(r"[^-_a-zA-Z0-9]", "", value.replace(" ", "-"))
+        if not re.match(prefix_compliance_regex, repaired_string):
+            raise ValueError(
+                f"Invalid prefix/shortName {value} in Metadata sheet, it must obey regex {prefix_compliance_regex} !"
+            )
+        else:
+            return repaired_string
+
+    @validator("cdf_space_name", always=True)
+    def make_cdf_space_name_compliant(cls, value):
+        repaired_string = re.sub(r"[^-_a-zA-Z0-9]", "", value.replace(" ", "-"))
+        if not re.match(cdf_space_name_compliance_regex, repaired_string):
+            raise ValueError(
+                f"Invalid cdfSpaceName {value} in Metadata sheet, it must obey regex {cdf_space_name_compliance_regex} !"
+            )
+        else:
+            return repaired_string
+
     @validator("namespace", always=True)
-    def set_namespace(cls, value, values):
+    def set_namespace_if_none(cls, value, values):
         if value is None:
-            return Namespace(f"http://purl.org/cognite/{values['prefix']}#")
+            if values["cdf_space_name"] == "playground":
+                return Namespace(f"http://purl.org/cognite/{values['prefix']}#")
+            else:
+                return Namespace(f"http://purl.org/cognite/{values['cdf_space_name']}/{values['prefix']}#")
         try:
-            _ = parse_obj_as(HttpUrl, value)
-            return Namespace(value)
+            return Namespace(parse_obj_as(HttpUrl, value))
         except ValidationError as e:
-            raise ValueError(f"Invalid namespace {value}, it must be a valid URL!") from e
+            raise ValueError(f"Invalid namespace {value} in Metadata sheet, it must be a valid URL!") from e
+
+    @validator("namespace", always=True)
+    def fix_namespace_ending(cls, value):
+        return value if value.endswith("#") or value.endswith("/") else f"{value}#"
+
+    @validator("data_model_name", always=True)
+    def set_data_model_name_if_none(cls, value, values):
+        return values["prefix"] if value is None else value
+
+    @validator("data_model_name", always=True)
+    def make_data_model_name_compliant(cls, value):
+        repaired_string = re.sub(r"[^_a-zA-Z0-9]", "", re.sub("[- .]+", "_", value))
+        if not re.match(data_model_name_compliance_regex, repaired_string):
+            raise ValueError(
+                f"Invalid name {repaired_string} in Metadata sheet, it must obey regex {data_model_name_compliance_regex} !"
+            )
+        else:
+            return repaired_string
+
+    @validator("version", always=True)
+    def make_version_compliant(cls, value):
+        repaired_string = re.sub(r"[^-_a-zA-Z0-9]", "", re.sub("[ .]+", "_", value))
+        if not re.match(version_compliance_regex, repaired_string):
+            raise ValueError(
+                f"Invalid version {repaired_string} in Metadata sheet, it must obey regex {version_compliance_regex} !"
+            )
+        else:
+            return repaired_string
 
     @validator("creator", "contributor")
     def to_list_if_comma(cls, value, field):
@@ -231,13 +402,18 @@ class Metadata(BaseModel):
 
     class Config:
         allow_population_by_field_name = True
+        anystr_strip_whitespace = True
 
     @classmethod
     def create_from_dataframe(cls, raw_dfs) -> Self:
         expected_tables = Tables.as_set()
         if missing_tables := (expected_tables - set(raw_dfs)):
             raise ValueError(f"Missing the following tables {', '.join(missing_tables)}")
-        return Metadata(**dict(zip(raw_dfs[Tables.metadata][0], raw_dfs[Tables.metadata][1])))
+
+        return Metadata(
+            **dict(zip(raw_dfs[Tables.metadata][0], raw_dfs[Tables.metadata][1])),
+            source=raw_dfs[Tables.metadata].source if "source" in dir(raw_dfs[Tables.metadata]) else None,
+        )
 
 
 class Prefixes(BaseModel):
@@ -361,17 +537,17 @@ class TransformationRules(BaseModel):
         )
 
     @validator("properties", each_item=True)
-    def is_valid_mapping(cls, value, values):
+    def class_property_exist(cls, value, values):
         if classes := values.get("classes"):
-            if value.class_name not in classes:
-                raise ValueError(f"invalid mapping rule, {value.class_name} does not exist ")
+            if value.class_id not in classes:
+                raise ValueError(f"Property <{value.property_id}> defined for non-existing class <{value.class_id}>!")
         return value
 
     @validator("properties", each_item=True)
     def value_type_exist(cls, value, values):
         if classes := values.get("classes"):
             if value.property_type == "ObjectProperty" and value.expected_value_type not in classes:
-                msg = f"Property <{value.property_name}> defined for class <{value.class_name}> has "
+                msg = f"Property <{value.property_id}> defined for class <{value.class_id}> has "
                 msg += f"value type <{value.expected_value_type}> which is not defined!"
                 raise ValueError(msg)
         return value
@@ -380,13 +556,13 @@ class TransformationRules(BaseModel):
     def add_missing_label(cls, value):
         "Add label if missing for relationships"
         if value.label is None and "Relationship" in value.cdf_resource_type:
-            value.label = value.property_name
+            value.label = value.property_id
         return value
 
     @validator("properties")
     def is_type_defined_as_object(cls, value):
         "Checks if property expected value type is defined as object"
-        defined_objects = {property_.class_name for property_ in value.values()}
+        defined_objects = {property_.class_id for property_ in value.values()}
 
         if undefined_objects := [
             id
@@ -400,15 +576,6 @@ class TransformationRules(BaseModel):
             raise ValueError("".join(msg))
         return value
 
-    @validator("properties", each_item=True)
-    def class_property_exist(cls, value, values):
-        if classes := values.get("classes"):
-            if value.class_name not in classes:
-                raise ValueError(
-                    f"Property <{value.property_name}> defined for non-existing class <{value.class_name}>!"
-                )
-        return value
-
     @validator("prefixes")
     def add_data_model_prefix_namespace(cls, value, values):
         value[values["metadata"].prefix] = values["metadata"].namespace
@@ -416,9 +583,9 @@ class TransformationRules(BaseModel):
 
     def get_labels(self) -> set[str]:
         """Return CDF labels for classes and relationships."""
-        class_labels = {class_.class_name for class_ in self.classes.values()}
+        class_labels = {class_.class_id for class_ in self.classes.values()}
 
-        property_labels = {property_.property_name for property_ in self.properties.values()}
+        property_labels = {property_.property_id for property_ in self.properties.values()}
 
         relationship_labels = {
             rule.label for rule in self.properties.values() if "Relationship" in rule.cdf_resource_type
@@ -428,7 +595,7 @@ class TransformationRules(BaseModel):
 
     def get_defined_classes(self) -> set[str]:
         """Returns classes that have been defined in the data model."""
-        return {property.class_name for property in self.properties.values()}
+        return {property.class_id for property in self.properties.values()}
 
     def get_classes_with_properties(self) -> dict[str, list[Property]]:
         """Returns classes that have been defined in the data model."""
@@ -436,7 +603,7 @@ class TransformationRules(BaseModel):
         class_property_pairs = {}
 
         for property_ in self.properties.values():
-            class_ = property_.class_name
+            class_ = property_.class_id
             if class_ in class_property_pairs:
                 class_property_pairs[class_] += [property_]
             else:
@@ -451,13 +618,13 @@ class TransformationRules(BaseModel):
         for class_, properties in self.get_classes_with_properties().items():
             processed_properties = {}
             for property_ in properties:
-                if property_.property_name in processed_properties:
+                if property_.property_id in processed_properties:
                     warnings.warn(
                         "Property has been defined more than once! Only first definition will be considered.",
                         stacklevel=2,
                     )
                     continue
-                processed_properties[property_.property_name] = property_
+                processed_properties[property_.property_id] = property_
             class_property_pairs[class_] = processed_properties
 
         return class_property_pairs
@@ -467,11 +634,11 @@ class TransformationRules(BaseModel):
         issues = set()
         for class_, properties in self.get_classes_with_properties().items():
             analyzed_properties = []
-            for property in properties:
-                if property.property_name not in analyzed_properties:
-                    analyzed_properties.append(property.property_name)
+            for property_ in properties:
+                if property_.property_id not in analyzed_properties:
+                    analyzed_properties.append(property_.property_id)
                 else:
-                    issues.add(f"Property {property.property_name} of class {class_} has been defined more than once!")
+                    issues.add(f"Property {property_.property_id} of class {class_} has been defined more than once!")
         return issues
 
     def reduce_data_model(self, desired_classes: set, skip_validation: bool = False) -> TransformationRules:
@@ -522,7 +689,7 @@ class TransformationRules(BaseModel):
             reduced_data_model["classes"][class_] = self.classes[class_]
 
         for id_, property_definition in self.properties.items():
-            if property_definition.class_name in possible_classes:
+            if property_definition.class_id in possible_classes:
                 reduced_data_model["properties"][id_] = property_definition
 
         if skip_validation:
@@ -547,8 +714,8 @@ class TransformationRules(BaseModel):
         for class_ in defined_classes:
             properties = {}
             for property_ in defined_classes[class_]:
-                if property_.property_name not in properties:
-                    properties[property_.property_name] = {
+                if property_.property_id not in properties:
+                    properties[property_.property_id] = {
                         "property_type": property_.property_type,
                         "value_type": property_.expected_value_type,
                         "min_count": property_.min_count,
@@ -567,9 +734,9 @@ class TransformationRules(BaseModel):
             if property_.property_type == "ObjectProperty":
                 new_row = pd.Series(
                     {
-                        "source_class": property_.class_name,
+                        "source_class": property_.class_id,
                         "target_class": property_.expected_value_type,
-                        "connecting_property": property_.property_name,
+                        "connecting_property": property_.property_id,
                         "max_occurrence": property_.max_count,
                     }
                 )
@@ -614,20 +781,20 @@ class TransformationRules(BaseModel):
         for row, rule in self.properties.items():
             if "Relationship" in rule.cdf_resource_type:
                 relationship = RelationshipDefinition(
-                    source_class=rule.class_name,
+                    source_class=rule.class_id,
                     target_class=rule.expected_value_type,
-                    property_=rule.property_name,
+                    property_=rule.property_id,
                     labels=list(
-                        set([rule.label, rule.class_name, rule.expected_value_type, "non-historic", rule.property_name])
+                        set([rule.label, rule.class_id, rule.expected_value_type, "non-historic", rule.property_id])
                     ),
                     target_type=rule.target_type,
                     source_type=rule.source_type,
                     relationship_external_id_rule=rule.relationship_external_id_rule,
                 )
 
-                id_ = f"{rule.class_name}({rule.property_name})"
+                id_ = f"{rule.class_id}({rule.property_id})"
                 if id_ in ids:
-                    msg = f"Relationship {rule.property_name} redefined at {row} in transformation rules!"
+                    msg = f"Relationship {rule.property_id} redefined at {row} in transformation rules!"
                     if stop_on_exception:
                         logging.error(msg)
                         raise ValueError(msg)
