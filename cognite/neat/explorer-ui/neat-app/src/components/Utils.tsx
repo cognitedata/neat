@@ -29,6 +29,14 @@ export function convertMillisToStr(millis) {
   return isoString;
 }
 
+export function getShortenedString(str,len) {
+  str = RemoveNsPrefix(str);
+  if (str.length <= len) {
+    return str;
+  } else {
+    return str.slice(0,len)+"..."+ str.slice(-len);
+  }
+}
 
 export default function RemoveNsPrefix(strWithPrefix: string) {
 

@@ -25,7 +25,7 @@ import TabPanel from 'components/TabPanel';
 import OverviewRow from './OverviewView';
 import OverviewTable from './OverviewView';
 import { ExplorerContext } from '../components/Context';
-import RemoveNsPrefix, { getNeatApiRootUrl, getSelectedWorkflowName } from '../components/Utils';
+import RemoveNsPrefix, { getNeatApiRootUrl, getSelectedWorkflowName,getShortenedString } from '../components/Utils';
 import Chip from '@mui/material/Chip';
 import OutlinedInput from '@mui/material/OutlinedInput';
 import { Theme, useTheme } from '@mui/material/styles';
@@ -146,7 +146,7 @@ export function QuerySelector(props:{selectedHandler:Function,settingsUpdateHand
         <Box>
          <TextField id="rule" label="Rule" value = {rule} size='small' sx={{width:"80vw"}} variant="outlined" onChange={handleRuleChange}  />
          <Button sx={{ margin: "5px" }} variant="contained" onClick={()=>{ props.selectedHandler(rule,"rule") }}> Execute rule </Button>
-        </Box>
+         </Box>
         </React.Fragment>
 )}
         <Box>
@@ -339,11 +339,13 @@ export default function QDataTable() {
   const [bhistory, setBhistory] = useState(Array<string>);
   const [tabValue, setTabValue] = React.useState(0);
   const [filters , setFilters] = React.useState(Array<string>);
+  const [sparqlQuery, setSparqlQuery] = React.useState("");
 
   // const {hiddenNsPrefixModeCtx, graphNameCtx} = React.useContext(ExplorerContext);
   // const [graphName, setGraphName] = graphNameCtx;
   // const [hiddenNsPrefixMode, setHiddenNsPrefixMode ] = hiddenNsPrefixModeCtx;
-  const nodeNameProperty = "<http://purl.org/cognite/tnt/IdentifiedObject.name>"
+  let nodeNameProperty = ""
+
 
   const getColumnDefs = (fields:[string]) => {
     const columns: GridColDef[] = [];
@@ -352,6 +354,27 @@ export default function QDataTable() {
       columns.push({field: field, headerName: field,renderCell: renderCellExpand , flex:0.5});
     });
     return columns;
+  }
+
+  const loadObjectAsGraph = (reference:string) => {
+    setTabValue(2);
+    nodeNameProperty = localStorage.getItem('nodeNameProperty')
+    let query = ``
+    if (!nodeNameProperty) {
+      query = `SELECT (?inst AS ?node_name) ?node_class (?inst AS ?node_id) WHERE {
+        BIND( <`+reference+`> AS ?inst)
+        ?inst rdf:type ?node_class .
+        } `
+    } else {
+      query = `SELECT ?node_name ?node_class (?inst AS ?node_id) WHERE {
+        BIND( <`+reference+`> AS ?inst)
+        ?inst `+nodeNameProperty+` ?node_name .
+        ?inst rdf:type ?node_class .
+        } `
+    }
+
+    setSparqlQuery(query);
+    // loadDataset(sparqlQuery,"query");
   }
 
   const loadObjectProperties = (reference:string) => {
@@ -385,6 +408,7 @@ export default function QDataTable() {
    }
 
    const searchObjects = (searchStr:string,searchType:string) => {
+      setTabValue(1);
       setLoading(true);
       const workflowName = getSelectedWorkflowName();
       fetch(neatApiRootUrl+`/api/search?`+new URLSearchParams({"search_str":searchStr,"graph_name":graphName,"search_type":searchType,"workflow_name":workflowName}).toString())
@@ -411,9 +435,9 @@ export default function QDataTable() {
   const renderCellExpand = (params) => {
     console.log(hiddenNsPrefixMode);
     if (params.value?.includes("#_")) {
-      return <Button onClick={(e)=> {loadObjectProperties(params.value)}}>explore object</Button>
+      return <Box>{getShortenedString(params.value,10)} <Button onClick={(e)=> {loadObjectProperties(params.value)}}>Table </Button> <Button onClick={(e)=> {loadObjectAsGraph(params.value)}}>Graph </Button></Box>
 
-    } else if (params.value?.includes("#") && hiddenNsPrefixMode) {
+      } else if (params.value?.includes("#") && hiddenNsPrefixMode) {
       const value = RemoveNsPrefix(params.value);
 
       return <Box sx={{ display: 'flex' }}> {value}</Box>
@@ -425,13 +449,29 @@ export default function QDataTable() {
 
   const settingsUpdateHandler = (settings:any) => {
     console.log("settingsUpdateHandler",settings);
-    setGraphName(settings.graphName);
-    setHiddenNsPrefixMode(settings.hiddenNsPrefixMode);
+    if (settings) {
+      setGraphName(settings.graphName);
+      setHiddenNsPrefixMode(settings.hiddenNsPrefixMode);
+    }
   }
+
+  const handleRunQueryCommand = (q:string,qtype:string) => {
+    setSparqlQuery(q);
+    if (tabValue == 0) {
+      // switching from Overview tab to Table tab
+      setTabValue(1);
+    }
+    if (tabValue != 2) {
+      // non-graph tab
+      loadDataset(q,qtype);
+    }
+
+  };
 
   const loadDataset = (q:string,qtype:string) => {
     let query = {}
     let url = ""
+
     console.log('reseting history');
     setLoading(true);
     const workflowName = getSelectedWorkflowName();
@@ -465,8 +505,16 @@ export default function QDataTable() {
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     console.log("handleTabChange",newValue);
     setTabValue(newValue);
-
   };
+
+  const activateTable= (className:string) => {
+    setTabValue(1);
+    let sparqlQuery = `SELECT ?instance ?property ?value  WHERE {
+      ?instance rdf:type <`+className+`> .
+      ?instance ?property ?value
+     } LIMIT 10000`
+    loadDataset(sparqlQuery,"query");
+  }
 
   return (
     <div>
@@ -476,7 +524,7 @@ export default function QDataTable() {
           <AlertTitle>Warning</AlertTitle>
             {alertMsg}
     </Alert> )}
-    <QuerySelector selectedHandler={loadDataset} settingsUpdateHandler={settingsUpdateHandler}/>
+    <QuerySelector selectedHandler={handleRunQueryCommand} settingsUpdateHandler={settingsUpdateHandler}/>
     <SearchBar searchButtonHandler={searchObjects} />
     <FilterBar filterChangeHandler={handleFilterChange}/>
     { loading &&( <LinearProgress />) }
@@ -487,7 +535,7 @@ export default function QDataTable() {
         <Tab label="Graph" {...a11yProps(2)} />
       </Tabs>
       <TabPanel value={tabValue} index={0}>
-       <OverviewTable/>
+       <OverviewTable onItemClick={activateTable}/>
       </TabPanel>
       <TabPanel value={tabValue} index={1} >
         <NavBreadcrumbs bhistory={bhistory} selectedHandler={loadObjectProperties}/>
@@ -501,7 +549,7 @@ export default function QDataTable() {
         </div>
       </TabPanel>
       <TabPanel value={tabValue} index={2}>
-        <GraphExplorer filters={filters} nodeNameProperty={nodeNameProperty}/>
+        <GraphExplorer filters={filters} sparqlQuery={sparqlQuery}/>
       </TabPanel>
       <Collapse in={openAlert}>
             <Alert
@@ -515,6 +563,7 @@ export default function QDataTable() {
             </Alert>
         </Collapse>
     </Box>
+
     </ExplorerContext.Provider>
     </div>
   );

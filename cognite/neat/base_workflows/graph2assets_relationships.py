@@ -69,7 +69,7 @@ class Graph2AssetHierarchyBaseWorkflow(GraphsAndRulesBaseWorkflow):
             logging.error(f"Found orphaned assets: {', '.join(orphan_assets)}")
 
             orphanage_asset_external_id = (
-                f"{self.transformation_rules.metadata.externalIdPrefix}orphanage"
+                f"{self.transformation_rules.metadata.externalIdPrefix}orphanage-{self.transformation_rules.metadata.data_set_id}"
                 if self.transformation_rules.metadata.externalIdPrefix
                 else "orphanage"
             )
@@ -93,7 +93,7 @@ class Graph2AssetHierarchyBaseWorkflow(GraphsAndRulesBaseWorkflow):
             logging.info("No orphaned assets found, your assets look healthy !")
 
         if circular_assets:
-            msg = f"Found circular dependencies: {', '.join(circular_assets)}"
+            msg = f"Found circular dependencies: {str(circular_assets)}"
             logging.error(msg)
             raise Exception(msg)
         elif orphan_assets:
