@@ -10,7 +10,7 @@ from typing import Dict, List, Optional, Self, Union
 
 import pandas as pd
 from graphql import GraphQLBoolean, GraphQLFloat, GraphQLInt, GraphQLString
-from pydantic import BaseModel, Field, HttpUrl, ValidationError, parse_obj_as, root_validator, validator
+from pydantic import BaseModel, Field, HttpUrl, ValidationError, constr, parse_obj_as, root_validator, validator
 from rdflib import XSD, Literal, Namespace, URIRef
 
 from cognite.neat.core.configuration import PREFIXES, Tables
@@ -39,9 +39,12 @@ class URL(BaseModel):
     url: HttpUrl
 
 
+Description = constr(min_length=1, max_length=255)
+
+
 class Resource(BaseModel):
     # Solution model
-    description: str = Field(alias="Description", max_length=1024, default=None)
+    description: Description = Field(alias="Description", default=None)
 
     # Solution CDF resource, it is not needed when working with FDM, this is only for
     # Classic CDF data model
@@ -88,15 +91,19 @@ class Resource(BaseModel):
 
 class_id_compliance_regex = r"^([a-zA-Z]+[a-zA-Z0-9]+[._-]{0,1}[a-zA-Z0-9]+)+$"
 
+ExternalId = constr(min_length=1, max_length=255)
+
 
 class Class(Resource):
-    class_id: ExternalId = Field(alias="Class", )
+    class_id: ExternalId = Field(
+        alias="Class",
+    )
     class_name: ExternalId = Field(alias="Name", default=None)
     # Solution model
-    parent_class: ExternalId= Field(alias="Parent Class", default=None)
+    parent_class: ExternalId = Field(alias="Parent Class", default=None)
 
     # Solution CDF resource
-    parent_asset: str = Field(alias="Parent Asset", default=None)
+    parent_asset: ExternalId = Field(alias="Parent Asset", default=None)
 
     @validator("parent_class", "parent_asset", pre=True)
     def replace_float_nan_with_default(cls, value, field):
@@ -123,10 +130,10 @@ property_id_compliance_regex = r"^(\*)|(([a-zA-Z]+[a-zA-Z0-9]+[._-]{0,1}[a-zA-Z0
 
 class Property(Resource):
     # Solution model
-    class_id: str = Field(alias="Class", min_length=1, max_length=255)
-    property_id: str = Field(alias="Property", min_length=1, max_length=255)
-    property_name: str = Field(alias="Name", min_length=1, max_length=255, default=None)
-    expected_value_type: str = Field(alias="Type", min_length=1, max_length=255)
+    class_id: ExternalId = Field(alias="Class")
+    property_id: ExternalId = Field(alias="Property")
+    property_name: ExternalId = Field(alias="Name", default=None)
+    expected_value_type: ExternalId = Field(alias="Type")
     min_count: Optional[int] = Field(alias="Min Count", default=0)
     max_count: Optional[int] = Field(alias="Max Count", default=None)
 
@@ -260,19 +267,17 @@ cdf_space_name_compliance_regex = rf"(?!^(space|cdf|dms|pg3|shared|system|node|e
 data_model_name_compliance_regex = r"^([a-zA-Z]+[a-zA-Z0-9]+[_]{0,1}[a-zA-Z0-9])+$"
 version_compliance_regex = r"^([0-9]+[_-]{1}[0-9]+[_-]{1}[0-9]+[_-]{1}[a-zA-Z0-9]+)|([0-9]+[_-]{1}[0-9]+[_-]{1}[0-9]+)|([0-9]+[_-]{1}[0-9])|([0-9]+)$"
 
+Prefix = constr(min_length=1, max_length=43)
+
 
 class Metadata(BaseModel):
-    prefix: str = Field(
+    prefix: Prefix = Field(
         alias="shortName",
         description="This is used as prefix for generation of RDF OWL/SHACL data model representation",
-        min_length=1,
-        max_length=43,
     )
-    cdf_space_name: str = Field(
+    cdf_space_name: Prefix = Field(
         description="This is used as CDF space name to which model is intend to be stored. By default it is set to 'playground'",
         alias="cdfSpaceName",
-        min_length=1,
-        max_length=43,
         default="playground",
     )
 
@@ -282,11 +287,9 @@ class Metadata(BaseModel):
         max_length=2048,
         default=None,
     )
-    data_model_name: str = Field(
+    data_model_name: ExternalId = Field(
         description="Name that uniquely identifies data model",
         alias="dataModelName",
-        min_length=1,
-        max_length=255,
         default=None,
     )
 
@@ -298,7 +301,7 @@ class Metadata(BaseModel):
     created: datetime
     updated: datetime = Field(default_factory=lambda: datetime.utcnow())
     title: str = Field(min_length=1, max_length=255)
-    description: str = Field(max_length=1024, default=None)
+    description: Description
     creator: str | list[str]
     contributor: Optional[str | list[str]] = None
     rights: Optional[str] = "Restricted for Internal Use of Cognite"
