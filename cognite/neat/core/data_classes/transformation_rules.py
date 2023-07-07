@@ -29,6 +29,7 @@ DATA_TYPE_MAPPING = {
     "anyURI": {"python": "str", "GraphQL": GraphQLString},
     "normalizedString": {"python": "str", "GraphQL": GraphQLString},
     "token": {"python": "str", "GraphQL": GraphQLString},
+    # Graphql does not have a datetime type this is CDF specific
     "dateTime": {"python": "datetime", "GraphQL": "Timestamp"},
 }
 METADATA_VALUE_MAX_LENGTH = 5120
@@ -104,14 +105,13 @@ class Class(Resource):
         return value
 
     @validator("class_id", always=True)
-    def make_class_id_compliant(cls, value):
-        repaired_string = re.sub(r"[^.-_a-zA-Z0-9]", "", value.replace(" ", "-"))
-        if not re.match(class_id_compliance_regex, repaired_string):
+    def is_class_id_compliant(cls, value):
+        if not re.match(class_id_compliance_regex, value):
             raise ValueError(
                 f"Invalid class_id {value} in Class sheet, it must obey regex {class_id_compliance_regex} !"
             )
         else:
-            return repaired_string
+            return value
 
     @validator("class_name", always=True)
     def set_class_name_if_none(cls, value, values):
@@ -173,34 +173,31 @@ class Property(Resource):
         return value
 
     @validator("class_id", always=True)
-    def make_class_id_compliant(cls, value):
-        repaired_string = re.sub(r"[^.-_a-zA-Z0-9]", "", value.replace(" ", "-"))
-        if not re.match(class_id_compliance_regex, repaired_string):
+    def is_class_id_compliant(cls, value):
+        if not re.match(class_id_compliance_regex, value):
             raise ValueError(
                 f"Invalid class_id {value} in Property sheet, it must obey regex {class_id_compliance_regex} !"
             )
         else:
-            return repaired_string
+            return value
 
     @validator("property_id", always=True)
-    def make_property_id_compliant(cls, value):
-        repaired_string = re.sub(r"[^\*.-_a-zA-Z0-9]", "", value.replace(" ", "-"))
-        if not re.match(property_id_compliance_regex, repaired_string):
+    def is_property_id_compliant(cls, value):
+        if not re.match(property_id_compliance_regex, value):
             raise ValueError(
                 f"Invalid property_id {value} in Property sheet, it must obey regex {property_id_compliance_regex} !"
             )
         else:
-            return repaired_string
+            return value
 
     @validator("expected_value_type", always=True)
-    def make_expected_value_type_compliant(cls, value):
-        repaired_string = re.sub(r"[^.-_a-zA-Z0-9]", "", value.replace(" ", "-"))
-        if not re.match(class_id_compliance_regex, repaired_string):
+    def is_expected_value_type_compliant(cls, value):
+        if not re.match(class_id_compliance_regex, value):
             raise ValueError(
                 f"Invalid Type {value} in Property sheet, it must obey regex {class_id_compliance_regex} !"
             )
         else:
-            return repaired_string
+            return value
 
     @validator("property_name", always=True)
     def set_property_name_if_none(cls, value, values):
@@ -307,11 +304,11 @@ class Metadata(BaseModel):
     rights: Optional[str] = "Restricted for Internal Use of Cognite"
     externalIdPrefix: str = Field(alias="externalIdPrefix", default=None)
     data_set_id: int = Field(alias="dataSetId", default=None)
-    imports: str | list[str] = Field(
+    imports: list[str] = Field(
         description="Placeholder in case when data model is modular, i.e. provided as set of Excel files",
         default=None,
     )
-    filepath: Path = Field(
+    source: str | Path = Field(
         description="File path to Excel file which was used to produce Transformation Rules",
         default=None,
     )
@@ -412,7 +409,7 @@ class Metadata(BaseModel):
 
         return Metadata(
             **dict(zip(raw_dfs[Tables.metadata][0], raw_dfs[Tables.metadata][1])),
-            filepath=raw_dfs[Tables.metadata].filepath if "filepath" in dir(raw_dfs[Tables.metadata]) else None,
+            source=raw_dfs[Tables.metadata].source if "source" in dir(raw_dfs[Tables.metadata]) else None,
         )
 
 

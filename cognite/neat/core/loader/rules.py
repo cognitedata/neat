@@ -30,6 +30,6 @@ def excel_file_to_table_by_name(filepath: Path) -> dict[str, pd.DataFrame]:
     }
 
     for sheetname in sheets:
-        sheets[sheetname].filepath = filepath
+        sheets[sheetname].source = filepath
 
     return sheets
