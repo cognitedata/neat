@@ -27,7 +27,7 @@ from pydantic.fields import FieldInfo
 from rdflib import XSD, Literal, Namespace, URIRef
 
 from cognite.neat.core.configuration import PREFIXES, Tables
-from cognite.neat.core.data_classes.rules import Entity, RuleType, parse_rule
+from cognite.neat.core.rules.rules import Entity, RuleType, parse_rule
 
 # mapping of XSD types to Python and GraphQL types
 DATA_TYPE_MAPPING = {

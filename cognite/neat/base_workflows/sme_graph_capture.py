@@ -6,7 +6,6 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes import AssetFilter
 
 from cognite.neat.core import extractors, loader, parser
-from cognite.neat.core.data_classes.transformation_rules import TransformationRules
 from cognite.neat.core.extractors.labels import upload_labels
 from cognite.neat.core.extractors.rdf_to_assets import categorize_assets, rdf2assets, upload_assets
 from cognite.neat.core.extractors.rdf_to_relationships import (
@@ -15,6 +14,7 @@ from cognite.neat.core.extractors.rdf_to_relationships import (
     upload_relationships,
 )
 from cognite.neat.core.loader.graph_store import NeatGraphStore
+from cognite.neat.core.rules.transformation_rules import TransformationRules
 from cognite.neat.core.utils import add_triples
 from cognite.neat.core.validator import validate_asset_hierarchy
 from cognite.neat.core.workflow import utils

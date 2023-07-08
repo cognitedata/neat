@@ -10,8 +10,8 @@ from cognite.client import ClientConfig as CogniteClientConfig
 from cognite.client import CogniteClient
 from prometheus_client import Gauge
 
-from cognite.neat.core.data_classes.config import ClientConfig, Config
 from cognite.neat.core.data_stores.metrics import NeatMetricsCollector
+from cognite.neat.core.rules.config import ClientConfig, Config
 from cognite.neat.core.utils import retry_decorator
 from cognite.neat.core.workflow import cdf_store
 from cognite.neat.core.workflow.model import (

@@ -3,7 +3,7 @@ import logging
 from cognite.client import CogniteClient
 from fastapi import FastAPI
 
-from cognite.neat.core.data_classes.config import Config
+from cognite.neat.core.rules.config import Config
 from cognite.neat.core.utils import get_cognite_client_from_config
 from cognite.neat.core.workflow.cdf_store import CdfStore
 from cognite.neat.core.workflow.manager import WorkflowManager

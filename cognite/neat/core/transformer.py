@@ -14,9 +14,9 @@ from pydantic import BaseModel
 from rdflib import RDF, Graph
 from rdflib.term import Literal
 
-from cognite.neat.core.data_classes.rules import AllProperties, AllReferences, RawLookup, parse_rule
-from cognite.neat.core.data_classes.transformation_rules import TransformationRules
 from cognite.neat.core.query_generator.sparql import build_sparql_query
+from cognite.neat.core.rules.rules import AllProperties, AllReferences, RawLookup, parse_rule
+from cognite.neat.core.rules.transformation_rules import TransformationRules
 from cognite.neat.core.utils import remove_namespace
 
 prom_total_proc_rules_g = Gauge("neat_total_processed_rules", "Number of processed rules", ["state"])

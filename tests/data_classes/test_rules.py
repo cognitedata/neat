@@ -4,8 +4,10 @@ import pytest
 from IPython.display import Markdown, display
 
 from cognite.neat.core.configuration import PREFIXES
-from cognite.neat.core.data_classes import rules
-from cognite.neat.core.data_classes.rules import (
+from cognite.neat.core.loader.graph_store import NeatGraphStore
+from cognite.neat.core.query_generator import build_sparql_query
+from cognite.neat.core.rules import rules
+from cognite.neat.core.rules.rules import (
     AllProperties,
     AllReferences,
     Entity,
@@ -15,8 +17,6 @@ from cognite.neat.core.data_classes.rules import (
     Step,
     parse_rule,
 )
-from cognite.neat.core.loader.graph_store import NeatGraphStore
-from cognite.neat.core.query_generator import build_sparql_query
 from tests import config
 
 

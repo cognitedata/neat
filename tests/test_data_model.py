@@ -1,4 +1,4 @@
-from cognite.neat.core.data_classes import TransformationRules
+from cognite.neat.core.rules import TransformationRules
 
 
 def test_data_model(transformation_rules: TransformationRules):

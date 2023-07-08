@@ -3,7 +3,7 @@ import logging
 import pandas as pd
 
 from cognite.neat.core.configuration import Tables
-from cognite.neat.core.data_classes import Instance, Metadata, Prefixes, TransformationRules
+from cognite.neat.core.rules import Instance, Metadata, Prefixes, TransformationRules
 
 
 def parse_transformation_rules(

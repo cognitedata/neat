@@ -1,6 +1,6 @@
 from cognite.neat.core import extractors, loader
-from cognite.neat.core.data_classes import TransformationRules
 from cognite.neat.core.mocks.graph import generate_triples
+from cognite.neat.core.rules import TransformationRules
 from cognite.neat.core.utils import add_triples, remove_namespace
 
 

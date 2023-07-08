@@ -9,9 +9,9 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes import LabelFilter, Relationship, RelationshipUpdate
 from cognite.client.exceptions import CogniteDuplicatedError
 
-from cognite.neat.core.data_classes.transformation_rules import TransformationRules
 from cognite.neat.core.extractors.rdf_to_assets import _categorize_cdf_assets
 from cognite.neat.core.loader.graph_store import NeatGraphStore
+from cognite.neat.core.rules.transformation_rules import TransformationRules
 from cognite.neat.core.utils import chunker, datetime_utc_now, epoch_now_ms, remove_namespace, retry_decorator
 
 # should be renamed to rdf2relationship_data_frame -> rdf2relationships

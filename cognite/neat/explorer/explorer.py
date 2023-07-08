@@ -19,8 +19,8 @@ from cognite import neat
 from cognite.neat import constants
 from cognite.neat.core import loader, parser, query_generator
 from cognite.neat.core.app import NeatApp
-from cognite.neat.core.data_classes.config import Config, configure_logging
 from cognite.neat.core.loader.config import copy_examples_to_directory
+from cognite.neat.core.rules.config import Config, configure_logging
 from cognite.neat.core.workflow import WorkflowFullStateReport, utils
 from cognite.neat.core.workflow.base import WorkflowDefinition
 from cognite.neat.core.workflow.model import FlowMessage, WorkflowConfigItem
