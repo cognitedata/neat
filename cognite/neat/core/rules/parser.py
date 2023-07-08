@@ -39,10 +39,11 @@ def parse_instances(raw_dfs: dict[str, pd.DataFrame], metadata: Metadata, prefix
     for row_no, row in raw_dfs[Tables.instances].iterrows():
         try:
             triple = Instance(**row.to_dict(), namespace=metadata.namespace, prefixes=prefixes)
-            instances += [(triple.instance, triple.property_, triple.value)]
         except Exception:
             msg = f"Skipping row <{row_no + 3}> in Instance sheet\nReason: prefix in Property or Value column not defined!\n"
             print(msg)
             logging.info(msg)
+        else:
+            instances += [(triple.instance, triple.property_, triple.value)]
 
     return instances
