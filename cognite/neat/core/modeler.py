@@ -6,7 +6,7 @@ from rdflib.graph import RDF, BNode, Collection, Graph, Literal, Namespace, URIR
 
 from cognite.neat.core.configuration import PREFIXES
 from cognite.neat.core.rules.data_model_definitions import DataModelingDefinition
-from cognite.neat.core.rules.transformation_rules import Class
+from cognite.neat.core.rules.models import Class
 
 SHACL = Namespace("http://www.w3.org/ns/shacl#")
 

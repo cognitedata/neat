@@ -1,7 +1,7 @@
 from cognite.neat.core import extractors, loader
 from cognite.neat.core.extractors.cdfcore import rdf_to_relationships
 from cognite.neat.core.mocks.graph import generate_triples
-from cognite.neat.core.rules import TransformationRules
+from cognite.neat.core.rules.models import TransformationRules
 from cognite.neat.core.utils.utils import add_triples, remove_namespace
 
 

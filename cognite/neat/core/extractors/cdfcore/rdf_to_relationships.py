@@ -1,4 +1,5 @@
 import logging
+import warnings
 
 # import traceback
 from typing import Dict, List, Set, Union
@@ -9,14 +10,71 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes import LabelFilter, Relationship, RelationshipUpdate
 from cognite.client.exceptions import CogniteDuplicatedError
 
+from cognite.neat.core.extractors.cdfcore.models import RelationshipDefinition, RelationshipDefinitions
 from cognite.neat.core.extractors.cdfcore.rdf_to_assets import _categorize_cdf_assets
 from cognite.neat.core.loader.graph_store import NeatGraphStore
-from cognite.neat.core.rules.transformation_rules import TransformationRules
+from cognite.neat.core.rules.models import TransformationRules
 from cognite.neat.core.utils.utils import chunker, datetime_utc_now, epoch_now_ms, remove_namespace, retry_decorator
 
+
+def define_relationships(rules: TransformationRules, stop_on_exception: bool = False) -> RelationshipDefinitions:
+    relationships = {}
+
+    # Unique ids used to check for redefinitions of relationships
+    ids = set()
+
+    for row, rule in rules.properties.items():
+        if "Relationship" in rule.cdf_resource_type:
+            relationship = RelationshipDefinition(
+                source_class=rule.class_id,
+                target_class=rule.expected_value_type,
+                property_=rule.property_id,
+                labels=list(
+                    set([rule.label, rule.class_id, rule.expected_value_type, "non-historic", rule.property_id])
+                ),
+                target_type=rule.target_type,
+                source_type=rule.source_type,
+                relationship_external_id_rule=rule.relationship_external_id_rule,
+            )
+
+            id_ = f"{rule.class_id}({rule.property_id})"
+            if id_ in ids:
+                msg = f"Relationship {rule.property_id} redefined at {row} in transformation rules!"
+                if stop_on_exception:
+                    logging.error(msg)
+                    raise ValueError(msg)
+                else:
+                    msg += " Skipping redefinition!"
+                    warnings.warn(msg, stacklevel=2)
+                    logging.warning(msg)
+            else:
+                relationships[row] = relationship
+                ids.add(id_)
+
+    if relationships:
+        return RelationshipDefinitions(
+            data_set_id=rules.metadata.data_set_id,
+            prefix=rules.metadata.prefix,
+            namespace=rules.metadata.namespace,
+            relationships=relationships,
+        )
+
+    msg = "No relationship defined in transformation rule sheet!"
+    if stop_on_exception:
+        logging.error(msg)
+        raise ValueError(msg)
+    else:
+        warnings.warn(msg, stacklevel=2)
+        logging.warning(msg)
+        return RelationshipDefinitions(
+            data_set_id=rules.metadata.data_set_id,
+            prefix=rules.metadata.prefix,
+            namespace=rules.metadata.namespace,
+            relationships={},
+        )
+
+
 # should be renamed to rdf2relationship_data_frame -> rdf2relationships
-
-
 def rdf2relationships(
     graph_store: NeatGraphStore,
     transformation_rules: TransformationRules,
@@ -38,7 +96,7 @@ def rdf2relationships(
     """
 
     # Step 1: Generate relationship definitions
-    relationship_definitions = transformation_rules.define_relationships(stop_on_exception)
+    relationship_definitions = define_relationships(transformation_rules, stop_on_exception)
 
     # Step 2: Generation relationships
 

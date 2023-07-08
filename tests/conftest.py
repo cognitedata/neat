@@ -5,7 +5,7 @@ from rdflib import Namespace
 from cognite.neat.core import extractors, loader, rules
 from cognite.neat.core.loader.graph_store import NeatGraphStore
 from cognite.neat.core.mocks.graph import generate_triples
-from cognite.neat.core.rules import TransformationRules
+from cognite.neat.core.rules.models import TransformationRules
 from cognite.neat.core.transformer import domain2app_knowledge_graph
 from cognite.neat.core.utils.utils import add_triples
 from tests import config

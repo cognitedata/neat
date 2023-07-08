@@ -6,7 +6,7 @@ from cognite.client import CogniteClient
 
 from cognite.neat.core import extractors, rules
 from cognite.neat.core.loader.graph_store import NeatGraphStore
-from cognite.neat.core.rules.transformation_rules import TransformationRules
+from cognite.neat.core.rules.models import TransformationRules
 from cognite.neat.core.workflow import utils
 from cognite.neat.core.workflow.base import BaseWorkflow
 from cognite.neat.core.workflow.cdf_store import CdfStore
