@@ -15,7 +15,7 @@ from cognite.neat.core.extractors.cdfcore.rdf_to_relationships import (
 )
 from cognite.neat.core.loader.graph_store import NeatGraphStore
 from cognite.neat.core.rules.transformation_rules import TransformationRules
-from cognite.neat.core.utils2.utils import add_triples
+from cognite.neat.core.utils.utils import add_triples
 from cognite.neat.core.validator import validate_asset_hierarchy
 from cognite.neat.core.workflow import utils
 from cognite.neat.core.workflow.base import BaseWorkflow

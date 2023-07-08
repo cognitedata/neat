@@ -12,7 +12,7 @@ from cognite.client.exceptions import CogniteDuplicatedError
 from cognite.neat.core.extractors.cdfcore.rdf_to_assets import _categorize_cdf_assets
 from cognite.neat.core.loader.graph_store import NeatGraphStore
 from cognite.neat.core.rules.transformation_rules import TransformationRules
-from cognite.neat.core.utils2.utils import chunker, datetime_utc_now, epoch_now_ms, remove_namespace, retry_decorator
+from cognite.neat.core.utils.utils import chunker, datetime_utc_now, epoch_now_ms, remove_namespace, retry_decorator
 
 # should be renamed to rdf2relationship_data_frame -> rdf2relationships
 

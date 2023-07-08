@@ -8,7 +8,7 @@ __all__ = [
     "excel_file_to_table_by_name",
 ]
 
-from cognite.neat.core.utils2.auxiliary import local_import
+from cognite.neat.core.utils.auxiliary import local_import
 
 
 def google_to_table_by_name(sheet_id: str) -> dict[str, pd.DataFrame]:

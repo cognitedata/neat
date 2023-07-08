@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from rdflib import Namespace
 from yaml import safe_load
 
-from cognite.neat.core.utils2.cdf import InteractiveClient, ServiceClient
+from cognite.neat.core.utils.cdf import InteractiveClient, ServiceClient
 
 
 class Tables:
