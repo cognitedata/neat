@@ -19,7 +19,7 @@
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
-    "@textea/json-viewer": "^2.14.1",
+    "@textea/json-viewer": "^3.0.0",
     "graphology": "^0.25.1",
     "graphology-layout-force": "^0.2.4",
     "graphology-layout-forceatlas2": "^0.10.1",
