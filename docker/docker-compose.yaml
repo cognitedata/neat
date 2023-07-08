@@ -2,7 +2,7 @@ version: '3'
 name: neat
 services:
   graphdb:
-    image: ontotext/graphdb:10.1.3
+    image: ontotext/graphdb:10.2.2
     command: -Dgraphdb.home=/opt/graphdb/home -Dgraphdb.workbench.importDirectory=/root -Xss5M
     ports:
       - "7201:7200"
