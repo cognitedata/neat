@@ -17,7 +17,7 @@ def raw_transformation_tables() -> dict[str, pd.DataFrame]:
 
 
 @pytest.fixture(scope="session")
-def transformation_rules(raw_transformation_tables) -> TransformationRules:
+def transformation_rules(raw_transformation_tables: dict[str, pd.DataFrame]) -> TransformationRules:
     return parser.parse_transformation_rules(raw_transformation_tables)
 
 

@@ -97,7 +97,7 @@ class WorkflowManager:
                 )
 
     def load_workflows_from_storage_v2(self, dir_path: str = None):
-        """Loads workflows from disk/storage into memory , initializes and register them in the workflow registry"""
+        """Loads workflows from disk/storage into memory, initializes and register them in the workflow registry"""
         if dir_path:
             dir_path = Path(dir_path)
         else:

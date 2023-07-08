@@ -81,7 +81,7 @@ class Sheet2CDFBaseWorkflow(BaseWorkflow):
         self.dataset_id = self.transformation_rules.metadata.data_set_id
         return FlowMessage(output_text=output_text)
 
-    def step_configuring_stores(self, flow_msg: FlowMessage = None):
+    def step_configuring_stores(self, flow_msg: FlowMessage = None, clean_start: bool = True):
         self.source_graph = loader.NeatGraphStore(
             prefixes=self.transformation_rules.prefixes, namespace=self.transformation_rules.metadata.namespace
         )

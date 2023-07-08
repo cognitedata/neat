@@ -6,11 +6,24 @@ import re
 import warnings
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Self, Union
+from typing import ClassVar, Dict, List, Optional, Self
 
 import pandas as pd
 from graphql import GraphQLBoolean, GraphQLFloat, GraphQLInt, GraphQLString
-from pydantic import BaseModel, Field, HttpUrl, ValidationError, constr, parse_obj_as, root_validator, validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    HttpUrl,
+    ValidationError,
+    constr,
+    field_validator,
+    model_validator,
+    parse_obj_as,
+    root_validator,
+    validator,
+)
+from pydantic.fields import FieldInfo
 from rdflib import XSD, Literal, Namespace, URIRef
 
 from cognite.neat.core.configuration import PREFIXES, Tables
@@ -35,6 +48,32 @@ DATA_TYPE_MAPPING = {
 METADATA_VALUE_MAX_LENGTH = 5120
 
 
+def replace_nan_floats_with_default(values: dict, model_fields: dict[str, FieldInfo]) -> dict:
+    output = {}
+    for field_name, value in values.items():
+        is_nan_float = isinstance(value, float) and math.isnan(value)
+        if not is_nan_float:
+            output[field_name] = value
+            continue
+        if field_name in model_fields:
+            output[field_name] = model_fields[field_name].default
+        else:
+            # field_name may be an alias
+            source_name = next((name for name, field in model_fields.items() if field.alias == field_name), None)
+            if source_name:
+                output[field_name] = model_fields[source_name].default
+            else:
+                # Just pass it through if it is not an alias.
+                output[field_name] = value
+    return output
+
+
+class RuleModel(BaseModel):
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        populate_by_name=True, str_strip_whitespace=True, arbitrary_types_allowed=True, strict=False
+    )
+
+
 class URL(BaseModel):
     url: HttpUrl
 
@@ -42,51 +81,36 @@ class URL(BaseModel):
 Description = constr(min_length=1, max_length=255)
 
 
-class Resource(BaseModel):
+class Resource(RuleModel):
     # Solution model
-    description: Description = Field(alias="Description", default=None)
+    description: Optional[Description] = Field(alias="Description", default=None)
 
     # Solution CDF resource, it is not needed when working with FDM, this is only for
     # Classic CDF data model
-    cdf_resource_type: str = Field(alias="Resource Type", default=None)
+    cdf_resource_type: Optional[str] = Field(alias="Resource Type", default=None)
 
     # Advance data modeling: Keeping track if Resource got deprecated or not
     deprecated: bool = Field(default=False)
     deprecation_date: Optional[datetime] = Field(alias="deprecationDate", default=None)
-    replaced_by: str = Field(alias="replacedBy", default=None)
+    replaced_by: Optional[str] = Field(alias="replacedBy", default=None)
 
     # Advance data modeling: Relation to existing resources for purpose of mapping
-    source: HttpUrl = Field(
+    source: Optional[HttpUrl] = Field(
         alias="Source", description="Source of information for given entity, e.g. CIM", default=None
     )
-    source_entity_name: str = Field(
+    source_entity_name: Optional[str] = Field(
         alias="Source Entity Name", description="Closest entity in source, e.g. Substation", default=None
     )
-    match_type: str = Field(
+    match_type: Optional[str] = Field(
         alias="Match Type", description="Type of match between source entity and one being defined", default=None
     )
-    comment: str = Field(alias="Comment", description="Comment about mapping", default=None)
-    issues: List[str] = Field(default=None, description="Storing list of pydantic validation issues")
-    valid: bool = Field(default=True, description="Indicates whether resource is valid or not")
+    comment: Optional[str] = Field(alias="Comment", description="Comment about mapping", default=None)
+    issues: Optional[List[str]] = Field(default=None, description="Storing list of pydantic validation issues")
+    valid: Optional[bool] = Field(default=True, description="Indicates whether resource is valid or not")
 
-    @validator(
-        "deprecated",
-        "deprecation_date",
-        "replaced_by",
-        "source",
-        "source_entity_name",
-        "match_type",
-        "comment",
-        pre=True,
-    )
-    def replace_float_nan_with_default(cls, value, field):
-        if isinstance(value, float) and math.isnan(value):
-            return field.default
-        return value
-
-    class Config:
-        allow_population_by_field_name = True
-        anystr_strip_whitespace = True
+    @model_validator(mode="before")
+    def replace_float_nan_with_default(cls, values: dict) -> dict:
+        return replace_nan_floats_with_default(values, cls.model_fields)
 
 
 class_id_compliance_regex = r"^([a-zA-Z]+[a-zA-Z0-9]+[._-]{0,1}[a-zA-Z0-9]+)+$"
@@ -98,18 +122,16 @@ class Class(Resource):
     class_id: ExternalId = Field(
         alias="Class",
     )
-    class_name: ExternalId = Field(alias="Name", default=None)
+    class_name: Optional[ExternalId] = Field(alias="Name", default=None)
     # Solution model
-    parent_class: ExternalId = Field(alias="Parent Class", default=None)
+    parent_class: Optional[ExternalId] = Field(alias="Parent Class", default=None)
 
     # Solution CDF resource
-    parent_asset: ExternalId = Field(alias="Parent Asset", default=None)
+    parent_asset: Optional[ExternalId] = Field(alias="Parent Asset", default=None)
 
-    @validator("parent_class", "parent_asset", pre=True)
-    def replace_float_nan_with_default(cls, value, field):
-        if isinstance(value, float) and math.isnan(value):
-            return field.default
-        return value
+    @model_validator(mode="before")
+    def replace_nan_floats_with_default(cls, values: dict) -> dict:
+        return replace_nan_floats_with_default(values, cls.model_fields)
 
     @validator("class_id", always=True)
     def is_class_id_compliant(cls, value):
@@ -132,7 +154,7 @@ class Property(Resource):
     # Solution model
     class_id: ExternalId = Field(alias="Class")
     property_id: ExternalId = Field(alias="Property")
-    property_name: ExternalId = Field(alias="Name", default=None)
+    property_name: Optional[ExternalId] = Field(alias="Name", default=None)
     expected_value_type: ExternalId = Field(alias="Type")
     min_count: Optional[int] = Field(alias="Min Count", default=0)
     max_count: Optional[int] = Field(alias="Max Count", default=None)
@@ -141,15 +163,15 @@ class Property(Resource):
     property_type: str = "DatatypeProperty"
 
     # Solution CDF resource
-    resource_type_property: List[str] = Field(alias="Resource Type Property", default=None)
+    resource_type_property: Optional[list[str]] = Field(alias="Resource Type Property", default=None)
     source_type: str = Field(alias="Relationship Source Type", default="Asset")
     target_type: str = Field(alias="Relationship Target Type", default="Asset")
-    label: str = Field(alias="Relationship Label", default=None)
-    relationship_external_id_rule: str = Field(alias="Relationship ExternalID Rule", default=None)
+    label: Optional[str] = Field(alias="Relationship Label", default=None)
+    relationship_external_id_rule: Optional[str] = Field(alias="Relationship ExternalID Rule", default=None)
 
     # Transformation rule (domain to solution)
     rule_type: RuleType = Field(alias="Rule Type", default=None)
-    rule: str = Field(alias="Rule", default=None)
+    rule: Optional[str] = Field(alias="Rule", default=None)
     skip_rule: bool = Field(alias="Skip", default=False)
 
     # Specialization of cdf_resource_type to allow definition of both
@@ -160,24 +182,9 @@ class Property(Resource):
     def is_raw_lookup(self) -> bool:
         return self.rule_type == RuleType.rawlookup
 
-    @validator(
-        "max_count",
-        "min_count",
-        "target_type",
-        "source_type",
-        "label",
-        "relationship_external_id_rule",
-        "resource_type_property",
-        "skip_rule",
-        "rule",
-        "rule_type",
-        "cdf_resource_type",
-        pre=True,
-    )
-    def replace_float_nan_with_default(cls, value, field):
-        if isinstance(value, float) and math.isnan(value):
-            return field.default
-        return value
+    @model_validator(mode="before")
+    def replace_float_nan_with_default(cls, values: dict) -> dict:
+        return replace_nan_floats_with_default(values, cls.model_fields)
 
     @validator("class_id", always=True)
     def is_class_id_compliant(cls, value):
@@ -237,12 +244,12 @@ class Property(Resource):
             return values.get("property_id")
         return value
 
-    @validator("cdf_resource_type", pre=True)
-    def to_list_if_comma(cls, value, field):
+    @field_validator("cdf_resource_type", mode="before")
+    def to_list_if_comma(cls, value, info):
         if isinstance(value, str):
             if value:
                 return value.replace(", ", ",").split(",")
-            if field.default is None:
+            if cls.model_fields[info.field_name].default is None:
                 return None
         return value
 
@@ -271,6 +278,9 @@ Prefix = constr(min_length=1, max_length=43)
 
 
 class Metadata(BaseModel):
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        populate_by_name=True, str_strip_whitespace=True, arbitrary_types_allowed=True
+    )
     prefix: Prefix = Field(
         alias="shortName",
         description="This is used as prefix for generation of RDF OWL/SHACL data model representation",
@@ -281,13 +291,13 @@ class Metadata(BaseModel):
         default="playground",
     )
 
-    namespace: Namespace = Field(
+    namespace: Optional[Namespace] = Field(
         description="This is used as RDF namespace for generation of RDF OWL/SHACL data model representation and/or for generation of RDF graphs",
         min_length=1,
         max_length=2048,
         default=None,
     )
-    data_model_name: ExternalId = Field(
+    data_model_name: Optional[ExternalId] = Field(
         description="Name that uniquely identifies data model",
         alias="dataModelName",
         default=None,
@@ -305,30 +315,30 @@ class Metadata(BaseModel):
     creator: str | list[str]
     contributor: Optional[str | list[str]] = None
     rights: Optional[str] = "Restricted for Internal Use of Cognite"
-    externalIdPrefix: str = Field(alias="externalIdPrefix", default=None)
-    data_set_id: int = Field(alias="dataSetId", default=None)
-    imports: list[str] = Field(
+    externalIdPrefix: Optional[str] = Field(alias="externalIdPrefix", default=None)
+    data_set_id: Optional[int] = Field(alias="dataSetId", default=None)
+    imports: Optional[list[str]] = Field(
         description="Placeholder in case when data model is modular, i.e. provided as set of Excel files",
         default=None,
     )
-    source: str | Path = Field(
+    source: Optional[str | Path] = Field(
         description="File path to Excel file which was used to produce Transformation Rules",
         default=None,
     )
-    issues: List[str] = Field(default=None, description="Storing list of pydantic validation issues")
-    valid: bool = Field(default=True, description="Indicates whether resource is valid or not")
+    issues: Optional[List[str]] = Field(default=None, description="Storing list of pydantic validation issues")
+    valid: Optional[bool] = Field(default=True, description="Indicates whether resource is valid or not")
 
-    @validator(
+    @field_validator(
         "externalIdPrefix",
         "contributor",
         "contributor",
         "description",
         "rights",
-        pre=True,
+        mode="before",
     )
-    def replace_float_nan_with_default(cls, value, field):
+    def replace_float_nan_with_default(cls, value, info):
         if isinstance(value, float) and math.isnan(value):
-            return field.default
+            return cls.model_fields[info.field_name].default
         return value
 
     @validator("prefix", always=True)
@@ -391,18 +401,14 @@ class Metadata(BaseModel):
         else:
             return repaired_string
 
-    @validator("creator", "contributor")
-    def to_list_if_comma(cls, value, field):
+    @field_validator("creator", "contributor", mode="before")
+    def to_list_if_comma(cls, value, info):
         if isinstance(value, str):
             if value:
                 return value.replace(", ", ",").split(",")
-            if field.default is None:
+            if cls.model_fields[info.field_name].default is None:
                 return None
         return value
-
-    class Config:
-        allow_population_by_field_name = True
-        anystr_strip_whitespace = True
 
     @classmethod
     def create_from_dataframe(cls, raw_dfs) -> Self:
@@ -416,7 +422,7 @@ class Metadata(BaseModel):
         )
 
 
-class Prefixes(BaseModel):
+class Prefixes(RuleModel):
     prefixes: Dict[str, Namespace] = PREFIXES
 
     @staticmethod
@@ -434,13 +440,13 @@ class Prefixes(BaseModel):
         return prefixes
 
 
-class Instance(BaseModel):
+class Instance(RuleModel):
     """Class deals with instances of classes in the data model"""
 
-    instance: URIRef = Field(alias="Instance", default=None)
-    property_: URIRef = Field(alias="Property", default=None)
-    value: Union[Literal, URIRef] = Field(alias="Value", default=None)
-    namespace: URIRef
+    instance: Optional[URIRef] = Field(alias="Instance", default=None)
+    property_: Optional[URIRef] = Field(alias="Property", default=None)
+    value: Optional[Literal | URIRef] = Field(alias="Value", default=None)
+    namespace: Namespace
     prefixes: Dict[str, Namespace]
 
     @staticmethod
@@ -455,7 +461,7 @@ class Instance(BaseModel):
             except ValueError:
                 return value
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def convert_values(cls, values: dict):
         # we expect to read Excel sheet which contains naming convention of column
         # 'Instance', 'Property', 'Value', if that's not the case we should raise error
@@ -519,12 +525,12 @@ class Instance(BaseModel):
             return a == b
 
 
-class TransformationRules(BaseModel):
+class TransformationRules(RuleModel):
     metadata: Metadata
     classes: dict[str, Class]
     properties: dict[str, Property]
     prefixes: dict[str, Namespace]
-    instances: list[tuple] = None
+    instances: Optional[list[tuple]] = None
 
     @property
     def raw_tables(self) -> list[str]:
@@ -840,8 +846,8 @@ class TransformationRules(BaseModel):
 class AssetClassMapping(BaseModel):
     external_id: str
     name: str
-    parent_external_id: Optional[str]
-    description: Optional[str]
+    parent_external_id: Optional[str] = None
+    description: Optional[str] = None
     metadata: Optional[dict] = {}
 
     @root_validator(pre=True)
@@ -863,10 +869,10 @@ class AssetTemplate(BaseModel):
 
     external_id_prefix: Optional[str] = None  # convenience field to add prefix to external_ids
     external_id: str
-    name: Optional[str]
-    parent_external_id: Optional[str]
+    name: Optional[str] = None
+    parent_external_id: Optional[str] = None
     metadata: Optional[dict] = {}
-    description: Optional[str]
+    description: Optional[str] = None
     data_set_id: Optional[int] = None
 
     @root_validator(pre=True)
@@ -950,10 +956,10 @@ class RelationshipDefinition(BaseModel):
     labels: Optional[List[str]] = None
     target_type: str = "Asset"
     source_type: str = "Asset"
-    relationship_external_id_rule: str = None
+    relationship_external_id_rule: Optional[str] = None
 
 
-class RelationshipDefinitions(BaseModel):
+class RelationshipDefinitions(RuleModel):
     data_set_id: int
     prefix: str
     namespace: Namespace

@@ -474,6 +474,7 @@ def start_workflow(request: RunWorkflowRequest):
 def get_workflow_stats(
     workflow_name: str,
 ) -> WorkflowFullStateReport:
+    logging.info("Hit the get_workflow_stats endpoint")
     workflow = neat_app.workflow_manager.get_workflow(workflow_name)
     return workflow.get_state()
 

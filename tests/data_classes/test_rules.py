@@ -129,7 +129,7 @@ def test_parse_traversal(raw: str, expected_traversal: AllProperties):
 
     # Assert
     assert type(actual_traversal) == type(expected_traversal)
-    assert actual_traversal.json(indent=4) == expected_traversal.json(indent=4)
+    assert actual_traversal.model_dump_json(indent=4) == expected_traversal.model_dump_json(indent=4)
 
 
 def _load_nordic_knowledge_graph():

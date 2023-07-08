@@ -15,6 +15,12 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.15.0] - 078-07-23
+
+### Changed
+
+* Require `pydantic` `v2`.
+
 ## [0.14.2] - 07-07-23
 
 ### Added
