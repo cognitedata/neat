@@ -116,7 +116,7 @@ _direction_by_symbol = {"->": "target", "<-": "source"}
 
 class Step(BaseModel):
     class_: Entity
-    property: Optional[Entity]  # only terminal step has property
+    property: Optional[Entity] = None  # only terminal step has property
     direction: StepDirection
 
     @classmethod
