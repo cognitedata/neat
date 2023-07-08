@@ -1,13 +1,12 @@
 from pathlib import Path
 
-from . import models
-from ._loader import excel_file_to_table_by_name, google_to_table_by_name
-from ._parser import parse_transformation_rules
+from . import _loader, _parser, models
 
 __all__ = [
     "models",
     "load_rules_from_excel_file",
     "load_rules_from_google_sheet",
+    "load_rules_from_yaml",
 ]
 
 
@@ -20,7 +19,7 @@ def load_rules_from_excel_file(filepath: Path) -> models.TransformationRules:
     Returns:
         TransformationRules: The transformation rules.
     """
-    return parse_transformation_rules(excel_file_to_table_by_name(filepath))
+    return _parser.from_tables(_loader.excel_file_to_table_by_name(filepath))
 
 
 def load_rules_from_google_sheet(sheet_id: str) -> models.TransformationRules:
@@ -32,4 +31,16 @@ def load_rules_from_google_sheet(sheet_id: str) -> models.TransformationRules:
     Returns:
         TransformationRules: The transformation rules.
     """
-    return parse_transformation_rules(google_to_table_by_name(sheet_id))
+    return _parser.from_tables(_loader.google_to_table_by_name(sheet_id))
+
+
+def load_rules_from_yaml(filepath: Path) -> models.TransformationRules:
+    """
+    Load transformation rules from a yaml file.
+
+    Args:
+        filepath (Path): Path to the yaml file.
+    Returns:
+        TransformationRules: The transformation rules.
+    """
+    return models.TransformationRules(**_loader.yaml_file_to_mapping_by_name(filepath))

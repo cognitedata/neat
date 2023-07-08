@@ -6,9 +6,7 @@ from rdflib import Namespace
 from .models import URL, Instance, Metadata, Prefixes, TransformationRules
 
 
-def parse_transformation_rules(
-    raw_dfs: dict[str, pd.DataFrame], allow_validation_errors: bool = False
-) -> TransformationRules:
+def from_tables(raw_dfs: dict[str, pd.DataFrame], allow_validation_errors: bool = False) -> TransformationRules:
     expected_tables = Tables.as_set()
     if missing_tables := (expected_tables - set(raw_dfs)):
         raise ValueError(f"Missing the following tables {', '.join(missing_tables)}")

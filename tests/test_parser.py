@@ -4,7 +4,7 @@ from pydantic import ValidationError
 
 from cognite.neat.core import rules
 from cognite.neat.core.rules._loader import excel_file_to_table_by_name
-from cognite.neat.core.rules._parser import Tables, parse_transformation_rules
+from cognite.neat.core.rules._parser import Tables, from_tables
 from tests import config
 
 
@@ -14,7 +14,7 @@ def raw_transformation_tables() -> dict[str, pd.DataFrame]:
 
 
 def test_parse_transformation_rules(raw_transformation_tables):
-    assert parse_transformation_rules(raw_transformation_tables)
+    assert from_tables(raw_transformation_tables)
 
 
 def generate_parse_transformation_invalid_rules_test_data():
