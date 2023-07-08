@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Literal, Optional, Self
 
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, field_validator
 
 
 @dataclass
@@ -146,7 +146,7 @@ class SingleProperty(Traversal):
     class_: Entity
     property: Entity
 
-    @validator("*", pre=True)
+    @field_validator("class_", "property", mode="before")
     def process_if_string(cls, value):
         return Entity.from_string(value) if isinstance(value, str) else value
 
@@ -154,7 +154,7 @@ class SingleProperty(Traversal):
 class AllReferences(Traversal):
     class_: Entity
 
-    @validator("class_", pre=True)
+    @field_validator("class_", mode="before")
     def process_if_string(cls, value):
         return Entity.from_string(value) if isinstance(value, str) else value
 
@@ -162,7 +162,7 @@ class AllReferences(Traversal):
 class AllProperties(Traversal):
     class_: Entity
 
-    @validator("class_", pre=True)
+    @field_validator("class_", mode="before")
     def process_if_string(cls, value):
         return Entity.from_string(value) if isinstance(value, str) else value
 
@@ -170,7 +170,7 @@ class AllProperties(Traversal):
 class Origin(BaseModel):
     class_: Entity
 
-    @validator("class_", pre=True)
+    @field_validator("class_", mode="before")
     def process_if_string(cls, value):
         return Entity.from_string(value) if isinstance(value, str) else value
 
@@ -181,11 +181,11 @@ class Hop(Traversal):
     origin: Origin
     traversal: list[Step]
 
-    @validator("origin", pre=True)
+    @field_validator("origin", mode="before")
     def process_origin_if_string(cls, value):
         return Origin(class_=value) if isinstance(value, str) else value
 
-    @validator("traversal", pre=True)
+    @field_validator("traversal", mode="before")
     def process_path_if_string(cls, value):
         if isinstance(value, str):
             return [Step.from_string(result[0]) for result in _steps.findall(value)]

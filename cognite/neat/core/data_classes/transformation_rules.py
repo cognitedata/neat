@@ -18,10 +18,12 @@ from pydantic import (
     ValidationError,
     constr,
     field_validator,
+    model_validator,
     parse_obj_as,
     root_validator,
     validator,
 )
+from pydantic.fields import FieldInfo
 from rdflib import XSD, Literal, Namespace, URIRef
 
 from cognite.neat.core.configuration import PREFIXES, Tables
@@ -46,9 +48,29 @@ DATA_TYPE_MAPPING = {
 METADATA_VALUE_MAX_LENGTH = 5120
 
 
+def replace_nan_floats_with_default(values: dict, model_fields: dict[str, FieldInfo]) -> dict:
+    output = {}
+    for field_name, value in values.items():
+        is_nan_float = isinstance(value, float) and math.isnan(value)
+        if not is_nan_float:
+            output[field_name] = value
+            continue
+        if field_name in model_fields:
+            output[field_name] = model_fields[field_name].default
+        else:
+            # field_name may be an alias
+            source_name = next((name for name, field in model_fields.items() if field.alias == field_name), None)
+            if source_name:
+                output[field_name] = model_fields[source_name].default
+            else:
+                # Just pass it through if it is not an alias.
+                output[field_name] = value
+    return output
+
+
 class RuleModel(BaseModel):
     model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, str_strip_whitespace=True, arbitrary_types_allowed=True
+        populate_by_name=True, str_strip_whitespace=True, arbitrary_types_allowed=True, strict=False
     )
 
 
@@ -86,20 +108,9 @@ class Resource(RuleModel):
     issues: Optional[List[str]] = Field(default=None, description="Storing list of pydantic validation issues")
     valid: Optional[bool] = Field(default=True, description="Indicates whether resource is valid or not")
 
-    @field_validator(
-        "deprecated",
-        "deprecation_date",
-        "replaced_by",
-        "source",
-        "source_entity_name",
-        "match_type",
-        "comment",
-        mode="before",
-    )
-    def replace_float_nan_with_default(cls, value, info):
-        if isinstance(value, float) and math.isnan(value):
-            return cls.model_fields[info.field_name].default
-        return value
+    @model_validator(mode="before")
+    def replace_float_nan_with_default(cls, values: dict) -> dict:
+        return replace_nan_floats_with_default(values, cls.model_fields)
 
 
 class_id_compliance_regex = r"^([a-zA-Z]+[a-zA-Z0-9]+[._-]{0,1}[a-zA-Z0-9]+)+$"
@@ -118,11 +129,9 @@ class Class(Resource):
     # Solution CDF resource
     parent_asset: Optional[ExternalId] = Field(alias="Parent Asset", default=None)
 
-    @field_validator("parent_class", "parent_asset", mode="before")
-    def replace_float_nan_with_default(cls, value, info):
-        if isinstance(value, float) and math.isnan(value):
-            return cls.model_fields[info.field_name].default
-        return value
+    @model_validator(mode="before")
+    def replace_nan_floats_with_default(cls, values: dict) -> dict:
+        return replace_nan_floats_with_default(values, cls.model_fields)
 
     @validator("class_id", always=True)
     def is_class_id_compliant(cls, value):
@@ -173,24 +182,9 @@ class Property(Resource):
     def is_raw_lookup(self) -> bool:
         return self.rule_type == RuleType.rawlookup
 
-    @field_validator(
-        "max_count",
-        "min_count",
-        "target_type",
-        "source_type",
-        "label",
-        "relationship_external_id_rule",
-        "resource_type_property",
-        "skip_rule",
-        "rule",
-        "rule_type",
-        "cdf_resource_type",
-        mode="before",
-    )
-    def replace_float_nan_with_default(cls, value, info):
-        if isinstance(value, float) and math.isnan(value):
-            return cls.model_fields[info.field_name].default
-        return value
+    @model_validator(mode="before")
+    def replace_float_nan_with_default(cls, values: dict) -> dict:
+        return replace_nan_floats_with_default(values, cls.model_fields)
 
     @validator("class_id", always=True)
     def is_class_id_compliant(cls, value):
@@ -452,7 +446,7 @@ class Instance(RuleModel):
     instance: Optional[URIRef] = Field(alias="Instance", default=None)
     property_: Optional[URIRef] = Field(alias="Property", default=None)
     value: Optional[Literal | URIRef] = Field(alias="Value", default=None)
-    namespace: URIRef
+    namespace: Namespace
     prefixes: Dict[str, Namespace]
 
     @staticmethod
@@ -467,7 +461,7 @@ class Instance(RuleModel):
             except ValueError:
                 return value
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def convert_values(cls, values: dict):
         # we expect to read Excel sheet which contains naming convention of column
         # 'Instance', 'Property', 'Value', if that's not the case we should raise error
@@ -536,7 +530,7 @@ class TransformationRules(RuleModel):
     classes: dict[str, Class]
     properties: dict[str, Property]
     prefixes: dict[str, Namespace]
-    instances: list[tuple] = None
+    instances: Optional[list[tuple]] = None
 
     @property
     def raw_tables(self) -> list[str]:
@@ -962,7 +956,7 @@ class RelationshipDefinition(BaseModel):
     labels: Optional[List[str]] = None
     target_type: str = "Asset"
     source_type: str = "Asset"
-    relationship_external_id_rule: str = None
+    relationship_external_id_rule: Optional[str] = None
 
 
 class RelationshipDefinitions(RuleModel):

@@ -97,6 +97,11 @@ class MemoryClient:
     @classmethod
     def _dump_item(cls, item: T_CogniteResource, ordered: bool, exclude: set[str]) -> dict[str, Any]:
         dump = item.dump()
+        if ordered and "metadata" in dump:
+            for key, value in list(dump["metadata"].items()):
+                if isinstance(value, list):
+                    dump["metadata"][key] = sorted(value)
+
         if "labels" in dump:
             # Labels are not properly dumped to dict.
             iterable = (label.dump() if hasattr(label, "dump") else label for label in dump["labels"])
