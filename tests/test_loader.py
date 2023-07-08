@@ -2,13 +2,12 @@ import filecmp
 from pathlib import Path
 
 from cognite.neat.constants import EXAMPLES_DIRECTORY
-from cognite.neat.core import rules
 from cognite.neat.core.loader.config import copy_examples_to_directory
-from tests import config
+from cognite.neat.core.rules.models import TransformationRules
 
 
-def test_load_excel():
-    assert rules.loader.excel_file_to_table_by_name(config.TNT_TRANSFORMATION_RULES)
+def test_load_excel(transformation_rules: TransformationRules):
+    assert transformation_rules
 
 
 def test_copy_examples_to_directory(tmp_path: Path):

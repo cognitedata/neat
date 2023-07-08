@@ -6,7 +6,7 @@ import re
 import warnings
 from datetime import datetime
 from pathlib import Path
-from typing import ClassVar, Dict, List, Optional, Self
+from typing import ClassVar, Dict, List, Optional
 
 import pandas as pd
 from graphql import GraphQLBoolean, GraphQLFloat, GraphQLInt, GraphQLString
@@ -25,8 +25,9 @@ from pydantic import (
 from pydantic.fields import FieldInfo
 from rdflib import XSD, Literal, Namespace, URIRef
 
-from cognite.neat.core.configuration import PREFIXES, Tables
-from cognite.neat.core.rules.to_rdf_path import Entity, RuleType, parse_rule
+from cognite.neat.core.configuration import PREFIXES
+
+from .to_rdf_path import Entity, RuleType, parse_rule
 
 __all__ = ["Class", "Instance", "Metadata", "Prefixes", "Property", "Resource", "TransformationRules"]
 
@@ -411,34 +412,9 @@ class Metadata(BaseModel):
                 return None
         return value
 
-    @classmethod
-    def create_from_dataframe(cls, raw_dfs) -> Self:
-        expected_tables = Tables.as_set()
-        if missing_tables := (expected_tables - set(raw_dfs)):
-            raise ValueError(f"Missing the following tables {', '.join(missing_tables)}")
-
-        return Metadata(
-            **dict(zip(raw_dfs[Tables.metadata][0], raw_dfs[Tables.metadata][1])),
-            source=raw_dfs[Tables.metadata].source if "source" in dir(raw_dfs[Tables.metadata]) else None,
-        )
-
 
 class Prefixes(RuleModel):
     prefixes: Dict[str, Namespace] = PREFIXES
-
-    @staticmethod
-    def create_from_dataframe(raw_dfs: pd.DataFrame) -> dict[str, Namespace]:
-        prefixes = {}
-        for i, row in raw_dfs.iterrows():
-            try:
-                url = URL(url=row["URI"]).url
-                prefixes[row["Prefix"]] = Namespace(url)
-            except ValueError as e:
-                msg = f"Prefix <{row['Prefix']}> has invalid URL: <{row['URI']}> fix this in Prefixes sheet at the row {i + 2} in the rule file!"
-                logging.error(msg)
-                raise ValueError(msg) from e
-
-        return prefixes
 
 
 class Instance(RuleModel):

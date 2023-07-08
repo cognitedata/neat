@@ -71,8 +71,7 @@ class Sheet2CDFBaseWorkflow(BaseWorkflow):
         else:
             cdf_store.load_rules_file_from_cdf(self.cdf_client, rules_file, version)
 
-        self.raw_tables = rules.loader.excel_file_to_table_by_name(rules_file_path)
-        self.transformation_rules = rules.parse_transformation_rules(self.raw_tables)
+        self.transformation_rules = rules.load_rules_from_excel_file(rules_file_path)
 
         output_text = f"Loaded {len(self.transformation_rules.properties)} rules from {rules_file_path.name!r}."
         logging.info(output_text)
@@ -102,7 +101,8 @@ class Sheet2CDFBaseWorkflow(BaseWorkflow):
         self.instance_ids = {triple[0] for triple in self.triples}
 
         output_text = f"Loaded {len(self.instance_ids)} instances out of"
-        output_text += f" {len(self.raw_tables['Instances'])} rows in Instances sheet"
+        # Todo: This is no longer exposed in the rules package. Need to extend the load methods to return a rapport.
+        # output_text += f" {len(self.raw_tables['Instances'])} rows in Instances sheet"
 
         logging.info(output_text)
         return FlowMessage(output_text=output_text)

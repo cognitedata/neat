@@ -3,11 +3,6 @@ from pathlib import Path
 import pandas as pd
 from openpyxl import Workbook, load_workbook
 
-__all__ = [
-    "google_to_table_by_name",
-    "excel_file_to_table_by_name",
-]
-
 from cognite.neat.core.utils.auxiliary import local_import
 
 

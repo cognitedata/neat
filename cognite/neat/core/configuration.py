@@ -12,19 +12,6 @@ from yaml import safe_load
 
 from cognite.neat.core.utils.cdf import InteractiveClient, ServiceClient
 
-
-class Tables:
-    prefixes = "Prefixes"
-    properties = "Properties"
-    classes = "Classes"
-    metadata = "Metadata"
-    instances = "Instances"
-
-    @classmethod
-    def as_set(cls) -> set[str]:
-        return {value for attr, value in cls.__dict__.items() if not attr.startswith("_") and attr != "as_set"}
-
-
 PREFIXES = {
     # "rdf": Namespace("http://www.w3.org/1999/02/22-rdf-syntax-ns#"), # noqa
     # "rdfs": Namespace("http://www.w3.org/2000/01/rdf-schema#"),# noqa

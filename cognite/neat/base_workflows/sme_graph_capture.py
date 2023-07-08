@@ -63,8 +63,7 @@ class SmeGraphCaptureBaseWorkflow(BaseWorkflow):
         else:
             cdf_store.load_rules_file_from_cdf(self.cdf_client, version)
 
-        tables = rules.loader.excel_file_to_table_by_name(rules_file_path)
-        self.transformation_rules = rules.parse_transformation_rules(tables)
+        self.transformation_rules = rules.load_rules_from_excel_file(rules_file_path)
         self.dataset_id = self.transformation_rules.metadata.data_set_id
         logging.info(f"Loaded prefixes {str(self.transformation_rules.prefixes)} rules")
         output_text = f"Loaded {len(self.transformation_rules.properties)} rules"

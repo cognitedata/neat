@@ -162,12 +162,11 @@ def get_rules(
         neat_app.cdf_store.load_rules_file_from_cdf(file_name, version)
         src = "cdf"
 
-    tables = rules_module.loader.excel_file_to_table_by_name(path)
     error_text = ""
     properties = []
     classes = []
     try:
-        rules = rules_module.parse_transformation_rules(tables)
+        rules = rules_module.load_rules_from_excel_file(path)
         properties = [
             {
                 "class": value.class_id,
