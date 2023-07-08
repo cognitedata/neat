@@ -6,9 +6,9 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes import AssetFilter
 
 from cognite.neat.core import extractors, loader, rules
-from cognite.neat.core.extractors.labels import upload_labels
-from cognite.neat.core.extractors.rdf_to_assets import categorize_assets, rdf2assets, upload_assets
-from cognite.neat.core.extractors.rdf_to_relationships import (
+from cognite.neat.core.extractors.cdfcore.labels import upload_labels
+from cognite.neat.core.extractors.cdfcore.rdf_to_assets import categorize_assets, rdf2assets, upload_assets
+from cognite.neat.core.extractors.cdfcore.rdf_to_relationships import (
     categorize_relationships,
     rdf2relationships,
     upload_relationships,

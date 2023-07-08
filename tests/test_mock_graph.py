@@ -1,4 +1,5 @@
 from cognite.neat.core import extractors, loader
+from cognite.neat.core.extractors.cdfcore import rdf_to_relationships
 from cognite.neat.core.mocks.graph import generate_triples
 from cognite.neat.core.rules import TransformationRules
 from cognite.neat.core.utils2.utils import add_triples, remove_namespace
@@ -31,7 +32,7 @@ def test_mock_graph(transformation_rules: TransformationRules):
     }
 
     assets = extractors.rdf2assets(graph_store, rules)
-    relationships = extractors.rdf_to_relationships.rdf2relationships(graph_store, rules)
+    relationships = rdf_to_relationships.rdf2relationships(graph_store, rules)
 
     assert len(mock_triples) == 503
     assert len(assets) == 97
