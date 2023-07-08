@@ -1,7 +1,7 @@
 from enum import StrEnum
 from typing import Any, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 
 class WorkflowState(StrEnum):
@@ -144,8 +144,14 @@ class WorkflowFullStateReport(BaseModel):
     workflow_version: Optional[str] = None
     run_id: Optional[str] = None
     state: WorkflowState
-    start_time: int = None
-    end_time: int = None
+    start_time: Optional[int] = None
+    end_time: Optional[int] = None
     elapsed_time: float = 0
     last_error: Optional[str] = None
     execution_log: list[WorkflowStepEvent]
+
+    @field_validator("start_time", "end_time", mode="before")
+    def float_to_int(cls, value):
+        if isinstance(value, float):
+            return int(value)
+        return value

@@ -1,4 +1,6 @@
-from pydantic import BaseModel
+import logging
+
+from pydantic import BaseModel, field_validator, model_validator
 
 
 class QueryRequest(BaseModel):
@@ -38,6 +40,17 @@ class RunWorkflowRequest(BaseModel):
     config: dict
     start_step: str
     sync: bool = False
+
+    @field_validator("config", mode="before")
+    def empty_string_to_dict(cls, value):
+        if value == "":
+            return {}
+        return value
+
+    @model_validator(mode="before")
+    def log_call(cls, values):
+        logging.info(f"RunWorkflowRequest: {values}")
+        return values
 
 
 class NodesAndEdgesRequest(BaseModel):
