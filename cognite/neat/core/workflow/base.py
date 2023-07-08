@@ -11,8 +11,7 @@ from cognite.client import CogniteClient
 from prometheus_client import Gauge
 
 from cognite.neat.core.data_stores.metrics import NeatMetricsCollector
-from cognite.neat.core.rules.config import ClientConfig, Config
-from cognite.neat.core.utils import retry_decorator
+from cognite.neat.core.utils2.utils import retry_decorator
 from cognite.neat.core.workflow import cdf_store
 from cognite.neat.core.workflow.model import (
     FlowMessage,
@@ -29,6 +28,8 @@ from cognite.neat.core.workflow.model import (
 )
 from cognite.neat.core.workflow.tasks import WorkflowTaskBuilder
 
+from ..configuration import Config
+from ..utils2.cdf import ClientConfig
 from . import utils
 
 summary_metrics = Gauge("neat_workflow_summary_metrics", "Workflow execution summary metrics", ["wf_name", "name"])

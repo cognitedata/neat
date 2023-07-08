@@ -1,4 +1,5 @@
-from .config import Config
+from . import loader
+from .parser import parse_transformation_rules
 from .transformation_rules import (
     AssetClassMapping,
     AssetTemplate,
@@ -12,7 +13,8 @@ from .transformation_rules import (
 )
 
 __all__ = [
-    "Config",
+    "loader",
+    "parse_transformation_rules",
     "TransformationRules",
     "Class",
     "Property",

@@ -8,7 +8,7 @@ from prometheus_client import Gauge
 from rdflib import RDF, Literal, Namespace, URIRef
 
 from cognite.neat.core.rules.transformation_rules import TransformationRules
-from cognite.neat.core.utils import get_generation_order, prettify_generation_order, remove_namespace
+from cognite.neat.core.utils2.utils import get_generation_order, prettify_generation_order, remove_namespace
 
 neat_total_processed_mock_triples = Gauge(
     "neat_total_processed_mock_triples", "Number of processed mock triples", ["state"]

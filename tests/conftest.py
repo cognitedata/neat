@@ -2,23 +2,23 @@ import pandas as pd
 import pytest
 from rdflib import Namespace
 
-from cognite.neat.core import extractors, loader, parser
+from cognite.neat.core import extractors, loader, rules
 from cognite.neat.core.loader.graph_store import NeatGraphStore
 from cognite.neat.core.mocks.graph import generate_triples
 from cognite.neat.core.rules import TransformationRules
 from cognite.neat.core.transformer import domain2app_knowledge_graph
-from cognite.neat.core.utils import add_triples
+from cognite.neat.core.utils2.utils import add_triples
 from tests import config
 
 
 @pytest.fixture(scope="session")
 def raw_transformation_tables() -> dict[str, pd.DataFrame]:
-    return loader.rules.excel_file_to_table_by_name(config.TNT_TRANSFORMATION_RULES)
+    return rules.loader.excel_file_to_table_by_name(config.TNT_TRANSFORMATION_RULES)
 
 
 @pytest.fixture(scope="session")
 def transformation_rules(raw_transformation_tables: dict[str, pd.DataFrame]) -> TransformationRules:
-    return parser.parse_transformation_rules(raw_transformation_tables)
+    return rules.parse_transformation_rules(raw_transformation_tables)
 
 
 @pytest.fixture(scope="session")
@@ -67,8 +67,8 @@ def mock_cdf_assets(mock_knowledge_graph, transformation_rules):
 
 @pytest.fixture(scope="function")
 def simple_rules():
-    return parser.parse_transformation_rules(
-        loader.rules.excel_file_to_table_by_name(config.SIMPLE_TRANSFORMATION_RULES)
+    return rules.parse_transformation_rules(
+        rules.loader.excel_file_to_table_by_name(config.SIMPLE_TRANSFORMATION_RULES)
     )
 
 

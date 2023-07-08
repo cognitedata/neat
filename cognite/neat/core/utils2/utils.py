@@ -12,7 +12,7 @@ from cognite.client.exceptions import CogniteDuplicatedError, CogniteReadTimeout
 from rdflib.term import URIRef
 
 from cognite.neat.core.loader.graph_store import NeatGraphStore
-from cognite.neat.core.rules.config import InteractiveClient, ServiceClient
+from cognite.neat.core.utils2.cdf import InteractiveClient, ServiceClient
 
 
 def get_cognite_client_from_config(config: ServiceClient) -> CogniteClient:

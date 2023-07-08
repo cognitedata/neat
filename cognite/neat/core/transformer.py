@@ -17,7 +17,7 @@ from rdflib.term import Literal
 from cognite.neat.core.query_generator.sparql import build_sparql_query
 from cognite.neat.core.rules.rules import AllProperties, AllReferences, RawLookup, parse_rule
 from cognite.neat.core.rules.transformation_rules import TransformationRules
-from cognite.neat.core.utils import remove_namespace
+from cognite.neat.core.utils2.utils import remove_namespace
 
 prom_total_proc_rules_g = Gauge("neat_total_processed_rules", "Number of processed rules", ["state"])
 rules_processing_timing_metric = Gauge(

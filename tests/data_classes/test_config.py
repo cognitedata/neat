@@ -3,7 +3,8 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from cognite.neat.core.rules import Config, rules, transformation_rules
+from cognite.neat.core.configuration import Config
+from cognite.neat.core.rules import rules, transformation_rules
 
 nan = float("nan")
 
