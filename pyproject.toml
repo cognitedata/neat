@@ -50,7 +50,7 @@ PyYAML = "*"
 requests = "*"
 urllib3 = "^1.26"
 uvicorn = {extras = ["standard"], version = "^0.21.0"}
-prometheus-client = "^0.16.0"
+prometheus-client = "^0.17.0"
 cognite-sdk = "^6"
 deepdiff = "*"
 fastapi = "^0.95"
