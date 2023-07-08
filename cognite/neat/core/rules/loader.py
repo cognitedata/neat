@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import gspread
 import pandas as pd
 from openpyxl import Workbook, load_workbook
 
@@ -9,8 +8,12 @@ __all__ = [
     "excel_file_to_table_by_name",
 ]
 
+from cognite.neat.core.utils2.auxiliary import local_import
+
 
 def google_to_table_by_name(sheet_id: str) -> dict[str, pd.DataFrame]:
+    gspread = local_import("gspread", "google")
+
     client_google = gspread.service_account()
     spreadsheet = client_google.open_by_key(sheet_id)
     return {worksheet.title: pd.DataFrame(worksheet.get_all_records()) for worksheet in spreadsheet.worksheets()}

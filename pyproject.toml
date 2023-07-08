@@ -43,9 +43,6 @@ pandas = "*"
 rdflib = "*"
 openpyxl = "*"
 pydantic = "^2"
-gspread = "*"
-google-api-python-client = "*"
-google-auth-oauthlib = "*"
 PyYAML = "*"
 requests = "*"
 urllib3 = "^1.26"
@@ -59,6 +56,10 @@ python-multipart = "^0.0.6"
 oxrdflib = {version = "^0.3.3", extras = ["oxigraph"]}
 graphql-core = "^3.2.3"
 
+gspread = {version="*", optional=true}
+google-api-python-client = {version="*", optional=true}
+google-auth-oauthlib = {version="*", optional=true}
+
 mkdocs =  {version="*", optional=true}
 mkdocs-jupyter = {version="*", optional=true}
 mkdocs-material-extensions = {version="*", optional=true}
@@ -69,6 +70,8 @@ mkdocs-glightbox = {version="*", optional=true}
 
 [tool.poetry.extras]
 docs = ["mkdocs", "mkdocs-jupyter", "mkdocs-material-extensions", "mkdocs-git-revision-date-localized-plugin", "mkdocs-git-authors-plugin", "mkdocs-gitbook", "mkdocs-glightbox"]
+google = ["gspread", "google-api-python-client", "google-auth-oauthlib"]
+all = ["gspread", "google-api-python-client", "google-auth-oauthlib"]
 
 [tool.poetry.dev-dependencies]
 twine = "*"
