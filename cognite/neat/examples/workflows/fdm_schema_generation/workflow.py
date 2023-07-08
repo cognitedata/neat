@@ -4,7 +4,7 @@ from pathlib import Path
 
 from cognite.client import CogniteClient
 
-from cognite.neat.core import extractors, loader, parser
+from cognite.neat.core import extractors, rules
 from cognite.neat.core.loader.graph_store import NeatGraphStore
 from cognite.neat.core.rules.transformation_rules import TransformationRules
 from cognite.neat.core.workflow import utils
@@ -49,8 +49,8 @@ class FDMSchemaGenerationNeatWorkflow(BaseWorkflow):
         else:
             cdf_store.load_rules_file_from_cdf(self.cdf_client, version)
 
-        tables = loader.rules.excel_file_to_table_by_name(rules_file_path)
-        self.transformation_rules = parser.parse_transformation_rules(tables)
+        tables = rules.loader.excel_file_to_table_by_name(rules_file_path)
+        self.transformation_rules = rules.parse_transformation_rules(tables)
         self.dataset_id = self.transformation_rules.metadata.data_set_id
         logging.info(f"Loaded prefixes {str(self.transformation_rules.prefixes)} rules")
         output_text = f"Loaded {len(self.transformation_rules.properties)} rules"

@@ -2,13 +2,13 @@ import pandas as pd
 import pytest
 from pydantic import ValidationError
 
-from cognite.neat.core import parser, rules
+from cognite.neat.core import rules
 from cognite.neat.core.configuration import Tables
 from tests import config
 
 
 def test_parse_transformation_rules(raw_transformation_tables):
-    assert parser.parse_transformation_rules(raw_transformation_tables)
+    assert rules.parse_transformation_rules(raw_transformation_tables)
 
 
 def generate_parse_transformation_invalid_rules_test_data():
@@ -23,4 +23,4 @@ def generate_parse_transformation_invalid_rules_test_data():
 @pytest.mark.parametrize("raw_tables", generate_parse_transformation_invalid_rules_test_data())
 def test_parse_transformation_invalid_rules(raw_tables: dict[str, pd.DataFrame]):
     with pytest.raises(ValidationError):
-        parser.parse_transformation_rules(raw_tables)
+        rules.parse_transformation_rules(raw_tables)
