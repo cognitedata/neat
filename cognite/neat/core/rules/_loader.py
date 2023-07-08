@@ -1,13 +1,14 @@
 from pathlib import Path
 
 import pandas as pd
-from openpyxl import Workbook, load_workbook
 
 from cognite.neat.core.utils.auxiliary import local_import
 
 
 def google_to_table_by_name(sheet_id: str) -> dict[str, pd.DataFrame]:
-    gspread = local_import("gspread", "google")
+    # To trigger ImportError if gspread is not installed
+    local_import("gspread", "google")
+    import gspread
 
     client_google = gspread.service_account()
     spreadsheet = client_google.open_by_key(sheet_id)
@@ -15,6 +16,11 @@ def google_to_table_by_name(sheet_id: str) -> dict[str, pd.DataFrame]:
 
 
 def excel_file_to_table_by_name(filepath: Path) -> dict[str, pd.DataFrame]:
+    # To trigger ImportError if openpyxl is not installed
+    local_import("openpyxl", "excel")
+
+    from openpyxl import Workbook, load_workbook
+
     workbook: Workbook = load_workbook(filepath)
 
     sheets = {

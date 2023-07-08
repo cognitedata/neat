@@ -5,6 +5,12 @@ on:
   pull_request:
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: pre-commit/action@v3.0.0
+
   checks:
     permissions:
       id-token: write
@@ -31,10 +37,7 @@ jobs:
         with:
           version: 1.3.1
 
-      - run: poetry install --sync
-
-      - name: Run linting
-        run: poetry run pre-commit run --all-files
+      - run: poetry install --sync -E all
 
       - name: Git diff (in case linting fails, prints why)
         if: always()
