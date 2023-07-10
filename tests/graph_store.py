@@ -2,7 +2,7 @@ import time
 
 import pandas as pd
 
-from cognite.neat.core.data_classes.config import RdfStoreType
+from cognite.neat.core.configuration import RdfStoreType
 from cognite.neat.core.loader import NeatGraphStore
 
 pd.options.display.max_colwidth = 100

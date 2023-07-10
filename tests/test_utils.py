@@ -1,7 +1,7 @@
 import pytest
 from cognite.client.exceptions import CogniteDuplicatedError, CogniteReadTimeout
 
-from cognite.neat.core.utils import retry_decorator
+from cognite.neat.core.utils.utils import retry_decorator
 
 
 def test_retry_decorator_t1():

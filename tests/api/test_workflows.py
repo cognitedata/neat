@@ -3,6 +3,7 @@ from cognite.client import CogniteClient
 from starlette.testclient import TestClient
 
 from cognite.neat.constants import EXAMPLE_WORKFLOWS
+from cognite.neat.core.rules.models import TransformationRules
 from cognite.neat.core.workflow import BaseWorkflow
 from cognite.neat.core.workflow.model import WorkflowDefinition
 from cognite.neat.explorer.data_classes.rest import RunWorkflowRequest
@@ -33,7 +34,7 @@ def test_load_example_workflows_loaded(workflow_names: list[str], fastapi_client
     assert sorted(result["workflows"]) == sorted(workflow_names)
 
 
-def test_load_rules(transformation_rules, fastapi_client: TestClient):
+def test_load_rules(transformation_rules: TransformationRules, fastapi_client: TestClient):
     response = fastapi_client.get("/api/rules")
 
     # Assert

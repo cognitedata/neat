@@ -10,9 +10,8 @@ from cognite.client import ClientConfig as CogniteClientConfig
 from cognite.client import CogniteClient
 from prometheus_client import Gauge
 
-from cognite.neat.core.data_classes.config import ClientConfig, Config
 from cognite.neat.core.data_stores.metrics import NeatMetricsCollector
-from cognite.neat.core.utils import retry_decorator
+from cognite.neat.core.utils.utils import retry_decorator
 from cognite.neat.core.workflow import cdf_store
 from cognite.neat.core.workflow.model import (
     FlowMessage,
@@ -29,6 +28,8 @@ from cognite.neat.core.workflow.model import (
 )
 from cognite.neat.core.workflow.tasks import WorkflowTaskBuilder
 
+from ..configuration import Config
+from ..utils.cdf import ClientConfig
 from . import utils
 
 summary_metrics = Gauge("neat_workflow_summary_metrics", "Workflow execution summary metrics", ["wf_name", "name"])
@@ -400,16 +401,16 @@ class BaseWorkflow:
             implementation_module=custom_implementation_module,
         )
         if output_format == "json":
-            return json.dumps(workflow_definitions.dict(), indent=4)
+            return json.dumps(workflow_definitions.model_dump(), indent=4)
         elif output_format == "yaml":
-            return yaml.dump(workflow_definitions.dict(), indent=4)
+            return yaml.dump(workflow_definitions.model_dump(), indent=4)
 
     @classmethod
     def deserialize_metadata(cls, json_string: str, output_format: str = "json") -> WorkflowDefinition:
         if output_format == "json":
-            workflow_definitions = WorkflowDefinition.parse_raw(json_string)
+            workflow_definitions = WorkflowDefinition.model_validate(json.loads(json_string))
         elif output_format == "yaml":
-            workflow_definitions = WorkflowDefinition.parse_obj(yaml.load(json_string, Loader=yaml.Loader))
+            workflow_definitions = WorkflowDefinition.model_validate(yaml.load(json_string, Loader=yaml.Loader))
         else:
             raise NotImplementedError(f"Output format {output_format} is not supported.")
         return workflow_definitions

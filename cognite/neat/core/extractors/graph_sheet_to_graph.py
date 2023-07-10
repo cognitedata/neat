@@ -4,7 +4,7 @@ import warnings
 import pandas as pd
 from rdflib import RDF, XSD, Literal, Namespace
 
-from cognite.neat.core.data_classes.transformation_rules import TransformationRules
+from cognite.neat.core.rules.models import TransformationRules
 
 
 def sheet2triples(

@@ -4,7 +4,7 @@ import traceback
 from cognite.client import CogniteClient
 from cognite.client.data_classes import LabelDefinition
 
-from cognite.neat.core.data_classes.transformation_rules import TransformationRules
+from cognite.neat.core.rules.models import TransformationRules
 
 
 def upload_labels(

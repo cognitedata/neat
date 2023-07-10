@@ -3,7 +3,9 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from cognite.neat.core.data_classes import Config, rules, transformation_rules
+from cognite.neat.core.configuration import Config
+from cognite.neat.core.rules import to_rdf_path
+from cognite.neat.core.rules.models import Property
 
 nan = float("nan")
 
@@ -37,7 +39,7 @@ def generate_valid_property_test_data():
 
 @pytest.mark.parametrize("raw_input", generate_valid_property_test_data())
 def test_creating_valid_property(raw_input: dict):
-    assert transformation_rules.Property(**raw_input)
+    assert Property(**raw_input)
 
 
 def generate_invalid_property_test_data():
@@ -70,7 +72,7 @@ def generate_invalid_property_test_data():
 @pytest.mark.parametrize("raw_input", generate_invalid_property_test_data())
 def test_creating_invalid_property(raw_input: dict):
     with pytest.raises(ValidationError):
-        transformation_rules.Property(**raw_input)
+        Property(**raw_input)
 
 
 def generate_is_rdfpath_test_data():
@@ -91,7 +93,7 @@ def generate_is_rdfpath_test_data():
 
 @pytest.mark.parametrize("raw_input, is_rdfpath_expected", generate_is_rdfpath_test_data())
 def test_is_rdfpath(raw_input: str, is_rdfpath_expected: bool):
-    assert rules.is_rdfpath(raw_input) is is_rdfpath_expected
+    assert to_rdf_path.is_rdfpath(raw_input) is is_rdfpath_expected
 
 
 def generate_is_rawlookup_test_data():
@@ -114,7 +116,7 @@ def generate_is_rawlookup_test_data():
 
 @pytest.mark.parametrize("raw_input, is_rawlookup_expected", generate_is_rawlookup_test_data())
 def test_is_rawlookup(raw_input: str, is_rawlookup_expected: bool):
-    assert rules.is_rawlookup(raw_input) is is_rawlookup_expected
+    assert to_rdf_path.is_rawlookup(raw_input) is is_rawlookup_expected
 
 
 def test_dump_and_load_default_config(tmp_path: Path):

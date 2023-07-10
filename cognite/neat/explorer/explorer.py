@@ -17,9 +17,10 @@ from prometheus_client import REGISTRY, Counter, make_asgi_app
 
 from cognite import neat
 from cognite.neat import constants
-from cognite.neat.core import loader, parser, query_generator
+from cognite.neat.core import query_generator
+from cognite.neat.core import rules as rules_module
 from cognite.neat.core.app import NeatApp
-from cognite.neat.core.data_classes.config import Config, configure_logging
+from cognite.neat.core.configuration import Config, configure_logging
 from cognite.neat.core.loader.config import copy_examples_to_directory
 from cognite.neat.core.workflow import WorkflowFullStateReport, utils
 from cognite.neat.core.workflow.base import WorkflowDefinition
@@ -161,12 +162,11 @@ def get_rules(
         neat_app.cdf_store.load_rules_file_from_cdf(file_name, version)
         src = "cdf"
 
-    tables = loader.rules.excel_file_to_table_by_name(path)
     error_text = ""
     properties = []
     classes = []
     try:
-        rules = parser.parse_transformation_rules(tables)
+        rules = rules_module.load_rules_from_excel_file(path)
         properties = [
             {
                 "class": value.class_id,
@@ -474,6 +474,7 @@ def start_workflow(request: RunWorkflowRequest):
 def get_workflow_stats(
     workflow_name: str,
 ) -> WorkflowFullStateReport:
+    logging.info("Hit the get_workflow_stats endpoint")
     workflow = neat_app.workflow_manager.get_workflow(workflow_name)
     return workflow.get_state()
 

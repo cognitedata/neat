@@ -6,7 +6,7 @@ from graphql import GraphQLError, GraphQLField, GraphQLList, GraphQLNonNull, Gra
 from graphql import assert_name as assert_graphql_name
 from graphql import print_schema
 
-from cognite.neat.core.data_classes.transformation_rules import DATA_TYPE_MAPPING, Property, TransformationRules
+from cognite.neat.core.rules.models import DATA_TYPE_MAPPING, Property, TransformationRules
 
 
 def get_invalid_names(entity_names: set) -> set:

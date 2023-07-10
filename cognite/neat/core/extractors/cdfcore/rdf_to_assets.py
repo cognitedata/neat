@@ -15,11 +15,11 @@ from deepdiff import DeepDiff
 from rdflib import Graph, Namespace
 from rdflib.term import URIRef
 
-from cognite.neat.core.data_classes import AssetTemplate, Property
-from cognite.neat.core.data_classes.config import EXCLUDE_PATHS
-from cognite.neat.core.data_classes.transformation_rules import TransformationRules
+from cognite.neat.core.configuration import EXCLUDE_PATHS
+from cognite.neat.core.extractors.cdfcore.models import AssetTemplate
 from cognite.neat.core.loader.graph_store import NeatGraphStore
-from cognite.neat.core.utils import chunker, datetime_utc_now, remove_namespace, retry_decorator
+from cognite.neat.core.rules.models import Property, TransformationRules
+from cognite.neat.core.utils.utils import chunker, datetime_utc_now, remove_namespace, retry_decorator
 
 
 @dataclass

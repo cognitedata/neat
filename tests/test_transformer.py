@@ -2,8 +2,8 @@ import pandas as pd
 from cognite.client.testing import monkeypatch_cognite_client
 from rdflib import Graph, Namespace
 
-from cognite.neat.core.data_classes import TransformationRules
-from cognite.neat.core.data_classes.rules import RuleType
+from cognite.neat.core.rules.models import TransformationRules
+from cognite.neat.core.rules.to_rdf_path import RuleType
 from cognite.neat.core.transformer import domain2app_knowledge_graph
 
 

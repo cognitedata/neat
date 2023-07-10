@@ -7,10 +7,9 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes import AssetFilter
 from prometheus_client import Gauge
 
-from cognite.neat.core import loader, parser
-from cognite.neat.core.data_classes.transformation_rules import TransformationRules
-from cognite.neat.core.extractors.labels import upload_labels
-from cognite.neat.core.extractors.rdf_to_assets import (
+from cognite.neat.core import loader, rules
+from cognite.neat.core.extractors.cdfcore.labels import upload_labels
+from cognite.neat.core.extractors.cdfcore.rdf_to_assets import (
     NeatMetadataKeys,
     categorize_assets,
     rdf2assets,
@@ -18,12 +17,13 @@ from cognite.neat.core.extractors.rdf_to_assets import (
     unique_asset_labels,
     upload_assets,
 )
-from cognite.neat.core.extractors.rdf_to_relationships import (
+from cognite.neat.core.extractors.cdfcore.rdf_to_relationships import (
     categorize_relationships,
     rdf2relationships,
     upload_relationships,
 )
 from cognite.neat.core.loader.graph_store import NeatGraphStore
+from cognite.neat.core.rules.models import TransformationRules
 from cognite.neat.core.validator import validate_asset_hierarchy
 from cognite.neat.core.workflow import utils
 from cognite.neat.core.workflow.base import BaseWorkflow, FlowMessage
@@ -71,8 +71,7 @@ class Sheet2CDFBaseWorkflow(BaseWorkflow):
         else:
             cdf_store.load_rules_file_from_cdf(self.cdf_client, rules_file, version)
 
-        self.raw_tables = loader.rules.excel_file_to_table_by_name(rules_file_path)
-        self.transformation_rules = parser.parse_transformation_rules(self.raw_tables)
+        self.transformation_rules = rules.load_rules_from_excel_file(rules_file_path)
 
         output_text = f"Loaded {len(self.transformation_rules.properties)} rules from {rules_file_path.name!r}."
         logging.info(output_text)
@@ -81,7 +80,7 @@ class Sheet2CDFBaseWorkflow(BaseWorkflow):
         self.dataset_id = self.transformation_rules.metadata.data_set_id
         return FlowMessage(output_text=output_text)
 
-    def step_configuring_stores(self, flow_msg: FlowMessage = None):
+    def step_configuring_stores(self, flow_msg: FlowMessage = None, clean_start: bool = True):
         self.source_graph = loader.NeatGraphStore(
             prefixes=self.transformation_rules.prefixes, namespace=self.transformation_rules.metadata.namespace
         )
@@ -102,7 +101,8 @@ class Sheet2CDFBaseWorkflow(BaseWorkflow):
         self.instance_ids = {triple[0] for triple in self.triples}
 
         output_text = f"Loaded {len(self.instance_ids)} instances out of"
-        output_text += f" {len(self.raw_tables['Instances'])} rows in Instances sheet"
+        # Todo: This is no longer exposed in the rules package. Need to extend the load methods to return a rapport.
+        # output_text += f" {len(self.raw_tables['Instances'])} rows in Instances sheet"
 
         logging.info(output_text)
         return FlowMessage(output_text=output_text)
