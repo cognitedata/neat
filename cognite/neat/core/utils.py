@@ -98,7 +98,7 @@ def remove_namespace(URI: URIRef, special_separator: str = "#_") -> str:
         URI of an entity
     special_separator : str
         Special separator to use instead of # or / if present in URI
-        Set by default to "#_" which covers Statnett use case
+        Set by default to "#_" which covers special client use case
 
     Returns
     -------
@@ -107,6 +107,30 @@ def remove_namespace(URI: URIRef, special_separator: str = "#_") -> str:
     """
 
     return URI.split(special_separator if special_separator in URI else ("#" if "#" in URI else "/"))[-1]
+
+
+def get_namespace(URI: URIRef, special_separator: str = "#_") -> str:
+    """Removes namespace from URI
+
+    Parameters
+    ----------
+    URI : URIRef
+        URI of an entity
+    special_separator : str
+        Special separator to use instead of # or / if present in URI
+        Set by default to "#_" which covers special client use case
+
+    Returns
+    -------
+    str
+        Entity id without namespace
+    """
+    if special_separator in URI:
+        return URI.split(special_separator)[0] + special_separator
+    elif "#" in URI:
+        return URI.split("#")[0] + "#"
+    else:
+        return "/".join(URI.split("/")[:-1]) + "/"
 
 
 def _traverse(hierarchy: dict, graph: dict, names: str) -> dict:
