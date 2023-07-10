@@ -5,7 +5,7 @@ class Error100(Exception):
     code: int = 100
     description: str = "Class ID, which is stored in the column 'Class' in the 'Classes' sheet, does not respect defined regex expression"
     example: str = (
-        "If class id is set to 'Class 1', while regex expression does not allow space,"
+        "If class id is set to 'Class 1', while regex expression does not allow spaces,"
         " the expression will be violated thus raising this error"
     )
     fix: str = (
@@ -29,7 +29,7 @@ class Error101(Exception):
     code: int = 101
     description: str = "Class ID, which is stored in the column 'Class' in the 'Properties' sheet, does not respect defined regex expression"
     example: str = (
-        "If class id is set to 'Class 1', while regex expression does not allow space,"
+        "If class id is set to 'Class 1', while regex expression does not allow spaces,"
         " the expression will be violated thus raising this error"
     )
     fix: str = (
@@ -56,7 +56,7 @@ class Error102(Exception):
         "in the 'Properties' sheet, does not respect defined regex expression"
     )
     example: str = (
-        "If property id is set to 'property 1', while regex expression does not allow space,"
+        "If property id is set to 'property 1', while regex expression does not allow spaces,"
         " the expression will be violated thus raising this error"
     )
     fix: str = (
@@ -81,7 +81,7 @@ class Error103(Exception):
     description: str = "Value type, which is stored in the column 'Type' in the 'Properties' sheet, does not respect defined regex expression"
     example: str = (
         "If value type is set to 'date time', while regex expression does not"
-        " allow space, the expression will be violated thus raising this error"
+        " allow spaces, the expression will be violated thus raising this error"
     )
     fix: str = (
         "Check definition of value types in 'Type' column in 'Properties' sheet"
@@ -105,7 +105,7 @@ class Error104(Exception):
     description: str = "Prefix, which is in the 'Metadata' sheet, does not respect defined regex expression"
     example: str = (
         "If prefix is set to 'power grid', while regex expression does not "
-        "allow space, the expression will be violated thus raising this error"
+        "allow spaces, the expression will be violated thus raising this error"
     )
     fix: str = (
         "Check if prefix in the 'Metadata' sheet contains any illegal characters and respects the regex expression"
@@ -130,7 +130,7 @@ class Error105(Exception):
     description: str = "cdfSpaceName, which is in the 'Metadata' sheet, does not respect defined regex expression"
     example: str = (
         "If cdfSpaceName is set to 'power grid', while regex expression does not "
-        "allow space, the expression will be violated thus raising this error"
+        "allow spaces, the expression will be violated thus raising this error"
     )
     fix: str = "Check if cdfSpaceName in the 'Metadata' sheet contains any illegal characters and respects the regex expression"
 
