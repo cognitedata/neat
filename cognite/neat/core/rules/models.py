@@ -139,7 +139,7 @@ class Class(Resource):
     @validator("class_id", always=True)
     def is_class_id_compliant(cls, value):
         if not re.match(class_id_compliance_regex, value):
-            raise _errors.Error100(value, class_id_compliance_regex)
+            raise _errors.Error200(value, class_id_compliance_regex)
         else:
             return value
 
@@ -190,21 +190,21 @@ class Property(Resource):
     @validator("class_id", always=True)
     def is_class_id_compliant(cls, value):
         if not re.match(class_id_compliance_regex, value):
-            raise _errors.Error101(value, class_id_compliance_regex)
+            raise _errors.Error300(value, class_id_compliance_regex)
         else:
             return value
 
     @validator("property_id", always=True)
     def is_property_id_compliant(cls, value):
         if not re.match(property_id_compliance_regex, value):
-            raise _errors.Error102(value, property_id_compliance_regex)
+            raise _errors.Error301(value, property_id_compliance_regex)
         else:
             return value
 
     @validator("expected_value_type", always=True)
     def is_expected_value_type_compliant(cls, value):
         if not re.match(class_id_compliance_regex, value):
-            raise _errors.Error103(value, class_id_compliance_regex)
+            raise _errors.Error302(value, class_id_compliance_regex)
         else:
             return value
 
@@ -337,16 +337,16 @@ class Metadata(BaseModel):
         return value
 
     @validator("prefix", always=True)
-    def make_prefix_compliant(cls, value):
+    def is_prefix_compliant(cls, value):
         if not re.match(prefix_compliance_regex, value):
-            raise _errors.Error104(value, prefix_compliance_regex)
+            raise _errors.Error100(value, prefix_compliance_regex)
         else:
             return value
 
     @validator("cdf_space_name", always=True)
-    def make_cdf_space_name_compliant(cls, value):
+    def is_cdf_space_name_compliant(cls, value):
         if not re.match(cdf_space_name_compliance_regex, value):
-            raise _errors.Error105(value, cdf_space_name_compliance_regex)
+            raise _errors.Error101(value, cdf_space_name_compliance_regex)
         else:
             return value
 
@@ -359,8 +359,8 @@ class Metadata(BaseModel):
                 return Namespace(f"http://purl.org/cognite/{values['cdf_space_name']}/{values['prefix']}#")
         try:
             return Namespace(parse_obj_as(HttpUrl, value))
-        except ValidationError as e:
-            raise ValueError(f"Invalid namespace {value} in Metadata sheet, it must be a valid URL!") from e
+        except ValidationError:
+            raise _errors.Error102(value)
 
     @validator("namespace", always=True)
     def fix_namespace_ending(cls, value):
@@ -371,24 +371,18 @@ class Metadata(BaseModel):
         return values["prefix"] if value is None else value
 
     @validator("data_model_name", always=True)
-    def make_data_model_name_compliant(cls, value):
-        repaired_string = re.sub(r"[^_a-zA-Z0-9]", "", re.sub("[- .]+", "_", value))
-        if not re.match(data_model_name_compliance_regex, repaired_string):
-            raise ValueError(
-                f"Invalid name {repaired_string} in Metadata sheet, it must obey regex {data_model_name_compliance_regex} !"
-            )
+    def is_data_model_name_compliant(cls, value):
+        if not re.match(data_model_name_compliance_regex, value):
+            raise _errors.Error103(value, data_model_name_compliance_regex)
         else:
-            return repaired_string
+            return value
 
     @validator("version", always=True)
-    def make_version_compliant(cls, value):
-        repaired_string = re.sub(r"[^-_a-zA-Z0-9]", "", re.sub("[ .]+", "_", value))
-        if not re.match(version_compliance_regex, repaired_string):
-            raise ValueError(
-                f"Invalid version {repaired_string} in Metadata sheet, it must obey regex {version_compliance_regex} !"
-            )
+    def is_version_compliant(cls, value):
+        if not re.match(version_compliance_regex, value):
+            raise _errors.Error104(value, version_compliance_regex)
         else:
-            return repaired_string
+            return value
 
     @field_validator("creator", "contributor", mode="before")
     def to_list_if_comma(cls, value, info):
