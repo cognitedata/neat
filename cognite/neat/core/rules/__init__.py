@@ -34,13 +34,13 @@ def load_rules_from_google_sheet(sheet_id: str) -> models.TransformationRules:
     return _parser.from_tables(_loader.google_to_table_by_name(sheet_id))
 
 
-def load_rules_from_yaml(filepath: Path) -> models.TransformationRules:
+def load_rules_from_yaml(dirpath: Path) -> models.TransformationRules:
     """
     Load transformation rules from a yaml file.
 
     Args:
-        filepath (Path): Path to the yaml file.
+        dirpath (Path): Path to the yaml file.
     Returns:
         TransformationRules: The transformation rules.
     """
-    return models.TransformationRules(**_loader.yaml_file_to_mapping_by_name(filepath))
+    return models.TransformationRules(**_loader.yaml_file_to_mapping_by_name(dirpath))

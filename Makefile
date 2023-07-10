@@ -39,7 +39,7 @@ start-ui-dev:
 
 poetry-export:
 	@echo "Exporting poetry dependencies"
-	poetry export -f requirements.txt --output requirements.txt
+	poetry export -f requirements.txt --output requirements.txt --extras all
 
 build-docker:
 	@echo "Building docker image"
