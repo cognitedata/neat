@@ -4,8 +4,9 @@ import pytest
 from IPython.display import Markdown, display
 
 from cognite.neat.core.configuration import PREFIXES
-from cognite.neat.core.data_classes import rules
-from cognite.neat.core.data_classes.rules import (
+from cognite.neat.core.loader.graph_store import NeatGraphStore
+from cognite.neat.core.query_generator import build_sparql_query
+from cognite.neat.core.rules.to_rdf_path import (
     AllProperties,
     AllReferences,
     Entity,
@@ -14,9 +15,8 @@ from cognite.neat.core.data_classes.rules import (
     SingleProperty,
     Step,
     parse_rule,
+    parse_traversal,
 )
-from cognite.neat.core.loader.graph_store import NeatGraphStore
-from cognite.neat.core.query_generator import build_sparql_query
 from tests import config
 
 
@@ -125,7 +125,7 @@ def generate_parse_traversal():
 @pytest.mark.parametrize("raw, expected_traversal", generate_parse_traversal())
 def test_parse_traversal(raw: str, expected_traversal: AllProperties):
     # Act
-    actual_traversal = rules.parse_traversal(raw)
+    actual_traversal = parse_traversal(raw)
 
     # Assert
     assert type(actual_traversal) == type(expected_traversal)

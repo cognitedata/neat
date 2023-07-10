@@ -6,7 +6,7 @@ import re
 import warnings
 from datetime import datetime
 from pathlib import Path
-from typing import ClassVar, Dict, List, Optional, Self
+from typing import ClassVar, Dict, List, Optional
 
 import pandas as pd
 from graphql import GraphQLBoolean, GraphQLFloat, GraphQLInt, GraphQLString
@@ -20,14 +20,16 @@ from pydantic import (
     field_validator,
     model_validator,
     parse_obj_as,
-    root_validator,
     validator,
 )
 from pydantic.fields import FieldInfo
 from rdflib import XSD, Literal, Namespace, URIRef
 
-from cognite.neat.core.configuration import PREFIXES, Tables
-from cognite.neat.core.data_classes.rules import Entity, RuleType, parse_rule
+from cognite.neat.core.configuration import PREFIXES
+
+from .to_rdf_path import Entity, RuleType, parse_rule
+
+__all__ = ["Class", "Instance", "Metadata", "Prefixes", "Property", "Resource", "TransformationRules"]
 
 # mapping of XSD types to Python and GraphQL types
 DATA_TYPE_MAPPING = {
@@ -410,34 +412,9 @@ class Metadata(BaseModel):
                 return None
         return value
 
-    @classmethod
-    def create_from_dataframe(cls, raw_dfs) -> Self:
-        expected_tables = Tables.as_set()
-        if missing_tables := (expected_tables - set(raw_dfs)):
-            raise ValueError(f"Missing the following tables {', '.join(missing_tables)}")
-
-        return Metadata(
-            **dict(zip(raw_dfs[Tables.metadata][0], raw_dfs[Tables.metadata][1])),
-            source=raw_dfs[Tables.metadata].source if "source" in dir(raw_dfs[Tables.metadata]) else None,
-        )
-
 
 class Prefixes(RuleModel):
     prefixes: Dict[str, Namespace] = PREFIXES
-
-    @staticmethod
-    def create_from_dataframe(raw_dfs: pd.DataFrame) -> dict[str, Namespace]:
-        prefixes = {}
-        for i, row in raw_dfs.iterrows():
-            try:
-                url = URL(url=row["URI"]).url
-                prefixes[row["Prefix"]] = Namespace(url)
-            except ValueError as e:
-                msg = f"Prefix <{row['Prefix']}> has invalid URL: <{row['URI']}> fix this in Prefixes sheet at the row {i + 2} in the rule file!"
-                logging.error(msg)
-                raise ValueError(msg) from e
-
-        return prefixes
 
 
 class Instance(RuleModel):
@@ -778,62 +755,6 @@ class TransformationRules(RuleModel):
                 sym_pairs.add((source, target))
         return sym_pairs
 
-    def define_relationships(self, stop_on_exception: bool = False) -> RelationshipDefinitions:
-        relationships = {}
-
-        # Unique ids used to check for redefinitions of relationships
-        ids = set()
-
-        for row, rule in self.properties.items():
-            if "Relationship" in rule.cdf_resource_type:
-                relationship = RelationshipDefinition(
-                    source_class=rule.class_id,
-                    target_class=rule.expected_value_type,
-                    property_=rule.property_id,
-                    labels=list(
-                        set([rule.label, rule.class_id, rule.expected_value_type, "non-historic", rule.property_id])
-                    ),
-                    target_type=rule.target_type,
-                    source_type=rule.source_type,
-                    relationship_external_id_rule=rule.relationship_external_id_rule,
-                )
-
-                id_ = f"{rule.class_id}({rule.property_id})"
-                if id_ in ids:
-                    msg = f"Relationship {rule.property_id} redefined at {row} in transformation rules!"
-                    if stop_on_exception:
-                        logging.error(msg)
-                        raise ValueError(msg)
-                    else:
-                        msg += " Skipping redefinition!"
-                        warnings.warn(msg, stacklevel=2)
-                        logging.warning(msg)
-                else:
-                    relationships[row] = relationship
-                    ids.add(id_)
-
-        if relationships:
-            return RelationshipDefinitions(
-                data_set_id=self.metadata.data_set_id,
-                prefix=self.metadata.prefix,
-                namespace=self.metadata.namespace,
-                relationships=relationships,
-            )
-
-        msg = "No relationship defined in transformation rule sheet!"
-        if stop_on_exception:
-            logging.error(msg)
-            raise ValueError(msg)
-        else:
-            warnings.warn(msg, stacklevel=2)
-            logging.warning(msg)
-            return RelationshipDefinitions(
-                data_set_id=self.metadata.data_set_id,
-                prefix=self.metadata.prefix,
-                namespace=self.metadata.namespace,
-                relationships={},
-            )
-
     def get_entity_names(self):
         class_names = set()
         property_names = set()
@@ -841,126 +762,3 @@ class TransformationRules(RuleModel):
             class_names.add(class_)
             property_names = property_names.union(set(properties.index))
         return class_names.union(property_names)
-
-
-class AssetClassMapping(BaseModel):
-    external_id: str
-    name: str
-    parent_external_id: Optional[str] = None
-    description: Optional[str] = None
-    metadata: Optional[dict] = {}
-
-    @root_validator(pre=True)
-    def create_metadata(cls, values: dict):
-        fields = values.keys()
-
-        # adding metadata key in case if it is missing
-        values["metadata"] = {} if "metadata" not in values else values["metadata"]
-
-        for field in fields:
-            if field not in ["external_id", "name", "parent_external_id", "data_set_id", "metadata", "description"]:
-                values["metadata"][field] = ""
-        return values
-
-
-class AssetTemplate(BaseModel):
-    """This class is used to validate, repair and wrangle rdf asset dictionary according to the
-    expected format of cognite sdk Asset dataclass."""
-
-    external_id_prefix: Optional[str] = None  # convenience field to add prefix to external_ids
-    external_id: str
-    name: Optional[str] = None
-    parent_external_id: Optional[str] = None
-    metadata: Optional[dict] = {}
-    description: Optional[str] = None
-    data_set_id: Optional[int] = None
-
-    @root_validator(pre=True)
-    def preprocess_fields(cls, values: dict):
-        fields = values.keys()
-
-        # Adding metadata key in case if it is missing
-        values["metadata"] = {} if "metadata" not in values else values["metadata"]
-
-        for field in fields:
-            # Enrich: adding any field that is not in the list of expected fields to metadata
-            if field not in [
-                "external_id",
-                "name",
-                "parent_external_id",
-                "data_set_id",
-                "metadata",
-                "description",
-                "external_id_prefix",
-            ]:
-                values["metadata"][field] = values[field]
-
-            # Repair: in case if name/description is list instead of single value list elements are joined
-            elif field in ["name", "description"] and isinstance(values[field], list):
-                msg = f"{values['type']} instance {values['identifier']} property {field} "
-                msg += f"has multiple values {values[field]}, "
-                msg += f"these values will be joined in a single string: {', '.join(values[field])}"
-                logging.info(msg)
-                values[field] = ", ".join(values[field])[: METADATA_VALUE_MAX_LENGTH - 1]
-
-            # Repair: in case if external_id or parent_external_id are lists, we take the first value
-            elif field in ["external_id", "parent_external_id"] and isinstance(values[field], list):
-                msg = f"{values['type']} instance {values['identifier']} property {field} "
-                msg += f"has multiple values {values[field]}, "
-                msg += f"only the first one will be used: {values[field][0]}"
-                logging.info(msg)
-                values[field] = values[field][0]
-
-        # Setting asset to be by default active
-        values["metadata"]["active"] = "true"
-
-        # Handling case when the external_id is not provided by defaulting to the original identifier
-        # The original identifier probably has its namespace removed
-        if "external_id" not in fields and "identifier" in fields:
-            values["external_id"] = values["identifier"]
-
-        return values
-
-    @validator("metadata")
-    def to_list_if_comma(cls, value):
-        for key, v in value.items():
-            if isinstance(v, list):
-                value[key] = ", ".join(v)[: METADATA_VALUE_MAX_LENGTH - 1]
-        return value
-
-    @validator("metadata")
-    def to_str(cls, value):
-        for key, v in value.items():
-            value[key] = str(v)
-        return value
-
-    @validator("external_id", always=True)
-    def add_prefix_to_external_id(cls, value, values):
-        if values["external_id_prefix"]:
-            return values["external_id_prefix"] + value
-        else:
-            return value
-
-    @validator("parent_external_id")
-    def add_prefix_to_parent_external_id(cls, value, values):
-        if values["external_id_prefix"]:
-            return values["external_id_prefix"] + value
-        else:
-            return value
-
-
-class RelationshipDefinition(BaseModel):
-    source_class: str
-    target_class: str
-    property_: str
-    labels: Optional[List[str]] = None
-    target_type: str = "Asset"
-    source_type: str = "Asset"
-    relationship_external_id_rule: Optional[str] = None
-
-
-class RelationshipDefinitions(RuleModel):
-    data_set_id: int
-    prefix: str
-    namespace: Namespace
-    relationships: dict[str, RelationshipDefinition]

@@ -15,7 +15,15 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## [0.15.0] - 078-07-23
+## [0.16.0] - 10-07-23
+
+### Changed
+
+* The subpackage inside `cognite-neat` `core.rules` has now a defined inteface with three different load methods
+  along with the data classes those load methods returns.
+* Started making dependencies optional and setting up options for installing `neat` for different use cases.
+
+## [0.15.0] - 08-07-23
 
 ### Changed
 

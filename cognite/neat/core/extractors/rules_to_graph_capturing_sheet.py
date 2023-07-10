@@ -7,8 +7,8 @@ from openpyxl.styles import Alignment, Border, Font, NamedStyle, PatternFill, Si
 from openpyxl.utils.cell import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
 
-from cognite.neat.core.data_classes.transformation_rules import TransformationRules
 from cognite.neat.core.extractors.rules_to_graphql import repair_name as to_graphql_name
+from cognite.neat.core.rules.models import TransformationRules
 
 
 def _add_index_identifiers(workbook: Workbook, sheet: str, no_rows: int):
