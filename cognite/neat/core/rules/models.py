@@ -27,6 +27,7 @@ from rdflib import XSD, Literal, Namespace, URIRef
 
 from cognite.neat.core.configuration import PREFIXES
 
+from . import _errors
 from .to_rdf_path import Entity, RuleType, parse_rule
 
 __all__ = ["Class", "Instance", "Metadata", "Prefixes", "Property", "Resource", "TransformationRules"]
@@ -138,9 +139,7 @@ class Class(Resource):
     @validator("class_id", always=True)
     def is_class_id_compliant(cls, value):
         if not re.match(class_id_compliance_regex, value):
-            raise ValueError(
-                f"Invalid class_id {value} in Class sheet, it must obey regex {class_id_compliance_regex} !"
-            )
+            raise _errors.Error100(value, class_id_compliance_regex)
         else:
             return value
 
@@ -191,27 +190,21 @@ class Property(Resource):
     @validator("class_id", always=True)
     def is_class_id_compliant(cls, value):
         if not re.match(class_id_compliance_regex, value):
-            raise ValueError(
-                f"Invalid class_id {value} in Property sheet, it must obey regex {class_id_compliance_regex} !"
-            )
+            raise _errors.Error101(value, class_id_compliance_regex)
         else:
             return value
 
     @validator("property_id", always=True)
     def is_property_id_compliant(cls, value):
         if not re.match(property_id_compliance_regex, value):
-            raise ValueError(
-                f"Invalid property_id {value} in Property sheet, it must obey regex {property_id_compliance_regex} !"
-            )
+            raise _errors.Error102(value, property_id_compliance_regex)
         else:
             return value
 
     @validator("expected_value_type", always=True)
     def is_expected_value_type_compliant(cls, value):
         if not re.match(class_id_compliance_regex, value):
-            raise ValueError(
-                f"Invalid Type {value} in Property sheet, it must obey regex {class_id_compliance_regex} !"
-            )
+            raise _errors.Error103(value, class_id_compliance_regex)
         else:
             return value
 
@@ -345,23 +338,17 @@ class Metadata(BaseModel):
 
     @validator("prefix", always=True)
     def make_prefix_compliant(cls, value):
-        repaired_string = re.sub(r"[^-_a-zA-Z0-9]", "", value.replace(" ", "-"))
-        if not re.match(prefix_compliance_regex, repaired_string):
-            raise ValueError(
-                f"Invalid prefix/shortName {value} in Metadata sheet, it must obey regex {prefix_compliance_regex} !"
-            )
+        if not re.match(prefix_compliance_regex, value):
+            raise _errors.Error104(value, prefix_compliance_regex)
         else:
-            return repaired_string
+            return value
 
     @validator("cdf_space_name", always=True)
     def make_cdf_space_name_compliant(cls, value):
-        repaired_string = re.sub(r"[^-_a-zA-Z0-9]", "", value.replace(" ", "-"))
-        if not re.match(cdf_space_name_compliance_regex, repaired_string):
-            raise ValueError(
-                f"Invalid cdfSpaceName {value} in Metadata sheet, it must obey regex {cdf_space_name_compliance_regex} !"
-            )
+        if not re.match(cdf_space_name_compliance_regex, value):
+            raise _errors.Error105(value, cdf_space_name_compliance_regex)
         else:
-            return repaired_string
+            return value
 
     @validator("namespace", always=True)
     def set_namespace_if_none(cls, value, values):
