@@ -9,9 +9,34 @@ CODES:
 - 600 - 699: reserved for Transformation Rules, usually checking inter-sheet dependencies
 """
 
+#########################################
+# Metadata sheet Error Codes 100 - 199: #
 
-# Metadata sheet errors:
-class Error100(Exception):
+
+from pydantic_core import PydanticCustomError
+
+
+class Error(Exception):
+    name: str
+    code: int
+    description: str
+    example: str
+    fix: str
+    message: str
+
+    def __init__(self, message) -> None:
+        ...
+
+    def to_pydantic_custom_error(self):
+        return PydanticCustomError(
+            self.name,
+            self.message,
+            dict(name=self.name, code=self.code, description=self.description, example=self.example, fix=self.fix),
+        )
+
+
+class Error100(Error):
+    name: str = "DataModelPrefixRegexViolation"
     code: int = 100
     description: str = "Prefix, which is in the 'Metadata' sheet, does not respect defined regex expression"
     example: str = (
@@ -36,7 +61,8 @@ class Error100(Exception):
         super().__init__(self.message)
 
 
-class Error101(Exception):
+class Error101(Error):
+    name: str = "DataModelCDFSpaceRegexViolation"
     code: int = 101
     description: str = "cdfSpaceName, which is in the 'Metadata' sheet, does not respect defined regex expression"
     example: str = (
@@ -57,7 +83,8 @@ class Error101(Exception):
         super().__init__(self.message)
 
 
-class Error102(Exception):
+class Error102(Error):
+    name: str = "DataModelNamespaceRegexViolation"
     code: int = 102
     description: str = "namespace, which is in the 'Metadata' sheet, is not valid URL"
     example: str = "If we have 'authority:namespace' as namespace as it is not a valid URL this error will be raised"
@@ -74,7 +101,8 @@ class Error102(Exception):
         super().__init__(self.message)
 
 
-class Error103(Exception):
+class Error103(Error):
+    name: str = "DataModelNameRegexViolation"
     code: int = 103
     description: str = "dataModelName, which is in the 'Metadata' sheet, does not respect defined regex expression"
     example: str = (
@@ -95,7 +123,8 @@ class Error103(Exception):
         super().__init__(self.message)
 
 
-class Error104(Exception):
+class Error104(Error):
+    name: str = "DataModelVersionRegexViolation"
     code: int = 104
     description: str = "version, which is in the 'Metadata' sheet, does not respect defined regex expression"
     example: str = (
@@ -110,7 +139,10 @@ class Error104(Exception):
         self.version = version
         self.regex_expression = regex_expression
 
-        self.message = f"Invalid dataModelName '{self.version}' stored in 'Metadata' sheet, it must obey regex {self.regex_expression}!"
+        self.message = (
+            f"Invalid version '{self.version}' stored in 'Metadata' sheet, it must obey regex {self.regex_expression}!"
+            f"\n\tFor further information visit https://thisisneat.io/errors/Error{self.code}"
+        )
         if verbose:
             self.message += f"\nDescription: {self.description}"
             self.message += f"\nExample: {self.example}"
@@ -118,8 +150,12 @@ class Error104(Exception):
         super().__init__(self.message)
 
 
-# Classes sheet errors:
-class Error200(Exception):
+########################################
+# Classes sheet Error Codes 200 - 199: #
+
+
+class Error200(Error):
+    name: str = "ClassIDRegexViolation"
     code: int = 200
     description: str = "Class ID, which is stored in the column 'Class' in the 'Classes' sheet, does not respect defined regex expression"
     example: str = (
@@ -143,8 +179,12 @@ class Error200(Exception):
         super().__init__(self.message)
 
 
-# Properties sheet errors:
-class Error300(Exception):
+###########################################
+# Properties sheet Error Codes 300 - 399: #
+
+
+class Error300(Error):
+    name: str = "ClassIDRegexViolation"
     code: int = 300
     description: str = "Class ID, which is stored in the column 'Class' in the 'Properties' sheet, does not respect defined regex expression"
     example: str = (
@@ -168,7 +208,8 @@ class Error300(Exception):
         super().__init__(self.message)
 
 
-class Error301(Exception):
+class Error301(Error):
+    name: str = "PropertyIDRegexViolation"
     code: int = 301
     description: str = (
         "Property ID, which is stored in the column 'Property' "
@@ -195,7 +236,8 @@ class Error301(Exception):
         super().__init__(self.message)
 
 
-class Error302(Exception):
+class Error302(Error):
+    name: str = "ValueTypeIDRegexViolation"
     code: int = 302
     description: str = "Value type, which is stored in the column 'Type' in the 'Properties' sheet, does not respect defined regex expression"
     example: str = (
@@ -219,4 +261,36 @@ class Error302(Exception):
         super().__init__(self.message)
 
 
-# Transformation Rules interdependency errors:
+###############################################
+# Transformation Rules Error Codes 400 - 499: #
+
+
+class Error400(Error):
+    """Property defined for a class that has not been defined in the 'Classes' sheet"""
+
+    name: str = "PropertyDefinedForUndefinedClass"
+    code: int = 300
+    description: str = "Property defined for a class that has not been defined in the 'Classes' sheet"
+    example: str = (
+        "If property 'someProperty' is defined for class 'Class 1' in the 'Properties' sheet, "
+        "while 'Class 1' has not been defined in the 'Classes' sheet,"
+        " this error will be raised"
+    )
+    fix: str = (
+        "Make sure to define all classes in the 'Classes' sheet before defining properties for them"
+        " in the 'Properties' sheet"
+    )
+
+    def __init__(self, property_id, class_id, verbose=False):
+        self.property_id = property_id
+        self.class_id = class_id
+
+        self.message = (
+            f"Property <{self.property_id}> defined for class <{self.class_id}>"
+            " which is not define in the 'Properties' sheet!"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)

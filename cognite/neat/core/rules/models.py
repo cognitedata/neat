@@ -380,7 +380,7 @@ class Metadata(BaseModel):
     @validator("version", always=True)
     def is_version_compliant(cls, value):
         if not re.match(version_compliance_regex, value):
-            raise _errors.Error104(value, version_compliance_regex)
+            raise _errors.Error104(value, version_compliance_regex).to_pydantic_custom_error()
         else:
             return value
 
@@ -487,7 +487,7 @@ class TransformationRules(RuleModel):
     metadata: Metadata
     classes: dict[str, Class]
     properties: dict[str, Property]
-    prefixes: dict[str, Namespace]
+    prefixes: Optional[dict[str, Namespace]] = PREFIXES
     instances: Optional[list[tuple]] = None
 
     @property
@@ -504,7 +504,7 @@ class TransformationRules(RuleModel):
     def class_property_exist(cls, value, values):
         if classes := values.get("classes"):
             if value.class_id not in classes:
-                raise ValueError(f"Property <{value.property_id}> defined for non-existing class <{value.class_id}>!")
+                raise _errors.Error400(value.property_id, value.class_id)
         return value
 
     @validator("properties", each_item=True)
