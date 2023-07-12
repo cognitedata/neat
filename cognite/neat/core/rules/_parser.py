@@ -1,75 +1,86 @@
 import logging
+from typing import Any
+from warnings import warn
 
 import pandas as pd
 from rdflib import Namespace
 
 from cognite.neat.core.configuration import PREFIXES
 
-from .models import URL, Instance, Metadata, TransformationRules
+from . import _exceptions
+from .models import TransformationRules
 
 
-def from_tables(raw_dfs: dict[str, pd.DataFrame], allow_validation_errors: bool = False) -> TransformationRules:
+def from_tables(raw_dfs: dict[str, pd.DataFrame]) -> TransformationRules:
+    transformation_rules: dict[str, Any] = {}
+
     expected_tables = Tables.mandatory()
     if missing_tables := (expected_tables - set(raw_dfs)):
         raise ValueError(f"Missing the following tables {', '.join(missing_tables)}")
 
-    metadata = _parse_metadata(raw_dfs[Tables.metadata])
-    prefixes = _parse_prefix(raw_dfs[Tables.prefixes]) if Tables.prefixes in raw_dfs else PREFIXES
-    instances = _parse_instances(raw_dfs, metadata, prefixes) if Tables.instances in raw_dfs else None
-
-    if not allow_validation_errors:
-        return TransformationRules(
-            metadata=metadata,
-            classes={class_.get("Class"): class_ for class_ in raw_dfs[Tables.classes].to_dict(orient="records")},
-            properties={
-                f"row {i+3}": property_
-                for i, property_ in enumerate(raw_dfs[Tables.properties].to_dict(orient="records"))
-            },
-            prefixes=prefixes,
-            instances=instances,
-        )
-    else:
-        raise NotImplementedError("Allowing validation errors is not yet implemented!")
-
-
-def _parse_instances(
-    raw_dfs: dict[str, pd.DataFrame], metadata: Metadata, prefixes: dict[str, Namespace]
-) -> list[tuple]:
-    prefixes[metadata.prefix] = metadata.namespace
-
-    instances = []
-    for row_no, row in raw_dfs[Tables.instances].iterrows():
-        try:
-            triple = Instance(**row.to_dict(), namespace=metadata.namespace, prefixes=prefixes)
-        except Exception:
-            msg = f"Skipping row <{row_no + 3}> in Instance sheet\nReason: prefix in Property or Value column not defined!\n"
-            print(msg)
-            logging.info(msg)
-        else:
-            instances += [(triple.instance, triple.property_, triple.value)]
-
-    return instances
-
-
-def _parse_metadata(meta_df: pd.DataFrame) -> Metadata:
-    return Metadata(
-        **dict(zip(meta_df[0], meta_df[1])),
-        source=meta_df.source if "source" in dir(meta_df) else None,
+    # cannot fail for any circumstances
+    transformation_rules["metadata"] = _parse_metadata(raw_dfs[Tables.metadata])
+    transformation_rules["classes"] = _parse_classes(raw_dfs[Tables.classes])
+    transformation_rules["properties"] = _parse_properties(raw_dfs[Tables.properties])
+    transformation_rules["prefixes"] = (
+        _parse_prefixes(raw_dfs[Tables.prefixes]) if Tables.prefixes in raw_dfs else PREFIXES
     )
 
+    if (
+        "prefix" in transformation_rules["metadata"]
+        and "namespace" in transformation_rules["metadata"]
+        and Tables.instances in raw_dfs
+    ):
+        namespace = Namespace(transformation_rules["metadata"]["namespace"])
+        prefix = transformation_rules["metadata"]["prefix"]
+        transformation_rules["prefixes"][prefix] = namespace
+        transformation_rules["instances"] = None
+        # transformation_rules["instances"] = _parse_instances(
+        #     raw_dfs[Tables.instances], namespace, transformation_rules["prefixes"]
+        # )
+    elif Tables.instances in raw_dfs:
+        logging.warning(_exceptions.Warning500().message)
+        warn(_exceptions.Warning500().message)
+        transformation_rules["instances"] = None
+    else:
+        transformation_rules["instances"] = None
 
-def _parse_prefix(prefix_df: pd.DataFrame) -> dict[str, Namespace]:
-    prefixes = {}
-    for i, row in prefix_df.iterrows():
-        try:
-            url = URL(url=row["URI"]).url
-            prefixes[row["Prefix"]] = Namespace(url)
-        except ValueError as e:
-            msg = f"Prefix <{row['Prefix']}> has invalid URL: <{row['URI']}> fix this in Prefixes sheet at the row {i + 2} in the rule file!"
-            logging.error(msg)
-            raise ValueError(msg) from e
+    # this is where it can fail
+    return TransformationRules(**transformation_rules)
 
-    return prefixes
+
+def _parse_metadata(meta_df: pd.DataFrame) -> dict[str, Any]:
+    metadata_dict = dict(zip(meta_df[0], meta_df[1]))
+    metadata_dict["source"] = meta_df.source if "source" in dir(meta_df) else None
+    return metadata_dict
+
+
+def _parse_classes(classes_df: pd.DataFrame) -> dict[str, dict[str, Any]]:
+    return {class_.get("Class"): class_ for class_ in classes_df.to_dict(orient="records")}
+
+
+def _parse_properties(properties_df: pd.DataFrame) -> dict[str, dict[str, Any]]:
+    return {f"row {i+3}": property_ for i, property_ in enumerate(properties_df.to_dict(orient="records"))}
+
+
+def _parse_prefixes(prefix_df: pd.DataFrame) -> dict[str, Namespace]:
+    return {row["Prefix"]: Namespace(row["URI"]) for i, row in prefix_df.iterrows()}
+
+
+# def _parse_instances(instances_df: pd.DataFrame, namespace: Namespace, prefixes: dict[str, Namespace]) -> list[tuple]:
+#     instances = []
+#     for row_no, row in instances_df.iterrows():
+#         instances += []
+#         try:
+#             triple = Instance(**row.to_dict(), namespace=metadata.namespace, prefixes=prefixes)
+#         except Exception:
+#             msg = f"Skipping row <{row_no + 3}> in Instance sheet\nReason: prefix in Property or Value column not defined!\n"
+#             print(msg)
+#             logging.info(msg)
+#         else:
+#             instances += [(triple.instance, triple.property_, triple.value)]
+
+#     return instances
 
 
 class Tables:
