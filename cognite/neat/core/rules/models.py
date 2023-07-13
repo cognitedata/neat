@@ -315,7 +315,7 @@ class Property(Resource):
     relationship_external_id_rule: Optional[str] = Field(alias="Relationship ExternalID Rule", default=None)
 
     # Transformation rule (domain to solution)
-    rule_type: RuleType = Field(alias="Rule Type", default=None)
+    rule_type: Optional[RuleType] = Field(alias="Rule Type", default=None)
     rule: Optional[str] = Field(alias="Rule", default=None)
     skip_rule: bool = Field(alias="Skip", default=False)
 
@@ -365,6 +365,10 @@ class Property(Resource):
     @validator("rule")
     def is_valid_rule(cls, value, values):
         if rule_type := values.get("rule_type"):
+            if not value:
+                raise _exceptions.Error305(
+                    values["property_id"], values["class_id"], values["rule_type"]
+                ).to_pydantic_custom_error()
             _ = parse_rule(value, rule_type)
         return value
 
@@ -382,6 +386,7 @@ class Property(Resource):
                 return None
         return value
 
+    # Setters
     @model_validator(mode="after")
     def set_property_type(cls, model: "Property"):
         if model.expected_value_type in DATA_TYPE_MAPPING.keys():
@@ -404,11 +409,14 @@ class Property(Resource):
             model.label = model.property_id
         return model
 
-    # TODO: witch to model_validator that runs after all validators are done
-    # as this one runs as setter and is not aware of the changes made by other validators
-    @validator("skip_rule", pre=True, always=True)
-    def no_rule(cls, value, values):
-        return True if values.get("rule_type") is None else value
+    @model_validator(mode="after")
+    def set_skip_rule(cls, model: "Property"):
+        if model.rule_type is None:
+            warnings.warn(_exceptions.Warning302(model.property_id, model.class_id).message, stacklevel=2)
+            model.skip_rule = True
+        else:
+            model.skip_rule = False
+        return model
 
 
 class Prefixes(RuleModel):

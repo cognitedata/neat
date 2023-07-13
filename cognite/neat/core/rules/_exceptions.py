@@ -89,6 +89,122 @@ class Error3(Error):
         super().__init__(self.message)
 
 
+class Error51(Error):
+    name: str = "MetadataSheetMissingMandatoryFields"
+    code: int = 52
+    description: str = "Metadata sheet, which is part of Transformation Rules Excel file, is missing mandatory rows"
+    example: str = ""
+    fix: str = ""
+
+    def __init__(self, missing_fields: set[str], verbose=False):
+        self.missing_fields = missing_fields
+
+        self.message = f"Metadata sheet is missing following mandatory fields: {', '.join(missing_fields)}"
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class Error52(Error):
+    name: str = "ClassesSheetMissingMandatoryColumns"
+    code: int = 52
+    description: str = "Classes sheet, which is a mandatory part of Transformation Rules Excel file, is missing mandatory columns at row 2"
+    example: str = ""
+    fix: str = ""
+
+    def __init__(self, missing_fields: set[str], verbose=False):
+        self.missing_fields = missing_fields
+
+        self.message = f"Classes sheet is missing following mandatory columns: {', '.join(missing_fields)} at row 2"
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class Error53(Error):
+    name: str = "PropertiesSheetMissingMandatoryColumns"
+    code: int = 53
+    description: str = "Properties sheet, which is a mandatory part of Transformation Rules Excel file, is missing mandatory columns at row 2"
+    example: str = ""
+    fix: str = ""
+
+    def __init__(self, missing_fields: set[str], verbose=False):
+        self.missing_fields = missing_fields
+
+        self.message = f"Properties sheet is missing following mandatory columns: {', '.join(missing_fields)} at row 2"
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class Error54(Error):
+    name: str = "PrefixesSheetMissingMandatoryColumns"
+    code: int = 54
+    description: str = (
+        "Prefixes sheet, which is part of Transformation Rules Excel file, is missing mandatory columns at row 1"
+    )
+    example: str = ""
+    fix: str = ""
+
+    def __init__(self, missing_fields: set[str], verbose=False):
+        self.missing_fields = missing_fields
+
+        self.message = f"Prefixes sheet is missing following mandatory columns: {', '.join(missing_fields)} at row 1"
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class Error55(Error):
+    name: str = "InstancesSheetMissingMandatoryColumns"
+    code: int = 55
+    description: str = (
+        "Instances sheet, which is part of Transformation Rules Excel file, is missing mandatory columns at row 1"
+    )
+    example: str = ""
+    fix: str = ""
+
+    def __init__(self, missing_fields: set[str], verbose=False):
+        self.missing_fields = missing_fields
+
+        self.message = f"Instances sheet is missing following mandatory columns: {', '.join(missing_fields)} at row 1"
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class Error56(Error):
+    name: str = "NotTransformationRulesExcelFile"
+    code: int = 55
+    description: str = "Given Excel file does not comply to a Transformation Rules Excel file format"
+    example: str = ""
+    fix: str = ""
+
+    def __init__(self, message, verbose=False):
+        self.message = message
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
 # Metadata sheet Error and Warning Codes 100 - 199:
 class Error100(Error):
     name: str = "PrefixRegexViolation"
@@ -446,37 +562,16 @@ class Error304(Error):
 
 
 class Error305(Error):
-    name: str = "CDFResourceTypeMissing"
+    name: str = "RuleTypeProvidedButRuleMissing"
     code: int = 305
     description: str = (
-        "CDF Resource Type, which is stored in the column 'Resource Type' in the 'Properties' sheet,"
-        " is either missing or did not pass validation"
+        "This error occurs when transformation rule type is provided but actual transformation rule is missing"
     )
     example: str = ""
-    fix: str = "Make sure that CDF Resource Type is provided and passes validation"
+    fix: str = "If you provide rule type you are must provide rule as well! Otherwise remove rule type if no transformation rule is needed"
 
-    def __init__(self, verbose=False):
-        self.message = self.description
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
-
-
-class Error306(Error):
-    name: str = "PropertyIDAndCDFResourceTypeMissing"
-    code: int = 305
-    description: str = (
-        "Property id and CDF resource type, which are stored stored in the column 'Property'"
-        " and 'Resource Type' in the 'Properties' sheet respectively,"
-        " are either missing or did not pass validation"
-    )
-    example: str = ""
-    fix: str = "Make sure that property id and CDF resource type are provided and they pass validation"
-
-    def __init__(self, verbose=False):
-        self.message = self.description
+    def __init__(self, property_id, class_id, rule_type, verbose=False):
+        self.message = f"Rule type '{rule_type}' provided for property '{property_id}' in class '{class_id}' but rule is not provided!"
         if verbose:
             self.message += f"\nDescription: {self.description}"
             self.message += f"\nExample: {self.example}"
@@ -518,6 +613,21 @@ class Warning301(UserWarning):
 
     def __init__(self, property_id, verbose=False):
         self.message = f"Property id {property_id} set as CDF relationship label!"
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+
+
+class Warning302(UserWarning):
+    name: str = "NoTransformationRules"
+    code: int = 302
+    description: str = "This warning is raised if there are no transformation rules defined in the 'Transformation' sheet for given propertuy"
+    example: str = ""
+    fix: str = "No fix is provided for this warning"
+
+    def __init__(self, property_id, class_id, verbose=False):
+        self.message = f"There is no transformation configured for property {property_id} of class {class_id}!"
         if verbose:
             self.message += f"\nDescription: {self.description}"
             self.message += f"\nExample: {self.example}"
