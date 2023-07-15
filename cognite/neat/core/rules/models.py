@@ -27,7 +27,9 @@ from rdflib import XSD, Literal, Namespace, URIRef
 
 from cognite.neat.core.configuration import PREFIXES
 
-from . import _exceptions
+# from . import _exceptions
+from cognite.neat.core.rules import _exceptions
+
 from .to_rdf_path import Entity, RuleType, parse_rule
 
 __all__ = ["Class", "Instance", "Metadata", "Prefixes", "Property", "Resource", "TransformationRules"]
@@ -76,6 +78,39 @@ class RuleModel(BaseModel):
         populate_by_name=True, str_strip_whitespace=True, arbitrary_types_allowed=True, strict=False
     )
 
+    @classmethod
+    def mandatory(cls, use_alias=False) -> set[str]:
+        """Returns a set of mandatory fields for the model."""
+        return _get_required_fields(cls, use_alias)
+
+
+def _get_required_fields(model: type[BaseModel], use_alias: bool = False) -> set[str]:
+    """Get required fields from a pydantic model.
+
+    Parameters
+    ----------
+    model : type[BaseModel]
+        Pydantic data model
+    use_alias : bool, optional
+        Whether to return field alias name, by default False
+
+    Returns
+    -------
+    list[str]
+        List of required fields
+    """
+    required_fields = set()
+    for name, field in model.model_fields.items():
+        if not field.is_required():
+            continue
+
+        alias = getattr(field, "alias", None)
+        if use_alias and alias:
+            required_fields.add(alias)
+        else:
+            required_fields.add(name)
+    return required_fields
+
 
 class URL(BaseModel):
     url: HttpUrl
@@ -93,7 +128,7 @@ Prefix = constr(min_length=1, max_length=43)
 ExternalId = constr(min_length=1, max_length=255)
 
 
-class Metadata(BaseModel):
+class Metadata(RuleModel):
     model_config: ClassVar[ConfigDict] = ConfigDict(
         populate_by_name=True, str_strip_whitespace=True, arbitrary_types_allowed=True
     )
@@ -187,14 +222,18 @@ class Metadata(BaseModel):
     def fix_namespace_ending(cls, value):
         if value.endswith("#") or value.endswith("/"):
             return value
-        warnings.warn(_exceptions.Warning100(value).message, stacklevel=2)
+        warnings.warn(_exceptions.Warning100(value).message, category=_exceptions.Warning100, stacklevel=2)
         return f"{value}#"
 
     @validator("data_model_name", always=True)
     def set_data_model_name_if_none(cls, value, values):
         if value is not None:
             return value
-        warnings.warn(_exceptions.Warning101(values["prefix"].replace("-", "_")).message, stacklevel=2)
+        warnings.warn(
+            _exceptions.Warning101(values["prefix"].replace("-", "_")).message,
+            category=_exceptions.Warning101,
+            stacklevel=2,
+        )
         return values["prefix"].replace("-", "_")
 
     @validator("data_model_name", always=True)
@@ -208,7 +247,7 @@ class Metadata(BaseModel):
     def is_version_compliant(cls, value):
         # turn "." into "_" to avoid issues with CDF
         if "." in value:
-            warnings.warn(_exceptions.Warning102().message, stacklevel=2)
+            warnings.warn(_exceptions.Warning102().message, category=_exceptions.Warning102, stacklevel=2)
             value = value.replace(".", "_")
         if not re.match(version_compliance_regex, value):
             raise _exceptions.Error104(value, version_compliance_regex).to_pydantic_custom_error()
@@ -287,7 +326,9 @@ class Class(Resource):
         if value is None:
             if "class_id" not in values:
                 raise _exceptions.Error201().to_pydantic_custom_error()
-            warnings.warn(_exceptions.Warning200(values["class_id"]).message, stacklevel=2)
+            warnings.warn(
+                _exceptions.Warning200(values["class_id"]).message, category=_exceptions.Warning200, stacklevel=2
+            )
             value = values["class_id"]
         return value
 
@@ -398,21 +439,29 @@ class Property(Resource):
     @model_validator(mode="after")
     def set_property_name_if_none(cls, model: "Property"):
         if model.property_name is None:
-            warnings.warn(_exceptions.Warning300(model.property_id).message, stacklevel=2)
+            warnings.warn(
+                _exceptions.Warning300(model.property_id).message, category=_exceptions.Warning300, stacklevel=2
+            )
             model.property_name = model.property_id
         return model
 
     @model_validator(mode="after")
     def set_relationship_label(cls, model: "Property"):
         if model.label is None:
-            warnings.warn(_exceptions.Warning301(model.property_id).message, stacklevel=2)
+            warnings.warn(
+                _exceptions.Warning301(model.property_id).message, category=_exceptions.Warning301, stacklevel=2
+            )
             model.label = model.property_id
         return model
 
     @model_validator(mode="after")
     def set_skip_rule(cls, model: "Property"):
         if model.rule_type is None:
-            warnings.warn(_exceptions.Warning302(model.property_id, model.class_id).message, stacklevel=2)
+            warnings.warn(
+                _exceptions.Warning302(model.property_id, model.class_id).message,
+                category=_exceptions.Warning302,
+                stacklevel=2,
+            )
             model.skip_rule = True
         else:
             model.skip_rule = False

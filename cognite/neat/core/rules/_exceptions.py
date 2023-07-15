@@ -13,11 +13,55 @@ CODES:
 # Metadata sheet Error Codes 100 - 199: #
 
 
-from pydantic_core import PydanticCustomError
+from pydantic_core import ErrorDetails, PydanticCustomError
 
 
-class Error(Exception):
-    name: str
+def wrangle_warnings(list_of_warnings: list) -> list | None:
+    warning_list = []
+    for warning in list_of_warnings:
+        if issubclass(warning.message.__class__, NeatWarning):
+            _append_neat_warning(warning, warning_list)
+        elif issubclass(warning.message.__class__, Warning):
+            _append_python_warning(warning, warning_list)
+    return warning_list if warning_list else None
+
+
+def _append_neat_warning(warning, warning_list):
+    warning_dict = {
+        "type": warning.category.type_,
+        "loc": (),
+        "msg": str(warning.message),
+        "input": None,
+        "ctx": dict(
+            type_=warning.category.type_,
+            code=warning.category.code,
+            description=warning.category.description,
+            example=warning.category.example,
+            fix=warning.category.fix,
+        ),
+    }
+    warning_list.append(warning_dict)
+
+
+def _append_python_warning(warning, warning_list):
+    warning_dict = {
+        "type": warning.category,
+        "loc": (),
+        "msg": str(warning.message),
+        "input": None,
+        "ctx": dict(
+            type_=warning.category,
+            code=None,
+            description=None,
+            example=None,
+            fix=None,
+        ),
+    }
+    warning_list.append(warning_dict)
+
+
+class NeatError(Exception):
+    type_: str
     code: int
     description: str
     example: str
@@ -26,14 +70,60 @@ class Error(Exception):
 
     def to_pydantic_custom_error(self):
         return PydanticCustomError(
-            self.name,
+            self.type_,
             self.message,
-            dict(name=self.name, code=self.code, description=self.description, example=self.example, fix=self.fix),
+            dict(type_=self.type_, code=self.code, description=self.description, example=self.example, fix=self.fix),
         )
 
+    def to_error_dict(self) -> ErrorDetails:
+        return {
+            "type": self.type_,
+            "loc": (),
+            "msg": self.message,
+            "input": None,
+            "ctx": dict(
+                type_=self.type_,
+                code=self.code,
+                description=self.description,
+                example=self.example,
+                fix=self.fix,
+            ),
+        }
 
-class Error1(Error):
-    name: str = "NotValidRDFPath"
+
+class NeatWarning(UserWarning):
+    type_: str
+    code: int
+    description: str
+    example: str
+    fix: str
+    message: str
+
+
+class Error0(NeatError):
+    type_: str = "NonCompliantExcelFile"
+    code: int = 0
+    description: str = "Given Excel file is missing mandatory sheets"
+    example: str = ""
+    fix: str = ""
+
+    def __init__(self, missing_sheets: set[str], verbose=False):
+        self.missing_fields = missing_sheets
+
+        self.message = (
+            "Given Excel file is not compliant Transformation Rules file."
+            f" It is missing mandatory sheets: {', '.join(missing_sheets)}"
+        )
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class Error1(NeatError):
+    type_: str = "NotValidRDFPath"
     code: int = 1
     description: str = "Provided rdf path is not valid, i.e. it cannot be converted to SPARQL query"
     example: str = ""
@@ -51,8 +141,8 @@ class Error1(Error):
         super().__init__(self.message)
 
 
-class Error2(Error):
-    name: str = "NotValidTableLookUp"
+class Error2(NeatError):
+    type_: str = "NotValidTableLookUp"
     code: int = 2
     description: str = "Provided table lookup is not valid, i.e. it cannot be converted to CDF lookup"
     example: str = ""
@@ -70,8 +160,8 @@ class Error2(Error):
         super().__init__(self.message)
 
 
-class Error3(Error):
-    name: str = "NotValidRAWLookUp"
+class Error3(NeatError):
+    type_: str = "NotValidRAWLookUp"
     code: int = 3
     description: str = "Provided rawlookup is not valid, i.e. it cannot be converted to SPARQL query and CDF lookup"
     example: str = ""
@@ -89,8 +179,8 @@ class Error3(Error):
         super().__init__(self.message)
 
 
-class Error51(Error):
-    name: str = "MetadataSheetMissingMandatoryFields"
+class Error51(NeatError):
+    type_: str = "MetadataSheetMissingMandatoryFields"
     code: int = 52
     description: str = "Metadata sheet, which is part of Transformation Rules Excel file, is missing mandatory rows"
     example: str = ""
@@ -108,8 +198,8 @@ class Error51(Error):
         super().__init__(self.message)
 
 
-class Error52(Error):
-    name: str = "ClassesSheetMissingMandatoryColumns"
+class Error52(NeatError):
+    type_: str = "ClassesSheetMissingMandatoryColumns"
     code: int = 52
     description: str = "Classes sheet, which is a mandatory part of Transformation Rules Excel file, is missing mandatory columns at row 2"
     example: str = ""
@@ -127,8 +217,8 @@ class Error52(Error):
         super().__init__(self.message)
 
 
-class Error53(Error):
-    name: str = "PropertiesSheetMissingMandatoryColumns"
+class Error53(NeatError):
+    type_: str = "PropertiesSheetMissingMandatoryColumns"
     code: int = 53
     description: str = "Properties sheet, which is a mandatory part of Transformation Rules Excel file, is missing mandatory columns at row 2"
     example: str = ""
@@ -146,8 +236,8 @@ class Error53(Error):
         super().__init__(self.message)
 
 
-class Error54(Error):
-    name: str = "PrefixesSheetMissingMandatoryColumns"
+class Error54(NeatError):
+    type_: str = "PrefixesSheetMissingMandatoryColumns"
     code: int = 54
     description: str = (
         "Prefixes sheet, which is part of Transformation Rules Excel file, is missing mandatory columns at row 1"
@@ -167,8 +257,8 @@ class Error54(Error):
         super().__init__(self.message)
 
 
-class Error55(Error):
-    name: str = "InstancesSheetMissingMandatoryColumns"
+class Error55(NeatError):
+    type_: str = "InstancesSheetMissingMandatoryColumns"
     code: int = 55
     description: str = (
         "Instances sheet, which is part of Transformation Rules Excel file, is missing mandatory columns at row 1"
@@ -188,26 +278,9 @@ class Error55(Error):
         super().__init__(self.message)
 
 
-class Error56(Error):
-    name: str = "NotTransformationRulesExcelFile"
-    code: int = 55
-    description: str = "Given Excel file does not comply to a Transformation Rules Excel file format"
-    example: str = ""
-    fix: str = ""
-
-    def __init__(self, message, verbose=False):
-        self.message = message
-
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
-
-
 # Metadata sheet Error and Warning Codes 100 - 199:
-class Error100(Error):
-    name: str = "PrefixRegexViolation"
+class Error100(NeatError):
+    type_: str = "PrefixRegexViolation"
     code: int = 100
     description: str = "Prefix, which is in the 'Metadata' sheet, does not respect defined regex expression"
     example: str = (
@@ -232,8 +305,8 @@ class Error100(Error):
         super().__init__(self.message)
 
 
-class Error101(Error):
-    name: str = "CDFSpaceRegexViolation"
+class Error101(NeatError):
+    type_: str = "CDFSpaceRegexViolation"
     code: int = 101
     description: str = "cdfSpaceName, which is in the 'Metadata' sheet, does not respect defined regex expression"
     example: str = (
@@ -254,8 +327,8 @@ class Error101(Error):
         super().__init__(self.message)
 
 
-class Error102(Error):
-    name: str = "NamespaceNotValidURL"
+class Error102(NeatError):
+    type_: str = "NamespaceNotValidURL"
     code: int = 102
     description: str = "namespace, which is in the 'Metadata' sheet, is not valid URL"
     example: str = "If we have 'authority:namespace' as namespace as it is not a valid URL this error will be raised"
@@ -272,8 +345,8 @@ class Error102(Error):
         super().__init__(self.message)
 
 
-class Error103(Error):
-    name: str = "DataModelNameRegexViolation"
+class Error103(NeatError):
+    type_: str = "DataModelNameRegexViolation"
     code: int = 103
     description: str = "dataModelName, which is in the 'Metadata' sheet, does not respect defined regex expression"
     example: str = (
@@ -294,8 +367,8 @@ class Error103(Error):
         super().__init__(self.message)
 
 
-class Error104(Error):
-    name: str = "VersionRegexViolation"
+class Error104(NeatError):
+    type_: str = "VersionRegexViolation"
     code: int = 104
     description: str = "version, which is in the 'Metadata' sheet, does not respect defined regex expression"
     example: str = (
@@ -321,8 +394,8 @@ class Error104(Error):
         super().__init__(self.message)
 
 
-class Warning100(UserWarning):
-    name: str = "NamespaceEndingFixed"
+class Warning100(NeatWarning):
+    type_: str = "NamespaceEndingFixed"
     code: int = 100
     description: str = "It is expected that namespace ends with '/' or '#'. If not, it will be fixed"
     example: str = "If namespace is set to http://purl.org/cognite, it will be converted to http://purl.org/cognite#"
@@ -337,8 +410,8 @@ class Warning100(UserWarning):
             # hint on a specific web docs page
 
 
-class Warning101(UserWarning):
-    name: str = "DataModelNameMissing"
+class Warning101(NeatWarning):
+    type_: str = "DataModelNameMissing"
     code: int = 101
     description: str = "In case when data model name is not provided in the 'Metadata' sheet, it will be set to prefix"
     example: str = ""
@@ -353,8 +426,8 @@ class Warning101(UserWarning):
             # hint on a specific web docs page
 
 
-class Warning102(UserWarning):
-    name: str = "VersionDotsConvertedToUnderscores"
+class Warning102(NeatWarning):
+    type_: str = "VersionDotsConvertedToUnderscores"
     code: int = 102
     description: str = "Version is expressed in classical form with dots major.minor.patch, while CDF accepts underscores major_minor_patch"
     example: str = "If version is provided as 1.2.3, this will be converted to 1_2_3 to be accepted by CDF"
@@ -375,8 +448,8 @@ class Warning102(UserWarning):
 # Classes sheet Error Codes 200 - 199: #
 
 
-class Error200(Error):
-    name: str = "ClassIDRegexViolation"
+class Error200(NeatError):
+    type_: str = "ClassIDRegexViolation"
     code: int = 200
     description: str = "Class ID, which is stored in the column 'Class' in the 'Classes' sheet, does not respect defined regex expression"
     example: str = (
@@ -400,8 +473,8 @@ class Error200(Error):
         super().__init__(self.message)
 
 
-class Error201(Error):
-    name: str = "ClassIDMissing"
+class Error201(NeatError):
+    type_: str = "ClassIDMissing"
     code: int = 200
     description: str = (
         "Class ID, which is stored in the column 'Class' in the 'Classes' sheet,"
@@ -422,8 +495,8 @@ class Error201(Error):
         super().__init__(self.message)
 
 
-class Warning200(UserWarning):
-    name: str = "ClassNameNotProvided"
+class Warning200(NeatWarning):
+    type_: str = "ClassNameNotProvided"
     code: int = 200
     description: str = (
         "If class name is not provided in the 'Classes' sheet under 'name' column,"
@@ -445,8 +518,8 @@ class Warning200(UserWarning):
 # Properties sheet Error Codes 300 - 399: #
 
 
-class Error300(Error):
-    name: str = "ClassIDRegexViolation"
+class Error300(NeatError):
+    type_: str = "ClassIDRegexViolation"
     code: int = 300
     description: str = "Class ID, which is stored in the column 'Class' in the 'Properties' sheet, does not respect defined regex expression"
     example: str = (
@@ -470,8 +543,8 @@ class Error300(Error):
         super().__init__(self.message)
 
 
-class Error301(Error):
-    name: str = "PropertyIDRegexViolation"
+class Error301(NeatError):
+    type_: str = "PropertyIDRegexViolation"
     code: int = 301
     description: str = (
         "Property ID, which is stored in the column 'Property' "
@@ -498,8 +571,8 @@ class Error301(Error):
         super().__init__(self.message)
 
 
-class Error302(Error):
-    name: str = "ValueTypeIDRegexViolation"
+class Error302(NeatError):
+    type_: str = "ValueTypeIDRegexViolation"
     code: int = 302
     description: str = "Value type, which is stored in the column 'Type' in the 'Properties' sheet, does not respect defined regex expression"
     example: str = (
@@ -523,8 +596,8 @@ class Error302(Error):
         super().__init__(self.message)
 
 
-class Error303(Error):
-    name: str = "MissingTypeValue"
+class Error303(NeatError):
+    type_: str = "MissingTypeValue"
     code: int = 302
     description: str = "Value type, which is stored in the column 'Type' in the 'Properties' sheet, is missing"
     example: str = "If value type is not set, this error will be raised"
@@ -539,8 +612,8 @@ class Error303(Error):
         super().__init__(self.message)
 
 
-class Error304(Error):
-    name: str = "PropertyIDMissing"
+class Error304(NeatError):
+    type_: str = "PropertyIDMissing"
     code: int = 304
     description: str = (
         "Property ID, which is stored in the column 'Property' in the 'Properties' sheet,"
@@ -561,8 +634,8 @@ class Error304(Error):
         super().__init__(self.message)
 
 
-class Error305(Error):
-    name: str = "RuleTypeProvidedButRuleMissing"
+class Error305(NeatError):
+    type_: str = "RuleTypeProvidedButRuleMissing"
     code: int = 305
     description: str = (
         "This error occurs when transformation rule type is provided but actual transformation rule is missing"
@@ -579,8 +652,8 @@ class Error305(Error):
         super().__init__(self.message)
 
 
-class Warning300(UserWarning):
-    name: str = "PropertyNameNotProvided"
+class Warning300(NeatWarning):
+    type_: str = "PropertyNameNotProvided"
     code: int = 300
     description: str = (
         "If property name is not provided in the 'Property' sheet under 'name' column,"
@@ -597,8 +670,8 @@ class Warning300(UserWarning):
             self.message += f"\nFix: {self.fix}"
 
 
-class Warning301(UserWarning):
-    name: str = "MissingLabel"
+class Warning301(NeatWarning):
+    type_: str = "MissingLabel"
     code: int = 301
     description: str = (
         "If property maps to CDF relationship, and it does not have label explicitly stated under 'Label' column"
@@ -619,8 +692,8 @@ class Warning301(UserWarning):
             self.message += f"\nFix: {self.fix}"
 
 
-class Warning302(UserWarning):
-    name: str = "NoTransformationRules"
+class Warning302(NeatWarning):
+    type_: str = "NoTransformationRules"
     code: int = 302
     description: str = "This warning is raised if there are no transformation rules defined in the 'Transformation' sheet for given propertuy"
     example: str = ""
@@ -638,8 +711,8 @@ class Warning302(UserWarning):
 #  Prefixes  Error Codes 400 - 499: #
 
 
-class Error400(Error):
-    name: str = "PrefixesRegexViolation"
+class Error400(NeatError):
+    type_: str = "PrefixesRegexViolation"
     code: int = 400
     description: str = "Prefix(es), which are in the 'Prefixes' sheet, do(es) not respect defined regex expression"
     example: str = (
@@ -665,8 +738,8 @@ class Error400(Error):
         super().__init__(self.message)
 
 
-class Error401(Error):
-    name: str = "NamespaceNotValidURL"
+class Error401(NeatError):
+    type_: str = "NamespaceNotValidURL"
     code: int = 401
     description: str = "namespace(es), which are/is in the 'Prefixes' sheet, are/is not valid URLs"
     example: str = "If we have 'authority:namespace' as namespace as it is not a valid URL this error will be raised"
@@ -690,8 +763,8 @@ class Error401(Error):
 # Instances Error Codes 500 - 599: #
 
 
-class Warning500(UserWarning):
-    name: str = "MissingDataModelPrefixOrNamespace"
+class Warning500(NeatWarning):
+    type_: str = "MissingDataModelPrefixOrNamespace"
     code: int = 500
     description: str = "Either prefix or namespace or both are missing in the 'Metadata' sheet"
     example: str = ""
@@ -713,10 +786,10 @@ class Warning500(UserWarning):
 # Transformation Rules Error Codes 600 - 699: #
 
 
-class Error600(Error):
+class Error600(NeatError):
     """Property defined for a class that has not been defined in the 'Classes' sheet"""
 
-    name: str = "PropertyDefinedForUndefinedClass"
+    type_: str = "PropertyDefinedForUndefinedClass"
     code: int = 600
     description: str = "Property defined for a class that has not been defined in the 'Classes' sheet"
     example: str = (
@@ -744,8 +817,8 @@ class Error600(Error):
         super().__init__(self.message)
 
 
-class Error601(Error):
-    name: str = "MetadataSheetMissingOrFailedValidation"
+class Error601(NeatError):
+    type_: str = "MetadataSheetMissingOrFailedValidation"
     code: int = 601
     description: str = "Metadata sheet is missing or it failed validation for one or more fields"
     example: str = ""
@@ -760,8 +833,8 @@ class Error601(Error):
         super().__init__(self.message)
 
 
-class Error602(Error):
-    name: str = "FiledInMetadataSheetMissingOrFailedValidation"
+class Error602(NeatError):
+    type_: str = "FiledInMetadataSheetMissingOrFailedValidation"
     code: int = 602
     description: str = "One of the expected fields in Metadata sheet is missing or it failed validation"
     example: str = ""
@@ -776,8 +849,8 @@ class Error602(Error):
         super().__init__(self.message)
 
 
-class Error603(Error):
-    name: str = "ValueTypeNotDefinedAsClass"
+class Error603(NeatError):
+    type_: str = "ValueTypeNotDefinedAsClass"
     code: int = 603
     description: str = (
         "Expected value type, which is stored in the column 'Type' in the 'Properties'"
@@ -804,8 +877,8 @@ class Error603(Error):
         super().__init__(self.message)
 
 
-class Error604(Error):
-    name: str = "UndefinedObjectsAsExpectedValueTypes"
+class Error604(NeatError):
+    type_: str = "UndefinedObjectsAsExpectedValueTypes"
     code: int = 604
     description: str = (
         "Expected value types, which are stored in the column 'Type' in the 'Properties'"
