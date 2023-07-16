@@ -7,7 +7,7 @@ class WorkflowTaskBuilder:
     """Collection of all base tasks for workflows.All tasks must run in the context of a workflow including threads."""
 
     def __init__(self, cdf_client: CogniteClient, worflow_manager):
-        # TODO : figure out ciclura import and set type to WorkflowManager
+        # TODO : figure out circular import and set type to WorkflowManager
         self.cdf_client = cdf_client
         self.workflow_manager = worflow_manager
 
