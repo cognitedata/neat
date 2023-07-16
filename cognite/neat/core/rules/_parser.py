@@ -21,7 +21,6 @@ def from_tables(
     try:
         with warnings.catch_warnings(record=True) as validation_warnings:
             raw_tables = RawTables.from_raw_dataframes(raw_dfs)
-
             rules_dict: dict[str, Any] = {
                 "metadata": _parse_metadata(raw_tables.Metadata),
                 "classes": _parse_classes(raw_tables.Classes),
@@ -34,7 +33,6 @@ def from_tables(
                 if raw_tables.Instances.empty
                 else _parse_instances(raw_tables.Instances, rules_dict["metadata"], rules_dict["prefixes"])
             )
-
             rules = TransformationRules(**rules_dict)
         return (rules, None, _exceptions.wrangle_warnings(validation_warnings)) if return_report else rules
 
@@ -110,9 +108,13 @@ class RawTables(RuleModel):
             Tables.metadata: raw_dfs[Tables.metadata],
             Tables.classes: raw_dfs[Tables.classes],
             Tables.properties: raw_dfs[Tables.properties],
-            Tables.prefixes: raw_dfs.get(Tables.prefixes, None),
-            Tables.instances: raw_dfs.get(Tables.instances, None),
         }
+
+        if Tables.prefixes in raw_dfs:
+            tables_dict[Tables.prefixes] = raw_dfs[Tables.prefixes]
+        if Tables.instances in raw_dfs:
+            tables_dict[Tables.instances] = raw_dfs[Tables.instances]
+
         return cls(**tables_dict)
 
     @field_validator("Metadata")

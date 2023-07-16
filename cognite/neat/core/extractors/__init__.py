@@ -5,6 +5,7 @@ from cognite.neat.core.extractors.cdfcore.rdf_to_relationships import (
     rdf2relationships,
     upload_relationships,
 )
+from cognite.neat.core.extractors.rdf_to_transformation_rules import owl2transformation_rules
 
 from .graph_sheet_to_graph import sheet2triples
 from .rules_to_graph_capturing_sheet import rules2graph_capturing_sheet
@@ -21,4 +22,5 @@ __all__ = [
     "rules2graphql_schema",
     "rules2graph_capturing_sheet",
     "sheet2triples",
+    "owl2transformation_rules",
 ]

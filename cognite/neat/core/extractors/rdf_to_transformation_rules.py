@@ -1,23 +1,39 @@
+import warnings
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from rdflib import DC, DCTERMS, OWL, RDF, RDFS, Graph
 
-from cognite.neat.core.utils import get_namespace, remove_namespace
+from cognite.neat.core.extractors import _exceptions
+from cognite.neat.core.rules import load_rules_from_excel_file
+from cognite.neat.core.utils.utils import generate_exception_report, get_namespace, remove_namespace
 
 
-def owl2transformation_rules(graph: Graph, filepath: Path):
+def owl2transformation_rules(owl_filepath: Path, excel_filepath: Path = None):
+    # sourcery skip: raise-specific-error
     """Convert owl ontology to transformation rules.
 
     Parameters
     ----------
-    graph : Graph
-        Graph containing owl ontology
+    owl_filepath : Path
+        Path to OWL ontology
     filepath : Path
-        Path to save transformation rules
+        Path to save transformation rules, defaults to None
+
     """
-    writer = pd.ExcelWriter(filepath, engine="xlsxwriter")
+    # makesure that filepaths are Path objects
+    owl_filepath = Path(owl_filepath)
+    if excel_filepath:
+        excel_filepath = Path(excel_filepath)
+    else:
+        excel_filepath = owl_filepath.parent / "transformation_rules.xlsx"
+
+    graph = Graph()
+    try:
+        graph.parse(owl_filepath)
+    except Exception as e:
+        raise Exception(f"Could not parse owl file: {e}") from e
 
     # bind key namespaces
     graph.bind("owl", OWL)
@@ -26,13 +42,39 @@ def owl2transformation_rules(graph: Graph, filepath: Path):
     graph.bind("dcterms", DCTERMS)
     graph.bind("dc", DC)
 
+    writer = pd.ExcelWriter(excel_filepath, engine="xlsxwriter")
+
     _parse_owl_metadata_df(graph).to_excel(writer, sheet_name="Metadata", header=False)
     _parse_owl_classes_df(graph).to_excel(writer, sheet_name="Classes", index=False, header=False)
     _parse_owl_properties_df(graph).to_excel(writer, sheet_name="Properties", index=False, header=False)
 
     writer.close()
 
+    _, validation_errors, validation_warnings = load_rules_from_excel_file(excel_filepath, return_report=True)
+    # if errors:
+    report = ""
+    if validation_errors:
+        warnings.warn(
+            _exceptions.Warning1().message,
+            category=_exceptions.Warning1,
+            stacklevel=2,
+        )
+        report = generate_exception_report(validation_errors, "Errors")
 
+    if validation_warnings:
+        warnings.warn(
+            _exceptions.Warning2().message,
+            category=_exceptions.Warning2,
+            stacklevel=2,
+        )
+        report += generate_exception_report(validation_warnings, "Warnings")
+
+    if report:
+        with open(excel_filepath.parent / "report.txt", "w") as f:
+            f.write(report)
+
+
+# TODO: these are to be read from Metadata pydantic model
 PARSING_METADATA = {
     "header": (
         "namespace",
@@ -115,6 +157,7 @@ def _parse_owl_metadata_df(graph: Graph, parsing_config: dict = PARSING_METADATA
     return pd.DataFrame(clean_list, columns=parsing_config["header"]).T
 
 
+# TODO: these are to be read from Class pydantic model
 PARSING_CONFIG_CLASSES = {
     "helper_row": ("Data Model Definition", "", "", "", "State", "", "", "Knowledge acquisition log", "", "", ""),
     "header": (
@@ -194,6 +237,7 @@ def _parse_owl_classes_df(graph: Graph, parsing_config: dict = PARSING_CONFIG_CL
     return pd.DataFrame([parsing_config["helper_row"], parsing_config["header"]] + clean_list)
 
 
+# TODO: these are to be read from Property pydantic model
 PARSING_CONFIG_PROPERTIES = {
     "helper_row": (
         "Data Model Definition",

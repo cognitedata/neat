@@ -699,8 +699,8 @@ class Warning302(NeatWarning):
     example: str = ""
     fix: str = "No fix is provided for this warning"
 
-    def __init__(self, property_id, class_id, verbose=False):
-        self.message = f"There is no transformation configured for property {property_id} of class {class_id}!"
+    def __init__(self, property_id, verbose=False):
+        self.message = f"There is no transformation configured for property {property_id}!"
         if verbose:
             self.message += f"\nDescription: {self.description}"
             self.message += f"\nExample: {self.example}"

@@ -428,6 +428,7 @@ class Property(Resource):
         return value
 
     # Setters
+    # TODO: configure setters to only run if field_validators are successful, otherwise do not run them!
     @model_validator(mode="after")
     def set_property_type(cls, model: "Property"):
         if model.expected_value_type in DATA_TYPE_MAPPING.keys():
@@ -458,7 +459,7 @@ class Property(Resource):
     def set_skip_rule(cls, model: "Property"):
         if model.rule_type is None:
             warnings.warn(
-                _exceptions.Warning302(model.property_id, model.class_id).message,
+                _exceptions.Warning302(model.property_id).message,
                 category=_exceptions.Warning302,
                 stacklevel=2,
             )

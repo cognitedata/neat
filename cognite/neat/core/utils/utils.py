@@ -250,3 +250,32 @@ def create_sha256_hash(string: str) -> str:
     hash_value = sha256_hash.hexdigest()
 
     return hash_value
+
+
+def generate_exception_report(exceptions: list[dict], category: str) -> str:
+    exceptions_as_dict = _order_expectations_by_type(exceptions) if exceptions else {}
+    report = ""
+
+    for exception_type in exceptions_as_dict.keys():
+        title = f"# {category}: {exception_type}"
+        warnings = "\n- " + "\n- ".join(exceptions_as_dict[exception_type])
+        report += title + warnings + "\n\n"
+
+    return report
+
+
+def _order_expectations_by_type(exceptions: list[dict]) -> dict[str, list[str]]:
+    exception_dict = {}
+    for exception in exceptions:
+        if exception["loc"]:
+            location = f"[{'/'.join(exception['loc'])}]"
+        else:
+            location = ""
+
+        issue = f"{exception['msg']} {location}"
+
+        if exception_dict.get(exception["type"]) is None:
+            exception_dict[exception["type"]] = [issue]
+        else:
+            exception_dict[exception["type"]].append(issue)
+    return exception_dict
