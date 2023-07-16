@@ -651,6 +651,12 @@ class TransformationRules(RuleModel):
 
         return class_labels.union(relationship_labels).union(property_labels)
 
+    def get_instances_as_triples(self) -> list[tuple]:
+        if self.instances:
+            return [(instance.instance, instance.property_, instance.value) for instance in self.instances]
+        else:
+            return []
+
     def get_defined_classes(self) -> set[str]:
         """Returns classes that have been defined in the data model."""
         return {property.class_id for property in self.properties.values()}
