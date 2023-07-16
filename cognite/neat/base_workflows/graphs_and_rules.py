@@ -120,7 +120,7 @@ class GraphsAndRulesBaseWorkflow(BaseWorkflow):
                 self.source_graph.get_graph(),
                 self.transformation_rules,
                 app_instance_graph=self.solution_graph.get_graph(),
-                extra_triples=self.transformation_rules.instances,
+                extra_triples=self.transformation_rules.get_instances_as_triples(),
                 client=self.cdf_client,
                 cdf_lookup_database=None,  # change this accordingly!
                 processing_report=report,
