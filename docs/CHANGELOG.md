@@ -20,12 +20,14 @@ Changes are grouped as follows:
 ### Changed
 
 - Parsing of Transformation Rules from Excel files more stricter validations
+- BREAKING CHANGE: Transformation Rules which contain Instances sheet now required namespace to be explicitly set in Metadata sheet !
 
 ### Added
 
 - Dedicated module for exceptions (warnings/errors) for Transformation Rules parsing
 - Ability to generate parsing report containing warnings/errors
 - Conversion of OWL ontologies to Transformation Rules
+- Tests for notebooks
 
 ## [0.16.0] - 10-07-23
 
