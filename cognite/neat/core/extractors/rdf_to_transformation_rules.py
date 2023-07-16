@@ -42,7 +42,7 @@ def owl2transformation_rules(owl_filepath: Path, excel_filepath: Path = None):
     graph.bind("dcterms", DCTERMS)
     graph.bind("dc", DC)
 
-    writer = pd.ExcelWriter(excel_filepath, engine="xlsxwriter")
+    writer = pd.ExcelWriter(excel_filepath, engine="openpyxl")
 
     _parse_owl_metadata_df(graph).to_excel(writer, sheet_name="Metadata", header=False)
     _parse_owl_classes_df(graph).to_excel(writer, sheet_name="Classes", index=False, header=False)
