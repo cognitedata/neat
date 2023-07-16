@@ -21,18 +21,20 @@ def from_tables(
     try:
         with warnings.catch_warnings(record=True) as validation_warnings:
             raw_tables = RawTables.from_raw_dataframes(raw_dfs)
+
             rules_dict: dict[str, Any] = {
                 "metadata": _parse_metadata(raw_tables.Metadata),
                 "classes": _parse_classes(raw_tables.Classes),
                 "properties": _parse_properties(raw_tables.Properties),
-                "prefixes": _parse_prefixes(raw_tables.Prefixes) if not raw_tables.Prefixes.empty else PREFIXES,
+                "prefixes": PREFIXES if raw_tables.Prefixes.empty else _parse_prefixes(raw_tables.Prefixes),
             }
 
             rules_dict["instances"] = (
-                _parse_instances(raw_tables.Instances, rules_dict["metadata"], rules_dict["prefixes"])
-                if not raw_tables.Instances.empty
-                else None
+                None
+                if raw_tables.Instances.empty
+                else _parse_instances(raw_tables.Instances, rules_dict["metadata"], rules_dict["prefixes"])
             )
+
             rules = TransformationRules(**rules_dict)
         return (rules, None, _exceptions.wrangle_warnings(validation_warnings)) if return_report else rules
 
