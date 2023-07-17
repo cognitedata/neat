@@ -14,6 +14,86 @@ from cognite.neat.core.rules import _exceptions, load_rules_from_excel_file
 from cognite.neat.core.utils.utils import generate_exception_report, get_namespace, remove_namespace
 
 
+def _create_default_metadata_parsing_config() -> dict[str, tuple[str, ...]]:
+    # TODO: these are to be read from Metadata pydantic model
+    return {
+        "header": (
+            "namespace",
+            "prefix",
+            "dataModelName",
+            "cdfSpaceName",
+            "version",
+            "isCurrentVersion",
+            "created",
+            "updated",
+            "title",
+            "description",
+            "creator",
+            "contributor",
+            "rights",
+            "license",
+        )
+    }
+
+
+def _create_default_classes_parsing_config() -> dict[str, tuple[str, ...]]:
+    # TODO: these are to be read from Class pydantic model
+    return {
+        "helper_row": ("Data Model Definition", "", "", "", "State", "", "", "Knowledge acquisition log", "", "", ""),
+        "header": (
+            "Class",
+            "Name",
+            "Description",
+            "Parent Class",
+            "Deprecated",
+            "Deprecation Date",
+            "Replaced By",
+            "Source",
+            "Source Entity Name",
+            "Match",
+            "Comment",
+        ),
+    }
+
+
+def _create_default_properties_parsing_config() -> dict[str, tuple[str, ...]]:
+    # TODO: these are to be read from Property pydantic model
+    return {
+        "helper_row": (
+            "Data Model Definition",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "State",
+            "",
+            "",
+            "Knowledge acquisition log",
+            "",
+            "",
+            "",
+        ),
+        "header": (
+            "Class",
+            "Property",
+            "Name",
+            "Description",
+            "Type",
+            "Min Count",
+            "Max Count",
+            "Deprecated",
+            "Deprecation Date",
+            "Replaced By",
+            "Source",
+            "Source Entity Name",
+            "Match",
+            "Comment",
+        ),
+    }
+
+
 def owl2excel(owl_filepath: Path, excel_filepath: Path = None, validate_results: bool = True):
     """Convert owl ontology to transformation rules serialized as Excel file.
 
@@ -55,53 +135,7 @@ def owl2excel(owl_filepath: Path, excel_filepath: Path = None, validate_results:
         _validate_excel_file(excel_filepath)
 
 
-def _validate_excel_file(excel_filepath: Path):
-    _, validation_errors, validation_warnings = load_rules_from_excel_file(excel_filepath, return_report=True)
-
-    report = ""
-    if validation_errors:
-        warnings.warn(
-            _exceptions.Warning1().message,
-            category=_exceptions.Warning1,
-            stacklevel=2,
-        )
-        report = generate_exception_report(validation_errors, "Errors")
-
-    if validation_warnings:
-        warnings.warn(
-            _exceptions.Warning2().message,
-            category=_exceptions.Warning2,
-            stacklevel=2,
-        )
-        report += generate_exception_report(validation_warnings, "Warnings")
-
-    if report:
-        with open(excel_filepath.parent / "report.txt", "w") as f:
-            f.write(report)
-
-
-# TODO: these are to be read from Metadata pydantic model
-PARSING_METADATA = {
-    "header": (
-        "namespace",
-        "prefix",
-        "dataModelName",
-        "cdfSpaceName",
-        "version",
-        "isCurrentVersion",
-        "created",
-        "updated",
-        "title",
-        "description",
-        "creator",
-        "contributor",
-        "rights",
-        "license",
-    )
-}
-
-
-def _parse_owl_metadata_df(graph: Graph, parsing_config: dict = PARSING_METADATA) -> pd.DataFrame:
+def _parse_owl_metadata_df(graph: Graph, parsing_config: dict = None) -> pd.DataFrame:
     """Parse owl metadata from graph to pandas dataframe.
 
     Parameters
@@ -109,13 +143,16 @@ def _parse_owl_metadata_df(graph: Graph, parsing_config: dict = PARSING_METADATA
     graph : Graph
         Graph containing owl metadata
     parsing_config : dict, optional
-        Configuration for parsing, by default PARSING_METADATA
+        Configuration for parsing, by default None
 
     Returns
     -------
     pd.DataFrame
         Dataframe containing owl metadata
     """
+    if parsing_config is None:
+        parsing_config = _create_default_metadata_parsing_config()
+
     query = """
     SELECT ?namespace ?prefix ?dataModelName ?cdfSpaceName ?version ?isCurrentVersion
            ?created ?updated ?title ?description ?creator ?contributor ?rights ?license
@@ -163,38 +200,24 @@ def _parse_owl_metadata_df(graph: Graph, parsing_config: dict = PARSING_METADATA
     return pd.DataFrame(clean_list, columns=parsing_config["header"]).T
 
 
-# TODO: these are to be read from Class pydantic model
-PARSING_CONFIG_CLASSES = {
-    "helper_row": ("Data Model Definition", "", "", "", "State", "", "", "Knowledge acquisition log", "", "", ""),
-    "header": (
-        "Class",
-        "Name",
-        "Description",
-        "Parent Class",
-        "Deprecated",
-        "Deprecation Date",
-        "Replaced By",
-        "Source",
-        "Source Entity Name",
-        "Match",
-        "Comment",
-    ),
-}
-
-
-def _parse_owl_classes_df(graph: Graph, parsing_config: dict = PARSING_CONFIG_CLASSES) -> pd.DataFrame:
+def _parse_owl_classes_df(graph: Graph, parsing_config: dict = None) -> pd.DataFrame:
     """Get all classes from the graph and their parent classes.
 
     Parameters
     ----------
     graph : Graph
         Graph to query
+    parsing_config : dict, optional
+        Configuration for parsing the dataframe, by default None
 
     Returns
     -------
     pd.DataFrame
         Dataframe with columns: class, parentClass
     """
+    if parsing_config is None:
+        parsing_config = _create_default_classes_parsing_config()
+
     query = """
     SELECT ?class ?name ?description ?parentClass ?deprecated ?deprecationDate ?replacedBy ?source ?sourceEntity ?match ?comment
     WHERE {
@@ -243,59 +266,24 @@ def _parse_owl_classes_df(graph: Graph, parsing_config: dict = PARSING_CONFIG_CL
     return pd.DataFrame([parsing_config["helper_row"], parsing_config["header"]] + clean_list)
 
 
-# TODO: these are to be read from Property pydantic model
-PARSING_CONFIG_PROPERTIES = {
-    "helper_row": (
-        "Data Model Definition",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "State",
-        "",
-        "",
-        "Knowledge acquisition log",
-        "",
-        "",
-        "",
-    ),
-    "header": (
-        "Class",
-        "Property",
-        "Name",
-        "Description",
-        "Type",
-        "Min Count",
-        "Max Count",
-        "Deprecated",
-        "Deprecation Date",
-        "Replaced By",
-        "Source",
-        "Source Entity Name",
-        "Match",
-        "Comment",
-    ),
-}
-
-
-def _parse_owl_properties_df(graph: Graph, parsing_config: dict = PARSING_CONFIG_PROPERTIES) -> pd.DataFrame:
+def _parse_owl_properties_df(graph: Graph, parsing_config: dict = None) -> pd.DataFrame:
     """Get all properties from the OWL ontology
 
     Parameters
     ----------
     graph : Graph
         Graph to query
-
-    parsing_config : dict
-        Configuration for parsing the dataframe
+    parsing_config : dict, optional
+        Configuration for parsing the dataframe, by default None
 
     Returns
     -------
     pd.DataFrame
         Dataframe with columns: class, property, name, ...
     """
+    if parsing_config is None:
+        parsing_config = _create_default_properties_parsing_config()
+
     query = """
     SELECT ?class ?property ?name ?description ?type ?minCount ?maxCount
     ?deprecated ?deprecationDate ?replacedBy ?source ?sourceEntity ?match ?comment
@@ -353,3 +341,28 @@ def _parse_owl_properties_df(graph: Graph, parsing_config: dict = PARSING_CONFIG
             ]
 
     return pd.DataFrame([parsing_config["helper_row"], parsing_config["header"]] + clean_list)
+
+
+def _validate_excel_file(excel_filepath: Path):
+    _, validation_errors, validation_warnings = load_rules_from_excel_file(excel_filepath, return_report=True)
+
+    report = ""
+    if validation_errors:
+        warnings.warn(
+            _exceptions.Warning1().message,
+            category=_exceptions.Warning1,
+            stacklevel=2,
+        )
+        report = generate_exception_report(validation_errors, "Errors")
+
+    if validation_warnings:
+        warnings.warn(
+            _exceptions.Warning2().message,
+            category=_exceptions.Warning2,
+            stacklevel=2,
+        )
+        report += generate_exception_report(validation_warnings, "Warnings")
+
+    if report:
+        with open(excel_filepath.parent / "report.txt", "w") as f:
+            f.write(report)
