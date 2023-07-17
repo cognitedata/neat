@@ -201,10 +201,12 @@ def retry_decorator(max_retries=2, retry_delay=3, component_name=""):
                         raise e
                 except CogniteDuplicatedError as e:
                     if isinstance(previous_exception, CogniteReadTimeout):
-                        # if previous exception was CogniteReadTimeout, we can't be sure if the items were created or not
+                        # if previous exception was CogniteReadTimeout,
+                        # we can't be sure if the items were created or not
                         if len(e.successful) == 0 and len(e.failed) == 0 and len(e.duplicated) >= 0:
                             logging.warning(
-                                f"Duplicate error for {component_name} . All items already exist in CDF. Suppressing error."
+                                f"Duplicate error for {component_name} . All items already exist in CDF. "
+                                "Suppressing error."
                             )
                             return
                         else:
@@ -227,7 +229,8 @@ def retry_decorator(max_retries=2, retry_delay=3, component_name=""):
                     previous_exception = e
                     if attempt < max_retries:
                         logging.error(
-                            f"Retry attempt {attempt + 1} failed for {component_name} . Retrying in {retry_delay} second(s)."
+                            f"Retry attempt {attempt + 1} failed for {component_name}. "
+                            f"Retrying in {retry_delay} second(s)."
                         )
                         logging.error(e)
                         time.sleep(retry_delay)

@@ -200,7 +200,8 @@ class WorkflowManager:
                 elapsed_time = time.perf_counter() - start_time
                 if elapsed_time > max_wait_time:
                     logging.info(
-                        f"Workflow {workflow_name} wait time exceeded . elapsed time = {elapsed_time}, max wait time = {max_wait_time}"
+                        f"Workflow {workflow_name} wait time exceeded . "
+                        f"elapsed time = {elapsed_time}, max wait time = {max_wait_time}"
                     )
                     return WorkflowStartStatus(
                         workflow_instance=None,

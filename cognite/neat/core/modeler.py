@@ -163,7 +163,8 @@ def _add_owl_property(
         )
     else:
         print(
-            f"BAD PRACTICE: Property <{property_}> is of multiple property types: {', '.join(list(properties[property_]['property_type']))}"
+            f"BAD PRACTICE: Property <{property_}> is of multiple property types: "
+            f"{', '.join(list(properties[property_]['property_type']))}"
         )
         [
             ontology_graph.add((data_model_definition.namespace[property_], RDF.type, property_type))
@@ -176,7 +177,8 @@ def _add_owl_property(
         )
     else:
         print(
-            f"WARNING: Property <{property_}> domain is union of multiple classes: {', '.join(list(properties[property_]['domain']))}"
+            f"WARNING: Property <{property_}> domain is union of multiple classes: "
+            f"{', '.join(list(properties[property_]['domain']))}"
         )
         b_union = BNode()
         b_domain = BNode()
@@ -191,7 +193,8 @@ def _add_owl_property(
         )
     else:
         print(
-            f"WARNING: Property <{property_}> range is union of multiple types: {', '.join(list(properties[property_]['range']))}"
+            f"WARNING: Property <{property_}> range is union of multiple types: "
+            f"{', '.join(list(properties[property_]['range']))}"
         )
         b_union = BNode()
         b_range = BNode()

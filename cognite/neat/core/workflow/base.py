@@ -75,8 +75,8 @@ class BaseWorkflow:
         self.is_ephemeral = False  # if True, workflow will be deleted after completion
 
     def start(self, sync=False, is_ephemeral=False, **kwargs) -> FlowMessage | None:
-        """Starts workflow execution.sync=True will block until workflow is completed and return last workflow flow message,
-        sync=False will start workflow in a separate thread and return None"""
+        """Starts workflow execution.sync=True will block until workflow is completed and
+        return last workflow flow message, sync=False will start workflow in a separate thread and return None"""
         if self.state not in [WorkflowState.CREATED, WorkflowState.COMPLETED, WorkflowState.FAILED]:
             logging.error(f"Workflow {self.name} is already running")
             return None
@@ -456,7 +456,8 @@ class BaseWorkflow:
 
     def get_new_cdf_client(self):
         """Get a new CogniteClient instance with the same configuration as the one used by the workflow .
-          Should be used from workflow steps to avoid sharing the same client instance between steps or reset reference to old client instance.
+          Should be used from workflow steps to avoid sharing the same client instance between steps or
+          reset reference to old client instance.
         Returns: CogniteClient
         """
         return CogniteClient(self.cdf_client_config)

@@ -73,7 +73,8 @@ class FDMSchemaGenerationNeatWorkflow(BaseWorkflow):
 
         output_text = (
             "FDM Schema generated and can be downloaded here : "
-            f'<a href="http://localhost:8000/data/data-models/{schema_name}?{time.time()}" target="_blank">{schema_name}</a>'
+            f'<a href="http://localhost:8000/data/data-models/{schema_name}?{time.time()}" '
+            f'target="_blank">{schema_name}</a>'
         )
 
         return FlowMessage(output_text=output_text)

@@ -91,7 +91,10 @@ def _generate_mock_object_property_triples(
             logging.error(msg)
             raise ValueError(msg)
         else:
-            msg += f"Skipping creating triples for property {property_definition.name} of class {class_} which expects values of this type!"
+            msg += (
+                f"Skipping creating triples for property {property_definition.name} "
+                f"of class {class_} which expects values of this type!"
+            )
             logging.warning(msg)
             warnings.warn(msg, stacklevel=2)
             return []
@@ -172,7 +175,8 @@ def generate_triples(
     stop_on_exception: bool = False,
     allow_isolated_classes: bool = True,
 ) -> list[tuple]:
-    """Generate mock triples for purposes of testing of NEAT based on input transformation rules and desired class count.
+    """Generate mock triples for purposes of testing of NEAT based on input transformation rules
+    and desired class count.
 
     Parameters
     ----------

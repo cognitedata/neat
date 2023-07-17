@@ -2,7 +2,8 @@ query_templates = [
     {"name": "Get all classes", "query": "SELECT DISTINCT ?class WHERE { ?s a ?class }"},
     {
         "name": "Get all classes with stats",
-        "query": "SELECT ?class (count(?s) as ?instances ) WHERE { ?s rdf:type ?class . } group by ?class order by DESC(?instances)",
+        "query": "SELECT ?class (count(?s) as ?instances ) "
+        "WHERE { ?s rdf:type ?class . } group by ?class order by DESC(?instances)",
     },
     {"name": "Describe object", "query": " DESCRIBE <http://cog.com/neat#_30b297b4-8e19-da40-9f52-fb9175136a22>"},
     {"name": "Count all classes", "query": " SELECT (COUNT(DISTINCT ?class) AS ?count) WHERE { ?s a ?class }"},
@@ -58,11 +59,14 @@ query_templates = [
     },
     {
         "name": "Get list of all properties of Substations",
-        "query": "SELECT ?subject ?p ?object WHERE { ?subject rdf:type cim:Substation . ?subject ?p ?object . } order by ?subject limit 12",
+        "query": "SELECT ?subject ?p ?object "
+        "WHERE { ?subject rdf:type cim:Substation . ?subject ?p ?object . } "
+        "order by ?subject limit 12",
     },
     {
         "name": "Get all properties of the node",
-        "query": "SELECT ?predicate ?object WHERE { <http://neat-cog.com/#_fbf1e5dc-2ce7-ec2a-e040-1e828c9489bf> ?predicate ?object . }",
+        "query": "SELECT ?predicate ?object "
+        "WHERE { <http://neat-cog.com/#_fbf1e5dc-2ce7-ec2a-e040-1e828c9489bf> ?predicate ?object . }",
     },
     {
         "name": "Get all properties of the node and performing 2 level traversal",

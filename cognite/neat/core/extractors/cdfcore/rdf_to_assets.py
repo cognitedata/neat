@@ -403,7 +403,10 @@ def rdf2assets(
         progress_counter = 0
         # loading all instances into cache
         try:
-            query = f"SELECT ?instance ?prop ?value WHERE {{ ?instance rdf:type <{class_ns}> . ?instance ?prop ?value . }} order by ?instance "
+            query = (
+                f"SELECT ?instance ?prop ?value "
+                f"WHERE {{ ?instance rdf:type <{class_ns}> . ?instance ?prop ?value . }} order by ?instance "
+            )
             logging.info(query)
             response_df = graph_store.query_to_dataframe(query)
         except Exception as e:
