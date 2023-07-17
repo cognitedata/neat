@@ -219,7 +219,8 @@ def _parse_owl_classes_df(graph: Graph, parsing_config: dict = None) -> pd.DataF
         parsing_config = _create_default_classes_parsing_config()
 
     query = """
-    SELECT ?class ?name ?description ?parentClass ?deprecated ?deprecationDate ?replacedBy ?source ?sourceEntity ?match ?comment
+SELECT ?class ?name ?description ?parentClass ?deprecated ?deprecationDate
+?replacedBy ?source ?sourceEntity ?match ?comment
     WHERE {
         ?class a owl:Class .
         OPTIONAL {?class rdfs:subClassOf ?parentClass }.

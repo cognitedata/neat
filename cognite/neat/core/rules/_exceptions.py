@@ -200,7 +200,10 @@ class Error51(NeatError):
 class Error52(NeatError):
     type_: str = "ClassesSheetMissingMandatoryColumns"
     code: int = 52
-    description: str = "Classes sheet, which is a mandatory part of Transformation Rules Excel file, is missing mandatory columns at row 2"
+    description: str = (
+        "Classes sheet, which is a mandatory part of Transformation Rules Excel file, "
+        "is missing mandatory columns at row 2"
+    )
     example: str = ""
     fix: str = ""
 
@@ -219,7 +222,10 @@ class Error52(NeatError):
 class Error53(NeatError):
     type_: str = "PropertiesSheetMissingMandatoryColumns"
     code: int = 53
-    description: str = "Properties sheet, which is a mandatory part of Transformation Rules Excel file, is missing mandatory columns at row 2"
+    description: str = (
+        "Properties sheet, which is a mandatory part of Transformation Rules Excel file, "
+        "is missing mandatory columns at row 2"
+    )
     example: str = ""
     fix: str = ""
 
@@ -312,13 +318,19 @@ class Error101(NeatError):
         "If cdfSpaceName is set to 'power grid', while regex expression does not "
         "allow spaces, the expression will be violated thus raising this error"
     )
-    fix: str = "Check if cdfSpaceName in the 'Metadata' sheet contains any illegal characters and respects the regex expression"
+    fix: str = (
+        "Check if cdfSpaceName in the 'Metadata' sheet "
+        "contains any illegal characters and respects the regex expression"
+    )
 
     def __init__(self, cdf_space_name, regex_expression, verbose=False):
         self.cdf_space_name = cdf_space_name
         self.regex_expression = regex_expression
 
-        self.message = f"Invalid cdfSpaceName '{self.cdf_space_name}' stored in 'Metadata' sheet, it must obey regex {self.regex_expression}!"
+        self.message = (
+            f"Invalid cdfSpaceName '{self.cdf_space_name}' stored in 'Metadata' sheet, "
+            f"it must obey regex {self.regex_expression}!"
+        )
         if verbose:
             self.message += f"\nDescription: {self.description}"
             self.message += f"\nExample: {self.example}"
@@ -331,7 +343,10 @@ class Error102(NeatError):
     code: int = 102
     description: str = "namespace, which is in the 'Metadata' sheet, is not valid URL"
     example: str = "If we have 'authority:namespace' as namespace as it is not a valid URL this error will be raised"
-    fix: str = "Check if 'namespace' in the 'Metadata' sheet is properly constructed as valid URL containing only allowed characters"
+    fix: str = (
+        "Check if 'namespace' in the 'Metadata' sheet is properly "
+        "constructed as valid URL containing only allowed characters"
+    )
 
     def __init__(self, namespace, verbose=False):
         self.namespace = namespace
@@ -352,13 +367,19 @@ class Error103(NeatError):
         "If dataModelName is set to 'power grid data model', while regex expression does not "
         "allow spaces, the expression will be violated thus raising this error"
     )
-    fix: str = "Check if dataModelName in the 'Metadata' sheet contains any illegal characters and respects the regex expression"
+    fix: str = (
+        "Check if dataModelName in the 'Metadata' sheet contains any illegal "
+        "characters and respects the regex expression"
+    )
 
     def __init__(self, data_model_name, regex_expression, verbose=False):
         self.data_model_name = data_model_name
         self.regex_expression = regex_expression
 
-        self.message = f"Invalid dataModelName '{self.data_model_name}' stored in 'Metadata' sheet, it must obey regex {self.regex_expression}!"
+        self.message = (
+            f"Invalid dataModelName '{self.data_model_name}' stored in 'Metadata' sheet, "
+            f"it must obey regex {self.regex_expression}!"
+        )
         if verbose:
             self.message += f"\nDescription: {self.description}"
             self.message += f"\nExample: {self.example}"
@@ -470,7 +491,10 @@ class Warning101(NeatWarning):
 class Warning102(NeatWarning):
     type_: str = "VersionDotsConvertedToUnderscores"
     code: int = 102
-    description: str = "Version is expressed in classical form with dots major.minor.patch, while CDF accepts underscores major_minor_patch"
+    description: str = (
+        "Version is expressed in classical form with dots major.minor.patch, "
+        "while CDF accepts underscores major_minor_patch"
+    )
     example: str = "If version is provided as 1.2.3, this will be converted to 1_2_3 to be accepted by CDF"
     fix: str = "Convert version to underscore notation major_minor_patch"
 
@@ -492,7 +516,10 @@ class Warning102(NeatWarning):
 class Error200(NeatError):
     type_: str = "ClassIDRegexViolation"
     code: int = 200
-    description: str = "Class ID, which is stored in the column 'Class' in the 'Classes' sheet, does not respect defined regex expression"
+    description: str = (
+        "Class ID, which is stored in the column 'Class' in the 'Classes' sheet, "
+        "does not respect defined regex expression"
+    )
     example: str = (
         "If class id is set to 'Class 1', while regex expression does not allow spaces,"
         " the expression will be violated thus raising this error"
@@ -506,7 +533,10 @@ class Error200(NeatError):
         self.class_id = class_id
         self.regex_expression = regex_expression
 
-        self.message = f"Class id '{self.class_id}' stored in 'Class' column in 'Classes' sheet violates regex {self.regex_expression}!"
+        self.message = (
+            f"Class id '{self.class_id}' stored in 'Class' column in 'Classes' "
+            f"sheet violates regex {self.regex_expression}!"
+        )
         if verbose:
             self.message += f"\nDescription: {self.description}"
             self.message += f"\nExample: {self.example}"
@@ -562,7 +592,10 @@ class Warning200(NeatWarning):
 class Error300(NeatError):
     type_: str = "ClassIDRegexViolation"
     code: int = 300
-    description: str = "Class ID, which is stored in the column 'Class' in the 'Properties' sheet, does not respect defined regex expression"
+    description: str = (
+        "Class ID, which is stored in the column 'Class' in the 'Properties' sheet, "
+        "does not respect defined regex expression"
+    )
     example: str = (
         "If class id is set to 'Class 1', while regex expression does not allow spaces,"
         " the expression will be violated thus raising this error"
@@ -576,7 +609,10 @@ class Error300(NeatError):
         self.class_id = class_id
         self.regex_expression = regex_expression
 
-        self.message = f"Class id '{self.class_id}' stored in 'Class' column in 'Properties' sheet violates regex {self.regex_expression}!"
+        self.message = (
+            f"Class id '{self.class_id}' stored in 'Class' column in 'Properties' "
+            f"sheet violates regex {self.regex_expression}!"
+        )
         if verbose:
             self.message += f"\nDescription: {self.description}"
             self.message += f"\nExample: {self.example}"
@@ -604,7 +640,10 @@ class Error301(NeatError):
         self.property_id = property_id
         self.regex_expression = regex_expression
 
-        self.message = f"Property id '{self.property_id}' stored in 'Property' column in 'Properties' sheet violates regex {self.regex_expression}!"
+        self.message = (
+            f"Property id '{self.property_id}' stored in 'Property' "
+            f"column in 'Properties' sheet violates regex {self.regex_expression}!"
+        )
         if verbose:
             self.message += f"\nDescription: {self.description}"
             self.message += f"\nExample: {self.example}"
@@ -615,7 +654,10 @@ class Error301(NeatError):
 class Error302(NeatError):
     type_: str = "ValueTypeIDRegexViolation"
     code: int = 302
-    description: str = "Value type, which is stored in the column 'Type' in the 'Properties' sheet, does not respect defined regex expression"
+    description: str = (
+        "Value type, which is stored in the column 'Type' in the 'Properties' sheet, "
+        "does not respect defined regex expression"
+    )
     example: str = (
         "If value type is set to 'date time', while regex expression does not"
         " allow spaces, the expression will be violated thus raising this error"
@@ -629,7 +671,10 @@ class Error302(NeatError):
         self.value_type = value_type
         self.regex_expression = regex_expression
 
-        self.message = f"Value type '{self.value_type}' stored in 'Type' column in 'Properties' sheet violates regex {self.regex_expression}!"
+        self.message = (
+            f"Value type '{self.value_type}' stored in 'Type' column in "
+            f"'Properties' sheet violates regex {self.regex_expression}!"
+        )
         if verbose:
             self.message += f"\nDescription: {self.description}"
             self.message += f"\nExample: {self.example}"
@@ -682,10 +727,16 @@ class Error305(NeatError):
         "This error occurs when transformation rule type is provided but actual transformation rule is missing"
     )
     example: str = ""
-    fix: str = "If you provide rule type you are must provide rule as well! Otherwise remove rule type if no transformation rule is needed"
+    fix: str = (
+        "If you provide rule type you are must provide rule as well! "
+        "Otherwise remove rule type if no transformation rule is needed"
+    )
 
     def __init__(self, property_id, class_id, rule_type, verbose=False):
-        self.message = f"Rule type '{rule_type}' provided for property '{property_id}' in class '{class_id}' but rule is not provided!"
+        self.message = (
+            f"Rule type '{rule_type}' provided for property '{property_id}' "
+            f"in class '{class_id}' but rule is not provided!"
+        )
         if verbose:
             self.message += f"\nDescription: {self.description}"
             self.message += f"\nExample: {self.example}"
@@ -736,7 +787,10 @@ class Warning301(NeatWarning):
 class Warning302(NeatWarning):
     type_: str = "NoTransformationRules"
     code: int = 302
-    description: str = "This warning is raised if there are no transformation rules defined in the 'Transformation' sheet for given propertuy"
+    description: str = (
+        "This warning is raised if there are no transformation rules "
+        "defined in the 'Transformation' sheet for given propertuy"
+    )
     example: str = ""
     fix: str = "No fix is provided for this warning"
 
@@ -784,7 +838,10 @@ class Error401(NeatError):
     code: int = 401
     description: str = "namespace(es), which are/is in the 'Prefixes' sheet, are/is not valid URLs"
     example: str = "If we have 'authority:namespace' as namespace as it is not a valid URL this error will be raised"
-    fix: str = "Check if 'namespaces' in the 'Prefixes' sheet are properly constructed as valid URLs containing only allowed characters"
+    fix: str = (
+        "Check if 'namespaces' in the 'Prefixes' sheet are properly "
+        "constructed as valid URLs containing only allowed characters"
+    )
 
     def __init__(self, namespaces, verbose=False):
         self.namespaces = namespaces
@@ -904,7 +961,10 @@ class Error603(NeatError):
         " 'Class1', while 'Class2' is not defined. Under this given circumstance, this error will be raised!"
     )
 
-    fix: str = "Make sure to define all of the classes in the 'Classes' sheet before defining properties that expect them as value types"
+    fix: str = (
+        "Make sure to define all of the classes in the 'Classes' sheet before defining "
+        "properties that expect them as value types"
+    )
 
     def __init__(self, class_id: str, property_id: str, expected_value_type: str, verbose=False):
         self.message = (
@@ -928,12 +988,16 @@ class Error604(NeatError):
     )
     example: str = (
         "We have 'Class1' which has property 'edgeClass1Class2' linking it to 'Class2', thus"
-        "expected value of 'edgeClass1Class2' is 'Class2'. Both 'Class1' and 'Class2' are defined in the 'Classes' sheet"
+        "expected value of 'edgeClass1Class2' is 'Class2'. "
+        "Both 'Class1' and 'Class2' are defined in the 'Classes' sheet"
         "However, only 'Class1' has properties defined in the 'Properties' sheet, making 'Class2' an undefined object"
         " leading to this error being raised!"
     )
 
-    fix: str = "Make sure to define properties for classes from 'Classes' sheet before defining properties that expect them as value types"
+    fix: str = (
+        "Make sure to define properties for classes from 'Classes' "
+        "sheet before defining properties that expect them as value types"
+    )
 
     def __init__(self, undefined_objects: list[str], verbose=False):
         self.message = (
