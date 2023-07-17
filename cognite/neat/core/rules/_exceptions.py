@@ -17,7 +17,7 @@ from pydantic_core import ErrorDetails, PydanticCustomError
 
 
 def wrangle_warnings(list_of_warnings: list) -> list | None:
-    warning_list = []
+    warning_list: list[NeatWarning] = []
     for warning in list_of_warnings:
         if issubclass(warning.message.__class__, NeatWarning):
             _append_neat_warning(warning, warning_list)
