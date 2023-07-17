@@ -16,50 +16,6 @@ CODES:
 from pydantic_core import ErrorDetails, PydanticCustomError
 
 
-def wrangle_warnings(list_of_warnings: list) -> list | None:
-    warning_list: list[NeatWarning] = []
-    for warning in list_of_warnings:
-        if issubclass(warning.message.__class__, NeatWarning):
-            _append_neat_warning(warning, warning_list)
-        elif issubclass(warning.message.__class__, Warning):
-            _append_python_warning(warning, warning_list)
-    return warning_list if warning_list else None
-
-
-def _append_neat_warning(warning, warning_list):
-    warning_dict = {
-        "type": warning.category.type_,
-        "loc": (),
-        "msg": str(warning.message),
-        "input": None,
-        "ctx": dict(
-            type_=warning.category.type_,
-            code=warning.category.code,
-            description=warning.category.description,
-            example=warning.category.example,
-            fix=warning.category.fix,
-        ),
-    }
-    warning_list.append(warning_dict)
-
-
-def _append_python_warning(warning, warning_list):
-    warning_dict = {
-        "type": warning.category,
-        "loc": (),
-        "msg": str(warning.message),
-        "input": None,
-        "ctx": dict(
-            type_=warning.category,
-            code=None,
-            description=None,
-            example=None,
-            fix=None,
-        ),
-    }
-    warning_list.append(warning_dict)
-
-
 class NeatError(Exception):
     type_: str
     code: int
@@ -98,6 +54,48 @@ class NeatWarning(UserWarning):
     example: str
     fix: str
     message: str
+
+
+def wrangle_warnings(list_of_warnings: list[UserWarning | NeatWarning]) -> list | None:
+    warning_list: list[dict] = []
+    for warning in list_of_warnings:
+        if issubclass(warning.message.__class__, NeatWarning):
+            warning_list.append(_neat_warning_to_dict(warning))
+        elif issubclass(warning.message.__class__, Warning):
+            warning_list.append(_python_warning_to_dict(warning))
+    return warning_list or None
+
+
+def _neat_warning_to_dict(warning: NeatWarning) -> dict:
+    return {
+        "type": warning.category.type_,
+        "loc": (),
+        "msg": str(warning.message),
+        "input": None,
+        "ctx": dict(
+            type_=warning.category.type_,
+            code=warning.category.code,
+            description=warning.category.description,
+            example=warning.category.example,
+            fix=warning.category.fix,
+        ),
+    }
+
+
+def _python_warning_to_dict(warning: Warning) -> dict:
+    return {
+        "type": warning.category,
+        "loc": (),
+        "msg": str(warning.message),
+        "input": None,
+        "ctx": dict(
+            type_=warning.category,
+            code=None,
+            description=None,
+            example=None,
+            fix=None,
+        ),
+    }
 
 
 class Error0(NeatError):

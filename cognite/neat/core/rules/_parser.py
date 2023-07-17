@@ -17,7 +17,7 @@ def from_tables(
     raw_dfs: dict[str, pd.DataFrame], return_report: bool = False
 ) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None] | TransformationRules:
     # the only way to suppress warnings from pylense
-    validation_warnings: list
+    validation_warnings = []
     try:
         with warnings.catch_warnings(record=True) as validation_warnings:
             raw_tables = RawTables.from_raw_dataframes(raw_dfs)
