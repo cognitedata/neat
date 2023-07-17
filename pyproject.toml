@@ -26,12 +26,8 @@ line-length = 120
 target_version = ['py311']
 include = '\.py$'
 
-[tool.isort]
-line_length=120                # corresponds to -w  flag
-multi_line_output=3            # corresponds to -m  flag
-include_trailing_comma=true    # corresponds to -tc flag
-skip_glob = '^((?!py$).)*$'    # this makes sort all Python files
-known_third_party = []
+[tool.mypy]
+explicit_package_bases = true
 
 [tool.poetry.scripts]
 neat = "cognite.neat.main:run"
