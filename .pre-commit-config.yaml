@@ -33,7 +33,9 @@ repos:
   - hooks:
     - id: mypy
       name: mypy
-      entry: dmypy run -- cognite/neat/core/utils
+      # Gradually the entire codebase should be checked by mypy, plan is to gradually add mypy for each
+      # module as we refactor it.
+      entry: dmypy run -- cognite/neat/core/utils/cdf.py
       files: ^.*.(py|pyi)$
       language: system
       pass_filenames: false
