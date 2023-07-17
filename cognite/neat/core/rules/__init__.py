@@ -32,7 +32,7 @@ def load_rules_from_excel_file(
     Load transformation rules from an Excel file.
 
     Args:
-        filepath (Path): Path to the excel file.
+        filepath (Path): Path to the Excel file.
         return_report (bool, optional): Whether to return a report. Defaults to False.
 
     Returns:
