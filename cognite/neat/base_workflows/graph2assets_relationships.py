@@ -186,7 +186,10 @@ class Graph2AssetHierarchyBaseWorkflow(GraphsAndRulesBaseWorkflow):
             count_resurrect_relationships
         )
 
-        msg = f"Total count of relationships { count_defined_relationships } of which: { count_create_relationships } to be created"
+        msg = (
+            f"Total count of relationships { count_defined_relationships } of which:"
+            f" { count_create_relationships } to be created"
+        )
         msg += f", { count_decommission_relationships } to be decommissioned"
         msg += f", { count_resurrect_relationships } to be resurrected"
 

@@ -450,7 +450,8 @@ def rdf2assets(
                 progress_counter += 1
             except Exception as ValidationError:
                 logging.error(
-                    f"Skipping class <{class_}> instance <{remove_namespace(instance_id)}>, reason:\n{ValidationError}\n"
+                    f"Skipping class <{class_}> instance <{remove_namespace(instance_id)}>, "
+                    f"reason:\n{ValidationError}\n"
                 )
                 if stop_on_exception:
                     raise ValidationError

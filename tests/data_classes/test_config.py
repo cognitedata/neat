@@ -31,7 +31,8 @@ def generate_valid_property_test_data():
             "Property": "Terminal.Substation",
             "Type": "nan",
             "Rule Type": "rawlookup",
-            "Rule": "cim:Terminal->cim:ConnectivityNode->cim:VoltageLevel->cim:Substation | TableName(Lookup, ValueColumn)",
+            "Rule": "cim:Terminal->cim:ConnectivityNode->cim:VoltageLevel->cim:Substation | "
+            "TableName(Lookup, ValueColumn)",
         },
         id="Valid rawlookup rule",
     )
