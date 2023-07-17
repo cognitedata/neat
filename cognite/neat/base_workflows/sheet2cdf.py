@@ -71,7 +71,9 @@ class Sheet2CDFBaseWorkflow(BaseWorkflow):
         else:
             cdf_store.load_rules_file_from_cdf(self.cdf_client, rules_file, version)
 
-        self.transformation_rules = rules.load_rules_from_excel_file(rules_file_path)
+        self.transformation_rules, self.errors, self.warnings = rules.load_rules_from_excel_file(
+            rules_file_path, return_report=True
+        )
 
         output_text = f"Loaded {len(self.transformation_rules.properties)} rules from {rules_file_path.name!r}."
         logging.info(output_text)
@@ -97,7 +99,7 @@ class Sheet2CDFBaseWorkflow(BaseWorkflow):
         # total number of rows in the sheet that have been processed by the workflow
         # and report back reasons why
 
-        self.triples = self.transformation_rules.instances
+        self.triples = self.transformation_rules.get_instances_as_triples()
         self.instance_ids = {triple[0] for triple in self.triples}
 
         output_text = f"Loaded {len(self.instance_ids)} instances out of"

@@ -161,3 +161,8 @@ cognite/neat/explorer-ui/neat-app/node_modules
 # local notebooks
 local/
 playground/
+
+
+# ignore any file type except .ipynb in docs/tutorial/notebooks
+docs/tutorial/notebooks/*
+!docs/tutorial/notebooks/*.ipynb

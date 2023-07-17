@@ -1,4 +1,7 @@
 from pathlib import Path
+from typing import Literal, overload
+
+from pydantic_core import ErrorDetails
 
 from . import _loader, _parser, models
 
@@ -10,19 +13,37 @@ __all__ = [
 ]
 
 
-def load_rules_from_excel_file(filepath: Path) -> models.TransformationRules:
+@overload
+def load_rules_from_excel_file(filepath: Path, return_report: Literal[False] = False) -> models.TransformationRules:
+    ...
+
+
+@overload
+def load_rules_from_excel_file(
+    filepath: Path, return_report: Literal[True]
+) -> tuple[models.TransformationRules | None, list[ErrorDetails] | None, list | None]:
+    ...
+
+
+def load_rules_from_excel_file(
+    filepath: Path, return_report: bool = False
+) -> tuple[models.TransformationRules | None, list[ErrorDetails] | None, list | None] | models.TransformationRules:
     """
     Load transformation rules from an Excel file.
 
     Args:
-        filepath (Path): Path to the excel file.
+        filepath (Path): Path to the Excel file.
+        return_report (bool, optional): Whether to return a report. Defaults to False.
+
     Returns:
         TransformationRules: The transformation rules.
     """
-    return _parser.from_tables(_loader.excel_file_to_table_by_name(filepath))
+    return _parser.from_tables(_loader.excel_file_to_table_by_name(filepath), return_report)
 
 
-def load_rules_from_google_sheet(sheet_id: str) -> models.TransformationRules:
+def load_rules_from_google_sheet(
+    sheet_id: str, return_report: bool = False
+) -> tuple[models.TransformationRules | None, list[ErrorDetails] | None, list | None] | models.TransformationRules:
     """
     Load transformation rules from a Google sheet.
 
@@ -31,7 +52,7 @@ def load_rules_from_google_sheet(sheet_id: str) -> models.TransformationRules:
     Returns:
         TransformationRules: The transformation rules.
     """
-    return _parser.from_tables(_loader.google_to_table_by_name(sheet_id))
+    return _parser.from_tables(_loader.google_to_table_by_name(sheet_id), return_report)
 
 
 def load_rules_from_yaml(dirpath: Path) -> models.TransformationRules:

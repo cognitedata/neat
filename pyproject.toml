@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cognite-neat"
-version = "0.16.0"
+version = "0.17.0"
 readme = "README.md"
 description = "Knowledge graph transformation"
 authors = ["Nikola Vasiljevic <nikola.vasiljevic@cognite.com>",
@@ -80,6 +80,7 @@ all = ["gspread", "google-api-python-client", "google-auth-oauthlib", "openpyxl"
 twine = "*"
 pytest = "*"
 pytest-cov = "*"
+pytest-notebook = "*"
 pre-commit = "*"
 safety = "*"
 bandit = "*"

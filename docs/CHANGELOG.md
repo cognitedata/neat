@@ -15,19 +15,33 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.17.0] - 16-07-23
+
+### Changed
+
+- Parsing of Transformation Rules from Excel files more stricter validations
+- BREAKING CHANGE: Transformation Rules which contain Instances sheet now required namespace to be explicitly set in Metadata sheet !
+
+### Added
+
+- Dedicated module for exceptions (warnings/errors) for Transformation Rules parsing
+- Ability to generate parsing report containing warnings/errors
+- Conversion of OWL ontologies to Transformation Rules
+- Tests for notebooks
+
 ## [0.16.0] - 10-07-23
 
 ### Changed
 
-* The subpackage inside `cognite-neat` `core.rules` has now a defined inteface with three different load methods
+- The subpackage inside `cognite-neat` `core.rules` has now a defined inteface with three different load methods
   along with the data classes those load methods returns.
-* Started making dependencies optional and setting up options for installing `neat` for different use cases.
+- Started making dependencies optional and setting up options for installing `neat` for different use cases.
 
 ## [0.15.0] - 08-07-23
 
 ### Changed
 
-* Require `pydantic` `v2`.
+- Require `pydantic` `v2`.
 
 ## [0.14.2] - 07-07-23
 

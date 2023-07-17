@@ -4,6 +4,9 @@ from rdflib import Namespace
 from cognite.neat.core import extractors, loader, rules
 from cognite.neat.core.loader.graph_store import NeatGraphStore
 from cognite.neat.core.mocks.graph import generate_triples
+from cognite.neat.core.rules._loader import excel_file_to_table_by_name
+from cognite.neat.core.rules._parser import RawTables
+from cognite.neat.core.rules.importer import owl2excel
 from cognite.neat.core.transformer import domain2app_knowledge_graph
 from cognite.neat.core.utils.utils import add_triples
 from tests import config
@@ -91,3 +94,10 @@ type PriceAreaConnection {
   name: String!
   priceArea: [PriceArea]
 }"""
+
+
+@pytest.fixture(scope="function")
+def owl_based_rules():
+    owl2excel(config.WIND_ONTOLOGY)
+
+    return RawTables(**excel_file_to_table_by_name(config.WIND_ONTOLOGY.parent / "transformation_rules.xlsx"))

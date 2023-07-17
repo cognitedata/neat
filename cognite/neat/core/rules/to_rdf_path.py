@@ -8,6 +8,8 @@ from typing import Literal, Optional, Self
 
 from pydantic import BaseModel, field_validator
 
+from . import _exceptions
+
 
 @dataclass
 class Triple:
@@ -228,7 +230,7 @@ def parse_traversal(raw: str) -> AllReferences | AllProperties | SingleProperty 
     elif result := _hop.match(raw):
         return Hop(origin=result.group("origin"), traversal=result.group(_traversal))
     else:
-        raise ValueError(f"{raw} is not a valid rdfpath!")
+        raise _exceptions.Error1(raw).to_pydantic_custom_error()
 
 
 def parse_table_lookup(raw: str) -> TableLookup:
@@ -236,7 +238,7 @@ def parse_table_lookup(raw: str) -> TableLookup:
         return TableLookup(
             name=result.group(Lookup.table), key=result.group(Lookup.key), value=result.group(Lookup.value)
         )
-    ValueError(f"{raw} is not a valid table lookup")
+    raise _exceptions.Error2(raw).to_pydantic_custom_error()
 
 
 def parse_rule(rule_raw: str, rule_type: RuleType) -> RDFPath:
@@ -247,7 +249,7 @@ def parse_rule(rule_raw: str, rule_type: RuleType) -> RDFPath:
         case RuleType.rawlookup:
             rule_raw = rule_raw.replace(" ", "")
             if Counter(rule_raw).get("|") != 1:
-                raise ValueError(f"Invalid {RuleType.rawlookup} expected traversal | table lookup, got {rule_raw}")
+                raise _exceptions.Error3(rule_raw).to_pydantic_custom_error()
             traversal, table_lookup = rule_raw.split("|")
             return RawLookup(traversal=parse_traversal(traversal), table=parse_table_lookup(table_lookup))
         case RuleType.sparql:

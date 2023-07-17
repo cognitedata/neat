@@ -1,6 +1,5 @@
 name: Check Quality and Test
 
-
 on:
   pull_request:
 
@@ -52,6 +51,9 @@ jobs:
 
       - name: Run tests
         run: export PYTHONPATH=$PYTHONPATH:$(pwd); poetry run pytest
+
+      - name: Run notebook tests
+        run: export PYTHONPATH=$PYTHONPATH:$(pwd); poetry run pytest ./docs/tutorial/notebooks/ --nb-test-files
 
       - name: Run security checks
         run: poetry check
