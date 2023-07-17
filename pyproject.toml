@@ -89,6 +89,7 @@ pytest-regressions = "*"
 memray = [{version = "^1.7", platform = "darwin"},
             {version = "^1.7", platform = "linux"}]
 httpx = "*"
+mypy = "^1.4"
 
 [build-system]
 requires = ["poetry>=0.12"]

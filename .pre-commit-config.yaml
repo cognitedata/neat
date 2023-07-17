@@ -1,25 +1,17 @@
 repos:
-  - repo: https://github.com/timothycrosley/isort
-    rev: 5.12.0
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.0.278
     hooks:
-      - id: isort
-        additional_dependencies: [toml]
-        args: ["--profile", "black"]
+      -   id: ruff
+          args:
+            - --fix
+            - --exit-non-zero-on-fix
+            - --line-length=120
 
   - repo: https://github.com/psf/black
     rev: 23.3.0
     hooks:
       - id: black
-        language_version: python3.11
-
-  - repo: https://github.com/PyCQA/flake8
-    rev: 6.0.0
-    hooks:
-      - id: flake8
-        exclude: initiate_templates.py
-        additional_dependencies:
-          - flake8-bugbear
-        args: ["--ignore=E800"]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
@@ -36,3 +28,13 @@ repos:
     rev: 0.0.1
     hooks:
       - id: check-nocommit
+
+# Mypy must be run in the local system environment, not in the pre-commit environment.
+  - hooks:
+    - id: mypy
+      name: mypy
+      entry: dmypy run -- cognite/neat/core/utils
+      files: ^.*.(py|pyi)$
+      language: system
+      pass_filenames: false
+    repo: local
