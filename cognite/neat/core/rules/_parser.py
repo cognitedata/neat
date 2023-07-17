@@ -72,7 +72,7 @@ def _parse_prefixes(prefix_df: pd.DataFrame) -> dict[str, Namespace]:
 
 def _parse_instances(
     instances_df: pd.DataFrame, metadata: dict[str, Any], prefixes: dict[str, Namespace]
-) -> list[tuple] | None:
+) -> list[dict] | None:
     if "prefix" not in metadata or "namespace" not in metadata:
         logging.warning(_exceptions.Warning500().message)
         warn(_exceptions.Warning500().message)
