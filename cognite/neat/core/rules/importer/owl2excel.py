@@ -21,7 +21,7 @@ def owl2excel(owl_filepath: Path, excel_filepath: Path = None, validate_results:
     ----------
     owl_filepath : Path
         Path to OWL ontology
-    filepath : Path
+    excel_filepath : Path
         Path to save transformation rules, defaults to None
     validate_results : bool, optional
         Whether to validate generated Excel file and create validation report, by default True
@@ -46,13 +46,10 @@ def owl2excel(owl_filepath: Path, excel_filepath: Path = None, validate_results:
     graph.bind("dcterms", DCTERMS)
     graph.bind("dc", DC)
 
-    writer = pd.ExcelWriter(excel_filepath)
-
-    _parse_owl_metadata_df(graph).to_excel(writer, sheet_name="Metadata", header=False)
-    _parse_owl_classes_df(graph).to_excel(writer, sheet_name="Classes", index=False, header=False)
-    _parse_owl_properties_df(graph).to_excel(writer, sheet_name="Properties", index=False, header=False)
-
-    writer.close()
+    with pd.ExcelWriter(excel_filepath) as writer:
+        _parse_owl_metadata_df(graph).to_excel(writer, sheet_name="Metadata", header=False)
+        _parse_owl_classes_df(graph).to_excel(writer, sheet_name="Classes", index=False, header=False)
+        _parse_owl_properties_df(graph).to_excel(writer, sheet_name="Properties", index=False, header=False)
 
     if validate_results:
         _validate_excel_file(excel_filepath)

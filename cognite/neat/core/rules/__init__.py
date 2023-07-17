@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal, overload
 
 from pydantic_core import ErrorDetails
 
@@ -12,6 +13,18 @@ __all__ = [
 ]
 
 
+@overload
+def load_rules_from_excel_file(filepath: Path, return_report: Literal[False] = False) -> models.TransformationRules:
+    ...
+
+
+@overload
+def load_rules_from_excel_file(
+    filepath: Path, return_report: Literal[True]
+) -> tuple[models.TransformationRules | None, list[ErrorDetails] | None, list | None]:
+    ...
+
+
 def load_rules_from_excel_file(
     filepath: Path, return_report: bool = False
 ) -> tuple[models.TransformationRules | None, list[ErrorDetails] | None, list | None] | models.TransformationRules:
@@ -19,7 +32,9 @@ def load_rules_from_excel_file(
     Load transformation rules from an Excel file.
 
     Args:
-        filepath (Path): Path to the excel file.
+        filepath (Path): Path to the Excel file.
+        return_report (bool, optional): Whether to return a report. Defaults to False.
+
     Returns:
         TransformationRules: The transformation rules.
     """
