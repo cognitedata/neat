@@ -6,7 +6,6 @@ import traceback
 from threading import Event
 
 import yaml
-from cognite.client import ClientConfig as CogniteClientConfig
 from cognite.client import CogniteClient
 from prometheus_client import Gauge
 
@@ -29,7 +28,7 @@ from cognite.neat.core.workflow.model import (
 from cognite.neat.core.workflow.tasks import WorkflowTaskBuilder
 
 from ..configuration import Config
-from ..utils.cdf import ClientConfig
+from ..utils.cdf import CogniteClientConfig
 from . import utils
 
 summary_metrics = Gauge("neat_workflow_summary_metrics", "Workflow execution summary metrics", ["wf_name", "name"])
@@ -450,7 +449,7 @@ class BaseWorkflow:
             else None
         )
 
-    def set_cdf_client_config(self, cdf_client_config: ClientConfig):
+    def set_cdf_client_config(self, cdf_client_config: CogniteClientConfig):
         """Set the CogniteClient configuration to be used by the workflow to create new CogniteClient instances."""
         self.cdf_client_config = cdf_client_config
 

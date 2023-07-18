@@ -33,7 +33,7 @@ repos:
   - hooks:
     - id: mypy
       name: mypy
-      # Gradually the entire codebase should be checked by mypy, plan is to gradually add mypy for each
+      # Gradually, the entire codebase should be checked by mypy, plan is to gradually add mypy for each
       # module as we refactor it.
       entry: dmypy run -- cognite/neat/core/utils/
       files: ^.*.(py|pyi)$
