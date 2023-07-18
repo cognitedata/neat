@@ -98,6 +98,6 @@ type PriceAreaConnection {
 
 @pytest.fixture(scope="function")
 def owl_based_rules():
-    owl2excel(config.WIND_ONTOLOGY)
+    owl2excel.owl2excel(config.WIND_ONTOLOGY)
 
     return RawTables(**excel_file_to_table_by_name(config.WIND_ONTOLOGY.parent / "transformation_rules.xlsx"))

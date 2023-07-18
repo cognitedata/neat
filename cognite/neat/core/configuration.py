@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from rdflib import Namespace
 from yaml import safe_load
 
-from cognite.neat.core.utils.cdf import InteractiveClient, ServiceClient
+from cognite.neat.core.utils.cdf import InteractiveCogniteClient, ServiceCogniteClient
 
 PREFIXES = {
     # "rdf": Namespace("http://www.w3.org/1999/02/22-rdf-syntax-ns#"), # noqa
@@ -88,7 +88,7 @@ class Config(BaseModel):
         default=None,
     )
 
-    cdf_client: InteractiveClient | ServiceClient = ServiceClient()
+    cdf_client: InteractiveCogniteClient | ServiceCogniteClient = ServiceCogniteClient()
     cdf_default_dataset_id: int = 0
     load_examples: bool = True
 
@@ -125,7 +125,7 @@ class Config(BaseModel):
 
     @classmethod
     def from_env(cls) -> Self:
-        cdf_config = ServiceClient(
+        cdf_config = ServiceCogniteClient(
             project=os.environ.get("NEAT_CDF_PROJECT"),
             client_name=os.environ.get("NEAT_CDF_CLIENT_NAME"),
             client_id=os.environ.get("NEAT_CDF_CLIENT_ID"),

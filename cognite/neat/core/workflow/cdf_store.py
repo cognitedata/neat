@@ -161,7 +161,8 @@ class CdfStore:
             for file_meta in files_metada:
                 self.client.files.download(self.workflows_storage_path, external_id=file_meta.external_id)
                 logging.info(
-                    f"Workflow {file_meta.name} , external_id = {file_meta.external_id} syccessfully downloaded from CDF"
+                    f"Workflow {file_meta.name} , "
+                    f"external_id = {file_meta.external_id} syccessfully downloaded from CDF"
                 )
                 self.extract_workflow_package(file_meta.name)
                 files_external_ids.append(file_meta.external_id)
@@ -284,7 +285,8 @@ class CdfStore:
                 )
             except Exception as e:
                 logging.info(
-                    f"Failed to parse workflow execution event for workflow , run_id = {event.metadata['run_id']}, error = {e}"
+                    f"Failed to parse workflow execution event for workflow, "
+                    f"run_id = {event.metadata['run_id']}, error = {e}"
                 )
         return executions
 
@@ -303,7 +305,8 @@ class CdfStore:
                     steps_log = self.client.files.download_bytes(external_id=external_id)
             except Exception as e:
                 logging.info(
-                    f"Failed to parse execution log for workflow {event.metadata['workflow_name']}, run_id = {event.metadata['run_id']}, error = {e}"
+                    f"Failed to parse execution log for workflow {event.metadata['workflow_name']}, "
+                    f"run_id = {event.metadata['run_id']}, error = {e}"
                 )
                 steps_log = []
             return WorkflowFullStateReport(
@@ -320,7 +323,8 @@ class CdfStore:
         raise Exception(f"Workflow execution with run_id = {run_id} not found")
 
     def report_workflow_execution_to_cdf(self, report: WorkflowFullStateReport):
-        # Report workflow run to CDF as single event with all the steps attached either in metadata or attached file (depends on the size)
+        # Report workflow run to CDF as single event with all the steps attached either in metadata
+        # or attached file (depends on the size)
         metadata = {
             "run_id": report.run_id,
             "elapsed_time": report.elapsed_time,

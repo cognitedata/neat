@@ -47,7 +47,8 @@ class GraphsAndRulesBaseWorkflow(BaseWorkflow):
         return FlowMessage(output_text=output_text)
 
     def step_configuring_stores(self, flow_msg: FlowMessage = None, clean_start: bool = True):
-        # Initialize source and solution graph stores . clean_start=True will delete all artifacts(files , locks , etc) from previous runs
+        # Initialize source and solution graph stores . clean_start=True will delete all
+        # artifacts(files , locks , etc) from previous runs
         logging.info("Initializing source graph")
         self.graph_source_type = self.get_config_item_value("source_rdf_store.type", self.graph_source_type)
         source_store_dir = self.get_config_item_value("source_rdf_store.disk_store_dir", None)

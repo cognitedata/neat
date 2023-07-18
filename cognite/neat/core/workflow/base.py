@@ -6,7 +6,6 @@ import traceback
 from threading import Event
 
 import yaml
-from cognite.client import ClientConfig as CogniteClientConfig
 from cognite.client import CogniteClient
 from prometheus_client import Gauge
 
@@ -29,7 +28,7 @@ from cognite.neat.core.workflow.model import (
 from cognite.neat.core.workflow.tasks import WorkflowTaskBuilder
 
 from ..configuration import Config
-from ..utils.cdf import ClientConfig
+from ..utils.cdf import CogniteClientConfig
 from . import utils
 
 summary_metrics = Gauge("neat_workflow_summary_metrics", "Workflow execution summary metrics", ["wf_name", "name"])
@@ -75,8 +74,8 @@ class BaseWorkflow:
         self.is_ephemeral = False  # if True, workflow will be deleted after completion
 
     def start(self, sync=False, is_ephemeral=False, **kwargs) -> FlowMessage | None:
-        """Starts workflow execution.sync=True will block until workflow is completed and return last workflow flow message,
-        sync=False will start workflow in a separate thread and return None"""
+        """Starts workflow execution.sync=True will block until workflow is completed and
+        return last workflow flow message, sync=False will start workflow in a separate thread and return None"""
         if self.state not in [WorkflowState.CREATED, WorkflowState.COMPLETED, WorkflowState.FAILED]:
             logging.error(f"Workflow {self.name} is already running")
             return None
@@ -450,13 +449,14 @@ class BaseWorkflow:
             else None
         )
 
-    def set_cdf_client_config(self, cdf_client_config: ClientConfig):
+    def set_cdf_client_config(self, cdf_client_config: CogniteClientConfig):
         """Set the CogniteClient configuration to be used by the workflow to create new CogniteClient instances."""
         self.cdf_client_config = cdf_client_config
 
     def get_new_cdf_client(self):
         """Get a new CogniteClient instance with the same configuration as the one used by the workflow .
-          Should be used from workflow steps to avoid sharing the same client instance between steps or reset reference to old client instance.
+          Should be used from workflow steps to avoid sharing the same client instance between steps or
+          reset reference to old client instance.
         Returns: CogniteClient
         """
         return CogniteClient(self.cdf_client_config)
