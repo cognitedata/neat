@@ -178,6 +178,49 @@ class Error3(NeatError):
         super().__init__(self.message)
 
 
+class Error10(NeatError):
+    type_: str = "EntitiesContainNonDMSCompliantCharacters"
+    code: int = 10
+    description: str = "This error is raised during export of Transformation Rules to DMS schema when entities contain non DMS compliant characters."
+    example: str = ""
+    fix: str = "Make sure to check validation report of Transformation Rules and fix DMS related warnings."
+
+    def __init__(self, verbose=False):
+        self.message = (
+            "Entities, such as classes, properties and/or property types contain non DMS compliant characters."
+            "/nConsult transformation rules validation report for more details."
+        )
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class Error11(NeatError):
+    type_: str = "PropertiesDefinedMultipleTimes"
+    code: int = 11
+    description: str = (
+        "This error is raised during export of Transformation Rules to "
+        "DMS schema when properties are defined multiple times for the same class."
+    )
+    example: str = ""
+    fix: str = "Make sure to check validation report of Transformation Rules and fix DMS related warnings."
+
+    def __init__(self, verbose=False):
+        self.message = (
+            "Properties defined multiple times for the same class(es)."
+            "/nConsult transformation rules validation report for more details."
+        )
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
 class Error51(NeatError):
     type_: str = "MetadataSheetMissingMandatoryFields"
     code: int = 52
@@ -740,8 +783,12 @@ class Warning302(NeatWarning):
     example: str = ""
     fix: str = "No fix is provided for this warning"
 
-    def __init__(self, property_id, verbose=False):
-        self.message = f"There is no transformation configured for property {property_id}!"
+    # need to have default value set otherwise
+    # warnings.warn(Warning302(property_id, class_id).message, category=Warning302)
+    # will raise TypeError: __init__() missing 1 required positional argument: 'property_id'
+    # not happy with this solution but it works
+    def __init__(self, property_id: str = "", class_id: str = "", verbose=False):
+        self.message = f"There is no transformation rule configured for class '{class_id}' property '{property_id}'!"
         if verbose:
             self.message += f"\nDescription: {self.description}"
             self.message += f"\nExample: {self.example}"
@@ -825,6 +872,43 @@ class Warning500(NeatWarning):
 
 ###############################################
 # Transformation Rules Error Codes 600 - 699: #
+
+
+class Warning600(NeatWarning):
+    type_: str = "EntityIDNotDMSCompliant"
+    code: int = 600
+    description: str = "Warning raise when entity id being class, property or value type is not DMS compliant"
+    example: str = ""
+    fix: str = "DMS ready means that entity id must only use following characters [a-zA-Z0-9_], where it can only start with letter!"
+
+    # See Warning302 for explanation why default values are set
+    def __init__(self, entity_type: str = "", entity_id: str = "", loc: str = "", verbose=False):
+        self.message = (
+            f"Not DMS compliant! {entity_type} id '{entity_id}'"
+            " it use character(s) outside range [a-zA-Z0-9_] or "
+            f"it starts with non-letter character! {loc}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+
+
+class Warning601(NeatWarning):
+    type_: str = "PropertyRedefined"
+    code: int = 600
+    description: str = "Warning raise when same property is defined multiple times for same class"
+    example: str = ""
+    fix: str = "Have only single definition of a perticular property for a class"
+
+    # See Warning302 for explanation why default values are set
+    def __init__(self, property_id: str = "", class_id: str = "", loc: str = "", verbose=False):
+        self.message = f"Not DMS compliant! Property '{property_id}' for class '{class_id}' redefined! {loc}"
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+            # hint on a specific web docs page
 
 
 class Error600(NeatError):

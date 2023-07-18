@@ -5,3 +5,5 @@ serializations such as Excel, OWL, SHACL, YAML, ..."""
 # - rules_to_graph_capturing_sheet.py
 # - rules_to_graphql.py
 # - modeler.py
+
+from cognite.neat.core.rules.exporter.rules2graph_sheet import rules2graph_capturing_sheet

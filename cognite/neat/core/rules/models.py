@@ -6,7 +6,7 @@ import re
 import warnings
 from datetime import datetime
 from pathlib import Path
-from typing import ClassVar, Dict, List, Optional
+from typing import ClassVar, Dict, Optional
 
 import pandas as pd
 from graphql import GraphQLBoolean, GraphQLFloat, GraphQLInt, GraphQLString
@@ -176,8 +176,7 @@ class Metadata(RuleModel):
         description="File path to Excel file which was used to produce Transformation Rules",
         default=None,
     )
-    issues: Optional[List[str]] = Field(default=None, description="Storing list of pydantic validation issues")
-    valid: Optional[bool] = Field(default=True, description="Indicates whether resource is valid or not")
+    dms_compliant: bool = True
 
     @field_validator(
         "externalIdPrefix",
@@ -288,8 +287,6 @@ class Resource(RuleModel):
         alias="Match Type", description="Type of match between source entity and one being defined", default=None
     )
     comment: Optional[str] = Field(alias="Comment", description="Comment about mapping", default=None)
-    issues: Optional[List[str]] = Field(default=None, description="Storing list of pydantic validation issues")
-    valid: Optional[bool] = Field(default=True, description="Indicates whether resource is valid or not")
 
     @model_validator(mode="before")
     def replace_float_nan_with_default(cls, values: dict) -> dict:
@@ -430,43 +427,43 @@ class Property(Resource):
     # Setters
     # TODO: configure setters to only run if field_validators are successful, otherwise do not run them!
     @model_validator(mode="after")
-    def set_property_type(cls, model: "Property"):
-        if model.expected_value_type in DATA_TYPE_MAPPING.keys():
-            model.property_type = "DatatypeProperty"
+    def set_property_type(self):
+        if self.expected_value_type in DATA_TYPE_MAPPING.keys():
+            self.property_type = "DatatypeProperty"
         else:
-            model.property_type = "ObjectProperty"
-        return model
+            self.property_type = "ObjectProperty"
+        return self
 
     @model_validator(mode="after")
-    def set_property_name_if_none(cls, model: "Property"):
-        if model.property_name is None:
+    def set_property_name_if_none(self):
+        if self.property_name is None:
             warnings.warn(
-                _exceptions.Warning300(model.property_id).message, category=_exceptions.Warning300, stacklevel=2
+                _exceptions.Warning300(self.property_id).message, category=_exceptions.Warning300, stacklevel=2
             )
-            model.property_name = model.property_id
-        return model
+            self.property_name = self.property_id
+        return self
 
     @model_validator(mode="after")
-    def set_relationship_label(cls, model: "Property"):
-        if model.label is None:
+    def set_relationship_label(self):
+        if self.label is None:
             warnings.warn(
-                _exceptions.Warning301(model.property_id).message, category=_exceptions.Warning301, stacklevel=2
+                _exceptions.Warning301(self.property_id).message, category=_exceptions.Warning301, stacklevel=2
             )
-            model.label = model.property_id
-        return model
+            self.label = self.property_id
+        return self
 
     @model_validator(mode="after")
-    def set_skip_rule(cls, model: "Property"):
-        if model.rule_type is None:
+    def set_skip_rule(self):
+        if self.rule_type is None:
             warnings.warn(
-                _exceptions.Warning302(model.property_id).message,
+                _exceptions.Warning302(class_id=self.class_id, property_id=self.property_id).message,
                 category=_exceptions.Warning302,
                 stacklevel=2,
             )
-            model.skip_rule = True
+            self.skip_rule = True
         else:
-            model.skip_rule = False
-        return model
+            self.skip_rule = False
+        return self
 
 
 class Prefixes(RuleModel):
@@ -558,12 +555,18 @@ class Instance(RuleModel):
             return a == b
 
 
+class Issues(BaseModel):
+    entity_ids_not_dms_compliant: bool = False
+    properties_redefined: bool = False
+
+
 class TransformationRules(RuleModel):
     metadata: Metadata
     classes: dict[str, Class]
     properties: dict[str, Property]
     prefixes: Optional[dict[str, Namespace]] = PREFIXES
     instances: Optional[list[Instance]] = None
+    issues: Issues = Issues()
 
     @property
     def raw_tables(self) -> list[str]:
@@ -639,6 +642,76 @@ class TransformationRules(RuleModel):
         value[values["metadata"].prefix] = values["metadata"].namespace
         return value
 
+    @model_validator(mode="after")
+    def is_model_dms_ready(self):
+        """Check if data model definitions are valid."""
+
+        for class_ in self.classes.values():
+            if not re.match(data_model_name_compliance_regex, class_.class_id):
+                warnings.warn(
+                    _exceptions.Warning600("Class", class_.class_id, f"[Classes/Class/{class_.class_id}]").message,
+                    category=_exceptions.Warning600,
+                    stacklevel=2,
+                )
+                self.issues.entity_ids_not_dms_compliant = True
+
+        for row, property_ in self.properties.items():
+            if not re.match(data_model_name_compliance_regex, property_.class_id):
+                warnings.warn(
+                    _exceptions.Warning600("Class", property_.class_id, f"[Properties/Class/{row}]").message,
+                    category=_exceptions.Warning600,
+                    stacklevel=2,
+                )
+                self.issues.entity_ids_not_dms_compliant = True
+            if not re.match(data_model_name_compliance_regex, property_.property_id):
+                warnings.warn(
+                    _exceptions.Warning600("Property", property_.property_id, f"[Properties/Property/{row}]").message,
+                    category=_exceptions.Warning600,
+                    stacklevel=2,
+                )
+                self.issues.entity_ids_not_dms_compliant = True
+            if not re.match(data_model_name_compliance_regex, property_.expected_value_type):
+                warnings.warn(
+                    _exceptions.Warning600(
+                        "Value type", property_.expected_value_type, f"[Properties/Type/{row}]"
+                    ).message,
+                    category=_exceptions.Warning600,
+                    stacklevel=2,
+                )
+                self.issues.entity_ids_not_dms_compliant = True
+
+        return self
+
+    @model_validator(mode="after")
+    def check_for_property_redefinitions(self):
+        for class_, properties in self.get_classes_with_properties().items():
+            analyzed_properties = []
+            for property_ in properties:
+                if property_.property_id not in analyzed_properties:
+                    analyzed_properties.append(property_.property_id)
+                else:
+                    self.issues.properties_redefined = True
+                    warnings.warn(
+                        _exceptions.Warning601(class_, property_.property_id).message,
+                        category=_exceptions.Warning600,
+                        stacklevel=2,
+                    )
+
+        return self
+
+    @model_validator(mode="after")
+    def property_ids_camel_case_compliant(self):
+        # check if property ids are camelCase compliant
+        # set self.issues.property_ids_not_camels_case = True
+        return self
+
+    @model_validator(mode="after")
+    def class_id_pascal_case_compliant(self):
+        # check if class ids are PascalCase compliant
+        # raise warning if not
+        # set self.issues.class_ids_not_pascal_case = True
+        return self
+
     # Bunch of methods that work on top of this class we might move out of TransformationRules class
     def get_labels(self) -> set[str]:
         """Return CDF labels for classes and relationships."""
@@ -694,17 +767,15 @@ class TransformationRules(RuleModel):
 
         return class_property_pairs
 
-    def check_data_model_definitions(self):
-        """Check if data model definitions are valid."""
-        issues = set()
-        for class_, properties in self.get_classes_with_properties().items():
-            analyzed_properties = []
-            for property_ in properties:
-                if property_.property_id not in analyzed_properties:
-                    analyzed_properties.append(property_.property_id)
-                else:
-                    issues.add(f"Property {property_.property_id} of class {class_} has been defined more than once!")
-        return issues
+        # issues = set()
+        # for class_, properties in self.get_classes_with_properties().items():
+        #     analyzed_properties = []
+        #     for property_ in properties:
+        #         if property_.property_id not in analyzed_properties:
+        #             analyzed_properties.append(property_.property_id)
+        #         else:
+        #             issues.add(f"Property {property_.property_id} of class {class_} has been defined more than once!")
+        # return issues
 
     def reduce_data_model(self, desired_classes: set, skip_validation: bool = False) -> TransformationRules:
         """Reduce the data model to only include desired classes and their properties.

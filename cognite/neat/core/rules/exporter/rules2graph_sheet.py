@@ -7,59 +7,8 @@ from openpyxl.styles import Alignment, Border, Font, NamedStyle, PatternFill, Si
 from openpyxl.utils.cell import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
 
-from cognite.neat.core.extractors.rules_to_graphql import repair_name as to_graphql_name
+from cognite.neat.core.rules.exporter.rules2graphql import _repair_name as to_graphql_name
 from cognite.neat.core.rules.models import TransformationRules
-
-
-def _add_index_identifiers(workbook: Workbook, sheet: str, no_rows: int):
-    """Adds index-based auto identifier to a sheet identifier column"""
-    for i in range(no_rows):
-        prefix = to_graphql_name(sheet, "class", True)
-        workbook[sheet][f"A{i+2}"] = f'=IF(ISBLANK(B{i+2}), "","{prefix}-{i+1}")'
-
-
-def _add_uuid_identifiers(workbook: Workbook, sheet: str, no_rows: int):
-    """Adds UUID-based auto identifier to a sheet identifier column"""
-    for i in range(no_rows):
-        prefix = to_graphql_name(sheet, "class", True)
-        workbook[sheet][f"A{i+2}"] = f'=IF(ISBLANK(B{i+2}), "","{prefix}-{uuid.uuid4()}")'
-
-
-def _add_drop_down_list(workbook: Workbook, sheet: str, column: str, no_rows: int, value_sheet: str, value_column: str):
-    """Adds a drop down list to a column"""
-    drop_down_list = DataValidation(type="list", formula1=f"={value_sheet}!{value_column}$2:{value_column}${no_rows}")
-
-    workbook[sheet].add_data_validation(drop_down_list)
-
-    for i in range(no_rows):
-        drop_down_list.add(workbook[sheet][f"{column}{i+2}"])
-
-
-def _adjust_column_width(workbook: Workbook):
-    """Adjusts the column width based on the content"""
-    for sheet in workbook.sheetnames:
-        for column in workbook[sheet].columns:
-            if column[0].value:
-                adjusted_width = (len(str(column[0].value)) + 5) * 1.2
-                workbook[sheet].column_dimensions[column[0].column_letter].width = adjusted_width
-
-
-def _set_header_style(workbook: Workbook):
-    """Sets the header style for all sheets in the workbook"""
-    style = NamedStyle(name="header style")
-    style.font = Font(bold=True, size=16)
-    side = Side(style="thin", color="000000")
-    style.border = Border(left=side, right=side, top=side, bottom=side)
-    workbook.add_named_style(style)
-
-    for sheet in workbook.sheetnames:
-        for column in workbook[sheet].columns:
-            workbook[sheet][f"{column[0].column_letter}1"].style = style
-            if f"{column[0].column_letter}1" == "A1":
-                workbook[sheet][f"{column[0].column_letter}1"].fill = PatternFill("solid", start_color="2FB5F2")
-            else:
-                workbook[sheet][f"{column[0].column_letter}1"].fill = PatternFill("solid", start_color="FFB202")
-            workbook[sheet][f"{column[0].column_letter}1"].alignment = Alignment(horizontal="center", vertical="center")
 
 
 def rules2graph_capturing_sheet(
@@ -128,3 +77,54 @@ def rules2graph_capturing_sheet(
     logging.info(f"Graph capturing sheet generated and stored at {file_path}!")
     workbook.save(file_path)
     workbook.close()
+
+
+def _add_index_identifiers(workbook: Workbook, sheet: str, no_rows: int):
+    """Adds index-based auto identifier to a sheet identifier column"""
+    for i in range(no_rows):
+        prefix = to_graphql_name(sheet, "class", True)
+        workbook[sheet][f"A{i+2}"] = f'=IF(ISBLANK(B{i+2}), "","{prefix}-{i+1}")'
+
+
+def _add_uuid_identifiers(workbook: Workbook, sheet: str, no_rows: int):
+    """Adds UUID-based auto identifier to a sheet identifier column"""
+    for i in range(no_rows):
+        prefix = to_graphql_name(sheet, "class", True)
+        workbook[sheet][f"A{i+2}"] = f'=IF(ISBLANK(B{i+2}), "","{prefix}-{uuid.uuid4()}")'
+
+
+def _add_drop_down_list(workbook: Workbook, sheet: str, column: str, no_rows: int, value_sheet: str, value_column: str):
+    """Adds a drop down list to a column"""
+    drop_down_list = DataValidation(type="list", formula1=f"={value_sheet}!{value_column}$2:{value_column}${no_rows}")
+
+    workbook[sheet].add_data_validation(drop_down_list)
+
+    for i in range(no_rows):
+        drop_down_list.add(workbook[sheet][f"{column}{i+2}"])
+
+
+def _adjust_column_width(workbook: Workbook):
+    """Adjusts the column width based on the content"""
+    for sheet in workbook.sheetnames:
+        for column in workbook[sheet].columns:
+            if column[0].value:
+                adjusted_width = (len(str(column[0].value)) + 5) * 1.2
+                workbook[sheet].column_dimensions[column[0].column_letter].width = adjusted_width
+
+
+def _set_header_style(workbook: Workbook):
+    """Sets the header style for all sheets in the workbook"""
+    style = NamedStyle(name="header style")
+    style.font = Font(bold=True, size=16)
+    side = Side(style="thin", color="000000")
+    style.border = Border(left=side, right=side, top=side, bottom=side)
+    workbook.add_named_style(style)
+
+    for sheet in workbook.sheetnames:
+        for column in workbook[sheet].columns:
+            workbook[sheet][f"{column[0].column_letter}1"].style = style
+            if f"{column[0].column_letter}1" == "A1":
+                workbook[sheet][f"{column[0].column_letter}1"].fill = PatternFill("solid", start_color="2FB5F2")
+            else:
+                workbook[sheet][f"{column[0].column_letter}1"].fill = PatternFill("solid", start_color="FFB202")
+            workbook[sheet][f"{column[0].column_letter}1"].alignment = Alignment(horizontal="center", vertical="center")
