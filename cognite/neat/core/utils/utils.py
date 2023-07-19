@@ -1,11 +1,9 @@
 import hashlib
 import logging
 import time
-from collections import OrderedDict
 from datetime import datetime, timezone
 from functools import wraps
 
-import pandas as pd
 from cognite.client import ClientConfig, CogniteClient
 from cognite.client.credentials import CredentialProvider, OAuthClientCredentials, OAuthInteractive
 from cognite.client.exceptions import CogniteDuplicatedError, CogniteReadTimeout
@@ -131,40 +129,6 @@ def get_namespace(URI: URIRef, special_separator: str = "#_") -> str:
         return URI.split("#")[0] + "#"
     else:
         return "/".join(URI.split("/")[:-1]) + "/"
-
-
-def _traverse(hierarchy: dict, graph: dict, names: str) -> dict:
-    """traverse the graph and return the hierarchy"""
-    for name in names:
-        hierarchy[name] = _traverse({}, graph, graph[name])
-    return hierarchy
-
-
-def get_generation_order(
-    class_linkage: pd.DataFrame, parent_col: str = "source_class", child_col: str = "target_class"
-) -> dict:
-    parent_child_list = class_linkage[[parent_col, child_col]].values.tolist()
-    # Build a directed graph and a list of all names that have no parent
-    graph = {name: set() for tup in parent_child_list for name in tup}
-    has_parent = {name: False for tup in parent_child_list for name in tup}
-    for parent, child in parent_child_list:
-        graph[parent].add(child)
-        has_parent[child] = True
-
-    # All names that have absolutely no parent:
-    roots = [name for name, parents in has_parent.items() if not parents]
-
-    return _traverse({}, graph, roots)
-
-
-def prettify_generation_order(generation_order: dict, depth: dict = None, start=-1) -> dict:
-    """Prettifies generation order dictionary for easier consumption."""
-    depth = depth or {}
-    for key, value in generation_order.items():
-        depth[key] = start + 1
-        if isinstance(value, dict):
-            prettify_generation_order(value, depth, start=start + 1)
-    return OrderedDict(sorted(depth.items(), key=lambda item: item[1]))
 
 
 def epoch_now_ms():

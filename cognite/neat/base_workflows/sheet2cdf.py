@@ -23,6 +23,7 @@ from cognite.neat.core.extractors.cdfcore.rdf_to_relationships import (
     upload_relationships,
 )
 from cognite.neat.core.loader.graph_store import NeatGraphStore
+from cognite.neat.core.rules.exporter.rules2triples import get_instances_as_triples
 from cognite.neat.core.rules.models import TransformationRules
 from cognite.neat.core.validator import validate_asset_hierarchy
 from cognite.neat.core.workflow import utils
@@ -99,7 +100,7 @@ class Sheet2CDFBaseWorkflow(BaseWorkflow):
         # total number of rows in the sheet that have been processed by the workflow
         # and report back reasons why
 
-        self.triples = self.transformation_rules.get_instances_as_triples()
+        self.triples = get_instances_as_triples(self.transformation_rules)
         self.instance_ids = {triple[0] for triple in self.triples}
 
         output_text = f"Loaded {len(self.instance_ids)} instances out of"
