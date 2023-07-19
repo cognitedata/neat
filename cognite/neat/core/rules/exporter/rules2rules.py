@@ -1,3 +1,9 @@
+"""This module provides set of methods that perform conversion of TransformationRules
+to TransformationRules for purpose of for example:
+
+- subsetting the data model to only include desired classes and their properties
+- converting classes/properties ids/names to DMS compliant format
+"""
 import logging
 import warnings
 
@@ -12,6 +18,8 @@ def subset_rules(
 
     Parameters
     ----------
+    transformation_rules : TransformationRules
+        Instance of TransformationRules to subset
     desired_classes : set
         Desired classes to include in the reduced data model
     skip_validation : bool
