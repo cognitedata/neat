@@ -5,17 +5,13 @@ import warnings
 from graphql import GraphQLField, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLSchema, print_schema
 
 from cognite.neat.core.rules import _exceptions
-from cognite.neat.core.rules.analysis import (
+from cognite.neat.core.rules.analysis import get_classes_with_properties
+from cognite.neat.core.rules._validation import (
     are_entity_names_dms_compliant,
     are_properties_redefined,
-    get_classes_with_properties,
 )
 from cognite.neat.core.rules.models import DATA_TYPE_MAPPING, Property, TransformationRules
 from cognite.neat.core.utils.utils import generate_exception_report
-
-
-def _make_ids_compliant(transformation_rules: TransformationRules) -> TransformationRules:
-    return transformation_rules
 
 
 def rules2graphql_schema(
