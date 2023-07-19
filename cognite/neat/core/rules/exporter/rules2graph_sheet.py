@@ -7,6 +7,7 @@ from openpyxl.styles import Alignment, Border, Font, NamedStyle, PatternFill, Si
 from openpyxl.utils.cell import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
 
+from cognite.neat.core.rules.analysis import get_class_property_pairs
 from cognite.neat.core.rules.exporter.rules2graphql import _repair_name as to_graphql_name
 from cognite.neat.core.rules.models import TransformationRules
 
@@ -45,7 +46,7 @@ def rules2graph_capturing_sheet(
     # Remove default sheet named "Sheet"
     workbook.remove(workbook["Sheet"])
 
-    for class_, properties in transformation_rules.get_class_property_pairs().items():
+    for class_, properties in get_class_property_pairs(transformation_rules).items():
         workbook.create_sheet(title=class_)
 
         # Add header rows
