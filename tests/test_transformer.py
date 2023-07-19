@@ -45,11 +45,13 @@ def test_domain2app_knowledge_graph_raw_lookup(
         )
 
     Gjerstad_node = app_graph.query(
-        "SELECT ?o WHERE {<http://purl.org/nordic44#_2dd9019e-bdfb-11e5-94fa-c8f73332c8f4> tnt:IdentifiedObject.name ?o}"
+        "SELECT ?o WHERE {<http://purl.org/nordic44#_2dd9019e-bdfb-11e5-94fa-c8f73332c8f4> "
+        "tnt:IdentifiedObject.name ?o}"
     )
 
     NaN_node = app_graph.query(
-        "SELECT ?o WHERE {<http://purl.org/nordic44#_2dd9040e-bdfb-11e5-94fa-c8f73332c8f4> tnt:IdentifiedObject.name ?o}"
+        "SELECT ?o WHERE {<http://purl.org/nordic44#_2dd9040e-bdfb-11e5-94fa-c8f73332c8f4> "
+        "tnt:IdentifiedObject.name ?o}"
     )
     assert list(Gjerstad_node)[0][0].value == "Gjerstad"
     assert list(NaN_node)[0][0].value == "NaN"

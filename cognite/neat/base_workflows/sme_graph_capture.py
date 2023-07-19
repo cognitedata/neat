@@ -89,7 +89,8 @@ class SmeGraphCaptureBaseWorkflow(BaseWorkflow):
 
         output_text = (
             "Data capture sheet generated and can be downloaded here : "
-            f'<a href="http://localhost:8000/data/graph-sheets/{sheet_name}?{time.time()}" target="_blank">{sheet_name}</a>'
+            f'<a href="http://localhost:8000/data/graph-sheets/{sheet_name}?{time.time()}" target="_blank">'
+            f"{sheet_name}</a>"
         )
 
         return FlowMessage(output_text=output_text)

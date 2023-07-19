@@ -71,7 +71,8 @@ class DefaultNeatWorkflow(BaseWorkflow):
         return FlowMessage(output_text=output_text)
 
     def step_configuring_stores(self, flow_msg: FlowMessage = None, clean_start: bool = True):
-        # Initialize source and solution graph stores . clean_start=True will delete all artifacts(files , locks , etc) from previous runs
+        # Initialize source and solution graph stores .
+        # clean_start=True will delete all artifacts(files , locks , etc) from previous runs
         logging.info("Initializing source graph")
         source_store_dir = self.get_config_item_value("source_rdf_store.disk_store_dir", None)
         solution_store_dir = self.get_config_item_value("solution_rdf_store.disk_store_dir", None)
@@ -293,7 +294,10 @@ class DefaultNeatWorkflow(BaseWorkflow):
             count_resurrect_relationships
         )
 
-        msg = f"Total count of relationships { count_defined_relationships } of which: { count_create_relationships } to be created"
+        msg = (
+            f"Total count of relationships { count_defined_relationships } of which: "
+            f"{ count_create_relationships } to be created"
+        )
         msg += f", { count_decommission_relationships } to be decommissioned"
         msg += f", { count_resurrect_relationships } to be resurrected"
 

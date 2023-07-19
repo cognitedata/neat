@@ -82,7 +82,8 @@ class NeatGraphStore:
         returnFormat : str, optional
             Transport format of graph data between, by default "csv"
         internal_storage_dir : Path, optional
-            Path to directory where internal storage is located, by default None (in-memory storage). Used only for Oxigraph.
+            Path to directory where internal storage is located, by default None (in-memory storage).
+            Used only for Oxigraph.
         """
         logging.info("Initializing NeatGraphStore")
         self.rdf_store_type = rdf_store_type
@@ -273,7 +274,8 @@ class NeatGraphStore:
 
 
 def drop_graph_store(graph: NeatGraphStore, storage_path: Path, force: bool = False):
-    """Drops graph store by flushing in-flight data , releasing locks and completly removing all files the storage path."""
+    """Drops graph store by flushing in-flight data , releasing locks and completely
+    removing all files the storage path."""
     if graph:
         if graph.rdf_store_type == RdfStoreType.OXIGRAPH and storage_path:
             if storage_path.exists():

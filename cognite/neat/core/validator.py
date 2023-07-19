@@ -18,14 +18,20 @@ def _find_circular_reference_path(asset: Asset, assets: dict[str, Asset], max_hi
         hop += 1
         circle.append(ref.get("external_id"))
         if len(circle) != len(set(circle)):
-            msg = f"Found circular reference in asset hierarchy which starts with {original_external_id} and enters loop at {circle[-1]}. "
+            msg = (
+                f"Found circular reference in asset hierarchy which starts with "
+                f"{original_external_id} and enters loop at {circle[-1]}. "
+            )
             logging.error(msg)
             return circle
 
         ref = assets.get(ref.get("parent_external_id"))
 
     if hop >= max_hierarchy_depth:
-        msg = f"Your asset hierarchy is too deep. Max depth is {max_hierarchy_depth}. You probably have a circular reference."
+        msg = (
+            f"Your asset hierarchy is too deep. Max depth is {max_hierarchy_depth}. "
+            "You probably have a circular reference."
+        )
         logging.error(msg)
         return circle
     else:

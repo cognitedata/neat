@@ -157,7 +157,8 @@ class Sheet2CDFBaseWorkflow(BaseWorkflow):
         labels_after = unique_asset_labels(rdf_assets.values())
         removed_labels = labels_before - labels_after
         logging.info(
-            f"Removed {len(removed_labels)} labels as these do not exists in CDF. Removed labels: {', '.join(sorted(removed_labels))}"
+            f"Removed {len(removed_labels)} labels as these do not exists in CDF. "
+            f"Removed labels: {', '.join(sorted(removed_labels))}"
         )
         ######################
 
@@ -290,7 +291,10 @@ class Sheet2CDFBaseWorkflow(BaseWorkflow):
             count_resurrect_relationships
         )
 
-        msg = f"Total count of relationships { count_defined_relationships } of which: { count_create_relationships } to be created"
+        msg = (
+            f"Total count of relationships { count_defined_relationships } "
+            f"of which: { count_create_relationships } to be created"
+        )
         msg += f", { count_decommission_relationships } to be decommissioned"
         msg += f", { count_resurrect_relationships } to be resurrected"
 

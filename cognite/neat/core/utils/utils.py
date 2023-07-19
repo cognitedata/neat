@@ -1,19 +1,23 @@
+from collections import OrderedDict
 import hashlib
 import logging
 import time
 from datetime import datetime, timezone
 from functools import wraps
-
+from typing_extensions import TypeAlias
+import pandas as pd
 from cognite.client import ClientConfig, CogniteClient
 from cognite.client.credentials import CredentialProvider, OAuthClientCredentials, OAuthInteractive
 from cognite.client.exceptions import CogniteDuplicatedError, CogniteReadTimeout
-from rdflib.term import URIRef
+from rdflib.term import URIRef, Node
 
 from cognite.neat.core.loader.graph_store import NeatGraphStore
-from cognite.neat.core.utils.cdf import InteractiveClient, ServiceClient
+from cognite.neat.core.utils.cdf import InteractiveCogniteClient, ServiceCogniteClient, CogniteClientConfig
+
+Triple: TypeAlias = tuple[Node, Node, Node]
 
 
-def get_cognite_client_from_config(config: ServiceClient) -> CogniteClient:
+def get_cognite_client_from_config(config: ServiceCogniteClient) -> CogniteClient:
     credentials = OAuthClientCredentials(
         token_url=config.token_url, client_id=config.client_id, client_secret=config.client_secret, scopes=config.scopes
     )
@@ -21,7 +25,7 @@ def get_cognite_client_from_config(config: ServiceClient) -> CogniteClient:
     return _get_cognite_client(config, credentials)
 
 
-def get_cognite_client_interactive(config: InteractiveClient) -> CogniteClient:
+def get_cognite_client_interactive(config: InteractiveCogniteClient) -> CogniteClient:
     credentials = OAuthInteractive(
         authority_url=config.authority_url,
         client_id=config.client_id,
@@ -31,7 +35,7 @@ def get_cognite_client_interactive(config: InteractiveClient) -> CogniteClient:
     return _get_cognite_client(config, credentials)
 
 
-def _get_cognite_client(config: ClientConfig, credentials: CredentialProvider) -> CogniteClient:
+def _get_cognite_client(config: CogniteClientConfig, credentials: CredentialProvider) -> CogniteClient:
     logging.info(f"Creating CogniteClient with parameters : {config}")
     return CogniteClient(
         ClientConfig(
@@ -46,7 +50,7 @@ def _get_cognite_client(config: ClientConfig, credentials: CredentialProvider) -
     )
 
 
-def add_triples(graph_store: NeatGraphStore, triples: list[tuple], batch_size: int = 10000):
+def add_triples(graph_store: NeatGraphStore, triples: list[Triple], batch_size: int = 10000):
     """Adds triples to the graph store in batches.
 
     Parameters
@@ -131,6 +135,40 @@ def get_namespace(URI: URIRef, special_separator: str = "#_") -> str:
         return "/".join(URI.split("/")[:-1]) + "/"
 
 
+def _traverse(hierarchy: dict, graph: dict, names: list[str]) -> dict:
+    """traverse the graph and return the hierarchy"""
+    for name in names:
+        hierarchy[name] = _traverse({}, graph, graph[name])
+    return hierarchy
+
+
+def get_generation_order(
+    class_linkage: pd.DataFrame, parent_col: str = "source_class", child_col: str = "target_class"
+) -> dict:
+    parent_child_list = class_linkage[[parent_col, child_col]].values.tolist()
+    # Build a directed graph and a list of all names that have no parent
+    graph: dict[str, set[str]] = {name: set() for tup in parent_child_list for name in tup}
+    has_parent = {name: False for tup in parent_child_list for name in tup}
+    for parent, child in parent_child_list:
+        graph[parent].add(child)
+        has_parent[child] = True
+
+    # All names that have absolutely no parent:
+    roots = [name for name, parents in has_parent.items() if not parents]
+
+    return _traverse({}, graph, roots)
+
+
+def prettify_generation_order(generation_order: dict, depth: dict | None = None, start=-1) -> dict:
+    """Prettifies generation order dictionary for easier consumption."""
+    depth = depth or {}
+    for key, value in generation_order.items():
+        depth[key] = start + 1
+        if isinstance(value, dict):
+            prettify_generation_order(value, depth, start=start + 1)
+    return OrderedDict(sorted(depth.items(), key=lambda item: item[1]))
+
+
 def epoch_now_ms():
     return int((datetime.now(timezone.utc) - datetime(1970, 1, 1, tzinfo=timezone.utc)).total_seconds() * 1000)
 
@@ -165,10 +203,12 @@ def retry_decorator(max_retries=2, retry_delay=3, component_name=""):
                         raise e
                 except CogniteDuplicatedError as e:
                     if isinstance(previous_exception, CogniteReadTimeout):
-                        # if previous exception was CogniteReadTimeout, we can't be sure if the items were created or not
+                        # if previous exception was CogniteReadTimeout,
+                        # we can't be sure if the items were created or not
                         if len(e.successful) == 0 and len(e.failed) == 0 and len(e.duplicated) >= 0:
                             logging.warning(
-                                f"Duplicate error for {component_name} . All items already exist in CDF. Suppressing error."
+                                f"Duplicate error for {component_name} . All items already exist in CDF. "
+                                "Suppressing error."
                             )
                             return
                         else:
@@ -191,7 +231,8 @@ def retry_decorator(max_retries=2, retry_delay=3, component_name=""):
                     previous_exception = e
                     if attempt < max_retries:
                         logging.error(
-                            f"Retry attempt {attempt + 1} failed for {component_name} . Retrying in {retry_delay} second(s)."
+                            f"Retry attempt {attempt + 1} failed for {component_name}. "
+                            f"Retrying in {retry_delay} second(s)."
                         )
                         logging.error(e)
                         time.sleep(retry_delay)
@@ -229,7 +270,7 @@ def generate_exception_report(exceptions: list[dict], category: str = "") -> str
 
 
 def _order_expectations_by_type(exceptions: list[dict]) -> dict[str, list[str]]:
-    exception_dict = {}
+    exception_dict: dict[str, list[str]] = {}
     for exception in exceptions:
         if exception["loc"]:
             location = f"[{'/'.join(exception['loc'])}]"

@@ -1,7 +1,7 @@
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, field_validator
 
 
-class ClientConfig(BaseModel):
+class CogniteClientConfig(BaseModel):
     project: str = "dev"
     client_id: str = "neat"
     client_name: str = "neat"
@@ -10,16 +10,16 @@ class ClientConfig(BaseModel):
     timeout: int = 60
     max_workers: int = 3
 
-    @validator("scopes", pre=True)
+    @field_validator("scopes", mode="before")
     def string_to_list(cls, value):
         return [value] if isinstance(value, str) else value
 
 
-class InteractiveClient(ClientConfig):
+class InteractiveCogniteClient(CogniteClientConfig):
     authority_url: str
     redirect_port: int = 53_000
 
 
-class ServiceClient(ClientConfig):
+class ServiceCogniteClient(CogniteClientConfig):
     token_url: str = "https://login.microsoftonline.com/common/oauth2/token"
     client_secret: str = "secret"

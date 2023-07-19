@@ -271,7 +271,8 @@ def query_graph(request: QueryRequest):
 @app.post("/api/execute-rule")
 def execute_rule(request: RuleRequest):
     logging.info(
-        f"Executing rule type: { request.rule_type } rule : {request.rule} , workflow : {request.workflow_name} , graph : {request.graph_name}"
+        f"Executing rule type: { request.rule_type } rule : {request.rule} , workflow : {request.workflow_name} , "
+        f"graph : {request.graph_name}"
     )
     # TODO : add support for other graphs
     workflow = neat_app.workflow_manager.get_workflow(request.workflow_name)
@@ -347,7 +348,10 @@ def get_classes(graph_name: str = "source", workflow_name: str = "default", cach
     cache_key = f"classes_{graph_name}"
     if cache_key in cache_store and cache:
         return cache_store[cache_key]
-    query = "SELECT ?class (count(?s) as ?instances ) WHERE { ?s rdf:type ?class . } group by ?class order by DESC(?instances)"
+    query = (
+        "SELECT ?class (count(?s) as ?instances ) WHERE { ?s rdf:type ?class . } "
+        "group by ?class order by DESC(?instances)"
+    )
     api_result = get_data_from_graph(query, graph_name, workflow_name)
     cache_store["get_classes"] = api_result
     return api_result

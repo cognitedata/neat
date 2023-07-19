@@ -15,7 +15,8 @@ def test_sheet2graph(simple_rules, graph_capturing_sheet):
         remove_namespace(res[0]): int(res[1])
         for res in list(
             graph_store.graph.query(
-                "SELECT ?class (count(?s) as ?instances ) WHERE { ?s a ?class . } group by ?class order by DESC(?instances)"
+                "SELECT ?class (count(?s) as ?instances ) WHERE { ?s a ?class . } "
+                "group by ?class order by DESC(?instances)"
             )
         )
     }

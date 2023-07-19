@@ -119,7 +119,10 @@ Description = constr(min_length=1, max_length=255)
 prefix_compliance_regex = r"^([a-zA-Z]+[a-zA-Z0-9]*[_-]{0,1}[a-zA-Z0-9]+)+$"
 cdf_space_name_compliance_regex = rf"(?!^(space|cdf|dms|pg3|shared|system|node|edge)$)({prefix_compliance_regex})"
 data_model_name_compliance_regex = r"^([a-zA-Z]+[a-zA-Z0-9]*[_]{0,1}[a-zA-Z0-9])+$"
-version_compliance_regex = r"^([0-9]+[_-]{1}[0-9]+[_-]{1}[0-9]+[_-]{1}[a-zA-Z0-9]+)|([0-9]+[_-]{1}[0-9]+[_-]{1}[0-9]+)|([0-9]+[_-]{1}[0-9])|([0-9]+)$"
+version_compliance_regex = (
+    r"^([0-9]+[_-]{1}[0-9]+[_-]{1}[0-9]+[_-]{1}[a-zA-Z0-9]+)|"
+    r"([0-9]+[_-]{1}[0-9]+[_-]{1}[0-9]+)|([0-9]+[_-]{1}[0-9])|([0-9]+)$"
+)
 
 Prefix = constr(min_length=1, max_length=43)
 ExternalId = constr(min_length=1, max_length=255)
@@ -134,13 +137,15 @@ class Metadata(RuleModel):
         description="This is used as prefix for generation of RDF OWL/SHACL data model representation",
     )
     cdf_space_name: Prefix = Field(
-        description="This is used as CDF space name to which model is intend to be stored. By default it is set to 'playground'",
+        description="This is used as CDF space name to which model is intend to be stored. "
+        "By default it is set to 'playground'",
         alias="cdfSpaceName",
         default="playground",
     )
 
     namespace: Optional[Namespace] = Field(
-        description="This is used as RDF namespace for generation of RDF OWL/SHACL data model representation and/or for generation of RDF graphs",
+        description="This is used as RDF namespace for generation of RDF OWL/SHACL data model representation "
+        "and/or for generation of RDF graphs",
         min_length=1,
         max_length=2048,
         default=None,
