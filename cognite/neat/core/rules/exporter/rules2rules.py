@@ -1,6 +1,7 @@
 import logging
 import warnings
 
+from cognite.neat.core.rules.analysis import get_defined_classes
 from cognite.neat.core.rules.models import TransformationRules
 
 
@@ -27,7 +28,7 @@ def subset_rules(
     model (i.e. TransformationRules) which has already been validated.
     """
 
-    defined_classes = transformation_rules.get_defined_classes()
+    defined_classes = get_defined_classes(transformation_rules)
     possible_classes = defined_classes.intersection(desired_classes)
     impossible_classes = desired_classes - possible_classes
 
