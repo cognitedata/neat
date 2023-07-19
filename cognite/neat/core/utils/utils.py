@@ -216,12 +216,12 @@ def create_sha256_hash(string: str) -> str:
     return hash_value
 
 
-def generate_exception_report(exceptions: list[dict], category: str) -> str:
+def generate_exception_report(exceptions: list[dict], category: str = "") -> str:
     exceptions_as_dict = _order_expectations_by_type(exceptions) if exceptions else {}
     report = ""
 
     for exception_type in exceptions_as_dict.keys():
-        title = f"# {category}: {exception_type}"
+        title = f"# {category}: {exception_type}" if category else ""
         warnings = "\n- " + "\n- ".join(exceptions_as_dict[exception_type])
         report += title + warnings + "\n\n"
 

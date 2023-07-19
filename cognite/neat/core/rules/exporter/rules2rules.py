@@ -62,3 +62,7 @@ def subset_rules(
         return TransformationRules.construct(**reduced_data_model)
     else:
         return TransformationRules(**reduced_data_model)
+
+
+def to_dms_compliant_rules(rules: TransformationRules) -> TransformationRules:
+    ...

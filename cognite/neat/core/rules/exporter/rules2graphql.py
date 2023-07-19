@@ -5,7 +5,13 @@ import warnings
 from graphql import GraphQLField, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLSchema, print_schema
 
 from cognite.neat.core.rules import _exceptions
+from cognite.neat.core.rules.analysis import (
+    are_entity_names_dms_compliant,
+    are_properties_redefined,
+    get_classes_with_properties,
+)
 from cognite.neat.core.rules.models import DATA_TYPE_MAPPING, Property, TransformationRules
+from cognite.neat.core.utils.utils import generate_exception_report
 
 
 def _make_ids_compliant(transformation_rules: TransformationRules) -> TransformationRules:
@@ -27,11 +33,13 @@ def rules2graphql_schema(
     str
         GraphQL schema string
     """
+    names_compliant, name_warnings = are_entity_names_dms_compliant(transformation_rules, return_report=True)
+    properties_redefined, redefinition_warnings = are_properties_redefined(transformation_rules, return_report=True)
 
-    if transformation_rules.flag.entity_ids_not_dms_compliant:
-        raise _exceptions.Error10()
-    if transformation_rules.flag.properties_redefined:
-        raise _exceptions.Error11()
+    if not names_compliant:
+        raise _exceptions.Error10(report=generate_exception_report(name_warnings))
+    if properties_redefined:
+        raise _exceptions.Error11(report=generate_exception_report(redefinition_warnings))
 
     def _define_fields(property_definitions: list[Property]) -> dict[str, GraphQLField]:
         gql_field_definitions = {}
@@ -73,7 +81,7 @@ def rules2graphql_schema(
         return gql_field_definitions
 
     gql_type_definitions: dict = {}
-    for class_, properties in transformation_rules.get_classes_with_properties().items():
+    for class_, properties in get_classes_with_properties(transformation_rules).items():
         gql_type_definitions[class_] = GraphQLObjectType(
             class_,
             lambda properties=properties: _define_fields(properties),

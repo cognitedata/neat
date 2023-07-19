@@ -185,11 +185,8 @@ class Error10(NeatError):
     example: str = ""
     fix: str = "Make sure to check validation report of Transformation Rules and fix DMS related warnings."
 
-    def __init__(self, verbose=False):
-        self.message = (
-            "Entities, such as classes, properties and/or property types contain non DMS compliant characters."
-            "/nConsult transformation rules validation report for more details."
-        )
+    def __init__(self, report: str = "", verbose=False):
+        self.message = f"Following entities contain non DMS compliant characters: {report}"
 
         if verbose:
             self.message += f"\nDescription: {self.description}"
@@ -208,11 +205,8 @@ class Error11(NeatError):
     example: str = ""
     fix: str = "Make sure to check validation report of Transformation Rules and fix DMS related warnings."
 
-    def __init__(self, verbose=False):
-        self.message = (
-            "Properties defined multiple times for the same class(es)."
-            "/nConsult transformation rules validation report for more details."
-        )
+    def __init__(self, report: str = "", verbose=False):
+        self.message = f"Following properties defined multiple times for the same class(es): {report}"
 
         if verbose:
             self.message += f"\nDescription: {self.description}"
@@ -884,8 +878,8 @@ class Warning600(NeatWarning):
     # See Warning302 for explanation why default values are set
     def __init__(self, entity_type: str = "", entity_id: str = "", loc: str = "", verbose=False):
         self.message = (
-            f"Not DMS compliant! {entity_type} id '{entity_id}'"
-            " it use character(s) outside range [a-zA-Z0-9_] or "
+            f"'{entity_id}' {entity_type.lower()}"
+            " use character(s) outside of range of allowed characters [a-zA-Z0-9_] or "
             f"it starts with non-letter character! {loc}"
         )
         if verbose:
