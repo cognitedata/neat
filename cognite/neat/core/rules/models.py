@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 import math
 import re
 import warnings
@@ -8,7 +7,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import ClassVar, Dict, Optional
 
-import pandas as pd
 from graphql import GraphQLBoolean, GraphQLFloat, GraphQLInt, GraphQLString
 from pydantic import (
     BaseModel,
@@ -29,8 +27,7 @@ from cognite.neat.core.configuration import PREFIXES
 
 # from . import _exceptions
 from cognite.neat.core.rules import _exceptions
-
-from .to_rdf_path import Entity, RuleType, parse_rule
+from cognite.neat.core.rules.to_rdf_path import Entity, RuleType, parse_rule
 
 __all__ = ["Class", "Instance", "Metadata", "Prefixes", "Property", "Resource", "TransformationRules"]
 
@@ -555,18 +552,12 @@ class Instance(RuleModel):
             return a == b
 
 
-class Issues(BaseModel):
-    entity_ids_not_dms_compliant: bool = False
-    properties_redefined: bool = False
-
-
 class TransformationRules(RuleModel):
     metadata: Metadata
     classes: dict[str, Class]
     properties: dict[str, Property]
     prefixes: Optional[dict[str, Namespace]] = PREFIXES
     instances: Optional[list[Instance]] = None
-    issues: Issues = Issues()
 
     @property
     def raw_tables(self) -> list[str]:
@@ -641,277 +632,3 @@ class TransformationRules(RuleModel):
 
         value[values["metadata"].prefix] = values["metadata"].namespace
         return value
-
-    @model_validator(mode="after")
-    def is_model_dms_ready(self):
-        """Check if data model definitions are valid."""
-
-        for class_ in self.classes.values():
-            if not re.match(data_model_name_compliance_regex, class_.class_id):
-                warnings.warn(
-                    _exceptions.Warning600("Class", class_.class_id, f"[Classes/Class/{class_.class_id}]").message,
-                    category=_exceptions.Warning600,
-                    stacklevel=2,
-                )
-                self.issues.entity_ids_not_dms_compliant = True
-
-        for row, property_ in self.properties.items():
-            if not re.match(data_model_name_compliance_regex, property_.class_id):
-                warnings.warn(
-                    _exceptions.Warning600("Class", property_.class_id, f"[Properties/Class/{row}]").message,
-                    category=_exceptions.Warning600,
-                    stacklevel=2,
-                )
-                self.issues.entity_ids_not_dms_compliant = True
-            if not re.match(data_model_name_compliance_regex, property_.property_id):
-                warnings.warn(
-                    _exceptions.Warning600("Property", property_.property_id, f"[Properties/Property/{row}]").message,
-                    category=_exceptions.Warning600,
-                    stacklevel=2,
-                )
-                self.issues.entity_ids_not_dms_compliant = True
-            if not re.match(data_model_name_compliance_regex, property_.expected_value_type):
-                warnings.warn(
-                    _exceptions.Warning600(
-                        "Value type", property_.expected_value_type, f"[Properties/Type/{row}]"
-                    ).message,
-                    category=_exceptions.Warning600,
-                    stacklevel=2,
-                )
-                self.issues.entity_ids_not_dms_compliant = True
-
-        return self
-
-    @model_validator(mode="after")
-    def check_for_property_redefinitions(self):
-        for class_, properties in self.get_classes_with_properties().items():
-            analyzed_properties = []
-            for property_ in properties:
-                if property_.property_id not in analyzed_properties:
-                    analyzed_properties.append(property_.property_id)
-                else:
-                    self.issues.properties_redefined = True
-                    warnings.warn(
-                        _exceptions.Warning601(class_, property_.property_id).message,
-                        category=_exceptions.Warning600,
-                        stacklevel=2,
-                    )
-
-        return self
-
-    @model_validator(mode="after")
-    def property_ids_camel_case_compliant(self):
-        # check if property ids are camelCase compliant
-        # set self.issues.property_ids_not_camels_case = True
-        return self
-
-    @model_validator(mode="after")
-    def class_id_pascal_case_compliant(self):
-        # check if class ids are PascalCase compliant
-        # raise warning if not
-        # set self.issues.class_ids_not_pascal_case = True
-        return self
-
-    # Bunch of methods that work on top of this class we might move out of TransformationRules class
-    def get_labels(self) -> set[str]:
-        """Return CDF labels for classes and relationships."""
-        class_labels = {class_.class_id for class_ in self.classes.values()}
-
-        property_labels = {property_.property_id for property_ in self.properties.values()}
-
-        relationship_labels = {
-            rule.label for rule in self.properties.values() if "Relationship" in rule.cdf_resource_type
-        }
-
-        return class_labels.union(relationship_labels).union(property_labels)
-
-    def get_instances_as_triples(self) -> list[tuple]:
-        if self.instances:
-            return [(instance.instance, instance.property_, instance.value) for instance in self.instances]
-        else:
-            return []
-
-    def get_defined_classes(self) -> set[str]:
-        """Returns classes that have been defined in the data model."""
-        return {property.class_id for property in self.properties.values()}
-
-    def get_classes_with_properties(self) -> dict[str, list[Property]]:
-        """Returns classes that have been defined in the data model."""
-        # TODO: Do not particularly like method name, find something more suitable
-        class_property_pairs = {}
-
-        for property_ in self.properties.values():
-            class_ = property_.class_id
-            if class_ in class_property_pairs:
-                class_property_pairs[class_] += [property_]
-            else:
-                class_property_pairs[class_] = [property_]
-
-        return class_property_pairs
-
-    def get_class_property_pairs(self) -> dict[str, dict[str, Property]]:
-        """This method will actually consider only the first definition of given property!"""
-        class_property_pairs = {}
-
-        for class_, properties in self.get_classes_with_properties().items():
-            processed_properties = {}
-            for property_ in properties:
-                if property_.property_id in processed_properties:
-                    warnings.warn(
-                        "Property has been defined more than once! Only first definition will be considered.",
-                        stacklevel=2,
-                    )
-                    continue
-                processed_properties[property_.property_id] = property_
-            class_property_pairs[class_] = processed_properties
-
-        return class_property_pairs
-
-        # issues = set()
-        # for class_, properties in self.get_classes_with_properties().items():
-        #     analyzed_properties = []
-        #     for property_ in properties:
-        #         if property_.property_id not in analyzed_properties:
-        #             analyzed_properties.append(property_.property_id)
-        #         else:
-        #             issues.add(f"Property {property_.property_id} of class {class_} has been defined more than once!")
-        # return issues
-
-    def reduce_data_model(self, desired_classes: set, skip_validation: bool = False) -> TransformationRules:
-        """Reduce the data model to only include desired classes and their properties.
-
-        Parameters
-        ----------
-        desired_classes : set
-            Desired classes to include in the reduced data model
-        skip_validation : bool
-            To skip underlying pydantic validation, by default False
-
-        Returns
-        -------
-        TransformationRules
-            Instance of TransformationRules
-
-        Notes
-        -----
-        It is fine to skip validation since we are deriving the reduced data model from data
-        model (i.e. TransformationRules) which has already been validated.
-        """
-
-        defined_classes = self.get_defined_classes()
-        possible_classes = defined_classes.intersection(desired_classes)
-        impossible_classes = desired_classes - possible_classes
-
-        if not possible_classes:
-            logging.error("None of the desired classes are defined in the data model!")
-            raise ValueError("None of the desired classes are defined in the data model!")
-
-        if impossible_classes:
-            logging.warning(f"Could not find the following classes defined in the data model: {impossible_classes}")
-            warnings.warn(
-                f"Could not find the following classes defined in the data model: {impossible_classes}", stacklevel=2
-            )
-
-        reduced_data_model = {
-            "metadata": self.metadata,
-            "prefixes": self.prefixes,
-            "classes": {},
-            "properties": {},
-            "instances": self.instances,
-        }
-
-        logging.info(f"Reducing data model to only include the following classes: {possible_classes}")
-        for class_ in possible_classes:
-            reduced_data_model["classes"][class_] = self.classes[class_]
-
-        for id_, property_definition in self.properties.items():
-            if property_definition.class_id in possible_classes:
-                reduced_data_model["properties"][id_] = property_definition
-
-        if skip_validation:
-            return TransformationRules.construct(**reduced_data_model)
-        else:
-            return TransformationRules(**reduced_data_model)
-
-    def to_dataframe(self) -> Dict[str, pd.DataFrame]:
-        """Represent data model as a dictionary of data frames, where each data frame
-        represents properties defined for a given class.
-
-        Returns
-        -------
-        Dict[str, pd.DataFrame]
-            Simplified representation of the data model
-        """
-
-        data_model = {}
-
-        defined_classes = self.get_classes_with_properties()
-
-        for class_ in defined_classes:
-            properties = {}
-            for property_ in defined_classes[class_]:
-                if property_.property_id not in properties:
-                    properties[property_.property_id] = {
-                        "property_type": property_.property_type,
-                        "value_type": property_.expected_value_type,
-                        "min_count": property_.min_count,
-                        "max_count": property_.max_count,
-                    }
-
-            data_model[class_] = pd.DataFrame(properties).T
-
-        return data_model
-
-    def get_class_linkage(self) -> pd.DataFrame:
-        """Returns a dataframe with the class linkage of the data model."""
-
-        class_linkage = pd.DataFrame(columns=["source_class", "target_class", "connecting_property", "max_occurrence"])
-        for property_ in self.properties.values():
-            if property_.property_type == "ObjectProperty":
-                new_row = pd.Series(
-                    {
-                        "source_class": property_.class_id,
-                        "target_class": property_.expected_value_type,
-                        "connecting_property": property_.property_id,
-                        "max_occurrence": property_.max_count,
-                    }
-                )
-                class_linkage = pd.concat([class_linkage, new_row.to_frame().T], ignore_index=True)
-
-        class_linkage.drop_duplicates(inplace=True)
-
-        return class_linkage
-
-    def get_connected_classes(self) -> set:
-        """Return a set of classes that are connected to other classes."""
-        class_linkage = self.get_class_linkage()
-        return set(class_linkage.source_class.values).union(set(class_linkage.target_class.values))
-
-    def get_disconnected_classes(self):
-        """Return a set of classes that are disconnected (i.e. isolated) from other classes."""
-        return self.get_defined_classes() - self.get_connected_classes()
-
-    def get_symmetric_pairs(self) -> list:
-        """Returns a list of pairs of symmetrically linked classes."""
-        # TODO: Find better name for this method
-
-        class_linkage = self.get_class_linkage()
-        if class_linkage.empty:
-            return []
-
-        sym_pairs = set()
-        for _, row in class_linkage.iterrows():
-            source = row.source_class
-            target = row.target_class
-            target_targets = class_linkage[class_linkage.source_class == target].target_class.values
-            if source in target_targets and (source, target) not in sym_pairs:
-                sym_pairs.add((source, target))
-        return sym_pairs
-
-    def get_entity_names(self):
-        class_names = set()
-        property_names = set()
-        for class_, properties in self.to_dataframe().items():
-            class_names.add(class_)
-            property_names = property_names.union(set(properties.index))
-        return class_names.union(property_names)

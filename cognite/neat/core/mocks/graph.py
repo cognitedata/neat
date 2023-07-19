@@ -7,6 +7,7 @@ import pandas as pd
 from prometheus_client import Gauge
 from rdflib import RDF, Literal, Namespace, URIRef
 
+from cognite.neat.core.rules.analysis import get_classes_with_properties
 from cognite.neat.core.rules.models import TransformationRules
 from cognite.neat.core.utils.utils import get_generation_order, prettify_generation_order, remove_namespace
 
@@ -164,6 +165,36 @@ def _generate_triples_per_class(
             raise ValueError(f"Property type {property_definition.property_type} not supported!")
 
     return triples
+
+
+def to_dict(transformation_rules: TransformationRules) -> dict[str, pd.DataFrame]:
+    """Represent data model as a dictionary of data frames, where each data frame
+    represents properties defined for a given class.
+
+    Returns
+    -------
+    Dict[str, pd.DataFrame]
+        Simplified representation of the data model
+    """
+
+    data_model = {}
+
+    defined_classes = get_classes_with_properties(transformation_rules)
+
+    for class_ in defined_classes:
+        properties = {}
+        for property_ in defined_classes[class_]:
+            if property_.property_id not in properties:
+                properties[property_.property_id] = {
+                    "property_type": property_.property_type,
+                    "value_type": property_.expected_value_type,
+                    "min_count": property_.min_count,
+                    "max_count": property_.max_count,
+                }
+
+        data_model[class_] = pd.DataFrame(properties).T
+
+    return data_model
 
 
 def generate_triples(

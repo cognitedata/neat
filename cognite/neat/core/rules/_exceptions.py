@@ -17,14 +17,14 @@ from warnings import WarningMessage
 from pydantic_core import ErrorDetails, PydanticCustomError
 
 
-def wrangle_warnings(list_of_warnings: list[WarningMessage]) -> list[dict] | None:
+def wrangle_warnings(list_of_warnings: list[WarningMessage]) -> list[dict]:
     warning_list: list[dict] = []
     for warning in list_of_warnings:
         if issubclass(warning.message.__class__, NeatWarning):
             warning_list.append(_neat_warning_to_dict(warning))
         elif issubclass(warning.message.__class__, Warning):
             warning_list.append(_python_warning_to_dict(warning))
-    return warning_list or None
+    return warning_list
 
 
 def _neat_warning_to_dict(warning: WarningMessage) -> dict:

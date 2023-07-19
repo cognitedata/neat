@@ -28,9 +28,9 @@ def rules2graphql_schema(
         GraphQL schema string
     """
 
-    if transformation_rules.issues.entity_ids_not_dms_compliant:
+    if transformation_rules.flag.entity_ids_not_dms_compliant:
         raise _exceptions.Error10()
-    if transformation_rules.issues.properties_redefined:
+    if transformation_rules.flag.properties_redefined:
         raise _exceptions.Error11()
 
     def _define_fields(property_definitions: list[Property]) -> dict[str, GraphQLField]:

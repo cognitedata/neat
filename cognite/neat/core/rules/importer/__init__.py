@@ -1,1 +1,1 @@
-from cognite.neat.core.rules.importer.owl2excel import owl2excel
+from cognite.neat.core.rules.importer.ontology2excel import owl2excel
