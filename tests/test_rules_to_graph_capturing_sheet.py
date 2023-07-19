@@ -1,5 +1,5 @@
-from cognite.neat.core.extractors import rules2graph_capturing_sheet
 from cognite.neat.core.loader.graph_capturing_sheet import excel_file_to_table_by_name
+from cognite.neat.core.rules.exporter.rules2graph_sheet import rules2graph_capturing_sheet
 
 
 def test_graph_capturing_sheet(tmp_path, simple_rules, graph_capturing_sheet):

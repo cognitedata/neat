@@ -1,21 +1,21 @@
 import hashlib
 import logging
 import time
-from typing_extensions import TypeAlias
 from collections import OrderedDict
 from datetime import datetime, timezone
 from functools import wraps
-
+from typing_extensions import TypeAlias
 import pandas as pd
 from cognite.client import ClientConfig, CogniteClient
 from cognite.client.credentials import CredentialProvider, OAuthClientCredentials, OAuthInteractive
 from cognite.client.exceptions import CogniteDuplicatedError, CogniteReadTimeout
-from rdflib.term import URIRef, Node
+from rdflib import Literal
+from rdflib.term import URIRef
 
 from cognite.neat.core.loader.graph_store import NeatGraphStore
 from cognite.neat.core.utils.cdf import InteractiveCogniteClient, ServiceCogniteClient, CogniteClientConfig
 
-Triple: TypeAlias = tuple[Node, Node, Node]
+Triple: TypeAlias = tuple[URIRef, URIRef, Literal | URIRef]
 
 
 def get_cognite_client_from_config(config: ServiceCogniteClient) -> CogniteClient:
@@ -258,12 +258,12 @@ def create_sha256_hash(string: str) -> str:
     return hash_value
 
 
-def generate_exception_report(exceptions: list[dict], category: str) -> str:
+def generate_exception_report(exceptions: list[dict], category: str = "") -> str:
     exceptions_as_dict = _order_expectations_by_type(exceptions) if exceptions else {}
     report = ""
 
     for exception_type in exceptions_as_dict.keys():
-        title = f"# {category}: {exception_type}"
+        title = f"# {category}: {exception_type}" if category else ""
         warnings = "\n- " + "\n- ".join(exceptions_as_dict[exception_type])
         report += title + warnings + "\n\n"
 

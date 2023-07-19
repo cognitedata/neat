@@ -4,6 +4,7 @@ import traceback
 from cognite.client import CogniteClient
 from cognite.client.data_classes import LabelDefinition
 
+from cognite.neat.core.rules.exporter.cdf import get_labels
 from cognite.neat.core.rules.models import TransformationRules
 
 
@@ -45,7 +46,7 @@ def upload_labels(
             raise e
         existing_labels = {}
 
-    non_existing_labels = set(list(transformation_rules.get_labels()) + extra_labels).difference(existing_labels)
+    non_existing_labels = set(list(get_labels(transformation_rules)) + extra_labels).difference(existing_labels)
 
     labels = []
     if non_existing_labels:
