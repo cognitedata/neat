@@ -9,12 +9,13 @@ import pandas as pd
 from cognite.client import ClientConfig, CogniteClient
 from cognite.client.credentials import CredentialProvider, OAuthClientCredentials, OAuthInteractive
 from cognite.client.exceptions import CogniteDuplicatedError, CogniteReadTimeout
-from rdflib.term import URIRef, Node
+from rdflib import Literal
+from rdflib.term import URIRef
 
 from cognite.neat.core.loader.graph_store import NeatGraphStore
 from cognite.neat.core.utils.cdf import InteractiveCogniteClient, ServiceCogniteClient, CogniteClientConfig
 
-Triple: TypeAlias = tuple[Node, Node, Node]
+Triple: TypeAlias = tuple[URIRef, URIRef, Literal | URIRef]
 
 
 def get_cognite_client_from_config(config: ServiceCogniteClient) -> CogniteClient:
