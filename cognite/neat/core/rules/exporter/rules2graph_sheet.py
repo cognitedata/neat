@@ -8,7 +8,7 @@ from openpyxl.utils.cell import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
 
 from cognite.neat.core.rules.analysis import get_class_property_pairs
-from cognite.neat.core.rules.exporter.rules2graphql import _repair_name as to_graphql_name
+from cognite.neat.core.rules.exporter.rules2rules import to_dms_name
 from cognite.neat.core.rules.models import TransformationRules
 
 
@@ -83,14 +83,14 @@ def rules2graph_capturing_sheet(
 def _add_index_identifiers(workbook: Workbook, sheet: str, no_rows: int):
     """Adds index-based auto identifier to a sheet identifier column"""
     for i in range(no_rows):
-        prefix = to_graphql_name(sheet, "class", True)
+        prefix = to_dms_name(sheet, "class", True)
         workbook[sheet][f"A{i+2}"] = f'=IF(ISBLANK(B{i+2}), "","{prefix}-{i+1}")'
 
 
 def _add_uuid_identifiers(workbook: Workbook, sheet: str, no_rows: int):
     """Adds UUID-based auto identifier to a sheet identifier column"""
     for i in range(no_rows):
-        prefix = to_graphql_name(sheet, "class", True)
+        prefix = to_dms_name(sheet, "class", True)
         workbook[sheet][f"A{i+2}"] = f'=IF(ISBLANK(B{i+2}), "","{prefix}-{uuid.uuid4()}")'
 
 
