@@ -5,6 +5,7 @@ to TransformationRules for purpose of for example:
 - converting classes/properties ids/names to DMS compliant format
 """
 import logging
+import re
 import warnings
 
 from cognite.neat.core.rules.analysis import get_defined_classes
@@ -74,3 +75,36 @@ def subset_rules(
 
 def to_dms_compliant_rules(rules: TransformationRules) -> TransformationRules:
     ...
+
+
+# to be used for conversion to DMS compliant format
+def to_dms_name(name: str, entity_type: str, fix_casing: bool = False) -> str:
+    """
+    Repairs an entity name to conform to GraphQL naming convention
+    >>> repair_name("wind-speed", "property")
+    'windspeed'
+    >>> repair_name("Wind.Speed", "property", True)
+    'windSpeed'
+    >>> repair_name("windSpeed", "class", True)
+    'WindSpeed'
+    >>> repair_name("22windSpeed", "class")
+    '_22windSpeed'
+    """
+
+    # Remove any non GraphQL compliant characters
+    repaired_string = re.sub(r"[^_a-zA-Z0-9]", "", name)
+
+    # Name must start with a letter or underscore
+    if repaired_string[0].isdigit():
+        repaired_string = f"_{repaired_string}"
+
+    if not fix_casing:
+        return repaired_string
+    # Property names must be camelCase
+    if entity_type == "property" and repaired_string[0].isupper():
+        return repaired_string[0].lower() + repaired_string[1:]
+    # Class names must be PascalCase
+    elif entity_type == "class" and repaired_string[0].islower():
+        return repaired_string[0].upper() + repaired_string[1:]
+    else:
+        return repaired_string

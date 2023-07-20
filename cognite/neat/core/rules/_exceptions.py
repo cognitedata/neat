@@ -218,6 +218,46 @@ class Error11(NeatError):
         super().__init__(self.message)
 
 
+class Error20(NeatError):
+    type_: str = "UnableToDownloadExcelFile"
+    code: int = 11
+    description: str = (
+        "This error is raised during loading of byte representation of"
+        " a Excel file from Github when given file cannot be downloaded."
+    )
+    example: str = ""
+    fix: str = "Make sure you provided correct parameters to download Excel file from github repository"
+
+    def __init__(self, filepath: str, loc: str, reason: str, verbose=False):
+        self.message = f"File '{filepath}' from '{loc}' cannot be downloaded! Reason: {reason}"
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class Error21(NeatError):
+    type_: str = "NotExcelFile"
+    code: int = 11
+    description: str = (
+        "This error is raised during loading of byte representation of a file from Github"
+        " into openpyxl workbook object in case when byte representation is not Excel file."
+    )
+    example: str = ""
+    fix: str = "Make sure you that byte representation of a file is Excel file!"
+
+    def __init__(self, filepath: str, loc: str, verbose=False):
+        self.message = f"File '{filepath}' from '{loc}' is not a valid excel file!"
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
 class Error51(NeatError):
     type_: str = "MetadataSheetMissingMandatoryFields"
     code: int = 52

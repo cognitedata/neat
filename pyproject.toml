@@ -50,7 +50,6 @@ fastapi = "^0.100"
 schedule = "^1"
 python-multipart = "^0.0.6"
 oxrdflib = {version = "^0.3.3", extras = ["oxigraph"]}
-graphql-core = "^3.2.3"
 
 openpyxl = {version="*", optional=true}
 
