@@ -1,23 +1,23 @@
+from typing import ClassVar
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 from cognite.neat.core.rules import _exceptions
-from jinja2 import DictLoader, Environment
 from cognite.neat.core.rules._validation import (
     are_entity_names_dms_compliant,
     are_properties_redefined,
 )
-
 from cognite.neat.core.rules.analysis import get_class_property_pairs
 from cognite.neat.core.rules.models import DATA_TYPE_MAPPING, TransformationRules
 from cognite.neat.core.utils.utils import generate_exception_report
 
 
-TYPE = (
+_TYPE = (
     "{% include 'type_header' %}type {{ class_definition.class_id }} {{'{'}}"
     "{%-for property_definition in class_properties%}"
     "{% include 'field' %}"
     "{% endfor %}\n}\n"
 )
 
-TYPE_HEADER = (
+_TYPE_HEADER = (
     "{%- if header %}"
     "{%- if class_definition.description and class_definition.class_name %}"
     '"""\n{{class_definition.description}}\n@name {{ class_definition.class_name }}\n"""\n{##}\n'
@@ -28,7 +28,7 @@ TYPE_HEADER = (
 )
 
 
-FIELD = (
+_FIELD = (
     "{% include 'field_header' %}\n"
     "  {{ property_definition.property_id }}: "
     "{%-if property_definition.property_type == 'DatatypeProperty'%}"
@@ -38,7 +38,7 @@ FIELD = (
     "{%- endif -%}"
 )
 
-FIELD_HEADER = (
+_FIELD_HEADER = (
     "{%- if header %}"
     "{%- if property_definition.description and property_definition.property_name %}"
     '\n  """\n  {{property_definition.description}}'
@@ -51,7 +51,7 @@ FIELD_HEADER = (
     "{%- endif %}"
 )
 
-ATTRIBUTE_OCCURRENCE = (
+_ATTRIBUTE_OCCURRENCE = (
     "{%-if property_definition.min_count and property_definition.max_count == 1%}"
     " {% include 'value_type' %}!"
     "{%-elif property_definition.min_count and property_definition.max_count != 1%}"
@@ -62,7 +62,7 @@ ATTRIBUTE_OCCURRENCE = (
     "{%- endif -%}"
 )
 
-EDGE_OCCURRENCE = (
+_EDGE_OCCURRENCE = (
     "{%-if not(property_definition.min_count and property_definition.max_count == 1)%}"
     " [{% include 'value_type' %}]"
     "{%-else%}"
@@ -70,63 +70,67 @@ EDGE_OCCURRENCE = (
     "{%- endif -%}"
 )
 
-FIELD_VALUE_TYPE = """{{value_type_mapping[property_definition.expected_value_type]['GraphQL']
+_FIELD_VALUE_TYPE = """{{value_type_mapping[property_definition.expected_value_type]['GraphQL']
                 if property_definition.expected_value_type in value_type_mapping
                 else property_definition.expected_value_type}}"""
 
 
-rules2graphql_template = Environment(
-    loader=DictLoader(
-        {
-            "type_header": TYPE_HEADER,
-            "type": TYPE,
-            "field_header": FIELD_HEADER,
-            "field": FIELD,
-            "value_type": FIELD_VALUE_TYPE,
-            "edge_occurrence": EDGE_OCCURRENCE,
-            "attribute_occurrence": ATTRIBUTE_OCCURRENCE,
-        }
-    ),
-    cache_size=1000,
-).get_template("type")
+class GraphQLSchema(BaseModel):
+    """Abilities to generate a GraphQL schema from TransformationRules"""
 
+    model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True, strict=False, extra="allow")
+    transformation_rules: TransformationRules
+    verbose: bool = False
 
-def rules2graphql_schema(
-    transformation_rules: TransformationRules,
-    header: bool = False,
-) -> str:
-    """Generates a GraphQL schema from an instance of TransformationRules
+    @field_validator("transformation_rules", mode="before")
+    def names_dms_compliant(cls, rules):
+        names_compliant, name_warnings = are_entity_names_dms_compliant(rules, return_report=True)
+        if not names_compliant:
+            raise _exceptions.Error10(report=generate_exception_report(name_warnings))
+        return rules
 
-    Parameters
-    ----------
-    transformation_rules : TransformationRules
-        TransformationRules object
+    @field_validator("transformation_rules", mode="before")
+    def properties_redefined(cls, rules):
+        properties_redefined, redefinition_warnings = are_properties_redefined(rules, return_report=True)
+        if properties_redefined:
+            raise _exceptions.Error11(report=generate_exception_report(redefinition_warnings))
+        return rules
 
-    Returns
-    -------
-    str
-        GraphQL schema string
-    """
-    names_compliant, name_warnings = are_entity_names_dms_compliant(transformation_rules, return_report=True)
-    properties_redefined, redefinition_warnings = are_properties_redefined(transformation_rules, return_report=True)
+    @model_validator(mode="after")
+    def set_template(self):
+        from jinja2 import DictLoader, Environment, Template
 
-    if not names_compliant:
-        raise _exceptions.Error10(report=generate_exception_report(name_warnings))
-    if properties_redefined:
-        raise _exceptions.Error11(report=generate_exception_report(redefinition_warnings))
+        self.template: Template = Environment(
+            loader=DictLoader(
+                {
+                    "type_header": _TYPE_HEADER,
+                    "type": _TYPE,
+                    "field_header": _FIELD_HEADER,
+                    "field": _FIELD,
+                    "value_type": _FIELD_VALUE_TYPE,
+                    "edge_occurrence": _EDGE_OCCURRENCE,
+                    "attribute_occurrence": _ATTRIBUTE_OCCURRENCE,
+                }
+            ),
+            cache_size=1000,
+        ).get_template("type")
+        return self
 
-    class_properties = get_class_property_pairs(transformation_rules)
+    @property
+    def schema(self) -> str:
+        """Generates a GraphQL schema of given TransformationRules"""
+        class_properties = get_class_property_pairs(self.transformation_rules)
 
-    type_definitions = []
+        type_definitions = []
 
-    for class_id in class_properties:
-        parameters = {
-            "class_definition": transformation_rules.classes[class_id],
-            "class_properties": list(class_properties[class_id].values()),
-            "value_type_mapping": DATA_TYPE_MAPPING,
-            "header": header,
-        }
+        for class_id in class_properties:
+            parameters = {
+                "class_definition": self.transformation_rules.classes[class_id],
+                "class_properties": list(class_properties[class_id].values()),
+                "value_type_mapping": DATA_TYPE_MAPPING,
+                "header": self.verbose,
+            }
 
-        type_definitions.append(rules2graphql_template.render(parameters))
+            type_definitions.append(self.template.render(parameters))
 
-    return "\n\n".join(type_definitions)
+        return "\n\n".join(type_definitions)
