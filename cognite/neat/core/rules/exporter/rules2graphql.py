@@ -1,175 +1,136 @@
-import logging
-import re
-import warnings
-
-from graphql import GraphQLField, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLSchema, print_schema
-
+from typing import ClassVar
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 from cognite.neat.core.rules import _exceptions
-from cognite.neat.core.rules.analysis import get_classes_with_properties
 from cognite.neat.core.rules._validation import (
     are_entity_names_dms_compliant,
     are_properties_redefined,
 )
-from cognite.neat.core.rules.models import DATA_TYPE_MAPPING, Property, TransformationRules
+from cognite.neat.core.rules.analysis import get_class_property_pairs
+from cognite.neat.core.rules.models import DATA_TYPE_MAPPING, TransformationRules
 from cognite.neat.core.utils.utils import generate_exception_report
 
 
-def rules2graphql_schema(
-    transformation_rules: TransformationRules,
-) -> str:
-    """Generates a GraphQL schema from an instance of TransformationRules
+_TYPE = (
+    "{% include 'type_header' %}type {{ class_definition.class_id }} {{'{'}}"
+    "{%-for property_definition in class_properties%}"
+    "{% include 'field' %}"
+    "{% endfor %}\n}\n"
+)
 
-    Parameters
-    ----------
-    transformation_rules : TransformationRules
-        TransformationRules object
-
-    Returns
-    -------
-    str
-        GraphQL schema string
-    """
-    names_compliant, name_warnings = are_entity_names_dms_compliant(transformation_rules, return_report=True)
-    properties_redefined, redefinition_warnings = are_properties_redefined(transformation_rules, return_report=True)
-
-    if not names_compliant:
-        raise _exceptions.Error10(report=generate_exception_report(name_warnings))
-    if properties_redefined:
-        raise _exceptions.Error11(report=generate_exception_report(redefinition_warnings))
-
-    def _define_fields(property_definitions: list[Property]) -> dict[str, GraphQLField]:
-        gql_field_definitions = {}
-        for property_ in property_definitions:
-            # property_name = _repair_name(property_.property_name, "property", fix_casing=fix_casing)  # type: ignore
-
-            property_name = property_.property_name
-
-            if property_name in gql_field_definitions:
-                logging.warn(f"Property {property_name} being redefined... skipping!")
-                warnings.warn(f"Property {property_name} being redefined... skipping!", stacklevel=2)
-                continue
-
-            # Node attribute
-            if property_.property_type == "DatatypeProperty":
-                value_type_gql = DATA_TYPE_MAPPING[property_.expected_value_type]["GraphQL"]
-
-                # Case: Mandatory, single value
-                if property_.min_count and property_.max_count == 1:
-                    value = GraphQLNonNull(value_type_gql)
-                # Case: Mandatory, multiple value
-                elif property_.min_count and property_.max_count != 1:
-                    value = GraphQLNonNull(GraphQLList(GraphQLNonNull(value_type_gql)))
-                # Case: Optional, single value
-                elif property_.max_count == 1:
-                    value = value_type_gql
-                # Case: Optional, multiple value
-                else:
-                    value = GraphQLList(value_type_gql)
-
-            # Node edge
-            else:
-                value = gql_type_definitions[property_.expected_value_type]
-                is_one_to_many_edge = not (property_.min_count and property_.max_count == 1)
-                if is_one_to_many_edge:
-                    value = GraphQLList(value)
-            gql_field_definitions[property_name] = GraphQLField(value)
-
-        return gql_field_definitions
-
-    gql_type_definitions: dict = {}
-    for class_, properties in get_classes_with_properties(transformation_rules).items():
-        gql_type_definitions[class_] = GraphQLObjectType(
-            class_,
-            lambda properties=properties: _define_fields(properties),
-        )
-
-    # Needs this so we are able to generate the schema string
-    query_schema = GraphQLSchema(
-        query=GraphQLObjectType(
-            "Query", lambda: {type_name: GraphQLField(type_def) for type_name, type_def in gql_type_definitions.items()}
-        )
-    )
-    return _get_graphql_schema_string(query_schema)
+_TYPE_HEADER = (
+    "{%- if header %}"
+    "{%- if class_definition.description and class_definition.class_name %}"
+    '"""\n{{class_definition.description}}\n@name {{ class_definition.class_name }}\n"""\n{##}\n'
+    "{%- elif class_definition.description %}"
+    '\n"""\n{{class_definition.description}}\n"""\n'
+    "{%- endif %}"
+    "{%- endif %}"
+)
 
 
-# def _get_invalid_names(entity_names: set) -> set:
-#     """Returns a set of invalid entity names"""
-#     return {entity_name for entity_name in entity_names if not re.match(name_compliance_regex, entity_name)}
+_FIELD = (
+    "{% include 'field_header' %}\n"
+    "  {{ property_definition.property_id }}: "
+    "{%-if property_definition.property_type == 'DatatypeProperty'%}"
+    "{% include 'attribute_occurrence' %}"
+    "{%-else%}"
+    "{% include 'edge_occurrence' %}"
+    "{%- endif -%}"
+)
+
+_FIELD_HEADER = (
+    "{%- if header %}"
+    "{%- if property_definition.description and property_definition.property_name %}"
+    '\n  """\n  {{property_definition.description}}'
+    "\n  @name {{ property_definition.property_name }}"
+    '\n  """\n  '
+    "{%- elif property_definition.description %}"
+    '\n  """\n  {{property_definition.description}}'
+    '\n  """\n  '
+    "{%- endif %}"
+    "{%- endif %}"
+)
+
+_ATTRIBUTE_OCCURRENCE = (
+    "{%-if property_definition.min_count and property_definition.max_count == 1%}"
+    " {% include 'value_type' %}!"
+    "{%-elif property_definition.min_count and property_definition.max_count != 1%}"
+    " [{% include 'value_type' %}!]!"
+    "{%-elif property_definition.max_count != 1%}"
+    " [{% include 'value_type' %}!]!"
+    "{%-else%}{% include 'value_type' %}"
+    "{%- endif -%}"
+)
+
+_EDGE_OCCURRENCE = (
+    "{%-if not(property_definition.min_count and property_definition.max_count == 1)%}"
+    " [{% include 'value_type' %}]"
+    "{%-else%}"
+    " {% include 'value_type' %}"
+    "{%- endif -%}"
+)
+
+_FIELD_VALUE_TYPE = """{{value_type_mapping[property_definition.expected_value_type]['GraphQL']
+                if property_definition.expected_value_type in value_type_mapping
+                else property_definition.expected_value_type}}"""
 
 
-def _repair_name(name: str, entity_type: str, fix_casing: bool = False) -> str:
-    """
-    Repairs an entity name to conform to GraphQL naming convention
-    >>> repair_name("wind-speed", "property")
-    'windspeed'
-    >>> repair_name("Wind.Speed", "property", True)
-    'windSpeed'
-    >>> repair_name("windSpeed", "class", True)
-    'WindSpeed'
-    >>> repair_name("22windSpeed", "class")
-    '_22windSpeed'
-    """
+class GraphQLSchema(BaseModel):
+    """Abilities to generate a GraphQL schema from TransformationRules"""
 
-    # Remove any non GraphQL compliant characters
-    repaired_string = re.sub(r"[^_a-zA-Z0-9]", "", name)
+    model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True, strict=False, extra="allow")
+    transformation_rules: TransformationRules
+    verbose: bool = False
 
-    # Name must start with a letter or underscore
-    if repaired_string[0].isdigit():
-        repaired_string = f"_{repaired_string}"
+    @field_validator("transformation_rules", mode="before")
+    def names_dms_compliant(cls, rules):
+        names_compliant, name_warnings = are_entity_names_dms_compliant(rules, return_report=True)
+        if not names_compliant:
+            raise _exceptions.Error10(report=generate_exception_report(name_warnings))
+        return rules
 
-    if not fix_casing:
-        return repaired_string
-    # Property names must be camelCase
-    if entity_type == "property" and repaired_string[0].isupper():
-        return repaired_string[0].lower() + repaired_string[1:]
-    # Class names must be PascalCase
-    elif entity_type == "class" and repaired_string[0].islower():
-        return repaired_string[0].upper() + repaired_string[1:]
-    else:
-        return repaired_string
+    @field_validator("transformation_rules", mode="before")
+    def properties_redefined(cls, rules):
+        properties_redefined, redefinition_warnings = are_properties_redefined(rules, return_report=True)
+        if properties_redefined:
+            raise _exceptions.Error11(report=generate_exception_report(redefinition_warnings))
+        return rules
 
+    @model_validator(mode="after")
+    def set_template(self):
+        from jinja2 import DictLoader, Environment, Template
 
-def _get_graphql_schema_string(schema: GraphQLSchema) -> str:
-    return _remove_query_type(print_schema(schema))
+        self.template: Template = Environment(
+            loader=DictLoader(
+                {
+                    "type_header": _TYPE_HEADER,
+                    "type": _TYPE,
+                    "field_header": _FIELD_HEADER,
+                    "field": _FIELD,
+                    "value_type": _FIELD_VALUE_TYPE,
+                    "edge_occurrence": _EDGE_OCCURRENCE,
+                    "attribute_occurrence": _ATTRIBUTE_OCCURRENCE,
+                }
+            ),
+            cache_size=1000,
+        ).get_template("type")
+        return self
 
+    @property
+    def schema(self) -> str:
+        """Generates a GraphQL schema of given TransformationRules"""
+        class_properties = get_class_property_pairs(self.transformation_rules)
 
-def _remove_query_type(schema_string: str) -> str:
-    """Removes unnecessary Query types to conform to Cognite's GraphQL API"""
-    lines = schema_string.split("\n")
+        type_definitions = []
 
-    for _i, line in enumerate(lines):
-        if "}" in line:
-            break
+        for class_id in class_properties:
+            parameters = {
+                "class_definition": self.transformation_rules.classes[class_id],
+                "class_properties": list(class_properties[class_id].values()),
+                "value_type_mapping": DATA_TYPE_MAPPING,
+                "header": self.verbose,
+            }
 
-    return "\n".join(lines[_i + 2 :])
+            type_definitions.append(self.template.render(parameters))
 
-    # invalid_names: set = _get_invalid_names(transformation_rules.get_entity_names())
-    # data_model_issues: set = transformation_rules.check_data_model_definitions()
-
-    # # this should be done when transformation rules are created
-    # if invalid_names and stop_on_exception:
-    #     msg = "Entity names must only contain [_a-zA-Z0-9] characters and can start only with [_a-zA-Z]"
-    #     logging.error(f"{msg}, following entities {invalid_names} do not follow these rules!")
-    #     raise GraphQLError(f"{msg}, following entities {invalid_names} do not follow these rules!")
-    # elif invalid_names and not stop_on_exception:
-    #     msg = "Entity names must only contain [_a-zA-Z0-9] characters and can start only with [_a-zA-Z]"
-    #     logging.warn(
-    #         f"{msg}, following entities {invalid_names} do not follow these rules! Attempting to repair names..."
-    #     )
-    #     warnings.warn(
-    #         f"{msg}, following entities {invalid_names} do not follow these rules! Attempting to repair names...",
-    #         stacklevel=2,
-    #     )
-
-    # if data_model_issues and stop_on_exception:
-    #     msg = " ".join(data_model_issues)
-    #     logging.error(msg)
-    #     raise ValueError(msg)
-    # elif data_model_issues and not stop_on_exception:
-    #     msg = " ".join(data_model_issues)
-    #     msg += " Redefinitions will be skipped!"
-    #     logging.warn(msg)
-    #     warnings.warn(
-    #         msg,
-    #         stacklevel=2,
-    #     )
+        return "\n\n".join(type_definitions)

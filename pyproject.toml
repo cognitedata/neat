@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cognite-neat"
-version = "0.17.1"
+version = "0.17.2"
 readme = "README.md"
 description = "Knowledge graph transformation"
 authors = ["Nikola Vasiljevic <nikola.vasiljevic@cognite.com>",
@@ -50,7 +50,6 @@ fastapi = "^0.100"
 schedule = "^1"
 python-multipart = "^0.0.6"
 oxrdflib = {version = "^0.3.3", extras = ["oxigraph"]}
-graphql-core = "^3.2.3"
 
 openpyxl = {version="*", optional=true}
 
@@ -70,7 +69,8 @@ mkdocs-glightbox = {version="*", optional=true}
 docs = ["mkdocs", "mkdocs-jupyter", "mkdocs-material-extensions", "mkdocs-git-revision-date-localized-plugin", "mkdocs-git-authors-plugin", "mkdocs-gitbook", "mkdocs-glightbox"]
 google = ["gspread", "google-api-python-client", "google-auth-oauthlib"]
 excel = ["openpyxl"]
-all = ["gspread", "google-api-python-client", "google-auth-oauthlib", "openpyxl"]
+graphql = ["jinja2"]
+all = ["gspread", "google-api-python-client", "google-auth-oauthlib", "openpyxl", "jinja2"]
 
 [tool.poetry.dev-dependencies]
 twine = "*"

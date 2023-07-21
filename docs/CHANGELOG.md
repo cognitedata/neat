@@ -15,6 +15,16 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.17.2] - 20-07-23
+
+### Changed
+
+- Switch to using `jinja2` template engine instead of `graphql-core` for generation of GraphQL schema
+
+### Added
+
+- Downloading rules from private github repository
+
 ## [0.17.1] - 19-07-23
 
 ### Changed
