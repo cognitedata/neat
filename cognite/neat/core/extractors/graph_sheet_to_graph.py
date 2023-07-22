@@ -4,7 +4,7 @@ import warnings
 import pandas as pd
 from rdflib import RDF, XSD, Literal, Namespace
 
-from cognite.neat.core.rules.analysis import get_class_property_pairs, get_defined_classes
+from cognite.neat.core.rules.analysis import to_class_property_pairs, get_defined_classes
 from cognite.neat.core.rules.models import TransformationRules
 
 
@@ -32,7 +32,7 @@ def sheet2triples(
     validate_rules_graph_pair(graph_capturing_sheet, transformation_rule)
 
     # get class property pairs
-    class_property_pairs = get_class_property_pairs(transformation_rule)
+    class_property_pairs = to_class_property_pairs(transformation_rule)
 
     # namespace selection
     if namespace is None:

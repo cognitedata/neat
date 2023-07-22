@@ -5,7 +5,7 @@ from cognite.neat.core.rules._validation import (
     are_entity_names_dms_compliant,
     are_properties_redefined,
 )
-from cognite.neat.core.rules.analysis import get_class_property_pairs
+from cognite.neat.core.rules.analysis import to_class_property_pairs
 from cognite.neat.core.rules.models import DATA_TYPE_MAPPING, TransformationRules
 from cognite.neat.core.utils.utils import generate_exception_report
 
@@ -119,7 +119,7 @@ class GraphQLSchema(BaseModel):
     @property
     def schema(self) -> str:
         """Generates a GraphQL schema of given TransformationRules"""
-        class_properties = get_class_property_pairs(self.transformation_rules)
+        class_properties = to_class_property_pairs(self.transformation_rules)
 
         type_definitions = []
 

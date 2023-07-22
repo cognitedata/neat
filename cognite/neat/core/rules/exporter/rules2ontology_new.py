@@ -1,10 +1,11 @@
 from logging import warn
 from typing import ClassVar, Optional
-from pydantic import BaseModel, ConfigDict, field_validator
-from rdflib import OWL, RDF, RDFS, XSD, BNode, Graph, Literal, URIRef, Namespace
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
+from rdflib import OWL, RDF, RDFS, XSD, DCTERMS, BNode, Graph, Literal, URIRef, Namespace
 from rdflib.collection import Collection as GraphCollection
 
-from cognite.neat.core.rules.models import DATA_TYPE_MAPPING, Class, Property, TransformationRules
+from cognite.neat.core.rules.models import DATA_TYPE_MAPPING, Class, Property, TransformationRules, Metadata
+from cognite.neat.core.rules.analysis import to_property_dict, to_class_property_pairs
 from cognite.neat.core.rules._validation import are_properties_redefined
 from cognite.neat.core.rules import _exceptions
 from cognite.neat.core.utils.utils import generate_exception_report
@@ -19,6 +20,53 @@ class Ontology(OntologyModel):
     properties: list["OWLProperty"]  # these should be created from transformation rules, mode = after
     classes: list["OWLClass"]  # these should be created from transformation rules, mode = after
     shapes: list["SHACLNodeShape"]  # these should be created from transformation rules, mode = after
+    metadata: "OWLMetadata"
+
+    @model_validator(mode="before")
+    def create_shapes(cls, values: dict) -> dict:
+        class_property_pairs = to_class_property_pairs(values["transformation_rules"])
+        values["shapes"] = [
+            SHACLNodeShape.from_rules(
+                values["transformation_rules"].classes[class_],
+                list(properties.values()),
+                values["transformation_rules"].metadata.namespace,
+            )
+            for class_, properties in class_property_pairs.items()
+        ]
+
+        return values
+
+    @model_validator(mode="before")
+    def create_classes(cls, values: dict) -> dict:
+        values["classes"] = [
+            OWLClass.from_class(
+                definition,
+                values["transformation_rules"].metadata.namespace,
+            )
+            for definition in values["transformation_rules"].classes.values()
+        ]
+
+        return values
+
+    @model_validator(mode="before")
+    def create_properties(cls, values: dict) -> dict:
+        definitions = to_property_dict(values["transformation_rules"])
+
+        values["properties"] = [
+            OWLProperty.from_list_of_properties(
+                definition,
+                values["transformation_rules"].metadata.namespace,
+            )
+            for definition in definitions.values()
+        ]
+
+        return values
+
+    @model_validator(mode="before")
+    def create_metadata(cls, values: dict) -> dict:
+        values["metadata"] = OWLMetadata(**values["transformation_rules"].metadata.model_dump())
+
+        return values
 
     @field_validator("transformation_rules", mode="before")
     def properties_redefined(cls, rules):
@@ -27,19 +75,73 @@ class Ontology(OntologyModel):
             raise _exceptions.Error11(report=generate_exception_report(redefinition_warnings))
         return rules
 
+    @model_validator(mode="after")
+    def generate_shacl_graph(self):
+        self.shacl = Graph()
+        self.shacl.bind(self.transformation_rules.metadata.prefix, self.transformation_rules.metadata.namespace)
+        for prefix, namespace in self.transformation_rules.prefixes.items():
+            self.shacl.bind(prefix, namespace)
+
+        for shape in self.shapes:
+            for triple in shape.triples:
+                self.shacl.add(triple)
+
+        return self
+
+    @model_validator(mode="after")
+    def generate_owl_graph(self):
+        self.owl = Graph()
+        self.owl.bind(self.transformation_rules.metadata.prefix, self.transformation_rules.metadata.namespace)
+        for prefix, namespace in self.transformation_rules.prefixes.items():
+            self.owl.bind(prefix, namespace)
+
+        self.owl.add((self.transformation_rules.metadata.namespace[""], RDF.type, OWL.Ontology))
+        for property_ in self.properties:
+            for triple in property_.triples:
+                self.owl.add(triple)
+
+        for class_ in self.classes:
+            for triple in class_.triples:
+                self.owl.add(triple)
+
+        for triple in self.metadata.triples:
+            self.owl.add(triple)
+
+        return self
+
+
+class OWLMetadata(Metadata):
     @property
-    def owl(self, serialization="turtle") -> str:
-        ...
+    def triples(self) -> list[tuple]:
+        # Mandatory triples originating from Metadata mandatory fields
+        triples = [(URIRef(self.namespace), DCTERMS.hasVersion, Literal(self.version))]
+        triples.append((URIRef(self.namespace), OWL.versionInfo, Literal(self.version)))
+        triples.append((URIRef(self.namespace), RDFS.label, Literal(self.title)))
+        triples.append((URIRef(self.namespace), DCTERMS.title, Literal(self.title)))
+        triples.append((URIRef(self.namespace), DCTERMS.created, Literal(self.created, datatype=XSD.dateTime)))
+        triples.append((URIRef(self.namespace), DCTERMS.description, Literal(self.description)))
+        if isinstance(self.creator, list):
+            triples.extend([(URIRef(self.namespace), DCTERMS.creator, Literal(creator)) for creator in self.creator])
+        else:
+            triples.append((URIRef(self.namespace), DCTERMS.creator, Literal(self.creator)))
 
-    # creates graph, binds namespaces, adds triples from classes and properties
-    # return serialized graph as string
+        # Optional triples originating from Metadata optional fields
+        if self.updated:
+            triples.append((URIRef(self.namespace), DCTERMS.modified, Literal(self.updated, datatype=XSD.dateTime)))
+        if self.rights:
+            triples.append((URIRef(self.namespace), DCTERMS.rights, Literal(self.rights)))
 
-    @property
-    def shacl(self, serialization="turtle") -> str:
-        ...
+        if self.contributor and isinstance(self.contributor, list):
+            triples.extend(
+                [
+                    (URIRef(self.namespace), DCTERMS.contributor, Literal(contributor))
+                    for contributor in self.contributor
+                ]
+            )
+        elif self.contributor:
+            triples.append((URIRef(self.namespace), DCTERMS.contributor, Literal(self.contributor)))
 
-    # creates graph, binds namespaces, adds triples from shapes
-    # return serialized graph as string
+        return triples
 
 
 class OWLClass(OntologyModel):
@@ -75,7 +177,10 @@ class OWLClass(OntologyModel):
 
     @property
     def subclass_triples(self) -> list[tuple]:
-        return [(self.id_, RDFS.subClassOf, self.sub_class_of)]
+        if self.sub_class_of:
+            return [(self.id_, RDFS.subClassOf, self.sub_class_of)]
+        else:
+            return []
 
     @property
     def triples(self) -> list[tuple]:
@@ -127,6 +232,7 @@ class OWLProperty(OntologyModel):
 
         return cls(**prop_dict, namespace=namespace)
 
+    # TODO: Add warnings to _exceptions.py and use them here:
     @field_validator("type_")
     def is_multy_type(cls, v):
         if len(v) > 1:

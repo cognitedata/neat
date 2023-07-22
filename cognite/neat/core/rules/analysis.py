@@ -24,7 +24,7 @@ def get_classes_with_properties(transformation_rules: TransformationRules) -> di
     return class_property_pairs
 
 
-def get_class_property_pairs(transformation_rules: TransformationRules) -> dict[str, dict[str, Property]]:
+def to_class_property_pairs(transformation_rules: TransformationRules) -> dict[str, dict[str, Property]]:
     """This method will actually consider only the first definition of given property!"""
     class_property_pairs = {}
 
