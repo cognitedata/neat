@@ -101,3 +101,17 @@ def get_entity_ids(transformation_rules: TransformationRules) -> set[str]:
     )
 
     # Methods below could as well easily go to analysis.py
+
+
+def to_property_dict(rules: TransformationRules) -> dict[str, list[Property]]:
+    """Convert list of properties to a dictionary of lists of properties with property_id as key."""
+    property_ = {}
+
+    for prop in rules.properties.values():
+        if not (prop.property_id and prop.property_name == "*"):
+            if prop.property_id in property_:
+                property_[prop.property_id].append(prop)
+            else:
+                property_[prop.property_id] = [prop]
+
+    return property_
