@@ -10,13 +10,15 @@ from cognite.neat.core.rules import _exceptions
 from cognite.neat.core.utils.utils import generate_exception_report
 
 
-class Ontology(BaseModel):
+class OntologyModel(BaseModel):
+    model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True, strict=False, extra="allow")
+
+
+class Ontology(OntologyModel):
     transformation_rules: TransformationRules
     properties: list["OWLProperty"]  # these should be created from transformation rules, mode = after
     classes: list["OWLClass"]  # these should be created from transformation rules, mode = after
     shapes: list["SHACLNodeShape"]  # these should be created from transformation rules, mode = after
-
-    model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True, strict=False, extra="allow")
 
     @field_validator("transformation_rules", mode="before")
     def properties_redefined(cls, rules):
@@ -40,15 +42,13 @@ class Ontology(BaseModel):
     # return serialized graph as string
 
 
-class OWLClass(BaseModel):
+class OWLClass(OntologyModel):
     id_: URIRef
     type_: URIRef = OWL.Class
     label: Optional[str]
     comment: Optional[str]
     sub_class_of: Optional[URIRef]
     namespace: Namespace
-
-    model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True, strict=False, extra="allow")
 
     @classmethod
     def from_class(cls, definition: Class, namespace: Namespace) -> "OWLClass":
@@ -82,7 +82,7 @@ class OWLClass(BaseModel):
         return self.type_triples + self.label_triples + self.comment_triples + self.subclass_triples
 
 
-class OWLProperty(BaseModel):
+class OWLProperty(OntologyModel):
     id_: URIRef
     type_: set[URIRef]
     label: set[str]
@@ -90,7 +90,6 @@ class OWLProperty(BaseModel):
     domain: set[URIRef]
     range_: set[URIRef]
     namespace: Namespace
-    model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True, strict=False, extra="allow")
 
     @staticmethod
     def same_property_id(definitions: list[Property]) -> bool:
@@ -234,13 +233,12 @@ class OWLProperty(BaseModel):
 SHACL = Namespace("http://www.w3.org/ns/shacl#")
 
 
-class SHACLNodeShape(BaseModel):
+class SHACLNodeShape(OntologyModel):
     id_: URIRef
     type_: URIRef = SHACL.NodeShape
     target_class: URIRef
     property_shapes: list["SHACLPropertyShape"]
     namespace: Namespace
-    model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True, strict=False, extra="allow")
 
     @property
     def type_triples(self) -> list[tuple]:
@@ -275,7 +273,7 @@ class SHACLNodeShape(BaseModel):
         return cls(**node_dict, namespace=namespace)
 
 
-class SHACLPropertyShape(BaseModel):
+class SHACLPropertyShape(OntologyModel):
     id_: BNode
     type_: URIRef = SHACL.property
     path: URIRef  # URIRef to property in OWL
@@ -284,7 +282,6 @@ class SHACLPropertyShape(BaseModel):
     min_count: Optional[int]
     max_count: Optional[int]
     namespace: Namespace
-    model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True, strict=False, extra="allow")
 
     @property
     def path_triples(self) -> list[tuple]:
