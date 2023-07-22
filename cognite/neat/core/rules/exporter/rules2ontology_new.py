@@ -26,51 +26,60 @@ class Ontology(BaseModel):
         return rules
 
     @property
-    def owl(self) -> str:
+    def owl(self, serialization="turtle") -> str:
         ...
 
     # creates graph, binds namespaces, adds triples from classes and properties
+    # return serialized graph as string
 
     @property
-    def shacl(self) -> str:
+    def shacl(self, serialization="turtle") -> str:
         ...
 
     # creates graph, binds namespaces, adds triples from shapes
+    # return serialized graph as string
 
 
 class OWLClass(BaseModel):
-    id_: str
+    id_: URIRef
     type_: URIRef = OWL.Class
-    label: str
-    comment: str
-    sub_class_of: URIRef
+    label: Optional[str]
+    comment: Optional[str]
+    sub_class_of: Optional[URIRef]
     namespace: Namespace
 
     model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True, strict=False, extra="allow")
 
     @classmethod
     def from_class(cls, definition: Class, namespace: Namespace) -> "OWLClass":
-        ...
+        class_dict = {
+            "id_": namespace[definition.class_id],
+            "label": definition.class_name,
+            "comment": definition.description,
+            "sub_class_of": namespace[definition.parent_class] if definition.parent_class else None,
+        }
+
+        return cls(**class_dict, namespace=namespace)
 
     @property
     def type_triples(self) -> list[tuple]:
-        ...
+        return [(self.id_, RDF.type, self.type_)]
 
     @property
     def label_triples(self) -> list[tuple]:
-        ...
+        return [(self.id_, RDFS.label, Literal(self.label))]
 
     @property
     def comment_triples(self) -> list[tuple]:
-        ...
+        return [(self.id_, RDFS.comment, Literal(self.comment))]
 
     @property
     def subclass_triples(self) -> list[tuple]:
-        ...
+        return [(self.id_, RDFS.subClassOf, self.sub_class_of)]
 
     @property
     def triples(self) -> list[tuple]:
-        ...
+        return self.type_triples + self.label_triples + self.comment_triples + self.subclass_triples
 
 
 class OWLProperty(BaseModel):
@@ -83,8 +92,17 @@ class OWLProperty(BaseModel):
     namespace: Namespace
     model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True, strict=False, extra="allow")
 
+    @staticmethod
+    def same_property_id(definitions: list[Property]) -> bool:
+        return len({definition.property_id for definition in definitions}) == 1
+
     @classmethod
-    def from_list(cls, definitions: list[Property], namespace: Namespace) -> "OWLProperty":
+    def from_list_of_properties(cls, definitions: list[Property], namespace: Namespace) -> "OWLProperty":
+        """Here list of properties is a list of properties with the same id, but different definitions."""
+
+        if not cls.same_property_id(definitions):
+            raise ValueError("All definitions should have the same property_id! Aborting.")
+
         prop_dict = {
             "id_": namespace[definitions[0].property_id],
             "type_": set(),
