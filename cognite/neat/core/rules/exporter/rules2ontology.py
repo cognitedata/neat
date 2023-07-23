@@ -1,372 +1,436 @@
-"""Methods to transform Excel Sheet to Data Model
-"""
+from logging import warn
+from typing import ClassVar, Optional
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
+from rdflib import OWL, RDF, RDFS, XSD, DCTERMS, BNode, Graph, Literal, URIRef, Namespace
+from rdflib.collection import Collection as GraphCollection
 
-from rdflib import DCTERMS, OWL, RDFS, SKOS, XSD
-from rdflib.graph import RDF, BNode, Collection, Graph, Literal, Namespace, URIRef
+from cognite.neat.core.rules.models import DATA_TYPE_MAPPING, Class, Property, TransformationRules, Metadata
+from cognite.neat.core.rules.analysis import to_property_dict, to_class_property_pairs
+from cognite.neat.core.rules._validation import are_properties_redefined
+from cognite.neat.core.rules import _exceptions
+from cognite.neat.core.utils.utils import generate_exception_report
 
-from cognite.neat.core.configuration import PREFIXES
-from cognite.neat.core.rules.data_model_definitions import DataModelingDefinition
-from cognite.neat.core.rules.models import Class
+
+class OntologyModel(BaseModel):
+    model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True, strict=False, extra="allow")
+
+
+class Ontology(OntologyModel):
+    transformation_rules: TransformationRules
+    properties: list["OWLProperty"]  # these should be created from transformation rules, mode = after
+    classes: list["OWLClass"]  # these should be created from transformation rules, mode = after
+    shapes: list["SHACLNodeShape"]  # these should be created from transformation rules, mode = after
+    metadata: "OWLMetadata"
+
+    @model_validator(mode="before")
+    def create_shapes(cls, values: dict) -> dict:
+        class_property_pairs = to_class_property_pairs(values["transformation_rules"])
+        values["shapes"] = [
+            SHACLNodeShape.from_rules(
+                values["transformation_rules"].classes[class_],
+                list(properties.values()),
+                values["transformation_rules"].metadata.namespace,
+            )
+            for class_, properties in class_property_pairs.items()
+        ]
+
+        return values
+
+    @model_validator(mode="before")
+    def create_classes(cls, values: dict) -> dict:
+        values["classes"] = [
+            OWLClass.from_class(
+                definition,
+                values["transformation_rules"].metadata.namespace,
+            )
+            for definition in values["transformation_rules"].classes.values()
+        ]
+
+        return values
+
+    @model_validator(mode="before")
+    def create_properties(cls, values: dict) -> dict:
+        definitions = to_property_dict(values["transformation_rules"])
+
+        values["properties"] = [
+            OWLProperty.from_list_of_properties(
+                definition,
+                values["transformation_rules"].metadata.namespace,
+            )
+            for definition in definitions.values()
+        ]
+
+        return values
+
+    @model_validator(mode="before")
+    def create_metadata(cls, values: dict) -> dict:
+        values["metadata"] = OWLMetadata(**values["transformation_rules"].metadata.model_dump())
+
+        return values
+
+    @field_validator("transformation_rules", mode="before")
+    def properties_redefined(cls, rules):
+        properties_redefined, redefinition_warnings = are_properties_redefined(rules, return_report=True)
+        if properties_redefined:
+            raise _exceptions.Error11(report=generate_exception_report(redefinition_warnings))
+        return rules
+
+    @model_validator(mode="after")
+    def generate_shacl_graph(self):
+        self.shacl = Graph()
+        self.shacl.bind(self.transformation_rules.metadata.prefix, self.transformation_rules.metadata.namespace)
+        for prefix, namespace in self.transformation_rules.prefixes.items():
+            self.shacl.bind(prefix, namespace)
+
+        for shape in self.shapes:
+            for triple in shape.triples:
+                self.shacl.add(triple)
+
+        return self
+
+    @model_validator(mode="after")
+    def generate_owl_graph(self):
+        self.owl = Graph()
+        self.owl.bind(self.transformation_rules.metadata.prefix, self.transformation_rules.metadata.namespace)
+        for prefix, namespace in self.transformation_rules.prefixes.items():
+            self.owl.bind(prefix, namespace)
+
+        self.owl.add((self.transformation_rules.metadata.namespace[""], RDF.type, OWL.Ontology))
+        for property_ in self.properties:
+            for triple in property_.triples:
+                self.owl.add(triple)
+
+        for class_ in self.classes:
+            for triple in class_.triples:
+                self.owl.add(triple)
+
+        for triple in self.metadata.triples:
+            self.owl.add(triple)
+
+        return self
+
+
+class OWLMetadata(Metadata):
+    @property
+    def triples(self) -> list[tuple]:
+        # Mandatory triples originating from Metadata mandatory fields
+        triples = [(URIRef(self.namespace), DCTERMS.hasVersion, Literal(self.version))]
+        triples.append((URIRef(self.namespace), OWL.versionInfo, Literal(self.version)))
+        triples.append((URIRef(self.namespace), RDFS.label, Literal(self.title)))
+        triples.append((URIRef(self.namespace), DCTERMS.title, Literal(self.title)))
+        triples.append((URIRef(self.namespace), DCTERMS.created, Literal(self.created, datatype=XSD.dateTime)))
+        triples.append((URIRef(self.namespace), DCTERMS.description, Literal(self.description)))
+        if isinstance(self.creator, list):
+            triples.extend([(URIRef(self.namespace), DCTERMS.creator, Literal(creator)) for creator in self.creator])
+        else:
+            triples.append((URIRef(self.namespace), DCTERMS.creator, Literal(self.creator)))
+
+        # Optional triples originating from Metadata optional fields
+        if self.updated:
+            triples.append((URIRef(self.namespace), DCTERMS.modified, Literal(self.updated, datatype=XSD.dateTime)))
+        if self.rights:
+            triples.append((URIRef(self.namespace), DCTERMS.rights, Literal(self.rights)))
+
+        if self.contributor and isinstance(self.contributor, list):
+            triples.extend(
+                [
+                    (URIRef(self.namespace), DCTERMS.contributor, Literal(contributor))
+                    for contributor in self.contributor
+                ]
+            )
+        elif self.contributor:
+            triples.append((URIRef(self.namespace), DCTERMS.contributor, Literal(self.contributor)))
+
+        return triples
+
+
+class OWLClass(OntologyModel):
+    id_: URIRef
+    type_: URIRef = OWL.Class
+    label: Optional[str]
+    comment: Optional[str]
+    sub_class_of: Optional[URIRef]
+    namespace: Namespace
+
+    @classmethod
+    def from_class(cls, definition: Class, namespace: Namespace) -> "OWLClass":
+        class_dict = {
+            "id_": namespace[definition.class_id],
+            "label": definition.class_name,
+            "comment": definition.description,
+            "sub_class_of": namespace[definition.parent_class] if definition.parent_class else None,
+        }
+
+        return cls(**class_dict, namespace=namespace)
+
+    @property
+    def type_triples(self) -> list[tuple]:
+        return [(self.id_, RDF.type, self.type_)]
+
+    @property
+    def label_triples(self) -> list[tuple]:
+        return [(self.id_, RDFS.label, Literal(self.label))]
+
+    @property
+    def comment_triples(self) -> list[tuple]:
+        return [(self.id_, RDFS.comment, Literal(self.comment))]
+
+    @property
+    def subclass_triples(self) -> list[tuple]:
+        if self.sub_class_of:
+            return [(self.id_, RDFS.subClassOf, self.sub_class_of)]
+        else:
+            return []
+
+    @property
+    def triples(self) -> list[tuple]:
+        return self.type_triples + self.label_triples + self.comment_triples + self.subclass_triples
+
+
+class OWLProperty(OntologyModel):
+    id_: URIRef
+    type_: set[URIRef]
+    label: set[str]
+    comment: set[str]
+    domain: set[URIRef]
+    range_: set[URIRef]
+    namespace: Namespace
+
+    @staticmethod
+    def same_property_id(definitions: list[Property]) -> bool:
+        return len({definition.property_id for definition in definitions}) == 1
+
+    @classmethod
+    def from_list_of_properties(cls, definitions: list[Property], namespace: Namespace) -> "OWLProperty":
+        """Here list of properties is a list of properties with the same id, but different definitions."""
+
+        if not cls.same_property_id(definitions):
+            raise ValueError("All definitions should have the same property_id! Aborting.")
+
+        prop_dict = {
+            "id_": namespace[definitions[0].property_id],
+            "type_": set(),
+            "label": set(),
+            "comment": set(),
+            "domain": set(),
+            "range_": set(),
+        }
+
+        for definition in definitions:
+            prop_dict["type_"].add(OWL[definition.property_type])
+            prop_dict["range_"].add(
+                XSD[definition.expected_value_type]
+                if definition.expected_value_type in DATA_TYPE_MAPPING
+                else namespace[definition.expected_value_type]
+            )
+            prop_dict["domain"].add(namespace[definition.class_id])
+
+            if definition.property_name:
+                prop_dict["label"].add(definition.property_name)
+            if definition.description:
+                prop_dict["comment"].add(definition.description)
+
+        return cls(**prop_dict, namespace=namespace)
+
+    # TODO: Add warnings to _exceptions.py and use them here:
+    @field_validator("type_")
+    def is_multy_type(cls, v):
+        if len(v) > 1:
+            warn(
+                (
+                    "It is bad practice that property of multiple types. "
+                    f"Currently it defined as multi type property: {', '.join(filter(None, v))}"
+                )
+            )
+        return v
+
+    @field_validator("range_")
+    def is_multi_range(cls, v):
+        if len(v) > 1:
+            warn(
+                (
+                    "Property should ideally have only single range of values."
+                    f" Currently it has multiple ranges {', '.join(filter(None, v))}"
+                )
+            )
+        return v
+
+    @field_validator("domain")
+    def is_multi_domain(cls, v):
+        if len(v) > 1:
+            warn(
+                (
+                    f"Property should ideally be defined for single class."
+                    f" Currently it has multiple ranges {', '.join(filter(None, v))}"
+                )
+            )
+        return v
+
+    @field_validator("label")
+    def has_multi_name(cls, v):
+        if len(v) > 1:
+            warn(
+                (
+                    "Property should have single preferred label (human readable name)."
+                    f" Currently it has multiple labels {', '.join(filter(None, v))}."
+                    " First one will be used as preferred label."
+                )
+            )
+        return v
+
+    @field_validator("comment")
+    def has_multi_comment(cls, v):
+        if len(v) > 1:
+            warn("Multiple definitions (aka comments) of property detected. Definitions will be concatenated.")
+        return v
+
+    @property
+    def domain_triples(self) -> list[tuple]:
+        triples = []
+        if len(self.domain) == 1:
+            triples.append((self.id_, RDFS.domain, next(iter(self.domain))))
+        else:
+            _graph = Graph()
+            b_union = BNode()
+            b_domain = BNode()
+            _graph.add((self.id_, RDFS.domain, b_domain))
+            _graph.add((b_domain, OWL.unionOf, b_union))
+            _graph.add((b_domain, RDF.type, OWL.Class))
+            _ = GraphCollection(_graph, b_union, list(self.domain))
+            triples.extend(list(_graph))
+        return triples
+
+    @property
+    def range_triples(self) -> list[tuple]:
+        triples = []
+        if len(self.range_) == 1:
+            triples.append((self.id_, RDFS.range, next(iter(self.range_))))
+        else:
+            _graph = Graph()
+            b_union = BNode()
+            b_range = BNode()
+            _graph.add((self.id_, RDFS.range, b_range))
+            _graph.add((b_range, OWL.unionOf, b_union))
+            _graph.add((b_range, RDF.type, OWL.Class))
+            _graph.add((b_range, OWL.unionOf, b_union))
+            _graph.add((b_range, RDF.type, OWL.Class))
+            _ = GraphCollection(_graph, b_union, list(self.range_))
+            triples.extend(list(_graph))
+        return triples
+
+    @property
+    def type_triples(self) -> list[tuple]:
+        return [(self.id_, RDF.type, type_) for type_ in self.type_]
+
+    @property
+    def label_triples(self) -> list[tuple]:
+        label = list(filter(None, self.label))
+        return [(self.id_, RDFS.label, Literal(label[0] if label else self.id_))]
+
+    @property
+    def comment_triples(self) -> list[tuple]:
+        return [(self.id_, RDFS.comment, Literal("\n".join(filter(None, self.comment))))]
+
+    @property
+    def triples(self) -> list[tuple]:
+        return self.type_triples + self.label_triples + self.comment_triples + self.domain_triples + self.range_triples
+
 
 SHACL = Namespace("http://www.w3.org/ns/shacl#")
 
 
-def _wrangle_owl_properties(data_model_definition: DataModelingDefinition) -> dict[str, dict[str, set]]:
-    """Wrangles the properties of the data model definition into a dictionary for easier conversion to RDF
+class SHACLNodeShape(OntologyModel):
+    id_: URIRef
+    type_: URIRef = SHACL.NodeShape
+    target_class: URIRef
+    property_shapes: list["SHACLPropertyShape"]
+    namespace: Namespace
 
-    Parameters
-    ----------
-    data_model_definition : DataModelingDefinition
-        Instance of DataModelingDefinition to be wrangled
+    @property
+    def type_triples(self) -> list[tuple]:
+        return [(self.id_, RDF.type, self.type_)]
 
-    Returns
-    -------
-    dict[str, dict[str, set]]
-        Dictionary of properties for easier conversion to RDF
-    """
-    # TODO: Add support for deprecated, replaced_by, similar_to, equal_to
-    properties = {}
+    @property
+    def target_class_triples(self) -> list[tuple]:
+        return [(self.id_, SHACL.targetClass, self.target_class)]
 
-    for property_ in data_model_definition.properties.values():
-        if property_.property_name != "*":
-            if property_.property_name not in properties:
-                properties[property_.property_name] = {
-                    "domain": {data_model_definition.namespace[property_.class_id]},
-                    "range": {
-                        data_model_definition.namespace[property_.expected_value_type]
-                        if property_.property_type == "ObjectProperty"
-                        else XSD[property_.expected_value_type]
-                    },
-                    "property_type": {
-                        OWL[property_.property_type],
-                    },
-                    "description": {property_.description or None},
-                    # "equal_to": {property_.equal_to or None},
-                    # "similar_to": {property_.similar_to or None},
-                    # "replaced_by": {property_.replaced_by or None},
-                    # "deprecated": {property_.deprecated or None},
-                }
-            else:
-                properties[property_.property_name]["domain"].add(data_model_definition.namespace[property_.class_id])
-                properties[property_.property_name]["range"].add(
-                    data_model_definition.namespace[property_.expected_value_type]
-                    if property_.property_type == "ObjectProperty"
-                    else XSD[property_.expected_value_type]
-                )
-                properties[property_.property_name]["property_type"].add(OWL[property_.property_type])
-                properties[property_.property_name]["description"].add(property_.description or None)
-                # properties[property_.property_name]["equal_to"].add(property_.equal_to or None)
-                # properties[property_.property_name]["similar_to"].add(property_.similar_to or None)
-                # properties[property_.property_name]["replaced_by"].add(property_.replaced_by or None)
-                # properties[property_.property_name]["deprecated"].add(property_.deprecated or None)
+    @property
+    def property_shapes_triples(self) -> list[tuple]:
+        triples = []
+        for property_shape in self.property_shapes:
+            triples.append((self.id_, SHACL.property, property_shape.id_))
+            triples.extend(property_shape.triples)
+        return triples
 
-    return properties
+    @property
+    def triples(self) -> list[tuple]:
+        return self.type_triples + self.target_class_triples + self.property_shapes_triples
+
+    @classmethod
+    def from_rules(
+        cls, class_definition: Class, property_definitions: list[Property], namespace: Namespace
+    ) -> "SHACLNodeShape":
+        node_dict = {
+            "id_": namespace[f"{class_definition.class_id}Shape"],
+            "target_class": namespace[class_definition.class_id],
+            "property_shapes": [SHACLPropertyShape.from_property(prop, namespace) for prop in property_definitions],
+        }
+
+        return cls(**node_dict, namespace=namespace)
 
 
-def _add_ontology_metadata(ontology_graph: Graph, data_model_definition: DataModelingDefinition) -> None:
-    """Adds metadata to the ontology graph
+class SHACLPropertyShape(OntologyModel):
+    id_: BNode
+    type_: URIRef = SHACL.property
+    path: URIRef  # URIRef to property in OWL
+    node_kind: URIRef  # SHACL.IRI or SHACL.Literal
+    expected_value_type: URIRef
+    min_count: Optional[int]
+    max_count: Optional[int]
+    namespace: Namespace
 
-    Parameters
-    ----------
-    ontology_graph : Graph
-        Ontology graph to add metadata to
-    data_model_definition : DataModelingDefinition
-        Instance of DataModelingDefinition to add metadata from
-    """
-    ontology_graph.add(
-        (URIRef(data_model_definition.namespace), DCTERMS.hasVersion, Literal(data_model_definition.metadata.version))
-    )
-    ontology_graph.add(
-        (URIRef(data_model_definition.namespace), OWL.versionInfo, Literal(data_model_definition.metadata.version))
-    )
-    ontology_graph.add(
-        (URIRef(data_model_definition.namespace), RDFS.label, Literal(data_model_definition.metadata.title))
-    )
-    ontology_graph.add(
-        (
-            URIRef(data_model_definition.namespace),
-            DCTERMS.created,
-            Literal(data_model_definition.metadata.created, datatype=XSD.dateTime),
-        )
-    )
-    ontology_graph.add(
-        (
-            URIRef(data_model_definition.namespace),
-            DCTERMS.modified,
-            Literal(data_model_definition.metadata.updated, datatype=XSD.dateTime),
-        )
-    )
+    @property
+    def path_triples(self) -> list[tuple]:
+        return [(self.id_, SHACL.path, self.path)]
 
-    if data_model_definition.metadata.rights:
-        ontology_graph.add(
-            (URIRef(data_model_definition.namespace), DCTERMS.rights, Literal(data_model_definition.metadata.rights))
-        )
+    @property
+    def node_kind_triples(self) -> list[tuple]:
+        triples = [(self.id_, SHACL.nodeKind, self.node_kind)]
 
-    if data_model_definition.metadata.description:
-        ontology_graph.add(
-            (URIRef(data_model_definition.namespace), RDFS.comment, Literal(data_model_definition.metadata.description))
-        )
+        if self.node_kind == SHACL.Literal:
+            triples.append((self.id_, SHACL.datatype, self.expected_value_type))
+        else:
+            triples.append((self.id_, SHACL.node, self.expected_value_type))
 
-    if data_model_definition.metadata.creator:
-        [
-            ontology_graph.add((URIRef(data_model_definition.namespace), DCTERMS.creator, Literal(creator)))
-            for creator in data_model_definition.metadata.creator
-        ]
+        return triples
 
-    if data_model_definition.metadata.contributor:
-        [
-            ontology_graph.add((URIRef(data_model_definition.namespace), DCTERMS.contributor, Literal(contributor)))
-            for contributor in data_model_definition.metadata.contributor
-        ]
+    @property
+    def cardinality_triples(self) -> list[tuple]:
+        triples = []
+        if self.min_count:
+            triples.append((self.id_, SHACL.minCount, Literal(self.min_count)))
+        if self.max_count:
+            triples.append((self.id_, SHACL.maxCount, Literal(self.max_count)))
 
+        return triples
 
-def _add_owl_property(
-    ontology_graph: Graph, data_model_definition: DataModelingDefinition, properties: dict, property_: str
-) -> None:
-    """Add OWL property to the ontology graph
+    @property
+    def triples(self) -> list[tuple]:
+        return self.path_triples + self.node_kind_triples + self.cardinality_triples
 
-    Parameters
-    ----------
-    ontology_graph : Graph
-        Ontology graph to add property to
-    data_model_definition : DataModelingDefinition
-        Instance of DataModelingDefinition to add property from
-    properties : dict
-        Wrangled properties
-    property_ : str
-        Specific property to add to the ontology graph which is a key in the properties dict
-    """
-    ontology_graph.add((data_model_definition.namespace[property_], RDFS.label, Literal(property_)))
+    @classmethod
+    def from_property(cls, definition: Property, namespace: Namespace) -> "SHACLPropertyShape":
+        prop_dict = {
+            "id_": BNode(),
+            "path": namespace[definition.property_id],
+            "node_kind": SHACL.IRI if definition.property_type == "ObjectProperty" else SHACL.Literal,
+            "expected_value_type": (
+                namespace[f"{definition.expected_value_type}Shape"]
+                if definition.property_type == "ObjectProperty"
+                else XSD[definition.expected_value_type]
+            ),
+            "min_count": definition.min_count,
+            "max_count": definition.max_count,
+        }
 
-    if len(properties[property_]["description"]) == 1:
-        ontology_graph.add(
-            (
-                data_model_definition.namespace[property_],
-                RDFS.comment,
-                Literal(list(properties[property_]["description"])[0]),
-            )
-        )
-    else:
-        print(f"WARNING: <{property_}> has multiple definitions which will be concatenated")
-        ontology_graph.add(
-            (
-                data_model_definition.namespace[property_],
-                RDFS.comment,
-                Literal("\n".join(list(properties[property_]["description"]))),
-            )
-        )
-
-    # add description
-    if len(properties[property_]["property_type"]) == 1:
-        ontology_graph.add(
-            (data_model_definition.namespace[property_], RDF.type, list(properties[property_]["property_type"])[0])
-        )
-    else:
-        print(
-            f"BAD PRACTICE: Property <{property_}> is of multiple property types: "
-            f"{', '.join(list(properties[property_]['property_type']))}"
-        )
-        [
-            ontology_graph.add((data_model_definition.namespace[property_], RDF.type, property_type))
-            for property_type in properties[property_]["property_type"]
-        ]
-
-    if len(properties[property_]["domain"]) == 1:
-        ontology_graph.add(
-            (data_model_definition.namespace[property_], RDFS.domain, list(properties[property_]["domain"])[0])
-        )
-    else:
-        print(
-            f"WARNING: Property <{property_}> domain is union of multiple classes: "
-            f"{', '.join(list(properties[property_]['domain']))}"
-        )
-        b_union = BNode()
-        b_domain = BNode()
-        ontology_graph.add((data_model_definition.namespace[property_], RDFS.domain, b_domain))
-        ontology_graph.add((b_domain, OWL.unionOf, b_union))
-        ontology_graph.add((b_domain, RDF.type, OWL.Class))
-        _ = Collection(ontology_graph, b_union, list(properties[property_]["domain"]))
-
-    if len(properties[property_]["range"]) == 1:
-        ontology_graph.add(
-            (data_model_definition.namespace[property_], RDFS.range, list(properties[property_]["range"])[0])
-        )
-    else:
-        print(
-            f"WARNING: Property <{property_}> range is union of multiple types: "
-            f"{', '.join(list(properties[property_]['range']))}"
-        )
-        b_union = BNode()
-        b_range = BNode()
-        ontology_graph.add((data_model_definition.namespace[property_], RDFS.range, b_range))
-        ontology_graph.add((b_range, OWL.unionOf, b_union))
-        ontology_graph.add((b_range, RDF.type, OWL.Class))
-        _ = Collection(ontology_graph, b_union, list(properties[property_]["range"]))
-
-
-def _add_owl_class(ontology_graph: Graph, data_model_definition: DataModelingDefinition, class_: Class) -> None:
-    """Add OWL class to ontology graph
-
-    Parameters
-    ----------
-    ontology_graph : Graph
-        Ontology graph
-    data_model_definition : DataModelingDefinition
-        Instance of DataModelingDefinition class
-    class_ : Class
-        Class to be added to ontology graph
-    """
-    # TODO: Simplify by only providing namespace instead of data_model_definition
-    ontology_graph.add((data_model_definition.namespace[class_.class_id], RDF.type, OWL.Class))
-    ontology_graph.add((data_model_definition.namespace[class_.class_id], RDFS.subClassOf, OWL.Thing))
-
-    # add datatype recognition
-    ontology_graph.add((data_model_definition.namespace[class_.class_id], RDFS.label, Literal(class_.class_id)))
-
-    if class_.description:
-        ontology_graph.add(
-            (data_model_definition.namespace[class_.class_id], RDFS.comment, Literal(class_.description))
-        )
-
-    if class_.parent_class:
-        ontology_graph.add(
-            (
-                data_model_definition.namespace[class_.class_id],
-                RDFS.subClassOf,
-                data_model_definition.namespace[class_.parent_class],
-            )
-        )
-
-    if class_.deprecated:
-        ontology_graph.add(
-            (
-                data_model_definition.namespace[class_.class_id],
-                OWL.deprecated,
-                Literal(class_.deprecated, datatype=XSD.boolean),
-            )
-        )
-
-    if class_.replaced_by:
-        ontology_graph.add(
-            (
-                data_model_definition.namespace[class_.class_id],
-                DCTERMS.isReplacedBy,
-                data_model_definition.namespace[class_.replaced_by],
-            )
-        )
-
-    if class_.similar_to:
-        ontology_graph.add((data_model_definition.namespace[class_.class_id], SKOS.exactMatch, class_.similar_to))
-
-    if class_.equal_to:
-        ontology_graph.add((data_model_definition.namespace[class_.class_id], OWL.equivalentClass, class_.equal_to))
-
-
-def data_model_definition2owl(
-    data_model_definition: DataModelingDefinition,
-    prefixes: dict[str, Namespace] = PREFIXES,
-    owl_graph: Graph = None,
-) -> Graph:
-    """Generate OWL ontology from data model definitions
-
-    Parameters
-    ----------
-    data_model_definition : DataModelingDefinition
-        Instance of DataModelingDefinition class
-    prefixes : dict[str, Namespace], optional
-        Prefixes followed with associated namespaces, by default PREFIXES
-    owl_graph : Graph, optional
-        ontology graph in case if it is being extended, by default None
-
-    Returns
-    -------
-    Graph
-        OWL ontology based on data model definitions
-    """
-
-    if not owl_graph:
-        owl_graph = Graph()
-        # Bind Data Model namespace and prefix
-        owl_graph.bind(data_model_definition.prefix, data_model_definition.namespace)
-        # Bind other prefixes and namespaces
-        for prefix, namespace in prefixes.items():
-            owl_graph.bind(prefix, namespace)
-
-    # add metadata to the graph
-    _add_ontology_metadata(owl_graph, data_model_definition)
-
-    # add OWL ontology classes to the graph
-    for class_ in data_model_definition.classes.values():
-        _add_owl_class(owl_graph, data_model_definition, class_)
-
-    # add OWL ontology properties to the graph
-    if owl_properties := _wrangle_owl_properties(data_model_definition):
-        for property_ in owl_properties:
-            _add_owl_property(owl_graph, data_model_definition, owl_properties, property_)
-
-    return owl_graph
-
-
-def data_model_definition2shacl(
-    data_model_definition: DataModelingDefinition,
-    prefixes: dict[str, Namespace] = PREFIXES,
-    shacl_graph: Graph = None,
-) -> Graph:
-    if not shacl_graph:
-        shacl_graph = Graph()
-        # Bind Data Model namespace and prefix
-        shacl_graph.bind(data_model_definition.prefix, data_model_definition.namespace)
-        # Bind other prefixes and namespaces
-        for prefix, namespace in prefixes.items():
-            shacl_graph.bind(prefix, namespace)
-
-    node_shapes = {}
-    for shacl_constraint in data_model_definition.properties.values():
-        property_name = shacl_constraint.property_name
-        if property_name != "*":
-            class_id = shacl_constraint.class_id
-            node_shape_name = f"{class_id}Shape"
-
-            # adds node shape to shacl graph
-            if node_shape_name not in node_shapes:
-                node_shapes[node_shape_name] = {}
-                shacl_graph.add((data_model_definition.namespace[node_shape_name], RDF.type, SHACL.NodeShape))
-                shacl_graph.add(
-                    (
-                        data_model_definition.namespace[node_shape_name],
-                        RDFS.comment,
-                        Literal(data_model_definition.classes[class_id].description),
-                    )
-                )
-                shacl_graph.add(
-                    (
-                        data_model_definition.namespace[node_shape_name],
-                        SHACL.targetClass,
-                        data_model_definition.namespace[class_id],
-                    )
-                )
-
-            # adds property shape to shacl graph
-            property_shape_node = BNode()
-            shacl_graph.add((data_model_definition.namespace[node_shape_name], SHACL.property, property_shape_node))
-            shacl_graph.add((property_shape_node, SHACL.path, data_model_definition.namespace[property_name]))
-            shacl_graph.add((property_shape_node, SHACL.name, Literal(property_name)))
-            if shacl_constraint.property_type == "ObjectProperty":
-                shacl_graph.add((property_shape_node, SHACL.nodeKind, SHACL.IRI))
-                shacl_graph.add(
-                    (
-                        property_shape_node,
-                        SHACL.node,
-                        data_model_definition.namespace[f"{shacl_constraint.expected_value_type}Shape"],
-                    )
-                )
-            else:
-                shacl_graph.add((property_shape_node, SHACL.nodeKind, SHACL.Literal))
-                shacl_graph.add((property_shape_node, SHACL.datatype, XSD[shacl_constraint.expected_value_type]))
-
-            if shacl_constraint.min_count:
-                shacl_graph.add((property_shape_node, SHACL.minCount, Literal(shacl_constraint.min_count)))
-            if shacl_constraint.max_count:
-                shacl_graph.add((property_shape_node, SHACL.maxCount, Literal(shacl_constraint.max_count)))
-
-    return shacl_graph
+        return cls(**prop_dict, namespace=namespace)
