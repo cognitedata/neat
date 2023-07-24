@@ -17,9 +17,9 @@ class OntologyModel(BaseModel):
 
 class Ontology(OntologyModel):
     transformation_rules: TransformationRules
-    properties: list["OWLProperty"]  # these should be created from transformation rules, mode = after
-    classes: list["OWLClass"]  # these should be created from transformation rules, mode = after
-    shapes: list["SHACLNodeShape"]  # these should be created from transformation rules, mode = after
+    properties: list["OWLProperty"]
+    classes: list["OWLClass"]
+    shapes: list["SHACLNodeShape"]
     metadata: "OWLMetadata"
 
     @model_validator(mode="before")
@@ -75,39 +75,63 @@ class Ontology(OntologyModel):
             raise _exceptions.Error11(report=generate_exception_report(redefinition_warnings))
         return rules
 
-    @model_validator(mode="after")
-    def generate_shacl_graph(self):
-        self.shacl = Graph()
-        self.shacl.bind(self.transformation_rules.metadata.prefix, self.transformation_rules.metadata.namespace)
+    @property
+    def shacl(self):
+        shacl = Graph()
+        shacl.bind(self.transformation_rules.metadata.prefix, self.transformation_rules.metadata.namespace)
         for prefix, namespace in self.transformation_rules.prefixes.items():
-            self.shacl.bind(prefix, namespace)
+            shacl.bind(prefix, namespace)
 
         for shape in self.shapes:
             for triple in shape.triples:
-                self.shacl.add(triple)
+                shacl.add(triple)
 
-        return self
+        return shacl
 
-    @model_validator(mode="after")
-    def generate_owl_graph(self):
-        self.owl = Graph()
-        self.owl.bind(self.transformation_rules.metadata.prefix, self.transformation_rules.metadata.namespace)
+    @property
+    def owl(self):
+        owl = Graph()
+        owl.bind(self.transformation_rules.metadata.prefix, self.transformation_rules.metadata.namespace)
         for prefix, namespace in self.transformation_rules.prefixes.items():
-            self.owl.bind(prefix, namespace)
+            owl.bind(prefix, namespace)
 
-        self.owl.add((self.transformation_rules.metadata.namespace[""], RDF.type, OWL.Ontology))
+        owl.add((URIRef(self.transformation_rules.metadata.namespace), RDF.type, OWL.Ontology))
         for property_ in self.properties:
             for triple in property_.triples:
-                self.owl.add(triple)
+                owl.add(triple)
 
         for class_ in self.classes:
             for triple in class_.triples:
-                self.owl.add(triple)
+                owl.add(triple)
 
         for triple in self.metadata.triples:
-            self.owl.add(triple)
+            owl.add(triple)
 
-        return self
+        return owl
+
+    @property
+    def owl_triples(self) -> list[tuple]:
+        return list(self.owl)
+
+    @property
+    def shacl_triples(self) -> list[tuple]:
+        return list(self.shacl)
+
+    @property
+    def triples(self) -> list[tuple]:
+        return self.owl_triples + self.shacl_triples
+
+    @property
+    def ontology(self) -> str:
+        return self.owl.serialize()
+
+    @property
+    def constraints(self) -> str:
+        return self.shacl.serialize()
+
+    @property
+    def semantic_data_model(self) -> str:
+        return (self.owl + self.shacl).serialize()
 
 
 class OWLMetadata(Metadata):
