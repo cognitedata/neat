@@ -238,6 +238,23 @@ class Error20(NeatError):
         super().__init__(self.message)
 
 
+class Error30(NeatError):
+    type_: str = "PropertyDefinitionsNotForSameProperty"
+    code: int = 11
+    description: str = "This error is raised if property definitions are not for linked to the same property id"
+    example: str = ""
+    fix: str = ""
+
+    def __init__(self, verbose=False):
+        self.message = "All definitions should have the same property_id! Aborting."
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
 class Error21(NeatError):
     type_: str = "NotExcelFile"
     code: int = 11
@@ -534,6 +551,115 @@ class Warning2(NeatWarning):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
             # hint on a specific web docs page
+
+
+class Warning30(NeatWarning):
+    type_: str = "OntologyMultiTypeProperty"
+    code: int = 30
+    description: str = (
+        "This warning occurs when a same property is define for two object"
+        " where its expected value type is different in one case it acts as"
+        " a node edge (i.e. object) in other case it acts as a node attribute"
+        " (i.e. hold simple values such as strings)."
+    )
+    example: str = ""
+    fix: str = "If a property takes different value types for different objects, simply define new property"
+
+    def __init__(self, property_id: str = "", types: list[str] = [], verbose=False):
+        self.message = (
+            "It is bad practice to have multi type property! "
+            f"Currently property '{property_id}' is defined as multi type property: {', '.join(types)}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+
+
+class Warning31(NeatWarning):
+    type_: str = "OntologyMultiRangeProperty"
+    code: int = 31
+    description: str = (
+        "This warning occurs when a property takes range of values" " which consists of union of multiple value types."
+    )
+    example: str = ""
+    fix: str = "If a property takes different range of values, simply define new property for each range"
+
+    def __init__(self, property_id: str = "", range_of_values: list[str] = [], verbose=False):
+        self.message = (
+            "Property should ideally have only single range of values. "
+            f"Currently property '{property_id}' has multiple ranges: {', '.join(range_of_values)}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+
+
+class Warning32(NeatWarning):
+    type_: str = "OntologyMultiDomainProperty"
+    code: int = 32
+    description: str = "This warning occurs when a property is reused/redefined for more than one classes."
+    example: str = ""
+    fix: str = (
+        "No need to fix this, but make sure that property type is consistent"
+        " across different classes and that ideally takes the same range of values"
+    )
+
+    def __init__(self, property_id: str = "", classes: list[str] = [], verbose=False):
+        self.message = (
+            "Property should ideally defined for single class. "
+            f"Currently property '{property_id}' is defined for multiple classes: {', '.join(classes)}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+
+
+class Warning33(NeatWarning):
+    type_: str = "OntologyMultiLabeledProperty"
+    code: int = 33
+    description: str = (
+        "This warning occurs when a property is given multiple labels,"
+        " typically if the same property is defined for different "
+        "classes but different name is given."
+    )
+    example: str = ""
+    fix: str = "This would be automatically fixes by taking the first name."
+
+    def __init__(self, property_id: str = "", names: list[str] = [], verbose=False):
+        self.message = (
+            "Property should have single preferred label (human readable name)."
+            f"Currently property '{property_id}' has multiple preferred labels: {', '.join(names)} !"
+            f"Only the first name, i.e. '{names[0]}' will be considered!"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+
+
+class Warning34(NeatWarning):
+    type_: str = "OntologyMultiDefinitionProperty"
+    code: int = 34
+    description: str = (
+        "This warning occurs when a property is given multiple human readable definitions,"
+        " typically if the same property is defined for different "
+        "classes and their usage differs from class to class."
+    )
+    example: str = ""
+    fix: str = "This would be automatically fixes by concatenating all definitions."
+
+    def __init__(self, property_id: str, verbose=False):
+        self.message = (
+            f"Multiple definitions (aka comments) of property '{property_id}' detected."
+            " Definitions will be concatenated."
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
 
 
 class Warning100(NeatWarning):

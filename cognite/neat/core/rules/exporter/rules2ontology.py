@@ -1,6 +1,6 @@
-from logging import warn
 from typing import ClassVar, Optional
-from pydantic import BaseModel, ConfigDict, field_validator, model_validator
+import warnings
+from pydantic import BaseModel, ConfigDict, FieldValidationInfo, field_validator, model_validator
 from rdflib import OWL, RDF, RDFS, XSD, DCTERMS, BNode, Graph, Literal, URIRef, Namespace
 from rdflib.collection import Collection as GraphCollection
 
@@ -8,7 +8,7 @@ from cognite.neat.core.rules.models import DATA_TYPE_MAPPING, Class, Property, T
 from cognite.neat.core.rules.analysis import to_property_dict, to_class_property_pairs
 from cognite.neat.core.rules._validation import are_properties_redefined
 from cognite.neat.core.rules import _exceptions
-from cognite.neat.core.utils.utils import generate_exception_report
+from cognite.neat.core.utils.utils import generate_exception_report, remove_namespace
 
 
 class OntologyModel(BaseModel):
@@ -258,54 +258,53 @@ class OWLProperty(OntologyModel):
 
     # TODO: Add warnings to _exceptions.py and use them here:
     @field_validator("type_")
-    def is_multy_type(cls, v):
+    def is_multi_type(cls, v, info: FieldValidationInfo):
         if len(v) > 1:
-            warn(
-                (
-                    "It is bad practice that property of multiple types. "
-                    f"Currently it defined as multi type property: {', '.join(filter(None, v))}"
-                )
+            warnings.warn(
+                _exceptions.Warning30(remove_namespace(info.data["id_"]), [remove_namespace(t) for t in v]).message,
+                category=_exceptions.Warning30,
+                stacklevel=2,
             )
         return v
 
     @field_validator("range_")
-    def is_multi_range(cls, v):
+    def is_multi_range(cls, v, info: FieldValidationInfo):
         if len(v) > 1:
-            warn(
-                (
-                    "Property should ideally have only single range of values."
-                    f" Currently it has multiple ranges {', '.join(filter(None, v))}"
-                )
+            warnings.warn(
+                _exceptions.Warning31(remove_namespace(info.data["id_"]), [remove_namespace(t) for t in v]).message,
+                category=_exceptions.Warning31,
+                stacklevel=2,
             )
         return v
 
     @field_validator("domain")
-    def is_multi_domain(cls, v):
+    def is_multi_domain(cls, v, info: FieldValidationInfo):
         if len(v) > 1:
-            warn(
-                (
-                    f"Property should ideally be defined for single class."
-                    f" Currently it has multiple ranges {', '.join(filter(None, v))}"
-                )
+            warnings.warn(
+                _exceptions.Warning32(remove_namespace(info.data["id_"]), [remove_namespace(t) for t in v]).message,
+                category=_exceptions.Warning32,
+                stacklevel=2,
             )
         return v
 
     @field_validator("label")
-    def has_multi_name(cls, v):
+    def has_multi_name(cls, v, info: FieldValidationInfo):
         if len(v) > 1:
-            warn(
-                (
-                    "Property should have single preferred label (human readable name)."
-                    f" Currently it has multiple labels {', '.join(filter(None, v))}."
-                    " First one will be used as preferred label."
-                )
+            warnings.warn(
+                _exceptions.Warning33(remove_namespace(info.data["id_"]), v).message,
+                category=_exceptions.Warning33,
+                stacklevel=2,
             )
         return v
 
     @field_validator("comment")
-    def has_multi_comment(cls, v):
+    def has_multi_comment(cls, v, info: FieldValidationInfo):
         if len(v) > 1:
-            warn("Multiple definitions (aka comments) of property detected. Definitions will be concatenated.")
+            warnings.warn(
+                _exceptions.Warning34(remove_namespace(info.data["id_"])).message,
+                category=_exceptions.Warning34,
+                stacklevel=2,
+            )
         return v
 
     @property
