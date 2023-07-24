@@ -4,6 +4,7 @@ import warnings
 import pandas as pd
 from rdflib import RDF, XSD, Literal, Namespace
 
+from cognite.neat.core.rules.analysis import get_class_property_pairs, get_defined_classes
 from cognite.neat.core.rules.models import TransformationRules
 
 
@@ -31,7 +32,7 @@ def sheet2triples(
     validate_rules_graph_pair(graph_capturing_sheet, transformation_rule)
 
     # get class property pairs
-    class_property_pairs = transformation_rule.get_class_property_pairs()
+    class_property_pairs = get_class_property_pairs(transformation_rule)
 
     # namespace selection
     if namespace is None:
@@ -120,7 +121,7 @@ def validate_rules_graph_pair(graph_capturing_sheet: dict[str, pd.DataFrame], tr
     transformation_rule : TransformationRules
         Transformation rules
     """
-    intersection = set(graph_capturing_sheet.keys()).intersection(set(transformation_rule.get_defined_classes()))
+    intersection = set(graph_capturing_sheet.keys()).intersection(set(get_defined_classes(transformation_rule)))
 
     if not intersection:
         msg = "Graph capturing sheet is not based on transformation rules! Aborting!"
@@ -138,7 +139,7 @@ def validate_rules_graph_pair(graph_capturing_sheet: dict[str, pd.DataFrame], tr
             stacklevel=2,
         )
 
-    elif len(intersection) < len(transformation_rule.get_defined_classes()):
+    elif len(intersection) < len(get_defined_classes(transformation_rule)):
         msg = "Transformation rules contain classes that are not present in the graph capturing sheet! Proceeding..."
         logging.warning(msg)
         warnings.warn(

@@ -15,11 +15,21 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## [0.17.2] - 24-07-23
+## [0.17.2] - 20-07-23
 
-### Added 
+### Changed
 
-- Added new composition based method of bulding step-components for NEAT workflows. 
+- Switch to using `jinja2` template engine instead of `graphql-core` for generation of GraphQL schema
+
+### Added
+
+- Downloading rules from private github repository
+
+## [0.17.1] - 19-07-23
+
+### Changed
+
+- Organized various methods that work with `TransformationRules` to importers/exporters and set of methods that perform rules analysis
 
 ## [0.17.0] - 16-07-23
 

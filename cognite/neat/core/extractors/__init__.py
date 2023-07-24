@@ -7,8 +7,6 @@ from cognite.neat.core.extractors.cdfcore.rdf_to_relationships import (
 )
 
 from .graph_sheet_to_graph import sheet2triples
-from .rules_to_graph_capturing_sheet import rules2graph_capturing_sheet
-from .rules_to_graphql import rules2graphql_schema
 
 __all__ = [
     "rdf2relationships",
@@ -18,7 +16,5 @@ __all__ = [
     "categorize_relationships",
     "upload_relationships",
     "upload_labels",
-    "rules2graphql_schema",
-    "rules2graph_capturing_sheet",
     "sheet2triples",
 ]
