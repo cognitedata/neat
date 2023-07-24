@@ -17,9 +17,9 @@ Changes are grouped as follows:
 
 ## [0.17.3] - 24-07-23
 
-### Added 
+### Added
 
-- Added new composition based method of bulding step-components for NEAT workflows. 
+- Added new composition based method of bulding step-components for NEAT workflows.
 
 ## [0.17.2] - 20-07-23
 
