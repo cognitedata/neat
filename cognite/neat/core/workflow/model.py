@@ -46,6 +46,7 @@ class FlowMessage(BaseModel):
 
 class StepType(StrEnum):
     PYSTEP = "pystep"
+    STD_STEP = "stdstep"
     START_WORKFLOW_TASK_STEP = "start_workflow_task_step"  # Call a workflow from another workflow
     CONTAINER_TASK_STEP = "container_step"  # TODO: implement
     CLI_TASK_STEP = "cli_step"  # TODO: implement

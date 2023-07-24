@@ -145,6 +145,7 @@ return (
               variant="outlined"
               onChange={(event) => { handleStepConfigChange("stype", event.target.value) }}
             >
+              <MenuItem value="stdstep">Step from standard library</MenuItem>
               <MenuItem value="pystep">Python function</MenuItem>
               <MenuItem value="http_trigger">HTTP trigger</MenuItem>
               <MenuItem value="time_trigger">Time trigger</MenuItem>
@@ -157,6 +158,9 @@ return (
             <TextField sx={{ marginTop: 1 }} id="step-config-descr" fullWidth label="Description" size='small' variant="outlined" value={selectedStep?.description} onChange={(event) => { handleStepConfigChange("description", event.target.value) }} />
             {(selectedStep?.stype == "time_trigger") && (
               <TextField sx={{ marginTop: 1 }} id="step-config-time-config" fullWidth label="Time interval" size='small' variant="outlined" value={selectedStep?.params["interval"]} onChange={(event) => { handleStepConfigChange("time-interval", event.target.value) }} />
+            )}
+            {(selectedStep?.stype == "stdstep") && (
+              <TextField sx={{ marginTop: 1 }} id="step-stdstep-method" fullWidth label="Name of the step" size='small' variant="outlined" value={selectedStep?.method} onChange={(event) => { handleStepConfigChange("method", event.target.value) }} />
             )}
              {(selectedStep?.stype == "pystep") && (
               <TextField sx={{ marginTop: 1 }} id="step-pystep-method" fullWidth label="Override function name (optional)" size='small' variant="outlined" value={selectedStep?.method} onChange={(event) => { handleStepConfigChange("method", event.target.value) }} />

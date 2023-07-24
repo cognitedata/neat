@@ -23,3 +23,18 @@ class NeatImportError(NeatException):
 
     def __str__(self) -> str:
         return self.message
+
+
+class InvalidWorkFlowError(NeatException):
+    """InvalidWorkFlowError
+    Raised if an invalid workflow is provided to the Workflow Manager.
+    Args:
+        step_name (str): Name of the step which could not be run
+        missing_data (list[str]): The missing data for the step.
+    """
+
+    def __init__(self, step_name, missing_data: list[str]):
+        self.message = f"In the workflow step {step_name} the following data is missing: {missing_data}."
+
+    def __str__(self) -> str:
+        return self.message

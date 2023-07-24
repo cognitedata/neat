@@ -15,11 +15,12 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## [0.17.4] - 20-07-23
+## [0.17.4] - 24-07-23
 
 ### Added
 
 - Generation of ontology, shape constraint objects and semantic data model out of transformation rules
+
 
 ## [0.17.3] - 24-07-23
 
