@@ -9,7 +9,7 @@ real_data/
 data/
 dev-data/
 
-!cognite/neat/examples/config.yaml
+!cognite/neat/workflows/examples/config.yaml
 requirements.txt
 
 # C extensions
@@ -154,8 +154,8 @@ data/temp
 docker/vol_data/*
 docker/vol_shared/*
 
-cognite/neat/explorer-ui/neat-app/node_modules
-!cognite/neat/explorer-ui/neat-app/build
+cognite/neat/app/ui/neat-app/node_modules
+!cognite/neat/app/ui/neat-app/build
 
 
 # local notebooks

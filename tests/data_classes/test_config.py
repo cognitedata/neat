@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from cognite.neat.core.configuration import Config
+from cognite.neat.app.api.configuration import Config
 from cognite.neat.core.rules import to_rdf_path
 from cognite.neat.core.rules.models import Property
 

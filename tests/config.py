@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from cognite.neat import constants
+from cognite.neat.workflows import constants
 
 ROOT = Path(__file__).resolve().parent.parent
 
