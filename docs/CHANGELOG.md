@@ -15,6 +15,12 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.17.3] - 24-07-23
+
+### Added 
+
+- Added new composition based method of bulding step-components for NEAT workflows. 
+
 ## [0.17.2] - 20-07-23
 
 ### Changed
