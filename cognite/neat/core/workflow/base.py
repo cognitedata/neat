@@ -1,15 +1,18 @@
+import inspect
 import json
 import logging
 import threading
 import time
 import traceback
 from threading import Event
+from typing import Type
 
 import yaml
 from cognite.client import CogniteClient
 from prometheus_client import Gauge
 
 from cognite.neat.core.data_stores.metrics import NeatMetricsCollector
+from cognite.neat.core.exceptions import InvalidWorkFlowError
 from cognite.neat.core.utils.utils import retry_decorator
 from cognite.neat.core.workflow import cdf_store
 from cognite.neat.core.workflow.model import (
@@ -30,6 +33,8 @@ from cognite.neat.core.workflow.tasks import WorkflowTaskBuilder
 from ..configuration import Config
 from ..utils.cdf import CogniteClientConfig
 from . import utils
+from .step_model import DataContract
+import cognite.neat.steps.steps
 
 summary_metrics = Gauge("neat_workflow_summary_metrics", "Workflow execution summary metrics", ["wf_name", "name"])
 steps_metrics = Gauge("neat_workflow_steps_metrics", "Workflow step level metrics", ["wf_name", "step_name", "name"])
@@ -72,6 +77,7 @@ class BaseWorkflow:
         self.metrics = NeatMetricsCollector(self.name, self.cdf_client)
         self.resume_event = Event()
         self.is_ephemeral = False  # if True, workflow will be deleted after completion
+        self.data: dict[str, Type[DataContract]] = {}
 
     def start(self, sync=False, is_ephemeral=False, **kwargs) -> FlowMessage | None:
         """Starts workflow execution.sync=True will block until workflow is completed and
@@ -252,6 +258,44 @@ class BaseWorkflow:
                     return method(flow_message)
 
                 new_flow_message = method_runner()
+            elif step.stype == StepType.STD_STEP:
+                for name, step_cls in inspect.getmembers(cognite.neat.steps.steps):
+                    if inspect.isclass(step_cls):
+                        if name == step.method:
+                            step_obj = step_cls(self.metrics)
+                            step_obj.set_global_configs(self.cdf_client, self.data_store_path, self.rules_storage_path)
+                            signature = inspect.signature(step_obj.run)
+                            parameters = signature.parameters
+                            is_valid = True
+                            input_data = []
+                            missing_data = []
+                            for parameter in parameters.values():
+                                try:
+                                    if parameter.annotation.__name__ == "FlowMessage":
+                                        input_data.append(self.flow_message)
+                                    else:
+                                        input_data.append(self.data[parameter.annotation.__name__])
+                                except KeyError:
+                                    is_valid = False
+                                    logging.error(f"Missing data for step {step.id} parameter {parameter.name}")
+                                    missing_data.append(parameter.annotation.__name__)
+                                    continue
+                            if not is_valid:
+                                raise InvalidWorkFlowError(step.id, missing_data)
+                            output = step_obj.run(*input_data)
+                            if output is not None:
+                                if isinstance(output, tuple):
+                                    for i, out_obj in enumerate(output):
+                                        if isinstance(out_obj, FlowMessage):
+                                            new_flow_message = out_obj
+                                        else:
+                                            self.data[type(out_obj).__name__] = out_obj
+                                else:
+                                    if isinstance(output, FlowMessage):
+                                        new_flow_message = output
+                                    else:
+                                        self.data[output.__name__] = output
+                            break
 
             elif step.stype == StepType.START_WORKFLOW_TASK_STEP:
                 if self.task_builder:
@@ -286,7 +330,6 @@ class BaseWorkflow:
                 logging.info(f"Workflow {self.name} resumed after event")
                 self.state = WorkflowState.RUNNING
                 self.resume_event.clear()
-
             else:
                 logging.error(f"Workflow step {step.id} has unsupported step type {step.stype}")
 
