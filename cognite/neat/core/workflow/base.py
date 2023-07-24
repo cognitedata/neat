@@ -33,7 +33,7 @@ from cognite.neat.core.workflow.tasks import WorkflowTaskBuilder
 from ..configuration import Config
 from ..utils.cdf import CogniteClientConfig
 from . import utils
-from .step_model import Data
+from .step_model import DataContract
 import cognite.neat.steps.steps
 
 summary_metrics = Gauge("neat_workflow_summary_metrics", "Workflow execution summary metrics", ["wf_name", "name"])
@@ -77,7 +77,7 @@ class BaseWorkflow:
         self.metrics = NeatMetricsCollector(self.name, self.cdf_client)
         self.resume_event = Event()
         self.is_ephemeral = False  # if True, workflow will be deleted after completion
-        self.data: dict[str, Type[Data]] = {}
+        self.data: dict[str, Type[DataContract]] = {}
 
     def start(self, sync=False, is_ephemeral=False, **kwargs) -> FlowMessage | None:
         """Starts workflow execution.sync=True will block until workflow is completed and
