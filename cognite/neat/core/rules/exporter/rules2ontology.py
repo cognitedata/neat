@@ -229,7 +229,7 @@ class OWLProperty(OntologyModel):
         """Here list of properties is a list of properties with the same id, but different definitions."""
 
         if not cls.same_property_id(definitions):
-            raise ValueError("All definitions should have the same property_id! Aborting.")
+            raise _exceptions.Error30()
 
         prop_dict = {
             "id_": namespace[definitions[0].property_id],
