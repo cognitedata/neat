@@ -260,10 +260,8 @@ class BaseWorkflow:
                 new_flow_message = method_runner()
             elif step.stype == StepType.STD_STEP:
                 for name, step_cls in inspect.getmembers(cognite.neat.steps.steps):
-                    logging.debug(f"Checking step {name}")
                     if inspect.isclass(step_cls):
                         if name == step.method:
-                            logging.debug(f" match {name}")
                             step_obj = step_cls(self.metrics)
                             step_obj.set_global_configs(self.cdf_client, self.data_store_path, self.rules_storage_path)
                             signature = inspect.signature(step_obj.run)
@@ -275,7 +273,7 @@ class BaseWorkflow:
                                 try:
                                     if parameter.annotation.__name__ == "FlowMessage":
                                         input_data.append(self.flow_message)
-                                    else:    
+                                    else:
                                         input_data.append(self.data[parameter.annotation.__name__])
                                 except KeyError:
                                     is_valid = False

@@ -21,7 +21,7 @@ class Step(ABC):
     def __init__(self, metrics):
         self.log: bool = False
         self.metrics = metrics
-    
+
     def set_global_configs(self, cdf_client: CogniteClient, data_store_path: str, rules_storage_path: str):
         self.cdf_client = cdf_client
         self.data_store_path = data_store_path

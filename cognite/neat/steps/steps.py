@@ -7,7 +7,7 @@ from cognite.neat.core.extractors import upload_labels
 from cognite.neat.core.rules import load_rules_from_excel_file
 from cognite.neat.core.workflow.model import FlowMessage
 from cognite.neat.core.workflow.step_model import Step
-from .data import ClientData, PathData, RulesData, SourceGraphData
+from .data_contracts import ClientData, PathData, RulesData, SourceGraphData
 
 __all__ = [
     "LoadTransformationRules",
@@ -32,7 +32,7 @@ class ConfiguringStores(Step):
         graph = loader.NeatGraphStore(prefixes=rules.prefixes, namespace=rules.metadata.namespace)
         graph.init_graph(base_prefix=rules.metadata.prefix)
         logging.info("Store configured")
-        return (FlowMessage(output_text="it works"), SourceGraphData(graph=graph))
+        return (FlowMessage(output_text="Stores Configured"), SourceGraphData(graph=graph))
 
 
 class LoadInstancesToGraph(Step):
