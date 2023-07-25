@@ -1,6 +1,6 @@
-from typing import ClassVar, Optional
+from typing import ClassVar, Optional, Self
 import warnings
-from pydantic import BaseModel, ConfigDict, FieldValidationInfo, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, FieldValidationInfo, field_validator
 from rdflib import OWL, RDF, RDFS, XSD, DCTERMS, BNode, Graph, Literal, URIRef, Namespace
 from rdflib.collection import Collection as GraphCollection
 
@@ -16,70 +16,53 @@ class OntologyModel(BaseModel):
 
 
 class Ontology(OntologyModel):
-    transformation_rules: TransformationRules
     properties: list["OWLProperty"]
     classes: list["OWLClass"]
     shapes: list["SHACLNodeShape"]
     metadata: "OWLMetadata"
+    prefixes: dict[str, Namespace]
 
-    @field_validator("transformation_rules", mode="before")
-    def properties_redefined(cls, rules):
-        properties_redefined, redefinition_warnings = are_properties_redefined(rules, return_report=True)
+    @classmethod
+    def from_rules(cls, transformation_rules: TransformationRules) -> Self:
+        properties_redefined, redefinition_warnings = are_properties_redefined(transformation_rules, return_report=True)
         if properties_redefined:
             raise _exceptions.Error11(report=generate_exception_report(redefinition_warnings))
-        return rules
 
-    @model_validator(mode="before")
-    def create_shapes(cls, values: dict) -> dict:
-        class_property_pairs = to_class_property_pairs(values["transformation_rules"])
-        values["shapes"] = [
-            SHACLNodeShape.from_rules(
-                values["transformation_rules"].classes[class_],
-                list(properties.values()),
-                values["transformation_rules"].metadata.namespace,
-            )
-            for class_, properties in class_property_pairs.items()
-        ]
+        class_property_pairs = to_class_property_pairs(transformation_rules)
+        property_definitions = to_property_dict(transformation_rules)
+        class_property_pairs = to_class_property_pairs(transformation_rules)
 
-        return values
+        return cls(
+            properties=[
+                OWLProperty.from_list_of_properties(
+                    definition,
+                    transformation_rules.metadata.namespace,
+                )
+                for definition in property_definitions.values()
+            ],
+            classes=[
+                OWLClass.from_class(
+                    definition,
+                    transformation_rules.metadata.namespace,
+                )
+                for definition in transformation_rules.classes.values()
+            ],
+            shapes=[
+                SHACLNodeShape.from_rules(
+                    transformation_rules.classes[class_],
+                    list(properties.values()),
+                    transformation_rules.metadata.namespace,
+                )
+                for class_, properties in class_property_pairs.items()
+            ],
+            metadata=OWLMetadata(**transformation_rules.metadata.model_dump()),
+            prefixes=transformation_rules.prefixes,
+        )
 
-    @model_validator(mode="before")
-    def create_classes(cls, values: dict) -> dict:
-        values["classes"] = [
-            OWLClass.from_class(
-                definition,
-                values["transformation_rules"].metadata.namespace,
-            )
-            for definition in values["transformation_rules"].classes.values()
-        ]
-
-        return values
-
-    @model_validator(mode="before")
-    def create_properties(cls, values: dict) -> dict:
-        definitions = to_property_dict(values["transformation_rules"])
-
-        values["properties"] = [
-            OWLProperty.from_list_of_properties(
-                definition,
-                values["transformation_rules"].metadata.namespace,
-            )
-            for definition in definitions.values()
-        ]
-
-        return values
-
-    @model_validator(mode="before")
-    def create_metadata(cls, values: dict) -> dict:
-        values["metadata"] = OWLMetadata(**values["transformation_rules"].metadata.model_dump())
-
-        return values
-
-    @property
-    def shacl(self):
+    def as_shacl(self) -> Graph:
         shacl = Graph()
-        shacl.bind(self.transformation_rules.metadata.prefix, self.transformation_rules.metadata.namespace)
-        for prefix, namespace in self.transformation_rules.prefixes.items():
+        shacl.bind(self.metadata.prefix, self.metadata.namespace)
+        for prefix, namespace in self.prefixes.items():
             shacl.bind(prefix, namespace)
 
         for shape in self.shapes:
@@ -88,14 +71,13 @@ class Ontology(OntologyModel):
 
         return shacl
 
-    @property
-    def owl(self):
+    def as_owl(self) -> Graph:
         owl = Graph()
-        owl.bind(self.transformation_rules.metadata.prefix, self.transformation_rules.metadata.namespace)
-        for prefix, namespace in self.transformation_rules.prefixes.items():
+        owl.bind(self.metadata.prefix, self.metadata.namespace)
+        for prefix, namespace in self.prefixes.items():
             owl.bind(prefix, namespace)
 
-        owl.add((URIRef(self.transformation_rules.metadata.namespace), RDF.type, OWL.Ontology))
+        owl.add((URIRef(self.metadata.namespace), RDF.type, OWL.Ontology))
         for property_ in self.properties:
             for triple in property_.triples:
                 owl.add(triple)
@@ -111,11 +93,11 @@ class Ontology(OntologyModel):
 
     @property
     def owl_triples(self) -> list[tuple]:
-        return list(self.owl)
+        return list(self.as_owl())
 
     @property
     def shacl_triples(self) -> list[tuple]:
-        return list(self.shacl)
+        return list(self.as_shacl())
 
     @property
     def triples(self) -> list[tuple]:
@@ -123,15 +105,15 @@ class Ontology(OntologyModel):
 
     @property
     def ontology(self) -> str:
-        return self.owl.serialize()
+        return self.as_owl().serialize()
 
     @property
     def constraints(self) -> str:
-        return self.shacl.serialize()
+        return self.as_shacl().serialize()
 
     @property
     def semantic_data_model(self) -> str:
-        return (self.owl + self.shacl).serialize()
+        return (self.as_owl() + self.as_shacl()).serialize()
 
 
 class OWLMetadata(Metadata):
@@ -179,7 +161,7 @@ class OWLClass(OntologyModel):
     namespace: Namespace
 
     @classmethod
-    def from_class(cls, definition: Class, namespace: Namespace) -> "OWLClass":
+    def from_class(cls, definition: Class, namespace: Namespace) -> Self:
         return cls(
             id_=namespace[definition.class_id],
             label=definition.class_name,

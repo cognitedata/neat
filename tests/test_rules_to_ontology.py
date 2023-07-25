@@ -5,7 +5,7 @@ from copy import deepcopy
 
 
 def test_rules2ontology(transformation_rules):
-    ontology = Ontology(transformation_rules=transformation_rules)
+    ontology = Ontology.from_rules(transformation_rules)
 
     # we have 7 classes in the ontology
     assert len(ontology.owl.query("SELECT ?s WHERE {?s rdf:type owl:Class Filter (!isBlank(?s))}")) == 7
@@ -18,4 +18,4 @@ def test_rules2ontology_raise(transformation_rules):
     rules.properties["row 150"] = rules.properties["row 15"]
 
     with pytest.raises(Error11):
-        _ = Ontology(transformation_rules=rules)
+        _ = Ontology.from_rules(rules)
