@@ -1,7 +1,7 @@
 import pytest
 from rdflib import Namespace
 
-from cognite.neat.core import extractors, loader, rules
+from cognite.neat.core import loaders, loader, rules
 from cognite.neat.core.loader.graph_store import NeatGraphStore
 from cognite.neat.core.mocks.graph import generate_triples
 from cognite.neat.core.rules._loader import excel_file_to_table_by_name
@@ -53,12 +53,12 @@ def mock_knowledge_graph(transformation_rules):
 
 @pytest.fixture(scope="function")
 def mock_rdf_assets(mock_knowledge_graph, transformation_rules):
-    return extractors.rdf2assets(mock_knowledge_graph, transformation_rules)
+    return loaders.rdf2assets(mock_knowledge_graph, transformation_rules)
 
 
 @pytest.fixture(scope="function")
 def mock_cdf_assets(mock_knowledge_graph, transformation_rules):
-    return extractors.rdf2assets(mock_knowledge_graph, transformation_rules)
+    return loaders.rdf2assets(mock_knowledge_graph, transformation_rules)
 
 
 @pytest.fixture(scope="function")
