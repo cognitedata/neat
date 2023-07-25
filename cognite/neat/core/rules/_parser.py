@@ -8,7 +8,7 @@ from pydantic import field_validator
 from pydantic_core import ErrorDetails, ValidationError
 from rdflib import Namespace
 
-from cognite.neat.core.configuration import PREFIXES
+from cognite.neat.app.api.configuration import PREFIXES
 from cognite.neat.core.rules import _exceptions
 from cognite.neat.core.rules.models import Class, Metadata, Property, RuleModel, TransformationRules
 

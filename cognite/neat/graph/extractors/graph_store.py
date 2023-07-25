@@ -11,7 +11,7 @@ from rdflib import Graph, Namespace
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 from rdflib.query import Result
 
-from cognite.neat.core.configuration import DEFAULT_NAMESPACE, PREFIXES, RdfStoreType
+from cognite.neat.app.api.configuration import DEFAULT_NAMESPACE, PREFIXES, RdfStoreType
 from cognite.neat.graph.extractors.data_stores import oxrdflib
 from cognite.neat.graph.extractors.graph import rdf_file_to_graph
 

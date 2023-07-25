@@ -22,7 +22,7 @@ from pydantic import (
 from pydantic.fields import FieldInfo
 from rdflib import XSD, Literal, Namespace, URIRef
 
-from cognite.neat.core.configuration import PREFIXES
+from cognite.neat.app.api.configuration import PREFIXES
 
 # from . import _exceptions
 from cognite.neat.core.rules import _exceptions

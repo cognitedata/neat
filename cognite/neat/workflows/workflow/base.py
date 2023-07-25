@@ -29,7 +29,7 @@ from cognite.neat.workflows.workflow.model import (
 )
 from cognite.neat.workflows.workflow.tasks import WorkflowTaskBuilder
 
-from cognite.neat.core.configuration import Config
+from cognite.neat.app.api.configuration import Config
 from cognite.neat.core.utils.cdf import CogniteClientConfig
 from . import utils, cdf_store
 from .step_model import DataContract
