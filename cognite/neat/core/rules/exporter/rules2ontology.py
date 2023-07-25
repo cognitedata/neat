@@ -180,14 +180,12 @@ class OWLClass(OntologyModel):
 
     @classmethod
     def from_class(cls, definition: Class, namespace: Namespace) -> "OWLClass":
-        class_dict = {
-            "id_": namespace[definition.class_id],
-            "label": definition.class_name,
-            "comment": definition.description,
-            "sub_class_of": namespace[definition.parent_class] if definition.parent_class else None,
-        }
-
-        return cls(**class_dict, namespace=namespace)
+        return cls(
+            id_=namespace[definition.class_id],
+            label=definition.class_name,
+            comment=definition.description,
+            sub_class_of=namespace[definition.parent_class] if definition.parent_class else None,
+            namespace=namespace)
 
     @property
     def type_triples(self) -> list[tuple]:
