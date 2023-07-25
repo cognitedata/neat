@@ -15,6 +15,13 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.18.0] - 25-07-23
+
+### Changed
+
+- Structure of `neat` package.
+
+
 ## [0.17.4] - 24-07-23
 
 ### Added
