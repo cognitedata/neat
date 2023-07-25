@@ -2,7 +2,7 @@ import pandas as pd
 
 from cognite.neat.core.configuration import PREFIXES
 from cognite.neat.core.loader.graph_store import NeatGraphStore
-from cognite.neat.core.query_generator.sparql import build_sparql_query
+from cognite.neat.graph.transformations.query_generator.sparql import build_sparql_query
 
 
 def test_graph_traversal(source_knowledge_graph: NeatGraphStore):

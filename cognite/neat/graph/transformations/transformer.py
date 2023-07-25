@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from rdflib import RDF, Graph
 from rdflib.term import Literal
 
-from cognite.neat.core.query_generator.sparql import build_sparql_query
+from cognite.neat.graph.transformations.query_generator.sparql import build_sparql_query
 from cognite.neat.core.rules.models import TransformationRules
 from cognite.neat.core.rules.to_rdf_path import AllProperties, AllReferences, RawLookup, parse_rule
 from cognite.neat.core.utils.utils import remove_namespace

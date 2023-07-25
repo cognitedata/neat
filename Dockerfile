@@ -7,7 +7,7 @@ WORKDIR /app/
 COPY cognite/neat /app/cognite/neat
 
 RUN mkdir -p /app/data \
-    && cp /app/cognite/neat/examples/. /app/data -r \
+    && cp /app/cognite/neat/workflows/examples/. /app/data -r \
     && chmod -R 777 /app/data \
     && pip install -r requirements.txt
 

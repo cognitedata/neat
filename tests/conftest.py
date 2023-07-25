@@ -7,7 +7,7 @@ from cognite.neat.core.mocks.graph import generate_triples
 from cognite.neat.core.rules._loader import excel_file_to_table_by_name
 from cognite.neat.core.rules._parser import RawTables
 from cognite.neat.core.rules.importer import owl2excel
-from cognite.neat.core.transformer import domain2app_knowledge_graph
+from cognite.neat.graph.transformations.transformer import domain2app_knowledge_graph
 from cognite.neat.core.utils.utils import add_triples
 from tests import config
 

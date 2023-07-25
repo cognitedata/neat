@@ -17,7 +17,7 @@ from prometheus_client import REGISTRY, Counter, make_asgi_app
 
 from cognite import neat
 from cognite.neat import constants
-from cognite.neat.core import query_generator
+from cognite.neat.graph.transformations import query_generator
 from cognite.neat.core import rules as rules_module
 from cognite.neat.core.app import NeatApp
 from cognite.neat.core.configuration import Config, configure_logging
