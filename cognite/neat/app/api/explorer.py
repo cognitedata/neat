@@ -35,7 +35,7 @@ from cognite.neat.app.api.data_classes.rest import (
 )
 from cognite.neat.app.api.utils.data_mapping import rdf_result_to_api_response
 from cognite.neat.app.api.utils.query_templates import query_templates
-from cognite.neat.migration.wf_manifests import migrate_wf_manifest
+from cognite.neat.workflows.migration.wf_manifests import migrate_wf_manifest
 
 logger = getLogger(__name__)  # temporary logger before config is loaded
 config_path = Path(os.environ.get("NEAT_CONFIG_PATH", "config.yaml"))

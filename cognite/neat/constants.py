@@ -3,7 +3,7 @@ from pathlib import Path
 from cognite import neat
 
 PACKAGE_DIRECTORY = Path(neat.__file__).parent
-EXAMPLES_DIRECTORY = PACKAGE_DIRECTORY / "examples"
+EXAMPLES_DIRECTORY = PACKAGE_DIRECTORY / "workflows" / "examples"
 EXAMPLE_RULES = EXAMPLES_DIRECTORY / "rules"
 EXAMPLE_SOURCE_GRAPHS = EXAMPLES_DIRECTORY / "source-graphs"
 EXAMPLE_WORKFLOWS = EXAMPLES_DIRECTORY / "workflows"

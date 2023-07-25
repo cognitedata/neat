@@ -1,6 +1,6 @@
 from cognite.client import CogniteClient
 
-from cognite.neat.base_workflows.sme_graph_capture import SmeGraphCaptureBaseWorkflow
+from cognite.neat.workflows.base_workflows.sme_graph_capture import SmeGraphCaptureBaseWorkflow
 
 
 class SmeGraphCaptureNeatWorkflow(SmeGraphCaptureBaseWorkflow):

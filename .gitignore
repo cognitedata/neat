@@ -9,7 +9,7 @@ real_data/
 data/
 dev-data/
 
-!cognite/neat/examples/config.yaml
+!cognite/neat/workflows/examples/config.yaml
 requirements.txt
 
 # C extensions

@@ -1,6 +1,6 @@
 from cognite.client import CogniteClient
 
-from cognite.neat.base_workflows.graph2assets_relationships import Graph2AssetHierarchyBaseWorkflow
+from cognite.neat.workflows.base_workflows.graph2assets_relationships import Graph2AssetHierarchyBaseWorkflow
 
 
 class Graph2AssetHierarchyNeatWorkflow(Graph2AssetHierarchyBaseWorkflow):

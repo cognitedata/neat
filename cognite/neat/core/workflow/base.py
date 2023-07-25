@@ -34,7 +34,7 @@ from ..configuration import Config
 from ..utils.cdf import CogniteClientConfig
 from . import utils
 from .step_model import DataContract
-import cognite.neat.steps.steps
+import cognite.neat.workflows.steps.steps
 
 summary_metrics = Gauge("neat_workflow_summary_metrics", "Workflow execution summary metrics", ["wf_name", "name"])
 steps_metrics = Gauge("neat_workflow_steps_metrics", "Workflow step level metrics", ["wf_name", "step_name", "name"])
@@ -259,7 +259,7 @@ class BaseWorkflow:
 
                 new_flow_message = method_runner()
             elif step.stype == StepType.STD_STEP:
-                for name, step_cls in inspect.getmembers(cognite.neat.steps.steps):
+                for name, step_cls in inspect.getmembers(cognite.neat.workflows.steps.steps):
                     if inspect.isclass(step_cls):
                         if name == step.method:
                             step_obj = step_cls(self.metrics)
