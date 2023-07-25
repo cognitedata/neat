@@ -169,10 +169,6 @@ class Metadata(RuleModel):
     rights: Optional[str] = "Restricted for Internal Use of Cognite"
     externalIdPrefix: Optional[str] = Field(alias="externalIdPrefix", default=None)
     data_set_id: Optional[int] = Field(alias="dataSetId", default=None)
-    imports: Optional[list[str]] = Field(
-        description="Placeholder in case when data model is modular, i.e. provided as set of Excel files",
-        default=None,
-    )
     source: Optional[str | Path] = Field(
         description="File path to Excel file which was used to produce Transformation Rules",
         default=None,
@@ -191,6 +187,10 @@ class Metadata(RuleModel):
         if isinstance(value, float) and math.isnan(value):
             return cls.model_fields[info.field_name].default
         return value
+
+    @field_validator("version", mode="before")
+    def convert_to_string(cls, value):
+        return str(value)
 
     @validator("prefix", always=True)
     def is_prefix_compliant(cls, value):
@@ -294,7 +294,7 @@ class Resource(RuleModel):
         return replace_nan_floats_with_default(values, cls.model_fields)
 
 
-class_id_compliance_regex = r"^([a-zA-Z]+[a-zA-Z0-9]+[._-]{0,1}[a-zA-Z0-9]+)+$"
+class_id_compliance_regex = r"^([a-zA-Z]+)([a-zA-Z0-9]+[._-]{0,1}[a-zA-Z0-9._-]+)+$"
 
 
 class Class(Resource):
@@ -331,7 +331,7 @@ class Class(Resource):
         return value
 
 
-property_id_compliance_regex = r"^(\*)|(([a-zA-Z]+[a-zA-Z0-9]+[._-]{0,1}[a-zA-Z0-9]+)+)$"
+property_id_compliance_regex = r"^(\*)|(([a-zA-Z]+)([a-zA-Z0-9]+[._-]{0,1}[a-zA-Z0-9._-]+)+)$"
 
 
 class Property(Resource):

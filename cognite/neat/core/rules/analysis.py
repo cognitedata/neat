@@ -1,3 +1,4 @@
+from collections import defaultdict
 import warnings
 import pandas as pd
 
@@ -24,7 +25,7 @@ def get_classes_with_properties(transformation_rules: TransformationRules) -> di
     return class_property_pairs
 
 
-def get_class_property_pairs(transformation_rules: TransformationRules) -> dict[str, dict[str, Property]]:
+def to_class_property_pairs(transformation_rules: TransformationRules) -> dict[str, dict[str, Property]]:
     """This method will actually consider only the first definition of given property!"""
     class_property_pairs = {}
 
@@ -101,3 +102,14 @@ def get_entity_ids(transformation_rules: TransformationRules) -> set[str]:
     )
 
     # Methods below could as well easily go to analysis.py
+
+
+def to_property_dict(rules: TransformationRules) -> dict[str, list[Property]]:
+    """Convert list of properties to a dictionary of lists of properties with property_id as key."""
+    property_: dict[str, list[Property]] = defaultdict(list)
+
+    for prop in rules.properties.values():
+        if not (prop.property_id and prop.property_name == "*"):
+            property_[prop.property_id].append(prop)
+
+    return property_
