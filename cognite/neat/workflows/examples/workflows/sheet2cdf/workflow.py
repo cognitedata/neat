@@ -1,7 +1,7 @@
 from cognite.neat.workflows.base_workflows.sheet2cdf import Sheet2CDFBaseWorkflow
-from tests.api.conftest import cognite_client
+from cognite.client import CogniteClient
 
 
 class Sheet2CDFNeatWorkflow(Sheet2CDFBaseWorkflow):
-    def __init__(self, name: str, client: cognite_client):
+    def __init__(self, name: str, client: CogniteClient):
         super().__init__(name, client)
