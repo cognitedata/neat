@@ -16,4 +16,4 @@ WORKDIR /app
 ENV NEAT_CONFIG_PATH=/app/data/config.yaml
 
 # Set the default command to run the application
-CMD ["uvicorn", "--host","0.0.0.0", "cognite.neat.explorer.explorer:app"]
+CMD ["uvicorn", "--host","0.0.0.0", "cognite.neat.app.api.explorer:app"]
