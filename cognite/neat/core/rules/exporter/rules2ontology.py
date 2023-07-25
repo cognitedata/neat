@@ -22,6 +22,13 @@ class Ontology(OntologyModel):
     shapes: list["SHACLNodeShape"]
     metadata: "OWLMetadata"
 
+    @field_validator("transformation_rules", mode="before")
+    def properties_redefined(cls, rules):
+        properties_redefined, redefinition_warnings = are_properties_redefined(rules, return_report=True)
+        if properties_redefined:
+            raise _exceptions.Error11(report=generate_exception_report(redefinition_warnings))
+        return rules
+
     @model_validator(mode="before")
     def create_shapes(cls, values: dict) -> dict:
         class_property_pairs = to_class_property_pairs(values["transformation_rules"])
@@ -67,13 +74,6 @@ class Ontology(OntologyModel):
         values["metadata"] = OWLMetadata(**values["transformation_rules"].metadata.model_dump())
 
         return values
-
-    @field_validator("transformation_rules", mode="before")
-    def properties_redefined(cls, rules):
-        properties_redefined, redefinition_warnings = are_properties_redefined(rules, return_report=True)
-        if properties_redefined:
-            raise _exceptions.Error11(report=generate_exception_report(redefinition_warnings))
-        return rules
 
     @property
     def shacl(self):
