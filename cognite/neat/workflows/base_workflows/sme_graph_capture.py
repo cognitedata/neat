@@ -5,7 +5,7 @@ from pathlib import Path
 from cognite.client import CogniteClient
 from cognite.client.data_classes import AssetFilter
 
-from cognite.neat.core import loader, rules
+from cognite.neat.core import extractors, rules
 from cognite.neat.graph import loaders
 from cognite.neat.graph.loaders.cdfcore.labels import upload_labels
 from cognite.neat.graph.loaders.cdfcore.rdf_to_assets import categorize_assets, rdf2assets, upload_assets
@@ -14,7 +14,7 @@ from cognite.neat.graph.loaders.cdfcore.rdf_to_relationships import (
     rdf2relationships,
     upload_relationships,
 )
-from cognite.neat.core.loader.graph_store import NeatGraphStore
+from cognite.neat.core.extractors.graph_store import NeatGraphStore
 from cognite.neat.core.rules.models import TransformationRules
 from cognite.neat.core.utils.utils import add_triples
 from cognite.neat.core.validator import validate_asset_hierarchy
@@ -72,7 +72,7 @@ class SmeGraphCaptureBaseWorkflow(BaseWorkflow):
 
     def step_configure_graph_store(self, flow_msg: FlowMessage = None):
         logging.info("Configure graph store")
-        self.solution_graph = loader.NeatGraphStore(prefixes=self.transformation_rules.prefixes)
+        self.solution_graph = extractors.NeatGraphStore(prefixes=self.transformation_rules.prefixes)
         self.solution_graph.init_graph("memory")
         return FlowMessage(output_text="Graph store configured")
 
@@ -103,7 +103,7 @@ class SmeGraphCaptureBaseWorkflow(BaseWorkflow):
         data_capture_sheet_path = Path(self.upload_meta_object["full_path"])
         logging.info(f"Processing data capture sheet {data_capture_sheet_path}")
 
-        raw_sheets = loader.graph_capturing_sheet.excel_file_to_table_by_name(data_capture_sheet_path)
+        raw_sheets = extractors.graph_capturing_sheet.excel_file_to_table_by_name(data_capture_sheet_path)
         triples = loaders.sheet2triples(raw_sheets, self.transformation_rules)
         add_triples(self.solution_graph, triples)
         return FlowMessage(output_text="Data capture sheet processed")

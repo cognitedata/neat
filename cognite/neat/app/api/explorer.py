@@ -21,7 +21,7 @@ from cognite.neat.graph.transformations import query_generator
 from cognite.neat.core import rules as rules_module
 from cognite.neat.core.app import NeatApp
 from cognite.neat.core.configuration import Config, configure_logging
-from cognite.neat.core.loader.config import copy_examples_to_directory
+from cognite.neat.core.extractors.config import copy_examples_to_directory
 from cognite.neat.workflows.workflow import WorkflowFullStateReport
 from cognite.neat.workflows.workflow import utils
 from cognite.neat.workflows.workflow.base import WorkflowDefinition

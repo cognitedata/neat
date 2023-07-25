@@ -1,9 +1,9 @@
 import pytest
 from rdflib import Namespace
 
-from cognite.neat.core import loader, rules
+from cognite.neat.core import extractors, rules
 from cognite.neat.graph import loaders
-from cognite.neat.core.loader.graph_store import NeatGraphStore
+from cognite.neat.core.extractors.graph_store import NeatGraphStore
 from cognite.neat.core.mocks.graph import generate_triples
 from cognite.neat.core.rules._loader import excel_file_to_table_by_name
 from cognite.neat.core.rules._parser import RawTables
@@ -33,7 +33,7 @@ def solution_knowledge_graph(source_knowledge_graph, transformation_rules):
 
 @pytest.fixture(scope="function")
 def mock_knowledge_graph(transformation_rules):
-    mock_graph = loader.NeatGraphStore(
+    mock_graph = extractors.NeatGraphStore(
         prefixes=transformation_rules.prefixes, namespace=transformation_rules.metadata.namespace
     )
     mock_graph.init_graph(base_prefix=transformation_rules.metadata.prefix)
@@ -70,7 +70,7 @@ def simple_rules():
 @pytest.fixture(scope="function")
 def graph_capturing_sheet():
     # return load_workbook(config.GRAPH_CAPTURING_SHEET)
-    return loader.graph_capturing_sheet.excel_file_to_table_by_name(config.GRAPH_CAPTURING_SHEET)
+    return extractors.graph_capturing_sheet.excel_file_to_table_by_name(config.GRAPH_CAPTURING_SHEET)
 
 
 @pytest.fixture(scope="function")

@@ -3,9 +3,9 @@ from pathlib import Path
 
 from cognite.client import CogniteClient
 
-from cognite.neat.core import loader, rules
+from cognite.neat.core import extractors, rules
 from cognite.neat.core.configuration import PREFIXES
-from cognite.neat.core.loader.graph_store import NeatGraphStore, drop_graph_store
+from cognite.neat.core.extractors.graph_store import NeatGraphStore, drop_graph_store
 from cognite.neat.core.rules.exporter.rules2triples import get_instances_as_triples
 from cognite.neat.core.rules.models import TransformationRules
 from cognite.neat.graph.transformations.transformer import RuleProcessingReport, domain2app_knowledge_graph
@@ -62,7 +62,7 @@ class GraphsAndRulesBaseWorkflow(BaseWorkflow):
             drop_graph_store(self.source_graph, source_store_dir, force=True)
             drop_graph_store(self.solution_graph, solution_store_dir, force=True)
 
-        self.source_graph = loader.NeatGraphStore(
+        self.source_graph = extractors.NeatGraphStore(
             prefixes=self.transformation_rules.prefixes, base_prefix="neat", namespace=PREFIXES["neat"]
         )
 
@@ -76,7 +76,7 @@ class GraphsAndRulesBaseWorkflow(BaseWorkflow):
             )
 
         if self.get_config_item_value("solution_rdf_store.type"):
-            self.solution_graph = loader.NeatGraphStore(
+            self.solution_graph = extractors.NeatGraphStore(
                 prefixes=self.transformation_rules.prefixes, base_prefix="neat", namespace=PREFIXES["neat"]
             )
 

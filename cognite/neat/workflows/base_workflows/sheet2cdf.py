@@ -7,7 +7,7 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes import AssetFilter
 from prometheus_client import Gauge
 
-from cognite.neat.core import loader, rules
+from cognite.neat.core import extractors, rules
 from cognite.neat.graph.loaders.cdfcore.labels import upload_labels
 from cognite.neat.graph.loaders.cdfcore.rdf_to_assets import (
     NeatMetadataKeys,
@@ -22,7 +22,7 @@ from cognite.neat.graph.loaders.cdfcore.rdf_to_relationships import (
     rdf2relationships,
     upload_relationships,
 )
-from cognite.neat.core.loader.graph_store import NeatGraphStore
+from cognite.neat.core.extractors.graph_store import NeatGraphStore
 from cognite.neat.core.rules.exporter.rules2triples import get_instances_as_triples
 from cognite.neat.core.rules.models import TransformationRules
 from cognite.neat.core.validator import validate_asset_hierarchy
@@ -84,7 +84,7 @@ class Sheet2CDFBaseWorkflow(BaseWorkflow):
         return FlowMessage(output_text=output_text)
 
     def step_configuring_stores(self, flow_msg: FlowMessage = None, clean_start: bool = True):
-        self.source_graph = loader.NeatGraphStore(
+        self.source_graph = extractors.NeatGraphStore(
             prefixes=self.transformation_rules.prefixes, namespace=self.transformation_rules.metadata.namespace
         )
         self.source_graph.init_graph(base_prefix=self.transformation_rules.metadata.prefix)

@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 from typing import Optional, Tuple
 
-from cognite.neat.core import loader
+from cognite.neat.core import extractors
 from cognite.neat.graph.loaders import upload_labels
 from cognite.neat.core.rules import load_rules_from_excel_file
 from cognite.neat.workflows.workflow.model import FlowMessage
@@ -29,7 +29,7 @@ class ConfiguringStores(Step):
     def run(self, input_data: RulesData) -> Tuple[FlowMessage, SourceGraphData]:
         logging.info("Configuring stores")
         rules = input_data.rules
-        graph = loader.NeatGraphStore(prefixes=rules.prefixes, namespace=rules.metadata.namespace)
+        graph = extractors.NeatGraphStore(prefixes=rules.prefixes, namespace=rules.metadata.namespace)
         graph.init_graph(base_prefix=rules.metadata.prefix)
         logging.info("Store configured")
         return (FlowMessage(output_text="Stores Configured"), SourceGraphData(graph=graph))

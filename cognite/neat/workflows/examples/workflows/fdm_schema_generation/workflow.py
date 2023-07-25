@@ -6,7 +6,7 @@ from cognite.client import CogniteClient
 
 from cognite.neat.core import rules
 from cognite.neat.graph import loaders
-from cognite.neat.core.loader.graph_store import NeatGraphStore
+from cognite.neat.core.extractors.graph_store import NeatGraphStore
 from cognite.neat.core.rules.models import TransformationRules
 from cognite.neat.workflows.workflow import utils
 from cognite.neat.workflows.workflow.base import BaseWorkflow, FlowMessage

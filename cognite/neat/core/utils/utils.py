@@ -12,7 +12,7 @@ from cognite.client.exceptions import CogniteDuplicatedError, CogniteReadTimeout
 from rdflib import Literal
 from rdflib.term import URIRef
 
-from cognite.neat.core.loader.graph_store import NeatGraphStore
+from cognite.neat.core.extractors.graph_store import NeatGraphStore
 from cognite.neat.core.utils.cdf import InteractiveCogniteClient, ServiceCogniteClient, CogniteClientConfig
 
 Triple: TypeAlias = tuple[URIRef, URIRef, Literal | URIRef]

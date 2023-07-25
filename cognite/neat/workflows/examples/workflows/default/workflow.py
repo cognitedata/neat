@@ -7,7 +7,7 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes import AssetFilter
 from prometheus_client import Gauge
 
-from cognite.neat.core import loader, rules
+from cognite.neat.core import extractors, rules
 from cognite.neat.graph.loaders.cdfcore.labels import upload_labels
 from cognite.neat.graph.loaders.cdfcore.rdf_to_assets import categorize_assets, rdf2assets, upload_assets
 from cognite.neat.graph.loaders.cdfcore.rdf_to_relationships import (
@@ -15,7 +15,7 @@ from cognite.neat.graph.loaders.cdfcore.rdf_to_relationships import (
     rdf2relationships,
     upload_relationships,
 )
-from cognite.neat.core.loader.graph_store import NeatGraphStore, drop_graph_store
+from cognite.neat.core.extractors.graph_store import NeatGraphStore, drop_graph_store
 from cognite.neat.core.rules.exporter.rules2triples import get_instances_as_triples
 from cognite.neat.core.rules.models import TransformationRules
 from cognite.neat.graph.transformations.transformer import RuleProcessingReport, domain2app_knowledge_graph
@@ -82,7 +82,7 @@ class DefaultNeatWorkflow(BaseWorkflow):
             drop_graph_store(self.source_graph, source_store_dir)
             drop_graph_store(self.solution_graph, solution_store_dir)
 
-        self.source_graph = loader.NeatGraphStore(
+        self.source_graph = extractors.NeatGraphStore(
             prefixes=self.transformation_rules.prefixes, base_prefix="nordic44", namespace="http://purl.org/nordic44#"
         )
         self.graph_source_type = self.get_config_item_value("source_rdf_store.type", self.graph_source_type)
@@ -93,7 +93,7 @@ class DefaultNeatWorkflow(BaseWorkflow):
             "neat-tnt",
             internal_storage_dir=source_store_dir,
         )
-        self.solution_graph = loader.NeatGraphStore(prefixes=self.transformation_rules.prefixes)
+        self.solution_graph = extractors.NeatGraphStore(prefixes=self.transformation_rules.prefixes)
         self.solution_graph.init_graph(
             self.get_config_item_value("solution_rdf_store.type"),
             self.get_config_item_value("solution_rdf_store.query_url"),

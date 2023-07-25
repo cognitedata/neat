@@ -1,5 +1,5 @@
 from cognite.neat.graph.loaders.cdfcore.rdf_to_assets import rdf2assets
-from cognite.neat.core.loader.graph_store import NeatGraphStore
+from cognite.neat.core.extractors.graph_store import NeatGraphStore
 from cognite.neat.core.validator import validate_asset_hierarchy
 
 

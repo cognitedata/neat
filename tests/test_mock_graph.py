@@ -1,4 +1,4 @@
-from cognite.neat.core import loader
+from cognite.neat.core import extractors
 from cognite.neat.graph import loaders
 from cognite.neat.graph.loaders.cdfcore import rdf_to_relationships
 from cognite.neat.core.mocks.graph import generate_triples
@@ -17,7 +17,7 @@ def test_mock_graph(transformation_rules: TransformationRules):
         "Terminal": 60,
     }
 
-    graph_store = loader.NeatGraphStore(prefixes=rules.prefixes, namespace=rules.metadata.namespace)
+    graph_store = extractors.NeatGraphStore(prefixes=rules.prefixes, namespace=rules.metadata.namespace)
     graph_store.init_graph(base_prefix=rules.metadata.prefix)
 
     mock_triples = generate_triples(rules, class_count)
