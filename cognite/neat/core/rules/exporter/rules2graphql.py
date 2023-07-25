@@ -1,5 +1,5 @@
-from typing import ClassVar
-from pydantic import BaseModel, ConfigDict, field_validator, model_validator
+from dataclasses import dataclass
+from typing import Self
 from cognite.neat.core.rules import _exceptions
 from cognite.neat.core.rules._validation import (
     are_entity_names_dms_compliant,
@@ -75,32 +75,48 @@ _FIELD_VALUE_TYPE = """{{value_type_mapping[property_definition.expected_value_t
                 else property_definition.expected_value_type}}"""
 
 
-class GraphQLSchema(BaseModel):
+@dataclass
+class GraphQLSchema:
     """Abilities to generate a GraphQL schema from TransformationRules"""
 
-    model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True, strict=False, extra="allow")
-    transformation_rules: TransformationRules
-    verbose: bool = False
+    schema: str
 
-    @field_validator("transformation_rules", mode="before")
-    def names_dms_compliant(cls, rules):
-        names_compliant, name_warnings = are_entity_names_dms_compliant(rules, return_report=True)
+    @classmethod
+    def from_rules(cls, transformation_rules: TransformationRules, verbose: bool = False) -> Self:
+        names_compliant, name_warnings = are_entity_names_dms_compliant(transformation_rules, return_report=True)
         if not names_compliant:
             raise _exceptions.Error10(report=generate_exception_report(name_warnings))
-        return rules
 
-    @field_validator("transformation_rules", mode="before")
-    def properties_redefined(cls, rules):
-        properties_redefined, redefinition_warnings = are_properties_redefined(rules, return_report=True)
+        properties_redefined, redefinition_warnings = are_properties_redefined(transformation_rules, return_report=True)
         if properties_redefined:
             raise _exceptions.Error11(report=generate_exception_report(redefinition_warnings))
-        return rules
 
-    @model_validator(mode="after")
-    def set_template(self):
+        return cls(schema=cls.generate_schema(transformation_rules, verbose))
+
+    @staticmethod
+    def generate_schema(transformation_rules: TransformationRules, verbose: bool) -> str:
+        """Generates a GraphQL schema of given TransformationRules"""
+        class_properties = to_class_property_pairs(transformation_rules)
+
+        type_definitions = []
+
+        for class_id in class_properties:
+            parameters = {
+                "class_definition": transformation_rules.classes[class_id],
+                "class_properties": list(class_properties[class_id].values()),
+                "value_type_mapping": DATA_TYPE_MAPPING,
+                "header": verbose,
+            }
+
+            type_definitions.append(GraphQLSchema.template().render(parameters))
+
+        return "\n\n".join(type_definitions)
+
+    @staticmethod
+    def template():
         from jinja2 import DictLoader, Environment, Template
 
-        self.template: Template = Environment(
+        template: Template = Environment(
             loader=DictLoader(
                 {
                     "type_header": _TYPE_HEADER,
@@ -114,23 +130,4 @@ class GraphQLSchema(BaseModel):
             ),
             cache_size=1000,
         ).get_template("type")
-        return self
-
-    @property
-    def schema(self) -> str:
-        """Generates a GraphQL schema of given TransformationRules"""
-        class_properties = to_class_property_pairs(self.transformation_rules)
-
-        type_definitions = []
-
-        for class_id in class_properties:
-            parameters = {
-                "class_definition": self.transformation_rules.classes[class_id],
-                "class_properties": list(class_properties[class_id].values()),
-                "value_type_mapping": DATA_TYPE_MAPPING,
-                "header": self.verbose,
-            }
-
-            type_definitions.append(self.template.render(parameters))
-
-        return "\n\n".join(type_definitions)
+        return template
