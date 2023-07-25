@@ -28,17 +28,13 @@ class Ontology(OntologyModel):
         if properties_redefined:
             raise _exceptions.Error11(report=generate_exception_report(redefinition_warnings))
 
-        class_property_pairs = to_class_property_pairs(transformation_rules)
-        property_definitions = to_property_dict(transformation_rules)
-        class_property_pairs = to_class_property_pairs(transformation_rules)
-
         return cls(
             properties=[
                 OWLProperty.from_list_of_properties(
                     definition,
                     transformation_rules.metadata.namespace,
                 )
-                for definition in property_definitions.values()
+                for definition in to_property_dict(transformation_rules).values()
             ],
             classes=[
                 OWLClass.from_class(
@@ -53,7 +49,7 @@ class Ontology(OntologyModel):
                     list(properties.values()),
                     transformation_rules.metadata.namespace,
                 )
-                for class_, properties in class_property_pairs.items()
+                for class_, properties in to_class_property_pairs(transformation_rules).items()
             ],
             metadata=OWLMetadata(**transformation_rules.metadata.model_dump()),
             prefixes=transformation_rules.prefixes,
