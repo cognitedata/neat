@@ -14,10 +14,10 @@ packages = [
     { include="cognite", from="." },
 ]
 exclude = [
-    "cognite/neat/explorer-ui/neat-app/public/**",
-    "cognite/neat/explorer-ui/neat-app/src/**",
-    "cognite/neat/explorer-ui/neat-app/node_modules/**",
-    "cognite/neat/explorer-ui/neat-app/*.json",
+    "cognite/neat/app/ui/neat-app/public/**",
+    "cognite/neat/app/ui/neat-app/src/**",
+    "cognite/neat/app/ui/neat-app/node_modules/**",
+    "cognite/neat/app/ui/neat-app/*.json",
 ]
 
 
@@ -30,7 +30,7 @@ include = '\.py$'
 explicit_package_bases = true
 
 [tool.poetry.scripts]
-neat = "cognite.neat.main:run"
+neat = "cognite.neat.app.main:run"
 
 
 [tool.poetry.dependencies]

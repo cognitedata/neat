@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from cognite.neat.explorer.explorer import app
+from cognite.neat.app.api.explorer import app
 from tests.api.memory_cognite_client import memory_cognite_client
 
 

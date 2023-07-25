@@ -1,0 +1,62 @@
+{
+  "name": "neat-app",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@emotion/react": "^11.10.5",
+    "@emotion/styled": "^11.10.5",
+    "@fontsource/roboto": "^4.5.8",
+    "@monaco-editor/react": "^4.5.1",
+    "@mui/base": "^5.0.0-alpha.106",
+    "@mui/icons-material": "^5.10.14",
+    "@mui/lab": "^5.0.0-alpha.113",
+    "@mui/material": "^5.11.1",
+    "@mui/x-data-grid": "^5.17.11",
+    "@react-sigma/core": "^3.1.0",
+    "@react-sigma/layout-circular": "^3.1.0",
+    "@react-sigma/layout-core": "^3.1.0",
+    "@react-sigma/layout-forceatlas2": "^3.1.0",
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "@textea/json-viewer": "^2.14.1",
+    "graphology": "^0.25.1",
+    "graphology-layout-force": "^0.2.4",
+    "graphology-layout-forceatlas2": "^0.10.1",
+    "graphology-types": "^0.24.5",
+    "lodash": "^4.17.21",
+    "parse-prometheus-text-format": "^1.1.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-mui-fileuploader": "^0.5.2",
+    "react-scripts": "^5.0.1",
+    "reactflow": "^11.3.0",
+    "sigma": "^2.4.0",
+    "web-vitals": "^2.1.4"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "homepage": "."
+}

@@ -154,8 +154,8 @@ data/temp
 docker/vol_data/*
 docker/vol_shared/*
 
-cognite/neat/explorer-ui/neat-app/node_modules
-!cognite/neat/explorer-ui/neat-app/build
+cognite/neat/ui/neat-app/node_modules
+!cognite/neat/ui/neat-app/build
 
 
 # local notebooks
