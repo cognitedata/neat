@@ -166,7 +166,7 @@ def get_rules(
     properties = []
     classes = []
     try:
-        rules = rules_module.load_rules_from_excel_file(path)
+        rules = rules_module.parse_rules_from_excel_file(path)
         properties = [
             {
                 "class": value.class_id,

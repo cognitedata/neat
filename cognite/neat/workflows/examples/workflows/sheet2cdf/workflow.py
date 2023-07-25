@@ -1,5 +1,5 @@
 from cognite.neat.workflows.base_workflows.sheet2cdf import Sheet2CDFBaseWorkflow
-from tests.api.conftest import cognite_client
+from tests.app.api.conftest import cognite_client
 
 
 class Sheet2CDFNeatWorkflow(Sheet2CDFBaseWorkflow):

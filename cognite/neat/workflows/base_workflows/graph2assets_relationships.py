@@ -7,9 +7,9 @@ from cognite.client.data_classes import AssetFilter
 from prometheus_client import Gauge
 
 from cognite.neat.workflows.base_workflows.graphs_and_rules import GraphsAndRulesBaseWorkflow
-from cognite.neat.graph.loaders.cdfcore.labels import upload_labels
-from cognite.neat.graph.loaders.cdfcore.rdf_to_assets import categorize_assets, rdf2assets, upload_assets
-from cognite.neat.graph.loaders.cdfcore.rdf_to_relationships import (
+from cognite.neat.graph.loaders.core.labels import upload_labels
+from cognite.neat.graph.loaders.core.rdf_to_assets import categorize_assets, rdf2assets, upload_assets
+from cognite.neat.graph.loaders.core.rdf_to_relationships import (
     categorize_relationships,
     rdf2relationships,
     upload_relationships,

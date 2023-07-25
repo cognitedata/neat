@@ -9,8 +9,8 @@ from prometheus_client import Gauge
 
 from cognite.neat import rules
 from cognite.neat.graph import extractors
-from cognite.neat.graph.loaders.cdfcore.labels import upload_labels
-from cognite.neat.graph.loaders.cdfcore.rdf_to_assets import (
+from cognite.neat.graph.loaders.core.labels import upload_labels
+from cognite.neat.graph.loaders.core.rdf_to_assets import (
     NeatMetadataKeys,
     categorize_assets,
     rdf2assets,
@@ -18,7 +18,7 @@ from cognite.neat.graph.loaders.cdfcore.rdf_to_assets import (
     unique_asset_labels,
     upload_assets,
 )
-from cognite.neat.graph.loaders.cdfcore.rdf_to_relationships import (
+from cognite.neat.graph.loaders.core.rdf_to_relationships import (
     categorize_relationships,
     rdf2relationships,
     upload_relationships,
@@ -73,7 +73,7 @@ class Sheet2CDFBaseWorkflow(BaseWorkflow):
         else:
             cdf_store.load_rules_file_from_cdf(self.cdf_client, rules_file, version)
 
-        self.transformation_rules, self.errors, self.warnings = rules.load_rules_from_excel_file(
+        self.transformation_rules, self.errors, self.warnings = rules.parse_rules_from_excel_file(
             rules_file_path, return_report=True
         )
 

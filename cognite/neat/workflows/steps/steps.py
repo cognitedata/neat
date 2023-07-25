@@ -4,7 +4,7 @@ from typing import Optional, Tuple
 
 from ...graph import extractors
 from cognite.neat.graph.loaders import upload_labels
-from cognite.neat.rules import load_rules_from_excel_file
+from cognite.neat.rules import parse_rules_from_excel_file
 from cognite.neat.workflows.workflow.model import FlowMessage
 from cognite.neat.workflows.workflow.step_model import Step
 from .data_contracts import ClientData, PathData, RulesData, SourceGraphData
@@ -21,7 +21,7 @@ __all__ = [
 class LoadTransformationRules(Step):
     def run(self, input_data: PathData) -> Tuple[FlowMessage, RulesData]:
         rules_file_path = Path(self.rules_storage_path, input_data.excel_file_path)
-        rules = load_rules_from_excel_file(rules_file_path)
+        rules = parse_rules_from_excel_file(rules_file_path)
         return (FlowMessage(output_text="Rules loaded successfully std step"), RulesData(rules=rules))
 
 
