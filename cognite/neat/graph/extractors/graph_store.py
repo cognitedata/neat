@@ -13,7 +13,7 @@ from rdflib.query import Result
 
 from cognite.neat.app.api.configuration import DEFAULT_NAMESPACE, PREFIXES, RdfStoreType
 from cognite.neat.graph.extractors.data_stores import oxrdflib
-from cognite.neat.graph.extractors.graph import rdf_file_to_graph
+from cognite.neat.graph.extractors.rdf_to_graph import rdf_file_to_graph
 
 prom_qsm = Summary("store_query_time_summary", "Time spent processing queries", ["query"])
 prom_sq = Gauge("store_single_query_time", "Time spent processing a single query", ["query"])
