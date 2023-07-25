@@ -20,7 +20,7 @@ from cognite.neat.graph.extractors import NeatGraphStore, drop_graph_store
 from cognite.neat.core.rules.exporter.rules2triples import get_instances_as_triples
 from cognite.neat.core.rules.models import TransformationRules
 from cognite.neat.graph.transformations.transformer import RuleProcessingReport, domain2app_knowledge_graph
-from cognite.neat.core.validator import validate_asset_hierarchy
+from cognite.neat.graph.loaders.validator import validate_asset_hierarchy
 from cognite.neat.workflows.workflow import utils
 from cognite.neat.workflows.workflow.base import BaseWorkflow, FlowMessage
 from cognite.neat.workflows.workflow.cdf_store import CdfStore

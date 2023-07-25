@@ -14,7 +14,7 @@ from cognite.neat.graph.loaders.cdfcore.rdf_to_relationships import (
     rdf2relationships,
     upload_relationships,
 )
-from cognite.neat.core.validator import validate_asset_hierarchy
+from cognite.neat.graph.loaders.validator import validate_asset_hierarchy
 from cognite.neat.workflows.workflow.model import FlowMessage
 
 with contextlib.suppress(ValueError):
