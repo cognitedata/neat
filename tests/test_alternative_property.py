@@ -1,8 +1,8 @@
 from rdflib import Literal
 
-from cognite.neat.core.extractors.cdfcore.rdf_to_assets import rdf2assets
-from cognite.neat.core.loader.graph_store import NeatGraphStore
-from cognite.neat.core.transformer import domain2app_knowledge_graph
+from cognite.neat.graph.loaders.cdfcore.rdf_to_assets import rdf2assets
+from cognite.neat.graph.extractors import NeatGraphStore
+from cognite.neat.graph.transformations.transformer import domain2app_knowledge_graph
 
 
 def test_missing_name(source_knowledge_graph, transformation_rules):

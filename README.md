@@ -175,12 +175,13 @@ The NEAT framework has few conventions :
  FlowMessage is passed from one step to another and it's captured in execution log.
 
 Simplest `workflow.py`
+
 ````python
 
 import logging
 from cognite.client import CogniteClient
-from cognite.neat.core.workflow.base import BaseWorkflow
-from cognite.neat.core.workflow.model import FlowMessage
+from cognite.neat.workflows.workflow import BaseWorkflow
+from cognite.neat.workflows.workflow import FlowMessage
 
 
 class PlaygroundNeatWorkflow(BaseWorkflow):

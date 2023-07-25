@@ -7,7 +7,7 @@ WORKDIR /app/
 COPY cognite/neat /app/cognite/neat
 
 RUN mkdir -p /app/data \
-    && cp /app/cognite/neat/examples/. /app/data -r \
+    && cp /app/cognite/neat/workflows/examples/. /app/data -r \
     && chmod -R 777 /app/data \
     && pip install -r requirements.txt
 
@@ -16,4 +16,4 @@ WORKDIR /app
 ENV NEAT_CONFIG_PATH=/app/data/config.yaml
 
 # Set the default command to run the application
-CMD ["uvicorn", "--host","0.0.0.0", "cognite.neat.explorer.explorer:app"]
+CMD ["uvicorn", "--host","0.0.0.0", "cognite.neat.app.api.explorer:app"]

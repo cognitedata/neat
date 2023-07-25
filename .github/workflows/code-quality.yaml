@@ -55,10 +55,6 @@ jobs:
 
       - run: poetry install -E all
 
-      - name: Git diff (in case linting fails, prints why)
-        if: always()
-        run: git diff .
-
       - name: Run tests
         run: export PYTHONPATH=$PYTHONPATH:$(pwd); poetry run pytest
 

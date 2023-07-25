@@ -1,8 +1,8 @@
 from rdflib import XSD, Literal
 
-from cognite.neat.core.extractors import sheet2triples
-from cognite.neat.core.loader import NeatGraphStore
-from cognite.neat.core.utils.utils import add_triples, remove_namespace
+from cognite.neat.graph.loaders import sheet2triples
+from cognite.neat.graph.extractors import NeatGraphStore
+from cognite.neat.utils.utils import add_triples, remove_namespace
 
 
 def test_sheet2graph(simple_rules, graph_capturing_sheet):

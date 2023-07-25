@@ -2,8 +2,8 @@ import filecmp
 from pathlib import Path
 
 from cognite.neat.constants import EXAMPLES_DIRECTORY
-from cognite.neat.core.loader.config import copy_examples_to_directory
-from cognite.neat.core.rules.models import TransformationRules
+from cognite.neat.graph.extractors.config import copy_examples_to_directory
+from cognite.neat.rules.models import TransformationRules
 
 
 def test_load_excel(transformation_rules: TransformationRules):

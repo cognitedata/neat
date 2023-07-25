@@ -3,9 +3,9 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from cognite.neat.core.configuration import Config
-from cognite.neat.core.rules import to_rdf_path
-from cognite.neat.core.rules.models import Property
+from cognite.neat.app.api.configuration import Config
+from cognite.neat.rules import to_rdf_path
+from cognite.neat.rules.models import Property
 
 nan = float("nan")
 

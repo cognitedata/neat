@@ -1,6 +1,6 @@
 import pytest
-from cognite.neat.core.rules.exporter.rules2ontology import Ontology
-from cognite.neat.core.rules._exceptions import Error11
+from cognite.neat.rules.exporter.rules2ontology import Ontology
+from cognite.neat.rules._exceptions import Error11
 from copy import deepcopy
 
 

@@ -3,10 +3,10 @@ from cognite.client import CogniteClient
 from starlette.testclient import TestClient
 
 from cognite.neat.constants import EXAMPLE_WORKFLOWS
-from cognite.neat.core.rules.models import TransformationRules
-from cognite.neat.core.workflow import BaseWorkflow
-from cognite.neat.core.workflow.model import WorkflowDefinition
-from cognite.neat.explorer.data_classes.rest import RunWorkflowRequest
+from cognite.neat.rules.models import TransformationRules
+from cognite.neat.workflows.workflow.base import BaseWorkflow
+from cognite.neat.workflows.workflow.model import WorkflowDefinition
+from cognite.neat.app.api.data_classes.rest import RunWorkflowRequest
 from tests.api.memory_cognite_client import MemoryClient
 
 

@@ -3,9 +3,9 @@ from copy import deepcopy
 from cognite.client.data_classes import Asset, AssetList, Label, LabelFilter, Relationship, RelationshipList
 from cognite.client.testing import monkeypatch_cognite_client
 
-from cognite.neat.core.extractors.cdfcore.rdf_to_assets import rdf2assets
-from cognite.neat.core.extractors.cdfcore.rdf_to_relationships import categorize_relationships, rdf2relationships
-from cognite.neat.core.rules.exporter.cdf.rules2labels import get_labels
+from cognite.neat.graph.loaders.cdfcore.rdf_to_assets import rdf2assets
+from cognite.neat.graph.loaders.cdfcore.rdf_to_relationships import categorize_relationships, rdf2relationships
+from cognite.neat.rules.exporter.cdf.rules2labels import get_labels
 
 
 def test_relationship_diffing(mock_knowledge_graph, transformation_rules):
