@@ -444,17 +444,15 @@ class SHACLPropertyShape(OntologyModel):
 
     @classmethod
     def from_property(cls, definition: Property, namespace: Namespace) -> "SHACLPropertyShape":
-        prop_dict = {
-            "id_": BNode(),
-            "path": namespace[definition.property_id],
-            "node_kind": SHACL.IRI if definition.property_type == "ObjectProperty" else SHACL.Literal,
-            "expected_value_type": (
+        return cls(
+            id_=BNode(),
+            path=namespace[definition.property_id],
+            node_kind=SHACL.IRI if definition.property_type == "ObjectProperty" else SHACL.Literal,
+            expected_value_type=(
                 namespace[f"{definition.expected_value_type}Shape"]
                 if definition.property_type == "ObjectProperty"
                 else XSD[definition.expected_value_type]
             ),
-            "min_count": definition.min_count,
-            "max_count": definition.max_count,
-        }
-
-        return cls(**prop_dict, namespace=namespace)
+            min_count=definition.min_count,
+            max_count=definition.max_count,
+            namespace=namespace)
