@@ -5,8 +5,8 @@ from pathlib import Path
 from cognite.client import CogniteClient
 from cognite.client.data_classes import AssetFilter
 
-from cognite.neat.core import extractors, rules
-from cognite.neat.graph import loaders
+from cognite.neat.core import rules
+from cognite.neat.graph import loaders, extractors
 from cognite.neat.graph.loaders.cdfcore.labels import upload_labels
 from cognite.neat.graph.loaders.cdfcore.rdf_to_assets import categorize_assets, rdf2assets, upload_assets
 from cognite.neat.graph.loaders.cdfcore.rdf_to_relationships import (
@@ -14,7 +14,7 @@ from cognite.neat.graph.loaders.cdfcore.rdf_to_relationships import (
     rdf2relationships,
     upload_relationships,
 )
-from cognite.neat.core.extractors.graph_store import NeatGraphStore
+from cognite.neat.graph.extractors import NeatGraphStore
 from cognite.neat.core.rules.models import TransformationRules
 from cognite.neat.core.utils.utils import add_triples
 from cognite.neat.core.validator import validate_asset_hierarchy

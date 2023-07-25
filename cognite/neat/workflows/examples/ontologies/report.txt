@@ -2,7 +2,6 @@
 - Input should be a valid string [metadata/prefix]
 - Input should be a valid string [metadata/cdfSpaceName]
 - Input should be a valid string [metadata/dataModelName]
-- Input should be a valid string [metadata/version]
 - Input should be a valid string [metadata/title]
 - Input should be a valid string [metadata/description]
 - Input should be a valid string [metadata/creator/constrained-str]
@@ -62,6 +61,10 @@
 - Input should be a valid string [properties/row 29/Type]
 - Input should be a valid string [properties/row 60/Type]
 
+# Errors: VersionRegexViolation
+- Invalid version 'nan' stored in 'Metadata' sheet, it must obey regex ^([0-9]+[_-]{1}[0-9]+[_-]{1}[0-9]+[_-]{1}[a-zA-Z0-9]+)|([0-9]+[_-]{1}[0-9]+[_-]{1}[0-9]+)|([0-9]+[_-]{1}[0-9])|([0-9]+)$!
+	For further information visit https://thisisneat.io/errors/Error104 [metadata/version]
+
 # Errors: datetime_parsing
 - Input should be a valid datetime, NaN values not permitted [metadata/created]
 - Input should be a valid datetime, NaN values not permitted [metadata/updated]
@@ -70,7 +73,7 @@
 - Input should be a valid list [metadata/creator/list[constrained-str]]
 
 # Errors: ClassIDRegexViolation
-- Class id '3DModel' stored in 'Class' column in 'Classes' sheet violates regex ^([a-zA-Z]+[a-zA-Z0-9]+[._-]{0,1}[a-zA-Z0-9]+)+$! [classes/3DModel/Class]
+- Class id '3DModel' stored in 'Class' column in 'Classes' sheet violates regex ^([a-zA-Z]+)([a-zA-Z0-9]+[._-]{0,1}[a-zA-Z0-9._-]+)+$! [classes/3DModel/Class]
 
 # Errors: ClassIDMissing
 - Class id is missing, it failed validation either because it has not been provided or because it did not respect regex expression! [classes/3DModel/Name]

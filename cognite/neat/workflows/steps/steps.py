@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 from typing import Optional, Tuple
 
-from cognite.neat.core import extractors
+from ...graph import extractors
 from cognite.neat.graph.loaders import upload_labels
 from cognite.neat.core.rules import load_rules_from_excel_file
 from cognite.neat.workflows.workflow.model import FlowMessage

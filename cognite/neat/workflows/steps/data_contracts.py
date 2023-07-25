@@ -2,7 +2,7 @@ from pathlib import Path
 
 from cognite.client import CogniteClient
 
-from cognite.neat.core.extractors import NeatGraphStore
+from cognite.neat.graph.extractors import NeatGraphStore
 from cognite.neat.core.rules.models import TransformationRules
 from cognite.neat.workflows.workflow.step_model import DataContract
 

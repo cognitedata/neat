@@ -2,7 +2,7 @@ import filecmp
 from pathlib import Path
 
 from cognite.neat.constants import EXAMPLES_DIRECTORY
-from cognite.neat.core.extractors.config import copy_examples_to_directory
+from cognite.neat.graph.extractors.config import copy_examples_to_directory
 from cognite.neat.core.rules.models import TransformationRules
 
 

@@ -7,7 +7,8 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes import AssetFilter
 from prometheus_client import Gauge
 
-from cognite.neat.core import extractors, rules
+from cognite.neat.core import rules
+from cognite.neat.graph import extractors
 from cognite.neat.graph.loaders.cdfcore.labels import upload_labels
 from cognite.neat.graph.loaders.cdfcore.rdf_to_assets import categorize_assets, rdf2assets, upload_assets
 from cognite.neat.graph.loaders.cdfcore.rdf_to_relationships import (
@@ -15,7 +16,7 @@ from cognite.neat.graph.loaders.cdfcore.rdf_to_relationships import (
     rdf2relationships,
     upload_relationships,
 )
-from cognite.neat.core.extractors.graph_store import NeatGraphStore, drop_graph_store
+from cognite.neat.graph.extractors import NeatGraphStore, drop_graph_store
 from cognite.neat.core.rules.exporter.rules2triples import get_instances_as_triples
 from cognite.neat.core.rules.models import TransformationRules
 from cognite.neat.graph.transformations.transformer import RuleProcessingReport, domain2app_knowledge_graph

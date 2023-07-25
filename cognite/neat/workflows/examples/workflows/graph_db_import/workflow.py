@@ -5,7 +5,7 @@ from pathlib import Path
 import requests
 from cognite.client import CogniteClient
 
-from cognite.neat.core.extractors.graph_store import NeatGraphStore
+from cognite.neat.graph.extractors import NeatGraphStore
 from cognite.neat.core.rules.models import TransformationRules
 from cognite.neat.workflows.workflow import BaseWorkflow, FlowMessage
 

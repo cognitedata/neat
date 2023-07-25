@@ -1,7 +1,7 @@
 import pandas as pd
 
 from cognite.neat.core.configuration import PREFIXES
-from cognite.neat.core.extractors.graph_store import NeatGraphStore
+from cognite.neat.graph.extractors import NeatGraphStore
 from cognite.neat.graph.transformations.query_generator.sparql import build_sparql_query
 
 

@@ -2,7 +2,7 @@
 import pytest
 from cognite.client.testing import monkeypatch_cognite_client
 
-from cognite.neat.core.extractors.config import copy_examples_to_directory
+from cognite.neat.graph.extractors.config import copy_examples_to_directory
 from cognite.neat.workflows.workflow import WorkflowManager
 
 
