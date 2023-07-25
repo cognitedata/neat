@@ -15,19 +15,26 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.18.1] - 25-07-23
+
+### Changed
+
+- Structure of `neat` package
+- Structure of `neat` tests to reflect package structure
+- Renamed rules loaders into readers
+- Merged rules readers and parsers into parser
+
 ## [0.18.0] - 25-07-23
 
 ### Changed
 
 - Structure of `neat` package.
 
-
 ## [0.17.4] - 24-07-23
 
 ### Added
 
 - Generation of ontology, shape constraint objects and semantic data model out of transformation rules
-
 
 ## [0.17.3] - 24-07-23
 
