@@ -185,7 +185,8 @@ class OWLClass(OntologyModel):
             label=definition.class_name,
             comment=definition.description,
             sub_class_of=namespace[definition.parent_class] if definition.parent_class else None,
-            namespace=namespace)
+            namespace=namespace,
+        )
 
     @property
     def type_triples(self) -> list[tuple]:
