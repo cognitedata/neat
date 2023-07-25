@@ -8,15 +8,15 @@ import pandas as pd
 from prometheus_client import Gauge
 from rdflib import RDF, Literal, Namespace, URIRef
 
-from cognite.neat.core.rules.analysis import (
+from cognite.neat.rules.analysis import (
     get_class_linkage,
     get_classes_with_properties,
     get_defined_classes,
     get_symmetric_pairs,
 )
-from cognite.neat.core.rules.exporter.rules2rules import subset_rules
-from cognite.neat.core.rules.models import TransformationRules
-from cognite.neat.core.utils.utils import remove_namespace
+from cognite.neat.rules.exporter.rules2rules import subset_rules
+from cognite.neat.rules.models import TransformationRules
+from cognite.neat.utils.utils import remove_namespace
 
 neat_total_processed_mock_triples = Gauge(
     "neat_total_processed_mock_triples", "Number of processed mock triples", ["state"]

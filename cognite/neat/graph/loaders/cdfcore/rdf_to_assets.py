@@ -18,8 +18,8 @@ from rdflib.term import URIRef
 from cognite.neat.app.api.configuration import EXCLUDE_PATHS
 from cognite.neat.graph.loaders.cdfcore.models import AssetTemplate
 from cognite.neat.graph.extractors.graph_store import NeatGraphStore
-from cognite.neat.core.rules.models import Property, TransformationRules
-from cognite.neat.core.utils.utils import chunker, datetime_utc_now, remove_namespace, retry_decorator
+from cognite.neat.rules.models import Property, TransformationRules
+from cognite.neat.utils.utils import chunker, datetime_utc_now, remove_namespace, retry_decorator
 
 
 @dataclass

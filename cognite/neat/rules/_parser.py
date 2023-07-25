@@ -9,8 +9,8 @@ from pydantic_core import ErrorDetails, ValidationError
 from rdflib import Namespace
 
 from cognite.neat.app.api.configuration import PREFIXES
-from cognite.neat.core.rules import _exceptions
-from cognite.neat.core.rules.models import Class, Metadata, Property, RuleModel, TransformationRules
+from cognite.neat.rules import _exceptions
+from cognite.neat.rules.models import Class, Metadata, Property, RuleModel, TransformationRules
 
 
 def from_tables(

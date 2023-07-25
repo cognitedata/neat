@@ -7,9 +7,9 @@ from openpyxl.styles import Alignment, Border, Font, NamedStyle, PatternFill, Si
 from openpyxl.utils.cell import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
 
-from cognite.neat.core.rules.analysis import to_class_property_pairs
-from cognite.neat.core.rules.exporter.rules2rules import to_dms_name
-from cognite.neat.core.rules.models import TransformationRules
+from cognite.neat.rules.analysis import to_class_property_pairs
+from cognite.neat.rules.exporter.rules2rules import to_dms_name
+from cognite.neat.rules.models import TransformationRules
 
 
 def rules2graph_capturing_sheet(

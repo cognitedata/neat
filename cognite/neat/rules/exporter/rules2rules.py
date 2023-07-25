@@ -8,8 +8,8 @@ import logging
 import re
 import warnings
 
-from cognite.neat.core.rules.analysis import get_defined_classes
-from cognite.neat.core.rules.models import TransformationRules
+from cognite.neat.rules.analysis import get_defined_classes
+from cognite.neat.rules.models import TransformationRules
 
 
 def subset_rules(

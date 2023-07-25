@@ -2,7 +2,7 @@ from collections import defaultdict
 import warnings
 import pandas as pd
 
-from cognite.neat.core.rules.models import Property, TransformationRules
+from cognite.neat.rules.models import Property, TransformationRules
 
 
 def get_defined_classes(transformation_rules: TransformationRules) -> set[str]:

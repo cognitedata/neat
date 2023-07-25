@@ -7,7 +7,7 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes import AssetFilter
 from prometheus_client import Gauge
 
-from cognite.neat.core import rules
+from cognite.neat import rules
 from cognite.neat.graph import extractors
 from cognite.neat.graph.loaders.cdfcore.labels import upload_labels
 from cognite.neat.graph.loaders.cdfcore.rdf_to_assets import (
@@ -24,8 +24,8 @@ from cognite.neat.graph.loaders.cdfcore.rdf_to_relationships import (
     upload_relationships,
 )
 from cognite.neat.graph.extractors import NeatGraphStore
-from cognite.neat.core.rules.exporter.rules2triples import get_instances_as_triples
-from cognite.neat.core.rules.models import TransformationRules
+from cognite.neat.rules.exporter.rules2triples import get_instances_as_triples
+from cognite.neat.rules.models import TransformationRules
 from cognite.neat.graph.loaders.validator import validate_asset_hierarchy
 from cognite.neat.workflows.workflow import utils
 from cognite.neat.workflows.workflow.base import BaseWorkflow, FlowMessage

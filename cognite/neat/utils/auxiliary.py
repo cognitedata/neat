@@ -1,7 +1,7 @@
 import importlib
 from types import ModuleType
 
-from cognite.neat.core.exceptions import NeatImportError
+from cognite.neat.exceptions import NeatImportError
 
 
 def local_import(module: str, extra: str) -> ModuleType:

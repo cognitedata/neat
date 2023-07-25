@@ -13,7 +13,7 @@ from rdflib import Literal
 from rdflib.term import URIRef
 
 from cognite.neat.graph.extractors import NeatGraphStore
-from cognite.neat.core.utils.cdf import InteractiveCogniteClient, ServiceCogniteClient, CogniteClientConfig
+from cognite.neat.utils.cdf import InteractiveCogniteClient, ServiceCogniteClient, CogniteClientConfig
 
 Triple: TypeAlias = tuple[URIRef, URIRef, Literal | URIRef]
 

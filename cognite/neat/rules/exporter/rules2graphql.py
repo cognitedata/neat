@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 from typing import Self
-from cognite.neat.core.rules import _exceptions
-from cognite.neat.core.rules._validation import (
+from cognite.neat.rules import _exceptions
+from cognite.neat.rules._validation import (
     are_entity_names_dms_compliant,
     are_properties_redefined,
 )
-from cognite.neat.core.rules.analysis import to_class_property_pairs
-from cognite.neat.core.rules.models import DATA_TYPE_MAPPING, TransformationRules
-from cognite.neat.core.utils.utils import generate_exception_report
+from cognite.neat.rules.analysis import to_class_property_pairs
+from cognite.neat.rules.models import DATA_TYPE_MAPPING, TransformationRules
+from cognite.neat.utils.utils import generate_exception_report
 
 
 _TYPE = (

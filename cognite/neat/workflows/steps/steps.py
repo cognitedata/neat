@@ -4,7 +4,7 @@ from typing import Optional, Tuple
 
 from ...graph import extractors
 from cognite.neat.graph.loaders import upload_labels
-from cognite.neat.core.rules import load_rules_from_excel_file
+from cognite.neat.rules import load_rules_from_excel_file
 from cognite.neat.workflows.workflow.model import FlowMessage
 from cognite.neat.workflows.workflow.step_model import Step
 from .data_contracts import ClientData, PathData, RulesData, SourceGraphData

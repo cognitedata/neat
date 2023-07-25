@@ -6,7 +6,7 @@ from IPython.display import Markdown, display
 from cognite.neat.app.api.configuration import PREFIXES
 from cognite.neat.graph.extractors import NeatGraphStore
 from cognite.neat.graph.transformations.query_generator import build_sparql_query
-from cognite.neat.core.rules.to_rdf_path import (
+from cognite.neat.rules.to_rdf_path import (
     AllProperties,
     AllReferences,
     Entity,

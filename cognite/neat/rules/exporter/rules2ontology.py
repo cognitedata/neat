@@ -4,11 +4,11 @@ from pydantic import BaseModel, ConfigDict, FieldValidationInfo, field_validator
 from rdflib import OWL, RDF, RDFS, XSD, DCTERMS, BNode, Graph, Literal, URIRef, Namespace
 from rdflib.collection import Collection as GraphCollection
 
-from cognite.neat.core.rules.models import DATA_TYPE_MAPPING, Class, Property, TransformationRules, Metadata
-from cognite.neat.core.rules.analysis import to_property_dict, to_class_property_pairs
-from cognite.neat.core.rules._validation import are_properties_redefined
-from cognite.neat.core.rules import _exceptions
-from cognite.neat.core.utils.utils import generate_exception_report, remove_namespace
+from cognite.neat.rules.models import DATA_TYPE_MAPPING, Class, Property, TransformationRules, Metadata
+from cognite.neat.rules.analysis import to_property_dict, to_class_property_pairs
+from cognite.neat.rules._validation import are_properties_redefined
+from cognite.neat.rules import _exceptions
+from cognite.neat.utils.utils import generate_exception_report, remove_namespace
 
 
 class OntologyModel(BaseModel):

@@ -25,8 +25,8 @@ from rdflib import XSD, Literal, Namespace, URIRef
 from cognite.neat.app.api.configuration import PREFIXES
 
 # from . import _exceptions
-from cognite.neat.core.rules import _exceptions
-from cognite.neat.core.rules.to_rdf_path import Entity, RuleType, parse_rule
+from cognite.neat.rules import _exceptions
+from cognite.neat.rules.to_rdf_path import Entity, RuleType, parse_rule
 
 __all__ = ["Class", "Instance", "Metadata", "Prefixes", "Property", "Resource", "TransformationRules"]
 

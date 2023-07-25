@@ -1,4 +1,4 @@
-from cognite.neat.core.rules.models import TransformationRules
+from cognite.neat.rules.models import TransformationRules
 
 
 def get_labels(transformation_rules: TransformationRules) -> set[str]:

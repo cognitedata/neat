@@ -16,9 +16,8 @@ from fastapi.staticfiles import StaticFiles
 from prometheus_client import REGISTRY, Counter, make_asgi_app
 
 from cognite import neat
-from cognite.neat import constants
+from cognite.neat import constants, rules as rules_module
 from cognite.neat.graph.transformations import query_generator
-from cognite.neat.core import rules as rules_module
 from cognite.neat.app.api.app import NeatApp
 from cognite.neat.app.api.configuration import Config, configure_logging
 from cognite.neat.graph.extractors.config import copy_examples_to_directory

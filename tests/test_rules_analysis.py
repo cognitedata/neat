@@ -1,4 +1,4 @@
-from cognite.neat.core.rules.analysis import (
+from cognite.neat.rules.analysis import (
     get_class_linkage,
     get_connected_classes,
     get_defined_classes,

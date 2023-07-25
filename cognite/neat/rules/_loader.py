@@ -5,8 +5,8 @@ from openpyxl import Workbook, load_workbook
 import pandas as pd
 import requests
 
-from cognite.neat.core.utils.auxiliary import local_import
-from cognite.neat.core.rules import _exceptions
+from cognite.neat.utils.auxiliary import local_import
+from cognite.neat.rules import _exceptions
 
 
 def google_to_table_by_name(sheet_id: str) -> dict[str, pd.DataFrame]:

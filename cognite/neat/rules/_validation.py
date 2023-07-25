@@ -1,8 +1,8 @@
 import re
 import warnings
 
-from cognite.neat.core.rules import _exceptions
-from cognite.neat.core.rules.models import TransformationRules, data_model_name_compliance_regex
+from cognite.neat.rules import _exceptions
+from cognite.neat.rules.models import TransformationRules, data_model_name_compliance_regex
 
 
 def are_entity_names_dms_compliant(

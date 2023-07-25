@@ -11,7 +11,7 @@ from cognite.neat.graph.loaders.cdfcore.rdf_to_assets import (
     order_assets,
     remove_non_existing_labels,
 )
-from cognite.neat.core.rules.exporter.cdf.rules2labels import get_labels
+from cognite.neat.rules.exporter.cdf.rules2labels import get_labels
 
 
 def test_asset_hierarchy_ordering(mock_rdf_assets):

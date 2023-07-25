@@ -6,7 +6,7 @@ from typing import ClassVar, List, Optional
 from pydantic import BaseModel, ConfigDict, root_validator, validator
 from rdflib import Namespace
 
-from cognite.neat.core.rules.models import METADATA_VALUE_MAX_LENGTH
+from cognite.neat.rules.models import METADATA_VALUE_MAX_LENGTH
 
 
 class AssetClassMapping(BaseModel):

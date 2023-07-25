@@ -5,6 +5,7 @@ from pydantic_core import ErrorDetails
 
 from . import _loader, _parser, models
 
+
 __all__ = [
     "models",
     "load_rules_from_excel_file",

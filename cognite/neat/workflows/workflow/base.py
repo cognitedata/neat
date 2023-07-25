@@ -12,8 +12,8 @@ from cognite.client import CogniteClient
 from prometheus_client import Gauge
 
 from cognite.neat.graph.extractors.data_stores.metrics import NeatMetricsCollector
-from cognite.neat.core.exceptions import InvalidWorkFlowError
-from cognite.neat.core.utils.utils import retry_decorator
+from cognite.neat.exceptions import InvalidWorkFlowError
+from cognite.neat.utils.utils import retry_decorator
 from cognite.neat.workflows.workflow.model import (
     FlowMessage,
     StepExecutionStatus,
@@ -30,7 +30,7 @@ from cognite.neat.workflows.workflow.model import (
 from cognite.neat.workflows.workflow.tasks import WorkflowTaskBuilder
 
 from cognite.neat.app.api.configuration import Config
-from cognite.neat.core.utils.cdf import CogniteClientConfig
+from cognite.neat.utils.cdf import CogniteClientConfig
 from . import utils, cdf_store
 from .step_model import DataContract
 import cognite.neat.workflows.steps.steps

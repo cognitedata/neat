@@ -13,8 +13,8 @@ from cognite.client.exceptions import CogniteDuplicatedError
 from cognite.neat.graph.loaders.cdfcore.models import RelationshipDefinition, RelationshipDefinitions
 from cognite.neat.graph.loaders.cdfcore.rdf_to_assets import _categorize_cdf_assets
 from cognite.neat.graph.extractors.graph_store import NeatGraphStore
-from cognite.neat.core.rules.models import TransformationRules
-from cognite.neat.core.utils.utils import chunker, datetime_utc_now, epoch_now_ms, remove_namespace, retry_decorator
+from cognite.neat.rules.models import TransformationRules
+from cognite.neat.utils.utils import chunker, datetime_utc_now, epoch_now_ms, remove_namespace, retry_decorator
 
 
 def define_relationships(rules: TransformationRules, stop_on_exception: bool = False) -> RelationshipDefinitions:

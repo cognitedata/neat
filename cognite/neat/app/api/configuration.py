@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from rdflib import Namespace
 from yaml import safe_load
 
-from cognite.neat.core.utils.cdf import InteractiveCogniteClient, ServiceCogniteClient
+from cognite.neat.utils.cdf import InteractiveCogniteClient, ServiceCogniteClient
 
 PREFIXES = {
     # "rdf": Namespace("http://www.w3.org/1999/02/22-rdf-syntax-ns#"), # noqa
