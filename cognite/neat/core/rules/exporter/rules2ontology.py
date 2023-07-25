@@ -395,10 +395,12 @@ class SHACLNodeShape(OntologyModel):
     def from_rules(
         cls, class_definition: Class, property_definitions: list[Property], namespace: Namespace
     ) -> "SHACLNodeShape":
-        return cls(id_=namespace[f"{class_definition.class_id}Shape"],
-                   target_class=namespace[class_definition.class_id],
-                   property_shapes=[SHACLPropertyShape.from_property(prop, namespace) for prop in property_definitions],
-                   namespace=namespace)
+        return cls(
+            id_=namespace[f"{class_definition.class_id}Shape"],
+            target_class=namespace[class_definition.class_id],
+            property_shapes=[SHACLPropertyShape.from_property(prop, namespace) for prop in property_definitions],
+            namespace=namespace,
+        )
 
 
 class SHACLPropertyShape(OntologyModel):
