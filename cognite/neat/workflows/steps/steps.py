@@ -5,8 +5,8 @@ from typing import Optional, Tuple
 from cognite.neat.core import loader
 from cognite.neat.graph.loaders import upload_labels
 from cognite.neat.core.rules import load_rules_from_excel_file
-from cognite.neat.core.workflow.model import FlowMessage
-from cognite.neat.core.workflow.step_model import Step
+from cognite.neat.workflows.workflow.model import FlowMessage
+from cognite.neat.workflows.workflow.step_model import Step
 from .data_contracts import ClientData, PathData, RulesData, SourceGraphData
 
 __all__ = [

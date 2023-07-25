@@ -6,8 +6,8 @@ import time
 import schedule
 from fastapi import Depends, FastAPI, Request
 
-from cognite.neat.core.workflow.manager import WorkflowManager
-from cognite.neat.core.workflow.model import FlowMessage, StepType, WorkflowState
+from cognite.neat.workflows.workflow.manager import WorkflowManager
+from cognite.neat.workflows.workflow.model import FlowMessage, StepType, WorkflowState
 
 
 async def get_body(request: Request):

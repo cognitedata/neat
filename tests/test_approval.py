@@ -3,7 +3,7 @@ import pytest
 from cognite.client.testing import monkeypatch_cognite_client
 
 from cognite.neat.core.loader.config import copy_examples_to_directory
-from cognite.neat.core.workflow.manager import WorkflowManager
+from cognite.neat.workflows.workflow import WorkflowManager
 
 
 @pytest.mark.skip("In development")

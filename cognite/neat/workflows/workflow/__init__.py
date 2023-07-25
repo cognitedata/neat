@@ -1,4 +1,4 @@
-from cognite.neat.core.workflow.base import BaseWorkflow
+from cognite.neat.workflows.workflow.base import BaseWorkflow
 from .model import WorkflowStepDefinition, FlowMessage, WorkflowStepEvent, WorkflowFullStateReport
 from .manager import WorkflowManager
 

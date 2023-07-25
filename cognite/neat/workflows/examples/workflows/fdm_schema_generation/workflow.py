@@ -8,10 +8,9 @@ from cognite.neat.core import rules
 from cognite.neat.graph import loaders
 from cognite.neat.core.loader.graph_store import NeatGraphStore
 from cognite.neat.core.rules.models import TransformationRules
-from cognite.neat.core.workflow import utils
-from cognite.neat.core.workflow.base import BaseWorkflow
-from cognite.neat.core.workflow.cdf_store import CdfStore
-from cognite.neat.core.workflow.model import FlowMessage
+from cognite.neat.workflows.workflow import utils
+from cognite.neat.workflows.workflow.base import BaseWorkflow, FlowMessage
+from cognite.neat.workflows.workflow.cdf_store import CdfStore
 
 
 class FDMSchemaGenerationNeatWorkflow(BaseWorkflow):

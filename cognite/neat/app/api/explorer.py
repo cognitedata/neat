@@ -22,9 +22,10 @@ from cognite.neat.core import rules as rules_module
 from cognite.neat.core.app import NeatApp
 from cognite.neat.core.configuration import Config, configure_logging
 from cognite.neat.core.loader.config import copy_examples_to_directory
-from cognite.neat.core.workflow import WorkflowFullStateReport, utils
-from cognite.neat.core.workflow.base import WorkflowDefinition
-from cognite.neat.core.workflow.model import FlowMessage, WorkflowConfigItem
+from cognite.neat.workflows.workflow import WorkflowFullStateReport
+from cognite.neat.workflows.workflow import utils
+from cognite.neat.workflows.workflow.base import WorkflowDefinition
+from cognite.neat.workflows.workflow.model import FlowMessage, WorkflowConfigItem
 from cognite.neat.app.api.data_classes.rest import (
     DownloadFromCdfRequest,
     NodesAndEdgesRequest,

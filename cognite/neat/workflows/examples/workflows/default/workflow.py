@@ -20,9 +20,9 @@ from cognite.neat.core.rules.exporter.rules2triples import get_instances_as_trip
 from cognite.neat.core.rules.models import TransformationRules
 from cognite.neat.graph.transformations.transformer import RuleProcessingReport, domain2app_knowledge_graph
 from cognite.neat.core.validator import validate_asset_hierarchy
-from cognite.neat.core.workflow import utils
-from cognite.neat.core.workflow.base import BaseWorkflow, FlowMessage
-from cognite.neat.core.workflow.cdf_store import CdfStore
+from cognite.neat.workflows.workflow import utils
+from cognite.neat.workflows.workflow.base import BaseWorkflow, FlowMessage
+from cognite.neat.workflows.workflow.cdf_store import CdfStore
 
 with contextlib.suppress(ValueError):
     prom_cdf_resource_stats = Gauge(

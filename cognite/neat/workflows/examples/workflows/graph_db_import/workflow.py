@@ -7,7 +7,7 @@ from cognite.client import CogniteClient
 
 from cognite.neat.core.loader.graph_store import NeatGraphStore
 from cognite.neat.core.rules.models import TransformationRules
-from cognite.neat.core.workflow.base import BaseWorkflow, FlowMessage
+from cognite.neat.workflows.workflow import BaseWorkflow, FlowMessage
 
 
 class GraphDbImportNeatWorkflow(BaseWorkflow):
