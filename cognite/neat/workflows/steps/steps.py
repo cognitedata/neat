@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Optional, Tuple
 
 from cognite.neat.core import loader
-from cognite.neat.core.loaders import upload_labels
+from cognite.neat.graph.loaders import upload_labels
 from cognite.neat.core.rules import load_rules_from_excel_file
 from cognite.neat.core.workflow.model import FlowMessage
 from cognite.neat.core.workflow.step_model import Step

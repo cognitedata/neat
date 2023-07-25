@@ -1,5 +1,6 @@
-from cognite.neat.core import loaders, loader
-from cognite.neat.core.loaders.cdfcore import rdf_to_relationships
+from cognite.neat.core import loader
+from cognite.neat.graph import loaders
+from cognite.neat.graph.loaders.cdfcore import rdf_to_relationships
 from cognite.neat.core.mocks.graph import generate_triples
 from cognite.neat.core.rules.models import TransformationRules
 from cognite.neat.core.utils.utils import add_triples, remove_namespace

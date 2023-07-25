@@ -1,7 +1,8 @@
 import pytest
 from rdflib import Namespace
 
-from cognite.neat.core import loaders, loader, rules
+from cognite.neat.core import loader, rules
+from cognite.neat.graph import loaders
 from cognite.neat.core.loader.graph_store import NeatGraphStore
 from cognite.neat.core.mocks.graph import generate_triples
 from cognite.neat.core.rules._loader import excel_file_to_table_by_name
