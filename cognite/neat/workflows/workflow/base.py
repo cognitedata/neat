@@ -11,7 +11,7 @@ import yaml
 from cognite.client import CogniteClient
 from prometheus_client import Gauge
 
-from cognite.neat.core.data_stores.metrics import NeatMetricsCollector
+from cognite.neat.graph.extractors.data_stores.metrics import NeatMetricsCollector
 from cognite.neat.core.exceptions import InvalidWorkFlowError
 from cognite.neat.core.utils.utils import retry_decorator
 from cognite.neat.workflows.workflow.model import (

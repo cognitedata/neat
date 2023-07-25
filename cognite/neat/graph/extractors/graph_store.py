@@ -12,7 +12,7 @@ from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 from rdflib.query import Result
 
 from cognite.neat.core.configuration import DEFAULT_NAMESPACE, PREFIXES, RdfStoreType
-from cognite.neat.core.data_stores import oxrdflib
+from cognite.neat.graph.extractors.data_stores import oxrdflib
 from cognite.neat.graph.extractors.graph import rdf_file_to_graph
 
 prom_qsm = Summary("store_query_time_summary", "Time spent processing queries", ["query"])

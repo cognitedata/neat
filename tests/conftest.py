@@ -4,7 +4,7 @@ from rdflib import Namespace
 from cognite.neat.core import rules
 from cognite.neat.graph import loaders, extractors
 from cognite.neat.graph.extractors import NeatGraphStore
-from cognite.neat.core.mocks.graph import generate_triples
+from cognite.neat.graph.extractors.mocks import generate_triples
 from cognite.neat.core.rules._loader import excel_file_to_table_by_name
 from cognite.neat.core.rules._parser import RawTables
 from cognite.neat.core.rules.importer import owl2excel
