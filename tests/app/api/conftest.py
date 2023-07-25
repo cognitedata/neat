@@ -2,7 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from cognite.neat.app.api.explorer import app
-from tests.api.memory_cognite_client import memory_cognite_client
+from tests.app.api.memory_cognite_client import memory_cognite_client
 
 
 @pytest.fixture(scope="function")
