@@ -138,12 +138,12 @@ class OWLMetadata(Metadata):
     @property
     def triples(self) -> list[tuple]:
         # Mandatory triples originating from Metadata mandatory fields
-        triples = [(URIRef(self.namespace), DCTERMS.hasVersion, Literal(self.version))]
-        triples.append((URIRef(self.namespace), OWL.versionInfo, Literal(self.version)))
-        triples.append((URIRef(self.namespace), RDFS.label, Literal(self.title)))
-        triples.append((URIRef(self.namespace), DCTERMS.title, Literal(self.title)))
-        triples.append((URIRef(self.namespace), DCTERMS.created, Literal(self.created, datatype=XSD.dateTime)))
-        triples.append((URIRef(self.namespace), DCTERMS.description, Literal(self.description)))
+        triples = [(URIRef(self.namespace), DCTERMS.hasVersion, Literal(self.version)),
+                   (URIRef(self.namespace), OWL.versionInfo, Literal(self.version)),
+                   (URIRef(self.namespace), RDFS.label, Literal(self.title)),
+                   (URIRef(self.namespace), DCTERMS.title, Literal(self.title)),
+                   (URIRef(self.namespace), DCTERMS.created, Literal(self.created, datatype=XSD.dateTime)),
+                   (URIRef(self.namespace), DCTERMS.description, Literal(self.description))]
         if isinstance(self.creator, list):
             triples.extend([(URIRef(self.namespace), DCTERMS.creator, Literal(creator)) for creator in self.creator])
         else:
