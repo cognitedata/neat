@@ -455,4 +455,5 @@ class SHACLPropertyShape(OntologyModel):
             ),
             min_count=definition.min_count,
             max_count=definition.max_count,
-            namespace=namespace)
+            namespace=namespace,
+        )
