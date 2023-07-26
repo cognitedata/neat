@@ -1,5 +1,28 @@
 FROM python:3.11-slim as base
 
+########################################################################
+###########Need to install Rust and other dependencies##################
+RUN apt-get -qq update
+
+RUN apt-get install -y -q \
+    build-essential \
+    openssl \
+    make \
+    cmake \
+    pkg-config \
+    libssl-dev \
+    clang \
+    libpq-dev \
+    curl
+
+# Get Rust; NOTE: using sh for better compatibility with other base images
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
+
+# Add .cargo/bin to PATH
+ENV PATH="/root/.cargo/bin:${PATH}"
+###########Need to above to install Rust and other dependencies#########
+########################################################################
+
 #Copy the requirements file from host to container
 COPY requirements.txt /app/
 WORKDIR /app/
@@ -7,7 +30,12 @@ WORKDIR /app/
 COPY cognite/neat /app/cognite/neat
 
 RUN mkdir -p /app/data \
-    && cp /app/cognite/neat/workflows/examples/. /app/data -r \
+    && mkdir -p /app/data/workflows \
+    && mkdir -p /app/data/rules \
+    && mkdir -p /app/data/source-graphs \
+    && cp /app/cognite/neat/workflows/examples/. /app/data/workflows -r \
+    && cp /app/cognite/neat/rules/examples/. /app/data/rules -r \
+    && cp /app/cognite/neat/graph/examples/. /app/data/source-graphs -r \
     && chmod -R 777 /app/data \
     && pip install -r requirements.txt
 

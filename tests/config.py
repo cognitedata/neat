@@ -1,15 +1,18 @@
 from pathlib import Path
 
-from cognite.neat import constants
+TEST_FOLDER = Path(__file__).resolve().parent
+ROOT = TEST_FOLDER.parent
+PACKAGE_DIRECTORY = ROOT / "cognite" / "neat"
 
-ROOT = Path(__file__).resolve().parent.parent
-
-DATA_FOLDER = ROOT / "data"
+DATA_FOLDER = TEST_FOLDER / "data"
 PYPROJECT_TOML = ROOT / "pyproject.toml"
 
-# Test use in-memory triple store
-TNT_TRANSFORMATION_RULES = constants.TNT_TRANSFORMATION_RULES
-SIMPLE_TRANSFORMATION_RULES = constants.SIMPLE_TRANSFORMATION_RULES
-NORDIC44_KNOWLEDGE_GRAPH = constants.NORDIC44_KNOWLEDGE_GRAPH
-GRAPH_CAPTURING_SHEET = constants.GRAPH_CAPTURING_SHEET
-WIND_ONTOLOGY = constants.WIND_ONTOLOGY
+# Example rule files
+TNT_TRANSFORMATION_RULES = PACKAGE_DIRECTORY / "rules" / "examples" / "Rules-Nordic44-to-TNT.xlsx"
+SIMPLE_TRANSFORMATION_RULES = PACKAGE_DIRECTORY / "rules" / "examples" / "sheet2cdf-transformation-rules.xlsx"
+
+# Example graph files
+NORDIC44_KNOWLEDGE_GRAPH = PACKAGE_DIRECTORY / "graph" / "examples" / "Knowledge-Graph-Nordic44.xml"
+
+GRAPH_CAPTURING_SHEET = DATA_FOLDER / "sheet2cdf-graph-capturing.xlsx"
+WIND_ONTOLOGY = DATA_FOLDER / "wind-energy.owl"

@@ -20,7 +20,7 @@ from cognite.neat import constants, rules as rules_module
 from cognite.neat.graph.transformations import query_generator
 from cognite.neat.app.api.app import NeatApp
 from cognite.neat.app.api.configuration import Config, configure_logging
-from cognite.neat.graph.extractors.config import copy_examples_to_directory
+from cognite.neat.config import copy_examples_to_directory
 from cognite.neat.workflows.workflow import WorkflowFullStateReport
 from cognite.neat.workflows.workflow import utils
 from cognite.neat.workflows.workflow.base import WorkflowDefinition
