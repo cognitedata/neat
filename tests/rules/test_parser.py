@@ -2,14 +2,14 @@ import pandas as pd
 import pytest
 from pydantic import ValidationError
 
-from cognite.neat.rules._loader import excel_file_to_table_by_name
+from cognite.neat.rules._parser import read_excel_file_to_table_by_name
 from cognite.neat.rules._parser import Tables, from_tables
 from tests import config
 
 
 @pytest.fixture(scope="session")
 def raw_transformation_tables() -> dict[str, pd.DataFrame]:
-    return excel_file_to_table_by_name(config.TNT_TRANSFORMATION_RULES)
+    return read_excel_file_to_table_by_name(config.TNT_TRANSFORMATION_RULES)
 
 
 def test_parse_transformation_rules(raw_transformation_tables):
@@ -17,7 +17,7 @@ def test_parse_transformation_rules(raw_transformation_tables):
 
 
 def generate_parse_transformation_invalid_rules_test_data():
-    raw_tables = excel_file_to_table_by_name(config.TNT_TRANSFORMATION_RULES)
+    raw_tables = read_excel_file_to_table_by_name(config.TNT_TRANSFORMATION_RULES)
 
     invalid_class_label = raw_tables
     invalid_class_label[Tables.properties] = invalid_class_label[Tables.properties].copy()

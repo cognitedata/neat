@@ -1,16 +1,119 @@
+from io import BytesIO
+from pathlib import Path
+from zipfile import BadZipFile
+
 import logging
 import warnings
-from typing import Any, Hashable
+from typing import Any, Hashable, Literal, overload
 from warnings import warn
 
-import pandas as pd
 from pydantic import field_validator
 from pydantic_core import ErrorDetails, ValidationError
+
+from openpyxl import Workbook, load_workbook
+import pandas as pd
+import requests
+
 from rdflib import Namespace
 
+
+from cognite.neat.utils.auxiliary import local_import
 from cognite.neat.app.api.configuration import PREFIXES
 from cognite.neat.rules import _exceptions
 from cognite.neat.rules.models import Class, Metadata, Property, RuleModel, TransformationRules
+
+
+@overload
+def parse_rules_from_excel_file(filepath: Path, return_report: Literal[False] = False) -> TransformationRules:
+    ...
+
+
+@overload
+def parse_rules_from_excel_file(
+    filepath: Path, return_report: Literal[True]
+) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None]:
+    ...
+
+
+def parse_rules_from_excel_file(
+    filepath: Path, return_report: bool = False
+) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None] | TransformationRules:
+    """Parse transformation rules from an Excel file.
+
+    Parameters
+    ----------
+    filepath : Path
+        Path to the Excel file
+    return_report : bool, optional
+        Whether to return a report, by default False
+
+    Returns
+    -------
+        Either the transformation rules or a tuple with the rules, a list of errors and a list of warnings
+    """
+    return from_tables(read_excel_file_to_table_by_name(filepath), return_report)
+
+
+def parse_rules_from_google_sheet(
+    sheet_id: str, return_report: bool = False
+) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None] | TransformationRules:
+    """Parse transformation rules from a Google sheet.
+
+    Parameters
+    ----------
+    sheet_id : str
+        The identifier of the Google sheet with the rules.
+    return_report : bool, optional
+        Whether to return a report, by default False
+
+    Returns
+    -------
+        Either the transformation rules or a tuple with the rules, a list of errors and a list of warnings
+    """
+    return from_tables(read_google_sheet_to_table_by_name(sheet_id), return_report)
+
+
+def parse_rules_from_github_sheet(
+    filepath: Path,
+    personal_token: str,
+    owner: str,
+    repo: str,
+    branch: str = "main",
+    return_report: bool = False,
+) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None] | TransformationRules:
+    """Parse transformation rules from a sheet stored in private Github.
+
+    Parameters
+    ----------
+    filepath : Path
+        Path to the sheet in the Github repository.
+    personal_token : str
+        Personal access token to access the Github repository.
+    owner : str
+        Owner of the Github repository.
+    repo : str
+        Name of the Github repository.
+    branch : str, optional
+        Branch of the Github repository, by default "main".
+
+    Returns
+    -------
+        Either the transformation rules or a tuple with the rules, a list of errors and a list of warnings
+    """
+
+    return from_tables(read_github_sheet_to_table_by_name(filepath, personal_token, owner, repo, branch), return_report)
+
+
+def parse_rules_from_yaml(dirpath: Path) -> TransformationRules:
+    """
+    Load transformation rules from a yaml file.
+
+    Args:
+        dirpath (Path): Path to the yaml file.
+    Returns:
+        TransformationRules: The transformation rules.
+    """
+    return TransformationRules(**read_yaml_file_to_mapping_by_name(dirpath))
 
 
 def from_tables(
@@ -177,3 +280,87 @@ class Tables:
     classes = "Classes"
     metadata = "Metadata"
     instances = "Instances"
+
+
+# readers:
+
+
+def read_google_sheet_to_table_by_name(sheet_id: str) -> dict[str, pd.DataFrame]:
+    # To trigger ImportError if gspread is not installed
+    local_import("gspread", "google")
+    import gspread
+
+    client_google = gspread.service_account()
+    spreadsheet = client_google.open_by_key(sheet_id)
+    return {worksheet.title: pd.DataFrame(worksheet.get_all_records()) for worksheet in spreadsheet.worksheets()}
+
+
+def read_excel_file_to_table_by_name(filepath: Path) -> dict[str, pd.DataFrame]:
+    # To trigger ImportError if openpyxl is not installed
+    local_import("openpyxl", "excel")
+
+    from openpyxl import Workbook, load_workbook
+
+    workbook: Workbook = load_workbook(filepath)
+
+    sheets = {
+        sheetname: pd.read_excel(
+            filepath,
+            sheet_name=sheetname,
+            header=None if sheetname == "Metadata" else 0,
+            skiprows=1 if sheetname in ["Classes", "Properties", "Instances"] else None,
+        )
+        for sheetname in workbook.sheetnames
+    }
+
+    for sheetname in sheets:
+        sheets[sheetname].source = filepath
+
+    return sheets
+
+
+def read_yaml_file_to_mapping_by_name(dirpath: Path, expected_files: set[str] | None = None) -> dict[str, dict]:
+    # To trigger ImportError if yaml is not installed
+    local_import("yaml", "yaml")
+    from yaml import safe_load
+
+    mapping_by_name = {}
+    for filepath in dirpath.iterdir():
+        if expected_files is not None and filepath.stem not in expected_files:
+            continue
+        mapping_by_name[filepath.stem] = safe_load(filepath.read_text())
+    return mapping_by_name
+
+
+def read_github_sheet_to_table_by_name(
+    filepath: str, personal_token: str, owner: str, repo: str, branch: str = "main"
+) -> dict[str, pd.DataFrame]:
+    r = requests.get(
+        f"https://api.github.com/repos/{owner}/{repo}/contents/{filepath}?ref={branch}",
+        headers={"accept": "application/vnd.github.v3.raw", "authorization": f"token {personal_token}"},
+    )
+
+    loc = f"https://github.com/{owner}/{repo}/tree/{branch}"
+
+    if r.status_code != 200:
+        raise _exceptions.Error20(filepath, loc, r.reason)
+    try:
+        wb = load_workbook(BytesIO(r.content), data_only=True)
+    except BadZipFile:
+        raise _exceptions.Error21(filepath, loc)
+    return _workbook_to_table_by_name(wb)
+
+
+def _workbook_to_table_by_name(workbook: Workbook) -> dict[str, pd.DataFrame]:
+    table = {}
+    for sheet in workbook:
+        sheetname = sheet.title
+        data = sheet.values
+        if sheetname == "Metadata":
+            table[sheetname] = pd.DataFrame(data, columns=None)
+        if sheetname in ["Classes", "Properties", "Instances"]:
+            next(data)
+            columns = next(data)[:]
+            table[sheet.title] = pd.DataFrame(data, columns=columns).dropna(how="all")
+
+    return table

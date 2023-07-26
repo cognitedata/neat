@@ -1,11 +1,41 @@
 import logging
+from pathlib import Path
 import warnings
 
 import pandas as pd
+import numpy as np
+from openpyxl import Workbook, load_workbook
 from rdflib import RDF, XSD, Literal, Namespace
 
 from cognite.neat.rules.analysis import to_class_property_pairs, get_defined_classes
 from cognite.neat.rules.models import TransformationRules
+
+
+def extract_graph_from_sheet(
+    filepath: Path,
+    transformation_rule: TransformationRules,
+    separator: str = ",",
+    namespace: str = None,
+) -> list[tuple]:
+    """Converts a graph capturing sheet to rdf triples
+
+    Parameters
+    ----------
+    filepath : Path
+        Path to the graph capturing sheet
+    graph_capturing_sheet : dict[str, pd.DataFrame]
+        Graph capturing sheet
+    transformation_rule : TransformationRules
+        Transformation rules
+    separator : str, optional
+        Multi value separator at cell level, by default ","
+    namespace : str, optional
+        In case of a custom namespace, by default None meaning the namespace is taken from the transformation rules
+    """
+
+    graph_capturing_sheet = read_graph_excel_file_to_table_by_name(filepath)
+
+    return sheet2triples(graph_capturing_sheet, transformation_rule, separator, namespace)
 
 
 def sheet2triples(
@@ -146,3 +176,26 @@ def validate_rules_graph_pair(graph_capturing_sheet: dict[str, pd.DataFrame], tr
             msg,
             stacklevel=2,
         )
+
+
+def read_graph_excel_file_to_table_by_name(filepath: Path) -> dict[str, pd.DataFrame]:
+    workbook: Workbook = load_workbook(filepath)
+
+    parsed_sheets = {
+        sheetname: pd.read_excel(
+            filepath,
+            sheet_name=sheetname,
+            header=0,
+        )
+        for sheetname in workbook.sheetnames
+    }
+
+    for sheetname, df in parsed_sheets.items():
+        if "identifier" in df.columns:
+            parsed_sheets[sheetname] = df.drop(df[df.identifier == 0].index)
+            parsed_sheets[sheetname] = df.replace({np.nan: None})
+        else:
+            logging.error(f"Sheet {sheetname} does not have an identifier column")
+            raise ValueError(f"Sheet {sheetname} does not have an identifier column")
+
+    return parsed_sheets

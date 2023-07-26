@@ -7,7 +7,7 @@ from cognite.neat.rules.models import TransformationRules
 from cognite.neat.workflows.workflow.base import BaseWorkflow
 from cognite.neat.workflows.workflow.model import WorkflowDefinition
 from cognite.neat.app.api.data_classes.rest import RunWorkflowRequest
-from tests.api.memory_cognite_client import MemoryClient
+from tests.app.api.memory_cognite_client import MemoryClient
 
 
 @pytest.fixture(scope="session")

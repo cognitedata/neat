@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from rdflib import DC, DCTERMS, OWL, RDF, RDFS, Graph
 
-from cognite.neat.rules import load_rules_from_excel_file
+from cognite.neat.rules import parse_rules_from_excel_file
 from cognite.neat.rules import _exceptions
 from cognite.neat.utils.utils import generate_exception_report, get_namespace, remove_namespace
 
@@ -346,7 +346,7 @@ def _parse_owl_properties_df(graph: Graph, parsing_config: dict = None) -> pd.Da
 
 
 def _validate_excel_file(excel_filepath: Path):
-    _, validation_errors, validation_warnings = load_rules_from_excel_file(excel_filepath, return_report=True)
+    _, validation_errors, validation_warnings = parse_rules_from_excel_file(excel_filepath, return_report=True)
 
     report = ""
     if validation_errors:

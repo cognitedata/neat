@@ -5,8 +5,7 @@ from cognite.neat import rules
 from cognite.neat.graph import loaders, extractors
 from cognite.neat.graph.extractors import NeatGraphStore
 from cognite.neat.graph.extractors.mocks import generate_triples
-from cognite.neat.rules._loader import excel_file_to_table_by_name
-from cognite.neat.rules._parser import RawTables
+from cognite.neat.rules._parser import RawTables, read_excel_file_to_table_by_name
 from cognite.neat.rules.importer.ontology2excel import owl2excel
 from cognite.neat.rules.models import TransformationRules
 from cognite.neat.graph.transformations.transformer import domain2app_knowledge_graph
@@ -16,7 +15,7 @@ from tests import config
 
 @pytest.fixture(scope="session")
 def transformation_rules() -> TransformationRules:
-    return rules.load_rules_from_excel_file(config.TNT_TRANSFORMATION_RULES)
+    return rules.parse_rules_from_excel_file(config.TNT_TRANSFORMATION_RULES)
 
 
 @pytest.fixture(scope="session")
@@ -65,13 +64,13 @@ def mock_cdf_assets(mock_knowledge_graph, transformation_rules):
 
 @pytest.fixture(scope="function")
 def simple_rules():
-    return rules.load_rules_from_excel_file(config.SIMPLE_TRANSFORMATION_RULES)
+    return rules.parse_rules_from_excel_file(config.SIMPLE_TRANSFORMATION_RULES)
 
 
 @pytest.fixture(scope="function")
 def graph_capturing_sheet():
     # return load_workbook(config.GRAPH_CAPTURING_SHEET)
-    return extractors.graph_capturing_sheet.excel_file_to_table_by_name(config.GRAPH_CAPTURING_SHEET)
+    return extractors.read_graph_excel_file_to_table_by_name(config.GRAPH_CAPTURING_SHEET)
 
 
 @pytest.fixture(scope="function")
@@ -102,4 +101,4 @@ type PriceAreaConnection {
 def owl_based_rules():
     owl2excel(config.WIND_ONTOLOGY)
 
-    return RawTables(**excel_file_to_table_by_name(config.WIND_ONTOLOGY.parent / "transformation_rules.xlsx"))
+    return RawTables(**read_excel_file_to_table_by_name(config.WIND_ONTOLOGY.parent / "transformation_rules.xlsx"))

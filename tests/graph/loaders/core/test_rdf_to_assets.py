@@ -4,14 +4,14 @@ import pytest
 from cognite.client.data_classes import Asset, AssetList, Label, LabelDefinition, LabelDefinitionList, LabelFilter
 from cognite.client.testing import monkeypatch_cognite_client
 
-from cognite.neat.graph.loaders.cdfcore.rdf_to_assets import (
+from cognite.neat.graph.loaders.core.rdf_to_assets import (
     AssetLike,
     NeatMetadataKeys,
     categorize_assets,
     order_assets,
     remove_non_existing_labels,
 )
-from cognite.neat.rules.exporter.cdf.rules2labels import get_labels
+from cognite.neat.rules.exporter.core.rules2labels import get_labels
 
 
 def test_asset_hierarchy_ordering(mock_rdf_assets):
