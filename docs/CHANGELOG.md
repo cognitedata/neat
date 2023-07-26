@@ -15,6 +15,13 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.18.2] - 26-07-23
+
+### Changed
+
+- First pass of refactoring / reorg of `workflows` package
+- Removed some of examples data from `neat` and place them under tests
+
 ## [0.18.1] - 25-07-23
 
 ### Changed
