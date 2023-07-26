@@ -11,10 +11,10 @@ from cognite.client import CogniteClient
 from prometheus_client import Gauge
 from pydantic import BaseModel
 
-from cognite.neat.workflows.workflow import BaseWorkflow
-from cognite.neat.workflows.workflow.base import WorkflowDefinition
-from cognite.neat.workflows.workflow.model import FlowMessage, InstanceStartMethod, WorkflowState
-from cognite.neat.workflows.workflow.tasks import WorkflowTaskBuilder
+from cognite.neat.workflows import BaseWorkflow
+from cognite.neat.workflows.base import WorkflowDefinition
+from cognite.neat.workflows.model import FlowMessage, InstanceStartMethod, WorkflowState
+from cognite.neat.workflows.tasks import WorkflowTaskBuilder
 
 live_workflow_instances = Gauge("neat_workflow_live_instances", "Count of live workflow instances", ["itype"])
 

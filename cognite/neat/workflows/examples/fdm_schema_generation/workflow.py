@@ -5,12 +5,12 @@ from pathlib import Path
 from cognite.client import CogniteClient
 
 from cognite.neat import rules
-from cognite.neat.graph import loaders
+from cognite.neat.rules.exporter.rules2graphql import GraphQLSchema
 from cognite.neat.graph.extractors import NeatGraphStore
 from cognite.neat.rules.models import TransformationRules
-from cognite.neat.workflows.workflow import utils
-from cognite.neat.workflows.workflow.base import BaseWorkflow, FlowMessage
-from cognite.neat.workflows.workflow.cdf_store import CdfStore
+from cognite.neat.workflows import utils
+from cognite.neat.workflows.base import BaseWorkflow, FlowMessage
+from cognite.neat.workflows.cdf_store import CdfStore
 
 
 class FDMSchemaGenerationNeatWorkflow(BaseWorkflow):
@@ -58,7 +58,7 @@ class FDMSchemaGenerationNeatWorkflow(BaseWorkflow):
 
     def step_generate_fdm_schema(self, flow_msg: FlowMessage = None):
         logging.info("Generating FDM schema")
-        self.data_model_gql = loaders.rules2graphql_schema(self.transformation_rules)
+        self.data_model_gql = GraphQLSchema(self.transformation_rules, verbose=True).schema
 
         default_name = (
             f"{self.transformation_rules.metadata.prefix}-"

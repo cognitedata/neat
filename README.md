@@ -5,6 +5,7 @@ This is python package handles transformation of domain knowledge graphs (more d
 ## Quickstart
 
 ### Option 1 - Python Package
+
 `neat` can be installed as a Python package, and a docker image for more robust execution and support such
 as `graphdb` for caching. This quickstart guide uses the Python package.
 
@@ -16,24 +17,26 @@ Running NEAT as docker container :
 Runnin NEAT as docker container with local data folder mounted :
 `docker run -p 8000:8000 --name neat -v $(shell pwd)/docker/vol_data:/app/data  cognite/neat:latest`
 
-
 ### Installation (Development setup)
+
 Prerequisites:
-* `poetry` installed on your system, [see installation](https://python-poetry.org/docs/).
-* `npm` installed on your system, [see installation](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
-* `react-scripts` installed on your system, [`npm i react-scripts`](https://www.npmjs.com/package/react-scripts)
+
+- `poetry` installed on your system, [see installation](https://python-poetry.org/docs/).
+- `npm` installed on your system, [see installation](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+- `react-scripts` installed on your system, [`npm i react-scripts`](https://www.npmjs.com/package/react-scripts)
 
 1. Clone this repo: `git clone git@github.com:cognitedata/neat.git`
 2. Create wheel: `make build-python`. This will create a wheel in the `dist` folder.
 3. Install wheel in your preferred environment, `pip install dist/neat-[NEAT_VERSTION]-py3-none-any.whl`
 
-
 ### Run Neat (Python Package)
 
 Once installed you can run neat with the command
+
 ```bash
 neat
 ```
+
 This will open your browser and launch the neat application.
 
 Note this will automatically create a `data` folder in your current working directory, which is populated
@@ -42,51 +45,46 @@ your CDF credentials to allow `neat` access CDF.
 
 ![launch_neat](https://user-images.githubusercontent.com/60234212/228812422-c5e9519f-19e7-4f08-9617-66a790323c7e.gif)
 
-
 ## Documentation
 
 [Documentation](https://cognite-neat.readthedocs-hosted.com/en/latest/)
 
 ![](./docs/figs/high-level-io.png)
 
-
 ## Docker container build process
 
-
-``` make build-docker ```
+`make build-docker`
 
 ## Starting the application locally using GraphDB as external rdf store
 
 Run the command :
 
-``` make compose-up```
+` make compose-up`
 
-The command starts NEAT container and GraphDB container and creates *vol_data* and *vol_shared* local folders that are mounted as volumes.
+The command starts NEAT container and GraphDB container and creates _vol_data_ and _vol_shared_ local folders that are mounted as volumes.
 
-*vol_data* - is mounted only in NEAT container. It contains `config.yaml`, `workflows`, `rules`. You can set `load_examples` to `true` to populate it with examples.
+_vol_data_ - is mounted only in NEAT container. It contains `config.yaml`, `workflows`, `rules`. You can set `load_examples` to `true` to populate it with examples.
 
-*vol_shared* - is mounted to both containers and files placed here become automatically visible for GraphDB import process. Main intension is to write files from NEAT container and make them available for GraphDB for import.
-
+_vol_shared_ - is mounted to both containers and files placed here become automatically visible for GraphDB import process. Main intension is to write files from NEAT container and make them available for GraphDB for import.
 
 ## Web UI
 
-``` http://localhost:8000 ```
+`http://localhost:8000`
 
 Open API docs :
 
-``` http://localhost:8000/docs ```
+`http://localhost:8000/docs`
 
 Prom metrics :
 
-``` http://localhost:8000/metrics ```
-
+`http://localhost:8000/metrics`
 
 ## Workflows and configurations
 
 All configurations are divided into 2 categories :
+
 - global configurations - global for entire service , loaded at startup (config.yaml)
 - workflow configurations - local to workflow , loaded from workflow manifest (.yaml)
-
 
 ## Global configurations
 
@@ -121,18 +119,18 @@ workflows_store_type: file
 data_store_path: /app/data
 
 cdf_client:
-    project: get-power-grid
-    client_id: "623c2450-cfc2-43d6-9036-10e14dad8ccf"
-    client_secret: "my-super-secret"
-    client_name: neat-test-service
-    base_url: https://az-power-no-northeurope.cognitedata.com
-    scopes:
-      - https://az-power-no-northeurope.cognitedata.com/.default
-    token_url: https://login.microsoftonline.com/e55e1701-82f8-4c52-af10-28e4d942c589/oauth2/v2.0/token
+  project: get-power-grid
+  client_id: "623c2450-cfc2-43d6-9036-10e14dad8ccf"
+  client_secret: "my-super-secret"
+  client_name: neat-test-service
+  base_url: https://az-power-no-northeurope.cognitedata.com
+  scopes:
+    - https://az-power-no-northeurope.cognitedata.com/.default
+  token_url: https://login.microsoftonline.com/e55e1701-82f8-4c52-af10-28e4d942c589/oauth2/v2.0/token
 
 cdf_default_dataset_id: 2626756768281823
 workflow_downloader_filter:
-    - tag:grid
+  - tag:grid
 log_level: DEBUG
 ```
 
@@ -140,6 +138,7 @@ log_level: DEBUG
 
 If `workflow_downloader_filter` is set, the app will try to download workflows from CDF based on provided filtering conditions .
 Filtering format :
+
 - `name:<workflows_name>=<workflow_version>` - loading workflow by name and version or latest by name if version is not set.
 - `tag:<tag_name>`- loading all workflows that tagged with specific tag.
 
@@ -153,35 +152,37 @@ System configurations:
 - system.execution_reporting_type - controls how workflow execution log should be reported to CDF . Supported values : `all_disabled`, `all_enabled`(default)
 
 Example :
+
 ```yaml
--   group: system
-    name: system.execution_reporting_type
-    value: all_disabled
+- group: system
+  name: system.execution_reporting_type
+  value: all_disabled
 ```
 
 ## How to develop your first workflow
 
 The NEAT framework has few conventions :
+
 - Each workflow must reside in its own folder
 - Workflow folder must contain at least 2 files :
-    - `workflow.py` - steps implementation file
-    - `workflow.yaml` - manifest and configurations
+  - `workflow.py` - steps implementation file
+  - `workflow.yaml` - manifest and configurations
 
- ### Workflow steps implementation file
+### Workflow steps implementation file
 
- Must implement `BaseWorkflow` class from `from cognite.neat.core.workflow.base`
+Must implement `BaseWorkflow` class from `from cognite.neat.core.workflow.base`
 
- Each method that should be orchestrated by workflow engine must be prefixed with `step_` , each method must have single argument of `FlowMessage` type and return `FlowMessage` or `None`.
- FlowMessage is passed from one step to another and it's captured in execution log.
+Each method that should be orchestrated by workflow engine must be prefixed with `step_` , each method must have single argument of `FlowMessage` type and return `FlowMessage` or `None`.
+FlowMessage is passed from one step to another and it's captured in execution log.
 
 Simplest `workflow.py`
 
-````python
+```python
 
 import logging
 from cognite.client import CogniteClient
-from cognite.neat.workflows.workflow import BaseWorkflow
-from cognite.neat.workflows.workflow import FlowMessage
+from cognite.neat.workflows import BaseWorkflow
+from cognite.neat.workflows import FlowMessage
 
 
 class PlaygroundNeatWorkflow(BaseWorkflow):
@@ -197,12 +198,13 @@ class PlaygroundNeatWorkflow(BaseWorkflow):
     def step_cleanup(self, flow_msg: FlowMessage = None):
         logging.info("Cleanup")
 
-````
+```
 
 Manifest `workflow.yaml` , normally should be updated from UI
-````yaml
+
+```yaml
 configs:
--   group: source_rdf_store
+  - group: source_rdf_store
     label: null
     name: source_rdf_store.type
     options: null
@@ -211,17 +213,17 @@ configs:
     value: graphdb
 description: null
 groups:
--   description: null
+  - description: null
     id: experimentation_system
     label: Experimentation playground
     transition_to: null
     ui_config:
-        pos_x: 171
-        pos_y: 6
+      pos_x: 171
+      pos_y: 6
 implementation_module: null
 name: playground
 steps:
--   description: null
+  - description: null
     enabled: true
     group_id: null
     id: run_experiment_1
@@ -230,12 +232,12 @@ steps:
     params: {}
     stype: pystep
     transition_to:
-    - cleanup
+      - cleanup
     trigger: false
     ui_config:
-        pos_x: 340
-        pos_y: 144
--   description: null
+      pos_x: 340
+      pos_y: 144
+  - description: null
     enabled: true
     group_id: null
     id: cleanup
@@ -246,9 +248,9 @@ steps:
     transition_to: []
     trigger: false
     ui_config:
-        pos_x: 295
-        pos_y: 303
--   description: null
+      pos_x: 295
+      pos_y: 303
+  - description: null
     enabled: true
     group_id: null
     id: step_trigger
@@ -257,26 +259,24 @@ steps:
     params: {}
     stype: http_trigger
     transition_to:
-    - run_experiment_1
+      - run_experiment_1
     trigger: true
     ui_config:
-        pos_x: 336
-        pos_y: 44
--   description: null
+      pos_x: 336
+      pos_y: 44
+  - description: null
     enabled: false
     group_id: null
     id: step_295076
     label: Run every 10 sec
     method: null
     params:
-        interval: every 10 seconds
+      interval: every 10 seconds
     stype: time_trigger
     transition_to:
-    - run_experiment_1
+      - run_experiment_1
     trigger: true
     ui_config:
-        pos_x: 544
-        pos_y: 42
-
-
-````
+      pos_x: 544
+      pos_y: 42
+```

@@ -58,7 +58,7 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
-
+!tests/data
 # Translations
 *.mo
 *.pot
@@ -160,8 +160,3 @@ cognite/neat/ui/neat-app/node_modules
 # local notebooks
 local/
 playground/
-
-
-# ignore any file type except .ipynb in docs/tutorial/notebooks
-docs/tutorial/notebooks/*
-!docs/tutorial/notebooks/*.ipynb

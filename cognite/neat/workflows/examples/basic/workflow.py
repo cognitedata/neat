@@ -2,8 +2,8 @@ import logging
 
 from cognite.client import CogniteClient
 
-from cognite.neat.workflows.workflow import BaseWorkflow
-from cognite.neat.workflows.workflow import FlowMessage
+from cognite.neat.workflows import BaseWorkflow
+from cognite.neat.workflows import FlowMessage
 
 
 class BasicNeatWorkflow(BaseWorkflow):

@@ -12,14 +12,14 @@ Users can customize the workflow by adding or removing steps, or by modifying th
 - **Workflow** - a set of steps that are executed in a specific order.
 - **Base workflow** - a workflow that is provided by NEAT project (and is immutable for user) and can be used as a starting point for custom workflows.
 - **Step** - a single block of code (function) that is executed as part of a workflow.
-- **Trigger** -  a special type of step that can be used to trigger workflow execution.
-- **Task** - is a special type of step that has provided implementation (no need to implement it in *workflow.py*) and can be used to perform some common tasks.
+- **Trigger** - a special type of step that can be used to trigger workflow execution.
+- **Task** - is a special type of step that has provided implementation (no need to implement it in _workflow.py_) and can be used to perform some common tasks.
 - **Flow message** - a message that is passed between steps. The message is a dictionary that contains information about the current state of the workflow.
 - **Workflow implementation class** - individual steps that make up the workflow and defined as python functions. All steps are aggregated into a single workflow class.
 - **Workflow manifest** - a YAML file that contains information about the workflow configuration , steps transitions , triggers and tasks cofiuration and other workflow related metadat.
 - **Workflow context** - all local variables that are defined in the workflow class and can be accessed by all steps.Information between steps is passed via the workflow context or flow message.
 - **Workflow Engine** - internal service that orchestrates steps execution.
-- **Configurations** - a set of configurable parameters that are separated from the workflow logic and stored in manifest file (*workflow.yaml*). Configurations can be updated by a user via UI or API.
+- **Configurations** - a set of configurable parameters that are separated from the workflow logic and stored in manifest file (_workflow.yaml_). Configurations can be updated by a user via UI or API.
 - **Transformation Rules** - Definition of data model and a set of rules that define how the data should be transformed from the source graph to the solution graph to the CDF resources. The rules are defined as Excel file.
 - **Data modelling functions** - a collection of functions for data modelling. The functions are defined in a python module and provided by NEAT project.
 - **Data transformation functions** - a collection of functions that define how the data should be transformed from the solution graph to the CDF resources. The functions are defined in a python module and provided by NEAT project.
@@ -30,8 +30,8 @@ Users can customize the workflow by adding or removing steps, or by modifying th
 - Each workflow must reside in its own folder and folder name defines workflow name.
 - Workflow class name must end with `NeatWorkflow` , for example `BasicNeatWorkflow` and must implement `BaseWorkflow` class from `from cognite.neat.core.workflow.base`
 - Workflow folder must contain at least 2 files :
-    - `workflow.py` - steps/workflow implementation file
-    - `workflow.yaml` - manifest and configurations
+  - `workflow.py` - steps/workflow implementation file
+  - `workflow.yaml` - manifest and configurations
 - Each method that should be orchestrated by workflow engine must be prefixed with `step_` , each method must have single argument of `FlowMessage` type and return `FlowMessage` or `None`.
 - FlowMessage is passed from one step to another and it's captured in execution log.
 - FlowMessage can have `next_step_ids` property that defines which steps should be executed next. If `next_step_ids` is not set, next step will be executed based on execution graph defined in manifest.
@@ -46,11 +46,9 @@ Manifest file consist of 3 main sections:
 - `description` - short description of the workflow.
 - `implementation_module` - alternative workflow implementation module name.If not set, `workflow.py` will be used. Can we used to reuse workflow implementation from another workflow.
 
-
 ### Steps
 
- Step is a single block of code (method of workflow class) that is executed as part of a workflow. Multiple step methods are aggregated into workflow class (*workflow.py* file).
-
+Step is a single block of code (method of workflow class) that is executed as part of a workflow. Multiple step methods are aggregated into workflow class (_workflow.py_ file).
 
 ### Triggers
 
@@ -63,7 +61,7 @@ Supported trigger types :
 
 ### Tasks
 
-Task is a special type of step that has provided implementation (no need to implement it in *workflow.py*) and can be used to perform some common tasks. Task are configured via `params` section in manifest file.
+Task is a special type of step that has provided implementation (no need to implement it in _workflow.py_) and can be used to perform some common tasks. Task are configured via `params` section in manifest file.
 
 Supported task types :
 
@@ -93,10 +91,11 @@ FlowMessage can have `next_step_ids` property that defines which steps should be
 FlowMessage can have `output_text` property that defines what should be logged in execution log and available in UI. If `output_text` is not set, method name will be used as output text. FlowMessage can have `error_text` property that defines error message that should be logged in execution log and available in UI in case of error.
 
 ### Static or dynamic execution graph
+
 Execution graph defines which steps should be executed next.
 By default, execution graph is static and defined in manifest file. It's possible to define dynamic execution graph by returning `next_step_ids` property in step method.
 
-Example of dynamic routing  :
+Example of dynamic routing :
 
 ```python
 def step_run_experiment_1(self, flow_msg: FlowMessage = None):
@@ -107,11 +106,11 @@ def step_run_experiment_1(self, flow_msg: FlowMessage = None):
 ```
 
 ### Base workflows and tasks/components
+
 A users can choose to implement workflow from scratch or use one of the base workflows provided by NEAT project. Base workflows are located in `cognite.neat.core.base_workflows` module.
 Base workflows are maintained by NEAT project and can be updated in future releases. If a user chooses to implement workflow completly from scratch, it's his/her responsibility to maintain it.
 
 ![Base workflows](./figs/base-components.png)
-
 
 Example :
 
@@ -129,7 +128,6 @@ class Graph2AssetHierarchyNeatWorkflow(Graph2AssetHierarchyBaseWorkflow):
 ### Workflow start methods
 
 NEAT supports 3 ways to start workflow execution : persistent non-blocking, persistent blocking, ephemeral mode. The mode is defined in manifest file via `workflow_start_method` property or via UI.
-
 
 **Persistent non-blocking**
 
@@ -161,11 +159,12 @@ Supported system configuration parameters :
 - `system.execution_reporting_type` - controls how workflow execution log should be reported to CDF . Supported values : `all_disabled`, `all_enabled`(default)
 
 Example :
+
 ```yaml
--   group: system
-    name: system.execution_reporting_type
-    value: all_disabled
-    label: Execution reporting type
+- group: system
+  name: system.execution_reporting_type
+  value: all_disabled
+  label: Execution reporting type
 ```
 
 ### Basic NEAT workflow definition
@@ -175,8 +174,8 @@ import logging
 
 from cognite.client import CogniteClient
 
-from cognite.neat.workflows.workflow import BaseWorkflow
-from cognite.neat.workflows.workflow import FlowMessage
+from cognite.neat.workflows import BaseWorkflow
+from cognite.neat.workflows import FlowMessage
 
 
 class BasicNeatWorkflow(BaseWorkflow):
@@ -211,14 +210,11 @@ class BasicNeatWorkflow(BaseWorkflow):
 
 ```
 
-
-
-
 manifest.yaml example:
-```yaml
 
+```yaml
 configs:
--   group: source_rdf_store
+  - group: source_rdf_store
     label: null
     name: source_rdf_store.type
     options: null
@@ -227,17 +223,17 @@ configs:
     value: graphdb
 description: null
 system_components:
--   description: null
+  - description: null
     id: experimentation_system
     label: Experimentation playground
     tranistion_to: null
     ui_config:
-        pos_x: 171
-        pos_y: 6
+      pos_x: 171
+      pos_y: 6
 implementation_module: null
 name: playground
 steps:
--   description: null
+  - description: null
     enabled: true
     system_component_id: null
     id: run_experiment_1
@@ -246,13 +242,13 @@ steps:
     params: {}
     stype: pystep
     transition_to:
-    - cleanup
-    - error_handler
+      - cleanup
+      - error_handler
     trigger: false
     ui_config:
-        pos_x: 340
-        pos_y: 144
--   description: null
+      pos_x: 340
+      pos_y: 144
+  - description: null
     enabled: true
     system_component_id: null
     id: cleanup
@@ -263,9 +259,9 @@ steps:
     transition_to: []
     trigger: false
     ui_config:
-        pos_x: 340
-        pos_y: 448
--   description: null
+      pos_x: 340
+      pos_y: 448
+  - description: null
     enabled: true
     system_component_id: null
     id: step_trigger
@@ -274,27 +270,27 @@ steps:
     params: {}
     stype: http_trigger
     transition_to:
-    - run_experiment_1
+      - run_experiment_1
     trigger: true
     ui_config:
-        pos_x: 336
-        pos_y: 44
--   description: null
+      pos_x: 336
+      pos_y: 44
+  - description: null
     enabled: false
     system_component_id: null
     id: step_295076
     label: Run every 10 sec
     method: null
     params:
-        interval: every 10 seconds
+      interval: every 10 seconds
     stype: time_trigger
     transition_to:
-    - run_experiment_1
+      - run_experiment_1
     trigger: true
     ui_config:
-        pos_x: 544
-        pos_y: 42
--   description: null
+      pos_x: 544
+      pos_y: 42
+  - description: null
     enabled: true
     system_component_id: null
     id: error_handler
@@ -303,11 +299,11 @@ steps:
     params: {}
     stype: pystep
     transition_to:
-    - cleanup
+      - cleanup
     trigger: false
     ui_config:
-        pos_x: 496
-        pos_y: 300
+      pos_x: 496
+      pos_y: 300
 ```
 
 ### Versioning
@@ -319,29 +315,29 @@ Workflows and rule files are versioned automatically or manually. If version is 
 Everything in measured in NEAT.
 Metrics are exposed via prometheus compatible endpoint on http://<host:port>/metrics but also available in json format on http://<host:port>/api/metrics
 The neat provides a set of default metrics and each workflow can define custom metrics,first step is to register metric in workflow constructor:
+
 ```python
     self.metrics.register_metric("counter_1", "", "counter", ["step"])
     self.metrics.register_metric("gauge_1", "", "gauge", ["step"])
 ```
+
 after that, metrics can be accessed in any step:
+
 ```python
         self.metrics.get("counter_1", {"step": "run_experiment_1"}).inc()
         self.metrics.get("gauge_1", {"step": "run_experiment_1"}).set(self.counter)
 ```
 
-
-
 ## Using the Workflow:
 
 ### Setup and Configuration:
 
-To set up and configure your first  NEAT workflow , follow these steps:
+To set up and configure your first NEAT workflow , follow these steps:
 
 1. Create new workflow package or download existing workflow package from CDF or from GitHub workflow repository(not available yet)
 2. Configure the parameters in the manifest file to match your system requirements
 3. Execute the workflow using the command line or a GUI tool or via http trigger or time schedule trigger
 4. Monitor the progress of the workflow and any errors that may occur
-
 
 ### Packaging and automatic resource loading
 
@@ -365,11 +361,11 @@ NEAT stores detailed data lineage in CDF. Produced resources can be tagged with 
 
 Open API docs : http://localhost:8000/docs
 
-
 ### Monitoring and metrics
 
 By default NEAT exposes all metric over Prometheus compatible endpoint on http://localhost:8080/metrics and also in json format on http://localhost:8080/api/metrics or via UI .
 Metrics can be accessed and set in any step of the workflow using metrics helper methods:
+
 ```python
         self.metrics.get("counter_1", {"step": "run_experiment_1"}).inc()
         self.metrics.get("gauge_1", {"step": "run_experiment_1"}).set(self.counter)
@@ -380,8 +376,8 @@ Complete example:
 ```python
 import logging
 from cognite.client import CogniteClient
-from cognite.neat.workflows.workflow import BaseWorkflow
-from cognite.neat.workflows.workflow import FlowMessage
+from cognite.neat.workflows import BaseWorkflow
+from cognite.neat.workflows import FlowMessage
 
 
 class BasicNeatWorkflow(BaseWorkflow):
@@ -395,7 +391,6 @@ class BasicNeatWorkflow(BaseWorkflow):
     self.metrics.get("counter_1", {"step": "run_experiment_1"}).inc()
     self.metrics.get("gauge_1", {"step": "run_experiment_1"}).set(self.counter)
 ```
-
 
 ### Troubleshooting:
 

@@ -15,7 +15,7 @@ from cognite.neat.graph.loaders.core.rdf_to_relationships import (
     upload_relationships,
 )
 from cognite.neat.graph.loaders.validator import validate_asset_hierarchy
-from cognite.neat.workflows.workflow.model import FlowMessage
+from cognite.neat.workflows.model import FlowMessage
 
 with contextlib.suppress(ValueError):
     prom_cdf_resource_stats = Gauge(

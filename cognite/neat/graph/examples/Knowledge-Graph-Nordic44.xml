@@ -21,13 +21,13 @@ Change log:
 			Minor corrections.
 2018-08-31:	Version 37
 			Added Energy Scheduling Area Ostfold and moved the substation Halden and Asker into this area.
-
+2023-07-26: Version 38. Purposely changed and defected graph for pupose of testing NEAT
 -->
 	<md:FullModel rdf:about="urn:uuid:2dd9014f-bdfb-11e5-94fa-c8f73332c8f4">
 		<md:Model.created>2018-08-31T13:47:55</md:Model.created>
 		<md:Model.scenarioTime>2015-03-06T00:30:00</md:Model.scenarioTime>
 		<pti:Model.createdBy>Statnett SF</pti:Model.createdBy>
-		<md:Model.version>37</md:Model.version>
+		<md:Model.version>38</md:Model.version>
 		<md:Model.description>CGM Test model developed by Statnett SF. Nordic 44 bus system for the Nordic region</md:Model.description>
 		<md:Model.modelingAuthoritySet>http://www.Statnett.no/IGM/Nordic44_CGM</md:Model.modelingAuthoritySet>
 		<md:Model.profile>http://entsoe.eu/CIM/EquipmentCore/3/1</md:Model.profile>

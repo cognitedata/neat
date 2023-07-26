@@ -82,8 +82,8 @@
 - Metadata sheet is missing or it failed validation for one or more fields! [prefixes]
 
 # Warnings: <class 'pydantic.warnings.PydanticDeprecatedSince20'>
-- parse_obj_as is deprecated. Use pydantic.TypeAdapter.validate_python instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.0.3/migration/
-- parse_obj_as is deprecated. Use pydantic.TypeAdapter.validate_python instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.0.3/migration/
+- parse_obj_as is deprecated. Use pydantic.TypeAdapter.validate_python instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.1.1/migration/
+- parse_obj_as is deprecated. Use pydantic.TypeAdapter.validate_python instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.1.1/migration/
 
 # Warnings: ClassNameNotProvided
 - Class id Aerial set as Class name!
