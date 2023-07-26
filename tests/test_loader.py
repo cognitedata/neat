@@ -12,7 +12,6 @@ def test_load_excel(transformation_rules: TransformationRules):
 
 def test_copy_examples_to_directory(tmp_path: Path):
     target_path = tmp_path / "data"
-    print("tmp_path")
     copy_examples_to_directory(target_path)
 
     rapport = filecmp.dircmp(target_path / "rules", EXAMPLE_RULES)
