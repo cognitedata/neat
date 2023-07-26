@@ -29,12 +29,11 @@ WORKDIR /app/
 # Copy the application source code from host to container
 COPY cognite/neat /app/cognite/neat
 
-RUN mkdir -p /app/data \
-    && mkdir -p /app/data/workflows \
-    && mkdir -p /app/data/rules \
-    && mkdir -p /app/data/source-graphs \
+RUN mkdir -p /app/data/workflows \
     && cp /app/cognite/neat/workflows/examples/. /app/data/workflows -r \
+    && mkdir -p /app/data/rules \
     && cp /app/cognite/neat/rules/examples/. /app/data/rules -r \
+    && mkdir -p /app/data/source-graphs \
     && cp /app/cognite/neat/graph/examples/. /app/data/source-graphs -r \
     && chmod -R 777 /app/data \
     && pip install -r requirements.txt

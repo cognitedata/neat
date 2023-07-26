@@ -165,3 +165,4 @@ playground/
 # ignore any file type except .ipynb in docs/tutorial/notebooks
 docs/tutorial/notebooks/*
 !docs/tutorial/notebooks/*.ipynb
+!docs/tutorial/notebooks/examples/power-grid-example.xlsx
