@@ -5,9 +5,9 @@ from fastapi import FastAPI
 
 from cognite.neat.app.api.configuration import Config
 from cognite.neat.utils.utils import get_cognite_client_from_config
-from cognite.neat.workflows.workflow.cdf_store import CdfStore
-from cognite.neat.workflows.workflow.manager import WorkflowManager
-from cognite.neat.workflows.workflow.triggers import TriggerManager
+from cognite.neat.workflows.cdf_store import CdfStore
+from cognite.neat.workflows.manager import WorkflowManager
+from cognite.neat.workflows.triggers import TriggerManager
 
 
 class NeatApp:

@@ -21,10 +21,10 @@ from cognite.neat.graph.transformations import query_generator
 from cognite.neat.app.api.app import NeatApp
 from cognite.neat.app.api.configuration import Config, configure_logging
 from cognite.neat.config import copy_examples_to_directory
-from cognite.neat.workflows.workflow import WorkflowFullStateReport
-from cognite.neat.workflows.workflow import utils
-from cognite.neat.workflows.workflow.base import WorkflowDefinition
-from cognite.neat.workflows.workflow.model import FlowMessage, WorkflowConfigItem
+from cognite.neat.workflows import WorkflowFullStateReport
+from cognite.neat.workflows import utils
+from cognite.neat.workflows.base import WorkflowDefinition
+from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
 from cognite.neat.app.api.data_classes.rest import (
     DownloadFromCdfRequest,
     NodesAndEdgesRequest,

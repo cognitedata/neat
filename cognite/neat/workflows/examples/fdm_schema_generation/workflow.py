@@ -9,9 +9,9 @@ from cognite.neat.rules.exporter.rules2graphql import GraphQLSchema
 from cognite.neat.rules.exporter.rules2ontology import Ontology
 from cognite.neat.graph.extractors import NeatGraphStore
 from cognite.neat.rules.models import TransformationRules
-from cognite.neat.workflows.workflow import utils
-from cognite.neat.workflows.workflow.base import BaseWorkflow, FlowMessage
-from cognite.neat.workflows.workflow.cdf_store import CdfStore
+from cognite.neat.workflows import utils
+from cognite.neat.workflows.base import BaseWorkflow, FlowMessage
+from cognite.neat.workflows.cdf_store import CdfStore
 
 
 class FDMSchemaGenerationNeatWorkflow(BaseWorkflow):

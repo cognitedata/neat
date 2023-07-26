@@ -18,9 +18,9 @@ from cognite.neat.graph.extractors import NeatGraphStore
 from cognite.neat.rules.models import TransformationRules
 from cognite.neat.utils.utils import add_triples
 from cognite.neat.graph.loaders.validator import validate_asset_hierarchy
-from cognite.neat.workflows.workflow import utils
-from cognite.neat.workflows.workflow.base import BaseWorkflow, FlowMessage
-from cognite.neat.workflows.workflow.cdf_store import CdfStore
+from cognite.neat.workflows import utils
+from cognite.neat.workflows.base import BaseWorkflow, FlowMessage
+from cognite.neat.workflows.cdf_store import CdfStore
 
 
 class SmeGraphCaptureBaseWorkflow(BaseWorkflow):

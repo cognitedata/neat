@@ -1,6 +1,6 @@
 from cognite.client import CogniteClient
 
-from cognite.neat.workflows.workflow.model import FlowMessage
+from cognite.neat.workflows.model import FlowMessage
 
 
 class WorkflowTaskBuilder:
