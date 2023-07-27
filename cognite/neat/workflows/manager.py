@@ -150,14 +150,14 @@ class WorkflowManager:
                                     f" registering it as '{workflow_name}' in the workflow registry"
                                 )
                             )
-                            self.register_workflow_instance(obj, workflow_name, workflow_definition)
+                            self.register_workflow(obj, workflow_name, workflow_definition)
 
                 except Exception as e:
                     trace = traceback.format_exc()
                     logging.error(f"Error loading workflow {workflow_name}: error: {e} trace : {trace}")
 
-    def register_workflow_instance(self, obj, workflow_name, workflow_definition):
-        """Register workflow instance in the workflow registry
+    def register_workflow(self, obj, workflow_name, workflow_definition):
+        """Register workflow in the workflow registry
 
         Parameters
         ----------
