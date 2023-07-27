@@ -22,7 +22,8 @@ from cognite.neat.rules.models import TransformationRules
 from cognite.neat.graph.transformations.transformer import RuleProcessingReport, domain2app_knowledge_graph
 from cognite.neat.graph.loaders.validator import validate_asset_hierarchy
 from cognite.neat.workflows import utils
-from cognite.neat.workflows.base import BaseWorkflow, FlowMessage
+from cognite.neat.workflows.base import BaseWorkflow
+from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.cdf_store import CdfStore
 
 with contextlib.suppress(ValueError):

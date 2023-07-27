@@ -50,7 +50,7 @@ class NeatApp:
             data_store_path=self.config.data_store_path,
             data_set_id=self.config.cdf_default_dataset_id,
         )
-        self.workflow_manager.load_workflows_from_storage_v2()
+        self.workflow_manager.load_workflows_from_storage()
         self.triggers_manager = TriggerManager(workflow_manager=self.workflow_manager)
         if self.fast_api_app:
             self.triggers_manager.start_http_listeners(self.fast_api_app)

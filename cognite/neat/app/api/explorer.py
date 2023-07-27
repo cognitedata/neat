@@ -500,7 +500,7 @@ def get_detailed_execution(execution_id: str):
 
 @app.post("/api/workflow/reload-workflows")
 def reload_workflows():
-    neat_app.workflow_manager.load_workflows_from_storage_v2()
+    neat_app.workflow_manager.load_workflows_from_storage()
     neat_app.triggers_manager.reload_all_triggers()
     return {"result": "ok", "workflows": neat_app.workflow_manager.get_list_of_workflows()}
 

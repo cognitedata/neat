@@ -22,7 +22,7 @@ def main():
             data_storage_path=PACKAGE_DIRECTORY,
             data_set_id=0,
         )
-        manager.load_workflows_from_storage_v2()
+        manager.load_workflows_from_storage()
         result = manager.start_workflow("default", sync=True)
 
     print(result)

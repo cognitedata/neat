@@ -2,11 +2,11 @@ import logging
 from pathlib import Path
 from typing import Optional, Tuple
 
-from ...graph import extractors
+from cognite.neat.graph import extractors
 from cognite.neat.graph.loaders import upload_labels
 from cognite.neat.rules import parse_rules_from_excel_file
 from cognite.neat.workflows.model import FlowMessage
-from cognite.neat.workflows.step_model import Step
+from cognite.neat.workflows.composition_based.step_model import Step
 from .data_contracts import ClientData, PathData, RulesData, SourceGraphData
 
 __all__ = [

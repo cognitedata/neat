@@ -1,38 +1,132 @@
 import contextlib
 import logging
 import time
+from pathlib import Path
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import AssetFilter
 from prometheus_client import Gauge
 
-from cognite.neat.workflows.base_workflows.graphs_and_rules import GraphsAndRulesBaseWorkflow
+from cognite.neat import rules
+from cognite.neat.graph import extractors
 from cognite.neat.graph.loaders.core.labels import upload_labels
-from cognite.neat.graph.loaders.core.rdf_to_assets import categorize_assets, rdf2assets, upload_assets
+from cognite.neat.graph.loaders.core.rdf_to_assets import (
+    NeatMetadataKeys,
+    categorize_assets,
+    rdf2assets,
+    remove_non_existing_labels,
+    unique_asset_labels,
+    upload_assets,
+)
 from cognite.neat.graph.loaders.core.rdf_to_relationships import (
     categorize_relationships,
     rdf2relationships,
     upload_relationships,
 )
+from cognite.neat.graph.extractors import NeatGraphStore
+from cognite.neat.rules.exporter.rules2triples import get_instances_as_triples
+from cognite.neat.rules.models import TransformationRules
 from cognite.neat.graph.loaders.validator import validate_asset_hierarchy
+from cognite.neat.workflows import utils
+from cognite.neat.workflows.base import BaseWorkflow
 from cognite.neat.workflows.model import FlowMessage
+from cognite.neat.workflows.cdf_store import CdfStore
 
 with contextlib.suppress(ValueError):
     prom_cdf_resource_stats = Gauge(
-        "neat_graph_to_asset_hierarchy_wf_cdf_resource_stats",
-        "CDF resource stats before and after running fast_graph workflow",
+        "neat_sheet2cdf_cdf_resource_stats",
+        "CDF resource stats before and after running sheet2cdf workflow",
         ["resource_type", "state"],
     )
 with contextlib.suppress(ValueError):
-    prom_data_issues_stats = Gauge("neat_graph_to_asset_hierarchy_wf_data_issues", "Data validation issues", ["type"])
+    prom_data_issues_stats = Gauge("neat_sheet2cdf_wf_data_issues", "Data validation issues", ["type"])
 
 
-class Graph2AssetHierarchyBaseWorkflow(GraphsAndRulesBaseWorkflow):
+class Sheet2CDFBaseWorkflow(BaseWorkflow):
     def __init__(self, name: str, client: CogniteClient):
-        super().__init__(name, client)
+        super().__init__(name, client, [])
         self.dataset_id: int = 0
+        self.current_step: str = None
+        self.source_graph: NeatGraphStore = None
+        self.solution_graph: NeatGraphStore = None
+        self.raw_tables = None
+        self.transformation_rules: TransformationRules = None
         self.stop_on_error = False
+        self.triples = []
+        self.instance_ids = set()
         self.count_create_assets = 0
+        self.meta_keys: NeatMetadataKeys | None = None
+
+    def step_load_transformation_rules(self, flow_msg: FlowMessage = None):
+        # Load rules from file or remote location
+        cdf_store = CdfStore(self.cdf_client, self.dataset_id, rules_storage_path=self.rules_storage_path)
+
+        rules_file = self.get_config_item("rules.file").value
+        rules_file_path = Path(self.rules_storage_path, rules_file)
+        version = self.get_config_item("rules.version").value
+
+        if rules_file_path.exists() and not version:
+            logging.info(f"Loading rules from {rules_file_path}")
+        elif rules_file_path.exists() and version:
+            hash = utils.get_file_hash(rules_file_path)
+            if hash != version:
+                cdf_store.load_rules_file_from_cdf(rules_file, version)
+        else:
+            cdf_store.load_rules_file_from_cdf(self.cdf_client, rules_file, version)
+
+        self.transformation_rules, self.errors, self.warnings = rules.parse_rules_from_excel_file(
+            rules_file_path, return_report=True
+        )
+
+        output_text = f"Loaded {len(self.transformation_rules.properties)} rules from {rules_file_path.name!r}."
+        logging.info(output_text)
+        logging.info(f"Loaded prefixes {str(self.transformation_rules.prefixes)} rules")
+
+        self.dataset_id = self.transformation_rules.metadata.data_set_id
+        return FlowMessage(output_text=output_text)
+
+    def step_configuring_stores(self, flow_msg: FlowMessage = None, clean_start: bool = True):
+        self.source_graph = extractors.NeatGraphStore(
+            prefixes=self.transformation_rules.prefixes, namespace=self.transformation_rules.metadata.namespace
+        )
+        self.source_graph.init_graph(base_prefix=self.transformation_rules.metadata.prefix)
+
+        # this is fix to be able to display the graph in the UI
+        # alex is working on a better solution
+        self.solution_graph = self.source_graph
+
+        return FlowMessage(output_text="Configured in-memory graph store")
+
+    def step_parse_instances(self, flow_msg: FlowMessage = None):
+        # TODO: Need to provide info both as metric and as report about
+        # total number of rows in the sheet that have been processed by the workflow
+        # and report back reasons why
+
+        self.triples = get_instances_as_triples(self.transformation_rules)
+        self.instance_ids = {triple[0] for triple in self.triples}
+
+        output_text = f"Loaded {len(self.instance_ids)} instances out of"
+        # Todo: This is no longer exposed in the rules package. Need to extend the load methods to return a rapport.
+        # output_text += f" {len(self.raw_tables['Instances'])} rows in Instances sheet"
+
+        logging.info(output_text)
+        return FlowMessage(output_text=output_text)
+
+    def step_load_instances_to_source_graph(self, flow_msg: FlowMessage = None):
+        # Load parsed instances to source graph
+
+        try:
+            for triple in self.triples:
+                self.source_graph.graph.add(triple)
+        except Exception as e:
+            logging.error("Not able to load instances to source graph")
+            raise e
+
+        output_text = f"Loaded {len(self.triples)} statements defining"
+        output_text += f" {len(self.instance_ids)} instances"
+
+        logging.info(output_text)
+        return FlowMessage(output_text=output_text)
 
     def step_create_cdf_labels(self, flow_msg: FlowMessage = None):
         logging.info("Creating CDF labels")
@@ -41,16 +135,34 @@ class Graph2AssetHierarchyBaseWorkflow(GraphsAndRulesBaseWorkflow):
     def step_prepare_cdf_assets(self, flow_msg: FlowMessage):
         # export graph into CDF
         # TODO : decide on error handling and retry logic\
+        self.meta_keys = NeatMetadataKeys.load(
+            self.get_config_group_values_by_name("cdf.asset.metadata.", remove_group_prefix=True)
+        )
 
-        rdf_asset_dicts = rdf2assets(
+        rdf_assets = rdf2assets(
             self.solution_graph,
             self.transformation_rules,
             stop_on_exception=self.stop_on_error,
+            meta_keys=self.meta_keys,
         )
 
         if not self.cdf_client:
             logging.info("Dry run, no CDF client available")
             return
+
+        # Label Validation
+        labels_before = unique_asset_labels(rdf_assets.values())
+        logging.info(f"Assets have {len(labels_before)} unique labels: {', '.join(sorted(labels_before))}")
+
+        rdf_assets = remove_non_existing_labels(self.cdf_client, rdf_assets)
+
+        labels_after = unique_asset_labels(rdf_assets.values())
+        removed_labels = labels_before - labels_after
+        logging.info(
+            f"Removed {len(removed_labels)} labels as these do not exists in CDF. "
+            f"Removed labels: {', '.join(sorted(removed_labels))}"
+        )
+        ######################
 
         # UPDATE: 2023-04-05 - correct aggregation of assets in CDF for specific dataset
         total_assets_before = self.cdf_client.assets.aggregate(
@@ -60,7 +172,7 @@ class Graph2AssetHierarchyBaseWorkflow(GraphsAndRulesBaseWorkflow):
         prom_cdf_resource_stats.labels(resource_type="asset", state="count_before_neat_update").set(total_assets_before)
         logging.info(f"Total count of assets in CDF before upload: { total_assets_before }")
 
-        orphan_assets, circular_assets = validate_asset_hierarchy(rdf_asset_dicts)
+        orphan_assets, circular_assets = validate_asset_hierarchy(rdf_assets)
 
         prom_data_issues_stats.labels(type="circular_assets").set(len(circular_assets))
         prom_data_issues_stats.labels(type="orphan_assets").set(len(orphan_assets))
@@ -69,14 +181,14 @@ class Graph2AssetHierarchyBaseWorkflow(GraphsAndRulesBaseWorkflow):
             logging.error(f"Found orphaned assets: {', '.join(orphan_assets)}")
 
             orphanage_asset_external_id = (
-                f"{self.transformation_rules.metadata.externalIdPrefix}orphanage-{self.transformation_rules.metadata.data_set_id}"
+                f"{self.transformation_rules.metadata.externalIdPrefix}orphanage"
                 if self.transformation_rules.metadata.externalIdPrefix
                 else "orphanage"
             )
 
             # Kill the process if you dont have orphanage asset in your asset hierarchy
             # and inform the user that it is missing !
-            if orphanage_asset_external_id not in rdf_asset_dicts:
+            if orphanage_asset_external_id not in rdf_assets:
                 msg = f"You dont have Orphanage asset {orphanage_asset_external_id} in asset hierarchy!"
                 logging.error(msg)
                 raise Exception(msg)
@@ -84,16 +196,16 @@ class Graph2AssetHierarchyBaseWorkflow(GraphsAndRulesBaseWorkflow):
             logging.error("Orphaned assets will be assigned to 'Orphanage' root asset")
 
             for external_id in orphan_assets:
-                rdf_asset_dicts[external_id]["parent_external_id"] = orphanage_asset_external_id
+                rdf_assets[external_id]["parent_external_id"] = orphanage_asset_external_id
 
-            orphan_assets, circular_assets = validate_asset_hierarchy(rdf_asset_dicts)
+            orphan_assets, circular_assets = validate_asset_hierarchy(rdf_assets)
 
             logging.info(orphan_assets)
         else:
             logging.info("No orphaned assets found, your assets look healthy !")
 
         if circular_assets:
-            msg = f"Found circular dependencies: {str(circular_assets)}"
+            msg = f"Found circular dependencies: {', '.join(circular_assets)}"
             logging.error(msg)
             raise Exception(msg)
         elif orphan_assets:
@@ -101,10 +213,10 @@ class Graph2AssetHierarchyBaseWorkflow(GraphsAndRulesBaseWorkflow):
             logging.error(msg)
             raise Exception(msg)
         else:
-            logging.info("No circular dependency among assets found, your assets hierarchy look healthy !")
+            logging.info("No circular dependency among assets found, your assets hierarchy look healthy!")
 
-        self.categorized_assets, report = categorize_assets(
-            self.cdf_client, rdf_asset_dicts, self.dataset_id, return_report=True
+        self.categorized_assets = categorize_assets(
+            self.cdf_client, rdf_assets, self.dataset_id, meta_keys=self.meta_keys
         )
 
         count_create_assets = len(self.categorized_assets["create"])
@@ -124,24 +236,19 @@ class Graph2AssetHierarchyBaseWorkflow(GraphsAndRulesBaseWorkflow):
         logging.info(f"Total count of assets to be decommission: { count_decommission_assets }")
         logging.info(f"Total count of assets to be resurrect: { count_resurrect_assets }")
 
-        msg = f"Total count of assets { len(rdf_asset_dicts) } of which: { count_create_assets } to be created"
+        msg = f"Total count of assets { len(rdf_assets) } of which: { count_create_assets } to be created"
         msg += f", { count_update_assets } to be updated"
         msg += f", { count_decommission_assets } to be decommissioned"
         msg += f", { count_resurrect_assets } to be resurrected"
-        number_of_updates = len(report["decommission"])
-        logging.info(f"Total number of updates: {number_of_updates}")
+
         return FlowMessage(output_text=msg)
 
     def step_upload_cdf_assets(self, flow_msg: FlowMessage = None):
-        if flow_msg and flow_msg.payload and "action" in flow_msg.payload:
-            if flow_msg.payload["action"] != "approve":
-                raise Exception("Update not approved")
-
         if not self.cdf_client:
             logging.error("No CDF client available")
             raise Exception("No CDF client available")
 
-        upload_assets(self.cdf_client, self.categorized_assets, max_retries=2, retry_delay=4)
+        upload_assets(self.cdf_client, self.categorized_assets)
         for _ in range(1000):
             total_assets_after = self.cdf_client.assets.aggregate(
                 filter=AssetFilter(data_set_ids=[{"id": self.dataset_id}])
@@ -187,8 +294,8 @@ class Graph2AssetHierarchyBaseWorkflow(GraphsAndRulesBaseWorkflow):
         )
 
         msg = (
-            f"Total count of relationships { count_defined_relationships } of which:"
-            f" { count_create_relationships } to be created"
+            f"Total count of relationships { count_defined_relationships } "
+            f"of which: { count_create_relationships } to be created"
         )
         msg += f", { count_decommission_relationships } to be decommissioned"
         msg += f", { count_resurrect_relationships } to be resurrected"
@@ -200,8 +307,9 @@ class Graph2AssetHierarchyBaseWorkflow(GraphsAndRulesBaseWorkflow):
             logging.error("No CDF client available")
             raise Exception("No CDF client available")
 
-        upload_relationships(self.cdf_client, self.categorized_relationships, max_retries=2, retry_delay=4)
+        upload_relationships(self.cdf_client, self.categorized_relationships)
 
     def step_cleanup(self, flow_msg: FlowMessage):
+        # TODO : cleanup
         self.categorized_assets = None
         self.categorized_relationships = None

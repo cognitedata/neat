@@ -31,9 +31,9 @@ from cognite.neat.workflows.tasks import WorkflowTaskBuilder
 
 from cognite.neat.app.api.configuration import Config
 from cognite.neat.utils.cdf import CogniteClientConfig
-from . import utils, cdf_store
-from .step_model import DataContract
-import cognite.neat.workflows.steps.steps
+from cognite.neat.workflows import utils, cdf_store
+from cognite.neat.workflows.composition_based.step_model import DataContract
+import cognite.neat.workflows.composition_based.steps
 
 summary_metrics = Gauge("neat_workflow_summary_metrics", "Workflow execution summary metrics", ["wf_name", "name"])
 steps_metrics = Gauge("neat_workflow_steps_metrics", "Workflow step level metrics", ["wf_name", "step_name", "name"])
@@ -258,7 +258,7 @@ class BaseWorkflow:
 
                 new_flow_message = method_runner()
             elif step.stype == StepType.STD_STEP:
-                for name, step_cls in inspect.getmembers(cognite.neat.workflows.steps.steps):
+                for name, step_cls in inspect.getmembers(cognite.neat.workflows.composition_based.steps):
                     if inspect.isclass(step_cls):
                         if name == step.method:
                             step_obj = step_cls(self.metrics)
@@ -447,7 +447,7 @@ class BaseWorkflow:
             return yaml.dump(workflow_definitions.model_dump(), indent=4)
 
     @classmethod
-    def deserialize_metadata(cls, json_string: str, output_format: str = "json") -> WorkflowDefinition:
+    def deserialize_definition(cls, json_string: str, output_format: str = "json") -> WorkflowDefinition:
         if output_format == "json":
             workflow_definitions = WorkflowDefinition.model_validate(json.loads(json_string))
         elif output_format == "yaml":
@@ -456,10 +456,10 @@ class BaseWorkflow:
             raise NotImplementedError(f"Output format {output_format} is not supported.")
         return workflow_definitions
 
-    def set_metadata(self, metadata: WorkflowDefinition):
-        self.workflow_steps = metadata.steps
-        self.workflow_system_components = metadata.system_components
-        self.configs = metadata.configs
+    def set_definition(self, workflow_definition: WorkflowDefinition):
+        self.workflow_steps = workflow_definition.steps
+        self.workflow_system_components = workflow_definition.system_components
+        self.configs = workflow_definition.configs
 
     def set_storage_path(self, storage_type: str, storage_path: str):
         if storage_type == "transformation_rules":

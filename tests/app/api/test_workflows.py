@@ -15,7 +15,7 @@ def workflow_definitions() -> list[WorkflowDefinition]:
     definitions = []
     for example in EXAMPLE_WORKFLOWS.iterdir():
         definition = (example / "workflow.yaml").read_text()
-        loaded = BaseWorkflow.deserialize_metadata(definition, "yaml")
+        loaded = BaseWorkflow.deserialize_definition(definition, "yaml")
         definitions.append(loaded)
     return definitions
 
@@ -35,6 +35,8 @@ def test_load_example_workflows_loaded(workflow_names: list[str], fastapi_client
 
 
 def test_load_rules(transformation_rules: TransformationRules, fastapi_client: TestClient):
+    # transformation_rules load Rules-Nordic44-to-TNT.xlsx
+    # /api/rules fetch rules related to default workflow which are Rules-Nordic44-to-TNT.xlsx
     response = fastapi_client.get("/api/rules")
 
     # Assert
@@ -58,14 +60,14 @@ def test_run_default_workflow(
         response = fastapi_client.get("/api/workflow/workflow-definition/graph_to_asset_hierarchy")
         definition = WorkflowDefinition(**response.json()["definition"])
         response = fastapi_client.post(
-            "/api/workflow/workflow-definition/graph_to_asset_hierarchy", json=definition.dict()
+            "/api/workflow/workflow-definition/graph_to_asset_hierarchy", json=definition.model_dump()
         )
         assert response.status_code == 200
 
     # Act
     response = fastapi_client.post(
         "/api/workflow/start",
-        json=RunWorkflowRequest(name=workflow_name, sync=True, config={}, start_step="").dict(),
+        json=RunWorkflowRequest(name=workflow_name, sync=True, config={}, start_step="").model_dump(),
     )
 
     print(response.json()["result"])

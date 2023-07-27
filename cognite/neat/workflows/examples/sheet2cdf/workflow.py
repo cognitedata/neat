@@ -1,4 +1,4 @@
-from cognite.neat.workflows.base_workflows.sheet2cdf import Sheet2CDFBaseWorkflow
+from cognite.neat.workflows.inheritance_based.sheet2cdf import Sheet2CDFBaseWorkflow
 from cognite.client import CogniteClient
 
 
