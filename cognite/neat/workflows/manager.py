@@ -145,23 +145,37 @@ class WorkflowManager:
                     # Instantiate them using the workflow definition loaded
                     # from workflow.yaml file
                     for name, obj in inspect.getmembers(module):
-                        if "NeatWorkflow" not in name:
-                            continue
-                        logging.info(f"Found class {name} in module {workflow_name}")
-
-                        # Instantiate the workflow class and register it in the workflow registry
-                        if inspect.isclass(obj):
-                            self.workflow_registry[workflow_name] = obj(workflow_name, self.client)
-                            self.workflow_registry[workflow_name].set_definition(workflow_definition)
-                            self.workflow_registry[workflow_name].set_task_builder(self.task_builder)
-                            self.workflow_registry[workflow_name].set_default_dataset_id(self.data_set_id)
-                            self.workflow_registry[workflow_name].set_storage_path(
-                                "transformation_rules", self.rules_storage_path
+                        if "NeatWorkflow" in name and inspect.isclass(obj):
+                            logging.info(
+                                (
+                                    f"Found class {name} in module {workflow_name},"
+                                    f" registering it as '{workflow_name}' in the workflow registry"
+                                )
                             )
-                            self.workflow_registry[workflow_name].set_storage_path("data_store", self.data_store_path)
+                            self.register_workflow_instance(obj, workflow_name, workflow_definition)
+
                 except Exception as e:
                     trace = traceback.format_exc()
                     logging.error(f"Error loading workflow {workflow_name}: error: {e} trace : {trace}")
+
+    def register_workflow_instance(self, obj, workflow_name, workflow_definition):
+        """Register workflow instance in the workflow registry
+
+        Parameters
+        ----------
+        obj : BaseWorkflow
+            Class of the workflow to be registered
+        workflow_name : _type_
+            Name of the workflow to be registered
+        workflow_definition : _type_
+            Definition of the workflow to be registered originating from workflow.yaml
+        """
+        self.workflow_registry[workflow_name] = obj(workflow_name, self.client)
+        self.workflow_registry[workflow_name].set_definition(workflow_definition)
+        self.workflow_registry[workflow_name].set_task_builder(self.task_builder)
+        self.workflow_registry[workflow_name].set_default_dataset_id(self.data_set_id)
+        self.workflow_registry[workflow_name].set_storage_path("transformation_rules", self.rules_storage_path)
+        self.workflow_registry[workflow_name].set_storage_path("data_store", self.data_store_path)
 
     def create_workflow_instance(self, template_name: str, add_to_registry: bool = True) -> BaseWorkflow:
         new_instance = self.workflow_registry[template_name].copy()
