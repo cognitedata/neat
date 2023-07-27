@@ -76,13 +76,11 @@ class WorkflowManager:
 
     def delete_workflow(self, name: str):
         del self.workflow_registry[name]
-        return
 
     def update_workflow(self, name: str, workflow: WorkflowDefinition):
         self.workflow_registry[name].workflow_steps = workflow.steps
         self.workflow_registry[name].configs = workflow.configs
         self.workflow_registry[name].workflow_system_components = workflow.system_components
-        return
 
     def save_workflow_to_storage(self, name: str, custom_implementation_module: str = None):
         """Save workflow from memory to storage"""
@@ -172,6 +170,8 @@ class WorkflowManager:
         """
         self.workflow_registry[workflow_name] = obj(workflow_name, self.client)
         self.workflow_registry[workflow_name].set_definition(workflow_definition)
+        # Comment: Not entirely sure what is task_builder meant for
+        # as at first glance it looks like circular import ???
         self.workflow_registry[workflow_name].set_task_builder(self.task_builder)
         self.workflow_registry[workflow_name].set_default_dataset_id(self.data_set_id)
         self.workflow_registry[workflow_name].set_storage_path("transformation_rules", self.rules_storage_path)
