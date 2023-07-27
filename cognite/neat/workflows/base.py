@@ -273,6 +273,9 @@ class BaseWorkflow:
                                     if parameter.annotation.__name__ == "FlowMessage":
                                         input_data.append(self.flow_message)
                                     else:
+                                        # Comment: self.data is suppose to be a dict of data contracts
+                                        # but it's not set anywhere. It is unclear where and how this
+                                        # this is suppose to be set
                                         input_data.append(self.data[parameter.annotation.__name__])
                                 except KeyError:
                                     is_valid = False
