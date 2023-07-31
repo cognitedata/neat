@@ -15,11 +15,19 @@ from deepdiff import DeepDiff
 from rdflib import Graph, Namespace
 from rdflib.term import URIRef
 
-from cognite.neat.app.api.configuration import EXCLUDE_PATHS
 from cognite.neat.graph.loaders.core.models import AssetTemplate
 from cognite.neat.graph.extractors.graph_store import NeatGraphStore
 from cognite.neat.rules.models import Property, TransformationRules
 from cognite.neat.utils.utils import chunker, datetime_utc_now, remove_namespace, retry_decorator
+
+EXCLUDE_PATHS = [
+    "root['labels']",
+    "root['metadata']['create_time']",
+    "root['metadata']['start_time']",
+    "root['metadata']['update_time']",
+    "root['metadata']['end_time']",
+    "root['metadata']['resurrection_time']",  # need to account for assets that are brought back to life
+]
 
 
 @dataclass

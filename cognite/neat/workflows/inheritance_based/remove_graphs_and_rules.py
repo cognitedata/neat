@@ -5,7 +5,7 @@ from cognite.client import CogniteClient
 
 from cognite.neat import rules
 from cognite.neat.graph import extractors
-from cognite.neat.app.api.configuration import PREFIXES
+from cognite.neat.constants import PREFIXES
 from cognite.neat.graph.extractors import NeatGraphStore, drop_graph_store
 from cognite.neat.rules.exporter.rules2triples import get_instances_as_triples
 from cognite.neat.rules.models import TransformationRules

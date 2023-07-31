@@ -7,10 +7,10 @@ from prometheus_client import Gauge
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import AssetFilter
-from cognite.neat.app.api.configuration import PREFIXES
+from cognite.neat.constants import PREFIXES
 
 from cognite.neat.rules.models import TransformationRules
-from cognite.neat.rules._parser import parse_rules_from_excel_file
+from cognite.neat.rules.parser import parse_rules_from_excel_file
 from cognite.neat.rules.exporter.rules2triples import get_instances_as_triples
 
 from cognite.neat.graph.extractors import NeatGraphStore, drop_graph_store

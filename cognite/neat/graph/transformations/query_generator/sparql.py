@@ -1,7 +1,7 @@
 from rdflib import Graph, Namespace
 from rdflib.term import URIRef
 
-from cognite.neat.app.api.configuration import PREFIXES
+from cognite.neat.constants import PREFIXES
 from cognite.neat.rules.to_rdf_path import (
     AllProperties,
     AllReferences,
