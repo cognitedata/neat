@@ -10,7 +10,7 @@ router = APIRouter()
 
 @router.get("/api/configs/global")
 def get_configs():
-    return config.dict()
+    return neat_app.config.dict()
 
 
 @router.post("/api/configs/global")

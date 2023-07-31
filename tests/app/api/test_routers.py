@@ -2,6 +2,8 @@ import pytest
 from cognite.client import CogniteClient
 from starlette.testclient import TestClient
 
+
+from cognite import neat
 from cognite.neat.constants import EXAMPLE_WORKFLOWS
 from cognite.neat.rules.models import TransformationRules
 from cognite.neat.workflows.base import BaseWorkflow
@@ -25,7 +27,7 @@ def workflow_names() -> list[str]:
     return [example.name for example in EXAMPLE_WORKFLOWS.iterdir()]
 
 
-def test_load_example_workflows_loaded(workflow_names: list[str], fastapi_client: TestClient):
+def test_workflow_workflows(workflow_names: list[str], fastapi_client: TestClient):
     # Act
     response = fastapi_client.get("/api/workflow/workflows")
 
@@ -34,7 +36,7 @@ def test_load_example_workflows_loaded(workflow_names: list[str], fastapi_client
     assert sorted(result["workflows"]) == sorted(workflow_names)
 
 
-def test_load_rules(transformation_rules: TransformationRules, fastapi_client: TestClient):
+def test_rules(transformation_rules: TransformationRules, fastapi_client: TestClient):
     # transformation_rules load Rules-Nordic44-to-TNT.xlsx
     # /api/rules fetch rules related to default workflow which are Rules-Nordic44-to-TNT.xlsx
     response = fastapi_client.get("/api/rules")
@@ -47,7 +49,7 @@ def test_load_rules(transformation_rules: TransformationRules, fastapi_client: T
 
 
 @pytest.mark.parametrize("workflow_name", ["graph_to_asset_hierarchy", "sheet2cdf"])
-def test_run_default_workflow(
+def test_workflow_start(
     workflow_name: str,
     cognite_client: CogniteClient,
     fastapi_client: TestClient,
@@ -80,3 +82,85 @@ def test_run_default_workflow(
         memory: MemoryClient = getattr(cognite_client, resource_name)
         data[resource_name] = memory.dump(ordered=True, exclude={"metadata.start_time", "metadata.update_time"})
     data_regression.check(data, basename=f"{workflow_name}_workflow")
+
+
+@pytest.mark.parametrize("workflow_name", ["graph_to_asset_hierarchy", "sheet2cdf"])
+def test_workflow_stats(
+    workflow_name: str,
+    fastapi_client: TestClient,
+):
+    # Act
+    response = fastapi_client.get(
+        f"/api/workflow/stats/{workflow_name}",
+    )
+
+    assert response.status_code == 200
+    assert response.json()["workflow_name"] == workflow_name
+    assert response.json()["state"] == "CREATED"
+
+
+def test_workflow_reload_workflows(
+    workflow_names: list[str],
+    fastapi_client: TestClient,
+):
+    # Act
+    response = fastapi_client.post(
+        "/api/workflow/reload-workflows",
+    )
+
+    assert response.status_code == 200
+    assert response.json()["result"] == "ok"
+    assert sorted(response.json()["workflows"]) == sorted(workflow_names)
+
+
+@pytest.mark.parametrize("workflow_name", ["graph_to_asset_hierarchy", "sheet2cdf"])
+def test_workflow_workflow_definition_get(
+    workflow_name: str,
+    fastapi_client: TestClient,
+):
+    # Act
+    response = fastapi_client.get(
+        f"/api/workflow/workflow-definition/{workflow_name}",
+    )
+
+    assert response.status_code == 200
+    assert response.json()["definition"]["name"] == workflow_name
+
+
+@pytest.mark.parametrize("workflow_name", ["graph_to_asset_hierarchy", "sheet2cdf"])
+def test_workflow_workflow_definition_post(
+    workflow_name: str,
+    fastapi_client: TestClient,
+):
+    # Act
+    response = fastapi_client.post(
+        f"/api/workflow/workflow-definition/{workflow_name}",
+    )
+
+    assert response.status_code == 200
+    assert response.json()["definition"]["name"] == workflow_name
+
+
+def test_about(
+    fastapi_client: TestClient,
+):
+    # Act
+    response = fastapi_client.get(
+        "/api/about",
+    )
+
+    assert response.status_code == 200
+    assert response.json()["version"] == neat.__version__
+
+
+def test_configs_global(
+    fastapi_client: TestClient,
+):
+    # Act
+    response = fastapi_client.get(
+        "/api/configs/global",
+    )
+
+    assert response.status_code == 200
+    assert response.json()["log_level"] == "INFO"
+    assert response.json()["workflows_store_type"] == "file"

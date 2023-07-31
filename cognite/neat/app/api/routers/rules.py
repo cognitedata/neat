@@ -5,7 +5,7 @@ from fastapi import APIRouter
 from cognite.neat.rules.parser import parse_rules_from_excel_file
 from cognite.neat.workflows.utils import get_file_hash
 
-from cognite.neat.app.api.configuration import neat_app, cache_store
+from cognite.neat.app.api.configuration import neat_app
 
 
 router = APIRouter()

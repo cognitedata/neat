@@ -5,10 +5,9 @@ from fastapi.responses import FileResponse
 from cognite.neat.app.api.configuration import neat_app
 from cognite.neat.app.api.data_classes.rest import DownloadFromCdfRequest, RunWorkflowRequest, UploadToCdfRequest
 from cognite.neat.workflows import WorkflowFullStateReport
-from cognite.neat.workflows import utils
 from cognite.neat.workflows.base import WorkflowDefinition
 from cognite.neat.workflows.migration.wf_manifests import migrate_wf_manifest
-from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
+from cognite.neat.workflows.model import FlowMessage
 
 
 router = APIRouter()

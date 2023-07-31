@@ -10,7 +10,7 @@ from cognite.neat.app.api.configuration import UI_PATH, neat_app
 from cognite.neat.app.api.context_manager import lifespan
 from cognite.neat.app.api.asgi.metrics import prometheus_app
 
-from cognite.neat.app.api.routers import configuration, metrics, workflows, rules, io, data_exploration
+from cognite.neat.app.api.routers import configuration, crud, metrics, workflows, rules, data_exploration
 
 
 app = FastAPI(title="Neat", lifespan=lifespan)
@@ -39,7 +39,7 @@ app.include_router(configuration.router)
 app.include_router(metrics.router)
 app.include_router(workflows.router)
 app.include_router(rules.router)
-app.include_router(io.router)
+app.include_router(crud.router)
 app.include_router(data_exploration.router)
 
 
