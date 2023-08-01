@@ -22,7 +22,8 @@ from cognite.neat.rules.models import TransformationRules
 from cognite.neat.graph.transformations.transformer import RuleProcessingReport, domain2app_knowledge_graph
 from cognite.neat.graph.loaders.validator import validate_asset_hierarchy
 from cognite.neat.workflows import utils
-from cognite.neat.workflows.base import BaseWorkflow, FlowMessage
+from cognite.neat.workflows.base import BaseWorkflow
+from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.cdf_store import CdfStore
 
 with contextlib.suppress(ValueError):
@@ -119,7 +120,7 @@ class DefaultNeatWorkflow(BaseWorkflow):
         elif self.graph_source_type.lower() in ("memory", "oxigraph"):
             if source_file := self.get_config_item_value("source_rdf_store.file"):
                 # Todo avoid hard-coding adjacent path
-                graphs = Path(self.data_store_path) / "source_graphs"
+                graphs = Path(self.data_store_path) / "source-graphs"
                 self.source_graph.import_from_file(graphs / source_file)
                 logging.info(f"Loaded {source_file} into source graph.")
             else:

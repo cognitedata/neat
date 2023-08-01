@@ -15,6 +15,20 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.18.3] - 01-08-23
+
+### Changed
+
+- First pass of refactoring / reorg of `app/api` package
+
+### Added
+
+- With exception of `get-nodes-and-edges` route and routes that need CDF all other are now tested
+
+### Removed
+
+- Running tests only on `graph_to_asset_hierarchy`, `sheet2cdf` is commented out
+
 ## [0.18.2] - 26-07-23
 
 ### Changed

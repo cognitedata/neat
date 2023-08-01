@@ -18,7 +18,7 @@ from rdflib import Namespace
 
 
 from cognite.neat.utils.auxiliary import local_import
-from cognite.neat.app.api.configuration import PREFIXES
+from cognite.neat.constants import PREFIXES
 from cognite.neat.rules import _exceptions
 from cognite.neat.rules.models import Class, Metadata, Property, RuleModel, TransformationRules
 

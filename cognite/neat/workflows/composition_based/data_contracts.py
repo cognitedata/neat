@@ -4,7 +4,7 @@ from cognite.client import CogniteClient
 
 from cognite.neat.graph.extractors import NeatGraphStore
 from cognite.neat.rules.models import TransformationRules
-from cognite.neat.workflows.step_model import DataContract
+from cognite.neat.workflows.composition_based.step_model import DataContract
 
 
 class RulesData(DataContract):
