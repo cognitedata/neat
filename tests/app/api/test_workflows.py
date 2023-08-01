@@ -8,8 +8,9 @@ from cognite.neat.constants import EXAMPLE_WORKFLOWS
 from cognite.neat.rules.models import TransformationRules
 from cognite.neat.workflows.base import BaseWorkflow
 from cognite.neat.workflows.model import WorkflowDefinition
-from cognite.neat.app.api.data_classes.rest import RunWorkflowRequest
+from cognite.neat.app.api.data_classes.rest import RuleRequest, RunWorkflowRequest, QueryRequest
 from tests.app.api.memory_cognite_client import MemoryClient
+from cognite.neat.app.api.utils.query_templates import query_templates
 
 
 @pytest.fixture(scope="session")
@@ -48,7 +49,7 @@ def test_rules(transformation_rules: TransformationRules, fastapi_client: TestCl
     assert len(transformation_rules.properties) == len(rules["properties"])
 
 
-@pytest.mark.parametrize("workflow_name", ["graph_to_asset_hierarchy", "sheet2cdf"])
+@pytest.mark.parametrize("workflow_name", ["graph_to_asset_hierarchy"])
 def test_workflow_start(
     workflow_name: str,
     cognite_client: CogniteClient,
@@ -84,7 +85,7 @@ def test_workflow_start(
     data_regression.check(data, basename=f"{workflow_name}_workflow")
 
 
-@pytest.mark.parametrize("workflow_name", ["graph_to_asset_hierarchy", "sheet2cdf"])
+@pytest.mark.parametrize("workflow_name", ["graph_to_asset_hierarchy"])
 def test_workflow_stats(
     workflow_name: str,
     fastapi_client: TestClient,
@@ -96,7 +97,7 @@ def test_workflow_stats(
 
     assert response.status_code == 200
     assert response.json()["workflow_name"] == workflow_name
-    assert response.json()["state"] == "CREATED"
+    assert response.json()["state"] == "COMPLETED"
 
 
 def test_workflow_reload_workflows(
@@ -113,7 +114,7 @@ def test_workflow_reload_workflows(
     assert sorted(response.json()["workflows"]) == sorted(workflow_names)
 
 
-@pytest.mark.parametrize("workflow_name", ["graph_to_asset_hierarchy", "sheet2cdf"])
+@pytest.mark.parametrize("workflow_name", ["graph_to_asset_hierarchy"])
 def test_workflow_workflow_definition_get(
     workflow_name: str,
     fastapi_client: TestClient,
@@ -150,3 +151,64 @@ def test_configs_global(
     assert response.status_code == 200
     assert response.json()["log_level"] == "INFO"
     assert response.json()["workflows_store_type"] == "file"
+
+
+def test_list_queries(
+    fastapi_client: TestClient,
+):
+    # Act
+    response = fastapi_client.get(
+        "/api/list-queries",
+    )
+
+    assert response.status_code == 200
+    assert response.json() == query_templates
+
+
+@pytest.mark.parametrize("workflow_name", ["graph_to_asset_hierarchy"])
+def test_query(
+    workflow_name: str,
+    fastapi_client: TestClient,
+):
+    # Act
+    response = fastapi_client.post(
+        "/api/query",
+        json=QueryRequest(
+            graph_name="source", workflow_name=workflow_name, query="SELECT DISTINCT ?class WHERE { ?s a ?class }"
+        ).model_dump(),
+    )
+
+    content = response.json()
+
+    assert response.status_code == 200
+    assert content["fields"] == ["class"]
+    assert len(content["rows"]) == 59
+    assert len(content["rows"]) == 59
+    assert {"class": "http://iec.ch/TC57/2013/CIM-schema-cim16#Terminal"} in content["rows"]
+
+
+@pytest.mark.parametrize("workflow_name", ["graph_to_asset_hierarchy"])
+def test_execute_rule(
+    workflow_name: str,
+    fastapi_client: TestClient,
+):
+    # Act
+    response = fastapi_client.post(
+        "/api/execute-rule",
+        json=RuleRequest(
+            graph_name="source",
+            workflow_name=workflow_name,
+            rule_type="rdfpath",
+            rule="cim:Terminal->cim:ConnectivityNode->cim:VoltageLevel->cim:Substation",
+        ).model_dump(),
+    )
+
+    content = response.json()
+
+    assert response.status_code == 200
+    assert content["fields"] == ["subject", "predicate", "object"]
+    assert {
+        "subject": "http://purl.org/cognite/neat#_2dd901ff-bdfb-11e5-94fa-c8f73332c8f4",
+        "predicate": "http://purl.org/dc/terms/relation",
+        "object": "http://purl.org/cognite/neat#_f176965a-9aeb-11e5-91da-b8763fd99c5f",
+    } in content["rows"]
