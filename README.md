@@ -1,6 +1,7 @@
 # kNowlEdge grAph Transformer (NEAT)
 
 This is python package handles transformation of domain knowledge graphs (more detailed, overarching) to app specific knowledge graphs.
+Documenation available at [https://thisisneat.io](https://thisisneat.io).
 
 ## Quickstart
 
