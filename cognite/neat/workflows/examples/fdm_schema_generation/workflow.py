@@ -1,4 +1,5 @@
 import logging
+import os
 import time
 from pathlib import Path
 
@@ -59,7 +60,7 @@ class FDMSchemaGenerationNeatWorkflow(BaseWorkflow):
 
     def step_generate_fdm_schema(self, flow_msg: FlowMessage = None):
         logging.info("Generating FDM schema")
-        self.data_model_gql = GraphQLSchema(self.transformation_rules, verbose=True).schema
+        self.data_model_gql = GraphQLSchema.from_rules(self.transformation_rules, verbose=True).schema
 
         default_name = (
             f"{self.transformation_rules.metadata.prefix}-"
@@ -67,6 +68,8 @@ class FDMSchemaGenerationNeatWorkflow(BaseWorkflow):
             ".graphql"
         )
         schema_name = self.get_config_item_value("fdm_schema.file", default_name)
+
+        os.makedirs(self.rules_storage_path.parent / "data-models", exist_ok=True)
         fdm_path = self.rules_storage_path.parent / "data-models" / schema_name
 
         with open(fdm_path, "w") as fdm_file:

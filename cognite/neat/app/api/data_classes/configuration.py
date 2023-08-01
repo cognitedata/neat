@@ -70,7 +70,7 @@ class Config(BaseModel):
 
     @property
     def source_graph_path(self) -> Path:
-        return self.data_store_path / "source_graphs"
+        return self.data_store_path / "source-graphs"
 
     @classmethod
     def from_yaml(cls, filepath: Path) -> Self:
