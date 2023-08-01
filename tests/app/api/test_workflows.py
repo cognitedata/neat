@@ -1,6 +1,7 @@
 import pytest
 from cognite.client import CogniteClient
 from starlette.testclient import TestClient
+from urllib.parse import quote
 
 
 from cognite import neat
@@ -212,3 +213,70 @@ def test_execute_rule(
         "predicate": "http://purl.org/dc/terms/relation",
         "object": "http://purl.org/cognite/neat#_f176965a-9aeb-11e5-91da-b8763fd99c5f",
     } in content["rows"]
+
+
+@pytest.mark.parametrize("workflow_name", ["graph_to_asset_hierarchy"])
+def test_object_properties(
+    workflow_name: str,
+    fastapi_client: TestClient,
+):
+    reference = quote("http://purl.org/cognite/neat#_lazarevac")
+    graph_name = "source"
+
+    # Act
+    response = fastapi_client.get(
+        f"/api/object-properties?reference={reference}&graph_name={graph_name}&workflow_name={workflow_name}",
+    )
+
+    content = response.json()
+
+    assert response.status_code == 200
+    assert content["fields"] == ["property", "value"]
+    assert {
+        "property": "http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject.description",
+        "value": "Serbia",
+    } in content["rows"]
+
+
+@pytest.mark.parametrize("workflow_name", ["graph_to_asset_hierarchy"])
+def test_search(
+    workflow_name: str,
+    fastapi_client: TestClient,
+):
+    search_str = "Serbia"
+    graph_name = "source"
+    search_type = "value_exact_match"
+
+    # Act
+    response = fastapi_client.get(
+        f"/api/search?search_str={search_str}&graph_name={graph_name}&search_type={search_type}&workflow_name={workflow_name}",
+    )
+
+    content = response.json()
+
+    assert response.status_code == 200
+    assert content["fields"] == ["object_ref", "type", "property", "value"]
+    assert {
+        "object_ref": "http://purl.org/cognite/neat#_lazarevac",
+        "type": "http://iec.ch/TC57/2013/CIM-schema-cim16#GeographicalRegion",
+        "property": "http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject.description",
+        "value": "Serbia",
+    } in content["rows"]
+
+
+@pytest.mark.parametrize("workflow_name", ["graph_to_asset_hierarchy"])
+def test_get_classes(
+    workflow_name: str,
+    fastapi_client: TestClient,
+):
+    # Act
+    response = fastapi_client.get(
+        f"/api/get-classes?graph_name=source&workflow_name={workflow_name}&cache=true",
+    )
+
+    content = response.json()
+
+    assert response.status_code == 200
+    assert content["fields"] == ["class", "instances"]
+    assert {"class": "http://iec.ch/TC57/2013/CIM-schema-cim16#Substation", "instances": "44"} in content["rows"]
+    assert len(content["rows"]) == 59
