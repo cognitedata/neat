@@ -579,14 +579,14 @@ class TransformationRules(RuleModel):
         if classes := values.get("classes"):
             if value.class_id not in classes:
                 raise _exceptions.Error600(value.property_id, value.class_id).to_pydantic_custom_error()
-        return value
+        return value 
 
     @validator("properties", each_item=True)
-    def value_type_exist(cls, value, values):
+    def value_type_exist(cls, value: Property, values):
         if classes := values.get("classes"):
             if value.property_type == "ObjectProperty" and value.expected_value_type not in classes:
                 raise _exceptions.Error603(
-                    value.class_i, value.property_id, value.expected_value_type
+                    value.class_id, value.property_id, value.expected_value_type
                 ).to_pydantic_custom_error()
         return value
 

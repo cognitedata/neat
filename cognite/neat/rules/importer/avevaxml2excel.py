@@ -12,8 +12,13 @@ from xml.etree.ElementTree import Element
 
 from cognite.neat.rules import parse_rules_from_excel_file
 from cognite.neat.rules import _exceptions
-from cognite.neat.utils.utils import generate_exception_report, get_namespace, remove_namespace, pascal_case, camel_case
+from cognite.neat.utils.utils import generate_exception_report,  pascal_case, camel_case
 
+REPLACE_TYPE = {
+    "String": "string",
+    "Boolean": "boolean",
+    "Decimal": "float",
+}
 
 def _create_default_metadata_parsing_config() -> dict[str, tuple[str, ...]]:
     # TODO: these are to be read from Metadata pydantic model
@@ -149,19 +154,23 @@ def _parse_avevaxml_metadata_df(root: Element, parsing_config: dict = None) -> p
     root_attributes = root.attrib
     
     attributes = {}
-    attributes["namespace"] = xmlns
+    attributes["namespace"] = xmlns.replace("{", "").replace("}", "")
     attributes["prefix"] = root_attributes["id"]
     attributes["description"] = root_attributes["description"]
     attributes["version"] = root_attributes["version"]
-    attributes["updated"] = root_attributes["versionDate"]
+    attributes["updated"] = root_attributes["versionDate"].replace(".","_")
+    attributes["created"] = root_attributes["versionDate"].replace(".","_")
     attributes["isCurrentVersion"] = "TRUE"
-    
+    attributes["cdfSpaceName"] = root_attributes["contentType"]
+    attributes["dataModelName"] = root_attributes["contentType"]
+    attributes["title"] = root_attributes["name"]    
+    attributes["creator"] = root_attributes["id"]    
     
     df_metadata = pd.DataFrame(attributes, index=[0])
     columns_to_keep = list(parsing_config["header"])
     missing_fields = [item for item in columns_to_keep if item not in df_metadata.columns]
     for field in missing_fields:
-        df_metadata[field] = None
+        df_metadata[field] = ''
     df_metadata = df_metadata[columns_to_keep]
     
     return df_metadata.T
@@ -193,9 +202,9 @@ def _parse_avevaxml_classes_df(root: Element, parsing_config: dict = None) -> pd
     
     classes_lst = [item.attrib for item in classes]
     df_class = pd.DataFrame(classes_lst)
-    df_class["Source"] = len(df_class) * xmlns.replace("{","").replace("}","")
+    df_class["Source"] = xmlns.replace("{","").replace("}","")
     df_class["Source Entity Name"] = df_class["id"]
-    df_class["Match"] = len(df_class) * ["exact"]
+    df_class["Match"] = "exact"
     df_class["Class"] = [pascal_case(item) for item in df_class["name"]]
     df_class["Name"] = df_class["name"] 
     df_class["Deprecated"] = df_class["obsolete"]
@@ -206,7 +215,7 @@ def _parse_avevaxml_classes_df(root: Element, parsing_config: dict = None) -> pd
     for field in missing_fields:
         df_class[field] = None
     df_class = df_class[columns_to_keep]
-    df_class.iloc[0,:] = df_class.columns
+    df_class = df_class.T.reset_index().T.reset_index(drop=True)
     df_class.columns = parsing_config["helper_row"]
         
     return df_class
@@ -263,14 +272,21 @@ def _parse_avevaxml_properties_df(root: Element, parsing_config: dict = None ) -
         for item in v:
             lst.append(attributes_dict[item["id"]])
         
+        def _replace_type(item):
+            if REPLACE_TYPE.get(item, None) is not None:
+                return REPLACE_TYPE[item]
+            else:
+                return item
+
         df_temp = pd.DataFrame(lst)
         class_name = classes_dict[k]["name"]
         df_temp["Class"] = pascal_case(class_name)
         df_temp["Property"] = df_temp["name"].apply(lambda x: camel_case(x))
         df_temp["Source"] = xmlns.replace("{", "").replace("}", "")
         df_temp["Name"] = df_temp["name"]
-        df_temp["Source Entity Name"] = df_temp["id"]
+        df_temp["Source Entity Name"] = df_temp["name"]
         df_temp["Description"] = df_temp["description"]
+        df_temp["dataType"] = df_temp["dataType"].apply(lambda x: _replace_type(x))
         
         df_temp = df_temp.rename(columns={"dataType": "Type", "obsolete": "Deprecated"})
         df_lst.append(df_temp)
@@ -280,7 +296,7 @@ def _parse_avevaxml_properties_df(root: Element, parsing_config: dict = None ) -
     columns_to_keep = list(parsing_config["header"]) 
     missing_fields = [item for item in columns_to_keep if item not in df_attributes.columns]
     for field in missing_fields:
-        df_attributes[field] = None
+        df_attributes[field] = ''
     df_attributes = df_attributes[columns_to_keep]
     df_attributes.iloc[0,:] = df_attributes.columns
     df_attributes.columns = parsing_config["helper_row"]
