@@ -265,6 +265,7 @@ SELECT ?class ?name ?description ?parentClass ?deprecated ?deprecationDate
         ]
         for class_, group_df in grouped_df
     ]
+    
     return pd.DataFrame([parsing_config["helper_row"], parsing_config["header"]] + clean_list)
 
 

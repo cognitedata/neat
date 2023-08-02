@@ -339,6 +339,7 @@ class Property(Resource):
     class_id: ExternalId = Field(alias="Class")
     property_id: ExternalId = Field(alias="Property")
     property_name: Optional[ExternalId] = Field(alias="Name", default=None)
+    # TODO: Are we missing "Description" field here?
     expected_value_type: ExternalId = Field(alias="Type")
     min_count: Optional[int] = Field(alias="Min Count", default=0)
     max_count: Optional[int] = Field(alias="Max Count", default=None)

@@ -285,3 +285,13 @@ def _order_expectations_by_type(exceptions: list[dict]) -> dict[str, list[str]]:
         else:
             exception_dict[exception["type"]].append(issue)
     return exception_dict
+
+
+def camel_case(st):
+    output = ''.join(x for x in st.title() if x.isalnum())
+    return output[0].lower() + output[1:]
+
+
+def pascal_case(st):
+    output = ''.join(x for x in st.title() if x.isalnum())
+    return output[0].upper() + output[1:]
