@@ -1,3 +1,4 @@
+import inspect
 import logging
 from pathlib import Path
 from fastapi import APIRouter
@@ -8,7 +9,8 @@ from cognite.neat.workflows import WorkflowFullStateReport
 from cognite.neat.workflows.base import WorkflowDefinition
 from cognite.neat.workflows.migration.wf_manifests import migrate_wf_manifest
 from cognite.neat.workflows.model import FlowMessage
-
+import cognite.neat.workflows.steps.lib
+from cognite.neat.workflows.steps_registry import StepsRegistry
 
 router = APIRouter()
 
@@ -112,4 +114,16 @@ def get_pre_cdf_assets(workflow_name: str):
     workflow = neat_app.workflow_manager.get_workflow(workflow_name)
     if workflow is None:
         return {"assets": []}
-    return {"assets": workflow.categorized_assets}
+    return {"assets": workflow.data["CategorizedAssets"]}
+
+
+@router.get("/api/workflow/context/{workflow_name}")
+def get_context(workflow_name: str):
+    workflow = neat_app.workflow_manager.get_workflow(workflow_name)
+    return {"context": workflow.get_context()}
+
+
+@router.get("/api/workflow/registered-steps")
+def get_steps():
+    steps_manager = StepsRegistry(metrics=None, data_store_path=neat_app.config.data_store_path)
+    return {"steps": steps_manager.get_list_of_steps()}

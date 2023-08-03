@@ -6,7 +6,7 @@ run-explorer:
 	# open "http://localhost:8000/static/index.html" || true
 	mkdir -p ./data
 	export NEAT_CONFIG_PATH=./dev-data/config.yaml && \
-	poetry run uvicorn --host 0.0.0.0 cognite.neat.explorer.explorer:app
+	poetry run uvicorn --host 0.0.0.0 cognite.neat.app.api.explorer:app
 
 run-tests:
 	@echo "Running tests..."
@@ -18,6 +18,7 @@ run-regen-test:
 
 configure:
 	@echo "Configuring..."
+	poetry install --extras all
 	cd cognite/neat/app/ui/neat-app; npm install
 
 run-linters:

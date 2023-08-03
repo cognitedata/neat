@@ -1,6 +1,7 @@
 import inspect
 import json
 import logging
+from pathlib import Path
 import threading
 import time
 import traceback
@@ -11,7 +12,7 @@ import yaml
 from cognite.client import CogniteClient
 from prometheus_client import Gauge
 
-from cognite.neat.graph.extractors.data_stores.metrics import NeatMetricsCollector
+from cognite.neat.stores.metrics import NeatMetricsCollector
 from cognite.neat.exceptions import InvalidWorkFlowError
 from cognite.neat.utils.utils import retry_decorator
 from cognite.neat.workflows.model import (
@@ -27,13 +28,14 @@ from cognite.neat.workflows.model import (
     WorkflowStepEvent,
     WorkflowSystemComponent,
 )
+from cognite.neat.workflows.steps_registry import StepsRegistry
 from cognite.neat.workflows.tasks import WorkflowTaskBuilder
 
 from cognite.neat.app.api.configuration import Config
 from cognite.neat.utils.cdf import CogniteClientConfig
 from cognite.neat.workflows import utils, cdf_store
-from cognite.neat.workflows.composition_based.step_model import DataContract
-import cognite.neat.workflows.composition_based.steps
+from cognite.neat.workflows.steps.step_model import DataContract
+import cognite.neat.workflows.steps.lib
 
 summary_metrics = Gauge("neat_workflow_summary_metrics", "Workflow execution summary metrics", ["wf_name", "name"])
 steps_metrics = Gauge("neat_workflow_steps_metrics", "Workflow step level metrics", ["wf_name", "step_name", "name"])
@@ -68,6 +70,7 @@ class BaseWorkflow:
         self.task_builder: WorkflowTaskBuilder = None
         self.rules_storage_path = None
         self.data_store_path = None
+        self.user_steps_path = None  # path to user defined steps
         self.cdf_store = (
             cdf_store.CdfStore(self.cdf_client, data_set_id=self.default_dataset_id)
             if self.default_dataset_id
@@ -76,20 +79,27 @@ class BaseWorkflow:
         self.metrics = NeatMetricsCollector(self.name, self.cdf_client)
         self.resume_event = Event()
         self.is_ephemeral = False  # if True, workflow will be deleted after completion
+        self.step_clases = None
         self.data: dict[str, Type[DataContract]] = {}
-
+        self.steps_registry: StepsRegistry = None
+    
     def start(self, sync=False, is_ephemeral=False, **kwargs) -> FlowMessage | None:
         """Starts workflow execution.sync=True will block until workflow is completed and
         return last workflow flow message, sync=False will start workflow in a separate thread and return None"""
         if self.state not in [WorkflowState.CREATED, WorkflowState.COMPLETED, WorkflowState.FAILED]:
             logging.error(f"Workflow {self.name} is already running")
             return None
+        self.data["CdfStore"] = self.cdf_store
+        self.data["CdfClient"] = self.cdf_client
+        self.data["WorkflowConfigs"] = self.configs
         self.state = WorkflowState.RUNNING
         self.start_time = time.time()
         self.end_time = None
         self.run_id = utils.generate_run_id()
         self.is_ephemeral = is_ephemeral
         self.execution_log = []
+        user_steps_path = Path(self.data_store_path)/"steps"
+        self.steps_registry = StepsRegistry(user_steps_path, self.metrics, self.data)
         if sync:
             return self._run_workflow(**kwargs)
 
@@ -258,47 +268,20 @@ class BaseWorkflow:
 
                 new_flow_message = method_runner()
             elif step.stype == StepType.STD_STEP:
-                for name, step_cls in inspect.getmembers(cognite.neat.workflows.composition_based.steps):
-                    if inspect.isclass(step_cls):
-                        if name == step.method:
-                            step_obj = step_cls(self.metrics)
-                            step_obj.set_global_configs(self.cdf_client, self.data_store_path, self.rules_storage_path)
-                            signature = inspect.signature(step_obj.run)
-                            parameters = signature.parameters
-                            is_valid = True
-                            input_data = []
-                            missing_data = []
-                            for parameter in parameters.values():
-                                try:
-                                    if parameter.annotation.__name__ == "FlowMessage":
-                                        input_data.append(self.flow_message)
-                                    else:
-                                        # Comment: self.data is suppose to be a dict of data contracts
-                                        # but it's not set anywhere. It is unclear where and how this
-                                        # this is suppose to be set
-                                        input_data.append(self.data[parameter.annotation.__name__])
-                                except KeyError:
-                                    is_valid = False
-                                    logging.error(f"Missing data for step {step.id} parameter {parameter.name}")
-                                    missing_data.append(parameter.annotation.__name__)
-                                    continue
-                            if not is_valid:
-                                raise InvalidWorkFlowError(step.id, missing_data)
-                            output = step_obj.run(*input_data)
-                            if output is not None:
-                                if isinstance(output, tuple):
-                                    for i, out_obj in enumerate(output):
-                                        if isinstance(out_obj, FlowMessage):
-                                            new_flow_message = out_obj
-                                        else:
-                                            self.data[type(out_obj).__name__] = out_obj
-                                else:
-                                    if isinstance(output, FlowMessage):
-                                        new_flow_message = output
-                                    else:
-                                        self.data[output.__name__] = output
-                            break
-
+                output = self.steps_registry.run_step(step.method, self.data)
+                if output is not None:
+                    if isinstance(output, tuple):
+                        for i, out_obj in enumerate(output):
+                            if isinstance(out_obj, FlowMessage):
+                                new_flow_message = out_obj
+                            else:
+                                self.data[type(out_obj).__name__] = out_obj
+                    else:
+                        if isinstance(output, FlowMessage):
+                            new_flow_message = output
+                        else:
+                            self.data[output.__name__] = output
+            
             elif step.stype == StepType.START_WORKFLOW_TASK_STEP:
                 if self.task_builder:
                     sync_str = step.params.get("sync", "false")
@@ -467,8 +450,11 @@ class BaseWorkflow:
     def set_storage_path(self, storage_type: str, storage_path: str):
         if storage_type == "transformation_rules":
             self.rules_storage_path = storage_path
+            self.cdf_store = cdf_store.CdfStore(self.cdf_client, data_set_id=self.default_dataset_id,
+                                                rules_storage_path=self.rules_storage_path)
         elif storage_type == "data_store":
             self.data_store_path = storage_path
+            self.user_steps_path = Path(self.data_store_path, "steps")
 
     def set_task_builder(self, task_builder: WorkflowTaskBuilder):
         self.task_builder = task_builder
@@ -514,3 +500,6 @@ class BaseWorkflow:
             return next((step for step in self.workflow_steps if step.id == step_id and step.enabled), None)
         else:
             return next((step for step in self.workflow_steps if step.trigger and step.enabled), None)
+
+    def get_context(self):
+        return self.data
