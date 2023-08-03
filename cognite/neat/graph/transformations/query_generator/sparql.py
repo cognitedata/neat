@@ -1,7 +1,9 @@
+import re
 from rdflib import Graph, Namespace
 from rdflib.term import URIRef
 
 from cognite.neat.constants import PREFIXES
+from cognite.neat.rules.models import TransformationRules
 from cognite.neat.rules.to_rdf_path import (
     AllProperties,
     AllReferences,
@@ -9,8 +11,10 @@ from cognite.neat.rules.to_rdf_path import (
     SingleProperty,
     Traversal,
     Triple,
+    parse_rule,
     parse_traversal,
 )
+from cognite.neat.rules.analysis import get_classes_with_properties
 
 
 def _generate_prefix_header(prefixes: dict[str, Namespace] = PREFIXES) -> str:
@@ -283,3 +287,162 @@ def build_sparql_query(
         query = query.replace(URI, f"{prefix}:")
 
     return query.replace("insertPrefixes\n\n", _generate_prefix_header(prefixes) if insert_prefixes else "")
+
+
+def compress_uri(uri: URIRef, prefixes: dict) -> str:
+    """Compresses URI to prefix:entity_id
+
+    Parameters
+    ----------
+    uri : URIRef
+        URI of entity
+    prefixes : dict
+        Dictionary of prefixes
+
+    Returns
+    -------
+    str
+        Compressed URI or original URI if no prefix is found
+    """
+    return next(
+        (
+            f"{prefix}:{uri.replace(namespace, '')}"
+            for prefix, namespace in prefixes.items()
+            if uri.startswith(namespace)
+        ),
+        uri,
+    )
+
+
+def _hop2property_path(graph: Graph, hop: Hop, prefixes: dict[str, Namespace]) -> str:
+    """Converts hop to property path string
+
+    Parameters
+    ----------
+    graph : Graph
+        Graph containing instances of classes
+    hop : Hop
+        Hop to convert
+    prefixes : dict[str, Namespace]
+        Dictionary of prefixes to use for compression and predicate quering
+
+    Returns
+    -------
+    str
+        Property path string for hop traversal (e.g. ^rdf:type/rdfs:subClassOf)
+    """
+
+    previous_step = hop.origin
+
+    # add triples for all steps until destination
+    property_path = ""
+    for current_step in hop.traversal:
+        sub_entity, obj_entity = (
+            (current_step, previous_step) if current_step.direction == "source" else (previous_step, current_step)
+        )
+
+        predicate = compress_uri(
+            _get_predicate_id(graph, sub_entity.class_.id, obj_entity.class_.id, prefixes), prefixes
+        )
+
+        predicate = f"^{predicate}" if current_step.direction == "source" else predicate
+        property_path += f"{predicate}/"
+
+        previous_step = current_step
+
+    if previous_step.property:
+        return property_path + previous_step.property.id
+    else:
+        return property_path[:-1]
+
+
+def build_construct_query(graph: Graph, class_: str, transformation_rules: TransformationRules) -> str:
+    """Builds CONSTRUCT query for given class and rules
+
+    Parameters
+    ----------
+    graph : NeatGraphStore
+        Data model graph or data model instance (aka knowledge graph)
+    class_ : str
+        ID of class
+    rules : Rules
+        Rules
+
+    Returns
+    -------
+    str
+        CONSTRUCT query
+    """
+
+    query_template = "CONSTRUCT {graph_template\n}\n\nWHERE {graph_pattern\n}\n\nLimit 1 "
+
+    templates, patterns = _to_construct_triples(graph, class_, transformation_rules)
+
+    graph_template = "\n           ".join(
+        [f"{template.subject} {template.predicate} {template.object} ." for template in templates]
+    )
+    graph_pattern = "\n       ".join(
+        [f"{pattern.subject} {pattern.predicate} {pattern.object} ." for pattern in patterns]
+    )
+
+    return query_template.replace("graph_template", graph_template).replace("graph_pattern", graph_pattern)
+
+
+def _to_construct_triples(
+    graph: Graph, class_: str, transformation_rules: TransformationRules
+) -> tuple[list[Triple], list[Triple]]:
+    """Converts class definition to CONSTRUCT triples
+
+    Parameters
+    ----------
+    graph : Graph
+        _description_
+    class_ : str
+        _description_
+    transformation_rules : TransformationRules
+        _description_
+
+    Returns
+    -------
+    tuple[list[Triple],list[Triple]]
+        _description_
+    """
+
+    templates = []
+    patterns = []
+
+    for property_ in get_classes_with_properties(transformation_rules)[class_]:
+        # Parse rule
+        parsed_rule = parse_rule(property_.rule, property_.rule_type)
+
+        graph_template_triple = Triple(
+            subject=f"?{class_.lower()}",
+            predicate=f"{transformation_rules.metadata.prefix}:{property_.property_id}",
+            object=f'?{re.sub(r"[^_a-zA-Z0-9/_]", "_", property_.property_id.lower())}',
+        )
+
+        if isinstance(parsed_rule.traversal, AllReferences):
+            graph_pattern_triple = Triple(
+                subject=graph_template_triple.object, predicate="a", object=parsed_rule.traversal.class_.id
+            )
+
+        elif isinstance(parsed_rule.traversal, SingleProperty):
+            graph_pattern_triple = Triple(
+                subject=graph_template_triple.subject,
+                predicate=parsed_rule.traversal.property.id,
+                object=graph_template_triple.object,
+            )
+
+        elif isinstance(parsed_rule.traversal, Hop):
+            graph_pattern_triple = Triple(
+                subject=graph_template_triple.subject,
+                predicate=_hop2property_path(graph, parsed_rule.traversal, transformation_rules.prefixes),
+                object=graph_template_triple.object,
+            )
+        else:
+            continue
+
+        patterns += [graph_pattern_triple]
+        templates += [graph_template_triple]
+
+    return templates, patterns
