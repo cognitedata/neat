@@ -8,7 +8,9 @@ from cognite.neat.rules.to_rdf_path import (
     AllProperties,
     AllReferences,
     Hop,
+    Origin,
     SingleProperty,
+    Step,
     Traversal,
     Triple,
     parse_rule,
@@ -86,8 +88,8 @@ def _get_entire_object_mapping(subject) -> list[Triple]:
 
 
 def _get_hop_triples(graph, path: Hop, prefixes) -> list[Triple]:
-    triples = [Triple("?subject", "a", path.origin.class_.id)]
-    previous_step = path.origin
+    triples = [Triple("?subject", "a", path.class_.id)]
+    previous_step = Step(class_=path.class_, direction="origin")
 
     # add triples for all steps until destination
     for curret_step in path.traversal:
@@ -98,7 +100,7 @@ def _get_hop_triples(graph, path: Hop, prefixes) -> list[Triple]:
         predicate = _get_predicate_id(graph, sub_entity.class_.id, obj_entity.class_.id, prefixes)
 
         # if this is first step after origin
-        if previous_step.class_.id == path.origin.class_.id:
+        if previous_step.class_.id == path.class_.id:
             if curret_step.direction == "source":
                 sub, obj = f"?{sub_entity.class_.name}ID", "?subject"
             else:
@@ -332,7 +334,8 @@ def _hop2property_path(graph: Graph, hop: Hop, prefixes: dict[str, Namespace]) -
         Property path string for hop traversal (e.g. ^rdf:type/rdfs:subClassOf)
     """
 
-    previous_step = hop.origin
+    # setting previous step to origin, as we are starting from there
+    previous_step = Step(class_=hop.class_, direction="origin")
 
     # add triples for all steps until destination
     property_path = ""
@@ -353,6 +356,7 @@ def _hop2property_path(graph: Graph, hop: Hop, prefixes: dict[str, Namespace]) -
     if previous_step.property:
         return property_path + previous_step.property.id
     else:
+        # removing "/" at the end of property path if there is no property at the end
         return property_path[:-1]
 
 

@@ -112,7 +112,7 @@ class Entity(BaseModel):
         return [cls(prefix=prefix, name=name) for name in names]
 
 
-StepDirection = Literal["source", "target"]
+StepDirection = Literal["source", "target", "origin"]
 _direction_by_symbol = {"->": "target", "<-": "source"}
 
 
@@ -180,12 +180,12 @@ class Origin(BaseModel):
 class Hop(Traversal):
     """Multi or single hop traversal through graph"""
 
-    origin: Origin
+    class_: Entity
     traversal: list[Step]
 
-    @field_validator("origin", mode="before")
+    @field_validator("class_", mode="before")
     def process_origin_if_string(cls, value):
-        return Origin(class_=value) if isinstance(value, str) else value
+        return Entity.from_string(value) if isinstance(value, str) else value
 
     @field_validator("traversal", mode="before")
     def process_path_if_string(cls, value):
@@ -228,7 +228,7 @@ def parse_traversal(raw: str) -> AllReferences | AllProperties | SingleProperty 
     elif result := _single_property.match(raw):
         return SingleProperty(class_=result.group(OWL.class_), property=result.group(OWL.property_))
     elif result := _hop.match(raw):
-        return Hop(origin=result.group("origin"), traversal=result.group(_traversal))
+        return Hop(class_=result.group("origin"), traversal=result.group(_traversal))
     else:
         raise _exceptions.Error1(raw).to_pydantic_custom_error()
 
