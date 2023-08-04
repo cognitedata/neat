@@ -66,9 +66,12 @@ class WorkflowManager:
     def get_list_of_workflows(self):
         return list(self.workflow_registry.keys())
 
-    def get_workflow(self, name: str) -> BaseWorkflow:
-        return self.workflow_registry[name]
-
+    def get_workflow(self, name: str) -> BaseWorkflow | None:
+        try:
+            return self.workflow_registry[name]
+        except KeyError:
+            return None
+    
     def start_workflow(self, name: str, sync=False, **kwargs):
         workflow = self.get_workflow(name)
         workflow.start(sync, kwargs=kwargs)
@@ -130,27 +133,37 @@ class WorkflowManager:
                         logging.info(f"Loading workflow module {workflow_name}")
 
                     full_module_name = f"{workflow_name}.workflow"
+                    load_user_defined_workflow = False
                     if full_module_name in sys.modules:
                         logging.info(f"Reloading existing workflow module {workflow_name}")
                         module = importlib.reload(sys.modules[full_module_name])
+                        load_user_defined_workflow = True
                     else:
                         logging.info(f"Loading NEW workflow module {workflow_name}")
                         logging.info(f"Loading NEW workflow module {full_module_name}")
-                        module = importlib.import_module(full_module_name)
-
+                        try:
+                            module = importlib.import_module(full_module_name)
+                            load_user_defined_workflow = True
+                        except ModuleNotFoundError as e:
+                            logging.debug(f"ModuleNotFoundError {e}")
+                   
                     # Dynamically load workflow classes which contain "NeatWorkflow" in their name
                     # from workflow.py module in the workflow directory and
                     # Instantiate them using the workflow definition loaded
                     # from workflow.yaml file
-                    for name, obj in inspect.getmembers(module):
-                        if "NeatWorkflow" in name and inspect.isclass(obj):
-                            logging.info(
-                                (
-                                    f"Found class {name} in module {workflow_name},"
-                                    f" registering it as '{workflow_name}' in the workflow registry"
+                    if load_user_defined_workflow:
+                        for name, obj in inspect.getmembers(module):
+                            if "NeatWorkflow" in name and inspect.isclass(obj):
+                                logging.info(
+                                    (
+                                        f"Found class {name} in module {workflow_name},"
+                                        f" registering it as '{workflow_name}' in the workflow registry"
+                                    )
                                 )
-                            )
-                            self.register_workflow(obj, workflow_name, workflow_definition)
+                                self.register_workflow(obj, workflow_name, workflow_definition)
+                                return 
+                    else:        
+                        self.register_workflow(BaseWorkflow, workflow_name, workflow_definition)
 
                 except Exception as e:
                     trace = traceback.format_exc()

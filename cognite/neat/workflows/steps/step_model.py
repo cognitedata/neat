@@ -17,7 +17,8 @@ T_Output = TypeVar("T_Output", bound=DataContract)
 
 
 class Step(ABC):
-    expected_config_items: list[str] = []
+    description: str = ""
+    configurations: list[str] = []
 
     def __init__(self, metrics, data_store_path: str | None = None, context: dict[str, str] = None):
         self.log: bool = False

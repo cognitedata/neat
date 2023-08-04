@@ -1,7 +1,7 @@
-import inspect
 import logging
 from pathlib import Path
 from fastapi import APIRouter
+from fastapi import HTTPException
 from fastapi.responses import FileResponse
 from cognite.neat.app.api.configuration import neat_app
 from cognite.neat.app.api.data_classes.rest import DownloadFromCdfRequest, RunWorkflowRequest, UploadToCdfRequest
@@ -9,7 +9,6 @@ from cognite.neat.workflows import WorkflowFullStateReport
 from cognite.neat.workflows.base import WorkflowDefinition
 from cognite.neat.workflows.migration.wf_manifests import migrate_wf_manifest
 from cognite.neat.workflows.model import FlowMessage
-import cognite.neat.workflows.steps.lib
 from cognite.neat.workflows.steps_registry import StepsRegistry
 
 router = APIRouter()
@@ -28,9 +27,11 @@ def start_workflow(request: RunWorkflowRequest):
 @router.get("/api/workflow/stats/{workflow_name}", response_model=WorkflowFullStateReport)
 def get_workflow_stats(
     workflow_name: str,
-) -> WorkflowFullStateReport:
+) -> WorkflowFullStateReport | None:
     logging.info("Hit the get_workflow_stats endpoint")
     workflow = neat_app.workflow_manager.get_workflow(workflow_name)
+    if workflow is None:
+        raise HTTPException(status_code=404, detail="workflow not found")
     return workflow.get_state()
 
 
@@ -126,4 +127,5 @@ def get_context(workflow_name: str):
 @router.get("/api/workflow/registered-steps")
 def get_steps():
     steps_manager = StepsRegistry(metrics=None, data_store_path=neat_app.config.data_store_path)
+    steps_manager.load_step_classes()
     return {"steps": steps_manager.get_list_of_steps()}

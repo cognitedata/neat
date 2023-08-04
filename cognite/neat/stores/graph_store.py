@@ -113,6 +113,7 @@ class NeatGraphStore:
                         # lock originated from another instance of the store
                         logging.error("Error initializing Oxigraph store: %s", e)
                         logging.info("Removing LOCK file and retrying")
+                        time.sleep(1)
                     else:
                         raise e
 

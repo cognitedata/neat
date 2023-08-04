@@ -1,4 +1,3 @@
-import inspect
 import json
 import logging
 from pathlib import Path
@@ -13,13 +12,13 @@ from cognite.client import CogniteClient
 from prometheus_client import Gauge
 
 from cognite.neat.stores.metrics import NeatMetricsCollector
-from cognite.neat.exceptions import InvalidWorkFlowError
 from cognite.neat.utils.utils import retry_decorator
 from cognite.neat.workflows.model import (
     FlowMessage,
     StepExecutionStatus,
     StepType,
     WorkflowConfigItem,
+    WorkflowConfigs,
     WorkflowDefinition,
     WorkflowFullStateReport,
     WorkflowStartException,
@@ -35,7 +34,6 @@ from cognite.neat.app.api.configuration import Config
 from cognite.neat.utils.cdf import CogniteClientConfig
 from cognite.neat.workflows import utils, cdf_store
 from cognite.neat.workflows.steps.step_model import DataContract
-import cognite.neat.workflows.steps.lib
 
 summary_metrics = Gauge("neat_workflow_summary_metrics", "Workflow execution summary metrics", ["wf_name", "name"])
 steps_metrics = Gauge("neat_workflow_steps_metrics", "Workflow step level metrics", ["wf_name", "step_name", "name"])
@@ -91,15 +89,15 @@ class BaseWorkflow:
             return None
         self.data["CdfStore"] = self.cdf_store
         self.data["CdfClient"] = self.cdf_client
-        self.data["WorkflowConfigs"] = self.configs
+        self.data["WorkflowConfigs"] = WorkflowConfigs(configs=self.configs)
         self.state = WorkflowState.RUNNING
         self.start_time = time.time()
         self.end_time = None
         self.run_id = utils.generate_run_id()
         self.is_ephemeral = is_ephemeral
         self.execution_log = []
-        user_steps_path = Path(self.data_store_path)/"steps"
-        self.steps_registry = StepsRegistry(user_steps_path, self.metrics, self.data)
+        self.steps_registry = StepsRegistry(self.metrics, self.data_store_path)
+        self.steps_registry.load_step_classes()
         if sync:
             return self._run_workflow(**kwargs)
 
