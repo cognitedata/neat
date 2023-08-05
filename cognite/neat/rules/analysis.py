@@ -3,6 +3,7 @@ import warnings
 import pandas as pd
 
 from cognite.neat.rules.models import Property, TransformationRules
+from cognite.neat.rules.to_rdf_path import RuleType
 
 
 def get_defined_classes(transformation_rules: TransformationRules) -> set[str]:
@@ -25,7 +26,9 @@ def get_classes_with_properties(transformation_rules: TransformationRules) -> di
     return class_property_pairs
 
 
-def to_class_property_pairs(transformation_rules: TransformationRules) -> dict[str, dict[str, Property]]:
+def to_class_property_pairs(
+    transformation_rules: TransformationRules, only_rdfpath: bool = False
+) -> dict[str, dict[str, Property]]:
     """This method will actually consider only the first definition of given property!"""
     class_property_pairs = {}
 
@@ -40,7 +43,12 @@ def to_class_property_pairs(transformation_rules: TransformationRules) -> dict[s
                     stacklevel=2,
                 )
                 continue
-            processed_properties[property_.property_id] = property_
+
+            if only_rdfpath and property_.rule_type == RuleType.rdfpath:
+                processed_properties[property_.property_id] = property_
+            elif not only_rdfpath:
+                processed_properties[property_.property_id] = property_
+
         class_property_pairs[class_] = processed_properties
 
     return class_property_pairs
@@ -113,3 +121,22 @@ def to_property_dict(rules: TransformationRules) -> dict[str, list[Property]]:
             property_[prop.property_id].append(prop)
 
     return property_
+
+
+def get_asset_related_properties(properties: list[Property]) -> list[Property]:
+    return [prop for prop in properties if "Asset" in prop.cdf_resource_type]
+
+
+def define_asset_class_mapping(transformation_rules: TransformationRules, class_: str) -> dict[str, list[str]]:
+    mapping_dict: dict[str, list[str]] = {}
+
+    class_properties = to_class_property_pairs(transformation_rules, only_rdfpath=True)[class_]
+
+    for asset_property in get_asset_related_properties(list(class_properties.values())):
+        for resource_type_property in asset_property.resource_type_property:
+            if resource_type_property not in mapping_dict:
+                mapping_dict[resource_type_property] = [asset_property.property_id]
+            else:
+                mapping_dict[resource_type_property] += [asset_property.property_id]
+
+    return mapping_dict

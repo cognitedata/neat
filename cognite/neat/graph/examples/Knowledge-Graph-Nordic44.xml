@@ -15278,6 +15278,7 @@ Change log:
 		<cim:Terminal.ConnectivityNode rdf:resource="#_b92e4ea4-edf8-ba43-987b-e5bfdf722f76"/>
 		<cim:IdentifiedObject.name>300ASKER-ARENDAL T1</cim:IdentifiedObject.name>
 		<cim:IdentifiedObject.description>5500 5603 &apos;1 &apos;</cim:IdentifiedObject.description>
+		<cim:IdentifiedObject.aliasName>Some Alias Name Which is not used since name exist</cim:IdentifiedObject.aliasName>
 		<cim:ACDCTerminal.sequenceNumber>2</cim:ACDCTerminal.sequenceNumber>
 	</cim:Terminal>
 	<cim:Terminal rdf:ID="_2dd90417-bdfb-11e5-94fa-c8f73332c8f4">
@@ -16218,7 +16219,7 @@ Change log:
 	<cim:Terminal rdf:ID="_2dd901a2-bdfb-11e5-94fa-c8f73332c8f4">
 		<cim:Terminal.ConductingEquipment rdf:resource="#_2dd901a1-bdfb-11e5-94fa-c8f73332c8f4"/>
 		<cim:Terminal.ConnectivityNode rdf:resource="#_f176967b-9aeb-11e5-91da-b8763fd99c5f"/>
-		<cim:IdentifiedObject.aliasName>Some Alias Name Which is not used since name exist</cim:IdentifiedObject.aliasName>
+		<!-- <cim:IdentifiedObject.aliasName>Some Alias Name Which is not used since name exist</cim:IdentifiedObject.aliasName> -->
 		<cim:IdentifiedObject.name>T1</cim:IdentifiedObject.name>
 	</cim:Terminal>
 	<cim:Terminal rdf:ID="_2dd901a4-bdfb-11e5-94fa-c8f73332c8f4">
@@ -19635,7 +19636,7 @@ Change log:
 	</entsoe2:CircuitShare>
 	<entsoe2:EnergyCongestionZone rdf:ID="_d3323018-7cba-faf9-e040-1e828c947b8e">
 		<cim:IdentifiedObject.name>FI-ELSP-1</cim:IdentifiedObject.name>
-		<cim:IdentifiedObject.aliasName>Elspot FI</cim:IdentifiedObject.aliasName>
+		<!-- <cim:IdentifiedObject.aliasName>Elspot FI</cim:IdentifiedObject.aliasName> -->
 		<cim:IdentifiedObject.description>Finland</cim:IdentifiedObject.description>
 		<pti:EnergyCongestionZone.marketCode>FI-ELSP-1</pti:EnergyCongestionZone.marketCode>
 	</entsoe2:EnergyCongestionZone>
@@ -19683,7 +19684,6 @@ Change log:
 	</entsoe2:EnergyCongestionZone>
 	<entsoe2:EnergyCongestionZone rdf:ID="_d3323018-7c8d-faf9-e040-1e828c947b8e">
 		<cim:IdentifiedObject.name>SE-ELSP-3</cim:IdentifiedObject.name>
-		<cim:IdentifiedObject.aliasName>Elspot SE3</cim:IdentifiedObject.aliasName>
 		<cim:IdentifiedObject.description>Sverige 3</cim:IdentifiedObject.description>
 		<pti:EnergyCongestionZone.marketCode>SE-ELSP-3</pti:EnergyCongestionZone.marketCode>
 	</entsoe2:EnergyCongestionZone>

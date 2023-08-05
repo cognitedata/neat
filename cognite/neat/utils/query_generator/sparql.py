@@ -9,6 +9,7 @@ from cognite.neat.rules.to_rdf_path import (
     AllReferences,
     Hop,
     Origin,
+    RuleType,
     SingleProperty,
     Step,
     Traversal,
@@ -17,6 +18,7 @@ from cognite.neat.rules.to_rdf_path import (
     parse_traversal,
 )
 from cognite.neat.rules.analysis import get_classes_with_properties
+from cognite.neat.utils.utils import remove_namespace
 
 
 def _generate_prefix_header(prefixes: dict[str, Namespace] = PREFIXES) -> str:
@@ -360,7 +362,13 @@ def _hop2property_path(graph: Graph, hop: Hop, prefixes: dict[str, Namespace]) -
         return property_path[:-1]
 
 
-def build_construct_query(graph: Graph, class_: str, transformation_rules: TransformationRules) -> str:
+def build_construct_query(
+    graph: Graph,
+    class_: str,
+    transformation_rules: TransformationRules,
+    properties_optional: bool = True,
+    class_instances: list[URIRef] | None = None,
+) -> str:
     """Builds CONSTRUCT query for given class and rules
 
     Parameters
@@ -378,22 +386,39 @@ def build_construct_query(graph: Graph, class_: str, transformation_rules: Trans
         CONSTRUCT query
     """
 
-    query_template = "CONSTRUCT {graph_template\n}\n\nWHERE {graph_pattern\n}\n\nLimit 1 "
+    query_template = f"CONSTRUCT {{graph_template\n}}\n\nWHERE {{graph_pattern\ninsert_filter}}"
+    query_template = _add_filter(class_instances, query_template)
 
-    templates, patterns = _to_construct_triples(graph, class_, transformation_rules)
+    templates, patterns = _to_construct_triples(graph, class_, transformation_rules, properties_optional)
 
-    graph_template = "\n           ".join(
-        [f"{template.subject} {template.predicate} {template.object} ." for template in templates]
-    )
-    graph_pattern = "\n       ".join(
-        [f"{pattern.subject} {pattern.predicate} {pattern.object} ." for pattern in patterns]
-    )
+    graph_template = "\n           ".join(_triples2sparql_statement(templates))
+    graph_pattern = "\n       ".join(_triples2sparql_statement(patterns))
 
     return query_template.replace("graph_template", graph_template).replace("graph_pattern", graph_pattern)
 
 
+def _add_filter(class_instances, query_template):
+    if class_instances:
+        class_instances_formatted = [f"<{instance}>" for instance in class_instances]
+        query_template = query_template.replace(
+            "insert_filter", f"\n\nFILTER (?subject IN ({', '.join(class_instances_formatted)}))"
+        )
+    else:
+        query_template = query_template.replace("insert_filter", "")
+    return query_template
+
+
+def _triples2sparql_statement(triples: list[Triple]):
+    return [
+        f"OPTIONAL {{ {triple.subject} {triple.predicate} {triple.object} . }}"
+        if triple.optional
+        else f"{triple.subject} {triple.predicate} {triple.object} ."
+        for triple in triples
+    ]
+
+
 def _to_construct_triples(
-    graph: Graph, class_: str, transformation_rules: TransformationRules
+    graph: Graph, class_: str, transformation_rules: TransformationRules, properties_optional: bool = True
 ) -> tuple[list[Triple], list[Triple]]:
     """Converts class definition to CONSTRUCT triples
 
@@ -415,33 +440,59 @@ def _to_construct_triples(
     templates = []
     patterns = []
 
-    for property_ in get_classes_with_properties(transformation_rules)[class_]:
-        # Parse rule
-        parsed_rule = parse_rule(property_.rule, property_.rule_type)
+    # here pull all properties which are of type `rdfpath` and are defined for the class:
+    properties = [
+        property_.model_copy()
+        for property_ in get_classes_with_properties(transformation_rules)[class_]
+        if property_.rule_type == RuleType.rdfpath and not property_.skip_rule
+    ]
 
+    # TODO: Add handling of UNIONs in rules
+
+    # parse rules for those properties
+    for i, property_ in enumerate(properties):
+        properties[i].rule = parse_rule(property_.rule, property_.rule_type).traversal
+
+    # add first triple for graph pattern stating type of object
+    patterns += [
+        Triple(
+            subject="?subject",
+            predicate="a",
+            object=_most_occurring_element([property_.rule.class_.id for property_ in properties]),
+            optional=False,
+        )
+    ]
+
+    for property_ in properties:
         graph_template_triple = Triple(
-            subject=f"?{class_.lower()}",
+            subject="?subject",
             predicate=f"{transformation_rules.metadata.prefix}:{property_.property_id}",
             object=f'?{re.sub(r"[^_a-zA-Z0-9/_]", "_", property_.property_id.lower())}',
+            optional=False,
         )
 
-        if isinstance(parsed_rule.traversal, AllReferences):
+        if isinstance(property_.rule, AllReferences):
             graph_pattern_triple = Triple(
-                subject=graph_template_triple.object, predicate="a", object=parsed_rule.traversal.class_.id
+                subject="BIND(?subject",
+                predicate="AS",
+                object=f"{graph_template_triple.object})",
+                optional=True if properties_optional else not property_.mandatory,
             )
 
-        elif isinstance(parsed_rule.traversal, SingleProperty):
+        elif isinstance(property_.rule, SingleProperty):
             graph_pattern_triple = Triple(
                 subject=graph_template_triple.subject,
-                predicate=parsed_rule.traversal.property.id,
+                predicate=property_.rule.property.id,
                 object=graph_template_triple.object,
+                optional=True if properties_optional else not property_.mandatory,
             )
 
-        elif isinstance(parsed_rule.traversal, Hop):
+        elif isinstance(property_.rule, Hop):
             graph_pattern_triple = Triple(
-                subject=graph_template_triple.subject,
-                predicate=_hop2property_path(graph, parsed_rule.traversal, transformation_rules.prefixes),
+                subject="?subject",
+                predicate=_hop2property_path(graph, property_.rule, transformation_rules.prefixes),
                 object=graph_template_triple.object,
+                optional=True if properties_optional else not property_.mandatory,
             )
         else:
             continue
@@ -450,3 +501,36 @@ def _to_construct_triples(
         templates += [graph_template_triple]
 
     return templates, patterns
+
+
+def _count_element_occurrence(l: list):
+    occurrence = {}
+    for i in l:
+        if i in occurrence:
+            occurrence[i] += 1
+        else:
+            occurrence[i] = 1
+    return occurrence
+
+
+def _most_occurring_element(l: list):
+    occurrence = _count_element_occurrence(l)
+    return max(occurrence, key=occurrence.get)
+
+
+def triples2dictionary(triples: list[tuple[URIRef, URIRef, str | URIRef]]) -> dict[str, list[str]]:
+    """Converts list of triples to dictionary"""
+    dictionary = {}
+    for triple in triples:
+        id_ = remove_namespace(triple[0])
+        property_ = remove_namespace(triple[1])
+        value = remove_namespace(triple[2])
+
+        if id_ not in dictionary:
+            dictionary["external_id"] = [id_]
+
+        if property_ in dictionary:
+            dictionary[property_].append(value)
+        else:
+            dictionary[property_] = [value]
+    return dictionary

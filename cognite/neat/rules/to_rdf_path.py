@@ -16,6 +16,7 @@ class Triple:
     subject: str
     predicate: str
     object: str = None
+    optional: bool = False
 
 
 class OWL(StrEnum):
