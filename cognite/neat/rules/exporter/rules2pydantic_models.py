@@ -1,7 +1,6 @@
 import re
-from typing import Any
 from typing_extensions import TypeAliasType
-from pydantic import BaseModel, ConfigDict, Field, create_model, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, create_model
 from pydantic._internal._model_construction import ModelMetaclass
 from rdflib import Graph, URIRef
 
@@ -149,7 +148,6 @@ def to_asset(
     metadata_keys_aliases: dict[str, str] = {},
     data_set_id: int = None,
 ) -> Asset:
-    result: dict[str, Any] = {}
     # Get mapping between fields of two models
 
     if add_system_metadata:

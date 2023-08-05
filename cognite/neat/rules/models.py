@@ -34,7 +34,6 @@ from cognite.neat.rules.to_rdf_path import (
     RuleType,
     SPARQLQuery,
     SingleProperty,
-    Traversal,
     parse_rule,
 )
 

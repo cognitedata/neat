@@ -8,7 +8,6 @@ from cognite.neat.rules.to_rdf_path import (
     AllProperties,
     AllReferences,
     Hop,
-    Origin,
     RuleType,
     SingleProperty,
     Step,
@@ -386,7 +385,7 @@ def build_construct_query(
         CONSTRUCT query
     """
 
-    query_template = f"CONSTRUCT {{graph_template\n}}\n\nWHERE {{graph_pattern\ninsert_filter}}"
+    query_template = "CONSTRUCT {graph_template\n}\n\nWHERE {graph_pattern\ninsert_filter}"
     query_template = _add_filter(class_instances, query_template)
 
     templates, patterns = _to_construct_triples(graph, class_, transformation_rules, properties_optional)
@@ -503,9 +502,9 @@ def _to_construct_triples(
     return templates, patterns
 
 
-def _count_element_occurrence(l: list):
+def _count_element_occurrence(list_of_elements: list):
     occurrence = {}
-    for i in l:
+    for i in list_of_elements:
         if i in occurrence:
             occurrence[i] += 1
         else:
@@ -513,8 +512,8 @@ def _count_element_occurrence(l: list):
     return occurrence
 
 
-def _most_occurring_element(l: list):
-    occurrence = _count_element_occurrence(l)
+def _most_occurring_element(list_of_elements: list):
+    occurrence = _count_element_occurrence(list_of_elements)
     return max(occurrence, key=occurrence.get)
 
 
