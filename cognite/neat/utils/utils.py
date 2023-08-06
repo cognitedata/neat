@@ -92,12 +92,12 @@ def add_triples(graph_store: NeatGraphStore, triples: list[Triple], batch_size: 
     check_commit(force_commit=True)
 
 
-def remove_namespace(URI: URIRef, special_separator: str = "#_") -> str:
+def remove_namespace(URI: URIRef | str, special_separator: str = "#_") -> str:
     """Removes namespace from URI
 
     Parameters
     ----------
-    URI : URIRef
+    URI : URIRef | str
         URI of an entity
     special_separator : str
         Special separator to use instead of # or / if present in URI

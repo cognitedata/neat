@@ -145,45 +145,66 @@ def from_graph(cls, graph: Graph, transformation_rules: TransformationRules, ext
 def to_asset(
     self,
     add_system_metadata: bool = True,
-    metadata_keys_aliases: dict[str, str] = {},
+    metadata_keys_aliases: dict[str, str] = None,
+    add_labels: bool = True,
     data_set_id: int = None,
 ) -> Asset:
-    # Get mapping between fields of two models
+    # Needs copy otherwise modifications impact all instances
+    default_mapping_dictionary = self._class_to_asset_mapping.copy()
+    class_instance_dictionary = self.model_dump(by_alias=True)
+
+    instance_mapping_dictionary = convert_default_to_instance_mapping_config(
+        class_instance_dictionary, default_mapping_dictionary
+    )
+
+    asset_dictionary = class_to_asset_instance_dictionary(class_instance_dictionary, instance_mapping_dictionary)
+
+    # Update of metadata
+    if metadata_keys_aliases:
+        ...
 
     if add_system_metadata:
         ...
 
-    if add_system_metadata and metadata_keys_aliases:
+    if metadata_keys_aliases:
         ...
 
-    # Needs copy otherwise modifications impact all instances
-    class_asset_mapping = self._class_to_asset_mapping.copy()
+    if add_labels:
+        ...
 
-    for key, values in class_asset_mapping.items():
+    if data_set_id:
+        return Asset(**asset_dictionary, data_set_id=data_set_id)
+    else:
+        return Asset(**asset_dictionary, data_set_id=self.data_set_id)
+
+
+def convert_default_to_instance_mapping_config(class_instance_dictionary, mapping_dictionary):
+    for key, values in mapping_dictionary.items():
         if key != "metadata":
             for value in values:
-                if self.model_dump(by_alias=True).get(value, None):
+                if class_instance_dictionary.get(value, None):
                     # take first value, as it is priority over the rest
-                    class_asset_mapping[key] = value
+                    mapping_dictionary[key] = value
                 else:
                     # remove key from dict
                     # raise warning that instance is missing expected properties
-                    class_asset_mapping.pop(key)
+                    mapping_dictionary.pop(key)
         else:
             for value in values:
-                if not self.model_dump(by_alias=True).get(value, None):
-                    class_asset_mapping.pop(key)
+                if not class_instance_dictionary.get(value, None):
+                    mapping_dictionary.pop(key)
 
-    for key, values in class_asset_mapping.items():
+    return mapping_dictionary
+
+
+def class_to_asset_instance_dictionary(class_instance_dictionary, mapping_dictionary):
+    for key, values in mapping_dictionary.items():
         if key != "metadata":
-            class_asset_mapping[key] = self.model_dump(by_alias=True).get(values, None)
+            mapping_dictionary[key] = class_instance_dictionary.get(values, None)
         else:
-            class_asset_mapping[key] = {value: self.model_dump(by_alias=True).get(value, None) for value in values}
+            mapping_dictionary[key] = {value: class_instance_dictionary.get(value, None) for value in values}
 
-    if data_set_id:
-        return Asset(**class_asset_mapping, data_set_id=data_set_id)
-    else:
-        return Asset(**class_asset_mapping, data_set_id=self.data_set_id)
+    return mapping_dictionary
 
 
 def to_relationship(self, transformation_rules: TransformationRules) -> Relationship:

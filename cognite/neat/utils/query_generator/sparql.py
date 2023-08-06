@@ -466,7 +466,7 @@ def _to_construct_triples(
         graph_template_triple = Triple(
             subject="?subject",
             predicate=f"{transformation_rules.metadata.prefix}:{property_.property_id}",
-            object=f'?{re.sub(r"[^_a-zA-Z0-9/_]", "_", property_.property_id.lower())}',
+            object=f'?{re.sub(r"[^_a-zA-Z0-9/_]", "_", str(property_.property_id).lower())}',
             optional=False,
         )
 
@@ -503,7 +503,7 @@ def _to_construct_triples(
 
 
 def _count_element_occurrence(list_of_elements: list):
-    occurrence = {}
+    occurrence: dict[str, int] = {}
     for i in list_of_elements:
         if i in occurrence:
             occurrence[i] += 1

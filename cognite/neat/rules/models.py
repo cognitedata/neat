@@ -34,6 +34,7 @@ from cognite.neat.rules.to_rdf_path import (
     RuleType,
     SPARQLQuery,
     SingleProperty,
+    Traversal,
     parse_rule,
 )
 
@@ -371,7 +372,7 @@ class Property(Resource):
 
     # Transformation rule (domain to solution)
     rule_type: Optional[RuleType] = Field(alias="Rule Type", default=None)
-    rule: Optional[str | AllReferences | SingleProperty | Hop | RawLookup | SPARQLQuery] = Field(
+    rule: Optional[str | AllReferences | SingleProperty | Hop | RawLookup | SPARQLQuery | Traversal] = Field(
         alias="Rule", default=None
     )
     skip_rule: bool = Field(alias="Skip", default=False)
