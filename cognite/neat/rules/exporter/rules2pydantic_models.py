@@ -1,4 +1,5 @@
 import re
+from typing import Any
 from typing_extensions import TypeAliasType
 from pydantic import BaseModel, ConfigDict, Field, create_model
 from pydantic._internal._model_construction import ModelMetaclass
@@ -7,7 +8,7 @@ from rdflib import Graph, URIRef
 from cognite.client.data_classes import Asset, Relationship
 from cognite.neat.rules.analysis import to_class_property_pairs, define_asset_class_mapping
 from cognite.neat.utils.query_generator.sparql import build_construct_query, triples2dictionary
-from cognite.neat.rules.models import TransformationRules, type_to_target_convention
+from cognite.neat.rules.models import Property, TransformationRules, type_to_target_convention
 
 
 OneToOne = TypeAliasType("OneToOne", str)
@@ -34,7 +35,7 @@ def rules_to_pydantic_models(
 
     models: dict[str, ModelMetaclass] = {}
     for class_, properties in class_property_pairs.items():
-        fields = _define_fields(properties)
+        fields = _properties_to_pydantic_fields(properties)
         model = dictionary_to_pydantic_model(
             class_, fields, methods=[from_graph, to_asset, to_relationship, to_dms, to_graph]
         )
@@ -49,7 +50,11 @@ def rules_to_pydantic_models(
     return models
 
 
-def _define_fields(properties) -> dict[str, tuple[type, Field]]:
+def _properties_to_pydantic_fields(
+    properties: list[Property],
+) -> dict[str, tuple[OneToMany | OneToOne | type | list[type], Any]]:
+    fields: dict[str, tuple[OneToMany | OneToOne | type | list[type], Any]] = {}
+
     fields = {"external_id": (str, Field(..., alias="external_id"))}
 
     for name, property_ in properties.items():
@@ -63,13 +68,14 @@ def _define_fields(properties) -> dict[str, tuple[type, Field]]:
         if not property_.mandatory:
             field["default"] = None
 
-        pythonic_name = re.sub(r"[^_a-zA-Z0-9/_]", "_", name)
-        fields[pythonic_name] = (field_type, Field(**field))
+        # making sure that field names are python compliant
+        # their original names are stored as aliases
+        fields[re.sub(r"[^_a-zA-Z0-9/_]", "_", name)] = (field_type, Field(**field))
 
     return fields
 
 
-def _define_field_type(property_):
+def _define_field_type(property_: Property):
     if property_.property_type == "ObjectProperty" and property_.max_count == 1:
         return OneToOne
     elif property_.property_type == "ObjectProperty":
