@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 from typing import ClassVar, Type, TypeVar
 from pydantic import BaseModel, ConfigDict
 
+from cognite.neat.workflows.model import WorkflowConfigItem
+
 
 class Config(BaseModel):
     ...
@@ -18,7 +20,7 @@ T_Output = TypeVar("T_Output", bound=DataContract)
 
 class Step(ABC):
     description: str = ""
-    configurations: list[str] = []
+    configuration_templates: list[WorkflowConfigItem] = []
 
     def __init__(self, metrics, data_store_path: str | None = None, context: dict[str, str] = None):
         self.log: bool = False

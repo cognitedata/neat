@@ -234,22 +234,23 @@ def get_data_from_graph(sparq_query: str, graph_name: str = "source", workflow_n
         logging.info(f"Preparing query :{sparq_query} ")
         start_time = time.perf_counter()
         workflow = neat_app.workflow_manager.get_workflow(workflow_name)
-        try:
-            if not workflow.source_graph or not workflow.solution_graph:
-                workflow.step_load_transformation_rules()
-                workflow.step_configuring_stores(clean_start=False)
-        except Exception as e:
-            logging.debug(f"Error while loading transformation rules or stores : {e}")
+        workflow_context = workflow.get_context()
+        # try:
+        #     if not workflow.source_graph or not workflow.solution_graph:
+        #         workflow.step_load_transformation_rules()
+        #         workflow.step_configuring_stores(clean_start=False)
+        # except Exception as e:
+        #     logging.debug(f"Error while loading transformation rules or stores : {e}")
 
         if graph_name == "source":
-            if workflow.source_graph:
-                result = workflow.source_graph.query(sparq_query)
+            if "SourceGraph" in workflow_context:
+                result = workflow_context["SourceGraph"].graph.query(sparq_query)
             else:
                 logging.info("Source graph is empty , please load the graph first")
                 api_result["error"] = "source graph is empty , please load the graph first"
         elif graph_name == "solution":
-            if workflow.solution_graph:
-                result = workflow.solution_graph.query(sparq_query)
+            if "SolutionGraph" in workflow_context:
+                result = workflow_context["SolutionGraph"].graph.query(sparq_query)
             else:
                 logging.info("Solution graph is empty , please load the graph first")
                 api_result["error"] = "solution graph is empty , please load the graph first"

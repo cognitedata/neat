@@ -19,7 +19,7 @@ import { useState, useEffect } from 'react';
 import Stack from '@mui/material/Stack';
 import { styled } from '@mui/material/styles';
 import Paper from '@mui/material/Paper';
-import { UIConfig, WorkflowDefinition, WorkflowStepDefinition, WorkflowSystemComponent} from 'types/WorkflowTypes';
+import { StepRegistry, UIConfig, WorkflowDefinition, WorkflowStepDefinition, WorkflowSystemComponent} from 'types/WorkflowTypes';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
@@ -81,10 +81,12 @@ export default function WorkflowView() {
   const [selectedStep, setSelectedStep] = useState<WorkflowStepDefinition>();
   const [selectedComponent, setSelectedComponent] = useState<WorkflowSystemComponent>();
   const [fileContent, setFileContent] = useState('');
+  const [stepRegistry, setStepRegistry] = useState<StepRegistry>();
 
 
   useEffect(() => {
     loadListOfWorkflows();
+    loadRegisteredSteps();
     loadWorkflowDefinitions(getSelectedWorkflowName());
     startStatePolling(selectedWorkflow);
 
@@ -142,7 +144,19 @@ export default function WorkflowView() {
   }).catch ((error) => {
     console.error('Error:', error);
   }).finally(() => { });
-}
+  } 
+
+  const loadRegisteredSteps = () => {
+    const url = neatApiRootUrl + "/api/workflow/registered-steps";
+    fetch(url).then((response) => response.json()).then((data) => {
+      const steps = StepRegistry.fromJSON(data.steps);
+      setStepRegistry(steps);
+  }).catch ((error) => {
+    console.error('Error:', error);
+  }).finally(() => { });
+  } 
+
+
 
 const filterStats = (stats: WorkflowStats) => {
   console.log("loadWorkflowStats")
@@ -445,7 +459,7 @@ return (
         alignItems="left">
         <Item>
           <OverviewComponentEditorDialog open={openOverviewComponentEditorDialog} component={selectedComponent} onClose={solutionComponentEditorDialogHandler} />
-          <StepEditorDialog open={dialogOpen} step={selectedStep} workflowName={selectedWorkflow} onClose={handleDialogClose} />
+          <StepEditorDialog open={dialogOpen} step={selectedStep} workflowName={selectedWorkflow} stepRegistry={stepRegistry} workflowDefinitions={workflowDefinitions} onClose={handleDialogClose} />
           <div style={{ height: '75vh', width: '70vw' }}>
             <ReactFlow
               nodes={nodes}

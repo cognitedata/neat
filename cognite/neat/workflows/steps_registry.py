@@ -5,6 +5,7 @@ from typing import Type
 
 from pydantic import BaseModel
 from cognite.neat.exceptions import InvalidWorkFlowError
+from cognite.neat.workflows.model import WorkflowConfigItem
 import cognite.neat.workflows.steps.lib
 import logging
 
@@ -17,7 +18,7 @@ class StepMetadata(BaseModel):
     description: str = ""
     input: list[str]
     output: list[str]
-    configurations: list[str] = []
+    configuration_templates: list[WorkflowConfigItem] = []
 
 
 class StepsRegistry:
@@ -64,12 +65,10 @@ class StepsRegistry:
                         logging.error(f"Missing data for step {step_name} parameter {parameter.name}")
                         missing_data.append(parameter.annotation.__name__)
                         continue
-                    if not is_valid:
-                        raise InvalidWorkFlowError(step_name, missing_data)
+                if not is_valid:
+                    raise InvalidWorkFlowError(step_name, missing_data)
                 return step_obj.run(*input_data)
-            else:
-                logging.error(f"Step {step_name} not found in registry")
-
+    
     def get_list_of_steps(self):
         steps: list[StepMetadata] = []
         for name, step_cls in self._step_classes:
@@ -94,7 +93,7 @@ class StepsRegistry:
                     input=input_data,
                     description=step_cls.description,
                     output=output_data,
-                    configurations=step_cls.configurations,
+                    configuration_templates=step_cls.configuration_templates,
                 )
             )
 

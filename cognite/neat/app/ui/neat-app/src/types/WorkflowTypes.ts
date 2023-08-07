@@ -28,6 +28,43 @@ export class WorkflowConfigItem {
     group?: string;
 }
 
+export class StepMetadata {
+    name: string;
+    description: string = "";
+    input: string[];
+    output: string[];
+    configuration_templates: WorkflowConfigItem[] = [];
+
+    constructor(name: string, input: string[], output: string[]) {
+        this.name = name;
+        this.input = input;
+        this.output = output;
+    }
+}
+
+export class StepRegistry { 
+    steps: StepMetadata[] = [];
+    static fromJSON(json: any): StepRegistry {
+        let stepRegistry = new StepRegistry();
+        Object.assign(stepRegistry.steps, json);
+        return stepRegistry;
+    }
+    getStepByName(name: string): StepMetadata {
+        let step = this.steps.find(step => step.name == name);
+        return step;
+    }
+    isInputConfigured(input: string): boolean {
+        let systems_outputs = ["WorkflowConfigs","CdfStore","CogniteClient"]
+        let step = this.steps.find(step => step.output.includes(input));
+        if (step != null) 
+            return true;
+        else 
+            return systems_outputs.includes(input);
+
+    }
+}
+
+
 export class WorkflowStepDefinition {
     id: string;
     label?: string;
@@ -78,6 +115,22 @@ export class WorkflowDefinition {
             system_components: this.system_components
         };
     }
+
+    isStepInputConfigured(stepId: string,inputParamName: string ,stepRegistry: StepRegistry): boolean {
+        let step = this.steps.find(step => step.id == stepId);
+        if (step.stype != "stdstep")
+            return false;
+        if (!stepRegistry)
+            return false;    
+        let listOfAllOutputs = ["WorkflowConfigs","CdfStore","CogniteClient"];
+        this.steps.forEach(step => {
+                let outputs = stepRegistry.getStepByName(step.method)?.output;
+                listOfAllOutputs = listOfAllOutputs.concat(outputs);
+        });
+        
+        return listOfAllOutputs.includes(inputParamName)
+    }
+            
 
     upsertConfigItem(config: WorkflowConfigItem) {
         let index = this.configs.findIndex(c => c.name == config.name);

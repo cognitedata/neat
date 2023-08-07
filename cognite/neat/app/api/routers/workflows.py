@@ -121,7 +121,11 @@ def get_pre_cdf_assets(workflow_name: str):
 @router.get("/api/workflow/context/{workflow_name}")
 def get_context(workflow_name: str):
     workflow = neat_app.workflow_manager.get_workflow(workflow_name)
-    return {"context": workflow.get_context()}
+    context = workflow.get_context()
+    objects_in_context = []
+    for key, value in context.items():
+        objects_in_context.append({"name": key, "type": type(value).__name__})
+    return {"context": objects_in_context}
 
 
 @router.get("/api/workflow/registered-steps")

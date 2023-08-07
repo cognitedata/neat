@@ -88,7 +88,7 @@ class BaseWorkflow:
             logging.error(f"Workflow {self.name} is already running")
             return None
         self.data["CdfStore"] = self.cdf_store
-        self.data["CdfClient"] = self.cdf_client
+        self.data["CogniteClient"] = self.cdf_client
         self.data["WorkflowConfigs"] = WorkflowConfigs(configs=self.configs)
         self.state = WorkflowState.RUNNING
         self.start_time = time.time()
@@ -272,13 +272,11 @@ class BaseWorkflow:
                         for i, out_obj in enumerate(output):
                             if isinstance(out_obj, FlowMessage):
                                 new_flow_message = out_obj
-                            else:
-                                self.data[type(out_obj).__name__] = out_obj
+                            self.data[type(out_obj).__name__] = out_obj
                     else:
                         if isinstance(output, FlowMessage):
                             new_flow_message = output
-                        else:
-                            self.data[output.__name__] = output
+                        self.data[type(output).__name__] = output
             
             elif step.stype == StepType.START_WORKFLOW_TASK_STEP:
                 if self.task_builder:

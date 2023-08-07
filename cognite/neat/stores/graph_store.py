@@ -1,4 +1,5 @@
 import logging
+import os
 import shutil
 import time
 from pathlib import Path
@@ -210,7 +211,24 @@ class NeatGraphStore:
                 self.returnFormat,
             )
         if self.rdf_store_type == RdfStoreType.OXIGRAPH:
+            files_before = os.listdir(self.internal_storage_dir)
+            self.graph.store._inner.flush()
             self.graph.store._inner.clear()
+            time.sleep(1)  # delay to allow the store finish file operations 
+            files_after = os.listdir(self.internal_storage_dir)
+            new_files = set(files_after) - set(files_before)
+            # static_files = ["CURRENT", "IDENTITY", "LOCK"]
+            static_files = [f for f in files_before if f.startswith("MANIFEST") or f.startswith("OPTIONS")]
+            static_files.extend(["CURRENT", "IDENTITY", "LOCK"])
+
+            files_to_keep = set(static_files) | new_files
+            logging.info("Files to keep: %s", files_to_keep)
+            for f in os.listdir(self.internal_storage_dir):
+                if f not in files_to_keep:
+                    try:
+                        os.remove(os.path.join(self.internal_storage_dir, f))
+                    except Exception as e:
+                        logging.error("Error deleting file %s: %s", f, e)    
 
         elif self.rdf_store_type == RdfStoreType.GRAPHDB:
             r = requests.delete(f"{self.graph_db_rest_url}/repositories/{self.graph_name}/rdf-graphs/service?default")
@@ -283,10 +301,13 @@ def drop_graph_store(graph: NeatGraphStore, storage_path: Path, force: bool = Fa
             if storage_path.exists():
                 graph.__del__()
                 graph = None
-                shutil.rmtree(storage_path)
+                # remove all files in the storage path except the lock file 
+                for f in os.listdir(storage_path):
+                    # if f != "LOCK":
+                    os.remove(os.path.join(storage_path, f))
                 logging.info("Graph store dropped.")
             else:
-                logging.info("Storage path does not exist. Skipping drop.")
+                logging.info(f"Storage path {storage_path} does not exist. Skipping drop.")
         else:
             logging.info(
                 "Graph store {graph.rdf_store_type} is not Oxigraph or storage path is not provided. Skipping drop."
