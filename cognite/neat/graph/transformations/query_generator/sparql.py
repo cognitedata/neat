@@ -517,7 +517,7 @@ def _most_occurring_element(list_of_elements: list):
     return max(occurrence, key=occurrence.get)
 
 
-def triples2dictionary(triples: list[tuple[URIRef, URIRef, str | URIRef]]) -> dict[str, list[str]]:
+def triples2dictionary(triples: list[tuple[URIRef, URIRef, str | URIRef]]) -> dict[str, list[str]] | dict[str, str]:
     """Converts list of triples to dictionary"""
     dictionary = {}
     for triple in triples:

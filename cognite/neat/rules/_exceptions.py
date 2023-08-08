@@ -12,9 +12,11 @@ CODES:
 #########################################
 # Metadata sheet Error Codes 100 - 199: #
 
+from typing import Any
 from warnings import WarningMessage
 
 from pydantic_core import ErrorDetails, PydanticCustomError
+from rdflib import URIRef
 
 
 def wrangle_warnings(list_of_warnings: list[WarningMessage]) -> list[dict]:
@@ -238,23 +240,6 @@ class Error20(NeatError):
         super().__init__(self.message)
 
 
-class Error30(NeatError):
-    type_: str = "PropertyDefinitionsNotForSameProperty"
-    code: int = 11
-    description: str = "This error is raised if property definitions are not for linked to the same property id"
-    example: str = ""
-    fix: str = ""
-
-    def __init__(self, verbose=False):
-        self.message = "All definitions should have the same property_id! Aborting."
-
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
-
-
 class Error21(NeatError):
     type_: str = "NotExcelFile"
     code: int = 11
@@ -275,9 +260,70 @@ class Error21(NeatError):
         super().__init__(self.message)
 
 
+class Error30(NeatError):
+    type_: str = "PropertyDefinitionsNotForSameProperty"
+    code: int = 30
+    description: str = "This error is raised if property definitions are not for linked to the same property id"
+    example: str = ""
+    fix: str = ""
+
+    def __init__(self, verbose=False):
+        self.message = "All definitions should have the same property_id! Aborting."
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class Error40(NeatError):
+    type_: str = "FieldValueOfUnknownType"
+    code: int = 40
+    description: str = (
+        "This error is raised when generating in-memory pydantic model"
+        " from Transformation Rules from model, when field definitions are not"
+        " provided as dictionary of field names ('str') and their types ('tuple' or 'dict')."
+    )
+    example: str = ""
+    fix: str = ""
+
+    def __init__(self, field: str, definition: Any, verbose=False):
+        self.message = (
+            f"Field {field} has definition of type {type(definition)}"
+            " which is not acceptable! Only definition in form of dict or tuple is acceptable!"
+        )
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class Error41(NeatError):
+    type_: str = "FieldRequiredButNotProvided"
+    code: int = 41
+    description: str = (
+        "This error is raised when instantiating in-memory pydantic model"
+        " from graph class instance which is missing required field (i.e., property)."
+    )
+    example: str = ""
+    fix: str = "Either make field optional or add missing property to graph instance."
+
+    def __init__(self, field: str, id_: str | URIRef, verbose=False):
+        self.message = f"Field {field} is not present in graph instance {id_}!"
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
 class Error51(NeatError):
     type_: str = "MetadataSheetMissingMandatoryFields"
-    code: int = 52
+    code: int = 51
     description: str = "Metadata sheet, which is part of Transformation Rules Excel file, is missing mandatory rows"
     example: str = ""
     fix: str = ""
@@ -655,6 +701,31 @@ class Warning34(NeatWarning):
         self.message = (
             f"Multiple definitions (aka comments) of property '{property_id}' detected."
             " Definitions will be concatenated."
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+
+
+class Warning41(NeatWarning):
+    type_: str = "FieldContainsMoreThanOneValue"
+    code: int = 30
+    description: str = (
+        "This warning occurs when a property, associated to the pydantic field, contains"
+        " more than one value (i.e. list of values), while it is defined as single value field."
+        " As consequence, only the first value will be considered!"
+    )
+    example: str = ""
+    fix: str = (
+        "If a property takes more than one value, define it as list of values in TransformationRules."
+        "To do this do not bound its `max_count` to 1, either leave it blank or set it to >1."
+    )
+
+    def __init__(self, field_name: str = "", no_of_values: int = None, verbose=False):
+        self.message = (
+            f"Field {field_name} is defined as single value property in TransformationRules,"
+            f" but it contains {no_of_values} values!"
         )
         if verbose:
             self.message += f"\nDescription: {self.description}"

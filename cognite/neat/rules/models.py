@@ -5,7 +5,7 @@ import re
 import warnings
 from datetime import datetime
 from pathlib import Path
-from typing import ClassVar, Dict, Optional
+from typing import Any, ClassVar, Dict, Optional
 
 from pydantic import (
     BaseModel,
@@ -359,6 +359,7 @@ class Property(Resource):
     expected_value_type: ExternalId = Field(alias="Type")
     min_count: Optional[int] = Field(alias="Min Count", default=0)
     max_count: Optional[int] = Field(alias="Max Count", default=None)
+    default: Any = Field(None)
 
     # OWL property
     property_type: str = "DatatypeProperty"

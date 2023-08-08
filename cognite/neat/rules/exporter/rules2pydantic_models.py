@@ -1,100 +1,164 @@
+from datetime import datetime, timezone
 import re
 from typing import Any
 from typing_extensions import TypeAliasType
+import warnings
 from pydantic import BaseModel, ConfigDict, Field, create_model
 from pydantic._internal._model_construction import ModelMetaclass
 from rdflib import Graph, URIRef
 
 from cognite.client.data_classes import Asset, Relationship
-from cognite.neat.rules.analysis import to_class_property_pairs, define_asset_class_mapping
-from cognite.neat.utils.query_generator.sparql import build_construct_query, triples2dictionary
+from cognite.neat.graph.loaders.core.rdf_to_assets import NeatMetadataKeys
+from cognite.neat.rules.analysis import (
+    to_class_property_pairs,
+    define_class_asset_mapping,
+    define_class_relationship_mapping,
+)
+from cognite.neat.graph.transformations.query_generator.sparql import build_construct_query, triples2dictionary
 from cognite.neat.rules.models import Property, TransformationRules, type_to_target_convention
+from cognite.neat.rules import _exceptions
+
+EdgeOneToOne = TypeAliasType("EdgeOneToOne", str)
+EdgeOneToMany = TypeAliasType("EdgeOneToMany", list[str])
 
 
-OneToOne = TypeAliasType("OneToOne", str)
-OneToMany = TypeAliasType("OneToMany", list[str])
-
-
-def default_configuration():
+def default_model_configuration():
     return ConfigDict(
         populate_by_name=True, str_strip_whitespace=True, arbitrary_types_allowed=True, strict=False, extra="allow"
     )
-
-
-def default_methods():
-    return [from_graph, to_asset, to_relationship, to_dms, to_graph]
 
 
 def rules_to_pydantic_models(
     transformation_rules: TransformationRules, methods: list = None
 ) -> dict[str, ModelMetaclass]:
     if methods is None:
-        methods = default_methods()
+        methods = default_model_methods()
+
+    # Currently this will take only unique properties and those which column rule_type
+    # is set to rdfpath, hence only_rdfpath = True. This means that at the moment
+    # we do not support UNION, i.e. ability to handle multiple rdfpaths for the same
+    # property. This is needed option and should be added in the second version of the exporter.
 
     class_property_pairs = to_class_property_pairs(transformation_rules, only_rdfpath=True)
 
     models: dict[str, ModelMetaclass] = {}
     for class_, properties in class_property_pairs.items():
+        # generate fields from define properties
         fields = _properties_to_pydantic_fields(properties)
-        model = dictionary_to_pydantic_model(
+
+        # store default class to relationship mapping field
+        # which is used by the `to_relationship` method
+        fields["class_to_asset_mapping"] = (
+            dict[str, list[str]],
+            Field(define_class_asset_mapping(transformation_rules, class_)),
+        )
+
+        # store default class to relationship mapping field
+        # which is used by the `to_relationship` method
+        fields["class_to_relationship_mapping"] = (
+            dict[str, list[str]],
+            Field(define_class_relationship_mapping(transformation_rules, class_)),
+        )
+
+        fields["data_set_id"] = (
+            int,
+            Field(
+                transformation_rules.metadata.data_set_id or None,
+            ),
+        )
+
+        model = _dictionary_to_pydantic_model(
             class_, fields, methods=[from_graph, to_asset, to_relationship, to_dms, to_graph]
         )
 
         models[class_] = model
 
-        # adding class to asset mapping to model
-        # this are extra fields allowed by configuration
-        models[class_]._class_to_asset_mapping = define_asset_class_mapping(transformation_rules, class_)
-        models[class_].data_set_id = transformation_rules.metadata.data_set_id
-
     return models
 
 
 def _properties_to_pydantic_fields(
-    properties: list[Property],
-) -> dict[str, tuple[OneToMany | OneToOne | type | list[type], Any]]:
-    fields: dict[str, tuple[OneToMany | OneToOne | type | list[type], Any]] = {}
+    properties: dict[str, Property],
+) -> dict[str, tuple[EdgeOneToMany | EdgeOneToOne | type | list[type], Any]]:
+    """Turns definition of properties into pydantic fields.
+
+    Parameters
+    ----------
+    properties : dict[str, Property]
+        Dictionary of properties
+
+    Returns
+    -------
+    dict[str, tuple[EdgeOneToMany | EdgeOneToOne | type | list[type], Any]]
+        Dictionary of pydantic fields
+    """
+
+    fields: dict[str, tuple[EdgeOneToMany | EdgeOneToOne | type | list[type], Any]] = {}
 
     fields = {"external_id": (str, Field(..., alias="external_id"))}
 
     for name, property_ in properties.items():
         field_type = _define_field_type(property_)
 
-        field: dict = {"alias": name}
+        field_definition: dict = {"alias": name}
 
-        if field_type.__name__ in [OneToMany.__name__, list.__name__]:
-            field["min_length"] = property_.min_count
-            field["max_length"] = property_.max_count
-        if not property_.mandatory:
-            field["default"] = None
+        if field_type.__name__ in [EdgeOneToMany.__name__, list.__name__]:
+            field_definition["min_length"] = property_.min_count
+            field_definition["max_length"] = property_.max_count
+
+        if not property_.mandatory and not property_.default:
+            field_definition["default"] = None
+        elif property_.default:
+            field_definition["default"] = property_.default
 
         # making sure that field names are python compliant
         # their original names are stored as aliases
-        fields[re.sub(r"[^_a-zA-Z0-9/_]", "_", name)] = (field_type, Field(**field))
+        fields[re.sub(r"[^_a-zA-Z0-9/_]", "_", name)] = (field_type, Field(**field_definition))
 
     return fields
 
 
 def _define_field_type(property_: Property):
     if property_.property_type == "ObjectProperty" and property_.max_count == 1:
-        return OneToOne
+        return EdgeOneToOne
     elif property_.property_type == "ObjectProperty":
-        return OneToMany
+        return EdgeOneToMany
     elif property_.property_type == "DatatypeProperty" and property_.max_count == 1:
         return type_to_target_convention(property_.expected_value_type, "python")
     else:
         return list[type_to_target_convention(property_.expected_value_type, "python")]
 
 
-def dictionary_to_pydantic_model(
+def _dictionary_to_pydantic_model(
     name: str,
     model_definition: dict,
     model_configuration: ConfigDict = None,
     methods: list = None,
     validators: list = None,
 ) -> type[BaseModel]:
+    """Generates pydantic model from dictionary containing definition of fields.
+    Additionally it adds methods to the model and validators.
+
+    Parameters
+    ----------
+    name : str
+        Name of the model
+    model_definition : dict
+        Dictionary containing definition of fields
+    model_configuration : ConfigDict, optional
+        Configuration of pydantic model, by default None
+    methods : list, optional
+        Methods that work on fields once model is instantiated, by default None
+    validators : list, optional
+        Any custom validators to be added in addition to base pydantic ones, by default None
+
+    Returns
+    -------
+    type[BaseModel]
+        Pydantic model
+    """
+
     if model_configuration:
-        model_configuration = default_configuration()
+        model_configuration = default_model_configuration()
 
     fields = {}
 
@@ -102,9 +166,9 @@ def dictionary_to_pydantic_model(
         if isinstance(value, tuple):
             fields[field_name] = value
         elif isinstance(value, dict):
-            fields[field_name] = (dictionary_to_pydantic_model(f"{name}_{field_name}", value), ...)
+            fields[field_name] = (_dictionary_to_pydantic_model(f"{name}_{field_name}", value), ...)
         else:
-            raise ValueError(f"Field {field_name}:{value} has invalid syntax")
+            raise _exceptions.Error40(field_name, value)
 
     model = create_model(name, __config__=model_configuration, **fields)
 
@@ -112,11 +176,18 @@ def dictionary_to_pydantic_model(
         for method in methods:
             setattr(model, method.__name__, method)
 
-    # should be added to model
+    # any additional validators to be added
     if validators:
         ...
 
     return model
+
+
+# Define methods that work on model instance
+
+
+def default_model_methods():
+    return [from_graph, to_asset, to_relationship, to_dms, to_graph]
 
 
 @classmethod
@@ -135,13 +206,22 @@ def from_graph(cls, graph: Graph, transformation_rules: TransformationRules, ext
         if not field.is_required() and field.alias not in result:
             continue
 
+        # if field is required and not in result, raise error
         if field.is_required() and field.alias not in result:
-            ...
-        # # if field is required and not in result, raise error
+            raise _exceptions.Error41(field.alias, external_id)
 
-        if field.annotation.__name__ not in [OneToMany.__name__, list.__name__]:
-            # take first value since it is not a list nor edge
-            # raise warning if there are multiple values !
+        # flatten result if field is not edge or list of values
+        if field.annotation.__name__ not in [EdgeOneToMany.__name__, list.__name__]:
+            if isinstance(result[field.alias], list) and len(result[field.alias]) > 1:
+                warnings.warn(
+                    _exceptions.Warning41(
+                        field.alias,
+                        len(result[field.alias]),
+                    ).message,
+                    category=_exceptions.Warning41,
+                    stacklevel=2,
+                )
+
             result[field.alias] = result[field.alias][0]
 
     return cls(**result)
@@ -151,66 +231,74 @@ def from_graph(cls, graph: Graph, transformation_rules: TransformationRules, ext
 def to_asset(
     self,
     add_system_metadata: bool = True,
-    metadata_keys_aliases: dict[str, str] = None,
+    metadata_keys: NeatMetadataKeys | None = None,
     add_labels: bool = True,
     data_set_id: int = None,
 ) -> Asset:
     # Needs copy otherwise modifications impact all instances
-    default_mapping_dictionary = self._class_to_asset_mapping.copy()
+    default_mapping_config = self.class_to_asset_mapping.copy()
     class_instance_dictionary = self.model_dump(by_alias=True)
-
-    instance_mapping_dictionary = convert_default_to_instance_mapping_config(
-        class_instance_dictionary, default_mapping_dictionary
+    adapted_mapping_config = _adapt_mapping_config_by_instance(
+        self.external_id, class_instance_dictionary, default_mapping_config
     )
+    asset = _class_to_asset_instance_dictionary(class_instance_dictionary, adapted_mapping_config)
 
-    asset_dictionary = class_to_asset_instance_dictionary(class_instance_dictionary, instance_mapping_dictionary)
+    # set default metadata keys if not provided
+    metadata_keys = NeatMetadataKeys() if metadata_keys is None else metadata_keys
 
-    # Update of metadata
-    if metadata_keys_aliases:
-        ...
-
+    # add system metadata
     if add_system_metadata:
-        ...
-
-    if metadata_keys_aliases:
-        ...
+        _add_system_metadata(self, metadata_keys, asset)
 
     if add_labels:
-        ...
+        asset["labels"] = [asset["metadata"][metadata_keys.type], "non-historic"]
 
     if data_set_id:
-        return Asset(**asset_dictionary, data_set_id=data_set_id)
+        return Asset(**asset, data_set_id=data_set_id)
     else:
-        return Asset(**asset_dictionary, data_set_id=self.data_set_id)
+        return Asset(**asset, data_set_id=self.data_set_id)
 
 
-def convert_default_to_instance_mapping_config(class_instance_dictionary, mapping_dictionary):
-    for key, values in mapping_dictionary.items():
+def _add_system_metadata(self, metadata_keys: NeatMetadataKeys, asset: dict):
+    asset["metadata"][metadata_keys.type] = self.__class__.__name__
+    asset["metadata"][metadata_keys.identifier] = self.external_id
+    now = str(datetime.now(timezone.utc))
+    asset["metadata"][metadata_keys.start_time] = now
+    asset["metadata"][metadata_keys.update_time] = now
+    asset["metadata"][metadata_keys.active] = "true"
+
+
+def _adapt_mapping_config_by_instance(external_id, class_instance_dictionary, mapping_config):
+    for key, values in mapping_config.items():
         if key != "metadata":
             for value in values:
                 if class_instance_dictionary.get(value, None):
                     # take first value, as it is priority over the rest
-                    mapping_dictionary[key] = value
+                    mapping_config[key] = value
                 else:
-                    # remove key from dict
-                    # raise warning that instance is missing expected properties
-                    mapping_dictionary.pop(key)
+                    warnings.warn(
+                        _exceptions.Warning40(external_id, key).message,
+                        category=_exceptions.Warning40,
+                        stacklevel=2,
+                    )
+
+                    mapping_config.pop(key)
         else:
             for value in values:
                 if not class_instance_dictionary.get(value, None):
-                    mapping_dictionary.pop(key)
+                    mapping_config.pop(key)
 
-    return mapping_dictionary
+    return mapping_config
 
 
-def class_to_asset_instance_dictionary(class_instance_dictionary, mapping_dictionary):
-    for key, values in mapping_dictionary.items():
+def _class_to_asset_instance_dictionary(class_instance_dictionary, mapping_config):
+    for key, values in mapping_config.items():
         if key != "metadata":
-            mapping_dictionary[key] = class_instance_dictionary.get(values, None)
+            mapping_config[key] = class_instance_dictionary.get(values, None)
         else:
-            mapping_dictionary[key] = {value: class_instance_dictionary.get(value, None) for value in values}
+            mapping_config[key] = {value: class_instance_dictionary.get(value, None) for value in values}
 
-    return mapping_dictionary
+    return mapping_config
 
 
 def to_relationship(self, transformation_rules: TransformationRules) -> Relationship:

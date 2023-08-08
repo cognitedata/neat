@@ -127,7 +127,7 @@ def get_asset_related_properties(properties: list[Property]) -> list[Property]:
     return [prop for prop in properties if "Asset" in prop.cdf_resource_type]
 
 
-def define_asset_class_mapping(transformation_rules: TransformationRules, class_: str) -> dict[str, list[str]]:
+def define_class_asset_mapping(transformation_rules: TransformationRules, class_: str) -> dict[str, list[str]]:
     mapping_dict: dict[str, list[str]] = {}
 
     class_properties = to_class_property_pairs(transformation_rules, only_rdfpath=True)[class_]
@@ -140,3 +140,7 @@ def define_asset_class_mapping(transformation_rules: TransformationRules, class_
                 mapping_dict[resource_type_property] += [asset_property.property_id]
 
     return mapping_dict
+
+
+def define_class_relationship_mapping(transformation_rules: TransformationRules, class_: str) -> dict[str, list[str]]:
+    ...
