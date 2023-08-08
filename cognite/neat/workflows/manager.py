@@ -14,6 +14,7 @@ from pydantic import BaseModel
 from cognite.neat.workflows import BaseWorkflow
 from cognite.neat.workflows.base import WorkflowDefinition
 from cognite.neat.workflows.model import FlowMessage, InstanceStartMethod, WorkflowState
+from cognite.neat.workflows.steps_registry import StepsRegistry
 from cognite.neat.workflows.tasks import WorkflowTaskBuilder
 
 live_workflow_instances = Gauge("neat_workflow_live_instances", "Count of live workflow instances", ["itype"])
@@ -56,6 +57,8 @@ class WorkflowManager:
         self.workflows_storage_path = workflows_storage_path if workflows_storage_path else Path("workflows")
         self.rules_storage_path = rules_storage_path if rules_storage_path else Path("rules")
         self.task_builder = WorkflowTaskBuilder(client, self)
+        self.steps_registry = StepsRegistry(self.data_store_path)
+        self.steps_registry.load_step_classes()
 
     def update_cdf_client(self, client: CogniteClient):
         self.client = client
@@ -65,6 +68,9 @@ class WorkflowManager:
 
     def get_list_of_workflows(self):
         return list(self.workflow_registry.keys())
+    
+    def get_steps_registry(self):
+        return self.steps_registry
 
     def get_workflow(self, name: str) -> BaseWorkflow | None:
         try:
@@ -181,7 +187,7 @@ class WorkflowManager:
         workflow_definition : _type_
             Definition of the workflow to be registered originating from workflow.yaml
         """
-        self.workflow_registry[workflow_name] = obj(workflow_name, self.client)
+        self.workflow_registry[workflow_name] = obj(workflow_name, self.client, steps_registry=self.steps_registry)
         self.workflow_registry[workflow_name].set_definition(workflow_definition)
         # Comment: Not entirely sure what is task_builder meant for
         # as at first glance it looks like circular import ???

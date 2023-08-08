@@ -45,6 +45,7 @@ class BaseWorkflow:
         self,
         name: str,
         client: CogniteClient,
+        steps_registry: StepsRegistry,
         workflow_steps: list[WorkflowStepDefinition] = None,
         default_dataset_id: int = None,
     ):
@@ -79,7 +80,7 @@ class BaseWorkflow:
         self.is_ephemeral = False  # if True, workflow will be deleted after completion
         self.step_clases = None
         self.data: dict[str, Type[DataContract]] = {}
-        self.steps_registry: StepsRegistry = None
+        self.steps_registry: StepsRegistry = steps_registry
     
     def start(self, sync=False, is_ephemeral=False, **kwargs) -> FlowMessage | None:
         """Starts workflow execution.sync=True will block until workflow is completed and
@@ -96,8 +97,7 @@ class BaseWorkflow:
         self.run_id = utils.generate_run_id()
         self.is_ephemeral = is_ephemeral
         self.execution_log = []
-        self.steps_registry = StepsRegistry(self.metrics, self.data_store_path)
-        self.steps_registry.load_step_classes()
+        
         if sync:
             return self._run_workflow(**kwargs)
 
@@ -266,7 +266,7 @@ class BaseWorkflow:
 
                 new_flow_message = method_runner()
             elif step.stype == StepType.STD_STEP:
-                output = self.steps_registry.run_step(step.method, self.data)
+                output = self.steps_registry.run_step(step.method, self.data, metrics=self.metrics)
                 if output is not None:
                     if isinstance(output, tuple):
                         for i, out_obj in enumerate(output):

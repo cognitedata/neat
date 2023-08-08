@@ -130,6 +130,5 @@ def get_context(workflow_name: str):
 
 @router.get("/api/workflow/registered-steps")
 def get_steps():
-    steps_manager = StepsRegistry(metrics=None, data_store_path=neat_app.config.data_store_path)
-    steps_manager.load_step_classes()
-    return {"steps": steps_manager.get_list_of_steps()}
+    steps_registry = neat_app.workflow_manager.get_steps_registry()
+    return {"steps": steps_registry.get_list_of_steps()}

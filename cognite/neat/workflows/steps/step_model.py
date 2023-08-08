@@ -20,8 +20,9 @@ T_Output = TypeVar("T_Output", bound=DataContract)
 
 class Step(ABC):
     description: str = ""
+    category: str = "default"
     configuration_templates: list[WorkflowConfigItem] = []
-
+    
     def __init__(self, metrics, data_store_path: str | None = None, context: dict[str, str] = None):
         self.log: bool = False
         self.data_store_path: str = data_store_path

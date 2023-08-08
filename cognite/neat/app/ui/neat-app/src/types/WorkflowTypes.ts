@@ -34,6 +34,7 @@ export class StepMetadata {
     input: string[];
     output: string[];
     configuration_templates: WorkflowConfigItem[] = [];
+    category: string = "";
 
     constructor(name: string, input: string[], output: string[]) {
         this.name = name;
@@ -52,15 +53,6 @@ export class StepRegistry {
     getStepByName(name: string): StepMetadata {
         let step = this.steps.find(step => step.name == name);
         return step;
-    }
-    isInputConfigured(input: string): boolean {
-        let systems_outputs = ["WorkflowConfigs","CdfStore","CogniteClient"]
-        let step = this.steps.find(step => step.output.includes(input));
-        if (step != null) 
-            return true;
-        else 
-            return systems_outputs.includes(input);
-
     }
 }
 
@@ -118,12 +110,14 @@ export class WorkflowDefinition {
 
     isStepInputConfigured(stepId: string,inputParamName: string ,stepRegistry: StepRegistry): boolean {
         let step = this.steps.find(step => step.id == stepId);
+        if (step == null)
+            return false;
         if (step.stype != "stdstep")
             return false;
         if (!stepRegistry)
             return false;    
         let listOfAllOutputs = ["WorkflowConfigs","CdfStore","CogniteClient"];
-        this.steps.forEach(step => {
+        this.steps?.forEach(step => {
                 let outputs = stepRegistry.getStepByName(step.method)?.output;
                 listOfAllOutputs = listOfAllOutputs.concat(outputs);
         });
@@ -138,6 +132,25 @@ export class WorkflowDefinition {
             this.configs[index] = config;
         }else {
             this.configs.push(config);
+        }
+    }
+
+    insertConfigItemFromTemplate(stepName : string,stepRegistry: StepRegistry) {
+        let step_template = stepRegistry.getStepByName(stepName);
+
+        console.log(" Insert check")
+        console.dir(step_template)
+        console.dir(this.configs)
+
+
+        for (let config of step_template.configuration_templates) {
+            let index = this.configs.findIndex(c => c.name == config.name);
+            if (index >= 0) {
+                continue;
+            }else {
+                config.group = step_template.name;
+                this.configs.push(config);
+            }
         }
     }
 

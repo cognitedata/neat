@@ -79,7 +79,7 @@ export default function StepEditorDialog(props: any)
             setStepRegistry(props.stepRegistry);
             setWorkflowDefinitions(props.workflowDefinitions);
             if (props.step.stype == "stdstep") {
-              setSelectedStepTemplate(props.stepRegistry.getStepByName(props.step.method))
+              setSelectedStepTemplate(props.stepRegistry?.getStepByName(props.step.method))
             }
             console.dir(props.stepRegistry);
         }
@@ -100,7 +100,7 @@ export default function StepEditorDialog(props: any)
                 updStep.params = { "interval": "every 60 minutes" }
                 updStep.trigger = true;
                 break;
-              case "time_trigger":
+              case "http_trigger":
                 updStep.trigger = true;
                 break;
 
@@ -115,6 +115,7 @@ export default function StepEditorDialog(props: any)
               case "method":
                 if (selectedStep.stype == "stdstep") {
                   setSelectedStepTemplate(stepRegistry.getStepByName(value))
+                  workflowDefinitions.insertConfigItemFromTemplate(value,stepRegistry)
                 }
                 updStep.method = value;
                 break
@@ -190,10 +191,11 @@ return (
                 label="Name of the step"
                 variant="outlined" 
                 onChange={(event) => { handleStepConfigChange("method", event.target.value) }}
+                sx={{ marginBottom: 2 }}
               >
                 {
                   stepRegistry && stepRegistry.steps.map((item, i) => (
-                    <MenuItem value={item.name} key={item.name}>{item.name}</MenuItem>
+                    <MenuItem value={item.name} key={item.name}> {item.category} : {item.name} </MenuItem>
                   ))
                 }
               </Select>
@@ -203,7 +205,7 @@ return (
               <Typography> Configurations : <ul>  {selectedStepTemplate?.configuration_templates.map((item,i)=> (<li> {item.name} - {item.label} </li>))} </ul> </Typography>
               </FormControl> 
             )}
-            <TextField sx={{ marginTop: 1 }} id="step-config-descr" fullWidth label="Description" size='small' variant="outlined" value={selectedStep?.description} onChange={(event) => { handleStepConfigChange("description", event.target.value) }} />
+            <TextField sx={{ marginTop: 1 }} id="step-config-descr" fullWidth label="Notes" size='small' variant="outlined" value={selectedStep?.description} onChange={(event) => { handleStepConfigChange("description", event.target.value) }} />
             
              {(selectedStep?.stype == "pystep") && (
               <TextField sx={{ marginTop: 1 }} id="step-pystep-method" fullWidth label="Override function name (optional)" size='small' variant="outlined" value={selectedStep?.method} onChange={(event) => { handleStepConfigChange("method", event.target.value) }} />
