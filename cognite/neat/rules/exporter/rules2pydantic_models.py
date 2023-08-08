@@ -350,12 +350,15 @@ def _class_to_asset_instance_dictionary(class_instance_dictionary, mapping_confi
 
 
 def to_relationship(self, transformation_rules: TransformationRules) -> Relationship:
+    """Creates relationship instance from model instance."""
     ...
 
 
 def to_dms(self, transformation_rules: TransformationRules):
+    """Creates instance of dm in CDF."""
     ...
 
 
 def to_graph(self, transformation_rules: TransformationRules, graph: Graph):
+    """Writes instance as set of triples to triple store (Graphs)."""
     ...
