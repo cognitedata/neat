@@ -708,9 +708,34 @@ class Warning34(NeatWarning):
             self.message += f"\nFix: {self.fix}"
 
 
+class Warning40(NeatWarning):
+    type_: str = "FieldNotFoundInInstance"
+    code: int = 40
+    description: str = (
+        "This warning occurs when a property, associated to the pydantic field, is not found in the instance."
+        "The missing field will be removed, which might lead to failure of the pydantic model validation if"
+        " the field/property is mandatory."
+    )
+    example: str = ""
+    fix: str = (
+        "If property/field is mandatory make sure that instances contain all mandatory fields."
+        "Otherwise, no need to fix this warning."
+    )
+
+    def __init__(self, id_: str | URIRef = "", field_name: str = "", verbose=False):
+        self.message = (
+            f"Field {field_name} is missing in the instance {id_}."
+            " If this field is mandatory, the validation of the pydantic model will fail!"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+
+
 class Warning41(NeatWarning):
     type_: str = "FieldContainsMoreThanOneValue"
-    code: int = 30
+    code: int = 41
     description: str = (
         "This warning occurs when a property, associated to the pydantic field, contains"
         " more than one value (i.e. list of values), while it is defined as single value field."

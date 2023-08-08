@@ -317,24 +317,45 @@ def _add_system_metadata(self, metadata_keys: NeatMetadataKeys, asset: dict):
 
 
 def _adapt_mapping_config_by_instance(external_id, class_instance_dictionary, mapping_config):
-    for key, values in mapping_config.items():
-        if key != "metadata":
-            for value in values:
-                if class_instance_dictionary.get(value, None):
+    fields_to_remove = []
+    metadata_keys_to_remove = []
+    for asset_field, class_properties in mapping_config.items():
+        properties_to_remove = []
+        if asset_field != "metadata":
+            for property_ in class_properties:
+                if class_instance_dictionary.get(property_, None):
                     # take first value, as it is priority over the rest
-                    mapping_config[key] = value
+                    mapping_config[asset_field] = property_
                 else:
-                    warnings.warn(
-                        _exceptions.Warning40(external_id, key).message,
-                        category=_exceptions.Warning40,
-                        stacklevel=2,
-                    )
+                    properties_to_remove += [property_]
 
-                    mapping_config.pop(key)
+            if class_properties == properties_to_remove:
+                warnings.warn(
+                    _exceptions.Warning40(external_id, asset_field).message,
+                    category=_exceptions.Warning40,
+                    stacklevel=2,
+                )
+                fields_to_remove += [asset_field]
+
         else:
-            for value in values:
-                if not class_instance_dictionary.get(value, None):
-                    mapping_config.pop(key)
+            for property_ in class_properties:
+                if not class_instance_dictionary.get(property_, None):
+                    metadata_keys_to_remove += [property_]
+            if metadata_keys_to_remove == mapping_config["metadata"]:
+                warnings.warn(
+                    _exceptions.Warning40(external_id, asset_field).message,
+                    category=_exceptions.Warning40,
+                    stacklevel=2,
+                )
+                fields_to_remove += [asset_field]
+
+    if fields_to_remove:
+        for asset_field in fields_to_remove:
+            mapping_config.pop(asset_field)
+
+    if metadata_keys_to_remove and mapping_config.get("metadata", None):
+        for metadata_key in metadata_keys_to_remove:
+            mapping_config["metadata"].remove(metadata_key)
 
     return mapping_config
 
