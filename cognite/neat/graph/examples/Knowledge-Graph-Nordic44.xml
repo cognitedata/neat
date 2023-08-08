@@ -16219,7 +16219,7 @@ Change log:
 	<cim:Terminal rdf:ID="_2dd901a2-bdfb-11e5-94fa-c8f73332c8f4">
 		<cim:Terminal.ConductingEquipment rdf:resource="#_2dd901a1-bdfb-11e5-94fa-c8f73332c8f4"/>
 		<cim:Terminal.ConnectivityNode rdf:resource="#_f176967b-9aeb-11e5-91da-b8763fd99c5f"/>
-		<!-- <cim:IdentifiedObject.aliasName>Some Alias Name Which is not used since name exist</cim:IdentifiedObject.aliasName> -->
+		<cim:IdentifiedObject.aliasName>Some Alias Name Which is not used since name exist</cim:IdentifiedObject.aliasName>
 		<cim:IdentifiedObject.name>T1</cim:IdentifiedObject.name>
 	</cim:Terminal>
 	<cim:Terminal rdf:ID="_2dd901a4-bdfb-11e5-94fa-c8f73332c8f4">
