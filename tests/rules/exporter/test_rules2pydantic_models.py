@@ -1,4 +1,3 @@
-import pytest
 from rdflib import URIRef
 from cognite.neat.rules.exporter.rules2pydantic_models import rules_to_pydantic_models
 
