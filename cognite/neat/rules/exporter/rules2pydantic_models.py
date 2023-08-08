@@ -28,16 +28,36 @@ def default_model_configuration():
     )
 
 
+def default_model_methods():
+    return [from_graph, to_asset, to_relationship, to_dms, to_graph]
+
+
 def rules_to_pydantic_models(
     transformation_rules: TransformationRules, methods: list = None
 ) -> dict[str, ModelMetaclass]:
+    """Generate pydantic models from transformation rules.
+
+    Parameters
+    ----------
+    transformation_rules : TransformationRules
+        Transformation rules
+    methods : list, optional
+        List of methods to register for pydantic models , by default None
+
+    Returns
+    -------
+    dict[str, ModelMetaclass]
+        Dictionary containing pydantic models
+
+    Notes
+    -----
+    Currently this will take only unique properties and those which column rule_type
+    is set to rdfpath, hence only_rdfpath = True. This means that at the moment
+    we do not support UNION, i.e. ability to handle multiple rdfpaths for the same
+    property. This is needed option and should be added in the second version of the exporter.
+    """
     if methods is None:
         methods = default_model_methods()
-
-    # Currently this will take only unique properties and those which column rule_type
-    # is set to rdfpath, hence only_rdfpath = True. This means that at the moment
-    # we do not support UNION, i.e. ability to handle multiple rdfpaths for the same
-    # property. This is needed option and should be added in the second version of the exporter.
 
     class_property_pairs = to_class_property_pairs(transformation_rules, only_rdfpath=True)
 
@@ -184,14 +204,24 @@ def _dictionary_to_pydantic_model(
 
 
 # Define methods that work on model instance
-
-
-def default_model_methods():
-    return [from_graph, to_asset, to_relationship, to_dms, to_graph]
-
-
 @classmethod
 def from_graph(cls, graph: Graph, transformation_rules: TransformationRules, external_id: URIRef):
+    """Method that creates model instance from class instance stored in graph.
+
+    Parameters
+    ----------
+    graph : Graph
+        Graph containing triples of class instance
+    transformation_rules : TransformationRules
+        Transformation rules
+    external_id : URIRef
+        External id of class instance to be used to instantiate associated pydantic model
+
+    Returns
+    -------
+    cls
+        Pydantic model instance
+    """
     # build sparql query for given object
     class_ = cls.__name__
     sparql_query = build_construct_query(
@@ -235,6 +265,24 @@ def to_asset(
     add_labels: bool = True,
     data_set_id: int = None,
 ) -> Asset:
+    """Convert model instance to asset.
+
+    Parameters
+    ----------
+    add_system_metadata : bool, optional
+        Flag indicating to add or not system/neat metadata, by default True
+    metadata_keys : NeatMetadataKeys | None, optional
+        Definition of system/neat metadata, by default None
+    add_labels : bool, optional
+        To add or not labels to asset, by default True
+    data_set_id : int, optional
+        Data set id to which asset belongs to, by default None
+
+    Returns
+    -------
+    Asset
+        Asset instance
+    """
     # Needs copy otherwise modifications impact all instances
     default_mapping_config = self.class_to_asset_mapping.copy()
     class_instance_dictionary = self.model_dump(by_alias=True)
