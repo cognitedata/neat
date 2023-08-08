@@ -15,6 +15,13 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.19.30] - 08-08-23
+
+### Added
+
+- Generation of in-memory pydantic models based on class/property definitions in `TransformationRules`
+- Generation of `CONSTRUCT` query which provides "views" into source graph and in most cases alleviate the need of creating solution graph
+
 ## [0.18.3] - 01-08-23
 
 ### Changed
