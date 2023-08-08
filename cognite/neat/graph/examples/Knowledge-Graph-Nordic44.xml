@@ -15278,7 +15278,7 @@ Change log:
 		<cim:Terminal.ConnectivityNode rdf:resource="#_b92e4ea4-edf8-ba43-987b-e5bfdf722f76"/>
 		<cim:IdentifiedObject.name>300ASKER-ARENDAL T1</cim:IdentifiedObject.name>
 		<cim:IdentifiedObject.description>5500 5603 &apos;1 &apos;</cim:IdentifiedObject.description>
-		<cim:IdentifiedObject.aliasName>Some Alias Name Which is not used since name exist</cim:IdentifiedObject.aliasName>
+		<!-- <cim:IdentifiedObject.aliasName>Some Alias Name Which is not used since name exist</cim:IdentifiedObject.aliasName> -->
 		<cim:ACDCTerminal.sequenceNumber>2</cim:ACDCTerminal.sequenceNumber>
 	</cim:Terminal>
 	<cim:Terminal rdf:ID="_2dd90417-bdfb-11e5-94fa-c8f73332c8f4">
