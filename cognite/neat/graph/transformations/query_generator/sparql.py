@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import Counter, defaultdict
 import re
 from rdflib import Graph, Namespace
 from rdflib.term import URIRef
@@ -369,21 +369,33 @@ def build_construct_query(
     properties_optional: bool = True,
     class_instances: list[URIRef] | None = None,
 ) -> str:
-    """Builds CONSTRUCT query for given class and rules
+    """Builds CONSTRUCT query for given class and rules and optionally filters by class instances
 
     Parameters
     ----------
-    graph : NeatGraphStore
-        Data model graph or data model instance (aka knowledge graph)
+    graph : Graph
+        Graph containing instances of classes
     class_ : str
-        ID of class
-    rules : Rules
-        Rules
+        ID of class for which class_instance we want to query
+    transformation_rules : TransformationRules
+        Transformation rules to use for query generation
+    properties_optional : bool, optional
+        Whether to make all properties optional, default True
+    class_instances : list[URIRef], optional
+        List of class instances to filter by, default None (no filter return all instances)
 
     Returns
     -------
     str
         CONSTRUCT query
+
+    Notes
+    -----
+    Construct query is far less unforgiving than SELECT query, in sense that it will not return
+    anything if one of the properties that define "shape" of the class instance is missing.
+    This is the reason why there is option to make all properties optional, so that query will
+    return all instances that have at least one property defined.
+
     """
 
     query_template = "CONSTRUCT {graph_template\n}\n\nWHERE {graph_pattern\ninsert_filter}"
@@ -420,21 +432,21 @@ def _triples2sparql_statement(triples: list[Triple]):
 def _to_construct_triples(
     graph: Graph, class_: str, transformation_rules: TransformationRules, properties_optional: bool = True
 ) -> tuple[list[Triple], list[Triple]]:
-    """Converts class definition to CONSTRUCT triples
+    """Converts class definition to CONSTRUCT triples which are used to generate CONSTRUCT query
 
     Parameters
     ----------
     graph : Graph
-        _description_
+        Graph containing instances of classes
     class_ : str
-        _description_
+        ID of class for which class_instance we want to query
     transformation_rules : TransformationRules
-        _description_
+        Transformation rules to use for query generation
 
     Returns
     -------
     tuple[list[Triple],list[Triple]]
-        _description_
+        Tuple of triples that define graph template and graph pattern parts of CONSTRUCT query
     """
 
     templates = []
@@ -503,19 +515,9 @@ def _to_construct_triples(
     return templates, patterns
 
 
-def _count_element_occurrence(list_of_elements: list):
-    occurrence: dict[str, int] = {}
-    for i in list_of_elements:
-        if i in occurrence:
-            occurrence[i] += 1
-        else:
-            occurrence[i] = 1
-    return occurrence
-
-
 def _most_occurring_element(list_of_elements: list):
-    occurrence = _count_element_occurrence(list_of_elements)
-    return max(occurrence, key=occurrence.get)
+    counts = Counter(list_of_elements)
+    return counts.most_common(1)[0][0]
 
 
 def triples2dictionary(triples: list[tuple[URIRef, URIRef, str | URIRef]]) -> dict[str, list[str]] | dict[str, str]:

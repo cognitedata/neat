@@ -331,7 +331,7 @@ def _adapt_mapping_config_by_instance(external_id, class_instance_dictionary, ma
         ]:
             adapted_mapping_config["metadata"] = metadata_keys
 
-    # Raise warning for fields that will miss in asset
+    # Raise warnings for fields that will miss in asset
     for asset_field in mapping_config:
         if asset_field not in adapted_mapping_config:
             warnings.warn(
