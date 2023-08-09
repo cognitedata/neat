@@ -9,7 +9,6 @@ from cognite.neat.workflows import WorkflowFullStateReport
 from cognite.neat.workflows.base import WorkflowDefinition
 from cognite.neat.workflows.migration.wf_manifests import migrate_wf_manifest
 from cognite.neat.workflows.model import FlowMessage
-from cognite.neat.workflows.steps_registry import StepsRegistry
 
 router = APIRouter()
 
@@ -38,6 +37,20 @@ def get_workflow_stats(
 @router.get("/api/workflow/workflows")
 def get_workflows():
     return {"workflows": neat_app.workflow_manager.get_list_of_workflows()}
+
+
+@router.post("/api/workflow/create")
+def create_new_workflow(request: WorkflowDefinition):
+    new_workflow_definition = neat_app.workflow_manager.create_new_workflow(
+        request.name, request.description, "manifest"
+    )
+    return {"workflow": new_workflow_definition}
+
+
+@router.delete("/api/workflow/{workflow_name}")
+def delete_workflow(workflow_name: str):
+    neat_app.workflow_manager.delete_workflow(workflow_name)
+    return {"result": "ok"}
 
 
 @router.get("/api/workflow/executions")

@@ -102,7 +102,7 @@ class WorkflowDefinition(BaseModel):
     name: str
     description: Optional[str] = None
     implementation_module: Optional[str] = None
-    steps: list[WorkflowStepDefinition]
+    steps: list[WorkflowStepDefinition] = []
     system_components: Optional[list[WorkflowSystemComponent]] = None
     configs: Optional[list[WorkflowConfigItem]] = None
 

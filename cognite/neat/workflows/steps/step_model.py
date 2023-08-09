@@ -22,8 +22,9 @@ class Step(ABC):
     description: str = ""
     category: str = "default"
     configuration_templates: list[WorkflowConfigItem] = []
+    scope: str = "global"
     
-    def __init__(self, metrics, data_store_path: str | None = None, context: dict[str, str] = None):
+    def __init__(self, metrics, data_store_path: str | None = None):
         self.log: bool = False
         self.data_store_path: str = data_store_path
         # Comment: Metrics should be optional

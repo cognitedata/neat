@@ -61,7 +61,7 @@ export default function ConfigView() {
     fetch(url,{ method:"post",body:wdef.serializeToJson(),headers: {
         'Content-Type': 'application/json;charset=utf-8'
     }}).then((response) => response.json()).then((data) => {
-        console.dir(data)
+        window.location.reload();
     }
     ).catch((error) => {
         console.error('Error:', error);

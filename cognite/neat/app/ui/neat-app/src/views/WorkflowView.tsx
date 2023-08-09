@@ -37,6 +37,8 @@ import QDataTable from './ExplorerView';
 import Editor, { DiffEditor, useMonaco, loader } from '@monaco-editor/react';
 import OverviewComponentEditorDialog from 'components/OverviewComponentEditorDialog';
 import StepEditorDialog from 'components/StepEditorDialog';
+import WorkflowMetadataDialog from 'components/WorkflowMetadataDialog';
+
 
 export interface ExecutionLog {
   id: string;
@@ -75,8 +77,9 @@ export default function WorkflowView() {
   const [workflowDefinitions, setWorkflowDefinitions] = useState<WorkflowDefinition>();
   const [selectedWorkflow, setSelectedWorkflow] = useState<string>(getSelectedWorkflowName());
   const [listOfWorkflows, setListOfWorkflows] = useState<string[]>([]);
-  const [viewType, setViewType] = useState<string>("system");
+  const [viewType, setViewType] = useState<string>("steps");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [workflowMetadataDialogOpen, setWorkflowMetadataDialogOpen] = useState(false);
   const [openOverviewComponentEditorDialog, setOpenOverviewComponentEditorDialog] = useState(false);
   const [selectedStep, setSelectedStep] = useState<WorkflowStepDefinition>();
   const [selectedComponent, setSelectedComponent] = useState<WorkflowSystemComponent>();
@@ -274,14 +277,17 @@ const reloadWorkflows = () => {
   })
 };
 
+const switchToWorkflow = (workflowName: string) => {
+  setSelectedWorkflowName(workflowName);
+  setSelectedWorkflow(workflowName);
+  loadWorkflowDefinitions(workflowName);
+  setViewType("steps");
+  syncWorkflowDefToNodesAndEdges("steps");
+  startStatePolling(workflowName);
+}
+
 const handleWorkflowSelectorChange = (event: SelectChangeEvent) => {
-  console.dir("Workflow changed to :" + event.target.value);
-  setSelectedWorkflowName(event.target.value);
-  setSelectedWorkflow(event.target.value);
-  loadWorkflowDefinitions(event.target.value);
-  setViewType("system");
-  syncWorkflowDefToNodesAndEdges("system");
-  startStatePolling(event.target.value);
+  switchToWorkflow(event.target.value);
 };
 
 const handleViewTypeChange = (
@@ -402,6 +408,27 @@ const solutionComponentEditorDialogHandler = (component: WorkflowSystemComponent
   setOpenOverviewComponentEditorDialog(false);
 }
 
+const handleCreateWorkflow = (wdef:WorkflowDefinition,action: string) => {
+  // send workflowMeta to backend
+  console.dir(wdef);
+  if (action != "save") 
+    return;
+  
+  const url = neatApiRootUrl + "/api/workflow/create";
+  fetch(url, {
+    method: "post", body: wdef.serializeToJson(), headers: {
+      'Content-Type': 'application/json;charset=utf-8'
+    }
+  }).then((response) => response.json()).then((data) => {
+    switchToWorkflow(wdef.name);
+    window.location.reload();
+  }
+  ).catch((error) => {
+    console.error('Error:', error);
+  })
+    
+}
+
 const onNodesChangeN = useCallback((nodeChanges: NodeChange[]) => {
   // console.log('onNodesChange')
   // console.dir(nodeChanges);
@@ -436,6 +463,7 @@ return (
           }
         </Select>
       </FormControl>
+      <WorkflowMetadataDialog open = {workflowMetadataDialogOpen} onClose={handleCreateWorkflow}/>
       <ToggleButtonGroup
         color="primary"
         value={viewType}
@@ -460,6 +488,7 @@ return (
         <Item>
           <OverviewComponentEditorDialog open={openOverviewComponentEditorDialog} component={selectedComponent} onClose={solutionComponentEditorDialogHandler} />
           <StepEditorDialog open={dialogOpen} step={selectedStep} workflowName={selectedWorkflow} stepRegistry={stepRegistry} workflowDefinitions={workflowDefinitions} onClose={handleDialogClose} />
+          
           <div style={{ height: '75vh', width: '70vw' }}>
             <ReactFlow
               nodes={nodes}

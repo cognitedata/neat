@@ -8,6 +8,7 @@ config.yaml
 real_data/
 data/
 dev-data/
+dev-data-*/
 
 !cognite/neat/workflows/examples/config.yaml
 requirements.txt

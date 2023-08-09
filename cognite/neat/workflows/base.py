@@ -45,7 +45,7 @@ class BaseWorkflow:
         self,
         name: str,
         client: CogniteClient,
-        steps_registry: StepsRegistry,
+        steps_registry: StepsRegistry = None,
         workflow_steps: list[WorkflowStepDefinition] = None,
         default_dataset_id: int = None,
     ):
@@ -111,6 +111,7 @@ class BaseWorkflow:
         logging.info(f"Starting workflow {self.name}")
         if flow_message := kwargs.get("flow_message"):
             self.flow_message = flow_message
+            self.data["FlowMessage"] = self.flow_message
         start_time = time.perf_counter()
         self.report_workflow_execution()
         try:
@@ -159,7 +160,6 @@ class BaseWorkflow:
         )
 
         step: WorkflowStepDefinition = trigger_steps[0]
-
         transition_steps = self.get_transition_step(step.transition_to)
 
         if len(transition_steps) == 0:
@@ -266,6 +266,8 @@ class BaseWorkflow:
 
                 new_flow_message = method_runner()
             elif step.stype == StepType.STD_STEP:
+                if self.steps_registry is None:
+                    raise Exception(f"Workflow step {step.id} can't be executed.Step registry is not configured or not set as parameter in BaseWorkflow constructor")
                 output = self.steps_registry.run_step(step.method, self.data, metrics=self.metrics)
                 if output is not None:
                     if isinstance(output, tuple):

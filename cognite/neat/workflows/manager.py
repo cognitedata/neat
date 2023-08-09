@@ -2,6 +2,7 @@ import importlib
 import inspect
 import logging
 import os
+import shutil
 import sys
 import time
 import traceback
@@ -68,7 +69,7 @@ class WorkflowManager:
 
     def get_list_of_workflows(self):
         return list(self.workflow_registry.keys())
-    
+
     def get_steps_registry(self):
         return self.steps_registry
 
@@ -77,7 +78,7 @@ class WorkflowManager:
             return self.workflow_registry[name]
         except KeyError:
             return None
-    
+
     def start_workflow(self, name: str, sync=False, **kwargs):
         workflow = self.get_workflow(name)
         workflow.start(sync, kwargs=kwargs)
@@ -85,6 +86,9 @@ class WorkflowManager:
 
     def delete_workflow(self, name: str):
         del self.workflow_registry[name]
+        full_path = self.workflows_storage_path / name
+        shutil.rmtree(full_path)
+        # TODO: check if more garbage collection is needed here. 
 
     def update_workflow(self, name: str, workflow: WorkflowDefinition):
         self.workflow_registry[name].workflow_steps = workflow.steps
@@ -95,6 +99,7 @@ class WorkflowManager:
         """Save workflow from memory to storage"""
         if self.workflows_storage_type == "file":
             full_path = self.workflows_storage_path / name / "workflow.yaml"
+            full_path.parent.mkdir(parents=True, exist_ok=True)
             wf = self.workflow_registry[name]
             with open(full_path, "w") as f:
                 f.write(
@@ -102,6 +107,15 @@ class WorkflowManager:
                         output_format="yaml", custom_implementation_module=custom_implementation_module
                     )
                 )
+
+    def create_new_workflow(self, name: str, description=None, mode: str = "manifest") -> WorkflowDefinition:
+        """Create new workflow in memory"""
+        workflow_definition = WorkflowDefinition(
+            name=name, description=description, steps=[], system_components=[], configs=[]
+        )
+        self.register_workflow(BaseWorkflow, name, workflow_definition)
+        self.save_workflow_to_storage(name)
+        return workflow_definition
 
     def load_workflows_from_storage(self, workflows_storage_path: str | Path = None):
         """Loads workflows from disk/storage into memory, initializes and register them in the workflow registry"""
@@ -152,11 +166,13 @@ class WorkflowManager:
                             load_user_defined_workflow = True
                         except ModuleNotFoundError as e:
                             logging.debug(f"ModuleNotFoundError {e}")
-                   
+
+                    self.steps_registry.load_custom_step_classes(workflow_path, workflow_name)
                     # Dynamically load workflow classes which contain "NeatWorkflow" in their name
                     # from workflow.py module in the workflow directory and
                     # Instantiate them using the workflow definition loaded
                     # from workflow.yaml file
+                    # WARNING: This will be deprecated in the future.
                     if load_user_defined_workflow:
                         for name, obj in inspect.getmembers(module):
                             if "NeatWorkflow" in name and inspect.isclass(obj):
@@ -167,8 +183,8 @@ class WorkflowManager:
                                     )
                                 )
                                 self.register_workflow(obj, workflow_name, workflow_definition)
-                                return 
-                    else:        
+                                return
+                    else:
                         self.register_workflow(BaseWorkflow, workflow_name, workflow_definition)
 
                 except Exception as e:
