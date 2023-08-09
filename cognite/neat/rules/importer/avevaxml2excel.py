@@ -14,6 +14,10 @@ from cognite.neat.rules import parse_rules_from_excel_file
 from cognite.neat.rules import _exceptions
 from cognite.neat.utils.utils import generate_exception_report,  pascal_case, camel_case
 
+from datetime import datetime
+
+# get the start time
+
 REPLACE_TYPE = {
     "String": "string",
     "Boolean": "boolean",
@@ -45,7 +49,7 @@ def _create_default_metadata_parsing_config() -> dict[str, tuple[str, ...]]:
 def _create_default_classes_parsing_config() -> dict[str, tuple[str, ...]]:
     # TODO: these are to be read from Class pydantic model
     return {
-        "helper_row": ("Data Model Definition", "", "", "", "State", "", "", "Knowledge acquisition log", "", "", ""),
+        "helper_row": ("Data Model Definition", "", "", "", "State", "", "", "Knowledge acquisition log", "", "", "", ""),
         "header": (
             "Class",
             "Name",
@@ -58,6 +62,7 @@ def _create_default_classes_parsing_config() -> dict[str, tuple[str, ...]]:
             "Source Entity Name",
             "Match",
             "Comment",
+            "Taxonomy"
         ),
     }
 
@@ -73,10 +78,12 @@ def _create_default_properties_parsing_config() -> dict[str, tuple[str, ...]]:
             "",
             "",
             "",
+            "",
             "State",
             "",
             "",
             "Knowledge acquisition log",
+            "",
             "",
             "",
             "",
@@ -86,6 +93,7 @@ def _create_default_properties_parsing_config() -> dict[str, tuple[str, ...]]:
             "Property",
             "Name",
             "Description",
+            "Default",
             "Type",
             "Min Count",
             "Max Count",
@@ -96,11 +104,149 @@ def _create_default_properties_parsing_config() -> dict[str, tuple[str, ...]]:
             "Source Entity Name",
             "Match",
             "Comment",
+            "Taxonomy"
         ),
     }
 
 
-def avevaxml2excel(avevaxml_filepath: Path, excel_filepath: Path = None, validate_results: bool = True):
+class AvevaXML:
+    
+    def __init__(self, xml_filepath):
+        self.tree = ET.parse(xml_filepath)
+        self.root = self.tree.getroot()
+        self.xmlns = self.root.tag.split("}")[0]+ "}"
+        self.parent_map = {c:p for p in self.tree.iter() for c in p}
+        
+        self._parse_attributes()
+        self._parse_functional_classes()
+        self._parse_document_classes()
+        self._parse_taxonomies()
+        
+    def _parse_attributes(self):
+        for item in self.root:
+            if f"{self.xmlns}Attributes" == item.tag:
+                attributes = item
+                
+        attributes = attributes.findall(f".//{self.xmlns}Attribute")
+        self.attributes_dict = {i.attrib['id']: i.attrib for i in attributes}
+        
+        
+    def _parse_functional_classes(self):
+        for item in self.root:
+            if f"{self.xmlns}Functionals" == item.tag:
+                functionals = item
+                
+        functional_classes = functionals.findall(f".//{self.xmlns}Class")
+        functional_classes_dict = {i.attrib['id']: i.attrib for i in functional_classes}
+        
+        for class_item in functional_classes:
+            # list_of_attributes = []
+            class_attributes_dict = {}
+            for item in class_item:
+                if f"{self.xmlns}Attributes" == item.tag:
+                    attributes = item
+                    
+            for attribute in attributes:
+                # if attrib.attrib["obsolete"] == "false": # get only non-obsolete attributes
+                # list_of_attributes.append(attribute.attrib)
+                tmp_dict = attribute.attrib
+                try:
+                    tmp_dict2 = self.attributes_dict[attribute.attrib["id"]]
+                except KeyError as e:
+                    warnings.warn(f"Attribute {attribute.attrib['id']} not found in attributes dictionary")
+                    
+                tmp_dict.update(tmp_dict2)
+                class_attributes_dict[attribute.attrib["id"]] = tmp_dict
+                
+            functional_classes_dict[class_item.attrib["id"]]["attributes"] = class_attributes_dict
+
+        self.functional_classes_dict = functional_classes_dict
+        
+        
+    def _parse_document_classes(self):
+        for item in self.root:
+            if f"{self.xmlns}Documents" == item.tag:
+                documents = item
+                
+        document_classes = documents.findall(f".//{self.xmlns}Class")
+        self.document_classes_dict = {i.attrib['id']: i.attrib for i in document_classes}
+        
+    
+    def _parse_taxonomies(self):
+        all_nodes = []
+        taxonomies = self.root.findall(f".//{self.xmlns}Taxonomy")
+        nodes = self.root.findall(f".//{self.xmlns}Node")
+
+        for node in nodes:
+            node_entity = {}
+            
+            attributes = node.findall(f".//{self.xmlns}Attributes") 
+            if attributes == []: # skip nodes where there are no attributes
+                continue
+            
+            taxonomy = None
+            while taxonomy not in taxonomies:
+                if taxonomy is None:
+                    taxonomy = self.parent_map[self.parent_map[node]]
+                else: 
+                    taxonomy = self.parent_map[taxonomy]
+
+            for attribute in taxonomy.attrib:
+                node_entity[f"taxonomy_{attribute}"] = taxonomy.attrib[attribute]
+                
+            if taxonomy.attrib['concept'] == 'Document': # Not looking at document taxonomies for now
+                continue
+            
+            
+            functional_class = None
+            for item in node:
+                if f"{self.xmlns}Classes" == item.tag:
+                    functional_class = item[0]
+                    
+            
+            if functional_class is not None:
+                functional_class_id = functional_class.attrib['id']
+                functional_class_data = self.functional_classes_dict[functional_class_id]
+                for k, v in functional_class_data.items():
+                    node_entity[f'class_{k}'] = v
+              
+            # if attributes != []:
+            attributes = attributes[0]
+            attributes = [i.attrib for i in attributes]
+            node_entity['set_attributes'] = {i['id']: i['value'] for i in attributes}
+                
+            try:
+                node_entity["attributes"] = self.functional_classes_dict[node_entity["class_id"]]["attributes"]
+            except KeyError:
+                pass
+            
+            parent_node = self.parent_map[self.parent_map[node]]
+        
+                
+            node_entity['parent'] = parent_node.attrib
+            for attribute in parent_node.attrib:
+                node_entity[f"parent_{attribute}"] = parent_node.attrib[attribute]
+                
+            node_entity['id'] = node.attrib['id']
+            node_entity['name'] = node.attrib['name']
+            if '|' in node.attrib['name']:
+                node_entity['unique_id'] = node.attrib['name'].split(' ')[0] # Perhaps a more explicity way of gettign unique ID, traverse up tree and combine all the node ids together
+            else:
+                node_entity['unique_id'] = node.attrib['id']
+                
+            if '|' in node_entity['parent_name']:
+                node_entity['parent_unique_id'] = node_entity['parent']['name'].split(' ')[0]
+            else:
+                node_entity['parent_unique_id'] = node_entity['parent_id']
+            
+            all_nodes.append(node_entity)
+            
+        df = pd.DataFrame(all_nodes)
+        # self.df = df[df['taxonomy_concept']=='Functional']
+        self.df = df
+        
+
+def avevaxml2excel(avevaxml_filepath: Path, excel_filepath: Path = None, validate_results: bool = True, dataframe_filter: dict = None):
     """Convert owl ontology to transformation rules serialized as Excel file.
 
     Parameters
@@ -119,19 +265,18 @@ def avevaxml2excel(avevaxml_filepath: Path, excel_filepath: Path = None, validat
     else:
         excel_filepath = avevaxml_filepath.parent / "transformation_rules.xlsx"
 
-    tree = ET.parse(avevaxml_filepath)
-    root = tree.getroot()
+    avevaxml = AvevaXML(avevaxml_filepath)
 
     with pd.ExcelWriter(excel_filepath) as writer:
-        _parse_avevaxml_metadata_df(root).to_excel(writer, sheet_name="Metadata", header=False)
-        _parse_avevaxml_classes_df(root).to_excel(writer, sheet_name="Classes", index=False, header=True)
-        _parse_avevaxml_properties_df(root).to_excel(writer, sheet_name="Properties", index=False, header=True)
-
+        _parse_avevaxml_metadata_df(avevaxml).to_excel(writer, sheet_name="Metadata", header=False)
+        _parse_avevaxml_classes_df(avevaxml, dataframe_filter = dataframe_filter).to_excel(writer, sheet_name="Classes", index=False, header=True)
+        _parse_avevaxml_properties_df(avevaxml, dataframe_filter = dataframe_filter).to_excel(writer, sheet_name="Properties", index=False, header=True)
+        
     if validate_results:
         _validate_excel_file(excel_filepath)
-
-
-def _parse_avevaxml_metadata_df(root: Element, parsing_config: dict = None) -> pd.DataFrame:
+        
+        
+def _parse_avevaxml_metadata_df(avevaxml: AvevaXML, parsing_config: dict = None) -> pd.DataFrame:
     """Parse xml metadata to pandas dataframe.
 
     Parameters
@@ -150,16 +295,16 @@ def _parse_avevaxml_metadata_df(root: Element, parsing_config: dict = None) -> p
     if parsing_config is None:
         parsing_config = _create_default_metadata_parsing_config()
         
-    xmlns = root.tag.split("}")[0]+ "}"
-    root_attributes = root.attrib
+    xmlns = avevaxml.xmlns
+    root_attributes = avevaxml.root.attrib
     
     attributes = {}
     attributes["namespace"] = xmlns.replace("{", "").replace("}", "")
     attributes["prefix"] = root_attributes["id"]
     attributes["description"] = root_attributes["description"]
     attributes["version"] = root_attributes["version"]
-    attributes["updated"] = root_attributes["versionDate"].replace(".","_")
-    attributes["created"] = root_attributes["versionDate"].replace(".","_")
+    attributes["updated"] = datetime.fromisoformat(root_attributes["versionDate"].replace(".","-"))
+    attributes["created"] = datetime.fromisoformat(root_attributes["versionDate"].replace(".","-"))
     attributes["isCurrentVersion"] = "TRUE"
     attributes["cdfSpaceName"] = root_attributes["contentType"]
     attributes["dataModelName"] = root_attributes["contentType"]
@@ -176,7 +321,7 @@ def _parse_avevaxml_metadata_df(root: Element, parsing_config: dict = None) -> p
     return df_metadata.T
 
 
-def _parse_avevaxml_classes_df(root: Element, parsing_config: dict = None) -> pd.DataFrame:
+def _parse_avevaxml_classes_df(avevaxml: AvevaXML, parsing_config: dict = None, dataframe_filter: dict = None) -> pd.DataFrame:
     """Get all classes from the xml and their parent classes.
 
     Parameters
@@ -189,39 +334,60 @@ def _parse_avevaxml_classes_df(root: Element, parsing_config: dict = None) -> pd
     Returns
     -------
     pd.DataFrame
-        Dataframe with columns: class, parentClass
+        Dataframe with columns: class, parentClasss
     """
     
       
     if parsing_config is None:
         parsing_config = _create_default_classes_parsing_config()
     
-    xmlns = root.tag.split("}")[0]+ "}"
-    functionals = root.findall(f".//{xmlns}Functionals")[0] #TODO: Better parsing of this, learn xml package
-    classes = functionals.findall(f".//{xmlns}Class")
+    xmlns = avevaxml.xmlns
+
+    df_class = avevaxml.df
+    if 'class_obsolete' in df_class.columns:
+        df_class = df_class[~df_class['class_obsolete'].isna()] # only take nodes that have a class
     
-    classes_lst = [item.attrib for item in classes]
-    df_class = pd.DataFrame(classes_lst)
+    # classes_lst = [item.attrib for item in classes]
+    # df_class = pd.DataFrame(classes_lst)
+    # id_to_name = dict(zip(df_class["unique_id"], [pascal_case(item) for item in df_class["name"]]))
+    
     df_class["Source"] = xmlns.replace("{","").replace("}","")
-    df_class["Source Entity Name"] = df_class["id"]
+    df_class["Source Entity Name"] = df_class["name"]
     df_class["Match"] = "exact"
-    df_class["Class"] = [pascal_case(item) for item in df_class["name"]]
+    df_class["Class"] = [pascal_case(item) for item in df_class["unique_id"]]
     df_class["Name"] = df_class["name"] 
-    df_class["Deprecated"] = df_class["obsolete"]
-    df_class["Description"] = df_class["description"]
+    # df_class["Description"] = [item['3213'] for item in df_class["set_attributes"]]
+    df_class["Description"] = df_class["class_description"]
+    df_class["Taxonomy"] = df_class["taxonomy_id"]
+    df_class["Parent Class"] =[pascal_case(item) for item in df_class["parent_unique_id"]]
+    if 'class_obsolete' in df_class.columns:
+        df_class["Deprecated"] = df_class["class_obsolete"]
 
     columns_to_keep = list(parsing_config["header"]) 
     missing_fields = [item for item in columns_to_keep if item not in df_class.columns]
     for field in missing_fields:
         df_class[field] = None
     df_class = df_class[columns_to_keep]
+    
+    if dataframe_filter is not None:
+        filter_lst = list(zip(dataframe_filter.keys(), dataframe_filter.values()))
+        df2 = pd.DataFrame()
+        for item in filter_lst:
+            if df2.empty:
+                df2 = df_class[(df_class[item[0]] == item[1])]
+            else:
+                df2 = df2[(df2[item[0]] == item[1])]
+                
+        df_class = df2
+        
     df_class = df_class.T.reset_index().T.reset_index(drop=True)
     df_class.columns = parsing_config["helper_row"]
+    
         
     return df_class
     
 
-def _parse_avevaxml_properties_df(root: Element, parsing_config: dict = None ) -> pd.DataFrame:
+def _parse_avevaxml_properties_df(avevaxml: AvevaXML, parsing_config: dict = None, dataframe_filter: dict = None ) -> pd.DataFrame:
     """Get all properties from the XML file
 
     Parameters
@@ -240,67 +406,91 @@ def _parse_avevaxml_properties_df(root: Element, parsing_config: dict = None ) -
     if parsing_config is None:
         parsing_config = _create_default_properties_parsing_config()
         
-    xmlns = root.tag.split("}")[0]+ "}"
-    functionals = root.findall(f".//{xmlns}Functionals")[0] #TODO: Better parsing of this, learn xml package
-    classes = functionals.findall(f".//{xmlns}Class")
+    xmlns = avevaxml.xmlns
+    # functionals = root.findall(f".//{xmlns}Functionals")[0] #TODO: Better parsing of this, learn xml package
+    # functional_classes = functionals.findall(f".//{xmlns}Class")
     
-    classes_attrib_dict = {}
-    for class_item in classes:
-        lst = []
-        for attrib in class_item[0]:
-            if attrib.attrib["obsolete"] == "false": # get only non-obsolete attributes
-                lst.append(attrib.attrib)
-            else:
-                pass
-        classes_attrib_dict[class_item.attrib["id"]] = lst
+    # for item in avevaxml.root:
+    #     if f"{xmlns}Functionals" == item.tag:
+    #         functionals = item
+            
+    # functional_classes = functionals.findall(f".//{xmlns}Class")
     
-    classes_lst = [item.attrib for item in classes]
-    classes_dict = {item["id"]:item for item in classes_lst}
+    # classes_lst = [item.attrib for item in functional_classes]
+    # classes_dict = {item["id"]:item for item in classes_lst}
 
-    attributes_root = root[1] #TODO: Better parsing of this, learn xml package
-    all_attributes = []
-    for attribute in attributes_root:
-        all_attributes.append(attribute)
-        
-    attributes_dict = {}
-    for item in all_attributes:
-        attributes_dict[item.attrib["id"]] = item.attrib
-        
+    # for class_item in functional_classes:
+    #     list_of_attributes = []
+    #     for attrib in class_item[0]:
+    #         # if attrib.attrib["obsolete"] == "false": # get only non-obsolete attributes
+    #         list_of_attributes.append(attrib.attrib)
+            
+    #     classes_dict[class_item.attrib["id"]]["attributes"] = list_of_attributes
+
+    df_class = avevaxml.df
+    # df_class = df_class[df_class["taxonomy_name"] =="OIH Tag Classes - VAL"]
+    if 'class_obsolete' in df_class.columns:
+        df_class = df_class[~df_class["class_obsolete"].isna()] # only take nodes that have a class
+
+    
+    def _replace_type(item):
+        if REPLACE_TYPE.get(item, None) is not None:
+            return REPLACE_TYPE[item]
+        else:
+            return item
+    
+
     df_lst = []
-    for k, v in classes_attrib_dict.items():
-        lst = []
-        for item in v:
-            lst.append(attributes_dict[item["id"]])
-        
-        def _replace_type(item):
-            if REPLACE_TYPE.get(item, None) is not None:
-                return REPLACE_TYPE[item]
-            else:
-                return item
+    for _, row in df_class.iterrows():
+        if pd.isna(row["attributes"]):
+            continue
+        data = list(row["attributes"].values())
+        df_subset = pd.DataFrame(data)
+        df_subset["Class"] = pascal_case(row["unique_id"])
+        set_attributes = row["set_attributes"]
+        df_subset["Default"] = [set_attributes.get(i, None) for i in df_subset["id"]]
+        df_subset["Taxonomy"] = row["taxonomy_id"]
+        # df_subset["Property"] = df_subset["name"].apply(lambda x: camel_case(x))
+        # df_subset["Source"] = xmlns.replace("{", "").replace("}", "")
+        # df_subset["Name"] = df_subset["name"]
+        # df_subset["Source Entity Name"] = df_subset["name"]
+        # df_subset["Description"] = df_subset["description"]
+        # df_subset["dataType"] = df_subset["dataType"].apply(lambda x: _replace_type(x))
+        df_lst.append(df_subset)
 
-        df_temp = pd.DataFrame(lst)
-        class_name = classes_dict[k]["name"]
-        df_temp["Class"] = pascal_case(class_name)
-        df_temp["Property"] = df_temp["name"].apply(lambda x: camel_case(x))
-        df_temp["Source"] = xmlns.replace("{", "").replace("}", "")
-        df_temp["Name"] = df_temp["name"]
-        df_temp["Source Entity Name"] = df_temp["name"]
-        df_temp["Description"] = df_temp["description"]
-        df_temp["dataType"] = df_temp["dataType"].apply(lambda x: _replace_type(x))
-        
-        df_temp = df_temp.rename(columns={"dataType": "Type", "obsolete": "Deprecated"})
-        df_lst.append(df_temp)
-        
+
     df_attributes = pd.concat(df_lst)
+    df_attributes["Property"] = df_attributes["name"].apply(lambda x: camel_case(x))
+    df_attributes["Source"] = xmlns.replace("{", "").replace("}", "")
+    df_attributes["Name"] = df_attributes["name"]
+    df_attributes["Source Entity Name"] = df_attributes["name"]
+    df_attributes["Description"] = df_attributes["description"]
+    if 'obsolete' in df_attributes.columns:
+        df_attributes["Deprecated"] = df_attributes["obsolete"]
+    df_attributes["Type"] = df_attributes["dataType"].apply(lambda x: _replace_type(x))
+    df_attributes["Min Count"] = 0
+    df_attributes["Max Count"] = 1
     
     columns_to_keep = list(parsing_config["header"]) 
     missing_fields = [item for item in columns_to_keep if item not in df_attributes.columns]
     for field in missing_fields:
         df_attributes[field] = ''
     df_attributes = df_attributes[columns_to_keep]
+    
+    if dataframe_filter is not None:
+        filter_lst = list(zip(dataframe_filter.keys(), dataframe_filter.values()))
+        df2 = pd.DataFrame()
+        for item in filter_lst:
+            if df2.empty:
+                df2 = df_attributes[(df_attributes[item[0]] == item[1])]
+            else:
+                df2 = df2[(df2[item[0]] == item[1])]
+                
+        df_attributes = df2
+        
     df_attributes.iloc[0,:] = df_attributes.columns
     df_attributes.columns = parsing_config["helper_row"]
-    
+
     return df_attributes
 
 
