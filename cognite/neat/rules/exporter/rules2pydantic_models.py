@@ -125,7 +125,7 @@ def _properties_to_pydantic_fields(
             field_definition["min_length"] = property_.min_count
             field_definition["max_length"] = property_.max_count
 
-        if not property_.mandatory and not property_.default:
+        if not property_.is_mandatory and not property_.default:
             field_definition["default"] = None
         elif property_.default:
             field_definition["default"] = property_.default
@@ -284,10 +284,9 @@ def to_asset(
         Asset instance
     """
     # Needs copy otherwise modifications impact all instances
-    default_mapping_config = self.class_to_asset_mapping.copy()
     class_instance_dictionary = self.model_dump(by_alias=True)
     adapted_mapping_config = _adapt_mapping_config_by_instance(
-        self.external_id, class_instance_dictionary, default_mapping_config
+        self.external_id, class_instance_dictionary, self.class_to_asset_mapping
     )
     asset = _class_to_asset_instance_dictionary(class_instance_dictionary, adapted_mapping_config)
 
@@ -317,47 +316,31 @@ def _add_system_metadata(self, metadata_keys: NeatMetadataKeys, asset: dict):
 
 
 def _adapt_mapping_config_by_instance(external_id, class_instance_dictionary, mapping_config):
-    fields_to_remove = []
-    metadata_keys_to_remove = []
+    adapted_mapping_config = {}
     for asset_field, class_properties in mapping_config.items():
-        properties_to_remove = []
         if asset_field != "metadata":
+            # We are selecting first property that is available in the graph
+            # and add it to corresponding asset field and exit loop
             for property_ in class_properties:
                 if class_instance_dictionary.get(property_, None):
-                    # take first value, as it is priority over the rest
-                    mapping_config[asset_field] = property_
-                else:
-                    properties_to_remove += [property_]
+                    adapted_mapping_config[asset_field] = property_
+                    break
 
-            if class_properties == properties_to_remove:
-                warnings.warn(
-                    _exceptions.Warning40(external_id, asset_field).message,
-                    category=_exceptions.Warning40,
-                    stacklevel=2,
-                )
-                fields_to_remove += [asset_field]
+        elif metadata_keys := [
+            property_ for property_ in class_properties if class_instance_dictionary.get(property_, None)
+        ]:
+            adapted_mapping_config["metadata"] = metadata_keys
 
-        else:
-            for property_ in class_properties:
-                if not class_instance_dictionary.get(property_, None):
-                    metadata_keys_to_remove += [property_]
-            if metadata_keys_to_remove == mapping_config["metadata"]:
-                warnings.warn(
-                    _exceptions.Warning40(external_id, asset_field).message,
-                    category=_exceptions.Warning40,
-                    stacklevel=2,
-                )
-                fields_to_remove += [asset_field]
+    # Raise warning for fields that will miss in asset
+    for asset_field in mapping_config:
+        if asset_field not in adapted_mapping_config:
+            warnings.warn(
+                _exceptions.Warning40(external_id, asset_field).message,
+                category=_exceptions.Warning40,
+                stacklevel=2,
+            )
 
-    if fields_to_remove:
-        for asset_field in fields_to_remove:
-            mapping_config.pop(asset_field)
-
-    if metadata_keys_to_remove and mapping_config.get("metadata", None):
-        for metadata_key in metadata_keys_to_remove:
-            mapping_config["metadata"].remove(metadata_key)
-
-    return mapping_config
+    return adapted_mapping_config
 
 
 def _class_to_asset_instance_dictionary(class_instance_dictionary, mapping_config):

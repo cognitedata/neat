@@ -448,10 +448,9 @@ class Property(Resource):
 
     # Setters
     # TODO: configure setters to only run if field_validators are successful, otherwise do not run them!
-    @model_validator(mode="after")
-    def set_mandatory(self):
-        self.mandatory = bool(self.min_count != 0)
-        return self
+    @property
+    def is_mandatory(self) -> bool:
+        return self.min_count != 0
 
     @model_validator(mode="after")
     def set_property_type(self):

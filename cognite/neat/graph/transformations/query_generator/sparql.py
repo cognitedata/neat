@@ -1,3 +1,4 @@
+from collections import defaultdict
 import re
 from rdflib import Graph, Namespace
 from rdflib.term import URIRef
@@ -475,7 +476,7 @@ def _to_construct_triples(
                 subject="BIND(?subject",
                 predicate="AS",
                 object=f"{graph_template_triple.object})",
-                optional=True if properties_optional else not property_.mandatory,
+                optional=True if properties_optional else not property_.is_mandatory,
             )
 
         elif isinstance(property_.rule, SingleProperty):
@@ -483,7 +484,7 @@ def _to_construct_triples(
                 subject=graph_template_triple.subject,
                 predicate=property_.rule.property.id,
                 object=graph_template_triple.object,
-                optional=True if properties_optional else not property_.mandatory,
+                optional=True if properties_optional else not property_.is_mandatory,
             )
 
         elif isinstance(property_.rule, Hop):
@@ -491,7 +492,7 @@ def _to_construct_triples(
                 subject="?subject",
                 predicate=_hop2property_path(graph, property_.rule, transformation_rules.prefixes),
                 object=graph_template_triple.object,
-                optional=True if properties_optional else not property_.mandatory,
+                optional=True if properties_optional else not property_.is_mandatory,
             )
         else:
             continue
@@ -519,17 +520,13 @@ def _most_occurring_element(list_of_elements: list):
 
 def triples2dictionary(triples: list[tuple[URIRef, URIRef, str | URIRef]]) -> dict[str, list[str]] | dict[str, str]:
     """Converts list of triples to dictionary"""
-    dictionary = {}
+    dictionary = defaultdict(list)
     for triple in triples:
         id_ = remove_namespace(triple[0])
         property_ = remove_namespace(triple[1])
         value = remove_namespace(triple[2])
-
         if id_ not in dictionary:
             dictionary["external_id"] = [id_]
 
-        if property_ in dictionary:
-            dictionary[property_].append(value)
-        else:
-            dictionary[property_] = [value]
+        dictionary[property_].append(value)
     return dictionary
