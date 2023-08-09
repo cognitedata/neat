@@ -88,6 +88,7 @@ class BaseWorkflow:
         if self.state not in [WorkflowState.CREATED, WorkflowState.COMPLETED, WorkflowState.FAILED]:
             logging.error(f"Workflow {self.name} is already running")
             return None
+        self.data["StartFlowMessage"] = kwargs.get("flow_message", None)
         self.data["CdfStore"] = self.cdf_store
         self.data["CogniteClient"] = self.cdf_client
         self.data["WorkflowConfigs"] = WorkflowConfigs(configs=self.configs)

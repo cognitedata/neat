@@ -6,7 +6,7 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes import AssetFilter
 
 from cognite.neat import rules
-from cognite.neat.graph import loaders, extractors
+from cognite.neat.graph import extractors
 from cognite.neat.graph.loaders.core.labels import upload_labels
 from cognite.neat.graph.loaders.core.rdf_to_assets import categorize_assets, rdf2assets, upload_assets
 from cognite.neat.graph.loaders.core.rdf_to_relationships import (
@@ -22,7 +22,7 @@ from cognite.neat.workflows import utils
 from cognite.neat.workflows.base import BaseWorkflow
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.cdf_store import CdfStore
-
+from cognite.neat.rules.exporter import rules2graph_sheet 
 
 class SmeGraphCaptureBaseWorkflow(BaseWorkflow):
     def __init__(self, name: str, client: CogniteClient):
@@ -84,7 +84,7 @@ class SmeGraphCaptureBaseWorkflow(BaseWorkflow):
         logging.info(f"Auto identifier type {auto_identifier_type}")
         data_capture_sheet_path = self.rules_storage_path.parent / "graph-sheets" / sheet_name
 
-        loaders.rules2graph_capturing_sheet(
+        rules2graph_sheet(
             self.transformation_rules, data_capture_sheet_path, auto_identifier_type=auto_identifier_type
         )
 
@@ -104,8 +104,7 @@ class SmeGraphCaptureBaseWorkflow(BaseWorkflow):
         data_capture_sheet_path = Path(self.upload_meta_object["full_path"])
         logging.info(f"Processing data capture sheet {data_capture_sheet_path}")
 
-        raw_sheets = extractors.graph_capturing_sheet.excel_file_to_table_by_name(data_capture_sheet_path)
-        triples = loaders.sheet2triples(raw_sheets, self.transformation_rules)
+        triples = extractors.extract_graph_from_sheet(data_capture_sheet_path, self.solution_graph)
         add_triples(self.solution_graph, triples)
         return FlowMessage(output_text="Data capture sheet processed")
 
