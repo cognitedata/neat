@@ -79,6 +79,7 @@ def _create_default_properties_parsing_config() -> dict[str, tuple[str, ...]]:
             "",
             "",
             "",
+            "",
             "State",
             "",
             "",
@@ -93,6 +94,7 @@ def _create_default_properties_parsing_config() -> dict[str, tuple[str, ...]]:
             "Property",
             "Name",
             "Description",
+            "Parent Class",
             "Default",
             "Type",
             "Min Count",
@@ -359,7 +361,7 @@ def _parse_avevaxml_classes_df(avevaxml: AvevaXML, parsing_config: dict = None, 
     # df_class["Description"] = [item['3213'] for item in df_class["set_attributes"]]
     df_class["Description"] = df_class["class_description"]
     df_class["Taxonomy"] = df_class["taxonomy_id"]
-    df_class["Parent Class"] =[pascal_case(item) for item in df_class["parent_unique_id"]]
+    df_class["Parent Class"] = [pascal_case(item) for item in df_class["parent_unique_id"]]
     if 'class_obsolete' in df_class.columns:
         df_class["Deprecated"] = df_class["class_obsolete"]
 
@@ -450,6 +452,7 @@ def _parse_avevaxml_properties_df(avevaxml: AvevaXML, parsing_config: dict = Non
         set_attributes = row["set_attributes"]
         df_subset["Default"] = [set_attributes.get(i, None) for i in df_subset["id"]]
         df_subset["Taxonomy"] = row["taxonomy_id"]
+        df_subset["Parent Class"] = pascal_case(row["parent_unique_id"])
         # df_subset["Property"] = df_subset["name"].apply(lambda x: camel_case(x))
         # df_subset["Source"] = xmlns.replace("{", "").replace("}", "")
         # df_subset["Name"] = df_subset["name"]
@@ -470,7 +473,8 @@ def _parse_avevaxml_properties_df(avevaxml: AvevaXML, parsing_config: dict = Non
     df_attributes["Type"] = df_attributes["dataType"].apply(lambda x: _replace_type(x))
     df_attributes["Min Count"] = 0
     df_attributes["Max Count"] = 1
-    
+   
+     
     columns_to_keep = list(parsing_config["header"]) 
     missing_fields = [item for item in columns_to_keep if item not in df_attributes.columns]
     for field in missing_fields:
