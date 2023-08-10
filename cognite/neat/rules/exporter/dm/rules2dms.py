@@ -69,7 +69,6 @@ class DataModel(BaseModel):
         # create space if it is missing
         # create data model if it is missing
         # create containers if they are missing
-        # create properties if they are missing
         ...
 
     def create_space(self, client: CogniteClient):
@@ -79,4 +78,16 @@ class DataModel(BaseModel):
         ...
 
     def create_containers(self, client: CogniteClient):
+        ...
+
+    @property
+    def data_model_exists(self, client: CogniteClient):
+        ...
+
+    @property
+    def space_exists(self, client: CogniteClient):
+        ...
+
+    @property
+    def container_exists(self, client: CogniteClient):
         ...
