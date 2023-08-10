@@ -38,7 +38,7 @@ class DataModel(BaseModel):
 
         return cls(
             space=transformation_rules.metadata.cdf_space_name,
-            external_id=transformation_rules.metadata.data_model_name,
+            external_id=transformation_rules.metadata.data_model_name,  # type: ignore
             version=transformation_rules.metadata.version,
             description=transformation_rules.metadata.description,
             name=transformation_rules.metadata.title,
@@ -56,12 +56,12 @@ class DataModel(BaseModel):
                 properties=DataModel.properties_from_dict(properties),
             )
             for class_id, properties in class_properties.items()
-        ]
+        ]  # type: ignore
 
     @staticmethod
     def properties_from_dict(properties: dict[str, Property]) -> dict[str, ContainerProperty]:
         for property_id, property_definition in properties.items():
-            type = property_definition.expected_value_type
+            type_ = property_definition.expected_value_type
 
         ...
 
