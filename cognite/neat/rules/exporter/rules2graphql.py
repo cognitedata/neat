@@ -63,7 +63,8 @@ _ATTRIBUTE_OCCURRENCE = (
 )
 
 _EDGE_OCCURRENCE = (
-    "{%-if not(property_definition.min_count and property_definition.max_count == 1)%}"
+    "{%-if not((property_definition.min_count and property_definition.max_count == 1) or"
+    " (property_definition.min_count == 0 and property_definition.max_count == 1))%}"
     " [{% include 'value_type' %}]"
     "{%-else%}"
     " {% include 'value_type' %}"
