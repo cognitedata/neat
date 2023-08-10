@@ -22,7 +22,9 @@ _TYPE_HEADER = (
     "{%- if class_definition.description and class_definition.class_name %}"
     '"""\n{{class_definition.description}}\n@name {{ class_definition.class_name }}\n"""\n{##}\n'
     "{%- elif class_definition.description %}"
-    '\n"""\n{{class_definition.description}}\n"""\n'
+    '"""\n{{class_definition.description}}\n"""\n{##}\n'
+    "{%- elif class_definition.class_name %}"
+    '"""\n@name {{ class_definition.class_name }}\n"""\n{##}\n'
     "{%- endif %}"
     "{%- endif %}"
 )
@@ -46,6 +48,9 @@ _FIELD_HEADER = (
     '\n  """\n  '
     "{%- elif property_definition.description %}"
     '\n  """\n  {{property_definition.description}}'
+    '\n  """\n  '
+    "{%- elif property_definition.property_name %}"
+    '\n  """\n  @name {{ property_definition.property_name }}'
     '\n  """\n  '
     "{%- endif %}"
     "{%- endif %}"
