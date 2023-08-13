@@ -161,7 +161,7 @@ def generate_parse_traversal():
     yield pytest.param(
         "cim:Terminal->cim:ConnectivityNode->cim:VoltageLevel->cim:Substation",
         Hop(
-            origin="cim:Terminal",
+            class_="cim:Terminal",
             traversal=[
                 Step.from_string(raw=step)
                 for step in ["->cim:ConnectivityNode", "->cim:VoltageLevel", "->cim:Substation"]
@@ -172,7 +172,7 @@ def generate_parse_traversal():
     yield pytest.param(
         "cim:Substation<-cim:VoltageLevel<-cim:ConnectivityNode<-cim:Terminal",
         Hop(
-            origin="cim:Substation",
+            class_="cim:Substation",
             traversal=[
                 Step.from_string(raw=step)
                 for step in ["<-cim:VoltageLevel", "<-cim:ConnectivityNode", "<-cim:Terminal"]
@@ -183,7 +183,7 @@ def generate_parse_traversal():
     yield pytest.param(
         "cim:HydroPump<-cim:SynchronousMachine->cim:VoltageLevel->cim:Substation",
         Hop(
-            origin="cim:HydroPump",
+            class_="cim:HydroPump",
             traversal=[
                 Step.from_string(raw=step)
                 for step in ["<-cim:SynchronousMachine", "->cim:VoltageLevel", "->cim:Substation"]
@@ -195,7 +195,7 @@ def generate_parse_traversal():
     yield pytest.param(
         "cim:Terminal->cim:ConnectivityNode->cim:VoltageLevel->cim:Substation(cim:IdentifiedObject.name)",
         Hop(
-            origin="cim:Terminal",
+            class_="cim:Terminal",
             traversal=[
                 Step.from_string(raw=step)
                 for step in [
@@ -210,7 +210,7 @@ def generate_parse_traversal():
     yield pytest.param(
         "cim:Substation<-cim:VoltageLevel<-cim:ConnectivityNode<-cim:Terminal(cim:IdentifiedObject.name)",
         Hop(
-            origin="cim:Substation",
+            class_="cim:Substation",
             traversal=[
                 Step.from_string(raw=step)
                 for step in [
@@ -225,7 +225,7 @@ def generate_parse_traversal():
     yield pytest.param(
         "cim:HydroPump<-cim:SynchronousMachine->cim:VoltageLevel->cim:Substation(cim:IdentifiedObject.name)",
         Hop(
-            origin="cim:HydroPump",
+            class_="cim:HydroPump",
             traversal=[
                 Step.from_string(raw=step)
                 for step in [

@@ -5,7 +5,7 @@ import re
 import warnings
 from datetime import datetime
 from pathlib import Path
-from typing import ClassVar, Dict, Optional
+from typing import Any, ClassVar, Dict, Optional
 
 from pydantic import (
     BaseModel,
@@ -26,26 +26,43 @@ from cognite.neat.constants import PREFIXES
 
 # from . import _exceptions
 from cognite.neat.rules import _exceptions
-from cognite.neat.rules.to_rdf_path import Entity, RuleType, parse_rule
+from cognite.neat.rules.to_rdf_path import (
+    AllReferences,
+    Entity,
+    Hop,
+    RawLookup,
+    RuleType,
+    SPARQLQuery,
+    SingleProperty,
+    Traversal,
+    parse_rule,
+)
 
 __all__ = ["Class", "Instance", "Metadata", "Prefixes", "Property", "Resource", "TransformationRules"]
 
 # mapping of XSD types to Python and GraphQL types
 DATA_TYPE_MAPPING = {
-    "boolean": {"python": "bool", "GraphQL": "Boolean"},
-    "float": {"python": "float", "GraphQL": "Float"},
+    "boolean": {"python": bool, "GraphQL": "Boolean"},
+    "float": {"python": float, "GraphQL": "Float"},
     "integer": {"python": "int", "GraphQL": "Int"},
-    "nonPositiveInteger": {"python": "int", "GraphQL": "Int"},
-    "nonNegativeInteger": {"python": "int", "GraphQL": "Int"},
+    "nonPositiveInteger": {"python": int, "GraphQL": "Int"},
+    "nonNegativeInteger": {"python": int, "GraphQL": "Int"},
     "negativeInteger": {"python": "int", "GraphQL": "Int"},
-    "long": {"python": "int", "GraphQL": "Int"},
-    "string": {"python": "str", "GraphQL": "String"},
-    "anyURI": {"python": "str", "GraphQL": "String"},
-    "normalizedString": {"python": "str", "GraphQL": "String"},
-    "token": {"python": "str", "GraphQL": "String"},
+    "long": {"python": int, "GraphQL": "Int"},
+    "string": {"python": str, "GraphQL": "String"},
+    "anyURI": {"python": str, "GraphQL": "String"},
+    "normalizedString": {"python": str, "GraphQL": "String"},
+    "token": {"python": str, "GraphQL": "String"},
     # Graphql does not have a datetime type this is CDF specific
-    "dateTime": {"python": "datetime", "GraphQL": "Timestamp"},
+    "dateTime": {"python": datetime, "GraphQL": "Timestamp"},
 }
+
+
+def type_to_target_convention(type_: str, target_type_convention: str) -> type:
+    """Returns the GraphQL type for a given XSD type."""
+    return DATA_TYPE_MAPPING[type_][target_type_convention]
+
+
 METADATA_VALUE_MAX_LENGTH = 5120
 
 
@@ -71,11 +88,11 @@ def replace_nan_floats_with_default(values: dict, model_fields: dict[str, FieldI
 
 class RuleModel(BaseModel):
     model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, str_strip_whitespace=True, arbitrary_types_allowed=True, strict=False
+        populate_by_name=True, str_strip_whitespace=True, arbitrary_types_allowed=True, strict=False, extra="allow"
     )
 
     @classmethod
-    def mandatory(cls, use_alias=False) -> set[str]:
+    def mandatory_fields(cls, use_alias=False) -> set[str]:
         """Returns a set of mandatory fields for the model."""
         return _get_required_fields(cls, use_alias)
 
@@ -342,6 +359,7 @@ class Property(Resource):
     expected_value_type: ExternalId = Field(alias="Type")
     min_count: Optional[int] = Field(alias="Min Count", default=0)
     max_count: Optional[int] = Field(alias="Max Count", default=None)
+    default: Any = Field(None)
 
     # OWL property
     property_type: str = "DatatypeProperty"
@@ -355,8 +373,11 @@ class Property(Resource):
 
     # Transformation rule (domain to solution)
     rule_type: Optional[RuleType] = Field(alias="Rule Type", default=None)
-    rule: Optional[str] = Field(alias="Rule", default=None)
+    rule: Optional[str | AllReferences | SingleProperty | Hop | RawLookup | SPARQLQuery | Traversal] = Field(
+        alias="Rule", default=None
+    )
     skip_rule: bool = Field(alias="Skip", default=False)
+    mandatory: bool = False
 
     # Specialization of cdf_resource_type to allow definition of both
     # Asset and Relationship at the same time
@@ -427,6 +448,10 @@ class Property(Resource):
 
     # Setters
     # TODO: configure setters to only run if field_validators are successful, otherwise do not run them!
+    @property
+    def is_mandatory(self) -> bool:
+        return self.min_count != 0
+
     @model_validator(mode="after")
     def set_property_type(self):
         if self.expected_value_type in DATA_TYPE_MAPPING.keys():

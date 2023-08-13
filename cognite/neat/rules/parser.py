@@ -201,7 +201,7 @@ class RawTables(RuleModel):
 
     @classmethod
     def from_raw_dataframes(cls, raw_dfs: dict[str, pd.DataFrame]) -> "RawTables":
-        expected_tables = cls.mandatory()
+        expected_tables = cls.mandatory_fields()
 
         # Validate raw tables
         if missing_tables := (expected_tables - set(raw_dfs)):
@@ -223,8 +223,8 @@ class RawTables(RuleModel):
     @field_validator("Metadata")
     def has_metadata_mandatory_rows(cls, v):
         given_rows = set(v[0].values)
-        mandatory_rows = Metadata.mandatory()
-        mandatory_rows_alias = Metadata.mandatory(use_alias=True)
+        mandatory_rows = Metadata.mandatory_fields()
+        mandatory_rows_alias = Metadata.mandatory_fields(use_alias=True)
 
         if not (mandatory_rows.issubset(given_rows) or mandatory_rows_alias.issubset(given_rows)):
             missing_rows = mandatory_rows_alias.difference(given_rows)
@@ -234,8 +234,8 @@ class RawTables(RuleModel):
     @field_validator("Classes")
     def has_classes_mandatory_columns(cls, v):
         given_columns = set(v.columns)
-        mandatory_columns = Class.mandatory()
-        mandatory_columns_alias = Class.mandatory(use_alias=True)
+        mandatory_columns = Class.mandatory_fields()
+        mandatory_columns_alias = Class.mandatory_fields(use_alias=True)
 
         if not (mandatory_columns.issubset(given_columns) or mandatory_columns_alias.issubset(given_columns)):
             missing_columns = mandatory_columns_alias.difference(given_columns)
@@ -245,8 +245,8 @@ class RawTables(RuleModel):
     @field_validator("Properties")
     def has_properties_mandatory_columns(cls, v):
         given_columns = set(v.columns)
-        mandatory_columns = Property.mandatory()
-        mandatory_columns_alias = Property.mandatory(use_alias=True)
+        mandatory_columns = Property.mandatory_fields()
+        mandatory_columns_alias = Property.mandatory_fields(use_alias=True)
 
         if not (mandatory_columns.issubset(given_columns) or mandatory_columns_alias.issubset(given_columns)):
             missing_columns = mandatory_columns_alias.difference(given_columns)

@@ -1,16 +1,24 @@
+from collections import Counter, defaultdict
+import re
 from rdflib import Graph, Namespace
 from rdflib.term import URIRef
 
 from cognite.neat.constants import PREFIXES
+from cognite.neat.rules.models import TransformationRules
 from cognite.neat.rules.to_rdf_path import (
     AllProperties,
     AllReferences,
     Hop,
+    RuleType,
     SingleProperty,
+    Step,
     Traversal,
     Triple,
+    parse_rule,
     parse_traversal,
 )
+from cognite.neat.rules.analysis import get_classes_with_properties
+from cognite.neat.utils.utils import remove_namespace
 
 
 def _generate_prefix_header(prefixes: dict[str, Namespace] = PREFIXES) -> str:
@@ -82,8 +90,8 @@ def _get_entire_object_mapping(subject) -> list[Triple]:
 
 
 def _get_hop_triples(graph, path: Hop, prefixes) -> list[Triple]:
-    triples = [Triple("?subject", "a", path.origin.class_.id)]
-    previous_step = path.origin
+    triples = [Triple("?subject", "a", path.class_.id)]
+    previous_step = Step(class_=path.class_, direction="origin")
 
     # add triples for all steps until destination
     for curret_step in path.traversal:
@@ -94,7 +102,7 @@ def _get_hop_triples(graph, path: Hop, prefixes) -> list[Triple]:
         predicate = _get_predicate_id(graph, sub_entity.class_.id, obj_entity.class_.id, prefixes)
 
         # if this is first step after origin
-        if previous_step.class_.id == path.origin.class_.id:
+        if previous_step.class_.id == path.class_.id:
             if curret_step.direction == "source":
                 sub, obj = f"?{sub_entity.class_.name}ID", "?subject"
             else:
@@ -283,3 +291,244 @@ def build_sparql_query(
         query = query.replace(URI, f"{prefix}:")
 
     return query.replace("insertPrefixes\n\n", _generate_prefix_header(prefixes) if insert_prefixes else "")
+
+
+def compress_uri(uri: URIRef, prefixes: dict) -> str:
+    """Compresses URI to prefix:entity_id
+
+    Parameters
+    ----------
+    uri : URIRef
+        URI of entity
+    prefixes : dict
+        Dictionary of prefixes
+
+    Returns
+    -------
+    str
+        Compressed URI or original URI if no prefix is found
+    """
+    return next(
+        (
+            f"{prefix}:{uri.replace(namespace, '')}"
+            for prefix, namespace in prefixes.items()
+            if uri.startswith(namespace)
+        ),
+        uri,
+    )
+
+
+def _hop2property_path(graph: Graph, hop: Hop, prefixes: dict[str, Namespace]) -> str:
+    """Converts hop to property path string
+
+    Parameters
+    ----------
+    graph : Graph
+        Graph containing instances of classes
+    hop : Hop
+        Hop to convert
+    prefixes : dict[str, Namespace]
+        Dictionary of prefixes to use for compression and predicate quering
+
+    Returns
+    -------
+    str
+        Property path string for hop traversal (e.g. ^rdf:type/rdfs:subClassOf)
+    """
+
+    # setting previous step to origin, as we are starting from there
+    previous_step = Step(class_=hop.class_, direction="origin")
+
+    # add triples for all steps until destination
+    property_path = ""
+    for current_step in hop.traversal:
+        sub_entity, obj_entity = (
+            (current_step, previous_step) if current_step.direction == "source" else (previous_step, current_step)
+        )
+
+        predicate = compress_uri(
+            _get_predicate_id(graph, sub_entity.class_.id, obj_entity.class_.id, prefixes), prefixes
+        )
+
+        predicate = f"^{predicate}" if current_step.direction == "source" else predicate
+        property_path += f"{predicate}/"
+
+        previous_step = current_step
+
+    if previous_step.property:
+        return property_path + previous_step.property.id
+    else:
+        # removing "/" at the end of property path if there is no property at the end
+        return property_path[:-1]
+
+
+def build_construct_query(
+    graph: Graph,
+    class_: str,
+    transformation_rules: TransformationRules,
+    properties_optional: bool = True,
+    class_instances: list[URIRef] | None = None,
+) -> str:
+    """Builds CONSTRUCT query for given class and rules and optionally filters by class instances
+
+    Parameters
+    ----------
+    graph : Graph
+        Graph containing instances of classes
+    class_ : str
+        ID of class for which class_instance we want to query
+    transformation_rules : TransformationRules
+        Transformation rules to use for query generation
+    properties_optional : bool, optional
+        Whether to make all properties optional, default True
+    class_instances : list[URIRef], optional
+        List of class instances to filter by, default None (no filter return all instances)
+
+    Returns
+    -------
+    str
+        CONSTRUCT query
+
+    Notes
+    -----
+    Construct query is far less unforgiving than SELECT query, in sense that it will not return
+    anything if one of the properties that define "shape" of the class instance is missing.
+    This is the reason why there is option to make all properties optional, so that query will
+    return all instances that have at least one property defined.
+
+    """
+
+    query_template = "CONSTRUCT {graph_template\n}\n\nWHERE {graph_pattern\ninsert_filter}"
+    query_template = _add_filter(class_instances, query_template)
+
+    templates, patterns = _to_construct_triples(graph, class_, transformation_rules, properties_optional)
+
+    graph_template = "\n           ".join(_triples2sparql_statement(templates))
+    graph_pattern = "\n       ".join(_triples2sparql_statement(patterns))
+
+    return query_template.replace("graph_template", graph_template).replace("graph_pattern", graph_pattern)
+
+
+def _add_filter(class_instances, query_template):
+    if class_instances:
+        class_instances_formatted = [f"<{instance}>" for instance in class_instances]
+        query_template = query_template.replace(
+            "insert_filter", f"\n\nFILTER (?subject IN ({', '.join(class_instances_formatted)}))"
+        )
+    else:
+        query_template = query_template.replace("insert_filter", "")
+    return query_template
+
+
+def _triples2sparql_statement(triples: list[Triple]):
+    return [
+        f"OPTIONAL {{ {triple.subject} {triple.predicate} {triple.object} . }}"
+        if triple.optional
+        else f"{triple.subject} {triple.predicate} {triple.object} ."
+        for triple in triples
+    ]
+
+
+def _to_construct_triples(
+    graph: Graph, class_: str, transformation_rules: TransformationRules, properties_optional: bool = True
+) -> tuple[list[Triple], list[Triple]]:
+    """Converts class definition to CONSTRUCT triples which are used to generate CONSTRUCT query
+
+    Parameters
+    ----------
+    graph : Graph
+        Graph containing instances of classes
+    class_ : str
+        ID of class for which class_instance we want to query
+    transformation_rules : TransformationRules
+        Transformation rules to use for query generation
+
+    Returns
+    -------
+    tuple[list[Triple],list[Triple]]
+        Tuple of triples that define graph template and graph pattern parts of CONSTRUCT query
+    """
+
+    templates = []
+    patterns = []
+
+    # here pull all properties which are of type `rdfpath` and are defined for the class:
+    properties = [
+        property_.model_copy()
+        for property_ in get_classes_with_properties(transformation_rules)[class_]
+        if property_.rule_type == RuleType.rdfpath and not property_.skip_rule
+    ]
+
+    # TODO: Add handling of UNIONs in rules
+
+    # parse rules for those properties
+    for i, property_ in enumerate(properties):
+        properties[i].rule = parse_rule(property_.rule, property_.rule_type).traversal
+
+    # add first triple for graph pattern stating type of object
+    patterns += [
+        Triple(
+            subject="?subject",
+            predicate="a",
+            object=_most_occurring_element([property_.rule.class_.id for property_ in properties]),
+            optional=False,
+        )
+    ]
+
+    for property_ in properties:
+        graph_template_triple = Triple(
+            subject="?subject",
+            predicate=f"{transformation_rules.metadata.prefix}:{property_.property_id}",
+            object=f'?{re.sub(r"[^_a-zA-Z0-9/_]", "_", str(property_.property_id).lower())}',
+            optional=False,
+        )
+
+        if isinstance(property_.rule, AllReferences):
+            graph_pattern_triple = Triple(
+                subject="BIND(?subject",
+                predicate="AS",
+                object=f"{graph_template_triple.object})",
+                optional=True if properties_optional else not property_.is_mandatory,
+            )
+
+        elif isinstance(property_.rule, SingleProperty):
+            graph_pattern_triple = Triple(
+                subject=graph_template_triple.subject,
+                predicate=property_.rule.property.id,
+                object=graph_template_triple.object,
+                optional=True if properties_optional else not property_.is_mandatory,
+            )
+
+        elif isinstance(property_.rule, Hop):
+            graph_pattern_triple = Triple(
+                subject="?subject",
+                predicate=_hop2property_path(graph, property_.rule, transformation_rules.prefixes),
+                object=graph_template_triple.object,
+                optional=True if properties_optional else not property_.is_mandatory,
+            )
+        else:
+            continue
+
+        patterns += [graph_pattern_triple]
+        templates += [graph_template_triple]
+
+    return templates, patterns
+
+
+def _most_occurring_element(list_of_elements: list):
+    counts = Counter(list_of_elements)
+    return counts.most_common(1)[0][0]
+
+
+def triples2dictionary(triples: list[tuple[URIRef, URIRef, str | URIRef]]) -> dict[str, list[str]] | dict[str, str]:
+    """Converts list of triples to dictionary"""
+    dictionary = defaultdict(list)
+    for triple in triples:
+        id_ = remove_namespace(triple[0])
+        property_ = remove_namespace(triple[1])
+        value = remove_namespace(triple[2])
+        if id_ not in dictionary:
+            dictionary["external_id"] = [id_]
+
+        dictionary[property_].append(value)
+    return dictionary
