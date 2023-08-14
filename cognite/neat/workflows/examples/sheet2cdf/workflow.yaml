@@ -35,7 +35,7 @@ configs:
     options: null
     required: false
     type: null
-    value: source-graph-store
+    value: source-graph-store-2
 -   group: ConfigureDefaultGraphStores
     label: Local directory for solution graph store
     name: solution_rdf_store.disk_store_dir
@@ -121,11 +121,11 @@ steps:
     stype: stdstep
     system_component_id: null
     transition_to:
-    - step_load_rules_into_store
+    - step_create_cdf_labels
     trigger: false
     ui_config:
-        pos_x: 511
-        pos_y: 311
+        pos_x: 512
+        pos_y: 299
 -   description: null
     enabled: true
     id: step_load_rules_into_store
@@ -140,8 +140,8 @@ steps:
     - step_generate_assets
     trigger: false
     ui_config:
-        pos_x: 511
-        pos_y: 389
+        pos_x: 507
+        pos_y: 459
 -   description: null
     enabled: true
     id: step_generate_assets
@@ -156,8 +156,8 @@ steps:
     - step_generate_relations
     trigger: false
     ui_config:
-        pos_x: 510
-        pos_y: 499
+        pos_x: 507
+        pos_y: 556
 -   description: null
     enabled: true
     id: step_generate_relations
@@ -172,8 +172,8 @@ steps:
     - step_upload_assets
     trigger: false
     ui_config:
-        pos_x: 508
-        pos_y: 584
+        pos_x: 507
+        pos_y: 632
 -   description: null
     enabled: true
     id: step_upload_assets
@@ -188,8 +188,8 @@ steps:
     - step_upload_relations
     trigger: false
     ui_config:
-        pos_x: 508
-        pos_y: 670
+        pos_x: 505
+        pos_y: 711
 -   description: null
     enabled: true
     id: step_upload_relations
@@ -203,8 +203,24 @@ steps:
     transition_to: []
     trigger: false
     ui_config:
-        pos_x: 509
-        pos_y: 758
+        pos_x: 506
+        pos_y: 795
+-   description: null
+    enabled: true
+    id: step_create_cdf_labels
+    label: Create CDF labels
+    max_retries: 0
+    method: CreateCDFLabels
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+    - step_load_rules_into_store
+    trigger: false
+    ui_config:
+        pos_x: 508
+        pos_y: 382
 system_components:
 -   description: null
     id: source_excel_sheet

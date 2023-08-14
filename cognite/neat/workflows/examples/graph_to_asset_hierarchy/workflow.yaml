@@ -112,7 +112,7 @@ steps:
     stype: stdstep
     system_component_id: null
     transition_to:
-    - step_graph_loader
+    - step_create_labels
     trigger: false
     ui_config:
         pos_x: 455
@@ -147,8 +147,8 @@ steps:
     - step_transform
     trigger: false
     ui_config:
-        pos_x: 456
-        pos_y: 447
+        pos_x: 455
+        pos_y: 478
 -   description: null
     enabled: true
     id: step_transform
@@ -228,6 +228,22 @@ steps:
     ui_config:
         pos_x: 457
         pos_y: 954
+-   description: null
+    enabled: true
+    id: step_create_labels
+    label: Create CDF labels
+    max_retries: 0
+    method: CreateCDFLabels
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+    - step_graph_loader
+    trigger: false
+    ui_config:
+        pos_x: 455
+        pos_y: 404
 system_components:
 -   description: null
     id: grid_management_system

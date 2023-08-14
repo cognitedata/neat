@@ -80,7 +80,7 @@ configs:
     value: ''
 description: null
 implementation_module: null
-name: sme_data_capture
+name: sme_graph_capture
 steps:
 -   description: null
     enabled: true
@@ -173,7 +173,8 @@ steps:
     retry_delay: 3
     stype: stdstep
     system_component_id: null
-    transition_to: []
+    transition_to:
+    - step_generate_assets
     trigger: false
     ui_config:
         pos_x: 666
@@ -194,6 +195,69 @@ steps:
     ui_config:
         pos_x: 667
         pos_y: 189
+-   description: null
+    enabled: true
+    id: step_generate_assets
+    label: Generate assets
+    max_retries: 0
+    method: GenerateCDFAssetsFromGraph
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+    - step_upload_assets
+    trigger: false
+    ui_config:
+        pos_x: 664
+        pos_y: 531
+-   description: null
+    enabled: true
+    id: step_upload_assets
+    label: Upload assets
+    max_retries: 0
+    method: UploadCDFAssets
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+    - step_generate_relationships
+    trigger: false
+    ui_config:
+        pos_x: 660
+        pos_y: 626
+-   description: null
+    enabled: true
+    id: step_generate_relationships
+    label: Generate relationships
+    max_retries: 0
+    method: GenerateCDFRelationshipsFromGraph
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+    - step_upload_relationship
+    trigger: false
+    ui_config:
+        pos_x: 664
+        pos_y: 717
+-   description: null
+    enabled: true
+    id: step_upload_relationship
+    label: Upload relationships
+    max_retries: 0
+    method: UploadCDFRelationships
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to: []
+    trigger: false
+    ui_config:
+        pos_x: 664
+        pos_y: 805
 system_components:
 -   description: null
     id: define_data_model
@@ -243,4 +307,3 @@ system_components:
     ui_config:
         pos_x: 448
         pos_y: 709
-
