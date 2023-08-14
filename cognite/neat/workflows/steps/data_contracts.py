@@ -3,7 +3,7 @@ from typing import Union
 
 from cognite.client import CogniteClient
 
-from cognite.neat.graph.extractors import NeatGraphStore
+from cognite.neat.stores.graph_store import NeatGraphStore
 from cognite.neat.rules.models import TransformationRules
 from cognite.neat.workflows.steps.step_model import DataContract
 from cognite.client.data_classes import Relationship, RelationshipUpdate

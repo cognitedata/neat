@@ -52,6 +52,11 @@ class LoadTransformationRules(Step):
             cdf_store.load_rules_file_from_cdf(rules_file, version)
 
         transformation_rules = parse_rules_from_excel_file(rules_file_path)
+        rules_metrics = self.metrics.register_metric(
+            "data_model_rules", "Transformation rules stats", m_type="gauge", metric_labels=["component"]
+        )
+        rules_metrics.labels({"component": "classes"}).set(len(transformation_rules.classes))
+        rules_metrics.labels({"component": "properties"}).set(len(transformation_rules.properties))
         logging.info(f"Loaded prefixes {str(transformation_rules.prefixes)} rules from {rules_file_path.name!r}.")
         output_text = f"Loaded {len(transformation_rules.properties)} rules"
         return (FlowMessage(output_text=output_text), RulesData(rules=transformation_rules))

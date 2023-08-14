@@ -1,98 +1,84 @@
 configs:
--   group: source_rdf_store
-    label: null
-    name: source_rdf_store.type
-    options: null
-    required: false
-    type: null
-    value: oxigraph
--   group: null
-    label: null
+-   group: LoadTransformationRules
+    label: Full name of the rules file
     name: rules.file
     options: null
     required: false
     type: null
-    value: power-grid-example.xlsx
--   group: null
-    label: null
-    name: data_capture.file
-    options: null
-    required: false
-    type: null
-    value: graph_capture_sheet.xlsx
--   group: null
-    label: null
+    value: Rules-Nordic44-to-graphql.xlsx
+-   group: LoadTransformationRules
+    label: Optional version of the rules file
     name: rules.version
     options: null
     required: false
     type: null
-    value: null
--   group: null
-    label: null
-    name: graph_capture_sheet.auto_identifier_type
+    value: ''
+-   group: GenerateGraphQLSchemaFromRules
+    label: Name of the FDM schema file
+    name: fdm_schema.file
     options: null
     required: false
     type: null
-    value: None
--   group: null
-    label: null
-    name: graph_capture.file
+    value: fdm_model.graphql
+-   group: GenerateGraphQLSchemaFromRules
+    label: Directory to store FDM schema file
+    name: graph_ql_export.storage_dir
     options: null
     required: false
     type: null
-    value: graph_capture_sheet.xlsx
+    value: staging
 description: null
 implementation_module: null
 name: fdm_schema_generation
 steps:
 -   description: null
     enabled: true
-    id: http_trigger
-    label: Http trigger
+    id: step_http_trigger
+    label: HTTP process trigger
     max_retries: 0
     method: null
     params:
-        interval: every 2 minutes
+        workflow_start_method: persistent_blocking
     retry_delay: 3
     stype: http_trigger
     system_component_id: null
     transition_to:
-    - load_transformation_rules
+    - step_load_rules
     trigger: true
     ui_config:
-        pos_x: 130
-        pos_y: 32
+        pos_x: 545
+        pos_y: 81
 -   description: null
     enabled: true
-    id: load_transformation_rules
-    label: Loading transformation rules
+    id: step_generate_graphql_file
+    label: Generate GraphQL file
     max_retries: 0
-    method: null
-    params: null
+    method: GenerateGraphQLSchemaFromRules
+    params: {}
     retry_delay: 3
-    stype: pystep
-    system_component_id: null
-    transition_to:
-    - generate_fdm_schema
-    trigger: false
-    ui_config:
-        pos_x: 130
-        pos_y: 123
--   description: null
-    enabled: true
-    id: generate_fdm_schema
-    label: Generate FDM Schema
-    max_retries: 0
-    method: null
-    params: null
-    retry_delay: 3
-    stype: pystep
+    stype: stdstep
     system_component_id: null
     transition_to: []
     trigger: false
     ui_config:
-        pos_x: 130
-        pos_y: 229
+        pos_x: 549
+        pos_y: 311
+-   description: null
+    enabled: true
+    id: step_load_rules
+    label: Load data model from rules file
+    max_retries: 0
+    method: LoadTransformationRules
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+    - step_generate_graphql_file
+    trigger: false
+    ui_config:
+        pos_x: 543
+        pos_y: 188
 system_components:
 -   description: null
     id: define_data_model

@@ -1,8 +1,6 @@
-import contextlib
 import logging
 import time
 from typing import Tuple
-from prometheus_client import Gauge
 from cognite.neat.graph.loaders import upload_labels
 from cognite.neat.graph.loaders.core.rdf_to_assets import (
     NeatMetadataKeys,
@@ -25,14 +23,14 @@ from cognite.client.data_classes import AssetFilter
 from cognite.client import CogniteClient
 from ..data_contracts import CategorizedAssets, CategorizedRelationships, RulesData, SolutionGraph
 
-with contextlib.suppress(ValueError):
-    prom_cdf_resource_stats = Gauge(
-        "neat_graph_to_asset_hierarchy_wf_cdf_resource_stats",
-        "CDF resource stats before and after running fast_graph workflow",
-        ["resource_type", "state"],
-    )
-with contextlib.suppress(ValueError):
-    prom_data_issues_stats = Gauge("neat_graph_to_asset_hierarchy_wf_data_issues", "Data validation issues", ["type"])
+# with contextlib.suppress(ValueError):
+#     prom_cdf_resource_stats = Gauge(
+#         "neat_graph_to_asset_hierarchy_wf_cdf_resource_stats",
+#         "CDF resource stats before and after running fast_graph workflow",
+#         ["resource_type", "state"],
+#     )
+# with contextlib.suppress(ValueError):
+#     prom_data_issues_stats = Gauge("neat_graph_to_asset_hierarchy_wf_data_issues", "Data validation issues", ["type"])
 
 
 __all__ = [
@@ -47,13 +45,15 @@ __all__ = [
 class CreateCDFLabels(Step):
     description = "The step creates default NEAT labels in CDF"
     category = "cdf_resources"
-    
+
     def run(self, rules: RulesData, cdf_client: CogniteClient) -> None:
         upload_labels(cdf_client, rules.rules, extra_labels=["non-historic", "historic"])
 
 
 class GenerateCDFAssetsFromGraph(Step):
-    description = "The step generates assets from the graph ,categorizes them and stores them in CategorizedAssets object"
+    description = (
+        "The step generates assets from the graph ,categorizes them and stores them in CategorizedAssets object"
+    )
     category = "cdf_resources"
 
     def run(
@@ -62,6 +62,16 @@ class GenerateCDFAssetsFromGraph(Step):
         self.meta_keys = NeatMetadataKeys.load(
             configs.get_config_group_values_by_name("cdf.asset.metadata.", remove_group_prefix=True)
         )
+        prom_cdf_resource_stats = self.metrics.register_metric(
+            "cdf_resources_stats",
+            "CDF resource stats before and after running the workflow",
+            m_type="gauge",
+            metric_labels=["resource_type", "state"],
+        )
+        prom_data_issues_stats = self.metrics.register_metric(
+            "data_issues_stats", "Data validation issues", m_type="gauge", metric_labels=["resource_type"]
+        )
+
         rdf_asset_dicts = rdf2assets(
             solution_graph.graph,
             rules.rules,
@@ -92,8 +102,8 @@ class GenerateCDFAssetsFromGraph(Step):
 
         orphan_assets, circular_assets = validate_asset_hierarchy(rdf_asset_dicts)
 
-        prom_data_issues_stats.labels(type="circular_assets").set(len(circular_assets))
-        prom_data_issues_stats.labels(type="orphan_assets").set(len(orphan_assets))
+        prom_data_issues_stats.labels(resource_type="circular_assets").set(len(circular_assets))
+        prom_data_issues_stats.labels(resource_type="orphan_assets").set(len(orphan_assets))
 
         if orphan_assets:
             logging.error(f"Found orphaned assets: {', '.join(orphan_assets)}")
@@ -165,14 +175,19 @@ class GenerateCDFAssetsFromGraph(Step):
 class UploadCDFAssets(Step):
     description = "The step uploads categorized assets to CDF"
     category = "cdf_resources"
-    
+
     def run(
         self, rules: RulesData, cdf_client: CogniteClient, categorized_assets: CategorizedAssets, flow_msg: FlowMessage
     ) -> FlowMessage:
         if flow_msg and flow_msg.payload and "action" in flow_msg.payload:
             if flow_msg.payload["action"] != "approve":
                 raise Exception("Update not approved")
-
+        prom_cdf_resource_stats = self.metrics.register_metric(
+            "cdf_resources_stats",
+            "CDF resource stats before and after running the workflow",
+            m_type="gauge",
+            metric_labels=["resource_type", "state"],
+        )
         upload_assets(cdf_client, categorized_assets.assets, max_retries=2, retry_delay=4)
         count_create_assets = len(categorized_assets.assets["create"])
         for _ in range(1000):
@@ -213,7 +228,12 @@ class GenerateCDFRelationshipsFromGraph(Step):
         count_create_relationships = len(categorized_relationships["create"])
         count_decommission_relationships = len(categorized_relationships["decommission"])
         count_resurrect_relationships = len(categorized_relationships["resurrect"])
-
+        prom_cdf_resource_stats = self.metrics.register_metric(
+            "cdf_resources_stats",
+            "CDF resource stats before and after running the workflow",
+            m_type="gauge",
+            metric_labels=["resource_type", "state"],
+        )
         prom_cdf_resource_stats.labels(resource_type="relationships", state="defined").set(count_defined_relationships)
         prom_cdf_resource_stats.labels(resource_type="relationships", state="create").set(count_create_relationships)
         prom_cdf_resource_stats.labels(resource_type="relationships", state="decommission").set(

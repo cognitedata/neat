@@ -1,11 +1,11 @@
 .PHONY: run-explorer run-tests run-linters build-ui build-python build-docker run-docker compose-up
 
-version="0.19.0"
+version="0.20.0"
 run-explorer:
 	@echo "Running explorer API server..."
 	# open "http://localhost:8000/static/index.html" || true
 	mkdir -p ./data
-	export NEAT_CONFIG_PATH=./dev-data-steps/config.yaml && \
+	export NEAT_CONFIG_PATH=./data/config.yaml && \
 	poetry run uvicorn --host 0.0.0.0 cognite.neat.app.api.explorer:app
 
 run-tests:

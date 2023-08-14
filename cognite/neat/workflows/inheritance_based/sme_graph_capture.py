@@ -22,7 +22,8 @@ from cognite.neat.workflows import utils
 from cognite.neat.workflows.base import BaseWorkflow
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.cdf_store import CdfStore
-from cognite.neat.rules.exporter import rules2graph_sheet 
+from cognite.neat.rules.exporter import rules2graph_sheet
+
 
 class SmeGraphCaptureBaseWorkflow(BaseWorkflow):
     def __init__(self, name: str, client: CogniteClient):
@@ -84,9 +85,7 @@ class SmeGraphCaptureBaseWorkflow(BaseWorkflow):
         logging.info(f"Auto identifier type {auto_identifier_type}")
         data_capture_sheet_path = self.rules_storage_path.parent / "graph-sheets" / sheet_name
 
-        rules2graph_sheet(
-            self.transformation_rules, data_capture_sheet_path, auto_identifier_type=auto_identifier_type
-        )
+        rules2graph_sheet(self.transformation_rules, data_capture_sheet_path, auto_identifier_type=auto_identifier_type)
 
         output_text = (
             "Data capture sheet generated and can be downloaded here : "

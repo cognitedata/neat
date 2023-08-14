@@ -107,7 +107,7 @@ export default function StepEditorDialog(props: any)
               case "start_workflow_task_step":
                 updStep.params = { "workflow_name": "", "sync": "false" }
                 break;
-              
+
             }
             updStep["stype"] = value;
           } else {
@@ -189,7 +189,7 @@ return (
                 value={selectedStep?.method}
                 size='small'
                 label="Name of the step"
-                variant="outlined" 
+                variant="outlined"
                 onChange={(event) => { handleStepConfigChange("method", event.target.value) }}
                 sx={{ marginBottom: 2 }}
               >
@@ -203,10 +203,10 @@ return (
               <Typography> Input : <ul> {selectedStepTemplate?.input.map((item,i)=> (<li>  {workflowDefinitions?.isStepInputConfigured(selectedStep?.id,item, stepRegistry) && (<CheckCircleOutlineOutlinedIcon sx={{ marginBottom: -0.5 }} color="success"/>) }  {item}</li>)) } </ul> </Typography>
               <Typography> Output : <ul> {selectedStepTemplate?.output.map((item,i)=> (<li> {item} </li>))} </ul> </Typography>
               <Typography> Configurations : <ul>  {selectedStepTemplate?.configuration_templates.map((item,i)=> (<li> {item.name} - {item.label} </li>))} </ul> </Typography>
-              </FormControl> 
+              </FormControl>
             )}
             <TextField sx={{ marginTop: 1 }} id="step-config-descr" fullWidth label="Notes" size='small' variant="outlined" value={selectedStep?.description} onChange={(event) => { handleStepConfigChange("description", event.target.value) }} />
-            
+
              {(selectedStep?.stype == "pystep") && (
               <TextField sx={{ marginTop: 1 }} id="step-pystep-method" fullWidth label="Override function name (optional)" size='small' variant="outlined" value={selectedStep?.method} onChange={(event) => { handleStepConfigChange("method", event.target.value) }} />
             )}

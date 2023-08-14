@@ -88,7 +88,7 @@ class WorkflowManager:
         del self.workflow_registry[name]
         full_path = self.workflows_storage_path / name
         shutil.rmtree(full_path)
-        # TODO: check if more garbage collection is needed here. 
+        # TODO: check if more garbage collection is needed here.
 
     def update_workflow(self, name: str, workflow: WorkflowDefinition):
         self.workflow_registry[name].workflow_steps = workflow.steps

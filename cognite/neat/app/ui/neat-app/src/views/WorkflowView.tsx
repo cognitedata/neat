@@ -147,7 +147,7 @@ export default function WorkflowView() {
   }).catch ((error) => {
     console.error('Error:', error);
   }).finally(() => { });
-  } 
+  }
 
   const loadRegisteredSteps = () => {
     const url = neatApiRootUrl + "/api/workflow/registered-steps";
@@ -157,7 +157,7 @@ export default function WorkflowView() {
   }).catch ((error) => {
     console.error('Error:', error);
   }).finally(() => { });
-  } 
+  }
 
 
 
@@ -411,9 +411,9 @@ const solutionComponentEditorDialogHandler = (component: WorkflowSystemComponent
 const handleCreateWorkflow = (wdef:WorkflowDefinition,action: string) => {
   // send workflowMeta to backend
   console.dir(wdef);
-  if (action != "save") 
+  if (action != "save")
     return;
-  
+
   const url = neatApiRootUrl + "/api/workflow/create";
   fetch(url, {
     method: "post", body: wdef.serializeToJson(), headers: {
@@ -426,7 +426,7 @@ const handleCreateWorkflow = (wdef:WorkflowDefinition,action: string) => {
   ).catch((error) => {
     console.error('Error:', error);
   })
-    
+
 }
 
 const onNodesChangeN = useCallback((nodeChanges: NodeChange[]) => {
@@ -488,7 +488,7 @@ return (
         <Item>
           <OverviewComponentEditorDialog open={openOverviewComponentEditorDialog} component={selectedComponent} onClose={solutionComponentEditorDialogHandler} />
           <StepEditorDialog open={dialogOpen} step={selectedStep} workflowName={selectedWorkflow} stepRegistry={stepRegistry} workflowDefinitions={workflowDefinitions} onClose={handleDialogClose} />
-          
+
           <div style={{ height: '75vh', width: '70vw' }}>
             <ReactFlow
               nodes={nodes}

@@ -46,7 +46,7 @@ class ConfigureDefaultGraphStores(Step):
             name="solution_rdf_store.api_root_url",
             value="",
             label="Root url for graphdb or sparql endpoint",
-        )
+        ),
     ]
 
     def run(self, configs: WorkflowConfigs, rules_data: RulesData) -> Tuple[FlowMessage, SourceGraph, SolutionGraph]:

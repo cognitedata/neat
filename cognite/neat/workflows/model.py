@@ -162,7 +162,7 @@ class WorkflowConfigs(BaseModel):
     """Workflow configs"""
 
     configs: list[WorkflowConfigItem] = []
-    
+
     def get_config_item(self, config_name: str) -> WorkflowConfigItem:
         return next((item for item in self.configs if item.name == config_name), None)
 

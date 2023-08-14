@@ -103,31 +103,34 @@ class StepsRegistry:
     def get_list_of_steps(self):
         steps: list[StepMetadata] = []
         for name, step_cls in self._step_classes:
-            signature = inspect.signature(step_cls.run)
-            parameters = signature.parameters
-            input_data = []
-            output_data = []
-            for parameter in parameters.values():
-                if parameter.annotation.__name__ != "_empty":
-                    input_data.append(parameter.annotation.__name__)
-            return_annotation = signature.return_annotation
-            if return_annotation:
-                if return_annotation.__name__ == "Tuple":
-                    for annotation in return_annotation.__args__:
-                        output_data.append(annotation.__name__)
-                else:
-                    output_data.append(return_annotation.__name__)
-            # logging.info(f"Step {name} output data: {return_annotation}")
-            steps.append(
-                StepMetadata(
-                    name=name,
-                    scope=step_cls.scope,
-                    input=input_data,
-                    description=step_cls.description,
-                    category=step_cls.category,
-                    output=output_data,
-                    configuration_templates=step_cls.configuration_templates,
+            try:
+                signature = inspect.signature(step_cls.run)
+                parameters = signature.parameters
+                input_data = []
+                output_data = []
+                for parameter in parameters.values():
+                    if parameter.annotation.__name__ != "_empty":
+                        input_data.append(parameter.annotation.__name__)
+                return_annotation = signature.return_annotation
+                if return_annotation:
+                    if return_annotation.__name__ == "Tuple":
+                        for annotation in return_annotation.__args__:
+                            output_data.append(annotation.__name__)
+                    else:
+                        output_data.append(return_annotation.__name__)
+                # logging.info(f"Step {name} output data: {return_annotation}")
+                steps.append(
+                    StepMetadata(
+                        name=name,
+                        scope=step_cls.scope,
+                        input=input_data,
+                        description=step_cls.description,
+                        category=step_cls.category,
+                        output=output_data,
+                        configuration_templates=step_cls.configuration_templates,
+                    )
                 )
-            )
+            except AttributeError as e:
+                logging.error(f"Step {name} does not have a run method.Error: {e}")    
 
         return steps

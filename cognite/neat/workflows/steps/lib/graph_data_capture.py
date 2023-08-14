@@ -25,7 +25,7 @@ class GenerateDataCaptureSpreadsheet(Step):
         ),
         WorkflowConfigItem(
             name="graph_capture_sheet.storage_dir", value="staging", label="Directory to store data capture sheets"
-        )
+        ),
     ]
 
     def run(self, configs: WorkflowConfigs, rules: RulesData) -> FlowMessage:

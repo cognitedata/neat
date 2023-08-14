@@ -34,7 +34,7 @@ export default function WorkflowMetadataDialog(props: any)
             wdef.name = component.name;
             wdef.description = component.description;
         }
-        
+
         switch (name) {
             case "name":
                 wdef.name = value;
@@ -60,7 +60,7 @@ return (
 <React.Fragment >
 <IconButton color="primary" aria-label="add new workflow" onClick={(event)=>{setDialogOpen(true)} }>
     <AddCircleOutlineOutlinedIcon />
-</IconButton>  
+</IconButton>
 <Dialog open={dialogOpen} onClose={handleDialogCancel}>
 <DialogTitle>Workflow editor</DialogTitle>
 <DialogContent>

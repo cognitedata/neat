@@ -81,7 +81,7 @@ class BaseWorkflow:
         self.step_clases = None
         self.data: dict[str, Type[DataContract]] = {}
         self.steps_registry: StepsRegistry = steps_registry
-    
+
     def start(self, sync=False, is_ephemeral=False, **kwargs) -> FlowMessage | None:
         """Starts workflow execution.sync=True will block until workflow is completed and
         return last workflow flow message, sync=False will start workflow in a separate thread and return None"""
@@ -98,7 +98,7 @@ class BaseWorkflow:
         self.run_id = utils.generate_run_id()
         self.is_ephemeral = is_ephemeral
         self.execution_log = []
-        
+
         if sync:
             return self._run_workflow(**kwargs)
 
@@ -268,7 +268,10 @@ class BaseWorkflow:
                 new_flow_message = method_runner()
             elif step.stype == StepType.STD_STEP:
                 if self.steps_registry is None:
-                    raise Exception(f"Workflow step {step.id} can't be executed.Step registry is not configured or not set as parameter in BaseWorkflow constructor")
+                    raise Exception(
+                        f"Workflow step {step.id} can't be executed.Step registry is not configured or \
+                          not set as parameter in BaseWorkflow constructor"
+                    )
                 output = self.steps_registry.run_step(step.method, self.data, metrics=self.metrics)
                 if output is not None:
                     if isinstance(output, tuple):
@@ -280,7 +283,7 @@ class BaseWorkflow:
                         if isinstance(output, FlowMessage):
                             new_flow_message = output
                         self.data[type(output).__name__] = output
-            
+
             elif step.stype == StepType.START_WORKFLOW_TASK_STEP:
                 if self.task_builder:
                     sync_str = step.params.get("sync", "false")
@@ -449,8 +452,9 @@ class BaseWorkflow:
     def set_storage_path(self, storage_type: str, storage_path: str):
         if storage_type == "transformation_rules":
             self.rules_storage_path = storage_path
-            self.cdf_store = cdf_store.CdfStore(self.cdf_client, data_set_id=self.default_dataset_id,
-                                                rules_storage_path=self.rules_storage_path)
+            self.cdf_store = cdf_store.CdfStore(
+                self.cdf_client, data_set_id=self.default_dataset_id, rules_storage_path=self.rules_storage_path
+            )
         elif storage_type == "data_store":
             self.data_store_path = storage_path
             self.user_steps_path = Path(self.data_store_path, "steps")

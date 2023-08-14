@@ -138,32 +138,32 @@ def query_graph(request: QueryRequest):
 
 @router.post("/api/execute-rule")
 def execute_rule(request: RuleRequest):
-    logging.info(
+    logging.debug(
         f"Executing rule type: { request.rule_type } rule : {request.rule} , workflow : {request.workflow_name} , "
         f"graph : {request.graph_name}"
     )
-    # TODO : add support for other graphs
     workflow = neat_app.workflow_manager.get_workflow(request.workflow_name)
-    if not workflow.source_graph or not workflow.solution_graph:
-        workflow.step_load_transformation_rules()
-        workflow.step_configuring_stores()
+    api_result = {"error": ""}
+    workflow_context = workflow.get_context()
     if request.graph_name == "source":
-        if not workflow.source_graph:
+        if "SourceGraph" in workflow_context:
+            graph = workflow_context["SourceGraph"].graph
+        else:
             logging.info("Source graph is empty , please load the graph first")
-            return {"error": "source graph is empty , please load the graph first"}
-        graph = workflow.source_graph
+            api_result["error"] = "source graph is empty , please load the graph first"
     elif request.graph_name == "solution":
-        if not workflow.solution_graph:
+        if "SolutionGraph" in workflow_context:
+            graph = workflow_context["SolutionGraph"].graph
+        else:
             logging.info("Solution graph is empty , please load the graph first")
-            return {"error": "solution graph is empty , please load the graph first"}
-        graph = workflow.solution_graph
+            api_result["error"] = "solution graph is empty , please load the graph first"
     else:
         raise Exception("Unknown graph name")
 
     if request.rule_type == "rdfpath":
         start_time = time.perf_counter()
         sparq_query = query_generator.build_sparql_query(
-            graph, request.rule, prefixes=workflow.transformation_rules.prefixes
+            graph, request.rule, prefixes=workflow_context["RulesData"].rules.prefixes
         )
     else:
         logging.error("Unknown rule type")
@@ -235,13 +235,7 @@ def get_data_from_graph(sparq_query: str, graph_name: str = "source", workflow_n
         start_time = time.perf_counter()
         workflow = neat_app.workflow_manager.get_workflow(workflow_name)
         workflow_context = workflow.get_context()
-        # try:
-        #     if not workflow.source_graph or not workflow.solution_graph:
-        #         workflow.step_load_transformation_rules()
-        #         workflow.step_configuring_stores(clean_start=False)
-        # except Exception as e:
-        #     logging.debug(f"Error while loading transformation rules or stores : {e}")
-
+    
         if graph_name == "source":
             if "SourceGraph" in workflow_context:
                 result = workflow_context["SourceGraph"].graph.query(sparq_query)

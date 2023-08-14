@@ -43,7 +43,7 @@ export class StepMetadata {
     }
 }
 
-export class StepRegistry { 
+export class StepRegistry {
     steps: StepMetadata[] = [];
     static fromJSON(json: any): StepRegistry {
         let stepRegistry = new StepRegistry();
@@ -115,16 +115,16 @@ export class WorkflowDefinition {
         if (step.stype != "stdstep")
             return false;
         if (!stepRegistry)
-            return false;    
+            return false;
         let listOfAllOutputs = ["WorkflowConfigs","CdfStore","CogniteClient"];
         this.steps?.forEach(step => {
                 let outputs = stepRegistry.getStepByName(step.method)?.output;
                 listOfAllOutputs = listOfAllOutputs.concat(outputs);
         });
-        
+
         return listOfAllOutputs.includes(inputParamName)
     }
-            
+
 
     upsertConfigItem(config: WorkflowConfigItem) {
         let index = this.configs.findIndex(c => c.name == config.name);
