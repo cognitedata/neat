@@ -33,7 +33,7 @@ def solution_knowledge_graph(source_knowledge_graph, transformation_rules):
 
 @pytest.fixture(scope="function")
 def mock_knowledge_graph(transformation_rules):
-    mock_graph = extractors.NeatGraphStore(
+    mock_graph = NeatGraphStore(
         prefixes=transformation_rules.prefixes, namespace=transformation_rules.metadata.namespace
     )
     mock_graph.init_graph(base_prefix=transformation_rules.metadata.prefix)

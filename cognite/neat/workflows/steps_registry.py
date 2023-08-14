@@ -131,6 +131,6 @@ class StepsRegistry:
                     )
                 )
             except AttributeError as e:
-                logging.error(f"Step {name} does not have a run method.Error: {e}")    
+                logging.error(f"Step {name} does not have a run method.Error: {e}")
 
         return steps

@@ -143,6 +143,7 @@ def execute_rule(request: RuleRequest):
         f"graph : {request.graph_name}"
     )
     workflow = neat_app.workflow_manager.get_workflow(request.workflow_name)
+
     api_result = {"error": ""}
     workflow_context = workflow.get_context()
     if request.graph_name == "source":
@@ -235,7 +236,7 @@ def get_data_from_graph(sparq_query: str, graph_name: str = "source", workflow_n
         start_time = time.perf_counter()
         workflow = neat_app.workflow_manager.get_workflow(workflow_name)
         workflow_context = workflow.get_context()
-    
+
         if graph_name == "source":
             if "SourceGraph" in workflow_context:
                 result = workflow_context["SourceGraph"].graph.query(sparq_query)

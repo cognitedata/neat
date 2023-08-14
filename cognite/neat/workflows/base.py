@@ -418,6 +418,12 @@ class BaseWorkflow:
     def add_step(self, step: WorkflowStepDefinition):
         self.workflow_steps.append(step)
 
+    def enable_step(self, step_id: str, enabled: bool = True):
+        """Enable or disable step in workflow. Primarily used for tests"""
+        for step in self.workflow_steps:
+            if step.id == step_id:
+                step.enabled = enabled
+
     def add_system_component(self, system_components: WorkflowSystemComponent):
         self.workflow_system_components.append(system_components)
 

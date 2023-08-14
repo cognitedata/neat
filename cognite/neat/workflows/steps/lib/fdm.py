@@ -19,7 +19,7 @@ class GenerateGraphQLSchemaFromRules(Step):
         ),
         WorkflowConfigItem(
             name="graph_ql_export.storage_dir", value="staging", label="Directory to store FDM schema file"
-        )
+        ),
     ]
 
     def run(self, transformation_rules: RulesData, configs: WorkflowConfigs) -> FlowMessage:
@@ -35,7 +35,7 @@ class GenerateGraphQLSchemaFromRules(Step):
         staging_dir = self.data_store_path / Path(staging_dir_str)
         staging_dir.mkdir(parents=True, exist_ok=True)
         fdm_model_full_path = staging_dir / schema_name
-        
+
         with fdm_model_full_path.open(mode="w") as fdm_file:
             fdm_file.write(data_model_gql)
 

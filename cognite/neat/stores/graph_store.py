@@ -231,7 +231,7 @@ class NeatGraphStore:
                         except Exception as e:
                             logging.error("Error deleting file %s: %s", f, e)
             except Exception as e:
-                logging.error("Error dropping graph : %s", e)                
+                logging.error("Error dropping graph : %s", e)
 
         elif self.rdf_store_type == RdfStoreType.GRAPHDB:
             r = requests.delete(f"{self.graph_db_rest_url}/repositories/{self.graph_name}/rdf-graphs/service?default")

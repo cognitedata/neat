@@ -1,7 +1,8 @@
-from cognite.neat.graph import loaders, extractors
+from cognite.neat.graph import loaders
 from cognite.neat.graph.loaders.core import rdf_to_relationships
 from cognite.neat.graph.extractors.mocks import generate_triples
 from cognite.neat.rules.models import TransformationRules
+from cognite.neat.stores.graph_store import NeatGraphStore
 from cognite.neat.utils.utils import add_triples, remove_namespace
 
 
@@ -16,7 +17,7 @@ def test_mock_graph(transformation_rules: TransformationRules):
         "Terminal": 60,
     }
 
-    graph_store = extractors.NeatGraphStore(prefixes=rules.prefixes, namespace=rules.metadata.namespace)
+    graph_store = NeatGraphStore(prefixes=rules.prefixes, namespace=rules.metadata.namespace)
     graph_store.init_graph(base_prefix=rules.metadata.prefix)
 
     mock_triples = generate_triples(rules, class_count)
