@@ -1,8 +1,8 @@
-"""Exports rules to CDF Data Model Storage.
+"""Exports rules to CDF Data Model Storage (DMS) through cognite-sdk.
 """
 
 from typing import ClassVar, Optional, Self
-from pydantic import BaseModel, ConfigDict, Field, model_validator, field_validator
+from pydantic import BaseModel, ConfigDict
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import ContainerApply, ContainerProperty, DirectRelation
@@ -13,7 +13,6 @@ from cognite.client.data_classes.data_modeling import (
     ViewId,
     SingleHopConnectionDefinition,
 )
-from cognite.client.data_classes._base import CogniteResource
 from cognite.neat.rules.analysis import to_class_property_pairs
 
 from cognite.neat.rules.models import Property, TransformationRules, DATA_TYPE_MAPPING
@@ -59,7 +58,7 @@ class DataModel(BaseModel):
         )
 
     @staticmethod
-    def containers_from_rules(transformation_rules: TransformationRules) -> list[ContainerApply]:
+    def containers_from_rules(transformation_rules: TransformationRules) -> dict[str, ContainerApply]:
         class_properties = to_class_property_pairs(transformation_rules)
         return {
             class_id: ContainerApply(
@@ -78,7 +77,7 @@ class DataModel(BaseModel):
     def container_properties_from_dict(properties: dict[str, Property], space: str) -> dict[str, ContainerProperty]:
         container_properties = {}
         for property_id, property_definition in properties.items():
-            if property_definition.property_type == "DatatypeProperty":
+            if property_definition.property_type == "DatatypeProperty":  # Literal
                 container_properties[property_id] = ContainerProperty(
                     type=DATA_TYPE_MAPPING[property_definition.expected_value_type]["dms"](
                         is_list=property_definition.max_count != 1
@@ -89,24 +88,18 @@ class DataModel(BaseModel):
                     description=property_definition.description,
                 )
 
-            # this is edge, not sure if there is difference between 1-1, 1-many, many-many ?
-            elif property_definition.property_type == "ObjectProperty":
+            elif property_definition.property_type == "ObjectProperty":  # URIRef
                 container_properties[property_id] = ContainerProperty(
-                    type=DirectRelation(),  # missing listable relations!
+                    type=DirectRelation(),
                     nullable=True,
                     name=property_definition.property_name,
                     description=property_definition.description,
                 )
 
-            else:
-                ...
-            # warning that the property type is not supported
-            # logging
-
         return container_properties
 
     @staticmethod
-    def views_from_rules(transformation_rules: TransformationRules) -> list[ViewApply]:
+    def views_from_rules(transformation_rules: TransformationRules) -> dict[str, ViewApply]:
         class_properties = to_class_property_pairs(transformation_rules)
         return {
             class_id: ViewApply(
@@ -137,27 +130,15 @@ class DataModel(BaseModel):
                     description=property_definition.description,
                 )
 
-            # edge 1-1, but makes 1-many, not really sure how to define 1-1 view, if attempted
-            # via MappedPropertyApply, it brings error:
-            # CogniteAPIError: Request had 1 constraint violations. Please fix the request and try again. [type must not be null]
+            # edge 1-1
             elif property_definition.property_type == "ObjectProperty" and property_definition.max_count == 1:
-                view_properties[property_id] = SingleHopConnectionDefinition(
-                    type=DirectRelationReference(
-                        space=space, external_id=f"{property_definition.class_id}.{property_definition.property_id}"
-                    ),
-                    source=ViewId(space=space, external_id=property_definition.expected_value_type, version=version),
-                    direction="outwards",
+                view_properties[property_id] = MappedPropertyApply(
+                    container=ContainerId(space=space, external_id=property_definition.class_id),
+                    container_property_identifier=property_id,
                     name=property_definition.property_name,
                     description=property_definition.description,
+                    source=ViewId(space=space, external_id=property_definition.expected_value_type, version=version),
                 )
-                # this is not working, but it should be possible to define 1-1 view
-                # view_properties[property_id] = MappedPropertyApply(
-                #     container=ContainerId(space=space, external_id=property_definition.class_id),
-                #     container_property_identifier=property_id,
-                #     name=property_definition.property_name,
-                #     description=property_definition.description,
-                #     source=ViewId(space=space, external_id=property_definition.expected_value_type, version=version),
-                # )
 
             # edge 1-many
             elif property_definition.property_type == "ObjectProperty" and property_definition.max_count != 1:
