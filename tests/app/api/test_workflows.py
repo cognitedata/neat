@@ -174,8 +174,9 @@ def test_query(
 ):
     # Act
     workflow = neat_app.workflow_manager.get_workflow(workflow_name)
-    workflow.enable_step("step_generate_assets", False)
-    neat_app.workflow_manager.start_workflow_instance(workflow_name, sync=True)
+    if "SourceGraph" not in workflow.get_context():
+        workflow.enable_step("step_generate_assets", False)
+        neat_app.workflow_manager.start_workflow_instance(workflow_name, sync=True)
 
     response = fastapi_client.post(
         "/api/query",
@@ -199,6 +200,11 @@ def test_execute_rule(
     fastapi_client: TestClient,
 ):
     # Act
+    workflow = neat_app.workflow_manager.get_workflow(workflow_name)
+    if "SourceGraph" not in workflow.get_context():
+        workflow.enable_step("step_generate_assets", False)
+        neat_app.workflow_manager.start_workflow_instance(workflow_name, sync=True)
+
     response = fastapi_client.post(
         "/api/execute-rule",
         json=RuleRequest(
