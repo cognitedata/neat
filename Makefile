@@ -40,11 +40,10 @@ start-ui-dev:
 
 poetry-export:
 	@echo "Exporting poetry dependencies"
-	poetry export -f requirements.txt --output requirements.txt --extras all
+	poetry export -f requirements.txt --output requirements.txt --extras "excel graphql"
 
-build-docker:
+build-docker: poetry-export
 	@echo "Building docker image"
-	make poetry-export
 	mkdir -p data
 	docker build -t cognite/neat:${version} -t cognite/neat:latest .
 	rm requirements.txt
