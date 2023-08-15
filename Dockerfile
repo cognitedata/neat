@@ -25,13 +25,13 @@ COPY requirements.txt /app/
 WORKDIR /app/
 RUN pip install -r requirements.txt
 
-# Building final image 
+# Building final image
 FROM python:3.11.4-slim-buster as runtime
 COPY --from=build /usr/local/lib/python3.11/site-packages  /usr/local/lib/python3.11/site-packages
 COPY --from=build /usr/local/bin /usr/local/bin
 # Copy the application source code from host to container
 COPY cognite/neat /app/cognite/neat
-RUN mkdir -p /app/data && chmod -R 777 /app/data 
+RUN mkdir -p /app/data && chmod -R 777 /app/data
 WORKDIR /app
 # Default config file
 ENV NEAT_CONFIG_PATH=/app/data/config.yaml
