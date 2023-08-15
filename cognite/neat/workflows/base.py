@@ -512,3 +512,6 @@ class BaseWorkflow:
 
     def get_context(self):
         return self.data
+
+    def get_configs(self):
+        return WorkflowConfigs(configs=self.configs)

@@ -3,8 +3,8 @@ from pathlib import Path
 from typing import Tuple
 from cognite.neat.constants import PREFIXES
 
-from cognite.neat.stores.configuration import RdfStoreType
-from cognite.neat.stores.graph_store import NeatGraphStore, drop_graph_store
+from cognite.neat.graph.stores import RdfStoreType
+from cognite.neat.graph.stores import NeatGraphStore, drop_graph_store
 from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem, WorkflowConfigs
 from cognite.neat.workflows.steps.step_model import Step
 

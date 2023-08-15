@@ -1,7 +1,7 @@
 from rdflib import Literal
 
 from cognite.neat.graph.loaders.core.rdf_to_assets import rdf2assets
-from cognite.neat.stores.graph_store import NeatGraphStore
+from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.graph.transformations.transformer import domain2app_knowledge_graph
 
 
