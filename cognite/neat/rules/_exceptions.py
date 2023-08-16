@@ -781,7 +781,7 @@ class Warning60(NeatWarning):
 
 
 class Warning61(NeatWarning):
-    type_: str = "ContainerPropertyTypeUnsupported"
+    type_: str = "ViewPropertyTypeUnsupported"
     code: int = 61
     description: str = (
         "This warning occurs when a TransformationRule property translates to unsupported DMS view property."
