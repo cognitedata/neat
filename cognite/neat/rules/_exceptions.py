@@ -773,19 +773,21 @@ class Error60(NeatError):
         self.existing_containers = existing_containers
         self.existing_views = existing_views
 
-        self.message = "Aborting data model creation!\n"
+        self.message = "Aborting data model creation!"
         if self.existing_data_model:
             self.message += (
-                f"Data model {self.existing_data_model} already exists in DMS! Delete it first or bump its version!"
+                f"\nData model {self.existing_data_model} already exists in DMS! Delete it first or bump its version! "
             )
         if self.existing_views:
             self.message += (
-                f"Views {self.existing_views} already exist in DMS! Delete them first or bump their versions!"
+                f"\nViews {self.existing_views} already exist in DMS! Delete them first or bump their versions! "
             )
         if self.existing_containers:
-            self.message += f"Containers {self.existing_containers} already exist in DMS! Delete them first!"
+            self.message += f"\nContainers {self.existing_containers} already exist in DMS! Delete them first! "
 
-        self.message = "To remove existing data model and its components, use `self.remove_data_model(client)` method."
+        self.message += (
+            "\nTo remove existing data model and its components, use `self.remove_data_model(client)` method."
+        )
 
         if verbose:
             self.message += f"\nDescription: {self.description}"
