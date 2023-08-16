@@ -6,4 +6,5 @@ from pathlib import Path
 # Currently there are simple paths to the examples which are then easily loaded in the notebooks
 
 power_grid_model = Path(__file__).parent / "power-grid-example.xlsx"
+simple_example = Path(__file__).parent / "sheet2cdf-transformation-rules.xlsx"
 source_to_solution_mapping = Path(__file__).parent / "source-to-solution-mapping-rules.xlsx"

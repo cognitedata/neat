@@ -758,6 +758,150 @@ class Warning41(NeatWarning):
             self.message += f"\nFix: {self.fix}"
 
 
+class Error60(NeatError):
+    type_: str = "DataModelOrItsComponentsAlreadyExist"
+    code: int = 60
+    description: str = "This error is raised when attempting to create data model which already exist in DMS."
+    example: str = ""
+    fix: str = (
+        "Remove existing data model and underlying views and/or containers, or bump "
+        "version of data model and views and optionally delete containers."
+    )
+
+    def __init__(self, existing_data_model, existing_containers, existing_views, verbose=False):
+        self.existing_data_model = existing_data_model
+        self.existing_containers = existing_containers
+        self.existing_views = existing_views
+
+        self.message = "Aborting data model creation!"
+        if self.existing_data_model:
+            self.message += (
+                f"\nData model {self.existing_data_model} already exists in DMS! Delete it first or bump its version! "
+            )
+        if self.existing_views:
+            self.message += (
+                f"\nViews {self.existing_views} already exist in DMS! Delete them first or bump their versions! "
+            )
+        if self.existing_containers:
+            self.message += f"\nContainers {self.existing_containers} already exist in DMS! Delete them first! "
+
+        self.message += (
+            "\nTo remove existing data model and its components, use `self.remove_data_model(client)` method."
+        )
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class Warning60(NeatWarning):
+    type_: str = "ContainerPropertyTypeUnsupported"
+    code: int = 60
+    description: str = (
+        "This warning occurs when a property type is not supported by the container."
+        " Currently only `DatatypeProperty` and `ObjectProperty` are supported, which"
+        " translate to `attribute` and `edge` respectively."
+    )
+    example: str = ""
+    fix: str = "Contact NEAT support team."
+
+    def __init__(self, property_id: str = "", property_type: str = "", verbose=False):
+        self.message = (
+            f"Property {property_id} has unsupported type {property_type}!"
+            "Only DatatypeProperty and ObjectProperty are supported!"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+
+
+class Warning61(NeatWarning):
+    type_: str = "ViewPropertyTypeUnsupported"
+    code: int = 61
+    description: str = (
+        "This warning occurs when a TransformationRule property translates to unsupported DMS view property."
+        " Currently only attributes, edges 1-1 and edges 1-n are supported."
+    )
+    example: str = ""
+    fix: str = "Contact NEAT support team."
+
+    def __init__(self, property_id: str = "", verbose=False):
+        self.message = (
+            f"Property {property_id} translates to unsupported!"
+            " Currently only attributes, edges 1-1 and edges 1-n are supported."
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+
+
+class Warning62(NeatWarning):
+    type_: str = "ContainersAlreadyExist"
+    code: int = 62
+    description: str = "This warning occurs when attempting to create containers which already exist in DMS."
+    example: str = ""
+    fix: str = "Remove existing containers and try again."
+
+    def __init__(self, container_ids: set[str] = set(), space: str = "", verbose=False):
+        self.message = (
+            f"Containers {container_ids} already exist in space {space}. "
+            "Since update of containers can cause issues, "
+            "remove them first prior data model creation!"
+            "Aborting containers creation!"
+        )
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+
+
+class Warning63(NeatWarning):
+    type_: str = "ViewsAlreadyExist"
+    code: int = 63
+    description: str = "This warning occurs when attempting to create views which already exist in DMS."
+    example: str = ""
+    fix: str = "Remove existing views and try again or update version of data model."
+
+    def __init__(self, views_ids: set[str] = set(), version: str = "", space: str = "", verbose=False):
+        self.message = (
+            f"Views {views_ids} version {version} already exist in space {space}. "
+            "Since update of views raise issues, "
+            "remove them first prior data model creation or update version of data model!"
+            "Aborting views creation!"
+        )
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+
+
+class Warning64(NeatWarning):
+    type_: str = "DataModelAlreadyExist"
+    code: int = 64
+    description: str = "This warning occurs when attempting to create data model which already exist in DMS."
+    example: str = ""
+    fix: str = "Remove existing data model and try again or update its version."
+
+    def __init__(self, data_model_id: str = "", version: str = "", space: str = "", verbose=False):
+        self.message = (
+            f"Data model {data_model_id} version {version} already exist in space {space}. "
+            "Since update of data model can raise issues, "
+            "remove it first or update its version!"
+            "Aborting data model creation!"
+        )
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+
+
 class Warning100(NeatWarning):
     type_: str = "NamespaceEndingFixed"
     code: int = 100
