@@ -248,7 +248,7 @@ class DataModel(BaseModel):
                 logging.info(f"Creating container {container_id} in space {self.space}")
                 _ = client.data_modeling.containers.apply(self.containers[container_id])
 
-    def create_views(self, client: CogniteClient, force: bool = False):
+    def create_views(self, client: CogniteClient):
         cdf_views = {}
         if views := client.data_modeling.views.list(space=self.space, limit=-1):
             cdf_views = {container.external_id: container for container in views}
