@@ -219,19 +219,53 @@ class DataModel(BaseModel):
         Args:
             client (CogniteClient): Cognite client.
         """
+        existing_data_model = self.find_existing_data_model(client)
+        existing_containers = self.find_existing_containers(client)
+        existing_views = self.find_existing_views(client)
+
+        if existing_data_model or existing_containers or existing_views:
+            raise _exceptions.Error60(existing_data_model, existing_containers, existing_views)
+
         self.create_space(client)
         self.create_containers(client)
         self.create_views(client)
         self.create_data_model(client)
 
-    def create_space(self, client: CogniteClient):
-        if not client.data_modeling.spaces.retrieve(space=self.space):
-            logging.info(f"Creating space {self.space}")
-            _ = client.data_modeling.spaces.apply(SpaceApply(space=self.space))
-        else:
-            logging.info(f"Space {self.space} already exists. Skipping creation!")
+    def find_existing_data_model(self, client: CogniteClient) -> set[str]:
+        """Checks if the data model exists in CDF.
 
-    def create_containers(self, client: CogniteClient):
+        Args:
+            client (CogniteClient): Cognite client.
+
+        Returns:
+            bool: True if the data model exists, False otherwise.
+        """
+
+        cdf_data_model = {}
+
+        if model := client.data_modeling.data_models.retrieve((self.space, self.external_id, self.version)):
+            cdf_data_model = model[0]
+            logging.warning(_exceptions.Warning64(self.external_id, self.version, self.space).message)
+            warnings.warn(
+                _exceptions.Warning64(self.external_id, self.version, self.space).message,
+                category=_exceptions.Warning64,
+                stacklevel=2,
+            )
+
+            return {cdf_data_model.external_id}
+        else:
+            return set()
+
+    def find_existing_containers(self, client: CogniteClient) -> set[str]:
+        """Checks if the containers exist in CDF.
+
+        Args:
+            client (CogniteClient): Cognite client.
+
+        Returns:
+            bool: True if the containers exist, False otherwise.
+        """
+
         cdf_containers = {}
         if containers := client.data_modeling.containers.list(space=self.space, limit=-1):
             cdf_containers = {container.external_id: container for container in containers}
@@ -243,12 +277,20 @@ class DataModel(BaseModel):
                 category=_exceptions.Warning62,
                 stacklevel=2,
             )
-        else:
-            for container_id in self.containers:
-                logging.info(f"Creating container {container_id} in space {self.space}")
-                _ = client.data_modeling.containers.apply(self.containers[container_id])
 
-    def create_views(self, client: CogniteClient):
+            return existing_containers
+        else:
+            return set()
+
+    def find_existing_views(self, client: CogniteClient) -> set[str]:
+        """Checks if the views exist in CDF.
+
+        Args:
+            client (CogniteClient): Cognite client.
+
+        Returns:
+            bool: True if the views exist, False otherwise.
+        """
         cdf_views = {}
         if views := client.data_modeling.views.list(space=self.space, limit=-1):
             cdf_views = {view.external_id: view for view in views}
@@ -260,36 +302,36 @@ class DataModel(BaseModel):
                 category=_exceptions.Warning63,
                 stacklevel=2,
             )
+            return existing_views
         else:
-            for view_id in self.views:
-                logging.info(f"Creating view {view_id} version {self.views[view_id].version} in space {self.space}")
-                _ = client.data_modeling.views.apply(self.views[view_id])
+            return set()
+
+    def create_space(self, client: CogniteClient):
+        logging.info(f"Creating space {self.space}")
+        _ = client.data_modeling.spaces.apply(SpaceApply(space=self.space))
+
+    def create_containers(self, client: CogniteClient):
+        for container_id in self.containers:
+            logging.info(f"Creating container {container_id} in space {self.space}")
+            _ = client.data_modeling.containers.apply(self.containers[container_id])
+
+    def create_views(self, client: CogniteClient):
+        for view_id in self.views:
+            logging.info(f"Creating view {view_id} version {self.views[view_id].version} in space {self.space}")
+            _ = client.data_modeling.views.apply(self.views[view_id])
 
     def create_data_model(self, client: CogniteClient):
-        cdf_data_model = {}
-
-        if model := client.data_modeling.data_models.retrieve((self.space, self.external_id, self.version)):
-            cdf_data_model = model[0]
-
-        if cdf_data_model:
-            logging.warning(_exceptions.Warning64(self.external_id, self.version, self.space).message)
-            warnings.warn(
-                _exceptions.Warning64(self.external_id, self.version, self.space).message,
-                category=_exceptions.Warning64,
-                stacklevel=2,
+        logging.info(f"Creating data model {self.external_id} version {self.version} in space {self.space}")
+        _ = client.data_modeling.data_models.apply(
+            DataModelApply(
+                name=self.name,
+                description=self.description,
+                space=self.space,
+                external_id=self.external_id,
+                version=self.version,
+                views=list(self.views.values()),
             )
-        else:
-            logging.info(f"Creating data model {self.external_id} version {self.version} in space {self.space}")
-            _ = client.data_modeling.data_models.apply(
-                DataModelApply(
-                    name=self.name,
-                    description=self.description,
-                    space=self.space,
-                    external_id=self.external_id,
-                    version=self.version,
-                    views=list(self.views.values()),
-                )
-            )
+        )
 
     def remove_data_model(self, client: CogniteClient):
         """Helper function to remove a data model, and all underlying views and containers from CDF.
