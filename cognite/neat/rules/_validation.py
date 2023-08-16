@@ -1,5 +1,5 @@
 import re
-from typing import overload
+from typing import Literal, overload
 import warnings
 
 from cognite.neat.rules import _exceptions
@@ -14,7 +14,9 @@ def are_entity_names_dms_compliant(
 
 
 @overload
-def are_entity_names_dms_compliant(transformation_rules: TransformationRules, return_report: Literal[False] = False) -> bool:
+def are_entity_names_dms_compliant(
+    transformation_rules: TransformationRules, return_report: Literal[False] = False
+) -> bool:
     ...
 
 
@@ -67,13 +69,13 @@ def are_entity_names_dms_compliant(
 
 @overload
 def are_properties_redefined(
-    transformation_rules: TransformationRules, return_report: bool = False
+    transformation_rules: TransformationRules, return_report: Literal[True]
 ) -> tuple[bool, list[dict]]:
     ...
 
 
 @overload
-def are_properties_redefined(transformation_rules: TransformationRules, return_report: bool = False) -> bool:
+def are_properties_redefined(transformation_rules: TransformationRules, return_report: Literal[False] = False) -> bool:
     ...
 
 
