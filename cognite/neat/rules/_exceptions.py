@@ -758,6 +758,42 @@ class Warning41(NeatWarning):
             self.message += f"\nFix: {self.fix}"
 
 
+class Error60(NeatError):
+    type_: str = "DataModelOrItsComponentsAlreadyExist"
+    code: int = 60
+    description: str = "This error is raised when attempting to create data model which already exist in DMS."
+    example: str = ""
+    fix: str = (
+        "Remove existing data model and underlying views and/or containers, or bump "
+        "version of data model and views and optionally delete containers."
+    )
+
+    def __init__(self, existing_data_model, existing_containers, existing_views, verbose=False):
+        self.existing_data_model = existing_data_model
+        self.existing_containers = existing_containers
+        self.existing_views = existing_views
+
+        self.message = "Aborting data model creation!\n"
+        if self.existing_data_model:
+            self.message += (
+                f"Data model {self.existing_data_model} already exists in DMS! Delete it first or bump its version!"
+            )
+        if self.existing_views:
+            self.message += (
+                f"Views {self.existing_views} already exist in DMS! Delete them first or bump their versions!"
+            )
+        if self.existing_containers:
+            self.message += f"Containers {self.existing_containers} already exist in DMS! Delete them first!"
+
+        self.message = "To remove existing data model and its components, use `self.remove_data_model(client)` method."
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
 class Warning60(NeatWarning):
     type_: str = "ContainerPropertyTypeUnsupported"
     code: int = 60
