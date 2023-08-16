@@ -48,12 +48,11 @@ class DataModel(BaseModel):
     )
 
     @classmethod
-    def from_rules(cls, transformation_rules: TransformationRules, fix_names: bool = False) -> Self:
+    def from_rules(cls, transformation_rules: TransformationRules) -> Self:
         """Generates a DataModel class instance from a TransformationRules instance.
 
         Args:
             transformation_rules (TransformationRules): instance of TransformationRules.
-            fix_names (bool, optional): Flag to fix non-compliant names. Defaults to False.
 
         Returns:
             DataModel: instance of DataModel.
