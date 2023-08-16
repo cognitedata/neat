@@ -251,7 +251,7 @@ class DataModel(BaseModel):
     def create_views(self, client: CogniteClient):
         cdf_views = {}
         if views := client.data_modeling.views.list(space=self.space, limit=-1):
-            cdf_views = {container.external_id: container for container in views}
+            cdf_views = {view.external_id: view for view in views}
 
         if existing_views := set(self.views.keys()).intersection(set(cdf_views.keys())):
             logging.warning(_exceptions.Warning63(existing_views, self.version, self.space).message)
