@@ -8,13 +8,13 @@ from cognite.neat.rules.models import TransformationRules, data_model_name_compl
 
 @overload
 def are_entity_names_dms_compliant(
-    transformation_rules: TransformationRules, return_report: bool = False
+    transformation_rules: TransformationRules, return_report: Literal[True]
 ) -> tuple[bool, list[dict]]:
     ...
 
 
 @overload
-def are_entity_names_dms_compliant(transformation_rules: TransformationRules, return_report: bool = False) -> bool:
+def are_entity_names_dms_compliant(transformation_rules: TransformationRules, return_report: Literal[False] = False) -> bool:
     ...
 
 
