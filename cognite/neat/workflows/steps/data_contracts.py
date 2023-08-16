@@ -34,11 +34,11 @@ class ClientData(DataContract):
 
 
 class CategorizedAssets(DataContract):
-    assets: Union[tuple[dict, dict], dict]
+    assets: tuple[dict, dict] | dict
 
 
 class CategorizedRelationships(DataContract):
-    relationships: Union[
-        tuple[dict[str, list[Union[Relationship, RelationshipUpdate]]], dict[str, set]],
-        dict[str, list[Union[Relationship, RelationshipUpdate]]],
-    ]
+    relationships: (
+        tuple[dict[str, list[Relationship | RelationshipUpdate]], dict[str, set]]
+        | dict[str, list[Relationship | RelationshipUpdate]]
+    )

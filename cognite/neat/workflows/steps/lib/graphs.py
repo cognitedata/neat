@@ -146,7 +146,7 @@ class LoadInstancesFromRdfFileToSourceGraph(Step):
         )
     ]
 
-    def run(self, configs: WorkflowConfigs, rules: RulesData, source_graph: SourceGraph) -> Tuple[FlowMessage]:
+    def run(self, configs: WorkflowConfigs, rules: RulesData, source_graph: SourceGraph) -> FlowMessage:
         if source_graph.graph.rdf_store_type.lower() in ("memory", "oxigraph"):
             if source_file := configs.get_config_item_value("source_rdf_store.file"):
                 source_graph.graph.import_from_file(Path(self.data_store_path) / Path(source_file))

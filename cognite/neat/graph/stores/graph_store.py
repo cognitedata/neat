@@ -223,7 +223,7 @@ class NeatGraphStore:
                 static_files.extend(["CURRENT", "IDENTITY", "LOCK"])
 
                 files_to_keep = set(static_files) | new_files
-                logging.info("Files to keep: %s", files_to_keep)
+                logging.info(f"Files to keep: {files_to_keep}")
                 for f in os.listdir(self.internal_storage_dir):
                     if f not in files_to_keep:
                         try:

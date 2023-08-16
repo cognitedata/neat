@@ -73,7 +73,7 @@ class StepsRegistry:
     def run_step(
         self,
         step_name: str,
-        flow_context: dict[str, Type[DataContract]],
+        flow_context: dict[str, DataContract],
         metrics=None,
     ) -> T_Output | None:
         for name, step_cls in self._step_classes:
@@ -87,7 +87,7 @@ class StepsRegistry:
                 missing_data = []
                 for parameter in parameters.values():
                     try:
-                        if parameter.annotation.__name__ == "FlowMessage":
+                        if parameter.annotation is FlowMessage:
                             input_data.append(flow_context["FlowMessage"])
                         else:
                             input_data.append(flow_context[parameter.annotation.__name__])

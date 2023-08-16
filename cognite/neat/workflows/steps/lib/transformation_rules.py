@@ -59,7 +59,7 @@ class LoadTransformationRules(Step):
         rules_metrics.labels({"component": "properties"}).set(len(transformation_rules.properties))
         logging.info(f"Loaded prefixes {str(transformation_rules.prefixes)} rules from {rules_file_path.name!r}.")
         output_text = f"Loaded {len(transformation_rules.properties)} rules"
-        return (FlowMessage(output_text=output_text), RulesData(rules=transformation_rules))
+        return FlowMessage(output_text=output_text), RulesData(rules=transformation_rules)
 
 
 class TransformSourceToSolutionGraph(Step):

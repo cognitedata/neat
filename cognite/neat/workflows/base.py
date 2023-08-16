@@ -274,15 +274,14 @@ class BaseWorkflow:
                     )
                 output = self.steps_registry.run_step(step.method, self.data, metrics=self.metrics)
                 if output is not None:
-                    if isinstance(output, tuple):
-                        for i, out_obj in enumerate(output):
-                            if isinstance(out_obj, FlowMessage):
-                                new_flow_message = out_obj
+                    outputs = output if isinstance(output, tuple) else (output,)
+                    for out_obj in outputs:
+                        if isinstance(out_obj, FlowMessage):
+                            new_flow_message = out_obj
+                        elif isinstance(out_obj, DataContract):
                             self.data[type(out_obj).__name__] = out_obj
-                    else:
-                        if isinstance(output, FlowMessage):
-                            new_flow_message = output
-                        self.data[type(output).__name__] = output
+                        else:
+                            raise InvalidStepOutputException(step.id, type(out_obj))
 
             elif step.stype == StepType.START_WORKFLOW_TASK_STEP:
                 if self.task_builder:

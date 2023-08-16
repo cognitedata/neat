@@ -23,14 +23,6 @@ from cognite.client.data_classes import AssetFilter
 from cognite.client import CogniteClient
 from ..data_contracts import CategorizedAssets, CategorizedRelationships, RulesData, SolutionGraph
 
-# with contextlib.suppress(ValueError):
-#     prom_cdf_resource_stats = Gauge(
-#         "neat_graph_to_asset_hierarchy_wf_cdf_resource_stats",
-#         "CDF resource stats before and after running fast_graph workflow",
-#         ["resource_type", "state"],
-#     )
-# with contextlib.suppress(ValueError):
-#     prom_data_issues_stats = Gauge("neat_graph_to_asset_hierarchy_wf_data_issues", "Data validation issues", ["type"])
 
 
 __all__ = [
@@ -58,8 +50,8 @@ class GenerateCDFAssetsFromGraph(Step):
 
     def run(
         self, rules: RulesData, cdf_client: CogniteClient, solution_graph: SolutionGraph, configs: WorkflowConfigs
-    ) -> Tuple[FlowMessage, CategorizedAssets]:
-        self.meta_keys = NeatMetadataKeys.load(
+    ) -> tuple[FlowMessage, CategorizedAssets]:
+        meta_keys = NeatMetadataKeys.load(
             configs.get_config_group_values_by_name("cdf.asset.metadata.", remove_group_prefix=True)
         )
         prom_cdf_resource_stats = self.metrics.register_metric(
@@ -169,7 +161,7 @@ class GenerateCDFAssetsFromGraph(Step):
         number_of_updates = len(report["decommission"])
         logging.info(f"Total number of updates: {number_of_updates}")
 
-        return (FlowMessage(output_text=msg), CategorizedAssets(assets=categorized_assets))
+        return FlowMessage(output_text=msg), CategorizedAssets(assets=categorized_assets)
 
 
 class UploadCDFAssets(Step):
@@ -250,7 +242,7 @@ class GenerateCDFRelationshipsFromGraph(Step):
         msg += f", { count_decommission_relationships } to be decommissioned"
         msg += f", { count_resurrect_relationships } to be resurrected"
 
-        return (FlowMessage(output_text=msg), CategorizedRelationships(relationships=categorized_relationships))
+        return FlowMessage(output_text=msg), CategorizedRelationships(relationships=categorized_relationships)
 
 
 class UploadCDFRelationships(Step):
