@@ -6,5 +6,3 @@ class InvalidStepOutputException(NeatError):
     code = 400
     description = "The step output is invalid."
     example = "The step output must be a dictionary."
-
-    
