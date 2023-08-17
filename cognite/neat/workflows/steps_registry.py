@@ -3,11 +3,12 @@ import inspect
 import os
 from pathlib import Path
 import sys
-from typing import Type
+import types
 
 from pydantic import BaseModel
+from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
 from cognite.neat.exceptions import InvalidWorkFlowError
-from cognite.neat.workflows.model import WorkflowConfigItem
+from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem, WorkflowConfigs
 import cognite.neat.workflows.steps.lib
 import logging
 
@@ -37,14 +38,15 @@ class StepsRegistry:
             return
         for name, step_cls in inspect.getmembers(cognite.neat.workflows.steps.lib):
             if inspect.isclass(step_cls):
-                self._step_classes.append([name, step_cls])
+                logging.info(f"Loading NEAT step {name}")
+                self._step_classes.append(step_cls)
         try:
             if self.user_steps_path:
                 self.load_custom_step_classes(self.user_steps_path, scope="global")
-        except Exception as e:
-            logging.warn(f"No user defined modules provided in {self.user_steps_path} : {e}")
+        except Exception:
+            logging.info(f"No user defined modules provided in {self.user_steps_path}")
 
-    def load_custom_step_classes(self, custom_steps_path: str, scope: str = "global"):
+    def load_custom_step_classes(self, custom_steps_path: Path, scope: str = "global"):
         sys.path.append(str(custom_steps_path))
         for step_module_name in os.listdir(custom_steps_path):
             step_module_path = custom_steps_path / Path(step_module_name)
@@ -54,7 +56,7 @@ class StepsRegistry:
                 continue
 
             steps_module = importlib.import_module(step_module_name.replace(".py", ""))
-            logging.info(f"Loading user defined module from {steps_module}")
+            logging.info(f"Loading user defined step from {steps_module}")
             for name, step_cls in inspect.getmembers(steps_module):
                 base_class = getattr(step_cls, "__bases__", None)
                 if (
@@ -68,18 +70,21 @@ class StepsRegistry:
                 if inspect.isclass(step_cls):
                     logging.info(f"Loading user defined step {name} class {step_cls.__name__}")
                     step_cls.scope = scope
-                    self._step_classes.append([name, step_cls])
+                    self._step_classes.append(step_cls)
 
     def run_step(
         self,
         step_name: str,
         flow_context: dict[str, DataContract],
-        metrics=None,
+        metrics: NeatMetricsCollector = None,
+        configs: WorkflowConfigs = None,
     ) -> T_Output | None:
-        for name, step_cls in self._step_classes:
-            if name == step_name:
-                step_obj = step_cls(metrics, self.data_store_path)
+        for step_cls in self._step_classes:
+            if step_cls.__name__ == step_name:
+                step_obj: Step = step_cls(self.data_store_path)
                 step_obj.set_flow_context(flow_context)
+                step_obj.set_metrics(metrics)
+                step_obj.set_workflow_configs(configs)
                 signature = inspect.signature(step_obj.run)
                 parameters = signature.parameters
                 is_valid = True
@@ -102,7 +107,7 @@ class StepsRegistry:
 
     def get_list_of_steps(self):
         steps: list[StepMetadata] = []
-        for name, step_cls in self._step_classes:
+        for step_cls in self._step_classes:
             try:
                 signature = inspect.signature(step_cls.run)
                 parameters = signature.parameters
@@ -113,15 +118,18 @@ class StepsRegistry:
                         input_data.append(parameter.annotation.__name__)
                 return_annotation = signature.return_annotation
                 if return_annotation:
-                    if return_annotation.__name__ == "Tuple":
+                    if isinstance(return_annotation, types.UnionType):
                         for annotation in return_annotation.__args__:
+                            output_data.append(annotation.__name__)
+                    elif isinstance(return_annotation, tuple):
+                        for annotation in return_annotation:
                             output_data.append(annotation.__name__)
                     else:
                         output_data.append(return_annotation.__name__)
                 # logging.info(f"Step {name} output data: {return_annotation}")
                 steps.append(
                     StepMetadata(
-                        name=name,
+                        name=step_cls.__name__,
                         scope=step_cls.scope,
                         input=input_data,
                         description=step_cls.description,
@@ -131,6 +139,6 @@ class StepsRegistry:
                     )
                 )
             except AttributeError as e:
-                logging.error(f"Step {name} does not have a run method.Error: {e}")
+                logging.error(f"Step {step_cls.__name__} does not have a run method.Error: {e}")
 
         return steps

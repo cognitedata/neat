@@ -1,9 +1,9 @@
 import logging
 from pathlib import Path
 import time
-from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem, WorkflowConfigs
-from cognite.neat.workflows.steps.step_model import Step
+from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
 from cognite.neat.graph import extractors
+from cognite.neat.workflows.steps.step_model import Step
 from ..data_contracts import RulesData, SolutionGraph
 from cognite.neat.rules.exporter import rules2graph_sheet
 from cognite.neat.utils.utils import add_triples
@@ -28,11 +28,11 @@ class GenerateDataCaptureSpreadsheet(Step):
         ),
     ]
 
-    def run(self, configs: WorkflowConfigs, rules: RulesData) -> FlowMessage:
+    def run(self, rules: RulesData) -> FlowMessage:
         logging.info("Generate graph capture sheet")
-        sheet_name = configs.get_config_item_value("graph_capture.file", "graph_capture_sheet.xlsx")
-        auto_identifier_type = configs.get_config_item_value("graph_capture_sheet.auto_identifier_type", None)
-        staging_dir_str = configs.get_config_item_value("graph_capture_sheet.storage_dir", "staging")
+        sheet_name = self.configs.get_config_item_value("graph_capture.file", "graph_capture_sheet.xlsx")
+        auto_identifier_type = self.configs.get_config_item_value("graph_capture_sheet.auto_identifier_type", None)
+        staging_dir_str = self.configs.get_config_item_value("graph_capture_sheet.storage_dir", "staging")
         logging.info(f"Auto identifier type {auto_identifier_type}")
         staging_dir = self.data_store_path / Path(staging_dir_str)
         staging_dir.mkdir(parents=True, exist_ok=True)

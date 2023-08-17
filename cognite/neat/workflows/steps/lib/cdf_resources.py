@@ -1,6 +1,5 @@
 import logging
 import time
-from typing import Tuple
 from cognite.neat.graph.loaders import upload_labels
 from cognite.neat.graph.loaders.core.rdf_to_assets import (
     NeatMetadataKeys,
@@ -16,14 +15,12 @@ from cognite.neat.graph.loaders.core.rdf_to_relationships import (
     upload_relationships,
 )
 from cognite.neat.graph.loaders.validator import validate_asset_hierarchy
-from cognite.neat.workflows.model import FlowMessage, WorkflowConfigs
+from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.step_model import Step
 from cognite.client.data_classes import AssetFilter
 
 from cognite.client import CogniteClient
 from ..data_contracts import CategorizedAssets, CategorizedRelationships, RulesData, SolutionGraph
-
-
 
 __all__ = [
     "CreateCDFLabels",
@@ -49,10 +46,10 @@ class GenerateCDFAssetsFromGraph(Step):
     category = "cdf_resources"
 
     def run(
-        self, rules: RulesData, cdf_client: CogniteClient, solution_graph: SolutionGraph, configs: WorkflowConfigs
-    ) -> tuple[FlowMessage, CategorizedAssets]:
+        self, rules: RulesData, cdf_client: CogniteClient, solution_graph: SolutionGraph
+    ) -> (FlowMessage, CategorizedAssets):
         meta_keys = NeatMetadataKeys.load(
-            configs.get_config_group_values_by_name("cdf.asset.metadata.", remove_group_prefix=True)
+            self.configs.get_config_group_values_by_name("cdf.asset.metadata.", remove_group_prefix=True)
         )
         prom_cdf_resource_stats = self.metrics.register_metric(
             "cdf_resources_stats",
@@ -68,7 +65,7 @@ class GenerateCDFAssetsFromGraph(Step):
             solution_graph.graph,
             rules.rules,
             stop_on_exception=True,
-            meta_keys=self.meta_keys,
+            meta_keys=meta_keys,
         )
         # UPDATE: 2023-04-05 - correct aggregation of assets in CDF for specific dataset
         total_assets_before = cdf_client.assets.aggregate(filter=AssetFilter(data_set_ids=[{"id": rules.dataset_id}]))[
@@ -208,7 +205,7 @@ class GenerateCDFRelationshipsFromGraph(Step):
 
     def run(
         self, rules: RulesData, cdf_client: CogniteClient, solution_graph: SolutionGraph
-    ) -> Tuple[FlowMessage, CategorizedRelationships]:
+    ) -> (FlowMessage, CategorizedRelationships):
         # create, categorize and upload relationships
         rdf_relationships = rdf2relationships(
             solution_graph.graph.get_graph(),

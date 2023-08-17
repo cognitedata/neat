@@ -1,7 +1,7 @@
 from pathlib import Path
 import time
 from cognite.neat.rules.exporter.rules2graphql import GraphQLSchema
-from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem, WorkflowConfigs
+from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
 from cognite.neat.workflows.steps.data_contracts import RulesData
 from cognite.neat.workflows.steps.step_model import Step
 
@@ -22,7 +22,7 @@ class GenerateGraphQLSchemaFromRules(Step):
         ),
     ]
 
-    def run(self, transformation_rules: RulesData, configs: WorkflowConfigs) -> FlowMessage:
+    def run(self, transformation_rules: RulesData) -> FlowMessage:
         data_model_gql = GraphQLSchema.from_rules(transformation_rules.rules, verbose=True).schema
 
         default_name = (
@@ -30,8 +30,8 @@ class GenerateGraphQLSchemaFromRules(Step):
             f"v{transformation_rules.rules.metadata.version.strip().replace('.', '_')}"
             ".graphql"
         )
-        schema_name = configs.get_config_item_value("fdm_schema.file", default_name)
-        staging_dir_str = configs.get_config_item_value("graph_ql_export.storage_dir", "staging")
+        schema_name = self.configs.get_config_item_value("fdm_schema.file", default_name)
+        staging_dir_str = self.configs.get_config_item_value("graph_ql_export.storage_dir", "staging")
         staging_dir = self.data_store_path / Path(staging_dir_str)
         staging_dir.mkdir(parents=True, exist_ok=True)
         fdm_model_full_path = staging_dir / schema_name

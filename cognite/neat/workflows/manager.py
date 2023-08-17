@@ -134,7 +134,6 @@ class WorkflowManager:
                 logging.info(f"Loading workflow {workflow_name} from {workflow_path}")
                 try:
                     workflow_definition_path = workflow_path / "workflow.yaml"
-                    logging.info(f"Loading workflow {workflow_name} definition from {workflow_definition_path}")
                     if os.path.exists(workflow_definition_path):
                         with open(workflow_definition_path, "r") as workflow_definition_file:
                             workflow_definition: WorkflowDefinition = BaseWorkflow.deserialize_definition(
@@ -143,6 +142,13 @@ class WorkflowManager:
                     else:
                         logging.info(f"Definition file {workflow_definition_path} not found, skipping")
                         continue
+
+                    # This is convinience feature when user wants to share self contained workflow
+                    # folder as single zip file.
+                    if (workflow_path / "rules").exists():
+                        logging.info(f"Copying rules from {workflow_path / 'rules'} to {self.rules_storage_path} ")
+                        for rule_file in os.listdir(workflow_path / "rules"):
+                            shutil.copy(workflow_path / "rules" / rule_file, self.rules_storage_path)
 
                     # Comment: All our workflows implementation_module is None
                     # what is this meant for ?, just to have different name?
@@ -159,13 +165,12 @@ class WorkflowManager:
                         module = importlib.reload(sys.modules[full_module_name])
                         load_user_defined_workflow = True
                     else:
-                        logging.info(f"Loading NEW workflow module {workflow_name}")
-                        logging.info(f"Loading NEW workflow module {full_module_name}")
                         try:
                             module = importlib.import_module(full_module_name)
                             load_user_defined_workflow = True
-                        except ModuleNotFoundError as e:
-                            logging.debug(f"ModuleNotFoundError {e}")
+                            logging.info(f"Workflow implementation class for {workflow_name} loaded successfully")
+                        except ModuleNotFoundError:
+                            pass
 
                     self.steps_registry.load_custom_step_classes(workflow_path, workflow_name)
                     # Dynamically load workflow classes which contain "NeatWorkflow" in their name

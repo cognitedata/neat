@@ -15,7 +15,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## [0.20.0] - 14-08-23
+## [0.21.0] - 17-08-23
 
 ### Changed
 

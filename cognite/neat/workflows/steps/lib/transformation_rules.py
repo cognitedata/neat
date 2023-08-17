@@ -1,6 +1,5 @@
 import logging
 from pathlib import Path
-from typing import Tuple
 
 from rdflib import RDF, Literal, URIRef
 from cognite.neat.constants import PREFIXES
@@ -9,7 +8,7 @@ from cognite.neat.rules import parse_rules_from_excel_file
 from cognite.neat.rules.exporter.rules2triples import get_instances_as_triples
 from cognite.neat.workflows import utils
 from cognite.neat.workflows.cdf_store import CdfStore
-from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem, WorkflowConfigs
+from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
 from cognite.neat.workflows.steps.step_model import Step
 
 from cognite.client import CogniteClient
@@ -35,10 +34,10 @@ class LoadTransformationRules(Step):
         WorkflowConfigItem(name="rules.version", value="", label="Optional version of the rules file"),
     ]
 
-    def run(self, configs: WorkflowConfigs, cdf_store: CdfStore) -> Tuple[FlowMessage, RulesData]:
-        rules_file = configs.get_config_item_value("rules.file")
+    def run(self, cdf_store: CdfStore) -> (FlowMessage, RulesData):
+        rules_file = self.configs.get_config_item_value("rules.file")
         rules_file_path = Path(self.data_store_path, "rules", rules_file)
-        version = configs.get_config_item_value("rules.version", default_value=None)
+        version = self.configs.get_config_item_value("rules.version", default_value=None)
         if not rules_file_path.exists():
             logging.info(f"Rules files doesn't exist in local fs {rules_file_path}")
 

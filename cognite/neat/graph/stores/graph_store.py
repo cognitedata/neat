@@ -14,7 +14,7 @@ from rdflib.query import Result
 
 from cognite.neat.constants import PREFIXES, DEFAULT_NAMESPACE
 from cognite.neat.graph.stores.configuration import RdfStoreType
-from cognite.neat.stores import oxrdflib
+from cognite.neat.graph.stores import oxrdflib
 from cognite.neat.graph.extractors.rdf_to_graph import rdf_file_to_graph
 
 prom_qsm = Summary("store_query_time_summary", "Time spent processing queries", ["query"])
@@ -229,13 +229,15 @@ class NeatGraphStore:
                         try:
                             os.remove(os.path.join(self.internal_storage_dir, f))
                         except Exception as e:
-                            logging.error("Error deleting file %s: %s", f, e)
+                            logging.error(f"Error deleting file {f}: {e}")
             except Exception as e:
-                logging.error("Error dropping graph : %s", e)
+                logging.error(f"Error dropping graph : {e}")
 
         elif self.rdf_store_type == RdfStoreType.GRAPHDB:
             r = requests.delete(f"{self.graph_db_rest_url}/repositories/{self.graph_name}/rdf-graphs/service?default")
-            logging.info("Dropped graph with state: %s", r.text)
+            logging.info(
+                f"Dropped graph with state: {r.text}",
+            )
 
     def query_to_dataframe(
         self,

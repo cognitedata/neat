@@ -1,11 +1,10 @@
 import logging
 from pathlib import Path
-from typing import Tuple
 from cognite.neat.constants import PREFIXES
 
 from cognite.neat.graph.stores import RdfStoreType
 from cognite.neat.graph.stores import NeatGraphStore, drop_graph_store
-from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem, WorkflowConfigs
+from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
 from cognite.neat.workflows.steps.step_model import Step
 
 from ..data_contracts import RulesData, SolutionGraph, SourceGraph
@@ -49,12 +48,12 @@ class ConfigureDefaultGraphStores(Step):
         ),
     ]
 
-    def run(self, configs: WorkflowConfigs, rules_data: RulesData) -> Tuple[FlowMessage, SourceGraph, SolutionGraph]:
+    def run(self, rules_data: RulesData) -> FlowMessage | SourceGraph | SolutionGraph:
         logging.info("Initializing source graph")
-        stores_to_configure = configs.get_config_item_value("stores_to_configure", "all")
-        source_store_dir = configs.get_config_item_value("source_rdf_store.disk_store_dir", "source_graph")
+        stores_to_configure = self.configs.get_config_item_value("stores_to_configure", "all")
+        source_store_dir = self.configs.get_config_item_value("source_rdf_store.disk_store_dir", "source_graph")
         source_store_dir = Path(self.data_store_path) / Path(source_store_dir) if source_store_dir else None
-        source_store_type = configs.get_config_item_value("source_rdf_store.type", RdfStoreType.MEMORY)
+        source_store_type = self.configs.get_config_item_value("source_rdf_store.type", RdfStoreType.MEMORY)
         if stores_to_configure in ["all", "source"]:
             if source_store_type == RdfStoreType.OXIGRAPH and "SourceGraph" in self.flow_context:
                 return FlowMessage(output_text="Stores already configured")
@@ -64,8 +63,8 @@ class ConfigureDefaultGraphStores(Step):
             )
             source_graph.init_graph(
                 source_store_type,
-                configs.get_config_item_value("source_rdf_store.query_url", ""),
-                configs.get_config_item_value("source_rdf_store.update_url", ""),
+                self.configs.get_config_item_value("source_rdf_store.query_url", ""),
+                self.configs.get_config_item_value("source_rdf_store.update_url", ""),
                 "neat-tnt",
                 internal_storage_dir=source_store_dir,
             )
@@ -75,9 +74,11 @@ class ConfigureDefaultGraphStores(Step):
                 )
 
         if stores_to_configure in ["all", "solution"]:
-            solution_store_dir = configs.get_config_item_value("solution_rdf_store.disk_store_dir", "solution_graph")
+            solution_store_dir = self.configs.get_config_item_value(
+                "solution_rdf_store.disk_store_dir", "solution_graph"
+            )
             solution_store_dir = Path(self.data_store_path) / Path(solution_store_dir) if solution_store_dir else None
-            solution_store_type = configs.get_config_item_value("solution_rdf_store.type", RdfStoreType.MEMORY)
+            solution_store_type = self.configs.get_config_item_value("solution_rdf_store.type", RdfStoreType.MEMORY)
 
             if solution_store_type == RdfStoreType.OXIGRAPH and "SolutionGraph" in self.flow_context:
                 return FlowMessage(output_text="Stores already configured")
@@ -87,13 +88,13 @@ class ConfigureDefaultGraphStores(Step):
 
             solution_graph.init_graph(
                 solution_store_type,
-                configs.get_config_item_value("solution_rdf_store.query_url", ""),
-                configs.get_config_item_value("solution_rdf_store.update_url", ""),
+                self.configs.get_config_item_value("solution_rdf_store.query_url", ""),
+                self.configs.get_config_item_value("solution_rdf_store.update_url", ""),
                 "tnt-solution",
                 internal_storage_dir=solution_store_dir,
             )
 
-            solution_graph.graph_db_rest_url = configs.get_config_item_value("solution_rdf_store.api_root_url", "")
+            solution_graph.graph_db_rest_url = self.configs.get_config_item_value("solution_rdf_store.api_root_url", "")
             if stores_to_configure == "solution":
                 return FlowMessage(output_text="Solution graph store configured successfully"), SolutionGraph(
                     graph=solution_graph
@@ -110,13 +111,13 @@ class ResetGraphStores(Step):
     description = "The step resets graph stores to their initial state (clears all data)."
     category = "graph_store"
 
-    def run(self, configs: WorkflowConfigs) -> FlowMessage:
-        source_store_type = configs.get_config_item_value("source_rdf_store.type", RdfStoreType.MEMORY)
-        solution_store_type = configs.get_config_item_value("solution_rdf_store.type", RdfStoreType.MEMORY)
+    def run(self) -> FlowMessage:
+        source_store_type = self.configs.get_config_item_value("source_rdf_store.type", RdfStoreType.MEMORY)
+        solution_store_type = self.configs.get_config_item_value("solution_rdf_store.type", RdfStoreType.MEMORY)
         if source_store_type == RdfStoreType.OXIGRAPH and solution_store_type == RdfStoreType.OXIGRAPH:
             if "SourceGraph" not in self.flow_context or "SolutionGraph" not in self.flow_context:
-                source_store_dir = configs.get_config_item_value("source_rdf_store.disk_store_dir", "source_graph")
-                solution_store_dir = configs.get_config_item_value(
+                source_store_dir = self.configs.get_config_item_value("source_rdf_store.disk_store_dir", "source_graph")
+                solution_store_dir = self.configs.get_config_item_value(
                     "solution_rdf_store.disk_store_dir", "solution_graph"
                 )
                 source_store_dir = Path(self.data_store_path) / Path(source_store_dir) if source_store_dir else None
@@ -146,9 +147,9 @@ class LoadInstancesFromRdfFileToSourceGraph(Step):
         )
     ]
 
-    def run(self, configs: WorkflowConfigs, rules: RulesData, source_graph: SourceGraph) -> FlowMessage:
+    def run(self, rules: RulesData, source_graph: SourceGraph) -> FlowMessage:
         if source_graph.graph.rdf_store_type.lower() in ("memory", "oxigraph"):
-            if source_file := configs.get_config_item_value("source_rdf_store.file"):
+            if source_file := self.configs.get_config_item_value("source_rdf_store.file"):
                 source_graph.graph.import_from_file(Path(self.data_store_path) / Path(source_file))
                 logging.info(f"Loaded {source_file} into source graph.")
             else:
