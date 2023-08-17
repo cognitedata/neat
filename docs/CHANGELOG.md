@@ -35,6 +35,11 @@ Changes are grouped as follows:
 ### Improved
 
 - Improved drop operations for NeatGraph store.
+## [0.20.0] - 08-08-23
+
+### Added
+
+- Generation of data model in DMS through `sdk` interaction with DMS endpoint
 
 ## [0.19.0] - 08-08-23
 

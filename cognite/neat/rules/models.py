@@ -22,6 +22,19 @@ from pydantic import (
 from pydantic.fields import FieldInfo
 from rdflib import XSD, Literal, Namespace, URIRef
 
+from cognite.client.data_classes.data_modeling.data_types import (
+    Timestamp,
+    Text,
+    Int32,
+    Int64,
+    Float32,
+    Boolean,
+    TimeSeriesReference,
+    FileReference,
+    SequenceReference,
+    Json,
+)
+
 from cognite.neat.constants import PREFIXES
 
 # from . import _exceptions
@@ -42,19 +55,24 @@ __all__ = ["Class", "Instance", "Metadata", "Prefixes", "Property", "Resource", 
 
 # mapping of XSD types to Python and GraphQL types
 DATA_TYPE_MAPPING = {
-    "boolean": {"python": bool, "GraphQL": "Boolean"},
-    "float": {"python": float, "GraphQL": "Float"},
-    "integer": {"python": "int", "GraphQL": "Int"},
-    "nonPositiveInteger": {"python": int, "GraphQL": "Int"},
-    "nonNegativeInteger": {"python": int, "GraphQL": "Int"},
-    "negativeInteger": {"python": "int", "GraphQL": "Int"},
-    "long": {"python": int, "GraphQL": "Int"},
-    "string": {"python": str, "GraphQL": "String"},
-    "anyURI": {"python": str, "GraphQL": "String"},
-    "normalizedString": {"python": str, "GraphQL": "String"},
-    "token": {"python": str, "GraphQL": "String"},
+    "boolean": {"python": bool, "GraphQL": "Boolean", "dms": Boolean},
+    "float": {"python": float, "GraphQL": "Float", "dms": Float32},
+    "integer": {"python": "int", "GraphQL": "Int", "dms": Int32},
+    "nonPositiveInteger": {"python": int, "GraphQL": "Int", "dms": Int32},
+    "nonNegativeInteger": {"python": int, "GraphQL": "Int", "dms": Int32},
+    "negativeInteger": {"python": "int", "GraphQL": "Int", "dms": Int32},
+    "long": {"python": int, "GraphQL": "Int", "dms": Int64},
+    "string": {"python": str, "GraphQL": "String", "dms": Text},
+    "anyURI": {"python": str, "GraphQL": "String", "dms": Text},
+    "normalizedString": {"python": str, "GraphQL": "String", "dms": Text},
+    "token": {"python": str, "GraphQL": "String", "dms": Text},
     # Graphql does not have a datetime type this is CDF specific
-    "dateTime": {"python": datetime, "GraphQL": "Timestamp"},
+    "dateTime": {"python": datetime, "GraphQL": "Timestamp", "dms": Timestamp},
+    # CDF specific types, not in XSD
+    "timeseries": {"python": TimeSeriesReference, "GraphQL": "TimeSeries", "dms": TimeSeriesReference},
+    "file": {"python": FileReference, "GraphQL": "File", "dms": FileReference},
+    "sequence": {"python": SequenceReference, "GraphQL": "Sequence", "dms": TimeSeriesReference},
+    "json": {"python": Json, "GraphQL": "Json", "dms": Json},
 }
 
 

@@ -1,8 +1,23 @@
 import re
+from typing import Literal, overload
 import warnings
 
 from cognite.neat.rules import _exceptions
 from cognite.neat.rules.models import TransformationRules, data_model_name_compliance_regex
+
+
+@overload
+def are_entity_names_dms_compliant(
+    transformation_rules: TransformationRules, return_report: Literal[True]
+) -> tuple[bool, list[dict]]:
+    ...
+
+
+@overload
+def are_entity_names_dms_compliant(
+    transformation_rules: TransformationRules, return_report: Literal[False] = False
+) -> bool:
+    ...
 
 
 def are_entity_names_dms_compliant(
@@ -50,6 +65,18 @@ def are_entity_names_dms_compliant(
         return flag, _exceptions.wrangle_warnings(validation_warnings)
     else:
         return flag
+
+
+@overload
+def are_properties_redefined(
+    transformation_rules: TransformationRules, return_report: Literal[True]
+) -> tuple[bool, list[dict]]:
+    ...
+
+
+@overload
+def are_properties_redefined(transformation_rules: TransformationRules, return_report: Literal[False] = False) -> bool:
+    ...
 
 
 def are_properties_redefined(
