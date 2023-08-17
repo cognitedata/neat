@@ -3,7 +3,7 @@ from rdflib import Namespace
 
 from cognite.neat import rules
 from cognite.neat.graph import loaders, extractors
-from cognite.neat.graph.extractors import NeatGraphStore
+from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.graph.extractors.mocks import generate_triples
 from cognite.neat.rules.parser import RawTables, read_excel_file_to_table_by_name
 from cognite.neat.rules.importer.ontology2excel import owl2excel
@@ -33,7 +33,7 @@ def solution_knowledge_graph(source_knowledge_graph, transformation_rules):
 
 @pytest.fixture(scope="function")
 def mock_knowledge_graph(transformation_rules):
-    mock_graph = extractors.NeatGraphStore(
+    mock_graph = NeatGraphStore(
         prefixes=transformation_rules.prefixes, namespace=transformation_rules.metadata.namespace
     )
     mock_graph.init_graph(base_prefix=transformation_rules.metadata.prefix)

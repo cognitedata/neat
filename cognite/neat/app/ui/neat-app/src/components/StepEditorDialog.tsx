@@ -11,10 +11,11 @@ import MenuItem from "@mui/material/MenuItem"
 import Select from "@mui/material/Select"
 import TextField from "@mui/material/TextField"
 import React, { useEffect, useState } from "react"
-import { WorkflowStepDefinition, WorkflowSystemComponent } from "types/WorkflowTypes"
+import { StepMetadata, StepRegistry, WorkflowDefinition, WorkflowStepDefinition, WorkflowSystemComponent } from "types/WorkflowTypes"
 import { getNeatApiRootUrl } from "./Utils"
 import LocalUploader from "./LocalUploader"
 import { InputLabel, Typography } from "@mui/material"
+import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined';
 
 export default function StepEditorDialog(props: any)
 {
@@ -23,6 +24,9 @@ export default function StepEditorDialog(props: any)
     const neatApiRootUrl = getNeatApiRootUrl();
     const [runPayload,setRunPayload] = useState<string>(JSON.stringify({"action":"approve"}))
     const [statusText,setStatusText] = useState<string>("")
+    const [stepRegistry,setStepRegistry] = useState<StepRegistry>()
+    const [selectedStepTemplate,setSelectedStepTemplate] = useState<StepMetadata>()
+    const [workflowDefinitions, setWorkflowDefinitions] = useState<WorkflowDefinition>();
 
     const handleDialogSave = () => {
         setDialogOpen(false);
@@ -72,7 +76,12 @@ export default function StepEditorDialog(props: any)
         if (props.open){
             setDialogOpen(true);
             setSelectedStep(props.step);
-            console.dir(props.step);
+            setStepRegistry(props.stepRegistry);
+            setWorkflowDefinitions(props.workflowDefinitions);
+            if (props.step.stype == "stdstep") {
+              setSelectedStepTemplate(props.stepRegistry?.getStepByName(props.step.method))
+            }
+            console.dir(props.stepRegistry);
         }
       }, [props.open]);
 
@@ -89,14 +98,27 @@ export default function StepEditorDialog(props: any)
             switch (value) {
               case "time_trigger":
                 updStep.params = { "interval": "every 60 minutes" }
+                updStep.trigger = true;
                 break;
+              case "http_trigger":
+                updStep.trigger = true;
+                break;
+
               case "start_workflow_task_step":
                 updStep.params = { "workflow_name": "", "sync": "false" }
                 break;
+
             }
             updStep["stype"] = value;
           } else {
             switch (name) {
+              case "method":
+                if (selectedStep.stype == "stdstep") {
+                  setSelectedStepTemplate(stepRegistry.getStepByName(value))
+                  workflowDefinitions.insertConfigItemFromTemplate(value,stepRegistry)
+                }
+                updStep.method = value;
+                break
               case "time-interval":
                 updStep.params["interval"] = value;
                 break;
@@ -155,13 +177,36 @@ return (
             </Select>
           </FormControl>
           <FormControl sx={{ marginTop: 1 }} fullWidth >
-            <TextField sx={{ marginTop: 1 }} id="step-config-descr" fullWidth label="Description" size='small' variant="outlined" value={selectedStep?.description} onChange={(event) => { handleStepConfigChange("description", event.target.value) }} />
             {(selectedStep?.stype == "time_trigger") && (
               <TextField sx={{ marginTop: 1 }} id="step-config-time-config" fullWidth label="Time interval" size='small' variant="outlined" value={selectedStep?.params["interval"]} onChange={(event) => { handleStepConfigChange("time-interval", event.target.value) }} />
             )}
             {(selectedStep?.stype == "stdstep") && (
-              <TextField sx={{ marginTop: 1 }} id="step-stdstep-method" fullWidth label="Name of the step" size='small' variant="outlined" value={selectedStep?.method} onChange={(event) => { handleStepConfigChange("method", event.target.value) }} />
+              <FormControl sx={{ marginTop: 2 }} fullWidth >
+              <InputLabel id="step_name_label">Step name</InputLabel>
+              <Select
+                id="step-stdstep-method"
+                labelId="step_name_label"
+                value={selectedStep?.method}
+                size='small'
+                label="Name of the step"
+                variant="outlined"
+                onChange={(event) => { handleStepConfigChange("method", event.target.value) }}
+                sx={{ marginBottom: 2 }}
+              >
+                {
+                  stepRegistry && stepRegistry.steps.map((item, i) => (
+                    <MenuItem value={item.name} key={item.name}> {item.category} : {item.name} </MenuItem>
+                  ))
+                }
+              </Select>
+              <Typography> Description : {selectedStepTemplate?.description} </Typography>
+              <Typography> Input : <ul> {selectedStepTemplate?.input.map((item,i)=> (<li>  {workflowDefinitions?.isStepInputConfigured(selectedStep?.id,item, stepRegistry) && (<CheckCircleOutlineOutlinedIcon sx={{ marginBottom: -0.5 }} color="success"/>) }  {item}</li>)) } </ul> </Typography>
+              <Typography> Output : <ul> {selectedStepTemplate?.output.map((item,i)=> (<li> {item} </li>))} </ul> </Typography>
+              <Typography> Configurations : <ul>  {selectedStepTemplate?.configuration_templates.map((item,i)=> (<li> {item.name} - {item.label} </li>))} </ul> </Typography>
+              </FormControl>
             )}
+            <TextField sx={{ marginTop: 1 }} id="step-config-descr" fullWidth label="Notes" size='small' variant="outlined" value={selectedStep?.description} onChange={(event) => { handleStepConfigChange("description", event.target.value) }} />
+
              {(selectedStep?.stype == "pystep") && (
               <TextField sx={{ marginTop: 1 }} id="step-pystep-method" fullWidth label="Override function name (optional)" size='small' variant="outlined" value={selectedStep?.method} onChange={(event) => { handleStepConfigChange("method", event.target.value) }} />
             )}
@@ -176,7 +221,6 @@ return (
             )}
 
             <FormControlLabel control={<Checkbox checked={selectedStep?.enabled} onChange={(event) => { handleStepConfigChange("enabled", event.target.checked) }} />} label="Is step enabled" />
-            <FormControlLabel control={<Checkbox checked={selectedStep?.trigger} onChange={(event) => { handleStepConfigChange("trigger", event.target.checked) }} />} label="Is trigger step" />
             {(selectedStep?.trigger == false) && (
             <TextField sx={{ marginTop: 1 }} id="step-config-max-retries" fullWidth label="Max retries on failure" size='small' type="number" variant="outlined" value={selectedStep?.max_retries} onChange={(event) => { handleStepConfigChange("max_retries", event.target.value) }} />
             )}
@@ -213,6 +257,7 @@ return (
             </FormControl>
 
           <Typography> {statusText} </Typography>
+
 
         </DialogContent>
         <DialogActions>

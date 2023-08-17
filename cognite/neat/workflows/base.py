@@ -1,24 +1,23 @@
-import inspect
 import json
 import logging
+from pathlib import Path
 import threading
 import time
 import traceback
 from threading import Event
-from typing import Type
 
 import yaml
 from cognite.client import CogniteClient
 from prometheus_client import Gauge
 
-from cognite.neat.graph.extractors.data_stores.metrics import NeatMetricsCollector
-from cognite.neat.exceptions import InvalidWorkFlowError
+from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
 from cognite.neat.utils.utils import retry_decorator
 from cognite.neat.workflows.model import (
     FlowMessage,
     StepExecutionStatus,
     StepType,
     WorkflowConfigItem,
+    WorkflowConfigs,
     WorkflowDefinition,
     WorkflowFullStateReport,
     WorkflowStartException,
@@ -27,13 +26,14 @@ from cognite.neat.workflows.model import (
     WorkflowStepEvent,
     WorkflowSystemComponent,
 )
+from cognite.neat.workflows.steps_registry import StepsRegistry
 from cognite.neat.workflows.tasks import WorkflowTaskBuilder
 
 from cognite.neat.app.api.configuration import Config
 from cognite.neat.utils.cdf import CogniteClientConfig
 from cognite.neat.workflows import utils, cdf_store
-from cognite.neat.workflows.composition_based.step_model import DataContract
-import cognite.neat.workflows.composition_based.steps
+from cognite.neat.workflows.steps.step_model import DataContract
+from cognite.neat.workflows._exceptions import InvalidStepOutputException
 
 summary_metrics = Gauge("neat_workflow_summary_metrics", "Workflow execution summary metrics", ["wf_name", "name"])
 steps_metrics = Gauge("neat_workflow_steps_metrics", "Workflow step level metrics", ["wf_name", "step_name", "name"])
@@ -45,6 +45,7 @@ class BaseWorkflow:
         self,
         name: str,
         client: CogniteClient,
+        steps_registry: StepsRegistry = None,
         workflow_steps: list[WorkflowStepDefinition] = None,
         default_dataset_id: int = None,
     ):
@@ -68,6 +69,7 @@ class BaseWorkflow:
         self.task_builder: WorkflowTaskBuilder = None
         self.rules_storage_path = None
         self.data_store_path = None
+        self.user_steps_path = None  # path to user defined steps
         self.cdf_store = (
             cdf_store.CdfStore(self.cdf_client, data_set_id=self.default_dataset_id)
             if self.default_dataset_id
@@ -76,7 +78,9 @@ class BaseWorkflow:
         self.metrics = NeatMetricsCollector(self.name, self.cdf_client)
         self.resume_event = Event()
         self.is_ephemeral = False  # if True, workflow will be deleted after completion
-        self.data: dict[str, Type[DataContract]] = {}
+        self.step_clases = None
+        self.data: dict[str, DataContract] = {}
+        self.steps_registry: StepsRegistry = steps_registry
 
     def start(self, sync=False, is_ephemeral=False, **kwargs) -> FlowMessage | None:
         """Starts workflow execution.sync=True will block until workflow is completed and
@@ -84,12 +88,16 @@ class BaseWorkflow:
         if self.state not in [WorkflowState.CREATED, WorkflowState.COMPLETED, WorkflowState.FAILED]:
             logging.error(f"Workflow {self.name} is already running")
             return None
+        self.data["StartFlowMessage"] = kwargs.get("flow_message", None)
+        self.data["CdfStore"] = self.cdf_store
+        self.data["CogniteClient"] = self.cdf_client
         self.state = WorkflowState.RUNNING
         self.start_time = time.time()
         self.end_time = None
         self.run_id = utils.generate_run_id()
         self.is_ephemeral = is_ephemeral
         self.execution_log = []
+
         if sync:
             return self._run_workflow(**kwargs)
 
@@ -103,6 +111,7 @@ class BaseWorkflow:
         logging.info(f"Starting workflow {self.name}")
         if flow_message := kwargs.get("flow_message"):
             self.flow_message = flow_message
+            self.data["FlowMessage"] = self.flow_message
         start_time = time.perf_counter()
         self.report_workflow_execution()
         try:
@@ -151,7 +160,6 @@ class BaseWorkflow:
         )
 
         step: WorkflowStepDefinition = trigger_steps[0]
-
         transition_steps = self.get_transition_step(step.transition_to)
 
         if len(transition_steps) == 0:
@@ -238,6 +246,7 @@ class BaseWorkflow:
         new_flow_message = None
         try:
             if step.stype == StepType.PYSTEP:
+                # Most likely will be discontinued in the future in favor of std steps
                 if step.method and hasattr(self, step.method):
                     method = getattr(self, step.method)
                 else:
@@ -258,46 +267,27 @@ class BaseWorkflow:
 
                 new_flow_message = method_runner()
             elif step.stype == StepType.STD_STEP:
-                for name, step_cls in inspect.getmembers(cognite.neat.workflows.composition_based.steps):
-                    if inspect.isclass(step_cls):
-                        if name == step.method:
-                            step_obj = step_cls(self.metrics)
-                            step_obj.set_global_configs(self.cdf_client, self.data_store_path, self.rules_storage_path)
-                            signature = inspect.signature(step_obj.run)
-                            parameters = signature.parameters
-                            is_valid = True
-                            input_data = []
-                            missing_data = []
-                            for parameter in parameters.values():
-                                try:
-                                    if parameter.annotation.__name__ == "FlowMessage":
-                                        input_data.append(self.flow_message)
-                                    else:
-                                        # Comment: self.data is suppose to be a dict of data contracts
-                                        # but it's not set anywhere. It is unclear where and how this
-                                        # this is suppose to be set
-                                        input_data.append(self.data[parameter.annotation.__name__])
-                                except KeyError:
-                                    is_valid = False
-                                    logging.error(f"Missing data for step {step.id} parameter {parameter.name}")
-                                    missing_data.append(parameter.annotation.__name__)
-                                    continue
-                            if not is_valid:
-                                raise InvalidWorkFlowError(step.id, missing_data)
-                            output = step_obj.run(*input_data)
-                            if output is not None:
-                                if isinstance(output, tuple):
-                                    for i, out_obj in enumerate(output):
-                                        if isinstance(out_obj, FlowMessage):
-                                            new_flow_message = out_obj
-                                        else:
-                                            self.data[type(out_obj).__name__] = out_obj
-                                else:
-                                    if isinstance(output, FlowMessage):
-                                        new_flow_message = output
-                                    else:
-                                        self.data[output.__name__] = output
-                            break
+                if self.steps_registry is None:
+                    raise Exception(
+                        f"Workflow step {step.id} can't be executed.Step registry is not configured or \
+                          not set as parameter in BaseWorkflow constructor"
+                    )
+                output = self.steps_registry.run_step(
+                    step.method, self.data, metrics=self.metrics, configs=self.get_configs()
+                )
+                if output is not None:
+                    outputs = output if isinstance(output, tuple) else (output,)
+                    for out_obj in outputs:
+                        if isinstance(out_obj, FlowMessage):
+                            new_flow_message = out_obj
+                        elif isinstance(out_obj, DataContract):
+                            self.data[type(out_obj).__name__] = out_obj
+                        else:
+                            raise InvalidStepOutputException(
+                                type_="InvalidStepOutputType",
+                                code=1,
+                                message=f"Object type {type(out_obj)} is not supported as step output",
+                            )
 
             elif step.stype == StepType.START_WORKFLOW_TASK_STEP:
                 if self.task_builder:
@@ -433,6 +423,12 @@ class BaseWorkflow:
     def add_step(self, step: WorkflowStepDefinition):
         self.workflow_steps.append(step)
 
+    def enable_step(self, step_id: str, enabled: bool = True):
+        """Enable or disable step in workflow. Primarily used for tests"""
+        for step in self.workflow_steps:
+            if step.id == step_id:
+                step.enabled = enabled
+
     def add_system_component(self, system_components: WorkflowSystemComponent):
         self.workflow_system_components.append(system_components)
 
@@ -467,8 +463,12 @@ class BaseWorkflow:
     def set_storage_path(self, storage_type: str, storage_path: str):
         if storage_type == "transformation_rules":
             self.rules_storage_path = storage_path
+            self.cdf_store = cdf_store.CdfStore(
+                self.cdf_client, data_set_id=self.default_dataset_id, rules_storage_path=self.rules_storage_path
+            )
         elif storage_type == "data_store":
             self.data_store_path = storage_path
+            self.user_steps_path = Path(self.data_store_path, "steps")
 
     def set_task_builder(self, task_builder: WorkflowTaskBuilder):
         self.task_builder = task_builder
@@ -514,3 +514,9 @@ class BaseWorkflow:
             return next((step for step in self.workflow_steps if step.id == step_id and step.enabled), None)
         else:
             return next((step for step in self.workflow_steps if step.trigger and step.enabled), None)
+
+    def get_context(self) -> dict[str, DataContract]:
+        return self.data
+
+    def get_configs(self) -> WorkflowConfigs:
+        return WorkflowConfigs(configs=self.configs)

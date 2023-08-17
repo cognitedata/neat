@@ -28,6 +28,35 @@ export class WorkflowConfigItem {
     group?: string;
 }
 
+export class StepMetadata {
+    name: string;
+    description: string = "";
+    input: string[];
+    output: string[];
+    configuration_templates: WorkflowConfigItem[] = [];
+    category: string = "";
+
+    constructor(name: string, input: string[], output: string[]) {
+        this.name = name;
+        this.input = input;
+        this.output = output;
+    }
+}
+
+export class StepRegistry {
+    steps: StepMetadata[] = [];
+    static fromJSON(json: any): StepRegistry {
+        let stepRegistry = new StepRegistry();
+        Object.assign(stepRegistry.steps, json);
+        return stepRegistry;
+    }
+    getStepByName(name: string): StepMetadata {
+        let step = this.steps.find(step => step.name == name);
+        return step;
+    }
+}
+
+
 export class WorkflowStepDefinition {
     id: string;
     label?: string;
@@ -79,12 +108,49 @@ export class WorkflowDefinition {
         };
     }
 
+    isStepInputConfigured(stepId: string,inputParamName: string ,stepRegistry: StepRegistry): boolean {
+        let step = this.steps.find(step => step.id == stepId);
+        if (step == null)
+            return false;
+        if (step.stype != "stdstep")
+            return false;
+        if (!stepRegistry)
+            return false;
+        let listOfAllOutputs = ["WorkflowConfigs","CdfStore","CogniteClient"];
+        this.steps?.forEach(step => {
+                let outputs = stepRegistry.getStepByName(step.method)?.output;
+                listOfAllOutputs = listOfAllOutputs.concat(outputs);
+        });
+
+        return listOfAllOutputs.includes(inputParamName)
+    }
+
+
     upsertConfigItem(config: WorkflowConfigItem) {
         let index = this.configs.findIndex(c => c.name == config.name);
         if (index >= 0) {
             this.configs[index] = config;
         }else {
             this.configs.push(config);
+        }
+    }
+
+    insertConfigItemFromTemplate(stepName : string,stepRegistry: StepRegistry) {
+        let step_template = stepRegistry.getStepByName(stepName);
+
+        console.log(" Insert check")
+        console.dir(step_template)
+        console.dir(this.configs)
+
+
+        for (let config of step_template.configuration_templates) {
+            let index = this.configs.findIndex(c => c.name == config.name);
+            if (index >= 0) {
+                continue;
+            }else {
+                config.group = step_template.name;
+                this.configs.push(config);
+            }
         }
     }
 

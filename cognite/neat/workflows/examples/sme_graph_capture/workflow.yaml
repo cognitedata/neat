@@ -1,261 +1,263 @@
 configs:
--   group: source_rdf_store
-    label: null
-    name: source_rdf_store.type
-    options: null
-    required: false
-    type: null
-    value: oxigraph
--   group: null
-    label: null
+-   group: LoadTransformationRules
+    label: Full name of the rules file
     name: rules.file
     options: null
     required: false
     type: null
-    value: power-grid-example.xlsx
--   group: null
-    label: null
-    name: data_capture.file
-    options: null
-    required: false
-    type: null
-    value: graph_capture_sheet.xlsx
--   group: null
-    label: null
+    value: Rules-Nordic44-to-TNT.xlsx
+-   group: LoadTransformationRules
+    label: Optional version of the rules file
     name: rules.version
     options: null
     required: false
     type: null
-    value: null
--   group: null
-    label: null
-    name: graph_capture_sheet.auto_identifier_type
-    options: null
-    required: false
-    type: null
-    value: index-based
--   group: null
-    label: null
+    value: ''
+-   group: GenerateDataCaptureSpreadsheet
+    label: File name of the data capture sheet
     name: graph_capture.file
     options: null
     required: false
     type: null
     value: graph_capture_sheet.xlsx
+-   group: GenerateDataCaptureSpreadsheet
+    label: Type of automatic identifier
+    name: graph_capture_sheet.auto_identifier_type
+    options: null
+    required: false
+    type: null
+    value: index-based
+-   group: GenerateDataCaptureSpreadsheet
+    label: Directory to store data capture sheets
+    name: graph_capture_sheet.storage_dir
+    options: null
+    required: false
+    type: null
+    value: staging
+-   group: ConfigureDefaultGraphStores
+    label: 'Data store type for source graph. Supported: oxigraph, memory,file, graphdb,
+        sparql. '
+    name: source_rdf_store.type
+    options: null
+    required: false
+    type: null
+    value: oxigraph
+-   group: ConfigureDefaultGraphStores
+    label: 'Data store type for solutioin graph. Supported: oxigraph, memory,file,
+        graphdb, sparql'
+    name: solution_rdf_store.type
+    options: null
+    required: false
+    type: null
+    value: oxigraph
+-   group: ConfigureDefaultGraphStores
+    label: Local directory for source graph store
+    name: source_rdf_store.disk_store_dir
+    options: null
+    required: false
+    type: null
+    value: source-graph-store
+-   group: ConfigureDefaultGraphStores
+    label: Local directory for solution graph store
+    name: solution_rdf_store.disk_store_dir
+    options: null
+    required: false
+    type: null
+    value: solution-graph-store
+-   group: ConfigureDefaultGraphStores
+    label: 'Defines which stores to configure. Possible values: all, source, solution'
+    name: stores_to_configure
+    options: null
+    required: false
+    type: null
+    value: all
+-   group: ConfigureDefaultGraphStores
+    label: Root url for graphdb or sparql endpoint
+    name: solution_rdf_store.api_root_url
+    options: null
+    required: false
+    type: null
+    value: ''
 description: null
 implementation_module: null
 name: sme_graph_capture
 steps:
 -   description: null
     enabled: true
-    id: step_trigger
-    label: Start graph capture sheet generation process
+    id: step_sheet_gen_trigger
+    label: 'Start spreadsheet generation '
     max_retries: 0
     method: null
-    params: {}
+    params:
+        workflow_start_method: persistent_blocking
     retry_delay: 3
     stype: http_trigger
     system_component_id: null
     transition_to:
-    - run_experiment_1
-    - load_transformation_rules
+    - step_load_rules
     trigger: true
     ui_config:
-        pos_x: 337
-        pos_y: 14
+        pos_x: 279
+        pos_y: 85
 -   description: null
     enabled: true
-    id: load_transformation_rules
-    label: Load transformation rules
-    max_retries: 1
-    method: null
+    id: step_load_rules
+    label: Load rules
+    max_retries: 0
+    method: LoadTransformationRules
     params: {}
     retry_delay: 3
-    stype: pystep
+    stype: stdstep
     system_component_id: null
     transition_to:
-    - error_handler
-    - step_45507
-    - configure_graph_store
+    - step_generate_spreadsheet
+    - step_generate_data_capture_sheet
     trigger: false
     ui_config:
-        pos_x: 335
-        pos_y: 124
+        pos_x: 281
+        pos_y: 214
 -   description: null
     enabled: true
-    id: configure_graph_store
-    label: Configure graph store
+    id: step_generate_data_capture_sheet
+    label: Generate data capture spreadsheet
     max_retries: 0
-    method: null
+    method: GenerateDataCaptureSpreadsheet
     params: {}
     retry_delay: 3
-    stype: pystep
-    system_component_id: null
-    transition_to:
-    - generate_graph_capture_sheet
-    trigger: false
-    ui_config:
-        pos_x: 335
-        pos_y: 230
--   description: null
-    enabled: true
-    id: generate_graph_capture_sheet
-    label: Generate graph capture sheet
-    max_retries: 0
-    method: null
-    params: {}
-    retry_delay: 3
-    stype: pystep
+    stype: stdstep
     system_component_id: null
     transition_to: []
     trigger: false
     ui_config:
-        pos_x: 335
-        pos_y: 341
--   description: ''
+        pos_x: 281
+        pos_y: 334
+-   description: null
     enabled: true
-    id: step_process_captured_data
-    label: Click here to upload the graph capture spreadsheet and start the process
+    id: step_process_capture_spreadsheet
+    label: Start processing captured data
     max_retries: 0
-    method: null
+    method: ProcessDataCaptureSpreadsheetIntoSolutionGraph
     params: {}
     retry_delay: 3
     stype: file_uploader
     system_component_id: null
     transition_to:
-    - step_604220
-    - file_generator
-    - load_transformation_rules_2
-    trigger: true
+    - step_load_rules_2
+    trigger: false
     ui_config:
         pos_x: 669
-        pos_y: 10
+        pos_y: 82
 -   description: null
     enabled: true
-    id: load_transformation_rules_2
-    label: Loading transformation rules
+    id: step_configure_store
+    label: Configure solution graph data store
     max_retries: 0
-    method: step_load_transformation_rules
+    method: ConfigureDefaultGraphStores
     params: {}
     retry_delay: 3
-    stype: pystep
+    stype: stdstep
     system_component_id: null
     transition_to:
-    - configure_graph_store_2
+    - step_process_spreadsheet_into_graph
     trigger: false
     ui_config:
-        pos_x: 668
-        pos_y: 135
+        pos_x: 669
+        pos_y: 271
 -   description: null
     enabled: true
-    id: configure_graph_store_2
-    label: Configuring graph store
+    id: step_process_spreadsheet_into_graph
+    label: Process captured data into solution graph
     max_retries: 0
-    method: step_configure_graph_store
+    method: ProcessDataCaptureSpreadsheetIntoSolutionGraph
     params: {}
     retry_delay: 3
-    stype: pystep
+    stype: stdstep
     system_component_id: null
     transition_to:
-    - process_graph_capture_sheet
+    - step_generate_assets
     trigger: false
     ui_config:
-        pos_x: 668
-        pos_y: 225
+        pos_x: 666
+        pos_y: 402
 -   description: null
     enabled: true
-    id: process_graph_capture_sheet
-    label: Load captured graph from spreadsheet to graph
+    id: step_load_rules_2
+    label: Load rules
     max_retries: 0
-    method: null
+    method: LoadTransformationRules
     params: {}
     retry_delay: 3
-    stype: pystep
+    stype: stdstep
     system_component_id: null
     transition_to:
-    - create_cdf_labels
+    - step_configure_store
     trigger: false
     ui_config:
-        pos_x: 668
-        pos_y: 332
+        pos_x: 667
+        pos_y: 189
 -   description: null
     enabled: true
-    id: create_cdf_labels
-    label: Create missing CDF labels
+    id: step_generate_assets
+    label: Generate assets
     max_retries: 0
-    method: null
+    method: GenerateCDFAssetsFromGraph
     params: {}
     retry_delay: 3
-    stype: pystep
+    stype: stdstep
     system_component_id: null
     transition_to:
-    - prepare_cdf_assets
+    - step_upload_assets
     trigger: false
     ui_config:
-        pos_x: 668
-        pos_y: 450
+        pos_x: 664
+        pos_y: 531
 -   description: null
     enabled: true
-    id: prepare_cdf_assets
-    label: Prepare CDF assets
+    id: step_upload_assets
+    label: Upload assets
     max_retries: 0
-    method: null
+    method: UploadCDFAssets
     params: {}
     retry_delay: 3
-    stype: pystep
+    stype: stdstep
     system_component_id: null
     transition_to:
-    - upload_cdf_assets
+    - step_generate_relationships
     trigger: false
     ui_config:
-        pos_x: 668
-        pos_y: 550
+        pos_x: 660
+        pos_y: 626
 -   description: null
     enabled: true
-    id: upload_cdf_assets
-    label: Upload Assets to CDF
+    id: step_generate_relationships
+    label: Generate relationships
     max_retries: 0
-    method: null
+    method: GenerateCDFRelationshipsFromGraph
     params: {}
     retry_delay: 3
-    stype: pystep
+    stype: stdstep
     system_component_id: null
     transition_to:
-    - prepare_cdf_relationships
+    - step_upload_relationship
     trigger: false
     ui_config:
-        pos_x: 668
-        pos_y: 650
+        pos_x: 664
+        pos_y: 717
 -   description: null
     enabled: true
-    id: prepare_cdf_relationships
-    label: Preparing CDF relationships
+    id: step_upload_relationship
+    label: Upload relationships
     max_retries: 0
-    method: null
-    params: null
+    method: UploadCDFRelationships
+    params: {}
     retry_delay: 3
-    stype: pystep
-    system_component_id: null
-    transition_to:
-    - upload_cdf_relationships
-    trigger: false
-    ui_config:
-        pos_x: 668
-        pos_y: 750
--   description: Uploading CDF relationships to CDF
-    enabled: true
-    id: upload_cdf_relationships
-    label: Uploading relationships to CDF
-    max_retries: 0
-    method: null
-    params: null
-    retry_delay: 3
-    stype: pystep
+    stype: stdstep
     system_component_id: null
     transition_to: []
     trigger: false
     ui_config:
-        pos_x: 668
-        pos_y: 874
+        pos_x: 664
+        pos_y: 805
 system_components:
 -   description: null
     id: define_data_model

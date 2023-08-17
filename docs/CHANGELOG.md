@@ -15,6 +15,26 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.21.0] - 17-08-23
+
+### Changed
+
+- BIG workflow refactoring. New workflow concept is more modular and easier to extend.
+- Steps are defined as independent components with well defined inputs and output data contracts/types and configurations.
+- Steps are now reusable and scoped to 3 categories: `global`, `project` and `workflow`. Global steps are available to all workflows and maintained by NEAT project, `project`scoped steps are available to all workflows in a project and `workflow` scoped steps defined and available only to a specific workflow.
+- Workflows are now defined as a composition of steps via manifest file , pytyhon file is no longer needed. Workflow Base class inheritance is still possible but not recomended and reserved for very advanced use cases.
+
+### Removed
+
+- Removed `base`and `default` workflows.
+
+### Added
+
+- Workflows can be added via UI.
+
+### Improved
+
+- Improved drop operations for NeatGraph store.
 ## [0.20.0] - 08-08-23
 
 ### Added

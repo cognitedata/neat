@@ -8,10 +8,11 @@ from cognite import neat
 from cognite.neat.constants import EXAMPLE_WORKFLOWS
 from cognite.neat.rules.models import TransformationRules
 from cognite.neat.workflows.base import BaseWorkflow
-from cognite.neat.workflows.model import WorkflowDefinition
+from cognite.neat.workflows.model import WorkflowConfigItem, WorkflowDefinition
 from cognite.neat.app.api.data_classes.rest import RuleRequest, RunWorkflowRequest, QueryRequest
 from tests.app.api.memory_cognite_client import MemoryClient
 from cognite.neat.app.api.utils.query_templates import query_templates
+from cognite.neat.app.api.configuration import neat_app
 
 
 @pytest.fixture(scope="session")
@@ -26,7 +27,7 @@ def workflow_definitions() -> list[WorkflowDefinition]:
 
 @pytest.fixture(scope="session")
 def workflow_names() -> list[str]:
-    return [example.name for example in EXAMPLE_WORKFLOWS.iterdir()]
+    return [example.name for example in EXAMPLE_WORKFLOWS.iterdir() if not example.name.startswith(".")]
 
 
 def test_workflow_workflows(workflow_names: list[str], fastapi_client: TestClient):
@@ -41,7 +42,7 @@ def test_workflow_workflows(workflow_names: list[str], fastapi_client: TestClien
 def test_rules(transformation_rules: TransformationRules, fastapi_client: TestClient):
     # transformation_rules load Rules-Nordic44-to-TNT.xlsx
     # /api/rules fetch rules related to default workflow which are Rules-Nordic44-to-TNT.xlsx
-    response = fastapi_client.get("/api/rules")
+    response = fastapi_client.get("/api/rules", params={"workflow_name": "graph_to_asset_hierarchy"})
 
     # Assert
     assert response.status_code == 200
@@ -172,6 +173,13 @@ def test_query(
     fastapi_client: TestClient,
 ):
     # Act
+    workflow = neat_app.workflow_manager.get_workflow(workflow_name)
+    configs = workflow.get_configs()
+    configs.set_config_item(WorkflowConfigItem(name="source_rdf_store.type", value="memory"))
+    configs.set_config_item(WorkflowConfigItem(name="solution_rdf_store.type", value="memory"))
+    workflow.enable_step("step_generate_assets", False)
+    neat_app.workflow_manager.start_workflow_instance(workflow_name, sync=True)
+
     response = fastapi_client.post(
         "/api/query",
         json=QueryRequest(
@@ -194,6 +202,11 @@ def test_execute_rule(
     fastapi_client: TestClient,
 ):
     # Act
+    workflow = neat_app.workflow_manager.get_workflow(workflow_name)
+    if "SourceGraph" not in workflow.get_context():
+        workflow.enable_step("step_generate_assets", False)
+        neat_app.workflow_manager.start_workflow_instance(workflow_name, sync=True)
+
     response = fastapi_client.post(
         "/api/execute-rule",
         json=RuleRequest(

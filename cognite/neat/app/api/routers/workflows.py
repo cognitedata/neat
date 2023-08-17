@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 from fastapi import APIRouter
+from fastapi import HTTPException
 from fastapi.responses import FileResponse
 from cognite.neat.app.api.configuration import neat_app
 from cognite.neat.app.api.data_classes.rest import DownloadFromCdfRequest, RunWorkflowRequest, UploadToCdfRequest
@@ -8,7 +9,6 @@ from cognite.neat.workflows import WorkflowFullStateReport
 from cognite.neat.workflows.base import WorkflowDefinition
 from cognite.neat.workflows.migration.wf_manifests import migrate_wf_manifest
 from cognite.neat.workflows.model import FlowMessage
-
 
 router = APIRouter()
 
@@ -26,15 +26,31 @@ def start_workflow(request: RunWorkflowRequest):
 @router.get("/api/workflow/stats/{workflow_name}", response_model=WorkflowFullStateReport)
 def get_workflow_stats(
     workflow_name: str,
-) -> WorkflowFullStateReport:
+) -> WorkflowFullStateReport | None:
     logging.info("Hit the get_workflow_stats endpoint")
     workflow = neat_app.workflow_manager.get_workflow(workflow_name)
+    if workflow is None:
+        raise HTTPException(status_code=404, detail="workflow not found")
     return workflow.get_state()
 
 
 @router.get("/api/workflow/workflows")
 def get_workflows():
     return {"workflows": neat_app.workflow_manager.get_list_of_workflows()}
+
+
+@router.post("/api/workflow/create")
+def create_new_workflow(request: WorkflowDefinition):
+    new_workflow_definition = neat_app.workflow_manager.create_new_workflow(
+        request.name, request.description, "manifest"
+    )
+    return {"workflow": new_workflow_definition}
+
+
+@router.delete("/api/workflow/{workflow_name}")
+def delete_workflow(workflow_name: str):
+    neat_app.workflow_manager.delete_workflow(workflow_name)
+    return {"result": "ok"}
 
 
 @router.get("/api/workflow/executions")
@@ -112,4 +128,20 @@ def get_pre_cdf_assets(workflow_name: str):
     workflow = neat_app.workflow_manager.get_workflow(workflow_name)
     if workflow is None:
         return {"assets": []}
-    return {"assets": workflow.categorized_assets}
+    return {"assets": workflow.data["CategorizedAssets"]}
+
+
+@router.get("/api/workflow/context/{workflow_name}")
+def get_context(workflow_name: str):
+    workflow = neat_app.workflow_manager.get_workflow(workflow_name)
+    context = workflow.get_context()
+    objects_in_context = []
+    for key, value in context.items():
+        objects_in_context.append({"name": key, "type": type(value).__name__})
+    return {"context": objects_in_context}
+
+
+@router.get("/api/workflow/registered-steps")
+def get_steps():
+    steps_registry = neat_app.workflow_manager.get_steps_registry()
+    return {"steps": steps_registry.get_list_of_steps()}

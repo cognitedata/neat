@@ -1,9 +1,7 @@
-FROM python:3.11-slim as base
+FROM python:3.11.4-buster as build-toolkit
 
-########################################################################
-###########Need to install Rust and other dependencies##################
+#### Configuring rust build environment ####
 RUN apt-get -qq update
-
 RUN apt-get install -y -q \
     build-essential \
     openssl \
@@ -14,25 +12,26 @@ RUN apt-get install -y -q \
     clang \
     libpq-dev \
     curl
-
 # Get Rust; NOTE: using sh for better compatibility with other base images
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
 
+####  Building non-python dependencies using build toolkit ####
+FROM build-toolkit as build
 # Add .cargo/bin to PATH
 ENV PATH="/root/.cargo/bin:${PATH}"
-###########Need to above to install Rust and other dependencies#########
-########################################################################
 
 #Copy the requirements file from host to container
 COPY requirements.txt /app/
 WORKDIR /app/
+RUN pip install -r requirements.txt
+
+# Building final image
+FROM python:3.11.4-slim-buster as runtime
+COPY --from=build /usr/local/lib/python3.11/site-packages  /usr/local/lib/python3.11/site-packages
+COPY --from=build /usr/local/bin /usr/local/bin
 # Copy the application source code from host to container
 COPY cognite/neat /app/cognite/neat
-
-RUN mkdir -p /app/data \
-    && chmod -R 777 /app/data \
-    && pip install -r requirements.txt
-
+RUN mkdir -p /app/data && chmod -R 777 /app/data
 WORKDIR /app
 # Default config file
 ENV NEAT_CONFIG_PATH=/app/data/config.yaml
