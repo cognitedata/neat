@@ -26,7 +26,7 @@ class Ontology(OntologyModel):
     def from_rules(cls, transformation_rules: TransformationRules) -> Self:
         properties_redefined, redefinition_warnings = are_properties_redefined(transformation_rules, return_report=True)
         if properties_redefined:
-            raise exceptions.Error11(report=generate_exception_report(redefinition_warnings))
+            raise exceptions.PropertiesDefinedMultipleTimes(report=generate_exception_report(redefinition_warnings))
 
         return cls(
             properties=[
@@ -208,7 +208,7 @@ class OWLProperty(OntologyModel):
         """Here list of properties is a list of properties with the same id, but different definitions."""
 
         if not cls.same_property_id(definitions):
-            raise exceptions.Error30()
+            raise exceptions.PropertyDefinitionsNotForSameProperty()
 
         prop_dict = {
             "id_": namespace[definitions[0].property_id],
@@ -240,8 +240,10 @@ class OWLProperty(OntologyModel):
     def is_multi_type(cls, v, info: FieldValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                exceptions.Warning30(remove_namespace(info.data["id_"]), [remove_namespace(t) for t in v]).message,
-                category=exceptions.Warning30,
+                exceptions.OntologyMultiTypeProperty(
+                    remove_namespace(info.data["id_"]), [remove_namespace(t) for t in v]
+                ).message,
+                category=exceptions.OntologyMultiTypeProperty,
                 stacklevel=2,
             )
         return v
@@ -250,8 +252,10 @@ class OWLProperty(OntologyModel):
     def is_multi_range(cls, v, info: FieldValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                exceptions.Warning31(remove_namespace(info.data["id_"]), [remove_namespace(t) for t in v]).message,
-                category=exceptions.Warning31,
+                exceptions.OntologyMultiRangeProperty(
+                    remove_namespace(info.data["id_"]), [remove_namespace(t) for t in v]
+                ).message,
+                category=exceptions.OntologyMultiRangeProperty,
                 stacklevel=2,
             )
         return v
@@ -260,8 +264,10 @@ class OWLProperty(OntologyModel):
     def is_multi_domain(cls, v, info: FieldValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                exceptions.Warning32(remove_namespace(info.data["id_"]), [remove_namespace(t) for t in v]).message,
-                category=exceptions.Warning32,
+                exceptions.OntologyMultiDomainProperty(
+                    remove_namespace(info.data["id_"]), [remove_namespace(t) for t in v]
+                ).message,
+                category=exceptions.OntologyMultiDomainProperty,
                 stacklevel=2,
             )
         return v
@@ -270,8 +276,8 @@ class OWLProperty(OntologyModel):
     def has_multi_name(cls, v, info: FieldValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                exceptions.Warning33(remove_namespace(info.data["id_"]), v).message,
-                category=exceptions.Warning33,
+                exceptions.OntologyMultiLabeledProperty(remove_namespace(info.data["id_"]), v).message,
+                category=exceptions.OntologyMultiLabeledProperty,
                 stacklevel=2,
             )
         return v
@@ -280,8 +286,8 @@ class OWLProperty(OntologyModel):
     def has_multi_comment(cls, v, info: FieldValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                exceptions.Warning34(remove_namespace(info.data["id_"])).message,
-                category=exceptions.Warning34,
+                exceptions.OntologyMultiDefinitionProperty(remove_namespace(info.data["id_"])).message,
+                category=exceptions.OntologyMultiDefinitionProperty,
                 stacklevel=2,
             )
         return v

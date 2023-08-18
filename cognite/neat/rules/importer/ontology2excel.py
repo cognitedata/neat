@@ -351,16 +351,16 @@ def _validate_excel_file(excel_filepath: Path):
     report = ""
     if validation_errors:
         warnings.warn(
-            exceptions.Warning1().message,
-            category=exceptions.Warning1,
+            exceptions.OWLGeneratedTransformationRulesHasErrors().message,
+            category=exceptions.OWLGeneratedTransformationRulesHasErrors,
             stacklevel=2,
         )
         report = generate_exception_report(validation_errors, "Errors")
 
     if validation_warnings:
         warnings.warn(
-            exceptions.Warning2().message,
-            category=exceptions.Warning2,
+            exceptions.OWLGeneratedTransformationRulesHasWarnings().message,
+            category=exceptions.OWLGeneratedTransformationRulesHasWarnings,
             stacklevel=2,
         )
         report += generate_exception_report(validation_warnings, "Warnings")

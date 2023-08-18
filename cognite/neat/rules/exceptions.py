@@ -11,97 +11,13 @@ CODES:
 
 #########################################
 # Metadata sheet Error Codes 100 - 199: #
-
+from cognite.neat.exceptions import NeatException, NeatWarning
 from typing import Any
-from warnings import WarningMessage
 
-from pydantic_core import ErrorDetails, PydanticCustomError
 from rdflib import URIRef
 
 
-def wrangle_warnings(list_of_warnings: list[WarningMessage]) -> list[dict]:
-    warning_list: list[dict] = []
-    for warning in list_of_warnings:
-        if issubclass(warning.message.__class__, NeatWarning):
-            warning_list.append(_neat_warning_to_dict(warning))
-        elif issubclass(warning.message.__class__, Warning):
-            warning_list.append(_python_warning_to_dict(warning))
-    return warning_list
-
-
-def _neat_warning_to_dict(warning: WarningMessage) -> dict:
-    return {
-        "type": warning.category.type_,
-        "loc": (),
-        "msg": str(warning.message),
-        "input": None,
-        "ctx": dict(
-            type_=warning.category.type_,
-            code=warning.category.code,
-            description=warning.category.description,
-            example=warning.category.example,
-            fix=warning.category.fix,
-        ),
-    }
-
-
-def _python_warning_to_dict(warning: WarningMessage) -> dict:
-    return {
-        "type": warning.category,
-        "loc": (),
-        "msg": str(warning.message),
-        "input": None,
-        "ctx": dict(
-            type_=warning.category,
-            code=None,
-            description=None,
-            example=None,
-            fix=None,
-        ),
-    }
-
-
-class NeatError(Exception):
-    type_: str
-    code: int
-    description: str
-    example: str
-    fix: str
-    message: str
-
-    def to_pydantic_custom_error(self):
-        return PydanticCustomError(
-            self.type_,
-            self.message,
-            dict(type_=self.type_, code=self.code, description=self.description, example=self.example, fix=self.fix),
-        )
-
-    def to_error_dict(self) -> ErrorDetails:
-        return {
-            "type": self.type_,
-            "loc": (),
-            "msg": self.message,
-            "input": None,
-            "ctx": dict(
-                type_=self.type_,
-                code=self.code,
-                description=self.description,
-                example=self.example,
-                fix=self.fix,
-            ),
-        }
-
-
-class NeatWarning(UserWarning):
-    type_: str
-    code: int
-    description: str
-    example: str
-    fix: str
-    message: str
-
-
-class Error0(NeatError):
+class ExcelFileMissingMandatorySheets(NeatException):
     type_: str = "ExcelFileMissingMandatorySheets"
     code: int = 0
     description: str = "Given Excel file is missing mandatory sheets"
@@ -123,7 +39,7 @@ class Error0(NeatError):
         super().__init__(self.message)
 
 
-class Error1(NeatError):
+class NotValidRDFPath(NeatException):
     type_: str = "NotValidRDFPath"
     code: int = 1
     description: str = "Provided rdf path is not valid, i.e. it cannot be converted to SPARQL query"
@@ -142,7 +58,7 @@ class Error1(NeatError):
         super().__init__(self.message)
 
 
-class Error2(NeatError):
+class NotValidTableLookUp(NeatException):
     type_: str = "NotValidTableLookUp"
     code: int = 2
     description: str = "Provided table lookup is not valid, i.e. it cannot be converted to CDF lookup"
@@ -161,7 +77,7 @@ class Error2(NeatError):
         super().__init__(self.message)
 
 
-class Error3(NeatError):
+class NotValidRAWLookUp(NeatException):
     type_: str = "NotValidRAWLookUp"
     code: int = 3
     description: str = "Provided rawlookup is not valid, i.e. it cannot be converted to SPARQL query and CDF lookup"
@@ -180,7 +96,7 @@ class Error3(NeatError):
         super().__init__(self.message)
 
 
-class Error10(NeatError):
+class EntitiesContainNonDMSCompliantCharacters(NeatException):
     type_: str = "EntitiesContainNonDMSCompliantCharacters"
     code: int = 10
     description: str = (
@@ -200,7 +116,7 @@ class Error10(NeatError):
         super().__init__(self.message)
 
 
-class Error11(NeatError):
+class PropertiesDefinedMultipleTimes(NeatException):
     type_: str = "PropertiesDefinedMultipleTimes"
     code: int = 11
     description: str = (
@@ -220,7 +136,7 @@ class Error11(NeatError):
         super().__init__(self.message)
 
 
-class Error20(NeatError):
+class UnableToDownloadExcelFile(NeatException):
     type_: str = "UnableToDownloadExcelFile"
     code: int = 11
     description: str = (
@@ -240,7 +156,7 @@ class Error20(NeatError):
         super().__init__(self.message)
 
 
-class Error21(NeatError):
+class NotExcelFile(NeatException):
     type_: str = "NotExcelFile"
     code: int = 11
     description: str = (
@@ -260,7 +176,7 @@ class Error21(NeatError):
         super().__init__(self.message)
 
 
-class Error30(NeatError):
+class PropertyDefinitionsNotForSameProperty(NeatException):
     type_: str = "PropertyDefinitionsNotForSameProperty"
     code: int = 30
     description: str = "This error is raised if property definitions are not for linked to the same property id"
@@ -277,7 +193,7 @@ class Error30(NeatError):
         super().__init__(self.message)
 
 
-class Error40(NeatError):
+class FieldValueOfUnknownType(NeatException):
     type_: str = "FieldValueOfUnknownType"
     code: int = 40
     description: str = (
@@ -301,7 +217,7 @@ class Error40(NeatError):
         super().__init__(self.message)
 
 
-class Error41(NeatError):
+class FieldRequiredButNotProvided(NeatException):
     type_: str = "FieldRequiredButNotProvided"
     code: int = 41
     description: str = (
@@ -321,7 +237,7 @@ class Error41(NeatError):
         super().__init__(self.message)
 
 
-class Error51(NeatError):
+class MetadataSheetMissingMandatoryFields(NeatException):
     type_: str = "MetadataSheetMissingMandatoryFields"
     code: int = 51
     description: str = "Metadata sheet, which is part of Transformation Rules Excel file, is missing mandatory rows"
@@ -340,7 +256,7 @@ class Error51(NeatError):
         super().__init__(self.message)
 
 
-class Error52(NeatError):
+class ClassesSheetMissingMandatoryColumns(NeatException):
     type_: str = "ClassesSheetMissingMandatoryColumns"
     code: int = 52
     description: str = (
@@ -362,7 +278,7 @@ class Error52(NeatError):
         super().__init__(self.message)
 
 
-class Error53(NeatError):
+class PropertiesSheetMissingMandatoryColumns(NeatException):
     type_: str = "PropertiesSheetMissingMandatoryColumns"
     code: int = 53
     description: str = (
@@ -384,7 +300,7 @@ class Error53(NeatError):
         super().__init__(self.message)
 
 
-class Error54(NeatError):
+class PrefixesSheetMissingMandatoryColumns(NeatException):
     type_: str = "PrefixesSheetMissingMandatoryColumns"
     code: int = 54
     description: str = (
@@ -405,7 +321,7 @@ class Error54(NeatError):
         super().__init__(self.message)
 
 
-class Error55(NeatError):
+class InstancesSheetMissingMandatoryColumns(NeatException):
     type_: str = "InstancesSheetMissingMandatoryColumns"
     code: int = 55
     description: str = (
@@ -427,7 +343,7 @@ class Error55(NeatError):
 
 
 # Metadata sheet Error and Warning Codes 100 - 199:
-class Error100(NeatError):
+class PrefixRegexViolation(NeatException):
     type_: str = "PrefixRegexViolation"
     code: int = 100
     description: str = "Prefix, which is in the 'Metadata' sheet, does not respect defined regex expression"
@@ -453,7 +369,7 @@ class Error100(NeatError):
         super().__init__(self.message)
 
 
-class Error101(NeatError):
+class CDFSpaceRegexViolation(NeatException):
     type_: str = "CDFSpaceRegexViolation"
     code: int = 101
     description: str = "cdfSpaceName, which is in the 'Metadata' sheet, does not respect defined regex expression"
@@ -481,8 +397,8 @@ class Error101(NeatError):
         super().__init__(self.message)
 
 
-class Error102(NeatError):
-    type_: str = "NamespaceNotValidURL"
+class MetadataSheetNamespaceNotValidURL(NeatException):
+    type_: str = "MetadataSheetNamespaceNotValidURL"
     code: int = 102
     description: str = "namespace, which is in the 'Metadata' sheet, is not valid URL"
     example: str = "If we have 'authority:namespace' as namespace as it is not a valid URL this error will be raised"
@@ -502,7 +418,7 @@ class Error102(NeatError):
         super().__init__(self.message)
 
 
-class Error103(NeatError):
+class DataModelNameRegexViolation(NeatException):
     type_: str = "DataModelNameRegexViolation"
     code: int = 103
     description: str = "dataModelName, which is in the 'Metadata' sheet, does not respect defined regex expression"
@@ -530,7 +446,7 @@ class Error103(NeatError):
         super().__init__(self.message)
 
 
-class Error104(NeatError):
+class VersionRegexViolation(NeatException):
     type_: str = "VersionRegexViolation"
     code: int = 104
     description: str = "version, which is in the 'Metadata' sheet, does not respect defined regex expression"
@@ -557,7 +473,7 @@ class Error104(NeatError):
         super().__init__(self.message)
 
 
-class Warning1(NeatWarning):
+class OWLGeneratedTransformationRulesHasErrors(NeatWarning):
     type_: str = "OWLGeneratedTransformationRulesHasErrors"
     code: int = 1
     description: str = (
@@ -578,7 +494,7 @@ class Warning1(NeatWarning):
             # hint on a specific web docs page
 
 
-class Warning2(NeatWarning):
+class OWLGeneratedTransformationRulesHasWarnings(NeatWarning):
     type_: str = "OWLGeneratedTransformationRulesHasWarnings"
     code: int = 2
     description: str = (
@@ -599,7 +515,7 @@ class Warning2(NeatWarning):
             # hint on a specific web docs page
 
 
-class Warning30(NeatWarning):
+class OntologyMultiTypeProperty(NeatWarning):
     type_: str = "OntologyMultiTypeProperty"
     code: int = 30
     description: str = (
@@ -622,7 +538,7 @@ class Warning30(NeatWarning):
             self.message += f"\nFix: {self.fix}"
 
 
-class Warning31(NeatWarning):
+class OntologyMultiRangeProperty(NeatWarning):
     type_: str = "OntologyMultiRangeProperty"
     code: int = 31
     description: str = (
@@ -642,7 +558,7 @@ class Warning31(NeatWarning):
             self.message += f"\nFix: {self.fix}"
 
 
-class Warning32(NeatWarning):
+class OntologyMultiDomainProperty(NeatWarning):
     type_: str = "OntologyMultiDomainProperty"
     code: int = 32
     description: str = "This warning occurs when a property is reused/redefined for more than one classes."
@@ -663,7 +579,7 @@ class Warning32(NeatWarning):
             self.message += f"\nFix: {self.fix}"
 
 
-class Warning33(NeatWarning):
+class OntologyMultiLabeledProperty(NeatWarning):
     type_: str = "OntologyMultiLabeledProperty"
     code: int = 33
     description: str = (
@@ -686,7 +602,7 @@ class Warning33(NeatWarning):
             self.message += f"\nFix: {self.fix}"
 
 
-class Warning34(NeatWarning):
+class OntologyMultiDefinitionProperty(NeatWarning):
     type_: str = "OntologyMultiDefinitionProperty"
     code: int = 34
     description: str = (
@@ -708,7 +624,7 @@ class Warning34(NeatWarning):
             self.message += f"\nFix: {self.fix}"
 
 
-class Warning40(NeatWarning):
+class FieldNotFoundInInstance(NeatWarning):
     type_: str = "FieldNotFoundInInstance"
     code: int = 40
     description: str = (
@@ -733,7 +649,7 @@ class Warning40(NeatWarning):
             self.message += f"\nFix: {self.fix}"
 
 
-class Warning41(NeatWarning):
+class FieldContainsMoreThanOneValue(NeatWarning):
     type_: str = "FieldContainsMoreThanOneValue"
     code: int = 41
     description: str = (
@@ -758,7 +674,7 @@ class Warning41(NeatWarning):
             self.message += f"\nFix: {self.fix}"
 
 
-class Error60(NeatError):
+class DataModelOrItsComponentsAlreadyExist(NeatException):
     type_: str = "DataModelOrItsComponentsAlreadyExist"
     code: int = 60
     description: str = "This error is raised when attempting to create data model which already exist in DMS."
@@ -796,7 +712,7 @@ class Error60(NeatError):
         super().__init__(self.message)
 
 
-class Warning60(NeatWarning):
+class ContainerPropertyTypeUnsupported(NeatWarning):
     type_: str = "ContainerPropertyTypeUnsupported"
     code: int = 60
     description: str = (
@@ -818,7 +734,7 @@ class Warning60(NeatWarning):
             self.message += f"\nFix: {self.fix}"
 
 
-class Warning61(NeatWarning):
+class ViewPropertyTypeUnsupported(NeatWarning):
     type_: str = "ViewPropertyTypeUnsupported"
     code: int = 61
     description: str = (
@@ -839,7 +755,7 @@ class Warning61(NeatWarning):
             self.message += f"\nFix: {self.fix}"
 
 
-class Warning62(NeatWarning):
+class ContainersAlreadyExist(NeatWarning):
     type_: str = "ContainersAlreadyExist"
     code: int = 62
     description: str = "This warning occurs when attempting to create containers which already exist in DMS."
@@ -860,7 +776,7 @@ class Warning62(NeatWarning):
             self.message += f"\nFix: {self.fix}"
 
 
-class Warning63(NeatWarning):
+class ViewsAlreadyExist(NeatWarning):
     type_: str = "ViewsAlreadyExist"
     code: int = 63
     description: str = "This warning occurs when attempting to create views which already exist in DMS."
@@ -881,7 +797,7 @@ class Warning63(NeatWarning):
             self.message += f"\nFix: {self.fix}"
 
 
-class Warning64(NeatWarning):
+class DataModelAlreadyExist(NeatWarning):
     type_: str = "DataModelAlreadyExist"
     code: int = 64
     description: str = "This warning occurs when attempting to create data model which already exist in DMS."
@@ -902,7 +818,7 @@ class Warning64(NeatWarning):
             self.message += f"\nFix: {self.fix}"
 
 
-class Warning100(NeatWarning):
+class NamespaceEndingFixed(NeatWarning):
     type_: str = "NamespaceEndingFixed"
     code: int = 100
     description: str = "It is expected that namespace ends with '/' or '#'. If not, it will be fixed"
@@ -918,7 +834,7 @@ class Warning100(NeatWarning):
             # hint on a specific web docs page
 
 
-class Warning101(NeatWarning):
+class DataModelNameMissing(NeatWarning):
     type_: str = "DataModelNameMissing"
     code: int = 101
     description: str = "In case when data model name is not provided in the 'Metadata' sheet, it will be set to prefix"
@@ -934,7 +850,7 @@ class Warning101(NeatWarning):
             # hint on a specific web docs page
 
 
-class Warning102(NeatWarning):
+class VersionDotsConvertedToUnderscores(NeatWarning):
     type_: str = "VersionDotsConvertedToUnderscores"
     code: int = 102
     description: str = (
@@ -959,8 +875,8 @@ class Warning102(NeatWarning):
 # Classes sheet Error Codes 200 - 199: #
 
 
-class Error200(NeatError):
-    type_: str = "ClassIDRegexViolation"
+class ClassSheetClassIDRegexViolation(NeatException):
+    type_: str = "ClassSheetClassIDRegexViolation"
     code: int = 200
     description: str = (
         "Class ID, which is stored in the column 'Class' in the 'Classes' sheet, "
@@ -990,7 +906,7 @@ class Error200(NeatError):
         super().__init__(self.message)
 
 
-class Error201(NeatError):
+class ClassIDMissing(NeatException):
     type_: str = "ClassIDMissing"
     code: int = 200
     description: str = (
@@ -1012,7 +928,7 @@ class Error201(NeatError):
         super().__init__(self.message)
 
 
-class Warning200(NeatWarning):
+class ClassNameNotProvided(NeatWarning):
     type_: str = "ClassNameNotProvided"
     code: int = 200
     description: str = (
@@ -1035,8 +951,8 @@ class Warning200(NeatWarning):
 # Properties sheet Error Codes 300 - 399: #
 
 
-class Error300(NeatError):
-    type_: str = "ClassIDRegexViolation"
+class PropertiesSheetClassIDRegexViolation(NeatException):
+    type_: str = "PropertiesSheetClassIDRegexViolation"
     code: int = 300
     description: str = (
         "Class ID, which is stored in the column 'Class' in the 'Properties' sheet, "
@@ -1066,7 +982,7 @@ class Error300(NeatError):
         super().__init__(self.message)
 
 
-class Error301(NeatError):
+class PropertyIDRegexViolation(NeatException):
     type_: str = "PropertyIDRegexViolation"
     code: int = 301
     description: str = (
@@ -1097,7 +1013,7 @@ class Error301(NeatError):
         super().__init__(self.message)
 
 
-class Error302(NeatError):
+class ValueTypeIDRegexViolation(NeatException):
     type_: str = "ValueTypeIDRegexViolation"
     code: int = 302
     description: str = (
@@ -1128,7 +1044,7 @@ class Error302(NeatError):
         super().__init__(self.message)
 
 
-class Error303(NeatError):
+class MissingTypeValue(NeatException):
     type_: str = "MissingTypeValue"
     code: int = 302
     description: str = "Value type, which is stored in the column 'Type' in the 'Properties' sheet, is missing"
@@ -1144,7 +1060,7 @@ class Error303(NeatError):
         super().__init__(self.message)
 
 
-class Error304(NeatError):
+class PropertyIDMissing(NeatException):
     type_: str = "PropertyIDMissing"
     code: int = 304
     description: str = (
@@ -1166,7 +1082,7 @@ class Error304(NeatError):
         super().__init__(self.message)
 
 
-class Error305(NeatError):
+class RuleTypeProvidedButRuleMissing(NeatException):
     type_: str = "RuleTypeProvidedButRuleMissing"
     code: int = 305
     description: str = (
@@ -1190,7 +1106,7 @@ class Error305(NeatError):
         super().__init__(self.message)
 
 
-class Warning300(NeatWarning):
+class PropertyNameNotProvided(NeatWarning):
     type_: str = "PropertyNameNotProvided"
     code: int = 300
     description: str = (
@@ -1208,7 +1124,7 @@ class Warning300(NeatWarning):
             self.message += f"\nFix: {self.fix}"
 
 
-class Warning301(NeatWarning):
+class MissingLabel(NeatWarning):
     type_: str = "MissingLabel"
     code: int = 301
     description: str = (
@@ -1230,7 +1146,7 @@ class Warning301(NeatWarning):
             self.message += f"\nFix: {self.fix}"
 
 
-class Warning302(NeatWarning):
+class NoTransformationRules(NeatWarning):
     type_: str = "NoTransformationRules"
     code: int = 302
     description: str = (
@@ -1256,7 +1172,7 @@ class Warning302(NeatWarning):
 #  Prefixes  Error Codes 400 - 499: #
 
 
-class Error400(NeatError):
+class PrefixesRegexViolation(NeatException):
     type_: str = "PrefixesRegexViolation"
     code: int = 400
     description: str = "Prefix(es), which are in the 'Prefixes' sheet, do(es) not respect defined regex expression"
@@ -1283,8 +1199,8 @@ class Error400(NeatError):
         super().__init__(self.message)
 
 
-class Error401(NeatError):
-    type_: str = "NamespaceNotValidURL"
+class PrefixesSheetNamespaceNotValidURL(NeatException):
+    type_: str = "PrefixesSheetNamespaceNotValidURL"
     code: int = 401
     description: str = "namespace(es), which are/is in the 'Prefixes' sheet, are/is not valid URLs"
     example: str = "If we have 'authority:namespace' as namespace as it is not a valid URL this error will be raised"
@@ -1311,7 +1227,7 @@ class Error401(NeatError):
 # Instances Error Codes 500 - 599: #
 
 
-class Warning500(NeatWarning):
+class MissingDataModelPrefixOrNamespace(NeatWarning):
     type_: str = "MissingDataModelPrefixOrNamespace"
     code: int = 500
     description: str = "Either prefix or namespace or both are missing in the 'Metadata' sheet"
@@ -1334,7 +1250,7 @@ class Warning500(NeatWarning):
 # Transformation Rules Error Codes 600 - 699: #
 
 
-class Warning600(NeatWarning):
+class EntityIDNotDMSCompliant(NeatWarning):
     type_: str = "EntityIDNotDMSCompliant"
     code: int = 600
     description: str = "Warning raise when entity id being class, property or value type is not DMS compliant"
@@ -1357,7 +1273,7 @@ class Warning600(NeatWarning):
             self.message += f"\nFix: {self.fix}"
 
 
-class Warning601(NeatWarning):
+class PropertyRedefined(NeatWarning):
     type_: str = "PropertyRedefined"
     code: int = 600
     description: str = "Warning raise when same property is defined multiple times for same class"
@@ -1374,7 +1290,7 @@ class Warning601(NeatWarning):
             # hint on a specific web docs page
 
 
-class Error600(NeatError):
+class PropertyDefinedForUndefinedClass(NeatException):
     """Property defined for a class that has not been defined in the 'Classes' sheet"""
 
     type_: str = "PropertyDefinedForUndefinedClass"
@@ -1405,7 +1321,7 @@ class Error600(NeatError):
         super().__init__(self.message)
 
 
-class Error601(NeatError):
+class MetadataSheetMissingOrFailedValidation(NeatException):
     type_: str = "MetadataSheetMissingOrFailedValidation"
     code: int = 601
     description: str = "Metadata sheet is missing or it failed validation for one or more fields"
@@ -1421,7 +1337,7 @@ class Error601(NeatError):
         super().__init__(self.message)
 
 
-class Error602(NeatError):
+class FiledInMetadataSheetMissingOrFailedValidation(NeatException):
     type_: str = "FiledInMetadataSheetMissingOrFailedValidation"
     code: int = 602
     description: str = "One of the expected fields in Metadata sheet is missing or it failed validation"
@@ -1437,7 +1353,7 @@ class Error602(NeatError):
         super().__init__(self.message)
 
 
-class Error603(NeatError):
+class ValueTypeNotDefinedAsClass(NeatException):
     type_: str = "ValueTypeNotDefinedAsClass"
     code: int = 603
     description: str = (
@@ -1468,7 +1384,7 @@ class Error603(NeatError):
         super().__init__(self.message)
 
 
-class Error604(NeatError):
+class UndefinedObjectsAsExpectedValueTypes(NeatException):
     type_: str = "UndefinedObjectsAsExpectedValueTypes"
     code: int = 604
     description: str = (
