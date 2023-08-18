@@ -13,7 +13,7 @@ from cognite.neat.rules.models import TransformationRules
 from cognite.neat.rules.parser import parse_rules_from_excel_file
 from cognite.neat.rules.exporter.rules2triples import get_instances_as_triples
 
-from cognite.neat.graph.extractors import NeatGraphStore, drop_graph_store
+from cognite.neat.graph.stores import NeatGraphStore, drop_graph_store
 from cognite.neat.graph.transformations.transformer import RuleProcessingReport, domain2app_knowledge_graph
 from cognite.neat.graph.loaders.core.labels import upload_labels
 from cognite.neat.graph.loaders.core.rdf_to_assets import categorize_assets, rdf2assets, upload_assets
