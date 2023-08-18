@@ -2,7 +2,7 @@ import re
 from typing import Literal, overload
 import warnings
 
-from cognite.neat.rules import _exceptions
+from cognite.neat.rules import exceptions
 from cognite.neat.rules.models import TransformationRules, data_model_name_compliance_regex
 
 
@@ -30,8 +30,8 @@ def are_entity_names_dms_compliant(
         for class_ in transformation_rules.classes.values():
             if not re.match(data_model_name_compliance_regex, class_.class_id):
                 warnings.warn(
-                    _exceptions.Warning600("Class", class_.class_id, f"[Classes/Class/{class_.class_id}]").message,
-                    category=_exceptions.Warning600,
+                    exceptions.Warning600("Class", class_.class_id, f"[Classes/Class/{class_.class_id}]").message,
+                    category=exceptions.Warning600,
                     stacklevel=2,
                 )
                 flag = False
@@ -39,30 +39,30 @@ def are_entity_names_dms_compliant(
         for row, property_ in transformation_rules.properties.items():
             if not re.match(data_model_name_compliance_regex, property_.class_id):
                 warnings.warn(
-                    _exceptions.Warning600("Class", property_.class_id, f"[Properties/Class/{row}]").message,
-                    category=_exceptions.Warning600,
+                    exceptions.Warning600("Class", property_.class_id, f"[Properties/Class/{row}]").message,
+                    category=exceptions.Warning600,
                     stacklevel=2,
                 )
                 flag = False
             if not re.match(data_model_name_compliance_regex, property_.property_id):
                 warnings.warn(
-                    _exceptions.Warning600("Property", property_.property_id, f"[Properties/Property/{row}]").message,
-                    category=_exceptions.Warning600,
+                    exceptions.Warning600("Property", property_.property_id, f"[Properties/Property/{row}]").message,
+                    category=exceptions.Warning600,
                     stacklevel=2,
                 )
                 flag = False
             if not re.match(data_model_name_compliance_regex, property_.expected_value_type):
                 warnings.warn(
-                    _exceptions.Warning600(
+                    exceptions.Warning600(
                         "Value type", property_.expected_value_type, f"[Properties/Type/{row}]"
                     ).message,
-                    category=_exceptions.Warning600,
+                    category=exceptions.Warning600,
                     stacklevel=2,
                 )
                 flag = False
 
     if return_report:
-        return flag, _exceptions.wrangle_warnings(validation_warnings)
+        return flag, exceptions.wrangle_warnings(validation_warnings)
     else:
         return flag
 
@@ -91,8 +91,8 @@ def are_properties_redefined(
             elif property_.class_id in analyzed_properties[property_.property_id]:
                 flag = True
                 warnings.warn(
-                    _exceptions.Warning601(property_.class_id, property_.property_id).message,
-                    category=_exceptions.Warning600,
+                    exceptions.Warning601(property_.class_id, property_.property_id).message,
+                    category=exceptions.Warning600,
                     stacklevel=2,
                 )
 
@@ -100,7 +100,7 @@ def are_properties_redefined(
                 analyzed_properties[property_.property_id].append(property_.class_id)
 
     if return_report:
-        return flag, _exceptions.wrangle_warnings(validation_warnings)
+        return flag, exceptions.wrangle_warnings(validation_warnings)
     else:
         return flag
 

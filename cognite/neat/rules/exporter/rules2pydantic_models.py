@@ -16,7 +16,7 @@ from cognite.neat.rules.analysis import (
 )
 from cognite.neat.graph.transformations.query_generator.sparql import build_construct_query, triples2dictionary
 from cognite.neat.rules.models import Property, TransformationRules, type_to_target_convention
-from cognite.neat.rules import _exceptions
+from cognite.neat.rules import exceptions
 
 EdgeOneToOne = TypeAliasType("EdgeOneToOne", str)
 EdgeOneToMany = TypeAliasType("EdgeOneToMany", list[str])
@@ -188,7 +188,7 @@ def _dictionary_to_pydantic_model(
         elif isinstance(value, dict):
             fields[field_name] = (_dictionary_to_pydantic_model(f"{name}_{field_name}", value), ...)
         else:
-            raise _exceptions.Error40(field_name, value)
+            raise exceptions.Error40(field_name, value)
 
     model = create_model(name, __config__=model_configuration, **fields)
 
@@ -238,17 +238,17 @@ def from_graph(cls, graph: Graph, transformation_rules: TransformationRules, ext
 
         # if field is required and not in result, raise error
         if field.is_required() and field.alias not in result:
-            raise _exceptions.Error41(field.alias, external_id)
+            raise exceptions.Error41(field.alias, external_id)
 
         # flatten result if field is not edge or list of values
         if field.annotation.__name__ not in [EdgeOneToMany.__name__, list.__name__]:
             if isinstance(result[field.alias], list) and len(result[field.alias]) > 1:
                 warnings.warn(
-                    _exceptions.Warning41(
+                    exceptions.Warning41(
                         field.alias,
                         len(result[field.alias]),
                     ).message,
-                    category=_exceptions.Warning41,
+                    category=exceptions.Warning41,
                     stacklevel=2,
                 )
 
@@ -335,8 +335,8 @@ def _adapt_mapping_config_by_instance(external_id, class_instance_dictionary, ma
     for asset_field in mapping_config:
         if asset_field not in adapted_mapping_config:
             warnings.warn(
-                _exceptions.Warning40(external_id, asset_field).message,
-                category=_exceptions.Warning40,
+                exceptions.Warning40(external_id, asset_field).message,
+                category=exceptions.Warning40,
                 stacklevel=2,
             )
 

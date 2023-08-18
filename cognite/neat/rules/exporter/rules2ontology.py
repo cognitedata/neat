@@ -7,7 +7,7 @@ from rdflib.collection import Collection as GraphCollection
 from cognite.neat.rules.models import DATA_TYPE_MAPPING, Class, Property, TransformationRules, Metadata
 from cognite.neat.rules.analysis import to_property_dict, to_class_property_pairs
 from cognite.neat.rules._validation import are_properties_redefined
-from cognite.neat.rules import _exceptions
+from cognite.neat.rules import exceptions
 from cognite.neat.utils.utils import generate_exception_report, remove_namespace
 
 
@@ -26,7 +26,7 @@ class Ontology(OntologyModel):
     def from_rules(cls, transformation_rules: TransformationRules) -> Self:
         properties_redefined, redefinition_warnings = are_properties_redefined(transformation_rules, return_report=True)
         if properties_redefined:
-            raise _exceptions.Error11(report=generate_exception_report(redefinition_warnings))
+            raise exceptions.Error11(report=generate_exception_report(redefinition_warnings))
 
         return cls(
             properties=[
@@ -208,7 +208,7 @@ class OWLProperty(OntologyModel):
         """Here list of properties is a list of properties with the same id, but different definitions."""
 
         if not cls.same_property_id(definitions):
-            raise _exceptions.Error30()
+            raise exceptions.Error30()
 
         prop_dict = {
             "id_": namespace[definitions[0].property_id],
@@ -240,8 +240,8 @@ class OWLProperty(OntologyModel):
     def is_multi_type(cls, v, info: FieldValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                _exceptions.Warning30(remove_namespace(info.data["id_"]), [remove_namespace(t) for t in v]).message,
-                category=_exceptions.Warning30,
+                exceptions.Warning30(remove_namespace(info.data["id_"]), [remove_namespace(t) for t in v]).message,
+                category=exceptions.Warning30,
                 stacklevel=2,
             )
         return v
@@ -250,8 +250,8 @@ class OWLProperty(OntologyModel):
     def is_multi_range(cls, v, info: FieldValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                _exceptions.Warning31(remove_namespace(info.data["id_"]), [remove_namespace(t) for t in v]).message,
-                category=_exceptions.Warning31,
+                exceptions.Warning31(remove_namespace(info.data["id_"]), [remove_namespace(t) for t in v]).message,
+                category=exceptions.Warning31,
                 stacklevel=2,
             )
         return v
@@ -260,8 +260,8 @@ class OWLProperty(OntologyModel):
     def is_multi_domain(cls, v, info: FieldValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                _exceptions.Warning32(remove_namespace(info.data["id_"]), [remove_namespace(t) for t in v]).message,
-                category=_exceptions.Warning32,
+                exceptions.Warning32(remove_namespace(info.data["id_"]), [remove_namespace(t) for t in v]).message,
+                category=exceptions.Warning32,
                 stacklevel=2,
             )
         return v
@@ -270,8 +270,8 @@ class OWLProperty(OntologyModel):
     def has_multi_name(cls, v, info: FieldValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                _exceptions.Warning33(remove_namespace(info.data["id_"]), v).message,
-                category=_exceptions.Warning33,
+                exceptions.Warning33(remove_namespace(info.data["id_"]), v).message,
+                category=exceptions.Warning33,
                 stacklevel=2,
             )
         return v
@@ -280,8 +280,8 @@ class OWLProperty(OntologyModel):
     def has_multi_comment(cls, v, info: FieldValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                _exceptions.Warning34(remove_namespace(info.data["id_"])).message,
-                category=_exceptions.Warning34,
+                exceptions.Warning34(remove_namespace(info.data["id_"])).message,
+                category=exceptions.Warning34,
                 stacklevel=2,
             )
         return v

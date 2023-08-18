@@ -1,6 +1,6 @@
 import pytest
 from cognite.neat.rules.exporter.rules2dms import DataModel
-from cognite.neat.rules._exceptions import Error10
+from cognite.neat.rules.exceptions import Error10
 
 
 def test_rules2dms(simple_rules):

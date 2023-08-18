@@ -38,7 +38,7 @@ from cognite.client.data_classes.data_modeling.data_types import (
 from cognite.neat.constants import PREFIXES
 
 # from . import _exceptions
-from cognite.neat.rules import _exceptions
+from cognite.neat.rules import exceptions
 from cognite.neat.rules.to_rdf_path import (
     AllReferences,
     Entity,
@@ -230,14 +230,14 @@ class Metadata(RuleModel):
     @validator("prefix", always=True)
     def is_prefix_compliant(cls, value):
         if not re.match(prefix_compliance_regex, value):
-            raise _exceptions.Error100(value, prefix_compliance_regex).to_pydantic_custom_error()
+            raise exceptions.Error100(value, prefix_compliance_regex).to_pydantic_custom_error()
         else:
             return value
 
     @validator("cdf_space_name", always=True)
     def is_cdf_space_name_compliant(cls, value):
         if not re.match(cdf_space_name_compliance_regex, value):
-            raise _exceptions.Error101(value, cdf_space_name_compliance_regex).to_pydantic_custom_error()
+            raise exceptions.Error101(value, cdf_space_name_compliance_regex).to_pydantic_custom_error()
         else:
             return value
 
@@ -251,13 +251,13 @@ class Metadata(RuleModel):
         try:
             return Namespace(parse_obj_as(HttpUrl, value))
         except ValidationError:
-            raise _exceptions.Error102(value).to_pydantic_custom_error()
+            raise exceptions.Error102(value).to_pydantic_custom_error()
 
     @validator("namespace", always=True)
     def fix_namespace_ending(cls, value):
         if value.endswith("#") or value.endswith("/"):
             return value
-        warnings.warn(_exceptions.Warning100(value).message, category=_exceptions.Warning100, stacklevel=2)
+        warnings.warn(exceptions.Warning100(value).message, category=exceptions.Warning100, stacklevel=2)
         return f"{value}#"
 
     @validator("data_model_name", always=True)
@@ -265,8 +265,8 @@ class Metadata(RuleModel):
         if value is not None:
             return value
         warnings.warn(
-            _exceptions.Warning101(values["prefix"].replace("-", "_")).message,
-            category=_exceptions.Warning101,
+            exceptions.Warning101(values["prefix"].replace("-", "_")).message,
+            category=exceptions.Warning101,
             stacklevel=2,
         )
         return values["prefix"].replace("-", "_")
@@ -274,7 +274,7 @@ class Metadata(RuleModel):
     @validator("data_model_name", always=True)
     def is_data_model_name_compliant(cls, value):
         if not re.match(data_model_name_compliance_regex, value):
-            raise _exceptions.Error103(value, data_model_name_compliance_regex).to_pydantic_custom_error()
+            raise exceptions.Error103(value, data_model_name_compliance_regex).to_pydantic_custom_error()
         else:
             return value
 
@@ -282,10 +282,10 @@ class Metadata(RuleModel):
     def is_version_compliant(cls, value):
         # turn "." into "_" to avoid issues with CDF
         if "." in value:
-            warnings.warn(_exceptions.Warning102().message, category=_exceptions.Warning102, stacklevel=2)
+            warnings.warn(exceptions.Warning102().message, category=exceptions.Warning102, stacklevel=2)
             value = value.replace(".", "_")
         if not re.match(version_compliance_regex, value):
-            raise _exceptions.Error104(value, version_compliance_regex).to_pydantic_custom_error()
+            raise exceptions.Error104(value, version_compliance_regex).to_pydantic_custom_error()
         else:
             return value
 
@@ -350,7 +350,7 @@ class Class(Resource):
     @validator("class_id", always=True)
     def is_class_id_compliant(cls, value):
         if not re.match(class_id_compliance_regex, value):
-            raise _exceptions.Error200(value, class_id_compliance_regex).to_pydantic_custom_error()
+            raise exceptions.Error200(value, class_id_compliance_regex).to_pydantic_custom_error()
         else:
             return value
 
@@ -358,9 +358,9 @@ class Class(Resource):
     def set_class_name_if_none(cls, value, values):
         if value is None:
             if "class_id" not in values:
-                raise _exceptions.Error201().to_pydantic_custom_error()
+                raise exceptions.Error201().to_pydantic_custom_error()
             warnings.warn(
-                _exceptions.Warning200(values["class_id"]).message, category=_exceptions.Warning200, stacklevel=2
+                exceptions.Warning200(values["class_id"]).message, category=exceptions.Warning200, stacklevel=2
             )
             value = values["class_id"]
         return value
@@ -412,21 +412,21 @@ class Property(Resource):
     @validator("class_id", always=True)
     def is_class_id_compliant(cls, value):
         if not re.match(class_id_compliance_regex, value):
-            raise _exceptions.Error300(value, class_id_compliance_regex).to_pydantic_custom_error()
+            raise exceptions.Error300(value, class_id_compliance_regex).to_pydantic_custom_error()
         else:
             return value
 
     @validator("property_id", always=True)
     def is_property_id_compliant(cls, value):
         if not re.match(property_id_compliance_regex, value):
-            raise _exceptions.Error301(value, property_id_compliance_regex).to_pydantic_custom_error()
+            raise exceptions.Error301(value, property_id_compliance_regex).to_pydantic_custom_error()
         else:
             return value
 
     @validator("expected_value_type", always=True)
     def is_expected_value_type_compliant(cls, value):
         if not re.match(class_id_compliance_regex, value):
-            raise _exceptions.Error302(value, class_id_compliance_regex).to_pydantic_custom_error()
+            raise exceptions.Error302(value, class_id_compliance_regex).to_pydantic_custom_error()
         else:
             return value
 
@@ -444,7 +444,7 @@ class Property(Resource):
     def is_valid_rule(cls, value, values):
         if rule_type := values.get("rule_type"):
             if not value:
-                raise _exceptions.Error305(
+                raise exceptions.Error305(
                     values["property_id"], values["class_id"], values["rule_type"]
                 ).to_pydantic_custom_error()
             _ = parse_rule(value, rule_type)
@@ -481,18 +481,14 @@ class Property(Resource):
     @model_validator(mode="after")
     def set_property_name_if_none(self):
         if self.property_name is None:
-            warnings.warn(
-                _exceptions.Warning300(self.property_id).message, category=_exceptions.Warning300, stacklevel=2
-            )
+            warnings.warn(exceptions.Warning300(self.property_id).message, category=exceptions.Warning300, stacklevel=2)
             self.property_name = self.property_id
         return self
 
     @model_validator(mode="after")
     def set_relationship_label(self):
         if self.label is None:
-            warnings.warn(
-                _exceptions.Warning301(self.property_id).message, category=_exceptions.Warning301, stacklevel=2
-            )
+            warnings.warn(exceptions.Warning301(self.property_id).message, category=exceptions.Warning301, stacklevel=2)
             self.label = self.property_id
         return self
 
@@ -500,8 +496,8 @@ class Property(Resource):
     def set_skip_rule(self):
         if self.rule_type is None:
             warnings.warn(
-                _exceptions.Warning302(class_id=self.class_id, property_id=self.property_id).message,
-                category=_exceptions.Warning302,
+                exceptions.Warning302(class_id=self.class_id, property_id=self.property_id).message,
+                category=exceptions.Warning302,
                 stacklevel=2,
             )
             self.skip_rule = True
@@ -620,14 +616,14 @@ class TransformationRules(RuleModel):
     def class_property_exist(cls, value, values):
         if classes := values.get("classes"):
             if value.class_id not in classes:
-                raise _exceptions.Error600(value.property_id, value.class_id).to_pydantic_custom_error()
+                raise exceptions.Error600(value.property_id, value.class_id).to_pydantic_custom_error()
         return value
 
     @validator("properties", each_item=True)
     def value_type_exist(cls, value, values):
         if classes := values.get("classes"):
             if value.property_type == "ObjectProperty" and value.expected_value_type not in classes:
-                raise _exceptions.Error603(
+                raise exceptions.Error603(
                     value.class_i, value.property_id, value.expected_value_type
                 ).to_pydantic_custom_error()
         return value
@@ -641,7 +637,7 @@ class TransformationRules(RuleModel):
             for _, property_ in value.items()
             if property_.property_type == "ObjectProperty" and property_.expected_value_type not in defined_objects
         ]:
-            raise _exceptions.Error604(undefined_objects).to_pydantic_custom_error()
+            raise exceptions.Error604(undefined_objects).to_pydantic_custom_error()
         else:
             return value
 
@@ -650,7 +646,7 @@ class TransformationRules(RuleModel):
         if ill_formed_prefixes := [
             prefix for prefix, _ in value.items() if not re.match(prefix_compliance_regex, prefix)
         ]:
-            raise _exceptions.Error400(ill_formed_prefixes, prefix_compliance_regex).to_pydantic_custom_error()
+            raise exceptions.Error400(ill_formed_prefixes, prefix_compliance_regex).to_pydantic_custom_error()
         else:
             return value
 
@@ -664,18 +660,18 @@ class TransformationRules(RuleModel):
                 ill_formed_namespaces += namespace
 
         if ill_formed_namespaces:
-            raise _exceptions.Error401(ill_formed_namespaces).to_pydantic_custom_error()
+            raise exceptions.Error401(ill_formed_namespaces).to_pydantic_custom_error()
         else:
             return value
 
     @validator("prefixes")
     def add_data_model_prefix_namespace(cls, value, values):
         if "metadata" not in values:
-            raise _exceptions.Error601().to_pydantic_custom_error()
+            raise exceptions.Error601().to_pydantic_custom_error()
         if "prefix" not in values["metadata"].dict():
-            raise _exceptions.Error602(missing_field="prefix").to_pydantic_custom_error()
+            raise exceptions.Error602(missing_field="prefix").to_pydantic_custom_error()
         if "namespace" not in values["metadata"].dict():
-            raise _exceptions.Error602(missing_field="namespace").to_pydantic_custom_error()
+            raise exceptions.Error602(missing_field="namespace").to_pydantic_custom_error()
 
         value[values["metadata"].prefix] = values["metadata"].namespace
         return value

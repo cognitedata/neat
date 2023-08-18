@@ -19,7 +19,7 @@ from rdflib import Namespace
 
 from cognite.neat.utils.auxiliary import local_import
 from cognite.neat.constants import PREFIXES
-from cognite.neat.rules import _exceptions
+from cognite.neat.rules import exceptions
 from cognite.neat.rules.models import Class, Metadata, Property, RuleModel, TransformationRules
 
 
@@ -137,18 +137,18 @@ def from_tables(
                 else _parse_instances(raw_tables.Instances, rules_dict["metadata"], rules_dict["prefixes"])
             )
             rules = TransformationRules(**rules_dict)
-        return (rules, None, _exceptions.wrangle_warnings(validation_warnings)) if return_report else rules
+        return (rules, None, exceptions.wrangle_warnings(validation_warnings)) if return_report else rules
 
-    except _exceptions.Error0 as e:
+    except exceptions.Error0 as e:
         validation_errors = [e.to_error_dict()]
         if return_report:
-            return None, validation_errors, _exceptions.wrangle_warnings(validation_warnings)
+            return None, validation_errors, exceptions.wrangle_warnings(validation_warnings)
         else:
             raise e
     except ValidationError as e:
         validation_errors = e.errors()
         if return_report:
-            return None, validation_errors, _exceptions.wrangle_warnings(validation_warnings)
+            return None, validation_errors, exceptions.wrangle_warnings(validation_warnings)
         else:
             raise e
 
@@ -177,8 +177,8 @@ def _parse_instances(
     instances_df: pd.DataFrame, metadata: dict[str, Any], prefixes: dict[str, Namespace]
 ) -> list[dict] | None:
     if "prefix" not in metadata or "namespace" not in metadata:
-        logging.warning(_exceptions.Warning500().message)
-        warn(_exceptions.Warning500().message)
+        logging.warning(exceptions.Warning500().message)
+        warn(exceptions.Warning500().message)
         return None
 
     prefixes[metadata["prefix"]] = metadata["namespace"]
@@ -205,7 +205,7 @@ class RawTables(RuleModel):
 
         # Validate raw tables
         if missing_tables := (expected_tables - set(raw_dfs)):
-            raise _exceptions.Error0(missing_tables)
+            raise exceptions.Error0(missing_tables)
 
         tables_dict = {
             Tables.metadata: raw_dfs[Tables.metadata],
@@ -228,7 +228,7 @@ class RawTables(RuleModel):
 
         if not (mandatory_rows.issubset(given_rows) or mandatory_rows_alias.issubset(given_rows)):
             missing_rows = mandatory_rows_alias.difference(given_rows)
-            raise _exceptions.Error51(missing_rows).to_pydantic_custom_error()
+            raise exceptions.Error51(missing_rows).to_pydantic_custom_error()
         return v
 
     @field_validator("Classes")
@@ -239,7 +239,7 @@ class RawTables(RuleModel):
 
         if not (mandatory_columns.issubset(given_columns) or mandatory_columns_alias.issubset(given_columns)):
             missing_columns = mandatory_columns_alias.difference(given_columns)
-            raise _exceptions.Error52(missing_columns).to_pydantic_custom_error()
+            raise exceptions.Error52(missing_columns).to_pydantic_custom_error()
         return v
 
     @field_validator("Properties")
@@ -250,7 +250,7 @@ class RawTables(RuleModel):
 
         if not (mandatory_columns.issubset(given_columns) or mandatory_columns_alias.issubset(given_columns)):
             missing_columns = mandatory_columns_alias.difference(given_columns)
-            raise _exceptions.Error53(missing_columns).to_pydantic_custom_error()
+            raise exceptions.Error53(missing_columns).to_pydantic_custom_error()
         return v
 
     @field_validator("Prefixes")
@@ -260,7 +260,7 @@ class RawTables(RuleModel):
 
         if not mandatory_columns.issubset(given_columns):
             missing_columns = mandatory_columns.difference(given_columns)
-            raise _exceptions.Error54(missing_columns).to_pydantic_custom_error()
+            raise exceptions.Error54(missing_columns).to_pydantic_custom_error()
         return v
 
     @field_validator("Instances")
@@ -270,7 +270,7 @@ class RawTables(RuleModel):
 
         if not mandatory_columns.issubset(given_columns):
             missing_columns = mandatory_columns.difference(given_columns)
-            raise _exceptions.Error55(missing_columns).to_pydantic_custom_error()
+            raise exceptions.Error55(missing_columns).to_pydantic_custom_error()
         return v
 
 
@@ -343,11 +343,11 @@ def read_github_sheet_to_table_by_name(
     loc = f"https://github.com/{owner}/{repo}/tree/{branch}"
 
     if r.status_code != 200:
-        raise _exceptions.Error20(filepath, loc, r.reason)
+        raise exceptions.Error20(filepath, loc, r.reason)
     try:
         wb = load_workbook(BytesIO(r.content), data_only=True)
     except BadZipFile:
-        raise _exceptions.Error21(filepath, loc)
+        raise exceptions.Error21(filepath, loc)
     return _workbook_to_table_by_name(wb)
 
 

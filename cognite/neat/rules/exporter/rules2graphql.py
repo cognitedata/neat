@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Self
-from cognite.neat.rules import _exceptions
+from cognite.neat.rules import exceptions
 from cognite.neat.rules._validation import (
     are_entity_names_dms_compliant,
     are_properties_redefined,
@@ -85,11 +85,11 @@ class GraphQLSchema:
     def from_rules(cls, transformation_rules: TransformationRules, verbose: bool = False) -> Self:
         names_compliant, name_warnings = are_entity_names_dms_compliant(transformation_rules, return_report=True)
         if not names_compliant:
-            raise _exceptions.Error10(report=generate_exception_report(name_warnings))
+            raise exceptions.Error10(report=generate_exception_report(name_warnings))
 
         properties_redefined, redefinition_warnings = are_properties_redefined(transformation_rules, return_report=True)
         if properties_redefined:
-            raise _exceptions.Error11(report=generate_exception_report(redefinition_warnings))
+            raise exceptions.Error11(report=generate_exception_report(redefinition_warnings))
 
         return cls(schema=cls.generate_schema(transformation_rules, verbose))
 
