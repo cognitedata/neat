@@ -15,6 +15,12 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.21.2] - 18-08-23
+
+### Changed
+
+- `cognite.neat.rules.exceptions` warnings and errors names changed to human-readable form
+
 ## [0.21.1] - 18-08-23
 
 ### Changed
