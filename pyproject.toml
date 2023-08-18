@@ -26,6 +26,16 @@ line-length = 120
 target_version = ['py311']
 include = '\.py$'
 
+[tool.ruff]
+# See https://beta.ruff.rs/docs/rules for an overview of ruff rules
+line-length = 120
+target-version = "py311"
+exclude = ["examples","examples-pydantic-v1", "scripts"]
+select = ["E","W","F","I","RUF","TID","UP", "B", "FLY", "PTH", "ERA"]
+fixable = ["E","W","F","I","RUF","TID","UP", "B", "FLY", "PTH", "ERA"]
+fix = true
+ignore = []
+
 [tool.mypy]
 explicit_package_bases = true
 
