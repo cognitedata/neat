@@ -36,6 +36,9 @@ fixable = ["E","W","F","I","RUF","TID","UP", "B", "FLY", "PTH", "ERA"]
 fix = true
 ignore = []
 
+[tool.ruff.isort]
+known-third-party = ["cognite.client"]
+
 [tool.mypy]
 explicit_package_bases = true
 
