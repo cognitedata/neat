@@ -1,26 +1,24 @@
-from io import BytesIO
-from pathlib import Path
-from zipfile import BadZipFile
-
 import logging
 import warnings
-from typing import Any, Hashable, Literal, overload
+from collections.abc import Hashable
+from io import BytesIO
+from pathlib import Path
+from typing import Any, Literal, overload
 from warnings import warn
+from zipfile import BadZipFile
 
-from pydantic import field_validator
-from pydantic_core import ErrorDetails, ValidationError
-
-from openpyxl import Workbook, load_workbook
 import pandas as pd
 import requests
-
+from openpyxl import Workbook, load_workbook
+from pydantic import field_validator
+from pydantic_core import ErrorDetails, ValidationError
 from rdflib import Namespace
 
-from cognite.neat.exceptions import wrangle_warnings
-from cognite.neat.utils.auxiliary import local_import
 from cognite.neat.constants import PREFIXES
+from cognite.neat.exceptions import wrangle_warnings
 from cognite.neat.rules import exceptions
 from cognite.neat.rules.models import Class, Metadata, Property, RuleModel, TransformationRules
+from cognite.neat.utils.auxiliary import local_import
 
 
 @overload
@@ -154,7 +152,7 @@ def from_tables(
 
 
 def _parse_metadata(meta_df: pd.DataFrame) -> dict[str, Any]:
-    metadata_dict = dict(zip(meta_df[0], meta_df[1]))
+    metadata_dict = dict(zip(meta_df[0], meta_df[1], strict=True))
     metadata_dict["source"] = meta_df.source if "source" in dir(meta_df) else None
     if "namespace" in metadata_dict:
         metadata_dict["namespace"] = Namespace(metadata_dict["namespace"])
@@ -178,7 +176,7 @@ def _parse_instances(
 ) -> list[dict] | None:
     if "prefix" not in metadata or "namespace" not in metadata:
         logging.warning(exceptions.MissingDataModelPrefixOrNamespace().message)
-        warn(exceptions.MissingDataModelPrefixOrNamespace().message)
+        warn(exceptions.MissingDataModelPrefixOrNamespace().message, stacklevel=2)
         return None
 
     prefixes[metadata["prefix"]] = metadata["namespace"]
@@ -346,8 +344,8 @@ def read_github_sheet_to_table_by_name(
         raise exceptions.UnableToDownloadExcelFile(filepath, loc, r.reason)
     try:
         wb = load_workbook(BytesIO(r.content), data_only=True)
-    except BadZipFile:
-        raise exceptions.NotExcelFile(filepath, loc)
+    except BadZipFile as e:
+        raise exceptions.NotExcelFile(filepath, loc) from e
     return _workbook_to_table_by_name(wb)
 
 

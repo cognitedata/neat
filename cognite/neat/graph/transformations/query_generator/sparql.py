@@ -1,9 +1,11 @@
-from collections import Counter, defaultdict
 import re
+from collections import Counter, defaultdict
+
 from rdflib import Graph, Namespace
 from rdflib.term import URIRef
 
 from cognite.neat.constants import PREFIXES
+from cognite.neat.rules.analysis import get_classes_with_properties
 from cognite.neat.rules.models import TransformationRules
 from cognite.neat.rules.to_rdf_path import (
     AllProperties,
@@ -17,7 +19,6 @@ from cognite.neat.rules.to_rdf_path import (
     parse_rule,
     parse_traversal,
 )
-from cognite.neat.rules.analysis import get_classes_with_properties
 from cognite.neat.utils.utils import remove_namespace
 
 

@@ -3,7 +3,6 @@ import traceback
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import LabelDefinition
-
 from cognite.neat.rules.exporter.core import get_labels
 from cognite.neat.rules.models import TransformationRules
 
@@ -11,7 +10,7 @@ from cognite.neat.rules.models import TransformationRules
 def upload_labels(
     client: CogniteClient,
     transformation_rules: TransformationRules,
-    extra_labels: list = None,
+    extra_labels: list | None = None,
     stop_on_exception: bool = False,
 ):
     """Upload labels to CDF

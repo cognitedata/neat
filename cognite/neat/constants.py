@@ -1,7 +1,8 @@
 from pathlib import Path
-from rdflib import Namespace
-from cognite import neat
 
+from rdflib import Namespace
+
+from cognite import neat
 
 PACKAGE_DIRECTORY = Path(neat.__file__).parent
 
@@ -12,10 +13,6 @@ EXAMPLE_WORKFLOWS = PACKAGE_DIRECTORY / "workflows" / "examples"
 
 
 PREFIXES = {
-    # "rdf": Namespace("http://www.w3.org/1999/02/22-rdf-syntax-ns#"), # noqa
-    # "rdfs": Namespace("http://www.w3.org/2000/01/rdf-schema#"),# noqa
-    # "owl": Namespace("http://www.w3.org/2002/07/owl#"),# noqa
-    # "sh": Namespace("http://www.w3.org/ns/shacl#"),
     "dct": Namespace("http://purl.org/dc/terms/"),
     "skos": Namespace("http://www.w3.org/2004/02/skos/core#"),
     "pav": Namespace("http://purl.org/pav/"),

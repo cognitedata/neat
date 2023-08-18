@@ -2,18 +2,17 @@ import logging
 from pathlib import Path
 
 from cognite.client import CogniteClient
-
 from cognite.neat import rules
-from cognite.neat.graph import extractors
 from cognite.neat.constants import PREFIXES
+from cognite.neat.graph import extractors
 from cognite.neat.graph.stores import NeatGraphStore, drop_graph_store
+from cognite.neat.graph.transformations.transformer import RuleProcessingReport, domain2app_knowledge_graph
 from cognite.neat.rules.exporter.rules2triples import get_instances_as_triples
 from cognite.neat.rules.models import TransformationRules
-from cognite.neat.graph.transformations.transformer import RuleProcessingReport, domain2app_knowledge_graph
 from cognite.neat.workflows import utils
 from cognite.neat.workflows.base import BaseWorkflow
-from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.cdf_store import CdfStore
+from cognite.neat.workflows.model import FlowMessage
 
 
 class GraphsAndRulesBaseWorkflow(BaseWorkflow):
@@ -44,7 +43,7 @@ class GraphsAndRulesBaseWorkflow(BaseWorkflow):
 
         self.transformation_rules = rules.parse_rules_from_excel_file(rules_file_path)
         self.dataset_id = self.transformation_rules.metadata.data_set_id
-        logging.info(f"Loaded prefixes {str(self.transformation_rules.prefixes)} rules from {rules_file_path.name!r}.")
+        logging.info(f"Loaded prefixes {self.transformation_rules.prefixes!s} rules from {rules_file_path.name!r}.")
         output_text = f"Loaded {len(self.transformation_rules.properties)} rules"
         logging.info(output_text)
         return FlowMessage(output_text=output_text)

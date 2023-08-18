@@ -1,15 +1,12 @@
 import logging
 import warnings
-
-# import traceback
-from typing import Dict, List, Set, Union
 from warnings import warn
 
 import pandas as pd
+
 from cognite.client import CogniteClient
 from cognite.client.data_classes import LabelFilter, Relationship, RelationshipUpdate
 from cognite.client.exceptions import CogniteDuplicatedError
-
 from cognite.neat.graph.loaders.core.models import RelationshipDefinition, RelationshipDefinitions
 from cognite.neat.graph.loaders.core.rdf_to_assets import _categorize_cdf_assets
 from cognite.neat.graph.stores import NeatGraphStore
@@ -171,7 +168,6 @@ def rdf2relationships(
             relationship_data_frames += [relationship_data_frame]
         except Exception as e:
             logging.error("Error processing relationship: " + id_)
-            # traceback.print_exc()
             if stop_on_exception:
                 raise e
             continue
@@ -205,12 +201,12 @@ def rdf2relationship_data_frame(
     transformation_rules: TransformationRules,
     stop_on_exception: bool = False,
 ) -> pd.DataFrame:
-    warn("'rdf2relationship_data_frame' is deprecated, please use 'rdf2relationships' instead!")
+    warn("'rdf2relationship_data_frame' is deprecated, please use 'rdf2relationships' instead!", stacklevel=2)
     logging.warning("'rdf2relationship_data_frame' is deprecated, please use 'rdf2relationships' instead!")
     return rdf2relationships(graph_store, transformation_rules, stop_on_exception)
 
 
-def _filter_relationship_xids(relationship_data_frame: pd.DataFrame, asset_xids: Union[List, Set]) -> Set:
+def _filter_relationship_xids(relationship_data_frame: pd.DataFrame, asset_xids: list | set) -> set:
     return set(
         relationship_data_frame[
             (relationship_data_frame["source_external_id"].isin(asset_xids))
@@ -219,7 +215,7 @@ def _filter_relationship_xids(relationship_data_frame: pd.DataFrame, asset_xids:
     )
 
 
-def _categorize_rdf_relationship_xids(rdf_relationships: pd.DataFrame, categorized_asset_ids: dict) -> Dict[str, set]:
+def _categorize_rdf_relationship_xids(rdf_relationships: pd.DataFrame, categorized_asset_ids: dict) -> dict[str, set]:
     """Categorizes the external ids of the RDF relationship."""
 
     missing_asset_ids = (
@@ -269,7 +265,7 @@ def _categorize_cdf_relationship_xids(client, data_set_id, partitions) -> dict[s
     }
 
 
-def _relationship_to_create(relationships: pd.DataFrame) -> List[Relationship]:
+def _relationship_to_create(relationships: pd.DataFrame) -> list[Relationship]:
     start_time = datetime_utc_now()
     if relationships.empty:
         return []
@@ -337,10 +333,10 @@ def categorize_relationships(
     data_set_id: int,
     partitions: int = 40,
     return_report: bool = False,
-) -> Union[
-    tuple[dict[str, list[Union[Relationship, RelationshipUpdate]]], dict[str, set]],
-    dict[str, list[Union[Relationship, RelationshipUpdate]]],
-]:
+) -> (
+    tuple[dict[str, list[Relationship | RelationshipUpdate]], dict[str, set]]
+    | dict[str, list[Relationship | RelationshipUpdate]]
+):
     """Categorize relationships on those that are to be created, decommissioned or resurrected"""
     # TODO also figure out which relationships to be deleted
 
@@ -356,11 +352,11 @@ def categorize_relationships(
     )
 
     # relationships to create
-    # NonHistoric_rdf - (Historic_cdf ∪ Non-historic_cdf)
+    # NonHistoric_rdf - (Historic_cdf U Non-historic_cdf)
     create_xids = categorized_rdf_relationships["non-historic"].difference(cdf_relationships_all)
 
     # relationships to decommission
-    # rdf: Historic_rdf ∩ NonHistoric_cdf ∪ (All_cdf - All_rdf)
+    # rdf: Historic_rdf ∩ NonHistoric_cdf U (All_cdf - All_rdf)
     decommission_xids = (
         categorized_rdf_relationships["historic"]
         .intersection(categorized_cdf_relationships["non-historic"])
@@ -445,7 +441,7 @@ def _micro_batch_push(
 
 def upload_relationships(
     client: CogniteClient,
-    categorized_relationships: Dict[str, list[Union[Relationship, RelationshipUpdate]]],
+    categorized_relationships: dict[str, list[Relationship | RelationshipUpdate]],
     batch_size: int = 5000,
     max_retries: int = 1,
     retry_delay: int = 3,

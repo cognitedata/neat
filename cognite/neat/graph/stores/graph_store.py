@@ -12,10 +12,10 @@ from rdflib import Graph, Namespace
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 from rdflib.query import Result
 
-from cognite.neat.constants import PREFIXES, DEFAULT_NAMESPACE
-from cognite.neat.graph.stores.configuration import RdfStoreType
-from cognite.neat.graph.stores import oxrdflib
+from cognite.neat.constants import DEFAULT_NAMESPACE, PREFIXES
 from cognite.neat.graph.extractors.rdf_to_graph import rdf_file_to_graph
+from cognite.neat.graph.stores import oxrdflib
+from cognite.neat.graph.stores.configuration import RdfStoreType
 
 prom_qsm = Summary("store_query_time_summary", "Time spent processing queries", ["query"])
 prom_sq = Gauge("store_single_query_time", "Time spent processing a single query", ["query"])
@@ -60,12 +60,12 @@ class NeatGraphStore:
     def init_graph(
         self,
         rdf_store_type: str = RdfStoreType.MEMORY,
-        rdf_store_query_url: str = None,
-        rdf_store_update_url: str = None,
-        graph_name: str = None,
-        base_prefix: str = None,
+        rdf_store_query_url: str | None = None,
+        rdf_store_update_url: str | None = None,
+        graph_name: str | None = None,
+        base_prefix: str | None = None,
         returnFormat: str = "csv",
-        internal_storage_dir: Path = None,
+        internal_storage_dir: Path | None = None,
     ):
         """Initializes the graph.
 
@@ -158,7 +158,7 @@ class NeatGraphStore:
             except Exception as e:
                 logging.debug("Error closing graph: %s", e)
 
-    def import_from_file(self, file_path: Path = None):
+    def import_from_file(self, file_path: Path | None = None):
         """Imports graph data from file.
 
         Parameters
@@ -218,7 +218,6 @@ class NeatGraphStore:
                 time.sleep(1)  # delay to allow the store finish file operations
                 files_after = os.listdir(self.internal_storage_dir)
                 new_files = set(files_after) - set(files_before)
-                # static_files = ["CURRENT", "IDENTITY", "LOCK"]
                 static_files = [f for f in files_before if f.startswith("MANIFEST") or f.startswith("OPTIONS")]
                 static_files.extend(["CURRENT", "IDENTITY", "LOCK"])
 
@@ -227,7 +226,7 @@ class NeatGraphStore:
                 for f in os.listdir(self.internal_storage_dir):
                     if f not in files_to_keep:
                         try:
-                            os.remove(os.path.join(self.internal_storage_dir, f))
+                            (self.internal_storage_dir / f).unlink()
                         except Exception as e:
                             logging.error(f"Error deleting file {f}: {e}")
             except Exception as e:
@@ -242,7 +241,7 @@ class NeatGraphStore:
     def query_to_dataframe(
         self,
         query: str,
-        column_mapping: dict = None,
+        column_mapping: dict | None = None,
         save_to_cache: bool = False,
         index_column: str = "instance",
     ) -> pd.DataFrame:
@@ -309,7 +308,7 @@ def drop_graph_store(graph: NeatGraphStore, storage_path: Path, force: bool = Fa
                 # remove all files in the storage path except the lock file
                 for f in os.listdir(storage_path):
                     # if f != "LOCK":
-                    os.remove(os.path.join(storage_path, f))
+                    (storage_path / f).unlink()
                 logging.info("Graph store dropped.")
             else:
                 logging.info(f"Storage path {storage_path} does not exist. Skipping drop.")

@@ -1,8 +1,9 @@
 import logging
 from pathlib import Path
-from fastapi import APIRouter
-from fastapi import HTTPException
+
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
+
 from cognite.neat.app.api.configuration import neat_app
 from cognite.neat.app.api.data_classes.rest import DownloadFromCdfRequest, RunWorkflowRequest, UploadToCdfRequest
 from cognite.neat.workflows import WorkflowFullStateReport

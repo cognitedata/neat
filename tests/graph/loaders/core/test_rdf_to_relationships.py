@@ -2,7 +2,6 @@ from copy import deepcopy
 
 from cognite.client.data_classes import Asset, AssetList, Label, LabelFilter, Relationship, RelationshipList
 from cognite.client.testing import monkeypatch_cognite_client
-
 from cognite.neat.graph.loaders.core.rdf_to_assets import rdf2assets
 from cognite.neat.graph.loaders.core.rdf_to_relationships import categorize_relationships, rdf2relationships
 from cognite.neat.rules.exporter.core.rules2labels import get_labels
@@ -71,7 +70,7 @@ def test_relationship_diffing(mock_knowledge_graph, transformation_rules):
                 return historic_asset_list + non_historic_asset_list
 
         def list_labels(**_):
-            label_names = list(get_labels(transformation_rules)) + ["non-historic", "historic"]
+            label_names = [*list(get_labels(transformation_rules)), "non-historic", "historic"]
             return [Label(external_id=label_name, name=label_names) for label_name in label_names]
 
         client_mock.labels.list = list_labels

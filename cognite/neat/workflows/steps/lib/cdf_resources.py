@@ -1,5 +1,8 @@
 import logging
 import time
+
+from cognite.client import CogniteClient
+from cognite.client.data_classes import AssetFilter
 from cognite.neat.graph.loaders import upload_labels
 from cognite.neat.graph.loaders.core.rdf_to_assets import (
     NeatMetadataKeys,
@@ -16,11 +19,13 @@ from cognite.neat.graph.loaders.core.rdf_to_relationships import (
 )
 from cognite.neat.graph.loaders.validator import validate_asset_hierarchy
 from cognite.neat.workflows.model import FlowMessage
+from cognite.neat.workflows.steps.data_contracts import (
+    CategorizedAssets,
+    CategorizedRelationships,
+    RulesData,
+    SolutionGraph,
+)
 from cognite.neat.workflows.steps.step_model import Step
-from cognite.client.data_classes import AssetFilter
-
-from cognite.client import CogniteClient
-from ..data_contracts import CategorizedAssets, CategorizedRelationships, RulesData, SolutionGraph
 
 __all__ = [
     "CreateCDFLabels",
@@ -122,7 +127,7 @@ class GenerateCDFAssetsFromGraph(Step):
             logging.info("No orphaned assets found, your assets look healthy !")
 
         if circular_assets:
-            msg = f"Found circular dependencies: {str(circular_assets)}"
+            msg = f"Found circular dependencies: {circular_assets!s}"
             logging.error(msg)
             raise Exception(msg)
         elif orphan_assets:

@@ -1,11 +1,10 @@
 from pathlib import Path
 
 from cognite.client import CogniteClient
-
+from cognite.client.data_classes import Relationship, RelationshipUpdate
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.rules.models import TransformationRules
 from cognite.neat.workflows.steps.step_model import DataContract
-from cognite.client.data_classes import Relationship, RelationshipUpdate
 
 
 class RulesData(DataContract):

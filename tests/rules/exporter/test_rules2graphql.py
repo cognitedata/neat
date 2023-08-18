@@ -1,6 +1,7 @@
 import pytest
-from cognite.neat.rules.exporter.rules2graphql import GraphQLSchema
+
 from cognite.neat.rules.exceptions import EntitiesContainNonDMSCompliantCharacters
+from cognite.neat.rules.exporter.rules2graphql import GraphQLSchema
 
 
 def test_rules2graphql(simple_rules, grid_graphql_schema):

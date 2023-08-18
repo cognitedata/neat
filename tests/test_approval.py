@@ -1,7 +1,6 @@
-# from pathlib import Path
 import pytest
-from cognite.client.testing import monkeypatch_cognite_client
 
+from cognite.client.testing import monkeypatch_cognite_client
 from cognite.neat.config import copy_examples_to_directory
 from cognite.neat.workflows import WorkflowManager
 

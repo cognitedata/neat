@@ -1,5 +1,6 @@
 import shutil
-from typing import Any, Dict, Generator, Iterable, Iterator, Mapping, Optional, Tuple, Union
+from collections.abc import Generator, Iterable, Iterator, Mapping
+from typing import Any
 
 import pyoxigraph as ox
 from rdflib import Graph
@@ -11,9 +12,9 @@ from rdflib.term import BNode, Identifier, Literal, Node, URIRef, Variable
 
 __all__ = ["OxigraphStore"]
 
-_Triple = Tuple[Node, Node, Node]
-_Quad = Tuple[Node, Node, Node, Graph]
-_TriplePattern = Tuple[Optional[Node], Optional[Node], Optional[Node]]
+_Triple = tuple[Node, Node, Node]
+_Quad = tuple[Node, Node, Node, Graph]
+_TriplePattern = tuple[Node | None, Node | None, Node | None]
 
 
 class OxigraphStore(Store):
@@ -24,23 +25,23 @@ class OxigraphStore(Store):
 
     def __init__(
         self,
-        configuration: Optional[str] = None,
-        identifier: Optional[Identifier] = None,
+        configuration: str | None = None,
+        identifier: Identifier | None = None,
         *,
-        store: Optional[ox.Store] = None,
+        store: ox.Store | None = None,
     ):
         self._store = store
-        self._prefix_for_namespace: Dict[URIRef, str] = {}
-        self._namespace_for_prefix: Dict[str, URIRef] = {}
+        self._prefix_for_namespace: dict[URIRef, str] = {}
+        self._namespace_for_prefix: dict[str, URIRef] = {}
         super().__init__(configuration, identifier)
 
-    def open(self, configuration: str, create: bool = False) -> Optional[int]:  # noqa: ARG002
+    def open(self, configuration: str, create: bool = False) -> int | None:
         if self._store is not None:
             raise ValueError("The open function should be called before any RDF operation")
         self._store = ox.Store(configuration)
         return VALID_STORE
 
-    def close(self, commit_pending_transaction: bool = False) -> None:  # noqa: ARG002
+    def close(self, commit_pending_transaction: bool = False) -> None:
         del self._store
 
     def destroy(self, configuration: str) -> None:
@@ -66,7 +67,7 @@ class OxigraphStore(Store):
         self._inner.add(_to_ox(triple, context))
         super().add(triple, context, quoted)
 
-    def addN(self, quads: Iterable[_Quad]) -> None:  # noqa: N802
+    def addN(self, quads: Iterable[_Quad]) -> None:
         self._inner.extend([_to_ox(q) for q in quads])
         for quad in quads:
             (s, p, o, g) = quad
@@ -75,7 +76,7 @@ class OxigraphStore(Store):
     def remove(
         self,
         triple: _TriplePattern,
-        context: Optional[Graph] = None,
+        context: Graph | None = None,
     ) -> None:
         for q in self._inner.quads_for_pattern(*_to_ox_quad_pattern(triple, context)):
             self._inner.remove(q)
@@ -84,32 +85,31 @@ class OxigraphStore(Store):
     def triples(
         self,
         triple_pattern: _TriplePattern,
-        context: Optional[Graph] = None,
-    ) -> Iterator[Tuple[_Triple, Iterator[Optional[Graph]]]]:
+        context: Graph | None = None,
+    ) -> Iterator[tuple[_Triple, Iterator[Graph | None]]]:
         return (_from_ox(q) for q in self._inner.quads_for_pattern(*_to_ox_quad_pattern(triple_pattern, context)))
 
-    def __len__(self, context: Optional[Graph] = None) -> int:
+    def __len__(self, context: Graph | None = None) -> int:
         if context is None:
             # TODO: very bad
             return len({q.triple for q in self._inner})
         return sum(1 for _ in self._inner.quads_for_pattern(None, None, None, _to_ox(context)))
 
-    def contexts(self, triple: Optional[_Triple] = None) -> Generator[Graph, None, None]:
+    def contexts(self, triple: _Triple | None = None) -> Generator[Graph, None, None]:
         if triple is None:
             return (_from_ox(g) for g in self._inner.named_graphs())
         return (_from_ox(q[3]) for q in self._inner.quads_for_pattern(*_to_ox_quad_pattern(triple)))
 
     def query(
         self,
-        query: Union[Query, str],
-        initNs: Mapping[str, Any],  # noqa: N803
-        initBindings: Mapping[str, Identifier],  # noqa: N803
-        queryGraph: str,  # noqa: N803
+        query: Query | str,
+        initNs: Mapping[str, Any],
+        initBindings: Mapping[str, Identifier],
+        queryGraph: str,
         **kwargs: Any,
     ) -> "Result":
         if isinstance(queryGraph, Query) or kwargs:
             raise NotImplementedError
-        # queryGraph = str(queryGraph)
         init_ns = dict(self._namespace_for_prefix, **initNs)
         query = "".join(f"PREFIX {prefix}: <{namespace}>\n" for prefix, namespace in init_ns.items()) + query
         if initBindings:
@@ -127,7 +127,9 @@ class OxigraphStore(Store):
         elif isinstance(result, ox.QuerySolutions):
             out = Result("SELECT")
             out.vars = [Variable(v.value) for v in result.variables]
-            out.bindings = ({v: _from_ox(val) for v, val in zip(out.vars, solution)} for solution in result)
+            out.bindings = (
+                {v: _from_ox(val) for v, val in zip(out.vars, solution, strict=False)} for solution in result
+            )
         elif isinstance(result, ox.QueryTriples):
             out = Result("CONSTRUCT")
             out.graph = Graph()
@@ -138,10 +140,10 @@ class OxigraphStore(Store):
 
     def update(
         self,
-        update: Union[Update, str],
-        initNs: Mapping[str, Any],  # noqa: N803
-        initBindings: Mapping[str, Identifier],  # noqa: N803
-        queryGraph: str,  # noqa: N803
+        update: Update | str,
+        initNs: Mapping[str, Any],
+        initBindings: Mapping[str, Identifier],
+        queryGraph: str,
         **kwargs: Any,
     ) -> None:
         raise NotImplementedError
@@ -182,17 +184,17 @@ class OxigraphStore(Store):
         del self._prefix_for_namespace[namespace]
         self._delete_from_prefix(prefix)
 
-    def prefix(self, namespace: URIRef) -> Optional[str]:
+    def prefix(self, namespace: URIRef) -> str | None:
         return self._prefix_for_namespace.get(namespace)
 
-    def namespace(self, prefix: str) -> Optional[URIRef]:
+    def namespace(self, prefix: str) -> URIRef | None:
         return self._namespace_for_prefix.get(prefix)
 
-    def namespaces(self) -> Iterator[Tuple[str, URIRef]]:
+    def namespaces(self) -> Iterator[tuple[str, URIRef]]:
         yield from self._namespace_for_prefix.items()
 
 
-def _to_ox(term: Union[Node, _Triple, _Quad, Graph], context: Optional[Graph] = None):
+def _to_ox(term: Node | _Triple | _Quad | Graph, context: Graph | None = None):
     if term is None:
         return None
     if term == DATASET_DEFAULT_GRAPH_ID:
@@ -210,10 +212,10 @@ def _to_ox(term: Union[Node, _Triple, _Quad, Graph], context: Optional[Graph] = 
             return ox.Quad(_to_ox(term[0]), _to_ox(term[1]), _to_ox(term[2]), _to_ox(context))
         if len(term) == 4:
             return ox.Quad(_to_ox(term[0]), _to_ox(term[1]), _to_ox(term[2]), _to_ox(term[3]))
-    raise ValueError(f"Unexpected rdflib term: {repr(term)}")
+    raise ValueError(f"Unexpected rdflib term: {term!r}")
 
 
-def _to_ox_quad_pattern(triple: _TriplePattern, context: Optional[Graph] = None):
+def _to_ox_quad_pattern(triple: _TriplePattern, context: Graph | None = None):
     (s, p, o) = triple
     return _to_ox_term_pattern(s), _to_ox_term_pattern(p), _to_ox_term_pattern(o), _to_ox_term_pattern(context)
 
@@ -229,7 +231,7 @@ def _to_ox_term_pattern(term):
         return ox.Literal(term, language=term.language, datatype=ox.NamedNode(term.datatype) if term.datatype else None)
     if isinstance(term, Graph):
         return _to_ox(term.identifier)
-    raise ValueError(f"Unexpected rdflib term: {repr(term)}")
+    raise ValueError(f"Unexpected rdflib term: {term!r}")
 
 
 def _from_ox(term):
@@ -249,4 +251,4 @@ def _from_ox(term):
         return _from_ox(term.subject), _from_ox(term.predicate), _from_ox(term.object)
     if isinstance(term, ox.Quad):
         return (_from_ox(term.subject), _from_ox(term.predicate), _from_ox(term.object)), _from_ox(term.graph_name)
-    raise ValueError(f"Unexpected Oxigraph term: {repr(term)}")
+    raise ValueError(f"Unexpected Oxigraph term: {term!r}")

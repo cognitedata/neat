@@ -3,12 +3,11 @@ as well App Data Model (RDF)
 """
 
 import logging
-from typing import List, Tuple
 
 from cognite.client.data_classes import Asset
 
 
-def _find_circular_reference_path(asset: Asset, assets: dict[str, Asset], max_hierarchy_depth: int = 10000) -> List:
+def _find_circular_reference_path(asset: Asset, assets: dict[str, Asset], max_hierarchy_depth: int = 10000) -> list:
     original_external_id = asset.get("external_id")
     circle = [original_external_id]
     ref = assets.get(asset.get("parent_external_id"))
@@ -38,7 +37,7 @@ def _find_circular_reference_path(asset: Asset, assets: dict[str, Asset], max_hi
         return []
 
 
-def validate_asset_hierarchy(assets: dict[str, Asset]) -> Tuple[List[str], List[List[str]]]:
+def validate_asset_hierarchy(assets: dict[str, Asset]) -> tuple[list[str], list[list[str]]]:
     """Validates asset hierarchy and reports on orphan assets and circular dependency
 
     Parameters

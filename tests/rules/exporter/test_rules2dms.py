@@ -1,6 +1,7 @@
 import pytest
-from cognite.neat.rules.exporter.rules2dms import DataModel
+
 from cognite.neat.rules.exceptions import EntitiesContainNonDMSCompliantCharacters
+from cognite.neat.rules.exporter.rules2dms import DataModel
 
 
 def test_rules2dms(simple_rules):

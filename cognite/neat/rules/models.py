@@ -5,7 +5,7 @@ import re
 import warnings
 from datetime import datetime
 from pathlib import Path
-from typing import Any, ClassVar, Dict, Optional
+from typing import Any, ClassVar
 
 from pydantic import (
     BaseModel,
@@ -23,21 +23,18 @@ from pydantic.fields import FieldInfo
 from rdflib import XSD, Literal, Namespace, URIRef
 
 from cognite.client.data_classes.data_modeling.data_types import (
-    Timestamp,
-    Text,
+    Boolean,
+    FileReference,
+    Float32,
     Int32,
     Int64,
-    Float32,
-    Boolean,
-    TimeSeriesReference,
-    FileReference,
-    SequenceReference,
     Json,
+    SequenceReference,
+    Text,
+    TimeSeriesReference,
+    Timestamp,
 )
-
 from cognite.neat.constants import PREFIXES
-
-# from . import _exceptions
 from cognite.neat.rules import exceptions
 from cognite.neat.rules.to_rdf_path import (
     AllReferences,
@@ -45,8 +42,8 @@ from cognite.neat.rules.to_rdf_path import (
     Hop,
     RawLookup,
     RuleType,
-    SPARQLQuery,
     SingleProperty,
+    SPARQLQuery,
     Traversal,
     parse_rule,
 )
@@ -177,14 +174,14 @@ class Metadata(RuleModel):
         default="playground",
     )
 
-    namespace: Optional[Namespace] = Field(
+    namespace: Namespace | None = Field(
         description="This is used as RDF namespace for generation of RDF OWL/SHACL data model representation "
         "and/or for generation of RDF graphs",
         min_length=1,
         max_length=2048,
         default=None,
     )
-    data_model_name: Optional[ExternalId] = Field(
+    data_model_name: ExternalId | None = Field(
         description="Name that uniquely identifies data model",
         alias="dataModelName",
         default=None,
@@ -200,11 +197,11 @@ class Metadata(RuleModel):
     title: str = Field(min_length=1, max_length=255)
     description: Description
     creator: str | list[str]
-    contributor: Optional[str | list[str]] = None
-    rights: Optional[str] = "Restricted for Internal Use of Cognite"
-    externalIdPrefix: Optional[str] = Field(alias="externalIdPrefix", default=None)
-    data_set_id: Optional[int] = Field(alias="dataSetId", default=None)
-    source: Optional[str | Path] = Field(
+    contributor: str | list[str] | None = None
+    rights: str | None = "Restricted for Internal Use of Cognite"
+    externalIdPrefix: str | None = Field(alias="externalIdPrefix", default=None)
+    data_set_id: int | None = Field(alias="dataSetId", default=None)
+    source: str | Path | None = Field(
         description="File path to Excel file which was used to produce Transformation Rules",
         default=None,
     )
@@ -250,8 +247,8 @@ class Metadata(RuleModel):
                 return Namespace(f"http://purl.org/cognite/{values['cdf_space_name']}/{values['prefix']}#")
         try:
             return Namespace(parse_obj_as(HttpUrl, value))
-        except ValidationError:
-            raise exceptions.MetadataSheetNamespaceNotValidURL(value).to_pydantic_custom_error()
+        except ValidationError as e:
+            raise exceptions.MetadataSheetNamespaceNotValidURL(value).to_pydantic_custom_error() from e
 
     @validator("namespace", always=True)
     def fix_namespace_ending(cls, value):
@@ -309,28 +306,28 @@ class Metadata(RuleModel):
 
 class Resource(RuleModel):
     # Solution model
-    description: Optional[Description] = Field(alias="Description", default=None)
+    description: Description | None = Field(alias="Description", default=None)
 
     # Solution CDF resource, it is not needed when working with FDM, this is only for
     # Classic CDF data model
-    cdf_resource_type: Optional[str] = Field(alias="Resource Type", default=None)
+    cdf_resource_type: str | None = Field(alias="Resource Type", default=None)
 
     # Advance data modeling: Keeping track if Resource got deprecated or not
     deprecated: bool = Field(default=False)
-    deprecation_date: Optional[datetime] = Field(alias="deprecationDate", default=None)
-    replaced_by: Optional[str] = Field(alias="replacedBy", default=None)
+    deprecation_date: datetime | None = Field(alias="deprecationDate", default=None)
+    replaced_by: str | None = Field(alias="replacedBy", default=None)
 
     # Advance data modeling: Relation to existing resources for purpose of mapping
-    source: Optional[HttpUrl] = Field(
+    source: HttpUrl | None = Field(
         alias="Source", description="Source of information for given entity, e.g. CIM", default=None
     )
-    source_entity_name: Optional[str] = Field(
+    source_entity_name: str | None = Field(
         alias="Source Entity Name", description="Closest entity in source, e.g. Substation", default=None
     )
-    match_type: Optional[str] = Field(
+    match_type: str | None = Field(
         alias="Match Type", description="Type of match between source entity and one being defined", default=None
     )
-    comment: Optional[str] = Field(alias="Comment", description="Comment about mapping", default=None)
+    comment: str | None = Field(alias="Comment", description="Comment about mapping", default=None)
 
     @model_validator(mode="before")
     def replace_float_nan_with_default(cls, values: dict) -> dict:
@@ -344,12 +341,12 @@ class Class(Resource):
     class_id: ExternalId = Field(
         alias="Class",
     )
-    class_name: Optional[ExternalId] = Field(alias="Name", default=None)
+    class_name: ExternalId | None = Field(alias="Name", default=None)
     # Solution model
-    parent_class: Optional[ExternalId] = Field(alias="Parent Class", default=None)
+    parent_class: ExternalId | None = Field(alias="Parent Class", default=None)
 
     # Solution CDF resource
-    parent_asset: Optional[ExternalId] = Field(alias="Parent Asset", default=None)
+    parent_asset: ExternalId | None = Field(alias="Parent Asset", default=None)
 
     @model_validator(mode="before")
     def replace_nan_floats_with_default(cls, values: dict) -> dict:
@@ -385,25 +382,25 @@ class Property(Resource):
     # Solution model
     class_id: ExternalId = Field(alias="Class")
     property_id: ExternalId = Field(alias="Property")
-    property_name: Optional[ExternalId] = Field(alias="Name", default=None)
+    property_name: ExternalId | None = Field(alias="Name", default=None)
     expected_value_type: ExternalId = Field(alias="Type")
-    min_count: Optional[int] = Field(alias="Min Count", default=0)
-    max_count: Optional[int] = Field(alias="Max Count", default=None)
+    min_count: int | None = Field(alias="Min Count", default=0)
+    max_count: int | None = Field(alias="Max Count", default=None)
     default: Any = Field(None)
 
     # OWL property
     property_type: str = "DatatypeProperty"
 
     # Solution CDF resource
-    resource_type_property: Optional[list[str]] = Field(alias="Resource Type Property", default=None)
+    resource_type_property: list[str] | None = Field(alias="Resource Type Property", default=None)
     source_type: str = Field(alias="Relationship Source Type", default="Asset")
     target_type: str = Field(alias="Relationship Target Type", default="Asset")
-    label: Optional[str] = Field(alias="Relationship Label", default=None)
-    relationship_external_id_rule: Optional[str] = Field(alias="Relationship ExternalID Rule", default=None)
+    label: str | None = Field(alias="Relationship Label", default=None)
+    relationship_external_id_rule: str | None = Field(alias="Relationship ExternalID Rule", default=None)
 
     # Transformation rule (domain to solution)
-    rule_type: Optional[RuleType] = Field(alias="Rule Type", default=None)
-    rule: Optional[str | AllReferences | SingleProperty | Hop | RawLookup | SPARQLQuery | Traversal] = Field(
+    rule_type: RuleType | None = Field(alias="Rule Type", default=None)
+    rule: str | AllReferences | SingleProperty | Hop | RawLookup | SPARQLQuery | Traversal | None = Field(
         alias="Rule", default=None
     )
     skip_rule: bool = Field(alias="Skip", default=False)
@@ -527,17 +524,17 @@ class Property(Resource):
 
 
 class Prefixes(RuleModel):
-    prefixes: Dict[str, Namespace] = PREFIXES
+    prefixes: dict[str, Namespace] = PREFIXES
 
 
 class Instance(RuleModel):
     """Class deals with instances of classes in the data model"""
 
-    instance: Optional[URIRef] = Field(alias="Instance", default=None)
-    property_: Optional[URIRef] = Field(alias="Property", default=None)
-    value: Optional[Literal | URIRef] = Field(alias="Value", default=None)
+    instance: URIRef | None = Field(alias="Instance", default=None)
+    property_: URIRef | None = Field(alias="Property", default=None)
+    value: Literal | URIRef | None = Field(alias="Value", default=None)
     namespace: Namespace
-    prefixes: Dict[str, Namespace]
+    prefixes: dict[str, Namespace]
 
     @staticmethod
     def get_value(value, prefixes) -> URIRef | Literal:
@@ -619,8 +616,8 @@ class TransformationRules(RuleModel):
     metadata: Metadata
     classes: dict[str, Class]
     properties: dict[str, Property]
-    prefixes: Optional[dict[str, Namespace]] = PREFIXES
-    instances: Optional[list[Instance]] = None
+    prefixes: dict[str, Namespace] | None = PREFIXES
+    instances: list[Instance] | None = None
 
     @property
     def raw_tables(self) -> list[str]:

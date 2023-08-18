@@ -1,7 +1,9 @@
-import pytest
-from cognite.neat.rules.exporter.rules2ontology import Ontology
-from cognite.neat.rules.exceptions import PropertiesDefinedMultipleTimes
 from copy import deepcopy
+
+import pytest
+
+from cognite.neat.rules.exceptions import PropertiesDefinedMultipleTimes
+from cognite.neat.rules.exporter.rules2ontology import Ontology
 
 
 def test_rules2ontology(transformation_rules):

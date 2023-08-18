@@ -1,12 +1,14 @@
 import logging
-from pathlib import Path
 import time
-from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
+from pathlib import Path
+from typing import ClassVar
+
 from cognite.neat.graph import extractors
-from cognite.neat.workflows.steps.step_model import Step
-from ..data_contracts import RulesData, SolutionGraph
 from cognite.neat.rules.exporter import rules2graph_sheet
 from cognite.neat.utils.utils import add_triples
+from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
+from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph
+from cognite.neat.workflows.steps.step_model import Step
 
 __all__ = ["GenerateDataCaptureSpreadsheet", "ProcessDataCaptureSpreadsheetIntoSolutionGraph"]
 
@@ -14,7 +16,7 @@ __all__ = ["GenerateDataCaptureSpreadsheet", "ProcessDataCaptureSpreadsheetIntoS
 class GenerateDataCaptureSpreadsheet(Step):
     description = "The step generates data capture spreadsheet from data model defined in rules"
     category = "data_capture"
-    configuration_templates = [
+    configuration_templates: ClassVar[list[WorkflowConfigItem]] = [
         WorkflowConfigItem(
             name="graph_capture.file",
             value="graph_capture_sheet.xlsx",

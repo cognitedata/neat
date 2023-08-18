@@ -1,13 +1,14 @@
-from typing import ClassVar, Optional, Self
 import warnings
+from typing import ClassVar, Self
+
 from pydantic import BaseModel, ConfigDict, FieldValidationInfo, field_validator
-from rdflib import OWL, RDF, RDFS, XSD, DCTERMS, BNode, Graph, Literal, URIRef, Namespace
+from rdflib import DCTERMS, OWL, RDF, RDFS, XSD, BNode, Graph, Literal, Namespace, URIRef
 from rdflib.collection import Collection as GraphCollection
 
-from cognite.neat.rules.models import DATA_TYPE_MAPPING, Class, Property, TransformationRules, Metadata
-from cognite.neat.rules.analysis import to_property_dict, to_class_property_pairs
-from cognite.neat.rules._validation import are_properties_redefined
 from cognite.neat.rules import exceptions
+from cognite.neat.rules._validation import are_properties_redefined
+from cognite.neat.rules.analysis import to_class_property_pairs, to_property_dict
+from cognite.neat.rules.models import DATA_TYPE_MAPPING, Class, Metadata, Property, TransformationRules
 from cognite.neat.utils.utils import generate_exception_report, remove_namespace
 
 
@@ -151,9 +152,9 @@ class OWLMetadata(Metadata):
 class OWLClass(OntologyModel):
     id_: URIRef
     type_: URIRef = OWL.Class
-    label: Optional[str]
-    comment: Optional[str]
-    sub_class_of: Optional[URIRef]
+    label: str | None
+    comment: str | None
+    sub_class_of: URIRef | None
     namespace: Namespace
 
     @classmethod
@@ -392,8 +393,8 @@ class SHACLPropertyShape(OntologyModel):
     path: URIRef  # URIRef to property in OWL
     node_kind: URIRef  # SHACL.IRI or SHACL.Literal
     expected_value_type: URIRef
-    min_count: Optional[int]
-    max_count: Optional[int]
+    min_count: int | None
+    max_count: int | None
     namespace: Namespace
 
     @property

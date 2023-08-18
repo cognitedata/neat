@@ -1,5 +1,6 @@
+from collections.abc import Iterator, Sequence
 from contextlib import contextmanager, suppress
-from typing import Any, Iterator, List, Literal, Optional, Sequence, Type, TypeVar, Union
+from typing import Any, Literal, TypeVar
 
 from cognite.client._constants import LIST_LIMIT_DEFAULT
 from cognite.client.data_classes import (
@@ -33,7 +34,7 @@ T = TypeVar("T")
 class MemoryClient:
     _RESOURCE_PATH: str
 
-    def __init__(self, list_cls: Type[T_CogniteResourceList], cls: Type[T_CogniteResource]) -> None:
+    def __init__(self, list_cls: type[T_CogniteResourceList], cls: type[T_CogniteResource]) -> None:
         self.store: dict[ExternalId | ID, T_CogniteResource] = {}
         self._next_id = 1
         self._CREATE_LIMIT = 10_000
@@ -49,21 +50,21 @@ class MemoryClient:
     def _retrieve(
         self,
         identifier: Identifier,
-        cls: Type[T_CogniteResource],
-        resource_path: str = None,
-        params: dict = None,
-        headers: dict = None,
-    ) -> Optional[T_CogniteResource]:
+        cls: type[T_CogniteResource],
+        resource_path: str | None = None,
+        params: dict | None = None,
+        headers: dict | None = None,
+    ) -> T_CogniteResource | None:
         return self.store.get(identifier.as_primitive())
 
     def _retrieve_multiple(
         self,
-        identifiers: Union[SingletonIdentifierSequence, IdentifierSequence],
-        resource_path: Optional[str] = None,
-        ignore_unknown_ids: Optional[bool] = None,
-        headers: Optional[dict[str, Any]] = None,
-        other_params: Optional[dict[str, Any]] = None,
-    ) -> Union[T_CogniteResourceList, Optional[T_CogniteResource]]:
+        identifiers: SingletonIdentifierSequence | IdentifierSequence,
+        resource_path: str | None = None,
+        ignore_unknown_ids: bool | None = None,
+        headers: dict[str, Any] | None = None,
+        other_params: dict[str, Any] | None = None,
+    ) -> T_CogniteResourceList | T_CogniteResource | None:
         if identifiers.is_singleton():
             return self._retrieve(identifier=identifiers[0], cls=self.cls)
         return self.list_cls([self._retrieve(identifier, cls=self.cls) for identifier in identifiers])
@@ -71,15 +72,15 @@ class MemoryClient:
     def _list(
         self,
         method: Literal["POST", "GET"],
-        resource_path: Optional[str] = None,
-        url_path: Optional[str] = None,
-        limit: Optional[int] = None,
-        filter: Optional[dict] = None,
-        other_params: Optional[dict] = None,
-        partitions: Optional[int] = None,
-        sort: Optional[Sequence[str]] = None,
-        headers: Optional[dict] = None,
-        initial_cursor: Optional[str] = None,
+        resource_path: str | None = None,
+        url_path: str | None = None,
+        limit: int | None = None,
+        filter: dict | None = None,
+        other_params: dict | None = None,
+        partitions: int | None = None,
+        sort: Sequence[str] | None = None,
+        headers: dict | None = None,
+        initial_cursor: str | None = None,
     ) -> T_CogniteResourceList:
         return self.list_cls(self._list_unique_in_store())
 
@@ -87,7 +88,7 @@ class MemoryClient:
         unique_ids = {id(item): item for item in self.store.values()}
         return self.list_cls(unique_ids.values())
 
-    def dump(self, ordered: bool = False, exclude: Optional[set[str]] = None) -> list[dict]:
+    def dump(self, ordered: bool = False, exclude: set[str] | None = None) -> list[dict]:
         exclude = exclude or set()
         iterable = (self._dump_item(item, ordered, exclude) for item in self._list_unique_in_store())
         if ordered:
@@ -118,25 +119,25 @@ class MemoryClient:
 
     def _aggregate(
         self,
-        cls: Type[T],
-        resource_path: Optional[str] = None,
-        filter: Optional[Union[CogniteFilter, dict]] = None,
-        aggregate: Optional[str] = None,
-        fields: Optional[Sequence[str]] = None,
-        keys: Optional[Sequence[str]] = None,
-        headers: Optional[dict] = None,
+        cls: type[T],
+        resource_path: str | None = None,
+        filter: CogniteFilter | dict | None = None,
+        aggregate: str | None = None,
+        fields: Sequence[str] | None = None,
+        keys: Sequence[str] | None = None,
+        headers: dict | None = None,
     ) -> list[T]:
         raise NotImplementedError()
 
     def _create_multiple(
         self,
         items: Sequence[T_CogniteResource] | Sequence[dict[str, Any]] | T_CogniteResource | dict[str, Any],
-        resource_path: Optional[str] = None,
-        params: Optional[dict] = None,
-        headers: Optional[dict] = None,
-        extra_body_fields: Optional[dict] = None,
-        limit: Optional[int] = None,
-    ) -> Union[T_CogniteResourceList, T_CogniteResource]:
+        resource_path: str | None = None,
+        params: dict | None = None,
+        headers: dict | None = None,
+        extra_body_fields: dict | None = None,
+        limit: int | None = None,
+    ) -> T_CogniteResourceList | T_CogniteResource:
         is_single = not isinstance(items, Sequence)
         create_items = [items] if is_single else items
         for item in create_items:
@@ -150,40 +151,40 @@ class AssetsMemory(MemoryClient):
 
     def __call__(
         self,
-        chunk_size: int = None,
-        name: str = None,
-        parent_ids: Sequence[int] = None,
-        parent_external_ids: Sequence[str] = None,
-        asset_subtree_ids: Union[int, Sequence[int]] = None,
-        asset_subtree_external_ids: Union[str, Sequence[str]] = None,
-        metadata: dict[str, str] = None,
-        data_set_ids: Union[int, Sequence[int]] = None,
-        data_set_external_ids: Union[str, Sequence[str]] = None,
+        chunk_size: int | None = None,
+        name: str | None = None,
+        parent_ids: Sequence[int] | None = None,
+        parent_external_ids: Sequence[str] | None = None,
+        asset_subtree_ids: int | Sequence[int] | None = None,
+        asset_subtree_external_ids: str | Sequence[str] | None = None,
+        metadata: dict[str, str] | None = None,
+        data_set_ids: int | Sequence[int] | None = None,
+        data_set_external_ids: str | Sequence[str] | None = None,
         labels: LabelFilter = None,
         geo_location: GeoLocationFilter = None,
-        source: str = None,
-        created_time: Union[dict[str, Any], TimestampRange] = None,
-        last_updated_time: Union[dict[str, Any], TimestampRange] = None,
-        root: bool = None,
-        external_id_prefix: str = None,
-        aggregated_properties: Sequence[str] = None,
-        limit: int = None,
-        partitions: int = None,
-    ) -> Union[Iterator[Asset], Iterator[AssetList]]:
+        source: str | None = None,
+        created_time: dict[str, Any] | TimestampRange = None,
+        last_updated_time: dict[str, Any] | TimestampRange = None,
+        root: bool | None = None,
+        external_id_prefix: str | None = None,
+        aggregated_properties: Sequence[str] | None = None,
+        limit: int | None = None,
+        partitions: int | None = None,
+    ) -> Iterator[Asset] | Iterator[AssetList]:
         return iter(
             self._list(
                 method="POST",
             )
         )
 
-    def retrieve(self, id: Optional[int] = None, external_id: Optional[str] = None) -> Optional[Asset]:
+    def retrieve(self, id: int | None = None, external_id: str | None = None) -> Asset | None:
         identifier = IdentifierSequence.load(ids=id, external_ids=external_id).as_singleton()
         return self._retrieve_multiple(identifiers=identifier)
 
     def retrieve_multiple(
         self,
-        ids: Optional[Sequence[int]] = None,
-        external_ids: Optional[Sequence[str]] = None,
+        ids: Sequence[int] | None = None,
+        external_ids: Sequence[str] | None = None,
         ignore_unknown_ids: bool = False,
     ) -> AssetList:
         identifiers = IdentifierSequence.load(ids=ids, external_ids=external_ids)
@@ -191,46 +192,46 @@ class AssetsMemory(MemoryClient):
 
     def list(
         self,
-        name: str = None,
-        parent_ids: Sequence[int] = None,
-        parent_external_ids: Sequence[str] = None,
-        asset_subtree_ids: Union[int, Sequence[int]] = None,
-        asset_subtree_external_ids: Union[str, Sequence[str]] = None,
-        data_set_ids: Union[int, Sequence[int]] = None,
-        data_set_external_ids: Union[str, Sequence[str]] = None,
+        name: str | None = None,
+        parent_ids: Sequence[int] | None = None,
+        parent_external_ids: Sequence[str] | None = None,
+        asset_subtree_ids: int | Sequence[int] | None = None,
+        asset_subtree_external_ids: str | Sequence[str] | None = None,
+        data_set_ids: int | Sequence[int] | None = None,
+        data_set_external_ids: str | Sequence[str] | None = None,
         labels: LabelFilter = None,
         geo_location: GeoLocationFilter = None,
-        metadata: dict[str, str] = None,
-        source: str = None,
-        created_time: Union[dict[str, Any], TimestampRange] = None,
-        last_updated_time: Union[dict[str, Any], TimestampRange] = None,
-        root: bool = None,
-        external_id_prefix: str = None,
-        aggregated_properties: Sequence[str] = None,
-        partitions: int = None,
+        metadata: dict[str, str] | None = None,
+        source: str | None = None,
+        created_time: dict[str, Any] | TimestampRange = None,
+        last_updated_time: dict[str, Any] | TimestampRange = None,
+        root: bool | None = None,
+        external_id_prefix: str | None = None,
+        aggregated_properties: Sequence[str] | None = None,
+        partitions: int | None = None,
         limit: int = LIST_LIMIT_DEFAULT,
     ) -> AssetList:
         return self._list(
             method="POST",
         )
 
-    def aggregate(self, filter: Union[AssetFilter, dict] = None) -> List[AssetAggregate]:
+    def aggregate(self, filter: AssetFilter | dict = None) -> list[AssetAggregate]:
         return [AssetAggregate(count=len(self._list_unique_in_store()))]
 
-    def aggregate_metadata_keys(self, filter: Union[AssetFilter, dict] = None) -> Sequence[AggregateBucketResult]:
+    def aggregate_metadata_keys(self, filter: AssetFilter | dict = None) -> Sequence[AggregateBucketResult]:
         raise NotImplementedError()
 
     def aggregate_metadata_values(
-        self, keys: Sequence[str], filter: Union[AssetFilter, dict] = None
+        self, keys: Sequence[str], filter: AssetFilter | dict = None
     ) -> Sequence[AggregateBucketResult]:
         raise NotImplementedError()
 
-    def create(self, asset: Union[Asset, Sequence[Asset]]) -> Union[Asset, AssetList]:
+    def create(self, asset: Asset | Sequence[Asset]) -> Asset | AssetList:
         return self._create_multiple(items=asset)
 
     def create_hierarchy(
         self,
-        assets: Union[Sequence[Asset], AssetHierarchy],
+        assets: Sequence[Asset] | AssetHierarchy,
         *,
         upsert: bool = False,
         upsert_mode: Literal["patch", "replace"] = "patch",
@@ -242,27 +243,29 @@ class AssetsMemory(MemoryClient):
 
     def delete(
         self,
-        id: Union[int, Sequence[int]] = None,
-        external_id: Union[str, Sequence[str]] = None,
+        id: int | Sequence[int] | None = None,
+        external_id: str | Sequence[str] | None = None,
         recursive: bool = False,
         ignore_unknown_ids: bool = False,
     ) -> None:
         raise NotImplementedError()
 
-    def update(self, item: Union[Asset, AssetUpdate, Sequence[Union[Asset, AssetUpdate]]]) -> Union[Asset, AssetList]:
+    def update(self, item: Asset | AssetUpdate | Sequence[Asset | AssetUpdate]) -> Asset | AssetList:
         raise NotImplementedError()
 
     def search(
         self,
-        name: str = None,
-        description: str = None,
-        query: str = None,
-        filter: Union[AssetFilter, dict] = None,
+        name: str | None = None,
+        description: str | None = None,
+        query: str | None = None,
+        filter: AssetFilter | dict = None,
         limit: int = 100,
     ) -> AssetList:
         raise NotImplementedError()
 
-    def retrieve_subtree(self, id: int = None, external_id: str = None, depth: int = None) -> AssetList:
+    def retrieve_subtree(
+        self, id: int | None = None, external_id: str | None = None, depth: int | None = None
+    ) -> AssetList:
         raise NotImplementedError()
 
 
@@ -272,17 +275,17 @@ class RelationshipsMemory(MemoryClient):
 
     def _create_filter(
         self,
-        source_external_ids: Sequence[str] = None,
-        source_types: Sequence[str] = None,
-        target_external_ids: Sequence[str] = None,
-        target_types: Sequence[str] = None,
-        data_set_ids: Sequence[dict[str, Any]] = None,
-        start_time: dict[str, int] = None,
-        end_time: dict[str, int] = None,
-        confidence: dict[str, int] = None,
-        last_updated_time: dict[str, int] = None,
-        created_time: dict[str, int] = None,
-        active_at_time: dict[str, int] = None,
+        source_external_ids: Sequence[str] | None = None,
+        source_types: Sequence[str] | None = None,
+        target_external_ids: Sequence[str] | None = None,
+        target_types: Sequence[str] | None = None,
+        data_set_ids: Sequence[dict[str, Any]] | None = None,
+        start_time: dict[str, int] | None = None,
+        end_time: dict[str, int] | None = None,
+        confidence: dict[str, int] | None = None,
+        last_updated_time: dict[str, int] | None = None,
+        created_time: dict[str, int] | None = None,
+        active_at_time: dict[str, int] | None = None,
         labels: LabelFilter = None,
     ) -> dict[str, Any]:
         return RelationshipFilter(
@@ -302,31 +305,31 @@ class RelationshipsMemory(MemoryClient):
 
     def __call__(
         self,
-        source_external_ids: Sequence[str] = None,
-        source_types: Sequence[str] = None,
-        target_external_ids: Sequence[str] = None,
-        target_types: Sequence[str] = None,
-        data_set_ids: Union[int, Sequence[int]] = None,
-        data_set_external_ids: Union[str, Sequence[str]] = None,
-        start_time: dict[str, int] = None,
-        end_time: dict[str, int] = None,
-        confidence: dict[str, int] = None,
-        last_updated_time: dict[str, int] = None,
-        created_time: dict[str, int] = None,
-        active_at_time: dict[str, int] = None,
+        source_external_ids: Sequence[str] | None = None,
+        source_types: Sequence[str] | None = None,
+        target_external_ids: Sequence[str] | None = None,
+        target_types: Sequence[str] | None = None,
+        data_set_ids: int | Sequence[int] | None = None,
+        data_set_external_ids: str | Sequence[str] | None = None,
+        start_time: dict[str, int] | None = None,
+        end_time: dict[str, int] | None = None,
+        confidence: dict[str, int] | None = None,
+        last_updated_time: dict[str, int] | None = None,
+        created_time: dict[str, int] | None = None,
+        active_at_time: dict[str, int] | None = None,
         labels: LabelFilter = None,
-        limit: int = None,
+        limit: int | None = None,
         fetch_resources: bool = False,
-        chunk_size: int = None,
-        partitions: int = None,
-    ) -> Union[Iterator[Relationship], Iterator[RelationshipList]]:
+        chunk_size: int | None = None,
+        partitions: int | None = None,
+    ) -> Iterator[Relationship] | Iterator[RelationshipList]:
         return iter(
             self._list(
                 method="POST",
             )
         )
 
-    def retrieve(self, external_id: str, fetch_resources: bool = False) -> Optional[Relationship]:
+    def retrieve(self, external_id: str, fetch_resources: bool = False) -> Relationship | None:
         identifiers = IdentifierSequence.load(ids=None, external_ids=external_id).as_singleton()
         return self._retrieve_multiple(
             identifiers=identifiers,
@@ -340,30 +343,28 @@ class RelationshipsMemory(MemoryClient):
 
     def list(
         self,
-        source_external_ids: Sequence[str] = None,
-        source_types: Sequence[str] = None,
-        target_external_ids: Sequence[str] = None,
-        target_types: Sequence[str] = None,
-        data_set_ids: Union[int, Sequence[int]] = None,
-        data_set_external_ids: Union[str, Sequence[str]] = None,
-        start_time: dict[str, int] = None,
-        end_time: dict[str, int] = None,
-        confidence: dict[str, int] = None,
-        last_updated_time: dict[str, int] = None,
-        created_time: dict[str, int] = None,
-        active_at_time: dict[str, int] = None,
+        source_external_ids: Sequence[str] | None = None,
+        source_types: Sequence[str] | None = None,
+        target_external_ids: Sequence[str] | None = None,
+        target_types: Sequence[str] | None = None,
+        data_set_ids: int | Sequence[int] | None = None,
+        data_set_external_ids: str | Sequence[str] | None = None,
+        start_time: dict[str, int] | None = None,
+        end_time: dict[str, int] | None = None,
+        confidence: dict[str, int] | None = None,
+        last_updated_time: dict[str, int] | None = None,
+        created_time: dict[str, int] | None = None,
+        active_at_time: dict[str, int] | None = None,
         labels: LabelFilter = None,
         limit: int = 100,
-        partitions: int = None,
+        partitions: int | None = None,
         fetch_resources: bool = False,
     ) -> RelationshipList:
         return self._list(
             method="POST",
         )
 
-    def create(
-        self, relationship: Union[Relationship, Sequence[Relationship]]
-    ) -> Union[Relationship, RelationshipList]:
+    def create(self, relationship: Relationship | Sequence[Relationship]) -> Relationship | RelationshipList:
         if isinstance(relationship, Sequence):
             relationship = [r._validate_resource_types() for r in relationship]
         else:
@@ -372,20 +373,14 @@ class RelationshipsMemory(MemoryClient):
         return self._create_multiple(items=relationship)
 
     def update(
-        self, item: Union[Relationship, RelationshipUpdate, Sequence[Union[Relationship, RelationshipUpdate]]]
-    ) -> Union[Relationship, RelationshipList]:
+        self, item: Relationship | RelationshipUpdate | Sequence[Relationship | RelationshipUpdate]
+    ) -> Relationship | RelationshipList:
         raise NotImplementedError()
         # return self._update_multiple(
-        #     list_cls=RelationshipList, resource_cls=Relationship, update_cls=RelationshipUpdate, items=item
-        # )
 
-    def delete(self, external_id: Union[str, Sequence[str]], ignore_unknown_ids: bool = False) -> None:
+    def delete(self, external_id: str | Sequence[str], ignore_unknown_ids: bool = False) -> None:
         raise NotImplementedError()
         # self._delete_multiple(
-        #     identifiers=IdentifierSequence.load(external_ids=external_id),
-        #     wrap_ids=True,
-        #     extra_body_fields={"ignoreUnknownIds": ignore_unknown_ids},
-        # )
 
 
 class LabelsMemory(MemoryClient):
@@ -396,13 +391,13 @@ class LabelsMemory(MemoryClient):
 
     def __call__(
         self,
-        name: str = None,
-        external_id_prefix: str = None,
-        limit: int = None,
-        chunk_size: int = None,
-        data_set_ids: Union[int, Sequence[int]] = None,
-        data_set_external_ids: Union[str, Sequence[str]] = None,
-    ) -> Union[Iterator[LabelDefinition], Iterator[LabelDefinitionList]]:
+        name: str | None = None,
+        external_id_prefix: str | None = None,
+        limit: int | None = None,
+        chunk_size: int | None = None,
+        data_set_ids: int | Sequence[int] | None = None,
+        data_set_external_ids: str | Sequence[str] | None = None,
+    ) -> Iterator[LabelDefinition] | Iterator[LabelDefinitionList]:
         return iter(
             self._list(
                 method="POST",
@@ -411,17 +406,15 @@ class LabelsMemory(MemoryClient):
 
     def list(
         self,
-        name: str = None,
-        external_id_prefix: str = None,
-        data_set_ids: Union[int, Sequence[int]] = None,
-        data_set_external_ids: Union[str, Sequence[str]] = None,
+        name: str | None = None,
+        external_id_prefix: str | None = None,
+        data_set_ids: int | Sequence[int] | None = None,
+        data_set_external_ids: str | Sequence[str] | None = None,
         limit: int = LIST_LIMIT_DEFAULT,
     ) -> LabelDefinitionList:
         return self._list(method="POST", limit=limit)
 
-    def create(
-        self, label: Union[LabelDefinition, Sequence[LabelDefinition]]
-    ) -> Union[LabelDefinition, LabelDefinitionList]:
+    def create(self, label: LabelDefinition | Sequence[LabelDefinition]) -> LabelDefinition | LabelDefinitionList:
         if isinstance(label, Sequence):
             if len(label) > 0 and not isinstance(label[0], LabelDefinition):
                 raise TypeError("'label' must be of type LabelDefinition or Sequence[LabelDefinition]")
@@ -429,9 +422,8 @@ class LabelsMemory(MemoryClient):
             raise TypeError("'label' must be of type LabelDefinition or Sequence[LabelDefinition]")
         return self._create_multiple(items=label)
 
-    def delete(self, external_id: Union[str, Sequence[str]] = None) -> None:
+    def delete(self, external_id: str | Sequence[str] | None = None) -> None:
         raise NotImplementedError()
-        # self._delete_multiple(identifiers=IdentifierSequence.load(external_ids=external_id), wrap_ids=True)
 
 
 @contextmanager

@@ -8,13 +8,6 @@ from prometheus_client import Gauge
 from cognite.client import CogniteClient
 from cognite.client.data_classes import AssetFilter
 from cognite.neat.constants import PREFIXES
-
-from cognite.neat.rules.models import TransformationRules
-from cognite.neat.rules.parser import parse_rules_from_excel_file
-from cognite.neat.rules.exporter.rules2triples import get_instances_as_triples
-
-from cognite.neat.graph.stores import NeatGraphStore, drop_graph_store
-from cognite.neat.graph.transformations.transformer import RuleProcessingReport, domain2app_knowledge_graph
 from cognite.neat.graph.loaders.core.labels import upload_labels
 from cognite.neat.graph.loaders.core.rdf_to_assets import categorize_assets, rdf2assets, upload_assets
 from cognite.neat.graph.loaders.core.rdf_to_relationships import (
@@ -23,12 +16,15 @@ from cognite.neat.graph.loaders.core.rdf_to_relationships import (
     upload_relationships,
 )
 from cognite.neat.graph.loaders.validator import validate_asset_hierarchy
-
+from cognite.neat.graph.stores import NeatGraphStore, drop_graph_store
+from cognite.neat.graph.transformations.transformer import RuleProcessingReport, domain2app_knowledge_graph
+from cognite.neat.rules.exporter.rules2triples import get_instances_as_triples
+from cognite.neat.rules.models import TransformationRules
+from cognite.neat.rules.parser import parse_rules_from_excel_file
 from cognite.neat.workflows import utils
-from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.base import BaseWorkflow
 from cognite.neat.workflows.cdf_store import CdfStore
-
+from cognite.neat.workflows.model import FlowMessage
 
 with contextlib.suppress(ValueError):
     prom_cdf_resource_stats = Gauge(
@@ -68,7 +64,7 @@ class GraphsAndRulesBaseWorkflow(BaseWorkflow):
 
         self.transformation_rules = parse_rules_from_excel_file(rules_file_path)
         self.dataset_id = self.transformation_rules.metadata.data_set_id
-        logging.info(f"Loaded prefixes {str(self.transformation_rules.prefixes)} rules from {rules_file_path.name!r}.")
+        logging.info(f"Loaded prefixes {self.transformation_rules.prefixes!s} rules from {rules_file_path.name!r}.")
         output_text = f"Loaded {len(self.transformation_rules.properties)} rules"
         logging.info(output_text)
         return FlowMessage(output_text=output_text)
@@ -227,7 +223,7 @@ class Graph2AssetHierarchyBaseWorkflow(GraphsAndRulesBaseWorkflow):
             logging.info("No orphaned assets found, your assets look healthy !")
 
         if circular_assets:
-            msg = f"Found circular dependencies: {str(circular_assets)}"
+            msg = f"Found circular dependencies: {circular_assets!s}"
             logging.error(msg)
             raise Exception(msg)
         elif orphan_assets:

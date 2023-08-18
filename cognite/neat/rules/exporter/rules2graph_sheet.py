@@ -50,7 +50,7 @@ def rules2graph_capturing_sheet(
         workbook.create_sheet(title=class_)
 
         # Add header rows
-        workbook[class_].append(["identifier"] + list(properties.keys()))
+        workbook[class_].append(["identifier", *list(properties.keys())])
 
         if auto_identifier_type and auto_identifier_type == "index-based":  # default, easy to read
             logging.debug(f"Configuring index-based automatic identifiers for sheet {class_}")

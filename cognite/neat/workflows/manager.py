@@ -8,10 +8,10 @@ import time
 import traceback
 from pathlib import Path
 
-from cognite.client import CogniteClient
 from prometheus_client import Gauge
 from pydantic import BaseModel
 
+from cognite.client import CogniteClient
 from cognite.neat.workflows import BaseWorkflow
 from cognite.neat.workflows.base import WorkflowDefinition
 from cognite.neat.workflows.model import FlowMessage, InstanceStartMethod, WorkflowState
@@ -43,10 +43,10 @@ class WorkflowManager:
         self,
         client: CogniteClient = None,
         registry_storage_type: str = "file",
-        workflows_storage_path: Path = None,
-        rules_storage_path: Path = None,
-        data_store_path: Path = None,
-        data_set_id: int = None,
+        workflows_storage_path: Path | None = None,
+        rules_storage_path: Path | None = None,
+        data_store_path: Path | None = None,
+        data_set_id: int | None = None,
     ):
         self.client = client
         self.data_set_id = data_set_id
@@ -95,13 +95,13 @@ class WorkflowManager:
         self.workflow_registry[name].configs = workflow.configs
         self.workflow_registry[name].workflow_system_components = workflow.system_components
 
-    def save_workflow_to_storage(self, name: str, custom_implementation_module: str = None):
+    def save_workflow_to_storage(self, name: str, custom_implementation_module: str | None = None):
         """Save workflow from memory to storage"""
         if self.workflows_storage_type == "file":
             full_path = self.workflows_storage_path / name / "workflow.yaml"
             full_path.parent.mkdir(parents=True, exist_ok=True)
             wf = self.workflow_registry[name]
-            with open(full_path, "w") as f:
+            with full_path.open("w") as f:
                 f.write(
                     wf.serialize_workflow(
                         output_format="yaml", custom_implementation_module=custom_implementation_module
@@ -117,7 +117,7 @@ class WorkflowManager:
         self.save_workflow_to_storage(name)
         return workflow_definition
 
-    def load_workflows_from_storage(self, workflows_storage_path: str | Path = None):
+    def load_workflows_from_storage(self, workflows_storage_path: str | Path | None = None):
         """Loads workflows from disk/storage into memory, initializes and register them in the workflow registry"""
 
         # set workflow storage path
@@ -134,8 +134,8 @@ class WorkflowManager:
                 logging.info(f"Loading workflow {workflow_name} from {workflow_path}")
                 try:
                     workflow_definition_path = workflow_path / "workflow.yaml"
-                    if os.path.exists(workflow_definition_path):
-                        with open(workflow_definition_path, "r") as workflow_definition_file:
+                    if workflows_storage_path.exists():
+                        with workflow_definition_path.open() as workflow_definition_file:
                             workflow_definition: WorkflowDefinition = BaseWorkflow.deserialize_definition(
                                 workflow_definition_file.read(), output_format="yaml"
                             )
@@ -182,10 +182,8 @@ class WorkflowManager:
                         for name, obj in inspect.getmembers(module):
                             if "NeatWorkflow" in name and inspect.isclass(obj):
                                 logging.info(
-                                    (
-                                        f"Found class {name} in module {workflow_name},"
-                                        f" registering it as '{workflow_name}' in the workflow registry"
-                                    )
+                                    f"Found class {name} in module {workflow_name},"
+                                    f" registering it as '{workflow_name}' in the workflow registry"
                                 )
                                 self.register_workflow(obj, workflow_name, workflow_definition)
                                 return
@@ -233,7 +231,7 @@ class WorkflowManager:
         return
 
     def start_workflow_instance(
-        self, workflow_name: str, step_id: str = "", flow_msg: FlowMessage = None, sync: bool = None
+        self, workflow_name: str, step_id: str = "", flow_msg: FlowMessage = None, sync: bool | None = None
     ) -> WorkflowStartStatus:
         workflow = self.get_workflow(workflow_name)
 

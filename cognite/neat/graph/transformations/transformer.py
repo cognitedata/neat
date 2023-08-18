@@ -5,15 +5,14 @@ import logging
 import time
 import traceback
 from enum import StrEnum
-from typing import List, Tuple
 
 import pandas as pd
-from cognite.client import CogniteClient
 from prometheus_client import Gauge
 from pydantic import BaseModel
 from rdflib import RDF, Graph
 from rdflib.term import Literal
 
+from cognite.client import CogniteClient
 from cognite.neat.graph.transformations.query_generator.sparql import build_sparql_query
 from cognite.neat.rules.models import TransformationRules
 from cognite.neat.rules.to_rdf_path import AllProperties, AllReferences, RawLookup, parse_rule
@@ -54,7 +53,7 @@ class RuleProcessingReport(BaseModel):
     total_success: int = 0
     total_success_no_results: int = 0
     total_failed: int = 0
-    records: List[RuleProcessingReportRec] = []
+    records: list[RuleProcessingReportRec] = []
     elapsed_time: float = 0
 
 
@@ -63,8 +62,8 @@ def source2solution_graph(
     transformation_rules: TransformationRules,
     solution_knowledge_graph: Graph = None,
     client: CogniteClient = None,
-    cdf_lookup_database: str = None,
-    extra_triples: List[Tuple] = None,
+    cdf_lookup_database: str | None = None,
+    extra_triples: list[tuple] | None = None,
     stop_on_exception: bool = False,
     missing_raw_lookup_value: str = "NaN",
     processing_report: RuleProcessingReport = None,
@@ -91,8 +90,8 @@ def domain2app_knowledge_graph(
     transformation_rules: TransformationRules,
     app_instance_graph: Graph = None,
     client: CogniteClient = None,
-    cdf_lookup_database: str = None,
-    extra_triples: List[Tuple] = None,
+    cdf_lookup_database: str | None = None,
+    extra_triples: list[tuple] | None = None,
     stop_on_exception: bool = False,
     missing_raw_lookup_value: str = "NaN",
     processing_report: RuleProcessingReport = None,
@@ -286,8 +285,8 @@ def domain2app_knowledge_graph(
             try:
                 app_instance_graph.add(triple)
                 check_commit()
-            except ValueError:
-                raise ValueError(f"Triple {i} in extra_triples is not correct and cannot be added!")
+            except ValueError as e:
+                raise ValueError(f"Triple {i} in extra_triples is not correct and cannot be added!") from e
 
     check_commit(force_commit=True)
     return app_instance_graph

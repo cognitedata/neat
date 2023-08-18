@@ -3,10 +3,10 @@ import logging
 import time
 from pathlib import Path
 
-from cognite.client import CogniteClient
-from cognite.client.data_classes import AssetFilter
 from prometheus_client import Gauge
 
+from cognite.client import CogniteClient
+from cognite.client.data_classes import AssetFilter
 from cognite.neat import rules
 from cognite.neat.graph import extractors
 from cognite.neat.graph.loaders.core.labels import upload_labels
@@ -23,14 +23,14 @@ from cognite.neat.graph.loaders.core.rdf_to_relationships import (
     rdf2relationships,
     upload_relationships,
 )
+from cognite.neat.graph.loaders.validator import validate_asset_hierarchy
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.rules.exporter.rules2triples import get_instances_as_triples
 from cognite.neat.rules.models import TransformationRules
-from cognite.neat.graph.loaders.validator import validate_asset_hierarchy
 from cognite.neat.workflows import utils
 from cognite.neat.workflows.base import BaseWorkflow
-from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.cdf_store import CdfStore
+from cognite.neat.workflows.model import FlowMessage
 
 with contextlib.suppress(ValueError):
     prom_cdf_resource_stats = Gauge(
@@ -80,7 +80,7 @@ class Sheet2CDFBaseWorkflow(BaseWorkflow):
 
         output_text = f"Loaded {len(self.transformation_rules.properties)} rules from {rules_file_path.name!r}."
         logging.info(output_text)
-        logging.info(f"Loaded prefixes {str(self.transformation_rules.prefixes)} rules")
+        logging.info(f"Loaded prefixes {self.transformation_rules.prefixes!s} rules")
 
         self.dataset_id = self.transformation_rules.metadata.data_set_id
         return FlowMessage(output_text=output_text)
@@ -107,7 +107,6 @@ class Sheet2CDFBaseWorkflow(BaseWorkflow):
 
         output_text = f"Loaded {len(self.instance_ids)} instances out of"
         # Todo: This is no longer exposed in the rules package. Need to extend the load methods to return a rapport.
-        # output_text += f" {len(self.raw_tables['Instances'])} rows in Instances sheet"
 
         logging.info(output_text)
         return FlowMessage(output_text=output_text)

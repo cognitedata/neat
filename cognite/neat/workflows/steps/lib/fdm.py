@@ -1,5 +1,7 @@
-from pathlib import Path
 import time
+from pathlib import Path
+from typing import ClassVar
+
 from cognite.neat.rules.exporter.rules2graphql import GraphQLSchema
 from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
 from cognite.neat.workflows.steps.data_contracts import RulesData
@@ -11,7 +13,7 @@ __all__ = ["GenerateGraphQLSchemaFromRules"]
 class GenerateGraphQLSchemaFromRules(Step):
     description = "The step generates GraphQL schema from data model defined in rules"
     category = "fdm"
-    configuration_templates = [
+    configuration_templates: ClassVar[list[WorkflowConfigItem]] = [
         WorkflowConfigItem(
             name="fdm_schema.file",
             value="fdm_model.graphql",

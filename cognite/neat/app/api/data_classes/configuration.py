@@ -3,8 +3,7 @@ import logging
 import os
 from enum import StrEnum
 from pathlib import Path
-
-from typing import Literal, Optional, Self
+from typing import Literal, Self
 
 import yaml
 from pydantic import BaseModel, Field
@@ -42,7 +41,7 @@ class Config(BaseModel):
     workflows_store_type: RulesStoreType = WorkflowsStoreType.FILE
     data_store_path: Path = Field(default_factory=lambda: Path.cwd() / "data")
 
-    workflow_downloader_filter: Optional[list[str]] = Field(
+    workflow_downloader_filter: list[str] | None = Field(
         description="List of workflow names+tags to filter on when downloading workflows from CDF. "
         "Example name:workflow_name=version,tag:tag_name",
         default=None,
