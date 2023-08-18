@@ -3,6 +3,7 @@ import traceback
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import LabelDefinition
+
 from cognite.neat.rules.exporter.core import get_labels
 from cognite.neat.rules.models import TransformationRules
 

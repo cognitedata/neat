@@ -1,7 +1,7 @@
 import pandas as pd
+from cognite.client.testing import monkeypatch_cognite_client
 from rdflib import Graph, Namespace
 
-from cognite.client.testing import monkeypatch_cognite_client
 from cognite.neat.graph.transformations.transformer import domain2app_knowledge_graph
 from cognite.neat.rules.models import TransformationRules
 from cognite.neat.rules.to_rdf_path import RuleType

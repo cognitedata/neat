@@ -7,6 +7,18 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, ClassVar
 
+from cognite.client.data_classes.data_modeling.data_types import (
+    Boolean,
+    FileReference,
+    Float32,
+    Int32,
+    Int64,
+    Json,
+    SequenceReference,
+    Text,
+    TimeSeriesReference,
+    Timestamp,
+)
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -22,18 +34,6 @@ from pydantic import (
 from pydantic.fields import FieldInfo
 from rdflib import XSD, Literal, Namespace, URIRef
 
-from cognite.client.data_classes.data_modeling.data_types import (
-    Boolean,
-    FileReference,
-    Float32,
-    Int32,
-    Int64,
-    Json,
-    SequenceReference,
-    Text,
-    TimeSeriesReference,
-    Timestamp,
-)
 from cognite.neat.constants import PREFIXES
 from cognite.neat.rules import exceptions
 from cognite.neat.rules.to_rdf_path import (

@@ -7,12 +7,12 @@ from functools import wraps
 from typing import TypeAlias
 
 import pandas as pd
-from rdflib import Literal
-from rdflib.term import URIRef
-
 from cognite.client import ClientConfig, CogniteClient
 from cognite.client.credentials import CredentialProvider, OAuthClientCredentials, OAuthInteractive
 from cognite.client.exceptions import CogniteDuplicatedError, CogniteReadTimeout
+from rdflib import Literal
+from rdflib.term import URIRef
+
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.utils.cdf import CogniteClientConfig, InteractiveCogniteClient, ServiceCogniteClient
 

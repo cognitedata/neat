@@ -3,6 +3,7 @@ import time
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import AssetFilter
+
 from cognite.neat.graph.loaders import upload_labels
 from cognite.neat.graph.loaders.core.rdf_to_assets import (
     NeatMetadataKeys,

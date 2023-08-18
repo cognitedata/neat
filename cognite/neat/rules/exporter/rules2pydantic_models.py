@@ -3,12 +3,12 @@ import warnings
 from datetime import UTC, datetime
 from typing import Any
 
+from cognite.client.data_classes import Asset, Relationship
 from pydantic import BaseModel, ConfigDict, Field, create_model
 from pydantic._internal._model_construction import ModelMetaclass
 from rdflib import Graph, URIRef
 from typing_extensions import TypeAliasType
 
-from cognite.client.data_classes import Asset, Relationship
 from cognite.neat.graph.loaders.core.rdf_to_assets import NeatMetadataKeys
 from cognite.neat.graph.transformations.query_generator.sparql import build_construct_query, triples2dictionary
 from cognite.neat.rules import exceptions

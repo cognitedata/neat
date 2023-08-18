@@ -1,4 +1,5 @@
 from cognite.client import CogniteClient
+
 from cognite.neat.workflows.model import FlowMessage
 
 

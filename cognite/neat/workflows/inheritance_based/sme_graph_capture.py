@@ -4,6 +4,7 @@ from pathlib import Path
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import AssetFilter
+
 from cognite.neat import rules
 from cognite.neat.graph import extractors
 from cognite.neat.graph.loaders.core.labels import upload_labels

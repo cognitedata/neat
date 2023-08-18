@@ -2,9 +2,9 @@ import logging
 from pathlib import Path
 from typing import ClassVar
 
+from cognite.client import CogniteClient
 from rdflib import RDF, Literal, URIRef
 
-from cognite.client import CogniteClient
 from cognite.neat.constants import PREFIXES
 from cognite.neat.graph.transformations.transformer import RuleProcessingReport, domain2app_knowledge_graph
 from cognite.neat.rules import parse_rules_from_excel_file

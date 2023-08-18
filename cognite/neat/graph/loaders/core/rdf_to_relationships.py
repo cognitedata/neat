@@ -3,10 +3,10 @@ import warnings
 from warnings import warn
 
 import pandas as pd
-
 from cognite.client import CogniteClient
 from cognite.client.data_classes import LabelFilter, Relationship, RelationshipUpdate
 from cognite.client.exceptions import CogniteDuplicatedError
+
 from cognite.neat.graph.loaders.core.models import RelationshipDefinition, RelationshipDefinitions
 from cognite.neat.graph.loaders.core.rdf_to_assets import _categorize_cdf_assets
 from cognite.neat.graph.stores import NeatGraphStore

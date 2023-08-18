@@ -2,10 +2,10 @@ import logging
 import os
 from pathlib import Path
 
+from cognite.client import CogniteClient
 from fastapi import FastAPI
 
 from cognite import neat
-from cognite.client import CogniteClient
 from cognite.neat.app.api.data_classes.configuration import Config, configure_logging
 from cognite.neat.config import copy_examples_to_directory
 from cognite.neat.constants import PACKAGE_DIRECTORY

@@ -6,11 +6,11 @@ import time
 import zipfile
 from pathlib import Path
 
+from cognite.client import CogniteClient
+from cognite.client.data_classes import Event, FileMetadataUpdate, LabelDefinition, LabelFilter
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 
-from cognite.client import CogniteClient
-from cognite.client.data_classes import Event, FileMetadataUpdate, LabelDefinition, LabelFilter
 from cognite.neat.workflows.model import WorkflowFullStateReport, WorkflowState, WorkflowStepEvent
 from cognite.neat.workflows.utils import get_file_hash
 

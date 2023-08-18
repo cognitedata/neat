@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 
 from cognite.client import CogniteClient
+
 from cognite.neat import rules
 from cognite.neat.constants import PREFIXES
 from cognite.neat.graph import extractors

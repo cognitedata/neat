@@ -3,10 +3,10 @@ import logging
 import time
 from pathlib import Path
 
-from prometheus_client import Gauge
-
 from cognite.client import CogniteClient
 from cognite.client.data_classes import AssetFilter
+from prometheus_client import Gauge
+
 from cognite.neat import rules
 from cognite.neat.graph import extractors
 from cognite.neat.graph.loaders.core.labels import upload_labels

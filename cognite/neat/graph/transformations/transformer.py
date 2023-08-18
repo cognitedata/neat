@@ -7,12 +7,12 @@ import traceback
 from enum import StrEnum
 
 import pandas as pd
+from cognite.client import CogniteClient
 from prometheus_client import Gauge
 from pydantic import BaseModel
 from rdflib import RDF, Graph
 from rdflib.term import Literal
 
-from cognite.client import CogniteClient
 from cognite.neat.graph.transformations.query_generator.sparql import build_sparql_query
 from cognite.neat.rules.models import TransformationRules
 from cognite.neat.rules.to_rdf_path import AllProperties, AllReferences, RawLookup, parse_rule

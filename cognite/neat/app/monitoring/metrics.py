@@ -1,8 +1,7 @@
 from collections.abc import Iterable
 
-from prometheus_client import REGISTRY, Counter, Gauge, Metric
-
 from cognite.client import CogniteClient
+from prometheus_client import REGISTRY, Counter, Gauge, Metric
 
 
 class NeatMetricsCollector:

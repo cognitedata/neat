@@ -8,13 +8,13 @@ from warnings import warn
 
 import numpy as np
 import pandas as pd
+from cognite.client import CogniteClient
+from cognite.client.data_classes import Asset, AssetHierarchy, AssetList
+from cognite.client.exceptions import CogniteDuplicatedError
 from deepdiff import DeepDiff
 from rdflib import Graph, Namespace
 from rdflib.term import URIRef
 
-from cognite.client import CogniteClient
-from cognite.client.data_classes import Asset, AssetHierarchy, AssetList
-from cognite.client.exceptions import CogniteDuplicatedError
 from cognite.neat.graph.loaders.core.models import AssetTemplate
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.rules.models import Property, TransformationRules

@@ -5,8 +5,6 @@ import logging
 import warnings
 from typing import ClassVar, Self
 
-from pydantic import BaseModel, ConfigDict
-
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import (
     ContainerApply,
@@ -21,6 +19,8 @@ from cognite.client.data_classes.data_modeling import (
     ViewApply,
     ViewId,
 )
+from pydantic import BaseModel, ConfigDict
+
 from cognite.neat.rules import exceptions
 from cognite.neat.rules._validation import (
     are_entity_names_dms_compliant,

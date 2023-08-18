@@ -1,10 +1,10 @@
 from urllib.parse import quote
 
 import pytest
+from cognite.client import CogniteClient
 from starlette.testclient import TestClient
 
 from cognite import neat
-from cognite.client import CogniteClient
 from cognite.neat.app.api.configuration import neat_app
 from cognite.neat.app.api.data_classes.rest import QueryRequest, RuleRequest, RunWorkflowRequest
 from cognite.neat.app.api.utils.query_templates import query_templates

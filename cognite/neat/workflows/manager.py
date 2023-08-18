@@ -8,10 +8,10 @@ import time
 import traceback
 from pathlib import Path
 
+from cognite.client import CogniteClient
 from prometheus_client import Gauge
 from pydantic import BaseModel
 
-from cognite.client import CogniteClient
 from cognite.neat.workflows import BaseWorkflow
 from cognite.neat.workflows.base import WorkflowDefinition
 from cognite.neat.workflows.model import FlowMessage, InstanceStartMethod, WorkflowState
