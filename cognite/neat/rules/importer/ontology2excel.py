@@ -11,7 +11,7 @@ import pandas as pd
 from rdflib import DC, DCTERMS, OWL, RDF, RDFS, Graph
 
 from cognite.neat.rules import parse_rules_from_excel_file
-from cognite.neat.rules import _exceptions
+from cognite.neat.rules import exceptions
 from cognite.neat.utils.utils import generate_exception_report, get_namespace, remove_namespace
 
 
@@ -351,16 +351,16 @@ def _validate_excel_file(excel_filepath: Path):
     report = ""
     if validation_errors:
         warnings.warn(
-            _exceptions.Warning1().message,
-            category=_exceptions.Warning1,
+            exceptions.OWLGeneratedTransformationRulesHasErrors().message,
+            category=exceptions.OWLGeneratedTransformationRulesHasErrors,
             stacklevel=2,
         )
         report = generate_exception_report(validation_errors, "Errors")
 
     if validation_warnings:
         warnings.warn(
-            _exceptions.Warning2().message,
-            category=_exceptions.Warning2,
+            exceptions.OWLGeneratedTransformationRulesHasWarnings().message,
+            category=exceptions.OWLGeneratedTransformationRulesHasWarnings,
             stacklevel=2,
         )
         report += generate_exception_report(validation_warnings, "Warnings")

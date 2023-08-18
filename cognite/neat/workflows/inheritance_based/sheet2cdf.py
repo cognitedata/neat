@@ -23,7 +23,7 @@ from cognite.neat.graph.loaders.core.rdf_to_relationships import (
     rdf2relationships,
     upload_relationships,
 )
-from cognite.neat.graph.extractors import NeatGraphStore
+from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.rules.exporter.rules2triples import get_instances_as_triples
 from cognite.neat.rules.models import TransformationRules
 from cognite.neat.graph.loaders.validator import validate_asset_hierarchy

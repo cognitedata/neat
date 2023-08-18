@@ -23,7 +23,7 @@ from cognite.client.data_classes.data_modeling import (
 from cognite.neat.rules.analysis import to_class_property_pairs
 
 from cognite.neat.rules.models import Property, TransformationRules, DATA_TYPE_MAPPING
-from cognite.neat.rules import _exceptions
+from cognite.neat.rules import exceptions
 from cognite.neat.rules._validation import (
     are_entity_names_dms_compliant,
     are_properties_redefined,
@@ -59,13 +59,19 @@ class DataModel(BaseModel):
         """
         names_compliant, name_warnings = are_entity_names_dms_compliant(transformation_rules, return_report=True)
         if not names_compliant:
-            logging.error(_exceptions.Error10(report=generate_exception_report(name_warnings)).message)
-            raise _exceptions.Error10(report=generate_exception_report(name_warnings))
+            logging.error(
+                exceptions.EntitiesContainNonDMSCompliantCharacters(
+                    report=generate_exception_report(name_warnings)
+                ).message
+            )
+            raise exceptions.EntitiesContainNonDMSCompliantCharacters(report=generate_exception_report(name_warnings))
 
         properties_redefined, redefinition_warnings = are_properties_redefined(transformation_rules, return_report=True)
         if properties_redefined:
-            logging.error(_exceptions.Error11(report=generate_exception_report(redefinition_warnings)))
-            raise _exceptions.Error11(report=generate_exception_report(redefinition_warnings))
+            logging.error(
+                exceptions.PropertiesDefinedMultipleTimes(report=generate_exception_report(redefinition_warnings))
+            )
+            raise exceptions.PropertiesDefinedMultipleTimes(report=generate_exception_report(redefinition_warnings))
 
         return cls(
             space=transformation_rules.metadata.cdf_space_name,
@@ -132,10 +138,12 @@ class DataModel(BaseModel):
                     description=property_definition.description,
                 )
             else:
-                logging.warning(_exceptions.Warning60(property_id, property_definition.property_type).message)
+                logging.warning(
+                    exceptions.ContainerPropertyTypeUnsupported(property_id, property_definition.property_type).message
+                )
                 warnings.warn(
-                    _exceptions.Warning60(property_id, property_definition.property_type).message,
-                    category=_exceptions.Warning60,
+                    exceptions.ContainerPropertyTypeUnsupported(property_id, property_definition.property_type).message,
+                    category=exceptions.ContainerPropertyTypeUnsupported,
                     stacklevel=2,
                 )
 
@@ -203,10 +211,10 @@ class DataModel(BaseModel):
                     description=property_definition.description,
                 )
             else:
-                logging.warning(_exceptions.Warning61(property_id).message)
+                logging.warning(exceptions.ViewPropertyTypeUnsupported(property_id).message)
                 warnings.warn(
-                    _exceptions.Warning61(property_id).message,
-                    category=_exceptions.Warning61,
+                    exceptions.ViewPropertyTypeUnsupported(property_id).message,
+                    category=exceptions.ViewPropertyTypeUnsupported,
                     stacklevel=2,
                 )
 
@@ -223,7 +231,9 @@ class DataModel(BaseModel):
         existing_views = self.find_existing_views(client)
 
         if existing_data_model or existing_containers or existing_views:
-            raise _exceptions.Error60(existing_data_model, existing_containers, existing_views)
+            raise exceptions.DataModelOrItsComponentsAlreadyExist(
+                existing_data_model, existing_containers, existing_views
+            )
 
         self.create_space(client)
         self.create_containers(client)
@@ -244,10 +254,10 @@ class DataModel(BaseModel):
 
         if model := client.data_modeling.data_models.retrieve((self.space, self.external_id, self.version)):
             cdf_data_model = model[0]
-            logging.warning(_exceptions.Warning64(self.external_id, self.version, self.space).message)
+            logging.warning(exceptions.DataModelAlreadyExist(self.external_id, self.version, self.space).message)
             warnings.warn(
-                _exceptions.Warning64(self.external_id, self.version, self.space).message,
-                category=_exceptions.Warning64,
+                exceptions.DataModelAlreadyExist(self.external_id, self.version, self.space).message,
+                category=exceptions.DataModelAlreadyExist,
                 stacklevel=2,
             )
 
@@ -270,10 +280,10 @@ class DataModel(BaseModel):
             cdf_containers = {container.external_id: container for container in containers}
 
         if existing_containers := set(self.containers.keys()).intersection(set(cdf_containers.keys())):
-            logging.warning(_exceptions.Warning62(existing_containers, self.space).message)
+            logging.warning(exceptions.ContainersAlreadyExist(existing_containers, self.space).message)
             warnings.warn(
-                _exceptions.Warning62(existing_containers, self.space).message,
-                category=_exceptions.Warning62,
+                exceptions.ContainersAlreadyExist(existing_containers, self.space).message,
+                category=exceptions.ContainersAlreadyExist,
                 stacklevel=2,
             )
 
@@ -295,10 +305,10 @@ class DataModel(BaseModel):
             cdf_views = {view.external_id: view for view in views if view.version == self.version}
 
         if existing_views := set(self.views.keys()).intersection(set(cdf_views.keys())):
-            logging.warning(_exceptions.Warning63(existing_views, self.version, self.space).message)
+            logging.warning(exceptions.ViewsAlreadyExist(existing_views, self.version, self.space).message)
             warnings.warn(
-                _exceptions.Warning63(existing_views, self.version, self.space).message,
-                category=_exceptions.Warning63,
+                exceptions.ViewsAlreadyExist(existing_views, self.version, self.space).message,
+                category=exceptions.ViewsAlreadyExist,
                 stacklevel=2,
             )
             return existing_views

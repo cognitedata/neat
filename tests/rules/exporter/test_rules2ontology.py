@@ -1,6 +1,6 @@
 import pytest
 from cognite.neat.rules.exporter.rules2ontology import Ontology
-from cognite.neat.rules._exceptions import Error11
+from cognite.neat.rules.exceptions import PropertiesDefinedMultipleTimes
 from copy import deepcopy
 
 
@@ -17,5 +17,5 @@ def test_rules2ontology_raise(transformation_rules):
     rules = deepcopy(transformation_rules)
     rules.properties["row 150"] = rules.properties["row 15"]
 
-    with pytest.raises(Error11):
+    with pytest.raises(PropertiesDefinedMultipleTimes):
         _ = Ontology.from_rules(rules)

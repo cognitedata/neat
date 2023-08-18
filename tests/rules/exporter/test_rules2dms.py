@@ -1,6 +1,6 @@
 import pytest
 from cognite.neat.rules.exporter.rules2dms import DataModel
-from cognite.neat.rules._exceptions import Error10
+from cognite.neat.rules.exceptions import EntitiesContainNonDMSCompliantCharacters
 
 
 def test_rules2dms(simple_rules):
@@ -16,5 +16,5 @@ def test_rules2dms(simple_rules):
 
 
 def test_raise_error10(transformation_rules):
-    with pytest.raises(Error10):
+    with pytest.raises(EntitiesContainNonDMSCompliantCharacters):
         _ = DataModel.from_rules(transformation_rules=transformation_rules)
