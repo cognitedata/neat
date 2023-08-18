@@ -15,6 +15,12 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.21.1] - 18-08-23
+
+### Changed
+
+- `rules2dms` is updated to query for specific version of views
+
 ## [0.21.0] - 17-08-23
 
 ### Changed
@@ -35,6 +41,7 @@ Changes are grouped as follows:
 ### Improved
 
 - Improved drop operations for NeatGraph store.
+
 ## [0.20.0] - 08-08-23
 
 ### Added

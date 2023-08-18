@@ -292,7 +292,7 @@ class DataModel(BaseModel):
         """
         cdf_views = {}
         if views := client.data_modeling.views.list(space=self.space, limit=-1):
-            cdf_views = {view.external_id: view for view in views}
+            cdf_views = {view.external_id: view for view in views if view.version == self.version}
 
         if existing_views := set(self.views.keys()).intersection(set(cdf_views.keys())):
             logging.warning(_exceptions.Warning63(existing_views, self.version, self.space).message)
@@ -343,7 +343,9 @@ class DataModel(BaseModel):
             logging.info(f"Removing data model {self.external_id} version {self.version} from space {self.space}")
             _ = client.data_modeling.data_models.delete((self.space, self.external_id, self.version))
 
-        if views := client.data_modeling.views.retrieve([view.as_id() for view in self.views.values()]):
+        if views := client.data_modeling.views.retrieve(
+            [view.as_id() for view in self.views.values()], all_versions=False
+        ):
             for view in views:
                 logging.info(f"Removing view {view.external_id} version {view.version} from space {self.space}")
                 _ = client.data_modeling.views.delete((view.space, view.external_id, view.version))
