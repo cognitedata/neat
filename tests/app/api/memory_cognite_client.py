@@ -190,31 +190,6 @@ class AssetsMemory(MemoryClient):
         identifiers = IdentifierSequence.load(ids=ids, external_ids=external_ids)
         return self._retrieve_multiple(identifiers=identifiers, ignore_unknown_ids=ignore_unknown_ids)
 
-    def list(
-        self,
-        name: str | None = None,
-        parent_ids: Sequence[int] | None = None,
-        parent_external_ids: Sequence[str] | None = None,
-        asset_subtree_ids: int | Sequence[int] | None = None,
-        asset_subtree_external_ids: str | Sequence[str] | None = None,
-        data_set_ids: int | Sequence[int] | None = None,
-        data_set_external_ids: str | Sequence[str] | None = None,
-        labels: LabelFilter = None,
-        geo_location: GeoLocationFilter = None,
-        metadata: dict[str, str] | None = None,
-        source: str | None = None,
-        created_time: dict[str, Any] | TimestampRange = None,
-        last_updated_time: dict[str, Any] | TimestampRange = None,
-        root: bool | None = None,
-        external_id_prefix: str | None = None,
-        aggregated_properties: Sequence[str] | None = None,
-        partitions: int | None = None,
-        limit: int = LIST_LIMIT_DEFAULT,
-    ) -> AssetList:
-        return self._list(
-            method="POST",
-        )
-
     def aggregate(self, filter: AssetFilter | dict = None) -> list[AssetAggregate]:
         return [AssetAggregate(count=len(self._list_unique_in_store()))]
 
@@ -267,6 +242,31 @@ class AssetsMemory(MemoryClient):
         self, id: int | None = None, external_id: str | None = None, depth: int | None = None
     ) -> AssetList:
         raise NotImplementedError()
+
+    def list(
+        self,
+        name: str | None = None,
+        parent_ids: Sequence[int] | None = None,
+        parent_external_ids: Sequence[str] | None = None,
+        asset_subtree_ids: int | Sequence[int] | None = None,
+        asset_subtree_external_ids: str | Sequence[str] | None = None,
+        data_set_ids: int | Sequence[int] | None = None,
+        data_set_external_ids: str | Sequence[str] | None = None,
+        labels: LabelFilter = None,
+        geo_location: GeoLocationFilter = None,
+        metadata: dict[str, str] | None = None,
+        source: str | None = None,
+        created_time: dict[str, Any] | TimestampRange = None,
+        last_updated_time: dict[str, Any] | TimestampRange = None,
+        root: bool | None = None,
+        external_id_prefix: str | None = None,
+        aggregated_properties: Sequence[str] | None = None,
+        partitions: int | None = None,
+        limit: int = LIST_LIMIT_DEFAULT,
+    ) -> AssetList:
+        return self._list(
+            method="POST",
+        )
 
 
 class RelationshipsMemory(MemoryClient):
@@ -341,6 +341,24 @@ class RelationshipsMemory(MemoryClient):
             identifiers=identifiers,
         )
 
+    def create(self, relationship: Relationship | Sequence[Relationship]) -> Relationship | RelationshipList:
+        if isinstance(relationship, Sequence):
+            relationship = [r._validate_resource_types() for r in relationship]
+        else:
+            relationship = relationship._validate_resource_types()
+
+        return self._create_multiple(items=relationship)
+
+    def update(
+        self, item: Relationship | RelationshipUpdate | Sequence[Relationship | RelationshipUpdate]
+    ) -> Relationship | RelationshipList:
+        raise NotImplementedError()
+        # return self._update_multiple(
+
+    def delete(self, external_id: str | Sequence[str], ignore_unknown_ids: bool = False) -> None:
+        raise NotImplementedError()
+        # self._delete_multiple(
+
     def list(
         self,
         source_external_ids: Sequence[str] | None = None,
@@ -364,24 +382,6 @@ class RelationshipsMemory(MemoryClient):
             method="POST",
         )
 
-    def create(self, relationship: Relationship | Sequence[Relationship]) -> Relationship | RelationshipList:
-        if isinstance(relationship, Sequence):
-            relationship = [r._validate_resource_types() for r in relationship]
-        else:
-            relationship = relationship._validate_resource_types()
-
-        return self._create_multiple(items=relationship)
-
-    def update(
-        self, item: Relationship | RelationshipUpdate | Sequence[Relationship | RelationshipUpdate]
-    ) -> Relationship | RelationshipList:
-        raise NotImplementedError()
-        # return self._update_multiple(
-
-    def delete(self, external_id: str | Sequence[str], ignore_unknown_ids: bool = False) -> None:
-        raise NotImplementedError()
-        # self._delete_multiple(
-
 
 class LabelsMemory(MemoryClient):
     _RESOURCE_PATH = "/labels"
@@ -404,16 +404,6 @@ class LabelsMemory(MemoryClient):
             )
         )
 
-    def list(
-        self,
-        name: str | None = None,
-        external_id_prefix: str | None = None,
-        data_set_ids: int | Sequence[int] | None = None,
-        data_set_external_ids: str | Sequence[str] | None = None,
-        limit: int = LIST_LIMIT_DEFAULT,
-    ) -> LabelDefinitionList:
-        return self._list(method="POST", limit=limit)
-
     def create(self, label: LabelDefinition | Sequence[LabelDefinition]) -> LabelDefinition | LabelDefinitionList:
         if isinstance(label, Sequence):
             if len(label) > 0 and not isinstance(label[0], LabelDefinition):
@@ -424,6 +414,16 @@ class LabelsMemory(MemoryClient):
 
     def delete(self, external_id: str | Sequence[str] | None = None) -> None:
         raise NotImplementedError()
+
+    def list(
+        self,
+        name: str | None = None,
+        external_id_prefix: str | None = None,
+        data_set_ids: int | Sequence[int] | None = None,
+        data_set_external_ids: str | Sequence[str] | None = None,
+        limit: int = LIST_LIMIT_DEFAULT,
+    ) -> LabelDefinitionList:
+        return self._list(method="POST", limit=limit)
 
 
 @contextmanager
