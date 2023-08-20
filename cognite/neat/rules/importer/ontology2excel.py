@@ -95,16 +95,14 @@ def _create_default_properties_parsing_config() -> dict[str, tuple[str, ...]]:
 
 
 def owl2excel(owl_filepath: Path, excel_filepath: Path | None = None, validate_results: bool = True):
-    """Convert owl ontology to transformation rules serialized as Excel file.
+    """Convert owl ontology to transformation rules and then stored as Excel file.
 
-    Parameters
-    ----------
-    owl_filepath : Path
-        Path to OWL ontology
-    excel_filepath : Path
-        Path to save transformation rules, defaults to None
-    validate_results : bool, optional
-        Whether to validate generated Excel file and create validation report, by default True
+    Args:
+        owl_filepath: Path to OWL ontology
+        excel_filepath: Path to save transformation rules. If None is passed, the
+                        file will be "owl_filepath.parent / transformation_rules.xlsx".
+        validate_results: Whether to validate generated Excel file and create validation report, by default True
+
     """
 
     owl_filepath = Path(owl_filepath)
