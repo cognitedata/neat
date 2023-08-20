@@ -612,6 +612,7 @@ class Prefixes(RuleModel):
     Args:
         prefixes: Dict of prefixes
     """
+
     prefixes: dict[str, Namespace] = PREFIXES
 
 
