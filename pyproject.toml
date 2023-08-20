@@ -77,10 +77,12 @@ mkdocs-git-revision-date-localized-plugin = {version="*", optional=true}
 mkdocs-git-authors-plugin = {version="*", optional=true}
 mkdocs-gitbook = {version="*", optional=true}
 mkdocs-glightbox = {version="*", optional=true}
+pymdown-extensions = {version="*", optional=true}
+mkdocstrings = {version="*", optional=true, extras=["python"]}
 jinja2 = {version = "^3.1.2", optional=true}
 
 [tool.poetry.extras]
-docs = ["mkdocs", "mkdocs-jupyter", "mkdocs-material-extensions", "mkdocs-git-revision-date-localized-plugin", "mkdocs-git-authors-plugin", "mkdocs-gitbook", "mkdocs-glightbox"]
+docs = ["mkdocs", "mkdocs-jupyter", "mkdocs-material-extensions", "mkdocs-git-revision-date-localized-plugin", "mkdocs-git-authors-plugin", "mkdocs-gitbook", "mkdocs-glightbox", "pymdown-extensions", "mkdocstrings"]
 google = ["gspread", "google-api-python-client", "google-auth-oauthlib"]
 excel = ["openpyxl"]
 graphql = ["jinja2"]
