@@ -12,6 +12,10 @@ __all__ = ["ConfigureDefaultGraphStores", "LoadInstancesFromRdfFileToSourceGraph
 
 
 class ConfigureDefaultGraphStores(Step):
+    """
+    This step initializes the source and solution graph stores.
+    """
+
     description = "The step initializes the source and solution graph stores."
     category = "graph_store"
     configuration_templates: ClassVar[list[WorkflowConfigItem]] = [
@@ -107,6 +111,10 @@ class ConfigureDefaultGraphStores(Step):
 
 
 class ResetGraphStores(Step):
+    """
+    The step resets graph stores to their initial state (clears all data).
+    """
+
     description = "The step resets graph stores to their initial state (clears all data)."
     category = "graph_store"
 
@@ -136,6 +144,10 @@ class ResetGraphStores(Step):
 
 
 class LoadInstancesFromRdfFileToSourceGraph(Step):
+    """
+    The step loads instances from a file into the source graph.The file must be in RDF format.
+    """
+
     description = "The step loads instances from a file into the source graph.The file must be in RDF format."
     category = "graph_loader"
     configuration_templates: ClassVar[list[WorkflowConfigItem]] = [

@@ -38,14 +38,32 @@ __all__ = [
 
 
 class CreateCDFLabels(Step):
+    """
+    This step creates default NEAT labels in CDF.
+
+    """
+
     description = "The step creates default NEAT labels in CDF"
     category = "cdf_resources"
 
     def run(self, rules: RulesData, cdf_client: CogniteClient) -> None:
+        """
+        Executes the step.
+
+        Args:
+            rules: The TransformationRules object.
+            cdf_client: Connection to CogniteClient.
+
+        """
         upload_labels(cdf_client, rules.rules, extra_labels=["non-historic", "historic"])
 
 
 class GenerateCDFAssetsFromGraph(Step):
+    """
+    This step generates assets from the graph and stores them in CategorizedAssets object.
+
+    """
+
     description = (
         "The step generates assets from the graph ,categorizes them and stores them in CategorizedAssets object"
     )
@@ -168,6 +186,12 @@ class GenerateCDFAssetsFromGraph(Step):
 
 
 class UploadCDFAssets(Step):
+    """
+    The step uploads categorized assets to CDF
+
+
+    """
+
     description = "The step uploads categorized assets to CDF"
     category = "cdf_resources"
 
@@ -206,6 +230,11 @@ class UploadCDFAssets(Step):
 
 
 class GenerateCDFRelationshipsFromGraph(Step):
+    """
+    The step generates relationships from the graph and saves them to CategorizedRelationships object
+
+    """
+
     description = "The step generates relationships from the graph and saves them to CategorizedRelationships object"
     category = "cdf_resources"
 
@@ -249,6 +278,11 @@ class GenerateCDFRelationshipsFromGraph(Step):
 
 
 class UploadCDFRelationships(Step):
+    """
+    The step uploads relationships to CDF
+
+    """
+
     description = "The step uploads relationships to CDF"
     category = "cdf_resources"
 

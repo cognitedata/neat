@@ -77,12 +77,30 @@ _FIELD_VALUE_TYPE = """{{value_type_mapping[property_definition.expected_value_t
 
 @dataclass
 class GraphQLSchema:
-    """Abilities to generate a GraphQL schema from TransformationRules"""
+    """
+    Represents a GraphQL schema.
+
+    This can be used to generate a GraphQL schema from TransformationRules.
+
+    Args:
+        schema: The GraphQL schema.
+
+    """
 
     schema: str
 
     @classmethod
     def from_rules(cls, transformation_rules: TransformationRules, verbose: bool = False) -> Self:
+        """
+        Generates a GraphQL schema from TransformationRules.
+
+        Args:
+            transformation_rules: The TransformationRules to generate a GraphQL schema from.
+            verbose: Whether to include descriptions and names in the schema.
+
+        Returns:
+            A GraphQLSchema instance.
+        """
         names_compliant, name_warnings = are_entity_names_dms_compliant(transformation_rules, return_report=True)
         if not names_compliant:
             raise exceptions.EntitiesContainNonDMSCompliantCharacters(report=generate_exception_report(name_warnings))
@@ -95,7 +113,16 @@ class GraphQLSchema:
 
     @staticmethod
     def generate_schema(transformation_rules: TransformationRules, verbose: bool) -> str:
-        """Generates a GraphQL schema of given TransformationRules"""
+        """
+        Generates a GraphQL schema from TransformationRules.
+
+        Args:
+            transformation_rules: Instance of TransformationRules to generate a GraphQL schema from.
+            verbose: Whether to include descriptions and names in the schema.
+
+        Returns:
+            A GraphQL schema.
+        """
         class_properties = to_class_property_pairs(transformation_rules)
 
         type_definitions = []
