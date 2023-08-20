@@ -24,6 +24,10 @@ __all__ = [
 
 
 class LoadTransformationRules(Step):
+    """
+    This step loads transformation rules from the file or remote location
+    """
+
     description = "The step loads transformation rules from the file or remote location"
     category = "rules"
     configuration_templates: ClassVar[list[WorkflowConfigItem]] = [
@@ -63,6 +67,10 @@ class LoadTransformationRules(Step):
 
 
 class TransformSourceToSolutionGraph(Step):
+    """
+    This step transforms source graph to solution graph
+    """
+
     description = "The step transforms source graph to solution graph"
     category = "transformation"
 
@@ -95,6 +103,10 @@ class TransformSourceToSolutionGraph(Step):
 
 
 class LoadInstancesFromRulesToSolutionGraph(Step):
+    """
+    This step loads instances from rules file into solution graph.
+    """
+
     description = "The step loads instances from rules file into solution graph."
     category = "graph_loader"
 
@@ -116,6 +128,10 @@ class LoadInstancesFromRulesToSolutionGraph(Step):
 
 
 class LoadDataModelFromRulesToSourceGraph(Step):
+    """
+    This step loads data model from rules file into source graph.
+    """
+
     description = "The step loads data model from rules file into source graph."
     category = "graph_loader"
 

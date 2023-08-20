@@ -14,6 +14,10 @@ __all__ = ["GenerateDataCaptureSpreadsheet", "ProcessDataCaptureSpreadsheetIntoS
 
 
 class GenerateDataCaptureSpreadsheet(Step):
+    """
+    This step generates data capture spreadsheet from data model defined in rules.
+    """
+
     description = "The step generates data capture spreadsheet from data model defined in rules"
     category = "data_capture"
     configuration_templates: ClassVar[list[WorkflowConfigItem]] = [
@@ -53,6 +57,10 @@ class GenerateDataCaptureSpreadsheet(Step):
 
 
 class ProcessDataCaptureSpreadsheetIntoSolutionGraph(Step):
+    """
+    This step processes data capture spreadsheet into solution graph.
+    """
+
     description = "The step processes data capture spreadsheet into solution graph"
     category = "data_capture"
 

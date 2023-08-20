@@ -41,7 +41,12 @@ nav:
             - Stores: api/graph/stores.md
         - Workflows:
             - Data Contracts: api/workflows/data_contracts.md
-            - Steps: api/workflows/steps.md
+            - Steps:
+              - CDF Core: api/workflows/steps/cdf_resources.md
+              - CDF Data Modeling: api/workflows/steps/fdm.md
+              - Graph Extraction: api/workflows/steps/graph_data_capture.md
+              - Graph Loading: api/workflows/steps/graphs.md
+              - Transformation Rule: api/workflows/steps/transformation_rules.md
         - Exceptions: api/exceptions.md
     - Changelog​: CHANGELOG.md
 

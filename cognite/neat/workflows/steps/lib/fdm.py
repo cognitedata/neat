@@ -11,6 +11,10 @@ __all__ = ["GenerateGraphQLSchemaFromRules"]
 
 
 class GenerateGraphQLSchemaFromRules(Step):
+    """
+    This step generates GraphQL schema from data model defined in rules.
+    """
+
     description = "The step generates GraphQL schema from data model defined in rules"
     category = "fdm"
     configuration_templates: ClassVar[list[WorkflowConfigItem]] = [
