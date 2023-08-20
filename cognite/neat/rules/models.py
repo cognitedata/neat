@@ -160,6 +160,37 @@ ExternalId = constr(min_length=1, max_length=255)
 
 
 class Metadata(RuleModel):
+    """
+    Metadata model for data model
+
+    Args:
+        prefix: This is used as prefix for generation of RDF OWL/SHACL data model representation
+        cdf_space_name: This is used as CDF space name to which model is intend to be stored. By default it is set to
+                        'playground'
+        namespace: This is used as RDF namespace for generation of RDF OWL/SHACL data model representation and/or for
+                   generation of RDF graphs
+        data_model_name: This is used as RDF data model name for generation of RDF OWL/SHACL data model representation
+                         and/or for generation of RDF graphs
+        version: This is used as RDF data model version for generation of RDF OWL/SHACL data model representation
+                 and/or for generation of RDF graphs
+        is_current_version: This is used as RDF data model version for generation of RDF OWL/SHACL data model
+        created: This is used as RDF data model creation date for generation of RDF OWL/SHACL data model representation
+        updated: This is used as RDF data model update date for generation of RDF OWL/SHACL data model representation
+        title: This is used as RDF data model title for generation of RDF OWL/SHACL data model representation
+        description: This is used as RDF data model description for generation of RDF
+                     OWL/SHACL data model representation
+        creator: This is used as RDF data model creator for generation of RDF OWL/SHACL data model representation
+        contributor: This is used as RDF data model contributor for generation of
+                     RDF OWL/SHACL data model representation
+        rights: This is used as RDF data model rights for generation of RDF OWL/SHACL data model representation
+        externalIdPrefix: This is used as RDF data model externalIdPrefix for generation of RDF OWL/SHACL data model
+        data_set_id: This is used as RDF data model data_set_id for generation of
+                     RDF OWL/SHACL data model representation
+        source: This is used as RDF data model source for generation of RDF OWL/SHACL data model representation
+        dms_compliant: This is used as RDF data model dms_compliant for generation of RDF OWL/SHACL data model
+
+    """
+
     model_config: ClassVar[ConfigDict] = ConfigDict(
         populate_by_name=True, str_strip_whitespace=True, arbitrary_types_allowed=True
     )
@@ -305,6 +336,22 @@ class Metadata(RuleModel):
 
 
 class Resource(RuleModel):
+    """
+    Base class for all resources
+
+    Args:
+        description: The description of the resource.
+        cdf_resource_type: The CDF resource type of the resource.
+        deprecated: Whether the resource is deprecated or not.
+        deprecation_date: The date when the resource was deprecated.
+        replaced_by: The resource that replaced this resource.
+        source: The source of the resource.
+        source_entity_name: The name of the source entity.
+        match_type: The match type of the resource.
+        comment: The comment of the resource.
+
+    """
+
     # Solution model
     description: Description | None = Field(alias="Description", default=None)
 
@@ -338,6 +385,16 @@ class_id_compliance_regex = r"^([a-zA-Z]+)([a-zA-Z0-9]+[._-]{0,1}[a-zA-Z0-9._-]+
 
 
 class Class(Resource):
+    """
+    Base class for all classes
+
+    Args:
+        class_id: The class ID of the class.
+        class_name: The name of the class.
+        parent_class: The parent class of the class.
+        parent_asset: The parent asset of the class.
+    """
+
     class_id: ExternalId = Field(
         alias="Class",
     )
@@ -379,6 +436,31 @@ property_id_compliance_regex = r"^(\*)|(([a-zA-Z]+)([a-zA-Z0-9]+[._-]{0,1}[a-zA-
 
 
 class Property(Resource):
+    """
+    A property is a characteristic of a class. It is a named attribute of a class that describes a range of values.
+
+    Args:
+        class_id: Class ID
+        property_id: Property ID
+        property_name: Property name
+        expected_value_type: Expected value type
+        min_count: Minimum count
+        max_count: Maximum count
+        default: Default value
+        property_type: Property type
+        resource_type_property: Resource type property
+        source_type: Source type
+        target_type: Target type
+        label: Label
+        relationship_external_id_rule: Relationship external ID rule
+        rule_type: Rule type
+        rule: Rule
+        skip_rule: Skip rule
+        mandatory: Mandatory
+        cdf_resource_type: CDF resource type
+
+    """
+
     # Solution model
     class_id: ExternalId = Field(alias="Class")
     property_id: ExternalId = Field(alias="Property")
@@ -524,11 +606,26 @@ class Property(Resource):
 
 
 class Prefixes(RuleModel):
+    """
+    Class deals with prefixes in the data model
+
+    Args:
+        prefixes: Dict of prefixes
+    """
     prefixes: dict[str, Namespace] = PREFIXES
 
 
 class Instance(RuleModel):
-    """Class deals with instances of classes in the data model"""
+    """
+    Class deals with instances of classes in the data model
+
+    Args:
+        instance: URI of the instance
+        property_: URI of the property
+        value: value of the property
+        namespace: namespace of the instance
+        prefixes: prefixes of the instance
+    """
 
     instance: URIRef | None = Field(alias="Instance", default=None)
     property_: URIRef | None = Field(alias="Property", default=None)
@@ -613,6 +710,25 @@ class Instance(RuleModel):
 
 
 class TransformationRules(RuleModel):
+    """
+    Transformation rules is a core concept in `neat`. This represents the rules that are used to transform the data
+    from the source to the target. The rules are defined in a Excel sheet and then parsed into a `TransformationRules`
+    object. The `TransformationRules` object is then used to generate the `RDF` graph.
+
+    Args:
+        metadata: Metadata of the data model
+        classes: Classes defined in the data model
+        properties: Properties defined in the data model
+        prefixes: Prefixes defined in the data model
+        instances: Instances defined in the data model
+
+    !!! note "Importers"
+        Neat supports importing data from different sources. See the importers section for more details.
+
+    !!! note "Exporters"
+        Neat supports exporting data to different sources. See the exporters section for more details.
+    """
+
     metadata: Metadata
     classes: dict[str, Class]
     properties: dict[str, Property]
