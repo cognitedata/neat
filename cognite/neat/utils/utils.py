@@ -2,9 +2,10 @@ import hashlib
 import logging
 import time
 from collections import OrderedDict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from functools import wraps
-from typing_extensions import TypeAlias
+from typing import TypeAlias
+
 import pandas as pd
 from cognite.client import ClientConfig, CogniteClient
 from cognite.client.credentials import CredentialProvider, OAuthClientCredentials, OAuthInteractive
@@ -13,7 +14,7 @@ from rdflib import Literal
 from rdflib.term import URIRef
 
 from cognite.neat.graph.stores import NeatGraphStore
-from cognite.neat.utils.cdf import InteractiveCogniteClient, ServiceCogniteClient, CogniteClientConfig
+from cognite.neat.utils.cdf import CogniteClientConfig, InteractiveCogniteClient, ServiceCogniteClient
 
 Triple: TypeAlias = tuple[URIRef, URIRef, Literal | URIRef]
 
@@ -171,7 +172,7 @@ def prettify_generation_order(generation_order: dict, depth: dict | None = None,
 
 
 def epoch_now_ms():
-    return int((datetime.now(timezone.utc) - datetime(1970, 1, 1, tzinfo=timezone.utc)).total_seconds() * 1000)
+    return int((datetime.now(UTC) - datetime(1970, 1, 1, tzinfo=UTC)).total_seconds() * 1000)
 
 
 def chunker(sequence, chunk_size):
@@ -179,7 +180,7 @@ def chunker(sequence, chunk_size):
 
 
 def datetime_utc_now():
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def retry_decorator(max_retries=2, retry_delay=3, component_name=""):

@@ -1,22 +1,23 @@
-from datetime import datetime, timezone
 import re
-from typing import Any
-from typing_extensions import TypeAliasType
 import warnings
+from datetime import UTC, datetime
+from typing import Any
+
+from cognite.client.data_classes import Asset, Relationship
 from pydantic import BaseModel, ConfigDict, Field, create_model
 from pydantic._internal._model_construction import ModelMetaclass
 from rdflib import Graph, URIRef
+from typing_extensions import TypeAliasType
 
-from cognite.client.data_classes import Asset, Relationship
 from cognite.neat.graph.loaders.core.rdf_to_assets import NeatMetadataKeys
+from cognite.neat.graph.transformations.query_generator.sparql import build_construct_query, triples2dictionary
+from cognite.neat.rules import exceptions
 from cognite.neat.rules.analysis import (
-    to_class_property_pairs,
     define_class_asset_mapping,
     define_class_relationship_mapping,
+    to_class_property_pairs,
 )
-from cognite.neat.graph.transformations.query_generator.sparql import build_construct_query, triples2dictionary
 from cognite.neat.rules.models import Property, TransformationRules, type_to_target_convention
-from cognite.neat.rules import exceptions
 
 EdgeOneToOne = TypeAliasType("EdgeOneToOne", str)
 EdgeOneToMany = TypeAliasType("EdgeOneToMany", list[str])
@@ -33,7 +34,7 @@ def default_model_methods():
 
 
 def rules_to_pydantic_models(
-    transformation_rules: TransformationRules, methods: list = None
+    transformation_rules: TransformationRules, methods: list | None = None
 ) -> dict[str, ModelMetaclass]:
     """Generate pydantic models from transformation rules.
 
@@ -152,8 +153,8 @@ def _dictionary_to_pydantic_model(
     name: str,
     model_definition: dict,
     model_configuration: ConfigDict = None,
-    methods: list = None,
-    validators: list = None,
+    methods: list | None = None,
+    validators: list | None = None,
 ) -> type[BaseModel]:
     """Generates pydantic model from dictionary containing definition of fields.
     Additionally it adds methods to the model and validators.
@@ -263,7 +264,7 @@ def to_asset(
     add_system_metadata: bool = True,
     metadata_keys: NeatMetadataKeys | None = None,
     add_labels: bool = True,
-    data_set_id: int = None,
+    data_set_id: int | None = None,
 ) -> Asset:
     """Convert model instance to asset.
 
@@ -309,7 +310,7 @@ def to_asset(
 def _add_system_metadata(self, metadata_keys: NeatMetadataKeys, asset: dict):
     asset["metadata"][metadata_keys.type] = self.__class__.__name__
     asset["metadata"][metadata_keys.identifier] = self.external_id
-    now = str(datetime.now(timezone.utc))
+    now = str(datetime.now(UTC))
     asset["metadata"][metadata_keys.start_time] = now
     asset["metadata"][metadata_keys.update_time] = now
     asset["metadata"][metadata_keys.active] = "true"

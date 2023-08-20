@@ -1,7 +1,10 @@
 import logging
 from pathlib import Path
+from typing import ClassVar
 
+from cognite.client import CogniteClient
 from rdflib import RDF, Literal, URIRef
+
 from cognite.neat.constants import PREFIXES
 from cognite.neat.graph.transformations.transformer import RuleProcessingReport, domain2app_knowledge_graph
 from cognite.neat.rules import parse_rules_from_excel_file
@@ -9,10 +12,8 @@ from cognite.neat.rules.exporter.rules2triples import get_instances_as_triples
 from cognite.neat.workflows import utils
 from cognite.neat.workflows.cdf_store import CdfStore
 from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
+from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
 from cognite.neat.workflows.steps.step_model import Step
-
-from cognite.client import CogniteClient
-from ..data_contracts import RulesData, SolutionGraph, SourceGraph
 
 __all__ = [
     "LoadTransformationRules",
@@ -25,7 +26,7 @@ __all__ = [
 class LoadTransformationRules(Step):
     description = "The step loads transformation rules from the file or remote location"
     category = "rules"
-    configuration_templates = [
+    configuration_templates: ClassVar[list[WorkflowConfigItem]] = [
         WorkflowConfigItem(
             name="rules.file",
             value="rules.xlsx",
@@ -56,7 +57,7 @@ class LoadTransformationRules(Step):
         )
         rules_metrics.labels({"component": "classes"}).set(len(transformation_rules.classes))
         rules_metrics.labels({"component": "properties"}).set(len(transformation_rules.properties))
-        logging.info(f"Loaded prefixes {str(transformation_rules.prefixes)} rules from {rules_file_path.name!r}.")
+        logging.info(f"Loaded prefixes {transformation_rules.prefixes!s} rules from {rules_file_path.name!r}.")
         output_text = f"Loaded {len(transformation_rules.properties)} rules"
         return FlowMessage(output_text=output_text), RulesData(rules=transformation_rules)
 
@@ -133,7 +134,7 @@ class LoadDataModelFromRulesToSourceGraph(Step):
                 )
             counter += 1
 
-        for property_name, property_def in properties.items():
+        for _property_name, property_def in properties.items():
             rdf_instance_id = URIRef(ns + "_" + property_def.class_id)
             source_graph.graph.graph.add(
                 (rdf_instance_id, URIRef(ns + property_def.property_id), Literal(property_def.expected_value_type))

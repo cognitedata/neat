@@ -1,17 +1,16 @@
 import logging
 import time
 import traceback
-from fastapi import APIRouter
+
 import rdflib
+from fastapi import APIRouter
 
-from cognite.neat.graph.transformations import query_generator
-
-from cognite.neat.app.api.configuration import neat_app, cache_store
-from cognite.neat.app.api.data_classes.rest import NodesAndEdgesRequest, QueryRequest, RuleRequest
 from cognite.neat.app.api.asgi.metrics import counter
+from cognite.neat.app.api.configuration import cache_store, neat_app
+from cognite.neat.app.api.data_classes.rest import NodesAndEdgesRequest, QueryRequest, RuleRequest
 from cognite.neat.app.api.utils.data_mapping import rdf_result_to_api_response
 from cognite.neat.app.api.utils.query_templates import query_templates
-
+from cognite.neat.graph.transformations import query_generator
 
 router = APIRouter()
 

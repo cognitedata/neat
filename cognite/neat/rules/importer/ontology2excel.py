@@ -10,8 +10,7 @@ import numpy as np
 import pandas as pd
 from rdflib import DC, DCTERMS, OWL, RDF, RDFS, Graph
 
-from cognite.neat.rules import parse_rules_from_excel_file
-from cognite.neat.rules import exceptions
+from cognite.neat.rules import exceptions, parse_rules_from_excel_file
 from cognite.neat.utils.utils import generate_exception_report, get_namespace, remove_namespace
 
 
@@ -95,7 +94,7 @@ def _create_default_properties_parsing_config() -> dict[str, tuple[str, ...]]:
     }
 
 
-def owl2excel(owl_filepath: Path, excel_filepath: Path = None, validate_results: bool = True):
+def owl2excel(owl_filepath: Path, excel_filepath: Path | None = None, validate_results: bool = True):
     """Convert owl ontology to transformation rules serialized as Excel file.
 
     Parameters
@@ -136,7 +135,7 @@ def owl2excel(owl_filepath: Path, excel_filepath: Path = None, validate_results:
         _validate_excel_file(excel_filepath)
 
 
-def _parse_owl_metadata_df(graph: Graph, parsing_config: dict = None) -> pd.DataFrame:
+def _parse_owl_metadata_df(graph: Graph, parsing_config: dict | None = None) -> pd.DataFrame:
     """Parse owl metadata from graph to pandas dataframe.
 
     Parameters
@@ -201,7 +200,7 @@ def _parse_owl_metadata_df(graph: Graph, parsing_config: dict = None) -> pd.Data
     return pd.DataFrame(clean_list, columns=parsing_config["header"]).T
 
 
-def _parse_owl_classes_df(graph: Graph, parsing_config: dict = None) -> pd.DataFrame:
+def _parse_owl_classes_df(graph: Graph, parsing_config: dict | None = None) -> pd.DataFrame:
     """Get all classes from the graph and their parent classes.
 
     Parameters
@@ -265,10 +264,10 @@ SELECT ?class ?name ?description ?parentClass ?deprecated ?deprecationDate
         ]
         for class_, group_df in grouped_df
     ]
-    return pd.DataFrame([parsing_config["helper_row"], parsing_config["header"]] + clean_list)
+    return pd.DataFrame([parsing_config["helper_row"], parsing_config["header"], *clean_list])
 
 
-def _parse_owl_properties_df(graph: Graph, parsing_config: dict = None) -> pd.DataFrame:
+def _parse_owl_properties_df(graph: Graph, parsing_config: dict | None = None) -> pd.DataFrame:
     """Get all properties from the OWL ontology
 
     Parameters
@@ -342,7 +341,7 @@ def _parse_owl_properties_df(graph: Graph, parsing_config: dict = None) -> pd.Da
                 ]
             ]
 
-    return pd.DataFrame([parsing_config["helper_row"], parsing_config["header"]] + clean_list)
+    return pd.DataFrame([parsing_config["helper_row"], parsing_config["header"], *clean_list])
 
 
 def _validate_excel_file(excel_filepath: Path):
@@ -366,5 +365,5 @@ def _validate_excel_file(excel_filepath: Path):
         report += generate_exception_report(validation_warnings, "Warnings")
 
     if report:
-        with open(excel_filepath.parent / "report.txt", "w") as f:
+        with (excel_filepath.parent / "report.txt").open("w") as f:
             f.write(report)

@@ -2,32 +2,32 @@
 """
 
 import logging
-from typing import ClassVar, Optional, Self
 import warnings
-from pydantic import BaseModel, ConfigDict
+from typing import ClassVar, Self
 
 from cognite.client import CogniteClient
-from cognite.client.data_classes.data_modeling import ContainerApply, ContainerProperty, DirectRelation
 from cognite.client.data_classes.data_modeling import (
-    ViewApply,
-    SpaceApply,
-    DataModelApply,
-    DirectRelationReference,
-)
-from cognite.client.data_classes.data_modeling import (
-    MappedPropertyApply,
+    ContainerApply,
     ContainerId,
-    ViewId,
+    ContainerProperty,
+    DataModelApply,
+    DirectRelation,
+    DirectRelationReference,
+    MappedPropertyApply,
     SingleHopConnectionDefinition,
+    SpaceApply,
+    ViewApply,
+    ViewId,
 )
-from cognite.neat.rules.analysis import to_class_property_pairs
+from pydantic import BaseModel, ConfigDict
 
-from cognite.neat.rules.models import Property, TransformationRules, DATA_TYPE_MAPPING
 from cognite.neat.rules import exceptions
 from cognite.neat.rules._validation import (
     are_entity_names_dms_compliant,
     are_properties_redefined,
 )
+from cognite.neat.rules.analysis import to_class_property_pairs
+from cognite.neat.rules.models import DATA_TYPE_MAPPING, Property, TransformationRules
 from cognite.neat.utils.utils import generate_exception_report
 
 
@@ -38,8 +38,8 @@ class DataModel(BaseModel):
     space: str
     external_id: str
     version: str
-    description: Optional[str] = None
-    name: Optional[str] = None
+    description: str | None = None
+    name: str | None = None
     containers: dict[str, ContainerApply]
     views: dict[str, ViewApply]
 

@@ -1,5 +1,5 @@
 from enum import StrEnum
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, field_validator
 
@@ -35,12 +35,12 @@ class FlowMessage(BaseModel):
     """A message that can be sent between steps in a workflow.It's the only parameter step takes as input."""
 
     payload: Any = None  # The payload of the message
-    headers: Optional[dict[str, str]] = None  # The headers of the message
-    output_text: Optional[str] = None  # The output text of the step that is captured in the execution log
-    error_text: Optional[str] = None  # The error text of the step that is captured in the execution log
-    next_step_ids: Optional[
-        list[str]
-    ] = None  # If set, the workflow will skip default route and go to the next step in the list
+    headers: dict[str, str] | None = None  # The headers of the message
+    output_text: str | None = None  # The output text of the step that is captured in the execution log
+    error_text: str | None = None  # The error text of the step that is captured in the execution log
+    next_step_ids: list[
+        str
+    ] | None = None  # If set, the workflow will skip default route and go to the next step in the list
     step_execution_status: StepExecutionStatus = StepExecutionStatus.UNKNOWN  # The status of the step execution
 
 
@@ -63,26 +63,26 @@ class UIConfig(BaseModel):
 
 class WorkflowConfigItem(BaseModel):
     name: str
-    value: Optional[str] = None
-    label: Optional[str] = None
-    type: Optional[str] = None
+    value: str | None = None
+    label: str | None = None
+    type: str | None = None
     required: bool = False
-    options: Optional[list[str]] = None
-    group: Optional[str] = None
+    options: list[str] | None = None
+    group: str | None = None
 
 
 class WorkflowStepDefinition(BaseModel):
     id: str
-    label: Optional[str] = None
+    label: str | None = None
     stype: str = StepType.PYSTEP
-    description: Optional[str] = None
-    method: Optional[str] = None
+    description: str | None = None
+    method: str | None = None
     enabled: bool = True
-    system_component_id: Optional[str] = None
+    system_component_id: str | None = None
     trigger: bool = False
-    transition_to: Optional[list[str]] = None
+    transition_to: list[str] | None = None
     ui_config: UIConfig = UIConfig()
-    params: Optional[dict[str, str]] = None
+    params: dict[str, str] | None = None
     max_retries: int = 0
     retry_delay: int = 3
 
@@ -91,8 +91,8 @@ class WorkflowSystemComponent(BaseModel):
     # Container for steps
     id: str
     label: str
-    transition_to: Optional[list[str]] = None
-    description: Optional[str] = None
+    transition_to: list[str] | None = None
+    description: str | None = None
     ui_config: UIConfig = UIConfig()
 
 
@@ -100,11 +100,11 @@ class WorkflowDefinition(BaseModel):
     """Workflow definition"""
 
     name: str
-    description: Optional[str] = None
-    implementation_module: Optional[str] = None
+    description: str | None = None
+    implementation_module: str | None = None
     steps: list[WorkflowStepDefinition] = []
-    system_components: Optional[list[WorkflowSystemComponent]] = None
-    configs: Optional[list[WorkflowConfigItem]] = None
+    system_components: list[WorkflowSystemComponent] | None = None
+    configs: list[WorkflowConfigItem] | None = None
 
     def get_config_item(self, name: str) -> WorkflowConfigItem:
         for config in self.configs:
@@ -129,26 +129,26 @@ class WorkflowStepEvent(BaseModel):
     """Workflow step event represent a single step execution"""
 
     id: str
-    system_component_id: Optional[str] = None
+    system_component_id: str | None = None
     state: StepExecutionStatus
     elapsed_time: float
     timestamp: str
-    error: Optional[str] = None
-    output_text: Optional[str] = None
+    error: str | None = None
+    output_text: str | None = None
     data: Any = None
 
 
 class WorkflowFullStateReport(BaseModel):
     """Workflow state report is complete log of workflow execution"""
 
-    workflow_name: Optional[str] = None
-    workflow_version: Optional[str] = None
-    run_id: Optional[str] = None
+    workflow_name: str | None = None
+    workflow_version: str | None = None
+    run_id: str | None = None
     state: WorkflowState
-    start_time: Optional[int] = None
-    end_time: Optional[int] = None
+    start_time: int | None = None
+    end_time: int | None = None
     elapsed_time: float = 0
-    last_error: Optional[str] = None
+    last_error: str | None = None
     execution_log: list[WorkflowStepEvent]
 
     @field_validator("start_time", "end_time", mode="before")

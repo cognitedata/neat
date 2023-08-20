@@ -1,13 +1,12 @@
 import logging
 from pathlib import Path
+from typing import ClassVar
+
 from cognite.neat.constants import PREFIXES
-
-from cognite.neat.graph.stores import RdfStoreType
-from cognite.neat.graph.stores import NeatGraphStore, drop_graph_store
+from cognite.neat.graph.stores import NeatGraphStore, RdfStoreType, drop_graph_store
 from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
+from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
 from cognite.neat.workflows.steps.step_model import Step
-
-from ..data_contracts import RulesData, SolutionGraph, SourceGraph
 
 __all__ = ["ConfigureDefaultGraphStores", "LoadInstancesFromRdfFileToSourceGraph", "ResetGraphStores"]
 
@@ -15,7 +14,7 @@ __all__ = ["ConfigureDefaultGraphStores", "LoadInstancesFromRdfFileToSourceGraph
 class ConfigureDefaultGraphStores(Step):
     description = "The step initializes the source and solution graph stores."
     category = "graph_store"
-    configuration_templates = [
+    configuration_templates: ClassVar[list[WorkflowConfigItem]] = [
         WorkflowConfigItem(
             name="source_rdf_store.type",
             value=RdfStoreType.OXIGRAPH,
@@ -139,7 +138,7 @@ class ResetGraphStores(Step):
 class LoadInstancesFromRdfFileToSourceGraph(Step):
     description = "The step loads instances from a file into the source graph.The file must be in RDF format."
     category = "graph_loader"
-    configuration_templates = [
+    configuration_templates: ClassVar[list[WorkflowConfigItem]] = [
         WorkflowConfigItem(
             name="source_rdf_store.file",
             value="source-graphs/source-graph-dump.xml",

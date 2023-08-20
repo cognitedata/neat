@@ -2,9 +2,9 @@ import pandas as pd
 from cognite.client.testing import monkeypatch_cognite_client
 from rdflib import Graph, Namespace
 
+from cognite.neat.graph.transformations.transformer import domain2app_knowledge_graph
 from cognite.neat.rules.models import TransformationRules
 from cognite.neat.rules.to_rdf_path import RuleType
-from cognite.neat.graph.transformations.transformer import domain2app_knowledge_graph
 
 
 def test_domain2app_knowledge_graph(transformation_rules: TransformationRules, source_knowledge_graph: Graph):
@@ -19,7 +19,7 @@ def test_domain2app_knowledge_graph(transformation_rules: TransformationRules, s
     res = app_graph.query(
         """SELECT ?o WHERE {<http://purl.org/nordic44#_f17695aa-9aeb-11e5-91da-b8763fd99c5f> rdf:type ?o}"""
     )
-    assert list(res)[0][0] == Namespace("http://purl.org/cognite/tnt#").Substation
+    assert next(iter(res))[0] == Namespace("http://purl.org/cognite/tnt#").Substation
 
 
 def test_domain2app_knowledge_graph_raw_lookup(
@@ -53,5 +53,5 @@ def test_domain2app_knowledge_graph_raw_lookup(
         "SELECT ?o WHERE {<http://purl.org/nordic44#_2dd9040e-bdfb-11e5-94fa-c8f73332c8f4> "
         "tnt:IdentifiedObject.name ?o}"
     )
-    assert list(Gjerstad_node)[0][0].value == "Gjerstad"
-    assert list(NaN_node)[0][0].value == "NaN"
+    assert next(iter(Gjerstad_node))[0].value == "Gjerstad"
+    assert next(iter(NaN_node))[0].value == "NaN"

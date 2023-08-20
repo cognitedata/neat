@@ -1,4 +1,4 @@
-from typing import Iterable
+from collections.abc import Iterable
 
 from cognite.client import CogniteClient
 from prometheus_client import REGISTRY, Counter, Gauge, Metric
@@ -10,7 +10,11 @@ class NeatMetricsCollector:
         self.metrics: dict[str, Gauge | Counter] = {}
 
     def register_metric(
-        self, metric_name: str, metric_description: str = "", m_type: str = "gauge", metric_labels: list[str] = None
+        self,
+        metric_name: str,
+        metric_description: str = "",
+        m_type: str = "gauge",
+        metric_labels: list[str] | None = None,
     ) -> Gauge | Counter:
         """Register metric in prometheus"""
         metric_labels = [] if metric_labels is None else metric_labels
@@ -30,14 +34,18 @@ class NeatMetricsCollector:
             self.metrics[metric_name] = metric
             return metric
 
-    def get(self, metric_name: str, labels: dict[str, str] = None) -> Gauge | Counter:
+    def get(self, metric_name: str, labels: dict[str, str] | None = None) -> Gauge | Counter:
         """Return metric by name"""
         labels = {} if labels is None else labels
         metric_name = f"neat_workflow_{self.name}_{metric_name}"
         return self.metrics.get(metric_name).labels(**labels)
 
     def report_metric_value(
-        self, metric_name: str, metric_description: str = "", m_type: str = "gauge", labels: dict[str, str] = None
+        self,
+        metric_name: str,
+        metric_description: str = "",
+        m_type: str = "gauge",
+        labels: dict[str, str] | None = None,
     ) -> Gauge | Counter:
         metric = self.register_metric(metric_name, metric_description, m_type, [k for k, v in labels.items()])
         return metric.labels(**labels)

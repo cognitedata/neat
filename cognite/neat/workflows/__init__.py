@@ -1,6 +1,7 @@
 from cognite.neat.workflows.base import BaseWorkflow
-from .model import WorkflowStepDefinition, FlowMessage, WorkflowStepEvent, WorkflowFullStateReport
+
 from .manager import WorkflowManager
+from .model import FlowMessage, WorkflowFullStateReport, WorkflowStepDefinition, WorkflowStepEvent
 
 __all__ = [
     "BaseWorkflow",

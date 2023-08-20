@@ -1,6 +1,6 @@
 import re
-from typing import Literal, overload
 import warnings
+from typing import Literal, overload
 
 from cognite.neat.exceptions import wrangle_warnings
 from cognite.neat.rules import exceptions

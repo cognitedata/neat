@@ -4,7 +4,7 @@ import re
 from collections import Counter
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Literal, Optional, Self
+from typing import Literal, Self
 
 from pydantic import BaseModel, field_validator
 
@@ -119,7 +119,7 @@ _direction_by_symbol = {"->": "target", "<-": "source"}
 
 class Step(BaseModel):
     class_: Entity
-    property: Optional[Entity] = None  # only terminal step has property
+    property: Entity | None = None  # only terminal step has property
     direction: StepDirection
 
     @classmethod

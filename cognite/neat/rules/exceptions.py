@@ -11,10 +11,11 @@ CODES:
 
 #########################################
 # Metadata sheet Error Codes 100 - 199: #
-from cognite.neat.exceptions import NeatException, NeatWarning
 from typing import Any
 
 from rdflib import URIRef
+
+from cognite.neat.exceptions import NeatException, NeatWarning
 
 
 class ExcelFileMissingMandatorySheets(NeatException):
@@ -896,7 +897,6 @@ class NoTransformationRules(NeatWarning):
     fix: str = "No fix is provided for this warning"
 
     # need to have default value set otherwise
-    # warnings.warn(Warning302(property_id, class_id).message, category=Warning302)
     # will raise TypeError: __init__() missing 1 required positional argument: 'property_id'
     # not happy with this solution but it works
     def __init__(self, property_id: str = "", class_id: str = "", verbose=False):
@@ -1249,10 +1249,10 @@ class OntologyMultiTypeProperty(NeatWarning):
     example: str = ""
     fix: str = "If a property takes different value types for different objects, simply define new property"
 
-    def __init__(self, property_id: str = "", types: list[str] = [], verbose=False):
+    def __init__(self, property_id: str = "", types: list[str] | None = None, verbose=False):
         self.message = (
             "It is bad practice to have multi type property! "
-            f"Currently property '{property_id}' is defined as multi type property: {', '.join(types)}"
+            f"Currently property '{property_id}' is defined as multi type property: {', '.join(types or [])}"
         )
         if verbose:
             self.message += f"\nDescription: {self.description}"
@@ -1272,10 +1272,10 @@ class OntologyMultiRangeProperty(NeatWarning):
     example: str = ""
     fix: str = "If a property takes different range of values, simply define new property for each range"
 
-    def __init__(self, property_id: str = "", range_of_values: list[str] = [], verbose=False):
+    def __init__(self, property_id: str = "", range_of_values: list[str] | None = None, verbose=False):
         self.message = (
             "Property should ideally have only single range of values. "
-            f"Currently property '{property_id}' has multiple ranges: {', '.join(range_of_values)}"
+            f"Currently property '{property_id}' has multiple ranges: {', '.join(range_of_values or None)}"
         )
         if verbose:
             self.message += f"\nDescription: {self.description}"
@@ -1296,10 +1296,10 @@ class OntologyMultiDomainProperty(NeatWarning):
         " across different classes and that ideally takes the same range of values"
     )
 
-    def __init__(self, property_id: str = "", classes: list[str] = [], verbose=False):
+    def __init__(self, property_id: str = "", classes: list[str] | None = None, verbose=False):
         self.message = (
             "Property should ideally defined for single class. "
-            f"Currently property '{property_id}' is defined for multiple classes: {', '.join(classes)}"
+            f"Currently property '{property_id}' is defined for multiple classes: {', '.join(classes or [])}"
         )
         if verbose:
             self.message += f"\nDescription: {self.description}"
@@ -1321,10 +1321,10 @@ class OntologyMultiLabeledProperty(NeatWarning):
     example: str = ""
     fix: str = "This would be automatically fixes by taking the first name."
 
-    def __init__(self, property_id: str = "", names: list[str] = [], verbose=False):
+    def __init__(self, property_id: str = "", names: list[str] | None = None, verbose=False):
         self.message = (
             "Property should have single preferred label (human readable name)."
-            f"Currently property '{property_id}' has multiple preferred labels: {', '.join(names)} !"
+            f"Currently property '{property_id}' has multiple preferred labels: {', '.join(names or [])} !"
             f"Only the first name, i.e. '{names[0]}' will be considered!"
         )
         if verbose:
@@ -1403,7 +1403,7 @@ class FieldContainsMoreThanOneValue(NeatWarning):
         "To do this do not bound its `max_count` to 1, either leave it blank or set it to >1."
     )
 
-    def __init__(self, field_name: str = "", no_of_values: int = None, verbose=False):
+    def __init__(self, field_name: str = "", no_of_values: int | None = None, verbose=False):
         self.message = (
             f"Field {field_name} is defined as single value property in TransformationRules,"
             f" but it contains {no_of_values} values!"
@@ -1473,9 +1473,9 @@ class ContainersAlreadyExist(NeatWarning):
     example: str = ""
     fix: str = "Remove existing containers and try again."
 
-    def __init__(self, container_ids: set[str] = set(), space: str = "", verbose=False):
+    def __init__(self, container_ids: set[str] | None = None, space: str = "", verbose=False):
         self.message = (
-            f"Containers {container_ids} already exist in space {space}. "
+            f"Containers {container_ids or set()} already exist in space {space}. "
             "Since update of containers can cause issues, "
             "remove them first prior data model creation!"
             "Aborting containers creation!"
@@ -1497,9 +1497,9 @@ class ViewsAlreadyExist(NeatWarning):
     example: str = ""
     fix: str = "Remove existing views and try again or update version of data model."
 
-    def __init__(self, views_ids: set[str] = set(), version: str = "", space: str = "", verbose=False):
+    def __init__(self, views_ids: set[str] | None = None, version: str = "", space: str = "", verbose=False):
         self.message = (
-            f"Views {views_ids} version {version} already exist in space {space}. "
+            f"Views {views_ids or set()} version {version} already exist in space {space}. "
             "Since update of views raise issues, "
             "remove them first prior data model creation or update version of data model!"
             "Aborting views creation!"
