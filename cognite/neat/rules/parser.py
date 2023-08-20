@@ -38,16 +38,12 @@ def parse_rules_from_excel_file(
 ) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None] | TransformationRules:
     """Parse transformation rules from an Excel file.
 
-    Parameters
-    ----------
-    filepath : Path
-        Path to the Excel file
-    return_report : bool, optional
-        Whether to return a report, by default False
+    Args:
+      filepath: Path to the Excel file
+      return_report: Whether to return a report, by default False
 
-    Returns
-    -------
-        Either the transformation rules or a tuple with the rules, a list of errors and a list of warnings
+    Returns:
+        The transformation rules, and optionally one list of validation errors and a one list of warnings.
     """
     return from_tables(read_excel_file_to_table_by_name(filepath), return_report)
 
@@ -57,16 +53,12 @@ def parse_rules_from_google_sheet(
 ) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None] | TransformationRules:
     """Parse transformation rules from a Google sheet.
 
-    Parameters
-    ----------
-    sheet_id : str
-        The identifier of the Google sheet with the rules.
-    return_report : bool, optional
-        Whether to return a report, by default False
+    Args:
+      sheet_id: The identifier of the Google sheet with the rules.
+      return_report: Whether to return a report, by default False
 
-    Returns
-    -------
-        Either the transformation rules or a tuple with the rules, a list of errors and a list of warnings
+    Returns:
+        The transformation rules, and optionally one list of validation errors and a one list of warnings.
     """
     return from_tables(read_google_sheet_to_table_by_name(sheet_id), return_report)
 
@@ -79,39 +71,37 @@ def parse_rules_from_github_sheet(
     branch: str = "main",
     return_report: bool = False,
 ) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None] | TransformationRules:
-    """Parse transformation rules from a sheet stored in private Github.
+    """Parse transformation rules from a sheet stored in private GitHub.
 
-    Parameters
-    ----------
-    filepath : Path
-        Path to the sheet in the Github repository.
-    personal_token : str
-        Personal access token to access the Github repository.
-    owner : str
-        Owner of the Github repository.
-    repo : str
-        Name of the Github repository.
-    branch : str, optional
-        Branch of the Github repository, by default "main".
+    Args:
+      filepath: Path to the sheet in the GitHub repository.
+      personal_token: Personal access token to access the GitHub repository.
+      owner: Owner of the GitHub repository.
+      repo: Name of the GitHub repository.
+      branch: Branch of the GitHub repository, by default "main".
+      return_report: Whether to return a report, by default False
 
-    Returns
-    -------
-        Either the transformation rules or a tuple with the rules, a list of errors and a list of warnings
+    Returns:
+        The transformation rules, and optionally one list of validation errors and a one list of warnings.
+
     """
-
     return from_tables(read_github_sheet_to_table_by_name(filepath, personal_token, owner, repo, branch), return_report)
 
 
-def parse_rules_from_yaml(dirpath: Path) -> TransformationRules:
-    """
-    Load transformation rules from a yaml file.
+def parse_rules_from_yaml(folder_path: Path) -> TransformationRules:
+    """Load transformation rules from a yaml files.
+
+    The yaml files must be named "metadata.yaml", "classes.yaml", "properties.yaml", "prefixes.yaml"
+    and "instances.yaml". These must be located in the same directory.
 
     Args:
-        dirpath (Path): Path to the yaml file.
+      folder_path: The directory where the yaml files are located.
+
     Returns:
-        TransformationRules: The transformation rules.
+      The transformation rules.
+
     """
-    return TransformationRules(**read_yaml_file_to_mapping_by_name(dirpath))
+    return TransformationRules(**read_yaml_file_to_mapping_by_name(folder_path))
 
 
 def from_tables(
