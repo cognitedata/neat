@@ -6,5 +6,4 @@
 
 ::: cognite.neat.rules.parser.parse_rules_from_yaml
 
-
 ::: cognite.neat.rules.importer.ontology2excel.owl2excel

@@ -36,26 +36,21 @@ def default_model_methods():
 def rules_to_pydantic_models(
     transformation_rules: TransformationRules, methods: list | None = None
 ) -> dict[str, ModelMetaclass]:
-    """Generate pydantic models from transformation rules.
+    """
+    Generate pydantic models from transformation rules.
 
-    Parameters
-    ----------
-    transformation_rules : TransformationRules
-        Transformation rules
-    methods : list, optional
-        List of methods to register for pydantic models , by default None
+    Args:
+        transformation_rules: Transformation rules
+        methods: List of methods to register for pydantic models, by default None.
 
-    Returns
-    -------
-    dict[str, ModelMetaclass]
+    Returns:
         Dictionary containing pydantic models
 
-    Notes
-    -----
-    Currently this will take only unique properties and those which column rule_type
-    is set to rdfpath, hence only_rdfpath = True. This means that at the moment
-    we do not support UNION, i.e. ability to handle multiple rdfpaths for the same
-    property. This is needed option and should be added in the second version of the exporter.
+    !!! note "Limitations"
+        Currently this will take only unique properties and those which column rule_type
+        is set to rdfpath, hence only_rdfpath = True. This means that at the moment
+        we do not support UNION, i.e. ability to handle multiple rdfpaths for the same
+        property. This is needed option and should be added in the second version of the exporter.
     """
     if methods is None:
         methods = default_model_methods()

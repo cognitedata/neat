@@ -33,7 +33,6 @@ nav:
         - Rules:
             - Importers: api/rules/importers.md
             - Exporters: api/rules/exporters.md
-            - Parsers: api/rules/parsers.md
             - Models: api/rules/models.md
         - Graph:
             - Extractors: api/graph/extractors.md
