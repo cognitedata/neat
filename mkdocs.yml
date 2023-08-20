@@ -29,7 +29,21 @@ nav:
                 - Sheet to CDF Graph: tutorial/workflows/sheet2cdf.md
                 - Source to Solution Graph: tutorial/workflows/source2solution-graph.md
                 - Data Model Generation: tutorial/workflows/data-model-generation.md
-    - Reference: reference.md
+    - Reference:
+        - Rules:
+            - Importers: api/rules/importers.md
+            - Exporters: api/rules/exporters.md
+            - Parsers: api/rules/parsers.md
+            - Models: api/rules/models.md
+        - Graph:
+            - Extractors: api/graph/extractors.md
+            - Transformers: api/graph/transformers.md
+            - Loaders: api/graph/loaders.md
+            - Stores: api/graph/stores.md
+        - Workflows:
+            - Workflows: api/workflows/data_contracts.md
+            - Workflow Steps: api/workflows/steps.md
+        - Exceptions: api/exceptions.md
     - Changelog​: CHANGELOG.md
 
 markdown_extensions:
@@ -45,6 +59,9 @@ markdown_extensions:
   - tables
   - abbr
   - attr_list
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
 
 plugins:
   - mkdocs-jupyter:
