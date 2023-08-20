@@ -40,8 +40,8 @@ nav:
             - Loaders: api/graph/loaders.md
             - Stores: api/graph/stores.md
         - Workflows:
-            - Workflows: api/workflows/data_contracts.md
-            - Workflow Steps: api/workflows/steps.md
+            - Data Contracts: api/workflows/data_contracts.md
+            - Steps: api/workflows/steps.md
         - Exceptions: api/exceptions.md
     - Changelog​: CHANGELOG.md
 
