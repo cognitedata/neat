@@ -129,7 +129,7 @@ class DownloadTransformationRulesFromGitHub(Step):
         WorkflowConfigItem(
             name="github.personal_token",
             value="",
-            label="Insert Github Personal Access Token which allows fetching file from Github",
+            label="Github Personal Access Token which allows fetching file from private Github repository",
         ),
         WorkflowConfigItem(
             name="github.owner",
@@ -154,26 +154,28 @@ class DownloadTransformationRulesFromGitHub(Step):
         github_owner = self.configs.get_config_item_value("github.owner")
         github_repo = self.configs.get_config_item_value("github.repo")
         github_branch = self.configs.get_config_item_value("github.branch", "main")
+        local_file_name = self.configs.get_config_item_value("rules.file") or Path(github_filepath).name
+
+        logging.info(f"{local_file_name} local file name")
 
         workbook: Workbook = read_github_sheet_to_workbook(
             github_filepath, github_personal_token, github_owner, github_repo, github_branch
         )
 
-        workbook.save(Path(self.data_store_path, "rules", Path(github_filepath).name))
+        workbook.save(Path(self.data_store_path, "rules", local_file_name))
 
         output_text = (
             "<p></p>"
-            " Downloaded rules from "
-            f'<a href="https://api.github.com/repos/{github_owner}/{github_repo}'
-            f'/contents/{github_filepath}?ref={github_branch}" '
-            f'target="_blank">Github</a>'
+            f" Downloaded rules file <b>{Path(github_filepath).name}</b> from:"
+            f'<p><a href="https://github.com/{github_owner}/{github_repo}/tree/{github_branch}"'
+            f'target="_blank">https://github.com/{github_owner}/{github_repo}/tree/{github_branch}</a></p>'
         )
 
         output_text += (
             "<p></p>"
-            " Downloaded rules accessible locally "
-            f'<a href="http://localhost:8000/data/rules/{Path(github_filepath).name}?{time.time()}" '
-            f'target="_blank">here</a>'
+            " Downloaded rules accessible locally under file name "
+            f'<a href="http://localhost:8000/data/rules/{local_file_name}?{time.time()}" '
+            f'target="_blank">{local_file_name}</a>'
         )
 
         return FlowMessage(output_text=output_text), RulesData(rules=from_tables(_workbook_to_table_by_name(workbook)))
