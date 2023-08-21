@@ -164,7 +164,8 @@ class DownloadTransformationRulesFromGitHub(Step):
         output_text = (
             "<p></p>"
             " Downloaded rules from "
-            f'<a href="https://api.github.com/repos/{github_owner}/{github_repo}/contents/{github_filepath}?ref={github_branch}" '
+            f'<a href="https://api.github.com/repos/{github_owner}/{github_repo}'
+            f'/contents/{github_filepath}?ref={github_branch}" '
             f'target="_blank">Github</a>'
         )
 
