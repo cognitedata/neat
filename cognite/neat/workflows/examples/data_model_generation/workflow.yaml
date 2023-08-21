@@ -1,54 +1,54 @@
 configs:
--   group: LoadTransformationRules
+  - group: LoadTransformationRules
     label: Full name of the rules file
     name: rules.file
     options: null
     required: false
     type: null
     value: Rules-Nordic44-to-graphql.xlsx
--   group: LoadTransformationRules
+  - group: LoadTransformationRules
     label: Optional version of the rules file
     name: rules.version
     options: null
     required: false
     type: null
-    value: ''
--   group: GenerateGraphQLSchemaFromRules
-    label: Name of the FDM schema file
-    name: fdm_schema.file
+    value: ""
+  - group: GenerateGraphQLSchemaFromRules
+    label: Name of the GraphQL schema file
+    name: graphql_schema.file
     options: null
     required: false
     type: null
-    value: fdm_model.graphql
--   group: GenerateGraphQLSchemaFromRules
-    label: Directory to store FDM schema file
-    name: graph_ql_export.storage_dir
+    value: data_model.graphql
+  - group: GenerateGraphQLSchemaFromRules
+    label: Directory to store GraphQL schema file
+    name: graphql_export.storage_dir
     options: null
     required: false
     type: null
     value: staging
 description: null
 implementation_module: null
-name: fdm_schema_generation
+name: data_mode_generation
 steps:
--   description: null
+  - description: null
     enabled: true
     id: step_http_trigger
     label: HTTP process trigger
     max_retries: 0
     method: null
     params:
-        workflow_start_method: persistent_blocking
+      workflow_start_method: persistent_blocking
     retry_delay: 3
     stype: http_trigger
     system_component_id: null
     transition_to:
-    - step_load_rules
+      - step_load_rules
     trigger: true
     ui_config:
-        pos_x: 545
-        pos_y: 81
--   description: null
+      pos_x: 545
+      pos_y: 81
+  - description: null
     enabled: true
     id: step_generate_graphql_file
     label: Generate GraphQL file
@@ -61,9 +61,9 @@ steps:
     transition_to: []
     trigger: false
     ui_config:
-        pos_x: 549
-        pos_y: 311
--   description: null
+      pos_x: 549
+      pos_y: 311
+  - description: null
     enabled: true
     id: step_load_rules
     label: Load data model from rules file
@@ -74,32 +74,32 @@ steps:
     stype: stdstep
     system_component_id: null
     transition_to:
-    - step_generate_graphql_file
+      - step_generate_graphql_file
     trigger: false
     ui_config:
-        pos_x: 543
-        pos_y: 188
+      pos_x: 543
+      pos_y: 188
 system_components:
--   description: null
+  - description: null
     id: define_data_model
     label: User defines data model using Transformation Rules template
     transition_to:
-    - convert_to_graphql
+      - convert_to_graphql
     ui_config:
-        pos_x: 452
-        pos_y: 106
--   description: null
+      pos_x: 452
+      pos_y: 106
+  - description: null
     id: convert_to_graphql
     label: Convert Transformation Rules to FDM Schema
     transition_to:
-    - download_fdm_schema
+      - download_fdm_schema
     ui_config:
-        pos_x: 452
-        pos_y: 216
--   description: null
+      pos_x: 452
+      pos_y: 216
+  - description: null
     id: download_fdm_schema
     label: Download FDM Schema
     transition_to: []
     ui_config:
-        pos_x: 452
-        pos_y: 306
+      pos_x: 452
+      pos_y: 306

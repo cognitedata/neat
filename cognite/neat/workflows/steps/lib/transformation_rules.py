@@ -1,21 +1,26 @@
 import logging
 from pathlib import Path
+import time
+from openpyxl import Workbook
 
 from rdflib import RDF, Literal, URIRef
 from cognite.neat.constants import PREFIXES
 from cognite.neat.graph.transformations.transformer import RuleProcessingReport, domain2app_knowledge_graph
 from cognite.neat.rules import parse_rules_from_excel_file
 from cognite.neat.rules.exporter.rules2triples import get_instances_as_triples
+from cognite.neat.rules.parser import read_github_sheet_to_workbook, _workbook_to_table_by_name, from_tables
+from cognite.neat.utils.utils import generate_exception_report
 from cognite.neat.workflows import utils
 from cognite.neat.workflows.cdf_store import CdfStore
 from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
 from cognite.neat.workflows.steps.step_model import Step
 
 from cognite.client import CogniteClient
-from ..data_contracts import RulesData, SolutionGraph, SourceGraph
+from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
 
 __all__ = [
     "LoadTransformationRules",
+    "DownloadTransformationRulesFromGitHub",
     "TransformSourceToSolutionGraph",
     "LoadInstancesFromRulesToSolutionGraph",
     "LoadDataModelFromRulesToSourceGraph",
@@ -27,6 +32,21 @@ class LoadTransformationRules(Step):
     category = "rules"
     configuration_templates = [
         WorkflowConfigItem(
+            name="rules.validate_rules",
+            value="True",
+            label="To generate validation report",
+        ),
+        WorkflowConfigItem(
+            name="rules.validation_report_storage_dir",
+            value="rules_validation_report",
+            label="Directory to store validation report",
+        ),
+        WorkflowConfigItem(
+            name="rules.validation_report_file",
+            value="rules_validation_report.txt",
+            label="File name to store validation report",
+        ),
+        WorkflowConfigItem(
             name="rules.file",
             value="rules.xlsx",
             label="Full name of the rules file",
@@ -35,9 +55,21 @@ class LoadTransformationRules(Step):
     ]
 
     def run(self, cdf_store: CdfStore) -> (FlowMessage, RulesData):
+        # rules file
         rules_file = self.configs.get_config_item_value("rules.file")
         rules_file_path = Path(self.data_store_path, "rules", rules_file)
         version = self.configs.get_config_item_value("rules.version", default_value=None)
+
+        # rules validation
+        validate_rules = self.configs.get_config_item_value("rules.validate_rules", "true").lower() == "true"
+        report_file = self.configs.get_config_item_value("rules.validation_report_file", "rules_validation.txt")
+        report_dir_str = self.configs.get_config_item_value(
+            "rules.validation_report_storage_dir", "rules_validation_reports"
+        )
+        report_dir = self.data_store_path / Path(report_dir_str)
+        report_dir.mkdir(parents=True, exist_ok=True)
+        report_full_path = report_dir / report_file
+
         if not rules_file_path.exists():
             logging.info(f"Rules files doesn't exist in local fs {rules_file_path}")
 
@@ -50,15 +82,100 @@ class LoadTransformationRules(Step):
         else:
             cdf_store.load_rules_file_from_cdf(rules_file, version)
 
-        transformation_rules = parse_rules_from_excel_file(rules_file_path)
+        if validate_rules:
+            transformation_rules, validation_errors, validation_warnings = parse_rules_from_excel_file(
+                rules_file_path, return_report=True
+            )
+            report = generate_exception_report(validation_errors, "Errors") + generate_exception_report(
+                validation_warnings, "Warnings"
+            )
+
+            with report_full_path.open(mode="w") as file:
+                file.write(report)
+        else:
+            transformation_rules = parse_rules_from_excel_file(rules_file_path)
+
         rules_metrics = self.metrics.register_metric(
             "data_model_rules", "Transformation rules stats", m_type="gauge", metric_labels=["component"]
         )
         rules_metrics.labels({"component": "classes"}).set(len(transformation_rules.classes))
         rules_metrics.labels({"component": "properties"}).set(len(transformation_rules.properties))
         logging.info(f"Loaded prefixes {str(transformation_rules.prefixes)} rules from {rules_file_path.name!r}.")
-        output_text = f"Loaded {len(transformation_rules.properties)} rules"
+        output_text = f"<p></p>Loaded {len(transformation_rules.properties)} rules!"
+
+        output_text += (
+            (
+                "<p></p>"
+                " Download rules validation report "
+                f'<a href="http://localhost:8000/data/{report_dir_str}/{report_file}?{time.time()}" '
+                f'target="_blank">here</a>'
+            )
+            if validate_rules
+            else ""
+        )
+
         return FlowMessage(output_text=output_text), RulesData(rules=transformation_rules)
+
+
+class DownloadTransformationRulesFromGitHub(Step):
+    description = "The step fetches and stores transformation rules from private Github repository"
+    category = "rules"
+    configuration_templates = [
+        WorkflowConfigItem(
+            name="github.filepath",
+            value="",
+            label="File path to Transformation Rules stored on Github",
+        ),
+        WorkflowConfigItem(
+            name="github.personal_token",
+            value="",
+            label="Insert Github Personal Access Token which allows fetching file from Github",
+        ),
+        WorkflowConfigItem(
+            name="github.owner",
+            value="",
+            label="Github repository owner, also know as github organization",
+        ),
+        WorkflowConfigItem(
+            name="github.repo",
+            value="",
+            label="Github repository from which Transformation Rules file is being fetched",
+        ),
+        WorkflowConfigItem(
+            name="github.branch",
+            value="main",
+            label="Github repository branch from which Transformation Rules file is being fetched",
+        ),
+    ]
+
+    def run(self, cdf_store: CdfStore) -> (FlowMessage, RulesData):
+        github_filepath = self.configs.get_config_item_value("github.filepath")
+        github_personal_token = self.configs.get_config_item_value("github.personal_token")
+        github_owner = self.configs.get_config_item_value("github.owner")
+        github_repo = self.configs.get_config_item_value("github.repo")
+        github_branch = self.configs.get_config_item_value("github.branch", "main")
+
+        workbook: Workbook = read_github_sheet_to_workbook(
+            github_filepath, github_personal_token, github_owner, github_repo, github_branch
+        )
+
+        workbook.save(Path(self.data_store_path, "rules", Path(github_filepath).name))
+
+        output_text = (
+            "<p></p>"
+            " Downloaded rules from "
+            f'<a href="https://api.github.com/repos/{github_owner}/{github_repo}/contents/{github_filepath}?ref={github_branch}" '
+            f'target="_blank">Github</a>'
+        )
+
+        output_text += (
+            "<p></p>"
+            " Downloaded rules accessible locally "
+            f'<a href="http://localhost:8000/data/rules/{Path(github_filepath).name}?{time.time()}" '
+            f'target="_blank">here</a>'
+        )
+
+        return FlowMessage(output_text=output_text), RulesData(rules=from_tables(_workbook_to_table_by_name(workbook)))
 
 
 class TransformSourceToSolutionGraph(Step):

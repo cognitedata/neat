@@ -4,7 +4,7 @@ import time
 from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
 from cognite.neat.graph import extractors
 from cognite.neat.workflows.steps.step_model import Step
-from ..data_contracts import RulesData, SolutionGraph
+from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph
 from cognite.neat.rules.exporter import rules2graph_sheet
 from cognite.neat.utils.utils import add_triples
 

@@ -38,9 +38,6 @@ class ExcelFileMissingMandatorySheets(NeatException):
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
 
-    def __str__(self) -> str:
-        return self.message
-
 
 class NotValidRDFPath(NeatException):
     type_: str = "NotValidRDFPath"
@@ -59,9 +56,6 @@ class NotValidRDFPath(NeatException):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
-
-    def __str__(self) -> str:
-        return self.message
 
 
 class NotValidTableLookUp(NeatException):
@@ -82,9 +76,6 @@ class NotValidTableLookUp(NeatException):
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
 
-    def __str__(self) -> str:
-        return self.message
-
 
 class NotValidRAWLookUp(NeatException):
     type_: str = "NotValidRAWLookUp"
@@ -103,9 +94,6 @@ class NotValidRAWLookUp(NeatException):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
-
-    def __str__(self) -> str:
-        return self.message
 
 
 class EntitiesContainNonDMSCompliantCharacters(NeatException):
@@ -127,9 +115,6 @@ class EntitiesContainNonDMSCompliantCharacters(NeatException):
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
 
-    def __str__(self) -> str:
-        return self.message
-
 
 class PropertiesDefinedMultipleTimes(NeatException):
     type_: str = "PropertiesDefinedMultipleTimes"
@@ -149,9 +134,6 @@ class PropertiesDefinedMultipleTimes(NeatException):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
-
-    def __str__(self) -> str:
-        return self.message
 
 
 class UnableToDownloadExcelFile(NeatException):
@@ -173,9 +155,6 @@ class UnableToDownloadExcelFile(NeatException):
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
 
-    def __str__(self) -> str:
-        return self.message
-
 
 class NotExcelFile(NeatException):
     type_: str = "NotExcelFile"
@@ -196,9 +175,6 @@ class NotExcelFile(NeatException):
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
 
-    def __str__(self) -> str:
-        return self.message
-
 
 class PropertyDefinitionsNotForSameProperty(NeatException):
     type_: str = "PropertyDefinitionsNotForSameProperty"
@@ -215,9 +191,6 @@ class PropertyDefinitionsNotForSameProperty(NeatException):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
-
-    def __str__(self) -> str:
-        return self.message
 
 
 class FieldValueOfUnknownType(NeatException):
@@ -243,9 +216,6 @@ class FieldValueOfUnknownType(NeatException):
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
 
-    def __str__(self) -> str:
-        return self.message
-
 
 class FieldRequiredButNotProvided(NeatException):
     type_: str = "FieldRequiredButNotProvided"
@@ -266,9 +236,6 @@ class FieldRequiredButNotProvided(NeatException):
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
 
-    def __str__(self) -> str:
-        return self.message
-
 
 class MetadataSheetMissingMandatoryFields(NeatException):
     type_: str = "MetadataSheetMissingMandatoryFields"
@@ -287,9 +254,6 @@ class MetadataSheetMissingMandatoryFields(NeatException):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
-
-    def __str__(self) -> str:
-        return self.message
 
 
 class ClassesSheetMissingMandatoryColumns(NeatException):
@@ -313,9 +277,6 @@ class ClassesSheetMissingMandatoryColumns(NeatException):
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
 
-    def __str__(self) -> str:
-        return self.message
-
 
 class PropertiesSheetMissingMandatoryColumns(NeatException):
     type_: str = "PropertiesSheetMissingMandatoryColumns"
@@ -338,9 +299,6 @@ class PropertiesSheetMissingMandatoryColumns(NeatException):
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
 
-    def __str__(self) -> str:
-        return self.message
-
 
 class PrefixesSheetMissingMandatoryColumns(NeatException):
     type_: str = "PrefixesSheetMissingMandatoryColumns"
@@ -362,9 +320,6 @@ class PrefixesSheetMissingMandatoryColumns(NeatException):
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
 
-    def __str__(self) -> str:
-        return self.message
-
 
 class InstancesSheetMissingMandatoryColumns(NeatException):
     type_: str = "InstancesSheetMissingMandatoryColumns"
@@ -385,9 +340,6 @@ class InstancesSheetMissingMandatoryColumns(NeatException):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
-
-    def __str__(self) -> str:
-        return self.message
 
 
 # Metadata sheet Error and Warning Codes 100 - 199:
@@ -415,9 +367,6 @@ class PrefixRegexViolation(NeatException):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
-
-    def __str__(self) -> str:
-        return self.message
 
 
 class CDFSpaceRegexViolation(NeatException):
@@ -447,9 +396,6 @@ class CDFSpaceRegexViolation(NeatException):
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
 
-    def __str__(self) -> str:
-        return self.message
-
 
 class MetadataSheetNamespaceNotValidURL(NeatException):
     type_: str = "MetadataSheetNamespaceNotValidURL"
@@ -470,9 +416,6 @@ class MetadataSheetNamespaceNotValidURL(NeatException):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
-
-    def __str__(self) -> str:
-        return self.message
 
 
 class DataModelNameRegexViolation(NeatException):
@@ -502,9 +445,6 @@ class DataModelNameRegexViolation(NeatException):
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
 
-    def __str__(self) -> str:
-        return self.message
-
 
 class VersionRegexViolation(NeatException):
     type_: str = "VersionRegexViolation"
@@ -531,9 +471,6 @@ class VersionRegexViolation(NeatException):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
-
-    def __str__(self) -> str:
-        return self.message
 
 
 class DataModelOrItsComponentsAlreadyExist(NeatException):
@@ -573,9 +510,6 @@ class DataModelOrItsComponentsAlreadyExist(NeatException):
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
 
-    def __str__(self) -> str:
-        return self.message
-
 
 ########################################
 # Classes sheet Error Codes 200 - 199: #
@@ -611,9 +545,6 @@ class ClassSheetClassIDRegexViolation(NeatException):
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
 
-    def __str__(self) -> str:
-        return self.message
-
 
 class ClassIDMissing(NeatException):
     type_: str = "ClassIDMissing"
@@ -636,9 +567,6 @@ class ClassIDMissing(NeatException):
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
 
-    def __str__(self) -> str:
-        return self.message
-
 
 class ClassNameNotProvided(NeatWarning):
     type_: str = "ClassNameNotProvided"
@@ -657,9 +585,6 @@ class ClassNameNotProvided(NeatWarning):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
             # hint on a specific web docs page
-
-    def __str__(self) -> str:
-        return self.message
 
 
 ###########################################
@@ -696,9 +621,6 @@ class PropertiesSheetClassIDRegexViolation(NeatException):
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
 
-    def __str__(self) -> str:
-        return self.message
-
 
 class PropertyIDRegexViolation(NeatException):
     type_: str = "PropertyIDRegexViolation"
@@ -729,9 +651,6 @@ class PropertyIDRegexViolation(NeatException):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
-
-    def __str__(self) -> str:
-        return self.message
 
 
 class ValueTypeIDRegexViolation(NeatException):
@@ -764,9 +683,6 @@ class ValueTypeIDRegexViolation(NeatException):
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
 
-    def __str__(self) -> str:
-        return self.message
-
 
 class MissingTypeValue(NeatException):
     type_: str = "MissingTypeValue"
@@ -782,9 +698,6 @@ class MissingTypeValue(NeatException):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
-
-    def __str__(self) -> str:
-        return self.message
 
 
 class PropertyIDMissing(NeatException):
@@ -807,9 +720,6 @@ class PropertyIDMissing(NeatException):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
-
-    def __str__(self) -> str:
-        return self.message
 
 
 class RuleTypeProvidedButRuleMissing(NeatException):
@@ -835,9 +745,6 @@ class RuleTypeProvidedButRuleMissing(NeatException):
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
 
-    def __str__(self) -> str:
-        return self.message
-
 
 class PropertyNameNotProvided(NeatWarning):
     type_: str = "PropertyNameNotProvided"
@@ -855,9 +762,6 @@ class PropertyNameNotProvided(NeatWarning):
             self.message += f"\nDescription: {self.description}"
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
-
-    def __str__(self) -> str:
-        return self.message
 
 
 class MissingLabel(NeatWarning):
@@ -881,9 +785,6 @@ class MissingLabel(NeatWarning):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
 
-    def __str__(self) -> str:
-        return self.message
-
 
 class NoTransformationRules(NeatWarning):
     type_: str = "NoTransformationRules"
@@ -905,9 +806,6 @@ class NoTransformationRules(NeatWarning):
             self.message += f"\nDescription: {self.description}"
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
-
-    def __str__(self) -> str:
-        return self.message
 
 
 ###############################################
@@ -940,9 +838,6 @@ class PrefixesRegexViolation(NeatException):
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
 
-    def __str__(self) -> str:
-        return self.message
-
 
 class PrefixesSheetNamespaceNotValidURL(NeatException):
     type_: str = "PrefixesSheetNamespaceNotValidURL"
@@ -967,9 +862,6 @@ class PrefixesSheetNamespaceNotValidURL(NeatException):
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
 
-    def __str__(self) -> str:
-        return self.message
-
 
 ###############################################
 # Instances Error Codes 500 - 599: #
@@ -992,9 +884,6 @@ class MissingDataModelPrefixOrNamespace(NeatWarning):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
             # hint on a specific web docs page
-
-    def __str__(self) -> str:
-        return self.message
 
 
 ###############################################
@@ -1023,9 +912,6 @@ class EntityIDNotDMSCompliant(NeatWarning):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
 
-    def __str__(self) -> str:
-        return self.message
-
 
 class PropertyRedefined(NeatWarning):
     type_: str = "PropertyRedefined"
@@ -1042,9 +928,6 @@ class PropertyRedefined(NeatWarning):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
             # hint on a specific web docs page
-
-    def __str__(self) -> str:
-        return self.message
 
 
 class PropertyDefinedForUndefinedClass(NeatException):
@@ -1077,9 +960,6 @@ class PropertyDefinedForUndefinedClass(NeatException):
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
 
-    def __str__(self) -> str:
-        return self.message
-
 
 class MetadataSheetMissingOrFailedValidation(NeatException):
     type_: str = "MetadataSheetMissingOrFailedValidation"
@@ -1096,9 +976,6 @@ class MetadataSheetMissingOrFailedValidation(NeatException):
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
 
-    def __str__(self) -> str:
-        return self.message
-
 
 class FiledInMetadataSheetMissingOrFailedValidation(NeatException):
     type_: str = "FiledInMetadataSheetMissingOrFailedValidation"
@@ -1114,9 +991,6 @@ class FiledInMetadataSheetMissingOrFailedValidation(NeatException):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
-
-    def __str__(self) -> str:
-        return self.message
 
 
 class ValueTypeNotDefinedAsClass(NeatException):
@@ -1148,9 +1022,6 @@ class ValueTypeNotDefinedAsClass(NeatException):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
-
-    def __str__(self) -> str:
-        return self.message
 
 
 class UndefinedObjectsAsExpectedValueTypes(NeatException):
@@ -1185,9 +1056,6 @@ class UndefinedObjectsAsExpectedValueTypes(NeatException):
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
 
-    def __str__(self) -> str:
-        return self.message
-
 
 class OWLGeneratedTransformationRulesHasErrors(NeatWarning):
     type_: str = "OWLGeneratedTransformationRulesHasErrors"
@@ -1209,9 +1077,6 @@ class OWLGeneratedTransformationRulesHasErrors(NeatWarning):
             self.message += f"\nFix: {self.fix}"
             # hint on a specific web docs page
 
-    def __str__(self) -> str:
-        return self.message
-
 
 class OWLGeneratedTransformationRulesHasWarnings(NeatWarning):
     type_: str = "OWLGeneratedTransformationRulesHasWarnings"
@@ -1232,9 +1097,6 @@ class OWLGeneratedTransformationRulesHasWarnings(NeatWarning):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
             # hint on a specific web docs page
-
-    def __str__(self) -> str:
-        return self.message
 
 
 class OntologyMultiTypeProperty(NeatWarning):
@@ -1259,9 +1121,6 @@ class OntologyMultiTypeProperty(NeatWarning):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
 
-    def __str__(self) -> str:
-        return self.message
-
 
 class OntologyMultiRangeProperty(NeatWarning):
     type_: str = "OntologyMultiRangeProperty"
@@ -1281,9 +1140,6 @@ class OntologyMultiRangeProperty(NeatWarning):
             self.message += f"\nDescription: {self.description}"
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
-
-    def __str__(self) -> str:
-        return self.message
 
 
 class OntologyMultiDomainProperty(NeatWarning):
@@ -1305,9 +1161,6 @@ class OntologyMultiDomainProperty(NeatWarning):
             self.message += f"\nDescription: {self.description}"
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
-
-    def __str__(self) -> str:
-        return self.message
 
 
 class OntologyMultiLabeledProperty(NeatWarning):
@@ -1332,9 +1185,6 @@ class OntologyMultiLabeledProperty(NeatWarning):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
 
-    def __str__(self) -> str:
-        return self.message
-
 
 class OntologyMultiDefinitionProperty(NeatWarning):
     type_: str = "OntologyMultiDefinitionProperty"
@@ -1356,9 +1206,6 @@ class OntologyMultiDefinitionProperty(NeatWarning):
             self.message += f"\nDescription: {self.description}"
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
-
-    def __str__(self) -> str:
-        return self.message
 
 
 class FieldNotFoundInInstance(NeatWarning):
@@ -1385,9 +1232,6 @@ class FieldNotFoundInInstance(NeatWarning):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
 
-    def __str__(self) -> str:
-        return self.message
-
 
 class FieldContainsMoreThanOneValue(NeatWarning):
     type_: str = "FieldContainsMoreThanOneValue"
@@ -1413,9 +1257,6 @@ class FieldContainsMoreThanOneValue(NeatWarning):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
 
-    def __str__(self) -> str:
-        return self.message
-
 
 class ContainerPropertyTypeUnsupported(NeatWarning):
     type_: str = "ContainerPropertyTypeUnsupported"
@@ -1438,9 +1279,6 @@ class ContainerPropertyTypeUnsupported(NeatWarning):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
 
-    def __str__(self) -> str:
-        return self.message
-
 
 class ViewPropertyTypeUnsupported(NeatWarning):
     type_: str = "ViewPropertyTypeUnsupported"
@@ -1461,9 +1299,6 @@ class ViewPropertyTypeUnsupported(NeatWarning):
             self.message += f"\nDescription: {self.description}"
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
-
-    def __str__(self) -> str:
-        return self.message
 
 
 class ContainersAlreadyExist(NeatWarning):
@@ -1486,9 +1321,6 @@ class ContainersAlreadyExist(NeatWarning):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
 
-    def __str__(self) -> str:
-        return self.message
-
 
 class ViewsAlreadyExist(NeatWarning):
     type_: str = "ViewsAlreadyExist"
@@ -1509,9 +1341,6 @@ class ViewsAlreadyExist(NeatWarning):
             self.message += f"\nDescription: {self.description}"
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
-
-    def __str__(self) -> str:
-        return self.message
 
 
 class DataModelAlreadyExist(NeatWarning):
@@ -1534,9 +1363,6 @@ class DataModelAlreadyExist(NeatWarning):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
 
-    def __str__(self) -> str:
-        return self.message
-
 
 class NamespaceEndingFixed(NeatWarning):
     type_: str = "NamespaceEndingFixed"
@@ -1553,9 +1379,6 @@ class NamespaceEndingFixed(NeatWarning):
             self.message += f"\nFix: {self.fix}"
             # hint on a specific web docs page
 
-    def __str__(self) -> str:
-        return self.message
-
 
 class DataModelNameMissing(NeatWarning):
     type_: str = "DataModelNameMissing"
@@ -1571,9 +1394,6 @@ class DataModelNameMissing(NeatWarning):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
             # hint on a specific web docs page
-
-    def __str__(self) -> str:
-        return self.message
 
 
 class VersionDotsConvertedToUnderscores(NeatWarning):
@@ -1595,6 +1415,3 @@ class VersionDotsConvertedToUnderscores(NeatWarning):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
             # hint on a specific web docs page
-
-    def __str__(self) -> str:
-        return self.message

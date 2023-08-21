@@ -332,9 +332,9 @@ def read_yaml_file_to_mapping_by_name(dirpath: Path, expected_files: set[str] | 
     return mapping_by_name
 
 
-def read_github_sheet_to_table_by_name(
+def read_github_sheet_to_workbook(
     filepath: str, personal_token: str, owner: str, repo: str, branch: str = "main"
-) -> dict[str, pd.DataFrame]:
+) -> Workbook:
     r = requests.get(
         f"https://api.github.com/repos/{owner}/{repo}/contents/{filepath}?ref={branch}",
         headers={"accept": "application/vnd.github.v3.raw", "authorization": f"token {personal_token}"},
@@ -348,6 +348,13 @@ def read_github_sheet_to_table_by_name(
         wb = load_workbook(BytesIO(r.content), data_only=True)
     except BadZipFile:
         raise exceptions.NotExcelFile(filepath, loc)
+    return wb
+
+
+def read_github_sheet_to_table_by_name(
+    filepath: str, personal_token: str, owner: str, repo: str, branch: str = "main"
+) -> dict[str, pd.DataFrame]:
+    wb = read_github_sheet_to_workbook(filepath, personal_token, owner, repo, branch)
     return _workbook_to_table_by_name(wb)
 
 

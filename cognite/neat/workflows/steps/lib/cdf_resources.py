@@ -20,7 +20,12 @@ from cognite.neat.workflows.steps.step_model import Step
 from cognite.client.data_classes import AssetFilter
 
 from cognite.client import CogniteClient
-from ..data_contracts import CategorizedAssets, CategorizedRelationships, RulesData, SolutionGraph
+from cognite.neat.workflows.steps.data_contracts import (
+    CategorizedAssets,
+    CategorizedRelationships,
+    RulesData,
+    SolutionGraph,
+)
 
 __all__ = [
     "CreateCDFLabels",
