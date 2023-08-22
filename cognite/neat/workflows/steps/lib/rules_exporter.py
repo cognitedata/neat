@@ -2,6 +2,7 @@ import logging
 import time
 import warnings
 from pathlib import Path
+from typing import ClassVar
 
 from cognite.neat.exceptions import wrangle_warnings
 from cognite.neat.rules.exporter import rules2graph_sheet
@@ -22,7 +23,7 @@ class GraphQLSchemaFromRules(Step):
 
     description = "This step generates GraphQL schema from data model defined in transformation rules."
     category = StepCategory.RulesExporter
-    configuration_templates = [
+    configuration_templates: ClassVar[list[WorkflowConfigItem]] = [
         WorkflowConfigItem(
             name="graphql_schema.file",
             value="",
@@ -72,7 +73,7 @@ class OntologyFromRules(Step):
 
     description = "This step generates OWL ontology from data model defined in transformation rules."
     category = StepCategory.RulesExporter
-    configuration_templates = [
+    configuration_templates: ClassVar[list[WorkflowConfigItem]] = [
         WorkflowConfigItem(
             name="ontology.file",
             value="",
@@ -145,7 +146,7 @@ class SHACLFromRules(Step):
 
     description = "This step generates SHACL from data model defined in transformation rules"
     category = StepCategory.RulesExporter
-    configuration_templates = [
+    configuration_templates: [
         WorkflowConfigItem(
             name="shacl.file",
             value="",
@@ -192,7 +193,7 @@ class GraphCaptureSpreadsheetFromRules(Step):
 
     description = "This step generates data capture spreadsheet from data model defined in rules"
     category = StepCategory.RulesExporter
-    configuration_templates = [
+    configuration_templates: ClassVar[list[WorkflowConfigItem]] = [
         WorkflowConfigItem(
             name="graph_capture.file",
             value="graph_capture_sheet.xlsx",

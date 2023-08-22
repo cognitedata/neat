@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+from typing import ClassVar
 
 from rdflib import RDF, Literal, URIRef
 
@@ -26,7 +27,7 @@ class InstancesFromRdfFileToSourceGraph(Step):
 
     description = "This step extract instances from a file into the source graph. The file must be in RDF format."
     category = StepCategory.GraphLoader
-    configuration_templates = [
+    configuration_templates: ClassVar[list[WorkflowConfigItem]] = [
         WorkflowConfigItem(
             name="source_rdf_store.file",
             value="source-graphs/source-graph-dump.xml",

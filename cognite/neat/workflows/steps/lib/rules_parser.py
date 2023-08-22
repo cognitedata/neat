@@ -1,6 +1,7 @@
 import logging
 import time
 from pathlib import Path
+from typing import ClassVar
 
 from openpyxl import Workbook
 
@@ -25,7 +26,7 @@ class LoadTransformationRules(Step):
 
     description = "This step loads transformation rules from the file or remote location"
     category = StepCategory.RulesParser
-    configuration_templates = [
+    configuration_templates: ClassVar[list[WorkflowConfigItem]] = [
         WorkflowConfigItem(
             name="rules.validate_rules",
             value="True",
@@ -119,7 +120,7 @@ class DownloadTransformationRulesFromGitHub(Step):
 
     description = "This step fetches and stores transformation rules from private Github repository"
     category = StepCategory.RulesParser
-    configuration_templates = [
+    configuration_templates: ClassVar[list[WorkflowConfigItem]] = [
         WorkflowConfigItem(
             name="github.filepath",
             value="",

@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+from typing import ClassVar
 
 from cognite.neat.constants import PREFIXES
 from cognite.neat.graph.stores import NeatGraphStore, RdfStoreType, drop_graph_store
@@ -17,7 +18,7 @@ class ConfigureDefaultGraphStores(Step):
 
     description = "This step initializes the source and solution graph stores."
     category = StepCategory.GraphStore
-    configuration_templates = [
+    configuration_templates: ClassVar[list[WorkflowConfigItem]] = [
         WorkflowConfigItem(
             name="source_rdf_store.type",
             value=RdfStoreType.OXIGRAPH,
