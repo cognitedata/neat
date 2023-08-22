@@ -142,7 +142,7 @@ class SHACLFromRules(Step):
             value="",
             label=(
                 "Name of the SHACL file it must have .ttl extension, if "
-                "empty defaults to form `prefix-version-shacl.ttl`",
+                "empty defaults to form `prefix-version-shacl.ttl`"
             ),
         ),
         WorkflowConfigItem(name="shacl_export.storage_dir", value="staging", label="Directory to store the SHACL file"),

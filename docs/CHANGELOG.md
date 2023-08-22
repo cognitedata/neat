@@ -29,6 +29,7 @@ Changes are grouped as follows:
 
 ### Improved
 - `data_model_generation` workflow has been extended to produce ontological and shape constraints representation
+- input parameters description for workflow steps in step library
 ## [0.21.2] - 18-08-23
 
 ### Changed
