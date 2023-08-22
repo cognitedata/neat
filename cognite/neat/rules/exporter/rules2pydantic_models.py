@@ -403,7 +403,7 @@ def to_relationship(self, transformation_rules: TransformationRules) -> Relation
 
 
 def to_dms(self, data_model: DataModel):
-    """Creates instance of dm in CDF."""
+    """Creates instance of data model type in CDF."""
 
     if set(data_model.containers[self.__class__.__name__].properties.keys()) != set(
         self.attributes + self.edges_one_to_one + self.edges_one_to_many
