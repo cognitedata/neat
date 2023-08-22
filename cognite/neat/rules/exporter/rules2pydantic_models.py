@@ -17,7 +17,9 @@ from cognite.neat.rules.analysis import (
     define_class_relationship_mapping,
     to_class_property_pairs,
 )
+from cognite.neat.rules.exporter.rules2dms import DataModel
 from cognite.neat.rules.models import Property, TransformationRules, type_to_target_convention
+from cognite.client.data_classes.data_modeling import EdgeApply, NodeOrEdgeData, NodeApply, ViewId
 
 EdgeOneToOne = TypeAliasType("EdgeOneToOne", str)
 EdgeOneToMany = TypeAliasType("EdgeOneToMany", list[str])
@@ -33,8 +35,12 @@ def default_model_methods():
     return [from_graph, to_asset, to_relationship, to_dms, to_graph]
 
 
+def default_model_property_attributes():
+    return [attributes, edges_one_to_one, edges_one_to_many]
+
+
 def rules_to_pydantic_models(
-    transformation_rules: TransformationRules, methods: list | None = None
+    transformation_rules: TransformationRules, methods: list | None = None, property_attributes: list | None = None
 ) -> dict[str, ModelMetaclass]:
     """
     Generate pydantic models from transformation rules.
@@ -42,6 +48,7 @@ def rules_to_pydantic_models(
     Args:
         transformation_rules: Transformation rules
         methods: List of methods to register for pydantic models, by default None.
+        property_attributes: List of property attributes to register for pydantic models, by default None.
 
     Returns:
         Dictionary containing pydantic models
@@ -54,6 +61,8 @@ def rules_to_pydantic_models(
     """
     if methods is None:
         methods = default_model_methods()
+    if property_attributes is None:
+        property_attributes = default_model_property_attributes()
 
     class_property_pairs = to_class_property_pairs(transformation_rules, only_rdfpath=True)
 
@@ -83,9 +92,7 @@ def rules_to_pydantic_models(
             ),
         )
 
-        model = _dictionary_to_pydantic_model(
-            class_, fields, methods=[from_graph, to_asset, to_relationship, to_dms, to_graph]
-        )
+        model = _dictionary_to_pydantic_model(class_, fields, methods=methods, property_attributes=property_attributes)
 
         models[class_] = model
 
@@ -115,7 +122,12 @@ def _properties_to_pydantic_fields(
     for name, property_ in properties.items():
         field_type = _define_field_type(property_)
 
-        field_definition: dict = {"alias": name}
+        field_definition: dict = {
+            "alias": name,
+            # keys below will be available under json_schema_extra
+            "property_type": field_type.__name__ if field_type in [EdgeOneToOne, EdgeOneToMany] else "NodeAttribute",
+            "property_value_type": property_.expected_value_type,
+        }
 
         if field_type.__name__ in [EdgeOneToMany.__name__, list.__name__]:
             field_definition["min_length"] = property_.min_count
@@ -149,6 +161,7 @@ def _dictionary_to_pydantic_model(
     model_definition: dict,
     model_configuration: ConfigDict = None,
     methods: list | None = None,
+    property_attributes: list | None = None,
     validators: list | None = None,
 ) -> type[BaseModel]:
     """Generates pydantic model from dictionary containing definition of fields.
@@ -164,6 +177,8 @@ def _dictionary_to_pydantic_model(
         Configuration of pydantic model, by default None
     methods : list, optional
         Methods that work on fields once model is instantiated, by default None
+    property_attributes : list, optional
+        Property attributed that work on model fields once model is instantiated, by default None
     validators : list, optional
         Any custom validators to be added in addition to base pydantic ones, by default None
 
@@ -191,12 +206,45 @@ def _dictionary_to_pydantic_model(
     if methods:
         for method in methods:
             setattr(model, method.__name__, method)
+    if property_attributes:
+        for property_attribute in property_attributes:
+            setattr(model, property_attribute.fget.__name__, property_attribute)
 
     # any additional validators to be added
     if validators:
         ...
 
     return model
+
+
+@property
+def attributes(self) -> list[str]:
+    return [
+        field
+        for field in self.model_fields_set
+        if self.model_fields[field].json_schema_extra
+        and self.model_fields[field].json_schema_extra.get("property_type", "") == "NodeAttribute"
+    ]
+
+
+@property
+def edges_one_to_one(self) -> list[str]:
+    return [
+        field
+        for field in self.model_fields_set
+        if self.model_fields[field].json_schema_extra
+        and self.model_fields[field].json_schema_extra.get("property_type", "") == "EdgeOneToOne"
+    ]
+
+
+@property
+def edges_one_to_many(self) -> list[str]:
+    return [
+        field
+        for field in self.model_fields_set
+        if self.model_fields[field].json_schema_extra
+        and self.model_fields[field].json_schema_extra.get("property_type", "") == "EdgeOneToMany"
+    ]
 
 
 # Define methods that work on model instance
@@ -354,9 +402,36 @@ def to_relationship(self, transformation_rules: TransformationRules) -> Relation
     ...
 
 
-def to_dms(self, transformation_rules: TransformationRules):
+def to_dms(self, data_model: DataModel):
     """Creates instance of dm in CDF."""
-    ...
+
+    if set(data_model.containers[self.__class__.__name__].properties.keys()) != set(
+        self.attributes + self.edges_one_to_one + self.edges_one_to_many
+    ):
+        raise exceptions.InstancePropertiesNotMatchingContainerProperties(
+            self.__class__.__name__,
+            self.attributes + self.edges_one_to_one + self.edges_one_to_many,
+            data_model.containers[self.__class__.__name__].properties.keys(),
+        )
+
+    attributes: dict = {attribute: self.__getattribute__(attribute) for attribute in self.attributes}
+    edges_one_to_one: dict = {
+        edge_one_to_one: {"space": data_model.space, "externalId": self.__getattribute__(edge_one_to_one)}
+        for edge_one_to_one in self.edges_one_to_one
+    }
+
+    node = NodeApply(
+        space=data_model.space,
+        external_id=self.external_id,
+        sources=[
+            NodeOrEdgeData(
+                source=data_model.views[self.__class__.__name__].as_id(),
+                properties={**attributes, **edges_one_to_one},
+            )
+        ],
+    )
+
+    return node
 
 
 def to_graph(self, transformation_rules: TransformationRules, graph: Graph):
