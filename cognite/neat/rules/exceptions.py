@@ -520,13 +520,11 @@ class InstancePropertiesNotMatchingContainerProperties(NeatException):
     fix: str = "Make sure that all properties of a class are defined in the DMS container"
 
     def __init__(self, class_name, class_properties, container_properties, verbose=False):
-        self.existing_data_model = existing_data_model
-        self.existing_containers = existing_containers
-        self.existing_views = existing_views
-
-        self.message = (f"Instance of class {class_name} has properties {class_properties}"
-                        f" while DMS container  {class_name} has properties {container_properties}!"
-                        f" Cannot create instance in DMS as properties do not match!")
+        self.message = (
+            f"Instance of class {class_name} has properties {class_properties}"
+            f" while DMS container  {class_name} has properties {container_properties}!"
+            f" Cannot create instance in DMS as properties do not match!"
+        )
 
         if verbose:
             self.message += f"\nDescription: {self.description}"

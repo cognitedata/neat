@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from cognite.client.data_classes import Asset, Relationship
+from cognite.client.data_classes.data_modeling import NodeApply, NodeOrEdgeData
 from pydantic import BaseModel, ConfigDict, Field, create_model
 from pydantic._internal._model_construction import ModelMetaclass
 from rdflib import Graph, URIRef
@@ -19,7 +20,6 @@ from cognite.neat.rules.analysis import (
 )
 from cognite.neat.rules.exporter.rules2dms import DataModel
 from cognite.neat.rules.models import Property, TransformationRules, type_to_target_convention
-from cognite.client.data_classes.data_modeling import EdgeApply, NodeOrEdgeData, NodeApply, ViewId
 
 EdgeOneToOne = TypeAliasType("EdgeOneToOne", str)
 EdgeOneToMany = TypeAliasType("EdgeOneToMany", list[str])
