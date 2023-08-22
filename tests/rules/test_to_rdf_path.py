@@ -1,9 +1,8 @@
-import pytest
-from tests import config
-from pydantic import ValidationError
-
 import pprint
+
+import pytest
 from IPython.display import Markdown, display
+from pydantic import ValidationError
 
 from cognite.neat.constants import PREFIXES
 from cognite.neat.graph.stores import NeatGraphStore
@@ -17,12 +16,12 @@ from cognite.neat.rules.to_rdf_path import (
     RuleType,
     SingleProperty,
     Step,
+    is_rawlookup,
+    is_rdfpath,
     parse_rule,
     parse_traversal,
-    is_rdfpath,
-    is_rawlookup,
 )
-
+from tests import config
 
 nan = float("nan")
 
@@ -262,7 +261,7 @@ GRAPH = None
 def display_test_parse_traversal(
     raw: str,
     expected_traversal: AllProperties | AllReferences | Entity | Hop | SingleProperty,
-    name: str = None,
+    name: str | None = None,
 ):
     global GRAPH
     if name:

@@ -2,44 +2,57 @@
 """
 
 import logging
-from typing import ClassVar, Optional, Self
 import warnings
-from pydantic import BaseModel, ConfigDict
+from typing import ClassVar, Self
 
 from cognite.client import CogniteClient
-from cognite.client.data_classes.data_modeling import ContainerApply, ContainerProperty, DirectRelation
 from cognite.client.data_classes.data_modeling import (
-    ViewApply,
-    SpaceApply,
-    DataModelApply,
-    DirectRelationReference,
-)
-from cognite.client.data_classes.data_modeling import (
-    MappedPropertyApply,
+    ContainerApply,
     ContainerId,
-    ViewId,
+    ContainerProperty,
+    DataModelApply,
+    DirectRelation,
+    DirectRelationReference,
+    MappedPropertyApply,
     SingleHopConnectionDefinition,
+    SpaceApply,
+    ViewApply,
+    ViewId,
 )
-from cognite.neat.rules.analysis import to_class_property_pairs
+from pydantic import BaseModel, ConfigDict
 
-from cognite.neat.rules.models import Property, TransformationRules, DATA_TYPE_MAPPING
 from cognite.neat.rules import exceptions
 from cognite.neat.rules._validation import (
     are_entity_names_dms_compliant,
     are_properties_redefined,
 )
+from cognite.neat.rules.analysis import to_class_property_pairs
+from cognite.neat.rules.models import DATA_TYPE_MAPPING, Property, TransformationRules
 from cognite.neat.utils.utils import generate_exception_report
 
 
 class DataModel(BaseModel):
-    """Data model pydantic class used to create space, containers, views and data model in CDF.
-    based on the transformation rules."""
+    """
+    Data model pydantic class used to create space, containers, views and data model in CDF.
+
+    This can be used to create a data model in CDF from transformation rules.
+
+    Args:
+        space: Name of the space to place the resulting data model.
+        external_id: External id of the data model.
+        version: Version of the data model.
+        description: Description of the data model.
+        name: Name of the data model.
+        containers: Containers connected to the data model.
+        views: Views connected to the data model.
+
+    """
 
     space: str
     external_id: str
     version: str
-    description: Optional[str] = None
-    name: Optional[str] = None
+    description: str | None = None
+    name: str | None = None
     containers: dict[str, ContainerApply]
     views: dict[str, ViewApply]
 
@@ -52,10 +65,10 @@ class DataModel(BaseModel):
         """Generates a DataModel class instance from a TransformationRules instance.
 
         Args:
-            transformation_rules (TransformationRules): instance of TransformationRules.
+            transformation_rules: instance of TransformationRules.
 
         Returns:
-            DataModel: instance of DataModel.
+            Instance of DataModel.
         """
         names_compliant, name_warnings = are_entity_names_dms_compliant(transformation_rules, return_report=True)
         if not names_compliant:
@@ -88,10 +101,10 @@ class DataModel(BaseModel):
         """Create a dictionary of ContainerApply instances from a TransformationRules instance.
 
         Args:
-            transformation_rules (TransformationRules): instance of TransformationRules.`
+            transformation_rules: instance of TransformationRules.`
 
         Returns:
-            dict[str, ContainerApply]: dictionary of ContainerApply instances.
+            Dictionary of ContainerApply instances.
         """
         class_properties = to_class_property_pairs(transformation_rules)
         return {
@@ -110,10 +123,10 @@ class DataModel(BaseModel):
         """Generates a dictionary of ContainerProperty instances from a dictionary of Property instances.
 
         Args:
-            properties (dict[str, Property]): dictionary of Property instances.
+            properties: Dictionary of Property instances.
 
         Returns:
-            dict[str, ContainerProperty]: dictionary of ContainerProperty instances.
+            Dictionary of ContainerProperty instances.
         """
         container_properties = {}
         for property_id, property_definition in properties.items():
@@ -154,10 +167,10 @@ class DataModel(BaseModel):
         """Generates a dictionary of ViewApply instances from a TransformationRules instance.
 
         Args:
-            transformation_rules (TransformationRules): instance of TransformationRules.
+            transformation_rules: Iinstance of TransformationRules.
 
         Returns:
-            dict[str, ViewApply]: dictionary of ViewApply instances.
+            Dictionary of ViewApply instances.
         """
         class_properties = to_class_property_pairs(transformation_rules)
         return {
@@ -221,10 +234,11 @@ class DataModel(BaseModel):
         return view_properties
 
     def to_cdf(self, client: CogniteClient):
-        """Creates the data model in CDF.
+        """Write the the data model to CDF.
 
         Args:
-            client (CogniteClient): Cognite client.
+            client: Connected Cognite client.
+
         """
         existing_data_model = self.find_existing_data_model(client)
         existing_containers = self.find_existing_containers(client)
@@ -244,16 +258,13 @@ class DataModel(BaseModel):
         """Checks if the data model exists in CDF.
 
         Args:
-            client (CogniteClient): Cognite client.
+            client: Cognite client.
 
         Returns:
-            bool: True if the data model exists, False otherwise.
+             True if the data model exists, False otherwise.
         """
-
-        cdf_data_model = {}
-
         if model := client.data_modeling.data_models.retrieve((self.space, self.external_id, self.version)):
-            cdf_data_model = model[0]
+            cdf_data_model = model.latest_version()
             logging.warning(exceptions.DataModelAlreadyExist(self.external_id, self.version, self.space).message)
             warnings.warn(
                 exceptions.DataModelAlreadyExist(self.external_id, self.version, self.space).message,
@@ -269,10 +280,10 @@ class DataModel(BaseModel):
         """Checks if the containers exist in CDF.
 
         Args:
-            client (CogniteClient): Cognite client.
+            client: Cognite client.
 
         Returns:
-            bool: True if the containers exist, False otherwise.
+            True if the containers exist, False otherwise.
         """
 
         cdf_containers = {}
@@ -295,10 +306,10 @@ class DataModel(BaseModel):
         """Checks if the views exist in CDF.
 
         Args:
-            client (CogniteClient): Cognite client.
+            client: Cognite client.
 
         Returns:
-            bool: True if the views exist, False otherwise.
+            True if the views exist, False otherwise.
         """
         cdf_views = {}
         if views := client.data_modeling.views.list(space=self.space, limit=-1):
@@ -346,7 +357,7 @@ class DataModel(BaseModel):
         """Helper function to remove a data model, and all underlying views and containers from CDF.
 
         Args:
-            client (CogniteClient): Cognite client.
+            client: Cognite client.
         """
 
         if client.data_modeling.data_models.retrieve((self.space, self.external_id, self.version)):

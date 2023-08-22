@@ -1,13 +1,13 @@
 import logging
-from pathlib import Path
 import warnings
+from pathlib import Path
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 from openpyxl import Workbook, load_workbook
 from rdflib import RDF, XSD, Literal, Namespace
 
-from cognite.neat.rules.analysis import to_class_property_pairs, get_defined_classes
+from cognite.neat.rules.analysis import get_defined_classes, to_class_property_pairs
 from cognite.neat.rules.models import TransformationRules
 
 
@@ -15,7 +15,7 @@ def extract_graph_from_sheet(
     filepath: Path,
     transformation_rule: TransformationRules,
     separator: str = ",",
-    namespace: str = None,
+    namespace: str | None = None,
 ) -> list[tuple]:
     """Converts a graph capturing sheet to rdf triples
 
@@ -42,7 +42,7 @@ def sheet2triples(
     graph_capturing_sheet: dict[str, pd.DataFrame],
     transformation_rule: TransformationRules,
     separator: str = ",",
-    namespace: str = None,
+    namespace: str | None = None,
 ) -> list[tuple]:
     """Converts a graph capturing sheet to rdf triples
 

@@ -1,7 +1,7 @@
 import shutil
 from pathlib import Path
 
-from cognite.neat.constants import EXAMPLE_RULES, EXAMPLE_GRAPHS, EXAMPLE_WORKFLOWS
+from cognite.neat.constants import EXAMPLE_GRAPHS, EXAMPLE_RULES, EXAMPLE_WORKFLOWS
 
 
 def copy_examples_to_directory(target_data_dir: Path):

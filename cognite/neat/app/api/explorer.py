@@ -1,16 +1,14 @@
+import pkg_resources
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
-import pkg_resources
-
 
 from cognite import neat
+from cognite.neat.app.api.asgi.metrics import prometheus_app
 from cognite.neat.app.api.configuration import UI_PATH, neat_app
 from cognite.neat.app.api.context_manager import lifespan
-from cognite.neat.app.api.asgi.metrics import prometheus_app
-from cognite.neat.app.api.routers import configuration, crud, metrics, workflows, rules, data_exploration
-
+from cognite.neat.app.api.routers import configuration, crud, data_exploration, metrics, rules, workflows
 
 app = FastAPI(title="Neat", lifespan=lifespan)
 

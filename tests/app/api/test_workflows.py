@@ -1,18 +1,18 @@
+from urllib.parse import quote
+
 import pytest
 from cognite.client import CogniteClient
 from starlette.testclient import TestClient
-from urllib.parse import quote
-
 
 from cognite import neat
+from cognite.neat.app.api.configuration import neat_app
+from cognite.neat.app.api.data_classes.rest import QueryRequest, RuleRequest, RunWorkflowRequest
+from cognite.neat.app.api.utils.query_templates import query_templates
 from cognite.neat.constants import EXAMPLE_WORKFLOWS
 from cognite.neat.rules.models import TransformationRules
 from cognite.neat.workflows.base import BaseWorkflow
 from cognite.neat.workflows.model import WorkflowConfigItem, WorkflowDefinition
-from cognite.neat.app.api.data_classes.rest import RuleRequest, RunWorkflowRequest, QueryRequest
 from tests.app.api.memory_cognite_client import MemoryClient
-from cognite.neat.app.api.utils.query_templates import query_templates
-from cognite.neat.app.api.configuration import neat_app
 
 
 @pytest.fixture(scope="session")

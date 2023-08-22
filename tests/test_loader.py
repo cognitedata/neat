@@ -1,8 +1,8 @@
 import filecmp
 from pathlib import Path
 
-from cognite.neat.constants import EXAMPLE_RULES, EXAMPLE_GRAPHS, EXAMPLE_WORKFLOWS
 from cognite.neat.config import copy_examples_to_directory
+from cognite.neat.constants import EXAMPLE_GRAPHS, EXAMPLE_RULES, EXAMPLE_WORKFLOWS
 from cognite.neat.rules.models import TransformationRules
 
 

@@ -19,25 +19,19 @@ def rules2graph_capturing_sheet(
     auto_identifier_type: str = "index-based",
     add_drop_down_list: bool = True,
 ):
-    """Converts a TransformationRules object to a graph capturing sheet
+    """
+    Converts a TransformationRules object to a graph capturing sheet
 
-    Parameters
-    ----------
-    transformation_rules : TransformationRules
-        The TransformationRules object to convert to the graph capturing sheet
-    file_path : Path
-        File path to save the sheet to
-    auto_identifier_type : str, optional
-        Type of automatic identifier, by default "index" based
-    no_rows : int, optional
-        Number of rows for processing, by default 1000
-    add_drop_down_list : bool, optional
-        Add drop down selection for columns that contain linking properties, by default True
+    Args:
+        transformation_rules: The TransformationRules object to convert to the graph capturing sheet
+        file_path: File path to save the sheet to
+        no_rows: Number of rows for processing, by default 1000
+        auto_identifier_type: Type of automatic identifier, by default "index" based
+        add_drop_down_list: Add drop down selection for columns that contain linking properties, by default True
 
-    Notes
-    -----
-    no_rows should be set to the maximum expected number of instances of any of the classes.
-    By default, it is set to 1000, increase it accordingly if you have more instances.
+    !!! note "no_rows parameter"
+        no_rows should be set to the maximum expected number of instances of any of the classes.
+        By default, it is set to 1000, increase it accordingly if you have more instances.
 
     """
 
@@ -50,7 +44,7 @@ def rules2graph_capturing_sheet(
         workbook.create_sheet(title=class_)
 
         # Add header rows
-        workbook[class_].append(["identifier"] + list(properties.keys()))
+        workbook[class_].append(["identifier", *list(properties.keys())])
 
         if auto_identifier_type and auto_identifier_type == "index-based":  # default, easy to read
             logging.debug(f"Configuring index-based automatic identifiers for sheet {class_}")

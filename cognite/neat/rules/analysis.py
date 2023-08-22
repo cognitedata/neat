@@ -1,5 +1,6 @@
-from collections import defaultdict
 import warnings
+from collections import defaultdict
+
 import pandas as pd
 
 from cognite.neat.rules.models import Property, TransformationRules

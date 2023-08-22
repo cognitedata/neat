@@ -2,8 +2,7 @@ import pandas as pd
 import pytest
 from pydantic import ValidationError
 
-from cognite.neat.rules.parser import read_excel_file_to_table_by_name
-from cognite.neat.rules.parser import Tables, from_tables
+from cognite.neat.rules.parser import Tables, from_tables, read_excel_file_to_table_by_name
 from tests import config
 
 

@@ -2,13 +2,13 @@ import pytest
 from rdflib import Namespace
 
 from cognite.neat import rules
-from cognite.neat.graph import loaders, extractors
-from cognite.neat.graph.stores import NeatGraphStore
+from cognite.neat.graph import extractors, loaders
 from cognite.neat.graph.extractors.mocks import generate_triples
-from cognite.neat.rules.parser import RawTables, read_excel_file_to_table_by_name
+from cognite.neat.graph.stores import NeatGraphStore
+from cognite.neat.graph.transformations.transformer import domain2app_knowledge_graph
 from cognite.neat.rules.importer.ontology2excel import owl2excel
 from cognite.neat.rules.models import TransformationRules
-from cognite.neat.graph.transformations.transformer import domain2app_knowledge_graph
+from cognite.neat.rules.parser import RawTables, read_excel_file_to_table_by_name
 from cognite.neat.utils.utils import add_triples
 from tests import config
 
@@ -69,7 +69,6 @@ def simple_rules():
 
 @pytest.fixture(scope="function")
 def graph_capturing_sheet():
-    # return load_workbook(config.GRAPH_CAPTURING_SHEET)
     return extractors.read_graph_excel_file_to_table_by_name(config.GRAPH_CAPTURING_SHEET)
 
 

@@ -21,7 +21,7 @@ def test_sheet2graph(simple_rules, graph_capturing_sheet):
         )
     }
 
-    assert list(graph_store.graph.query("Select ?o WHERE { neat:Country-1 neat:TSO ?o }"))[0][0] == Literal(
+    assert next(iter(graph_store.graph.query("Select ?o WHERE { neat:Country-1 neat:TSO ?o }")))[0] == Literal(
         "Statnett", datatype=XSD.string
     )
     assert count_dict == {"PriceArea": 2, "CountryGroup": 1, "Country": 1, "PriceAreaConnection": 1}

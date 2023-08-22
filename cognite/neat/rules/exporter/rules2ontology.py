@@ -1,13 +1,14 @@
-from typing import ClassVar, Optional, Self
 import warnings
+from typing import ClassVar, Self
+
 from pydantic import BaseModel, ConfigDict, FieldValidationInfo, field_validator
-from rdflib import OWL, RDF, RDFS, XSD, DCTERMS, BNode, Graph, Literal, URIRef, Namespace
+from rdflib import DCTERMS, OWL, RDF, RDFS, XSD, BNode, Graph, Literal, Namespace, URIRef
 from rdflib.collection import Collection as GraphCollection
 
-from cognite.neat.rules.models import DATA_TYPE_MAPPING, Class, Property, TransformationRules, Metadata
-from cognite.neat.rules.analysis import to_property_dict, to_class_property_pairs
-from cognite.neat.rules._validation import are_properties_redefined
 from cognite.neat.rules import exceptions
+from cognite.neat.rules._validation import are_properties_redefined
+from cognite.neat.rules.analysis import to_class_property_pairs, to_property_dict
+from cognite.neat.rules.models import DATA_TYPE_MAPPING, Class, Metadata, Property, TransformationRules
 from cognite.neat.utils.utils import generate_exception_report, remove_namespace
 
 
@@ -16,6 +17,17 @@ class OntologyModel(BaseModel):
 
 
 class Ontology(OntologyModel):
+    """
+    Represents an ontology. Thi class is used to generate an OWL ontology from a set of transformation rules.
+
+    Args:
+        properties: A list of OWL properties.
+        classes: A list of OWL classes.
+        shapes: A list of SHACL node shapes.
+        metadata: Metadata about the ontology.
+        prefixes: A dictionary of prefixes and namespaces.
+    """
+
     properties: list["OWLProperty"]
     classes: list["OWLClass"]
     shapes: list["SHACLNodeShape"]
@@ -24,6 +36,15 @@ class Ontology(OntologyModel):
 
     @classmethod
     def from_rules(cls, transformation_rules: TransformationRules) -> Self:
+        """
+        Generates an ontology from a set of transformation rules.
+
+        Args:
+            transformation_rules: Instance of TransformationRules.
+
+        Returns:
+            An instance of Ontology.
+        """
         properties_redefined, redefinition_warnings = are_properties_redefined(transformation_rules, return_report=True)
         if properties_redefined:
             raise exceptions.PropertiesDefinedMultipleTimes(report=generate_exception_report(redefinition_warnings))
@@ -56,6 +77,13 @@ class Ontology(OntologyModel):
         )
 
     def as_shacl(self) -> Graph:
+        """
+        Generates a SHACL graph from the ontology.
+
+        Returns:
+            A SHACL graph.
+        """
+
         shacl = Graph()
         shacl.bind(self.metadata.prefix, self.metadata.namespace)
         for prefix, namespace in self.prefixes.items():
@@ -68,6 +96,12 @@ class Ontology(OntologyModel):
         return shacl
 
     def as_owl(self) -> Graph:
+        """
+        Generates an OWL graph from the ontology.
+
+        Returns:
+            An OWL graph.
+        """
         owl = Graph()
         owl.bind(self.metadata.prefix, self.metadata.namespace)
         for prefix, namespace in self.prefixes.items():
@@ -151,9 +185,9 @@ class OWLMetadata(Metadata):
 class OWLClass(OntologyModel):
     id_: URIRef
     type_: URIRef = OWL.Class
-    label: Optional[str]
-    comment: Optional[str]
-    sub_class_of: Optional[URIRef]
+    label: str | None
+    comment: str | None
+    sub_class_of: URIRef | None
     namespace: Namespace
 
     @classmethod
@@ -392,8 +426,8 @@ class SHACLPropertyShape(OntologyModel):
     path: URIRef  # URIRef to property in OWL
     node_kind: URIRef  # SHACL.IRI or SHACL.Literal
     expected_value_type: URIRef
-    min_count: Optional[int]
-    max_count: Optional[int]
+    min_count: int | None
+    max_count: int | None
     namespace: Namespace
 
     @property

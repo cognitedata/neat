@@ -5,8 +5,20 @@ import re
 import warnings
 from datetime import datetime
 from pathlib import Path
-from typing import Any, ClassVar, Dict, Optional
+from typing import Any, ClassVar
 
+from cognite.client.data_classes.data_modeling.data_types import (
+    Boolean,
+    FileReference,
+    Float32,
+    Int32,
+    Int64,
+    Json,
+    SequenceReference,
+    Text,
+    TimeSeriesReference,
+    Timestamp,
+)
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -22,22 +34,7 @@ from pydantic import (
 from pydantic.fields import FieldInfo
 from rdflib import XSD, Literal, Namespace, URIRef
 
-from cognite.client.data_classes.data_modeling.data_types import (
-    Timestamp,
-    Text,
-    Int32,
-    Int64,
-    Float32,
-    Boolean,
-    TimeSeriesReference,
-    FileReference,
-    SequenceReference,
-    Json,
-)
-
 from cognite.neat.constants import PREFIXES
-
-# from . import _exceptions
 from cognite.neat.rules import exceptions
 from cognite.neat.rules.to_rdf_path import (
     AllReferences,
@@ -45,8 +42,8 @@ from cognite.neat.rules.to_rdf_path import (
     Hop,
     RawLookup,
     RuleType,
-    SPARQLQuery,
     SingleProperty,
+    SPARQLQuery,
     Traversal,
     parse_rule,
 )
@@ -163,6 +160,37 @@ ExternalId = constr(min_length=1, max_length=255)
 
 
 class Metadata(RuleModel):
+    """
+    Metadata model for data model
+
+    Args:
+        prefix: This is used as prefix for generation of RDF OWL/SHACL data model representation
+        cdf_space_name: This is used as CDF space name to which model is intend to be stored. By default it is set to
+                        'playground'
+        namespace: This is used as RDF namespace for generation of RDF OWL/SHACL data model representation and/or for
+                   generation of RDF graphs
+        data_model_name: This is used as RDF data model name for generation of RDF OWL/SHACL data model representation
+                         and/or for generation of RDF graphs
+        version: This is used as RDF data model version for generation of RDF OWL/SHACL data model representation
+                 and/or for generation of RDF graphs
+        is_current_version: This is used as RDF data model version for generation of RDF OWL/SHACL data model
+        created: This is used as RDF data model creation date for generation of RDF OWL/SHACL data model representation
+        updated: This is used as RDF data model update date for generation of RDF OWL/SHACL data model representation
+        title: This is used as RDF data model title for generation of RDF OWL/SHACL data model representation
+        description: This is used as RDF data model description for generation of RDF
+                     OWL/SHACL data model representation
+        creator: This is used as RDF data model creator for generation of RDF OWL/SHACL data model representation
+        contributor: This is used as RDF data model contributor for generation of
+                     RDF OWL/SHACL data model representation
+        rights: This is used as RDF data model rights for generation of RDF OWL/SHACL data model representation
+        externalIdPrefix: This is used as RDF data model externalIdPrefix for generation of RDF OWL/SHACL data model
+        data_set_id: This is used as RDF data model data_set_id for generation of
+                     RDF OWL/SHACL data model representation
+        source: This is used as RDF data model source for generation of RDF OWL/SHACL data model representation
+        dms_compliant: This is used as RDF data model dms_compliant for generation of RDF OWL/SHACL data model
+
+    """
+
     model_config: ClassVar[ConfigDict] = ConfigDict(
         populate_by_name=True, str_strip_whitespace=True, arbitrary_types_allowed=True
     )
@@ -177,14 +205,14 @@ class Metadata(RuleModel):
         default="playground",
     )
 
-    namespace: Optional[Namespace] = Field(
+    namespace: Namespace | None = Field(
         description="This is used as RDF namespace for generation of RDF OWL/SHACL data model representation "
         "and/or for generation of RDF graphs",
         min_length=1,
         max_length=2048,
         default=None,
     )
-    data_model_name: Optional[ExternalId] = Field(
+    data_model_name: ExternalId | None = Field(
         description="Name that uniquely identifies data model",
         alias="dataModelName",
         default=None,
@@ -200,11 +228,11 @@ class Metadata(RuleModel):
     title: str = Field(min_length=1, max_length=255)
     description: Description
     creator: str | list[str]
-    contributor: Optional[str | list[str]] = None
-    rights: Optional[str] = "Restricted for Internal Use of Cognite"
-    externalIdPrefix: Optional[str] = Field(alias="externalIdPrefix", default=None)
-    data_set_id: Optional[int] = Field(alias="dataSetId", default=None)
-    source: Optional[str | Path] = Field(
+    contributor: str | list[str] | None = None
+    rights: str | None = "Restricted for Internal Use of Cognite"
+    externalIdPrefix: str | None = Field(alias="externalIdPrefix", default=None)
+    data_set_id: int | None = Field(alias="dataSetId", default=None)
+    source: str | Path | None = Field(
         description="File path to Excel file which was used to produce Transformation Rules",
         default=None,
     )
@@ -250,8 +278,8 @@ class Metadata(RuleModel):
                 return Namespace(f"http://purl.org/cognite/{values['cdf_space_name']}/{values['prefix']}#")
         try:
             return Namespace(parse_obj_as(HttpUrl, value))
-        except ValidationError:
-            raise exceptions.MetadataSheetNamespaceNotValidURL(value).to_pydantic_custom_error()
+        except ValidationError as e:
+            raise exceptions.MetadataSheetNamespaceNotValidURL(value).to_pydantic_custom_error() from e
 
     @validator("namespace", always=True)
     def fix_namespace_ending(cls, value):
@@ -308,29 +336,45 @@ class Metadata(RuleModel):
 
 
 class Resource(RuleModel):
+    """
+    Base class for all resources
+
+    Args:
+        description: The description of the resource.
+        cdf_resource_type: The CDF resource type of the resource.
+        deprecated: Whether the resource is deprecated or not.
+        deprecation_date: The date when the resource was deprecated.
+        replaced_by: The resource that replaced this resource.
+        source: The source of the resource.
+        source_entity_name: The name of the source entity.
+        match_type: The match type of the resource.
+        comment: The comment of the resource.
+
+    """
+
     # Solution model
-    description: Optional[Description] = Field(alias="Description", default=None)
+    description: Description | None = Field(alias="Description", default=None)
 
     # Solution CDF resource, it is not needed when working with FDM, this is only for
     # Classic CDF data model
-    cdf_resource_type: Optional[str] = Field(alias="Resource Type", default=None)
+    cdf_resource_type: str | None = Field(alias="Resource Type", default=None)
 
     # Advance data modeling: Keeping track if Resource got deprecated or not
     deprecated: bool = Field(default=False)
-    deprecation_date: Optional[datetime] = Field(alias="deprecationDate", default=None)
-    replaced_by: Optional[str] = Field(alias="replacedBy", default=None)
+    deprecation_date: datetime | None = Field(alias="deprecationDate", default=None)
+    replaced_by: str | None = Field(alias="replacedBy", default=None)
 
     # Advance data modeling: Relation to existing resources for purpose of mapping
-    source: Optional[HttpUrl] = Field(
+    source: HttpUrl | None = Field(
         alias="Source", description="Source of information for given entity, e.g. CIM", default=None
     )
-    source_entity_name: Optional[str] = Field(
+    source_entity_name: str | None = Field(
         alias="Source Entity Name", description="Closest entity in source, e.g. Substation", default=None
     )
-    match_type: Optional[str] = Field(
+    match_type: str | None = Field(
         alias="Match Type", description="Type of match between source entity and one being defined", default=None
     )
-    comment: Optional[str] = Field(alias="Comment", description="Comment about mapping", default=None)
+    comment: str | None = Field(alias="Comment", description="Comment about mapping", default=None)
 
     @model_validator(mode="before")
     def replace_float_nan_with_default(cls, values: dict) -> dict:
@@ -341,15 +385,25 @@ class_id_compliance_regex = r"^([a-zA-Z]+)([a-zA-Z0-9]+[._-]{0,1}[a-zA-Z0-9._-]+
 
 
 class Class(Resource):
+    """
+    Base class for all classes
+
+    Args:
+        class_id: The class ID of the class.
+        class_name: The name of the class.
+        parent_class: The parent class of the class.
+        parent_asset: The parent asset of the class.
+    """
+
     class_id: ExternalId = Field(
         alias="Class",
     )
-    class_name: Optional[ExternalId] = Field(alias="Name", default=None)
+    class_name: ExternalId | None = Field(alias="Name", default=None)
     # Solution model
-    parent_class: Optional[ExternalId] = Field(alias="Parent Class", default=None)
+    parent_class: ExternalId | None = Field(alias="Parent Class", default=None)
 
     # Solution CDF resource
-    parent_asset: Optional[ExternalId] = Field(alias="Parent Asset", default=None)
+    parent_asset: ExternalId | None = Field(alias="Parent Asset", default=None)
 
     @model_validator(mode="before")
     def replace_nan_floats_with_default(cls, values: dict) -> dict:
@@ -382,28 +436,53 @@ property_id_compliance_regex = r"^(\*)|(([a-zA-Z]+)([a-zA-Z0-9]+[._-]{0,1}[a-zA-
 
 
 class Property(Resource):
+    """
+    A property is a characteristic of a class. It is a named attribute of a class that describes a range of values.
+
+    Args:
+        class_id: Class ID
+        property_id: Property ID
+        property_name: Property name
+        expected_value_type: Expected value type
+        min_count: Minimum count
+        max_count: Maximum count
+        default: Default value
+        property_type: Property type
+        resource_type_property: Resource type property
+        source_type: Source type
+        target_type: Target type
+        label: Label
+        relationship_external_id_rule: Relationship external ID rule
+        rule_type: Rule type
+        rule: Rule
+        skip_rule: Skip rule
+        mandatory: Mandatory
+        cdf_resource_type: CDF resource type
+
+    """
+
     # Solution model
     class_id: ExternalId = Field(alias="Class")
     property_id: ExternalId = Field(alias="Property")
-    property_name: Optional[ExternalId] = Field(alias="Name", default=None)
+    property_name: ExternalId | None = Field(alias="Name", default=None)
     expected_value_type: ExternalId = Field(alias="Type")
-    min_count: Optional[int] = Field(alias="Min Count", default=0)
-    max_count: Optional[int] = Field(alias="Max Count", default=None)
+    min_count: int | None = Field(alias="Min Count", default=0)
+    max_count: int | None = Field(alias="Max Count", default=None)
     default: Any = Field(None)
 
     # OWL property
     property_type: str = "DatatypeProperty"
 
     # Solution CDF resource
-    resource_type_property: Optional[list[str]] = Field(alias="Resource Type Property", default=None)
+    resource_type_property: list[str] | None = Field(alias="Resource Type Property", default=None)
     source_type: str = Field(alias="Relationship Source Type", default="Asset")
     target_type: str = Field(alias="Relationship Target Type", default="Asset")
-    label: Optional[str] = Field(alias="Relationship Label", default=None)
-    relationship_external_id_rule: Optional[str] = Field(alias="Relationship ExternalID Rule", default=None)
+    label: str | None = Field(alias="Relationship Label", default=None)
+    relationship_external_id_rule: str | None = Field(alias="Relationship ExternalID Rule", default=None)
 
     # Transformation rule (domain to solution)
-    rule_type: Optional[RuleType] = Field(alias="Rule Type", default=None)
-    rule: Optional[str | AllReferences | SingleProperty | Hop | RawLookup | SPARQLQuery | Traversal] = Field(
+    rule_type: RuleType | None = Field(alias="Rule Type", default=None)
+    rule: str | AllReferences | SingleProperty | Hop | RawLookup | SPARQLQuery | Traversal | None = Field(
         alias="Rule", default=None
     )
     skip_rule: bool = Field(alias="Skip", default=False)
@@ -527,17 +606,33 @@ class Property(Resource):
 
 
 class Prefixes(RuleModel):
-    prefixes: Dict[str, Namespace] = PREFIXES
+    """
+    Class deals with prefixes in the data model
+
+    Args:
+        prefixes: Dict of prefixes
+    """
+
+    prefixes: dict[str, Namespace] = PREFIXES
 
 
 class Instance(RuleModel):
-    """Class deals with instances of classes in the data model"""
+    """
+    Class deals with instances of classes in the data model
 
-    instance: Optional[URIRef] = Field(alias="Instance", default=None)
-    property_: Optional[URIRef] = Field(alias="Property", default=None)
-    value: Optional[Literal | URIRef] = Field(alias="Value", default=None)
+    Args:
+        instance: URI of the instance
+        property_: URI of the property
+        value: value of the property
+        namespace: namespace of the instance
+        prefixes: prefixes of the instance
+    """
+
+    instance: URIRef | None = Field(alias="Instance", default=None)
+    property_: URIRef | None = Field(alias="Property", default=None)
+    value: Literal | URIRef | None = Field(alias="Value", default=None)
     namespace: Namespace
-    prefixes: Dict[str, Namespace]
+    prefixes: dict[str, Namespace]
 
     @staticmethod
     def get_value(value, prefixes) -> URIRef | Literal:
@@ -616,11 +711,30 @@ class Instance(RuleModel):
 
 
 class TransformationRules(RuleModel):
+    """
+    Transformation rules is a core concept in `neat`. This represents the rules that are used to transform the data
+    from the source to the target. The rules are defined in a Excel sheet and then parsed into a `TransformationRules`
+    object. The `TransformationRules` object is then used to generate the `RDF` graph.
+
+    Args:
+        metadata: Metadata of the data model
+        classes: Classes defined in the data model
+        properties: Properties defined in the data model
+        prefixes: Prefixes defined in the data model
+        instances: Instances defined in the data model
+
+    !!! note "Importers"
+        Neat supports importing data from different sources. See the importers section for more details.
+
+    !!! note "Exporters"
+        Neat supports exporting data to different sources. See the exporters section for more details.
+    """
+
     metadata: Metadata
     classes: dict[str, Class]
     properties: dict[str, Property]
-    prefixes: Optional[dict[str, Namespace]] = PREFIXES
-    instances: Optional[list[Instance]] = None
+    prefixes: dict[str, Namespace] | None = PREFIXES
+    instances: list[Instance] | None = None
 
     @property
     def raw_tables(self) -> list[str]:

@@ -5,7 +5,6 @@ import shutil
 import time
 import zipfile
 from pathlib import Path
-from typing import Dict
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import Event, FileMetadataUpdate, LabelDefinition, LabelFilter
@@ -34,14 +33,13 @@ class CdfStore:
         self,
         client: CogniteClient,
         data_set_id: int,
-        workflows_storage_path: Path = None,
-        rules_storage_path: Path = None,
+        workflows_storage_path: Path | None = None,
+        rules_storage_path: Path | None = None,
     ):
         self.client = client
         self.data_set_id = data_set_id
-        # todo use pathlib
-        self.workflows_storage_path = str(workflows_storage_path)
-        self.rules_storage_path = str(rules_storage_path)
+        self.workflows_storage_path = workflows_storage_path
+        self.rules_storage_path = rules_storage_path
         self.workflows_storage_type = "file"
 
     def init_cdf_resources(self, resource_type="all"):
@@ -66,10 +64,10 @@ class CdfStore:
 
     def package_workflow(self, workflow_name):
         """Creates a zip archive from a folder"""
-        folder_path = os.path.join(self.workflows_storage_path, workflow_name)
-        archive_path = os.path.join(self.workflows_storage_path, f"{workflow_name}.zip")
+        folder_path = self.workflows_storage_path / workflow_name
+        archive_path = self.workflows_storage_path / f"{workflow_name}.zip"
         # Make sure the folder exists
-        if not os.path.isdir(folder_path):
+        if not folder_path.is_dir():
             logging.error(f"Error: {folder_path} is not a directory")
             raise Exception(f"Can't package workflow.Error: {folder_path} is not a directory")
 
@@ -78,7 +76,7 @@ class CdfStore:
             # Walk through the directory and add each json file to the archive
             for root, _, files in os.walk(folder_path):
                 for file in files:
-                    file_path = os.path.join(root, file)
+                    file_path = Path(root) / Path(file)
                     # Check if the file has a .json extension
                     if (
                         file.endswith(".yaml")
@@ -96,7 +94,7 @@ class CdfStore:
         workflow_name = workflow_name.replace(".zip", "")
         package_full_path = Path(self.workflows_storage_path).joinpath(f"{workflow_name}.zip")
         output_folder = Path(self.workflows_storage_path).joinpath(workflow_name)
-        if not os.path.isfile(package_full_path):
+        if not package_full_path.is_file():
             print(f"Error: {package_full_path} is not a file")
             raise Exception(f"Can't extract workflow package. Error: {package_full_path} is not a file")
 
@@ -104,13 +102,13 @@ class CdfStore:
         if output_folder.exists():
             shutil.rmtree(output_folder)
         # Create the output folder if it does not exist
-        os.makedirs(output_folder, exist_ok=True)
+        output_folder.mkdir(parents=True, exist_ok=True)
 
         # Extract the contents of the archive to the output folder
         with zipfile.ZipFile(package_full_path, "r") as zipf:
             zipf.extractall(output_folder)
 
-    def load_workflows_from_cfg_by_filter(self, config_filter: list[str] = None) -> str:
+    def load_workflows_from_cfg_by_filter(self, config_filter: list[str] | None = None) -> str:
         """Load workflow package from CDF and extract it to the storage path"""
         # filter syntax: name:workflow_name=version; tag:tag_name
         try:
@@ -136,7 +134,10 @@ class CdfStore:
             logging.error(f"Failed to load workflows by filter. Error: {e}")
 
     def load_workflows_from_cdf(
-        self, workflow_name: str = None, version: str = None, metadata_filter: Dict[str, str] = None
+        self,
+        workflow_name: str | None = None,
+        version: str | None = None,
+        metadata_filter: dict[str, str] | None = None,
     ) -> list[str]:
         """Load workflow package or multiple workfllows from CDF and extract it to the storage path"""
         # TODO: Add workflow and tag filters
@@ -177,7 +178,7 @@ class CdfStore:
             zip_file = Path(self.workflows_storage_path) / f"{name}.zip"
             if zip_file.exists():
                 self.save_resource_to_cdf(name, "workflow-package", zip_file, tag, changed_by, comments)
-                os.remove(zip_file)
+                zip_file.unlink()
                 logging.info(f"Workflow package {name} uploaded to CDF")
             else:
                 logging.error(f"Workflow package {name} not found, skipping")
@@ -195,7 +196,7 @@ class CdfStore:
     ) -> None:
         """Saves resources to cdf. For instance workflow package, rules file, etc"""
         if self.data_set_id and self.client:
-            if not os.path.exists(file_path):
+            if not file_path.exists():
                 logging.error(f"File {file_path} not found, skipping")
                 return
             # removing the latest tag from all files related to this workflow
@@ -231,7 +232,7 @@ class CdfStore:
         else:
             logging.error("No CDF client or data set id provided")
 
-    def load_rules_file_from_cdf(self, name: str, version: str = None):
+    def load_rules_file_from_cdf(self, name: str, version: str | None = None):
         logging.info(f"Loading rules file {name} (version = {version} ) from CDF ")
         # TODO: Download latest if version is not specified
         files_metadata = self.client.files.list(name=name, metadata={"hash": version})
@@ -333,11 +334,9 @@ class CdfStore:
             "workflow_name": report.workflow_name,
         }
         external_id = f"neat-wf-run-{report.run_id}"
-        # serialized_execution_log = json.dumps([step.dict() for step in report.execution_log])
         serialized_execution_log = json.dumps(jsonable_encoder(report.execution_log))
         execution_log_size = bytes(serialized_execution_log, "utf-8").__sizeof__()
         logging.debug(f"Serialized execution log size: {execution_log_size}")
-        # logging.debug(f"Serialized execution log: {serialized_execution_log}")
 
         if report.start_time:
             report.start_time = report.start_time * 1000

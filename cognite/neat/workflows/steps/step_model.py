@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
 from enum import StrEnum
 from typing import ClassVar, TypeVar
-from pydantic import BaseModel, ConfigDict
-from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
 
+from pydantic import BaseModel, ConfigDict
+
+from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
 from cognite.neat.workflows.model import WorkflowConfigItem, WorkflowConfigs
 
 
@@ -33,7 +34,7 @@ T_Output = TypeVar("T_Output", bound=DataContract)
 class Step(ABC):
     description: str = ""
     category: str = "default"
-    configuration_templates: list[WorkflowConfigItem] = []
+    configuration_templates: ClassVar[list[WorkflowConfigItem]] = []
     scope: str = "global"
     metrics: NeatMetricsCollector | None = None
     configs: WorkflowConfigs | None = None

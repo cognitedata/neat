@@ -1,4 +1,5 @@
 from pathlib import Path
+
 from cognite.neat.app.api.configuration import Config
 
 

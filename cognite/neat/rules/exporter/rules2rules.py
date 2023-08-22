@@ -15,26 +15,21 @@ from cognite.neat.rules.models import TransformationRules
 def subset_rules(
     transformation_rules: TransformationRules, desired_classes: set, skip_validation: bool = False
 ) -> TransformationRules:
-    """Subset transformation rules to only include desired classes and their properties.
+    """
+    Subset transformation rules to only include desired classes and their properties.
 
-    Parameters
-    ----------
-    transformation_rules : TransformationRules
-        Instance of TransformationRules to subset
-    desired_classes : set
-        Desired classes to include in the reduced data model
-    skip_validation : bool
-        To skip underlying pydantic validation, by default False
+    Args:
+        transformation_rules: Instance of TransformationRules to subset
+        desired_classes: Desired classes to include in the reduced data model
+        skip_validation: Whether to skip underlying pydantic validation, by default False
 
-    Returns
-    -------
-    TransformationRules
+    Returns:
         Instance of TransformationRules
 
-    Notes
-    -----
-    It is fine to skip validation since we are deriving the reduced data model from data
-    model (i.e. TransformationRules) which has already been validated.
+    !!! note "Skipping Validation"
+        It is fine to skip validation since we are deriving the reduced data model from data
+        model (i.e. TransformationRules) which has already been validated.
+
     """
 
     defined_classes = get_defined_classes(transformation_rules)

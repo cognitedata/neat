@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import ClassVar, List, Optional
+from typing import ClassVar
 
 from pydantic import BaseModel, ConfigDict, root_validator, validator
 from rdflib import Namespace
@@ -12,9 +12,9 @@ from cognite.neat.rules.models import METADATA_VALUE_MAX_LENGTH
 class AssetClassMapping(BaseModel):
     external_id: str
     name: str
-    parent_external_id: Optional[str] = None
-    description: Optional[str] = None
-    metadata: Optional[dict] = {}
+    parent_external_id: str | None = None
+    description: str | None = None
+    metadata: dict | None = {}
 
     @root_validator(pre=True)
     def create_metadata(cls, values: dict):
@@ -33,13 +33,13 @@ class AssetTemplate(BaseModel):
     """This class is used to validate, repair and wrangle rdf asset dictionary according to the
     expected format of cognite sdk Asset dataclass."""
 
-    external_id_prefix: Optional[str] = None  # convenience field to add prefix to external_ids
+    external_id_prefix: str | None = None  # convenience field to add prefix to external_ids
     external_id: str
-    name: Optional[str] = None
-    parent_external_id: Optional[str] = None
-    metadata: Optional[dict] = {}
-    description: Optional[str] = None
-    data_set_id: Optional[int] = None
+    name: str | None = None
+    parent_external_id: str | None = None
+    metadata: dict | None = {}
+    description: str | None = None
+    data_set_id: int | None = None
 
     @root_validator(pre=True)
     def preprocess_fields(cls, values: dict):
@@ -119,10 +119,10 @@ class RelationshipDefinition(BaseModel):
     source_class: str
     target_class: str
     property_: str
-    labels: Optional[List[str]] = None
+    labels: list[str] | None = None
     target_type: str = "Asset"
     source_type: str = "Asset"
-    relationship_external_id_rule: Optional[str] = None
+    relationship_external_id_rule: str | None = None
 
 
 class RelationshipDefinitions(BaseModel):
