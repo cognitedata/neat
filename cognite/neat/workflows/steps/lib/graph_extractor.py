@@ -1,6 +1,5 @@
 import logging
 from pathlib import Path
-import time
 
 from rdflib import RDF, Literal, URIRef
 from cognite.neat.constants import PREFIXES

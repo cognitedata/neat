@@ -23,7 +23,10 @@ class GraphQLSchemaFromRules(Step):
         WorkflowConfigItem(
             name="graphql_schema.file",
             value="",
-            label="Name of the GraphQL schema file it must have .graphql extension, if empty defaults to form `prefix-version.graphql`",
+            label=(
+                "Name of the GraphQL schema file it must have .graphql extension,"
+                " if empty defaults to form `prefix-version.graphql`"
+            ),
         ),
         WorkflowConfigItem(
             name="graphql_export.storage_dir", value="staging", label="Directory to store GraphQL schema file"
@@ -66,7 +69,10 @@ class OntologyFromRules(Step):
         WorkflowConfigItem(
             name="ontology.file",
             value="",
-            label="Name of the OWL ontology file it must have .ttl extension, if empty defaults to form `prefix-version-ontology.ttl`",
+            label=(
+                "Name of the OWL ontology file it must have .ttl extension,"
+                " if empty defaults to form `prefix-version-ontology.ttl`"
+            ),
         ),
         WorkflowConfigItem(
             name="ontology_export.storage_dir", value="staging", label="Directory to store the OWL ontology file"
@@ -126,13 +132,18 @@ class OntologyFromRules(Step):
 
 
 class SHACLFromRules(Step):
-    description = "The step generates shape object constraints (SHACL) from data model defined in transformation rules."
+    description = (
+        "The step generates shape object constraints (SHACL) from data model defined" " in transformation rules."
+    )
     category = StepCategory.RulesExporter
     configuration_templates = [
         WorkflowConfigItem(
             name="shacl.file",
             value="",
-            label="Name of the SHACL file it must have .ttl extension, if empty defaults to form `prefix-version-shacl.ttl`",
+            label=(
+                "Name of the SHACL file it must have .ttl extension, if "
+                "empty defaults to form `prefix-version-shacl.ttl`",
+            ),
         ),
         WorkflowConfigItem(name="shacl_export.storage_dir", value="staging", label="Directory to store the SHACL file"),
     ]

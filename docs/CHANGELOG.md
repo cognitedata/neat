@@ -15,6 +15,20 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.21.3] - 22-08-23
+
+### Changed
+
+- Re-org and re-name step library
+- Update workflows according to new step library org
+### Added
+
+- `OntologyFromRules` step to step library
+- `SHACLFromRules` step to step library
+- `DownloadTransformationRulesFromGitHub` to step library
+
+### Improved
+- `data_model_generation` workflow has been extended to produce ontological and shape constraints representation
 ## [0.21.2] - 18-08-23
 
 ### Changed
