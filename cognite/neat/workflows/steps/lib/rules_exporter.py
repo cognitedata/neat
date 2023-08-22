@@ -17,7 +17,11 @@ __all__ = ["GraphQLSchemaFromRules", "OntologyFromRules", "SHACLFromRules", "Gra
 
 
 class GraphQLSchemaFromRules(Step):
-    description = "The step generates GraphQL schema from data model defined in transformation rules."
+    """
+    This step generates GraphQL schema from data model defined in transformation rules
+    """
+
+    description = "This step generates GraphQL schema from data model defined in transformation rules."
     category = StepCategory.RulesExporter
     configuration_templates = [
         WorkflowConfigItem(
@@ -63,7 +67,11 @@ class GraphQLSchemaFromRules(Step):
 
 
 class OntologyFromRules(Step):
-    description = "The step generates OWL ontology from data model defined in transformation rules."
+    """
+    This step generates OWL ontology from data model defined in transformation rules
+    """
+
+    description = "This step generates OWL ontology from data model defined in transformation rules."
     category = StepCategory.RulesExporter
     configuration_templates = [
         WorkflowConfigItem(
@@ -132,9 +140,11 @@ class OntologyFromRules(Step):
 
 
 class SHACLFromRules(Step):
-    description = (
-        "The step generates shape object constraints (SHACL) from data model defined" " in transformation rules."
-    )
+    """
+    This step generates SHACL from data model defined in transformation rules
+    """
+
+    description = "This step generates SHACL from data model defined in transformation rules"
     category = StepCategory.RulesExporter
     configuration_templates = [
         WorkflowConfigItem(
@@ -177,7 +187,11 @@ class SHACLFromRules(Step):
 
 
 class GraphCaptureSpreadsheetFromRules(Step):
-    description = "The step generates data capture spreadsheet from data model defined in rules"
+    """
+    This step generates data capture spreadsheet from data model defined in rules
+    """
+
+    description = "This step generates data capture spreadsheet from data model defined in rules"
     category = StepCategory.RulesExporter
     configuration_templates = [
         WorkflowConfigItem(

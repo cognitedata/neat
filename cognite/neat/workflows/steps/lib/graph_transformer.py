@@ -12,6 +12,10 @@ __all__ = [
 
 
 class TransformSourceToSolutionGraph(Step):
+    """
+    The step transforms source graph to solution graph
+    """
+
     description = "The step transforms source graph to solution graph"
     category = StepCategory.GraphTransformer
 

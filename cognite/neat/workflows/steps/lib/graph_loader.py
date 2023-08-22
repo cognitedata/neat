@@ -37,7 +37,11 @@ __all__ = [
 
 
 class CreateCDFLabels(Step):
-    description = "The step creates default NEAT labels in CDF"
+    """
+    This step creates default NEAT labels in CDF
+    """
+
+    description = "This step creates default NEAT labels in CDF"
     category = StepCategory.GraphLoader
 
     def run(self, rules: RulesData, cdf_client: CogniteClient) -> None:
@@ -45,6 +49,10 @@ class CreateCDFLabels(Step):
 
 
 class GenerateCDFAssetsFromGraph(Step):
+    """
+    The step generates assets from the graph ,categorizes them and stores them in CategorizedAssets object
+    """
+
     description = (
         "The step generates assets from the graph ,categorizes them and stores them in CategorizedAssets object"
     )
@@ -167,7 +175,11 @@ class GenerateCDFAssetsFromGraph(Step):
 
 
 class UploadCDFAssets(Step):
-    description = "The step uploads categorized assets to CDF"
+    """
+    This step uploads categorized assets to CDF
+    """
+
+    description = "This step uploads categorized assets to CDF"
     category = StepCategory.GraphLoader
 
     def run(
@@ -205,7 +217,11 @@ class UploadCDFAssets(Step):
 
 
 class GenerateCDFRelationshipsFromGraph(Step):
-    description = "The step generates relationships from the graph and saves them to CategorizedRelationships object"
+    """
+    This step generates relationships from the graph and saves them to CategorizedRelationships object
+    """
+
+    description = "This step generates relationships from the graph and saves them to CategorizedRelationships object"
     category = StepCategory.GraphLoader
 
     def run(
@@ -248,7 +264,11 @@ class GenerateCDFRelationshipsFromGraph(Step):
 
 
 class UploadCDFRelationships(Step):
-    description = "The step uploads relationships to CDF"
+    """
+    This step uploads relationships to CDF
+    """
+
+    description = "This step uploads relationships to CDF"
     category = StepCategory.GraphLoader
 
     def run(self, cdf_client: CogniteClient, categorized_relationships: CategorizedRelationships) -> FlowMessage:

@@ -20,7 +20,11 @@ __all__ = [
 
 
 class InstancesFromRdfFileToSourceGraph(Step):
-    description = "The step extract instances from a file into the source graph. The file must be in RDF format."
+    """
+    This step extract instances from a file into the source graph. The file must be in RDF format.
+    """
+
+    description = "This step extract instances from a file into the source graph. The file must be in RDF format."
     category = StepCategory.GraphLoader
     configuration_templates = [
         WorkflowConfigItem(
@@ -44,7 +48,11 @@ class InstancesFromRdfFileToSourceGraph(Step):
 
 
 class InstancesFromGraphCaptureSpreadsheetToSolutionGraph(Step):
-    description = "The step extracts instances from graph capture spreadsheet and loads them into solution graph"
+    """
+    This step extracts instances from graph capture spreadsheet and loads them into solution graph
+    """
+
+    description = "This step extracts instances from graph capture spreadsheet and loads them into solution graph"
     category = StepCategory.GraphExtractor
 
     def run(
@@ -64,7 +72,11 @@ class InstancesFromGraphCaptureSpreadsheetToSolutionGraph(Step):
 
 
 class InstancesFromRulesToSolutionGraph(Step):
-    description = "The step extracts instances from rules file and loads them into solution graph."
+    """
+    This step extracts instances from rules file and loads them into solution graph
+    """
+
+    description = "This step extracts instances from rules file and loads them into solution graph."
     category = StepCategory.GraphExtractor
 
     def run(self, transformation_rules: RulesData, solution_graph: SolutionGraph) -> FlowMessage:
@@ -85,7 +97,11 @@ class InstancesFromRulesToSolutionGraph(Step):
 
 
 class DataModelFromRulesToSourceGraph(Step):
-    description = "The step extracts data model from rules file and loads it into source graph."
+    """
+    This step extracts data model from rules file and loads it into source graph
+    """
+
+    description = "This step extracts data model from rules file and loads it into source graph."
     category = StepCategory.GraphExtractor
 
     def run(self, transformation_rules: RulesData, source_graph: SourceGraph) -> FlowMessage:

@@ -12,7 +12,11 @@ __all__ = ["ConfigureDefaultGraphStores", "ResetGraphStores"]
 
 
 class ConfigureDefaultGraphStores(Step):
-    description = "The step initializes the source and solution graph stores."
+    """
+    This step initializes the source and solution graph stores
+    """
+
+    description = "This step initializes the source and solution graph stores."
     category = StepCategory.GraphStore
     configuration_templates = [
         WorkflowConfigItem(
@@ -107,7 +111,11 @@ class ConfigureDefaultGraphStores(Step):
 
 
 class ResetGraphStores(Step):
-    description = "The step resets graph stores to their initial state (clears all data)."
+    """
+    This step resets graph stores to their initial state (clears all data)
+    """
+
+    description = "This step resets graph stores to their initial state (clears all data)."
     category = StepCategory.GraphStore
 
     def run(self) -> FlowMessage:

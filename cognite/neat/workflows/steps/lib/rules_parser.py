@@ -22,7 +22,11 @@ from cognite.neat.workflows.steps.data_contracts import RulesData
 
 
 class LoadTransformationRules(Step):
-    description = "The step loads transformation rules from the file or remote location"
+    """
+    This step loads transformation rules from the file or remote location
+    """
+
+    description = "This step loads transformation rules from the file or remote location"
     category = StepCategory.RulesParser
     configuration_templates = [
         WorkflowConfigItem(
@@ -112,7 +116,11 @@ class LoadTransformationRules(Step):
 
 
 class DownloadTransformationRulesFromGitHub(Step):
-    description = "The step fetches and stores transformation rules from private Github repository"
+    """
+    This step fetches and stores transformation rules from private Github repository
+    """
+
+    description = "This step fetches and stores transformation rules from private Github repository"
     category = StepCategory.RulesParser
     configuration_templates = [
         WorkflowConfigItem(
