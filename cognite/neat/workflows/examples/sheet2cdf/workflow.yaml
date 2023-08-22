@@ -1,84 +1,86 @@
 configs:
--   group: LoadTransformationRules
+  - group: LoadTransformationRules
     label: Full name of the rules file
     name: rules.file
     options: null
     required: false
     type: null
     value: sheet2cdf-transformation-rules.xlsx
--   group: LoadTransformationRules
+  - group: LoadTransformationRules
     label: Optional version of the rules file
     name: rules.version
     options: null
     required: false
     type: null
-    value: ''
--   group: ConfigureDefaultGraphStores
-    label: 'Data store type for source graph. Supported: oxigraph, memory,file, graphdb,
-        sparql. '
+    value: ""
+  - group: ConfigureDefaultGraphStores
+    label:
+      "Data store type for source graph. Supported: oxigraph, memory,file, graphdb,
+      sparql. "
     name: source_rdf_store.type
     options: null
     required: false
     type: null
     value: oxigraph
--   group: ConfigureDefaultGraphStores
-    label: 'Data store type for solutioin graph. Supported: oxigraph, memory,file,
-        graphdb, sparql'
+  - group: ConfigureDefaultGraphStores
+    label:
+      "Data store type for solutioin graph. Supported: oxigraph, memory,file,
+      graphdb, sparql"
     name: solution_rdf_store.type
     options: null
     required: false
     type: null
     value: oxigraph
--   group: ConfigureDefaultGraphStores
+  - group: ConfigureDefaultGraphStores
     label: Local directory for source graph store
     name: source_rdf_store.disk_store_dir
     options: null
     required: false
     type: null
     value: source-graph-store-2
--   group: ConfigureDefaultGraphStores
+  - group: ConfigureDefaultGraphStores
     label: Local directory for solution graph store
     name: solution_rdf_store.disk_store_dir
     options: null
     required: false
     type: null
     value: solution-graph-store-2
--   group: ConfigureDefaultGraphStores
-    label: 'Defines which stores to configure. Possible values: all, source, solution'
+  - group: ConfigureDefaultGraphStores
+    label: "Defines which stores to configure. Possible values: all, source, solution"
     name: stores_to_configure
     options: null
     required: false
     type: null
     value: solution
--   group: ConfigureDefaultGraphStores
+  - group: ConfigureDefaultGraphStores
     label: Root url for graphdb or sparql endpoint
     name: solution_rdf_store.api_root_url
     options: null
     required: false
     type: null
-    value: ''
+    value: ""
 description: null
 implementation_module: null
 name: sheet2cdf
 steps:
--   description: null
+  - description: null
     enabled: true
     id: step_trigger
     label: Process trigger
     max_retries: 0
     method: null
     params:
-        workflow_start_method: persistent_blocking
+      workflow_start_method: persistent_blocking
     retry_delay: 3
     stype: http_trigger
     system_component_id: null
     transition_to:
-    - step_load_rules
+      - step_load_rules
     trigger: true
     ui_config:
-        pos_x: 509
-        pos_y: 93
--   description: null
+      pos_x: 509
+      pos_y: 93
+  - description: null
     enabled: true
     id: step_load_rules
     label: Load rules from file
@@ -89,12 +91,12 @@ steps:
     stype: stdstep
     system_component_id: null
     transition_to:
-    - step_reset_stores
+      - step_reset_stores
     trigger: false
     ui_config:
-        pos_x: 510
-        pos_y: 165
--   description: null
+      pos_x: 510
+      pos_y: 165
+  - description: null
     enabled: true
     id: step_reset_stores
     label: Reset stores
@@ -105,12 +107,12 @@ steps:
     stype: stdstep
     system_component_id: null
     transition_to:
-    - step_configure_graph_stores
+      - step_configure_graph_stores
     trigger: false
     ui_config:
-        pos_x: 510
-        pos_y: 236
--   description: null
+      pos_x: 510
+      pos_y: 236
+  - description: null
     enabled: true
     id: step_configure_graph_stores
     label: Configure graph stores
@@ -121,28 +123,28 @@ steps:
     stype: stdstep
     system_component_id: null
     transition_to:
-    - step_create_cdf_labels
+      - step_create_cdf_labels
     trigger: false
     ui_config:
-        pos_x: 512
-        pos_y: 299
--   description: null
+      pos_x: 512
+      pos_y: 299
+  - description: null
     enabled: true
     id: step_load_rules_into_store
     label: Load rules as data into solution graph
     max_retries: 0
-    method: LoadInstancesFromRulesToSolutionGraph
+    method: InstancesFromRulesToSolutionGraph
     params: {}
     retry_delay: 3
     stype: stdstep
     system_component_id: null
     transition_to:
-    - step_generate_assets
+      - step_generate_assets
     trigger: false
     ui_config:
-        pos_x: 507
-        pos_y: 459
--   description: null
+      pos_x: 507
+      pos_y: 459
+  - description: null
     enabled: true
     id: step_generate_assets
     label: Generate assets
@@ -153,12 +155,12 @@ steps:
     stype: stdstep
     system_component_id: null
     transition_to:
-    - step_generate_relations
+      - step_generate_relations
     trigger: false
     ui_config:
-        pos_x: 507
-        pos_y: 556
--   description: null
+      pos_x: 507
+      pos_y: 556
+  - description: null
     enabled: true
     id: step_generate_relations
     label: Generate relationships
@@ -169,12 +171,12 @@ steps:
     stype: stdstep
     system_component_id: null
     transition_to:
-    - step_upload_assets
+      - step_upload_assets
     trigger: false
     ui_config:
-        pos_x: 507
-        pos_y: 632
--   description: null
+      pos_x: 507
+      pos_y: 632
+  - description: null
     enabled: true
     id: step_upload_assets
     label: Upload assets
@@ -185,12 +187,12 @@ steps:
     stype: stdstep
     system_component_id: null
     transition_to:
-    - step_upload_relations
+      - step_upload_relations
     trigger: false
     ui_config:
-        pos_x: 505
-        pos_y: 711
--   description: null
+      pos_x: 505
+      pos_y: 711
+  - description: null
     enabled: true
     id: step_upload_relations
     label: Upload relationships
@@ -203,9 +205,9 @@ steps:
     transition_to: []
     trigger: false
     ui_config:
-        pos_x: 506
-        pos_y: 795
--   description: null
+      pos_x: 506
+      pos_y: 795
+  - description: null
     enabled: true
     id: step_create_cdf_labels
     label: Create CDF labels
@@ -216,57 +218,57 @@ steps:
     stype: stdstep
     system_component_id: null
     transition_to:
-    - step_load_rules_into_store
+      - step_load_rules_into_store
     trigger: false
     ui_config:
-        pos_x: 508
-        pos_y: 382
+      pos_x: 508
+      pos_y: 382
 system_components:
--   description: null
+  - description: null
     id: source_excel_sheet
     label: Transformation Rules
     transition_to:
-    - excel2rdf_parser
-    - cdf_classic_exporter
+      - excel2rdf_parser
+      - cdf_classic_exporter
     ui_config:
-        pos_x: 170
-        pos_y: 10
--   description: null
+      pos_x: 170
+      pos_y: 10
+  - description: null
     id: excel2rdf_parser
     label: Excel to Graph Parser
     transition_to:
-    - source_graph
+      - source_graph
     ui_config:
-        pos_x: 0
-        pos_y: 80
--   description: null
+      pos_x: 0
+      pos_y: 80
+  - description: null
     id: source_graph
     label: Source Graph
     transition_to:
-    - in_memmory_store
+      - in_memmory_store
     ui_config:
-        pos_x: 0
-        pos_y: 150
--   description: null
+      pos_x: 0
+      pos_y: 150
+  - description: null
     id: in_memmory_store
     label: In-Memory Graph Database
     transition_to:
-    - cdf_classic_exporter
+      - cdf_classic_exporter
     ui_config:
-        pos_x: 0
-        pos_y: 220
--   description: null
+      pos_x: 0
+      pos_y: 220
+  - description: null
     id: cdf_classic_exporter
     label: CDF Classic Exporter
     transition_to:
-    - cdf_classic
+      - cdf_classic
     ui_config:
-        pos_x: 170
-        pos_y: 330
--   description: null
+      pos_x: 170
+      pos_y: 330
+  - description: null
     id: cdf_classic
     label: CDF Classic (Asset,Relationships, Labels)
     transition_to: null
     ui_config:
-        pos_x: 170
-        pos_y: 400
+      pos_x: 170
+      pos_y: 400

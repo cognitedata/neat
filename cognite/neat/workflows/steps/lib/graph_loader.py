@@ -16,7 +16,7 @@ from cognite.neat.graph.loaders.core.rdf_to_relationships import (
 )
 from cognite.neat.graph.loaders.validator import validate_asset_hierarchy
 from cognite.neat.workflows.model import FlowMessage
-from cognite.neat.workflows.steps.step_model import Step
+from cognite.neat.workflows.steps.step_model import StepCategory, Step
 from cognite.client.data_classes import AssetFilter
 
 from cognite.client import CogniteClient
@@ -38,7 +38,7 @@ __all__ = [
 
 class CreateCDFLabels(Step):
     description = "The step creates default NEAT labels in CDF"
-    category = "cdf_resources"
+    category = StepCategory.GraphLoader
 
     def run(self, rules: RulesData, cdf_client: CogniteClient) -> None:
         upload_labels(cdf_client, rules.rules, extra_labels=["non-historic", "historic"])
@@ -48,7 +48,7 @@ class GenerateCDFAssetsFromGraph(Step):
     description = (
         "The step generates assets from the graph ,categorizes them and stores them in CategorizedAssets object"
     )
-    category = "cdf_resources"
+    category = StepCategory.GraphLoader
 
     def run(
         self, rules: RulesData, cdf_client: CogniteClient, solution_graph: SolutionGraph
@@ -168,7 +168,7 @@ class GenerateCDFAssetsFromGraph(Step):
 
 class UploadCDFAssets(Step):
     description = "The step uploads categorized assets to CDF"
-    category = "cdf_resources"
+    category = StepCategory.GraphLoader
 
     def run(
         self, rules: RulesData, cdf_client: CogniteClient, categorized_assets: CategorizedAssets, flow_msg: FlowMessage
@@ -206,7 +206,7 @@ class UploadCDFAssets(Step):
 
 class GenerateCDFRelationshipsFromGraph(Step):
     description = "The step generates relationships from the graph and saves them to CategorizedRelationships object"
-    category = "cdf_resources"
+    category = StepCategory.GraphLoader
 
     def run(
         self, rules: RulesData, cdf_client: CogniteClient, solution_graph: SolutionGraph
@@ -249,7 +249,7 @@ class GenerateCDFRelationshipsFromGraph(Step):
 
 class UploadCDFRelationships(Step):
     description = "The step uploads relationships to CDF"
-    category = "cdf_resources"
+    category = StepCategory.GraphLoader
 
     def run(self, cdf_client: CogniteClient, categorized_relationships: CategorizedRelationships) -> FlowMessage:
         upload_relationships(cdf_client, categorized_relationships.relationships, max_retries=2, retry_delay=4)

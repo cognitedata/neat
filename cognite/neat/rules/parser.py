@@ -355,10 +355,10 @@ def read_github_sheet_to_table_by_name(
     filepath: str, personal_token: str, owner: str, repo: str, branch: str = "main"
 ) -> dict[str, pd.DataFrame]:
     wb = read_github_sheet_to_workbook(filepath, personal_token, owner, repo, branch)
-    return _workbook_to_table_by_name(wb)
+    return workbook_to_table_by_name(wb)
 
 
-def _workbook_to_table_by_name(workbook: Workbook) -> dict[str, pd.DataFrame]:
+def workbook_to_table_by_name(workbook: Workbook) -> dict[str, pd.DataFrame]:
     table = {}
     for sheet in workbook:
         sheetname = sheet.title

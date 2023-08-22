@@ -1,20 +1,24 @@
 from pathlib import Path
 import time
 import warnings
+import logging
+
 from cognite.neat.rules.exporter.rules2graphql import GraphQLSchema
 from cognite.neat.rules.exporter.rules2ontology import Ontology
+from cognite.neat.rules.exporter import rules2graph_sheet
+
 from cognite.neat.exceptions import wrangle_warnings
 from cognite.neat.utils.utils import generate_exception_report
 from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
 from cognite.neat.workflows.steps.data_contracts import RulesData
-from cognite.neat.workflows.steps.step_model import Step
+from cognite.neat.workflows.steps.step_model import StepCategory, Step
 
-__all__ = ["GenerateGraphQLSchemaFromRules", "GenerateOntologyFromRules", "GenerateSHACLFromRules"]
+__all__ = ["GraphQLSchemaFromRules", "OntologyFromRules", "SHACLFromRules", "GraphCaptureSpreadsheetFromRules"]
 
 
-class GenerateGraphQLSchemaFromRules(Step):
+class GraphQLSchemaFromRules(Step):
     description = "The step generates GraphQL schema from data model defined in transformation rules."
-    category = "data modeling"
+    category = StepCategory.RulesExporter
     configuration_templates = [
         WorkflowConfigItem(
             name="graphql_schema.file",
@@ -59,9 +63,9 @@ class GenerateGraphQLSchemaFromRules(Step):
         return FlowMessage(output_text=output_text)
 
 
-class GenerateOntologyFromRules(Step):
+class OntologyFromRules(Step):
     description = "The step generates OWL ontology from data model defined in transformation rules."
-    category = "data modeling"
+    category = StepCategory.RulesExporter
     configuration_templates = [
         WorkflowConfigItem(
             name="ontology.file",
@@ -129,9 +133,9 @@ class GenerateOntologyFromRules(Step):
         return FlowMessage(output_text=output_text)
 
 
-class GenerateSHACLFromRules(Step):
+class SHACLFromRules(Step):
     description = "The step generates shape object constraints (SHACL) from data model defined in transformation rules."
-    category = "data modeling"
+    category = StepCategory.RulesExporter
     configuration_templates = [
         WorkflowConfigItem(
             name="shacl.file",
@@ -169,5 +173,44 @@ class GenerateSHACLFromRules(Step):
             "SHACL generated and can be downloaded here : "
             f'<a href="http://localhost:8000/data/{storage_dir_str}/{shacl_file}?{time.time()}" '
             f'target="_blank">{shacl_file}</a>'
+        )
+        return FlowMessage(output_text=output_text)
+
+
+class GraphCaptureSpreadsheetFromRules(Step):
+    description = "The step generates data capture spreadsheet from data model defined in rules"
+    category = StepCategory.RulesExporter
+    configuration_templates = [
+        WorkflowConfigItem(
+            name="graph_capture.file",
+            value="graph_capture_sheet.xlsx",
+            label="File name of the data capture sheet",
+        ),
+        WorkflowConfigItem(
+            name="graph_capture_sheet.auto_identifier_type", value="index-based", label="Type of automatic identifier"
+        ),
+        WorkflowConfigItem(
+            name="graph_capture_sheet.storage_dir", value="staging", label="Directory to store data capture sheets"
+        ),
+    ]
+
+    def run(self, rules: RulesData) -> FlowMessage:
+        logging.info("Generate graph capture sheet")
+        sheet_name = self.configs.get_config_item_value("graph_capture.file", "graph_capture_sheet.xlsx")
+        auto_identifier_type = self.configs.get_config_item_value("graph_capture_sheet.auto_identifier_type", None)
+        staging_dir_str = self.configs.get_config_item_value("graph_capture_sheet.storage_dir", "staging")
+        logging.info(f"Auto identifier type {auto_identifier_type}")
+        staging_dir = self.data_store_path / Path(staging_dir_str)
+        staging_dir.mkdir(parents=True, exist_ok=True)
+        data_capture_sheet_path = staging_dir / sheet_name
+
+        rules2graph_sheet.rules2graph_capturing_sheet(
+            rules.rules, data_capture_sheet_path, auto_identifier_type=auto_identifier_type
+        )
+
+        output_text = (
+            "Data capture sheet generated and can be downloaded here : "
+            f'<a href="http://localhost:8000/data/{staging_dir_str}/{sheet_name}?{time.time()}" target="_blank">'
+            f"{sheet_name}</a>"
         )
         return FlowMessage(output_text=output_text)

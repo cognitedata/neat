@@ -13,14 +13,14 @@ configs:
     required: false
     type: null
     value: ""
-  - group: GenerateGraphQLSchemaFromRules
+  - group: GraphQLSchemaFromRules
     label: Name of the GraphQL schema file
     name: graphql_schema.file
     options: null
     required: false
     type: null
     value: data_model.graphql
-  - group: GenerateGraphQLSchemaFromRules
+  - group: GraphQLSchemaFromRules
     label: Directory to store GraphQL schema file
     name: graphql_export.storage_dir
     options: null
@@ -53,7 +53,7 @@ steps:
     id: step_generate_graphql_file
     label: Generate GraphQL file
     max_retries: 0
-    method: GenerateGraphQLSchemaFromRules
+    method: GraphQLSchemaFromRules
     params: {}
     retry_delay: 3
     stype: stdstep

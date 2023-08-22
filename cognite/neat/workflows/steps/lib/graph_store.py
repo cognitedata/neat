@@ -5,16 +5,15 @@ from cognite.neat.constants import PREFIXES
 from cognite.neat.graph.stores import RdfStoreType
 from cognite.neat.graph.stores import NeatGraphStore, drop_graph_store
 from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
-from cognite.neat.workflows.steps.step_model import Step
-
+from cognite.neat.workflows.steps.step_model import StepCategory, Step
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
 
-__all__ = ["ConfigureDefaultGraphStores", "LoadInstancesFromRdfFileToSourceGraph", "ResetGraphStores"]
+__all__ = ["ConfigureDefaultGraphStores", "ResetGraphStores"]
 
 
 class ConfigureDefaultGraphStores(Step):
     description = "The step initializes the source and solution graph stores."
-    category = "graph_store"
+    category = StepCategory.GraphStore
     configuration_templates = [
         WorkflowConfigItem(
             name="source_rdf_store.type",
@@ -109,7 +108,7 @@ class ConfigureDefaultGraphStores(Step):
 
 class ResetGraphStores(Step):
     description = "The step resets graph stores to their initial state (clears all data)."
-    category = "graph_store"
+    category = StepCategory.GraphStore
 
     def run(self) -> FlowMessage:
         source_store_type = self.configs.get_config_item_value("source_rdf_store.type", RdfStoreType.MEMORY)
@@ -134,27 +133,3 @@ class ResetGraphStores(Step):
                 if "SolutionGraph" in self.flow_context:
                     self.flow_context["SolutionGraph"].graph.drop()
         return FlowMessage(output_text="Stores Reset")
-
-
-class LoadInstancesFromRdfFileToSourceGraph(Step):
-    description = "The step loads instances from a file into the source graph.The file must be in RDF format."
-    category = "graph_loader"
-    configuration_templates = [
-        WorkflowConfigItem(
-            name="source_rdf_store.file",
-            value="source-graphs/source-graph-dump.xml",
-            label="File name of source graph data dump in RDF format",
-        )
-    ]
-
-    def run(self, rules: RulesData, source_graph: SourceGraph) -> FlowMessage:
-        if source_graph.graph.rdf_store_type.lower() in ("memory", "oxigraph"):
-            if source_file := self.configs.get_config_item_value("source_rdf_store.file"):
-                source_graph.graph.import_from_file(Path(self.data_store_path) / Path(source_file))
-                logging.info(f"Loaded {source_file} into source graph.")
-            else:
-                raise ValueError("You need a source_rdf_store.file specified for source_rdf_store.type=memory")
-        else:
-            raise NotImplementedError(f"Graph type {source_graph.graph.rdf_store_type} is not supported.")
-
-        return FlowMessage(output_text="Instances loaded to source graph")
