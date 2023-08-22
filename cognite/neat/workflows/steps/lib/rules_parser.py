@@ -1,24 +1,21 @@
 import logging
-from pathlib import Path
 import time
+from pathlib import Path
+
 from openpyxl import Workbook
 
-
 from cognite.neat.rules.parser import (
+    from_tables,
     parse_rules_from_excel_file,
     read_github_sheet_to_workbook,
     workbook_to_table_by_name,
-    from_tables,
 )
-
 from cognite.neat.utils.utils import generate_exception_report
 from cognite.neat.workflows import utils
 from cognite.neat.workflows.cdf_store import CdfStore
 from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
-from cognite.neat.workflows.steps.step_model import StepCategory, Step
-
-
 from cognite.neat.workflows.steps.data_contracts import RulesData
+from cognite.neat.workflows.steps.step_model import Step, StepCategory
 
 
 class LoadTransformationRules(Step):
@@ -98,7 +95,7 @@ class LoadTransformationRules(Step):
         )
         rules_metrics.labels({"component": "classes"}).set(len(transformation_rules.classes))
         rules_metrics.labels({"component": "properties"}).set(len(transformation_rules.properties))
-        logging.info(f"Loaded prefixes {str(transformation_rules.prefixes)} rules from {rules_file_path.name!r}.")
+        logging.info(f"Loaded prefixes {transformation_rules.prefixes!s} rules from {rules_file_path.name!r}.")
         output_text = f"<p></p>Loaded {len(transformation_rules.properties)} rules!"
 
         output_text += (

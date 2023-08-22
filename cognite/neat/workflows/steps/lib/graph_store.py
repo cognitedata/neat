@@ -1,12 +1,11 @@
 import logging
 from pathlib import Path
-from cognite.neat.constants import PREFIXES
 
-from cognite.neat.graph.stores import RdfStoreType
-from cognite.neat.graph.stores import NeatGraphStore, drop_graph_store
+from cognite.neat.constants import PREFIXES
+from cognite.neat.graph.stores import NeatGraphStore, RdfStoreType, drop_graph_store
 from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
-from cognite.neat.workflows.steps.step_model import StepCategory, Step
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
+from cognite.neat.workflows.steps.step_model import Step, StepCategory
 
 __all__ = ["ConfigureDefaultGraphStores", "ResetGraphStores"]
 

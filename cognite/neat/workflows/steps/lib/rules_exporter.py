@@ -1,17 +1,16 @@
-from pathlib import Path
+import logging
 import time
 import warnings
-import logging
-
-from cognite.neat.rules.exporter.rules2graphql import GraphQLSchema
-from cognite.neat.rules.exporter.rules2ontology import Ontology
-from cognite.neat.rules.exporter import rules2graph_sheet
+from pathlib import Path
 
 from cognite.neat.exceptions import wrangle_warnings
+from cognite.neat.rules.exporter import rules2graph_sheet
+from cognite.neat.rules.exporter.rules2graphql import GraphQLSchema
+from cognite.neat.rules.exporter.rules2ontology import Ontology
 from cognite.neat.utils.utils import generate_exception_report
 from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
 from cognite.neat.workflows.steps.data_contracts import RulesData
-from cognite.neat.workflows.steps.step_model import StepCategory, Step
+from cognite.neat.workflows.steps.step_model import Step, StepCategory
 
 __all__ = ["GraphQLSchemaFromRules", "OntologyFromRules", "SHACLFromRules", "GraphCaptureSpreadsheetFromRules"]
 

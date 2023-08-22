@@ -2,14 +2,14 @@ import logging
 from pathlib import Path
 
 from rdflib import RDF, Literal, URIRef
-from cognite.neat.constants import PREFIXES
-from cognite.neat.rules.exporter.rules2triples import get_instances_as_triples
-from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
-from cognite.neat.graph import extractors
-from cognite.neat.workflows.steps.step_model import StepCategory, Step
-from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
-from cognite.neat.utils.utils import add_triples
 
+from cognite.neat.constants import PREFIXES
+from cognite.neat.graph import extractors
+from cognite.neat.rules.exporter.rules2triples import get_instances_as_triples
+from cognite.neat.utils.utils import add_triples
+from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
+from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
+from cognite.neat.workflows.steps.step_model import Step, StepCategory
 
 __all__ = [
     "InstancesFromRdfFileToSourceGraph",
@@ -119,7 +119,7 @@ class DataModelFromRulesToSourceGraph(Step):
                 )
             counter += 1
 
-        for property_name, property_def in properties.items():
+        for _property_name, property_def in properties.items():
             rdf_instance_id = URIRef(ns + "_" + property_def.class_id)
             source_graph.graph.graph.add(
                 (rdf_instance_id, URIRef(ns + property_def.property_id), Literal(property_def.expected_value_type))
