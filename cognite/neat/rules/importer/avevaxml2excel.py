@@ -262,7 +262,8 @@ def _parse_avevaxml_metadata_df(avevaxml: AvevaXML, parsing_config: dict = None)
 def _get_class_attribute(avevaxml):
     attributes_dict = avevaxml.attributes_dict
     group_ids = list(set([v.get("groupId", None) for v in attributes_dict.values()]))
-    group_ids = [''.join((x for x in group_id if not x.isdigit())) for group_id in group_ids]
+    group_ids.remove('01 Core Attributes')
+    group_ids = [''.join((x for x in group_id if not x.isdigit())).strip() for group_id in group_ids]
     
     class_object_lst = []
     for group_id in group_ids:
@@ -312,6 +313,10 @@ def _parse_avevaxml_classes_df(avevaxml: AvevaXML, parsing_config: dict = None, 
     df_class["Name"] = df_class["name"] 
     df_class["Description"] = df_class["description"]
     df_class["Parent Class"] = df_class["extends"]
+    
+    df_class_attributes = _get_class_attribute(avevaxml)
+    df_class = pd.concat([df_class, df_class_attributes])
+
     
     columns_to_keep = list(parsing_config["header"]) 
     missing_fields = [item for item in columns_to_keep if item not in df_class.columns]
@@ -383,27 +388,47 @@ def _parse_avevaxml_properties_df(avevaxml: AvevaXML, parsing_config: dict = Non
     for _, row in df_class.iterrows():
         if pd.isna(row["attributes"]):
             continue
+        group_ids = list(set([v['groupId'] for v in row["attributes"].values()]))
+        group_ids.remove('01 Core Attributes')
+        group_ids = [''.join((x for x in group_id if not x.isdigit())).strip() for group_id in group_ids]
         
         data = [
             {
                 'Class': pascal_case(row["name"]),
-                'Property': camel_case(v['name']),
-                'Name': v['name'],
+                'Property': camel_case(k),
+                'Name': k,
                 'Deprecated': 'false',
-                'Type': REPLACE_TYPE[v["dataType"]],
-                'Description': avevaxml.attributes_dict[k].get("description", None),
-                'Taxonomy': row["Taxonomy"],
-                # 'Parent Class': pascal_case(row["parent_unique_id"]),
-                'Class Category': v['groupId']
+                'Type': pascal_case(k),
+                'Description': None,
+                # 'Taxonomy': row["Taxonomy"],
+                # 'Parent Class': pascal_case(row[""]),
+                # 'Class Category': row['Class Category']
                 } 
-            for k, v in row["attributes"].items()
+            for k in group_ids
             ]
         
+        core_attributes = [i for i in row["attributes"].values() if i["groupId"] == '01 Core Attributes']
+        for attribute in core_attributes:
+            data.append(
+                {
+                    'Class': pascal_case(row["name"]),
+                    'Property': camel_case(attribute["name"]),
+                    'Name': attribute["name"],
+                    'Deprecated': 'false',
+                    'Type': REPLACE_TYPE.get(attribute["dataType"], None),
+                    'Description': avevaxml.attributes_dict[attribute["id"]].get("description", None),
+                }
+            )
         df_subset = pd.DataFrame(data)
-        
         df_lst.append(df_subset)
         
     df_attributes = pd.concat(df_lst)
+    unique_attributes = list(set(df_attributes['Property']))
+    df_unique_attributes = _get_unique_attributes(avevaxml, unique_attributes)
+    df_attributes = pd.concat([df_attributes, df_unique_attributes])
+    df_attributes["Source"] = avevaxml.xmlns.replace("{", "").replace("}", "")
+    df_attributes["Source Entity Name"] = df_attributes["Name"]
+    
     df_attributes["Min Count"] = 0
     df_attributes["Max Count"] = 1
     
