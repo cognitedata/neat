@@ -22,8 +22,8 @@ class GraphQLSchemaFromRules(Step):
     configuration_templates = [
         WorkflowConfigItem(
             name="graphql_schema.file",
-            value="data_model.graphql",
-            label="Name of the GraphQL schema file",
+            value="",
+            label="Name of the GraphQL schema file it must have .graphql extension, if empty defaults to form `prefix-version.graphql`",
         ),
         WorkflowConfigItem(
             name="graphql_export.storage_dir", value="staging", label="Directory to store GraphQL schema file"
@@ -39,11 +39,7 @@ class GraphQLSchemaFromRules(Step):
             ".graphql"
         )
 
-        schema_name = (
-            default_name
-            if self.configs.get_config_item_value("graphql_schema.file", default_name) == "data_model.graphql"
-            else self.configs.get_config_item_value("graphql_schema.file", default_name)
-        )
+        schema_name = self.configs.get_config_item_value("graphql_schema.file") or default_name
 
         staging_dir_str = self.configs.get_config_item_value("graphql_export.storage_dir", "staging")
         staging_dir = self.data_store_path / Path(staging_dir_str)
@@ -69,8 +65,8 @@ class OntologyFromRules(Step):
     configuration_templates = [
         WorkflowConfigItem(
             name="ontology.file",
-            value="ontology.ttl",
-            label="Name of the OWL ontology file it must have .ttl extension",
+            value="",
+            label="Name of the OWL ontology file it must have .ttl extension, if empty defaults to form `prefix-version-ontology.ttl`",
         ),
         WorkflowConfigItem(
             name="ontology_export.storage_dir", value="staging", label="Directory to store the OWL ontology file"
@@ -87,14 +83,10 @@ class OntologyFromRules(Step):
         default_name = (
             f"{transformation_rules.rules.metadata.prefix}-"
             f"v{transformation_rules.rules.metadata.version.strip().replace('.', '_')}"
-            "_ontology.ttl"
+            "-ontology.ttl"
         )
 
-        ontology_file = (
-            default_name
-            if self.configs.get_config_item_value("ontology.file", default_name) == "ontology.ttl"
-            else self.configs.get_config_item_value("ontology.file", default_name)
-        )
+        ontology_file = self.configs.get_config_item_value("ontology.file") or default_name
 
         storage_dir_str = self.configs.get_config_item_value("ontology_export.storage_dir", "staging")
         storage_dir = self.data_store_path / storage_dir_str
@@ -139,8 +131,8 @@ class SHACLFromRules(Step):
     configuration_templates = [
         WorkflowConfigItem(
             name="shacl.file",
-            value="shacl.ttl",
-            label="Name of the SHACL file, it must have .ttl extension",
+            value="",
+            label="Name of the SHACL file it must have .ttl extension, if empty defaults to form `prefix-version-shacl.ttl`",
         ),
         WorkflowConfigItem(name="shacl_export.storage_dir", value="staging", label="Directory to store the SHACL file"),
     ]
@@ -150,14 +142,10 @@ class SHACLFromRules(Step):
         default_name = (
             f"{transformation_rules.rules.metadata.prefix}-"
             f"v{transformation_rules.rules.metadata.version.strip().replace('.', '_')}"
-            "_shacl.ttl"
+            "-shacl.ttl"
         )
 
-        shacl_file = (
-            default_name
-            if self.configs.get_config_item_value("shacl.file", default_name) == "shacl.ttl"
-            else self.configs.get_config_item_value("shacl.file", default_name)
-        )
+        shacl_file = self.configs.get_config_item_value("shacl.file") or default_name
 
         storage_dir_str = self.configs.get_config_item_value("shacl_export.storage_dir", "staging")
         storage_dir = self.data_store_path / storage_dir_str

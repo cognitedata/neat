@@ -1,6 +1,9 @@
 import logging
 from pathlib import Path
 import time
+
+from rdflib import RDF, Literal, URIRef
+from cognite.neat.constants import PREFIXES
 from cognite.neat.rules.exporter.rules2triples import get_instances_as_triples
 from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
 from cognite.neat.graph import extractors

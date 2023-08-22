@@ -1,72 +1,152 @@
 configs:
-  - group: LoadTransformationRules
+-   group: LoadTransformationRules
     label: Full name of the rules file
     name: rules.file
     options: null
     required: false
     type: null
     value: Rules-Nordic44-to-graphql.xlsx
-  - group: LoadTransformationRules
+-   group: LoadTransformationRules
     label: Optional version of the rules file
     name: rules.version
     options: null
     required: false
     type: null
-    value: ""
-  - group: GraphQLSchemaFromRules
+    value: ''
+-   group: GraphQLSchemaFromRules
     label: Name of the GraphQL schema file
     name: graphql_schema.file
     options: null
     required: false
     type: null
-    value: data_model.graphql
-  - group: GraphQLSchemaFromRules
+    value: ''
+-   group: GraphQLSchemaFromRules
     label: Directory to store GraphQL schema file
     name: graphql_export.storage_dir
     options: null
     required: false
     type: null
     value: staging
+-   group: OntologyFromRules
+    label: Name of the OWL ontology file it must have .ttl extension
+    name: ontology.file
+    options: null
+    required: false
+    type: null
+    value: ''
+-   group: OntologyFromRules
+    label: Directory to store the OWL ontology file
+    name: ontology_export.storage_dir
+    options: null
+    required: false
+    type: null
+    value: staging
+-   group: OntologyFromRules
+    label: To store warnings while generating ontology
+    name: ontology.store_warnings
+    options: null
+    required: false
+    type: null
+    value: 'True'
+-   group: SHACLFromRules
+    label: Name of the SHACL file, it must have .ttl extension, defaults to form <b>`{prefix}-v{version}.graphql`<\b>
+    name: shacl.file
+    options: null
+    required: false
+    type: null
+    value: ''
+-   group: SHACLFromRules
+    label: Directory to store the SHACL file
+    name: shacl_export.storage_dir
+    options: null
+    required: false
+    type: null
+    value: staging
+-   group: ConfigureDefaultGraphStores
+    label: 'Data store type for source graph. Supported: oxigraph, memory,file, graphdb,
+        sparql. '
+    name: source_rdf_store.type
+    options: null
+    required: false
+    type: null
+    value: memory
+-   group: ConfigureDefaultGraphStores
+    label: 'Data store type for solutioin graph. Supported: oxigraph, memory,file,
+        graphdb, sparql'
+    name: solution_rdf_store.type
+    options: null
+    required: false
+    type: null
+    value: memory
+-   group: ConfigureDefaultGraphStores
+    label: Local directory for source graph store
+    name: source_rdf_store.disk_store_dir
+    options: null
+    required: false
+    type: null
+    value: data-model-source-graph-store
+-   group: ConfigureDefaultGraphStores
+    label: Local directory for solution graph store
+    name: solution_rdf_store.disk_store_dir
+    options: null
+    required: false
+    type: null
+    value: data-model-solution-graph-store
+-   group: ConfigureDefaultGraphStores
+    label: 'Defines which stores to configure. Possible values: all, source, solution'
+    name: stores_to_configure
+    options: null
+    required: false
+    type: null
+    value: all
+-   group: ConfigureDefaultGraphStores
+    label: Root url for graphdb or sparql endpoint
+    name: solution_rdf_store.api_root_url
+    options: null
+    required: false
+    type: null
+    value: ''
 description: null
 implementation_module: null
-name: data_mode_generation
+name: data_model_generation
 steps:
-  - description: null
+-   description: null
     enabled: true
     id: step_http_trigger
     label: HTTP process trigger
     max_retries: 0
     method: null
     params:
-      workflow_start_method: persistent_blocking
+        workflow_start_method: persistent_blocking
     retry_delay: 3
     stype: http_trigger
     system_component_id: null
     transition_to:
-      - step_load_rules
+    - step_load_rules
     trigger: true
     ui_config:
-      pos_x: 545
-      pos_y: 81
-  - description: null
+        pos_x: 545
+        pos_y: 81
+-   description: null
     enabled: true
     id: step_generate_graphql_file
-    label: Generate GraphQL file
+    label: Generate GraphQL Schema from Transformation Rules
     max_retries: 0
     method: GraphQLSchemaFromRules
     params: {}
     retry_delay: 3
     stype: stdstep
     system_component_id: null
-    transition_to: []
+    transition_to:
+    - step_rules2ontology
     trigger: false
     ui_config:
-      pos_x: 549
-      pos_y: 311
-  - description: null
+        pos_x: 545
+        pos_y: 256
+-   description: null
     enabled: true
     id: step_load_rules
-    label: Load data model from rules file
+    label: Load Transformation Rules from Excel file
     max_retries: 0
     method: LoadTransformationRules
     params: {}
@@ -74,32 +154,98 @@ steps:
     stype: stdstep
     system_component_id: null
     transition_to:
-      - step_generate_graphql_file
+    - step_generate_graphql_file
     trigger: false
     ui_config:
-      pos_x: 543
-      pos_y: 188
+        pos_x: 545
+        pos_y: 165
+-   description: null
+    enabled: true
+    id: step_rules2ontology
+    label: Generate Ontology from Transformation Rules
+    max_retries: 0
+    method: OntologyFromRules
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+    - step_rules2shacl
+    trigger: false
+    ui_config:
+        pos_x: 545
+        pos_y: 366
+-   description: null
+    enabled: true
+    id: step_rules2shacl
+    label: Generate SHACL from Transformation Rules
+    max_retries: 0
+    method: SHACLFromRules
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+    - step_configure_graph_store
+    trigger: false
+    ui_config:
+        pos_x: 545
+        pos_y: 472
 system_components:
-  - description: null
-    id: define_data_model
+-   description: null
+    id: system_comp_define_data_model
     label: User defines data model using Transformation Rules template
     transition_to:
-      - convert_to_graphql
+    - convert_to_graphql
+    - system_comp_rules2graphql
+    - system_comp_rules2ontology
+    - system_comp_rules2shacl
     ui_config:
-      pos_x: 452
-      pos_y: 106
-  - description: null
-    id: convert_to_graphql
-    label: Convert Transformation Rules to FDM Schema
+        pos_x: 653
+        pos_y: 57
+-   description: null
+    id: system_comp_rules2graphql
+    label: Convert Transformation Rules to GraphQL Schema
     transition_to:
-      - download_fdm_schema
+    - download_fdm_schema
+    - system_comp_download_graphql_schema
     ui_config:
-      pos_x: 452
-      pos_y: 216
-  - description: null
-    id: download_fdm_schema
-    label: Download FDM Schema
+        pos_x: 452
+        pos_y: 216
+-   description: null
+    id: system_comp_download_graphql_schema
+    label: Download GraphQL Schema
     transition_to: []
     ui_config:
-      pos_x: 452
-      pos_y: 306
+        pos_x: 452
+        pos_y: 306
+-   description: null
+    id: system_comp_rules2ontology
+    label: Convert Transformation Rules to OWL Ontology
+    transition_to:
+    - system_comp_download_ontology
+    ui_config:
+        pos_x: 654
+        pos_y: 216
+-   description: null
+    id: system_comp_rules2shacl
+    label: Convert Transformation Rules to SHACL
+    transition_to:
+    - system_comp_213748
+    ui_config:
+        pos_x: 842
+        pos_y: 218
+-   description: null
+    id: system_comp_download_ontology
+    label: Download OWL Ontology
+    transition_to: []
+    ui_config:
+        pos_x: 654
+        pos_y: 305
+-   description: null
+    id: system_comp_213748
+    label: Download SHACL Contraints
+    transition_to: []
+    ui_config:
+        pos_x: 842
+        pos_y: 308
