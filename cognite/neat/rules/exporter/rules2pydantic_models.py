@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from cognite.client.data_classes import Asset, Relationship
-from cognite.client.data_classes.data_modeling import NodeApply, NodeOrEdgeData
+from cognite.client.data_classes.data_modeling import NodeApply, NodeOrEdgeData, EdgeApply, DirectRelationReference
 from pydantic import BaseModel, ConfigDict, Field, create_model
 from pydantic._internal._model_construction import ModelMetaclass
 from rdflib import Graph, URIRef
@@ -32,7 +32,7 @@ def default_model_configuration():
 
 
 def default_model_methods():
-    return [from_graph, to_asset, to_relationship, to_dms, to_graph]
+    return [from_graph, to_asset, to_relationship, to_node, to_edge, to_instance, to_graph]
 
 
 def default_model_property_attributes():
@@ -402,8 +402,12 @@ def to_relationship(self, transformation_rules: TransformationRules) -> Relation
     ...
 
 
-def to_dms(self, data_model: DataModel):
-    """Creates instance of data model type in CDF."""
+def to_instance(self, data_model: DataModel) -> tuple[NodeApply, list[EdgeApply]]:
+    return (self.to_node(data_model), self.to_edge(data_model))
+
+
+def to_node(self, data_model: DataModel) -> NodeApply:
+    """Creates instance of data model type."""
 
     if set(data_model.containers[self.__class__.__name__].properties.keys()) != set(
         self.attributes + self.edges_one_to_one + self.edges_one_to_many
@@ -420,18 +424,36 @@ def to_dms(self, data_model: DataModel):
         for edge_one_to_one in self.edges_one_to_one
     }
 
-    node = NodeApply(
+    return NodeApply(
         space=data_model.space,
         external_id=self.external_id,
         sources=[
             NodeOrEdgeData(
                 source=data_model.views[self.__class__.__name__].as_id(),
-                properties={**attributes, **edges_one_to_one},
+                properties=attributes | edges_one_to_one,
             )
         ],
     )
 
-    return node
+
+def to_edge(self, data_model: DataModel) -> list[EdgeApply]:
+    edges = []
+    for edge_one_to_many in self.edges_one_to_many:
+        edge_type_id = f"{self.__class__.__name__}.{edge_one_to_many}"
+        edges.extend(
+            EdgeApply(
+                space=data_model.space,
+                external_id=f"{self.external_id}-{end_node_id}",
+                type=(data_model.space, edge_type_id),
+                start_node=(data_model.space, self.external_id),
+                end_node=(
+                    data_model.space,
+                    end_node_id,
+                ),
+            )
+            for end_node_id in self.__getattribute__(edge_one_to_many)
+        )
+    return edges
 
 
 def to_graph(self, transformation_rules: TransformationRules, graph: Graph):
