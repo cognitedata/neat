@@ -42,7 +42,7 @@ def sheet2triples(
     graph_capturing_sheet: dict[str, pd.DataFrame],
     transformation_rule: TransformationRules,
     separator: str = ",",
-    namespace: str = None,
+    namespace: str | None = None,
 ) -> list[tuple]:
     """Converts a graph capturing sheet to rdf triples
 
@@ -102,28 +102,58 @@ def sheet2triples(
                     )
 
                 # Adding object properties
-                elif class_property_pairs[sheet_name][property_].property_type == "ObjectProperty" and value:
-                    triples.extend(
-                        (
-                            instance_namespace[row.identifier],
-                            model_namespace[property_],
-                            instance_namespace[v.strip()],
+                elif value and class_property_pairs[sheet_name][property_].property_type == "ObjectProperty":
+                    if (
+                        class_property_pairs[sheet_name][property_].max_count
+                        and class_property_pairs[sheet_name][property_].max_count > 1
+                        and separator
+                    ):
+                        triples.extend(
+                            (
+                                instance_namespace[row.identifier],
+                                model_namespace[property_],
+                                instance_namespace[v.strip()],
+                            )
+                            for v in value.split(separator)
                         )
-                        for v in value.split(separator)
-                    )
+                    else:
+                        triples.append(
+                            (
+                                instance_namespace[row.identifier],
+                                model_namespace[property_],
+                                instance_namespace[value.strip()],
+                            )
+                        )
 
                 # Adding data properties
-                # TODO: Add support for datatype
-                elif value:
-                    triples.append(
-                        (
-                            instance_namespace[row.identifier],
-                            model_namespace[property_],
-                            Literal(
-                                value, datatype=XSD[class_property_pairs[sheet_name][property_].expected_value_type]
-                            ),
+                elif value and class_property_pairs[sheet_name][property_].property_type == "DatatypeProperty":
+                    if (
+                        class_property_pairs[sheet_name][property_].max_count
+                        and class_property_pairs[sheet_name][property_].max_count > 1
+                        and separator
+                    ):
+                        triples.extend(
+                            (
+                                instance_namespace[row.identifier],
+                                model_namespace[property_],
+                                Literal(
+                                    v.strip(),
+                                    datatype=XSD[class_property_pairs[sheet_name][property_].expected_value_type],
+                                ),
+                            )
+                            for v in value.split(separator)
                         )
-                    )
+                    else:
+                        triples.append(
+                            (
+                                instance_namespace[row.identifier],
+                                model_namespace[property_],
+                                Literal(
+                                    value.strip(),
+                                    datatype=XSD[class_property_pairs[sheet_name][property_].expected_value_type],
+                                ),
+                            )
+                        )
     return triples
 
 
