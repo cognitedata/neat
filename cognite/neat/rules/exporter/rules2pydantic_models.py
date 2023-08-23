@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from cognite.client.data_classes import Asset, Relationship
-from cognite.client.data_classes.data_modeling import NodeApply, NodeOrEdgeData, EdgeApply, DirectRelationReference
+from cognite.client.data_classes.data_modeling import EdgeApply, NodeApply, NodeOrEdgeData
 from pydantic import BaseModel, ConfigDict, Field, create_model
 from pydantic._internal._model_construction import ModelMetaclass
 from rdflib import Graph, URIRef
