@@ -7,7 +7,7 @@ from functools import wraps
 from typing_extensions import TypeAlias
 import pandas as pd
 from cognite.client import ClientConfig, CogniteClient
-from cognite.client.credentials import CredentialProvider, OAuthClientCredentials, OAuthInteractive
+from cognite.client.credentials import CredentialProvider, OAuthClientCredentials, OAuthInteractive, Token
 from cognite.client.exceptions import CogniteDuplicatedError, CogniteReadTimeout
 from rdflib import Literal
 from rdflib.term import URIRef
@@ -23,6 +23,11 @@ def get_cognite_client_from_config(config: ServiceCogniteClient) -> CogniteClien
         token_url=config.token_url, client_id=config.client_id, client_secret=config.client_secret, scopes=config.scopes
     )
 
+    return _get_cognite_client(config, credentials)
+
+
+def get_cognite_client_from_token(config: ServiceCogniteClient) -> CogniteClient:
+    credentials = Token(config.client_secret)
     return _get_cognite_client(config, credentials)
 
 

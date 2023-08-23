@@ -84,10 +84,14 @@ def get_nodes_and_edges(request: NodesAndEdgesRequest):
         if len(request.node_class_filter) > 0:
             nodes_filter = "VALUES ?node_class { " + " ".join([f"<{x}>" for x in request.node_class_filter]) + " }"
 
-        node_name_property = request.node_name_property or "cim:IdentifiedObject.name"
-        nodes_query = f"SELECT DISTINCT ?node_id ?node_class ?node_name WHERE \
-        {{ {nodes_filter} \
-        ?node_id {node_name_property} ?node_name . ?node_id rdf:type ?node_class }} "
+        if request.node_name_property:
+            nodes_query = f"SELECT DISTINCT ?node_id ?node_class ?node_name WHERE \
+            {{ {nodes_filter} \
+            ?node_id {request.node_name_property} ?node_name . ?node_id rdf:type ?node_class }} "
+        else:
+            nodes_query = f"SELECT DISTINCT ?node_id ?node_class (?node_id AS ?node_name) WHERE \
+            {{ {nodes_filter} ?node_id rdf:type ?node_class }} "
+
         if len(request.src_edge_filter) > 0:
             edges_src_filter = (
                 "VALUES ?src_object_class { " + " ".join([f"<{x}>" for x in request.src_edge_filter]) + " }"

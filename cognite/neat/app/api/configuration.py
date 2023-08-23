@@ -11,7 +11,7 @@ from cognite import neat
 from cognite.neat.app.api.data_classes.configuration import Config, configure_logging
 from cognite.neat.config import copy_examples_to_directory
 from cognite.neat.constants import PACKAGE_DIRECTORY
-from cognite.neat.utils.utils import get_cognite_client_from_config
+from cognite.neat.utils.utils import get_cognite_client_from_config, get_cognite_client_from_token
 from cognite.neat.workflows.cdf_store import CdfStore
 from cognite.neat.workflows.manager import WorkflowManager
 from cognite.neat.workflows.triggers import TriggerManager
@@ -40,7 +40,11 @@ class NeatApp:
             self.config = config
         logging.info("Initializing global objects")
         if not self.cdf_client:
-            self.cdf_client = get_cognite_client_from_config(self.config.cdf_client)
+            if self.config.cdf_client.client_id:
+                self.cdf_client = get_cognite_client_from_config(self.config.cdf_client)
+            else:
+                # If no client_id is provided, we assume that the token is provided instead of secret.
+                self.cdf_client = get_cognite_client_from_token(self.config.cdf_client)
         self.cdf_store = CdfStore(
             self.cdf_client,
             self.config.cdf_default_dataset_id,

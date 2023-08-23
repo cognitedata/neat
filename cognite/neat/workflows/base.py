@@ -297,6 +297,7 @@ class BaseWorkflow:
                         workflow_name=step.params.get("workflow_name", ""), sync=sync, flow_message=self.flow_message
                     )
                     if start_status.is_success and start_status.workflow_instance.state == WorkflowState.COMPLETED:
+                        # It only works with sync = true
                         new_flow_message = start_status.workflow_instance.flow_message
                     else:
                         logging.error(f"Workflow step {step.id} failed to start workflow task")
