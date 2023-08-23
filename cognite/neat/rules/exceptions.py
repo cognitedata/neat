@@ -218,18 +218,37 @@ class FieldValueOfUnknownType(NeatException):
         super().__init__(self.message)
 
 
-class FieldRequiredButNotProvided(NeatException):
-    type_: str = "FieldRequiredButNotProvided"
+class MissingInstanceTriples(NeatException):
+    type_: str = "MissingInstanceTriples"
     code: int = 41
     description: str = (
+        "This error is raised when queried RDF class instance " " does not return any triples that define it."
+    )
+    example: str = ""
+    fix: str = "Make sure that RDF class instance holds necessary triples that define it."
+
+    def __init__(self, id_: str | URIRef, verbose=False):
+        self.message = f"Instance {id_} does not contain triples that would define it!"
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class PropertyRequiredButNotProvided(NeatException):
+    type_: str = "PropertyRequiredButNotProvided"
+    code: int = 42
+    description: str = (
         "This error is raised when instantiating in-memory pydantic model"
-        " from graph class instance which is missing required field (i.e., property)."
+        " from graph class instance which is missing required property."
     )
     example: str = ""
     fix: str = "Either make field optional or add missing property to graph instance."
 
-    def __init__(self, field: str, id_: str | URIRef, verbose=False):
-        self.message = f"Field {field} is not present in graph instance {id_}!"
+    def __init__(self, property: str, id_: str | URIRef, verbose=False):
+        self.message = f"Property {property} is not present in graph instance {id_}!"
 
         if verbose:
             self.message += f"\nDescription: {self.description}"

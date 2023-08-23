@@ -268,11 +268,17 @@ def from_graph(cls, graph: Graph, transformation_rules: TransformationRules, ext
     """
     # build sparql query for given object
     class_ = cls.__name__
+
+    # here properties_optional is set to True in order to also return
+    # incomplete class instances so we catch them and raise exceptions
     sparql_query = build_construct_query(
-        graph, class_, transformation_rules, class_instances=[external_id], properties_optional=False
+        graph, class_, transformation_rules, class_instances=[external_id], properties_optional=True
     )
 
     result = triples2dictionary(list(graph.query(sparql_query)))
+
+    if not result:
+        raise exceptions.MissingInstanceTriples(external_id)
 
     # wrangle results to dict
     for field in cls.model_fields.values():
@@ -282,7 +288,7 @@ def from_graph(cls, graph: Graph, transformation_rules: TransformationRules, ext
 
         # if field is required and not in result, raise error
         if field.is_required() and field.alias not in result:
-            raise exceptions.FieldRequiredButNotProvided(field.alias, external_id)
+            raise exceptions.PropertyRequiredButNotProvided(field.alias, external_id)
 
         # flatten result if field is not edge or list of values
         if field.annotation.__name__ not in [EdgeOneToMany.__name__, list.__name__]:
