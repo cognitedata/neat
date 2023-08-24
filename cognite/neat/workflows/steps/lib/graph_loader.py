@@ -1,6 +1,7 @@
 import logging
 import time
 from datetime import datetime
+from typing import ClassVar
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import AssetFilter
@@ -22,7 +23,7 @@ from cognite.neat.graph.loaders.core.rdf_to_relationships import (
 from cognite.neat.graph.loaders.rdf_to_dms import rdf2nodes_and_edges, upload_edges, upload_nodes
 from cognite.neat.graph.loaders.validator import validate_asset_hierarchy
 from cognite.neat.utils.utils import generate_exception_report
-from cognite.neat.workflows.model import FlowMessage
+from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
 from cognite.neat.workflows.steps.data_contracts import (
     CategorizedAssets,
     CategorizedRelationships,
@@ -68,7 +69,21 @@ class GenerateCDFNodesAndEdgesFromGraph(Step):
     description = "The step generates nodes and edges from the graph"
     category = CATEGORY
 
+    configuration_templates: ClassVar[list[WorkflowConfigItem]] = [
+        WorkflowConfigItem(
+            name="nodes_and_edges_generation.graph_name",
+            value="source",
+            label=("The name of the graph to be used for matching." " Supported options : source, solution"),
+        ),
+    ]
+
     def run(self, rules: RulesData, graph: SourceGraph | SolutionGraph) -> (FlowMessage, Nodes, Edges):
+        graph_name = self.configs.get_config_item_value("nodes_and_edges_generation.graph_name", "source")
+        if graph_name == "solution":
+            graph = self.flow_context["SolutionGraph"]
+        else:
+            graph = self.flow_context["SourceGraph"]
+
         nodes, edges, exceptions = rdf2nodes_and_edges(graph.graph, rules.rules)
 
         msg = f"Total count of: <ul><li>{ len(nodes) } nodes</li><li>{ len(edges) } edges</li></ul>"
