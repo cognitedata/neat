@@ -2,6 +2,7 @@ import logging
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import EdgeApply, NodeApply
+from cognite.neat.exceptions import NeatException
 
 from cognite.neat.graph.stores.graph_store import NeatGraphStore
 from cognite.neat.rules.exporter.rules2dms import DataModel
@@ -14,7 +15,7 @@ def rdf2nodes_and_edges(
     graph_store: NeatGraphStore,
     transformation_rules: TransformationRules,
     stop_on_exception: bool = False,
-) -> tuple[list[NodeApply], list[EdgeApply]]:
+) -> tuple[list[NodeApply], list[EdgeApply], list[dict]]:
     """Generates DMS nodes and edges from knowledge graph stored as RDF triples
 
     Args:
@@ -23,19 +24,21 @@ def rdf2nodes_and_edges(
         stop_on_exception: Whether to stop execution on exception. Defaults to False.
 
     Returns:
-        Tuple holding nodes and edges
+        Tuple holding nodes, edges and exceptions
     """
+    nodes = []
+    edges = []
+    exceptions = []
+
     data_model = DataModel.from_rules(transformation_rules)
     pydantic_models = rules_to_pydantic_models(transformation_rules)
 
-    nodes = []
-    edges = []
-
     for class_ in transformation_rules.classes:
         if class_ in data_model.containers:
-            class_ns = transformation_rules.metadata.namespace[class_]
+            class_namespace = transformation_rules.metadata.namespace[class_]
             class_instance_ids = [
-                res[0] for res in graph_store.query(f"SELECT ?instance WHERE {{ ?instance rdf:type <{class_ns}> . }}")
+                res[0]
+                for res in graph_store.query(f"SELECT ?instance WHERE {{ ?instance rdf:type <{class_namespace}> . }}")
             ]
 
             for class_instance_id in class_instance_ids:
@@ -49,9 +52,12 @@ def rdf2nodes_and_edges(
                     )
                     if stop_on_exception:
                         raise e
+
+                    if isinstance(e, NeatException):
+                        exceptions.append(e.to_error_dict())
                     continue
 
-    return nodes, edges
+    return nodes, edges, exceptions
 
 
 def upload_nodes(

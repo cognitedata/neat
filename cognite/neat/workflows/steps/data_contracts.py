@@ -6,6 +6,7 @@ from cognite.client.data_classes import Relationship, RelationshipUpdate
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.rules.models import TransformationRules
 from cognite.neat.workflows.steps.step_model import DataContract
+from cognite.client.data_classes.data_modeling import EdgeApply, NodeApply
 
 
 class RulesData(DataContract):
@@ -92,3 +93,36 @@ class CategorizedRelationships(DataContract):
         tuple[dict[str, list[Relationship | RelationshipUpdate]], dict[str, set]]
         | dict[str, list[Relationship | RelationshipUpdate]]
     )
+
+
+class Nodes(DataContract):
+    """
+    This represents nodes.
+
+    Args:
+        nodes: list of nodes.
+    """
+
+    nodes: list[NodeApply]
+
+
+class Edges(DataContract):
+    """
+    This represents edges.
+
+    Args:
+        edges: list of edges.
+    """
+
+    edges: list[EdgeApply]
+
+
+class Exceptions(DataContract):
+    """
+    This represents Neat exceptions raised in a step.
+
+    Args:
+        exceptions: list of exceptions.
+    """
+
+    exceptions: list[dict]
