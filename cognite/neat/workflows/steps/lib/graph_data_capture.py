@@ -4,11 +4,15 @@ import time
 from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
 from cognite.neat.graph import extractors
 from cognite.neat.workflows.steps.step_model import Step
-from ..data_contracts import RulesData, SolutionGraph
+from ..data_contracts import RulesData, SolutionGraph, SourceGraph
 from cognite.neat.rules.exporter import rules2graph_sheet
 from cognite.neat.utils.utils import add_triples
 
-__all__ = ["GenerateDataCaptureSpreadsheet", "ProcessDataCaptureSpreadsheetIntoSolutionGraph"]
+__all__ = [
+    "GenerateDataCaptureSpreadsheet",
+    "ProcessDataCaptureSpreadsheetIntoSolutionGraph",
+    "ProcessDataCaptureSpreadsheetIntoSourceGraph",
+]
 
 
 class GenerateDataCaptureSpreadsheet(Step):
@@ -33,7 +37,6 @@ class GenerateDataCaptureSpreadsheet(Step):
         sheet_name = self.configs.get_config_item_value("graph_capture.file", "graph_capture_sheet.xlsx")
         auto_identifier_type = self.configs.get_config_item_value("graph_capture_sheet.auto_identifier_type", None)
         staging_dir_str = self.configs.get_config_item_value("graph_capture_sheet.storage_dir", "staging")
-        logging.info(f"Auto identifier type {auto_identifier_type}")
         staging_dir = self.data_store_path / Path(staging_dir_str)
         staging_dir.mkdir(parents=True, exist_ok=True)
         data_capture_sheet_path = staging_dir / sheet_name
@@ -53,6 +56,16 @@ class GenerateDataCaptureSpreadsheet(Step):
 class ProcessDataCaptureSpreadsheetIntoSolutionGraph(Step):
     description = "The step processes data capture spreadsheet into solution graph"
     category = "data_capture"
+    configuration_templates = [
+        WorkflowConfigItem(
+            name="graph_capture.file",
+            value="graph_capture_sheet.xlsx",
+            label="File name of the data capture sheet",
+        ),
+        WorkflowConfigItem(
+            name="graph_capture_sheet.storage_dir", value="staging", label="Directory to store data capture sheets"
+        ),
+    ]
 
     def run(
         self,
@@ -60,7 +73,15 @@ class ProcessDataCaptureSpreadsheetIntoSolutionGraph(Step):
         solution_graph: SolutionGraph,
     ) -> FlowMessage:
         triggered_flow_message = self.flow_context["StartFlowMessage"]
-        data_capture_sheet_path = Path(triggered_flow_message.payload["full_path"])
+        if "full_path" in triggered_flow_message.payload:
+            data_capture_sheet_path = Path(triggered_flow_message.payload["full_path"])
+        else:
+            data_capture_sheet_path = (
+                self.data_store_path
+                / Path(self.configs.get_config_item_value("graph_capture_sheet.storage_dir", "staging"))
+                / self.configs.get_config_item_value("graph_capture.file", "graph_capture_sheet.xlsx")
+            )
+
         logging.info(f"Processing data capture sheet {data_capture_sheet_path}")
 
         triples = extractors.extract_graph_from_sheet(
@@ -68,3 +89,14 @@ class ProcessDataCaptureSpreadsheetIntoSolutionGraph(Step):
         )
         add_triples(solution_graph.graph, triples)
         return FlowMessage(output_text="Data capture sheet processed")
+
+
+class ProcessDataCaptureSpreadsheetIntoSourceGraph(ProcessDataCaptureSpreadsheetIntoSolutionGraph):
+    description = "The step processes data capture spreadsheet into source graph"
+    
+    def run(
+        self,
+        transformation_rules: RulesData,
+        graph: SourceGraph,
+    ) -> FlowMessage:
+        return super().run(transformation_rules, graph)
