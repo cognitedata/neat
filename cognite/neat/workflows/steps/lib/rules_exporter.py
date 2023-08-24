@@ -53,8 +53,7 @@ class GraphQLSchemaFromRules(Step):
         staging_dir.mkdir(parents=True, exist_ok=True)
         fdm_model_full_path = staging_dir / schema_name
 
-        with fdm_model_full_path.open(mode="w") as fdm_file:
-            fdm_file.write(data_model_gql)
+        fdm_model_full_path.write_text(data_model_gql)
 
         output_text = (
             "<p></p>"
