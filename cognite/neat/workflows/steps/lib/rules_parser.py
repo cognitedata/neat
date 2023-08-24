@@ -16,7 +16,11 @@ from cognite.neat.workflows import utils
 from cognite.neat.workflows.cdf_store import CdfStore
 from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
 from cognite.neat.workflows.steps.data_contracts import RulesData
-from cognite.neat.workflows.steps.step_model import Step, StepCategory
+from cognite.neat.workflows.steps.step_model import Step
+
+__all__ = ["LoadTransformationRules", "DownloadTransformationRulesFromGitHub"]
+
+CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
 
 
 class LoadTransformationRules(Step):
@@ -25,7 +29,7 @@ class LoadTransformationRules(Step):
     """
 
     description = "This step loads transformation rules from the file or remote location"
-    category = StepCategory.RulesParser
+    category = CATEGORY
     configuration_templates: ClassVar[list[WorkflowConfigItem]] = [
         WorkflowConfigItem(
             name="rules.validate_rules",
@@ -119,7 +123,7 @@ class DownloadTransformationRulesFromGitHub(Step):
     """
 
     description = "This step fetches and stores transformation rules from private Github repository"
-    category = StepCategory.RulesParser
+    category = CATEGORY
     configuration_templates: ClassVar[list[WorkflowConfigItem]] = [
         WorkflowConfigItem(
             name="github.filepath",

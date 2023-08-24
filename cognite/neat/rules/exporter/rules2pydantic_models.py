@@ -32,7 +32,7 @@ def default_model_configuration():
 
 
 def default_model_methods():
-    return [from_graph, to_asset, to_relationship, to_node, to_edge, to_instance, to_graph]
+    return [from_graph, to_asset, to_relationship, to_node, to_edge, to_graph]
 
 
 def default_model_property_attributes():
@@ -408,12 +408,8 @@ def to_relationship(self, transformation_rules: TransformationRules) -> Relation
     ...
 
 
-def to_instance(self, data_model: DataModel) -> tuple[NodeApply, list[EdgeApply]]:
-    return (self.to_node(data_model), self.to_edge(data_model))
-
-
 def to_node(self, data_model: DataModel) -> NodeApply:
-    """Creates instance of data model type."""
+    """Creates DMS node from pydantic model."""
 
     if set(data_model.containers[self.__class__.__name__].properties.keys()) != set(
         self.attributes + self.edges_one_to_one + self.edges_one_to_many
@@ -443,6 +439,7 @@ def to_node(self, data_model: DataModel) -> NodeApply:
 
 
 def to_edge(self, data_model: DataModel) -> list[EdgeApply]:
+    """Creates DMS edge from pydantic model."""
     edges = []
     for edge_one_to_many in self.edges_one_to_many:
         edge_type_id = f"{self.__class__.__name__}.{edge_one_to_many}"

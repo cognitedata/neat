@@ -5,6 +5,7 @@ from cognite.client.data_classes import Relationship, RelationshipUpdate
 from cognite.client.data_classes.data_modeling import EdgeApply, NodeApply
 
 from cognite.neat.graph.stores import NeatGraphStore
+from cognite.neat.rules.exporter.rules2dms import DataModel
 from cognite.neat.rules.models import TransformationRules
 from cognite.neat.workflows.steps.step_model import DataContract
 
@@ -117,12 +118,12 @@ class Edges(DataContract):
     edges: list[EdgeApply]
 
 
-class Exceptions(DataContract):
+class DMSDataModel(DataContract):
     """
-    This represents Neat exceptions raised in a step.
+    This represents DMS Data Model.
 
     Args:
-        exceptions: list of exceptions.
+        data_model: DMS data model.
     """
 
-    exceptions: list[dict]
+    data_model: DataModel
