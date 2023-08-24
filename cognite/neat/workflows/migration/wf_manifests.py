@@ -17,14 +17,14 @@ def migrate_wf_manifest(wf_store_path: Path):
             metadata_file_migrated = wf_store_path / wf_module_name / "workflow.yaml"
             logging.info(f"Loading workflow {wf_module_name} metadata from {metadata_file}")
             if metadata_file.exists():
-                with open(metadata_file, "r") as f:
+                with metadata_file.open() as f:
                     manifest_yaml = yaml.safe_load(f, Loader=yaml.Loader)
                     logging.info(f"Loaded workflow {wf_module_name} metadata from {metadata_file}")
                 if "groups" in manifest_yaml:
                     logging.info(f"Found groups in {metadata_file}, migrating to system_components")
                     manifest_yaml["system_components"] = manifest_yaml["groups"]
                     del manifest_yaml["groups"]
-                    with open(metadata_file_migrated, "w") as f:
+                    with metadata_file_migrated.open("w") as f:
                         yaml.dump(manifest_yaml, f, indent=4)
                         migrated_files.append(metadata_file_migrated)
             else:

@@ -4,11 +4,11 @@ import re
 from collections import Counter
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Literal, Optional, Self
+from typing import Literal, Self
 
 from pydantic import BaseModel, field_validator
 
-from . import _exceptions
+from . import exceptions
 
 
 @dataclass
@@ -119,7 +119,7 @@ _direction_by_symbol = {"->": "target", "<-": "source"}
 
 class Step(BaseModel):
     class_: Entity
-    property: Optional[Entity] = None  # only terminal step has property
+    property: Entity | None = None  # only terminal step has property
     direction: StepDirection
 
     @classmethod
@@ -231,7 +231,7 @@ def parse_traversal(raw: str) -> AllReferences | AllProperties | SingleProperty 
     elif result := _hop.match(raw):
         return Hop(class_=result.group("origin"), traversal=result.group(_traversal))
     else:
-        raise _exceptions.Error1(raw).to_pydantic_custom_error()
+        raise exceptions.NotValidRDFPath(raw).to_pydantic_custom_error()
 
 
 def parse_table_lookup(raw: str) -> TableLookup:
@@ -239,7 +239,7 @@ def parse_table_lookup(raw: str) -> TableLookup:
         return TableLookup(
             name=result.group(Lookup.table), key=result.group(Lookup.key), value=result.group(Lookup.value)
         )
-    raise _exceptions.Error2(raw).to_pydantic_custom_error()
+    raise exceptions.NotValidTableLookUp(raw).to_pydantic_custom_error()
 
 
 def parse_rule(rule_raw: str, rule_type: RuleType) -> RDFPath:
@@ -250,7 +250,7 @@ def parse_rule(rule_raw: str, rule_type: RuleType) -> RDFPath:
         case RuleType.rawlookup:
             rule_raw = rule_raw.replace(" ", "")
             if Counter(rule_raw).get("|") != 1:
-                raise _exceptions.Error3(rule_raw).to_pydantic_custom_error()
+                raise exceptions.NotValidRAWLookUp(rule_raw).to_pydantic_custom_error()
             traversal, table_lookup = rule_raw.split("|")
             return RawLookup(traversal=parse_traversal(traversal), table=parse_table_lookup(table_lookup))
         case RuleType.sparql:

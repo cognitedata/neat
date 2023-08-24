@@ -1,19 +1,18 @@
 import importlib
 import inspect
+import logging
 import os
-from pathlib import Path
 import sys
 import types
+from pathlib import Path
 
 from pydantic import BaseModel
+
+import cognite.neat.workflows.steps.lib
 from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
 from cognite.neat.exceptions import InvalidWorkFlowError
 from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem, WorkflowConfigs
-import cognite.neat.workflows.steps.lib
-import logging
-
-from cognite.neat.workflows.steps.step_model import DataContract, T_Output
-from cognite.neat.workflows.steps.step_model import Step
+from cognite.neat.workflows.steps.step_model import DataContract, Step, T_Output
 
 
 class StepMetadata(BaseModel):
@@ -140,7 +139,6 @@ class StepsRegistry:
                             output_data.append(annotation.__name__)
                     else:
                         output_data.append(return_annotation.__name__)
-                # logging.info(f"Step {name} output data: {return_annotation}")
                 steps.append(
                     StepMetadata(
                         name=step_cls.__name__,

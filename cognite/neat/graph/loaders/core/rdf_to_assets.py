@@ -2,8 +2,8 @@ import logging
 import warnings
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, fields
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Self, Tuple, Union, overload
+from datetime import UTC, datetime
+from typing import Any, Self, overload
 from warnings import warn
 
 import numpy as np
@@ -56,7 +56,7 @@ class NeatMetadataKeys:
         return {field.default: getattr(self, field.name) for field in fields(self)}
 
 
-def _get_class_instance_ids(graph: Graph, class_: str, namespace: Namespace, limit: int = -1) -> List[URIRef]:
+def _get_class_instance_ids(graph: Graph, class_: str, namespace: Namespace, limit: int = -1) -> list[URIRef]:
     """Get instances ids for a given class
 
     Parameters
@@ -83,7 +83,7 @@ def _get_class_instance_ids(graph: Graph, class_: str, namespace: Namespace, lim
     return [res[0] for res in list(graph.query(query_statement))]
 
 
-def _get_class_instance(graph: Graph, instance: URIRef) -> List[tuple]:
+def _get_class_instance(graph: Graph, instance: URIRef) -> list[tuple]:
     """Get instance by means of tuples containing property-value pairs
 
     Returns
@@ -103,7 +103,7 @@ def _get_class_instance(graph: Graph, instance: URIRef) -> List[tuple]:
     return result
 
 
-def _get_class_property_pairs(transformation_rules: TransformationRules) -> dict[List[Property]]:
+def _get_class_property_pairs(transformation_rules: TransformationRules) -> dict[list[Property]]:
     """Define classes in terms of their properties
 
     Parameters
@@ -171,7 +171,7 @@ def _define_asset_class_mapping(transformation_rules: TransformationRules) -> di
     return asset_class_mapping
 
 
-def _remap_class_properties(class_instance: dict, asset_class_mapping: dict) -> Tuple[dict, set, set]:
+def _remap_class_properties(class_instance: dict, asset_class_mapping: dict) -> tuple[dict, set, set]:
     """Remaps original class instance properties to asset properties (e.g., external_id, name, description, metadata)
 
     Parameters
@@ -213,8 +213,8 @@ def _class2asset_instance(
     asset_class_mapping: dict,
     data_set_id: int,
     meta_keys: NeatMetadataKeys,
-    orphanage_asset_external_id: str = None,
-    external_id_prefix: str = None,
+    orphanage_asset_external_id: str | None = None,
+    external_id_prefix: str | None = None,
     fallback_property: str = NeatMetadataKeys.identifier,
     empty_name_default: str = "Missing Name",
     add_missing_metadata: bool = True,
@@ -419,7 +419,6 @@ def rdf2assets(
             response_df = graph_store.query_to_dataframe(query)
         except Exception as e:
             logging.error(f"Error while loading instances of class <{class_ns}> into cache. Reason: {e}")
-            # traceback.print_exc()
             if stop_on_exception:
                 raise e
             continue
@@ -448,7 +447,7 @@ def rdf2assets(
 
                 # adding labels and timestamps
                 asset["labels"] = [asset["metadata"][meta_keys.type], "non-historic"]
-                now = str(datetime.now(timezone.utc))
+                now = str(datetime.now(UTC))
                 asset["metadata"][meta_keys.start_time] = now
                 asset["metadata"][meta_keys.update_time] = now
                 asset["metadata"] = {meta_keys_aliases.get(k, k): v for k, v in asset["metadata"].items()}
@@ -486,8 +485,8 @@ def rdf2asset_dictionary(
     transformation_rules: TransformationRules,
     stop_on_exception: bool = False,
     use_orphanage: bool = True,
-) -> Dict[str, Asset]:
-    warn("'rdf2asset_dictionary' is deprecated, please use 'rdf2assets' instead!")
+) -> dict[str, Asset]:
+    warn("'rdf2asset_dictionary' is deprecated, please use 'rdf2assets' instead!", stacklevel=2)
     logging.warning("'rdf2asset_dictionary' is deprecated, please use 'rdf2assets' instead!")
     return rdf2assets(graph_store, transformation_rules, stop_on_exception, use_orphanage)
 
@@ -536,7 +535,7 @@ def _asset2dict(asset: Asset) -> dict:
     }
 
 
-def _flatten_labels(labels: List[Dict[str, str]]) -> set[str]:
+def _flatten_labels(labels: list[dict[str, str]]) -> set[str]:
     """Flatten labels"""
     result = set()
     if labels is None:
@@ -556,7 +555,7 @@ def _is_historic(labels) -> bool:
 
 def _categorize_cdf_assets(
     client: CogniteClient, data_set_id: int, partitions: int
-) -> Tuple[Optional[pd.DataFrame], dict[str, set]]:
+) -> tuple[pd.DataFrame | None, dict[str, set]]:
     """Categorize CDF assets
 
     Parameters
@@ -733,8 +732,8 @@ def _assets_to_update(
             try:
                 asset.metadata[meta_keys.start_time] = cdf_asset[external_id]["metadata"][meta_keys.start_time]
             except KeyError:
-                asset.metadata[meta_keys.start_time] = str(datetime.now(timezone.utc))
-            asset.metadata[meta_keys.update_time] = str(datetime.now(timezone.utc))
+                asset.metadata[meta_keys.start_time] = str(datetime.now(UTC))
+            asset.metadata[meta_keys.update_time] = str(datetime.now(UTC))
             assets.append(asset)
 
             report[external_id] = dict(diffing_result)
@@ -775,7 +774,7 @@ def _assets_to_resurrect(
         cdf_asset = cdf_asset_subset[external_id]
 
         asset = Asset(**rdf_assets[external_id])
-        now = str(datetime.now(timezone.utc))
+        now = str(datetime.now(UTC))
         try:
             asset.metadata[meta_keys.start_time] = cdf_asset[external_id]["metadata"][meta_keys.start_time]
         except KeyError:
@@ -803,7 +802,7 @@ def _assets_to_decommission(cdf_assets, asset_ids, meta_keys: NeatMetadataKeys) 
     for external_id in asset_ids:
         cdf_asset = cdf_asset_subset[external_id]
 
-        now = str(datetime.now(timezone.utc))
+        now = str(datetime.now(UTC))
         cdf_asset["metadata"][meta_keys.update_time] = now
         cdf_asset["metadata"].pop(meta_keys.resurrection_time, None)
         cdf_asset["metadata"][meta_keys.end_time] = now
@@ -828,7 +827,7 @@ def categorize_assets(
     stop_on_exception: bool = False,
     return_report: bool = False,
     meta_keys: NeatMetadataKeys | None = None,
-) -> Union[tuple[dict, dict], dict]:
+) -> tuple[dict, dict] | dict:
     """Categorize assets on those that are to be created, updated and decommissioned
 
     Parameters
@@ -950,7 +949,7 @@ def _micro_batch_push(
 
 def upload_assets(
     client: CogniteClient,
-    categorized_assets: Dict[str, Sequence[Asset]],
+    categorized_assets: dict[str, Sequence[Asset]],
     batch_size: int = 5000,
     max_retries: int = 1,
     retry_delay: int = 3,

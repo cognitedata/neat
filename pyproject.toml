@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cognite-neat"
-version = "0.21.0"
+version = "0.21.3"
 readme = "README.md"
 description = "Knowledge graph transformation"
 authors = ["Nikola Vasiljevic <nikola.vasiljevic@cognite.com>",
@@ -25,6 +25,19 @@ exclude = [
 line-length = 120
 target_version = ['py311']
 include = '\.py$'
+
+[tool.ruff]
+# See https://beta.ruff.rs/docs/rules for an overview of ruff rules
+line-length = 120
+target-version = "py311"
+exclude = ["examples","examples-pydantic-v1", "scripts"]
+select = ["E","W","F","I","RUF","TID","UP", "B", "FLY", "PTH", "ERA"]
+fixable = ["E","W","F","I","RUF","TID","UP", "B", "FLY", "PTH", "ERA"]
+fix = true
+ignore = []
+
+[tool.ruff.isort]
+known-third-party = ["cognite.client"]
 
 [tool.mypy]
 explicit_package_bases = true
@@ -64,10 +77,12 @@ mkdocs-git-revision-date-localized-plugin = {version="*", optional=true}
 mkdocs-git-authors-plugin = {version="*", optional=true}
 mkdocs-gitbook = {version="*", optional=true}
 mkdocs-glightbox = {version="*", optional=true}
+pymdown-extensions = {version="*", optional=true}
+mkdocstrings = {version="*", optional=true, extras=["python"]}
 jinja2 = {version = "^3.1.2", optional=true}
 
 [tool.poetry.extras]
-docs = ["mkdocs", "mkdocs-jupyter", "mkdocs-material-extensions", "mkdocs-git-revision-date-localized-plugin", "mkdocs-git-authors-plugin", "mkdocs-gitbook", "mkdocs-glightbox"]
+docs = ["mkdocs", "mkdocs-jupyter", "mkdocs-material-extensions", "mkdocs-git-revision-date-localized-plugin", "mkdocs-git-authors-plugin", "mkdocs-gitbook", "mkdocs-glightbox", "pymdown-extensions", "mkdocstrings"]
 google = ["gspread", "google-api-python-client", "google-auth-oauthlib"]
 excel = ["openpyxl"]
 graphql = ["jinja2"]

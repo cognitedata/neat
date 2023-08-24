@@ -2,26 +2,26 @@
 
 
 import logging
-import os
 import shutil
-from fastapi import APIRouter, UploadFile
-from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
 
-from cognite.neat.workflows.utils import get_file_hash
+from fastapi import APIRouter, UploadFile
+
 from cognite.neat.app.api.configuration import neat_app
+from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
+from cognite.neat.workflows.utils import get_file_hash
 
 router = APIRouter()
 
 
 @router.get("/api/cdf/neat-resources")
-def get_neat_resources(resource_type: str = None):
+def get_neat_resources(resource_type: str | None = None):
     result = neat_app.cdf_store.get_list_of_resources_from_cdf(resource_type=resource_type)
     logging.debug(f"Got {len(result)} resources")
     return {"result": result}
 
 
 @router.post("/api/cdf/init-neat-resources")
-def init_neat_cdf_resources(resource_type: str = None):
+def init_neat_cdf_resources(resource_type: str | None = None):
     neat_app.cdf_store.init_cdf_resources(resource_type=resource_type)
     return {"result": "ok"}
 
@@ -37,8 +37,8 @@ async def file_upload_handler(files: list[UploadFile], workflow_name: str, file_
             f"Uploading file : {file.filename} , workflow : {workflow_name} , step_id {step_id} , action : {action}"
         )
         # save file to disk
-        full_path = os.path.join(upload_dir, file.filename)
-        with open(full_path, "wb") as buffer:
+        full_path = upload_dir / file.filename
+        with full_path.open("wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         file_name = file.filename
         file_version = get_file_hash(full_path)

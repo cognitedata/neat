@@ -1,22 +1,23 @@
-from datetime import datetime, timezone
 import re
-from typing import Any
-from typing_extensions import TypeAliasType
 import warnings
+from datetime import UTC, datetime
+from typing import Any
+
+from cognite.client.data_classes import Asset, Relationship
 from pydantic import BaseModel, ConfigDict, Field, create_model
 from pydantic._internal._model_construction import ModelMetaclass
 from rdflib import Graph, URIRef
+from typing_extensions import TypeAliasType
 
-from cognite.client.data_classes import Asset, Relationship
 from cognite.neat.graph.loaders.core.rdf_to_assets import NeatMetadataKeys
+from cognite.neat.graph.transformations.query_generator.sparql import build_construct_query, triples2dictionary
+from cognite.neat.rules import exceptions
 from cognite.neat.rules.analysis import (
-    to_class_property_pairs,
     define_class_asset_mapping,
     define_class_relationship_mapping,
+    to_class_property_pairs,
 )
-from cognite.neat.graph.transformations.query_generator.sparql import build_construct_query, triples2dictionary
 from cognite.neat.rules.models import Property, TransformationRules, type_to_target_convention
-from cognite.neat.rules import _exceptions
 
 EdgeOneToOne = TypeAliasType("EdgeOneToOne", str)
 EdgeOneToMany = TypeAliasType("EdgeOneToMany", list[str])
@@ -33,28 +34,23 @@ def default_model_methods():
 
 
 def rules_to_pydantic_models(
-    transformation_rules: TransformationRules, methods: list = None
+    transformation_rules: TransformationRules, methods: list | None = None
 ) -> dict[str, ModelMetaclass]:
-    """Generate pydantic models from transformation rules.
+    """
+    Generate pydantic models from transformation rules.
 
-    Parameters
-    ----------
-    transformation_rules : TransformationRules
-        Transformation rules
-    methods : list, optional
-        List of methods to register for pydantic models , by default None
+    Args:
+        transformation_rules: Transformation rules
+        methods: List of methods to register for pydantic models, by default None.
 
-    Returns
-    -------
-    dict[str, ModelMetaclass]
+    Returns:
         Dictionary containing pydantic models
 
-    Notes
-    -----
-    Currently this will take only unique properties and those which column rule_type
-    is set to rdfpath, hence only_rdfpath = True. This means that at the moment
-    we do not support UNION, i.e. ability to handle multiple rdfpaths for the same
-    property. This is needed option and should be added in the second version of the exporter.
+    !!! note "Limitations"
+        Currently this will take only unique properties and those which column rule_type
+        is set to rdfpath, hence only_rdfpath = True. This means that at the moment
+        we do not support UNION, i.e. ability to handle multiple rdfpaths for the same
+        property. This is needed option and should be added in the second version of the exporter.
     """
     if methods is None:
         methods = default_model_methods()
@@ -152,8 +148,8 @@ def _dictionary_to_pydantic_model(
     name: str,
     model_definition: dict,
     model_configuration: ConfigDict = None,
-    methods: list = None,
-    validators: list = None,
+    methods: list | None = None,
+    validators: list | None = None,
 ) -> type[BaseModel]:
     """Generates pydantic model from dictionary containing definition of fields.
     Additionally it adds methods to the model and validators.
@@ -188,7 +184,7 @@ def _dictionary_to_pydantic_model(
         elif isinstance(value, dict):
             fields[field_name] = (_dictionary_to_pydantic_model(f"{name}_{field_name}", value), ...)
         else:
-            raise _exceptions.Error40(field_name, value)
+            raise exceptions.FieldValueOfUnknownType(field_name, value)
 
     model = create_model(name, __config__=model_configuration, **fields)
 
@@ -238,17 +234,17 @@ def from_graph(cls, graph: Graph, transformation_rules: TransformationRules, ext
 
         # if field is required and not in result, raise error
         if field.is_required() and field.alias not in result:
-            raise _exceptions.Error41(field.alias, external_id)
+            raise exceptions.FieldRequiredButNotProvided(field.alias, external_id)
 
         # flatten result if field is not edge or list of values
         if field.annotation.__name__ not in [EdgeOneToMany.__name__, list.__name__]:
             if isinstance(result[field.alias], list) and len(result[field.alias]) > 1:
                 warnings.warn(
-                    _exceptions.Warning41(
+                    exceptions.FieldContainsMoreThanOneValue(
                         field.alias,
                         len(result[field.alias]),
                     ).message,
-                    category=_exceptions.Warning41,
+                    category=exceptions.FieldContainsMoreThanOneValue,
                     stacklevel=2,
                 )
 
@@ -263,7 +259,7 @@ def to_asset(
     add_system_metadata: bool = True,
     metadata_keys: NeatMetadataKeys | None = None,
     add_labels: bool = True,
-    data_set_id: int = None,
+    data_set_id: int | None = None,
 ) -> Asset:
     """Convert model instance to asset.
 
@@ -309,7 +305,7 @@ def to_asset(
 def _add_system_metadata(self, metadata_keys: NeatMetadataKeys, asset: dict):
     asset["metadata"][metadata_keys.type] = self.__class__.__name__
     asset["metadata"][metadata_keys.identifier] = self.external_id
-    now = str(datetime.now(timezone.utc))
+    now = str(datetime.now(UTC))
     asset["metadata"][metadata_keys.start_time] = now
     asset["metadata"][metadata_keys.update_time] = now
     asset["metadata"][metadata_keys.active] = "true"
@@ -335,8 +331,8 @@ def _adapt_mapping_config_by_instance(external_id, class_instance_dictionary, ma
     for asset_field in mapping_config:
         if asset_field not in adapted_mapping_config:
             warnings.warn(
-                _exceptions.Warning40(external_id, asset_field).message,
-                category=_exceptions.Warning40,
+                exceptions.FieldNotFoundInInstance(external_id, asset_field).message,
+                category=exceptions.FieldNotFoundInInstance,
                 stacklevel=2,
             )
 

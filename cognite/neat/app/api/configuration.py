@@ -1,11 +1,9 @@
 import logging
 import os
-
 from pathlib import Path
-from fastapi import FastAPI
 
 from cognite.client import CogniteClient
-
+from fastapi import FastAPI
 
 from cognite import neat
 from cognite.neat.app.api.data_classes.configuration import Config, configure_logging
@@ -15,7 +13,6 @@ from cognite.neat.utils.utils import get_cognite_client_from_config, get_cognite
 from cognite.neat.workflows.cdf_store import CdfStore
 from cognite.neat.workflows.manager import WorkflowManager
 from cognite.neat.workflows.triggers import TriggerManager
-
 
 UI_PATH = PACKAGE_DIRECTORY / "app" / "ui" / "neat-app" / "build"
 

@@ -1,5 +1,9 @@
 import logging
 import time
+
+from cognite.client import CogniteClient
+from cognite.client.data_classes import AssetFilter
+
 from cognite.neat.graph.loaders import upload_labels
 from cognite.neat.graph.loaders.core.rdf_to_assets import (
     NeatMetadataKeys,
@@ -16,11 +20,13 @@ from cognite.neat.graph.loaders.core.rdf_to_relationships import (
 )
 from cognite.neat.graph.loaders.validator import validate_asset_hierarchy
 from cognite.neat.workflows.model import FlowMessage
+from cognite.neat.workflows.steps.data_contracts import (
+    CategorizedAssets,
+    CategorizedRelationships,
+    RulesData,
+    SolutionGraph,
+)
 from cognite.neat.workflows.steps.step_model import Step
-from cognite.client.data_classes import AssetFilter
-
-from cognite.client import CogniteClient
-from ..data_contracts import CategorizedAssets, CategorizedRelationships, RulesData, SolutionGraph
 
 __all__ = [
     "CreateCDFLabels",
@@ -30,20 +36,30 @@ __all__ = [
     "UploadCDFRelationships",
 ]
 
+CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
+
 
 class CreateCDFLabels(Step):
-    description = "The step creates default NEAT labels in CDF"
-    category = "cdf_resources"
+    """
+    This step creates default NEAT labels in CDF
+    """
+
+    description = "This step creates default NEAT labels in CDF"
+    category = CATEGORY
 
     def run(self, rules: RulesData, cdf_client: CogniteClient) -> None:
         upload_labels(cdf_client, rules.rules, extra_labels=["non-historic", "historic"])
 
 
 class GenerateCDFAssetsFromGraph(Step):
+    """
+    The step generates assets from the graph ,categorizes them and stores them in CategorizedAssets object
+    """
+
     description = (
         "The step generates assets from the graph ,categorizes them and stores them in CategorizedAssets object"
     )
-    category = "cdf_resources"
+    category = CATEGORY
 
     def run(
         self, rules: RulesData, cdf_client: CogniteClient, solution_graph: SolutionGraph
@@ -122,7 +138,7 @@ class GenerateCDFAssetsFromGraph(Step):
             logging.info("No orphaned assets found, your assets look healthy !")
 
         if circular_assets:
-            msg = f"Found circular dependencies: {str(circular_assets)}"
+            msg = f"Found circular dependencies: {circular_assets!s}"
             logging.error(msg)
             raise Exception(msg)
         elif orphan_assets:
@@ -162,8 +178,12 @@ class GenerateCDFAssetsFromGraph(Step):
 
 
 class UploadCDFAssets(Step):
-    description = "The step uploads categorized assets to CDF"
-    category = "cdf_resources"
+    """
+    This step uploads categorized assets to CDF
+    """
+
+    description = "This step uploads categorized assets to CDF"
+    category = CATEGORY
 
     def run(
         self, rules: RulesData, cdf_client: CogniteClient, categorized_assets: CategorizedAssets, flow_msg: FlowMessage
@@ -200,8 +220,12 @@ class UploadCDFAssets(Step):
 
 
 class GenerateCDFRelationshipsFromGraph(Step):
-    description = "The step generates relationships from the graph and saves them to CategorizedRelationships object"
-    category = "cdf_resources"
+    """
+    This step generates relationships from the graph and saves them to CategorizedRelationships object
+    """
+
+    description = "This step generates relationships from the graph and saves them to CategorizedRelationships object"
+    category = CATEGORY
 
     def run(
         self, rules: RulesData, cdf_client: CogniteClient, solution_graph: SolutionGraph
@@ -243,8 +267,12 @@ class GenerateCDFRelationshipsFromGraph(Step):
 
 
 class UploadCDFRelationships(Step):
-    description = "The step uploads relationships to CDF"
-    category = "cdf_resources"
+    """
+    This step uploads relationships to CDF
+    """
+
+    description = "This step uploads relationships to CDF"
+    category = CATEGORY
 
     def run(self, cdf_client: CogniteClient, categorized_relationships: CategorizedRelationships) -> FlowMessage:
         upload_relationships(cdf_client, categorized_relationships.relationships, max_retries=2, retry_delay=4)

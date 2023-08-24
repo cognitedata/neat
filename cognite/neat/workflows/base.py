@@ -1,17 +1,21 @@
 import json
 import logging
-from pathlib import Path
 import threading
 import time
 import traceback
+from pathlib import Path
 from threading import Event
 
 import yaml
 from cognite.client import CogniteClient
 from prometheus_client import Gauge
 
+from cognite.neat.app.api.configuration import Config
 from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
+from cognite.neat.utils.cdf import CogniteClientConfig
 from cognite.neat.utils.utils import retry_decorator
+from cognite.neat.workflows import cdf_store, utils
+from cognite.neat.workflows._exceptions import InvalidStepOutputException
 from cognite.neat.workflows.model import (
     FlowMessage,
     StepExecutionStatus,
@@ -26,14 +30,9 @@ from cognite.neat.workflows.model import (
     WorkflowStepEvent,
     WorkflowSystemComponent,
 )
+from cognite.neat.workflows.steps.step_model import DataContract
 from cognite.neat.workflows.steps_registry import StepsRegistry
 from cognite.neat.workflows.tasks import WorkflowTaskBuilder
-
-from cognite.neat.app.api.configuration import Config
-from cognite.neat.utils.cdf import CogniteClientConfig
-from cognite.neat.workflows import utils, cdf_store
-from cognite.neat.workflows.steps.step_model import DataContract
-from cognite.neat.workflows._exceptions import InvalidStepOutputException
 
 summary_metrics = Gauge("neat_workflow_summary_metrics", "Workflow execution summary metrics", ["wf_name", "name"])
 steps_metrics = Gauge("neat_workflow_steps_metrics", "Workflow step level metrics", ["wf_name", "step_name", "name"])
@@ -46,8 +45,8 @@ class BaseWorkflow:
         name: str,
         client: CogniteClient,
         steps_registry: StepsRegistry = None,
-        workflow_steps: list[WorkflowStepDefinition] = None,
-        default_dataset_id: int = None,
+        workflow_steps: list[WorkflowStepDefinition] | None = None,
+        default_dataset_id: int | None = None,
     ):
         self.name = name
         self.module_name = self.__class__.__module__
@@ -139,7 +138,7 @@ class BaseWorkflow:
     def get_transition_step(self, transitions: list[str]) -> list[str]:
         return [stp for stp in self.workflow_steps if stp.id in transitions and stp.enabled] if transitions else []
 
-    def run_workflow_steps(self, start_step_id: str = None) -> str:
+    def run_workflow_steps(self, start_step_id: str | None = None) -> str:
         if not start_step_id:
             trigger_steps = list(filter(lambda x: x.trigger, self.workflow_steps))
         else:
@@ -317,7 +316,6 @@ class BaseWorkflow:
                 self.state = WorkflowState.RUNNING_WAITING
                 timeout = float(step.params.get("wait_timeout", "60"))
                 # reporting workflow execution before waiting for event
-                # self.report_workflow_execution()
                 logging.info(f"Workflow {self.name} is waiting for event")
                 self.resume_event.wait(timeout=timeout)
                 logging.info(f"Workflow {self.name} resumed after event")
@@ -364,7 +362,7 @@ class BaseWorkflow:
         self.report_step_execution()
         return new_flow_message
 
-    def resume_workflow(self, flow_message: FlowMessage, step_id: str = None):
+    def resume_workflow(self, flow_message: FlowMessage, step_id: str | None = None):
         if step_id:
             if self.current_step != step_id:
                 logging.error(f"Workflow {self.name} is not in step {step_id} , resume is skipped")
@@ -433,7 +431,7 @@ class BaseWorkflow:
     def add_system_component(self, system_components: WorkflowSystemComponent):
         self.workflow_system_components.append(system_components)
 
-    def serialize_workflow(self, output_format: str = "json", custom_implementation_module: str = None) -> str:
+    def serialize_workflow(self, output_format: str = "json", custom_implementation_module: str | None = None) -> str:
         workflow_definitions = WorkflowDefinition(
             name=self.name,
             steps=self.workflow_steps,
@@ -510,7 +508,7 @@ class BaseWorkflow:
     def get_step_by_id(self, step_id: str) -> WorkflowStepDefinition:
         return next((step for step in self.workflow_steps if step.id == step_id), None)
 
-    def get_trigger_step(self, step_id: str = None) -> WorkflowStepDefinition:
+    def get_trigger_step(self, step_id: str | None = None) -> WorkflowStepDefinition:
         if step_id:
             return next((step for step in self.workflow_steps if step.id == step_id and step.enabled), None)
         else:

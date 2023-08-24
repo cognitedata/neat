@@ -1,26 +1,24 @@
-from io import BytesIO
-from pathlib import Path
-from zipfile import BadZipFile
-
 import logging
 import warnings
-from typing import Any, Hashable, Literal, overload
+from collections.abc import Hashable
+from io import BytesIO
+from pathlib import Path
+from typing import Any, Literal, overload
 from warnings import warn
+from zipfile import BadZipFile
 
-from pydantic import field_validator
-from pydantic_core import ErrorDetails, ValidationError
-
-from openpyxl import Workbook, load_workbook
 import pandas as pd
 import requests
-
+from openpyxl import Workbook, load_workbook
+from pydantic import field_validator
+from pydantic_core import ErrorDetails, ValidationError
 from rdflib import Namespace
 
-
-from cognite.neat.utils.auxiliary import local_import
 from cognite.neat.constants import PREFIXES
-from cognite.neat.rules import _exceptions
+from cognite.neat.exceptions import wrangle_warnings
+from cognite.neat.rules import exceptions
 from cognite.neat.rules.models import Class, Metadata, Property, RuleModel, TransformationRules
+from cognite.neat.utils.auxiliary import local_import
 
 
 @overload
@@ -40,16 +38,12 @@ def parse_rules_from_excel_file(
 ) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None] | TransformationRules:
     """Parse transformation rules from an Excel file.
 
-    Parameters
-    ----------
-    filepath : Path
-        Path to the Excel file
-    return_report : bool, optional
-        Whether to return a report, by default False
+    Args:
+      filepath: Path to the Excel file
+      return_report: Whether to return a report, by default False
 
-    Returns
-    -------
-        Either the transformation rules or a tuple with the rules, a list of errors and a list of warnings
+    Returns:
+        The transformation rules, and optionally one list of validation errors and a one list of warnings.
     """
     return from_tables(read_excel_file_to_table_by_name(filepath), return_report)
 
@@ -59,16 +53,12 @@ def parse_rules_from_google_sheet(
 ) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None] | TransformationRules:
     """Parse transformation rules from a Google sheet.
 
-    Parameters
-    ----------
-    sheet_id : str
-        The identifier of the Google sheet with the rules.
-    return_report : bool, optional
-        Whether to return a report, by default False
+    Args:
+      sheet_id: The identifier of the Google sheet with the rules.
+      return_report: Whether to return a report, by default False
 
-    Returns
-    -------
-        Either the transformation rules or a tuple with the rules, a list of errors and a list of warnings
+    Returns:
+        The transformation rules, and optionally one list of validation errors and a one list of warnings.
     """
     return from_tables(read_google_sheet_to_table_by_name(sheet_id), return_report)
 
@@ -81,39 +71,37 @@ def parse_rules_from_github_sheet(
     branch: str = "main",
     return_report: bool = False,
 ) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None] | TransformationRules:
-    """Parse transformation rules from a sheet stored in private Github.
+    """Parse transformation rules from a sheet stored in private GitHub.
 
-    Parameters
-    ----------
-    filepath : Path
-        Path to the sheet in the Github repository.
-    personal_token : str
-        Personal access token to access the Github repository.
-    owner : str
-        Owner of the Github repository.
-    repo : str
-        Name of the Github repository.
-    branch : str, optional
-        Branch of the Github repository, by default "main".
+    Args:
+      filepath: Path to the sheet in the GitHub repository.
+      personal_token: Personal access token to access the GitHub repository.
+      owner: Owner of the GitHub repository.
+      repo: Name of the GitHub repository.
+      branch: Branch of the GitHub repository, by default "main".
+      return_report: Whether to return a report, by default False
 
-    Returns
-    -------
-        Either the transformation rules or a tuple with the rules, a list of errors and a list of warnings
+    Returns:
+        The transformation rules, and optionally one list of validation errors and a one list of warnings.
+
     """
-
     return from_tables(read_github_sheet_to_table_by_name(filepath, personal_token, owner, repo, branch), return_report)
 
 
-def parse_rules_from_yaml(dirpath: Path) -> TransformationRules:
-    """
-    Load transformation rules from a yaml file.
+def parse_rules_from_yaml(folder_path: Path) -> TransformationRules:
+    """Load transformation rules from a yaml files.
+
+    The yaml files must be named "metadata.yaml", "classes.yaml", "properties.yaml", "prefixes.yaml"
+    and "instances.yaml". These must be located in the same directory.
 
     Args:
-        dirpath (Path): Path to the yaml file.
+      folder_path: The directory where the yaml files are located.
+
     Returns:
-        TransformationRules: The transformation rules.
+      The transformation rules.
+
     """
-    return TransformationRules(**read_yaml_file_to_mapping_by_name(dirpath))
+    return TransformationRules(**read_yaml_file_to_mapping_by_name(folder_path))
 
 
 def from_tables(
@@ -137,24 +125,24 @@ def from_tables(
                 else _parse_instances(raw_tables.Instances, rules_dict["metadata"], rules_dict["prefixes"])
             )
             rules = TransformationRules(**rules_dict)
-        return (rules, None, _exceptions.wrangle_warnings(validation_warnings)) if return_report else rules
+        return (rules, None, wrangle_warnings(validation_warnings)) if return_report else rules
 
-    except _exceptions.Error0 as e:
+    except exceptions.ExcelFileMissingMandatorySheets as e:
         validation_errors = [e.to_error_dict()]
         if return_report:
-            return None, validation_errors, _exceptions.wrangle_warnings(validation_warnings)
+            return None, validation_errors, wrangle_warnings(validation_warnings)
         else:
             raise e
     except ValidationError as e:
         validation_errors = e.errors()
         if return_report:
-            return None, validation_errors, _exceptions.wrangle_warnings(validation_warnings)
+            return None, validation_errors, wrangle_warnings(validation_warnings)
         else:
             raise e
 
 
 def _parse_metadata(meta_df: pd.DataFrame) -> dict[str, Any]:
-    metadata_dict = dict(zip(meta_df[0], meta_df[1]))
+    metadata_dict = dict(zip(meta_df[0], meta_df[1], strict=True))
     metadata_dict["source"] = meta_df.source if "source" in dir(meta_df) else None
     if "namespace" in metadata_dict:
         metadata_dict["namespace"] = Namespace(metadata_dict["namespace"])
@@ -177,8 +165,8 @@ def _parse_instances(
     instances_df: pd.DataFrame, metadata: dict[str, Any], prefixes: dict[str, Namespace]
 ) -> list[dict] | None:
     if "prefix" not in metadata or "namespace" not in metadata:
-        logging.warning(_exceptions.Warning500().message)
-        warn(_exceptions.Warning500().message)
+        logging.warning(exceptions.MissingDataModelPrefixOrNamespace().message)
+        warn(exceptions.MissingDataModelPrefixOrNamespace().message, stacklevel=2)
         return None
 
     prefixes[metadata["prefix"]] = metadata["namespace"]
@@ -205,7 +193,7 @@ class RawTables(RuleModel):
 
         # Validate raw tables
         if missing_tables := (expected_tables - set(raw_dfs)):
-            raise _exceptions.Error0(missing_tables)
+            raise exceptions.ExcelFileMissingMandatorySheets(missing_tables)
 
         tables_dict = {
             Tables.metadata: raw_dfs[Tables.metadata],
@@ -228,7 +216,7 @@ class RawTables(RuleModel):
 
         if not (mandatory_rows.issubset(given_rows) or mandatory_rows_alias.issubset(given_rows)):
             missing_rows = mandatory_rows_alias.difference(given_rows)
-            raise _exceptions.Error51(missing_rows).to_pydantic_custom_error()
+            raise exceptions.MetadataSheetMissingMandatoryFields(missing_rows).to_pydantic_custom_error()
         return v
 
     @field_validator("Classes")
@@ -239,7 +227,7 @@ class RawTables(RuleModel):
 
         if not (mandatory_columns.issubset(given_columns) or mandatory_columns_alias.issubset(given_columns)):
             missing_columns = mandatory_columns_alias.difference(given_columns)
-            raise _exceptions.Error52(missing_columns).to_pydantic_custom_error()
+            raise exceptions.ClassesSheetMissingMandatoryColumns(missing_columns).to_pydantic_custom_error()
         return v
 
     @field_validator("Properties")
@@ -250,7 +238,7 @@ class RawTables(RuleModel):
 
         if not (mandatory_columns.issubset(given_columns) or mandatory_columns_alias.issubset(given_columns)):
             missing_columns = mandatory_columns_alias.difference(given_columns)
-            raise _exceptions.Error53(missing_columns).to_pydantic_custom_error()
+            raise exceptions.PropertiesSheetMissingMandatoryColumns(missing_columns).to_pydantic_custom_error()
         return v
 
     @field_validator("Prefixes")
@@ -260,7 +248,7 @@ class RawTables(RuleModel):
 
         if not mandatory_columns.issubset(given_columns):
             missing_columns = mandatory_columns.difference(given_columns)
-            raise _exceptions.Error54(missing_columns).to_pydantic_custom_error()
+            raise exceptions.PrefixesSheetMissingMandatoryColumns(missing_columns).to_pydantic_custom_error()
         return v
 
     @field_validator("Instances")
@@ -270,7 +258,7 @@ class RawTables(RuleModel):
 
         if not mandatory_columns.issubset(given_columns):
             missing_columns = mandatory_columns.difference(given_columns)
-            raise _exceptions.Error55(missing_columns).to_pydantic_custom_error()
+            raise exceptions.InstancesSheetMissingMandatoryColumns(missing_columns).to_pydantic_custom_error()
         return v
 
 
@@ -332,9 +320,9 @@ def read_yaml_file_to_mapping_by_name(dirpath: Path, expected_files: set[str] | 
     return mapping_by_name
 
 
-def read_github_sheet_to_table_by_name(
+def read_github_sheet_to_workbook(
     filepath: str, personal_token: str, owner: str, repo: str, branch: str = "main"
-) -> dict[str, pd.DataFrame]:
+) -> Workbook:
     r = requests.get(
         f"https://api.github.com/repos/{owner}/{repo}/contents/{filepath}?ref={branch}",
         headers={"accept": "application/vnd.github.v3.raw", "authorization": f"token {personal_token}"},
@@ -343,15 +331,22 @@ def read_github_sheet_to_table_by_name(
     loc = f"https://github.com/{owner}/{repo}/tree/{branch}"
 
     if r.status_code != 200:
-        raise _exceptions.Error20(filepath, loc, r.reason)
+        raise exceptions.UnableToDownloadExcelFile(filepath, loc, r.reason)
     try:
         wb = load_workbook(BytesIO(r.content), data_only=True)
-    except BadZipFile:
-        raise _exceptions.Error21(filepath, loc)
-    return _workbook_to_table_by_name(wb)
+    except BadZipFile as e:
+        raise exceptions.NotExcelFile(filepath, loc) from e
+    return wb
 
 
-def _workbook_to_table_by_name(workbook: Workbook) -> dict[str, pd.DataFrame]:
+def read_github_sheet_to_table_by_name(
+    filepath: str, personal_token: str, owner: str, repo: str, branch: str = "main"
+) -> dict[str, pd.DataFrame]:
+    wb = read_github_sheet_to_workbook(filepath, personal_token, owner, repo, branch)
+    return workbook_to_table_by_name(wb)
+
+
+def workbook_to_table_by_name(workbook: Workbook) -> dict[str, pd.DataFrame]:
     table = {}
     for sheet in workbook:
         sheetname = sheet.title

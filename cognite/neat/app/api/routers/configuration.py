@@ -1,9 +1,10 @@
 import logging
 import os
 from pathlib import Path
-from fastapi import APIRouter
-from cognite.neat.app.api.configuration import Config, neat_app
 
+from fastapi import APIRouter
+
+from cognite.neat.app.api.configuration import Config, neat_app
 
 router = APIRouter()
 

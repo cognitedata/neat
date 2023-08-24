@@ -15,6 +15,33 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.21.3] - 22-08-23
+
+### Changed
+
+- Re-org and re-name step library
+- Update workflows according to new step library org
+### Added
+
+- `OntologyFromRules` step to step library
+- `SHACLFromRules` step to step library
+- `DownloadTransformationRulesFromGitHub` to step library
+
+### Improved
+- `data_model_generation` workflow has been extended to produce ontological and shape constraints representation
+- input parameters description for workflow steps in step library
+## [0.21.2] - 18-08-23
+
+### Changed
+
+- `cognite.neat.rules.exceptions` warnings and errors names changed to human-readable form
+
+## [0.21.1] - 18-08-23
+
+### Changed
+
+- `rules2dms` is updated to query for specific version of views
+
 ## [0.21.0] - 17-08-23
 
 ### Changed
@@ -35,6 +62,7 @@ Changes are grouped as follows:
 ### Improved
 
 - Improved drop operations for NeatGraph store.
+
 ## [0.20.0] - 08-08-23
 
 ### Added
