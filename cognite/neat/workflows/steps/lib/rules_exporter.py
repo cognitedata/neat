@@ -95,7 +95,7 @@ class DeleteDMSDataModel(Step):
         output_text = (
             f"DMS Data Model <b><code>{data_model.data_model.external_id}</code></b> version"
             f" <b><code>{data_model.data_model.version}</code></b> removed"
-            f" from space {data_model.data_model.space}:"
+            f" from space <b><code>{data_model.data_model.space}</code></b> as well:"
             f"<ul><li> {len(data_model.data_model.containers)} containers</li>"
             f"<li> {len(data_model.data_model.views)} views</li></ul>"
         )

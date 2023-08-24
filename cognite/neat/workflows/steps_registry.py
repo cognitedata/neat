@@ -94,7 +94,17 @@ class StepsRegistry:
                         if parameter.annotation is FlowMessage:
                             input_data.append(flow_context["FlowMessage"])
                         else:
-                            input_data.append(flow_context[parameter.annotation.__name__])
+                            if isinstance(parameter.annotation, types.UnionType):
+                                for param in parameter.annotation.__args__:
+                                    if (
+                                        param.__name__ != "_empty"
+                                        and param.__name__ in flow_context
+                                        and flow_context[param.__name__] is not None
+                                    ):
+                                        input_data.append(flow_context[param.__name__])
+                                        break  # Only one variable can be used as input
+                            else:
+                                input_data.append(flow_context[parameter.annotation.__name__])
                     except KeyError:
                         is_valid = False
                         logging.error(f"Missing data for step {step_name} parameter {parameter.name}")
@@ -113,7 +123,11 @@ class StepsRegistry:
                 input_data = []
                 output_data = []
                 for parameter in parameters.values():
-                    if parameter.annotation.__name__ != "_empty":
+                    if isinstance(parameter.annotation, types.UnionType):
+                        for param in parameter.annotation.__args__:
+                            if param.__name__ != "_empty":
+                                input_data.append(param.__name__)
+                    elif parameter.annotation.__name__ != "_empty":
                         input_data.append(parameter.annotation.__name__)
                 return_annotation = signature.return_annotation
                 if return_annotation:

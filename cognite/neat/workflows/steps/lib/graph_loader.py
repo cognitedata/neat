@@ -68,10 +68,8 @@ class GenerateCDFNodesAndEdgesFromGraph(Step):
     description = "The step generates nodes and edges from the graph"
     category = CATEGORY
 
-    def run(
-        self, rules: RulesData, cdf_client: CogniteClient, source_graph: SourceGraph
-    ) -> (FlowMessage, Nodes, Edges):
-        nodes, edges, exceptions = rdf2nodes_and_edges(rules.rules, source_graph.graph)
+    def run(self, rules: RulesData, graph: SourceGraph | SolutionGraph) -> (FlowMessage, Nodes, Edges):
+        nodes, edges, exceptions = rdf2nodes_and_edges(graph.graph, rules.rules)
 
         msg = f"Total count of: <ul><li>{ len(nodes) } nodes</li><li>{ len(edges) } edges</li></ul>"
 
