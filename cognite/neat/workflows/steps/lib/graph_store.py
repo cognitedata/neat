@@ -6,7 +6,7 @@ from cognite.neat.constants import PREFIXES
 from cognite.neat.graph.stores import NeatGraphStore, RdfStoreType, drop_graph_store
 from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
-from cognite.neat.workflows.steps.step_model import Step, StepCategory
+from cognite.neat.workflows.steps.step_model import Step
 
 __all__ = ["ConfigureDefaultGraphStores", "ResetGraphStores"]
 

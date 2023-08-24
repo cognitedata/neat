@@ -16,7 +16,7 @@ from cognite.neat.workflows import utils
 from cognite.neat.workflows.cdf_store import CdfStore
 from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
 from cognite.neat.workflows.steps.data_contracts import RulesData
-from cognite.neat.workflows.steps.step_model import Step, StepCategory
+from cognite.neat.workflows.steps.step_model import Step
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
 

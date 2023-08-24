@@ -26,7 +26,7 @@ from cognite.neat.workflows.steps.data_contracts import (
     RulesData,
     SolutionGraph,
 )
-from cognite.neat.workflows.steps.step_model import Step, StepCategory
+from cognite.neat.workflows.steps.step_model import Step
 
 __all__ = [
     "CreateCDFLabels",

@@ -4,7 +4,7 @@ from cognite.neat.graph.transformations.transformer import RuleProcessingReport,
 from cognite.neat.rules.exporter.rules2triples import get_instances_as_triples
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
-from cognite.neat.workflows.steps.step_model import Step, StepCategory
+from cognite.neat.workflows.steps.step_model import Step
 
 __all__ = [
     "TransformSourceToSolutionGraph",

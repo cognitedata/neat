@@ -11,7 +11,7 @@ from cognite.neat.rules.exporter.rules2ontology import Ontology
 from cognite.neat.utils.utils import generate_exception_report
 from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
 from cognite.neat.workflows.steps.data_contracts import RulesData
-from cognite.neat.workflows.steps.step_model import Step, StepCategory
+from cognite.neat.workflows.steps.step_model import Step
 
 __all__ = ["GraphQLSchemaFromRules", "OntologyFromRules", "SHACLFromRules", "GraphCaptureSpreadsheetFromRules"]
 
