@@ -1174,7 +1174,7 @@ class OntologyMultiRangeProperty(NeatWarning):
     def __init__(self, property_id: str = "", range_of_values: list[str] | None = None, verbose=False):
         self.message = (
             "Property should ideally have only single range of values. "
-            f"Currently property '{property_id}' has multiple ranges: {', '.join(range_of_values or None)}"
+            f"Currently property '{property_id}' has multiple ranges: {', '.join(range_of_values or [])}"
         )
         if verbose:
             self.message += f"\nDescription: {self.description}"
