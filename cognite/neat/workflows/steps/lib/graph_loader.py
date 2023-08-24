@@ -41,6 +41,8 @@ __all__ = [
     "GenerateCDFNodesAndEdgesFromGraph",
     "UploadCDFAssets",
     "UploadCDFRelationships",
+    "UploadCDFNodes",
+    "UploadCDFEdges",
 ]
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()

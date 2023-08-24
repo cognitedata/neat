@@ -249,30 +249,40 @@ def edges_one_to_many(self) -> list[str]:
 
 # Define methods that work on model instance
 @classmethod
-def from_graph(cls, graph: Graph, transformation_rules: TransformationRules, external_id: URIRef):
+def from_graph(
+    cls,
+    graph: Graph,
+    transformation_rules: TransformationRules,
+    external_id: URIRef,
+    incomplete_instance_allowed: bool = True,
+):
     """Method that creates model instance from class instance stored in graph.
 
-    Parameters
-    ----------
-    graph : Graph
-        Graph containing triples of class instance
-    transformation_rules : TransformationRules
-        Transformation rules
-    external_id : URIRef
-        External id of class instance to be used to instantiate associated pydantic model
+    Args:
+        graph: Graph containing triples of class instance
+        transformation_rules: Transformation rules
+        external_id: External id of class instance to be used to instantiate associated pydantic model
+        incomplete_instance_allowed: Flag allowing incomplete instances to be queried. Defaults to True.
 
-    Returns
-    -------
-    cls
+    Raises:
+        exceptions.MissingInstanceTriples: _description_
+        exceptions.PropertyRequiredButNotProvided: _description_
+
+    Returns:
         Pydantic model instance
     """
+
     # build sparql query for given object
     class_ = cls.__name__
 
     # here properties_optional is set to True in order to also return
     # incomplete class instances so we catch them and raise exceptions
     sparql_query = build_construct_query(
-        graph, class_, transformation_rules, class_instances=[external_id], properties_optional=True
+        graph,
+        class_,
+        transformation_rules,
+        class_instances=[external_id],
+        properties_optional=incomplete_instance_allowed,
     )
 
     result = triples2dictionary(list(graph.query(sparql_query)))
