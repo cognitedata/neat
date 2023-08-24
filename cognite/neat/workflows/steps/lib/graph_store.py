@@ -10,7 +10,6 @@ from cognite.neat.workflows.steps.step_model import Step
 
 __all__ = ["ConfigureDefaultGraphStores", "ResetGraphStores"]
 
-
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
 
 

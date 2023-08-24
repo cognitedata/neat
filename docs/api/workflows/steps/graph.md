@@ -1,4 +1,3 @@
-
 # Graph Store Steps
 ::: cognite.neat.workflows.steps.lib.graph_store
 # Graph Extractor Steps
