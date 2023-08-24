@@ -14,7 +14,15 @@ Changes are grouped as follows:
 - `Removed` for now removed features.
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
+## [0.24.0] - 24-08-23
 
+### Added
+
+- Generation of DM instances
+- `DMSDataModelFromRules`, `GenerateCDFNodesAndEdgesFromGraph`, `UploadCDFNodes` and `UploadCDFEdges` added to step libary
+
+### Improved
+- Handling of generation of pydantic model instances in case of incomplete graph instances
 ## [0.22.0] - 22-08-23
 
 ### Changed
