@@ -36,38 +36,30 @@ __all__ = [
     "UploadCDFRelationships",
 ]
 
+CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
+
 
 class CreateCDFLabels(Step):
     """
-    This step creates default NEAT labels in CDF.
-
+    This step creates default NEAT labels in CDF
     """
 
-    description = "The step creates default NEAT labels in CDF"
-    category = "cdf_resources"
+    description = "This step creates default NEAT labels in CDF"
+    category = CATEGORY
 
     def run(self, rules: RulesData, cdf_client: CogniteClient) -> None:
-        """
-        Executes the step.
-
-        Args:
-            rules: The TransformationRules object.
-            cdf_client: Connection to CogniteClient.
-
-        """
         upload_labels(cdf_client, rules.rules, extra_labels=["non-historic", "historic"])
 
 
 class GenerateCDFAssetsFromGraph(Step):
     """
-    This step generates assets from the graph and stores them in CategorizedAssets object.
-
+    The step generates assets from the graph ,categorizes them and stores them in CategorizedAssets object
     """
 
     description = (
         "The step generates assets from the graph ,categorizes them and stores them in CategorizedAssets object"
     )
-    category = "cdf_resources"
+    category = CATEGORY
 
     def run(
         self, rules: RulesData, cdf_client: CogniteClient, solution_graph: SolutionGraph
@@ -187,13 +179,11 @@ class GenerateCDFAssetsFromGraph(Step):
 
 class UploadCDFAssets(Step):
     """
-    The step uploads categorized assets to CDF
-
-
+    This step uploads categorized assets to CDF
     """
 
-    description = "The step uploads categorized assets to CDF"
-    category = "cdf_resources"
+    description = "This step uploads categorized assets to CDF"
+    category = CATEGORY
 
     def run(
         self, rules: RulesData, cdf_client: CogniteClient, categorized_assets: CategorizedAssets, flow_msg: FlowMessage
@@ -231,12 +221,11 @@ class UploadCDFAssets(Step):
 
 class GenerateCDFRelationshipsFromGraph(Step):
     """
-    The step generates relationships from the graph and saves them to CategorizedRelationships object
-
+    This step generates relationships from the graph and saves them to CategorizedRelationships object
     """
 
-    description = "The step generates relationships from the graph and saves them to CategorizedRelationships object"
-    category = "cdf_resources"
+    description = "This step generates relationships from the graph and saves them to CategorizedRelationships object"
+    category = CATEGORY
 
     def run(
         self, rules: RulesData, cdf_client: CogniteClient, solution_graph: SolutionGraph
@@ -279,12 +268,11 @@ class GenerateCDFRelationshipsFromGraph(Step):
 
 class UploadCDFRelationships(Step):
     """
-    The step uploads relationships to CDF
-
+    This step uploads relationships to CDF
     """
 
-    description = "The step uploads relationships to CDF"
-    category = "cdf_resources"
+    description = "This step uploads relationships to CDF"
+    category = CATEGORY
 
     def run(self, cdf_client: CogniteClient, categorized_relationships: CategorizedRelationships) -> FlowMessage:
         upload_relationships(cdf_client, categorized_relationships.relationships, max_retries=2, retry_delay=4)

@@ -1,105 +1,107 @@
 configs:
--   group: LoadTransformationRules
+  - group: LoadTransformationRules
     label: Full name of the rules file
     name: rules.file
     options: null
     required: false
     type: null
     value: Rules-Nordic44-to-TNT.xlsx
--   group: LoadTransformationRules
+  - group: LoadTransformationRules
     label: Optional version of the rules file
     name: rules.version
     options: null
     required: false
     type: null
-    value: ''
--   group: GenerateDataCaptureSpreadsheet
+    value: ""
+  - group: GraphCaptureSpreadsheetFromRules
     label: File name of the data capture sheet
     name: graph_capture.file
     options: null
     required: false
     type: null
     value: graph_capture_sheet.xlsx
--   group: GenerateDataCaptureSpreadsheet
+  - group: GraphCaptureSpreadsheetFromRules
     label: Type of automatic identifier
     name: graph_capture_sheet.auto_identifier_type
     options: null
     required: false
     type: null
     value: index-based
--   group: GenerateDataCaptureSpreadsheet
+  - group: GraphCaptureSpreadsheetFromRules
     label: Directory to store data capture sheets
     name: graph_capture_sheet.storage_dir
     options: null
     required: false
     type: null
     value: staging
--   group: ConfigureDefaultGraphStores
-    label: 'Data store type for source graph. Supported: oxigraph, memory,file, graphdb,
-        sparql. '
+  - group: ConfigureDefaultGraphStores
+    label:
+      "Data store type for source graph. Supported: oxigraph, memory,file, graphdb,
+      sparql. "
     name: source_rdf_store.type
     options: null
     required: false
     type: null
     value: oxigraph
--   group: ConfigureDefaultGraphStores
-    label: 'Data store type for solutioin graph. Supported: oxigraph, memory,file,
-        graphdb, sparql'
+  - group: ConfigureDefaultGraphStores
+    label:
+      "Data store type for solutioin graph. Supported: oxigraph, memory,file,
+      graphdb, sparql"
     name: solution_rdf_store.type
     options: null
     required: false
     type: null
     value: oxigraph
--   group: ConfigureDefaultGraphStores
+  - group: ConfigureDefaultGraphStores
     label: Local directory for source graph store
     name: source_rdf_store.disk_store_dir
     options: null
     required: false
     type: null
     value: source-graph-store
--   group: ConfigureDefaultGraphStores
+  - group: ConfigureDefaultGraphStores
     label: Local directory for solution graph store
     name: solution_rdf_store.disk_store_dir
     options: null
     required: false
     type: null
     value: solution-graph-store
--   group: ConfigureDefaultGraphStores
-    label: 'Defines which stores to configure. Possible values: all, source, solution'
+  - group: ConfigureDefaultGraphStores
+    label: "Defines which stores to configure. Possible values: all, source, solution"
     name: stores_to_configure
     options: null
     required: false
     type: null
     value: all
--   group: ConfigureDefaultGraphStores
+  - group: ConfigureDefaultGraphStores
     label: Root url for graphdb or sparql endpoint
     name: solution_rdf_store.api_root_url
     options: null
     required: false
     type: null
-    value: ''
+    value: ""
 description: null
 implementation_module: null
 name: sme_graph_capture
 steps:
--   description: null
+  - description: null
     enabled: true
     id: step_sheet_gen_trigger
-    label: 'Start spreadsheet generation '
+    label: "Start spreadsheet generation "
     max_retries: 0
     method: null
     params:
-        workflow_start_method: persistent_blocking
+      workflow_start_method: persistent_blocking
     retry_delay: 3
     stype: http_trigger
     system_component_id: null
     transition_to:
-    - step_load_rules
+      - step_load_rules
     trigger: true
     ui_config:
-        pos_x: 279
-        pos_y: 85
--   description: null
+      pos_x: 279
+      pos_y: 85
+  - description: null
     enabled: true
     id: step_load_rules
     label: Load rules
@@ -110,18 +112,18 @@ steps:
     stype: stdstep
     system_component_id: null
     transition_to:
-    - step_generate_spreadsheet
-    - step_generate_data_capture_sheet
+      - step_generate_spreadsheet
+      - step_generate_data_capture_sheet
     trigger: false
     ui_config:
-        pos_x: 281
-        pos_y: 214
--   description: null
+      pos_x: 281
+      pos_y: 214
+  - description: null
     enabled: true
     id: step_generate_data_capture_sheet
     label: Generate data capture spreadsheet
     max_retries: 0
-    method: GenerateDataCaptureSpreadsheet
+    method: GraphCaptureSpreadsheetFromRules
     params: {}
     retry_delay: 3
     stype: stdstep
@@ -129,9 +131,9 @@ steps:
     transition_to: []
     trigger: false
     ui_config:
-        pos_x: 281
-        pos_y: 334
--   description: null
+      pos_x: 281
+      pos_y: 334
+  - description: null
     enabled: true
     id: step_process_capture_spreadsheet
     label: Start processing captured data
@@ -142,12 +144,12 @@ steps:
     stype: file_uploader
     system_component_id: null
     transition_to:
-    - step_load_rules_2
+      - step_load_rules_2
     trigger: false
     ui_config:
-        pos_x: 669
-        pos_y: 82
--   description: null
+      pos_x: 669
+      pos_y: 82
+  - description: null
     enabled: true
     id: step_configure_store
     label: Configure solution graph data store
@@ -158,12 +160,12 @@ steps:
     stype: stdstep
     system_component_id: null
     transition_to:
-    - step_process_spreadsheet_into_graph
+      - step_process_spreadsheet_into_graph
     trigger: false
     ui_config:
-        pos_x: 669
-        pos_y: 271
--   description: null
+      pos_x: 669
+      pos_y: 271
+  - description: null
     enabled: true
     id: step_process_spreadsheet_into_graph
     label: Process captured data into solution graph
@@ -174,12 +176,12 @@ steps:
     stype: stdstep
     system_component_id: null
     transition_to:
-    - step_generate_assets
+      - step_generate_assets
     trigger: false
     ui_config:
-        pos_x: 666
-        pos_y: 402
--   description: null
+      pos_x: 666
+      pos_y: 402
+  - description: null
     enabled: true
     id: step_load_rules_2
     label: Load rules
@@ -190,12 +192,12 @@ steps:
     stype: stdstep
     system_component_id: null
     transition_to:
-    - step_configure_store
+      - step_configure_store
     trigger: false
     ui_config:
-        pos_x: 667
-        pos_y: 189
--   description: null
+      pos_x: 667
+      pos_y: 189
+  - description: null
     enabled: true
     id: step_generate_assets
     label: Generate assets
@@ -206,12 +208,12 @@ steps:
     stype: stdstep
     system_component_id: null
     transition_to:
-    - step_upload_assets
+      - step_upload_assets
     trigger: false
     ui_config:
-        pos_x: 664
-        pos_y: 531
--   description: null
+      pos_x: 664
+      pos_y: 531
+  - description: null
     enabled: true
     id: step_upload_assets
     label: Upload assets
@@ -222,12 +224,12 @@ steps:
     stype: stdstep
     system_component_id: null
     transition_to:
-    - step_generate_relationships
+      - step_generate_relationships
     trigger: false
     ui_config:
-        pos_x: 660
-        pos_y: 626
--   description: null
+      pos_x: 660
+      pos_y: 626
+  - description: null
     enabled: true
     id: step_generate_relationships
     label: Generate relationships
@@ -238,12 +240,12 @@ steps:
     stype: stdstep
     system_component_id: null
     transition_to:
-    - step_upload_relationship
+      - step_upload_relationship
     trigger: false
     ui_config:
-        pos_x: 664
-        pos_y: 717
--   description: null
+      pos_x: 664
+      pos_y: 717
+  - description: null
     enabled: true
     id: step_upload_relationship
     label: Upload relationships
@@ -256,54 +258,54 @@ steps:
     transition_to: []
     trigger: false
     ui_config:
-        pos_x: 664
-        pos_y: 805
+      pos_x: 664
+      pos_y: 805
 system_components:
--   description: null
+  - description: null
     id: define_data_model
     label: User defines data model
     transition_to:
-    - group_524479
-    - run_neat_workflow
+      - group_524479
+      - run_neat_workflow
     ui_config:
-        pos_x: 452
-        pos_y: 106
--   description: null
+      pos_x: 452
+      pos_y: 106
+  - description: null
     id: run_neat_workflow
     label: Run NEAT graph capture sheet generations workflow
     transition_to:
-    - distribute_mode
+      - distribute_mode
     ui_config:
-        pos_x: 451
-        pos_y: 218
--   description: null
+      pos_x: 451
+      pos_y: 218
+  - description: null
     id: distribute_mode
     label: Send graph capture sheet to domain experts
     transition_to:
-    - system_comp_632583
+      - system_comp_632583
     ui_config:
-        pos_x: 450
-        pos_y: 348
--   description: null
+      pos_x: 450
+      pos_y: 348
+  - description: null
     id: system_comp_632583
     label: Upload results to NEAT
     transition_to:
-    - system_comp_277046
+      - system_comp_277046
     ui_config:
-        pos_x: 450
-        pos_y: 487
--   description: null
+      pos_x: 450
+      pos_y: 487
+  - description: null
     id: system_comp_277046
     label: NEAT converts captured graph to Assets
     transition_to:
-    - system_comp_188404
+      - system_comp_188404
     ui_config:
-        pos_x: 448
-        pos_y: 581
--   description: null
+      pos_x: 448
+      pos_y: 581
+  - description: null
     id: system_comp_188404
     label: Upload Assets to CDF
     transition_to: []
     ui_config:
-        pos_x: 448
-        pos_y: 709
+      pos_x: 448
+      pos_y: 709
