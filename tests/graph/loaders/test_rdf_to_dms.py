@@ -1,5 +1,5 @@
-import pytest
 from rdflib import URIRef
+
 from cognite.neat.graph.loaders.rdf_to_dms import rdf2nodes_and_edges
 
 

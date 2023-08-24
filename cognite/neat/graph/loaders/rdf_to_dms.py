@@ -2,8 +2,8 @@ import logging
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import EdgeApply, NodeApply
-from cognite.neat.exceptions import NeatException
 
+from cognite.neat.exceptions import NeatException
 from cognite.neat.graph.stores.graph_store import NeatGraphStore
 from cognite.neat.rules.exporter.rules2dms import DataModel
 from cognite.neat.rules.exporter.rules2pydantic_models import rules_to_pydantic_models

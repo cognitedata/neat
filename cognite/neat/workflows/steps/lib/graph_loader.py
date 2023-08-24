@@ -1,7 +1,6 @@
-from datetime import datetime
 import logging
-from pathlib import Path
 import time
+from datetime import datetime
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import AssetFilter
@@ -20,9 +19,7 @@ from cognite.neat.graph.loaders.core.rdf_to_relationships import (
     rdf2relationships,
     upload_relationships,
 )
-
-from cognite.neat.graph.loaders.rdf_to_dms import rdf2nodes_and_edges, upload_edges, upload_nodes
-
+from cognite.neat.graph.loaders.rdf_to_dms import rdf2nodes_and_edges
 from cognite.neat.graph.loaders.validator import validate_asset_hierarchy
 from cognite.neat.utils.utils import generate_exception_report
 from cognite.neat.workflows.model import FlowMessage
