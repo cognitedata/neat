@@ -15,6 +15,8 @@ from cognite.neat.workflows.steps.step_model import Step, StepCategory
 
 __all__ = ["GraphQLSchemaFromRules", "OntologyFromRules", "SHACLFromRules", "GraphCaptureSpreadsheetFromRules"]
 
+CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
+
 
 class GraphQLSchemaFromRules(Step):
     """
@@ -22,7 +24,7 @@ class GraphQLSchemaFromRules(Step):
     """
 
     description = "This step generates GraphQL schema from data model defined in transformation rules."
-    category = StepCategory.RulesExporter
+    category = CATEGORY
     configuration_templates: ClassVar[list[WorkflowConfigItem]] = [
         WorkflowConfigItem(
             name="graphql_schema.file",
@@ -71,7 +73,7 @@ class OntologyFromRules(Step):
     """
 
     description = "This step generates OWL ontology from data model defined in transformation rules."
-    category = StepCategory.RulesExporter
+    category = CATEGORY
     configuration_templates: ClassVar[list[WorkflowConfigItem]] = [
         WorkflowConfigItem(
             name="ontology.file",
@@ -144,7 +146,7 @@ class SHACLFromRules(Step):
     """
 
     description = "This step generates SHACL from data model defined in transformation rules"
-    category = StepCategory.RulesExporter
+    category = CATEGORY
     configuration_templates: [
         WorkflowConfigItem(
             name="shacl.file",
@@ -191,7 +193,7 @@ class GraphCaptureSpreadsheetFromRules(Step):
     """
 
     description = "This step generates data capture spreadsheet from data model defined in rules"
-    category = StepCategory.RulesExporter
+    category = CATEGORY
     configuration_templates: ClassVar[list[WorkflowConfigItem]] = [
         WorkflowConfigItem(
             name="graph_capture.file",

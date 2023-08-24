@@ -10,6 +10,8 @@ from cognite.neat.workflows.steps.step_model import Step, StepCategory
 
 __all__ = ["ConfigureDefaultGraphStores", "ResetGraphStores"]
 
+CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
+
 
 class ConfigureDefaultGraphStores(Step):
     """
@@ -17,7 +19,7 @@ class ConfigureDefaultGraphStores(Step):
     """
 
     description = "This step initializes the source and solution graph stores."
-    category = StepCategory.GraphStore
+    category = CATEGORY
     configuration_templates: ClassVar[list[WorkflowConfigItem]] = [
         WorkflowConfigItem(
             name="source_rdf_store.type",
@@ -116,7 +118,7 @@ class ResetGraphStores(Step):
     """
 
     description = "This step resets graph stores to their initial state (clears all data)."
-    category = StepCategory.GraphStore
+    category = CATEGORY
 
     def run(self) -> FlowMessage:
         source_store_type = self.configs.get_config_item_value("source_rdf_store.type", RdfStoreType.MEMORY)

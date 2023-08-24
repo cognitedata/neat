@@ -36,6 +36,8 @@ __all__ = [
     "UploadCDFRelationships",
 ]
 
+CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
+
 
 class CreateCDFLabels(Step):
     """
@@ -43,7 +45,7 @@ class CreateCDFLabels(Step):
     """
 
     description = "This step creates default NEAT labels in CDF"
-    category = StepCategory.GraphLoader
+    category = CATEGORY
 
     def run(self, rules: RulesData, cdf_client: CogniteClient) -> None:
         upload_labels(cdf_client, rules.rules, extra_labels=["non-historic", "historic"])
@@ -57,7 +59,7 @@ class GenerateCDFAssetsFromGraph(Step):
     description = (
         "The step generates assets from the graph ,categorizes them and stores them in CategorizedAssets object"
     )
-    category = StepCategory.GraphLoader
+    category = CATEGORY
 
     def run(
         self, rules: RulesData, cdf_client: CogniteClient, solution_graph: SolutionGraph
@@ -181,7 +183,7 @@ class UploadCDFAssets(Step):
     """
 
     description = "This step uploads categorized assets to CDF"
-    category = StepCategory.GraphLoader
+    category = CATEGORY
 
     def run(
         self, rules: RulesData, cdf_client: CogniteClient, categorized_assets: CategorizedAssets, flow_msg: FlowMessage
@@ -223,7 +225,7 @@ class GenerateCDFRelationshipsFromGraph(Step):
     """
 
     description = "This step generates relationships from the graph and saves them to CategorizedRelationships object"
-    category = StepCategory.GraphLoader
+    category = CATEGORY
 
     def run(
         self, rules: RulesData, cdf_client: CogniteClient, solution_graph: SolutionGraph
@@ -270,7 +272,7 @@ class UploadCDFRelationships(Step):
     """
 
     description = "This step uploads relationships to CDF"
-    category = StepCategory.GraphLoader
+    category = CATEGORY
 
     def run(self, cdf_client: CogniteClient, categorized_relationships: CategorizedRelationships) -> FlowMessage:
         upload_relationships(cdf_client, categorized_relationships.relationships, max_retries=2, retry_delay=4)

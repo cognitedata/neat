@@ -10,6 +10,8 @@ __all__ = [
     "TransformSourceToSolutionGraph",
 ]
 
+CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
+
 
 class TransformSourceToSolutionGraph(Step):
     """
@@ -17,7 +19,7 @@ class TransformSourceToSolutionGraph(Step):
     """
 
     description = "The step transforms source graph to solution graph"
-    category = StepCategory.GraphTransformer
+    category = CATEGORY
 
     def run(
         self,

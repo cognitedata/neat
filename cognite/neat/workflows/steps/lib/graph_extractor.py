@@ -19,6 +19,8 @@ __all__ = [
     "DataModelFromRulesToSourceGraph",
 ]
 
+CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
+
 
 class InstancesFromRdfFileToSourceGraph(Step):
     """
@@ -26,7 +28,7 @@ class InstancesFromRdfFileToSourceGraph(Step):
     """
 
     description = "This step extract instances from a file into the source graph. The file must be in RDF format."
-    category = StepCategory.GraphLoader
+    category = CATEGORY
     configuration_templates: ClassVar[list[WorkflowConfigItem]] = [
         WorkflowConfigItem(
             name="source_rdf_store.file",
@@ -54,7 +56,7 @@ class InstancesFromGraphCaptureSpreadsheetToSolutionGraph(Step):
     """
 
     description = "This step extracts instances from graph capture spreadsheet and loads them into solution graph"
-    category = StepCategory.GraphExtractor
+    category = CATEGORY
 
     def run(
         self,
@@ -78,7 +80,7 @@ class InstancesFromRulesToSolutionGraph(Step):
     """
 
     description = "This step extracts instances from rules file and loads them into solution graph."
-    category = StepCategory.GraphExtractor
+    category = CATEGORY
 
     def run(self, transformation_rules: RulesData, solution_graph: SolutionGraph) -> FlowMessage:
         triples = get_instances_as_triples(transformation_rules.rules)
@@ -103,7 +105,7 @@ class DataModelFromRulesToSourceGraph(Step):
     """
 
     description = "This step extracts data model from rules file and loads it into source graph."
-    category = StepCategory.GraphExtractor
+    category = CATEGORY
 
     def run(self, transformation_rules: RulesData, source_graph: SourceGraph) -> FlowMessage:
         ns = PREFIXES["neat"]
