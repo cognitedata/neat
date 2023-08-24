@@ -8,16 +8,6 @@ from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
 from cognite.neat.workflows.model import WorkflowConfigItem, WorkflowConfigs
 
 
-class StepCategory(StrEnum):
-    RulesImporter = "rules | importer"
-    RulesParser = "rules | parser"
-    RulesExporter = "rules | exporter"
-    GraphExtractor = "graph | extractor"
-    GraphTransformer = "graph | transformer"
-    GraphStore = "graph | store"
-    GraphLoader = "graph | loader"
-
-
 class Config(BaseModel):
     ...
 
