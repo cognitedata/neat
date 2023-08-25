@@ -272,7 +272,8 @@ class BaseWorkflow:
                           not set as parameter in BaseWorkflow constructor"
                     )
                 output = self.steps_registry.run_step(
-                    step.method, self.data, metrics=self.metrics, configs=self.get_configs()
+                    step.method, self.data, metrics=self.metrics, workflow_configs=self.get_configs(),
+                    step_configs=step.configs
                 )
                 if output is not None:
                     outputs = output if isinstance(output, tuple) else (output,)

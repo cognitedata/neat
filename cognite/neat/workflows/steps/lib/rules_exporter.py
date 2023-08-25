@@ -9,9 +9,9 @@ from cognite.neat.rules.exporter import rules2graph_sheet
 from cognite.neat.rules.exporter.rules2graphql import GraphQLSchema
 from cognite.neat.rules.exporter.rules2ontology import Ontology
 from cognite.neat.utils.utils import generate_exception_report
-from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
+from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import RulesData
-from cognite.neat.workflows.steps.step_model import Step
+from cognite.neat.workflows.steps.step_model import Configurable, Step
 
 __all__ = ["GraphQLSchemaFromRules", "OntologyFromRules", "SHACLFromRules", "GraphCaptureSpreadsheetFromRules"]
 
@@ -25,18 +25,16 @@ class GraphQLSchemaFromRules(Step):
 
     description = "This step generates GraphQL schema from data model defined in transformation rules."
     category = CATEGORY
-    configuration_templates: ClassVar[list[WorkflowConfigItem]] = [
-        WorkflowConfigItem(
-            name="graphql_schema.file",
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="file_name",
             value="",
             label=(
                 "Name of the GraphQL schema file it must have .graphql extension,"
                 " if empty defaults to form `prefix-version.graphql`"
             ),
         ),
-        WorkflowConfigItem(
-            name="graphql_export.storage_dir", value="staging", label="Directory to store GraphQL schema file"
-        ),
+        Configurable(name="storage_dir", value="staging", label="Directory to store GraphQL schema file"),
     ]
 
     def run(self, transformation_rules: RulesData) -> FlowMessage:
@@ -48,9 +46,9 @@ class GraphQLSchemaFromRules(Step):
             ".graphql"
         )
 
-        schema_name = self.configs.get_config_item_value("graphql_schema.file") or default_name
+        schema_name = self.configs["file_name"] or default_name
 
-        staging_dir_str = self.configs.get_config_item_value("graphql_export.storage_dir", "staging")
+        staging_dir_str = self.configs["storage_dir"]
         staging_dir = self.data_store_path / Path(staging_dir_str)
         staging_dir.mkdir(parents=True, exist_ok=True)
         fdm_model_full_path = staging_dir / schema_name
@@ -74,22 +72,21 @@ class OntologyFromRules(Step):
 
     description = "This step generates OWL ontology from data model defined in transformation rules."
     category = CATEGORY
-    configuration_templates: ClassVar[list[WorkflowConfigItem]] = [
-        WorkflowConfigItem(
-            name="ontology.file",
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="file_name",
             value="",
             label=(
                 "Name of the OWL ontology file it must have .ttl extension,"
                 " if empty defaults to form `prefix-version-ontology.ttl`"
             ),
         ),
-        WorkflowConfigItem(
-            name="ontology_export.storage_dir", value="staging", label="Directory to store the OWL ontology file"
-        ),
-        WorkflowConfigItem(
-            name="ontology.store_warnings",
+        Configurable(name="storage_dir", value="staging", label="Directory to store the OWL ontology file"),
+        Configurable(
+            name="store_warnings",
             value="True",
             label="To store warnings while generating ontology",
+            options=["True", "False"],
         ),
     ]
 
@@ -101,13 +98,13 @@ class OntologyFromRules(Step):
             "-ontology.ttl"
         )
 
-        ontology_file = self.configs.get_config_item_value("ontology.file") or default_name
+        ontology_file = self.configs["file_name"] or default_name
 
-        storage_dir_str = self.configs.get_config_item_value("ontology_export.storage_dir", "staging")
+        storage_dir_str = self.configs["storage_dir"]
         storage_dir = self.data_store_path / storage_dir_str
         storage_dir.mkdir(parents=True, exist_ok=True)
 
-        store_warnings = self.configs.get_config_item_value("ontology.store_warnings", "true").lower() == "true"
+        store_warnings = self.configs["store_warnings"].lower() == "true"
 
         with warnings.catch_warnings(record=True) as validation_warnings:
             ontology = Ontology.from_rules(transformation_rules=transformation_rules.rules)
@@ -147,16 +144,16 @@ class SHACLFromRules(Step):
 
     description = "This step generates SHACL from data model defined in transformation rules"
     category = CATEGORY
-    configuration_templates: [
-        WorkflowConfigItem(
-            name="shacl.file",
+    configurables = [
+        Configurable(
+            name="file_name",
             value="",
             label=(
                 "Name of the SHACL file it must have .ttl extension, if "
                 "empty defaults to form `prefix-version-shacl.ttl`"
             ),
         ),
-        WorkflowConfigItem(name="shacl_export.storage_dir", value="staging", label="Directory to store the SHACL file"),
+        Configurable(name="storage_dir", value="staging", label="Directory to store the SHACL file"),
     ]
 
     def run(self, transformation_rules: RulesData) -> FlowMessage:
@@ -167,9 +164,9 @@ class SHACLFromRules(Step):
             "-shacl.ttl"
         )
 
-        shacl_file = self.configs.get_config_item_value("shacl.file") or default_name
+        shacl_file = self.configs["file_name"] or default_name
 
-        storage_dir_str = self.configs.get_config_item_value("shacl_export.storage_dir", "staging")
+        storage_dir_str = self.configs["storage_dir"]
         storage_dir = self.data_store_path / storage_dir_str
         storage_dir.mkdir(parents=True, exist_ok=True)
 
@@ -194,25 +191,21 @@ class GraphCaptureSpreadsheetFromRules(Step):
 
     description = "This step generates data capture spreadsheet from data model defined in rules"
     category = CATEGORY
-    configuration_templates: ClassVar[list[WorkflowConfigItem]] = [
-        WorkflowConfigItem(
-            name="graph_capture.file",
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="file_name",
             value="graph_capture_sheet.xlsx",
             label="File name of the data capture sheet",
         ),
-        WorkflowConfigItem(
-            name="graph_capture_sheet.auto_identifier_type", value="index-based", label="Type of automatic identifier"
-        ),
-        WorkflowConfigItem(
-            name="graph_capture_sheet.storage_dir", value="staging", label="Directory to store data capture sheets"
-        ),
+        Configurable(name="auto_identifier_type", value="index-based", label="Type of automatic identifier"),
+        Configurable(name="storage_dir", value="staging", label="Directory to store data capture sheets"),
     ]
 
     def run(self, rules: RulesData) -> FlowMessage:
         logging.info("Generate graph capture sheet")
-        sheet_name = self.configs.get_config_item_value("graph_capture.file", "graph_capture_sheet.xlsx")
-        auto_identifier_type = self.configs.get_config_item_value("graph_capture_sheet.auto_identifier_type", None)
-        staging_dir_str = self.configs.get_config_item_value("graph_capture_sheet.storage_dir", "staging")
+        sheet_name = self.configs["file"]
+        auto_identifier_type = self.configs["auto_identifier_type"]
+        staging_dir_str = self.configs["graph_capture_sheet.storage_dir"]
         logging.info(f"Auto identifier type {auto_identifier_type}")
         staging_dir = self.data_store_path / Path(staging_dir_str)
         staging_dir.mkdir(parents=True, exist_ok=True)

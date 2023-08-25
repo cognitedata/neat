@@ -8,9 +8,9 @@ from cognite.neat.constants import PREFIXES
 from cognite.neat.graph import extractors
 from cognite.neat.rules.exporter.rules2triples import get_instances_as_triples
 from cognite.neat.utils.utils import add_triples
-from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
+from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
-from cognite.neat.workflows.steps.step_model import Step
+from cognite.neat.workflows.steps.step_model import Configurable, Step
 
 __all__ = [
     "InstancesFromRdfFileToSourceGraph",
@@ -29,9 +29,9 @@ class InstancesFromRdfFileToSourceGraph(Step):
 
     description = "This step extract instances from a file into the source graph. The file must be in RDF format."
     category = CATEGORY
-    configuration_templates: ClassVar[list[WorkflowConfigItem]] = [
-        WorkflowConfigItem(
-            name="source_rdf_store.file",
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="file_path",
             value="source-graphs/source-graph-dump.xml",
             label="File name of source graph data dump in RDF format",
         )
@@ -39,7 +39,7 @@ class InstancesFromRdfFileToSourceGraph(Step):
 
     def run(self, rules: RulesData, source_graph: SourceGraph) -> FlowMessage:
         if source_graph.graph.rdf_store_type.lower() in ("memory", "oxigraph"):
-            if source_file := self.configs.get_config_item_value("source_rdf_store.file"):
+            if source_file := self.configs["file_path"]:
                 source_graph.graph.import_from_file(Path(self.data_store_path) / Path(source_file))
                 logging.info(f"Loaded {source_file} into source graph.")
             else:
@@ -64,7 +64,14 @@ class InstancesFromGraphCaptureSpreadsheetToSolutionGraph(Step):
         solution_graph: SolutionGraph,
     ) -> FlowMessage:
         triggered_flow_message = self.flow_context["StartFlowMessage"]
-        data_capture_sheet_path = Path(triggered_flow_message.payload["full_path"])
+        if "full_path" in triggered_flow_message.payload:
+            data_capture_sheet_path = Path(triggered_flow_message.payload["full_path"])
+        else:
+            data_capture_sheet_path = (
+                self.data_store_path
+                / Path(self.configs.get_config_item_value("graph_capture_sheet.storage_dir", "staging"))
+                / self.configs.get_config_item_value("graph_capture.file", "graph_capture_sheet.xlsx")
+            )
         logging.info(f"Processing graph capture sheet {data_capture_sheet_path}")
 
         triples = extractors.extract_graph_from_sheet(
