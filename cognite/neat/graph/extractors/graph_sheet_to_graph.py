@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 from openpyxl import Workbook, load_workbook
 from rdflib import RDF, XSD, Literal, Namespace
-from cognite.neat.graph import exceptions
 
+from cognite.neat.graph import exceptions
 from cognite.neat.rules.analysis import get_defined_classes, to_class_property_pairs
 from cognite.neat.rules.models import TransformationRules
 

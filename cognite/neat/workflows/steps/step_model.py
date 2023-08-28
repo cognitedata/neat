@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from enum import StrEnum
 from typing import ClassVar, TypeVar
 
 from pydantic import BaseModel, ConfigDict
