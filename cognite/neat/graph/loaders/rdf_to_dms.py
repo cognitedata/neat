@@ -171,14 +171,12 @@ def _micro_batch_push(
         start_time = datetime_utc_now()
 
         @retry_decorator(max_retries=max_retries, retry_delay=retry_delay, component_name=f"microbatch-{push_type}")
-        def upsert_nodes_or_edges(batch):
+        def upsert_nodes_or_edges(upload_batch):
             if push_type == "nodes":
-                client.data_modeling.instances.apply(
-                    nodes=nodes_or_edges, auto_create_start_nodes=True, auto_create_end_nodes=True
-                )
+                client.data_modeling.instances.apply(nodes=upload_batch)
             elif push_type == "edges":
                 client.data_modeling.instances.apply(
-                    edges=nodes_or_edges, auto_create_start_nodes=True, auto_create_end_nodes=True
+                    edges=upload_batch, auto_create_start_nodes=True, auto_create_end_nodes=True
                 )
 
         upsert_nodes_or_edges(batch)
