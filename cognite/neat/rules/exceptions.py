@@ -188,6 +188,19 @@ class DataModelNameRegexViolation(NeatException):
 
 
 class VersionRegexViolation(NeatException):
+    """version, which is in the 'Metadata' sheet, does not respect defined regex expression
+
+    Args:
+        version: version that raised exception
+        regex_expression: regex expression against which version is validated
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        Check if `version` in the `Metadata` sheet contains any illegal
+        characters and respects the regex expression
+
+    """
+
     type_: str = "VersionRegexViolation"
     code: int = 4
     description: str = "version, which is in the 'Metadata' sheet, does not respect defined regex expression"
@@ -199,12 +212,58 @@ class VersionRegexViolation(NeatException):
         "Check if version in the 'Metadata' sheet contains any illegal characters and respects the regex expression"
     )
 
-    def __init__(self, version, regex_expression, verbose=False):
+    def __init__(self, version: str, regex_expression: str, verbose=False):
         self.version = version
         self.regex_expression = regex_expression
 
         self.message = (
             f"Invalid version '{self.version}' stored in 'Metadata' sheet, it must obey regex {self.regex_expression}!"
+            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class ClassSheetClassIDRegexViolation(NeatException):
+    """Class ID, which is stored in the column 'Class' in the 'Classes' sheet, does not
+    respect defined regex expression
+
+    Args:
+        class_id: class_id that raised exception
+        regex_expression: regex expression against which class_id is validated
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        Check definition of class ids in 'Class' column in 'Classes' sheet and
+        make sure to respect the regex expression by removing any illegal characters
+
+    """
+
+    type_: str = "ClassSheetClassIDRegexViolation"
+    code: int = 5
+    description: str = (
+        "Class ID, which is stored in the column 'Class' in the 'Classes' sheet, "
+        "does not respect defined regex expression"
+    )
+    example: str = (
+        "If class id is set to 'Class 1', while regex expression does not allow spaces,"
+        " the expression will be violated thus raising this error"
+    )
+    fix: str = (
+        "Check definition of class ids in 'Class' column in 'Classes' sheet and "
+        "make sure to respect the regex expression by removing any illegal characters"
+    )
+
+    def __init__(self, class_id: str, regex_expression: str, verbose: bool = False):
+        self.class_id = class_id
+        self.regex_expression = regex_expression
+
+        self.message = (
+            f"Class id '{self.class_id}' stored in 'Class' column in 'Classes' "
+            f"sheet violates regex {self.regex_expression}!"
             f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
         )
         if verbose:
@@ -778,14 +837,22 @@ class PropertyRequiredButNotProvided(NeatException):
         super().__init__(self.message)
 
 
-################################################################################################
-# Exceptions that need to be updated ###########################################################
-################################################################################################
-
-
 class DataModelOrItsComponentsAlreadyExist(NeatException):
+    """This error is raised when attempting to create data model which already exist in DMS
+
+    Args:
+        existing_data_model: external_id of model that already exist in DMS
+        existing_containers: set of external_ids of containers that already exist in DMS
+        existing_views: set of external_ids of views that already exist in DMS
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        Remove existing data model and underlying views and/or containers, or bump
+        version of data model and views and/ir optionally delete containers.
+    """
+
     type_: str = "DataModelOrItsComponentsAlreadyExist"
-    code: int = 60
+    code: int = 406
     description: str = "This error is raised when attempting to create data model which already exist in DMS."
     example: str = ""
     fix: str = (
@@ -793,7 +860,9 @@ class DataModelOrItsComponentsAlreadyExist(NeatException):
         "version of data model and views and optionally delete containers."
     )
 
-    def __init__(self, existing_data_model, existing_containers, existing_views, verbose=False):
+    def __init__(
+        self, existing_data_model: str, existing_containers: set[str], existing_views: set[str], verbose: bool = False
+    ):
         self.existing_data_model = existing_data_model
         self.existing_containers = existing_containers
         self.existing_views = existing_views
@@ -812,6 +881,7 @@ class DataModelOrItsComponentsAlreadyExist(NeatException):
 
         self.message += (
             "\nTo remove existing data model and its components, use `self.remove_data_model(client)` method."
+            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
         )
 
         if verbose:
@@ -822,17 +892,33 @@ class DataModelOrItsComponentsAlreadyExist(NeatException):
 
 
 class InstancePropertiesNotMatchingContainerProperties(NeatException):
+    """This error is raised when an instance of a class has properties which are not
+    defined in the DMS container
+
+    Args:
+        class_name: class name of instance that raised exception
+        class_properties: list of mandatory properties of class
+        container_properties: list of properties of container
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        Make sure that all properties of a class are defined in the DMS container.
+    """
+
     type_: str = "InstancePropertiesNotMatchingContainerProperties"
-    code: int = 61
+    code: int = 407
     description: str = "Instance of a class has properties which are not defined in the DMS container"
     example: str = ""
     fix: str = "Make sure that all properties of a class are defined in the DMS container"
 
-    def __init__(self, class_name, class_properties, container_properties, verbose=False):
+    def __init__(
+        self, class_name: str, class_properties: list[str], container_properties: list[str], verbose: bool = False
+    ):
         self.message = (
             f"Instance of class {class_name} has properties {class_properties}"
             f" while DMS container  {class_name} has properties {container_properties}!"
             f" Cannot create instance in DMS as properties do not match!"
+            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
         )
 
         if verbose:
@@ -842,39 +928,9 @@ class InstancePropertiesNotMatchingContainerProperties(NeatException):
         super().__init__(self.message)
 
 
-########################################
-# Classes sheet Error Codes 200 - 199: #
-
-
-class ClassSheetClassIDRegexViolation(NeatException):
-    type_: str = "ClassSheetClassIDRegexViolation"
-    code: int = 200
-    description: str = (
-        "Class ID, which is stored in the column 'Class' in the 'Classes' sheet, "
-        "does not respect defined regex expression"
-    )
-    example: str = (
-        "If class id is set to 'Class 1', while regex expression does not allow spaces,"
-        " the expression will be violated thus raising this error"
-    )
-    fix: str = (
-        "Check definition of class ids in 'Class' column in 'Classes' sheet and "
-        "make sure to respect the regex expression by removing any illegal characters"
-    )
-
-    def __init__(self, class_id, regex_expression, verbose=False):
-        self.class_id = class_id
-        self.regex_expression = regex_expression
-
-        self.message = (
-            f"Class id '{self.class_id}' stored in 'Class' column in 'Classes' "
-            f"sheet violates regex {self.regex_expression}!"
-        )
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
+################################################################################################
+# Exceptions that need to be updated ###########################################################
+################################################################################################
 
 
 class ClassIDMissing(NeatException):
