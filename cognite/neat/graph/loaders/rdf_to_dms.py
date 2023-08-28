@@ -2,6 +2,7 @@ import logging
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import EdgeApply, NodeApply
+from pydantic_core import ErrorDetails
 
 from cognite.neat.exceptions import NeatException
 from cognite.neat.graph.stores.graph_store import NeatGraphStore
@@ -15,7 +16,7 @@ def rdf2nodes_and_edges(
     graph_store: NeatGraphStore,
     transformation_rules: TransformationRules,
     stop_on_exception: bool = False,
-) -> tuple[list[NodeApply], list[EdgeApply], list[dict]]:
+) -> tuple[list[NodeApply], list[EdgeApply], list[ErrorDetails]]:
     """Generates DMS nodes and edges from knowledge graph stored as RDF triples
 
     Args:
