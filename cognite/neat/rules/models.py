@@ -288,7 +288,7 @@ class Metadata(RuleModel):
         warnings.warn(
             exceptions.NamespaceEndingFixed(value).message, category=exceptions.NamespaceEndingFixed, stacklevel=2
         )
-        return f"{value}#"
+        return Namespace(f"{value}#")
 
     @validator("data_model_name", always=True)
     def set_data_model_name_if_none(cls, value, values):
