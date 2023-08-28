@@ -240,8 +240,7 @@ def edges_one_to_many(self) -> list[str]:
     return [
         field
         for field in self.model_fields_set
-        if self.model_fields[field].json_schema_extra
-        and self.model_fields[field].json_schema_extra.get("property_type", "") == "EdgeOneToMany"
+        if (schema := self.model_fields[field].json_schema_extra) and schema.get("property_type") == "EdgeOneToMany"
     ]
 
 
