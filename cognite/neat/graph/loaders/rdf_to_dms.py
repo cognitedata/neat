@@ -94,7 +94,7 @@ def upload_nodes(
 
         @retry_decorator(max_retries=max_retries, retry_delay=retry_delay, component_name="create-nodes")
         def create_nodes():
-            client.data_modeling.instances.apply(nodes=nodes, auto_create_start_nodes=True, auto_create_end_nodes=True)
+            client.data_modeling.instances.apply(nodes=nodes)
 
         create_nodes()
 
