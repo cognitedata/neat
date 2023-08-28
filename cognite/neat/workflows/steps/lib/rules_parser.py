@@ -18,6 +18,8 @@ from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
 from cognite.neat.workflows.steps.data_contracts import RulesData
 from cognite.neat.workflows.steps.step_model import Step
 
+__all__ = ["LoadTransformationRules", "DownloadTransformationRulesFromGitHub"]
+
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
 
 

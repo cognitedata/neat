@@ -484,12 +484,11 @@ def _to_construct_triples(
             optional=False,
         )
 
+        # AllReferences should not be "optional" since we are creating their values
+        # by binding them to certain property
         if isinstance(property_.rule, AllReferences):
             graph_pattern_triple = Triple(
-                subject="BIND(?subject",
-                predicate="AS",
-                object=f"{graph_template_triple.object})",
-                optional=True if properties_optional else not property_.is_mandatory,
+                subject="BIND(?subject", predicate="AS", object=f"{graph_template_triple.object})", optional=False
             )
 
         elif isinstance(property_.rule, SingleProperty):

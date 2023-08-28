@@ -1,5 +1,7 @@
 import logging
 import time
+from datetime import datetime
+from typing import ClassVar
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import AssetFilter
@@ -18,13 +20,18 @@ from cognite.neat.graph.loaders.core.rdf_to_relationships import (
     rdf2relationships,
     upload_relationships,
 )
+from cognite.neat.graph.loaders.rdf_to_dms import rdf2nodes_and_edges, upload_edges, upload_nodes
 from cognite.neat.graph.loaders.validator import validate_asset_hierarchy
-from cognite.neat.workflows.model import FlowMessage
+from cognite.neat.utils.utils import generate_exception_report
+from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
 from cognite.neat.workflows.steps.data_contracts import (
     CategorizedAssets,
     CategorizedRelationships,
+    Edges,
+    Nodes,
     RulesData,
     SolutionGraph,
+    SourceGraph,
 )
 from cognite.neat.workflows.steps.step_model import Step
 
@@ -32,8 +39,11 @@ __all__ = [
     "CreateCDFLabels",
     "GenerateCDFAssetsFromGraph",
     "GenerateCDFRelationshipsFromGraph",
+    "GenerateCDFNodesAndEdgesFromGraph",
     "UploadCDFAssets",
     "UploadCDFRelationships",
+    "UploadCDFNodes",
+    "UploadCDFEdges",
 ]
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
@@ -49,6 +59,75 @@ class CreateCDFLabels(Step):
 
     def run(self, rules: RulesData, cdf_client: CogniteClient) -> None:
         upload_labels(cdf_client, rules.rules, extra_labels=["non-historic", "historic"])
+
+
+class GenerateCDFNodesAndEdgesFromGraph(Step):
+    """
+    The step generates nodes and edges from the graph
+    """
+
+    description = "The step generates nodes and edges from the graph"
+    category = CATEGORY
+
+    configuration_templates: ClassVar[list[WorkflowConfigItem]] = [
+        WorkflowConfigItem(
+            name="nodes_and_edges_generation.graph_name",
+            value="source",
+            label=("The name of the graph to be used for matching." " Supported options : source, solution"),
+        ),
+    ]
+
+    def run(self, rules: RulesData, graph: SourceGraph | SolutionGraph) -> (FlowMessage, Nodes, Edges):
+        graph_name = self.configs.get_config_item_value("nodes_and_edges_generation.graph_name", "source")
+        if graph_name == "solution":
+            graph = self.flow_context["SolutionGraph"]
+        else:
+            graph = self.flow_context["SourceGraph"]
+
+        nodes, edges, exceptions = rdf2nodes_and_edges(graph.graph, rules.rules)
+
+        msg = f"Total count of: <ul><li>{ len(nodes) } nodes</li><li>{ len(edges) } edges</li></ul>"
+
+        if exceptions:
+            file_name = f'nodes-and-edges-exceptions_{datetime.now().strftime("%Y%d%m%H%M")}.txt'
+            exceptions_report_dir = self.data_store_path / "reports"
+            exceptions_report_dir.mkdir(parents=True, exist_ok=True)
+            exceptions_report_path = exceptions_report_dir / file_name
+
+            exceptions_report_path.write_text(generate_exception_report(exceptions, "Errors"))
+            msg += (
+                f"<p>There is total of { len(exceptions) } exceptions</p>"
+                f'<a href="http://localhost:8000/data/reports/{file_name}?{time.time()}" '
+                f'target="_blank">here</a>'
+            )
+
+        return FlowMessage(output_text=msg), Nodes(nodes=nodes), Edges(edges=edges)
+
+
+class UploadCDFNodes(Step):
+    """
+    This step uploads nodes to CDF
+    """
+
+    description = "This step uploads nodes to CDF"
+    category = CATEGORY
+
+    def run(self, cdf_client: CogniteClient, nodes: Nodes) -> FlowMessage:
+        upload_nodes(cdf_client, nodes.nodes, max_retries=2, retry_delay=4)
+        return FlowMessage(output_text="CDF nodes uploaded successfully")
+
+
+class UploadCDFEdges(Step):
+    """
+    This step uploads edges to CDF
+    """
+
+    description = "This step uploads edges to CDF"
+    category = CATEGORY
+
+    def run(self, cdf_client: CogniteClient, edges: Edges) -> FlowMessage:
+        upload_edges(cdf_client, edges.edges, max_retries=2, retry_delay=4)
+        return FlowMessage(output_text="CDF edges uploaded successfully")
 
 
 class GenerateCDFAssetsFromGraph(Step):

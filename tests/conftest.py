@@ -6,6 +6,7 @@ from cognite.neat.graph import extractors, loaders
 from cognite.neat.graph.extractors.mocks import generate_triples
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.graph.transformations.transformer import domain2app_knowledge_graph
+from cognite.neat.rules.exporter.rules2triples import get_instances_as_triples
 from cognite.neat.rules.importer.ontology2excel import owl2excel
 from cognite.neat.rules.models import TransformationRules
 from cognite.neat.rules.parser import RawTables, read_excel_file_to_table_by_name
@@ -16,6 +17,25 @@ from tests import config
 @pytest.fixture(scope="session")
 def transformation_rules() -> TransformationRules:
     return rules.parse_rules_from_excel_file(config.TNT_TRANSFORMATION_RULES)
+
+
+@pytest.fixture(scope="session")
+def simple_rules() -> TransformationRules:
+    return rules.parse_rules_from_excel_file(config.SIMPLE_TRANSFORMATION_RULES)
+
+
+@pytest.fixture(scope="function")
+def small_graph(simple_rules) -> NeatGraphStore:
+    graph_store = NeatGraphStore(
+        base_prefix=simple_rules.metadata.prefix,
+        namespace=simple_rules.metadata.namespace,
+        prefixes=simple_rules.prefixes,
+    )
+    graph_store.init_graph()
+
+    for triple in get_instances_as_triples(simple_rules):
+        graph_store.graph.add(triple)
+    return graph_store
 
 
 @pytest.fixture(scope="session")
@@ -60,11 +80,6 @@ def mock_rdf_assets(mock_knowledge_graph, transformation_rules):
 @pytest.fixture(scope="function")
 def mock_cdf_assets(mock_knowledge_graph, transformation_rules):
     return loaders.rdf2assets(mock_knowledge_graph, transformation_rules)
-
-
-@pytest.fixture(scope="function")
-def simple_rules():
-    return rules.parse_rules_from_excel_file(config.SIMPLE_TRANSFORMATION_RULES)
 
 
 @pytest.fixture(scope="function")
