@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from openpyxl import Workbook, load_workbook
 from rdflib import RDF, XSD, Literal, Namespace
+from cognite.neat.graph import exceptions
 
 from cognite.neat.rules.analysis import get_defined_classes, to_class_property_pairs
 from cognite.neat.rules.models import TransformationRules
@@ -90,9 +91,9 @@ def sheet2triples(
                 continue
 
             # iterate over sheet rows properties
-            for property_, value in row.to_dict().items():
+            for property_name, value in row.to_dict().items():
                 # Setting RDF type of the instance
-                if property_ == "identifier":
+                if property_name == "identifier":
                     triples.append(
                         (
                             instance_namespace[row.identifier],
@@ -100,60 +101,39 @@ def sheet2triples(
                             model_namespace[sheet_name],
                         )
                     )
+                    continue
+                elif not value:
+                    continue
+
+                property_ = class_property_pairs[sheet_name][property_name]
+                is_one_to_many = (property_.max_count or 1) > 1 and separator
+                values = value.split(separator) if is_one_to_many else [value]
 
                 # Adding object properties
-                elif value and class_property_pairs[sheet_name][property_].property_type == "ObjectProperty":
-                    if (
-                        class_property_pairs[sheet_name][property_].max_count
-                        and class_property_pairs[sheet_name][property_].max_count > 1
-                        and separator
-                    ):
-                        triples.extend(
-                            (
-                                instance_namespace[row.identifier],
-                                model_namespace[property_],
-                                instance_namespace[v.strip()],
-                            )
-                            for v in value.split(separator)
+                if property_.property_type == "ObjectProperty":
+                    triples.extend(
+                        (
+                            instance_namespace[row.identifier],
+                            model_namespace[property_name],
+                            instance_namespace[v.strip()],
                         )
-                    else:
-                        triples.append(
-                            (
-                                instance_namespace[row.identifier],
-                                model_namespace[property_],
-                                instance_namespace[value.strip()],
-                            )
-                        )
-
+                        for v in values
+                    )
                 # Adding data properties
-                elif value and class_property_pairs[sheet_name][property_].property_type == "DatatypeProperty":
-                    if (
-                        class_property_pairs[sheet_name][property_].max_count
-                        and class_property_pairs[sheet_name][property_].max_count > 1
-                        and separator
-                    ):
-                        triples.extend(
-                            (
-                                instance_namespace[row.identifier],
-                                model_namespace[property_],
-                                Literal(
-                                    v.strip(),
-                                    datatype=XSD[class_property_pairs[sheet_name][property_].expected_value_type],
-                                ),
-                            )
-                            for v in value.split(separator)
+                elif property_.property_type == "DatatypeProperty":
+                    triples.extend(
+                        (
+                            instance_namespace[row.identifier],
+                            model_namespace[property_name],
+                            Literal(
+                                v.strip(),
+                                datatype=XSD[property_.expected_value_type],
+                            ),
                         )
-                    else:
-                        triples.append(
-                            (
-                                instance_namespace[row.identifier],
-                                model_namespace[property_],
-                                Literal(
-                                    value.strip(),
-                                    datatype=XSD[class_property_pairs[sheet_name][property_].expected_value_type],
-                                ),
-                            )
-                        )
+                        for v in values
+                    )
+                else:
+                    raise exceptions.UnsupportedPropertyType(property_.property_type)
     return triples
 
 
