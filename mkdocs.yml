@@ -32,6 +32,7 @@ nav:
   - Reference:
       - Rules:
           - Importers: api/rules/importers.md
+          - Parsers: api/rules/parsers.md
           - Exporters: api/rules/exporters.md
           - Models: api/rules/models.md
       - Graph:
@@ -63,6 +64,8 @@ markdown_extensions:
   - admonition
   - pymdownx.details
   - pymdownx.superfences
+  - toc:
+      permalink: "#"
 
 plugins:
   - mkdocs-jupyter:
@@ -79,3 +82,5 @@ plugins:
           options:
             show_root_heading: true
             show_source: true
+            members_order: source
+  - autorefs

@@ -95,7 +95,7 @@ def _create_default_properties_parsing_config() -> dict[str, tuple[str, ...]]:
 
 
 def owl2excel(owl_filepath: Path, excel_filepath: Path | None = None, validate_results: bool = True):
-    """Convert owl ontology to transformation rules and then stored as Excel file.
+    """Convert owl ontology to transformation rules and then stored them as an Excel file.
 
     Args:
         owl_filepath: Path to OWL ontology
@@ -136,16 +136,11 @@ def owl2excel(owl_filepath: Path, excel_filepath: Path | None = None, validate_r
 def _parse_owl_metadata_df(graph: Graph, parsing_config: dict | None = None) -> pd.DataFrame:
     """Parse owl metadata from graph to pandas dataframe.
 
-    Parameters
-    ----------
-    graph : Graph
-        Graph containing owl metadata
-    parsing_config : dict, optional
-        Configuration for parsing, by default None
+    Args:
+        graph: Graph containing owl metadata
+        parsing_config: Configuration for parsing. Defaults to None.
 
-    Returns
-    -------
-    pd.DataFrame
+    Returns:
         Dataframe containing owl metadata
     """
     if parsing_config is None:

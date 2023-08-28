@@ -19,6 +19,9 @@ exclude = [
     "cognite/neat/app/ui/neat-app/node_modules/**",
     "cognite/neat/app/ui/neat-app/*.json",
 ]
+[tool.poetry.group.docs.dependencies]
+mkdocs-autorefs = "^0.5.0"
+
 
 
 [tool.black]

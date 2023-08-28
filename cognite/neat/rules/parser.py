@@ -89,7 +89,7 @@ def parse_rules_from_github_sheet(
 
 
 def parse_rules_from_yaml(folder_path: Path) -> TransformationRules:
-    """Load transformation rules from a yaml files.
+    """Parse transformation rules from a yaml files.
 
     The yaml files must be named "metadata.yaml", "classes.yaml", "properties.yaml", "prefixes.yaml"
     and "instances.yaml". These must be located in the same directory.

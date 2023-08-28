@@ -1,371 +1,48 @@
-"""This module contains the definition of validation errors and warnings raised when parsing transformation rules.
-CODES:
-- 0 - 99: reserved for errors and warnings related to general errors/warnings
-- 100 - 199: reserved for Metadata sheet
-- 200 - 299: reserved for Classes sheet
-- 300 - 399: reserved for Properties sheet
-- 400 - 499: reserved for Prefixes sheet
-- 500 - 599: reserved for Instances sheet
-- 600 - 699: reserved for Transformation Rules, usually checking inter-sheet dependencies
+"""This module contains the definition of errors and warnings raised when dealing
+with TransformationRules object. This includes underlying pydantic model, actual transformation rules
+handling (such `rdfpath`), and rules loaders, parsers and exporters.
+
+\nThe errors and warning are grouped by means of error codes:\n
+- 0 - 99: errors and warnings raised when dealing with TransformationRules pydantic model
+- 100 - 199: errors and warnings raised when parsing actual transformation rules, i.e. `rdfpath`
+- 200 - 299: errors and warnings raised when dealing TransformationRules importers
+- 300 - 399: errors and warnings raised when dealing TransformationRules parsers
+- 400 - 499: errors and warnings raised when dealing TransformationRules exporters
+
 """
 
-#########################################
-# Metadata sheet Error Codes 100 - 199: #
+
 from typing import Any
 
 from rdflib import URIRef
-
+from cognite.neat.constants import DEFAULT_DOCS_URL
 from cognite.neat.exceptions import NeatException, NeatWarning
 
 
-class ExcelFileMissingMandatorySheets(NeatException):
-    type_: str = "ExcelFileMissingMandatorySheets"
-    code: int = 0
-    description: str = "Given Excel file is missing mandatory sheets"
-    example: str = ""
-    fix: str = ""
+BASE_URL = f"{DEFAULT_DOCS_URL}api/exceptions.html#{__name__}"
 
-    def __init__(self, missing_sheets: set[str], verbose=False):
-        self.missing_fields = missing_sheets
 
-        self.message = (
-            "Given Excel file is not compliant Transformation Rules file."
-            f" It is missing mandatory sheets: {', '.join(missing_sheets)}"
-        )
+################################################################################################
+# RULES MODEL REPRESENTATION: 100 - 199 ########################################################
+################################################################################################
 
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
 
-
-class NotValidRDFPath(NeatException):
-    type_: str = "NotValidRDFPath"
-    code: int = 1
-    description: str = "Provided rdf path is not valid, i.e. it cannot be converted to SPARQL query"
-    example: str = ""
-    fix: str = "Get familiar with RDF paths and check if provided path is valid"
-
-    def __init__(self, rdf_path, verbose=False):
-        self.rdf_path = rdf_path
-
-        self.message = f"{self.rdf_path} is not a valid rdfpath!"
-
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
-
-
-class NotValidTableLookUp(NeatException):
-    type_: str = "NotValidTableLookUp"
-    code: int = 2
-    description: str = "Provided table lookup is not valid, i.e. it cannot be converted to CDF lookup"
-    example: str = ""
-    fix: str = "Get familiar with RAW look up and RDF paths and check if provided rawlookup is valid"
-
-    def __init__(self, table_look_up, verbose=False):
-        self.table_look_up = table_look_up
-
-        self.message = f"{self.table_look_up} is not a valid table lookup"
-
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
-
-
-class NotValidRAWLookUp(NeatException):
-    type_: str = "NotValidRAWLookUp"
-    code: int = 3
-    description: str = "Provided rawlookup is not valid, i.e. it cannot be converted to SPARQL query and CDF lookup"
-    example: str = ""
-    fix: str = "Get familiar with RAW look up and RDF paths and check if provided rawlookup is valid"
-
-    def __init__(self, raw_look_up, verbose=False):
-        self.raw_look_up = raw_look_up
-
-        self.message = f"Invalid rawlookup expected traversal | table lookup, got {raw_look_up}"
-
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
-
-
-class EntitiesContainNonDMSCompliantCharacters(NeatException):
-    type_: str = "EntitiesContainNonDMSCompliantCharacters"
-    code: int = 10
-    description: str = (
-        "This error is raised during export of Transformation Rules to"
-        " DMS schema when entities contain non DMS compliant characters."
-    )
-    example: str = ""
-    fix: str = "Make sure to check validation report of Transformation Rules and fix DMS related warnings."
-
-    def __init__(self, report: str = "", verbose=False):
-        self.message = f"Following entities contain non DMS compliant characters: {report}"
-
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
-
-
-class PropertiesDefinedMultipleTimes(NeatException):
-    type_: str = "PropertiesDefinedMultipleTimes"
-    code: int = 11
-    description: str = (
-        "This error is raised during export of Transformation Rules to "
-        "DMS schema when properties are defined multiple times for the same class."
-    )
-    example: str = ""
-    fix: str = "Make sure to check validation report of Transformation Rules and fix DMS related warnings."
-
-    def __init__(self, report: str = "", verbose=False):
-        self.message = f"Following properties defined multiple times for the same class(es): {report}"
-
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
-
-
-class UnableToDownloadExcelFile(NeatException):
-    type_: str = "UnableToDownloadExcelFile"
-    code: int = 11
-    description: str = (
-        "This error is raised during loading of byte representation of"
-        " a Excel file from Github when given file cannot be downloaded."
-    )
-    example: str = ""
-    fix: str = "Make sure you provided correct parameters to download Excel file from github repository"
-
-    def __init__(self, filepath: str, loc: str, reason: str, verbose=False):
-        self.message = f"File '{filepath}' from '{loc}' cannot be downloaded! Reason: {reason}"
-
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
-
-
-class NotExcelFile(NeatException):
-    type_: str = "NotExcelFile"
-    code: int = 11
-    description: str = (
-        "This error is raised during loading of byte representation of a file from Github"
-        " into openpyxl workbook object in case when byte representation is not Excel file."
-    )
-    example: str = ""
-    fix: str = "Make sure you that byte representation of a file is Excel file!"
-
-    def __init__(self, filepath: str, loc: str, verbose=False):
-        self.message = f"File '{filepath}' from '{loc}' is not a valid excel file!"
-
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
-
-
-class PropertyDefinitionsNotForSameProperty(NeatException):
-    type_: str = "PropertyDefinitionsNotForSameProperty"
-    code: int = 30
-    description: str = "This error is raised if property definitions are not for linked to the same property id"
-    example: str = ""
-    fix: str = ""
-
-    def __init__(self, verbose=False):
-        self.message = "All definitions should have the same property_id! Aborting."
-
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
-
-
-class FieldValueOfUnknownType(NeatException):
-    type_: str = "FieldValueOfUnknownType"
-    code: int = 40
-    description: str = (
-        "This error is raised when generating in-memory pydantic model"
-        " from Transformation Rules from model, when field definitions are not"
-        " provided as dictionary of field names ('str') and their types ('tuple' or 'dict')."
-    )
-    example: str = ""
-    fix: str = ""
-
-    def __init__(self, field: str, definition: Any, verbose=False):
-        self.message = (
-            f"Field {field} has definition of type {type(definition)}"
-            " which is not acceptable! Only definition in form of dict or tuple is acceptable!"
-        )
-
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
-
-
-class MissingInstanceTriples(NeatException):
-    type_: str = "MissingInstanceTriples"
-    code: int = 41
-    description: str = (
-        "This error is raised when queried RDF class instance " " does not return any triples that define it."
-    )
-    example: str = ""
-    fix: str = "Make sure that RDF class instance holds necessary triples that define it."
-
-    def __init__(self, id_: str | URIRef, verbose=False):
-        self.message = f"Instance {id_} does not contain triples that would define it!"
-
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
-
-
-class PropertyRequiredButNotProvided(NeatException):
-    type_: str = "PropertyRequiredButNotProvided"
-    code: int = 42
-    description: str = (
-        "This error is raised when instantiating in-memory pydantic model"
-        " from graph class instance which is missing required property."
-    )
-    example: str = ""
-    fix: str = "Either make field optional or add missing property to graph instance."
-
-    def __init__(self, property: str, id_: str | URIRef, verbose=False):
-        self.message = f"Property {property} is not present in graph instance {id_}!"
-
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
-
-
-class MetadataSheetMissingMandatoryFields(NeatException):
-    type_: str = "MetadataSheetMissingMandatoryFields"
-    code: int = 51
-    description: str = "Metadata sheet, which is part of Transformation Rules Excel file, is missing mandatory rows"
-    example: str = ""
-    fix: str = ""
-
-    def __init__(self, missing_fields: set[str], verbose=False):
-        self.missing_fields = missing_fields
-
-        self.message = f"Metadata sheet is missing following mandatory fields: {', '.join(missing_fields)}"
-
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
-
-
-class ClassesSheetMissingMandatoryColumns(NeatException):
-    type_: str = "ClassesSheetMissingMandatoryColumns"
-    code: int = 52
-    description: str = (
-        "Classes sheet, which is a mandatory part of Transformation Rules Excel file, "
-        "is missing mandatory columns at row 2"
-    )
-    example: str = ""
-    fix: str = ""
-
-    def __init__(self, missing_fields: set[str], verbose=False):
-        self.missing_fields = missing_fields
-
-        self.message = f"Classes sheet is missing following mandatory columns: {', '.join(missing_fields)} at row 2"
-
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
-
-
-class PropertiesSheetMissingMandatoryColumns(NeatException):
-    type_: str = "PropertiesSheetMissingMandatoryColumns"
-    code: int = 53
-    description: str = (
-        "Properties sheet, which is a mandatory part of Transformation Rules Excel file, "
-        "is missing mandatory columns at row 2"
-    )
-    example: str = ""
-    fix: str = ""
-
-    def __init__(self, missing_fields: set[str], verbose=False):
-        self.missing_fields = missing_fields
-
-        self.message = f"Properties sheet is missing following mandatory columns: {', '.join(missing_fields)} at row 2"
-
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
-
-
-class PrefixesSheetMissingMandatoryColumns(NeatException):
-    type_: str = "PrefixesSheetMissingMandatoryColumns"
-    code: int = 54
-    description: str = (
-        "Prefixes sheet, which is part of Transformation Rules Excel file, is missing mandatory columns at row 1"
-    )
-    example: str = ""
-    fix: str = ""
-
-    def __init__(self, missing_fields: set[str], verbose=False):
-        self.missing_fields = missing_fields
-
-        self.message = f"Prefixes sheet is missing following mandatory columns: {', '.join(missing_fields)} at row 1"
-
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
-
-
-class InstancesSheetMissingMandatoryColumns(NeatException):
-    type_: str = "InstancesSheetMissingMandatoryColumns"
-    code: int = 55
-    description: str = (
-        "Instances sheet, which is part of Transformation Rules Excel file, is missing mandatory columns at row 1"
-    )
-    example: str = ""
-    fix: str = ""
-
-    def __init__(self, missing_fields: set[str], verbose=False):
-        self.missing_fields = missing_fields
-
-        self.message = f"Instances sheet is missing following mandatory columns: {', '.join(missing_fields)} at row 1"
-
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
-
-
-# Metadata sheet Error and Warning Codes 100 - 199:
 class PrefixRegexViolation(NeatException):
+    """Prefix, which is in the 'Metadata' sheet, does not respect defined regex expression
+
+    Args:
+        prefix: prefix that raised exception
+        regex_expression: regex expression against which prefix is validated
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        Check if prefix in the 'Metadata' sheet contains any illegal characters and
+        respects the regex expression.
+
+    """
+
     type_: str = "PrefixRegexViolation"
-    code: int = 100
+    code: int = 0
     description: str = "Prefix, which is in the 'Metadata' sheet, does not respect defined regex expression"
     example: str = (
         "If prefix is set to 'power grid', while regex expression does not "
@@ -375,12 +52,13 @@ class PrefixRegexViolation(NeatException):
         "Check if prefix in the 'Metadata' sheet contains any illegal characters and respects the regex expression"
     )
 
-    def __init__(self, prefix, regex_expression, verbose=False):
+    def __init__(self, prefix: str, regex_expression: str, verbose=False):
         self.prefix = prefix
         self.regex_expression = regex_expression
 
         self.message = (
             f"Invalid prefix '{self.prefix}' stored in 'Metadata' sheet, it must obey regex {self.regex_expression}!"
+            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
         )
         if verbose:
             self.message += f"\nDescription: {self.description}"
@@ -390,8 +68,21 @@ class PrefixRegexViolation(NeatException):
 
 
 class CDFSpaceRegexViolation(NeatException):
+    """cdfSpaceName, which is in the 'Metadata' sheet, does not respect defined regex expression
+
+    Args:
+        cdf_space_name: cdf_space_name that raised exception
+        regex_expression: regex expression against which cdf_space_name is validated
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        Check if cdfSpaceName in the 'Metadata' sheet contains any illegal characters and
+        respects the regex expression.
+
+    """
+
     type_: str = "CDFSpaceRegexViolation"
-    code: int = 101
+    code: int = 1
     description: str = "cdfSpaceName, which is in the 'Metadata' sheet, does not respect defined regex expression"
     example: str = (
         "If cdfSpaceName is set to 'power grid', while regex expression does not "
@@ -402,13 +93,14 @@ class CDFSpaceRegexViolation(NeatException):
         "contains any illegal characters and respects the regex expression"
     )
 
-    def __init__(self, cdf_space_name, regex_expression, verbose=False):
+    def __init__(self, cdf_space_name: str, regex_expression: str, verbose=False):
         self.cdf_space_name = cdf_space_name
         self.regex_expression = regex_expression
 
         self.message = (
             f"Invalid cdfSpaceName '{self.cdf_space_name}' stored in 'Metadata' sheet, "
             f"it must obey regex {self.regex_expression}!"
+            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
         )
         if verbose:
             self.message += f"\nDescription: {self.description}"
@@ -418,8 +110,20 @@ class CDFSpaceRegexViolation(NeatException):
 
 
 class MetadataSheetNamespaceNotValidURL(NeatException):
+    """namespace, which is in the 'Metadata' sheet, does not respect defined regex expression
+
+    Args:
+        namespace: namespace that raised exception
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        Check if `namespace` in the `Metadata` sheet is properly constructed as valid URL
+        containing only allowed characters.
+
+    """
+
     type_: str = "MetadataSheetNamespaceNotValidURL"
-    code: int = 102
+    code: int = 2
     description: str = "namespace, which is in the 'Metadata' sheet, is not valid URL"
     example: str = "If we have 'authority:namespace' as namespace as it is not a valid URL this error will be raised"
     fix: str = (
@@ -427,10 +131,13 @@ class MetadataSheetNamespaceNotValidURL(NeatException):
         "constructed as valid URL containing only allowed characters"
     )
 
-    def __init__(self, namespace, verbose=False):
+    def __init__(self, namespace: str, verbose=False):
         self.namespace = namespace
 
-        self.message = f"Invalid namespace '{self.namespace}' stored in 'Metadata' sheet, it must be valid URL!"
+        self.message = (
+            f"Invalid namespace '{self.namespace}' stored in 'Metadata' sheet, it must be valid URL!"
+            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+        )
         if verbose:
             self.message += f"\nDescription: {self.description}"
             self.message += f"\nExample: {self.example}"
@@ -439,8 +146,21 @@ class MetadataSheetNamespaceNotValidURL(NeatException):
 
 
 class DataModelNameRegexViolation(NeatException):
+    """dataModelName, which is in the 'Metadata' sheet, does not respect defined regex expression
+
+    Args:
+        data_model_name: data_model_name that raised exception
+        regex_expression: regex expression against which data_model_name is validated
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        Check if `dataModelName` in the `Metadata` sheet contains any illegal
+        characters and respects the regex expression
+
+    """
+
     type_: str = "DataModelNameRegexViolation"
-    code: int = 103
+    code: int = 3
     description: str = "dataModelName, which is in the 'Metadata' sheet, does not respect defined regex expression"
     example: str = (
         "If dataModelName is set to 'power grid data model', while regex expression does not "
@@ -451,13 +171,14 @@ class DataModelNameRegexViolation(NeatException):
         "characters and respects the regex expression"
     )
 
-    def __init__(self, data_model_name, regex_expression, verbose=False):
+    def __init__(self, data_model_name: str, regex_expression: str, verbose=False):
         self.data_model_name = data_model_name
         self.regex_expression = regex_expression
 
         self.message = (
             f"Invalid dataModelName '{self.data_model_name}' stored in 'Metadata' sheet, "
             f"it must obey regex {self.regex_expression}!"
+            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
         )
         if verbose:
             self.message += f"\nDescription: {self.description}"
@@ -468,7 +189,7 @@ class DataModelNameRegexViolation(NeatException):
 
 class VersionRegexViolation(NeatException):
     type_: str = "VersionRegexViolation"
-    code: int = 104
+    code: int = 4
     description: str = "version, which is in the 'Metadata' sheet, does not respect defined regex expression"
     example: str = (
         "If version is set to '1.2.3 alpha4443', while regex expression does not "
@@ -484,13 +205,582 @@ class VersionRegexViolation(NeatException):
 
         self.message = (
             f"Invalid version '{self.version}' stored in 'Metadata' sheet, it must obey regex {self.regex_expression}!"
-            f"\n\tFor further information visit https://thisisneat.io/errors/Error{self.code}"
+            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
         )
         if verbose:
             self.message += f"\nDescription: {self.description}"
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
+
+
+################################################################################################
+# RULES PROCESSING: 100 - 199 ##################################################################
+################################################################################################
+
+
+class NotValidRDFPath(NeatException):
+    """Provided `rdfpath` is not valid, i.e. it cannot be converted to SPARQL query.
+
+    Args:
+        rdf_path: `rdfpath` that raised exception
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        Get familiar with `rdfpath` to avoid this exception.
+    """
+
+    type_: str = "NotValidRDFPath"
+    code: int = 100
+    description: str = "Provided `rdfpath` is not valid, i.e. it cannot be converted to SPARQL query"
+    example: str = ""
+    fix: str = "Get familiar with `rdfpath` and check if provided path is valid!"
+
+    def __init__(self, rdf_path: str, verbose: bool = False):
+        self.rdf_path = rdf_path
+
+        self.message = (
+            f"{self.rdf_path} is not a valid rdfpath!"
+            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+        )
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class NotValidTableLookUp(NeatException):
+    """Provided `table lookup` is not valid, i.e. it cannot be converted to CDF lookup.
+
+    Args:
+        table_look_up: `table_look_up`, a part of `rawlookup`, that raised exception
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        Get familiar with `rawlookup` and `rdfpath` to avoid this exception.
+    """
+
+    type_: str = "NotValidTableLookUp"
+    code: int = 101
+    description: str = "Provided table lookup is not valid, i.e. it cannot be converted to CDF lookup"
+    example: str = ""
+    fix: str = "Get familiar with RAW look up and RDF paths and check if provided rawlookup is valid"
+
+    def __init__(self, table_look_up: str, verbose: bool = False):
+        self.table_look_up = table_look_up
+
+        self.message = (
+            f"{self.table_look_up} is not a valid table lookup"
+            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+        )
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class NotValidRAWLookUp(NeatException):
+    """Provided `rawlookup` is not valid, i.e. it cannot be converted to SPARQL query and CDF lookup
+
+    Args:
+        raw_look_up: `rawlookup` rule that raised exception
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        Get familiar with `rawlookup` and `rdfpath` to avoid this exception.
+    """
+
+    type_: str = "NotValidRAWLookUp"
+    code: int = 102
+    description: str = "Provided rawlookup is not valid, i.e. it cannot be converted to SPARQL query and CDF lookup"
+    example: str = ""
+    fix: str = "Get familiar with `rawlookup` and `rdfpath` to avoid this exception"
+
+    def __init__(self, raw_look_up: str, verbose: bool = False):
+        self.raw_look_up = raw_look_up
+
+        self.message = (
+            f"Invalid rawlookup expected traversal | table lookup, got {raw_look_up}"
+            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+        )
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+################################################################################################
+# RULES PARSERS: 300 - 399 #####################################################################
+################################################################################################
+class ExcelFileMissingMandatorySheets(NeatException):
+    """Given Excel file is missing one or more mandatory sheets
+
+    Args:
+        missing_mandatory_sheets: set of missing mandatory sheets
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        This exception is raised when Excel file is missing one or more mandatory sheets.
+        The mandatory sheets are: `Metadata`, `Classes`, `Properties`.
+    """
+
+    type_: str = "ExcelFileMissingMandatorySheets"
+    code: int = 300
+    description: str = "Given Excel file is missing one or more mandatory sheets"
+    example: str = "An Excel file is missing sheet named 'Metadata'"
+    fix: str = "Make sure that Excel file contains all mandatory sheets, i.e. 'Metadata', 'Classes', 'Properties'"
+
+    def __init__(self, missing_mandatory_sheets: set[str], verbose: bool = False):
+        self.missing_fields = missing_mandatory_sheets
+
+        self.message = (
+            "Given Excel file is not compliant Transformation Rules file."
+            f" It is missing mandatory sheets: {', '.join(missing_mandatory_sheets)}."
+            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+        )
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class UnableToDownloadExcelFile(NeatException):
+    """This error is raised during loading of byte representation of  a Excel file from
+    Github, when given file cannot be downloaded.
+
+    Args:
+        filepath: file path to Excel file that cannot be downloaded from Github
+        loc: URL of Excel file from Github repository
+        reason: reason why file cannot be downloaded (e.g., Forbidden, Not Found, etc.)
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+       Make sure you provided correct parameters to download Excel file from github repository.
+    """
+
+    type_: str = "UnableToDownloadExcelFile"
+    code: int = 301
+    description: str = (
+        "This error is raised during loading of byte representation of"
+        " a Excel file from Github when given file cannot be downloaded."
+    )
+    example: str = ""
+    fix: str = "Make sure you provided correct parameters to download Excel file from github repository"
+
+    def __init__(self, filepath: str, loc: str, reason: str, verbose: bool = False):
+        self.message = (
+            f"File '{filepath}' from '{loc}' cannot be downloaded! Reason: {reason}"
+            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+        )
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class NotExcelFile(NeatException):
+    """This error is raised during loading of byte representation of a file from Github
+    into `openpyxl` `Workbook` object in case when byte representation is not Excel file.
+
+    Args:
+        filepath: file path to Excel file that cannot be downloaded from Github
+        loc: URL of Excel file from Github repository
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+       Make sure you that byte representation of a file is Excel file.
+    """
+
+    type_: str = "NotExcelFile"
+    code: int = 302
+    description: str = (
+        "This error is raised during loading of byte representation of a file from Github"
+        " into `openpyxl` `Workbook` object in case when byte representation is not Excel file."
+    )
+    example: str = ""
+    fix: str = "Make sure you that byte representation of a file is Excel file!"
+
+    def __init__(self, filepath: str, loc: str, verbose: bool = False):
+        self.message = (
+            f"File '{filepath}' from '{loc}' is not a valid excel file!"
+            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+        )
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class MetadataSheetMissingMandatoryFields(NeatException):
+    """Metadata sheet, which is part of Transformation Rules Excel file, is missing
+    mandatory rows (i.e., fields)
+
+    Args:
+        missing_fields: Fields/rows that are missing in Metadata sheet
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+    """
+
+    type_: str = "MetadataSheetMissingMandatoryFields"
+    code: int = 303
+    description: str = "Metadata sheet, which is part of Transformation Rules Excel file, is missing mandatory rows"
+    example: str = ""
+    fix: str = ""
+
+    def __init__(self, missing_fields: set[str], verbose: bool = False):
+        self.missing_fields = missing_fields
+
+        self.message = (
+            f"Metadata sheet is missing following mandatory fields: {', '.join(missing_fields)}"
+            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+        )
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class ClassesSheetMissingMandatoryColumns(NeatException):
+    """Classes sheet, which is a mandatory part of Transformation Rules Excel file, is
+    missing mandatory columns at row 2
+
+    Args:
+        missing_fields: Fields/columns that are missing in Classes sheet
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+    """
+
+    type_: str = "ClassesSheetMissingMandatoryColumns"
+    code: int = 304
+    description: str = (
+        "Classes sheet, which is a mandatory part of Transformation Rules Excel file, "
+        "is missing mandatory columns at row 2"
+    )
+    example: str = ""
+    fix: str = ""
+
+    def __init__(self, missing_fields: set[str], verbose=False):
+        self.missing_fields = missing_fields
+
+        self.message = (
+            f"Classes sheet is missing following mandatory columns: {', '.join(missing_fields)} at row 2"
+            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+        )
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class PropertiesSheetMissingMandatoryColumns(NeatException):
+    """Properties sheet, which is a mandatory part of Transformation Rules Excel file, is
+    missing mandatory columns at row 2
+
+    Args:
+        missing_fields: Fields/columns that are missing in Properties sheet
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+    """
+
+    type_: str = "PropertiesSheetMissingMandatoryColumns"
+    code: int = 305
+    description: str = (
+        "Properties sheet, which is a mandatory part of Transformation Rules Excel file, "
+        "is missing mandatory columns at row 2"
+    )
+    example: str = ""
+    fix: str = ""
+
+    def __init__(self, missing_fields: set[str], verbose=False):
+        self.missing_fields = missing_fields
+
+        self.message = (
+            f"Properties sheet is missing following mandatory columns: {', '.join(missing_fields)} at row 2"
+            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+        )
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class PrefixesSheetMissingMandatoryColumns(NeatException):
+    """Prefixes sheet, which is part of Transformation Rules Excel file, is missing
+    mandatory columns at row 1
+
+    Args:
+        missing_fields: Fields/columns that are missing in Prefixes sheet
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+    """
+
+    type_: str = "PrefixesSheetMissingMandatoryColumns"
+    code: int = 306
+    description: str = (
+        "Prefixes sheet, which is part of Transformation Rules Excel file, is missing mandatory columns at row 1"
+    )
+    example: str = ""
+    fix: str = ""
+
+    def __init__(self, missing_fields: set[str], verbose=False):
+        self.missing_fields = missing_fields
+
+        self.message = (
+            f"Prefixes sheet is missing following mandatory columns: {', '.join(missing_fields)} at row 1"
+            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+        )
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class InstancesSheetMissingMandatoryColumns(NeatException):
+    """Instances sheet, which is part of Transformation Rules Excel file, is missing
+    mandatory columns at row 1
+
+    Args:
+        missing_fields: Fields/columns that are missing in Instances sheet
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+    """
+
+    type_: str = "InstancesSheetMissingMandatoryColumns"
+    code: int = 307
+    description: str = (
+        "Instances sheet, which is part of Transformation Rules Excel file, is missing mandatory columns at row 1"
+    )
+    example: str = ""
+    fix: str = ""
+
+    def __init__(self, missing_fields: set[str], verbose=False):
+        self.missing_fields = missing_fields
+
+        self.message = (
+            f"Instances sheet is missing following mandatory columns: {', '.join(missing_fields)} at row 1"
+            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+        )
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+################################################################################################
+# RULES EXPORTERS ##############################################################################
+################################################################################################
+
+
+class EntitiesContainNonDMSCompliantCharacters(NeatException):
+    """This error is raised during export of Transformation Rules to DMS schema when
+    entities (e.g., types and fields) ids contain non DMS compliant characters.
+
+    Args:
+        report: report of entities that contain non DMS compliant characters
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+       Make sure to check validation report of Transformation Rules and fix DMS related exceptions.
+    """
+
+    type_: str = "EntitiesContainNonDMSCompliantCharacters"
+    code: int = 400
+    description: str = (
+        "This error is raised during export of Transformation Rules to"
+        " DMS schema when entities contain non DMS compliant characters."
+    )
+    example: str = ""
+    fix: str = "Make sure to check validation report of Transformation Rules and fix DMS related exceptions."
+
+    def __init__(self, report: str = "", verbose: bool = False):
+        self.message = (
+            f"Following entities contain non DMS compliant characters: {report}"
+            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+        )
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class PropertiesDefinedMultipleTimes(NeatException):
+    """This error is raised during export of Transformation Rules to DMS schema when
+    when properties are defined multiple times for the same class.
+
+    Args:
+        report: report on properties which are defined multiple times
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+       Make sure to check validation report of Transformation Rules and fix DMS related warnings.
+    """
+
+    type_: str = "PropertiesDefinedMultipleTimes"
+    code: int = 401
+    description: str = (
+        "This error is raised during export of Transformation Rules to "
+        "DMS schema when properties are defined multiple times for the same class."
+    )
+    example: str = ""
+    fix: str = "Make sure to check validation report of Transformation Rules and fix DMS related warnings."
+
+    def __init__(self, report: str = "", verbose: bool = False):
+        self.message = (
+            f"Following properties defined multiple times for the same class(es): {report}"
+            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+        )
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class PropertyDefinitionsNotForSameProperty(NeatException):
+    """This error is raised if property definitions are not for linked to the same
+    property id when exporting rules to ontological representation.
+
+    Args:
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+    """
+
+    type_: str = "PropertyDefinitionsNotForSameProperty"
+    code: int = 402
+    description: str = "This error is raised if property definitions are not for linked to the same property id"
+    example: str = ""
+    fix: str = ""
+
+    def __init__(self, verbose: bool = False):
+        self.message = (
+            "All definitions should have the same property_id! Aborting."
+            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+        )
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class FieldValueOfUnknownType(NeatException):
+    """This error is raised when generating in-memory pydantic model from Transformation
+    Rules from model, when field definitions are not provided as dictionary of field names
+    ('str') and their types ('tuple' or 'dict').
+
+    Args:
+        field: field name that raised exception due to unknown type
+        definition: definition of field that raised exception
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+    """
+
+    type_: str = "FieldValueOfUnknownType"
+    code: int = 403
+    description: str = (
+        "This error is raised when generating in-memory pydantic model"
+        " from Transformation Rules from model, when field definitions are not"
+        " provided as dictionary of field names ('str') and their types ('tuple' or 'dict')."
+    )
+    example: str = ""
+    fix: str = ""
+
+    def __init__(self, field: str, definition: Any, verbose: bool = False):
+        self.message = (
+            f"Field {field} has definition of type {type(definition)}"
+            " which is not acceptable! Only definition in form of dict or tuple is acceptable!"
+            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+        )
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class MissingInstanceTriples(NeatException):
+    """This error is raised when queried RDF class instance does not return any triples that define it.
+
+    Args:
+        id_: instance id
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+    """
+
+    type_: str = "MissingInstanceTriples"
+    code: int = 404
+    description: str = (
+        "This error is raised when queried RDF class instance " " does not return any triples that define it."
+    )
+    example: str = ""
+    fix: str = "Make sure that RDF class instance holds necessary triples that define it."
+
+    def __init__(self, id_: str | URIRef, verbose: bool = False):
+        self.message = (
+            f"Instance {id_} does not contain triples that would define it!"
+            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+        )
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class PropertyRequiredButNotProvided(NeatException):
+    """This error is raised when instantiating in-memory pydantic model from graph class
+    instance which is missing required property.
+
+    Args:
+        id_: instance id
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+    """
+
+    type_: str = "PropertyRequiredButNotProvided"
+    code: int = 405
+    description: str = (
+        "This error is raised when instantiating in-memory pydantic model"
+        " from graph class instance which is missing required property."
+    )
+    example: str = ""
+    fix: str = "Either make field optional or add missing property to graph instance."
+
+    def __init__(self, property: str, id_: str | URIRef, verbose: bool = False):
+        self.message = (
+            f"Property {property} is not present in graph instance {id_}!"
+            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+        )
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+################################################################################################
+# Exceptions that need to be updated ###########################################################
+################################################################################################
 
 
 class DataModelOrItsComponentsAlreadyExist(NeatException):
