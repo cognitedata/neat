@@ -141,7 +141,6 @@ def _micro_batch_push(
     client: CogniteClient,
     nodes_or_edges: list[NodeApply] | list[EdgeApply],
     batch_size: int = 1000,
-    push_type: str = "nodes",
     message: str = "Upload",
     max_retries: int = 1,
     retry_delay: int = 3,
@@ -160,9 +159,12 @@ def _micro_batch_push(
     total = len(nodes_or_edges)
     counter = 0
 
-    if push_type not in ["nodes", "edges"]:
-        logging.info(f"push_type {push_type} not supported")
-        raise ValueError(f"push_type {push_type} not supported")
+    if nodes_or_edges and isinstance(nodes_or_edges[0], NodeApply):
+        push_type = "nodes"
+    elif nodes_or_edges and isinstance(nodes_or_edges[0], EdgeApply):
+        push_type = "edges"
+    else:
+        raise ValueError("nodes_or_edges must be a list of NodeApply or EdgeApply objects")
 
     for batch in chunker(nodes_or_edges, batch_size):
         counter += len(batch)
