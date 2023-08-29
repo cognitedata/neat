@@ -14,7 +14,7 @@ handling (such `rdfpath`), and rules loaders, parsers and exporters.
 
 from typing import Any
 
-from rdflib import URIRef
+from rdflib import Namespace, URIRef
 from cognite.neat.constants import DEFAULT_DOCS_URL
 from cognite.neat.exceptions import NeatException, NeatWarning
 
@@ -95,7 +95,7 @@ class CDFSpaceRegexViolation(NeatException):
         "contains any illegal characters and respects the regex expression"
     )
 
-    def __init__(self, cdf_space_name: str, regex_expression: str, verbose=False):
+    def __init__(self, cdf_space_name: str, regex_expression: str, verbose: bool = False):
         self.cdf_space_name = cdf_space_name
         self.regex_expression = regex_expression
 
@@ -133,7 +133,7 @@ class MetadataSheetNamespaceNotValidURL(NeatException):
         "constructed as valid URL containing only allowed characters"
     )
 
-    def __init__(self, namespace: str, verbose=False):
+    def __init__(self, namespace: str, verbose: bool = False):
         self.namespace = namespace
 
         self.message = (
@@ -173,7 +173,7 @@ class DataModelNameRegexViolation(NeatException):
         "characters and respects the regex expression"
     )
 
-    def __init__(self, data_model_name: str, regex_expression: str, verbose=False):
+    def __init__(self, data_model_name: str, regex_expression: str, verbose: bool = False):
         self.data_model_name = data_model_name
         self.regex_expression = regex_expression
 
@@ -214,7 +214,7 @@ class VersionRegexViolation(NeatException):
         "Check if version in the 'Metadata' sheet contains any illegal characters and respects the regex expression"
     )
 
-    def __init__(self, version: str, regex_expression: str, verbose=False):
+    def __init__(self, version: str, regex_expression: str, verbose: bool = False):
         self.version = version
         self.regex_expression = regex_expression
 
@@ -427,7 +427,7 @@ class ValueTypeIDRegexViolation(NeatException):
         " and make sure to respect the regex expression by removing any illegal characters"
     )
 
-    def __init__(self, value_type: str, regex_expression: str, verbose=False):
+    def __init__(self, value_type: str, regex_expression: str, verbose: bool = False):
         self.value_type = value_type
         self.regex_expression = regex_expression
 
@@ -530,7 +530,7 @@ class RuleTypeProvidedButRuleMissing(NeatException):
         "Otherwise remove rule type if no transformation rule is needed"
     )
 
-    def __init__(self, property_id: str, class_id: str, rule_type: str, verbose=False):
+    def __init__(self, property_id: str, class_id: str, rule_type: str, verbose: bool = False):
         self.message = (
             f"Rule type '{rule_type}' provided for property '{property_id}' "
             f"in class '{class_id}' but rule is not provided!"
@@ -943,7 +943,7 @@ class PropertyNameNotProvided(NeatWarning):
     example: str = ""
     fix: str = "If you want to have different property name then property id, provide it in the 'name' column"
 
-    def __init__(self, property_id: str = "", verbose=False):
+    def __init__(self, property_id: str = "", verbose: bool = False):
         self.message = (
             f"Property id {property_id} set as Property name!"
             f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
@@ -1025,6 +1025,102 @@ class NoTransformationRules(NeatWarning):
             self.message += f"\nDescription: {self.description}"
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
+
+
+class NamespaceEndingFixed(NeatWarning):
+    """This warning occurs when namespace does not end with '/' or '#'
+
+    Args:
+        namespace: namespace that raised warning due to improper ending
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        Make sure that namespace ends with `/` or `#`, if not it will be fixed by adding
+        `#` at the end !
+    """
+
+    type_: str = "NamespaceEndingFixed"
+    code: int = 7
+    description: str = "This warning occurs when namespace does not end with '/' or '#'"
+    example: str = "If namespace is set to http://purl.org/cognite, it will be converted to http://purl.org/cognite#"
+    fix: str = "Make sure that namespace ends with '/' or '#'"
+
+    def __init__(self, namespace: Namespace, verbose: bool = False):
+        self.message = (
+            f"Namespace {namespace} ending fixed by adding '#' at its end!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+            # hint on a specific web docs page
+
+
+class DataModelNameMissing(NeatWarning):
+    """This warning occurs when data model name is not provided in 'Metadata' sheet
+
+    Args:
+        prefix: prefix to which data model name will be set if not provided
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        Make sure that namespace ends with `/` or `#`, if not it will be fixed by adding
+        `#` at the end !
+    """
+
+    type_: str = "DataModelNameMissing"
+    code: int = 8
+    description: str = "This warning occurs when data model name is not provided in 'Metadata' sheet"
+    example: str = ""
+    fix: str = "Provide data model name to avoid this warning and otherwise it will default to prefix"
+
+    def __init__(self, prefix: str, verbose: bool = False):
+        self.message = (
+            f"Data model name not provided, defaulting to prefix {prefix}!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+
+
+class VersionDotsConvertedToUnderscores(NeatWarning):
+    """This warning occurs when converting version from dot notation to use of underscores
+    in order to achieve version format that is accepted by CDF/DMS
+
+    Args:
+        prefix: prefix to which data model name will be set if not provided
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        Typically version is expressed in classical form with dots major.minor.patch, while
+        CDF accepts underscores major_minor_patch, thus this warning occurs when converting
+        version from dot notation to use of underscores in order to achieve version format
+        that is accepted by CDF/DMS
+    """
+
+    type_: str = "VersionDotsConvertedToUnderscores"
+    code: int = 9
+    description: str = (
+        "This warning occurs when converting version from dot notation to use of underscores"
+        " in order to achieve version format that is accepted by CDF/DMS"
+    )
+    example: str = "If version is provided as 1.2.3, this will be converted to 1_2_3 to be accepted by CDF"
+    fix: str = "Convert version to underscore notation major_minor_patch"
+
+    def __init__(self, verbose: bool = False):
+        self.message = (
+            "Data model version expressed with '.' which is not acceptable for CDF."
+            " All '.' are converted to '_'!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+            # hint on a specific web docs page
 
 
 ################################################################################################
@@ -1351,7 +1447,7 @@ class ClassesSheetMissingMandatoryColumns(NeatException):
     example: str = ""
     fix: str = ""
 
-    def __init__(self, missing_fields: set[str], verbose=False):
+    def __init__(self, missing_fields: set[str], verbose: bool = False):
         self.missing_fields = missing_fields
 
         self.message = (
@@ -1384,7 +1480,7 @@ class PropertiesSheetMissingMandatoryColumns(NeatException):
     example: str = ""
     fix: str = ""
 
-    def __init__(self, missing_fields: set[str], verbose=False):
+    def __init__(self, missing_fields: set[str], verbose: bool = False):
         self.missing_fields = missing_fields
 
         self.message = (
@@ -1416,7 +1512,7 @@ class PrefixesSheetMissingMandatoryColumns(NeatException):
     example: str = ""
     fix: str = ""
 
-    def __init__(self, missing_fields: set[str], verbose=False):
+    def __init__(self, missing_fields: set[str], verbose: bool = False):
         self.missing_fields = missing_fields
 
         self.message = (
@@ -1448,7 +1544,7 @@ class InstancesSheetMissingMandatoryColumns(NeatException):
     example: str = ""
     fix: str = ""
 
-    def __init__(self, missing_fields: set[str], verbose=False):
+    def __init__(self, missing_fields: set[str], verbose: bool = False):
         self.missing_fields = missing_fields
 
         self.message = (
@@ -1872,7 +1968,7 @@ class OntologyMultiDomainProperty(NeatWarning):
         " across different classes and that ideally takes the same range of values"
     )
 
-    def __init__(self, property_id: str = "", classes: list[str] | None = None, verbose=False):
+    def __init__(self, property_id: str = "", classes: list[str] | None = None, verbose: bool = False):
         self.message = (
             f"Currently property '{property_id}' is defined for multiple classes: {', '.join(classes or [])}"
             f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
@@ -1906,7 +2002,7 @@ class OntologyMultiLabeledProperty(NeatWarning):
     example: str = ""
     fix: str = "This would be automatically fixed by taking the first label (aka name) of the property."
 
-    def __init__(self, property_id: str = "", names: list[str] | None = None, verbose=False):
+    def __init__(self, property_id: str = "", names: list[str] | None = None, verbose: bool = False):
         self.message = (
             "Property should have single preferred label (human readable name)."
             f"Currently property '{property_id}' has multiple preferred labels: {', '.join(names or [])} !"
@@ -2199,56 +2295,3 @@ class DataModelAlreadyExist(NeatWarning):
             self.message += f"\nDescription: {self.description}"
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
-
-
-class NamespaceEndingFixed(NeatWarning):
-    type_: str = "NamespaceEndingFixed"
-    code: int = 412
-    description: str = "It is expected that namespace ends with '/' or '#'. If not, it will be fixed"
-    example: str = "If namespace is set to http://purl.org/cognite, it will be converted to http://purl.org/cognite#"
-    fix: str = "Make sure that namespace ends with '/' or '#'"
-
-    def __init__(self, namespace, verbose=False):
-        self.message = f"Namespace {namespace} ending fixed by adding '#' at its end!"
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-            # hint on a specific web docs page
-
-
-class DataModelNameMissing(NeatWarning):
-    type_: str = "DataModelNameMissing"
-    code: int = 413
-    description: str = "In case when data model name is not provided in the 'Metadata' sheet, it will be set to prefix"
-    example: str = ""
-    fix: str = "Provide data model name to avoid this warning and defaulting to prefix"
-
-    def __init__(self, prefix, verbose=False):
-        self.message = f"Data model name not provided, defaulting to prefix {prefix}!"
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-            # hint on a specific web docs page
-
-
-class VersionDotsConvertedToUnderscores(NeatWarning):
-    type_: str = "VersionDotsConvertedToUnderscores"
-    code: int = 414
-    description: str = (
-        "Version is expressed in classical form with dots major.minor.patch, "
-        "while CDF accepts underscores major_minor_patch"
-    )
-    example: str = "If version is provided as 1.2.3, this will be converted to 1_2_3 to be accepted by CDF"
-    fix: str = "Convert version to underscore notation major_minor_patch"
-
-    def __init__(self, verbose=False):
-        self.message = (
-            "Data model version expressed with '.' which is illegal character for CDF. All '.' are converted to '_'!"
-        )
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-            # hint on a specific web docs page
