@@ -14,6 +14,17 @@ Changes are grouped as follows:
 - `Removed` for now removed features.
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
+## [0.24.2] - 29-08-23
+
+### Added
+
+- Multi parent classes are now allowed
+- Validation of parent classes ids against class id regex
+- New Exception in case of ill-formed parent class ids
+
+### Fixed
+- Bug raising when generating Ontology triples in case when there are multi parent classes
+
 ## [0.24.1] - 29-08-23
 
 ### Added
