@@ -4,4 +4,3 @@
 ::: cognite.neat.rules.exceptions
 ## Neat Graph Exceptions
 ::: cognite.neat.graph.exceptions
-

@@ -15,9 +15,9 @@ handling (such `rdfpath`), and rules loaders, parsers and exporters.
 from typing import Any
 
 from rdflib import Namespace, URIRef
+
 from cognite.neat.constants import DEFAULT_DOCS_URL
 from cognite.neat.exceptions import NeatException, NeatWarning
-
 
 DOCS_BASE_URL = f"{DEFAULT_DOCS_URL}api/exceptions.html#{__name__}"
 
