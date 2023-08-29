@@ -14,6 +14,15 @@ Changes are grouped as follows:
 - `Removed` for now removed features.
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
+## [0.24.1] - 29-08-23
+
+### Added
+
+- Docstring to `cognite.neat.rules.exceptions` and `cognite.neat.graph.exceptions`
+- Rendering of exceptions in `docs` (mkdocs)
+
+### Fixed
+- `fix_namespace_ending` was returning `str` instead of `Namespace` causing issues
 ## [0.24.0] - 24-08-23
 
 ### Added
