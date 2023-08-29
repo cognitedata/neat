@@ -810,6 +810,52 @@ class UndefinedObjectsAsExpectedValueTypes(NeatException):
         super().__init__(self.message)
 
 
+class ClassSheetParentClassIDRegexViolation(NeatException):
+    """Parent ID, which is stored in the column 'Parent Class' in the 'Classes' sheet,
+    does not respect defined regex expression
+
+    Args:
+        parent_ids: parent_ids that raised exception
+        regex_expression: regex expression against which parent_id is validated
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        Check definition of parent ids in `Parent Class` column in `Classes` sheet and
+        make sure to respect the regex expression by removing any illegal characters
+
+    """
+
+    type_: str = "ClassSheetParentClassIDRegexViolation"
+    code: int = 20
+    description: str = (
+        "Parent ID, which is stored in the column 'Parent Class' in the 'Classes' sheet, "
+        "does not respect defined regex expression"
+    )
+    example: str = (
+        "If parent class is set to 'Class 1', while regex expression does not allow spaces,"
+        " the expression will be violated thus raising this error"
+    )
+    fix: str = (
+        "Check definition of class ids in 'Parent Class' column in 'Classes' sheet and "
+        "make sure to respect the regex expression by removing any illegal characters"
+    )
+
+    def __init__(self, parent_ids: list[str], regex_expression: str, verbose: bool = False):
+        self.parent_ids = parent_ids
+        self.regex_expression = regex_expression
+
+        self.message = (
+            f"Parents ids: [{', '.join(parent_ids or [])}], stored in 'Parent Class' column in 'Classes' "
+            f"sheet violates regex {self.regex_expression}!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
 # Warnings:
 
 

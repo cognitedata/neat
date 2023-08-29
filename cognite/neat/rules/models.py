@@ -400,7 +400,7 @@ class Class(Resource):
     )
     class_name: ExternalId | None = Field(alias="Name", default=None)
     # Solution model
-    parent_class: ExternalId | None = Field(alias="Parent Class", default=None)
+    parent_class: ExternalId | list[ExternalId] | None = Field(alias="Parent Class", default=None)
 
     # Solution CDF resource
     parent_asset: ExternalId | None = Field(alias="Parent Asset", default=None)
@@ -429,6 +429,28 @@ class Class(Resource):
                 stacklevel=2,
             )
             value = values["class_id"]
+        return value
+
+    @field_validator("parent_class", mode="before")
+    def to_list_if_comma(cls, value, info):
+        if isinstance(value, str):
+            if value:
+                return value.replace(", ", ",").split(",")
+            if cls.model_fields[info.field_name].default is None:
+                return None
+
+    @field_validator("parent_class", mode="after")
+    def is_parent_class_id_compliant(cls, value):
+        if isinstance(value, str):
+            if not re.match(class_id_compliance_regex, value):
+                raise exceptions.ClassSheetParentClassIDRegexViolation(
+                    [value], class_id_compliance_regex
+                ).to_pydantic_custom_error()
+        elif isinstance(value, list):
+            if illegal_ids := [v for v in value if not re.match(class_id_compliance_regex, v)]:
+                raise exceptions.ClassSheetParentClassIDRegexViolation(
+                    illegal_ids, class_id_compliance_regex
+                ).to_pydantic_custom_error()
         return value
 
 
