@@ -274,8 +274,11 @@ return (
                         ))
                       } 
                     </Select> )}
-                    {!item?.options && selectedStep?.configs && selectedStep?.configs[item.name] != undefined && ( 
+                    {!item?.options && selectedStep?.configs && selectedStep?.configs[item.name] != undefined && item?.type != "password" && ( 
                       <TextField sx={{ marginTop: 0 }} fullWidth size='small' variant="outlined" value={ selectedStep?.configs[item.name]} onChange={(event) => { handleStepConfigurableChange(item.name, event.target.value) }} />
+                    )}
+                     {!item?.options && selectedStep?.configs && selectedStep?.configs[item.name] != undefined && item?.type == "password" && ( 
+                      <TextField sx={{ marginTop: 0 }} fullWidth size='small' type="password" variant="outlined" value={ selectedStep?.configs[item.name]} onChange={(event) => { handleStepConfigurableChange(item.name, event.target.value) }} />
                     )}
                   </FormControl>
                   </Box>

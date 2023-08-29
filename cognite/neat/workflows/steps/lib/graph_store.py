@@ -31,6 +31,7 @@ class ConfigureDefaultGraphStores(Step):
             name="solution_rdf_store.type",
             value=RdfStoreType.OXIGRAPH,
             label="Data store type for solutioin graph. Supported: oxigraph, memory,file, graphdb, sparql",
+            options=["oxigraph", "memory", "file", "graphdb", "sparql"],
         ),
         Configurable(
             name="source_rdf_store.disk_store_dir",
@@ -45,7 +46,8 @@ class ConfigureDefaultGraphStores(Step):
         Configurable(
             name="stores_to_configure",
             value="all",
-            label="Defines which stores to configure. Possible values: all, source, solution",
+            label="Defines which stores to configure",
+            options=["all", "source", "solution"],
         ),
         Configurable(
             name="solution_rdf_store.api_root_url",

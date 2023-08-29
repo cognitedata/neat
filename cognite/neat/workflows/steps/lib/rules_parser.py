@@ -133,6 +133,7 @@ class DownloadTransformationRulesFromGitHub(Step):
             name="github.personal_token",
             value="",
             label="Github Personal Access Token which allows fetching file from private Github repository",
+            type="password",
         ),
         Configurable(
             name="github.owner",

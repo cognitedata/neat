@@ -61,6 +61,7 @@ export class StepMetadata {
     input: string[];
     output: string[];
     configurables: StepConfigurable[] = [];
+    type: string = "";
    
     constructor(name: string, input: string[], output: string[]) {
         this.name = name;
