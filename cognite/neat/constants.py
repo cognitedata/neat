@@ -28,3 +28,5 @@ PREFIXES = {
 
 DEFAULT_NAMESPACE = Namespace("http://purl.org/cognite/app#")
 DEFAULT_URI = ""
+
+DEFAULT_DOCS_URL = "https://cognite-neat.readthedocs-hosted.com/en/latest/"

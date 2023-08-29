@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cognite-neat"
-version = "0.24.0"
+version = "0.24.1"
 readme = "README.md"
 description = "Knowledge graph transformation"
 authors = ["Nikola Vasiljevic <nikola.vasiljevic@cognite.com>",
@@ -19,6 +19,9 @@ exclude = [
     "cognite/neat/app/ui/neat-app/node_modules/**",
     "cognite/neat/app/ui/neat-app/*.json",
 ]
+[tool.poetry.group.docs.dependencies]
+mkdocs-autorefs = "^0.5.0"
+
 
 
 [tool.black]

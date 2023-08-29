@@ -269,7 +269,6 @@ class OWLProperty(OntologyModel):
 
         return cls(**prop_dict, namespace=namespace)
 
-    # TODO: Add warnings to _exceptions.py and use them here:
     @field_validator("type_")
     def is_multi_type(cls, v, info: FieldValidationInfo):
         if len(v) > 1:
