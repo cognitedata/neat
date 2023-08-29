@@ -1129,6 +1129,73 @@ class NotValidRAWLookUp(NeatException):
 
 
 ################################################################################################
+# RULES IMPORTERS: 200 - 299 ###################################################################
+################################################################################################
+class OWLGeneratedTransformationRulesHasErrors(NeatWarning):
+    """This warning occurs when transformation rules generated from OWL ontology are invalid/incomplete.
+
+    Args:
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        OWL ontology is not guaranteed to contain all information needed to generate
+        transformation rules. In such cases, transformation rules generated from OWL ontology
+        will be incomplete and invalid. Go through the generated report file and fix the warnings
+    """
+
+    type_: str = "OWLGeneratedTransformationRulesHasErrors"
+    code: int = 200
+    description: str = (
+        "This warning occurs when transformation rules generated from OWL ontology are invalid/incomplete."
+    )
+    example: str = ""
+    fix: str = "Go through the generated report file and fix the warnings in generated Transformation Rules."
+
+    def __init__(self, verbose: bool = False):
+        self.message = (
+            "Transformation rules generated from OWL ontology are invalid!"
+            " Consult report.txt for details on the errors and fix them before using the rules file."
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+
+
+class OWLGeneratedTransformationRulesHasWarnings(NeatWarning):
+    """This warning occurs when transformation rules generated from OWL ontology are invalid/incomplete.
+
+    Args:
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        OWL ontology is not guaranteed to contain all information needed to generate
+        transformation rules. In such cases, transformation rules generated from OWL ontology
+        will be incomplete and invalid. Go through the generated report file and fix the warnings
+    """
+
+    type_: str = "OWLGeneratedTransformationRulesHasWarnings"
+    code: int = 201
+    description: str = (
+        "This warning occurs when transformation rules generated from OWL ontology are invalid/incomplete."
+    )
+    example: str = ""
+    fix: str = "Go through the generated report file and fix the warnings in generated Transformation Rules."
+
+    def __init__(self, verbose: bool = False):
+        self.message = (
+            "Transformation rules generated from OWL ontology raised warnings!"
+            " Consult report.txt for details on warnings, and fix them prior using the rules file."
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+
+
+################################################################################################
 # RULES PARSERS: 300 - 399 #####################################################################
 ################################################################################################
 class ExcelFileMissingMandatorySheets(NeatException):
@@ -1394,6 +1461,36 @@ class InstancesSheetMissingMandatoryColumns(NeatException):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
+
+
+# Warnings
+class MissingDataModelPrefixOrNamespace(NeatWarning):
+    """Prefix and/or namespace are missing in the 'Metadata' sheet
+
+    Args:
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+    Add missing prefix and/or namespace in the 'Metadata' sheet
+    """
+
+    type_: str = "MissingDataModelPrefixOrNamespace"
+    code: int = 300
+    description: str = "Either prefix or namespace or both are missing in the 'Metadata' sheet"
+    example: str = ""
+    fix: str = "Add missing prefix and/or namespace in the 'Metadata' sheet"
+
+    def __init__(self, verbose: bool = False):
+        self.message = (
+            "Instances sheet is present but prefix and/or namespace are missing in 'Metadata' sheet."
+            "Instances sheet will not be processed!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+            # hint on a specific web docs page
 
 
 ################################################################################################
@@ -1682,92 +1779,37 @@ class InstancePropertiesNotMatchingContainerProperties(NeatException):
         super().__init__(self.message)
 
 
-################################################################################################
-# Exceptions that need to be updated ###########################################################
-################################################################################################
-
-
-###########################################
 # Warnings
-
-
-class MissingDataModelPrefixOrNamespace(NeatWarning):
-    type_: str = "MissingDataModelPrefixOrNamespace"
-    code: int = 500
-    description: str = "Either prefix or namespace or both are missing in the 'Metadata' sheet"
-    example: str = ""
-    fix: str = "Add missing prefix and/or namespace in the 'Metadata' sheet"
-
-    def __init__(self, verbose=False):
-        self.message = (
-            "Instances sheet is present but prefix and/or namespace are missing in 'Metadata' sheet."
-            "Instances sheet will not be processed!"
-        )
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-            # hint on a specific web docs page
-
-
-class OWLGeneratedTransformationRulesHasErrors(NeatWarning):
-    type_: str = "OWLGeneratedTransformationRulesHasErrors"
-    code: int = 1
-    description: str = (
-        "This warning occurs when generating transformation rules from OWL ontology are invalid/incomplete."
-    )
-    example: str = ""
-    fix: str = "Go through the generated report file and fix the warnings in generated Transformation Rules."
-
-    def __init__(self, verbose=False):
-        self.message = (
-            "Transformation rules generated from OWL ontology are invalid!"
-            " Consult report.txt for details on the errors and fix them before using the rules file."
-        )
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-            # hint on a specific web docs page
-
-
-class OWLGeneratedTransformationRulesHasWarnings(NeatWarning):
-    type_: str = "OWLGeneratedTransformationRulesHasWarnings"
-    code: int = 2
-    description: str = (
-        "This warning occurs when generating transformation rules from OWL ontology are invalid/incomplete."
-    )
-    example: str = ""
-    fix: str = "Go through the generated report file and fix the warnings in generated Transformation Rules."
-
-    def __init__(self, verbose=False):
-        self.message = (
-            "Transformation rules generated from OWL ontology raised warnings!"
-            " Consult report.txt for details on warnings, and fix them prior using the rules file."
-        )
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-            # hint on a specific web docs page
-
-
 class OntologyMultiTypeProperty(NeatWarning):
+    """This warning occurs when a same property is define for two object/classes where
+    its expected value type is different in one definition, e.g. acts as an edge, while in
+    other definition acts as and attribute
+
+    Args:
+        property_id: property id that raised warning due to multi type definition
+        types: list of types of property
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        If a property takes different value types for different objects, simply define
+        new property. It is bad practice to have multi type property!
+    """
+
     type_: str = "OntologyMultiTypeProperty"
-    code: int = 30
+    code: int = 400
     description: str = (
-        "This warning occurs when a same property is define for two object"
-        " where its expected value type is different in one case it acts as"
-        " a node edge (i.e. object) in other case it acts as a node attribute"
-        " (i.e. hold simple values such as strings)."
+        "This warning occurs when a same property is define for two object/classes where"
+        " its expected value type is different in one definition, e.g. acts as an edge, while in "
+        "other definition acts as and attribute"
     )
     example: str = ""
     fix: str = "If a property takes different value types for different objects, simply define new property"
 
-    def __init__(self, property_id: str = "", types: list[str] | None = None, verbose=False):
+    def __init__(self, property_id: str = "", types: list[str] | None = None, verbose: bool = False):
         self.message = (
             "It is bad practice to have multi type property! "
             f"Currently property '{property_id}' is defined as multi type property: {', '.join(types or [])}"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
         if verbose:
             self.message += f"\nDescription: {self.description}"
@@ -1776,18 +1818,31 @@ class OntologyMultiTypeProperty(NeatWarning):
 
 
 class OntologyMultiRangeProperty(NeatWarning):
+    """This warning occurs when a property takes range of values which consists of union
+    of multiple value types
+
+    Args:
+        property_id: property id that raised warning due to multi range definition
+        range_of_values: list of ranges that property takes
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        If a property takes different range of values, simply define new property.
+    """
+
     type_: str = "OntologyMultiRangeProperty"
-    code: int = 31
+    code: int = 401
     description: str = (
-        "This warning occurs when a property takes range of values" " which consists of union of multiple value types."
+        "This warning occurs when a property takes range of values which consists of union of multiple value types."
     )
     example: str = ""
-    fix: str = "If a property takes different range of values, simply define new property for each range"
+    fix: str = "If a property takes different range of values, simply define new property"
 
-    def __init__(self, property_id: str = "", range_of_values: list[str] | None = None, verbose=False):
+    def __init__(self, property_id: str = "", range_of_values: list[str] | None = None, verbose: bool = False):
         self.message = (
-            "Property should ideally have only single range of values. "
+            "It is bad practice to have property that take various range of values! "
             f"Currently property '{property_id}' has multiple ranges: {', '.join(range_of_values or [])}"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
         if verbose:
             self.message += f"\nDescription: {self.description}"
@@ -1796,9 +1851,21 @@ class OntologyMultiRangeProperty(NeatWarning):
 
 
 class OntologyMultiDomainProperty(NeatWarning):
+    """This warning occurs when a property is reused for more than one classes
+
+    Args:
+        property_id: property id that raised warning due to reuse definition
+        classes: list of classes that use the same property
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        No need to fix this, but make sure that property type is consistent across different
+        classes and that ideally takes the same range of values
+    """
+
     type_: str = "OntologyMultiDomainProperty"
-    code: int = 32
-    description: str = "This warning occurs when a property is reused/redefined for more than one classes."
+    code: int = 402
+    description: str = "This warning occurs when a property is reused for more than one classes."
     example: str = ""
     fix: str = (
         "No need to fix this, but make sure that property type is consistent"
@@ -1807,8 +1874,8 @@ class OntologyMultiDomainProperty(NeatWarning):
 
     def __init__(self, property_id: str = "", classes: list[str] | None = None, verbose=False):
         self.message = (
-            "Property should ideally defined for single class. "
             f"Currently property '{property_id}' is defined for multiple classes: {', '.join(classes or [])}"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
         if verbose:
             self.message += f"\nDescription: {self.description}"
@@ -1817,21 +1884,34 @@ class OntologyMultiDomainProperty(NeatWarning):
 
 
 class OntologyMultiLabeledProperty(NeatWarning):
+    """This warning occurs when a property is given multiple labels, typically if the
+    same property is defined for different classes but different name is given
+
+    Args:
+        property_id: property id that raised warning due to multiple labels
+        names: list of names of property
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        This would be automatically fixed by taking the first label (aka name) of the property.
+    """
+
     type_: str = "OntologyMultiLabeledProperty"
-    code: int = 33
+    code: int = 403
     description: str = (
         "This warning occurs when a property is given multiple labels,"
         " typically if the same property is defined for different "
         "classes but different name is given."
     )
     example: str = ""
-    fix: str = "This would be automatically fixes by taking the first name."
+    fix: str = "This would be automatically fixed by taking the first label (aka name) of the property."
 
     def __init__(self, property_id: str = "", names: list[str] | None = None, verbose=False):
         self.message = (
             "Property should have single preferred label (human readable name)."
             f"Currently property '{property_id}' has multiple preferred labels: {', '.join(names or [])} !"
             f"Only the first name, i.e. '{names[0]}' will be considered!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
         if verbose:
             self.message += f"\nDescription: {self.description}"
@@ -1840,20 +1920,33 @@ class OntologyMultiLabeledProperty(NeatWarning):
 
 
 class OntologyMultiDefinitionProperty(NeatWarning):
+    """This warning occurs when a property is given multiple human readable definitions,
+    typically if the same property is defined for different classes where each definition
+    is different.
+
+    Args:
+        property_id: property id that raised warning due to multiple definitions
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        This would be automatically fixed by concatenating all definitions.
+    """
+
     type_: str = "OntologyMultiDefinitionProperty"
-    code: int = 34
+    code: int = 404
     description: str = (
         "This warning occurs when a property is given multiple human readable definitions,"
         " typically if the same property is defined for different "
-        "classes and their usage differs from class to class."
+        "classes where each definition is different."
     )
     example: str = ""
-    fix: str = "This would be automatically fixes by concatenating all definitions."
+    fix: str = "This would be automatically fixed by concatenating all definitions."
 
-    def __init__(self, property_id: str, verbose=False):
+    def __init__(self, property_id: str, verbose: bool = False):
         self.message = (
             f"Multiple definitions (aka comments) of property '{property_id}' detected."
             " Definitions will be concatenated."
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
         if verbose:
             self.message += f"\nDescription: {self.description}"
@@ -1862,8 +1955,21 @@ class OntologyMultiDefinitionProperty(NeatWarning):
 
 
 class FieldNotFoundInInstance(NeatWarning):
+    """This warning occurs when a property, associated to the pydantic field, is not found in the instance.
+    The missing field will be removed, which might lead to failure of the pydantic model validation if
+    the field/property is mandatory.
+
+    Args:
+        id_: instance id that raised warning due to missing field
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        If property/field is mandatory make sure that instances contain all mandatory fields.
+        Otherwise, no need to fix this warning.
+    """
+
     type_: str = "FieldNotFoundInInstance"
-    code: int = 40
+    code: int = 405
     description: str = (
         "This warning occurs when a property, associated to the pydantic field, is not found in the instance."
         "The missing field will be removed, which might lead to failure of the pydantic model validation if"
@@ -1875,10 +1981,11 @@ class FieldNotFoundInInstance(NeatWarning):
         "Otherwise, no need to fix this warning."
     )
 
-    def __init__(self, id_: str | URIRef = "", field_name: str = "", verbose=False):
+    def __init__(self, id_: str | URIRef = "", field_name: str = "", verbose: bool = False):
         self.message = (
             f"Field {field_name} is missing in the instance {id_}."
             " If this field is mandatory, the validation of the pydantic model will fail!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
         if verbose:
             self.message += f"\nDescription: {self.description}"
@@ -1887,8 +1994,22 @@ class FieldNotFoundInInstance(NeatWarning):
 
 
 class FieldContainsMoreThanOneValue(NeatWarning):
+    """This warning occurs when a property, associated to the pydantic field, contains
+    more than one value (i.e. list of values), while it is defined as single value field.
+    As consequence, only the first value will be considered!
+
+    Args:
+        field_name: field name that raised warning due to multiple values
+        no_of_values: number of values that field contains
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        If a property takes more than one value, define it as list of values in TransformationRules.
+        To do this do not bound its `max_count` to 1, either leave it blank or set it to >1.
+    """
+
     type_: str = "FieldContainsMoreThanOneValue"
-    code: int = 41
+    code: int = 406
     description: str = (
         "This warning occurs when a property, associated to the pydantic field, contains"
         " more than one value (i.e. list of values), while it is defined as single value field."
@@ -1900,10 +2021,11 @@ class FieldContainsMoreThanOneValue(NeatWarning):
         "To do this do not bound its `max_count` to 1, either leave it blank or set it to >1."
     )
 
-    def __init__(self, field_name: str = "", no_of_values: int | None = None, verbose=False):
+    def __init__(self, field_name: str = "", no_of_values: int | None = None, verbose: bool = False):
         self.message = (
             f"Field {field_name} is defined as single value property in TransformationRules,"
             f" but it contains {no_of_values} values!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
         if verbose:
             self.message += f"\nDescription: {self.description}"
@@ -1912,8 +2034,21 @@ class FieldContainsMoreThanOneValue(NeatWarning):
 
 
 class ContainerPropertyTypeUnsupported(NeatWarning):
+    """This warning occurs when a property type is not supported by the container.
+    Currently only `DatatypeProperty` and `ObjectProperty` are supported, which
+    translate to `attribute` and `edge` respectively.
+
+    Args:
+        property_id: property id that raised warning due to unsupported type
+        unsupported_type: unsupported property type
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        Contact the NEAT support team if the warning is raised.
+    """
+
     type_: str = "ContainerPropertyTypeUnsupported"
-    code: int = 60
+    code: int = 407
     description: str = (
         "This warning occurs when a property type is not supported by the container."
         " Currently only `DatatypeProperty` and `ObjectProperty` are supported, which"
@@ -1922,10 +2057,11 @@ class ContainerPropertyTypeUnsupported(NeatWarning):
     example: str = ""
     fix: str = "Contact NEAT support team."
 
-    def __init__(self, property_id: str = "", property_type: str = "", verbose=False):
+    def __init__(self, property_id: str = "", unsupported_type: str = "", verbose: bool = False):
         self.message = (
-            f"Property {property_id} has unsupported type {property_type}!"
+            f"Property {property_id} has unsupported type {unsupported_type}!"
             "Only DatatypeProperty and ObjectProperty are supported!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
         if verbose:
             self.message += f"\nDescription: {self.description}"
@@ -1934,8 +2070,19 @@ class ContainerPropertyTypeUnsupported(NeatWarning):
 
 
 class ViewPropertyTypeUnsupported(NeatWarning):
+    """This warning occurs when a TransformationRule property translates to unsupported
+    DMS view property. Currently only attributes, edges 1-1 and edges 1-n are supported.
+
+    Args:
+        property_id: property id that raised warning due to unsupported type
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        Contact the NEAT support team if the warning is raised.
+    """
+
     type_: str = "ViewPropertyTypeUnsupported"
-    code: int = 61
+    code: int = 408
     description: str = (
         "This warning occurs when a TransformationRule property translates to unsupported DMS view property."
         " Currently only attributes, edges 1-1 and edges 1-n are supported."
@@ -1943,10 +2090,11 @@ class ViewPropertyTypeUnsupported(NeatWarning):
     example: str = ""
     fix: str = "Contact NEAT support team."
 
-    def __init__(self, property_id: str = "", verbose=False):
+    def __init__(self, property_id: str = "", verbose: bool = False):
         self.message = (
             f"Property {property_id} translates to unsupported!"
             " Currently only attributes, edges 1-1 and edges 1-n are supported."
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
         if verbose:
             self.message += f"\nDescription: {self.description}"
@@ -1956,7 +2104,7 @@ class ViewPropertyTypeUnsupported(NeatWarning):
 
 class ContainersAlreadyExist(NeatWarning):
     type_: str = "ContainersAlreadyExist"
-    code: int = 62
+    code: int = 409
     description: str = "This warning occurs when attempting to create containers which already exist in DMS."
     example: str = ""
     fix: str = "Remove existing containers and try again."
@@ -1977,7 +2125,7 @@ class ContainersAlreadyExist(NeatWarning):
 
 class ViewsAlreadyExist(NeatWarning):
     type_: str = "ViewsAlreadyExist"
-    code: int = 63
+    code: int = 410
     description: str = "This warning occurs when attempting to create views which already exist in DMS."
     example: str = ""
     fix: str = "Remove existing views and try again or update version of data model."
@@ -1998,7 +2146,7 @@ class ViewsAlreadyExist(NeatWarning):
 
 class DataModelAlreadyExist(NeatWarning):
     type_: str = "DataModelAlreadyExist"
-    code: int = 64
+    code: int = 411
     description: str = "This warning occurs when attempting to create data model which already exist in DMS."
     example: str = ""
     fix: str = "Remove existing data model and try again or update its version."
@@ -2019,7 +2167,7 @@ class DataModelAlreadyExist(NeatWarning):
 
 class NamespaceEndingFixed(NeatWarning):
     type_: str = "NamespaceEndingFixed"
-    code: int = 100
+    code: int = 412
     description: str = "It is expected that namespace ends with '/' or '#'. If not, it will be fixed"
     example: str = "If namespace is set to http://purl.org/cognite, it will be converted to http://purl.org/cognite#"
     fix: str = "Make sure that namespace ends with '/' or '#'"
@@ -2035,7 +2183,7 @@ class NamespaceEndingFixed(NeatWarning):
 
 class DataModelNameMissing(NeatWarning):
     type_: str = "DataModelNameMissing"
-    code: int = 101
+    code: int = 413
     description: str = "In case when data model name is not provided in the 'Metadata' sheet, it will be set to prefix"
     example: str = ""
     fix: str = "Provide data model name to avoid this warning and defaulting to prefix"
@@ -2051,7 +2199,7 @@ class DataModelNameMissing(NeatWarning):
 
 class VersionDotsConvertedToUnderscores(NeatWarning):
     type_: str = "VersionDotsConvertedToUnderscores"
-    code: int = 102
+    code: int = 414
     description: str = (
         "Version is expressed in classical form with dots major.minor.patch, "
         "while CDF accepts underscores major_minor_patch"
