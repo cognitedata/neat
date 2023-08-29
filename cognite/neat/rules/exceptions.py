@@ -19,12 +19,14 @@ from cognite.neat.constants import DEFAULT_DOCS_URL
 from cognite.neat.exceptions import NeatException, NeatWarning
 
 
-BASE_URL = f"{DEFAULT_DOCS_URL}api/exceptions.html#{__name__}"
+DOCS_BASE_URL = f"{DEFAULT_DOCS_URL}api/exceptions.html#{__name__}"
 
 
 ################################################################################################
 # RULES MODEL REPRESENTATION: 100 - 199 ########################################################
 ################################################################################################
+
+# Exceptions:
 
 
 class PrefixRegexViolation(NeatException):
@@ -52,13 +54,13 @@ class PrefixRegexViolation(NeatException):
         "Check if prefix in the 'Metadata' sheet contains any illegal characters and respects the regex expression"
     )
 
-    def __init__(self, prefix: str, regex_expression: str, verbose=False):
+    def __init__(self, prefix: str, regex_expression: str, verbose: bool = False):
         self.prefix = prefix
         self.regex_expression = regex_expression
 
         self.message = (
             f"Invalid prefix '{self.prefix}' stored in 'Metadata' sheet, it must obey regex {self.regex_expression}!"
-            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
         if verbose:
             self.message += f"\nDescription: {self.description}"
@@ -100,7 +102,7 @@ class CDFSpaceRegexViolation(NeatException):
         self.message = (
             f"Invalid cdfSpaceName '{self.cdf_space_name}' stored in 'Metadata' sheet, "
             f"it must obey regex {self.regex_expression}!"
-            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
         if verbose:
             self.message += f"\nDescription: {self.description}"
@@ -136,7 +138,7 @@ class MetadataSheetNamespaceNotValidURL(NeatException):
 
         self.message = (
             f"Invalid namespace '{self.namespace}' stored in 'Metadata' sheet, it must be valid URL!"
-            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
         if verbose:
             self.message += f"\nDescription: {self.description}"
@@ -178,7 +180,7 @@ class DataModelNameRegexViolation(NeatException):
         self.message = (
             f"Invalid dataModelName '{self.data_model_name}' stored in 'Metadata' sheet, "
             f"it must obey regex {self.regex_expression}!"
-            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
         if verbose:
             self.message += f"\nDescription: {self.description}"
@@ -218,7 +220,7 @@ class VersionRegexViolation(NeatException):
 
         self.message = (
             f"Invalid version '{self.version}' stored in 'Metadata' sheet, it must obey regex {self.regex_expression}!"
-            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
         if verbose:
             self.message += f"\nDescription: {self.description}"
@@ -264,13 +266,765 @@ class ClassSheetClassIDRegexViolation(NeatException):
         self.message = (
             f"Class id '{self.class_id}' stored in 'Class' column in 'Classes' "
             f"sheet violates regex {self.regex_expression}!"
-            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
         if verbose:
             self.message += f"\nDescription: {self.description}"
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
+
+
+class ClassIDMissing(NeatException):
+    """Class ID, which is stored in the column 'Class' in the 'Classes' sheet, is either
+    missing or did not satisfied regex expression
+
+    Args:
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        Make sure that class id is provided and respects regex expression
+    """
+
+    type_: str = "ClassIDMissing"
+    code: int = 6
+    description: str = (
+        "Class ID, which is stored in the column 'Class' in the 'Classes' sheet,"
+        " is either missing or did not satisfied regex expression"
+    )
+    example: str = ""
+    fix: str = "Make sure that class id is provided and respects regex expression"
+
+    def __init__(self, verbose: bool = False):
+        self.message = (
+            "Class id is missing, it failed validation either because it has"
+            " not been provided or because it did not respect regex expression!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class PropertiesSheetClassIDRegexViolation(NeatException):
+    """Class ID, which is stored in the column 'Class' in the 'Properties' sheet, does
+    not respect defined regex expression
+
+    Args:
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+        class_id: class id that raised exception
+        regex_expression: regex expression against which class id is checked
+
+    Notes:
+        Check definition of class ids in `Class` column in `Properties` sheet and make
+        sure to respect the regex expression by removing any illegal characters
+    """
+
+    type_: str = "PropertiesSheetClassIDRegexViolation"
+    code: int = 7
+    description: str = (
+        "Class ID, which is stored in the column 'Class' in the 'Properties' sheet, "
+        "does not respect defined regex expression"
+    )
+    example: str = (
+        "If class id is set to 'Class 1', while regex expression does not allow spaces,"
+        " the expression will be violated thus raising this error"
+    )
+    fix: str = (
+        "Check definition of class ids in 'Class' column in 'Properties' sheet "
+        "and make sure to respect the regex expression by removing any illegal characters"
+    )
+
+    def __init__(self, class_id: str, regex_expression: str, verbose: bool = False):
+        self.class_id = class_id
+        self.regex_expression = regex_expression
+
+        self.message = (
+            f"Class id '{self.class_id}' stored in 'Class' column in 'Properties' "
+            f"sheet violates regex {self.regex_expression}!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class PropertyIDRegexViolation(NeatException):
+    """Property ID, which is stored in the column 'Property' in the 'Properties' sheet, does
+    not respect defined regex expression
+
+    Args:
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+        property_id: property id that raised exception
+        regex_expression: regex expression against which property id is checked
+
+    Notes:
+        Check definition of class ids in `Property` column in `Properties` sheet and make
+        sure to respect the regex expression by removing any illegal characters
+    """
+
+    type_: str = "PropertyIDRegexViolation"
+    code: int = 8
+    description: str = (
+        "Property ID, which is stored in the column 'Property' "
+        "in the 'Properties' sheet, does not respect defined regex expression"
+    )
+    example: str = (
+        "If property id is set to 'property 1', while regex expression does not allow spaces,"
+        " the expression will be violated thus raising this error"
+    )
+    fix: str = (
+        "Check definition of property ids in 'Property' column in 'Properties' sheet"
+        " and make sure to respect the regex expression by removing any illegal characters"
+    )
+
+    def __init__(self, property_id: str, regex_expression: str, verbose: bool = False):
+        self.property_id = property_id
+        self.regex_expression = regex_expression
+
+        self.message = (
+            f"Property id '{self.property_id}' stored in 'Property' "
+            f"column in 'Properties' sheet violates regex {self.regex_expression}!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class ValueTypeIDRegexViolation(NeatException):
+    """Value type, which is stored in the column 'Type' in the 'Properties' sheet, does
+    not respect defined regex expression
+
+    Args:
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+        value_type: value type that raised exception
+        regex_expression: regex expression against which value type is checked
+
+    Notes:
+        Check definition of class ids in `Type` column in `Properties` sheet and make
+        sure to respect the regex expression by removing any illegal characters
+    """
+
+    type_: str = "ValueTypeIDRegexViolation"
+    code: int = 9
+    description: str = (
+        "Value type, which is stored in the column 'Type' in the 'Properties' sheet, "
+        "does not respect defined regex expression"
+    )
+    example: str = (
+        "If value type is set to 'date time', while regex expression does not"
+        " allow spaces, the expression will be violated thus raising this error"
+    )
+    fix: str = (
+        "Check definition of value types in 'Type' column in 'Properties' sheet"
+        " and make sure to respect the regex expression by removing any illegal characters"
+    )
+
+    def __init__(self, value_type: str, regex_expression: str, verbose=False):
+        self.value_type = value_type
+        self.regex_expression = regex_expression
+
+        self.message = (
+            f"Value type '{self.value_type}' stored in 'Type' column in "
+            f"'Properties' sheet violates regex {self.regex_expression}!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class MissingTypeValue(NeatException):
+    """Value type, which is stored in the column 'Type' in the 'Properties' sheet, is missing
+
+    Args:
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        Make sure to define value type in `Type` column in `Properties` sheet
+    """
+
+    type_: str = "MissingTypeValue"
+    code: int = 10
+    description: str = "Value type, which is stored in the column 'Type' in the 'Properties' sheet, is missing"
+    example: str = "If value type is not set, this error will be raised"
+    fix: str = "Make sure to define value type in 'Type' column in 'Properties' sheet"
+
+    def __init__(self, verbose: bool = False):
+        self.message = (
+            "Value type, which is stored in the column 'Type' in the 'Properties' sheet, is missing"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class PropertyIDMissing(NeatException):
+    """Property ID, which is stored in the column 'Property' in the 'Properties' sheet,
+    is either missing or did not satisfied regex expression
+
+    Args:
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        Make sure to define value type in `Type` column in `Properties` sheet
+    """
+
+    type_: str = "PropertyIDMissing"
+    code: int = 11
+    description: str = (
+        "Property ID, which is stored in the column 'Property' in the 'Properties' sheet,"
+        " is either missing or did not satisfied regex expression"
+    )
+    example: str = ""
+    fix: str = "Make sure that property id is provided and respects regex expression"
+
+    def __init__(self, verbose: bool = False):
+        self.message = (
+            "Property id is missing, validator for property id failed either"
+            " due to lack of property id or due to not respecting regex expression!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class RuleTypeProvidedButRuleMissing(NeatException):
+    """This error occurs when transformation rule type is provided but actual
+    transformation rule is missing
+
+    Args:
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+        property_id: property id which is missing transformation rule
+        class_id: class id for which property id is defined
+        rule_type: rule type that is provided for property id
+
+    Notes:
+        If you provide rule type you must provide rule as well! Otherwise remove rule
+        type if no transformation rule is needed
+    """
+
+    type_: str = "RuleTypeProvidedButRuleMissing"
+    code: int = 12
+    description: str = (
+        "This error occurs when transformation rule type is provided but actual transformation rule is missing"
+    )
+    example: str = ""
+    fix: str = (
+        "If you provide rule type you must provide rule as well! "
+        "Otherwise remove rule type if no transformation rule is needed"
+    )
+
+    def __init__(self, property_id: str, class_id: str, rule_type: str, verbose=False):
+        self.message = (
+            f"Rule type '{rule_type}' provided for property '{property_id}' "
+            f"in class '{class_id}' but rule is not provided!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class PropertyDefinedForUndefinedClass(NeatException):
+    """Property defined for a class that has not been defined in the 'Classes' sheet
+
+    Args:
+        property_id: property id that is defined for undefined class
+        class_id: class id that is undefined
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        Make sure to define all classes in the 'Classes' sheet before defining properties
+        for them in the `Properties` sheet
+    """
+
+    type_: str = "PropertyDefinedForUndefinedClass"
+    code: int = 13
+    description: str = "Property defined for a class that has not been defined in the 'Classes' sheet"
+    example: str = (
+        "If property 'someProperty' is defined for class 'Class 1' in the 'Properties' sheet, "
+        "while 'Class 1' has not been defined in the 'Classes' sheet,"
+        " this error will be raised"
+    )
+    fix: str = (
+        "Make sure to define all classes in the 'Classes' sheet before defining properties for them"
+        " in the 'Properties' sheet"
+    )
+
+    def __init__(self, property_id: str, class_id: str, verbose: bool = False):
+        self.property_id = property_id
+        self.class_id = class_id
+
+        self.message = (
+            f"Class <{self.class_id}> to which property {self.property_id}> is being defined"
+            " is not define in the 'Classes' sheet!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class MetadataSheetMissingOrFailedValidation(NeatException):
+    """Metadata sheet is missing or it failed validation for one or more fields
+
+    Args:
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+       Make sure to define compliant Metadata sheet before proceeding
+    """
+
+    type_: str = "MetadataSheetMissingOrFailedValidation"
+    code: int = 14
+    description: str = "Metadata sheet is missing or it failed validation for one or more fields"
+    example: str = ""
+    fix: str = "Make sure to define compliant Metadata sheet before proceeding"
+
+    def __init__(self, verbose: bool = False):
+        self.message = (
+            "Metadata sheet is missing or it failed validation for one or more fields!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class FiledInMetadataSheetMissingOrFailedValidation(NeatException):
+    """One of the mandatory fields in Metadata sheet is missing or it failed validation
+
+    Args:
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+       Make sure to define compliant field in Metadata sheet before proceeding
+    """
+
+    type_: str = "FiledInMetadataSheetMissingOrFailedValidation"
+    code: int = 15
+    description: str = "One of the mandatory fields in Metadata sheet is missing or it failed validation"
+    example: str = ""
+    fix: str = "Make sure to define compliant field in Metadata sheet before proceeding"
+
+    def __init__(self, missing_field: str, verbose: str = False):
+        self.message = (
+            f"Field {missing_field} is missing in the 'Metadata' sheet or it failed validation!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class PrefixesRegexViolation(NeatException):
+    """Prefix(es), which are in the 'Prefixes' sheet, do(es) not respect defined regex expression
+
+    Args:
+        prefixes: list of prefixes that violate regex expression
+        regex_expression: regex expression that is violated
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+       Check if prefixes in the `Prefixes` sheet contains any illegal characters and respects the regex expression
+    """
+
+    type_: str = "PrefixesRegexViolation"
+    code: int = 16
+    description: str = "Prefix(es), which are in the 'Prefixes' sheet, do(es) not respect defined regex expression"
+    example: str = (
+        "If prefix is set to 'power grid', while regex expression does not "
+        "allow spaces, the expression will be violated thus raising this error"
+    )
+    fix: str = (
+        "Check if prefixes in the 'Prefixes' sheet contains any illegal characters and respects the regex expression"
+    )
+
+    def __init__(self, prefixes: list[str], regex_expression: str, verbose: bool = False):
+        self.prefixes = prefixes
+        self.regex_expression = regex_expression
+
+        self.message = (
+            f"Invalid prefix(es) {', '.join(self.prefixes)} stored in the 'Prefixes' sheet, "
+            f"it/they must obey regex {self.regex_expression}!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class PrefixesSheetNamespaceNotValidURL(NeatException):
+    """Namespace(es), which are/is in the 'Prefixes' sheet, are/is not valid URL(s)
+
+    Args:
+        namespaces: list of namespaces that raised exception
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+       Check if `namespaces` in the `Prefixes` sheet are properly constructed as valid
+       URLs containing only allowed characters
+    """
+
+    type_: str = "PrefixesSheetNamespaceNotValidURL"
+    code: int = 17
+    description: str = "Namespace(es), which are/is in the 'Prefixes' sheet, are/is not valid URLs"
+    example: str = "If we have 'authority:namespace' as namespace as it is not a valid URL this error will be raised"
+    fix: str = (
+        "Check if 'namespaces' in the 'Prefixes' sheet are properly "
+        "constructed as valid URLs containing only allowed characters"
+    )
+
+    def __init__(self, namespaces: list[str], verbose: bool = False):
+        self.namespaces = namespaces
+
+        self.message = (
+            f"Invalid namespace(es) {', '.join(self.namespaces)} stored in the 'Prefixes' sheet, "
+            f"it/they must be valid URLs!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class ValueTypeNotDefinedAsClass(NeatException):
+    """Expected value type, which is stored in the column 'Type' in the 'Properties' sheet,
+    is not defined in the 'Classes' sheet. This error occurs when property is defined as
+    an edge between two classes, of which one is not defined
+
+    Args:
+        expected_value_type: expected value type that raised exception
+        property_id: property id that has expected value type that raised exception
+        class_id: class id for which property is defined
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        Make sure to define all of the classes in the `Classes` sheet before defining
+        properties that expect them as value types
+    """
+
+    type_: str = "ValueTypeNotDefinedAsClass"
+    code: int = 18
+    description: str = (
+        "Expected value type, which is stored in the column 'Type' in the 'Properties'"
+        " sheet, is not defined in the 'Classes' sheet. "
+        "This error occurs when property is defined as an edge between two classes, of which one is not defined"
+    )
+    example: str = (
+        "We have 'Class1' which has property 'edgeClass1Class2' linking it to 'Class2', thus"
+        "expected value of 'edgeClass1Class2' is 'Class2'. However, 'Classes' sheet only contains"
+        " 'Class1', while 'Class2' is not defined. Under this given circumstance, this error will be raised!"
+    )
+
+    fix: str = (
+        "Make sure to define all of the classes in the 'Classes' sheet before defining "
+        "properties that expect them as value types"
+    )
+
+    def __init__(self, class_id: str, property_id: str, expected_value_type: str, verbose: bool = False):
+        self.message = (
+            f"Property {property_id} defined for class {class_id} has"
+            f" value type {expected_value_type} which is not defined as a class in the 'Classes' sheet!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class UndefinedObjectsAsExpectedValueTypes(NeatException):
+    """Expected value types, which are stored in the column 'Type' in the 'Properties'
+    sheet, are classes that exist in the 'Classes' sheet but for which no properties are defined
+    in the 'Properties' sheet.
+
+    Args:
+        undefined_objects: list of undefined objects that raised exception
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        Make sure to define properties for classes from 'Classes' sheet before defining
+        properties that expect them as value types
+    """
+
+    type_: str = "UndefinedObjectsAsExpectedValueTypes"
+    code: int = 19
+    description: str = (
+        "Expected value types, which are stored in the column 'Type' in the 'Properties'"
+        " sheet, are classes that exist in the 'Classes' sheet but for which no properties are defined "
+        "in the 'Properties' sheet. "
+    )
+    example: str = (
+        "We have 'Class1' which has property 'edgeClass1Class2' linking it to 'Class2', thus"
+        "expected value of 'edgeClass1Class2' is 'Class2'. "
+        "Both 'Class1' and 'Class2' are defined in the 'Classes' sheet"
+        "However, only 'Class1' has properties defined in the 'Properties' sheet, making 'Class2' an undefined object"
+        " leading to this error being raised!"
+    )
+
+    fix: str = (
+        "Make sure to define properties for classes from 'Classes' "
+        "sheet before defining properties that expect them as value types"
+    )
+
+    def __init__(self, undefined_objects: list[str], verbose: bool = False):
+        self.message = (
+            f"Following classes {', '.join(undefined_objects)} defined as classes in the 'Classes' sheet"
+            f" have no properties defined in the 'Properties' sheet or their validation as objects failed!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+# Warnings:
+
+
+class ClassNameNotProvided(NeatWarning):
+    """This warning is raised when class name is not provided in the 'Classes' sheet
+    under 'name' column, which will be then set the class id stored in the 'Class' column
+
+    Args:
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+        class_id: class id that raised warning, and which is used as class name
+
+    Notes:
+        If you want to have differentiation between the class name and class id, then
+        provide class name in the `name` column
+    """
+
+    type_: str = "ClassNameNotProvided"
+    code: int = 1
+    description: str = (
+        "This warning is raised when class name is not provided in the 'Classes' sheet"
+        "under 'name' column, which will be then set the class id stored in the 'Class' column"
+    )
+    example: str = ""
+    fix: str = (
+        "If you want to have differentiation between the class name"
+        " and class id, then provide class name in the `name` column"
+    )
+
+    # need to have default value set to arguments
+    # otherwise it will raise TypeError
+    def __init__(self, class_id: str = "", verbose: bool = False):
+        self.message = (
+            f"Class id {class_id} set as Class name!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+
+
+class EntityIDNotDMSCompliant(NeatWarning):
+    """Warning raise when entity id being class, property or value type is not DMS compliant
+
+    Args:
+        entity_type: type of entity that raised warning
+        entity_id: id of entity that raised warning
+        loc: location of entity in the Transformation Rules sheet that raised warning
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        DMS ready means that entity id must only use following characters [a-zA-Z0-9_],
+        where it can only start with letter!
+    """
+
+    type_: str = "EntityIDNotDMSCompliant"
+    code: int = 2
+    description: str = "Warning raise when entity id being class, property or value type is not DMS compliant"
+    example: str = ""
+    fix: str = (
+        "DMS ready means that entity id must only use following"
+        " characters [a-zA-Z0-9_], where it can only start with letter!"
+    )
+
+    # See ClassNameNotProvided for explanation why default values are set
+    def __init__(self, entity_type: str = "", entity_id: str = "", loc: str = "", verbose: bool = False):
+        self.message = (
+            f"'{entity_id}' {entity_type.lower()}"
+            " use character(s) outside of range of allowed characters [a-zA-Z0-9_] or "
+            f"it starts with non-letter character! {loc}"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+
+
+class PropertyRedefined(NeatWarning):
+    """Warning raise when same property is defined multiple times for same class, this
+    typically occurs if there are multiple ways to extract certain information from the
+    NeatGraph.
+
+    Args:
+        property_id: property id that is redefined
+        class_id: class id for which property is redefined
+        loc: location of property redefinition in the 'Properties' sheet of Transformation Rules Excel file
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        If possible, have only single definition of a particular property for a class, otherwise
+        transformation rules will not be DMS compliant.
+    """
+
+    type_: str = "PropertyRedefined"
+    code: int = 3
+    description: str = "Warning raise when same property is defined multiple times for same class"
+    example: str = ""
+    fix: str = "Have only single definition of a particular property for a class"
+
+    # See Warning302 for explanation why default values are set
+    def __init__(self, property_id: str = "", class_id: str = "", loc: str = "", verbose: bool = False):
+        self.message = (
+            f"Not DMS compliant! Property '{property_id}' for class '{class_id}' redefined! {loc}"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+            # hint on a specific web docs page
+
+
+class PropertyNameNotProvided(NeatWarning):
+    """If property name is not provided in the 'Property' sheet under 'name' column, it
+    will be set to corresponding value from 'Property' column, thus property id
+
+    Args:
+        property_id: property id that is set as property name
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+    Notes:
+        If you want to have different property name then property id, provide it in the 'name' column
+    """
+
+    type_: str = "PropertyNameNotProvided"
+    code: int = 4
+    description: str = (
+        "If property name is not provided in the 'Property' sheet under 'name' column,"
+        " it will be set to corresponding value from 'Property' column, thus property id"
+    )
+    example: str = ""
+    fix: str = "If you want to have different property name then property id, provide it in the 'name' column"
+
+    def __init__(self, property_id: str = "", verbose=False):
+        self.message = (
+            f"Property id {property_id} set as Property name!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+
+
+class MissingLabel(NeatWarning):
+    """If property maps to CDF relationship, and it does not have label explicitly stated
+    under 'Label' column  in the 'Property' sheet under 'name' column,  it will be set
+    to corresponding value from 'Property' column, thus property id
+
+    Args:
+        property_id: property id that which is missing label
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+
+    Notes:
+        If you want to have control over relationship labels make sure to define one
+        in the `Label` column in the `Properties` sheet
+    """
+
+    type_: str = "MissingLabel"
+    code: int = 5
+    description: str = (
+        "If property maps to CDF relationship, and it does not have label explicitly stated under 'Label' column"
+        " in the 'Property' sheet under 'name' column,"
+        " it will be set to corresponding value from 'Property' column, thus property id"
+    )
+    example: str = ""
+    fix: str = (
+        "If you want to have control over relationship labels make sure to define one"
+        " in the 'Label' column in the 'Properties' sheet."
+    )
+
+    def __init__(self, property_id: str = "", verbose: bool = False):
+        self.message = (
+            f"Property id {property_id} set as CDF relationship label!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+
+
+class NoTransformationRules(NeatWarning):
+    """This warning is raised if there are no transformation rules defined for given
+    property and class
+
+    Args:
+        property_id: property id that which is missing transformation rules
+        class_id: class id for which property is missing transformation rules
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        One can omit this warning if the Transformation Rules spreadsheet is used solely
+        for defining the data model and not for performing knowledge graph transformation.
+    """
+
+    type_: str = "NoTransformationRules"
+    code: int = 6
+    description: str = (
+        "This warning is raised if there are no transformation rules "
+        "defined in the 'Transformation' sheet for given property"
+    )
+    example: str = ""
+    fix: str = "No fix is provided for this warning"
+
+    def __init__(self, property_id: str = "", class_id: str = "", verbose: bool = False):
+        self.message = (
+            f"There is no transformation rule configured for class '{class_id}' property '{property_id}'!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
 
 
 ################################################################################################
@@ -300,7 +1054,7 @@ class NotValidRDFPath(NeatException):
 
         self.message = (
             f"{self.rdf_path} is not a valid rdfpath!"
-            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
 
         if verbose:
@@ -332,7 +1086,7 @@ class NotValidTableLookUp(NeatException):
 
         self.message = (
             f"{self.table_look_up} is not a valid table lookup"
-            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
 
         if verbose:
@@ -364,7 +1118,7 @@ class NotValidRAWLookUp(NeatException):
 
         self.message = (
             f"Invalid rawlookup expected traversal | table lookup, got {raw_look_up}"
-            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
 
         if verbose:
@@ -401,7 +1155,7 @@ class ExcelFileMissingMandatorySheets(NeatException):
         self.message = (
             "Given Excel file is not compliant Transformation Rules file."
             f" It is missing mandatory sheets: {', '.join(missing_mandatory_sheets)}."
-            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
 
         if verbose:
@@ -437,7 +1191,7 @@ class UnableToDownloadExcelFile(NeatException):
     def __init__(self, filepath: str, loc: str, reason: str, verbose: bool = False):
         self.message = (
             f"File '{filepath}' from '{loc}' cannot be downloaded! Reason: {reason}"
-            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
 
         if verbose:
@@ -472,7 +1226,7 @@ class NotExcelFile(NeatException):
     def __init__(self, filepath: str, loc: str, verbose: bool = False):
         self.message = (
             f"File '{filepath}' from '{loc}' is not a valid excel file!"
-            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
 
         if verbose:
@@ -502,7 +1256,7 @@ class MetadataSheetMissingMandatoryFields(NeatException):
 
         self.message = (
             f"Metadata sheet is missing following mandatory fields: {', '.join(missing_fields)}"
-            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
 
         if verbose:
@@ -535,7 +1289,7 @@ class ClassesSheetMissingMandatoryColumns(NeatException):
 
         self.message = (
             f"Classes sheet is missing following mandatory columns: {', '.join(missing_fields)} at row 2"
-            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
 
         if verbose:
@@ -568,7 +1322,7 @@ class PropertiesSheetMissingMandatoryColumns(NeatException):
 
         self.message = (
             f"Properties sheet is missing following mandatory columns: {', '.join(missing_fields)} at row 2"
-            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
 
         if verbose:
@@ -600,7 +1354,7 @@ class PrefixesSheetMissingMandatoryColumns(NeatException):
 
         self.message = (
             f"Prefixes sheet is missing following mandatory columns: {', '.join(missing_fields)} at row 1"
-            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
 
         if verbose:
@@ -632,7 +1386,7 @@ class InstancesSheetMissingMandatoryColumns(NeatException):
 
         self.message = (
             f"Instances sheet is missing following mandatory columns: {', '.join(missing_fields)} at row 1"
-            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
 
         if verbose:
@@ -643,7 +1397,7 @@ class InstancesSheetMissingMandatoryColumns(NeatException):
 
 
 ################################################################################################
-# RULES EXPORTERS ##############################################################################
+# RULES EXPORTERS 400-499#######################################################################
 ################################################################################################
 
 
@@ -671,7 +1425,7 @@ class EntitiesContainNonDMSCompliantCharacters(NeatException):
     def __init__(self, report: str = "", verbose: bool = False):
         self.message = (
             f"Following entities contain non DMS compliant characters: {report}"
-            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
 
         if verbose:
@@ -705,7 +1459,7 @@ class PropertiesDefinedMultipleTimes(NeatException):
     def __init__(self, report: str = "", verbose: bool = False):
         self.message = (
             f"Following properties defined multiple times for the same class(es): {report}"
-            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
 
         if verbose:
@@ -732,7 +1486,7 @@ class PropertyDefinitionsNotForSameProperty(NeatException):
     def __init__(self, verbose: bool = False):
         self.message = (
             "All definitions should have the same property_id! Aborting."
-            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
 
         if verbose:
@@ -767,7 +1521,7 @@ class FieldValueOfUnknownType(NeatException):
         self.message = (
             f"Field {field} has definition of type {type(definition)}"
             " which is not acceptable! Only definition in form of dict or tuple is acceptable!"
-            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
 
         if verbose:
@@ -796,7 +1550,7 @@ class MissingInstanceTriples(NeatException):
     def __init__(self, id_: str | URIRef, verbose: bool = False):
         self.message = (
             f"Instance {id_} does not contain triples that would define it!"
-            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
 
         if verbose:
@@ -827,7 +1581,7 @@ class PropertyRequiredButNotProvided(NeatException):
     def __init__(self, property: str, id_: str | URIRef, verbose: bool = False):
         self.message = (
             f"Property {property} is not present in graph instance {id_}!"
-            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
 
         if verbose:
@@ -881,7 +1635,7 @@ class DataModelOrItsComponentsAlreadyExist(NeatException):
 
         self.message += (
             "\nTo remove existing data model and its components, use `self.remove_data_model(client)` method."
-            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
 
         if verbose:
@@ -918,7 +1672,7 @@ class InstancePropertiesNotMatchingContainerProperties(NeatException):
             f"Instance of class {class_name} has properties {class_properties}"
             f" while DMS container  {class_name} has properties {container_properties}!"
             f" Cannot create instance in DMS as properties do not match!"
-            f"\nFor more information visit: {BASE_URL}.{self.__class__.__name__}"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
 
         if verbose:
@@ -933,324 +1687,8 @@ class InstancePropertiesNotMatchingContainerProperties(NeatException):
 ################################################################################################
 
 
-class ClassIDMissing(NeatException):
-    type_: str = "ClassIDMissing"
-    code: int = 200
-    description: str = (
-        "Class ID, which is stored in the column 'Class' in the 'Classes' sheet,"
-        " is either missing or did not satisfied regex expression"
-    )
-    example: str = ""
-    fix: str = "Make sure that class id is provided and respects regex expression"
-
-    def __init__(self, verbose=False):
-        self.message = (
-            "Class id is missing, it failed validation either because it has"
-            " not been provided or because it did not respect regex expression!"
-        )
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
-
-
-class ClassNameNotProvided(NeatWarning):
-    type_: str = "ClassNameNotProvided"
-    code: int = 200
-    description: str = (
-        "If class name is not provided in the 'Classes' sheet under 'name' column,"
-        " it will be set to corresponding value from 'Class' column, thus class id"
-    )
-    example: str = ""
-    fix: str = "If you want to have different class name than class id, provide it in the 'name' column"
-
-    def __init__(self, class_id, verbose=False):
-        self.message = f"Class id {class_id} set as Class name!"
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-            # hint on a specific web docs page
-
-
 ###########################################
-# Properties sheet Error Codes 300 - 399: #
-
-
-class PropertiesSheetClassIDRegexViolation(NeatException):
-    type_: str = "PropertiesSheetClassIDRegexViolation"
-    code: int = 300
-    description: str = (
-        "Class ID, which is stored in the column 'Class' in the 'Properties' sheet, "
-        "does not respect defined regex expression"
-    )
-    example: str = (
-        "If class id is set to 'Class 1', while regex expression does not allow spaces,"
-        " the expression will be violated thus raising this error"
-    )
-    fix: str = (
-        "Check definition of class ids in 'Class' column in 'Properties' sheet "
-        "and make sure to respect the regex expression by removing any illegal characters"
-    )
-
-    def __init__(self, class_id, regex_expression, verbose=False):
-        self.class_id = class_id
-        self.regex_expression = regex_expression
-
-        self.message = (
-            f"Class id '{self.class_id}' stored in 'Class' column in 'Properties' "
-            f"sheet violates regex {self.regex_expression}!"
-        )
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
-
-
-class PropertyIDRegexViolation(NeatException):
-    type_: str = "PropertyIDRegexViolation"
-    code: int = 301
-    description: str = (
-        "Property ID, which is stored in the column 'Property' "
-        "in the 'Properties' sheet, does not respect defined regex expression"
-    )
-    example: str = (
-        "If property id is set to 'property 1', while regex expression does not allow spaces,"
-        " the expression will be violated thus raising this error"
-    )
-    fix: str = (
-        "Check definition of property ids in 'Property' column in 'Properties' sheet"
-        " and make sure to respect the regex expression by removing any illegal characters"
-    )
-
-    def __init__(self, property_id, regex_expression, verbose=False):
-        self.property_id = property_id
-        self.regex_expression = regex_expression
-
-        self.message = (
-            f"Property id '{self.property_id}' stored in 'Property' "
-            f"column in 'Properties' sheet violates regex {self.regex_expression}!"
-        )
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
-
-
-class ValueTypeIDRegexViolation(NeatException):
-    type_: str = "ValueTypeIDRegexViolation"
-    code: int = 302
-    description: str = (
-        "Value type, which is stored in the column 'Type' in the 'Properties' sheet, "
-        "does not respect defined regex expression"
-    )
-    example: str = (
-        "If value type is set to 'date time', while regex expression does not"
-        " allow spaces, the expression will be violated thus raising this error"
-    )
-    fix: str = (
-        "Check definition of value types in 'Type' column in 'Properties' sheet"
-        " and make sure to respect the regex expression by removing any illegal characters"
-    )
-
-    def __init__(self, value_type, regex_expression, verbose=False):
-        self.value_type = value_type
-        self.regex_expression = regex_expression
-
-        self.message = (
-            f"Value type '{self.value_type}' stored in 'Type' column in "
-            f"'Properties' sheet violates regex {self.regex_expression}!"
-        )
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
-
-
-class MissingTypeValue(NeatException):
-    type_: str = "MissingTypeValue"
-    code: int = 302
-    description: str = "Value type, which is stored in the column 'Type' in the 'Properties' sheet, is missing"
-    example: str = "If value type is not set, this error will be raised"
-    fix: str = "Make sure to define value type in 'Type' column in 'Properties' sheet"
-
-    def __init__(self, verbose=False):
-        self.message = "Value type, which is stored in the column 'Type' in the 'Properties' sheet, is missing"
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
-
-
-class PropertyIDMissing(NeatException):
-    type_: str = "PropertyIDMissing"
-    code: int = 304
-    description: str = (
-        "Property ID, which is stored in the column 'Property' in the 'Properties' sheet,"
-        " is either missing or did not satisfied regex expression"
-    )
-    example: str = ""
-    fix: str = "Make sure that property id is provided and respects regex expression"
-
-    def __init__(self, verbose=False):
-        self.message = (
-            "Property id is missing, validator for property id failed either"
-            " due to lack of property id or due to not respecting regex expression!"
-        )
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
-
-
-class RuleTypeProvidedButRuleMissing(NeatException):
-    type_: str = "RuleTypeProvidedButRuleMissing"
-    code: int = 305
-    description: str = (
-        "This error occurs when transformation rule type is provided but actual transformation rule is missing"
-    )
-    example: str = ""
-    fix: str = (
-        "If you provide rule type you are must provide rule as well! "
-        "Otherwise remove rule type if no transformation rule is needed"
-    )
-
-    def __init__(self, property_id, class_id, rule_type, verbose=False):
-        self.message = (
-            f"Rule type '{rule_type}' provided for property '{property_id}' "
-            f"in class '{class_id}' but rule is not provided!"
-        )
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
-
-
-class PropertyNameNotProvided(NeatWarning):
-    type_: str = "PropertyNameNotProvided"
-    code: int = 300
-    description: str = (
-        "If property name is not provided in the 'Property' sheet under 'name' column,"
-        " it will be set to corresponding value from 'Property' column, thus property id"
-    )
-    example: str = ""
-    fix: str = "If you want to have different property name than property id, provide it in the 'name' column"
-
-    def __init__(self, property_id, verbose=False):
-        self.message = f"Property id {property_id} set as Property name!"
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-
-
-class MissingLabel(NeatWarning):
-    type_: str = "MissingLabel"
-    code: int = 301
-    description: str = (
-        "If property maps to CDF relationship, and it does not have label explicitly stated under 'Label' column"
-        " in the 'Property' sheet under 'name' column,"
-        " it will be set to corresponding value from 'Property' column, thus property id"
-    )
-    example: str = ""
-    fix: str = (
-        "If you want to have control over relationship labels make sure to define one"
-        " in the 'Label' column in the 'Properties' sheet."
-    )
-
-    def __init__(self, property_id, verbose=False):
-        self.message = f"Property id {property_id} set as CDF relationship label!"
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-
-
-class NoTransformationRules(NeatWarning):
-    type_: str = "NoTransformationRules"
-    code: int = 302
-    description: str = (
-        "This warning is raised if there are no transformation rules "
-        "defined in the 'Transformation' sheet for given propertuy"
-    )
-    example: str = ""
-    fix: str = "No fix is provided for this warning"
-
-    # need to have default value set otherwise
-    # will raise TypeError: __init__() missing 1 required positional argument: 'property_id'
-    # not happy with this solution but it works
-    def __init__(self, property_id: str = "", class_id: str = "", verbose=False):
-        self.message = f"There is no transformation rule configured for class '{class_id}' property '{property_id}'!"
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-
-
-###############################################
-#  Prefixes  Error Codes 400 - 499: #
-
-
-class PrefixesRegexViolation(NeatException):
-    type_: str = "PrefixesRegexViolation"
-    code: int = 400
-    description: str = "Prefix(es), which are in the 'Prefixes' sheet, do(es) not respect defined regex expression"
-    example: str = (
-        "If prefix is set to 'power grid', while regex expression does not "
-        "allow spaces, the expression will be violated thus raising this error"
-    )
-    fix: str = (
-        "Check if prefixes in the 'Prefixes' sheet contains any illegal characters and respects the regex expression"
-    )
-
-    def __init__(self, prefixes, regex_expression, verbose=False):
-        self.prefixes = prefixes
-        self.regex_expression = regex_expression
-
-        self.message = (
-            f"Invalid prefix(es) {', '.join(self.prefixes)} stored in the 'Prefixes' sheet, "
-            f"it/they must obey regex {self.regex_expression}!"
-        )
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
-
-
-class PrefixesSheetNamespaceNotValidURL(NeatException):
-    type_: str = "PrefixesSheetNamespaceNotValidURL"
-    code: int = 401
-    description: str = "namespace(es), which are/is in the 'Prefixes' sheet, are/is not valid URLs"
-    example: str = "If we have 'authority:namespace' as namespace as it is not a valid URL this error will be raised"
-    fix: str = (
-        "Check if 'namespaces' in the 'Prefixes' sheet are properly "
-        "constructed as valid URLs containing only allowed characters"
-    )
-
-    def __init__(self, namespaces, verbose=False):
-        self.namespaces = namespaces
-
-        self.message = (
-            f"Invalid namespace(es) {', '.join(self.namespaces)} stored in the 'Prefixes' sheet, "
-            f"it/they must be valid URLs!"
-        )
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
-
-
-###############################################
-# Instances Error Codes 500 - 599: #
+# Warnings
 
 
 class MissingDataModelPrefixOrNamespace(NeatWarning):
@@ -1270,177 +1708,6 @@ class MissingDataModelPrefixOrNamespace(NeatWarning):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
             # hint on a specific web docs page
-
-
-###############################################
-# Transformation Rules Error Codes 600 - 699: #
-
-
-class EntityIDNotDMSCompliant(NeatWarning):
-    type_: str = "EntityIDNotDMSCompliant"
-    code: int = 600
-    description: str = "Warning raise when entity id being class, property or value type is not DMS compliant"
-    example: str = ""
-    fix: str = (
-        "DMS ready means that entity id must only use following"
-        " characters [a-zA-Z0-9_], where it can only start with letter!"
-    )
-
-    # See Warning302 for explanation why default values are set
-    def __init__(self, entity_type: str = "", entity_id: str = "", loc: str = "", verbose=False):
-        self.message = (
-            f"'{entity_id}' {entity_type.lower()}"
-            " use character(s) outside of range of allowed characters [a-zA-Z0-9_] or "
-            f"it starts with non-letter character! {loc}"
-        )
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-
-
-class PropertyRedefined(NeatWarning):
-    type_: str = "PropertyRedefined"
-    code: int = 600
-    description: str = "Warning raise when same property is defined multiple times for same class"
-    example: str = ""
-    fix: str = "Have only single definition of a perticular property for a class"
-
-    # See Warning302 for explanation why default values are set
-    def __init__(self, property_id: str = "", class_id: str = "", loc: str = "", verbose=False):
-        self.message = f"Not DMS compliant! Property '{property_id}' for class '{class_id}' redefined! {loc}"
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-            # hint on a specific web docs page
-
-
-class PropertyDefinedForUndefinedClass(NeatException):
-    """Property defined for a class that has not been defined in the 'Classes' sheet"""
-
-    type_: str = "PropertyDefinedForUndefinedClass"
-    code: int = 600
-    description: str = "Property defined for a class that has not been defined in the 'Classes' sheet"
-    example: str = (
-        "If property 'someProperty' is defined for class 'Class 1' in the 'Properties' sheet, "
-        "while 'Class 1' has not been defined in the 'Classes' sheet,"
-        " this error will be raised"
-    )
-    fix: str = (
-        "Make sure to define all classes in the 'Classes' sheet before defining properties for them"
-        " in the 'Properties' sheet"
-    )
-
-    def __init__(self, property_id, class_id, verbose=False):
-        self.property_id = property_id
-        self.class_id = class_id
-
-        self.message = (
-            f"Class <{self.class_id}> to which property {self.property_id}> is being defined"
-            " is not define in the 'Classes' sheet!"
-        )
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
-
-
-class MetadataSheetMissingOrFailedValidation(NeatException):
-    type_: str = "MetadataSheetMissingOrFailedValidation"
-    code: int = 601
-    description: str = "Metadata sheet is missing or it failed validation for one or more fields"
-    example: str = ""
-    fix: str = "Make sure to define compliant Metadata sheet before proceeding"
-
-    def __init__(self, verbose=False):
-        self.message = "Metadata sheet is missing or it failed validation for one or more fields!"
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
-
-
-class FiledInMetadataSheetMissingOrFailedValidation(NeatException):
-    type_: str = "FiledInMetadataSheetMissingOrFailedValidation"
-    code: int = 602
-    description: str = "One of the expected fields in Metadata sheet is missing or it failed validation"
-    example: str = ""
-    fix: str = "Make sure to define compliant field in Metadata sheet before proceeding"
-
-    def __init__(self, missing_field: str, verbose=False):
-        self.message = f"Field {missing_field} is missing in the 'Metadata' sheet or it failed validation!"
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
-
-
-class ValueTypeNotDefinedAsClass(NeatException):
-    type_: str = "ValueTypeNotDefinedAsClass"
-    code: int = 603
-    description: str = (
-        "Expected value type, which is stored in the column 'Type' in the 'Properties'"
-        " sheet, is not defined in the 'Classes' sheet. "
-        "This error occurs when property is defined as an edge between two classes, of which one is not defined"
-    )
-    example: str = (
-        "We have 'Class1' which has property 'edgeClass1Class2' linking it to 'Class2', thus"
-        "expected value of 'edgeClass1Class2' is 'Class2'. However, 'Classes' sheet only contains"
-        " 'Class1', while 'Class2' is not defined. Under this given circumstance, this error will be raised!"
-    )
-
-    fix: str = (
-        "Make sure to define all of the classes in the 'Classes' sheet before defining "
-        "properties that expect them as value types"
-    )
-
-    def __init__(self, class_id: str, property_id: str, expected_value_type: str, verbose=False):
-        self.message = (
-            f"Property {property_id} defined for class {class_id} has"
-            f" value type {expected_value_type} which is not defined as a class in the 'Classes' sheet!"
-        )
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
-
-
-class UndefinedObjectsAsExpectedValueTypes(NeatException):
-    type_: str = "UndefinedObjectsAsExpectedValueTypes"
-    code: int = 604
-    description: str = (
-        "Expected value types, which are stored in the column 'Type' in the 'Properties'"
-        " sheet, are classes that exist in the 'Classes' sheet but for which no properties are defined "
-        "in the 'Properties' sheet. "
-    )
-    example: str = (
-        "We have 'Class1' which has property 'edgeClass1Class2' linking it to 'Class2', thus"
-        "expected value of 'edgeClass1Class2' is 'Class2'. "
-        "Both 'Class1' and 'Class2' are defined in the 'Classes' sheet"
-        "However, only 'Class1' has properties defined in the 'Properties' sheet, making 'Class2' an undefined object"
-        " leading to this error being raised!"
-    )
-
-    fix: str = (
-        "Make sure to define properties for classes from 'Classes' "
-        "sheet before defining properties that expect them as value types"
-    )
-
-    def __init__(self, undefined_objects: list[str], verbose=False):
-        self.message = (
-            f"Following classes {', '.join(undefined_objects)} defined as classes in the 'Classes' sheet"
-            f" have no properties defined in the 'Properties' sheet or their validation as objects failed!"
-        )
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
 
 
 class OWLGeneratedTransformationRulesHasErrors(NeatWarning):
