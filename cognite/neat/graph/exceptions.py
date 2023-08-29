@@ -2,21 +2,33 @@
 """
 
 from cognite.neat.exceptions import NeatException
+from cognite.neat.constants import DEFAULT_DOCS_URL
+
+
+DOCS_BASE_URL = f"{DEFAULT_DOCS_URL}api/exceptions.html#{__name__}"
 
 
 class UnsupportedPropertyType(NeatException):
+    """Unsupported property type when processing the graph capturing sheet
+
+    Args:
+        property_type: property type that is not supported
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+    """
+
     type_: str = "UnsupportedPropertyType"
     code: int = 1000
     description: str = "Unsupported property type when processing the graph capturing sheet."
     example: str = ""
     fix: str = ""
 
-    def __init__(self, property_type: str, verbose=False):
+    def __init__(self, property_type: str, verbose: bool = False):
         self.property_type = property_type
 
         self.message = (
             f"Property type {self.property_type} is not supported. "
             " Only the following property types are supported: DatatypeProperty and ObjectProperty"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
 
         if verbose:
