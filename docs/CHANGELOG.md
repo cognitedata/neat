@@ -19,10 +19,13 @@ Changes are grouped as follows:
 ### Added
 
 - Docstring to `cognite.neat.rules.exceptions` and `cognite.neat.graph.exceptions`
+- URL to exception definition added to exception message
 - Rendering of exceptions in `docs` (mkdocs)
 
 ### Fixed
 - `fix_namespace_ending` was returning `str` instead of `Namespace` causing issues
+### Improved
+- Split docs config of importers to importers and parsers to avoid confusion
 ## [0.24.0] - 24-08-23
 
 ### Added
