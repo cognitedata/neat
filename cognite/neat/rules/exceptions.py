@@ -2103,18 +2103,29 @@ class ViewPropertyTypeUnsupported(NeatWarning):
 
 
 class ContainersAlreadyExist(NeatWarning):
+    """This warning occurs when attempting to create containers which already exist in DMS.
+
+    Args:
+        container_ids: set of container ids that already exist in DMS
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        If you need to create containers remove existing once and try again.
+    """
+
     type_: str = "ContainersAlreadyExist"
     code: int = 409
     description: str = "This warning occurs when attempting to create containers which already exist in DMS."
     example: str = ""
     fix: str = "Remove existing containers and try again."
 
-    def __init__(self, container_ids: set[str] | None = None, space: str = "", verbose=False):
+    def __init__(self, container_ids: set[str] | None = None, space: str = "", verbose: bool = False):
         self.message = (
             f"Containers {container_ids or set()} already exist in space {space}. "
             "Since update of containers can cause issues, "
             "remove them first prior data model creation!"
             "Aborting containers creation!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
 
         if verbose:
@@ -2124,18 +2135,31 @@ class ContainersAlreadyExist(NeatWarning):
 
 
 class ViewsAlreadyExist(NeatWarning):
+    """This warning occurs when attempting to create views which already exist in DMS.
+
+    Args:
+        views_ids: set of view ids that already exist in DMS
+        version: version of data model/views that already exist in DMS
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        If you need to create views remove existing once and try again or update
+        data model version.
+    """
+
     type_: str = "ViewsAlreadyExist"
     code: int = 410
     description: str = "This warning occurs when attempting to create views which already exist in DMS."
     example: str = ""
     fix: str = "Remove existing views and try again or update version of data model."
 
-    def __init__(self, views_ids: set[str] | None = None, version: str = "", space: str = "", verbose=False):
+    def __init__(self, views_ids: set[str] | None = None, version: str = "", space: str = "", verbose: bool = False):
         self.message = (
             f"Views {views_ids or set()} version {version} already exist in space {space}. "
             "Since update of views raise issues, "
             "remove them first prior data model creation or update version of data model!"
             "Aborting views creation!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
 
         if verbose:
@@ -2145,18 +2169,30 @@ class ViewsAlreadyExist(NeatWarning):
 
 
 class DataModelAlreadyExist(NeatWarning):
+    """This warning occurs when attempting to create data model which already exist in DMS.
+
+    Args:
+        data_model_id: data model id that already exist in DMS
+        version: version of data model that already exist in DMS
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        Remove existing data model and try again or update its version
+    """
+
     type_: str = "DataModelAlreadyExist"
     code: int = 411
     description: str = "This warning occurs when attempting to create data model which already exist in DMS."
     example: str = ""
     fix: str = "Remove existing data model and try again or update its version."
 
-    def __init__(self, data_model_id: str = "", version: str = "", space: str = "", verbose=False):
+    def __init__(self, data_model_id: str = "", version: str = "", space: str = "", verbose: bool = False):
         self.message = (
             f"Data model {data_model_id} version {version} already exist in space {space}. "
             "Since update of data model can raise issues, "
             "remove it first or update its version!"
             "Aborting data model creation!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
 
         if verbose:
