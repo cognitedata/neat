@@ -28,14 +28,40 @@ export class WorkflowConfigItem {
     group?: string;
 }
 
+class StepConfigurable {
+    name: string;
+    value?: string | null;
+    label?: string | null;
+    type?: string | null;  // string , secret , number , boolean , json 
+    required: boolean = false;
+    options?: string[] | null;
+
+    constructor(
+        name: string,
+        value: string | null = null,
+        label: string | null = null,
+        type: string | null = null,
+        required: boolean = false,
+        options: string[] | null = null
+    ) {
+        this.name = name;
+        this.value = value;
+        this.label = label;
+        this.type = type;
+        this.required = required;
+        this.options = options;
+    }
+}
+
+
 export class StepMetadata {
     name: string;
+    category: string = "";
     description: string = "";
     input: string[];
     output: string[];
-    configuration_templates: WorkflowConfigItem[] = [];
-    category: string = "";
-
+    configurables: StepConfigurable[] = [];
+   
     constructor(name: string, input: string[], output: string[]) {
         this.name = name;
         this.input = input;
@@ -71,6 +97,7 @@ export class WorkflowStepDefinition {
     transition_to?: string[];
     params?:any = {}
     ui_config?: UIConfig = new UIConfig();
+    configs?: Map<string, any> = new Map<string, any>();
 }
 
 
@@ -135,24 +162,24 @@ export class WorkflowDefinition {
         }
     }
 
-    insertConfigItemFromTemplate(stepName : string,stepRegistry: StepRegistry) {
-        let step_template = stepRegistry.getStepByName(stepName);
+    // insertConfigItemFromTemplate(stepName : string,stepRegistry: StepRegistry) {
+    //     let step_template = stepRegistry.getStepByName(stepName);
 
-        console.log(" Insert check")
-        console.dir(step_template)
-        console.dir(this.configs)
+    //     console.log(" Insert check")
+    //     console.dir(step_template)
+    //     console.dir(this.configs)
 
 
-        for (let config of step_template.configuration_templates) {
-            let index = this.configs.findIndex(c => c.name == config.name);
-            if (index >= 0) {
-                continue;
-            }else {
-                config.group = step_template.name;
-                this.configs.push(config);
-            }
-        }
-    }
+    //     for (let config of step_template.configurables) {
+    //         let index = this.configs.findIndex(c => c.name == config.name);
+    //         if (index >= 0) {
+    //             continue;
+    //         }else {
+    //             config.group = step_template.name;
+    //             this.configs.push(config);
+    //         }
+    //     }
+    // }
 
     addConfigItem(config: WorkflowConfigItem) {
         this.configs.push(config);
