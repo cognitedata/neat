@@ -1,3 +1,7 @@
+"""This module contains the definition of `TransformationRules` pydantic model and all
+its sub-models and validators.
+"""
+
 from __future__ import annotations
 
 import math
@@ -337,18 +341,18 @@ class Metadata(RuleModel):
 
 class Resource(RuleModel):
     """
-    Base class for all resources
+    Base class for resources that constitute data model (i.e., classes, properties)
 
     Args:
         description: The description of the resource.
-        cdf_resource_type: The CDF resource type of the resource.
+        cdf_resource_type: The CDF resource type to which resource resolves to
         deprecated: Whether the resource is deprecated or not.
         deprecation_date: The date when the resource was deprecated.
         replaced_by: The resource that replaced this resource.
-        source: The source of the resource.
-        source_entity_name: The name of the source entity.
-        match_type: The match type of the resource.
-        comment: The comment of the resource.
+        source: Source of information for given resource
+        source_entity_name: The name of the source entity that is closest to the resource being described.
+        match_type: The match type of the resource being described and the source entity.
+        comment: Additional comment about mapping between the resource being described and the source entity.
 
     """
 
@@ -366,7 +370,11 @@ class Resource(RuleModel):
 
     # Advance data modeling: Relation to existing resources for purpose of mapping
     source: HttpUrl | None = Field(
-        alias="Source", description="Source of information for given entity, e.g. CIM", default=None
+        alias="Source",
+        description=(
+            "Source of information for given entity, e.g. https://www.entsoe.eu/digital/common-information-model/"
+        ),
+        default=None,
     )
     source_entity_name: str | None = Field(
         alias="Source Entity Name", description="Closest entity in source, e.g. Substation", default=None
@@ -386,7 +394,7 @@ class_id_compliance_regex = r"^([a-zA-Z]+)([a-zA-Z0-9]+[._-]{0,1}[a-zA-Z0-9._-]+
 
 class Class(Resource):
     """
-    Base class for all classes
+    Base class for all classes that are part of the data model.
 
     Args:
         class_id: The class ID of the class.
@@ -459,27 +467,32 @@ property_id_compliance_regex = r"^(\*)|(([a-zA-Z]+)([a-zA-Z0-9]+[._-]{0,1}[a-zA-
 
 class Property(Resource):
     """
-    A property is a characteristic of a class. It is a named attribute of a class that describes a range of values.
+    A property is a characteristic of a class. It is a named attribute of a class that describes a range of values
+    or a relationship to another class.
 
     Args:
-        class_id: Class ID
-        property_id: Property ID
-        property_name: Property name
-        expected_value_type: Expected value type
-        min_count: Minimum count
-        max_count: Maximum count
-        default: Default value
-        property_type: Property type
-        resource_type_property: Resource type property
-        source_type: Source type
-        target_type: Target type
-        label: Label
-        relationship_external_id_rule: Relationship external ID rule
-        rule_type: Rule type
-        rule: Rule
-        skip_rule: Skip rule
-        mandatory: Mandatory
-        cdf_resource_type: CDF resource type
+        class_id: Class ID to which property belongs
+        property_id: Property ID of the property
+        property_name: Property name. Defaults to property_id
+        expected_value_type: Expected value type of the property
+        min_count: Minimum count of the property values. Defaults to 0
+        max_count: Maximum count of the property values. Defaults to None
+        default: Default value of the property
+        property_type: Property type (DatatypeProperty/attribute or ObjectProperty/edge/relationship)
+        cdf_resource_type: CDF resource to under which property will be resolved to (e.g., Asset)
+        resource_type_property: To what property of CDF resource given property resolves to (e.g., Asset name)
+        source_type: In case if property resolves as CDF relationship, this argument indicates
+                     relationship source type (defaults to Asset)
+        target_type: In case if property resolves as CDF relationship, this argument
+                     indicates relationship target type (defaults to Asset)
+        label: CDF Label used for relationship. Defaults to property_id
+        relationship_external_id_rule: Rule to use when generating CDF relationship externalId
+        rule_type: Rule type for the transformation from source to target representation
+                   of knowledge graph. Defaults to None (no transformation)
+        rule: Actual rule for the transformation from source to target representation of
+              knowledge graph. Defaults to None (no transformation)
+        skip_rule: Flag indicating if rule should be skipped when performing
+                   knowledge graph transformations. Defaults to False
 
     """
 
@@ -508,7 +521,6 @@ class Property(Resource):
         alias="Rule", default=None
     )
     skip_rule: bool = Field(alias="Skip", default=False)
-    mandatory: bool = False
 
     # Specialization of cdf_resource_type to allow definition of both
     # Asset and Relationship at the same time
@@ -629,7 +641,7 @@ class Property(Resource):
 
 class Prefixes(RuleModel):
     """
-    Class deals with prefixes in the data model
+    Class deals with prefixes used in the data model and data model instances
 
     Args:
         prefixes: Dict of prefixes
@@ -640,7 +652,8 @@ class Prefixes(RuleModel):
 
 class Instance(RuleModel):
     """
-    Class deals with instances of classes in the data model
+    Class deals with RDF triple that defines data model instances of data, represented
+    as a single row in the `Instances` sheet of the Excel file.
 
     Args:
         instance: URI of the instance
@@ -648,6 +661,14 @@ class Instance(RuleModel):
         value: value of the property
         namespace: namespace of the instance
         prefixes: prefixes of the instance
+
+    !!! note "Warning"
+        Use of the `Instances` sheet is not recommended, instead if you need additional
+        triples in your graph use Graph Capturing Sheet instead!
+
+        See
+        [`extract_graph_from_sheet`](../graph/extractors.md#cognite.neat.graph.extractors.extract_graph_from_sheet)
+        for more details.
     """
 
     instance: URIRef | None = Field(alias="Instance", default=None)
@@ -734,19 +755,27 @@ class Instance(RuleModel):
 
 class TransformationRules(RuleModel):
     """
-    Transformation rules is a core concept in `neat`. This represents the rules that are used to transform the data
-    from the source to the target. The rules are defined in a Excel sheet and then parsed into a `TransformationRules`
-    object. The `TransformationRules` object is then used to generate the `RDF` graph.
+    Transformation rules is a core concept in `neat`. This represents fusion of data model
+    definitions and the associated rules that are used to transform the data from the
+    source representation to the target representation defined by the data model.
+    The rules are defined in a Excel sheet and then parsed into a `TransformationRules`
+    object. The `TransformationRules` object is then used to generate data model and the
+    `RDF` graph made of data model instances.
 
     Args:
-        metadata: Metadata of the data model
+        metadata: Data model metadata
         classes: Classes defined in the data model
-        properties: Properties defined in the data model
-        prefixes: Prefixes defined in the data model
-        instances: Instances defined in the data model
+        properties: Class properties defined in the data model with accompanying transformation rules
+                    to transform data from source to target representation
+        prefixes: Prefixes used in the data model. Defaults to PREFIXES
+        instances: Instances defined in the data model. Defaults to None
 
     !!! note "Importers"
         Neat supports importing data from different sources. See the importers section for more details.
+
+    !!! note "Parsers"
+        Neat supports parsing data from different sources into `TransformationRules` instance.
+        See the parsers section for more details.
 
     !!! note "Exporters"
         Neat supports exporting data to different sources. See the exporters section for more details.

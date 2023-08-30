@@ -13,21 +13,16 @@ def rdf_file_to_graph(
     base_namespace: Namespace = DEFAULT_NAMESPACE,
     prefixes: dict[str, Namespace] = PREFIXES,
 ) -> Graph:
-    """Loads RDF from file
+    """Created rdflib Graph instance loaded with RDF triples from file
 
-    Parameters
-    ----------
-    filepath : Path
-        File path to RDF
-    namespace : Namespace, optional
-        The logical URI to use as the graph namespace base, by default "http://purl.org/cognite/app-dm"
-    prefixes : dict, optional
-        Dictionary containing prefix-namespace pairs, by default PREFIXES
+    Args:
+        filepath: Path to the RDF file
+        base_prefix: base prefix for URIs. Defaults to DEFAULT_URI.
+        base_namespace: base namespace for URIs . Defaults to DEFAULT_NAMESPACE.
+        prefixes: Dictionary of prefixes to bind to graph. Defaults to PREFIXES.
 
-    Returns
-    -------
-    Graph
-        An RDF Graph
+    Returns:
+        Graph instance loaded with RDF triples from file
     """
     graph = Graph()
     if filepath.is_file():

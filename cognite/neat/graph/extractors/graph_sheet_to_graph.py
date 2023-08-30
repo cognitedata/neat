@@ -18,20 +18,18 @@ def extract_graph_from_sheet(
     separator: str = ",",
     namespace: str | None = None,
 ) -> list[tuple]:
-    """Converts a graph capturing sheet to rdf triples
+    """Converts a graph capturing sheet to RDF triples that define data model instances
 
-    Parameters
-    ----------
-    filepath : Path
-        Path to the graph capturing sheet
-    graph_capturing_sheet : dict[str, pd.DataFrame]
-        Graph capturing sheet
-    transformation_rule : TransformationRules
-        Transformation rules
-    separator : str, optional
-        Multi value separator at cell level, by default ","
-    namespace : str, optional
-        In case of a custom namespace, by default None meaning the namespace is taken from the transformation rules
+    Args:
+        filepath : Path to the graph capturing sheet
+        transformation_rule : Transformation rules which holds data model that is used to validate
+                              the graph capturing sheet and extract data model instances from it (i.e. RDF triples)
+        separator : Multi value separator at cell level. Defaults to ",".
+        namespace : Optional custom namespace to use for extracted triples that define data
+                    model instances. Defaults to None.
+
+    Returns:
+        List of RDF triples, represented as tuples `(subject, predicate, object)`, that define data model instances
     """
 
     graph_capturing_sheet = read_graph_excel_file_to_table_by_name(filepath)
@@ -45,19 +43,20 @@ def sheet2triples(
     separator: str = ",",
     namespace: str | None = None,
 ) -> list[tuple]:
-    """Converts a graph capturing sheet to rdf triples
+    """Converts a graph capturing sheet represented as dictionary of dataframes to rdf triples
 
-    Parameters
-    ----------
-    graph_capturing_sheet : dict[str, pd.DataFrame]
-        Graph capturing sheet
-    transformation_rule : TransformationRules
-        Transformation rules
-    separator : str, optional
-        Multi value separator at cell level, by default ","
-    namespace : str, optional
-        In case of a custom namespace, by default None meaning the namespace is taken from the transformation rules
+    Args:
+        graph_capturing_sheet : Graph capturing sheet provided as dictionary of dataframes
+        transformation_rule : Transformation rules which holds data model that is used to validate
+                             the graph capturing sheet and extract data model instances from it (i.e. RDF triples)
+        separator : Multi value separator at cell level. Defaults to ",".
+        namespace : Optional custom namespace to use for extracted triples that define
+                    data model instances. Defaults to None.
+
+    Returns:
+        List of RDF triples, represented as tuples `(subject, predicate, object)`, that define data model instances
     """
+
     # Validation that everything is in order before proceeding
     validate_if_graph_capturing_sheet_empty(graph_capturing_sheet)
     validate_rules_graph_pair(graph_capturing_sheet, transformation_rule)
@@ -140,10 +139,8 @@ def sheet2triples(
 def validate_if_graph_capturing_sheet_empty(graph_capturing_sheet: dict[str, pd.DataFrame]):
     """Validate if the graph capturing sheet is empty
 
-    Parameters
-    ----------
-    graph_capturing_sheet : dict[str, pd.DataFrame]
-        Graph capturing sheet
+    Args:
+        graph_capturing_sheet : Graph capturing sheet
     """
     if all(df.empty for df in graph_capturing_sheet.values()):
         msg = "Graph capturing sheet is empty! Aborting!"
@@ -154,12 +151,9 @@ def validate_if_graph_capturing_sheet_empty(graph_capturing_sheet: dict[str, pd.
 def validate_rules_graph_pair(graph_capturing_sheet: dict[str, pd.DataFrame], transformation_rule: TransformationRules):
     """Validate if the graph capturing sheet is based on the transformation rules
 
-    Parameters
-    ----------
-    graph_capturing_sheet : dict[str, pd.DataFrame]
-        Graph capturing sheet
-    transformation_rule : TransformationRules
-        Transformation rules
+    Args:
+        graph_capturing_sheet : Graph capturing sheet
+        transformation_rule : Transformation rules
     """
     intersection = set(graph_capturing_sheet.keys()).intersection(set(get_defined_classes(transformation_rule)))
 

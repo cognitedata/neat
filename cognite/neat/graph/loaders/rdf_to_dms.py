@@ -76,6 +76,9 @@ def upload_nodes(
         batch_size: Size of batch. Defaults to 5000.
         max_retries: Maximum times to retry the upload. Defaults to 1.
         retry_delay: Time delay before retrying the upload. Defaults to 3.
+
+    !!! note "batch_size"
+        If batch size is set to 1 or None, all nodes will be pushed to CDF in one go.
     """
     if batch_size:
         logging.info(f"Uploading nodes in batches of {batch_size}")
@@ -114,6 +117,10 @@ def upload_edges(
         batch_size: Size of batch. Defaults to 5000.
         max_retries: Maximum times to retry the upload. Defaults to 1.
         retry_delay: Time delay before retrying the upload. Defaults to 3.
+
+    !!! note "batch_size"
+        If batch size is set to 1 or None, all edges will be pushed to CDF in one go.
+
     """
     if batch_size:
         logging.info(f"Uploading edges in batches of {batch_size}")
