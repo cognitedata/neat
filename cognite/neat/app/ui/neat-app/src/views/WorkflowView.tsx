@@ -239,7 +239,7 @@ const saveWorkflow = () => {
   }).then((response) => {
     if (!response.ok) {
       setErrorText("Workflow can't be saved . Error code :"+response.status+", message :"+response.statusText);
-      
+
       return null;
     }
     return response.json()
@@ -543,7 +543,7 @@ return (
               {viewType == "steps" && (<Button variant="outlined" onClick={onAddStep}>Add workflow step</Button>)}
               </Panel>
             </ReactFlow>
-            
+
             <Button variant="outlined" onClick={startWorkflow} sx={{ marginTop: 2, marginRight: 1 }}>Start workflow</Button>
             <Button variant="outlined" onClick={saveWorkflow} sx={{ marginTop: 2, marginRight: 1 }}>Save workflow</Button>
             <Button variant="outlined" onClick={reloadWorkflows} sx={{ marginTop: 2, marginRight: 1 }} >Reload local workflows</Button>

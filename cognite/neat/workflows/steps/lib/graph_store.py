@@ -231,4 +231,4 @@ class ConfigureGraphStore(Step):
             else:
                 if graph_name in self.flow_context:
                     self.flow_context[graph_name].graph.drop()
-        return 
+        return

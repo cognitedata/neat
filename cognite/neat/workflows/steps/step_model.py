@@ -1,10 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import ClassVar, Optional, TypeVar
+from typing import ClassVar, TypeVar
 
 from pydantic import BaseModel, ConfigDict
 
 from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
-
 from cognite.neat.workflows.model import WorkflowConfigs
 
 
@@ -14,11 +13,11 @@ class Config(BaseModel):
 
 class Configurable(BaseModel):
     name: str
-    value: Optional[str] = None
-    label: Optional[str] = None
-    type: Optional[str] = None  # string , secret , number , boolean , json
+    value: str | None = None
+    label: str | None = None
+    type: str | None = None  # string , secret , number , boolean , json
     required: bool = False
-    options: Optional[list[str]] = None
+    options: list[str] | None = None
 
 
 class DataContract(BaseModel):

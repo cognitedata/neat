@@ -32,7 +32,7 @@ class StepConfigurable {
     name: string;
     value?: string | null;
     label?: string | null;
-    type?: string | null;  // string , secret , number , boolean , json 
+    type?: string | null;  // string , secret , number , boolean , json
     required: boolean = false;
     options?: string[] | null;
 
@@ -62,7 +62,7 @@ export class StepMetadata {
     output: string[];
     configurables: StepConfigurable[] = [];
     type: string = "";
-   
+
     constructor(name: string, input: string[], output: string[]) {
         this.name = name;
         this.input = input;

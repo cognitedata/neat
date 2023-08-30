@@ -86,7 +86,7 @@ export default function StepEditorDialog(props: any)
             }
             setStepRegistry(props.stepRegistry);
             setWorkflowDefinitions(props.workflowDefinitions);
-            
+
             console.dir(props.stepRegistry);
         }
       }, [props.open]);
@@ -95,7 +95,7 @@ export default function StepEditorDialog(props: any)
       //   updateStepConfigsFromConfigurables(selectedStepTemplate,selectedStep,true);
       // }, [selectedStepTemplate]);
 
-      
+
       const handleStepConfigurableChange = (name: string, value: any) => {
         console.log('handleStepConfigurableChange')
         console.dir(selectedStep);
@@ -150,7 +150,7 @@ export default function StepEditorDialog(props: any)
                 updStep.params = { "workflow_name": "", "sync": "false" }
                 break;
               case "stdstep":
-                setSelectedStepTemplate(null)  
+                setSelectedStepTemplate(null)
 
             }
             updStep["stype"] = value;
@@ -256,34 +256,34 @@ return (
               {selectedStepTemplate?.configurables.map((item,i)=> (
                 <ListItem>
                   <Box sx={{width:'50vw'}}>
-                  <ListItemText  primary={item.name} secondary={item.label}></ListItemText> 
+                  <ListItemText  primary={item.name} secondary={item.label}></ListItemText>
                   </Box>
                   <Box sx={{width:'50vw'}}>
                   <FormControl fullWidth>
-                    {item?.options && selectedStep?.configs[item.name] != undefined && ( 
+                    {item?.options && selectedStep?.configs[item.name] != undefined && (
                     <Select
                       value={ selectedStep?.configs[item.name]}
                       size='small'
                       variant="outlined"
                       onChange={(event) => { handleStepConfigurableChange(item.name, event.target.value) }}
                       sx={{ marginBottom: 0 }}
-                    > 
+                    >
                       {
                         item?.options && item.options.map((option, i) => (
                           <MenuItem value={option} key={option}> {option} </MenuItem>
                         ))
-                      } 
+                      }
                     </Select> )}
-                    {!item?.options && selectedStep?.configs && selectedStep?.configs[item.name] != undefined && item?.type != "password" && ( 
+                    {!item?.options && selectedStep?.configs && selectedStep?.configs[item.name] != undefined && item?.type != "password" && (
                       <TextField sx={{ marginTop: 0 }} fullWidth size='small' variant="outlined" value={ selectedStep?.configs[item.name]} onChange={(event) => { handleStepConfigurableChange(item.name, event.target.value) }} />
                     )}
-                     {!item?.options && selectedStep?.configs && selectedStep?.configs[item.name] != undefined && item?.type == "password" && ( 
+                     {!item?.options && selectedStep?.configs && selectedStep?.configs[item.name] != undefined && item?.type == "password" && (
                       <TextField sx={{ marginTop: 0 }} fullWidth size='small' type="password" variant="outlined" value={ selectedStep?.configs[item.name]} onChange={(event) => { handleStepConfigurableChange(item.name, event.target.value) }} />
                     )}
                   </FormControl>
                   </Box>
                 </ListItem>
-              ))} 
+              ))}
               </List>
               </Box>
               )}

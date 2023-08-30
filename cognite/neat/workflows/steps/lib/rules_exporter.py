@@ -34,7 +34,7 @@ class DMSDataModelFromRules(Step):
 
     description = "This step generates DMS Data model from data model defined in transformation rules."
     category = CATEGORY
-    
+
     def run(self, transformation_rules: RulesData) -> (FlowMessage, DMSDataModel):
         data_model = DataModel.from_rules(transformation_rules.rules)
 
@@ -56,7 +56,7 @@ class UploadDMSDataModel(Step):
 
     description = "This step uploaded generated DMS Data model."
     category = CATEGORY
-    
+
     def run(self, data_model: DMSDataModel, cdf_client: CogniteClient) -> FlowMessage:
         data_model.data_model.to_cdf(cdf_client)
 
@@ -78,7 +78,7 @@ class DeleteDMSDataModel(Step):
 
     description = "This step deletes DMS Data model and all underlying containers and views."
     category = CATEGORY
-    
+
     def run(self, data_model: DMSDataModel, cdf_client: CogniteClient) -> FlowMessage:
         data_model.data_model.remove_data_model(cdf_client)
 
@@ -226,7 +226,7 @@ class SHACLFromRules(Step):
 
     description = "This step generates SHACL from data model defined in transformation rules"
     category = CATEGORY
-    configurables = [
+    configurables = ClassVar[list[Configurable]][
         Configurable(
             name="file_name",
             value="",

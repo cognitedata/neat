@@ -16,7 +16,7 @@ from cognite.neat.workflows import utils
 from cognite.neat.workflows.cdf_store import CdfStore
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import RulesData
-from cognite.neat.workflows.steps.step_model import Step, Configurable
+from cognite.neat.workflows.steps.step_model import Configurable, Step
 
 __all__ = ["LoadTransformationRules", "DownloadTransformationRulesFromGitHub"]
 

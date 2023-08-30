@@ -82,7 +82,7 @@ class WorkflowStepDefinition(BaseModel):
     trigger: bool = False
     transition_to: list[str] | None = None
     ui_config: UIConfig = UIConfig()
-    params: dict[str, str] | None = None   # System parameters
+    params: dict[str, str] | None = None  # System parameters
     configs: dict[str, Any] | None = None  # Step configurations
     max_retries: int = 0
     retry_delay: int = 3
