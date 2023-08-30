@@ -21,11 +21,12 @@ def extract_graph_from_sheet(
     """Converts a graph capturing sheet to RDF triples that define data model instances
 
     Args:
-        filepath: Path to the graph capturing sheet
-        transformation_rule: Transformation rules which holds data model that is used to validate
-                             the graph capturing sheet and extract data model instances from it (i.e. RDF triples)
-        separator: Multi value separator at cell level. Defaults to ",".
-        namespace: Optional custom namespace to use for extracted triples that define data model instances. Defaults to None.
+        filepath : Path to the graph capturing sheet
+        transformation_rule : Transformation rules which holds data model that is used to validate
+                              the graph capturing sheet and extract data model instances from it (i.e. RDF triples)
+        separator : Multi value separator at cell level. Defaults to ",".
+        namespace : Optional custom namespace to use for extracted triples that define data
+                    model instances. Defaults to None.
 
     Returns:
         List of RDF triples, represented as tuples `(subject, predicate, object)`, that define data model instances
@@ -45,11 +46,12 @@ def sheet2triples(
     """Converts a graph capturing sheet represented as dictionary of dataframes to rdf triples
 
     Args:
-        graph_capturing_sheet: Graph capturing sheet provided as dictionary of dataframes
-        transformation_rule: Transformation rules which holds data model that is used to validate
+        graph_capturing_sheet : Graph capturing sheet provided as dictionary of dataframes
+        transformation_rule : Transformation rules which holds data model that is used to validate
                              the graph capturing sheet and extract data model instances from it (i.e. RDF triples)
-        separator: Multi value separator at cell level. Defaults to ",".
-        namespace: Optional custom namespace to use for extracted triples that define data model instances. Defaults to None.
+        separator : Multi value separator at cell level. Defaults to ",".
+        namespace : Optional custom namespace to use for extracted triples that define
+                    data model instances. Defaults to None.
 
     Returns:
         List of RDF triples, represented as tuples `(subject, predicate, object)`, that define data model instances
