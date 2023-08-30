@@ -71,7 +71,8 @@ class NeatGraphStore:
             graph_name : Name of graph, by default None
             base_prefix : Base prefix for graph namespace to change if needed, by default None
             returnFormat : Transport format of graph data between, by default "csv"
-            internal_storage_dir : Path to directory where internal storage is located, by default None (in-memory storage).
+            internal_storage_dir : Path to directory where internal storage is located,
+                                   by default None (in-memory storage).
 
         !!! note "internal_storage_dir"
             Used only for Oxigraph

@@ -481,13 +481,18 @@ class Property(Resource):
         property_type: Property type (DatatypeProperty/attribute or ObjectProperty/edge/relationship)
         cdf_resource_type: CDF resource to under which property will be resolved to (e.g., Asset)
         resource_type_property: To what property of CDF resource given property resolves to (e.g., Asset name)
-        source_type: In case if property resolves as CDF relationship, this argument indicates relationship source type (defaults to Asset)
-        target_type: In case if property resolves as CDF relationship, this argument indicates relationship target type (defaults to Asset)
+        source_type: In case if property resolves as CDF relationship, this argument indicates
+                     relationship source type (defaults to Asset)
+        target_type: In case if property resolves as CDF relationship, this argument
+                     indicates relationship target type (defaults to Asset)
         label: CDF Label used for relationship. Defaults to property_id
         relationship_external_id_rule: Rule to use when generating CDF relationship externalId
-        rule_type: Rule type for the transformation from source to target representation of knowledge graph. Defaults to None (no transformation)
-        rule: Actual rule for the transformation from source to target representation of knowledge graph. Defaults to None (no transformation)
-        skip_rule: Flag indicating if rule should be skipped when performing knowledge graph transformations. Defaults to False
+        rule_type: Rule type for the transformation from source to target representation
+                   of knowledge graph. Defaults to None (no transformation)
+        rule: Actual rule for the transformation from source to target representation of
+              knowledge graph. Defaults to None (no transformation)
+        skip_rule: Flag indicating if rule should be skipped when performing
+                   knowledge graph transformations. Defaults to False
 
     """
 
@@ -661,7 +666,9 @@ class Instance(RuleModel):
         Use of the `Instances` sheet is not recommended, instead if you need additional
         triples in your graph use Graph Capturing Sheet instead!
 
-        See [`extract_graph_from_sheet`](../graph/extractors.md#cognite.neat.graph.extractors.extract_graph_from_sheet) for more details.
+        See
+        [`extract_graph_from_sheet`](../graph/extractors.md#cognite.neat.graph.extractors.extract_graph_from_sheet)
+        for more details.
     """
 
     instance: URIRef | None = Field(alias="Instance", default=None)
@@ -748,10 +755,12 @@ class Instance(RuleModel):
 
 class TransformationRules(RuleModel):
     """
-    Transformation rules is a core concept in `neat`. This represents fusion of data model definitions and the associated
-    rules that are used to transform the data from the source representation to the target representation defined by the data model.
-    The rules are defined in a Excel sheet and then parsed into a `TransformationRules` object. The `TransformationRules`
-    object is then used to generate data model and the `RDF` graph made of data model instances.
+    Transformation rules is a core concept in `neat`. This represents fusion of data model
+    definitions and the associated rules that are used to transform the data from the
+    source representation to the target representation defined by the data model.
+    The rules are defined in a Excel sheet and then parsed into a `TransformationRules`
+    object. The `TransformationRules` object is then used to generate data model and the
+    `RDF` graph made of data model instances.
 
     Args:
         metadata: Data model metadata
@@ -765,7 +774,8 @@ class TransformationRules(RuleModel):
         Neat supports importing data from different sources. See the importers section for more details.
 
     !!! note "Parsers"
-        Neat supports parsing data from different sources into `TransformationRules` instance. See the parsers section for more details.
+        Neat supports parsing data from different sources into `TransformationRules` instance.
+        See the parsers section for more details.
 
     !!! note "Exporters"
         Neat supports exporting data to different sources. See the exporters section for more details.

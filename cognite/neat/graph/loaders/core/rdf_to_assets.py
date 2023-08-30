@@ -223,7 +223,8 @@ def _class2asset_instance(
         data_set_id: data set id to which asset belongs
         orphanage_asset_id: Orphanage asset external id, by default None
         external_id_prefix: External id prefix to be added to any external id, by default None
-        fallback_property: Property from class instance to be used as fallback in case of missing properties, by default "identifier"
+        fallback_property: Property from class instance to be used as fallback in case of
+                           missing properties, by default "identifier"
 
 
     Returns:

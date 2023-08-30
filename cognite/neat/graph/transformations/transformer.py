@@ -71,9 +71,12 @@ def source2solution_graph(
     """Transforms  solution knowledge graph based on Domain Knowledge Graph
 
     Args:
-        domain_knowledge_graph: Domain Knowledge Graph which represent the source graph being transformed to app/solution specific graph
-        transformation_rules: Transformation rules holding data model definition and rules to transform source/domain graph to app/solution specific graph
-        app_instance_graph: Graph to store app/solution specific graph. Defaults to None (i.e., empty graph).
+        domain_knowledge_graph: Domain Knowledge Graph which represent the source graph being
+                                transformed to app/solution specific graph
+        transformation_rules: Transformation rules holding data model definition and rules to
+                              transform source/domain graph to app/solution specific graph
+        app_instance_graph: Graph to store app/solution specific graph.
+                            Defaults to None (i.e., empty graph).
         client: CogniteClient. Defaults to None.
         cdf_lookup_database: CDF RAW database name to use for `rawlookup` rules. Defaults to None.
         extra_triples: Additional triples to add to app/solution knowledge graph. Defaults to None.
@@ -114,8 +117,10 @@ def domain2app_knowledge_graph(
     """Generates application/solution specific knowledge graph based on Domain Knowledge Graph
 
     Args:
-        domain_knowledge_graph: Domain Knowledge Graph which represent the source graph being transformed to app/solution specific graph
-        transformation_rules: Transformation rules holding data model definition and rules to transform source/domain graph to app/solution specific graph
+        domain_knowledge_graph: Domain Knowledge Graph which represent the source graph being
+                                transformed to app/solution specific graph
+        transformation_rules: Transformation rules holding data model definition and rules
+                              to transform source/domain graph to app/solution specific graph
         app_instance_graph: Graph to store app/solution specific graph. Defaults to None (i.e., empty graph).
         client: CogniteClient. Defaults to None.
         cdf_lookup_database: CDF RAW database name to use for `rawlookup` rules. Defaults to None.

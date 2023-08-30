@@ -19,7 +19,8 @@ def upload_labels(
     Args:
         client : Instance of CogniteClient
         transformation_rules : Instance of TransformationRules which contains the labels to upload
-        extra_labels : Any additional labels not defined in TransformationRules , by default ["historic", "non-historic"]
+        extra_labels : Any additional labels not defined in TransformationRules ,
+                       by default ["historic", "non-historic"]
         stop_on_exception : If this function fails to stop the process, by default False
     """
     if extra_labels is None:
