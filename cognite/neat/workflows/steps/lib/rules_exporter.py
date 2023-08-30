@@ -226,7 +226,7 @@ class SHACLFromRules(Step):
 
     description = "This step generates SHACL from data model defined in transformation rules"
     category = CATEGORY
-    configurables = ClassVar[list[Configurable]][
+    configurables: ClassVar[list[Configurable]] = [
         Configurable(
             name="file_name",
             value="",

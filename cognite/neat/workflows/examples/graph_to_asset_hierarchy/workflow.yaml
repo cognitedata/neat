@@ -212,24 +212,6 @@ steps:
     ui_config:
         pos_x: 450
         pos_y: 337
--   configs:
-        file_name: nordic44.gql
-        storage_dir: staging
-    description: null
-    enabled: true
-    id: step_347026
-    label: FDM data model
-    max_retries: 0
-    method: GraphQLSchemaFromRules
-    params: {}
-    retry_delay: 3
-    stype: stdstep
-    system_component_id: null
-    transition_to: []
-    trigger: false
-    ui_config:
-        pos_x: 443
-        pos_y: 1056
 system_components:
 -   description: null
     id: grid_management_system

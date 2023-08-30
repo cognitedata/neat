@@ -21,9 +21,16 @@ def get_rules(
     version: str | None = None,
 ):
     workflow = neat_app.workflow_manager.get_workflow(workflow_name)
+    workflow_defintion = workflow.get_workflow_definition()
+
     if not file_name:
-        version = workflow.get_config_item("rules.version").value
-        file_name = workflow.get_config_item("rules.file").value
+        for step in workflow_defintion.steps:
+            # TODO : Add support for multiple rules loading steps
+            if step.method == "LoadTransformationRules":
+                file_name = step.configs["file_name"]
+                version = step.configs["version"]
+                break
+
     path = Path(neat_app.config.rules_store_path, file_name)
     src = "local"
     if url:

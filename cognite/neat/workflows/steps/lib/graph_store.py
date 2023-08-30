@@ -225,10 +225,9 @@ class ConfigureGraphStore(Step):
 
     def reset_store(self, store_type: str, graph_name: str, data_store_dir: Path):
         if store_type == RdfStoreType.OXIGRAPH:
-            if graph_name in self.flow_context:
+            if graph_name not in self.flow_context:
                 if data_store_dir:
                     drop_graph_store(None, data_store_dir, force=True)
             else:
-                if graph_name in self.flow_context:
-                    self.flow_context[graph_name].graph.drop()
+                self.flow_context[graph_name].graph.drop()
         return
