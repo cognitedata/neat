@@ -11,4 +11,3 @@
 ::: cognite.neat.rules.models.Instance
 
 ::: cognite.neat.rules.models.Resource
-
