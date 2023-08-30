@@ -203,9 +203,9 @@ class GraphCaptureSpreadsheetFromRules(Step):
 
     def run(self, rules: RulesData) -> FlowMessage:
         logging.info("Generate graph capture sheet")
-        sheet_name = self.configs["file"]
+        sheet_name = self.configs["file_name"]
         auto_identifier_type = self.configs["auto_identifier_type"]
-        staging_dir_str = self.configs["graph_capture_sheet.storage_dir"]
+        staging_dir_str = self.configs["storage_dir"]
         logging.info(f"Auto identifier type {auto_identifier_type}")
         staging_dir = self.data_store_path / Path(staging_dir_str)
         staging_dir.mkdir(parents=True, exist_ok=True)

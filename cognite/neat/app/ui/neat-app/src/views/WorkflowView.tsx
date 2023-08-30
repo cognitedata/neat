@@ -236,7 +236,17 @@ const saveWorkflow = () => {
     method: "post", body: wdef.serializeToJson(), headers: {
       'Content-Type': 'application/json;charset=utf-8'
     }
-  }).then((response) => response.json()).then((data) => {
+  }).then((response) => {
+    if (!response.ok) {
+      setErrorText("Workflow can't be saved . Error code :"+response.status+", message :"+response.statusText);
+      
+      return null;
+    }
+    return response.json()
+  }
+  ).then((data) => {
+    if(!data)
+      return;
     console.dir(data)
     setLoading(false);
     setEditState("");
@@ -355,8 +365,8 @@ const onAddStep = (() => {
   console.log('onAddStep')
   setEditState("Unsaved");
   const ui_config = new UIConfig();
-  ui_config.pos_x = window.innerWidth * 0.3;
-  ui_config.pos_y = window.innerHeight * 0.3;
+  ui_config.pos_x = Math.round(window.innerWidth * 0.3);
+  ui_config.pos_y = Math.round(window.innerHeight * 0.3);
   if (viewType == "steps") {
     const step = new WorkflowStepDefinition();
     step.id = "step_" + Math.floor(Math.random() * 1000000);
@@ -504,6 +514,7 @@ return (
       </ToggleButtonGroup>
     </Box>
     { editState && (<Typography color={"red"} variant="overline"> {editState} </Typography> ) }
+    { errorText && (<Typography color={"red"} variant="caption"> Error messages : {errorText} </Typography> ) }
     { loading &&( <LinearProgress />) }
     {(viewType == "system" || viewType == "steps") && (
       <Stack direction="row" spacing={1} justifyContent="left"
@@ -532,7 +543,7 @@ return (
               {viewType == "steps" && (<Button variant="outlined" onClick={onAddStep}>Add workflow step</Button>)}
               </Panel>
             </ReactFlow>
-            { errorText && (<Typography variant="caption"> {errorText} </Typography> ) }
+            
             <Button variant="outlined" onClick={startWorkflow} sx={{ marginTop: 2, marginRight: 1 }}>Start workflow</Button>
             <Button variant="outlined" onClick={saveWorkflow} sx={{ marginTop: 2, marginRight: 1 }}>Save workflow</Button>
             <Button variant="outlined" onClick={reloadWorkflows} sx={{ marginTop: 2, marginRight: 1 }} >Reload local workflows</Button>

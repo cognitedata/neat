@@ -64,9 +64,7 @@ class GenerateCDFAssetsFromGraph(Step):
     def run(
         self, rules: RulesData, cdf_client: CogniteClient, solution_graph: SolutionGraph
     ) -> (FlowMessage, CategorizedAssets):
-        meta_keys = NeatMetadataKeys.load(
-            self.configs.get_config_group_values_by_name("cdf.asset.metadata.", remove_group_prefix=True)
-        )
+        meta_keys = NeatMetadataKeys.load(self.configs)
         prom_cdf_resource_stats = self.metrics.register_metric(
             "cdf_resources_stats",
             "CDF resource stats before and after running the workflow",

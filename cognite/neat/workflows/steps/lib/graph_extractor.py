@@ -82,8 +82,8 @@ class InstancesFromGraphCaptureSpreadsheetToGraph(Step):
             data_capture_sheet_path = Path(triggered_flow_message.payload["full_path"])
         else:
             data_capture_sheet_path = self.data_store_path / Path(
-                self.configs["storage_dir"] / self.configs["file_name"], "graph_capture_sheet.xlsx"
-            )
+                self.configs["storage_dir"]) / self.configs["file_name"]
+            
         logging.info(f"Processing graph capture sheet {data_capture_sheet_path}")
 
         triples = extractors.extract_graph_from_sheet(

@@ -16,7 +16,7 @@ class Configurable(BaseModel):
     name: str
     value: Optional[str] = None
     label: Optional[str] = None
-    type: Optional[str] = None  # string , secret , number , boolean , json 
+    type: Optional[str] = None  # string , secret , number , boolean , json
     required: bool = False
     options: Optional[list[str]] = None
 
@@ -57,8 +57,4 @@ class Step(ABC):
 
     @abstractmethod
     def run(self, *input_data: T_Input) -> T_Output:
-        ...
-
-    @abstractmethod
-    def validate(self, *input_data: T_Input) -> bool:
         ...

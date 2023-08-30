@@ -220,7 +220,7 @@ class ConfigureGraphStore(Step):
 
         return (
             FlowMessage(output_text="Graph store configured successfully"),
-            SourceGraph(graph=graph_store) if graph_name == "source" else SolutionGraph(graph=graph_store),
+            SourceGraph(graph=graph_store) if graph_name == "SourceGraph" else SolutionGraph(graph=graph_store),
         )
 
     def reset_store(self, store_type: str, graph_name: str, data_store_dir: Path):

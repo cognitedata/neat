@@ -324,13 +324,13 @@ export class WorkflowDefinition {
         nodes.forEach(node => {
             let step = this.steps.find(step => step.id == node.id);
             if (step) {
-                step.ui_config.pos_x = node.position.x;
-                step.ui_config.pos_y = node.position.y;
+                step.ui_config.pos_x = Math.round(node.position.x);
+                step.ui_config.pos_y = Math.round(node.position.y);
             }else {
                 let systemComponent = this.system_components.find(systemComponent => systemComponent.id == node.id);
                 if (systemComponent) {
-                    systemComponent.ui_config.pos_x = node.position.x;
-                    systemComponent.ui_config.pos_y = node.position.y;
+                    systemComponent.ui_config.pos_x = Math.round(node.position.x);
+                    systemComponent.ui_config.pos_y = Math.round(node.position.y);
                 }
             }
         });

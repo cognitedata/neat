@@ -59,7 +59,7 @@ class LoadTransformationRules(Step):
         # rules file
         rules_file = self.configs["file_name"]
         rules_file_path = Path(self.data_store_path, "rules", rules_file)
-        version = self.configs["rules.version"]
+        version = self.configs["version"]
 
         # rules validation
         validate_rules = self.configs["validate_rules"].lower() == "true"
