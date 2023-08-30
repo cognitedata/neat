@@ -15,6 +15,16 @@ from cognite.neat.utils.utils import chunker, datetime_utc_now, epoch_now_ms, re
 
 
 def define_relationships(rules: TransformationRules, stop_on_exception: bool = False) -> RelationshipDefinitions:
+    """Define relationships from transformation rules
+
+    Args:
+        rules: Transformation rules which holds data model
+        stop_on_exception: Whether to stop on exception or to continue. Defaults to False.
+
+    Returns:
+        RelationshipDefinitions instance holding relationship definitions extracted from transformation rules
+        which are used to generate CDF relationships
+    """
     relationships = {}
 
     # Unique ids used to check for redefinitions of relationships
@@ -71,25 +81,19 @@ def define_relationships(rules: TransformationRules, stop_on_exception: bool = F
         )
 
 
-# should be renamed to rdf2relationship_data_frame -> rdf2relationships
 def rdf2relationships(
     graph_store: NeatGraphStore,
     transformation_rules: TransformationRules,
     stop_on_exception: bool = False,
 ) -> pd.DataFrame:
-    """_summary_
+    """Converts RDF triples to relationships
 
-    Parameters
-    ----------
-    graph : Graph
-        _description_
-    transformation_rules : TransformationRules
-        _description_
+    Args:
+        graph : Graph instance holding RDF triples
+        transformation_rules : Transformation rules which holds data model and relationship definitions
 
-    Returns
-    -------
-    Dict[str, Asset]
-        _description_
+    Returns:
+        Dataframe holding relationships
     """
 
     # Step 1: Generate relationship definitions
@@ -337,7 +341,18 @@ def categorize_relationships(
     tuple[dict[str, list[Relationship | RelationshipUpdate]], dict[str, set]]
     | dict[str, list[Relationship | RelationshipUpdate]]
 ):
-    """Categorize relationships on those that are to be created, decommissioned or resurrected"""
+    """Categorize relationships on those that are to be created, decommissioned or resurrected
+
+    Args:
+        client : CogniteClient
+        rdf_relationships : Dataframe holding relationships
+        data_set_id : CDF data set id to which relationships are to be uploaded
+        partitions : Number of partitions to use when querying CDF for relationships
+        return_report : Whether to return report or not
+
+    Returns:
+        Categorized relationships to be created, decommissioned or resurrected
+    """
     # TODO also figure out which relationships to be deleted
 
     _, categorized_asset_ids = _categorize_cdf_assets(client, data_set_id=data_set_id, partitions=partitions)
@@ -394,8 +409,7 @@ def _micro_batch_push(
 ):
     """Updates assets in batches of 1000
 
-    Parameters
-    ----------
+    Args:
     client : CogniteClient
         Instance of CogniteClient
     relationships : list
@@ -448,14 +462,13 @@ def upload_relationships(
 ):
     """Uploads categorized relationships to CDF
 
-    Parameters
-    ----------
-    client : CogniteClient
-        Instance of CogniteClient
-    categorized_relationships : Dict[str, list[Union[Relationship, RelationshipUpdate]]]
-        Categories of relationships to be uploaded
-    batch_size : int, optional
-        Size of batch, by default 5000
+    Args:
+        client : Instance of CogniteClient
+        categorized_relationships : Categories of relationships to be uploaded
+        batch_size : Size of batch, by default 5000
+
+    !!! note "batch_size"
+        If batch size is set to 1 or None, all relationships will be pushed to CDF in one go.
     """
     if batch_size:
         logging.info(f"Uploading relationships in batches of {batch_size}")

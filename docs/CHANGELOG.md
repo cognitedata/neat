@@ -14,8 +14,39 @@ Changes are grouped as follows:
 - `Removed` for now removed features.
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
+## [0.24.2] - 29-08-23
 
-## [0.21.3] - 22-08-23
+### Added
+
+- Multi parent classes are now allowed
+- Validation of parent classes ids against class id regex
+- New Exception in case of ill-formed parent class ids
+
+### Fixed
+- Bug raising when generating Ontology triples in case when there are multi parent classes
+
+## [0.24.1] - 29-08-23
+
+### Added
+
+- Docstring to `cognite.neat.rules.exceptions` and `cognite.neat.graph.exceptions`
+- URL to exception definition added to exception message
+- Rendering of exceptions in `docs` (mkdocs)
+
+### Fixed
+- `fix_namespace_ending` was returning `str` instead of `Namespace` causing issues
+### Improved
+- Split docs config of importers to importers and parsers to avoid confusion
+## [0.24.0] - 24-08-23
+
+### Added
+
+- Generation of DM instances
+- `DMSDataModelFromRules`, `GenerateCDFNodesAndEdgesFromGraph`, `UploadCDFNodes` and `UploadCDFEdges` added to step libary
+
+### Improved
+- Handling of generation of pydantic model instances in case of incomplete graph instances
+## [0.22.0] - 22-08-23
 
 ### Changed
 

@@ -8,13 +8,27 @@ from cognite.neat.rules.to_rdf_path import RuleType
 
 
 def get_defined_classes(transformation_rules: TransformationRules) -> set[str]:
-    """Returns classes that have been defined in the data model."""
+    """Returns classes that have properties defined for them in the data model.
+
+    Args:
+        transformation_rules: Instance of TransformationRules holding the data model
+
+    Returns:
+        Set of classes that have been defined in the data model
+    """
     return {property.class_id for property in transformation_rules.properties.values()}
 
 
 def get_classes_with_properties(transformation_rules: TransformationRules) -> dict[str, list[Property]]:
-    """Returns classes that have been defined in the data model."""
-    # TODO: Do not particularly like method name, find something more suitable
+    """Returns classes that have been defined in the data model.
+
+    Args:
+        transformation_rules: Instance of TransformationRules holding the data model
+
+    Returns:
+        Dictionary of classes with a list of properties defined for them
+    """
+
     class_property_pairs = {}
 
     for property_ in transformation_rules.properties.values():
@@ -32,23 +46,17 @@ def to_class_property_pairs(
 ) -> dict[str, dict[str, Property]]:
     """Returns a dictionary of classes with a dictionary of properties associated with them.
 
-    Parameters
-    ----------
-    transformation_rules : TransformationRules
-        Instance of TransformationRules holding the data model
-    only_rdfpath : bool, optional
-        To consider only properties which have rule `rdfpath` set, by default False
+    Args:
+        transformation_rules : Instance of TransformationRules holding the data model
+        only_rdfpath : To consider only properties which have rule `rdfpath` set. Defaults False
 
-    Returns
-    -------
-    dict[str, dict[str, Property]]
+    Returns:
         Dictionary of classes with a dictionary of properties associated with them.
 
-    Notes
-    -----
-    If only_rdfpath is True, only properties with RuleType.rdfpath will be returned as
-    a part of the dictionary of properties related to a class. Otherwise, all properties
-    will be returned.
+    !!! note "only_rdfpath"
+        If only_rdfpath is True, only properties with RuleType.rdfpath will be returned as
+        a part of the dictionary of properties related to a class. Otherwise, all properties
+        will be returned.
     """
 
     class_property_pairs = {}
@@ -73,7 +81,14 @@ def to_class_property_pairs(
 
 
 def get_class_linkage(transformation_rules: TransformationRules) -> pd.DataFrame:
-    """Returns a dataframe with the class linkage of the data model."""
+    """Returns a dataframe with the class linkage of the data model.
+
+    Args:
+        transformation_rules: Instance of TransformationRules holding the data model
+
+    Returns:
+        Dataframe with the class linkage of the data model
+    """
 
     class_linkage = pd.DataFrame(columns=["source_class", "target_class", "connecting_property", "max_occurrence"])
     for property_ in transformation_rules.properties.values():
@@ -94,18 +109,40 @@ def get_class_linkage(transformation_rules: TransformationRules) -> pd.DataFrame
 
 
 def get_connected_classes(transformation_rules: TransformationRules) -> set[str]:
-    """Return a set of classes that are connected to other classes."""
+    """Return a set of classes that are connected to other classes.
+
+    Args:
+        transformation_rules: Instance of TransformationRules holding the data model
+
+    Returns:
+        Set of classes that are connected to other classes
+    """
     class_linkage = get_class_linkage(transformation_rules)
     return set(class_linkage.source_class.values).union(set(class_linkage.target_class.values))
 
 
-def get_disconnected_classes(transformation_rules: TransformationRules):
-    """Return a set of classes that are disconnected (i.e. isolated) from other classes."""
+def get_disconnected_classes(transformation_rules: TransformationRules) -> set[str]:
+    """Return a set of classes that are disconnected (i.e. isolated) from other classes.
+
+    Args:
+        transformation_rules: Instance of TransformationRules holding the data model
+
+    Returns:
+        Set of classes that are disconnected from other classes
+    """
     return get_defined_classes(transformation_rules) - get_connected_classes(transformation_rules)
 
 
 def get_symmetric_pairs(transformation_rules: TransformationRules) -> set[tuple]:
-    """Returns a list of pairs of symmetrically linked classes."""
+    """Returns a set of pairs of symmetrically linked classes.
+
+    Args:
+        transformation_rules: Instance of TransformationRules holding the data model
+
+    Returns:
+        Set of pairs of symmetrically linked classes
+    """
+
     # TODO: Find better name for this method
     sym_pairs = set()
 
@@ -123,18 +160,31 @@ def get_symmetric_pairs(transformation_rules: TransformationRules) -> set[tuple]
 
 
 def get_entity_ids(transformation_rules: TransformationRules) -> set[str]:
+    """Returns a set of entity ids (classes and properties) defined in the data model.
+
+    Args:
+        transformation_rules: Instance of TransformationRules holding the data model
+
+    Returns:
+        Set of entity ids (classes and properties) defined in the data model
+    """
     return set(transformation_rules.classes.keys()).union(
         {property_.property_id for property_ in transformation_rules.properties.values()}
     )
 
-    # Methods below could as well easily go to analysis.py
 
+def to_property_dict(transformation_rules: TransformationRules) -> dict[str, list[Property]]:
+    """Convert list of properties to a dictionary of lists of properties with property_id as key.
 
-def to_property_dict(rules: TransformationRules) -> dict[str, list[Property]]:
-    """Convert list of properties to a dictionary of lists of properties with property_id as key."""
+    Args:
+        transformation_rules: Instance of TransformationRules holding the data model
+
+    Returns:
+        Dictionary of lists of properties with property_id as key
+    """
     property_: dict[str, list[Property]] = defaultdict(list)
 
-    for prop in rules.properties.values():
+    for prop in transformation_rules.properties.values():
         if not (prop.property_id and prop.property_name == "*"):
             property_[prop.property_id].append(prop)
 
@@ -142,10 +192,27 @@ def to_property_dict(rules: TransformationRules) -> dict[str, list[Property]]:
 
 
 def get_asset_related_properties(properties: list[Property]) -> list[Property]:
+    """Return properties that are used to define CDF Assets
+
+    Args:
+        properties: List of properties
+
+    Returns:
+        List of properties that are used to define CDF Assets
+    """
     return [prop for prop in properties if "Asset" in prop.cdf_resource_type]
 
 
 def define_class_asset_mapping(transformation_rules: TransformationRules, class_: str) -> dict[str, list[str]]:
+    """Define mapping between class and asset properties
+
+    Args:
+        transformation_rules: Instance of TransformationRules holding the data model
+        class_: Class id for which mapping is to be defined
+
+    Returns:
+        Dictionary with asset properties as keys and list of class properties as values
+    """
     mapping_dict: dict[str, list[str]] = {}
 
     class_properties = to_class_property_pairs(transformation_rules, only_rdfpath=True)[class_]

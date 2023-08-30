@@ -7,6 +7,7 @@ import pandas as pd
 from openpyxl import Workbook, load_workbook
 from rdflib import RDF, XSD, Literal, Namespace
 
+from cognite.neat.graph import exceptions
 from cognite.neat.rules.analysis import get_defined_classes, to_class_property_pairs
 from cognite.neat.rules.models import TransformationRules
 
@@ -17,20 +18,18 @@ def extract_graph_from_sheet(
     separator: str = ",",
     namespace: str | None = None,
 ) -> list[tuple]:
-    """Converts a graph capturing sheet to rdf triples
+    """Converts a graph capturing sheet to RDF triples that define data model instances
 
-    Parameters
-    ----------
-    filepath : Path
-        Path to the graph capturing sheet
-    graph_capturing_sheet : dict[str, pd.DataFrame]
-        Graph capturing sheet
-    transformation_rule : TransformationRules
-        Transformation rules
-    separator : str, optional
-        Multi value separator at cell level, by default ","
-    namespace : str, optional
-        In case of a custom namespace, by default None meaning the namespace is taken from the transformation rules
+    Args:
+        filepath : Path to the graph capturing sheet
+        transformation_rule : Transformation rules which holds data model that is used to validate
+                              the graph capturing sheet and extract data model instances from it (i.e. RDF triples)
+        separator : Multi value separator at cell level. Defaults to ",".
+        namespace : Optional custom namespace to use for extracted triples that define data
+                    model instances. Defaults to None.
+
+    Returns:
+        List of RDF triples, represented as tuples `(subject, predicate, object)`, that define data model instances
     """
 
     graph_capturing_sheet = read_graph_excel_file_to_table_by_name(filepath)
@@ -44,19 +43,20 @@ def sheet2triples(
     separator: str = ",",
     namespace: str | None = None,
 ) -> list[tuple]:
-    """Converts a graph capturing sheet to rdf triples
+    """Converts a graph capturing sheet represented as dictionary of dataframes to rdf triples
 
-    Parameters
-    ----------
-    graph_capturing_sheet : dict[str, pd.DataFrame]
-        Graph capturing sheet
-    transformation_rule : TransformationRules
-        Transformation rules
-    separator : str, optional
-        Multi value separator at cell level, by default ","
-    namespace : str, optional
-        In case of a custom namespace, by default None meaning the namespace is taken from the transformation rules
+    Args:
+        graph_capturing_sheet : Graph capturing sheet provided as dictionary of dataframes
+        transformation_rule : Transformation rules which holds data model that is used to validate
+                             the graph capturing sheet and extract data model instances from it (i.e. RDF triples)
+        separator : Multi value separator at cell level. Defaults to ",".
+        namespace : Optional custom namespace to use for extracted triples that define
+                    data model instances. Defaults to None.
+
+    Returns:
+        List of RDF triples, represented as tuples `(subject, predicate, object)`, that define data model instances
     """
+
     # Validation that everything is in order before proceeding
     validate_if_graph_capturing_sheet_empty(graph_capturing_sheet)
     validate_rules_graph_pair(graph_capturing_sheet, transformation_rule)
@@ -90,9 +90,9 @@ def sheet2triples(
                 continue
 
             # iterate over sheet rows properties
-            for property_, value in row.to_dict().items():
+            for property_name, value in row.to_dict().items():
                 # Setting RDF type of the instance
-                if property_ == "identifier":
+                if property_name == "identifier":
                     triples.append(
                         (
                             instance_namespace[row.identifier],
@@ -100,70 +100,47 @@ def sheet2triples(
                             model_namespace[sheet_name],
                         )
                     )
+                    continue
+                elif not value:
+                    continue
+
+                property_ = class_property_pairs[sheet_name][property_name]
+                is_one_to_many = (property_.max_count or 1) > 1 and separator
+                values = value.split(separator) if is_one_to_many else [value]
 
                 # Adding object properties
-                elif value and class_property_pairs[sheet_name][property_].property_type == "ObjectProperty":
-                    if (
-                        class_property_pairs[sheet_name][property_].max_count
-                        and class_property_pairs[sheet_name][property_].max_count > 1
-                        and separator
-                    ):
-                        triples.extend(
-                            (
-                                instance_namespace[row.identifier],
-                                model_namespace[property_],
-                                instance_namespace[v.strip()],
-                            )
-                            for v in value.split(separator)
+                if property_.property_type == "ObjectProperty":
+                    triples.extend(
+                        (
+                            instance_namespace[row.identifier],
+                            model_namespace[property_name],
+                            instance_namespace[v.strip()],
                         )
-                    else:
-                        triples.append(
-                            (
-                                instance_namespace[row.identifier],
-                                model_namespace[property_],
-                                instance_namespace[value.strip()],
-                            )
-                        )
-
+                        for v in values
+                    )
                 # Adding data properties
-                elif value and class_property_pairs[sheet_name][property_].property_type == "DatatypeProperty":
-                    if (
-                        class_property_pairs[sheet_name][property_].max_count
-                        and class_property_pairs[sheet_name][property_].max_count > 1
-                        and separator
-                    ):
-                        triples.extend(
-                            (
-                                instance_namespace[row.identifier],
-                                model_namespace[property_],
-                                Literal(
-                                    v.strip(),
-                                    datatype=XSD[class_property_pairs[sheet_name][property_].expected_value_type],
-                                ),
-                            )
-                            for v in value.split(separator)
+                elif property_.property_type == "DatatypeProperty":
+                    triples.extend(
+                        (
+                            instance_namespace[row.identifier],
+                            model_namespace[property_name],
+                            Literal(
+                                v.strip(),
+                                datatype=XSD[property_.expected_value_type],
+                            ),
                         )
-                    else:
-                        triples.append(
-                            (
-                                instance_namespace[row.identifier],
-                                model_namespace[property_],
-                                Literal(
-                                    value.strip(),
-                                    datatype=XSD[class_property_pairs[sheet_name][property_].expected_value_type],
-                                ),
-                            )
-                        )
+                        for v in values
+                    )
+                else:
+                    raise exceptions.UnsupportedPropertyType(property_.property_type)
     return triples
 
 
 def validate_if_graph_capturing_sheet_empty(graph_capturing_sheet: dict[str, pd.DataFrame]):
     """Validate if the graph capturing sheet is empty
 
-    Parameters
-    ----------
-    graph_capturing_sheet : dict[str, pd.DataFrame]
-        Graph capturing sheet
+    Args:
+        graph_capturing_sheet : Graph capturing sheet
     """
     if all(df.empty for df in graph_capturing_sheet.values()):
         msg = "Graph capturing sheet is empty! Aborting!"
@@ -174,12 +151,9 @@ def validate_if_graph_capturing_sheet_empty(graph_capturing_sheet: dict[str, pd.
 def validate_rules_graph_pair(graph_capturing_sheet: dict[str, pd.DataFrame], transformation_rule: TransformationRules):
     """Validate if the graph capturing sheet is based on the transformation rules
 
-    Parameters
-    ----------
-    graph_capturing_sheet : dict[str, pd.DataFrame]
-        Graph capturing sheet
-    transformation_rule : TransformationRules
-        Transformation rules
+    Args:
+        graph_capturing_sheet : Graph capturing sheet
+        transformation_rule : Transformation rules
     """
     intersection = set(graph_capturing_sheet.keys()).intersection(set(get_defined_classes(transformation_rule)))
 

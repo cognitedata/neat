@@ -6,16 +6,98 @@ from typing import ClassVar
 
 from cognite.neat.exceptions import wrangle_warnings
 from cognite.neat.rules.exporter import rules2graph_sheet
+from cognite.neat.rules.exporter.rules2dms import DataModel
 from cognite.neat.rules.exporter.rules2graphql import GraphQLSchema
 from cognite.neat.rules.exporter.rules2ontology import Ontology
 from cognite.neat.utils.utils import generate_exception_report
 from cognite.neat.workflows.model import FlowMessage
-from cognite.neat.workflows.steps.data_contracts import RulesData
+from cognite.neat.workflows.steps.data_contracts import CogniteClient, DMSDataModel, RulesData
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
-__all__ = ["GraphQLSchemaFromRules", "OntologyFromRules", "SHACLFromRules", "GraphCaptureSpreadsheetFromRules"]
+__all__ = [
+    "DMSDataModelFromRules",
+    "GraphQLSchemaFromRules",
+    "OntologyFromRules",
+    "SHACLFromRules",
+    "GraphCaptureSpreadsheetFromRules",
+    "UploadDMSDataModel",
+    "DeleteDMSDataModel",
+]
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
+
+
+class DMSDataModelFromRules(Step):
+    """
+    This step generates DMS Data model from data model defined in transformation rules
+    """
+
+    description = "This step generates DMS Data model from data model defined in transformation rules."
+    category = CATEGORY
+    
+    def run(self, transformation_rules: RulesData) -> (FlowMessage, DMSDataModel):
+        data_model = DataModel.from_rules(transformation_rules.rules)
+
+        output_text = (
+            f"DMS Data Model <b><code>{data_model.external_id}</code></b> version"
+            f" <b><code>{data_model.version}</code></b> generated containing:<ul>"
+            f"<li> {len(data_model.containers)} containers</li>"
+            f"<li> {len(data_model.views)} views</li>"
+            f"</ul> Data model is meant to be uploaded to <b><code>{data_model.space}</code></b> space"
+        )
+
+        return FlowMessage(output_text=output_text), DMSDataModel(data_model=data_model)
+
+
+class UploadDMSDataModel(Step):
+    """
+    This step uploaded generated DMS Data model
+    """
+
+    description = "This step uploaded generated DMS Data model."
+    category = CATEGORY
+    
+    def run(self, data_model: DMSDataModel, cdf_client: CogniteClient) -> FlowMessage:
+        data_model.data_model.to_cdf(cdf_client)
+
+        output_text = (
+            f"DMS Data Model <b><code>{data_model.data_model.external_id}</code></b> version"
+            f" <b><code>{data_model.data_model.version}</code></b> uploaded to space"
+            f" <b><code>{data_model.space}</code></b> containing:<ul>"
+            f"<li> {len(data_model.data_model.containers)} containers</li>"
+            f"<li> {len(data_model.data_model.views)} views</li></ul>"
+        )
+
+        return FlowMessage(output_text=output_text)
+
+
+class DeleteDMSDataModel(Step):
+    """
+    This step deletes DMS Data model and all underlying containers and views
+    """
+
+    description = "This step deletes DMS Data model and all underlying containers and views."
+    category = CATEGORY
+    
+    def run(self, data_model: DMSDataModel, cdf_client: CogniteClient) -> FlowMessage:
+        data_model.data_model.remove_data_model(cdf_client)
+
+        output_text = (
+            f"DMS Data Model {data_model.data_model.external_id} version {data_model.data_model.version} "
+            f"under {data_model.data_model.space} removed:"
+            f"<p> - {len(data_model.data_model.containers)} containers removed</p>"
+            f"<p> - {len(data_model.data_model.views)} views removed</p>"
+        )
+
+        output_text = (
+            f"DMS Data Model <b><code>{data_model.data_model.external_id}</code></b> version"
+            f" <b><code>{data_model.data_model.version}</code></b> removed"
+            f" from space <b><code>{data_model.data_model.space}</code></b> as well:"
+            f"<ul><li> {len(data_model.data_model.containers)} containers</li>"
+            f"<li> {len(data_model.data_model.views)} views</li></ul>"
+        )
+
+        return FlowMessage(output_text=output_text)
 
 
 class GraphQLSchemaFromRules(Step):

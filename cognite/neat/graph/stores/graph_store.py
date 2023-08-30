@@ -25,16 +25,11 @@ class NeatGraphStore:
     """NeatGraphStore is a class that stores the graph and provides methods to read/write data it contains
 
 
-    Attributes
-    ----------
-    graph : Graph
-        Instance of rdflib.Graph class for graph storage
-    base_prefix : str
-        Used as a base prefix for graph namespace, allowing querying graph data using a shortform of a URI
-    namespace : Namespace
-        Namespace (aka URI) used to resolve any relative URI in the graph
-    prefixes : dict[str, URIRef]
-        Dictionary of additional prefixes used in the graph
+    Args:
+        graph : Instance of rdflib.Graph class for graph storage
+        base_prefix : Used as a base prefix for graph namespace, allowing querying graph data using a shortform of a URI
+        namespace : Namespace (aka URI) used to resolve any relative URI in the graph
+        prefixes : Dictionary of additional prefixes used in the graph
     """
 
     def __init__(
@@ -69,23 +64,18 @@ class NeatGraphStore:
     ):
         """Initializes the graph.
 
-        Parameters
-        ----------
-        rdf_store_type : str, optional
-            Graph store type, by default RdfStoreType.MEMORY
-        rdf_store_query_url : str, optional
-            URL towards which SPARQL query is executed, by default None
-        rdf_store_update_url : str, optional
-            URL towards which SPARQL update is executed, by default None
-        graph_name : str, optional
-            Name of graph, by default None
-        base_prefix : str
-            Base prefix for graph namespace to change if needed, by default None
-        returnFormat : str, optional
-            Transport format of graph data between, by default "csv"
-        internal_storage_dir : Path, optional
-            Path to directory where internal storage is located, by default None (in-memory storage).
-            Used only for Oxigraph.
+        Args:
+            rdf_store_type : Graph store type, by default RdfStoreType.MEMORY
+            rdf_store_query_url : URL towards which SPARQL query is executed, by default None
+            rdf_store_update_url : URL towards which SPARQL update is executed, by default None
+            graph_name : Name of graph, by default None
+            base_prefix : Base prefix for graph namespace to change if needed, by default None
+            returnFormat : Transport format of graph data between, by default "csv"
+            internal_storage_dir : Path to directory where internal storage is located,
+                                   by default None (in-memory storage).
+
+        !!! note "internal_storage_dir"
+            Used only for Oxigraph
         """
         logging.info("Initializing NeatGraphStore")
         self.rdf_store_type = rdf_store_type
@@ -161,10 +151,8 @@ class NeatGraphStore:
     def import_from_file(self, file_path: Path | None = None):
         """Imports graph data from file.
 
-        Parameters
-        ----------
-        file_path : Path, optional
-            File path to file containing graph data, by default None
+        Args:
+            file_path : File path to file containing graph data, by default None
         """
 
         if not file_path:
@@ -247,20 +235,13 @@ class NeatGraphStore:
     ) -> pd.DataFrame:
         """Returns the result of the query as a dataframe.
 
-        Parameters
-        ----------
-        query : str
-            SPARQL query to execute
-        column_mapping : dict, optional
-            Columns name mapping, by default None
-        save_to_cache : bool, optional
-            Save result of query to cache, by default False
-        index_column : str, optional
-            Indexing column , by default "instance"
+        Args:
+            query : SPARQL query to execute
+            column_mapping : Columns name mapping, by default None
+            save_to_cache : Save result of query to cache, by default False
+            index_column : Indexing column , by default "instance"
 
-        Returns
-        -------
-        pd.DataFrame
+        Returns:
             Dataframe with result of query
         """
 
@@ -299,7 +280,13 @@ class NeatGraphStore:
 
 def drop_graph_store(graph: NeatGraphStore, storage_path: Path, force: bool = False):
     """Drops graph store by flushing in-flight data , releasing locks and completely
-    removing all files the storage path."""
+    removing all files the storage path.
+
+    Args:
+        graph : Instance of NeatGraphStore
+        storage_path : Path to storage directory
+        force : Forcefully drop of graph. Defaults to False.
+    """
     if graph:
         if graph.rdf_store_type == RdfStoreType.OXIGRAPH and storage_path:
             if storage_path.exists():

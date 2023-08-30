@@ -187,16 +187,23 @@ class OWLClass(OntologyModel):
     type_: URIRef = OWL.Class
     label: str | None
     comment: str | None
-    sub_class_of: URIRef | None
+    sub_class_of: list[URIRef] | None
     namespace: Namespace
 
     @classmethod
     def from_class(cls, definition: Class, namespace: Namespace) -> Self:
+        if definition.parent_class and isinstance(definition.parent_class, list):
+            sub_class_of = [namespace[parent_class] for parent_class in definition.parent_class]
+        elif definition.parent_class and isinstance(definition.parent_class, str):
+            sub_class_of = [namespace[definition.parent_class]]
+        else:
+            sub_class_of = None
+
         return cls(
             id_=namespace[definition.class_id],
             label=definition.class_name,
             comment=definition.description,
-            sub_class_of=namespace[definition.parent_class] if definition.parent_class else None,
+            sub_class_of=sub_class_of,
             namespace=namespace,
         )
 
@@ -215,7 +222,7 @@ class OWLClass(OntologyModel):
     @property
     def subclass_triples(self) -> list[tuple]:
         if self.sub_class_of:
-            return [(self.id_, RDFS.subClassOf, self.sub_class_of)]
+            return [(self.id_, RDFS.subClassOf, sub_class_of) for sub_class_of in self.sub_class_of]
         else:
             return []
 
@@ -269,7 +276,6 @@ class OWLProperty(OntologyModel):
 
         return cls(**prop_dict, namespace=namespace)
 
-    # TODO: Add warnings to _exceptions.py and use them here:
     @field_validator("type_")
     def is_multi_type(cls, v, info: FieldValidationInfo):
         if len(v) > 1:

@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from cognite.client.data_classes import Asset, Relationship
+from cognite.client.data_classes.data_modeling import EdgeApply, NodeApply, NodeOrEdgeData
 from pydantic import BaseModel, ConfigDict, Field, create_model
 from pydantic._internal._model_construction import ModelMetaclass
 from rdflib import Graph, URIRef
@@ -17,6 +18,7 @@ from cognite.neat.rules.analysis import (
     define_class_relationship_mapping,
     to_class_property_pairs,
 )
+from cognite.neat.rules.exporter.rules2dms import DataModel
 from cognite.neat.rules.models import Property, TransformationRules, type_to_target_convention
 
 EdgeOneToOne = TypeAliasType("EdgeOneToOne", str)
@@ -30,11 +32,15 @@ def default_model_configuration():
 
 
 def default_model_methods():
-    return [from_graph, to_asset, to_relationship, to_dms, to_graph]
+    return [from_graph, to_asset, to_relationship, to_node, to_edge, to_graph]
+
+
+def default_model_property_attributes():
+    return [attributes, edges_one_to_one, edges_one_to_many]
 
 
 def rules_to_pydantic_models(
-    transformation_rules: TransformationRules, methods: list | None = None
+    transformation_rules: TransformationRules, methods: list | None = None, property_attributes: list | None = None
 ) -> dict[str, ModelMetaclass]:
     """
     Generate pydantic models from transformation rules.
@@ -42,6 +48,7 @@ def rules_to_pydantic_models(
     Args:
         transformation_rules: Transformation rules
         methods: List of methods to register for pydantic models, by default None.
+        property_attributes: List of property attributes to register for pydantic models, by default None.
 
     Returns:
         Dictionary containing pydantic models
@@ -54,6 +61,8 @@ def rules_to_pydantic_models(
     """
     if methods is None:
         methods = default_model_methods()
+    if property_attributes is None:
+        property_attributes = default_model_property_attributes()
 
     class_property_pairs = to_class_property_pairs(transformation_rules, only_rdfpath=True)
 
@@ -83,9 +92,7 @@ def rules_to_pydantic_models(
             ),
         )
 
-        model = _dictionary_to_pydantic_model(
-            class_, fields, methods=[from_graph, to_asset, to_relationship, to_dms, to_graph]
-        )
+        model = _dictionary_to_pydantic_model(class_, fields, methods=methods, property_attributes=property_attributes)
 
         models[class_] = model
 
@@ -115,7 +122,12 @@ def _properties_to_pydantic_fields(
     for name, property_ in properties.items():
         field_type = _define_field_type(property_)
 
-        field_definition: dict = {"alias": name}
+        field_definition: dict = {
+            "alias": name,
+            # keys below will be available under json_schema_extra
+            "property_type": field_type.__name__ if field_type in [EdgeOneToOne, EdgeOneToMany] else "NodeAttribute",
+            "property_value_type": property_.expected_value_type,
+        }
 
         if field_type.__name__ in [EdgeOneToMany.__name__, list.__name__]:
             field_definition["min_length"] = property_.min_count
@@ -149,6 +161,7 @@ def _dictionary_to_pydantic_model(
     model_definition: dict,
     model_configuration: ConfigDict = None,
     methods: list | None = None,
+    property_attributes: list | None = None,
     validators: list | None = None,
 ) -> type[BaseModel]:
     """Generates pydantic model from dictionary containing definition of fields.
@@ -164,6 +177,8 @@ def _dictionary_to_pydantic_model(
         Configuration of pydantic model, by default None
     methods : list, optional
         Methods that work on fields once model is instantiated, by default None
+    property_attributes : list, optional
+        Property attributed that work on model fields once model is instantiated, by default None
     validators : list, optional
         Any custom validators to be added in addition to base pydantic ones, by default None
 
@@ -191,6 +206,9 @@ def _dictionary_to_pydantic_model(
     if methods:
         for method in methods:
             setattr(model, method.__name__, method)
+    if property_attributes:
+        for property_attribute in property_attributes:
+            setattr(model, property_attribute.fget.__name__, property_attribute)
 
     # any additional validators to be added
     if validators:
@@ -199,32 +217,75 @@ def _dictionary_to_pydantic_model(
     return model
 
 
+@property
+def attributes(self) -> list[str]:
+    return [
+        field
+        for field in self.model_fields_set
+        if (schema := self.model_fields[field].json_schema_extra) and schema.get("property_type") == "NodeAttribute"
+    ]
+
+
+@property
+def edges_one_to_one(self) -> list[str]:
+    return [
+        field
+        for field in self.model_fields_set
+        if (schema := self.model_fields[field].json_schema_extra) and schema.get("property_type") == "EdgeOneToOne"
+    ]
+
+
+@property
+def edges_one_to_many(self) -> list[str]:
+    return [
+        field
+        for field in self.model_fields_set
+        if (schema := self.model_fields[field].json_schema_extra) and schema.get("property_type") == "EdgeOneToMany"
+    ]
+
+
 # Define methods that work on model instance
 @classmethod
-def from_graph(cls, graph: Graph, transformation_rules: TransformationRules, external_id: URIRef):
+def from_graph(
+    cls,
+    graph: Graph,
+    transformation_rules: TransformationRules,
+    external_id: URIRef,
+    incomplete_instance_allowed: bool = True,
+):
     """Method that creates model instance from class instance stored in graph.
 
-    Parameters
-    ----------
-    graph : Graph
-        Graph containing triples of class instance
-    transformation_rules : TransformationRules
-        Transformation rules
-    external_id : URIRef
-        External id of class instance to be used to instantiate associated pydantic model
+    Args:
+        graph: Graph containing triples of class instance
+        transformation_rules: Transformation rules
+        external_id: External id of class instance to be used to instantiate associated pydantic model
+        incomplete_instance_allowed: Flag allowing incomplete instances to be queried. Defaults to True.
 
-    Returns
-    -------
-    cls
+    Raises:
+        exceptions.MissingInstanceTriples: _description_
+        exceptions.PropertyRequiredButNotProvided: _description_
+
+    Returns:
         Pydantic model instance
     """
+
     # build sparql query for given object
     class_ = cls.__name__
+
+    # here properties_optional is set to True in order to also return
+    # incomplete class instances so we catch them and raise exceptions
     sparql_query = build_construct_query(
-        graph, class_, transformation_rules, class_instances=[external_id], properties_optional=False
+        graph,
+        class_,
+        transformation_rules,
+        class_instances=[external_id],
+        properties_optional=incomplete_instance_allowed,
     )
 
     result = triples2dictionary(list(graph.query(sparql_query)))
+
+    if not result:
+        raise exceptions.MissingInstanceTriples(external_id)
 
     # wrangle results to dict
     for field in cls.model_fields.values():
@@ -234,7 +295,7 @@ def from_graph(cls, graph: Graph, transformation_rules: TransformationRules, ext
 
         # if field is required and not in result, raise error
         if field.is_required() and field.alias not in result:
-            raise exceptions.FieldRequiredButNotProvided(field.alias, external_id)
+            raise exceptions.PropertyRequiredButNotProvided(field.alias, external_id)
 
         # flatten result if field is not edge or list of values
         if field.annotation.__name__ not in [EdgeOneToMany.__name__, list.__name__]:
@@ -354,9 +415,55 @@ def to_relationship(self, transformation_rules: TransformationRules) -> Relation
     ...
 
 
-def to_dms(self, transformation_rules: TransformationRules):
-    """Creates instance of dm in CDF."""
-    ...
+def to_node(self, data_model: DataModel) -> NodeApply:
+    """Creates DMS node from pydantic model."""
+
+    if set(data_model.containers[self.__class__.__name__].properties.keys()) != set(
+        self.attributes + self.edges_one_to_one + self.edges_one_to_many
+    ):
+        raise exceptions.InstancePropertiesNotMatchingContainerProperties(
+            self.__class__.__name__,
+            self.attributes + self.edges_one_to_one + self.edges_one_to_many,
+            data_model.containers[self.__class__.__name__].properties.keys(),
+        )
+
+    attributes: dict = {attribute: self.__getattribute__(attribute) for attribute in self.attributes}
+    edges_one_to_one: dict = {
+        edge_one_to_one: {"space": data_model.space, "externalId": self.__getattribute__(edge_one_to_one)}
+        for edge_one_to_one in self.edges_one_to_one
+    }
+
+    return NodeApply(
+        space=data_model.space,
+        external_id=self.external_id,
+        sources=[
+            NodeOrEdgeData(
+                source=data_model.views[self.__class__.__name__].as_id(),
+                properties=attributes | edges_one_to_one,
+            )
+        ],
+    )
+
+
+def to_edge(self, data_model: DataModel) -> list[EdgeApply]:
+    """Creates DMS edge from pydantic model."""
+    edges = []
+    for edge_one_to_many in self.edges_one_to_many:
+        edge_type_id = f"{self.__class__.__name__}.{edge_one_to_many}"
+        edges.extend(
+            EdgeApply(
+                space=data_model.space,
+                external_id=f"{self.external_id}-{end_node_id}",
+                type=(data_model.space, edge_type_id),
+                start_node=(data_model.space, self.external_id),
+                end_node=(
+                    data_model.space,
+                    end_node_id,
+                ),
+            )
+            for end_node_id in self.__getattribute__(edge_one_to_many)
+        )
+    return edges
 
 
 def to_graph(self, transformation_rules: TransformationRules, graph: Graph):
