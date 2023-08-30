@@ -32,18 +32,17 @@ def generate_triples(
     stop_on_exception: bool = False,
     allow_isolated_classes: bool = True,
 ) -> list[tuple]:
-    """Generate mock triples for purposes of testing of NEAT
+    """Generate mock triples based on data model defined transformation rules and desired number
+    of class instances
 
-    Parameters
-    ----------
-    data_model : DataModelingDefinition
-        Data model containing ontology and object shape constraints for each class
-    class_count : dict
-        Target class count for each class in the ontology
-    stop_on_exception: bool
-        To stop if exception is encountered or not, default is False
-    allow_isolated_classes: bool
-        To allow generation of instances for classes that are not connected to any other class, default is True
+    Args:
+        data_model: Data model containing ontology and object shape constraints for each class
+        class_count: Target class count for each class in the ontology
+        stop_on_exception: To stop if exception is encountered or not, default is False
+        allow_isolated_classes: To allow generation of instances for classes that are not connected to any other class, default is True
+
+    Returns:
+        List of RDF triples, represented as tuples `(subject, predicate, object)`, that define data model instances
     """
 
     # Figure out which classes are defined in the data model and which are not
@@ -318,9 +317,10 @@ def _rules_to_dict(transformation_rules: TransformationRules) -> dict[str, pd.Da
     """Represent data model as a dictionary of data frames, where each data frame
     represents properties defined for a given class.
 
-    Returns
-    -------
-    Dict[str, pd.DataFrame]
+    Args:
+        transformation_rules: Transformation rules defining the data model
+
+    Returns:
         Simplified representation of the data model
     """
 

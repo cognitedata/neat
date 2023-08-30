@@ -14,18 +14,13 @@ def upload_labels(
     extra_labels: list | None = None,
     stop_on_exception: bool = False,
 ):
-    """Upload labels to CDF
+    """Generates labels from transformation rules and upload them to CDF
 
-    Parameters
-    ----------
-    client : CogniteClient
-        Instance of CogniteClient
-    transformation_rules : TransformationRules
-        Instance of TransformationRules which contains the labels to upload
-    extra_labels : list[str], optional
-        Any additional labels not defined in TransformationRules , by default ["historic", "non-historic"]
-    stop_on_exception : bool, optional
-        If this function fails to stop the process, by default False
+    Args:
+        client : Instance of CogniteClient
+        transformation_rules : Instance of TransformationRules which contains the labels to upload
+        extra_labels : Any additional labels not defined in TransformationRules , by default ["historic", "non-historic"]
+        stop_on_exception : If this function fails to stop the process, by default False
     """
     if extra_labels is None:
         extra_labels = []

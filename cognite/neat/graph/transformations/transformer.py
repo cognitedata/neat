@@ -67,8 +67,23 @@ def source2solution_graph(
     stop_on_exception: bool = False,
     missing_raw_lookup_value: str = "NaN",
     processing_report: RuleProcessingReport = None,
-):
-    """Create solution graph from source graph and transformation rules"""
+) -> Graph:
+    """Transforms  solution knowledge graph based on Domain Knowledge Graph
+
+    Args:
+        domain_knowledge_graph: Domain Knowledge Graph which represent the source graph being transformed to app/solution specific graph
+        transformation_rules: Transformation rules holding data model definition and rules to transform source/domain graph to app/solution specific graph
+        app_instance_graph: Graph to store app/solution specific graph. Defaults to None (i.e., empty graph).
+        client: CogniteClient. Defaults to None.
+        cdf_lookup_database: CDF RAW database name to use for `rawlookup` rules. Defaults to None.
+        extra_triples: Additional triples to add to app/solution knowledge graph. Defaults to None.
+        stop_on_exception: To stop on exception. Defaults to False.
+        missing_raw_lookup_value: If no value is find for `rawlookup` default value to use. Defaults to "NaN".
+        processing_report: Processing report to store results to. Defaults to None.
+
+    Returns:
+        Transformed knowledge graph based on transformation rules
+    """
 
     # TODO: This is to be improved and slowly sunset domain2app_knowledge_graph
 
@@ -96,19 +111,23 @@ def domain2app_knowledge_graph(
     missing_raw_lookup_value: str = "NaN",
     processing_report: RuleProcessingReport = None,
 ) -> Graph:
-    """Generates App specific knowledge graph based on Domain Knowledge Graph
+    """Generates application/solution specific knowledge graph based on Domain Knowledge Graph
 
-    Parameters
-    ----------
-    domain_knowledge_graph : Graph
-        _description_
+    Args:
+        domain_knowledge_graph: Domain Knowledge Graph which represent the source graph being transformed to app/solution specific graph
+        transformation_rules: Transformation rules holding data model definition and rules to transform source/domain graph to app/solution specific graph
+        app_instance_graph: Graph to store app/solution specific graph. Defaults to None (i.e., empty graph).
+        client: CogniteClient. Defaults to None.
+        cdf_lookup_database: CDF RAW database name to use for `rawlookup` rules. Defaults to None.
+        extra_triples: Additional triples to add to app/solution knowledge graph. Defaults to None.
+        stop_on_exception: To stop on exception. Defaults to False.
+        missing_raw_lookup_value: If no value is find for `rawlookup` default value to use. Defaults to "NaN".
+        processing_report: Processing report to store results to. Defaults to None.
 
-
-    Returns
-    -------
-    Graph
-        _description_
+    Returns:
+        Transformed knowledge graph based on transformation rules
     """
+
     if app_instance_graph is None:
         app_instance_graph = Graph()
         # Bind App namespace and prefix

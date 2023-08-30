@@ -32,6 +32,19 @@ EXCLUDE_PATHS = [
 
 @dataclass
 class NeatMetadataKeys:
+    """Class holding mapping between NEAT metadata key names and their desired names in
+    in CDF Asset metadata
+
+    Args:
+        start_time: Start time key name
+        end_time: End time key name
+        update_time: Update time key name
+        resurrection_time: Resurrection time key name
+        identifier: Identifier key name
+        active: Active key name
+        type: Type key name
+    """
+
     start_time: str = "start_time"
     end_time: str = "end_time"
     update_time: str = "update_time"
@@ -59,20 +72,13 @@ class NeatMetadataKeys:
 def _get_class_instance_ids(graph: Graph, class_: str, namespace: Namespace, limit: int = -1) -> list[URIRef]:
     """Get instances ids for a given class
 
-    Parameters
-    ----------
-    graph : Graph
-        Graph containing class instances
-    class_ : str
-        Class for which instances are to be found
-    namespace : Namespace
-        Namespace of given class (to avoid writing long URIs)
-    limit : int
-        Max number of instances to return, by default -1 meaning all instances
+    Args:
+        graph: Graph containing class instances
+        class_: Class for which instances are to be found
+        namespace: Namespace of given class (to avoid writing long URIs)
+        limit: Max number of instances to return, by default -1 meaning all instances
 
-    Returns
-    -------
-    List[URIRef]
+    Returns:
         List of class instance URIs
     """
 
@@ -85,11 +91,12 @@ def _get_class_instance_ids(graph: Graph, class_: str, namespace: Namespace, lim
 
 def _get_class_instance(graph: Graph, instance: URIRef) -> list[tuple]:
     """Get instance by means of tuples containing property-value pairs
+    Args:
+        graph: Graph containing class instances
+        instance: Instance URI
 
-    Returns
-    -------
-    List
-        list property-value pairs
+    Returns:
+        list of property-value pairs for given instance
     """
 
     query_statement = "SELECT DISTINCT ?predicate ?object WHERE {<subject> ?predicate ?object .}".replace(
@@ -106,15 +113,11 @@ def _get_class_instance(graph: Graph, instance: URIRef) -> list[tuple]:
 def _get_class_property_pairs(transformation_rules: TransformationRules) -> dict[list[Property]]:
     """Define classes in terms of their properties
 
-    Parameters
-    ----------
-    transformation_rules : TransformationRules
-        _description_
+    Args:
+    transformation_rules : Instance of TransformationRules containing class and property definitions
 
-    Returns
-    -------
-    dict
-        Dict containing keys as class names and list of their properties
+    Returns:
+        Dict containing keys as class ids and list of their properties
     """
 
     classes = {}
@@ -133,14 +136,10 @@ def _get_class_property_pairs(transformation_rules: TransformationRules) -> dict
 def _define_asset_class_mapping(transformation_rules: TransformationRules) -> dict:
     """Define mapping from class to asset properties
 
-    Parameters
-    ----------
-    transformation_rules : TransformationRules
-        Transformation rules
+    Args:
+        transformation_rules : Instance of TransformationRules containing class and property definitions
 
-    Returns
-    -------
-    tuple[dict, dict[Any, dict[str, list[Any]]]]
+    Returns:
         Dict containing mapping from class to asset properties
     """
     solution2cdf_mapping_rules = _get_class_property_pairs(transformation_rules)
@@ -174,17 +173,12 @@ def _define_asset_class_mapping(transformation_rules: TransformationRules) -> di
 def _remap_class_properties(class_instance: dict, asset_class_mapping: dict) -> tuple[dict, set, set]:
     """Remaps original class instance properties to asset properties (e.g., external_id, name, description, metadata)
 
-    Parameters
-    ----------
-    class_instance : dict
-        Dictionary containing class instance properties and values originating from RDF
-        stripped from namespaces
-    asset_class_mapping : dict
-        Property mapping from class to asset
+    Args:
+        class_instance: Dictionary containing class instance properties and values
+                        originating from RDF stripped from namespaces
+        asset_class_mapping: Property mapping from class to asset
 
-    Returns
-    -------
-    Tuple[dict, set, set]
+    Returns:
         Remapped class instance, set of missing asset properties and set of missing asset metadata
     """
     # Make distinction between missing properties that map into Asset fields
@@ -221,28 +215,18 @@ def _class2asset_instance(
 ) -> dict:
     """Converts class instance to asset instance dictionary
 
-    Parameters
-    ----------
-    class_ : str
-        Class name which instance is being converted to asset instance
-    class_instance : dict
-        Dictionary containing class instance properties and values originating from RDF
-        stripped from namespaces
-    asset_class_mapping : dict
-        Property mapping from class to asset
-    data_set_id : int
-        data set id to which asset belongs
-    orphanage_asset_id : str, optional
-        Orphanage asset external id, by default None
-    external_id_prefix : str, optional
-        External id prefix to be added to any external id, by default None
-    fallback_property : str, optional
-        Property from class instance to be used as fallback in case of missing properties, by default "identifier"
+    Args:
+        class_: Class name which instance is being converted to asset instance
+        class_instance: Dictionary containing class instance properties and values originating from RDF
+                        stripped from namespaces
+        asset_class_mapping: Property mapping from class to asset
+        data_set_id: data set id to which asset belongs
+        orphanage_asset_id: Orphanage asset external id, by default None
+        external_id_prefix: External id prefix to be added to any external id, by default None
+        fallback_property: Property from class instance to be used as fallback in case of missing properties, by default "identifier"
 
 
-    Returns
-    -------
-    dict
+    Returns:
         Asset instance dictionary
     """
 
@@ -320,14 +304,10 @@ def __extracted_from___class2asset_instance_56(fallback_property, class_, remapp
 def _list2dict(class_instance: list) -> dict:
     """Converting list of class instance properties and values to dictionary
 
-    Parameters
-    ----------
-    class_instance : list
-        Class instance properties and values originating from RDF as list of tuples
+    Args:
+        class_instance: Class instance properties and values originating from RDF as list of tuples
 
-    Returns
-    -------
-    dict
+    Returns:
         Class instance properties and values as dictionary
     """
 
@@ -365,22 +345,14 @@ def rdf2assets(
 ) -> dict[str, dict[str, Any]]:
     """Creates assets from RDF graph
 
-    Parameters
-    ----------
-    graph_store : Graph
-        Graph containing RDF data
-    transformation_rules : TransformationRules
-        Instance of TransformationRules class containing transformation rules
-    stop_on_exception : bool
-        Whether to stop upon exception.
-    use_orphanage : bool
-        Whether to use an orphanage for assets without parent_external_id
-    meta_keys : NeatMetadataKeys
-        The names of neat metadat keys to use.
+    Args:
+        graph_store : Graph containing RDF data
+        transformation_rules : Instance of TransformationRules class containing transformation rules
+        stop_on_exception : Whether to stop upon exception.
+        use_orphanage : Whether to use an orphanage for assets without parent_external_id
+        meta_keys : The names of neat metadat keys to use.
 
-    Returns
-    -------
-    Dict[str, dict]
+    Returns:
         Dictionary representations of assets by external id.
     """
     meta_keys = NeatMetadataKeys() if meta_keys is None else meta_keys
@@ -514,14 +486,10 @@ def _create_orphanage(orphanage_external_id: str, dataset_id: int, meta_keys: Ne
 def _asset2dict(asset: Asset) -> dict:
     """Return asset as dict representation
 
-    Parameters
-    ----------
-    asset : Asset
-        Instance of Asset class
+    Args:
+        asset : Instance of Asset class
 
-    Returns
-    -------
-    dict
+    Returns:
         Asset in dict representation
     """
 
@@ -558,18 +526,12 @@ def _categorize_cdf_assets(
 ) -> tuple[pd.DataFrame | None, dict[str, set]]:
     """Categorize CDF assets
 
-    Parameters
-    ----------
-    client : CogniteClient
-        Instance of CogniteClient
-    data_set_id : int
-        Id of data set
-    partitions : int
-        Number of partitions
+    Args:
+        client : Instance of CogniteClient
+        data_set_id : Id of data set
+        partitions : Number of partitions
 
-    Returns
-    -------
-    Tuple[Optional[pd.DataFrame], dict]
+    Returns:
         CDF assets as pandas dataframe and dictionary with categorized assets
     """
     cdf_assets = client.assets.list(data_set_ids=data_set_id, limit=None, partitions=partitions)
@@ -610,14 +572,10 @@ def _categorize_cdf_assets(
 def order_assets(assets: dict[str, dict]) -> list[Asset]:
     """Order assets in a way that parent assets are created before child assets
 
-    Parameters
-    ----------
-    assets : dict[str, dict]
-        List of assets to be created
+    Args:
+    assets : List of assets to be created
 
-    Returns
-    -------
-    list[Asset]
+    Returns:
         Ordered list of assets
     """
     hierarchy = AssetHierarchy([Asset(**asset) for asset in assets.values()], ignore_orphans=True)
@@ -645,16 +603,11 @@ def order_assets(assets: dict[str, dict]) -> list[Asset]:
 def _assets_to_create(rdf_assets: dict, asset_ids: set) -> list[Asset]:
     """Return list of assets to be created
 
-    Parameters
-    ----------
-    rdf_assets : dict
-        Dictionary containing assets derived from knowledge graph (RDF)
-    asset_ids : set
-        Set of asset ids to be created
+    Args:
+        rdf_assets : Dictionary containing assets derived from knowledge graph (RDF)
+        asset_ids : Set of asset ids to be created
 
-    Returns
-    -------
-    list[Asset]
+    Returns:
         Ordered list of assets to be created
     """
     start_time = datetime_utc_now()
@@ -677,24 +630,15 @@ def _assets_to_update(
 ) -> tuple[list[Asset], dict[str, dict]]:
     """Return list of assets to be updated
 
-    Parameters
-    ----------
-    rdf_assets : dict
-        Dictionary containing assets derived from knowledge graph (RDF)
-    cdf_assets : pd.DataFrame
-        Dataframe containing assets from CDF
-    asset_ids : set
-        Candidate assets to be updated
-    meta_keys : NeatMetadataKeys
-        The neat meta data keys.
-    exclude_paths : list, optional
-        Paths not to be checked when diffing rdf and cdf assets, by default EXCLUDE_PATHS
-    stop_on_exception: bool, optional
-        Whether to stop on exception or not, by default False
+    Args:
+        rdf_assets : Dictionary containing assets derived from knowledge graph (RDF)
+        cdf_assets : Dataframe containing assets from CDF
+        asset_ids : Candidate assets to be updated
+        meta_keys : The neat meta data keys.
+        exclude_paths : Paths not to be checked when diffing rdf and cdf assets, by default EXCLUDE_PATHS
+        stop_on_exception: Whether to stop on exception or not, by default False
 
-    Returns
-    -------
-    tuple[list[Asset], dict[str, dict]]
+    Returns:
         List of assets to be updated and detailed report of changes per asset
     """
 
@@ -747,18 +691,12 @@ def _assets_to_resurrect(
 ) -> list[Asset]:
     """Returns list of assets to be resurrected
 
-    Parameters
-    ----------
-    rdf_assets : dict
-        Dictionary containing assets derived from knowledge graph (RDF)
-    cdf_assets : pd.DataFrame
-        Dataframe containing assets from CDF
-    asset_ids : set
-        Set of asset ids to be resurrected
+    Args:
+        rdf_assets : Dictionary containing assets derived from knowledge graph (RDF)
+        cdf_assets : Dataframe containing assets from CDF
+        asset_ids : Set of asset ids to be resurrected
 
-    Returns
-    -------
-    list[Asset]
+    Returns:
         List of assets to be resurrected
     """
     start_time = datetime_utc_now()
@@ -830,26 +768,16 @@ def categorize_assets(
 ) -> tuple[dict, dict] | dict:
     """Categorize assets on those that are to be created, updated and decommissioned
 
-    Parameters
-    ----------
-    client : CogniteClient
-        Instance of CogniteClient
-    rdf_assets : dict
-        Dictionary containing asset external_id - asset pairs
-    data_set_id : int
-        Dataset id to which assets are to be/are stored
-    partitions : int, optional
-        Number of partitions to use when fetching assets from CDF, by default 2
-    stop_on_exception : bool, optional
-        Whether to stop on exception or not, by default False
-    return_report : bool, optional
-        Whether to report on the diffing results or not, by default False
-    meta_keys : NeatMetadataKeys, optional
-        The metadata keys used by neat.
+    Args:
+        client : Instance of CogniteClient
+        rdf_assets : Dictionary containing asset external_id - asset pairs
+        data_set_id : Dataset id to which assets are to be/are stored
+        partitions : Number of partitions to use when fetching assets from CDF, by default 2
+        stop_on_exception : Whether to stop on exception or not, by default False
+        return_report : Whether to report on the diffing results or not, by default False
+        meta_keys : The metadata keys used by neat.
 
-    Returns
-    -------
-    Dict[str, list]
+    Returns:
         dictionary containing asset category - list of asset pairs
     """
     meta_keys = NeatMetadataKeys() if meta_keys is None else meta_keys
@@ -904,8 +832,7 @@ def _micro_batch_push(
 ):
     """Updates assets in batches of 1000
 
-    Parameters
-    ----------
+    Args:
     client : CogniteClient
         Instance of CogniteClient
     assets : list
@@ -956,14 +883,16 @@ def upload_assets(
 ):
     """Uploads categorized assets to CDF
 
-    Parameters
-    ----------
+    Args:
     client : CogniteClient
         Instance of CogniteClient
     categorized_assets : Dict[str, list]
         dictionary containing asset category - list of asset pairs
     batch_size : int, optional
         Size of batch, by default 5000
+
+    !!! note "batch_size"
+        If batch size is set to 1 or None, all assets will be pushed to CDF in one go.
     """
     if batch_size:
         logging.info(f"Uploading assets in batches of {batch_size}")

@@ -40,14 +40,10 @@ def _find_circular_reference_path(asset: Asset, assets: dict[str, Asset], max_hi
 def validate_asset_hierarchy(assets: dict[str, Asset]) -> tuple[list[str], list[list[str]]]:
     """Validates asset hierarchy and reports on orphan assets and circular dependency
 
-    Parameters
-    ----------
-    assets : dict[str, Asset]
-        A dictionary of assets with external_id as key
+    Args:
+        assets : A dictionary of assets with external_id as key
 
-    Returns
-    -------
-    Tuple[List[Asset], List[List[str]]
+    Returns:
         List of orphan assets external ids and list of circular path of external ids.
         If both lists are empty, the hierarchy is healthy.
     """

@@ -31,10 +31,11 @@ nav:
           - Data Model Generation: tutorial/workflows/data-model-generation.md
   - Reference:
       - Rules:
+          - Models: api/rules/models.md
+          - Analysis: api/rules/analysis.md
           - Importers: api/rules/importers.md
           - Parsers: api/rules/parsers.md
           - Exporters: api/rules/exporters.md
-          - Models: api/rules/models.md
       - Graph:
           - Extractors: api/graph/extractors.md
           - Transformers: api/graph/transformers.md
