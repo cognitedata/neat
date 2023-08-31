@@ -1,4 +1,5 @@
 import logging
+
 from rdflib import Literal, URIRef
 
 from cognite.neat.graph.stores.graph_store import NeatGraphStore
