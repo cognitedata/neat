@@ -25,11 +25,9 @@ def get_rules(
 
     if not file_name:
         for step in workflow_defintion.steps:
-            # TODO : Add support for multiple rules loading steps
             if step.method == "LoadTransformationRules":
                 file_name = step.configs["file_name"]
                 version = step.configs["version"]
-                break
 
     path = Path(neat_app.config.rules_store_path, file_name)
     src = "local"
