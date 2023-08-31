@@ -243,6 +243,9 @@ class CdfStore:
 
     def get_list_of_resources_from_cdf(self, resource_type: str) -> list[NeatCdfResource]:
         logging.info(f"Getting list of resources of type {resource_type} from CDF")
+        if not self.data_set_id:
+            return []
+
         label_filter = LabelFilter(contains_any=["neat-workflow"])
         files_metadata = self.client.files.list(labels=label_filter, metadata={"resource_type": resource_type})
 
@@ -264,6 +267,8 @@ class CdfStore:
     def get_list_of_workflow_executions_from_cdf(self, limit=200) -> list[WorkflowFullStateReport]:
         """Returns list of workflow executions from CDF."""
         logging.debug("Getting list of workflow executions from CDF")
+        if not self.data_set_id:
+            return []
         events = self.client.events.list(type="neat-workflow-run", source="neat", sort=["startTime:desc"], limit=limit)
         executions = []
         for event in events:
@@ -295,6 +300,8 @@ class CdfStore:
         """Returns detailed workflow execution report from CDF"""
         logging.debug(f"Getting detailed workflow execution {run_id} from CDF")
         external_id = f"neat-wf-run-{run_id}"
+        if not self.data_set_id:
+            return None
         event = self.client.events.retrieve(external_id=external_id)
         steps_log = []
         if event:
@@ -326,6 +333,8 @@ class CdfStore:
     def report_workflow_execution_to_cdf(self, report: WorkflowFullStateReport):
         # Report workflow run to CDF as single event with all the steps attached either in metadata
         # or attached file (depends on the size)
+        if not self.data_set_id:
+            return
         metadata = {
             "run_id": report.run_id,
             "elapsed_time": report.elapsed_time,

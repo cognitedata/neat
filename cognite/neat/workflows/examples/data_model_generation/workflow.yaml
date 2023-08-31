@@ -1,116 +1,10 @@
-configs:
--   group: LoadTransformationRules
-    label: Full name of the rules file
-    name: rules.file
-    options: null
-    required: false
-    type: null
-    value: Rules-Nordic44-to-graphql.xlsx
--   group: LoadTransformationRules
-    label: Optional version of the rules file
-    name: rules.version
-    options: null
-    required: false
-    type: null
-    value: ''
--   group: GraphQLSchemaFromRules
-    label: Name of the GraphQL schema file
-    name: graphql_schema.file
-    options: null
-    required: false
-    type: null
-    value: ''
--   group: GraphQLSchemaFromRules
-    label: Directory to store GraphQL schema file
-    name: graphql_export.storage_dir
-    options: null
-    required: false
-    type: null
-    value: staging
--   group: OntologyFromRules
-    label: Name of the OWL ontology file it must have .ttl extension
-    name: ontology.file
-    options: null
-    required: false
-    type: null
-    value: ''
--   group: OntologyFromRules
-    label: Directory to store the OWL ontology file
-    name: ontology_export.storage_dir
-    options: null
-    required: false
-    type: null
-    value: staging
--   group: OntologyFromRules
-    label: To store warnings while generating ontology
-    name: ontology.store_warnings
-    options: null
-    required: false
-    type: null
-    value: 'True'
--   group: SHACLFromRules
-    label: Name of the SHACL file, it must have .ttl extension, defaults to form <b>`{prefix}-v{version}.graphql`<\b>
-    name: shacl.file
-    options: null
-    required: false
-    type: null
-    value: ''
--   group: SHACLFromRules
-    label: Directory to store the SHACL file
-    name: shacl_export.storage_dir
-    options: null
-    required: false
-    type: null
-    value: staging
--   group: ConfigureDefaultGraphStores
-    label: 'Data store type for source graph. Supported: oxigraph, memory,file, graphdb,
-        sparql. '
-    name: source_rdf_store.type
-    options: null
-    required: false
-    type: null
-    value: memory
--   group: ConfigureDefaultGraphStores
-    label: 'Data store type for solutioin graph. Supported: oxigraph, memory,file,
-        graphdb, sparql'
-    name: solution_rdf_store.type
-    options: null
-    required: false
-    type: null
-    value: memory
--   group: ConfigureDefaultGraphStores
-    label: Local directory for source graph store
-    name: source_rdf_store.disk_store_dir
-    options: null
-    required: false
-    type: null
-    value: data-model-source-graph-store
--   group: ConfigureDefaultGraphStores
-    label: Local directory for solution graph store
-    name: solution_rdf_store.disk_store_dir
-    options: null
-    required: false
-    type: null
-    value: data-model-solution-graph-store
--   group: ConfigureDefaultGraphStores
-    label: 'Defines which stores to configure. Possible values: all, source, solution'
-    name: stores_to_configure
-    options: null
-    required: false
-    type: null
-    value: all
--   group: ConfigureDefaultGraphStores
-    label: Root url for graphdb or sparql endpoint
-    name: solution_rdf_store.api_root_url
-    options: null
-    required: false
-    type: null
-    value: ''
+configs: []
 description: null
 implementation_module: null
 name: data_model_generation
 steps:
--   description: null
+-   configs: null
+    description: null
     enabled: true
     id: step_http_trigger
     label: HTTP process trigger
@@ -127,7 +21,10 @@ steps:
     ui_config:
         pos_x: 545
         pos_y: 81
--   description: null
+-   configs:
+        file_name: ''
+        storage_dir: staging
+    description: null
     enabled: true
     id: step_generate_graphql_file
     label: Generate GraphQL Schema from Transformation Rules
@@ -143,7 +40,13 @@ steps:
     ui_config:
         pos_x: 545
         pos_y: 256
--   description: null
+-   configs:
+        file_name: Rules-Nordic44-to-graphql.xlsx
+        validate_rules: 'True'
+        validation_report_file: rules_validation_report.txt
+        validation_report_storage_dir: rules_validation_report
+        version: ''
+    description: null
     enabled: true
     id: step_load_rules
     label: Load Transformation Rules from Excel file
@@ -159,7 +62,8 @@ steps:
     ui_config:
         pos_x: 545
         pos_y: 165
--   description: null
+-   configs: {}
+    description: null
     enabled: true
     id: step_rules2ontology
     label: Generate Ontology from Transformation Rules
@@ -175,7 +79,8 @@ steps:
     ui_config:
         pos_x: 545
         pos_y: 366
--   description: null
+-   configs: {}
+    description: null
     enabled: true
     id: step_rules2shacl
     label: Generate SHACL from Transformation Rules

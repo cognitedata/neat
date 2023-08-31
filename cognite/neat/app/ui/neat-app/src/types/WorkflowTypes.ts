@@ -28,13 +28,40 @@ export class WorkflowConfigItem {
     group?: string;
 }
 
+class StepConfigurable {
+    name: string;
+    value?: string | null;
+    label?: string | null;
+    type?: string | null;  // string , secret , number , boolean , json
+    required: boolean = false;
+    options?: string[] | null;
+
+    constructor(
+        name: string,
+        value: string | null = null,
+        label: string | null = null,
+        type: string | null = null,
+        required: boolean = false,
+        options: string[] | null = null
+    ) {
+        this.name = name;
+        this.value = value;
+        this.label = label;
+        this.type = type;
+        this.required = required;
+        this.options = options;
+    }
+}
+
+
 export class StepMetadata {
     name: string;
+    category: string = "";
     description: string = "";
     input: string[];
     output: string[];
-    configuration_templates: WorkflowConfigItem[] = [];
-    category: string = "";
+    configurables: StepConfigurable[] = [];
+    type: string = "";
 
     constructor(name: string, input: string[], output: string[]) {
         this.name = name;
@@ -71,6 +98,7 @@ export class WorkflowStepDefinition {
     transition_to?: string[];
     params?:any = {}
     ui_config?: UIConfig = new UIConfig();
+    configs?: Map<string, any> = new Map<string, any>();
 }
 
 
@@ -135,24 +163,24 @@ export class WorkflowDefinition {
         }
     }
 
-    insertConfigItemFromTemplate(stepName : string,stepRegistry: StepRegistry) {
-        let step_template = stepRegistry.getStepByName(stepName);
+    // insertConfigItemFromTemplate(stepName : string,stepRegistry: StepRegistry) {
+    //     let step_template = stepRegistry.getStepByName(stepName);
 
-        console.log(" Insert check")
-        console.dir(step_template)
-        console.dir(this.configs)
+    //     console.log(" Insert check")
+    //     console.dir(step_template)
+    //     console.dir(this.configs)
 
 
-        for (let config of step_template.configuration_templates) {
-            let index = this.configs.findIndex(c => c.name == config.name);
-            if (index >= 0) {
-                continue;
-            }else {
-                config.group = step_template.name;
-                this.configs.push(config);
-            }
-        }
-    }
+    //     for (let config of step_template.configurables) {
+    //         let index = this.configs.findIndex(c => c.name == config.name);
+    //         if (index >= 0) {
+    //             continue;
+    //         }else {
+    //             config.group = step_template.name;
+    //             this.configs.push(config);
+    //         }
+    //     }
+    // }
 
     addConfigItem(config: WorkflowConfigItem) {
         this.configs.push(config);
@@ -296,13 +324,13 @@ export class WorkflowDefinition {
         nodes.forEach(node => {
             let step = this.steps.find(step => step.id == node.id);
             if (step) {
-                step.ui_config.pos_x = node.position.x;
-                step.ui_config.pos_y = node.position.y;
+                step.ui_config.pos_x = Math.round(node.position.x);
+                step.ui_config.pos_y = Math.round(node.position.y);
             }else {
                 let systemComponent = this.system_components.find(systemComponent => systemComponent.id == node.id);
                 if (systemComponent) {
-                    systemComponent.ui_config.pos_x = node.position.x;
-                    systemComponent.ui_config.pos_y = node.position.y;
+                    systemComponent.ui_config.pos_x = Math.round(node.position.x);
+                    systemComponent.ui_config.pos_y = Math.round(node.position.y);
                 }
             }
         });

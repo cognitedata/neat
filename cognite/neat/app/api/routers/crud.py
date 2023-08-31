@@ -7,7 +7,7 @@ import shutil
 from fastapi import APIRouter, UploadFile
 
 from cognite.neat.app.api.configuration import neat_app
-from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
+from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.utils import get_file_hash
 
 router = APIRouter()
@@ -49,17 +49,11 @@ async def file_upload_handler(files: list[UploadFile], workflow_name: str, file_
         workflow = neat_app.workflow_manager.get_workflow(workflow_name)
         workflow_definition = workflow.get_workflow_definition()
 
-        # update config item rules.file with the new file name
-        config_item = workflow_definition.get_config_item("rules.file")
-        if config_item is None:
-            config_item = WorkflowConfigItem(name="rules.file", value=file_name, label="Rules file name", group="rules")
-        config_item.value = file_name
-        workflow_definition.upsert_config_item(config_item)
-        # update config item rules.file with the new file name
-        config_item = workflow_definition.get_config_item("rules.version")
-        if config_item is None:
-            config_item = WorkflowConfigItem(name="rules.version", value="", label="Rules file version", group="rules")
-            workflow_definition.upsert_config_item(config_item)
+        for step in workflow_definition.steps:
+            if step.method == "LoadTransformationRules":
+                step.configs["file_name"] = file_name
+                step.configs["version"] = ""
+
         neat_app.workflow_manager.save_workflow_to_storage(workflow_name)
 
     if "start_workflow" in action:

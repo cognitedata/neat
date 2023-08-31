@@ -14,7 +14,7 @@ import React, { useEffect, useState } from "react"
 import { StepMetadata, StepRegistry, WorkflowDefinition, WorkflowStepDefinition, WorkflowSystemComponent } from "types/WorkflowTypes"
 import { getNeatApiRootUrl } from "./Utils"
 import LocalUploader from "./LocalUploader"
-import { InputLabel, Typography } from "@mui/material"
+import { Box, InputLabel, List, ListItem, ListItemText, Typography } from "@mui/material"
 import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined';
 
 export default function StepEditorDialog(props: any)
@@ -30,6 +30,8 @@ export default function StepEditorDialog(props: any)
 
     const handleDialogSave = () => {
         setDialogOpen(false);
+        console.log("handleDialogSave")
+        console.dir(selectedStep);
         props.onClose(selectedStep,"save");
     };
     const handleDialogCancel = () => {
@@ -75,15 +77,55 @@ export default function StepEditorDialog(props: any)
     useEffect(() => {
         if (props.open){
             setDialogOpen(true);
-            setSelectedStep(props.step);
-            setStepRegistry(props.stepRegistry);
-            setWorkflowDefinitions(props.workflowDefinitions);
             if (props.step.stype == "stdstep") {
               setSelectedStepTemplate(props.stepRegistry?.getStepByName(props.step.method))
+              let updStep = updateStepConfigsFromConfigurables(props.stepRegistry?.getStepByName(props.step.method),props.step,false)
+              setSelectedStep(updStep);
+            }else {
+              setSelectedStep(props.step);
             }
+            setStepRegistry(props.stepRegistry);
+            setWorkflowDefinitions(props.workflowDefinitions);
+
             console.dir(props.stepRegistry);
         }
       }, [props.open]);
+
+      // useEffect(() => {
+      //   updateStepConfigsFromConfigurables(selectedStepTemplate,selectedStep,true);
+      // }, [selectedStepTemplate]);
+
+
+      const handleStepConfigurableChange = (name: string, value: any) => {
+        console.log('handleStepConfigurableChange')
+        console.dir(selectedStep);
+        let updStep= Object.assign({},selectedStep);
+        if (selectedStep) {
+          if (!selectedStep.configs)
+            selectedStep.configs = new Map<string,string>();
+          selectedStep.configs[name] = value;
+        }
+        setSelectedStep(updStep);
+      }
+
+      const updateStepConfigsFromConfigurables = (stepTemplate: StepMetadata, currentStep:WorkflowStepDefinition,loadDefaults:boolean) =>  {
+        // Configuring default valus from step template
+        console.log('updateStepConfigsFromConfigurables')
+        let updStep= Object.assign({},currentStep);
+        if (!updStep.configs || loadDefaults) {
+          updStep.configs = new Map<string,string>();
+        }
+        if(!currentStep?.configs)
+          currentStep.configs = new Map<string,string>();
+        for (let i=0;i<stepTemplate?.configurables.length;i++) {
+          let confFromTemplate = stepTemplate?.configurables[i];
+          if (currentStep?.configs[confFromTemplate.name])
+            updStep.configs[confFromTemplate.name] = currentStep?.configs[confFromTemplate.name];
+          else
+            updStep.configs[confFromTemplate.name] = confFromTemplate?.value;
+        }
+        return updStep;
+      }
 
       const handleStepConfigChange = (name: string, value: any) => {
         console.log('handleStepConfigChange')
@@ -107,6 +149,8 @@ export default function StepEditorDialog(props: any)
               case "start_workflow_task_step":
                 updStep.params = { "workflow_name": "", "sync": "false" }
                 break;
+              case "stdstep":
+                setSelectedStepTemplate(null)
 
             }
             updStep["stype"] = value;
@@ -114,8 +158,9 @@ export default function StepEditorDialog(props: any)
             switch (name) {
               case "method":
                 if (selectedStep.stype == "stdstep") {
+                  updStep = updateStepConfigsFromConfigurables(stepRegistry.getStepByName(value),updStep,true)
+                  selectedStep.configs = updStep.configs;
                   setSelectedStepTemplate(stepRegistry.getStepByName(value))
-                  workflowDefinitions.insertConfigItemFromTemplate(value,stepRegistry)
                 }
                 updStep.method = value;
                 break
@@ -149,7 +194,7 @@ export default function StepEditorDialog(props: any)
 
 
 return (
-  <Dialog open={dialogOpen} onClose={handleDialogCancel}>
+  <Dialog open={dialogOpen} onClose={handleDialogCancel} fullWidth={true}  maxWidth={"xl"}>
         <DialogTitle>Step configurator</DialogTitle>
         <DialogContent >
           <FormControl  fullWidth>
@@ -181,6 +226,7 @@ return (
               <TextField sx={{ marginTop: 1 }} id="step-config-time-config" fullWidth label="Time interval" size='small' variant="outlined" value={selectedStep?.params["interval"]} onChange={(event) => { handleStepConfigChange("time-interval", event.target.value) }} />
             )}
             {(selectedStep?.stype == "stdstep") && (
+              <Box>
               <FormControl sx={{ marginTop: 2 }} fullWidth >
               <InputLabel id="step_name_label">Step name</InputLabel>
               <Select
@@ -199,11 +245,49 @@ return (
                   ))
                 }
               </Select>
+              </FormControl>
+              {selectedStepTemplate && (
+              <Box>
               <Typography> Description : {selectedStepTemplate?.description} </Typography>
               <Typography> Input : <ul> {selectedStepTemplate?.input.map((item,i)=> (<li>  {workflowDefinitions?.isStepInputConfigured(selectedStep?.id,item, stepRegistry) && (<CheckCircleOutlineOutlinedIcon sx={{ marginBottom: -0.5 }} color="success"/>) }  {item}</li>)) } </ul> </Typography>
               <Typography> Output : <ul> {selectedStepTemplate?.output.map((item,i)=> (<li> {item} </li>))} </ul> </Typography>
-              <Typography> Configurations : <ul>  {selectedStepTemplate?.configuration_templates.map((item,i)=> (<li> {item.name} - {item.label} </li>))} </ul> </Typography>
-              </FormControl>
+              <Typography> Configurations : </Typography>
+              <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
+              {selectedStepTemplate?.configurables.map((item,i)=> (
+                <ListItem>
+                  <Box sx={{width:'50vw'}}>
+                  <ListItemText  primary={item.name} secondary={item.label}></ListItemText>
+                  </Box>
+                  <Box sx={{width:'50vw'}}>
+                  <FormControl fullWidth>
+                    {item?.options && selectedStep?.configs[item.name] != undefined && (
+                    <Select
+                      value={ selectedStep?.configs[item.name]}
+                      size='small'
+                      variant="outlined"
+                      onChange={(event) => { handleStepConfigurableChange(item.name, event.target.value) }}
+                      sx={{ marginBottom: 0 }}
+                    >
+                      {
+                        item?.options && item.options.map((option, i) => (
+                          <MenuItem value={option} key={option}> {option} </MenuItem>
+                        ))
+                      }
+                    </Select> )}
+                    {!item?.options && selectedStep?.configs && selectedStep?.configs[item.name] != undefined && item?.type != "password" && (
+                      <TextField sx={{ marginTop: 0 }} fullWidth size='small' variant="outlined" value={ selectedStep?.configs[item.name]} onChange={(event) => { handleStepConfigurableChange(item.name, event.target.value) }} />
+                    )}
+                     {!item?.options && selectedStep?.configs && selectedStep?.configs[item.name] != undefined && item?.type == "password" && (
+                      <TextField sx={{ marginTop: 0 }} fullWidth size='small' type="password" variant="outlined" value={ selectedStep?.configs[item.name]} onChange={(event) => { handleStepConfigurableChange(item.name, event.target.value) }} />
+                    )}
+                  </FormControl>
+                  </Box>
+                </ListItem>
+              ))}
+              </List>
+              </Box>
+              )}
+              </Box>
             )}
             <TextField sx={{ marginTop: 1 }} id="step-config-descr" fullWidth label="Notes" size='small' variant="outlined" value={selectedStep?.description} onChange={(event) => { handleStepConfigChange("description", event.target.value) }} />
 

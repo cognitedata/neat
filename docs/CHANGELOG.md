@@ -14,6 +14,20 @@ Changes are grouped as follows:
 - `Removed` for now removed features.
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
+
+## [0.25.0] - 30-08-23
+
+### Changed
+
+- New way of configuring workflows steps . Now steps are configured individually and not as a part of workflow manifest.
+- Added access_token autentication for Cognite client. If client_id is not set in config.yaml, NEAT will use client_secret as access_token.
+- Multiple UI usability improvements and bug fixes.
+
+### Added
+
+- Added SimpleContextualization step . The step can be used to create links between nodes in a graph either by using regex or exact match between source and target properties.
+- Added single store configuration step. Now solution and graph stores can be configured individually.
+
 ## [0.24.2] - 29-08-23
 
 ### Added

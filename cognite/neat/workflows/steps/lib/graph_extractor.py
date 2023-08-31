@@ -8,14 +8,14 @@ from cognite.neat.constants import PREFIXES
 from cognite.neat.graph import extractors
 from cognite.neat.rules.exporter.rules2triples import get_instances_as_triples
 from cognite.neat.utils.utils import add_triples
-from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
+from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
-from cognite.neat.workflows.steps.step_model import Step
+from cognite.neat.workflows.steps.step_model import Configurable, Step
 
 __all__ = [
     "InstancesFromRdfFileToSourceGraph",
     "InstancesFromRulesToSolutionGraph",
-    "InstancesFromGraphCaptureSpreadsheetToSolutionGraph",
+    "InstancesFromGraphCaptureSpreadsheetToGraph",
     "DataModelFromRulesToSourceGraph",
 ]
 
@@ -29,9 +29,9 @@ class InstancesFromRdfFileToSourceGraph(Step):
 
     description = "This step extract instances from a file into the source graph. The file must be in RDF format."
     category = CATEGORY
-    configuration_templates: ClassVar[list[WorkflowConfigItem]] = [
-        WorkflowConfigItem(
-            name="source_rdf_store.file",
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="file_path",
             value="source-graphs/source-graph-dump.xml",
             label="File name of source graph data dump in RDF format",
         )
@@ -39,7 +39,7 @@ class InstancesFromRdfFileToSourceGraph(Step):
 
     def run(self, rules: RulesData, source_graph: SourceGraph) -> FlowMessage:
         if source_graph.graph.rdf_store_type.lower() in ("memory", "oxigraph"):
-            if source_file := self.configs.get_config_item_value("source_rdf_store.file"):
+            if source_file := self.configs["file_path"]:
                 source_graph.graph.import_from_file(Path(self.data_store_path) / Path(source_file))
                 logging.info(f"Loaded {source_file} into source graph.")
             else:
@@ -50,27 +50,54 @@ class InstancesFromRdfFileToSourceGraph(Step):
         return FlowMessage(output_text="Instances loaded to source graph")
 
 
-class InstancesFromGraphCaptureSpreadsheetToSolutionGraph(Step):
+class InstancesFromGraphCaptureSpreadsheetToGraph(Step):
     """
     This step extracts instances from graph capture spreadsheet and loads them into solution graph
     """
 
     description = "This step extracts instances from graph capture spreadsheet and loads them into solution graph"
     category = CATEGORY
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="file_name",
+            value="graph_capture_sheet.xlsx",
+            label="File name of the data capture sheet",
+        ),
+        Configurable(name="storage_dir", value="staging", label="Directory to store data capture sheets"),
+        Configurable(
+            name="graph_name",
+            value="solution",
+            label="The name of target graph.",
+            options=["source", "solution"],
+        ),
+    ]
 
     def run(
         self,
         transformation_rules: RulesData,
-        solution_graph: SolutionGraph,
+        graph_store: SolutionGraph | SourceGraph,
     ) -> FlowMessage:
         triggered_flow_message = self.flow_context["StartFlowMessage"]
-        data_capture_sheet_path = Path(triggered_flow_message.payload["full_path"])
+        if "full_path" in triggered_flow_message.payload:
+            data_capture_sheet_path = Path(triggered_flow_message.payload["full_path"])
+        else:
+            data_capture_sheet_path = (
+                self.data_store_path / Path(self.configs["storage_dir"]) / self.configs["file_name"]
+            )
+
         logging.info(f"Processing graph capture sheet {data_capture_sheet_path}")
 
         triples = extractors.extract_graph_from_sheet(
             data_capture_sheet_path, transformation_rule=transformation_rules.rules
         )
-        add_triples(solution_graph.graph, triples)
+
+        graph_name = self.configs["graph_name"]
+        if graph_name == "solution":
+            graph_store = self.flow_context["SolutionGraph"]
+        else:
+            graph_store = self.flow_context["SourceGraph"]
+
+        add_triples(graph_store.graph, triples)
         return FlowMessage(output_text="Graph capture sheet processed")
 
 

@@ -38,6 +38,8 @@ import Editor, { DiffEditor, useMonaco, loader } from '@monaco-editor/react';
 import OverviewComponentEditorDialog from 'components/OverviewComponentEditorDialog';
 import StepEditorDialog from 'components/StepEditorDialog';
 import WorkflowMetadataDialog from 'components/WorkflowMetadataDialog';
+import LinearProgress from '@mui/material/LinearProgress';
+import { Typography } from '@mui/material';
 
 
 export interface ExecutionLog {
@@ -85,6 +87,9 @@ export default function WorkflowView() {
   const [selectedComponent, setSelectedComponent] = useState<WorkflowSystemComponent>();
   const [fileContent, setFileContent] = useState('');
   const [stepRegistry, setStepRegistry] = useState<StepRegistry>();
+  const [editState, setEditState] = useState<string>("");
+  const [loading , setLoading] = useState<boolean>(false);
+  const [errorText, setErrorText] = useState<string>("");
 
 
   useEffect(() => {
@@ -143,9 +148,11 @@ export default function WorkflowView() {
     fetch(url).then((response) => response.json()).then((data) => {
       const workflows = WorkflowDefinition.fromJSON(data.definition);
       setWorkflowDefinitions(workflows);
+      setEditState("");
       // loadWorkflowStats(workflowName);
   }).catch ((error) => {
     console.error('Error:', error);
+    setErrorText(error);
   }).finally(() => { });
   }
 
@@ -222,16 +229,31 @@ const saveWorkflow = () => {
   syncNodesAndEdgesToWorkflowDef();
   let wdef = workflowDefinitions;
   console.dir(wdef);
+  setLoading(true);
+  setErrorText("");
   const url = neatApiRootUrl + "/api/workflow/workflow-definition/" + selectedWorkflow;
   fetch(url, {
     method: "post", body: wdef.serializeToJson(), headers: {
       'Content-Type': 'application/json;charset=utf-8'
     }
-  }).then((response) => response.json()).then((data) => {
+  }).then((response) => {
+    if (!response.ok) {
+      setErrorText("Workflow can't be saved . Error code :"+response.status+", message :"+response.statusText);
+
+      return null;
+    }
+    return response.json()
+  }
+  ).then((data) => {
+    if(!data)
+      return;
     console.dir(data)
+    setLoading(false);
+    setEditState("");
   }
   ).catch((error) => {
     console.error('Error:', error);
+    setErrorText(error);
   })
 };
 
@@ -307,6 +329,7 @@ const onConnect = useCallback((params) => {
   console.log('onConnect')
   setEdges((eds) => addEdge(params, eds))
   syncNodesAndEdgesToWorkflowDef();
+  setEditState("Unsaved");
 }, [setEdges]);
 
 const onEdgeUpdateStart = useCallback(() => {
@@ -318,6 +341,7 @@ const onEdgeUpdate = useCallback((oldEdge, newConnection) => {
   console.log('onEdgeUpdate')
   edgeUpdateSuccessful.current = true;
   setEdges((els) => updateEdge(oldEdge, newConnection, els));
+  setEditState("Unsaved");
 }, [setEdges]);
 
 const onEdgeUpdateEnd = useCallback((_, edge) => {
@@ -326,6 +350,7 @@ const onEdgeUpdateEnd = useCallback((_, edge) => {
     setEdges((eds) => eds.filter((e) => e.id !== edge.id));
     syncNodesAndEdgesToWorkflowDef();
   }
+  setEditState("Unsaved");
 
   edgeUpdateSuccessful.current = true;
 }, [setEdges]);
@@ -338,9 +363,10 @@ const onNodeClick = useCallback((event, node) => {
 
 const onAddStep = (() => {
   console.log('onAddStep')
+  setEditState("Unsaved");
   const ui_config = new UIConfig();
-  ui_config.pos_x = 100;
-  ui_config.pos_y = 100;
+  ui_config.pos_x = Math.round(window.innerWidth * 0.3);
+  ui_config.pos_y = Math.round(window.innerHeight * 0.3);
   if (viewType == "steps") {
     const step = new WorkflowStepDefinition();
     step.id = "step_" + Math.floor(Math.random() * 1000000);
@@ -376,11 +402,13 @@ const handleDialogClose = (step:WorkflowStepDefinition,action:string) => {
     case "delete":
       workflowDefinitions.deleteStep(selectedStep.id);
       syncWorkflowDefToNodesAndEdges(viewType);
+      setEditState("Unsaved");
       break;
     case "save":
       workflowDefinitions.updateStep(selectedStep.id, step);
       setSelectedStep(step);
       syncWorkflowDefToNodesAndEdges(viewType);
+      setEditState("Unsaved");
       break;
   }
 
@@ -405,6 +433,7 @@ const solutionComponentEditorDialogHandler = (component: WorkflowSystemComponent
       syncWorkflowDefToNodesAndEdges(viewType);
       break;
   }
+  setEditState("Unsaved");
   setOpenOverviewComponentEditorDialog(false);
 }
 
@@ -434,6 +463,7 @@ const onNodesChangeN = useCallback((nodeChanges: NodeChange[]) => {
   // console.dir(nodeChanges);
   onNodesChange(nodeChanges);
   syncNodesAndEdgesToWorkflowDef();
+  // setEditState("Unsaved");
 }, [workflowDefinitions,nodes,edges]);
 
 const onEdgesChangeN = useCallback((edgeChanges: EdgeChange[]) => {
@@ -441,6 +471,7 @@ const onEdgesChangeN = useCallback((edgeChanges: EdgeChange[]) => {
   console.dir(edgeChanges);
   onEdgesChange(edgeChanges);
   syncNodesAndEdgesToWorkflowDef();
+  // setEditState("Unsaved");
 }, [workflowDefinitions,nodes,edges]);
 
 return (
@@ -482,6 +513,9 @@ return (
 
       </ToggleButtonGroup>
     </Box>
+    { editState && (<Typography color={"red"} variant="overline"> {editState} </Typography> ) }
+    { errorText && (<Typography color={"red"} variant="caption"> Error messages : {errorText} </Typography> ) }
+    { loading &&( <LinearProgress />) }
     {(viewType == "system" || viewType == "steps") && (
       <Stack direction="row" spacing={1} justifyContent="left"
         alignItems="left">

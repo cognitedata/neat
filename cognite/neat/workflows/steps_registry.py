@@ -5,14 +5,15 @@ import os
 import sys
 import types
 from pathlib import Path
+from typing import Any
 
 from pydantic import BaseModel
 
 import cognite.neat.workflows.steps.lib
 from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
 from cognite.neat.exceptions import InvalidWorkFlowError
-from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem, WorkflowConfigs
-from cognite.neat.workflows.steps.step_model import DataContract, Step, T_Output
+from cognite.neat.workflows.model import FlowMessage, WorkflowConfigs
+from cognite.neat.workflows.steps.step_model import Configurable, DataContract, Step, T_Output
 
 
 class StepMetadata(BaseModel):
@@ -22,7 +23,7 @@ class StepMetadata(BaseModel):
     scope: str = "global"  # defines the scope of the step (e.g. "global", local to a specific workflow)
     input: list[str]
     output: list[str]
-    configuration_templates: list[WorkflowConfigItem] = []
+    configurables: list[Configurable] = []
 
 
 class StepsRegistry:
@@ -76,14 +77,16 @@ class StepsRegistry:
         step_name: str,
         flow_context: dict[str, DataContract],
         metrics: NeatMetricsCollector = None,
-        configs: WorkflowConfigs = None,
+        workflow_configs: WorkflowConfigs = None,
+        step_configs: dict[str, Any] | None = None,
     ) -> T_Output | None:
         for step_cls in self._step_classes:
             if step_cls.__name__ == step_name:
                 step_obj: Step = step_cls(self.data_store_path)
+                step_obj.configure(step_configs)
                 step_obj.set_flow_context(flow_context)
                 step_obj.set_metrics(metrics)
-                step_obj.set_workflow_configs(configs)
+                step_obj.set_workflow_configs(workflow_configs)
                 signature = inspect.signature(step_obj.run)
                 parameters = signature.parameters
                 is_valid = True
@@ -147,7 +150,7 @@ class StepsRegistry:
                         description=step_cls.description,
                         category=step_cls.category,
                         output=output_data,
-                        configuration_templates=step_cls.configuration_templates,
+                        configurables=step_cls.configurables,
                     )
                 )
             except AttributeError as e:

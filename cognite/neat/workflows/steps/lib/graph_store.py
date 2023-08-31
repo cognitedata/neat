@@ -4,11 +4,11 @@ from typing import ClassVar
 
 from cognite.neat.constants import PREFIXES
 from cognite.neat.graph.stores import NeatGraphStore, RdfStoreType, drop_graph_store
-from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
+from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
-from cognite.neat.workflows.steps.step_model import Step
+from cognite.neat.workflows.steps.step_model import Configurable, Step
 
-__all__ = ["ConfigureDefaultGraphStores", "ResetGraphStores"]
+__all__ = ["ConfigureDefaultGraphStores", "ResetGraphStores", "ConfigureGraphStore"]
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
 
@@ -20,33 +20,36 @@ class ConfigureDefaultGraphStores(Step):
 
     description = "This step initializes the source and solution graph stores."
     category = CATEGORY
-    configuration_templates: ClassVar[list[WorkflowConfigItem]] = [
-        WorkflowConfigItem(
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
             name="source_rdf_store.type",
             value=RdfStoreType.OXIGRAPH,
             label="Data store type for source graph. Supported: oxigraph, memory,file, graphdb, sparql. ",
+            options=["oxigraph", "memory", "file", "graphdb", "sparql"],
         ),
-        WorkflowConfigItem(
+        Configurable(
             name="solution_rdf_store.type",
             value=RdfStoreType.OXIGRAPH,
             label="Data store type for solutioin graph. Supported: oxigraph, memory,file, graphdb, sparql",
+            options=["oxigraph", "memory", "file", "graphdb", "sparql"],
         ),
-        WorkflowConfigItem(
+        Configurable(
             name="source_rdf_store.disk_store_dir",
             value="source-graph-store",
             label="Local directory for source graph store",
         ),
-        WorkflowConfigItem(
+        Configurable(
             name="solution_rdf_store.disk_store_dir",
             value="solution-graph-store",
             label="Local directory for solution graph store",
         ),
-        WorkflowConfigItem(
+        Configurable(
             name="stores_to_configure",
             value="all",
-            label="Defines which stores to configure. Possible values: all, source, solution",
+            label="Defines which stores to configure",
+            options=["all", "source", "solution"],
         ),
-        WorkflowConfigItem(
+        Configurable(
             name="solution_rdf_store.api_root_url",
             value="",
             label="Root url for graphdb or sparql endpoint",
@@ -55,10 +58,10 @@ class ConfigureDefaultGraphStores(Step):
 
     def run(self, rules_data: RulesData) -> FlowMessage | SourceGraph | SolutionGraph:
         logging.info("Initializing source graph")
-        stores_to_configure = self.configs.get_config_item_value("stores_to_configure", "all")
-        source_store_dir = self.configs.get_config_item_value("source_rdf_store.disk_store_dir", "source_graph")
+        stores_to_configure = self.configs["stores_to_configure"]
+        source_store_dir = self.configs["source_rdf_store.disk_store_dir"]
         source_store_dir = Path(self.data_store_path) / Path(source_store_dir) if source_store_dir else None
-        source_store_type = self.configs.get_config_item_value("source_rdf_store.type", RdfStoreType.MEMORY)
+        source_store_type = self.configs["source_rdf_store.type"]
         if stores_to_configure in ["all", "source"]:
             if source_store_type == RdfStoreType.OXIGRAPH and "SourceGraph" in self.flow_context:
                 return FlowMessage(output_text="Stores already configured")
@@ -68,8 +71,8 @@ class ConfigureDefaultGraphStores(Step):
             )
             source_graph.init_graph(
                 source_store_type,
-                self.configs.get_config_item_value("source_rdf_store.query_url", ""),
-                self.configs.get_config_item_value("source_rdf_store.update_url", ""),
+                self.configs["source_rdf_store.query_url"],
+                self.configs["source_rdf_store.update_url"],
                 "neat-tnt",
                 internal_storage_dir=source_store_dir,
             )
@@ -79,11 +82,9 @@ class ConfigureDefaultGraphStores(Step):
                 )
 
         if stores_to_configure in ["all", "solution"]:
-            solution_store_dir = self.configs.get_config_item_value(
-                "solution_rdf_store.disk_store_dir", "solution_graph"
-            )
+            solution_store_dir = self.configs["solution_rdf_store.disk_store_dir"]
             solution_store_dir = Path(self.data_store_path) / Path(solution_store_dir) if solution_store_dir else None
-            solution_store_type = self.configs.get_config_item_value("solution_rdf_store.type", RdfStoreType.MEMORY)
+            solution_store_type = self.configs["solution_rdf_store.type"]
 
             if solution_store_type == RdfStoreType.OXIGRAPH and "SolutionGraph" in self.flow_context:
                 return FlowMessage(output_text="Stores already configured")
@@ -93,13 +94,13 @@ class ConfigureDefaultGraphStores(Step):
 
             solution_graph.init_graph(
                 solution_store_type,
-                self.configs.get_config_item_value("solution_rdf_store.query_url", ""),
-                self.configs.get_config_item_value("solution_rdf_store.update_url", ""),
+                self.configs["solution_rdf_store.query_url"],
+                self.configs["solution_rdf_store.update_url"],
                 "tnt-solution",
                 internal_storage_dir=solution_store_dir,
             )
 
-            solution_graph.graph_db_rest_url = self.configs.get_config_item_value("solution_rdf_store.api_root_url", "")
+            solution_graph.graph_db_rest_url = self.configs["solution_rdf_store.api_root_url"]
             if stores_to_configure == "solution":
                 return FlowMessage(output_text="Solution graph store configured successfully"), SolutionGraph(
                     graph=solution_graph
@@ -121,14 +122,12 @@ class ResetGraphStores(Step):
     category = CATEGORY
 
     def run(self) -> FlowMessage:
-        source_store_type = self.configs.get_config_item_value("source_rdf_store.type", RdfStoreType.MEMORY)
-        solution_store_type = self.configs.get_config_item_value("solution_rdf_store.type", RdfStoreType.MEMORY)
+        source_store_type = self.configs["source_rdf_store.type"]
+        solution_store_type = self.configs["solution_rdf_store.type"]
         if source_store_type == RdfStoreType.OXIGRAPH and solution_store_type == RdfStoreType.OXIGRAPH:
             if "SourceGraph" not in self.flow_context or "SolutionGraph" not in self.flow_context:
-                source_store_dir = self.configs.get_config_item_value("source_rdf_store.disk_store_dir", "source_graph")
-                solution_store_dir = self.configs.get_config_item_value(
-                    "solution_rdf_store.disk_store_dir", "solution_graph"
-                )
+                source_store_dir = self.configs["source_rdf_store.disk_store_dir"]
+                solution_store_dir = self.configs["solution_rdf_store.disk_store_dir"]
                 source_store_dir = Path(self.data_store_path) / Path(source_store_dir) if source_store_dir else None
                 solution_store_dir = (
                     Path(self.data_store_path) / Path(solution_store_dir) if solution_store_dir else None
@@ -143,3 +142,92 @@ class ResetGraphStores(Step):
                 if "SolutionGraph" in self.flow_context:
                     self.flow_context["SolutionGraph"].graph.drop()
         return FlowMessage(output_text="Stores Reset")
+
+
+class ConfigureGraphStore(Step):
+    """
+    This step initializes source and solution graph store
+    """
+
+    description = "This step initializes the source and solution graph stores."
+    category = CATEGORY
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="graph_name",
+            value="source",
+            label="Name of the data store. Supported: solution, source ",
+            options=["source", "solution"],
+        ),
+        Configurable(
+            name="store_type",
+            value=RdfStoreType.OXIGRAPH,
+            label="Data store type for source graph. Supported: oxigraph, memory,file, graphdb, sparql. ",
+            options=["oxigraph", "memory", "file", "graphdb", "sparql"],
+        ),
+        Configurable(
+            name="disk_store_dir",
+            value="source-graph-store",
+            label="Local directory that is used as local graph store.Only for oxigraph, file store types",
+        ),
+        Configurable(
+            name="sparql_query_url",
+            value="",
+            label="Query url for sparql endpoint.Only for sparql store type",
+        ),
+        Configurable(
+            name="sparql_update_url",
+            value="",
+            label="Update url for sparql endpoint.Only for sparql store type",
+        ),
+        Configurable(
+            name="db_server_api_root_url",
+            value="",
+            label="Root url for graphdb or sparql endpoint.Only for graphdb",
+        ),
+        Configurable(
+            name="init_procedure",
+            value="reset",
+            label="Operations to be performed on the graph store as part of init and configuration process. \
+              Supported options : reset, clear, none",
+            options=["reset", "none"],
+        ),
+    ]
+
+    def run(self, rules_data: RulesData) -> FlowMessage | SourceGraph | SolutionGraph:
+        logging.info("Initializing graph")
+        store_dir = self.configs["disk_store_dir"]
+        store_dir = Path(self.data_store_path) / Path(store_dir) if store_dir else None
+        store_type = self.configs["store_type"]
+        graph_name_mapping = {"source": "SourceGraph", "solution": "SolutionGraph"}
+
+        graph_name = graph_name_mapping[self.configs["graph_name"]]
+
+        if self.configs["init_procedure"] == "reset":
+            self.reset_store(store_type, graph_name, store_dir)
+
+        if store_type == RdfStoreType.OXIGRAPH and graph_name in self.flow_context:
+            # OXIGRAPH doesn't like to be initialized twice without a good reason
+            return FlowMessage(output_text="Stores already configured")
+
+        graph_store = NeatGraphStore(prefixes=rules_data.rules.prefixes, base_prefix="neat", namespace=PREFIXES["neat"])
+        graph_store.init_graph(
+            store_type,
+            self.configs["sparql_query_url"],
+            self.configs["sparql_update_url"],
+            "neat-tnt",
+            internal_storage_dir=store_dir,
+        )
+
+        return (
+            FlowMessage(output_text="Graph store configured successfully"),
+            SourceGraph(graph=graph_store) if graph_name == "SourceGraph" else SolutionGraph(graph=graph_store),
+        )
+
+    def reset_store(self, store_type: str, graph_name: str, data_store_dir: Path):
+        if store_type == RdfStoreType.OXIGRAPH:
+            if graph_name not in self.flow_context:
+                if data_store_dir:
+                    drop_graph_store(None, data_store_dir, force=True)
+            else:
+                self.flow_context[graph_name].graph.drop()
+        return

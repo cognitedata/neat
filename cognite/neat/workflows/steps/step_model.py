@@ -4,11 +4,20 @@ from typing import ClassVar, TypeVar
 from pydantic import BaseModel, ConfigDict
 
 from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
-from cognite.neat.workflows.model import WorkflowConfigItem, WorkflowConfigs
+from cognite.neat.workflows.model import WorkflowConfigs
 
 
 class Config(BaseModel):
     ...
+
+
+class Configurable(BaseModel):
+    name: str
+    value: str | None = None
+    label: str | None = None
+    type: str | None = None  # string , secret , number , boolean , json
+    required: bool = False
+    options: list[str] | None = None
 
 
 class DataContract(BaseModel):
@@ -23,10 +32,11 @@ T_Output = TypeVar("T_Output", bound=DataContract)
 class Step(ABC):
     description: str = ""
     category: str = "default"
-    configuration_templates: ClassVar[list[WorkflowConfigItem]] = []
+    configurables: ClassVar[list[Configurable]] = []
     scope: str = "global"
+    configs: dict[str, str] | None = None
     metrics: NeatMetricsCollector | None = None
-    configs: WorkflowConfigs | None = None
+    workflow_configs: WorkflowConfigs | None = None
 
     def __init__(self, data_store_path: str | None = None):
         self.log: bool = False
@@ -36,6 +46,9 @@ class Step(ABC):
         self.metrics = metrics
 
     def set_workflow_configs(self, configs: WorkflowConfigs):
+        self.workflow_configs = configs
+
+    def configure(self, configs: dict[str, str]):
         self.configs = configs
 
     def set_flow_context(self, context: dict[str, DataContract]):

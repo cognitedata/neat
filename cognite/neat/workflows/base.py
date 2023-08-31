@@ -272,7 +272,11 @@ class BaseWorkflow:
                           not set as parameter in BaseWorkflow constructor"
                     )
                 output = self.steps_registry.run_step(
-                    step.method, self.data, metrics=self.metrics, configs=self.get_configs()
+                    step.method,
+                    self.data,
+                    metrics=self.metrics,
+                    workflow_configs=self.get_configs(),
+                    step_configs=step.configs,
                 )
                 if output is not None:
                     outputs = output if isinstance(output, tuple) else (output,)
@@ -296,6 +300,7 @@ class BaseWorkflow:
                         workflow_name=step.params.get("workflow_name", ""), sync=sync, flow_message=self.flow_message
                     )
                     if start_status.is_success and start_status.workflow_instance.state == WorkflowState.COMPLETED:
+                        # It only works with sync = true
                         new_flow_message = start_status.workflow_instance.flow_message
                     else:
                         logging.error(f"Workflow step {step.id} failed to start workflow task")

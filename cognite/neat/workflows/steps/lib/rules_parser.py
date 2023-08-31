@@ -14,13 +14,15 @@ from cognite.neat.rules.parser import (
 from cognite.neat.utils.utils import generate_exception_report
 from cognite.neat.workflows import utils
 from cognite.neat.workflows.cdf_store import CdfStore
-from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
+from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import RulesData
-from cognite.neat.workflows.steps.step_model import Step
+from cognite.neat.workflows.steps.step_model import Configurable, Step
 
 __all__ = ["LoadTransformationRules", "DownloadTransformationRulesFromGitHub"]
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
+
+__all__ = ["LoadTransformationRules", "DownloadTransformationRulesFromGitHub"]
 
 
 class LoadTransformationRules(Step):
@@ -30,42 +32,41 @@ class LoadTransformationRules(Step):
 
     description = "This step loads transformation rules from the file or remote location"
     category = CATEGORY
-    configuration_templates: ClassVar[list[WorkflowConfigItem]] = [
-        WorkflowConfigItem(
-            name="rules.validate_rules",
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="validate_rules",
             value="True",
             label="To generate validation report",
+            options=["True", "False"],
         ),
-        WorkflowConfigItem(
-            name="rules.validation_report_storage_dir",
+        Configurable(
+            name="validation_report_storage_dir",
             value="rules_validation_report",
             label="Directory to store validation report",
         ),
-        WorkflowConfigItem(
-            name="rules.validation_report_file",
+        Configurable(
+            name="validation_report_file",
             value="rules_validation_report.txt",
             label="File name to store validation report",
         ),
-        WorkflowConfigItem(
-            name="rules.file",
+        Configurable(
+            name="file_name",
             value="rules.xlsx",
             label="Full name of the rules file",
         ),
-        WorkflowConfigItem(name="rules.version", value="", label="Optional version of the rules file"),
+        Configurable(name="version", value="", label="Optional version of the rules file"),
     ]
 
     def run(self, cdf_store: CdfStore) -> (FlowMessage, RulesData):
         # rules file
-        rules_file = self.configs.get_config_item_value("rules.file")
+        rules_file = self.configs["file_name"]
         rules_file_path = Path(self.data_store_path, "rules", rules_file)
-        version = self.configs.get_config_item_value("rules.version", default_value=None)
+        version = self.configs["version"]
 
         # rules validation
-        validate_rules = self.configs.get_config_item_value("rules.validate_rules", "true").lower() == "true"
-        report_file = self.configs.get_config_item_value("rules.validation_report_file", "rules_validation.txt")
-        report_dir_str = self.configs.get_config_item_value(
-            "rules.validation_report_storage_dir", "rules_validation_reports"
-        )
+        validate_rules = self.configs["validate_rules"].lower() == "true"
+        report_file = self.configs["validation_report_file"]
+        report_dir_str = self.configs["validation_report_storage_dir"]
         report_dir = self.data_store_path / Path(report_dir_str)
         report_dir.mkdir(parents=True, exist_ok=True)
         report_full_path = report_dir / report_file
@@ -124,28 +125,29 @@ class DownloadTransformationRulesFromGitHub(Step):
 
     description = "This step fetches and stores transformation rules from private Github repository"
     category = CATEGORY
-    configuration_templates: ClassVar[list[WorkflowConfigItem]] = [
-        WorkflowConfigItem(
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
             name="github.filepath",
             value="",
             label="File path to Transformation Rules stored on Github",
         ),
-        WorkflowConfigItem(
+        Configurable(
             name="github.personal_token",
             value="",
             label="Github Personal Access Token which allows fetching file from private Github repository",
+            type="password",
         ),
-        WorkflowConfigItem(
+        Configurable(
             name="github.owner",
             value="",
             label="Github repository owner, also know as github organization",
         ),
-        WorkflowConfigItem(
+        Configurable(
             name="github.repo",
             value="",
             label="Github repository from which Transformation Rules file is being fetched",
         ),
-        WorkflowConfigItem(
+        Configurable(
             name="github.branch",
             value="main",
             label="Github repository branch from which Transformation Rules file is being fetched",
@@ -153,12 +155,12 @@ class DownloadTransformationRulesFromGitHub(Step):
     ]
 
     def run(self) -> (FlowMessage, RulesData):
-        github_filepath = self.configs.get_config_item_value("github.filepath")
-        github_personal_token = self.configs.get_config_item_value("github.personal_token")
-        github_owner = self.configs.get_config_item_value("github.owner")
-        github_repo = self.configs.get_config_item_value("github.repo")
-        github_branch = self.configs.get_config_item_value("github.branch", "main")
-        local_file_name = self.configs.get_config_item_value("rules.file") or Path(github_filepath).name
+        github_filepath = self.configs["github.filepath"]
+        github_personal_token = self.configs["github.personal_token"]
+        github_owner = self.configs["github.owner"]
+        github_repo = self.configs["github.repo"]
+        github_branch = self.configs["github.branch", "main"]
+        local_file_name = self.configs["rules.file"] or Path(github_filepath).name
 
         logging.info(f"{local_file_name} local file name")
 
