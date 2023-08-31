@@ -151,9 +151,10 @@ class URL(BaseModel):
 Description = constr(min_length=1, max_length=255)
 
 # regex expressions for compliance of Metadata sheet parsing
-prefix_compliance_regex = r"^([a-zA-Z]+)([a-zA-Z0-9]*[_-]{0,1}[a-zA-Z0-9])+$"
+more_than_one_none_alphanumerics_regex = r"([_-]{2,})"
+prefix_compliance_regex = r"^([a-zA-Z]+)([a-zA-Z0-9]*[_-]{0,1}[a-zA-Z0-9_-]*)([a-zA-Z0-9]+)$"
 cdf_space_name_compliance_regex = rf"(?!^(space|cdf|dms|pg3|shared|system|node|edge)$)({prefix_compliance_regex})"
-data_model_name_compliance_regex = r"^([a-zA-Z]+)([a-zA-Z0-9]*[_-]{0,1}[a-zA-Z0-9])+$"
+data_model_name_compliance_regex = prefix_compliance_regex
 version_compliance_regex = (
     r"^([0-9]+[_-]{1}[0-9]+[_-]{1}[0-9]+[_-]{1}[a-zA-Z0-9]+)|"
     r"([0-9]+[_-]{1}[0-9]+[_-]{1}[0-9]+)|([0-9]+[_-]{1}[0-9])|([0-9]+)$"
@@ -261,6 +262,8 @@ class Metadata(RuleModel):
 
     @validator("prefix", always=True)
     def is_prefix_compliant(cls, value):
+        if re.search(more_than_one_none_alphanumerics_regex, value):
+            raise exceptions.MoreThanOneNonAlphanumericCharacter("prefix", value).to_pydantic_custom_error()
         if not re.match(prefix_compliance_regex, value):
             raise exceptions.PrefixRegexViolation(value, prefix_compliance_regex).to_pydantic_custom_error()
         else:
@@ -268,6 +271,8 @@ class Metadata(RuleModel):
 
     @validator("cdf_space_name", always=True)
     def is_cdf_space_name_compliant(cls, value):
+        if re.search(more_than_one_none_alphanumerics_regex, value):
+            raise exceptions.MoreThanOneNonAlphanumericCharacter("cdf_space_name", value).to_pydantic_custom_error()
         if not re.match(cdf_space_name_compliance_regex, value):
             raise exceptions.CDFSpaceRegexViolation(value, cdf_space_name_compliance_regex).to_pydantic_custom_error()
         else:
@@ -307,6 +312,8 @@ class Metadata(RuleModel):
 
     @validator("data_model_name", always=True)
     def is_data_model_name_compliant(cls, value):
+        if re.search(more_than_one_none_alphanumerics_regex, value):
+            raise exceptions.MoreThanOneNonAlphanumericCharacter("data_model_name", value).to_pydantic_custom_error()
         if not re.match(data_model_name_compliance_regex, value):
             raise exceptions.DataModelNameRegexViolation(
                 value, data_model_name_compliance_regex
@@ -324,6 +331,8 @@ class Metadata(RuleModel):
                 stacklevel=2,
             )
             value = value.replace(".", "_")
+        if re.search(more_than_one_none_alphanumerics_regex, value):
+            raise exceptions.MoreThanOneNonAlphanumericCharacter("version", value).to_pydantic_custom_error()
         if not re.match(version_compliance_regex, value):
             raise exceptions.VersionRegexViolation(value, version_compliance_regex).to_pydantic_custom_error()
         else:
@@ -389,7 +398,7 @@ class Resource(RuleModel):
         return replace_nan_floats_with_default(values, cls.model_fields)
 
 
-class_id_compliance_regex = r"^([a-zA-Z]+)([a-zA-Z0-9]+[._-]{0,1}[a-zA-Z0-9._-]+)+$"
+class_id_compliance_regex = r"^([a-zA-Z]+)([a-zA-Z0-9]*[._-]{0,1}[a-zA-Z0-9._-]*)([a-zA-Z0-9]+)$"
 
 
 class Class(Resource):
@@ -419,6 +428,8 @@ class Class(Resource):
 
     @validator("class_id", always=True)
     def is_class_id_compliant(cls, value):
+        if re.search(more_than_one_none_alphanumerics_regex, value):
+            raise exceptions.MoreThanOneNonAlphanumericCharacter("class_id", value).to_pydantic_custom_error()
         if not re.match(class_id_compliance_regex, value):
             raise exceptions.ClassSheetClassIDRegexViolation(
                 value, class_id_compliance_regex
@@ -450,11 +461,17 @@ class Class(Resource):
     @field_validator("parent_class", mode="after")
     def is_parent_class_id_compliant(cls, value):
         if isinstance(value, str):
+            if re.search(more_than_one_none_alphanumerics_regex, value):
+                raise exceptions.MoreThanOneNonAlphanumericCharacter("parent_class", value).to_pydantic_custom_error()
             if not re.match(class_id_compliance_regex, value):
                 raise exceptions.ClassSheetParentClassIDRegexViolation(
                     [value], class_id_compliance_regex
                 ).to_pydantic_custom_error()
         elif isinstance(value, list):
+            if illegal_ids := [v for v in value if re.search(more_than_one_none_alphanumerics_regex, v)]:
+                raise exceptions.MoreThanOneNonAlphanumericCharacter(
+                    "parent_class", ", ".join(illegal_ids)
+                ).to_pydantic_custom_error()
             if illegal_ids := [v for v in value if not re.match(class_id_compliance_regex, v)]:
                 raise exceptions.ClassSheetParentClassIDRegexViolation(
                     illegal_ids, class_id_compliance_regex
@@ -462,7 +479,7 @@ class Class(Resource):
         return value
 
 
-property_id_compliance_regex = r"^(\*)|(([a-zA-Z]+)([a-zA-Z0-9]+[._-]{0,1}[a-zA-Z0-9._-]+)+)$"
+property_id_compliance_regex = r"^(\*)|([a-zA-Z]+)([a-zA-Z0-9]*[._-]{0,1}[a-zA-Z0-9._-]*)([a-zA-Z0-9]+)$"
 
 
 class Property(Resource):
@@ -536,6 +553,8 @@ class Property(Resource):
 
     @validator("class_id", always=True)
     def is_class_id_compliant(cls, value):
+        if re.search(more_than_one_none_alphanumerics_regex, value):
+            raise exceptions.MoreThanOneNonAlphanumericCharacter("class_id", value).to_pydantic_custom_error()
         if not re.match(class_id_compliance_regex, value):
             raise exceptions.PropertiesSheetClassIDRegexViolation(
                 value, class_id_compliance_regex
@@ -545,6 +564,8 @@ class Property(Resource):
 
     @validator("property_id", always=True)
     def is_property_id_compliant(cls, value):
+        if re.search(more_than_one_none_alphanumerics_regex, value):
+            raise exceptions.MoreThanOneNonAlphanumericCharacter("property_id", value).to_pydantic_custom_error()
         if not re.match(property_id_compliance_regex, value):
             raise exceptions.PropertyIDRegexViolation(value, property_id_compliance_regex).to_pydantic_custom_error()
         else:
@@ -552,6 +573,10 @@ class Property(Resource):
 
     @validator("expected_value_type", always=True)
     def is_expected_value_type_compliant(cls, value):
+        if re.search(more_than_one_none_alphanumerics_regex, value):
+            raise exceptions.MoreThanOneNonAlphanumericCharacter(
+                "expected_value_type", value
+            ).to_pydantic_custom_error()
         if not re.match(class_id_compliance_regex, value):
             raise exceptions.ValueTypeIDRegexViolation(value, class_id_compliance_regex).to_pydantic_custom_error()
         else:
@@ -830,6 +855,12 @@ class TransformationRules(RuleModel):
 
     @validator("prefixes")
     def are_prefixes_compliant(cls, value):
+        if ill_formed_prefixes := [
+            prefix for prefix, _ in value.items() if re.search(more_than_one_none_alphanumerics_regex, prefix)
+        ]:
+            raise exceptions.MoreThanOneNonAlphanumericCharacter(
+                "prefixes", ", ".join(ill_formed_prefixes)
+            ).to_pydantic_custom_error()
         if ill_formed_prefixes := [
             prefix for prefix, _ in value.items() if not re.match(prefix_compliance_regex, prefix)
         ]:
