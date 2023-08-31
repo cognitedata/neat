@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.25.1] - 31-08-23
+
+### Fixed
+- Fixed issues with regex validations for entity ids
 ## [0.25.0] - 30-08-23
 
 ### Changed
