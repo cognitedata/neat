@@ -63,8 +63,6 @@ class NeatApp:
         )
         self.workflow_manager.load_workflows_from_storage()
         self.triggers_manager = TriggerManager(workflow_manager=self.workflow_manager)
-        if self.fast_api_app:
-            self.triggers_manager.start_http_listeners(self.fast_api_app)
         self.triggers_manager.start_time_schedulers()
         logging.info("NeatApp started")
 

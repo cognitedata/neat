@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import FileResponse
 
 from cognite.neat.app.api.configuration import neat_app
@@ -146,3 +146,24 @@ def get_context(workflow_name: str):
 def get_steps():
     steps_registry = neat_app.workflow_manager.get_steps_registry()
     return {"steps": steps_registry.get_list_of_steps()}
+
+
+async def get_body(request: Request):
+    return await request.body()
+
+
+fast_api_depends = Depends(get_body)
+
+
+@router.post("/api/workflow/{workflow_name}/http_trigger/{step_id}")
+def http_trigger_start_workflow(workflow_name: str, step_id: str, request: Request, body: bytes = fast_api_depends):
+    return neat_app.triggers_manager.start_workflow_from_http_request(workflow_name, step_id, request, body)
+
+
+@router.post("/api/workflow/{workflow_name}/resume/{step_id}/{instance_id}")
+def http_trigger_resume_workflow(
+    workflow_name: str, step_id: str, instance_id: str, request: Request, body: bytes = fast_api_depends
+):
+    return neat_app.triggers_manager.resume_workflow_from_http_request(
+        workflow_name, step_id, instance_id, request, body
+    )

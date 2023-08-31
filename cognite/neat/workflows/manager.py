@@ -79,6 +79,10 @@ class WorkflowManager:
         except KeyError:
             return None
 
+    def full_reset(self):
+        self.workflow_registry = {}
+        self.ephemeral_instance_registry = {}
+
     def start_workflow(self, name: str, sync=False, **kwargs):
         workflow = self.get_workflow(name)
         workflow.start(sync, kwargs=kwargs)
