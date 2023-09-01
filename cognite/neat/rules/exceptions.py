@@ -853,6 +853,45 @@ class ClassSheetParentClassIDRegexViolation(NeatException):
             self.message += f"\nDescription: {self.description}"
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
+
+
+class MoreThanOneNonAlphanumericCharacter(NeatException):
+    """This exceptions is raised when doing regex validation of strings which either
+    represent class ids, property ids, prefix, data model name, that contain more than
+    one non-alphanumeric character, such as for example '_' or '-'.
+
+    Args:
+        field_name: filed on which regex validation failed
+        value: value that failed regex validation
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        Make sure not to use more than non-alphanumeric character in the row
+
+    """
+
+    type_: str = "MoreThanOneNonAlphanumericCharacter"
+    code: int = 21
+    description: str = (
+        "This exceptions is raised when doing regex validation of strings which either"
+        "represent class ids, property ids, prefix, data model name, that contain more than"
+        "one non-alphanumeric character, such as for example '_' or '-'."
+    )
+    example: str = ""
+    fix: str = ""
+
+    def __init__(self, field_name: str, value: str, verbose: bool = False):
+        self.field_name = field_name
+        self.value = value
+
+        self.message = (
+            f"Field {field_name} with value {value} contains more than one non-alphanumeric character!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
 
 
