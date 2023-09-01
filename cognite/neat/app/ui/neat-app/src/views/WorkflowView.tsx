@@ -95,7 +95,11 @@ export default function WorkflowView() {
   useEffect(() => {
     loadListOfWorkflows();
     loadRegisteredSteps();
-    loadWorkflowDefinitions(getSelectedWorkflowName());
+    if (getSelectedWorkflowName())
+      loadWorkflowDefinitions(getSelectedWorkflowName());
+    else
+      setEditState("Please select one of provided workflows or create new one");
+
     startStatePolling(selectedWorkflow);
 
   }, []);
@@ -145,14 +149,23 @@ export default function WorkflowView() {
     if (workflowName == "")
       workflowName = selectedWorkflow;
     const url = neatApiRootUrl + "/api/workflow/workflow-definition/" + workflowName;
-    fetch(url).then((response) => response.json()).then((data) => {
+    fetch(url).then((response) => {
+      if(response.ok)
+        return response.json()
+      else
+        setErrorText("Workflow definition can't be loaded . Error:"+response.statusText+", code:"+response.status);
+        return null
+    }).then((data) => {
+      if (!data) {
+        return
+      }
       const workflows = WorkflowDefinition.fromJSON(data.definition);
       setWorkflowDefinitions(workflows);
       setEditState("");
+      setErrorText("");
       // loadWorkflowStats(workflowName);
   }).catch ((error) => {
-    console.error('Error:', error);
-    setErrorText(error);
+    setErrorText(error.message);
   }).finally(() => { });
   }
 
@@ -239,7 +252,6 @@ const saveWorkflow = () => {
   }).then((response) => {
     if (!response.ok) {
       setErrorText("Workflow can't be saved . Error code :"+response.status+", message :"+response.statusText);
-
       return null;
     }
     return response.json()

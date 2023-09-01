@@ -2,9 +2,6 @@
 
 export function getSelectedWorkflowName() {
   let workflowName = localStorage.getItem("selectedWorkflowName");
-  if (workflowName == null) {
-    workflowName = "default";
-  }
   return workflowName;
 }
 export function setSelectedWorkflowName(workflowName: string) {
@@ -19,6 +16,9 @@ export function getNeatApiRootUrl() {
     const domain = window.location.hostname;
     const port = window.location.port;
     url = protocol + "//" + domain + ":" + port;
+    if (url == "http://localhost:3000") {
+      url = "http://localhost:8000";
+    }
   }
   return url;
 }

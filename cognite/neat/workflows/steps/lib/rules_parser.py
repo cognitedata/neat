@@ -159,7 +159,7 @@ class DownloadTransformationRulesFromGitHub(Step):
         github_personal_token = self.configs["github.personal_token"]
         github_owner = self.configs["github.owner"]
         github_repo = self.configs["github.repo"]
-        github_branch = self.configs["github.branch", "main"]
+        github_branch = self.configs["github.branch"]
         local_file_name = self.configs["rules.file"] or Path(github_filepath).name
 
         logging.info(f"{local_file_name} local file name")

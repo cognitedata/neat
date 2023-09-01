@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.25.2] - 1-09-23
+
+### Fixed
+- Multiple UI usability improvements and bug fixes.
+
 ## [0.25.1] - 31-08-23
 
 ### Fixed

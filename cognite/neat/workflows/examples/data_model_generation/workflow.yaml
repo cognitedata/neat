@@ -22,25 +22,6 @@ steps:
         pos_x: 545
         pos_y: 81
 -   configs:
-        file_name: ''
-        storage_dir: staging
-    description: null
-    enabled: true
-    id: step_generate_graphql_file
-    label: Generate GraphQL Schema from Transformation Rules
-    max_retries: 0
-    method: GraphQLSchemaFromRules
-    params: {}
-    retry_delay: 3
-    stype: stdstep
-    system_component_id: null
-    transition_to:
-    - step_rules2ontology
-    trigger: false
-    ui_config:
-        pos_x: 545
-        pos_y: 256
--   configs:
         file_name: Rules-Nordic44-to-graphql.xlsx
         validate_rules: 'True'
         validation_report_file: rules_validation_report.txt
@@ -60,9 +41,31 @@ steps:
     - step_generate_graphql_file
     trigger: false
     ui_config:
-        pos_x: 545
+        pos_x: 543
         pos_y: 165
--   configs: {}
+-   configs:
+        file_name: ''
+        storage_dir: staging
+    description: null
+    enabled: true
+    id: step_generate_graphql_file
+    label: Generate GraphQL Schema from Transformation Rules
+    max_retries: 0
+    method: GraphQLSchemaFromRules
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+    - step_rules2ontology
+    trigger: false
+    ui_config:
+        pos_x: 542
+        pos_y: 269
+-   configs:
+        file_name: ''
+        storage_dir: staging
+        store_warnings: 'True'
     description: null
     enabled: true
     id: step_rules2ontology
@@ -77,9 +80,11 @@ steps:
     - step_rules2shacl
     trigger: false
     ui_config:
-        pos_x: 545
-        pos_y: 366
--   configs: {}
+        pos_x: 541
+        pos_y: 379
+-   configs:
+        file_name: ''
+        storage_dir: staging
     description: null
     enabled: true
     id: step_rules2shacl
@@ -90,12 +95,11 @@ steps:
     retry_delay: 3
     stype: stdstep
     system_component_id: null
-    transition_to:
-    - step_configure_graph_store
+    transition_to: []
     trigger: false
     ui_config:
-        pos_x: 545
-        pos_y: 472
+        pos_x: 542
+        pos_y: 498
 system_components:
 -   description: null
     id: system_comp_define_data_model

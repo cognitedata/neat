@@ -4,17 +4,10 @@ import threading
 import time
 
 import schedule
-from fastapi import Depends, FastAPI, Request
+from fastapi import Request
 
 from cognite.neat.workflows.manager import WorkflowManager
 from cognite.neat.workflows.model import FlowMessage, StepType, WorkflowState
-
-
-async def get_body(request: Request):
-    return await request.body()
-
-
-fast_api_depends = Depends(get_body)
 
 
 class TriggerManager:
@@ -25,54 +18,43 @@ class TriggerManager:
         self.is_running = False
         self.thread = None
 
-    def start_http_listeners(self, web_server: FastAPI):
-        """Starts a HTTP listener for the workflows
+    def start_workflow_from_http_request(self, workflow_name: str, step_id: str, request: Request, body: bytes):
+        logging.info(f"New HTTP trigger request for workflow {workflow_name} step {step_id}")
+        headers = dict(request.headers)
+        logging.debug(f"Request headers = {headers}")
+        json_payload = None
+        try:
+            json_payload = json.loads(body)
+        except Exception as e:
+            logging.info(f"Error parsing json body {e}")
+        logging.debug(f"Request object = {json_payload}")
 
-        Parameters
-        ----------
-        web_server : FastAPI instance
-        """
-        logging.info("Starting HTTP trigger endpoint")
+        flow_msg = FlowMessage(payload=json_payload, headers=dict(headers))
+        start_status = self.workflow_manager.start_workflow_instance(
+            workflow_name=workflow_name, step_id=step_id, flow_msg=flow_msg
+        )
+        if start_status.is_success:
+            return start_status.workflow_instance.flow_message
 
-        @web_server.post("/api/workflow/{workflow_name}/http_trigger/{step_id}")
-        def start_workflow(workflow_name: str, step_id: str, request: Request, body: bytes = fast_api_depends):
-            logging.info(f"New HTTP trigger request for workflow {workflow_name} step {step_id}")
-            headers = dict(request.headers)
-            logging.debug(f"Request headers = {headers}")
-            json_payload = None
-            try:
-                json_payload = json.loads(body)
-            except Exception as e:
-                logging.info(f"Error parsing json body {e}")
-            logging.debug(f"Request object = {json_payload}")
+    def resume_workflow_from_http_request(
+        self, workflow_name: str, step_id: str, instance_id: str, request: Request, body: bytes
+    ):
+        if instance_id != "default":
+            workflow = self.workflow_manager.get_workflow_instance(instance_id)
+        else:
+            workflow = self.workflow_manager.get_workflow(workflow_name)
 
-            flow_msg = FlowMessage(payload=json_payload, headers=dict(headers))
-            start_status = self.workflow_manager.start_workflow_instance(
-                workflow_name=workflow_name, step_id=step_id, flow_msg=flow_msg
-            )
-            if start_status.is_success:
-                return start_status.workflow_instance.flow_message
+        json_payload = None
+        try:
+            json_payload = json.loads(body)
+        except ValueError as e:
+            logging.info(f"Error parsing json body {e}")
+        flow_msg = FlowMessage(payload=json_payload)
+        if workflow.state == WorkflowState.RUNNING_WAITING:
+            workflow.resume_workflow(flow_message=flow_msg, step_id=step_id)
+            return {"result": "Workflow instance resumed"}
 
-        @web_server.post("/api/workflow/{workflow_name}/resume/{step_id}/{instance_id}")
-        def resume_workflow(
-            workflow_name: str, step_id: str, instance_id: str, request: Request, body: bytes = fast_api_depends
-        ):
-            if instance_id != "default":
-                workflow = self.workflow_manager.get_workflow_instance(instance_id)
-            else:
-                workflow = self.workflow_manager.get_workflow(workflow_name)
-
-            json_payload = None
-            try:
-                json_payload = json.loads(body)
-            except ValueError as e:
-                logging.info(f"Error parsing json body {e}")
-            flow_msg = FlowMessage(payload=json_payload)
-            if workflow.state == WorkflowState.RUNNING_WAITING:
-                workflow.resume_workflow(flow_message=flow_msg, step_id=step_id)
-                return {"result": "Workflow instance resumed"}
-
-            return {"result": "Workflow instance not in RUNNING_WAITING state"}
+        return {"result": "Workflow instance not in RUNNING_WAITING state"}
 
     def _start_scheduler_main_loop(self):
         """Starts a scheduler main loop for the workflows
