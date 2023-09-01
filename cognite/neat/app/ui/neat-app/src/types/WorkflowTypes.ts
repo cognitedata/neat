@@ -136,6 +136,13 @@ export class WorkflowDefinition {
         };
     }
 
+    isNewIdUnique(id: string): boolean {
+        let step = this.steps.find(step => step.id == id);
+        if (step == null)
+            return true;
+        return false;
+    }
+
     isStepInputConfigured(stepId: string,inputParamName: string ,stepRegistry: StepRegistry): boolean {
         let step = this.steps.find(step => step.id == stepId);
         if (step == null)

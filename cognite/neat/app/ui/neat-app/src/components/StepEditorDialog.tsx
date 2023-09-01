@@ -27,20 +27,28 @@ export default function StepEditorDialog(props: any)
     const [stepRegistry,setStepRegistry] = useState<StepRegistry>()
     const [selectedStepTemplate,setSelectedStepTemplate] = useState<StepMetadata>()
     const [workflowDefinitions, setWorkflowDefinitions] = useState<WorkflowDefinition>();
+    const [showStepIdError, setShowStepIdError] = useState(false);
+    const [isConfigurationValid, setIsConfigurationValid] = useState(true);
 
     const handleDialogSave = () => {
         setDialogOpen(false);
         console.log("handleDialogSave")
         console.dir(selectedStep);
         props.onClose(selectedStep,"save");
+        setShowStepIdError(false);
+        setIsConfigurationValid(true);
     };
     const handleDialogCancel = () => {
         setDialogOpen(false);
         props.onClose(selectedStep,"cancel");
+        setShowStepIdError(false);
+        setIsConfigurationValid(true);
     };
     const handleDelete = () => {
         setDialogOpen(false);
         props.onClose(selectedStep,"delete");
+        setShowStepIdError(false);
+        setIsConfigurationValid(true);
     };
 
     const handleRunCommand = () => {
@@ -129,7 +137,6 @@ export default function StepEditorDialog(props: any)
 
       const handleStepConfigChange = (name: string, value: any) => {
         console.log('handleStepConfigChange')
-        console.dir(selectedStep);
         let updStep= Object.assign({},selectedStep);
 
         if (selectedStep) {
@@ -156,6 +163,18 @@ export default function StepEditorDialog(props: any)
             updStep["stype"] = value;
           } else {
             switch (name) {
+              case "id":
+                // validate if id is unique
+                let isUnique = workflowDefinitions?.isNewIdUnique(value);
+                if (!isUnique) {
+                  setShowStepIdError(true);
+                  setIsConfigurationValid(false);
+                } else {
+                  setShowStepIdError(false);
+                  setIsConfigurationValid(true);
+                }
+                updStep.id = value;
+                break;
               case "method":
                 if (selectedStep.stype == "stdstep") {
                   updStep = updateStepConfigsFromConfigurables(stepRegistry.getStepByName(value),updStep,true)
@@ -199,6 +218,7 @@ return (
         <DialogContent >
           <FormControl  fullWidth>
             <TextField sx={{ marginTop: 1 }} id="step-config-id" fullWidth label="Step id" size='small' variant="outlined" value={selectedStep?.id} onChange={(event) => { handleStepConfigChange("id", event.target.value) }} />
+            {showStepIdError && ( <Typography sx={{ marginTop: 1 }} color="error"> Step id must be unique </Typography>)}
             <TextField sx={{ marginTop: 1 }} id="step-config-label" fullWidth label="Label" size='small' variant="outlined" value={selectedStep?.label} onChange={(event) => { handleStepConfigChange("label", event.target.value) }} />
           </FormControl>
           <FormControl sx={{ marginTop: 2 }} fullWidth >
@@ -345,7 +365,7 @@ return (
 
         </DialogContent>
         <DialogActions>
-          <Button variant="outlined" size="small" onClick={handleDialogSave}>Save</Button>
+          <Button variant="outlined" size="small" disabled={!isConfigurationValid} onClick={handleDialogSave}>Save</Button>
           <Button variant="outlined" size="small" onClick={handleDialogCancel}>Cancel</Button>
           <Button variant="outlined" size="small" color="error" onClick={handleDelete} >Delete</Button>
           {(selectedStep?.stype == "http_trigger") && (
