@@ -2,6 +2,7 @@ import hashlib
 import logging
 import time
 from collections import OrderedDict
+from collections.abc import Iterable
 from datetime import UTC, datetime
 from functools import wraps
 from typing import TypeAlias
@@ -10,6 +11,7 @@ import pandas as pd
 from cognite.client import ClientConfig, CogniteClient
 from cognite.client.credentials import CredentialProvider, OAuthClientCredentials, OAuthInteractive, Token
 from cognite.client.exceptions import CogniteDuplicatedError, CogniteReadTimeout
+from pydantic_core import ErrorDetails
 from rdflib import Literal
 from rdflib.term import URIRef
 
@@ -264,7 +266,7 @@ def create_sha256_hash(string: str) -> str:
     return hash_value
 
 
-def generate_exception_report(exceptions: list[dict], category: str = "") -> str:
+def generate_exception_report(exceptions: list[dict] | list[ErrorDetails] | None, category: str = "") -> str:
     exceptions_as_dict = _order_expectations_by_type(exceptions) if exceptions else {}
     report = ""
 
@@ -276,11 +278,11 @@ def generate_exception_report(exceptions: list[dict], category: str = "") -> str
     return report
 
 
-def _order_expectations_by_type(exceptions: list[dict]) -> dict[str, list[str]]:
+def _order_expectations_by_type(exceptions: list[dict] | list[ErrorDetails]) -> dict[str, list[str]]:
     exception_dict: dict[str, list[str]] = {}
     for exception in exceptions:
-        if exception["loc"]:
-            location = f"[{'/'.join(exception['loc'])}]"
+        if not isinstance(exception["loc"], str) and isinstance(exception["loc"], Iterable):
+            location = f"[{'/'.join((str(e) for e in exception['loc']))}]"
         else:
             location = ""
 

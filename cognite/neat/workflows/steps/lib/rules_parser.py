@@ -1,9 +1,10 @@
 import logging
 import time
 from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, cast
 
 from openpyxl import Workbook
+from prometheus_client import Gauge
 
 from cognite.neat.rules.parser import (
     from_tables,
@@ -13,9 +14,8 @@ from cognite.neat.rules.parser import (
 )
 from cognite.neat.utils.utils import generate_exception_report
 from cognite.neat.workflows import utils
-from cognite.neat.workflows.cdf_store import CdfStore
 from cognite.neat.workflows.model import FlowMessage
-from cognite.neat.workflows.steps.data_contracts import RulesData
+from cognite.neat.workflows.steps.data_contracts import CDFStoreData, RulesData
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
 __all__ = ["LoadTransformationRules", "DownloadTransformationRulesFromGitHub"]
@@ -25,7 +25,7 @@ CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
 __all__ = ["LoadTransformationRules", "DownloadTransformationRulesFromGitHub"]
 
 
-class LoadTransformationRules(Step):
+class LoadTransformationRules(Step[RulesData]):
     """
     This step loads transformation rules from the file or remote location
     """
@@ -57,8 +57,11 @@ class LoadTransformationRules(Step):
         Configurable(name="version", value="", label="Optional version of the rules file"),
     ]
 
-    def run(self, cdf_store: CdfStore) -> (FlowMessage, RulesData):
+    def run(self, cdf_store: CDFStoreData) -> tuple[FlowMessage, RulesData]:
+        store = cdf_store.store
         # rules file
+        if self.configs is None:
+            raise ValueError(f"Step {type(self).__name__} has not been configured.")
         rules_file = self.configs["file_name"]
         rules_file_path = Path(self.data_store_path, "rules", rules_file)
         version = self.configs["version"]
@@ -79,9 +82,9 @@ class LoadTransformationRules(Step):
         elif rules_file_path.exists() and version:
             hash = utils.get_file_hash(rules_file_path)
             if hash != version:
-                cdf_store.load_rules_file_from_cdf(rules_file, version)
+                store.load_rules_file_from_cdf(rules_file, version)
         else:
-            cdf_store.load_rules_file_from_cdf(rules_file, version)
+            store.load_rules_file_from_cdf(rules_file, version)
 
         if validate_rules:
             transformation_rules, validation_errors, validation_warnings = parse_rules_from_excel_file(
@@ -96,8 +99,16 @@ class LoadTransformationRules(Step):
         else:
             transformation_rules = parse_rules_from_excel_file(rules_file_path)
 
-        rules_metrics = self.metrics.register_metric(
-            "data_model_rules", "Transformation rules stats", m_type="gauge", metric_labels=["component"]
+        if transformation_rules is None:
+            raise ValueError(f"Failed to load transformation rules from {rules_file_path.name!r}.")
+
+        if self.metrics is None:
+            raise ValueError(f"Step {type(self).__name__} has not been configured.")
+        rules_metrics = cast(
+            Gauge,
+            self.metrics.register_metric(
+                "data_model_rules", "Transformation rules stats", m_type="gauge", metric_labels=["component"]
+            ),
         )
         rules_metrics.labels({"component": "classes"}).set(len(transformation_rules.classes))
         rules_metrics.labels({"component": "properties"}).set(len(transformation_rules.properties))
@@ -118,7 +129,7 @@ class LoadTransformationRules(Step):
         return FlowMessage(output_text=output_text), RulesData(rules=transformation_rules)
 
 
-class DownloadTransformationRulesFromGitHub(Step):
+class DownloadTransformationRulesFromGitHub(Step[RulesData]):
     """
     This step fetches and stores transformation rules from private Github repository
     """
@@ -154,7 +165,9 @@ class DownloadTransformationRulesFromGitHub(Step):
         ),
     ]
 
-    def run(self) -> (FlowMessage, RulesData):
+    def run(self, *_) -> tuple[FlowMessage, RulesData]:
+        if self.configs is None:
+            raise ValueError(f"Step {type(self).__name__} has not been configured.")
         github_filepath = self.configs["github.filepath"]
         github_personal_token = self.configs["github.personal_token"]
         github_owner = self.configs["github.owner"]
@@ -183,5 +196,4 @@ class DownloadTransformationRulesFromGitHub(Step):
             f'<a href="http://localhost:8000/data/rules/{local_file_name}?{time.time()}" '
             f'target="_blank">{local_file_name}</a>'
         )
-
         return FlowMessage(output_text=output_text), RulesData(rules=from_tables(workbook_to_table_by_name(workbook)))

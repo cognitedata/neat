@@ -7,6 +7,7 @@ from cognite.client.data_classes.data_modeling import EdgeApply, NodeApply
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.rules.exporter.rules2dms import DataModel
 from cognite.neat.rules.models import TransformationRules
+from cognite.neat.workflows.cdf_store import CdfStore
 from cognite.neat.workflows.steps.step_model import DataContract
 
 
@@ -127,3 +128,14 @@ class DMSDataModel(DataContract):
     """
 
     data_model: DataModel
+
+
+class CDFStoreData(DataContract):
+    """
+    This represents CDF Store Data.
+
+    Args:
+        store: CDF Store Data.
+    """
+
+    store: CdfStore

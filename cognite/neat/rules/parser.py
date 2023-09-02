@@ -104,6 +104,18 @@ def parse_rules_from_yaml(folder_path: Path) -> TransformationRules:
     return TransformationRules(**read_yaml_file_to_mapping_by_name(folder_path))
 
 
+@overload
+def from_tables(raw_dfs: dict[str, pd.DataFrame], return_report: Literal[False] = False) -> TransformationRules:
+    ...
+
+
+@overload
+def from_tables(
+    raw_dfs: dict[str, pd.DataFrame], return_report: Literal[True]
+) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None]:
+    ...
+
+
 def from_tables(
     raw_dfs: dict[str, pd.DataFrame], return_report: bool = False
 ) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None] | TransformationRules:
