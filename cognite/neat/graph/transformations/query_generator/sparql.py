@@ -1,5 +1,6 @@
 import re
 from collections import Counter, defaultdict
+from collections.abc import Iterable
 
 from rdflib import Graph, Namespace
 from rdflib.term import URIRef
@@ -520,13 +521,11 @@ def _most_occurring_element(list_of_elements: list):
     return counts.most_common(1)[0][0]
 
 
-def triples2dictionary(triples: list[tuple[URIRef, URIRef, str | URIRef]]) -> dict[str, list[str]] | dict[str, str]:
+def triples2dictionary(triples: Iterable[tuple[URIRef, URIRef, str | URIRef]]) -> dict[str, list[str]]:
     """Converts list of triples to dictionary"""
     dictionary = defaultdict(list)
     for triple in triples:
-        id_ = remove_namespace(triple[0])
-        property_ = remove_namespace(triple[1])
-        value = remove_namespace(triple[2])
+        id_, property_, value = remove_namespace(*triple)
         if id_ not in dictionary:
             dictionary["external_id"] = [id_]
 

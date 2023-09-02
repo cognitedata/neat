@@ -1,7 +1,7 @@
 import re
 import warnings
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, cast
 
 from cognite.client.data_classes import Asset, Relationship
 from cognite.client.data_classes.data_modeling import EdgeApply, NodeApply, NodeOrEdgeData
@@ -217,7 +217,7 @@ def _dictionary_to_pydantic_model(
     return model
 
 
-@property
+@property  # type: ignore[misc]
 def attributes(self) -> list[str]:
     return [
         field
@@ -226,7 +226,7 @@ def attributes(self) -> list[str]:
     ]
 
 
-@property
+@property  # type: ignore[misc]
 def edges_one_to_one(self) -> list[str]:
     return [
         field
@@ -235,7 +235,7 @@ def edges_one_to_one(self) -> list[str]:
     ]
 
 
-@property
+@property  # type: ignore[misc]
 def edges_one_to_many(self) -> list[str]:
     return [
         field
@@ -245,7 +245,7 @@ def edges_one_to_many(self) -> list[str]:
 
 
 # Define methods that work on model instance
-@classmethod
+@classmethod  # type: ignore[misc]
 def from_graph(
     cls,
     graph: Graph,
@@ -274,20 +274,24 @@ def from_graph(
 
     # here properties_optional is set to True in order to also return
     # incomplete class instances so we catch them and raise exceptions
-    sparql_query = build_construct_query(
+    sparql_construct_query = build_construct_query(
         graph,
         class_,
         transformation_rules,
         class_instances=[external_id],
         properties_optional=incomplete_instance_allowed,
     )
+    # In the docs, a construct query is said to return triple
+    # Not sure if the triple will be URIRef or Literal
+    query_result = cast(tuple[URIRef, URIRef, str | URIRef], graph.query(sparql_construct_query))
 
-    result = triples2dictionary(list(graph.query(sparql_query)))
+    result = triples2dictionary([query_result])
 
     if not result:
         raise exceptions.MissingInstanceTriples(external_id)
 
     # wrangle results to dict
+    args: dict[str, list[str] | str] = {}
     for field in cls.model_fields.values():
         # if field is not required and not in result, skip
         if not field.is_required() and field.alias not in result:
@@ -309,9 +313,11 @@ def from_graph(
                     stacklevel=2,
                 )
 
-            result[field.alias] = result[field.alias][0]
+            args[field.alias] = result[field.alias][0]
+        else:
+            args[field.alias] = result[field.alias]
 
-    return cls(**result)
+    return cls(**args)
 
 
 # define methods that creates asset out of model id (default)
@@ -412,7 +418,7 @@ def _class_to_asset_instance_dictionary(class_instance_dictionary, mapping_confi
 
 def to_relationship(self, transformation_rules: TransformationRules) -> Relationship:
     """Creates relationship instance from model instance."""
-    ...
+    raise NotImplementedError()
 
 
 def to_node(self, data_model: DataModel) -> NodeApply:
@@ -424,7 +430,7 @@ def to_node(self, data_model: DataModel) -> NodeApply:
         raise exceptions.InstancePropertiesNotMatchingContainerProperties(
             self.__class__.__name__,
             self.attributes + self.edges_one_to_one + self.edges_one_to_many,
-            data_model.containers[self.__class__.__name__].properties.keys(),
+            list(data_model.containers[self.__class__.__name__].properties.keys()),
         )
 
     attributes: dict = {attribute: self.__getattribute__(attribute) for attribute in self.attributes}
@@ -447,7 +453,7 @@ def to_node(self, data_model: DataModel) -> NodeApply:
 
 def to_edge(self, data_model: DataModel) -> list[EdgeApply]:
     """Creates DMS edge from pydantic model."""
-    edges = []
+    edges: list[EdgeApply] = []
     for edge_one_to_many in self.edges_one_to_many:
         edge_type_id = f"{self.__class__.__name__}.{edge_one_to_many}"
         edges.extend(

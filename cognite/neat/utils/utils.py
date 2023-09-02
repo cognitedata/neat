@@ -5,7 +5,7 @@ from collections import OrderedDict
 from collections.abc import Iterable
 from datetime import UTC, datetime
 from functools import wraps
-from typing import TypeAlias
+from typing import TypeAlias, overload
 
 import pandas as pd
 from cognite.client import ClientConfig, CogniteClient
@@ -100,7 +100,19 @@ def add_triples(graph_store: NeatGraphStore, triples: list[Triple], batch_size: 
     check_commit(force_commit=True)
 
 
-def remove_namespace(URI: URIRef | str, special_separator: str = "#_") -> str:
+@overload
+def remove_namespace(*URI: URIRef | str, special_separator: str = "#_") -> str:
+    ...
+
+
+@overload
+def remove_namespace(*URI: tuple[URIRef | str, ...], special_separator: str = "#_") -> tuple[str, ...]:
+    ...
+
+
+def remove_namespace(
+    *URI: URIRef | str | tuple[URIRef | str, ...], special_separator: str = "#_"
+) -> tuple[str, ...] | str:
     """Removes namespace from URI
 
     Parameters
@@ -114,10 +126,12 @@ def remove_namespace(URI: URIRef | str, special_separator: str = "#_") -> str:
     Returns
     -------
     str
-        Entity id without namespace
+        Entities id without namespace
     """
-
-    return URI.split(special_separator if special_separator in URI else ("#" if "#" in URI else "/"))[-1]
+    output = tuple(
+        u.split(special_separator if special_separator in u else ("#" if "#" in u else "/"))[-1] for u in URI
+    )
+    return output if len(output) > 1 else output[0]
 
 
 def get_namespace(URI: URIRef, special_separator: str = "#_") -> str:
