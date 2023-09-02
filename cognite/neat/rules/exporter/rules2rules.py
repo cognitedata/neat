@@ -69,7 +69,7 @@ def subset_rules(
 
 
 def to_dms_compliant_rules(rules: TransformationRules) -> TransformationRules:
-    ...
+    raise NotImplementedError()
 
 
 # to be used for conversion to DMS compliant format

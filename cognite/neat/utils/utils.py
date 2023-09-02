@@ -128,10 +128,14 @@ def remove_namespace(
     str
         Entities id without namespace
     """
-    if isinstance(URI, str), or isinstance(URI, URIRef):
-        URI = (URI,)
+    if isinstance(URI, str | URIRef):
+        uris = (URI,)
+    elif isinstance(URI, tuple):
+        uris = URI
+    else:
+        raise TypeError(f"URI must be of type URIRef or str, got {type(URI)}")
     output = tuple(
-        u.split(special_separator if special_separator in u else ("#" if "#" in u else "/"))[-1] for u in URI
+        u.split(special_separator if special_separator in u else ("#" if "#" in u else "/"))[-1] for u in uris
     )
     return output if len(output) > 1 else output[0]
 
