@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from cognite.client import CogniteClient
-from cognite.client.data_classes import Relationship, RelationshipUpdate
+from cognite.client.data_classes import Asset, AssetUpdate, Relationship, RelationshipUpdate
 from cognite.client.data_classes.data_modeling import EdgeApply, NodeApply
 
 from cognite.neat.graph.stores import NeatGraphStore
@@ -79,7 +79,7 @@ class CategorizedAssets(DataContract):
         assets: The categorized assets.
     """
 
-    assets: tuple[dict, dict] | dict
+    assets: dict[str, list[Asset | AssetUpdate]]
 
 
 class CategorizedRelationships(DataContract):
@@ -91,10 +91,7 @@ class CategorizedRelationships(DataContract):
 
     """
 
-    relationships: (
-        tuple[dict[str, list[Relationship | RelationshipUpdate]], dict[str, set]]
-        | dict[str, list[Relationship | RelationshipUpdate]]
-    )
+    relationships: dict[str, list[Relationship | RelationshipUpdate]]
 
 
 class Nodes(DataContract):
@@ -139,3 +136,14 @@ class CDFStoreData(DataContract):
     """
 
     store: CdfStore
+
+
+class CogniteClientData(DataContract):
+    """
+    This represents Cognite Client Data.
+
+    Args:
+        client: Cognite Client Data.
+    """
+
+    client: CogniteClient

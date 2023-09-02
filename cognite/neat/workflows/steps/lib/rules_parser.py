@@ -57,7 +57,7 @@ class LoadTransformationRules(Step[RulesData]):
         Configurable(name="version", value="", label="Optional version of the rules file"),
     ]
 
-    def run(self, cdf_store: CDFStoreData) -> tuple[FlowMessage, RulesData]:
+    def run(self, cdf_store: CDFStoreData) -> tuple[FlowMessage, RulesData]:  # type: ignore[override]
         store = cdf_store.store
         # rules file
         if self.configs is None:
