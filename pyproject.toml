@@ -107,7 +107,7 @@ httpx = "*"
 mypy = "^1.4"
 pandas-stubs = "^2"
 types-PyYAML = "^6"
-
+types-openpyxl = "^3"
 
 [build-system]
 requires = ["poetry>=0.12"]
