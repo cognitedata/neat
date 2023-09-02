@@ -127,6 +127,13 @@ def remove_namespace(
     -------
     str
         Entities id without namespace
+
+    Examples:
+
+        >>> remove_namespace("http://www.example.org/index.html#section2")
+        'section2'
+        >>> remove_namespace("http://www.example.org/index.html#section2", "http://www.example.org/index.html#section3")
+        ('section2', 'section3')
     """
     if isinstance(URI, str | URIRef):
         uris = (URI,)
