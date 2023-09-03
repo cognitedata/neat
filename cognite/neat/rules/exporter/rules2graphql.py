@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Self, TYPE_CHECKING
+from typing import TYPE_CHECKING, Self
 
 from cognite.neat.rules import exceptions
 from cognite.neat.rules._validation import (
@@ -143,7 +143,7 @@ class GraphQLSchema:
         return "\n\n".join(type_definitions)
 
     @staticmethod
-    def template() -> Template:
+    def template() -> "Template":
         from jinja2 import DictLoader, Environment, Template
 
         template: Template = Environment(
