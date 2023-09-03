@@ -49,6 +49,9 @@ class Ontology(OntologyModel):
         if properties_redefined:
             raise exceptions.PropertiesDefinedMultipleTimes(report=generate_exception_report(redefinition_warnings))
 
+        if transformation_rules.prefixes is None:
+            raise exceptions.PrefixMissing()
+
         return cls(
             properties=[
                 OWLProperty.from_list_of_properties(
@@ -91,7 +94,7 @@ class Ontology(OntologyModel):
 
         for shape in self.shapes:
             for triple in shape.triples:
-                shacl.add(triple)
+                shacl.add(triple)  # type: ignore[arg-type]
 
         return shacl
 
@@ -107,17 +110,20 @@ class Ontology(OntologyModel):
         for prefix, namespace in self.prefixes.items():
             owl.bind(prefix, namespace)
 
+        if self.metadata.namespace is None:
+            raise exceptions.MetadataSheetNamespaceNotDefined()
+
         owl.add((URIRef(self.metadata.namespace), RDF.type, OWL.Ontology))
         for property_ in self.properties:
             for triple in property_.triples:
-                owl.add(triple)
+                owl.add(triple)  # type: ignore[arg-type]
 
         for class_ in self.classes:
             for triple in class_.triples:
-                owl.add(triple)
+                owl.add(triple)  # type: ignore[arg-type]
 
         for triple in self.metadata.triples:
-            owl.add(triple)
+            owl.add(triple)  # type: ignore[arg-type]
 
         return owl
 

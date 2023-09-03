@@ -70,6 +70,32 @@ class PrefixRegexViolation(NeatException):
         super().__init__(self.message)
 
 
+class PrefixMissing(NeatException):
+    """Prefix, which is in the 'Metadata' sheet, is missing.
+
+    Args:
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    """
+
+    type_: str = "PrefixMissing"
+    code: int = 0
+    description: str = "Prefix is missing from the 'Metadata' sheet."
+    example: str = "There is no prefix in the 'Metadata' sheet."
+    fix: str = "Specify the prefix if prefix in the 'Metadata' sheet."
+
+    def __init__(self, verbose: bool = False):
+        self.message = (
+            f"Missing prefix stored in 'Metadata' sheet."
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
 class CDFSpaceRegexViolation(NeatException):
     """cdfSpaceName, which is in the 'Metadata' sheet, does not respect defined regex expression
 
