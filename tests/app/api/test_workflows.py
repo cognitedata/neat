@@ -1,3 +1,4 @@
+from pathlib import Path
 from urllib.parse import quote
 
 import pytest
@@ -16,9 +17,18 @@ from tests.app.api.memory_cognite_client import MemoryClient
 
 
 @pytest.fixture(scope="session")
-def workflow_definitions() -> list[WorkflowDefinition]:
+def workflow_directories() -> list[Path]:
+    return [
+        example
+        for example in EXAMPLE_WORKFLOWS.iterdir()
+        if not example.name.startswith(".") and not example.name.startswith("_")
+    ]
+
+
+@pytest.fixture(scope="session")
+def workflow_definitions(workflow_directories: list[Path]) -> list[WorkflowDefinition]:
     definitions = []
-    for example in EXAMPLE_WORKFLOWS.iterdir():
+    for example in workflow_directories:
         definition = (example / "workflow.yaml").read_text()
         loaded = BaseWorkflow.deserialize_definition(definition, "yaml")
         definitions.append(loaded)
@@ -26,8 +36,8 @@ def workflow_definitions() -> list[WorkflowDefinition]:
 
 
 @pytest.fixture(scope="session")
-def workflow_names() -> list[str]:
-    return [example.name for example in EXAMPLE_WORKFLOWS.iterdir() if not example.name.startswith(".")]
+def workflow_names(workflow_directories: list[Path]) -> list[str]:
+    return [example.name for example in workflow_directories]
 
 
 def test_workflow_workflows(workflow_names: list[str], fastapi_client: TestClient):
