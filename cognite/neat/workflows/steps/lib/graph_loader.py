@@ -28,7 +28,6 @@ from cognite.neat.workflows.model import FlowMessage, WorkflowConfigItem
 from cognite.neat.workflows.steps.data_contracts import (
     CategorizedAssets,
     CategorizedRelationships,
-    CogniteClientData,
     Edges,
     Nodes,
     RulesData,
@@ -377,8 +376,8 @@ class UploadCDFRelationships(Step):
 
     def run(  # type: ignore[override]
         self,
-        client_data: CogniteClientData,
+        client: CogniteClient,
         categorized_relationships: CategorizedRelationships,
     ) -> FlowMessage:
-        upload_relationships(client_data.client, categorized_relationships.relationships, max_retries=2, retry_delay=4)
+        upload_relationships(client, categorized_relationships.relationships, max_retries=2, retry_delay=4)
         return FlowMessage(output_text="CDF relationships uploaded successfully")

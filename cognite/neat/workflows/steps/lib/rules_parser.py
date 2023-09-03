@@ -15,14 +15,13 @@ from cognite.neat.rules.parser import (
 from cognite.neat.utils.utils import generate_exception_report
 from cognite.neat.workflows import utils
 from cognite.neat.workflows.model import FlowMessage
-from cognite.neat.workflows.steps.data_contracts import CDFStoreData, RulesData
+from cognite.neat.workflows.steps.data_contracts import RulesData
 from cognite.neat.workflows.steps.step_model import Configurable, Step
+from cognite.neat.workflows.cdf_store import CdfStore
 
 __all__ = ["LoadTransformationRules", "DownloadTransformationRulesFromGitHub"]
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
-
-__all__ = ["LoadTransformationRules", "DownloadTransformationRulesFromGitHub"]
 
 
 class LoadTransformationRules(Step[RulesData]):
@@ -57,8 +56,8 @@ class LoadTransformationRules(Step[RulesData]):
         Configurable(name="version", value="", label="Optional version of the rules file"),
     ]
 
-    def run(self, cdf_store: CDFStoreData) -> tuple[FlowMessage, RulesData]:  # type: ignore[override]
-        store = cdf_store.store
+    def run(self, cdf_store: CdfStore) -> tuple[FlowMessage, RulesData]:  # type: ignore[override]
+        store = cdf_store
         # rules file
         if self.configs is None:
             raise ValueError(f"Step {type(self).__name__} has not been configured.")

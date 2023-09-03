@@ -125,25 +125,3 @@ class DMSDataModel(DataContract):
     """
 
     data_model: DataModel
-
-
-class CDFStoreData(DataContract):
-    """
-    This represents CDF Store Data.
-
-    Args:
-        store: CDF Store Data.
-    """
-
-    store: CdfStore
-
-
-class CogniteClientData(DataContract):
-    """
-    This represents Cognite Client Data.
-
-    Args:
-        client: Cognite Client Data.
-    """
-
-    client: CogniteClient
