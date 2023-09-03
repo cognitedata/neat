@@ -2,13 +2,14 @@ import re
 import warnings
 from collections.abc import Iterable
 from datetime import UTC, datetime
-from typing import Any, TypeAlias, cast
+from typing import Any, cast
 
 from cognite.client.data_classes import Asset, Relationship
 from cognite.client.data_classes.data_modeling import EdgeApply, NodeApply, NodeOrEdgeData
 from pydantic import BaseModel, ConfigDict, Field, create_model
 from pydantic._internal._model_construction import ModelMetaclass
 from rdflib import Graph, URIRef
+from typing_extensions import TypeAliasType
 
 from cognite.neat.graph.loaders.core.rdf_to_assets import NeatMetadataKeys
 from cognite.neat.graph.transformations.query_generator.sparql import build_construct_query, triples2dictionary
@@ -21,8 +22,8 @@ from cognite.neat.rules.analysis import (
 from cognite.neat.rules.exporter.rules2dms import DataModel
 from cognite.neat.rules.models import Property, TransformationRules, type_to_target_convention
 
-EdgeOneToOne: TypeAlias = str
-EdgeOneToMany: TypeAlias = list[str]
+EdgeOneToOne = TypeAliasType("EdgeOneToOne", str)
+EdgeOneToMany = TypeAliasType("EdgeOneToMany", list[str])
 
 
 def default_model_configuration():
