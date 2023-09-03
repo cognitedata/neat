@@ -228,4 +228,6 @@ def define_class_asset_mapping(transformation_rules: TransformationRules, class_
 
 
 def define_class_relationship_mapping(transformation_rules: TransformationRules, class_: str) -> dict[str, list[str]]:
+    # Todo Nikola: This function is used in rules2pydantic models. Is this the expected behavior?
+    # Functions that are not implemented should raise an NotImplementedError instead of returning an empty dict or None
     return {}
