@@ -2,14 +2,13 @@ import re
 import warnings
 from collections.abc import Iterable
 from datetime import UTC, datetime
-from typing import Any, cast
+from typing import Any, TypeAlias, cast
 
 from cognite.client.data_classes import Asset, Relationship
 from cognite.client.data_classes.data_modeling import EdgeApply, NodeApply, NodeOrEdgeData
 from pydantic import BaseModel, ConfigDict, Field, create_model
 from pydantic._internal._model_construction import ModelMetaclass
 from rdflib import Graph, URIRef
-from typing_extensions import TypeAliasType
 
 from cognite.neat.graph.loaders.core.rdf_to_assets import NeatMetadataKeys
 from cognite.neat.graph.transformations.query_generator.sparql import build_construct_query, triples2dictionary
@@ -22,8 +21,8 @@ from cognite.neat.rules.analysis import (
 from cognite.neat.rules.exporter.rules2dms import DataModel
 from cognite.neat.rules.models import Property, TransformationRules, type_to_target_convention
 
-EdgeOneToOne = TypeAliasType("EdgeOneToOne", str)
-EdgeOneToMany = TypeAliasType("EdgeOneToMany", list[str])
+EdgeOneToOne: TypeAlias = str
+EdgeOneToMany: TypeAlias = list[str]
 
 
 def default_model_configuration():
@@ -116,7 +115,7 @@ def _properties_to_pydantic_fields(
         Dictionary of pydantic fields
     """
 
-    fields: dict[str, tuple[EdgeOneToMany | EdgeOneToOne | type | list[type], Any]] = {}
+    fields: dict[str, tuple[EdgeOneToMany | EdgeOneToOne | type | list[type], Any]]
 
     fields = {"external_id": (str, Field(..., alias="external_id"))}
 
@@ -154,19 +153,20 @@ def _define_field_type(property_: Property):
     elif property_.property_type == "DatatypeProperty" and property_.max_count == 1:
         return type_to_target_convention(property_.expected_value_type, "python")
     else:
-        return list[type_to_target_convention(property_.expected_value_type, "python")]
+        inner_type = type_to_target_convention(property_.expected_value_type, "python")
+        return list[inner_type]  # type: ignore[valid-type]
 
 
 def _dictionary_to_pydantic_model(
     name: str,
     model_definition: dict,
-    model_configuration: ConfigDict = None,
+    model_configuration: ConfigDict | None = None,
     methods: list | None = None,
     property_attributes: list | None = None,
     validators: list | None = None,
 ) -> type[BaseModel]:
     """Generates pydantic model from dictionary containing definition of fields.
-    Additionally it adds methods to the model and validators.
+    Additionally, it adds methods to the model and validators.
 
     Parameters
     ----------
@@ -192,7 +192,7 @@ def _dictionary_to_pydantic_model(
     if model_configuration:
         model_configuration = default_model_configuration()
 
-    fields = {}
+    fields: dict[str, tuple | type[BaseModel]] = {}
 
     for field_name, value in model_definition.items():
         if isinstance(value, tuple):
@@ -202,7 +202,7 @@ def _dictionary_to_pydantic_model(
         else:
             raise exceptions.FieldValueOfUnknownType(field_name, value)
 
-    model = create_model(name, __config__=model_configuration, **fields)
+    model = create_model(name, __config__=model_configuration, **fields)  # type: ignore[call-overload]
 
     if methods:
         for method in methods:

@@ -11,6 +11,7 @@ from cognite.client.data_classes.data_modeling import (
     ContainerId,
     ContainerProperty,
     DataModelApply,
+    DataModelId,
     DirectRelation,
     DirectRelationReference,
     MappedPropertyApply,
@@ -254,7 +255,7 @@ class DataModel(BaseModel):
         self.create_views(client)
         self.create_data_model(client)
 
-    def find_existing_data_model(self, client: CogniteClient) -> set[str]:
+    def find_existing_data_model(self, client: CogniteClient) -> DataModelId | None:
         """Checks if the data model exists in CDF.
 
         Args:
@@ -272,11 +273,10 @@ class DataModel(BaseModel):
                 stacklevel=2,
             )
 
-            return {cdf_data_model.external_id}
-        else:
-            return set()
+            return cdf_data_model.as_id()
+        return None
 
-    def find_existing_containers(self, client: CogniteClient) -> set[str]:
+    def find_existing_containers(self, client: CogniteClient) -> set[ContainerId]:
         """Checks if the containers exist in CDF.
 
         Args:
@@ -288,9 +288,11 @@ class DataModel(BaseModel):
 
         cdf_containers = {}
         if containers := client.data_modeling.containers.list(space=self.space, limit=-1):
-            cdf_containers = {container.external_id: container for container in containers}
+            cdf_containers = {container.as_id(): container for container in containers}
 
-        if existing_containers := set(self.containers.keys()).intersection(set(cdf_containers.keys())):
+        if existing_containers := {c.as_id() for c in self.containers.values()}.intersection(
+            set(cdf_containers.keys())
+        ):
             logging.warning(exceptions.ContainersAlreadyExist(existing_containers, self.space).message)
             warnings.warn(
                 exceptions.ContainersAlreadyExist(existing_containers, self.space).message,
@@ -302,7 +304,7 @@ class DataModel(BaseModel):
         else:
             return set()
 
-    def find_existing_views(self, client: CogniteClient) -> set[str]:
+    def find_existing_views(self, client: CogniteClient) -> set[ViewId]:
         """Checks if the views exist in CDF.
 
         Args:
@@ -313,9 +315,9 @@ class DataModel(BaseModel):
         """
         cdf_views = {}
         if views := client.data_modeling.views.list(space=self.space, limit=-1):
-            cdf_views = {view.external_id: view for view in views if view.version == self.version}
+            cdf_views = {view.as_id(): view for view in views if view.version == self.version}
 
-        if existing_views := set(self.views.keys()).intersection(set(cdf_views.keys())):
+        if existing_views := {v.as_id() for v in self.views.values()}.intersection(set(cdf_views.keys())):
             logging.warning(exceptions.ViewsAlreadyExist(existing_views, self.version, self.space).message)
             warnings.warn(
                 exceptions.ViewsAlreadyExist(existing_views, self.version, self.space).message,

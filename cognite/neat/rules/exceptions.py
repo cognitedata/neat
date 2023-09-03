@@ -14,6 +14,7 @@ handling (such `rdfpath`), and rules loaders, parsers and exporters.
 
 from typing import Any
 
+from cognite.client.data_classes.data_modeling import ContainerId, DataModelId, ViewId
 from rdflib import Namespace, URIRef
 
 from cognite.neat.constants import DEFAULT_DOCS_URL
@@ -1923,7 +1924,11 @@ class DataModelOrItsComponentsAlreadyExist(NeatException):
     )
 
     def __init__(
-        self, existing_data_model: str, existing_containers: set[str], existing_views: set[str], verbose: bool = False
+        self,
+        existing_data_model: DataModelId | None,
+        existing_containers: set[ContainerId],
+        existing_views: set[ViewId],
+        verbose: bool = False,
     ):
         self.existing_data_model = existing_data_model
         self.existing_containers = existing_containers
@@ -2330,7 +2335,7 @@ class ContainersAlreadyExist(NeatWarning):
     example: str = ""
     fix: str = "Remove existing containers and try again."
 
-    def __init__(self, container_ids: set[str] | None = None, space: str = "", verbose: bool = False):
+    def __init__(self, container_ids: set[ContainerId] | None = None, space: str = "", verbose: bool = False):
         self.message = (
             f"Containers {container_ids or set()} already exist in space {space}. "
             "Since update of containers can cause issues, "
@@ -2364,7 +2369,7 @@ class ViewsAlreadyExist(NeatWarning):
     example: str = ""
     fix: str = "Remove existing views and try again or update version of data model."
 
-    def __init__(self, views_ids: set[str] | None = None, version: str = "", space: str = "", verbose: bool = False):
+    def __init__(self, views_ids: set[ViewId] | None = None, version: str = "", space: str = "", verbose: bool = False):
         self.message = (
             f"Views {views_ids or set()} version {version} already exist in space {space}. "
             "Since update of views raise issues, "

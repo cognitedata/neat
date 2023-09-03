@@ -18,6 +18,7 @@ from cognite.client.data_classes.data_modeling.data_types import (
     Int32,
     Int64,
     Json,
+    PropertyType,
     SequenceReference,
     Text,
     TimeSeriesReference,
@@ -55,7 +56,7 @@ from cognite.neat.rules.to_rdf_path import (
 __all__ = ["Class", "Instance", "Metadata", "Prefixes", "Property", "Resource", "TransformationRules"]
 
 # mapping of XSD types to Python and GraphQL types
-DATA_TYPE_MAPPING = {
+DATA_TYPE_MAPPING: dict[str, dict[str, type | str | PropertyType]] = {
     "boolean": {"python": bool, "GraphQL": "Boolean", "dms": Boolean},
     "float": {"python": float, "GraphQL": "Float", "dms": Float32},
     "integer": {"python": "int", "GraphQL": "Int", "dms": Int32},
@@ -77,7 +78,7 @@ DATA_TYPE_MAPPING = {
 }
 
 
-def type_to_target_convention(type_: str, target_type_convention: str) -> type:
+def type_to_target_convention(type_: str, target_type_convention: str) -> type | str | PropertyType:
     """Returns the GraphQL type for a given XSD type."""
     return DATA_TYPE_MAPPING[type_][target_type_convention]
 

@@ -103,8 +103,9 @@ def _add_drop_down_list(workbook: Workbook, sheet: str, column: str, no_rows: in
 def _adjust_column_width(workbook: Workbook):
     """Adjusts the column width based on the content"""
     for sheet in workbook.sheetnames:
-        for cell, *_ in workbook[sheet].columns:
-            cell = cast(Cell, cell)
+        for cell_tuple in workbook[sheet].columns:
+            # Wrong type annotation in openpyxl
+            cell = cast(Cell, cell_tuple[0])  # type: ignore[index]
             if cell.value:
                 adjusted_width = (len(str(cell.value)) + 5) * 1.2
                 workbook[sheet].column_dimensions[cell.column_letter].width = adjusted_width
@@ -119,8 +120,9 @@ def _set_header_style(workbook: Workbook):
     workbook.add_named_style(style)
 
     for sheet in workbook.sheetnames:
-        for cell, *_ in workbook[sheet].columns:
-            cell = cast(Cell, cell)
+        for cell_tuple in workbook[sheet].columns:
+            # Wrong type annotation in openpyxl
+            cell = cast(Cell, cell_tuple[0])  # type: ignore[index]
             workbook[sheet][f"{cell.column_letter}1"].style = style
             if f"{cell.column_letter}1" == "A1":
                 workbook[sheet][f"{cell.column_letter}1"].fill = PatternFill("solid", start_color="2FB5F2")

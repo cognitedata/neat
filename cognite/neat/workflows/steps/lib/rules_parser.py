@@ -14,10 +14,10 @@ from cognite.neat.rules.parser import (
 )
 from cognite.neat.utils.utils import generate_exception_report
 from cognite.neat.workflows import utils
+from cognite.neat.workflows.cdf_store import CdfStore
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import RulesData
 from cognite.neat.workflows.steps.step_model import Configurable, Step
-from cognite.neat.workflows.cdf_store import CdfStore
 
 __all__ = ["LoadTransformationRules", "DownloadTransformationRulesFromGitHub"]
 
