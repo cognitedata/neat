@@ -48,11 +48,11 @@ def subset_rules(
         )
 
     reduced_data_model: dict[str, Any] = {
-        "metadata": transformation_rules.metadata.model_dump(),
-        "prefixes": transformation_rules.prefixes,
+        "metadata": transformation_rules.metadata.model_copy(),
+        "prefixes": transformation_rules.prefixes.copy(),
         "classes": {},
         "properties": {},
-        "instances": [inst.model_dump() for inst in transformation_rules.instances],
+        "instances": transformation_rules.instances.copy(),
     }
 
     logging.info(f"Reducing data model to only include the following classes: {possible_classes}")
