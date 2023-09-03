@@ -1,5 +1,6 @@
 import re
 import warnings
+from collections.abc import Iterable
 from datetime import UTC, datetime
 from typing import Any, cast
 
@@ -283,9 +284,9 @@ def from_graph(
     )
     # In the docs, a construct query is said to return triple
     # Not sure if the triple will be URIRef or Literal
-    query_result = cast(tuple[URIRef, URIRef, str | URIRef], graph.query(sparql_construct_query))
+    query_result = cast(Iterable[tuple[URIRef, URIRef, str | URIRef]], graph.query(sparql_construct_query))
 
-    result = triples2dictionary([query_result])
+    result = triples2dictionary(query_result)
 
     if not result:
         raise exceptions.MissingInstanceTriples(external_id)

@@ -415,3 +415,4 @@ For more information visit: https://cognite-neat.readthedocs-hosted.com/en/lates
 For more information visit: https://cognite-neat.readthedocs-hosted.com/en/latest/api/exceptions.html#cognite.neat.rules.exceptions.PropertyNameNotProvided []
 - Property id hasWindTurbinePowerCurve set as Property name!
 For more information visit: https://cognite-neat.readthedocs-hosted.com/en/latest/api/exceptions.html#cognite.neat.rules.exceptions.PropertyNameNotProvided []
+
