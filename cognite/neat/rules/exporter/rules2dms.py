@@ -192,7 +192,7 @@ class DataModel(BaseModel):
     def view_properties_from_dict(
         properties: dict[str, Property], space: str, version: str
     ) -> dict[str, MappedPropertyApply | SingleHopConnectionDefinition]:
-        view_properties = {}
+        view_properties: dict[str, MappedPropertyApply | SingleHopConnectionDefinition] = {}
         for property_id, property_definition in properties.items():
             # attribute
             if property_definition.property_type == "DatatypeProperty":
