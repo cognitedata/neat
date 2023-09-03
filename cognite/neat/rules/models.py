@@ -150,7 +150,7 @@ class URL(BaseModel):
     url: HttpUrl
 
 
-Description = constr(min_length=1, max_length=255)
+Description: TypeAlias = constr(min_length=1, max_length=255)  # type: ignore[valid-type]
 
 # regex expressions for compliance of Metadata sheet parsing
 more_than_one_none_alphanumerics_regex = r"([_-]{2,})"
@@ -162,8 +162,8 @@ version_compliance_regex = (
     r"([0-9]+[_-]{1}[0-9]+[_-]{1}[0-9]+)|([0-9]+[_-]{1}[0-9])|([0-9]+)$"
 )
 
-Prefix: TypeAlias = constr(min_length=1, max_length=43)
-ExternalId: TypeAlias = constr(min_length=1, max_length=255)
+Prefix: TypeAlias = constr(min_length=1, max_length=43)  # type: ignore[valid-type]
+ExternalId: TypeAlias = constr(min_length=1, max_length=255)  # type: ignore[valid-type]
 
 
 class Metadata(RuleModel):
@@ -372,7 +372,7 @@ class Resource(RuleModel):
 
     # Solution CDF resource, it is not needed when working with FDM, this is only for
     # Classic CDF data model
-    cdf_resource_type: str | None = Field(alias="Resource Type", default=None)
+    cdf_resource_type: list[str] | str | None = Field(alias="Resource Type", default=None)
 
     # Advance data modeling: Keeping track if Resource got deprecated or not
     deprecated: bool = Field(default=False)
@@ -543,7 +543,7 @@ class Property(Resource):
 
     # Specialization of cdf_resource_type to allow definition of both
     # Asset and Relationship at the same time
-    cdf_resource_type: list[str] = Field(alias="Resource Type", default=[])
+    cdf_resource_type: list[str] = Field(alias="Resource Type", default_factory=list)
 
     @property
     def is_raw_lookup(self) -> bool:
@@ -708,7 +708,7 @@ class Instance(RuleModel):
     def get_value(value, prefixes) -> URIRef | Literal:
         try:
             url = URL(url=value).url
-            return URIRef(url)
+            return URIRef(str(url))
         except ValidationError:
             try:
                 entity = Entity.from_string(value)
@@ -818,7 +818,7 @@ class TransformationRules(RuleModel):
     def raw_tables(self) -> list[str]:
         return list(
             {
-                parse_rule(rule.rule, RuleType.rawlookup).table.name
+                parse_rule(rule.rule, RuleType.rawlookup).table.name  # type: ignore[arg-type, attr-defined]
                 for rule in self.properties.values()
                 if rule.is_raw_lookup
             }

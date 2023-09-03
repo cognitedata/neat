@@ -34,7 +34,7 @@ def parse_rules_from_excel_file(
 
 
 def parse_rules_from_excel_file(
-    filepath: Path, return_report: bool = False
+    filepath: Path, return_report: Literal[True, False] = False
 ) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None] | TransformationRules:
     """Parse transformation rules from an Excel file.
 
@@ -48,8 +48,20 @@ def parse_rules_from_excel_file(
     return from_tables(read_excel_file_to_table_by_name(filepath), return_report)
 
 
+@overload
+def parse_rules_from_google_sheet(sheet_id: str, return_report: Literal[False] = False) -> TransformationRules:
+    ...
+
+
+@overload
 def parse_rules_from_google_sheet(
-    sheet_id: str, return_report: bool = False
+    sheet_id: str, return_report: Literal[True]
+) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None]:
+    ...
+
+
+def parse_rules_from_google_sheet(
+    sheet_id: str, return_report: Literal[True, False] = False
 ) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None] | TransformationRules:
     """Parse transformation rules from a Google sheet.
 
@@ -63,13 +75,37 @@ def parse_rules_from_google_sheet(
     return from_tables(read_google_sheet_to_table_by_name(sheet_id), return_report)
 
 
+@overload
 def parse_rules_from_github_sheet(
     filepath: Path,
     personal_token: str,
     owner: str,
     repo: str,
+    return_report: Literal[False] = False,
     branch: str = "main",
-    return_report: bool = False,
+) -> TransformationRules:
+    ...
+
+
+@overload
+def parse_rules_from_github_sheet(
+    filepath: Path,
+    personal_token: str,
+    owner: str,
+    repo: str,
+    return_report: Literal[True],
+    branch: str = "main",
+) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None]:
+    ...
+
+
+def parse_rules_from_github_sheet(
+    filepath: Path,
+    personal_token: str,
+    owner: str,
+    repo: str,
+    return_report: Literal[True, False] = False,
+    branch: str = "main",
 ) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None] | TransformationRules:
     """Parse transformation rules from a sheet stored in private GitHub.
 
@@ -85,7 +121,8 @@ def parse_rules_from_github_sheet(
         The transformation rules, and optionally one list of validation errors and a one list of warnings.
 
     """
-    return from_tables(read_github_sheet_to_table_by_name(filepath, personal_token, owner, repo, branch), return_report)
+    tables = read_github_sheet_to_table_by_name(str(filepath), personal_token, owner, repo, branch)
+    return from_tables(tables, return_report)
 
 
 def parse_rules_from_yaml(folder_path: Path) -> TransformationRules:
@@ -101,7 +138,7 @@ def parse_rules_from_yaml(folder_path: Path) -> TransformationRules:
       The transformation rules.
 
     """
-    return TransformationRules(**read_yaml_file_to_mapping_by_name(folder_path))
+    return TransformationRules(**read_yaml_file_to_mapping_by_name(folder_path))  # type: ignore[arg-type]
 
 
 @overload
@@ -288,7 +325,7 @@ class Tables:
 def read_google_sheet_to_table_by_name(sheet_id: str) -> dict[str, pd.DataFrame]:
     # To trigger ImportError if gspread is not installed
     local_import("gspread", "google")
-    import gspread
+    import gspread  # type: ignore[import]
 
     client_google = gspread.service_account()
     spreadsheet = client_google.open_by_key(sheet_id)

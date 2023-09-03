@@ -29,7 +29,7 @@ def get_classes_with_properties(transformation_rules: TransformationRules) -> di
         Dictionary of classes with a list of properties defined for them
     """
 
-    class_property_pairs = {}
+    class_property_pairs: dict[str, list[Property]] = {}
 
     for property_ in transformation_rules.properties.values():
         class_ = property_.class_id
@@ -144,7 +144,7 @@ def get_symmetric_pairs(transformation_rules: TransformationRules) -> set[tuple]
     """
 
     # TODO: Find better name for this method
-    sym_pairs = set()
+    sym_pairs: set[tuple] = set()
 
     class_linkage = get_class_linkage(transformation_rules)
     if class_linkage.empty:
@@ -218,7 +218,7 @@ def define_class_asset_mapping(transformation_rules: TransformationRules, class_
     class_properties = to_class_property_pairs(transformation_rules, only_rdfpath=True)[class_]
 
     for asset_property in get_asset_related_properties(list(class_properties.values())):
-        for resource_type_property in asset_property.resource_type_property:
+        for resource_type_property in asset_property.resource_type_property or []:
             if resource_type_property not in mapping_dict:
                 mapping_dict[resource_type_property] = [asset_property.property_id]
             else:
@@ -228,4 +228,4 @@ def define_class_asset_mapping(transformation_rules: TransformationRules, class_
 
 
 def define_class_relationship_mapping(transformation_rules: TransformationRules, class_: str) -> dict[str, list[str]]:
-    ...
+    return {}

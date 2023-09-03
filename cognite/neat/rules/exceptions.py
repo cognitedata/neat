@@ -686,7 +686,7 @@ class FiledInMetadataSheetMissingOrFailedValidation(NeatException):
     example: str = ""
     fix: str = "Make sure to define compliant field in Metadata sheet before proceeding"
 
-    def __init__(self, missing_field: str, verbose: str = False):
+    def __init__(self, missing_field: str, verbose: bool = False):
         self.message = (
             f"Field {missing_field} is missing in the 'Metadata' sheet or it failed validation!"
             f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
@@ -2152,7 +2152,7 @@ class OntologyMultiLabeledProperty(NeatWarning):
         self.message = (
             "Property should have single preferred label (human readable name)."
             f"Currently property '{property_id}' has multiple preferred labels: {', '.join(names or [])} !"
-            f"Only the first name, i.e. '{names[0]}' will be considered!"
+            f"Only the first name, i.e. '{names[0] if names else ''}' will be considered!"
             f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
         if verbose:
