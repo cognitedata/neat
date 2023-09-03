@@ -52,6 +52,9 @@ class Ontology(OntologyModel):
         if transformation_rules.prefixes is None:
             raise exceptions.PrefixMissing()
 
+        if transformation_rules.metadata.namespace is None:
+            raise exceptions.MissingDataModelPrefixOrNamespace()
+
         return cls(
             properties=[
                 OWLProperty.from_list_of_properties(

@@ -9,7 +9,7 @@ import re
 import warnings
 from datetime import datetime
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import Any, ClassVar, TypeAlias
 
 from cognite.client.data_classes.data_modeling.data_types import (
     Boolean,
@@ -162,8 +162,8 @@ version_compliance_regex = (
     r"([0-9]+[_-]{1}[0-9]+[_-]{1}[0-9]+)|([0-9]+[_-]{1}[0-9])|([0-9]+)$"
 )
 
-Prefix = constr(min_length=1, max_length=43)
-ExternalId = constr(min_length=1, max_length=255)
+Prefix: TypeAlias = constr(min_length=1, max_length=43)
+ExternalId: TypeAlias = constr(min_length=1, max_length=255)
 
 
 class Metadata(RuleModel):

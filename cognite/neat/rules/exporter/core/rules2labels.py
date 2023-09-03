@@ -16,7 +16,9 @@ def get_labels(transformation_rules: TransformationRules) -> set[str]:
     property_labels = {property_.property_id for property_ in transformation_rules.properties.values()}
 
     relationship_labels = {
-        rule.label for rule in transformation_rules.properties.values() if "Relationship" in rule.cdf_resource_type
+        str(rule.label)
+        for rule in transformation_rules.properties.values()
+        if "Relationship" in rule.cdf_resource_type and rule.label
     }
 
     return class_labels.union(relationship_labels).union(property_labels)
