@@ -147,6 +147,36 @@ class MetadataSheetNamespaceNotValidURL(NeatException):
         super().__init__(self.message)
 
 
+class MetadataSheetNamespaceNotDefined(NeatException):
+    """namespace, which is in the 'Metadata' sheet, is not defined
+
+    Args:
+        namespace: namespace that raised exception
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        Check if `namespace` in the `Metadata` sheet is properly constructed as valid URL
+        containing only allowed characters.
+
+    """
+
+    type_ = "MetadataSheetNamespaceNotDefined"
+    code: int = 2
+    description: str = "namespace, which is in the 'Metadata' sheet, is missing"
+    example: str = "Example of a valid namespace 'http://www.w3.org/ns/sparql'"
+    fix: str = "Define the 'namespace' in the 'Metadata' sheet."
+
+    def __init__(self, verbose: bool = False):
+        self.message = (
+            f"Missing namespace  in 'Metadata' sheet." f"\nFor more information visit: {DOCS_BASE_URL}.{self.type_}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
 class DataModelNameRegexViolation(NeatException):
     """dataModelName, which is in the 'Metadata' sheet, does not respect defined regex expression
 

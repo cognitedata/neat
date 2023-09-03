@@ -150,6 +150,8 @@ class OWLMetadata(Metadata):
     @property
     def triples(self) -> list[tuple]:
         # Mandatory triples originating from Metadata mandatory fields
+        if self.namespace is None:
+            raise exceptions.MetadataSheetNamespaceNotDefined()
         triples = [
             (URIRef(self.namespace), DCTERMS.hasVersion, Literal(self.version)),
             (URIRef(self.namespace), OWL.versionInfo, Literal(self.version)),
