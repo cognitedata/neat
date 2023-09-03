@@ -3,7 +3,7 @@
 
 import logging
 import warnings
-from typing import ClassVar, Self
+from typing import ClassVar, Self, cast
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import (
@@ -15,10 +15,14 @@ from cognite.client.data_classes.data_modeling import (
     DirectRelation,
     DirectRelationReference,
     MappedPropertyApply,
-    SingleHopConnectionDefinition,
     SpaceApply,
     ViewApply,
     ViewId,
+)
+from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
+from cognite.client.data_classes.data_modeling.views import (
+    ConnectionDefinitionApply,
+    SingleHopConnectionDefinitionApply,
 )
 from pydantic import BaseModel, ConfigDict
 
@@ -87,6 +91,10 @@ class DataModel(BaseModel):
             )
             raise exceptions.PropertiesDefinedMultipleTimes(report=generate_exception_report(redefinition_warnings))
 
+        if transformation_rules.metadata.data_model_name is None:
+            logging.error(exceptions.DataModelNameMissing(prefix=transformation_rules.metadata.prefix).message)
+            raise exceptions.DataModelNameMissing(prefix=transformation_rules.metadata.prefix)
+
         return cls(
             space=transformation_rules.metadata.cdf_space_name,
             external_id=transformation_rules.metadata.data_model_name,
@@ -133,10 +141,11 @@ class DataModel(BaseModel):
         for property_id, property_definition in properties.items():
             # Literal, i.e. attribute
             if property_definition.property_type == "DatatypeProperty":
+                property_type = cast(
+                    type[ListablePropertyType], DATA_TYPE_MAPPING[property_definition.expected_value_type]["dms"]
+                )
                 container_properties[property_id] = ContainerProperty(
-                    type=DATA_TYPE_MAPPING[property_definition.expected_value_type]["dms"](
-                        is_list=property_definition.max_count != 1
-                    ),
+                    type=property_type(is_list=property_definition.max_count != 1),
                     nullable=property_definition.min_count == 0,
                     default_value=property_definition.default,
                     name=property_definition.property_name,
@@ -191,8 +200,8 @@ class DataModel(BaseModel):
     @staticmethod
     def view_properties_from_dict(
         properties: dict[str, Property], space: str, version: str
-    ) -> dict[str, MappedPropertyApply | SingleHopConnectionDefinition]:
-        view_properties: dict[str, MappedPropertyApply | SingleHopConnectionDefinition] = {}
+    ) -> dict[str, MappedPropertyApply | ConnectionDefinitionApply]:
+        view_properties: dict[str, MappedPropertyApply | ConnectionDefinitionApply] = {}
         for property_id, property_definition in properties.items():
             # attribute
             if property_definition.property_type == "DatatypeProperty":
@@ -215,7 +224,7 @@ class DataModel(BaseModel):
 
             # edge 1-many
             elif property_definition.property_type == "ObjectProperty" and property_definition.max_count != 1:
-                view_properties[property_id] = SingleHopConnectionDefinition(
+                view_properties[property_id] = SingleHopConnectionDefinitionApply(
                     type=DirectRelationReference(
                         space=space, external_id=f"{property_definition.class_id}.{property_definition.property_id}"
                     ),
