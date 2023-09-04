@@ -189,10 +189,10 @@ class BaseWorkflow:
             steps = self.get_transition_step(step.transition_to)
 
             if new_flow_msg:
+                self.flow_message = new_flow_msg
                 # If the step returned a new flow message, use it to mutate execution flow
                 if new_flow_msg.next_step_ids:
                     steps = self.get_transition_step(new_flow_msg.next_step_ids)
-                self.flow_message = new_flow_msg
 
             if len(steps) == 0:
                 break
@@ -271,13 +271,22 @@ class BaseWorkflow:
                         f"Workflow step {step.id} can't be executed.Step registry is not configured or \
                           not set as parameter in BaseWorkflow constructor"
                     )
-                output = self.steps_registry.run_step(
-                    step.method,
-                    self.data,
-                    metrics=self.metrics,
-                    workflow_configs=self.get_configs(),
-                    step_configs=step.configs,
+
+                @retry_decorator(
+                    max_retries=step.max_retries,
+                    retry_delay=step.retry_delay,
+                    component_name=f"wf step runner , step.id = {step.id}",
                 )
+                def method_runner():
+                    return self.steps_registry.run_step(
+                        step.method,
+                        self.data,
+                        metrics=self.metrics,
+                        workflow_configs=self.get_configs(),
+                        step_configs=step.configs,
+                    )
+
+                output = method_runner()
                 if output is not None:
                     outputs = output if isinstance(output, tuple) else (output,)
                     for out_obj in outputs:
@@ -330,11 +339,23 @@ class BaseWorkflow:
 
             stop_time = time.perf_counter()
             elapsed_time = stop_time - start_time
-            logging.info(f"Step {step_name} completed in {elapsed_time} seconds")
-            step_execution_status = StepExecutionStatus.SUCCESS
+            logging.info(f"Step {step_name} completed in {elapsed_time} seconds with ")
+
             if new_flow_message:
+                logging.info(f"Step {self.name} completed with status {new_flow_message.step_execution_status}")
                 error_text = new_flow_message.error_text
                 output_text = new_flow_message.output_text
+                if new_flow_message.step_execution_status == StepExecutionStatus.ABORT_AND_FAIL:
+                    new_flow_message.step_execution_status = StepExecutionStatus.FAILED
+                    self.state = WorkflowState.FAILED
+
+                step_execution_status = (
+                    StepExecutionStatus.SUCCESS
+                    if new_flow_message.step_execution_status == StepExecutionStatus.UNKNOWN
+                    else new_flow_message.step_execution_status
+                )
+            else:
+                step_execution_status = StepExecutionStatus.SUCCESS
             steps_metrics.labels(wf_name=self.name, step_name=step_name, name="completed_counter").inc()
             timing_metrics.labels(wf_name=self.name, component="step", name=step_name).set(elapsed_time)
         except Exception:

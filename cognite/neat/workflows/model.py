@@ -19,6 +19,7 @@ class StepExecutionStatus(StrEnum):
     SKIPPED = "SKIPPED"
     STARTED = "STARTED"
     UNKNOWN = "UNKNOWN"
+    ABORT_AND_FAIL = "ABORT_AND_FAIL"
 
 
 class InstanceStartMethod(StrEnum):
