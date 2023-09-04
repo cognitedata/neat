@@ -4,10 +4,10 @@ from pathlib import Path
 from typing import ClassVar
 
 import requests
+from cognite.client import CogniteClient
 
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.step_model import Configurable, Step
-from cognite.client import CogniteClient
 
 __all__ = ["DownloadFileFromGitHub", "UploadFileToGitHub", "DownloadFileFromCDF", "UploadFileToCDF"]
 
@@ -68,7 +68,8 @@ class DownloadFileFromGitHub(Step):
             full_local_file_path.mkdir(parents=True, exist_ok=True)
 
         r = requests.get(
-            f"https://api.github.com/repos/{github_owner}/{github_repo }/contents/{github_filepath}?ref={github_branch}",
+            f"https://api.github.com/repos/{github_owner}/{github_repo }"
+            + f"/contents/{github_filepath}?ref={github_branch}",
             headers={"accept": "application/vnd.github.v3.raw", "authorization": f"token {github_personal_token}"},
         )
 
@@ -76,7 +77,7 @@ class DownloadFileFromGitHub(Step):
             local_download_path = Path(self.configs["local.storage_dir"]) / local_file_name
             full_local_file_path = full_local_file_path / local_file_name
             try:
-                with open(full_local_file_path, "wb") as f:
+                with full_local_file_path.open("wb") as f:
                     f.write(r.content)
             except Exception as e:
                 return FlowMessage(
@@ -168,7 +169,7 @@ class UploadFileToGitHub(Step):
                 step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
             )
 
-        with open(full_local_file_path, "rb") as f:
+        with full_local_file_path.open("rb") as f:
             file_content = f.read()
 
         headers = {
