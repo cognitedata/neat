@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import ClassVar, TypeVar
+from typing import ClassVar, Generic, TypeVar
 
 from pydantic import BaseModel, ConfigDict
 
 from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
-from cognite.neat.workflows.model import WorkflowConfigs
+from cognite.neat.workflows.model import FlowMessage, WorkflowConfigs
 
 
 class Config(BaseModel):
@@ -25,11 +25,12 @@ class DataContract(BaseModel):
 
 
 T_Input = TypeVar("T_Input", bound=DataContract)
-
+T_Input1 = TypeVar("T_Input1", bound=DataContract)
+T_Input2 = TypeVar("T_Input2", bound=DataContract)
 T_Output = TypeVar("T_Output", bound=DataContract)
 
 
-class Step(ABC):
+class Step(ABC, Generic[T_Output]):
     description: str = ""
     category: str = "default"
     configurables: ClassVar[list[Configurable]] = []
@@ -41,6 +42,10 @@ class Step(ABC):
     def __init__(self, data_store_path: str | None = None):
         self.log: bool = False
         self.data_store_path: str = data_store_path
+
+    @property
+    def _not_configured_message(self) -> str:
+        return f"Step {type(self).__name__} has not been configured."
 
     def set_metrics(self, metrics: NeatMetricsCollector):
         self.metrics = metrics
@@ -55,5 +60,5 @@ class Step(ABC):
         self.flow_context = context
 
     @abstractmethod
-    def run(self, *input_data: T_Input) -> T_Output:
+    def run(self, *input_data: T_Input) -> T_Output | tuple[FlowMessage, T_Output] | FlowMessage:
         ...

@@ -1,10 +1,11 @@
 import logging
 import time
 from datetime import datetime
-from typing import ClassVar
+from typing import ClassVar, cast
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import AssetFilter
+from prometheus_client import Gauge
 
 from cognite.neat.graph.loaders import upload_labels
 from cognite.neat.graph.loaders.core.rdf_to_assets import (
@@ -144,14 +145,22 @@ class GenerateCDFAssetsFromGraph(Step):
         self, rules: RulesData, cdf_client: CogniteClient, solution_graph: SolutionGraph
     ) -> (FlowMessage, CategorizedAssets):
         meta_keys = NeatMetadataKeys.load(self.configs)
-        prom_cdf_resource_stats = self.metrics.register_metric(
-            "cdf_resources_stats",
-            "CDF resource stats before and after running the workflow",
-            m_type="gauge",
-            metric_labels=["resource_type", "state"],
+        if self.metrics is None:
+            raise ValueError(self._not_configured_message)
+        prom_cdf_resource_stats = cast(
+            Gauge,
+            self.metrics.register_metric(
+                "cdf_resources_stats",
+                "CDF resource stats before and after running the workflow",
+                m_type="gauge",
+                metric_labels=["resource_type", "state"],
+            ),
         )
-        prom_data_issues_stats = self.metrics.register_metric(
-            "data_issues_stats", "Data validation issues", m_type="gauge", metric_labels=["resource_type"]
+        prom_data_issues_stats = cast(
+            Gauge,
+            self.metrics.register_metric(
+                "data_issues_stats", "Data validation issues", m_type="gauge", metric_labels=["resource_type"]
+            ),
         )
 
         rdf_asset_dicts = rdf2assets(
@@ -262,17 +271,23 @@ class UploadCDFAssets(Step):
     description = "This step uploads categorized assets to CDF"
     category = CATEGORY
 
-    def run(
+    def run(  # type: ignore[override]
         self, rules: RulesData, cdf_client: CogniteClient, categorized_assets: CategorizedAssets, flow_msg: FlowMessage
     ) -> FlowMessage:
         if flow_msg and flow_msg.payload and "action" in flow_msg.payload:
             if flow_msg.payload["action"] != "approve":
                 raise Exception("Update not approved")
-        prom_cdf_resource_stats = self.metrics.register_metric(
-            "cdf_resources_stats",
-            "CDF resource stats before and after running the workflow",
-            m_type="gauge",
-            metric_labels=["resource_type", "state"],
+        if self.metrics is None:
+            raise ValueError(self._not_configured_message)
+
+        prom_cdf_resource_stats = cast(
+            Gauge,
+            self.metrics.register_metric(
+                "cdf_resources_stats",
+                "CDF resource stats before and after running the workflow",
+                m_type="gauge",
+                metric_labels=["resource_type", "state"],
+            ),
         )
         upload_assets(cdf_client, categorized_assets.assets, max_retries=2, retry_delay=4)
         count_create_assets = len(categorized_assets.assets["create"])
@@ -292,11 +307,11 @@ class UploadCDFAssets(Step):
 
         prom_cdf_resource_stats.labels(resource_type="asset", state="count_after_neat_update").set(total_assets_after)
         logging.info(f"Total count of assets in CDF after update: { total_assets_after }")
-        categorized_assets.assets = None  # free up memory after upload .
+        del categorized_assets.assets  # free up memory after upload .
         return FlowMessage(output_text=f"Total count of assets in CDF after update: { total_assets_after }")
 
 
-class GenerateCDFRelationshipsFromGraph(Step):
+class GenerateCDFRelationshipsFromGraph(Step[CategorizedRelationships]):
     """
     This step generates relationships from the graph and saves them to CategorizedRelationships object
     """
@@ -304,12 +319,12 @@ class GenerateCDFRelationshipsFromGraph(Step):
     description = "This step generates relationships from the graph and saves them to CategorizedRelationships object"
     category = CATEGORY
 
-    def run(
+    def run(  # type: ignore[override]
         self, rules: RulesData, cdf_client: CogniteClient, solution_graph: SolutionGraph
-    ) -> (FlowMessage, CategorizedRelationships):
+    ) -> tuple[FlowMessage, CategorizedRelationships]:
         # create, categorize and upload relationships
         rdf_relationships = rdf2relationships(
-            solution_graph.graph.get_graph(),
+            solution_graph.graph,
             rules.rules,
         )
 
@@ -318,12 +333,20 @@ class GenerateCDFRelationshipsFromGraph(Step):
         count_create_relationships = len(categorized_relationships["create"])
         count_decommission_relationships = len(categorized_relationships["decommission"])
         count_resurrect_relationships = len(categorized_relationships["resurrect"])
-        prom_cdf_resource_stats = self.metrics.register_metric(
-            "cdf_resources_stats",
-            "CDF resource stats before and after running the workflow",
-            m_type="gauge",
-            metric_labels=["resource_type", "state"],
+
+        if self.metrics is None:
+            raise ValueError(self._not_configured_message)
+
+        prom_cdf_resource_stats = cast(
+            Gauge,
+            self.metrics.register_metric(
+                "cdf_resources_stats",
+                "CDF resource stats before and after running the workflow",
+                m_type="gauge",
+                metric_labels=["resource_type", "state"],
+            ),
         )
+
         prom_cdf_resource_stats.labels(resource_type="relationships", state="defined").set(count_defined_relationships)
         prom_cdf_resource_stats.labels(resource_type="relationships", state="create").set(count_create_relationships)
         prom_cdf_resource_stats.labels(resource_type="relationships", state="decommission").set(
@@ -351,6 +374,10 @@ class UploadCDFRelationships(Step):
     description = "This step uploads relationships to CDF"
     category = CATEGORY
 
-    def run(self, cdf_client: CogniteClient, categorized_relationships: CategorizedRelationships) -> FlowMessage:
-        upload_relationships(cdf_client, categorized_relationships.relationships, max_retries=2, retry_delay=4)
+    def run(  # type: ignore[override]
+        self,
+        client: CogniteClient,
+        categorized_relationships: CategorizedRelationships,
+    ) -> FlowMessage:
+        upload_relationships(client, categorized_relationships.relationships, max_retries=2, retry_delay=4)
         return FlowMessage(output_text="CDF relationships uploaded successfully")

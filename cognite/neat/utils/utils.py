@@ -2,14 +2,16 @@ import hashlib
 import logging
 import time
 from collections import OrderedDict
+from collections.abc import Iterable
 from datetime import UTC, datetime
 from functools import wraps
-from typing import TypeAlias
+from typing import TypeAlias, cast, overload
 
 import pandas as pd
 from cognite.client import ClientConfig, CogniteClient
 from cognite.client.credentials import CredentialProvider, OAuthClientCredentials, OAuthInteractive, Token
 from cognite.client.exceptions import CogniteDuplicatedError, CogniteReadTimeout
+from pydantic_core import ErrorDetails
 from rdflib import Literal
 from rdflib.term import URIRef
 
@@ -98,7 +100,19 @@ def add_triples(graph_store: NeatGraphStore, triples: list[Triple], batch_size: 
     check_commit(force_commit=True)
 
 
-def remove_namespace(URI: URIRef | str, special_separator: str = "#_") -> str:
+@overload
+def remove_namespace(*URI: URIRef | str, special_separator: str = "#_") -> str:
+    ...
+
+
+@overload
+def remove_namespace(*URI: tuple[URIRef | str, ...], special_separator: str = "#_") -> tuple[str, ...]:
+    ...
+
+
+def remove_namespace(
+    *URI: URIRef | str | tuple[URIRef | str, ...], special_separator: str = "#_"
+) -> tuple[str, ...] | str:
     """Removes namespace from URI
 
     Parameters
@@ -112,10 +126,27 @@ def remove_namespace(URI: URIRef | str, special_separator: str = "#_") -> str:
     Returns
     -------
     str
-        Entity id without namespace
-    """
+        Entities id without namespace
 
-    return URI.split(special_separator if special_separator in URI else ("#" if "#" in URI else "/"))[-1]
+    Examples:
+
+        >>> remove_namespace("http://www.example.org/index.html#section2")
+        'section2'
+        >>> remove_namespace("http://www.example.org/index.html#section2", "http://www.example.org/index.html#section3")
+        ('section2', 'section3')
+    """
+    if isinstance(URI, str | URIRef):
+        uris = (URI,)
+    elif isinstance(URI, tuple):
+        # Assume that all elements in the tuple are of the same type following type hint
+        uris = cast(tuple[URIRef | str, ...], URI)
+    else:
+        raise TypeError(f"URI must be of type URIRef or str, got {type(URI)}")
+
+    output = tuple(
+        u.split(special_separator if special_separator in u else ("#" if "#" in u else "/"))[-1] for u in uris
+    )
+    return output if len(output) > 1 else output[0]
 
 
 def get_namespace(URI: URIRef, special_separator: str = "#_") -> str:
@@ -264,7 +295,7 @@ def create_sha256_hash(string: str) -> str:
     return hash_value
 
 
-def generate_exception_report(exceptions: list[dict], category: str = "") -> str:
+def generate_exception_report(exceptions: list[dict] | list[ErrorDetails] | None, category: str = "") -> str:
     exceptions_as_dict = _order_expectations_by_type(exceptions) if exceptions else {}
     report = ""
 
@@ -276,11 +307,11 @@ def generate_exception_report(exceptions: list[dict], category: str = "") -> str
     return report
 
 
-def _order_expectations_by_type(exceptions: list[dict]) -> dict[str, list[str]]:
+def _order_expectations_by_type(exceptions: list[dict] | list[ErrorDetails]) -> dict[str, list[str]]:
     exception_dict: dict[str, list[str]] = {}
     for exception in exceptions:
-        if exception["loc"]:
-            location = f"[{'/'.join(exception['loc'])}]"
+        if not isinstance(exception["loc"], str) and isinstance(exception["loc"], Iterable):
+            location = f"[{'/'.join((str(e) for e in exception['loc']))}]"
         else:
             location = ""
 

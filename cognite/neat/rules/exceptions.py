@@ -14,6 +14,7 @@ handling (such `rdfpath`), and rules loaders, parsers and exporters.
 
 from typing import Any
 
+from cognite.client.data_classes.data_modeling import ContainerId, DataModelId, ViewId
 from rdflib import Namespace, URIRef
 
 from cognite.neat.constants import DEFAULT_DOCS_URL
@@ -60,6 +61,32 @@ class PrefixRegexViolation(NeatException):
 
         self.message = (
             f"Invalid prefix '{self.prefix}' stored in 'Metadata' sheet, it must obey regex {self.regex_expression}!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class PrefixMissing(NeatException):
+    """Prefix, which is in the 'Metadata' sheet, is missing.
+
+    Args:
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    """
+
+    type_: str = "PrefixMissing"
+    code: int = 0
+    description: str = "Prefix is missing from the 'Metadata' sheet."
+    example: str = "There is no prefix in the 'Metadata' sheet."
+    fix: str = "Specify the prefix if prefix in the 'Metadata' sheet."
+
+    def __init__(self, verbose: bool = False):
+        self.message = (
+            f"Missing prefix stored in 'Metadata' sheet."
             f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
         if verbose:
@@ -139,6 +166,36 @@ class MetadataSheetNamespaceNotValidURL(NeatException):
         self.message = (
             f"Invalid namespace '{self.namespace}' stored in 'Metadata' sheet, it must be valid URL!"
             f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class MetadataSheetNamespaceNotDefined(NeatException):
+    """namespace, which is in the 'Metadata' sheet, is not defined
+
+    Args:
+        namespace: namespace that raised exception
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        Check if `namespace` in the `Metadata` sheet is properly constructed as valid URL
+        containing only allowed characters.
+
+    """
+
+    type_ = "MetadataSheetNamespaceNotDefined"
+    code: int = 2
+    description: str = "namespace, which is in the 'Metadata' sheet, is missing"
+    example: str = "Example of a valid namespace 'http://www.w3.org/ns/sparql'"
+    fix: str = "Define the 'namespace' in the 'Metadata' sheet."
+
+    def __init__(self, verbose: bool = False):
+        self.message = (
+            f"Missing namespace  in 'Metadata' sheet." f"\nFor more information visit: {DOCS_BASE_URL}.{self.type_}"
         )
         if verbose:
             self.message += f"\nDescription: {self.description}"
@@ -629,7 +686,7 @@ class FiledInMetadataSheetMissingOrFailedValidation(NeatException):
     example: str = ""
     fix: str = "Make sure to define compliant field in Metadata sheet before proceeding"
 
-    def __init__(self, missing_field: str, verbose: str = False):
+    def __init__(self, missing_field: str, verbose: bool = False):
         self.message = (
             f"Field {missing_field} is missing in the 'Metadata' sheet or it failed validation!"
             f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
@@ -1893,7 +1950,11 @@ class DataModelOrItsComponentsAlreadyExist(NeatException):
     )
 
     def __init__(
-        self, existing_data_model: str, existing_containers: set[str], existing_views: set[str], verbose: bool = False
+        self,
+        existing_data_model: DataModelId | None,
+        existing_containers: set[ContainerId],
+        existing_views: set[ViewId],
+        verbose: bool = False,
     ):
         self.existing_data_model = existing_data_model
         self.existing_containers = existing_containers
@@ -2091,7 +2152,7 @@ class OntologyMultiLabeledProperty(NeatWarning):
         self.message = (
             "Property should have single preferred label (human readable name)."
             f"Currently property '{property_id}' has multiple preferred labels: {', '.join(names or [])} !"
-            f"Only the first name, i.e. '{names[0]}' will be considered!"
+            f"Only the first name, i.e. '{names[0] if names else ''}' will be considered!"
             f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
         if verbose:
@@ -2300,7 +2361,7 @@ class ContainersAlreadyExist(NeatWarning):
     example: str = ""
     fix: str = "Remove existing containers and try again."
 
-    def __init__(self, container_ids: set[str] | None = None, space: str = "", verbose: bool = False):
+    def __init__(self, container_ids: set[ContainerId] | None = None, space: str = "", verbose: bool = False):
         self.message = (
             f"Containers {container_ids or set()} already exist in space {space}. "
             "Since update of containers can cause issues, "
@@ -2334,7 +2395,7 @@ class ViewsAlreadyExist(NeatWarning):
     example: str = ""
     fix: str = "Remove existing views and try again or update version of data model."
 
-    def __init__(self, views_ids: set[str] | None = None, version: str = "", space: str = "", verbose: bool = False):
+    def __init__(self, views_ids: set[ViewId] | None = None, version: str = "", space: str = "", verbose: bool = False):
         self.message = (
             f"Views {views_ids or set()} version {version} already exist in space {space}. "
             "Since update of views raise issues, "

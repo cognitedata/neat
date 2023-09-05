@@ -7,6 +7,7 @@ to TransformationRules for purpose of for example:
 import logging
 import re
 import warnings
+from typing import Any
 
 from cognite.neat.rules.analysis import get_defined_classes
 from cognite.neat.rules.models import TransformationRules
@@ -46,12 +47,12 @@ def subset_rules(
             f"Could not find the following classes defined in the data model: {impossible_classes}", stacklevel=2
         )
 
-    reduced_data_model = {
-        "metadata": transformation_rules.metadata,
-        "prefixes": transformation_rules.prefixes,
+    reduced_data_model: dict[str, Any] = {
+        "metadata": transformation_rules.metadata.model_copy(),
+        "prefixes": (transformation_rules.prefixes or {}).copy(),
         "classes": {},
         "properties": {},
-        "instances": transformation_rules.instances,
+        "instances": (transformation_rules.instances or []).copy(),
     }
 
     logging.info(f"Reducing data model to only include the following classes: {possible_classes}")
@@ -63,13 +64,13 @@ def subset_rules(
             reduced_data_model["properties"][id_] = property_definition
 
     if skip_validation:
-        return TransformationRules.construct(**reduced_data_model)
+        return TransformationRules.model_construct(**reduced_data_model)
     else:
         return TransformationRules(**reduced_data_model)
 
 
 def to_dms_compliant_rules(rules: TransformationRules) -> TransformationRules:
-    ...
+    raise NotImplementedError()
 
 
 # to be used for conversion to DMS compliant format

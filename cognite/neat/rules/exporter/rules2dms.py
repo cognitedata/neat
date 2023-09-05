@@ -3,7 +3,7 @@
 
 import logging
 import warnings
-from typing import ClassVar, Self
+from typing import ClassVar, Self, cast
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import (
@@ -11,13 +11,18 @@ from cognite.client.data_classes.data_modeling import (
     ContainerId,
     ContainerProperty,
     DataModelApply,
+    DataModelId,
     DirectRelation,
     DirectRelationReference,
     MappedPropertyApply,
-    SingleHopConnectionDefinition,
     SpaceApply,
     ViewApply,
     ViewId,
+)
+from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
+from cognite.client.data_classes.data_modeling.views import (
+    ConnectionDefinitionApply,
+    SingleHopConnectionDefinitionApply,
 )
 from pydantic import BaseModel, ConfigDict
 
@@ -86,6 +91,10 @@ class DataModel(BaseModel):
             )
             raise exceptions.PropertiesDefinedMultipleTimes(report=generate_exception_report(redefinition_warnings))
 
+        if transformation_rules.metadata.data_model_name is None:
+            logging.error(exceptions.DataModelNameMissing(prefix=transformation_rules.metadata.prefix).message)
+            raise exceptions.DataModelNameMissing(prefix=transformation_rules.metadata.prefix)
+
         return cls(
             space=transformation_rules.metadata.cdf_space_name,
             external_id=transformation_rules.metadata.data_model_name,
@@ -132,10 +141,11 @@ class DataModel(BaseModel):
         for property_id, property_definition in properties.items():
             # Literal, i.e. attribute
             if property_definition.property_type == "DatatypeProperty":
+                property_type = cast(
+                    type[ListablePropertyType], DATA_TYPE_MAPPING[property_definition.expected_value_type]["dms"]
+                )
                 container_properties[property_id] = ContainerProperty(
-                    type=DATA_TYPE_MAPPING[property_definition.expected_value_type]["dms"](
-                        is_list=property_definition.max_count != 1
-                    ),
+                    type=property_type(is_list=property_definition.max_count != 1),
                     nullable=property_definition.min_count == 0,
                     default_value=property_definition.default,
                     name=property_definition.property_name,
@@ -190,8 +200,8 @@ class DataModel(BaseModel):
     @staticmethod
     def view_properties_from_dict(
         properties: dict[str, Property], space: str, version: str
-    ) -> dict[str, MappedPropertyApply | SingleHopConnectionDefinition]:
-        view_properties = {}
+    ) -> dict[str, MappedPropertyApply | ConnectionDefinitionApply]:
+        view_properties: dict[str, MappedPropertyApply | ConnectionDefinitionApply] = {}
         for property_id, property_definition in properties.items():
             # attribute
             if property_definition.property_type == "DatatypeProperty":
@@ -214,7 +224,7 @@ class DataModel(BaseModel):
 
             # edge 1-many
             elif property_definition.property_type == "ObjectProperty" and property_definition.max_count != 1:
-                view_properties[property_id] = SingleHopConnectionDefinition(
+                view_properties[property_id] = SingleHopConnectionDefinitionApply(
                     type=DirectRelationReference(
                         space=space, external_id=f"{property_definition.class_id}.{property_definition.property_id}"
                     ),
@@ -254,7 +264,7 @@ class DataModel(BaseModel):
         self.create_views(client)
         self.create_data_model(client)
 
-    def find_existing_data_model(self, client: CogniteClient) -> set[str]:
+    def find_existing_data_model(self, client: CogniteClient) -> DataModelId | None:
         """Checks if the data model exists in CDF.
 
         Args:
@@ -272,11 +282,10 @@ class DataModel(BaseModel):
                 stacklevel=2,
             )
 
-            return {cdf_data_model.external_id}
-        else:
-            return set()
+            return cdf_data_model.as_id()
+        return None
 
-    def find_existing_containers(self, client: CogniteClient) -> set[str]:
+    def find_existing_containers(self, client: CogniteClient) -> set[ContainerId]:
         """Checks if the containers exist in CDF.
 
         Args:
@@ -288,9 +297,11 @@ class DataModel(BaseModel):
 
         cdf_containers = {}
         if containers := client.data_modeling.containers.list(space=self.space, limit=-1):
-            cdf_containers = {container.external_id: container for container in containers}
+            cdf_containers = {container.as_id(): container for container in containers}
 
-        if existing_containers := set(self.containers.keys()).intersection(set(cdf_containers.keys())):
+        if existing_containers := {c.as_id() for c in self.containers.values()}.intersection(
+            set(cdf_containers.keys())
+        ):
             logging.warning(exceptions.ContainersAlreadyExist(existing_containers, self.space).message)
             warnings.warn(
                 exceptions.ContainersAlreadyExist(existing_containers, self.space).message,
@@ -302,7 +313,7 @@ class DataModel(BaseModel):
         else:
             return set()
 
-    def find_existing_views(self, client: CogniteClient) -> set[str]:
+    def find_existing_views(self, client: CogniteClient) -> set[ViewId]:
         """Checks if the views exist in CDF.
 
         Args:
@@ -313,9 +324,9 @@ class DataModel(BaseModel):
         """
         cdf_views = {}
         if views := client.data_modeling.views.list(space=self.space, limit=-1):
-            cdf_views = {view.external_id: view for view in views if view.version == self.version}
+            cdf_views = {view.as_id(): view for view in views if view.version == self.version}
 
-        if existing_views := set(self.views.keys()).intersection(set(cdf_views.keys())):
+        if existing_views := {v.as_id() for v in self.views.values()}.intersection(set(cdf_views.keys())):
             logging.warning(exceptions.ViewsAlreadyExist(existing_views, self.version, self.space).message)
             warnings.warn(
                 exceptions.ViewsAlreadyExist(existing_views, self.version, self.space).message,

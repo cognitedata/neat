@@ -159,7 +159,7 @@ def generate_parse_traversal():
     )
     yield pytest.param(
         "cim:Terminal->cim:ConnectivityNode->cim:VoltageLevel->cim:Substation",
-        Hop(
+        Hop.from_string(
             class_="cim:Terminal",
             traversal=[
                 Step.from_string(raw=step)
@@ -170,7 +170,7 @@ def generate_parse_traversal():
     )
     yield pytest.param(
         "cim:Substation<-cim:VoltageLevel<-cim:ConnectivityNode<-cim:Terminal",
-        Hop(
+        Hop.from_string(
             class_="cim:Substation",
             traversal=[
                 Step.from_string(raw=step)
@@ -181,7 +181,7 @@ def generate_parse_traversal():
     )
     yield pytest.param(
         "cim:HydroPump<-cim:SynchronousMachine->cim:VoltageLevel->cim:Substation",
-        Hop(
+        Hop.from_string(
             class_="cim:HydroPump",
             traversal=[
                 Step.from_string(raw=step)
@@ -193,7 +193,7 @@ def generate_parse_traversal():
 
     yield pytest.param(
         "cim:Terminal->cim:ConnectivityNode->cim:VoltageLevel->cim:Substation(cim:IdentifiedObject.name)",
-        Hop(
+        Hop.from_string(
             class_="cim:Terminal",
             traversal=[
                 Step.from_string(raw=step)
@@ -208,7 +208,7 @@ def generate_parse_traversal():
     )
     yield pytest.param(
         "cim:Substation<-cim:VoltageLevel<-cim:ConnectivityNode<-cim:Terminal(cim:IdentifiedObject.name)",
-        Hop(
+        Hop.from_string(
             class_="cim:Substation",
             traversal=[
                 Step.from_string(raw=step)
@@ -223,7 +223,7 @@ def generate_parse_traversal():
     )
     yield pytest.param(
         "cim:HydroPump<-cim:SynchronousMachine->cim:VoltageLevel->cim:Substation(cim:IdentifiedObject.name)",
-        Hop(
+        Hop.from_string(
             class_="cim:HydroPump",
             traversal=[
                 Step.from_string(raw=step)

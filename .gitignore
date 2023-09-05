@@ -163,3 +163,6 @@ cognite/neat/ui/neat-app/node_modules
 # local notebooks
 local/
 playground/
+
+tests/data/report.txt
+tests/data/transformation_rules.xlsx

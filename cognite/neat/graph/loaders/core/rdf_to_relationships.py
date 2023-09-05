@@ -1,5 +1,6 @@
 import logging
 import warnings
+from typing import Literal, overload
 from warnings import warn
 
 import pandas as pd
@@ -329,6 +330,32 @@ def _relationships_to_resurrect(external_ids: list[str]) -> list[RelationshipUpd
 
     logging.info(f"Wrangling of {len(relationships)} completed in {(datetime_utc_now() - start_time).seconds} seconds")
     return relationships
+
+
+class Lite:
+    pass
+
+
+@overload
+def categorize_relationships(
+    client: CogniteClient,
+    rdf_relationships: pd.DataFrame,
+    data_set_id: int,
+    partitions: int = 40,
+    return_report: Literal[False] = False,
+) -> dict[str, list[Relationship | RelationshipUpdate]]:
+    ...
+
+
+@overload
+def categorize_relationships(
+    client: CogniteClient,
+    rdf_relationships: pd.DataFrame,
+    data_set_id: int,
+    partitions: int = 40,
+    return_report: Literal[True] = False,
+) -> tuple[dict[str, list[Relationship | RelationshipUpdate]], dict[str, set]]:
+    ...
 
 
 def categorize_relationships(
