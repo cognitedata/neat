@@ -63,7 +63,7 @@ class UploadDMSDataModel(Step):
         output_text = (
             f"DMS Data Model <b><code>{data_model.data_model.external_id}</code></b> version"
             f" <b><code>{data_model.data_model.version}</code></b> uploaded to space"
-            f" <b><code>{data_model.space}</code></b> containing:<ul>"
+            f" <b><code>{data_model.data_model.space}</code></b> containing:<ul>"
             f"<li> {len(data_model.data_model.containers)} containers</li>"
             f"<li> {len(data_model.data_model.views)} views</li></ul>"
         )
