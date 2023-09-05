@@ -404,9 +404,9 @@ def workbook_to_table_by_name(workbook: Workbook) -> dict[str, pd.DataFrame]:
             table[sheetname] = pd.DataFrame(data, columns=None)
         if sheetname == "Prefixes":
             columns = next(data)[:]
-            table[sheetname] = pd.DataFrame(data,columns=columns).dropna(how="all")
+            table[sheetname] = pd.DataFrame(data, columns=columns).dropna(how="all")
         if sheetname in ["Classes", "Properties", "Instances"]:
             next(data)
             columns = next(data)[:]
-            table[sheet.title] = pd.DataFrame(data, columns=columns).dropna(how="all")   
+            table[sheet.title] = pd.DataFrame(data, columns=columns).dropna(how="all")
     return table

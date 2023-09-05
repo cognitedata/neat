@@ -17,6 +17,7 @@ __all__ = ["LoadTransformationRules"]
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
 
+
 class LoadTransformationRules(Step[RulesData]):
     """
     This step loads transformation rules from the file or remote location
