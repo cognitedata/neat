@@ -3,14 +3,7 @@ import time
 from pathlib import Path
 from typing import ClassVar
 
-from openpyxl import Workbook
-
-from cognite.neat.rules.parser import (
-    from_tables,
-    parse_rules_from_excel_file,
-    read_github_sheet_to_workbook,
-    workbook_to_table_by_name,
-)
+from cognite.neat.rules.parser import parse_rules_from_excel_file
 from cognite.neat.utils.utils import generate_exception_report
 from cognite.neat.workflows import utils
 from cognite.neat.workflows.cdf_store import CdfStore
@@ -18,11 +11,9 @@ from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import RulesData
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
-__all__ = ["LoadTransformationRules", "DownloadTransformationRulesFromGitHub"]
+__all__ = ["LoadTransformationRules"]
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
-
-__all__ = ["LoadTransformationRules", "DownloadTransformationRulesFromGitHub"]
 
 
 class LoadTransformationRules(Step):
@@ -52,7 +43,7 @@ class LoadTransformationRules(Step):
         Configurable(
             name="file_name",
             value="rules.xlsx",
-            label="Full name of the rules file",
+            label="Full name of the rules file. The file should be stored in the rules directory.",
         ),
         Configurable(name="version", value="", label="Optional version of the rules file"),
     ]
@@ -116,72 +107,3 @@ class LoadTransformationRules(Step):
         )
 
         return FlowMessage(output_text=output_text), RulesData(rules=transformation_rules)
-
-
-class DownloadTransformationRulesFromGitHub(Step):
-    """
-    This step fetches and stores transformation rules from private Github repository
-    """
-
-    description = "This step fetches and stores transformation rules from private Github repository"
-    category = CATEGORY
-    configurables: ClassVar[list[Configurable]] = [
-        Configurable(
-            name="github.filepath",
-            value="",
-            label="File path to Transformation Rules stored on Github",
-        ),
-        Configurable(
-            name="github.personal_token",
-            value="",
-            label="Github Personal Access Token which allows fetching file from private Github repository",
-            type="password",
-        ),
-        Configurable(
-            name="github.owner",
-            value="",
-            label="Github repository owner, also know as github organization",
-        ),
-        Configurable(
-            name="github.repo",
-            value="",
-            label="Github repository from which Transformation Rules file is being fetched",
-        ),
-        Configurable(
-            name="github.branch",
-            value="main",
-            label="Github repository branch from which Transformation Rules file is being fetched",
-        ),
-    ]
-
-    def run(self) -> (FlowMessage, RulesData):
-        github_filepath = self.configs["github.filepath"]
-        github_personal_token = self.configs["github.personal_token"]
-        github_owner = self.configs["github.owner"]
-        github_repo = self.configs["github.repo"]
-        github_branch = self.configs["github.branch"]
-        local_file_name = self.configs["rules.file"] or Path(github_filepath).name
-
-        logging.info(f"{local_file_name} local file name")
-
-        workbook: Workbook = read_github_sheet_to_workbook(
-            github_filepath, github_personal_token, github_owner, github_repo, github_branch
-        )
-
-        workbook.save(Path(self.data_store_path, "rules", local_file_name))
-
-        output_text = (
-            "<p></p>"
-            f" Downloaded rules file <b>{Path(github_filepath).name}</b> from:"
-            f'<p><a href="https://github.com/{github_owner}/{github_repo}/tree/{github_branch}"'
-            f'target="_blank">https://github.com/{github_owner}/{github_repo}/tree/{github_branch}</a></p>'
-        )
-
-        output_text += (
-            "<p></p>"
-            " Downloaded rules accessible locally under file name "
-            f'<a href="http://localhost:8000/data/rules/{local_file_name}?{time.time()}" '
-            f'target="_blank">{local_file_name}</a>'
-        )
-
-        return FlowMessage(output_text=output_text), RulesData(rules=from_tables(workbook_to_table_by_name(workbook)))

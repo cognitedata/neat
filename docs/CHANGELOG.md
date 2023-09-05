@@ -15,6 +15,17 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.25.3] - 4-09-23
+
+### Fixed
+- Fixed Github rules loader.
+
+### Changed
+- Github rules loader now split into Github downloader step and RulesLoader.
+
+### Added
+- Added Input/Output steps for downloading and uploading rules from/to Github and from/to CDF files.
+
 ## [0.25.2] - 1-09-23
 
 ### Fixed
