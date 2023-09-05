@@ -3,6 +3,8 @@ import time
 from pathlib import Path
 from typing import ClassVar, cast
 
+from prometheus_client import Gauge
+
 from cognite.neat.rules.parser import parse_rules_from_excel_file
 from cognite.neat.utils.utils import generate_exception_report
 from cognite.neat.workflows import utils
