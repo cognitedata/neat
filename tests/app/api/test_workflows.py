@@ -200,7 +200,8 @@ def test_query(
     content = response.json()
 
     assert response.status_code == 200
-    assert content["fields"] == ["class"]
+    assert content, "Missing content"
+    assert content["fields"] == ["class"], f"Missing fields, got {content}"
     assert len(content["rows"]) == 59
     assert len(content["rows"]) == 59
     assert {"class": "http://iec.ch/TC57/2013/CIM-schema-cim16#Terminal"} in content["rows"]
