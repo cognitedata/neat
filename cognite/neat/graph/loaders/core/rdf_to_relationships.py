@@ -148,7 +148,7 @@ def rdf2relationships(
             relationship_data_frame.rename(columns={0: "source_external_id", 1: "target_external_id"}, inplace=True)
 
             # removes namespace
-            relationship_data_frame = relationship_data_frame.applymap(remove_namespace)
+            relationship_data_frame = relationship_data_frame.map(remove_namespace)
 
             # adding prefix
             if transformation_rules.metadata.externalIdPrefix:
@@ -186,6 +186,7 @@ def rdf2relationships(
 
         # Remove duplicate rows, if any. This should not happen, but it is better to be safe than sorry
         relationship_data_frames.drop_duplicates(subset=["external_id"], inplace=True)
+        relationship_data_frames["start_time"] = len(relationship_data_frames) * [epoch_now_ms()]
         return relationship_data_frames
     else:
         return pd.DataFrame(
@@ -197,6 +198,7 @@ def rdf2relationships(
                 "labels",
                 "external_id",
                 "data_set_id",
+                "start_time",
             ]
         )
 
