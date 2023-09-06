@@ -12,7 +12,7 @@ from cognite.neat.app.api.utils.query_templates import query_templates
 from cognite.neat.constants import EXAMPLE_WORKFLOWS
 from cognite.neat.rules.models import TransformationRules
 from cognite.neat.workflows.base import BaseWorkflow
-from cognite.neat.workflows.model import WorkflowConfigItem, WorkflowDefinition
+from cognite.neat.workflows.model import WorkflowDefinition
 from tests.app.api.memory_cognite_client import MemoryClient
 
 
@@ -184,9 +184,11 @@ def test_query(
 ):
     # Act
     workflow = neat_app.workflow_manager.get_workflow(workflow_name)
-    configs = workflow.get_configs()
-    configs.set_config_item(WorkflowConfigItem(name="source_rdf_store.type", value="memory"))
-    configs.set_config_item(WorkflowConfigItem(name="solution_rdf_store.type", value="memory"))
+    workflow_defintion = workflow.get_workflow_definition()
+    for step in workflow_defintion.steps:
+        if step.method == "ConfigureGraphStore":
+            step.configs["store_type"] = "memory"
+
     workflow.enable_step("step_generate_assets", False)
     neat_app.workflow_manager.start_workflow_instance(workflow_name, sync=True)
 
