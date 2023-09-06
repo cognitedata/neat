@@ -1,6 +1,6 @@
 import logging
 import warnings
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, fields
 from datetime import UTC, datetime
 from typing import Any, Self, overload
@@ -9,7 +9,7 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 from cognite.client import CogniteClient
-from cognite.client.data_classes import Asset, AssetHierarchy, AssetList
+from cognite.client.data_classes import Asset, AssetHierarchy, AssetList, AssetUpdate
 from cognite.client.exceptions import CogniteDuplicatedError
 from deepdiff import DeepDiff
 from rdflib import Graph, Namespace
@@ -212,7 +212,7 @@ def _class2asset_instance(
     fallback_property: str = NeatMetadataKeys.identifier,
     empty_name_default: str = "Missing Name",
     add_missing_metadata: bool = True,
-) -> dict:
+) -> dict[str, Any]:
     """Converts class instance to asset instance dictionary
 
     Args:
@@ -824,7 +824,7 @@ def categorize_assets(
 
 def _micro_batch_push(
     client: CogniteClient,
-    assets: list,
+    assets: list[Asset | AssetUpdate],
     batch_size: int = 1000,
     push_type: str = "update",
     message: str = "Updated",
@@ -877,7 +877,7 @@ def _micro_batch_push(
 
 def upload_assets(
     client: CogniteClient,
-    categorized_assets: dict[str, Sequence[Asset]],
+    categorized_assets: Mapping[str, Sequence[Asset | AssetUpdate]],
     batch_size: int = 5000,
     max_retries: int = 1,
     retry_delay: int = 3,

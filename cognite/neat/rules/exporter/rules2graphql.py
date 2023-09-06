@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Self
+from typing import TYPE_CHECKING, Self
 
 from cognite.neat.rules import exceptions
 from cognite.neat.rules._validation import (
@@ -9,6 +9,9 @@ from cognite.neat.rules._validation import (
 from cognite.neat.rules.analysis import to_class_property_pairs
 from cognite.neat.rules.models import DATA_TYPE_MAPPING, TransformationRules
 from cognite.neat.utils.utils import generate_exception_report
+
+if TYPE_CHECKING:
+    from jinja2 import Template
 
 _TYPE = (
     "{% include 'type_header' %}type {{ class_definition.class_id }} {{'{'}}"
@@ -140,7 +143,7 @@ class GraphQLSchema:
         return "\n\n".join(type_definitions)
 
     @staticmethod
-    def template():
+    def template() -> "Template":
         from jinja2 import DictLoader, Environment, Template
 
         template: Template = Environment(

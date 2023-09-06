@@ -49,6 +49,12 @@ class Ontology(OntologyModel):
         if properties_redefined:
             raise exceptions.PropertiesDefinedMultipleTimes(report=generate_exception_report(redefinition_warnings))
 
+        if transformation_rules.prefixes is None:
+            raise exceptions.PrefixMissing()
+
+        if transformation_rules.metadata.namespace is None:
+            raise exceptions.MissingDataModelPrefixOrNamespace()
+
         return cls(
             properties=[
                 OWLProperty.from_list_of_properties(
@@ -91,7 +97,7 @@ class Ontology(OntologyModel):
 
         for shape in self.shapes:
             for triple in shape.triples:
-                shacl.add(triple)
+                shacl.add(triple)  # type: ignore[arg-type]
 
         return shacl
 
@@ -107,17 +113,20 @@ class Ontology(OntologyModel):
         for prefix, namespace in self.prefixes.items():
             owl.bind(prefix, namespace)
 
+        if self.metadata.namespace is None:
+            raise exceptions.MetadataSheetNamespaceNotDefined()
+
         owl.add((URIRef(self.metadata.namespace), RDF.type, OWL.Ontology))
         for property_ in self.properties:
             for triple in property_.triples:
-                owl.add(triple)
+                owl.add(triple)  # type: ignore[arg-type]
 
         for class_ in self.classes:
             for triple in class_.triples:
-                owl.add(triple)
+                owl.add(triple)  # type: ignore[arg-type]
 
         for triple in self.metadata.triples:
-            owl.add(triple)
+            owl.add(triple)  # type: ignore[arg-type]
 
         return owl
 
@@ -150,7 +159,9 @@ class OWLMetadata(Metadata):
     @property
     def triples(self) -> list[tuple]:
         # Mandatory triples originating from Metadata mandatory fields
-        triples = [
+        if self.namespace is None:
+            raise exceptions.MetadataSheetNamespaceNotDefined()
+        triples: list[tuple] = [
             (URIRef(self.namespace), DCTERMS.hasVersion, Literal(self.version)),
             (URIRef(self.namespace), OWL.versionInfo, Literal(self.version)),
             (URIRef(self.namespace), RDFS.label, Literal(self.title)),
@@ -250,31 +261,30 @@ class OWLProperty(OntologyModel):
 
         if not cls.same_property_id(definitions):
             raise exceptions.PropertyDefinitionsNotForSameProperty()
-
-        prop_dict = {
-            "id_": namespace[definitions[0].property_id],
-            "type_": set(),
-            "label": set(),
-            "comment": set(),
-            "domain": set(),
-            "range_": set(),
-        }
-
+        owl_property = cls.model_construct(
+            id_=namespace[definitions[0].property_id],
+            namespace=namespace,
+            label=set(),
+            comment=set(),
+            domain=set(),
+            range_=set(),
+            type_=set(),
+        )
         for definition in definitions:
-            prop_dict["type_"].add(OWL[definition.property_type])
-            prop_dict["range_"].add(
+            owl_property.type_.add(OWL[definition.property_type])
+            owl_property.range_.add(
                 XSD[definition.expected_value_type]
                 if definition.expected_value_type in DATA_TYPE_MAPPING
                 else namespace[definition.expected_value_type]
             )
-            prop_dict["domain"].add(namespace[definition.class_id])
+            owl_property.domain.add(namespace[definition.class_id])
 
             if definition.property_name:
-                prop_dict["label"].add(definition.property_name)
+                owl_property.label.add(definition.property_name)
             if definition.description:
-                prop_dict["comment"].add(definition.description)
+                owl_property.comment.add(definition.description)
 
-        return cls(**prop_dict, namespace=namespace)
+        return owl_property
 
     @field_validator("type_")
     def is_multi_type(cls, v, info: FieldValidationInfo):
@@ -334,7 +344,7 @@ class OWLProperty(OntologyModel):
 
     @property
     def domain_triples(self) -> list[tuple]:
-        triples = []
+        triples: list[tuple] = []
         if len(self.domain) == 1:
             triples.append((self.id_, RDFS.domain, next(iter(self.domain))))
         else:
@@ -350,7 +360,7 @@ class OWLProperty(OntologyModel):
 
     @property
     def range_triples(self) -> list[tuple]:
-        triples = []
+        triples: list[tuple] = []
         if len(self.range_) == 1:
             triples.append((self.id_, RDFS.range, next(iter(self.range_))))
         else:
@@ -404,7 +414,7 @@ class SHACLNodeShape(OntologyModel):
 
     @property
     def property_shapes_triples(self) -> list[tuple]:
-        triples = []
+        triples: list[tuple] = []
         for property_shape in self.property_shapes:
             triples.append((self.id_, SHACL.property, property_shape.id_))
             triples.extend(property_shape.triples)
@@ -442,7 +452,7 @@ class SHACLPropertyShape(OntologyModel):
 
     @property
     def node_kind_triples(self) -> list[tuple]:
-        triples = [(self.id_, SHACL.nodeKind, self.node_kind)]
+        triples: list[tuple] = [(self.id_, SHACL.nodeKind, self.node_kind)]
 
         if self.node_kind == SHACL.Literal:
             triples.append((self.id_, SHACL.datatype, self.expected_value_type))
@@ -453,7 +463,7 @@ class SHACLPropertyShape(OntologyModel):
 
     @property
     def cardinality_triples(self) -> list[tuple]:
-        triples = []
+        triples: list[tuple] = []
         if self.min_count:
             triples.append((self.id_, SHACL.minCount, Literal(self.min_count)))
         if self.max_count:

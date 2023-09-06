@@ -1,3 +1,4 @@
+from pathlib import Path
 from urllib.parse import quote
 
 import pytest
@@ -11,14 +12,23 @@ from cognite.neat.app.api.utils.query_templates import query_templates
 from cognite.neat.constants import EXAMPLE_WORKFLOWS
 from cognite.neat.rules.models import TransformationRules
 from cognite.neat.workflows.base import BaseWorkflow
-from cognite.neat.workflows.model import WorkflowConfigItem, WorkflowDefinition
+from cognite.neat.workflows.model import WorkflowDefinition
 from tests.app.api.memory_cognite_client import MemoryClient
 
 
 @pytest.fixture(scope="session")
-def workflow_definitions() -> list[WorkflowDefinition]:
+def workflow_directories() -> list[Path]:
+    return [
+        example
+        for example in EXAMPLE_WORKFLOWS.iterdir()
+        if not example.name.startswith(".") and not example.name.startswith("_")
+    ]
+
+
+@pytest.fixture(scope="session")
+def workflow_definitions(workflow_directories: list[Path]) -> list[WorkflowDefinition]:
     definitions = []
-    for example in EXAMPLE_WORKFLOWS.iterdir():
+    for example in workflow_directories:
         definition = (example / "workflow.yaml").read_text()
         loaded = BaseWorkflow.deserialize_definition(definition, "yaml")
         definitions.append(loaded)
@@ -26,8 +36,8 @@ def workflow_definitions() -> list[WorkflowDefinition]:
 
 
 @pytest.fixture(scope="session")
-def workflow_names() -> list[str]:
-    return [example.name for example in EXAMPLE_WORKFLOWS.iterdir() if not example.name.startswith(".")]
+def workflow_names(workflow_directories: list[Path]) -> list[str]:
+    return [example.name for example in workflow_directories]
 
 
 def test_workflow_workflows(workflow_names: list[str], fastapi_client: TestClient):
@@ -174,9 +184,11 @@ def test_query(
 ):
     # Act
     workflow = neat_app.workflow_manager.get_workflow(workflow_name)
-    configs = workflow.get_configs()
-    configs.set_config_item(WorkflowConfigItem(name="source_rdf_store.type", value="memory"))
-    configs.set_config_item(WorkflowConfigItem(name="solution_rdf_store.type", value="memory"))
+    workflow_defintion = workflow.get_workflow_definition()
+    for step in workflow_defintion.steps:
+        if step.method == "ConfigureGraphStore":
+            step.configs["store_type"] = "memory"
+
     workflow.enable_step("step_generate_assets", False)
     neat_app.workflow_manager.start_workflow_instance(workflow_name, sync=True)
 
@@ -190,7 +202,8 @@ def test_query(
     content = response.json()
 
     assert response.status_code == 200
-    assert content["fields"] == ["class"]
+    assert content, "Missing content"
+    assert content["fields"] == ["class"], f"Missing fields, got {content}"
     assert len(content["rows"]) == 59
     assert len(content["rows"]) == 59
     assert {"class": "http://iec.ch/TC57/2013/CIM-schema-cim16#Terminal"} in content["rows"]

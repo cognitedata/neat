@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.284
+    rev: v0.0.287
     hooks:
       -   id: ruff
           args:
@@ -33,7 +33,7 @@ repos:
       name: mypy
       # Gradually, the entire codebase should be checked by mypy, plan is to gradually add mypy for each
       # module as we refactor it.
-      entry: dmypy run -- cognite/neat/utils/
+      entry: dmypy run -- cognite/neat/utils cognite/neat/rules
       files: ^.*.(py|pyi)$
       language: system
       pass_filenames: false

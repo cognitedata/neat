@@ -1,8 +1,10 @@
 import logging
 import uuid
 from pathlib import Path
+from typing import cast
 
 from openpyxl import Workbook
+from openpyxl.cell import Cell
 from openpyxl.styles import Alignment, Border, Font, NamedStyle, PatternFill, Side
 from openpyxl.utils.cell import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
@@ -101,10 +103,12 @@ def _add_drop_down_list(workbook: Workbook, sheet: str, column: str, no_rows: in
 def _adjust_column_width(workbook: Workbook):
     """Adjusts the column width based on the content"""
     for sheet in workbook.sheetnames:
-        for column in workbook[sheet].columns:
-            if column[0].value:
-                adjusted_width = (len(str(column[0].value)) + 5) * 1.2
-                workbook[sheet].column_dimensions[column[0].column_letter].width = adjusted_width
+        for cell_tuple in workbook[sheet].columns:
+            # Wrong type annotation in openpyxl
+            cell = cast(Cell, cell_tuple[0])  # type: ignore[index]
+            if cell.value:
+                adjusted_width = (len(str(cell.value)) + 5) * 1.2
+                workbook[sheet].column_dimensions[cell.column_letter].width = adjusted_width
 
 
 def _set_header_style(workbook: Workbook):
@@ -116,10 +120,12 @@ def _set_header_style(workbook: Workbook):
     workbook.add_named_style(style)
 
     for sheet in workbook.sheetnames:
-        for column in workbook[sheet].columns:
-            workbook[sheet][f"{column[0].column_letter}1"].style = style
-            if f"{column[0].column_letter}1" == "A1":
-                workbook[sheet][f"{column[0].column_letter}1"].fill = PatternFill("solid", start_color="2FB5F2")
+        for cell_tuple in workbook[sheet].columns:
+            # Wrong type annotation in openpyxl
+            cell = cast(Cell, cell_tuple[0])  # type: ignore[index]
+            workbook[sheet][f"{cell.column_letter}1"].style = style
+            if f"{cell.column_letter}1" == "A1":
+                workbook[sheet][f"{cell.column_letter}1"].fill = PatternFill("solid", start_color="2FB5F2")
             else:
-                workbook[sheet][f"{column[0].column_letter}1"].fill = PatternFill("solid", start_color="FFB202")
-            workbook[sheet][f"{column[0].column_letter}1"].alignment = Alignment(horizontal="center", vertical="center")
+                workbook[sheet][f"{cell.column_letter}1"].fill = PatternFill("solid", start_color="FFB202")
+            workbook[sheet][f"{cell.column_letter}1"].alignment = Alignment(horizontal="center", vertical="center")

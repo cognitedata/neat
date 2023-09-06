@@ -113,8 +113,8 @@ def are_properties_redefined(
 
 
 def property_ids_camel_case_compliant(transformation_rules) -> bool | tuple[bool, list[dict]]:
-    ...
+    raise NotImplementedError()
 
 
 def class_id_pascal_case_compliant(transformation_rules) -> bool | tuple[bool, list[dict]]:
-    ...
+    raise NotImplementedError()

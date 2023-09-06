@@ -244,7 +244,7 @@ SELECT ?class ?name ?description ?parentClass ?deprecated ?deprecationDate
     clean_list = [
         [
             class_,
-            group_df.Name.unique()[0],
+            group_df["Name"].unique()[0],
             "\n".join(list(group_df.Description.unique())),
             ", ".join(list(group_df["Parent Class"].unique())),
             group_df.Deprecated.unique()[0],
@@ -319,7 +319,7 @@ def _parse_owl_properties_df(graph: Graph, parsing_config: dict | None = None) -
                 [
                     class_,
                     property_,
-                    property_grouped_df.Name.unique()[0],
+                    property_grouped_df["Name"].unique()[0],
                     "\n".join(list(property_grouped_df.Description.unique())),
                     property_grouped_df.Type.unique()[0],
                     property_grouped_df["Min Count"].unique()[0],

@@ -1,7 +1,9 @@
 import logging
 import time
 from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, cast
+
+from prometheus_client import Gauge
 
 from cognite.neat.rules.parser import parse_rules_from_excel_file
 from cognite.neat.utils.utils import generate_exception_report
@@ -16,7 +18,7 @@ __all__ = ["LoadTransformationRules"]
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
 
 
-class LoadTransformationRules(Step):
+class LoadTransformationRules(Step[RulesData]):
     """
     This step loads transformation rules from the file or remote location
     """
@@ -48,8 +50,11 @@ class LoadTransformationRules(Step):
         Configurable(name="version", value="", label="Optional version of the rules file"),
     ]
 
-    def run(self, cdf_store: CdfStore) -> (FlowMessage, RulesData):
+    def run(self, cdf_store: CdfStore) -> (FlowMessage, RulesData):  # type: ignore[override]
+        store = cdf_store
         # rules file
+        if self.configs is None:
+            raise ValueError(f"Step {type(self).__name__} has not been configured.")
         rules_file = self.configs["file_name"]
         rules_file_path = Path(self.data_store_path, "rules", rules_file)
         version = self.configs["version"]
@@ -70,9 +75,9 @@ class LoadTransformationRules(Step):
         elif rules_file_path.exists() and version:
             hash = utils.get_file_hash(rules_file_path)
             if hash != version:
-                cdf_store.load_rules_file_from_cdf(rules_file, version)
+                store.load_rules_file_from_cdf(rules_file, version)
         else:
-            cdf_store.load_rules_file_from_cdf(rules_file, version)
+            store.load_rules_file_from_cdf(rules_file, version)
 
         if validate_rules:
             transformation_rules, validation_errors, validation_warnings = parse_rules_from_excel_file(
@@ -87,8 +92,16 @@ class LoadTransformationRules(Step):
         else:
             transformation_rules = parse_rules_from_excel_file(rules_file_path)
 
-        rules_metrics = self.metrics.register_metric(
-            "data_model_rules", "Transformation rules stats", m_type="gauge", metric_labels=["component"]
+        if transformation_rules is None:
+            raise ValueError(f"Failed to load transformation rules from {rules_file_path.name!r}.")
+
+        if self.metrics is None:
+            raise ValueError(f"Step {type(self).__name__} has not been configured.")
+        rules_metrics = cast(
+            Gauge,
+            self.metrics.register_metric(
+                "data_model_rules", "Transformation rules stats", m_type="gauge", metric_labels=["component"]
+            ),
         )
         rules_metrics.labels({"component": "classes"}).set(len(transformation_rules.classes))
         rules_metrics.labels({"component": "properties"}).set(len(transformation_rules.properties))

@@ -137,8 +137,7 @@ class WorkflowManager:
             if workflow_path.is_dir():
                 logging.info(f"Loading workflow {workflow_name} from {workflow_path}")
                 try:
-                    workflow_definition_path = workflow_path / "workflow.yaml"
-                    if workflows_storage_path.exists():
+                    if (workflow_definition_path := workflow_path / "workflow.yaml").exists():
                         with workflow_definition_path.open() as workflow_definition_file:
                             workflow_definition: WorkflowDefinition = BaseWorkflow.deserialize_definition(
                                 workflow_definition_file.read(), output_format="yaml"

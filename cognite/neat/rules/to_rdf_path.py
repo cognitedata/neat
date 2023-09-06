@@ -15,7 +15,7 @@ from . import exceptions
 class Triple:
     subject: str
     predicate: str
-    object: str = None
+    object: str | None = None
     optional: bool = False
 
 
@@ -114,7 +114,7 @@ class Entity(BaseModel):
 
 
 StepDirection = Literal["source", "target", "origin"]
-_direction_by_symbol = {"->": "target", "<-": "source"}
+_direction_by_symbol: dict[str, StepDirection] = {"->": "target", "<-": "source"}
 
 
 class Step(BaseModel):
@@ -149,25 +149,25 @@ class SingleProperty(Traversal):
     class_: Entity
     property: Entity
 
-    @field_validator("class_", "property", mode="before")
-    def process_if_string(cls, value):
-        return Entity.from_string(value) if isinstance(value, str) else value
+    @classmethod
+    def from_string(cls, class_: str, property_: str) -> Self:
+        return cls(class_=Entity.from_string(class_), property=Entity.from_string(property_))
 
 
 class AllReferences(Traversal):
     class_: Entity
 
-    @field_validator("class_", mode="before")
-    def process_if_string(cls, value):
-        return Entity.from_string(value) if isinstance(value, str) else value
+    @classmethod
+    def from_string(cls, class_: str) -> Self:
+        return cls(class_=Entity.from_string(class_))
 
 
 class AllProperties(Traversal):
     class_: Entity
 
-    @field_validator("class_", mode="before")
-    def process_if_string(cls, value):
-        return Entity.from_string(value) if isinstance(value, str) else value
+    @classmethod
+    def from_string(cls, class_: str) -> Self:
+        return cls(class_=Entity.from_string(class_))
 
 
 class Origin(BaseModel):
@@ -184,15 +184,14 @@ class Hop(Traversal):
     class_: Entity
     traversal: list[Step]
 
-    @field_validator("class_", mode="before")
-    def process_origin_if_string(cls, value):
-        return Entity.from_string(value) if isinstance(value, str) else value
-
-    @field_validator("traversal", mode="before")
-    def process_path_if_string(cls, value):
-        if isinstance(value, str):
-            return [Step.from_string(result[0]) for result in _steps.findall(value)]
-        return value
+    @classmethod
+    def from_string(cls, class_: str, traversal: str | list[Step]) -> Self:
+        return cls(
+            class_=Entity.from_string(class_),
+            traversal=[Step.from_string(result[0]) for result in _steps.findall(traversal)]
+            if isinstance(traversal, str)
+            else traversal,
+        )
 
 
 class TableLookup(BaseModel):
@@ -205,31 +204,31 @@ class Rule(BaseModel):
     pass
 
 
+class Query(BaseModel):
+    query: str
+
+
 class RDFPath(Rule):
-    traversal: Traversal
+    traversal: Traversal | Query
 
 
 class RawLookup(RDFPath):
     table: TableLookup
 
 
-class Query(BaseModel):
-    query: str
-
-
-class SPARQLQuery(Rule):
+class SPARQLQuery(RDFPath):
     traversal: Query
 
 
 def parse_traversal(raw: str) -> AllReferences | AllProperties | SingleProperty | Hop:
     if result := _class_only.match(raw):
-        return AllReferences(class_=result.group(OWL.class_))
+        return AllReferences.from_string(class_=result.group(OWL.class_))
     elif result := _all_properties.match(raw):
-        return AllProperties(class_=result.group(OWL.class_))
+        return AllProperties.from_string(class_=result.group(OWL.class_))
     elif result := _single_property.match(raw):
-        return SingleProperty(class_=result.group(OWL.class_), property=result.group(OWL.property_))
+        return SingleProperty.from_string(class_=result.group(OWL.class_), property_=result.group(OWL.property_))
     elif result := _hop.match(raw):
-        return Hop(class_=result.group("origin"), traversal=result.group(_traversal))
+        return Hop.from_string(class_=result.group("origin"), traversal=result.group(_traversal))
     else:
         raise exceptions.NotValidRDFPath(raw).to_pydantic_custom_error()
 
