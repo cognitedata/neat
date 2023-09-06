@@ -17,9 +17,10 @@ class NeatMetricsCollector:
         metric_labels: list[str] | None = None,
     ) -> Gauge | Counter:
         """Register metric in prometheus"""
+        metric_name = self.sanitize_metric_name(metric_name)
         metric_labels = [] if metric_labels is None else metric_labels
 
-        metric_name = f"neat_workflow_{self.name}_{metric_name}"
+        metric_name = f"neat_workflow_{self.sanitize_metric_name(self.name)}_{metric_name}"
         if metric_name in REGISTRY._names_to_collectors:
             self.metrics[metric_name] = REGISTRY._names_to_collectors[metric_name]
             return self.metrics[metric_name]
@@ -36,8 +37,9 @@ class NeatMetricsCollector:
 
     def get(self, metric_name: str, labels: dict[str, str] | None = None) -> Gauge | Counter:
         """Return metric by name"""
+        metric_name = self.sanitize_metric_name(metric_name)
         labels = {} if labels is None else labels
-        metric_name = f"neat_workflow_{self.name}_{metric_name}"
+        metric_name = f"neat_workflow_{self.sanitize_metric_name(self.name)}_{metric_name}"
         return self.metrics.get(metric_name).labels(**labels)
 
     def report_metric_value(
@@ -47,8 +49,12 @@ class NeatMetricsCollector:
         m_type: str = "gauge",
         labels: dict[str, str] | None = None,
     ) -> Gauge | Counter:
+        self.sanitize_metric_name(metric_name)
         metric = self.register_metric(metric_name, metric_description, m_type, [k for k, v in labels.items()])
         return metric.labels(**labels)
+
+    def sanitize_metric_name(self, metric_name: str) -> str:
+        return metric_name.replace("-", "_").replace(" ", "_").replace(".", "_").replace(":", "_").lower()
 
     def collect(self) -> Iterable[Metric]:
         pass

@@ -261,7 +261,7 @@ class OWLProperty(OntologyModel):
 
         if not cls.same_property_id(definitions):
             raise exceptions.PropertyDefinitionsNotForSameProperty()
-        instance = cls.model_construct(
+        owl_property = cls.model_construct(
             id_=namespace[definitions[0].property_id],
             namespace=namespace,
             label=set(),
@@ -271,20 +271,20 @@ class OWLProperty(OntologyModel):
             type_=set(),
         )
         for definition in definitions:
-            instance.type_.add(OWL[definition.property_type])
-            instance.range_.add(
+            owl_property.type_.add(OWL[definition.property_type])
+            owl_property.range_.add(
                 XSD[definition.expected_value_type]
                 if definition.expected_value_type in DATA_TYPE_MAPPING
                 else namespace[definition.expected_value_type]
             )
-            instance.domain.add(namespace[definition.class_id])
+            owl_property.domain.add(namespace[definition.class_id])
 
             if definition.property_name:
-                instance.label.add(definition.property_name)
+                owl_property.label.add(definition.property_name)
             if definition.description:
-                instance.comment.add(definition.description)
+                owl_property.comment.add(definition.description)
 
-        return instance
+        return owl_property
 
     @field_validator("type_")
     def is_multi_type(cls, v, info: FieldValidationInfo):
