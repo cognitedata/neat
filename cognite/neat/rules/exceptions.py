@@ -190,7 +190,7 @@ class MetadataSheetNamespaceNotDefined(NeatException):
     type_ = "MetadataSheetNamespaceNotDefined"
     code: int = 2
     description: str = "namespace, which is in the 'Metadata' sheet, is missing"
-    example: str = "Example of a valid namespace 'http://www.w3.org/ns/sparql'"
+    example: str = "Example of a valid namespace 'http://www.w3.org/ns/sparql#'"
     fix: str = "Define the 'namespace' in the 'Metadata' sheet."
 
     def __init__(self, verbose: bool = False):
