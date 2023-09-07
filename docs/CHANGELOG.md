@@ -15,6 +15,18 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.25.4] - 5-09-23
+
+### Fixed
+- Fixed issue when columns names are non-string
+- Fixed missing start_time in relationships
+- Fixed upload_nodes/edges
+- Fixed DMS upload step
+
+### Added
+- Handling of edge cases when creating Assets in which name was pushed to be None even though there is alt property
+- Notebook 5 with walk through about fDM, nodes and edges
+
 ## [0.25.3] - 4-09-23
 
 ### Fixed

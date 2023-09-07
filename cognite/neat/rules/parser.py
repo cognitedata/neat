@@ -246,14 +246,14 @@ class RawTables(RuleModel):
 
         tables_dict = {
             Tables.metadata: raw_dfs[Tables.metadata],
-            Tables.classes: raw_dfs[Tables.classes],
-            Tables.properties: raw_dfs[Tables.properties],
+            Tables.classes: cls.drop_non_string_columns(raw_dfs[Tables.classes]),
+            Tables.properties: cls.drop_non_string_columns(raw_dfs[Tables.properties]),
         }
 
         if Tables.prefixes in raw_dfs:
-            tables_dict[Tables.prefixes] = raw_dfs[Tables.prefixes]
+            tables_dict[Tables.prefixes] = cls.drop_non_string_columns(raw_dfs[Tables.prefixes])
         if Tables.instances in raw_dfs:
-            tables_dict[Tables.instances] = raw_dfs[Tables.instances]
+            tables_dict[Tables.instances] = cls.drop_non_string_columns(raw_dfs[Tables.instances])
 
         return cls(**tables_dict)
 
@@ -309,6 +309,20 @@ class RawTables(RuleModel):
             missing_columns = mandatory_columns.difference(given_columns)
             raise exceptions.InstancesSheetMissingMandatoryColumns(missing_columns).to_pydantic_custom_error()
         return v
+
+    @staticmethod
+    def drop_non_string_columns(df: pd.DataFrame) -> pd.DataFrame:
+        """Drop non-string columns as this can cause issue when loading rules
+
+        Args:
+            df: data frame
+
+        Returns:
+            dataframe with removed non string columns
+        """
+        columns = [column for column in df.columns[df.columns.notna()] if isinstance(column, str)]
+
+        return df[columns]
 
 
 class Tables:
@@ -402,9 +416,11 @@ def workbook_to_table_by_name(workbook: Workbook) -> dict[str, pd.DataFrame]:
         data = sheet.values
         if sheetname == "Metadata":
             table[sheetname] = pd.DataFrame(data, columns=None)
+        if sheetname == "Prefixes":
+            columns = next(data)[:]
+            table[sheetname] = pd.DataFrame(data, columns=columns).dropna(how="all")
         if sheetname in ["Classes", "Properties", "Instances"]:
             next(data)
             columns = next(data)[:]
             table[sheet.title] = pd.DataFrame(data, columns=columns).dropna(how="all")
-
     return table

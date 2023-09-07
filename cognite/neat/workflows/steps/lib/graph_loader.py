@@ -324,7 +324,7 @@ class GenerateCDFRelationshipsFromGraph(Step[CategorizedRelationships]):
     ) -> (FlowMessage, CategorizedRelationships):
         # create, categorize and upload relationships
         rdf_relationships = rdf2relationships(
-            solution_graph.graph.get_graph(),
+            solution_graph.graph,
             rules.rules,
         )
 

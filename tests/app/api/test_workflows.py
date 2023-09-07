@@ -93,7 +93,9 @@ def test_workflow_start(
     data = {}
     for resource_name in ["assets", "relationships", "labels"]:
         memory: MemoryClient = getattr(cognite_client, resource_name)
-        data[resource_name] = memory.dump(ordered=True, exclude={"metadata.start_time", "metadata.update_time"})
+        data[resource_name] = memory.dump(
+            ordered=True, exclude={"metadata.start_time", "metadata.update_time", "start_time"}
+        )
     data_regression.check(data, basename=f"{workflow_name}_workflow")
 
 

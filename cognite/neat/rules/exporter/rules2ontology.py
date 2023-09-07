@@ -261,6 +261,7 @@ class OWLProperty(OntologyModel):
 
         if not cls.same_property_id(definitions):
             raise exceptions.PropertyDefinitionsNotForSameProperty()
+
         owl_property = cls.model_construct(
             id_=namespace[definitions[0].property_id],
             namespace=namespace,

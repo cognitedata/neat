@@ -239,6 +239,7 @@ def _class2asset_instance(
     remapped_class_instance[meta_keys.type] = class_
     # This will be a default case since we want to use original identifier as external_id
     # We are though dropping namespace from the original identifier (avoiding long-tail URIs)
+
     if "external_id" in missing_properties or asset_class_mapping["external_id"] == []:
         try:
             __extracted_from___class2asset_instance_49(
@@ -256,6 +257,7 @@ def _class2asset_instance(
             __extracted_from___class2asset_instance_49(remapped_class_instance, fallback_property, "name", class_)
         except Exception:
             __extracted_from___class2asset_instance_56(fallback_property, class_, remapped_class_instance)
+
     # If object is expected to have parent, but parent is not provided, it is added to orphanage
     # This is typically sign of objects not following proposed ontology/data model/schema
     if "parent_external_id" in missing_properties and orphanage_asset_external_id:
@@ -263,7 +265,6 @@ def _class2asset_instance(
 
     if "name" in remapped_class_instance and remapped_class_instance["name"] == "":
         remapped_class_instance["name"] = empty_name_default
-
     # To maintain shape across of all assets of specific type we are adding missing metadata
     # keys as empty strings, this was request by Statnett
     # Generally this is bad practice, but more of a workaround of their bad data
@@ -272,16 +273,16 @@ def _class2asset_instance(
         msg += f" instance <{remapped_class_instance['identifier']}>. "
         logging.debug(msg)
         for key in missing_metadata:
-            remapped_class_instance[key] = ""
-            logging.debug(f"\tKey {key} added to <{remapped_class_instance['identifier']}> metadata!")
+            if key not in remapped_class_instance.keys():
+                remapped_class_instance[key] = ""
+                logging.debug(f"\tKey {key} added to <{remapped_class_instance['identifier']}> metadata!")
 
     asset_instance = AssetTemplate(
         **remapped_class_instance, external_id_prefix=external_id_prefix, data_set_id=data_set_id
     )
-
     # Removing field external_id_prefix from asset instance dictionary as it is only
     # convenience field for external_id and parent_external_id update in AssetTemplate
-    return asset_instance.dict(exclude={"external_id_prefix"})
+    return asset_instance.model_dump(exclude={"external_id_prefix"})
 
 
 # TODO Rename this here and in `__class2asset_instance`
