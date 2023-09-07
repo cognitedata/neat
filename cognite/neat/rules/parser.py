@@ -312,7 +312,7 @@ class RawTables(RuleModel):
 
     @staticmethod
     def drop_non_string_columns(df: pd.DataFrame) -> pd.DataFrame:
-        """Drop non string columns as this can cause issue when loading rules
+        """Drop non-string columns as this can cause issue when loading rules
 
         Args:
             df: data frame
