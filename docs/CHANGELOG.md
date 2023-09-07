@@ -15,6 +15,9 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.25.5] - 5-09-23
+### Added
+- Support for upload of various RDF formats to `NeatGraph` store
 ## [0.25.4] - 5-09-23
 
 ### Fixed
