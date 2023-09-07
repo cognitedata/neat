@@ -321,7 +321,7 @@ class GenerateCDFRelationshipsFromGraph(Step[CategorizedRelationships]):
 
     def run(  # type: ignore[override]
         self, rules: RulesData, cdf_client: CogniteClient, solution_graph: SolutionGraph
-    ) -> tuple[FlowMessage, CategorizedRelationships]:
+    ) -> (FlowMessage, CategorizedRelationships):
         # create, categorize and upload relationships
         rdf_relationships = rdf2relationships(
             solution_graph.graph,
