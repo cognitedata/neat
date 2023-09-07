@@ -148,7 +148,9 @@ class NeatGraphStore:
             except Exception as e:
                 logging.debug("Error closing graph: %s", e)
 
-    def import_from_file(self, file_path: Path | None = None):
+    def import_from_file(
+        self, file_path: Path | None = None, mime_type: str = "application/rdf+xml", add_base_iri: bool = True
+    ):
         """Imports graph data from file.
 
         Args:
@@ -159,10 +161,16 @@ class NeatGraphStore:
             file_path = self.config.rdf_import_path
 
         if self.rdf_store_type == RdfStoreType.OXIGRAPH:
-            self.graph.store._inner.bulk_load(str(file_path), "application/rdf+xml", base_iri=self.namespace)
+            if add_base_iri:
+                self.graph.store._inner.bulk_load(str(file_path), mime_type, base_iri=self.namespace)
+            else:
+                self.graph.store._inner.bulk_load(str(file_path), mime_type)
             self.graph.store._inner.optimize()
         else:
-            self.graph = rdf_file_to_graph(file_path, base_namespace=self.namespace, prefixes=self.prefixes)
+            if add_base_iri:
+                self.graph = rdf_file_to_graph(file_path, base_namespace=self.namespace, prefixes=self.prefixes)
+            else:
+                self.graph = rdf_file_to_graph(file_path, prefixes=self.prefixes)
         return
 
     def get_graph(self) -> Graph:

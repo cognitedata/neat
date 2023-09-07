@@ -45,7 +45,9 @@ steps:
         pos_x: 452
         pos_y: 167
 -   configs:
+        add_base_iri: 'True'
         file_path: source-graphs/Knowledge-Graph-Nordic44.xml
+        mime_type: application/rdf+xml
     description: null
     enabled: true
     id: step_graph_loader

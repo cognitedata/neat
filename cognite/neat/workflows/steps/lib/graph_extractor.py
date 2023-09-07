@@ -34,13 +34,35 @@ class InstancesFromRdfFileToSourceGraph(Step):
             name="file_path",
             value="source-graphs/source-graph-dump.xml",
             label="File name of source graph data dump in RDF format",
-        )
+        ),
+        Configurable(
+            name="mime_type",
+            value="application/rdf+xml",
+            label="MIME type of file containing RDF graph",
+            options=[
+                "application/rdf+xml",
+                "text/turtle",
+                "application/n-triples",
+                "application/n-quads",
+                "application/trig",
+            ],
+        ),
+        Configurable(
+            name="add_base_iri",
+            value="True",
+            label="Whether to add base IRI to graph in case if entity ids are relative",
+            options=["True", "False"],
+        ),
     ]
 
     def run(self, rules: RulesData, source_graph: SourceGraph) -> FlowMessage:
         if source_graph.graph.rdf_store_type.lower() in ("memory", "oxigraph"):
             if source_file := self.configs["file_path"]:
-                source_graph.graph.import_from_file(Path(self.data_store_path) / Path(source_file))
+                source_graph.graph.import_from_file(
+                    Path(self.data_store_path) / Path(source_file),
+                    mime_type=self.configs["mime_type"],
+                    add_base_iri=self.configs["add_base_iri"] == "True",
+                )
                 logging.info(f"Loaded {source_file} into source graph.")
             else:
                 raise ValueError("You need a source_rdf_store.file specified for source_rdf_store.type=memory")
