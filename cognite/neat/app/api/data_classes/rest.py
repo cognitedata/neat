@@ -63,3 +63,15 @@ class NodesAndEdgesRequest(BaseModel):
     limit: int = 1000
     node_name_property: str = ""
     sparql_query: str = ""
+
+
+class DatatypePropertyRequest(BaseModel):
+    graph_name: str = "source"
+    workflow_name: str = "default"
+    cache: bool = False
+    limit: int = 10
+    sparql_query: str = (
+        "SELECT DISTINCT ?property (count(?o) as ?occurrence ) "
+        "WHERE { ?s ?property ?o . FILTER(isLiteral(?o))} "
+        "group by ?property order by DESC(?occurrence)"
+    )

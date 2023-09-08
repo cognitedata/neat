@@ -7,7 +7,12 @@ from starlette.testclient import TestClient
 
 from cognite import neat
 from cognite.neat.app.api.configuration import neat_app
-from cognite.neat.app.api.data_classes.rest import QueryRequest, RuleRequest, RunWorkflowRequest
+from cognite.neat.app.api.data_classes.rest import (
+    DatatypePropertyRequest,
+    QueryRequest,
+    RuleRequest,
+    RunWorkflowRequest,
+)
 from cognite.neat.app.api.utils.query_templates import query_templates
 from cognite.neat.constants import EXAMPLE_WORKFLOWS
 from cognite.neat.rules.models import TransformationRules
@@ -241,6 +246,36 @@ def test_execute_rule(
         "predicate": "http://purl.org/dc/terms/relation",
         "object": "http://purl.org/cognite/neat#_f176965a-9aeb-11e5-91da-b8763fd99c5f",
     } in content["rows"]
+
+
+@pytest.mark.parametrize("workflow_name", ["graph_to_asset_hierarchy"])
+def test_get_datatype_properties(
+    workflow_name: str,
+    fastapi_client: TestClient,
+):
+    # Act
+    workflow = neat_app.workflow_manager.get_workflow(workflow_name)
+    if "SourceGraph" not in workflow.get_context():
+        workflow.enable_step("step_generate_assets", False)
+        neat_app.workflow_manager.start_workflow_instance(workflow_name, sync=True)
+
+    response = fastapi_client.post(
+        "/api/get-datatype-properties",
+        json=DatatypePropertyRequest(
+            graph_name="source",
+            workflow_name=workflow_name,
+            limit=1,
+        ).model_dump(),
+    )
+
+    content = response.json()
+
+    assert response.status_code == 200
+    assert {
+        "property_id": "http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject.name",
+        "property_occurrence": "2502",
+        "property_name": "IdentifiedObject.name",
+    } in content["datatype_properties"]
 
 
 @pytest.mark.parametrize("workflow_name", ["graph_to_asset_hierarchy"])
