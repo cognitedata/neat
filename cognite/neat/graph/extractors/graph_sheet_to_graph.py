@@ -68,6 +68,7 @@ def sheet2triples(
         instance_namespace = Namespace(namespace)
     else:
         raise ValueError("Namespace is not defined in the transformation rules!")
+
     model_namespace = Namespace(transformation_rule.metadata.namespace)
 
     # Now create empty graph
