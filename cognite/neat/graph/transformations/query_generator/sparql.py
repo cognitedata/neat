@@ -525,7 +525,11 @@ def triples2dictionary(triples: Iterable[tuple[URIRef, URIRef, str | URIRef]]) -
     """Converts list of triples to dictionary"""
     dictionary = defaultdict(list)
     for triple in triples:
-        id_, property_, value = remove_namespace(*triple)
+        id_: str
+        property_: str
+        value: str
+        id_, property_, value = remove_namespace(*triple)  # type: ignore[misc]
+
         if id_ not in dictionary:
             dictionary["external_id"] = [id_]
 

@@ -45,12 +45,13 @@ class NeatGraphStore:
         self.prefixes: dict[str, Namespace] = prefixes
 
         self.rdf_store_type: str = RdfStoreType.MEMORY
-        self.rdf_store_query_url: str = None
-        self.rdf_store_update_url: str = None
-        self.returnFormat: str = None
-        self.df_cache: pd.DataFrame = None
+        self.rdf_store_query_url: str | None = None
+        self.rdf_store_update_url: str | None = None
+        self.returnFormat: str | None = None
+        self.df_cache: pd.DataFrame | None = None
         self.graph_db_rest_url: str = "http://localhost:7200"
-        self.internal_storage_dir: Path = None
+        self.internal_storage_dir: Path | None = None
+        self.graph_name: str | None = None
 
     def init_graph(
         self,
