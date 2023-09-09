@@ -30,21 +30,20 @@ def upload_labels(
         logging.debug("Fetching existing labels from CDF")
         # This is to list all labels, not just the ones in the dataset since labels
         # must have unique external_ids, fixing issue that Daniel encountered
-        if existing_labels := client.labels.list(limit=-1):
-            existing_labels = set(existing_labels.to_pandas().external_id)
+        if retrieved_labels := client.labels.list(limit=-1):
+            existing_labels = set(retrieved_labels.to_pandas().external_id)
         else:
-            existing_labels = {}
+            existing_labels = set()
         logging.debug(f"Found {len(existing_labels)} existing labels in CDF")
     except Exception as e:
         logging.debug("Error fetching existing labels from CDF, no ")
         traceback.print_exc()
         if stop_on_exception:
             raise e
-        existing_labels = {}
+        existing_labels = set()
 
     non_existing_labels = set(list(get_labels(transformation_rules)) + extra_labels).difference(existing_labels)
 
-    labels = []
     if non_existing_labels:
         logging.debug(f"Creating total of {len(existing_labels)} new labels in CDF")
         labels = [

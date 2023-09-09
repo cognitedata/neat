@@ -47,6 +47,9 @@ def generate_triples(
     """
 
     # Figure out which classes are defined in the data model and which are not
+    if transformation_rules.metadata.namespace is None:
+        raise ValueError("Namespace must be defined in transformation rules!")
+    namespace = transformation_rules.metadata.namespace
 
     defined_classes = get_defined_classes(transformation_rules)
 
@@ -86,17 +89,13 @@ def generate_triples(
     class_definitions = _rules_to_dict(transformation_rules)
 
     # pregenerate instance ids for each remaining class
-    instance_ids = {
-        key: [URIRef(transformation_rules.metadata.namespace[f"{key}-{i}"]) for i in range(value)]
-        for key, value in class_count.items()
-    }
+    instance_ids = {key: [URIRef(namespace[f"{key}-{i}"]) for i in range(value)] for key, value in class_count.items()}
 
     # create triple for each class instance defining its type
     triples: list[tuple] = []
     for class_ in class_count:
         triples += [
-            (class_instance_id, RDF.type, URIRef(transformation_rules.metadata.namespace[class_]))
-            for class_instance_id in instance_ids[class_]
+            (class_instance_id, RDF.type, URIRef(namespace[class_])) for class_instance_id in instance_ids[class_]
         ]
 
     # generate triples for connected classes
@@ -106,7 +105,7 @@ def generate_triples(
             class_definitions,
             sym_pairs,
             instance_ids,
-            transformation_rules.metadata.namespace,
+            namespace,
             stop_on_exception,
         )
 
@@ -114,12 +113,7 @@ def generate_triples(
     if allow_isolated_classes:
         for class_ in set(class_count.keys()) - set(generation_order):
             triples += _generate_triples_per_class(
-                class_,
-                class_definitions,
-                sym_pairs,
-                instance_ids,
-                transformation_rules.metadata.namespace,
-                stop_on_exception,
+                class_, class_definitions, sym_pairs, instance_ids, namespace, stop_on_exception
             )
 
     return triples
@@ -128,10 +122,10 @@ def generate_triples(
 def _get_generation_order(
     class_linkage: pd.DataFrame, parent_col: str = "source_class", child_col: str = "target_class"
 ) -> dict:
-    parent_child_list = class_linkage[[parent_col, child_col]].values.tolist()
+    parent_child_list: list[list[str]] = class_linkage[[parent_col, child_col]].values.tolist()
     # Build a directed graph and a list of all names that have no parent
-    graph = {name: set() for tup in parent_child_list for name in tup}
-    has_parent = {name: False for tup in parent_child_list for name in tup}
+    graph: dict[str, set] = {name: set() for tup in parent_child_list for name in tup}
+    has_parent: dict[str, bool] = {name: False for tup in parent_child_list for name in tup}
     for parent, child in parent_child_list:
         graph[parent].add(child)
         has_parent[child] = True

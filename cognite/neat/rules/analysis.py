@@ -68,8 +68,7 @@ def to_class_property_pairs(
                 # TODO: use appropriate Warning class from _exceptions.py
                 # if missing make one !
                 warnings.warn(
-                    "Property has been defined more than once! Only first definition will be considered.",
-                    stacklevel=2,
+                    "Property has been defined more than once! Only first definition will be considered.", stacklevel=2
                 )
                 continue
 
@@ -133,7 +132,7 @@ def get_disconnected_classes(transformation_rules: TransformationRules) -> set[s
     return get_defined_classes(transformation_rules) - get_connected_classes(transformation_rules)
 
 
-def get_symmetric_pairs(transformation_rules: TransformationRules) -> set[tuple]:
+def get_symmetric_pairs(transformation_rules: TransformationRules) -> set[tuple[str, str]]:
     """Returns a set of pairs of symmetrically linked classes.
 
     Args:
@@ -144,7 +143,7 @@ def get_symmetric_pairs(transformation_rules: TransformationRules) -> set[tuple]
     """
 
     # TODO: Find better name for this method
-    sym_pairs: set[tuple] = set()
+    sym_pairs: set[tuple[str, str]] = set()
 
     class_linkage = get_class_linkage(transformation_rules)
     if class_linkage.empty:
