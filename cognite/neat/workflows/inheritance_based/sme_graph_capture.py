@@ -36,10 +36,10 @@ class SmeGraphCaptureBaseWorkflow(BaseWorkflow):
         self.dataset_id: int = 0
         self.upload_meta_object = None
 
-    def step_cleanup(self, flow_msg: FlowMessage = None):
+    def step_cleanup(self, flow_msg: FlowMessage | None = None):
         logging.info("Cleanup")
 
-    def step_error_handler(self, flow_msg: FlowMessage = None):
+    def step_error_handler(self, flow_msg: FlowMessage | None = None):
         logging.info("Error handler")
         return FlowMessage(output_text="Error handleed")
 
@@ -47,7 +47,7 @@ class SmeGraphCaptureBaseWorkflow(BaseWorkflow):
     # ------------------ Graph Capturing Sheet Generation ------------------------------
     # ----------------------------------------------------------------------------------
 
-    def step_load_transformation_rules(self, flow_msg: FlowMessage = None):
+    def step_load_transformation_rules(self, flow_msg: FlowMessage | None = None):
         # Load rules from file or remote location
         self.upload_meta_object = flow_msg.payload
         cdf_store = CdfStore(self.cdf_client, self.dataset_id, rules_storage_path=self.rules_storage_path)
@@ -72,13 +72,13 @@ class SmeGraphCaptureBaseWorkflow(BaseWorkflow):
         logging.info(output_text)
         return FlowMessage(output_text=output_text)
 
-    def step_configure_graph_store(self, flow_msg: FlowMessage = None):
+    def step_configure_graph_store(self, flow_msg: FlowMessage | None = None):
         logging.info("Configure graph store")
         self.solution_graph = extractors.NeatGraphStore(prefixes=self.transformation_rules.prefixes)
         self.solution_graph.init_graph("memory")
         return FlowMessage(output_text="Graph store configured")
 
-    def step_generate_graph_capture_sheet(self, flow_msg: FlowMessage = None):
+    def step_generate_graph_capture_sheet(self, flow_msg: FlowMessage | None = None):
         logging.info("Generate graph capture sheet")
         sheet_name = self.get_config_item_value("graph_capture.file", "graph_capture_sheet.xlsx")
         auto_identifier_type = self.get_config_item_value("graph_capture_sheet.auto_identifier_type", None)
@@ -99,7 +99,7 @@ class SmeGraphCaptureBaseWorkflow(BaseWorkflow):
     # ------------------ Graph Capturing Sheet Processing ------------------------------
     # ----------------------------------------------------------------------------------
 
-    def step_process_graph_capture_sheet(self, flow_msg: FlowMessage = None):
+    def step_process_graph_capture_sheet(self, flow_msg: FlowMessage | None = None):
         data_capture_sheet_path = Path(self.upload_meta_object["full_path"])
         logging.info(f"Processing data capture sheet {data_capture_sheet_path}")
 
@@ -107,7 +107,7 @@ class SmeGraphCaptureBaseWorkflow(BaseWorkflow):
         add_triples(self.solution_graph, triples)
         return FlowMessage(output_text="Data capture sheet processed")
 
-    def step_create_cdf_labels(self, flow_msg: FlowMessage = None):
+    def step_create_cdf_labels(self, flow_msg: FlowMessage | None = None):
         logging.info("Creating CDF labels")
         upload_labels(self.cdf_client, self.transformation_rules, extra_labels=["non-historic", "historic"])
 
@@ -188,7 +188,7 @@ class SmeGraphCaptureBaseWorkflow(BaseWorkflow):
         )
         return FlowMessage(output_text=msg)
 
-    def step_upload_cdf_assets(self, flow_msg: FlowMessage = None):
+    def step_upload_cdf_assets(self, flow_msg: FlowMessage | None = None):
         if not self.cdf_client:
             logging.error("No CDF client available")
             raise Exception("No CDF client available")
@@ -213,7 +213,7 @@ class SmeGraphCaptureBaseWorkflow(BaseWorkflow):
         self.categorized_assets = None  # free up memory after upload .
         return FlowMessage(output_text=f"Total count of assets in CDF after update: { total_assets_after }")
 
-    def step_prepare_cdf_relationships(self, flow_msg: FlowMessage = None):
+    def step_prepare_cdf_relationships(self, flow_msg: FlowMessage | None = None):
         # create, categorize and upload relationships
         rdf_relationships = rdf2relationships(self.solution_graph.get_graph(), self.transformation_rules)
         if not self.cdf_client:
@@ -240,7 +240,7 @@ class SmeGraphCaptureBaseWorkflow(BaseWorkflow):
 
         return FlowMessage(output_text=msg)
 
-    def step_upload_cdf_relationships(self, flow_msg: FlowMessage = None):
+    def step_upload_cdf_relationships(self, flow_msg: FlowMessage | None = None):
         if not self.cdf_client:
             logging.error("No CDF client available")
             raise Exception("No CDF client available")

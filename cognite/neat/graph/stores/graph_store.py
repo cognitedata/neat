@@ -34,7 +34,7 @@ class NeatGraphStore:
 
     def __init__(
         self,
-        graph: Graph = None,
+        graph: Graph | None = None,
         base_prefix: str = "",  # usually empty
         namespace: Namespace = DEFAULT_NAMESPACE,
         prefixes: dict = PREFIXES,
@@ -143,7 +143,7 @@ class NeatGraphStore:
         if self.rdf_store_type == RdfStoreType.OXIGRAPH:
             try:
                 if self.graph:
-                    self.graph.store._inner.flush() # type: ignore[attr-defined]
+                    self.graph.store._inner.flush()  # type: ignore[attr-defined]
                     self.graph.close()
             except Exception as e:
                 logging.debug("Error closing graph: %s", e)
@@ -162,7 +162,9 @@ class NeatGraphStore:
 
         if self.rdf_store_type == RdfStoreType.OXIGRAPH:
             if add_base_iri:
-                self.graph.store._inner.bulk_load(str(file_path), mime_type, base_iri=self.namespace)  # type: ignore[attr-defined]
+                self.graph.store._inner.bulk_load(  # type: ignore[attr-defined]
+                    str(file_path), mime_type, base_iri=self.namespace
+                )
             else:
                 self.graph.store._inner.bulk_load(str(file_path), mime_type)  # type: ignore[attr-defined]
             self.graph.store._inner.optimize()  # type: ignore[attr-defined]

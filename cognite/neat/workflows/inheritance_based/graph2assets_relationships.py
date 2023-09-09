@@ -45,7 +45,7 @@ class GraphsAndRulesBaseWorkflow(BaseWorkflow):
         self.transformation_rules: TransformationRules = None
         self.graph_source_type = "memory"
 
-    def step_load_transformation_rules(self, flow_msg: FlowMessage = None):
+    def step_load_transformation_rules(self, flow_msg: FlowMessage | None = None):
         # Load rules from file or remote location
         cdf_store = CdfStore(self.cdf_client, self.dataset_id, rules_storage_path=self.rules_storage_path)
 
@@ -69,7 +69,7 @@ class GraphsAndRulesBaseWorkflow(BaseWorkflow):
         logging.info(output_text)
         return FlowMessage(output_text=output_text)
 
-    def step_configuring_stores(self, flow_msg: FlowMessage = None, clean_start: bool = True):
+    def step_configuring_stores(self, flow_msg: FlowMessage | None = None, clean_start: bool = True):
         # Initialize source and solution graph stores . clean_start=True will delete all
         # artifacts(files , locks , etc) from previous runs
         logging.info("Initializing source graph")
@@ -113,7 +113,7 @@ class GraphsAndRulesBaseWorkflow(BaseWorkflow):
         self.solution_graph.graph_db_rest_url = self.get_config_item_value("solution_rdf_store.api_root_url")
         return
 
-    def step_load_source_graph(self, flow_msg: FlowMessage = None):
+    def step_load_source_graph(self, flow_msg: FlowMessage | None = None):
         # Load graph into memory or GraphDB
         if self.graph_source_type.lower() == "graphdb":
             try:
@@ -136,7 +136,7 @@ class GraphsAndRulesBaseWorkflow(BaseWorkflow):
         self.solution_graph.drop()
         return
 
-    def step_run_transformation(self, flow_msg: FlowMessage = None):
+    def step_run_transformation(self, flow_msg: FlowMessage | None = None):
         report = RuleProcessingReport()
         # run transformation and generate new graph
         self.solution_graph.set_graph(
@@ -164,7 +164,7 @@ class Graph2AssetHierarchyBaseWorkflow(GraphsAndRulesBaseWorkflow):
         self.stop_on_error = False
         self.count_create_assets = 0
 
-    def step_create_cdf_labels(self, flow_msg: FlowMessage = None):
+    def step_create_cdf_labels(self, flow_msg: FlowMessage | None = None):
         logging.info("Creating CDF labels")
         upload_labels(self.cdf_client, self.transformation_rules, extra_labels=["non-historic", "historic"])
 
@@ -260,7 +260,7 @@ class Graph2AssetHierarchyBaseWorkflow(GraphsAndRulesBaseWorkflow):
         logging.info(f"Total number of updates: {number_of_updates}")
         return FlowMessage(output_text=msg)
 
-    def step_upload_cdf_assets(self, flow_msg: FlowMessage = None):
+    def step_upload_cdf_assets(self, flow_msg: FlowMessage | None = None):
         if flow_msg and flow_msg.payload and "action" in flow_msg.payload:
             if flow_msg.payload["action"] != "approve":
                 raise Exception("Update not approved")
@@ -289,7 +289,7 @@ class Graph2AssetHierarchyBaseWorkflow(GraphsAndRulesBaseWorkflow):
         self.categorized_assets = None  # free up memory after upload .
         return FlowMessage(output_text=f"Total count of assets in CDF after update: { total_assets_after }")
 
-    def step_prepare_cdf_relationships(self, flow_msg: FlowMessage = None):
+    def step_prepare_cdf_relationships(self, flow_msg: FlowMessage | None = None):
         # create, categorize and upload relationships
         rdf_relationships = rdf2relationships(self.solution_graph.get_graph(), self.transformation_rules)
         if not self.cdf_client:
@@ -320,7 +320,7 @@ class Graph2AssetHierarchyBaseWorkflow(GraphsAndRulesBaseWorkflow):
 
         return FlowMessage(output_text=msg)
 
-    def step_upload_cdf_relationships(self, flow_msg: FlowMessage = None):
+    def step_upload_cdf_relationships(self, flow_msg: FlowMessage | None = None):
         if not self.cdf_client:
             logging.error("No CDF client available")
             raise Exception("No CDF client available")

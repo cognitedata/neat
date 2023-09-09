@@ -25,7 +25,7 @@ class GraphsAndRulesBaseWorkflow(BaseWorkflow):
         self.transformation_rules: TransformationRules = None
         self.graph_source_type = "memory"
 
-    def step_load_transformation_rules(self, flow_msg: FlowMessage = None):
+    def step_load_transformation_rules(self, flow_msg: FlowMessage | None = None):
         # Load rules from file or remote location
         cdf_store = CdfStore(self.cdf_client, self.dataset_id, rules_storage_path=self.rules_storage_path)
 
@@ -49,7 +49,7 @@ class GraphsAndRulesBaseWorkflow(BaseWorkflow):
         logging.info(output_text)
         return FlowMessage(output_text=output_text)
 
-    def step_configuring_stores(self, flow_msg: FlowMessage = None, clean_start: bool = True):
+    def step_configuring_stores(self, flow_msg: FlowMessage | None = None, clean_start: bool = True):
         # Initialize source and solution graph stores . clean_start=True will delete all
         # artifacts(files , locks , etc) from previous runs
         logging.info("Initializing source graph")
@@ -93,7 +93,7 @@ class GraphsAndRulesBaseWorkflow(BaseWorkflow):
         self.solution_graph.graph_db_rest_url = self.get_config_item_value("solution_rdf_store.api_root_url")
         return
 
-    def step_load_source_graph(self, flow_msg: FlowMessage = None):
+    def step_load_source_graph(self, flow_msg: FlowMessage | None = None):
         # Load graph into memory or GraphDB
         if self.graph_source_type.lower() == "graphdb":
             try:
@@ -116,7 +116,7 @@ class GraphsAndRulesBaseWorkflow(BaseWorkflow):
         self.solution_graph.drop()
         return
 
-    def step_run_transformation(self, flow_msg: FlowMessage = None):
+    def step_run_transformation(self, flow_msg: FlowMessage | None = None):
         report = RuleProcessingReport()
         # run transformation and generate new graph
         self.solution_graph.set_graph(

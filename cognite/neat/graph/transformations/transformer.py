@@ -5,6 +5,7 @@ import logging
 import time
 import traceback
 from enum import StrEnum
+from typing import Any
 
 import pandas as pd
 from cognite.client import CogniteClient
@@ -39,7 +40,7 @@ class RuleProcessingReportRec(BaseModel):
     row_id: str | None = None
     rule_name: str | None = None
     rule_type: str | None = None
-    rule_expression: str | None = None
+    rule_expression: Any | None = None
     status: str | None = None
     error_message: str | None = None
     elapsed_time: float = 0
@@ -106,8 +107,8 @@ def source2solution_graph(
 def domain2app_knowledge_graph(
     domain_knowledge_graph: Graph,
     transformation_rules: TransformationRules,
-    app_instance_graph: Graph = None,
-    client: CogniteClient = None,
+    app_instance_graph: Graph | None = None,
+    client: CogniteClient | None = None,
     cdf_lookup_database: str | None = None,
     extra_triples: list[tuple[Node, Node, Node]] | None = None,
     stop_on_exception: bool = False,
@@ -145,10 +146,11 @@ def domain2app_knowledge_graph(
             app_instance_graph.bind(prefix, namespace)
 
     tables_by_name = {}
-    for table_name in transformation_rules.raw_tables:
-        logging.debug(f"Loading {table_name} table from database {cdf_lookup_database}")
-        table = client.raw.rows.retrieve_dataframe(cdf_lookup_database, table_name, limit=-1)
-        tables_by_name[table_name] = table
+    if cdf_lookup_database and client:
+        for table_name in transformation_rules.raw_tables:
+            logging.debug(f"Loading {table_name} table from database {cdf_lookup_database}")
+            table = client.raw.rows.retrieve_dataframe(cdf_lookup_database, table_name, limit=-1)
+            tables_by_name[table_name] = table
 
     # Add references with their type first
     types = []
@@ -194,7 +196,7 @@ def domain2app_knowledge_graph(
         try:
             start_time = time.perf_counter()
             # Parse rule:
-            rule = parse_rule(rule_definition.rule, rule_definition.rule_type)
+            rule = parse_rule(rule_definition.rule, rule_definition.rule_type)  # type: ignore[arg-type]
 
             # Build SPARQL if needed:
             if isinstance(rule.traversal, Query) and rule_definition.rule_type == "sparql":

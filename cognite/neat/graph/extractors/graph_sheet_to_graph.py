@@ -64,13 +64,14 @@ def sheet2triples(
     # namespace selection
     if namespace is None and transformation_rule.metadata.namespace is not None:
         instance_namespace = transformation_rule.metadata.namespace
-    else:
+    elif namespace:
         instance_namespace = Namespace(namespace)
-
+    else:
+        raise ValueError("Namespace is not defined in the transformation rules!")
     model_namespace = Namespace(transformation_rule.metadata.namespace)
 
     # Now create empty graph
-    triples = []
+    triples: list[tuple] = []
 
     # Add triples from the capturing sheet to the graph by iterating over the capturing sheet
     # iterate over sheets

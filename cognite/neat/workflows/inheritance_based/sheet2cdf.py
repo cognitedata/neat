@@ -57,7 +57,7 @@ class Sheet2CDFBaseWorkflow(BaseWorkflow):
         self.count_create_assets = 0
         self.meta_keys: NeatMetadataKeys | None = None
 
-    def step_load_transformation_rules(self, flow_msg: FlowMessage = None):
+    def step_load_transformation_rules(self, flow_msg: FlowMessage | None = None):
         # Load rules from file or remote location
         cdf_store = CdfStore(self.cdf_client, self.dataset_id, rules_storage_path=self.rules_storage_path)
 
@@ -85,7 +85,7 @@ class Sheet2CDFBaseWorkflow(BaseWorkflow):
         self.dataset_id = self.transformation_rules.metadata.data_set_id
         return FlowMessage(output_text=output_text)
 
-    def step_configuring_stores(self, flow_msg: FlowMessage = None, clean_start: bool = True):
+    def step_configuring_stores(self, flow_msg: FlowMessage | None = None, clean_start: bool = True):
         self.source_graph = extractors.NeatGraphStore(
             prefixes=self.transformation_rules.prefixes, namespace=self.transformation_rules.metadata.namespace
         )
@@ -97,7 +97,7 @@ class Sheet2CDFBaseWorkflow(BaseWorkflow):
 
         return FlowMessage(output_text="Configured in-memory graph store")
 
-    def step_parse_instances(self, flow_msg: FlowMessage = None):
+    def step_parse_instances(self, flow_msg: FlowMessage | None = None):
         # TODO: Need to provide info both as metric and as report about
         # total number of rows in the sheet that have been processed by the workflow
         # and report back reasons why
@@ -111,7 +111,7 @@ class Sheet2CDFBaseWorkflow(BaseWorkflow):
         logging.info(output_text)
         return FlowMessage(output_text=output_text)
 
-    def step_load_instances_to_source_graph(self, flow_msg: FlowMessage = None):
+    def step_load_instances_to_source_graph(self, flow_msg: FlowMessage | None = None):
         # Load parsed instances to source graph
 
         try:
@@ -127,7 +127,7 @@ class Sheet2CDFBaseWorkflow(BaseWorkflow):
         logging.info(output_text)
         return FlowMessage(output_text=output_text)
 
-    def step_create_cdf_labels(self, flow_msg: FlowMessage = None):
+    def step_create_cdf_labels(self, flow_msg: FlowMessage | None = None):
         logging.info("Creating CDF labels")
         upload_labels(self.cdf_client, self.transformation_rules, extra_labels=["non-historic", "historic"])
 
@@ -242,7 +242,7 @@ class Sheet2CDFBaseWorkflow(BaseWorkflow):
 
         return FlowMessage(output_text=msg)
 
-    def step_upload_cdf_assets(self, flow_msg: FlowMessage = None):
+    def step_upload_cdf_assets(self, flow_msg: FlowMessage | None = None):
         if not self.cdf_client:
             logging.error("No CDF client available")
             raise Exception("No CDF client available")
@@ -267,7 +267,7 @@ class Sheet2CDFBaseWorkflow(BaseWorkflow):
         self.categorized_assets = None  # free up memory after upload .
         return FlowMessage(output_text=f"Total count of assets in CDF after update: { total_assets_after }")
 
-    def step_prepare_cdf_relationships(self, flow_msg: FlowMessage = None):
+    def step_prepare_cdf_relationships(self, flow_msg: FlowMessage | None = None):
         # create, categorize and upload relationships
         rdf_relationships = rdf2relationships(self.solution_graph.get_graph(), self.transformation_rules)
         if not self.cdf_client:
@@ -298,7 +298,7 @@ class Sheet2CDFBaseWorkflow(BaseWorkflow):
 
         return FlowMessage(output_text=msg)
 
-    def step_upload_cdf_relationships(self, flow_msg: FlowMessage = None):
+    def step_upload_cdf_relationships(self, flow_msg: FlowMessage | None = None):
         if not self.cdf_client:
             logging.error("No CDF client available")
             raise Exception("No CDF client available")

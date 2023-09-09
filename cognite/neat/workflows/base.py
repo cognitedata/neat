@@ -44,7 +44,7 @@ class BaseWorkflow:
         self,
         name: str,
         client: CogniteClient,
-        steps_registry: StepsRegistry = None,
+        steps_registry: StepsRegistry | None = None,
         workflow_steps: list[WorkflowStepDefinition] | None = None,
         default_dataset_id: int | None = None,
     ):
