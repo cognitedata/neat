@@ -13,10 +13,7 @@ from cognite.neat.rules.models import TransformationRules
 
 
 def extract_graph_from_sheet(
-    filepath: Path,
-    transformation_rule: TransformationRules,
-    separator: str = ",",
-    namespace: str | None = None,
+    filepath: Path, transformation_rule: TransformationRules, separator: str = ",", namespace: str | None = None
 ) -> list[tuple]:
     """Converts a graph capturing sheet to RDF triples that define data model instances
 
@@ -65,7 +62,7 @@ def sheet2triples(
     class_property_pairs = to_class_property_pairs(transformation_rule)
 
     # namespace selection
-    if namespace is None:
+    if namespace is None and transformation_rule.metadata.namespace is not None:
         instance_namespace = transformation_rule.metadata.namespace
     else:
         instance_namespace = Namespace(namespace)
@@ -83,23 +80,14 @@ def sheet2triples(
             if row.identifier is None:
                 msg = f"Missing identifier in sheet {sheet_name} at row {row.name}! Skipping..."
                 logging.warning(msg)
-                warnings.warn(
-                    msg,
-                    stacklevel=2,
-                )
+                warnings.warn(msg, stacklevel=2)
                 continue
 
             # iterate over sheet rows properties
             for property_name, value in row.to_dict().items():
                 # Setting RDF type of the instance
                 if property_name == "identifier":
-                    triples.append(
-                        (
-                            instance_namespace[row.identifier],
-                            RDF.type,
-                            model_namespace[sheet_name],
-                        )
-                    )
+                    triples.append((instance_namespace[row.identifier], RDF.type, model_namespace[sheet_name]))
                     continue
                 elif not value:
                     continue
@@ -124,10 +112,7 @@ def sheet2triples(
                         (
                             instance_namespace[row.identifier],
                             model_namespace[property_name],
-                            Literal(
-                                v.strip(),
-                                datatype=XSD[property_.expected_value_type],
-                            ),
+                            Literal(v.strip(), datatype=XSD[property_.expected_value_type]),
                         )
                         for v in values
                     )
@@ -168,30 +153,19 @@ def validate_rules_graph_pair(graph_capturing_sheet: dict[str, pd.DataFrame], tr
     elif len(intersection) < len(graph_capturing_sheet.keys()):
         msg = "Graph capturing sheet contains classes that are not defined in the transformation rules! Proceeding..."
         logging.warning(msg)
-        warnings.warn(
-            msg,
-            stacklevel=2,
-        )
+        warnings.warn(msg, stacklevel=2)
 
     elif len(intersection) < len(get_defined_classes(transformation_rule)):
         msg = "Transformation rules contain classes that are not present in the graph capturing sheet! Proceeding..."
         logging.warning(msg)
-        warnings.warn(
-            msg,
-            stacklevel=2,
-        )
+        warnings.warn(msg, stacklevel=2)
 
 
 def read_graph_excel_file_to_table_by_name(filepath: Path) -> dict[str, pd.DataFrame]:
     workbook: Workbook = load_workbook(filepath)
 
     parsed_sheets = {
-        sheetname: pd.read_excel(
-            filepath,
-            sheet_name=sheetname,
-            header=0,
-        )
-        for sheetname in workbook.sheetnames
+        sheetname: pd.read_excel(filepath, sheet_name=sheetname, header=0) for sheetname in workbook.sheetnames
     }
 
     for sheetname, df in parsed_sheets.items():

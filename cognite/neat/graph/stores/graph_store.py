@@ -143,7 +143,7 @@ class NeatGraphStore:
         if self.rdf_store_type == RdfStoreType.OXIGRAPH:
             try:
                 if self.graph:
-                    self.graph.store._inner.flush()
+                    self.graph.store._inner.flush() # type: ignore[attr-defined]
                     self.graph.close()
             except Exception as e:
                 logging.debug("Error closing graph: %s", e)
@@ -162,10 +162,10 @@ class NeatGraphStore:
 
         if self.rdf_store_type == RdfStoreType.OXIGRAPH:
             if add_base_iri:
-                self.graph.store._inner.bulk_load(str(file_path), mime_type, base_iri=self.namespace)
+                self.graph.store._inner.bulk_load(str(file_path), mime_type, base_iri=self.namespace)  # type: ignore[attr-defined]
             else:
-                self.graph.store._inner.bulk_load(str(file_path), mime_type)
-            self.graph.store._inner.optimize()
+                self.graph.store._inner.bulk_load(str(file_path), mime_type)  # type: ignore[attr-defined]
+            self.graph.store._inner.optimize()  # type: ignore[attr-defined]
         else:
             if add_base_iri:
                 self.graph = rdf_file_to_graph(file_path, base_namespace=self.namespace, prefixes=self.prefixes)
@@ -230,9 +230,7 @@ class NeatGraphStore:
 
         elif self.rdf_store_type == RdfStoreType.GRAPHDB:
             r = requests.delete(f"{self.graph_db_rest_url}/repositories/{self.graph_name}/rdf-graphs/service?default")
-            logging.info(
-                f"Dropped graph with state: {r.text}",
-            )
+            logging.info(f"Dropped graph with state: {r.text}")
 
     def query_to_dataframe(
         self,

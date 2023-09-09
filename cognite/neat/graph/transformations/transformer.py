@@ -15,7 +15,7 @@ from rdflib.term import Literal, Node
 
 from cognite.neat.graph.transformations.query_generator.sparql import build_sparql_query
 from cognite.neat.rules.models import TransformationRules
-from cognite.neat.rules.to_rdf_path import AllProperties, AllReferences, RawLookup, parse_rule
+from cognite.neat.rules.to_rdf_path import AllProperties, AllReferences, Query, RawLookup, Traversal, parse_rule
 from cognite.neat.utils.utils import remove_namespace
 
 prom_total_proc_rules_g = Gauge("neat_total_processed_rules", "Number of processed rules", ["state"])
@@ -112,7 +112,7 @@ def domain2app_knowledge_graph(
     extra_triples: list[tuple[Node, Node, Node]] | None = None,
     stop_on_exception: bool = False,
     missing_raw_lookup_value: str = "NaN",
-    processing_report: RuleProcessingReport = None,
+    processing_report: RuleProcessingReport | None = None,
 ) -> Graph:
     """Generates application/solution specific knowledge graph based on Domain Knowledge Graph
 
@@ -132,11 +132,14 @@ def domain2app_knowledge_graph(
     Returns:
         Transformed knowledge graph based on transformation rules
     """
+    if transformation_rules.metadata.namespace is None:
+        raise ValueError("Transformation rules must have namespace defined!")
+    rule_namespace = transformation_rules.metadata.namespace
 
     if app_instance_graph is None:
         app_instance_graph = Graph()
         # Bind App namespace and prefix
-        app_instance_graph.bind(transformation_rules.metadata.prefix, transformation_rules.metadata.namespace)
+        app_instance_graph.bind(transformation_rules.metadata.prefix, rule_namespace)
         # Bind other prefixes and namespaces
         for prefix, namespace in transformation_rules.prefixes.items():
             app_instance_graph.bind(prefix, namespace)
@@ -194,17 +197,18 @@ def domain2app_knowledge_graph(
             rule = parse_rule(rule_definition.rule, rule_definition.rule_type)
 
             # Build SPARQL if needed:
-            if rule_definition.rule_type == "sparql":
+            if isinstance(rule.traversal, Query) and rule_definition.rule_type == "sparql":
                 query = rule.traversal.query
-            else:
+            elif isinstance(rule.traversal, Traversal | str):
                 query = build_sparql_query(domain_knowledge_graph, rule.traversal, transformation_rules.prefixes)
-
+            else:
+                raise ValueError(f"Unknown traversal type {type(rule.traversal)}")
             logging.info(f"Query: {query}")
 
             if query_results := list(domain_knowledge_graph.query(query)):
                 # Generate URI for class and property in target namespace
-                class_URI = transformation_rules.metadata.namespace[rule_definition.class_id]
-                property_URI = transformation_rules.metadata.namespace[rule_definition.property_name]
+                class_URI = rule_namespace[rule_definition.class_id]
+                property_URI = rule_namespace[rule_definition.property_name]  # type: ignore[index]
 
                 # Turn query results into dataframe
                 instance_df = pd.DataFrame(query_results, columns=list(Triple))
@@ -241,7 +245,7 @@ def domain2app_knowledge_graph(
 
                 # Add instances
                 for _, triple in instance_df.iterrows():
-                    app_instance_graph.add(triple.values)
+                    app_instance_graph.add(triple.values)  # type: ignore[arg-type]
                     check_commit()
                 # Setting instances type and merging them with df containing instance - type relations
                 instance_df[Triple.predicate] = RDF.type
@@ -298,11 +302,11 @@ def domain2app_knowledge_graph(
     type_df = pd.concat(types).drop_duplicates(Triple.subject).reset_index(drop=True)
 
     # Add instance - RDF Type relations
-    for _, triple in type_df.iterrows():
+    for _, triple in type_df.iterrows():  # type: ignore[assignment]
         app_instance_graph.add(triple.values)  # type: ignore[arg-type]
         check_commit()
 
-    for i, triple in enumerate(extra_triples or []):
+    for i, triple in enumerate(extra_triples or []):  # type: ignore[assignment]
         try:
             app_instance_graph.add(triple)  # type: ignore[arg-type]
             check_commit()

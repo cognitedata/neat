@@ -269,10 +269,7 @@ class Sheet2CDFBaseWorkflow(BaseWorkflow):
 
     def step_prepare_cdf_relationships(self, flow_msg: FlowMessage = None):
         # create, categorize and upload relationships
-        rdf_relationships = rdf2relationships(
-            self.solution_graph.get_graph(),
-            self.transformation_rules,
-        )
+        rdf_relationships = rdf2relationships(self.solution_graph.get_graph(), self.transformation_rules)
         if not self.cdf_client:
             logging.info("Dry run, no CDF client available")
             return

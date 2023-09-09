@@ -173,9 +173,7 @@ class Graph2AssetHierarchyBaseWorkflow(GraphsAndRulesBaseWorkflow):
         # TODO : decide on error handling and retry logic\
 
         rdf_asset_dicts = rdf2assets(
-            self.solution_graph,
-            self.transformation_rules,
-            stop_on_exception=self.stop_on_error,
+            self.solution_graph, self.transformation_rules, stop_on_exception=self.stop_on_error
         )
 
         if not self.cdf_client:
@@ -293,10 +291,7 @@ class Graph2AssetHierarchyBaseWorkflow(GraphsAndRulesBaseWorkflow):
 
     def step_prepare_cdf_relationships(self, flow_msg: FlowMessage = None):
         # create, categorize and upload relationships
-        rdf_relationships = rdf2relationships(
-            self.solution_graph.get_graph(),
-            self.transformation_rules,
-        )
+        rdf_relationships = rdf2relationships(self.solution_graph.get_graph(), self.transformation_rules)
         if not self.cdf_client:
             logging.info("Dry run, no CDF client available")
             return

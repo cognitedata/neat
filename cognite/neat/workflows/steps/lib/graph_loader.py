@@ -75,7 +75,7 @@ class GenerateCDFNodesAndEdgesFromGraph(Step):
             name="nodes_and_edges_generation.graph_name",
             value="source",
             label=("The name of the graph to be used for matching." " Supported options : source, solution"),
-        ),
+        )
     ]
 
     def run(self, rules: RulesData, graph: SourceGraph | SolutionGraph) -> (FlowMessage, Nodes, Edges):
@@ -163,12 +163,7 @@ class GenerateCDFAssetsFromGraph(Step):
             ),
         )
 
-        rdf_asset_dicts = rdf2assets(
-            solution_graph.graph,
-            rules.rules,
-            stop_on_exception=True,
-            meta_keys=meta_keys,
-        )
+        rdf_asset_dicts = rdf2assets(solution_graph.graph, rules.rules, stop_on_exception=True, meta_keys=meta_keys)
         # UPDATE: 2023-04-05 - correct aggregation of assets in CDF for specific dataset
         total_assets_before = cdf_client.assets.aggregate(filter=AssetFilter(data_set_ids=[{"id": rules.dataset_id}]))[
             0
@@ -323,10 +318,7 @@ class GenerateCDFRelationshipsFromGraph(Step[CategorizedRelationships]):
         self, rules: RulesData, cdf_client: CogniteClient, solution_graph: SolutionGraph
     ) -> (FlowMessage, CategorizedRelationships):
         # create, categorize and upload relationships
-        rdf_relationships = rdf2relationships(
-            solution_graph.graph,
-            rules.rules,
-        )
+        rdf_relationships = rdf2relationships(solution_graph.graph, rules.rules)
 
         categorized_relationships = categorize_relationships(cdf_client, rdf_relationships, rules.dataset_id)
         count_defined_relationships = len(rdf_relationships)
@@ -375,9 +367,7 @@ class UploadCDFRelationships(Step):
     category = CATEGORY
 
     def run(  # type: ignore[override]
-        self,
-        client: CogniteClient,
-        categorized_relationships: CategorizedRelationships,
+        self, client: CogniteClient, categorized_relationships: CategorizedRelationships
     ) -> FlowMessage:
         upload_relationships(client, categorized_relationships.relationships, max_retries=2, retry_delay=4)
         return FlowMessage(output_text="CDF relationships uploaded successfully")

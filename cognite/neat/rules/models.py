@@ -162,8 +162,8 @@ version_compliance_regex = (
     r"([0-9]+[_-]{1}[0-9]+[_-]{1}[0-9]+)|([0-9]+[_-]{1}[0-9])|([0-9]+)$"
 )
 
-Prefix: TypeAlias = constr(min_length=1, max_length=43)  # type: ignore[valid-type]
-ExternalId: TypeAlias = constr(min_length=1, max_length=255)  # type: ignore[valid-type]
+Prefix: TypeAlias = str
+ExternalId: TypeAlias = str
 
 
 class Metadata(RuleModel):
@@ -220,7 +220,11 @@ class Metadata(RuleModel):
         default=None,
     )
     data_model_name: ExternalId | None = Field(
-        description="Name that uniquely identifies data model", alias="dataModelName", default=None
+        description="Name that uniquely identifies data model",
+        alias="dataModelName",
+        default=None,
+        min_length=1,
+        max_length=255,
     )
 
     version: str = Field(min_length=1, max_length=43)
@@ -232,7 +236,7 @@ class Metadata(RuleModel):
     creator: str | list[str]
     contributor: str | list[str] | None = None
     rights: str | None = "Restricted for Internal Use of Cognite"
-    externalIdPrefix: str | None = Field(alias="externalIdPrefix", default=None)
+    externalIdPrefix: str = Field(alias="externalIdPrefix", default="")
     data_set_id: int | None = Field(alias="dataSetId", default=None)
     source: str | Path | None = Field(
         description="File path to Excel file which was used to produce Transformation Rules", default=None
@@ -401,13 +405,15 @@ class Class(Resource):
         parent_asset: The parent asset of the class.
     """
 
-    class_id: ExternalId = Field(alias="Class")
-    class_name: ExternalId | None = Field(alias="Name", default=None)
+    class_id: ExternalId = Field(alias="Class", min_length=1, max_length=255)
+    class_name: ExternalId | None = Field(alias="Name", default=None, min_length=1, max_length=255)
     # Solution model
-    parent_class: ExternalId | list[ExternalId] | None = Field(alias="Parent Class", default=None)
+    parent_class: ExternalId | list[ExternalId] | None = Field(
+        alias="Parent Class", default=None, min_length=1, max_length=255
+    )
 
     # Solution CDF resource
-    parent_asset: ExternalId | None = Field(alias="Parent Asset", default=None)
+    parent_asset: ExternalId | None = Field(alias="Parent Asset", default=None, min_length=1, max_length=255)
 
     @model_validator(mode="before")
     def replace_nan_floats_with_default(cls, values: dict) -> dict:
@@ -501,10 +507,27 @@ class Property(Resource):
     """
 
     # Solution model
-    class_id: ExternalId = Field(alias="Class")
-    property_id: ExternalId = Field(alias="Property")
-    property_name: ExternalId | None = Field(alias="Name", default=None)
-    expected_value_type: ExternalId = Field(alias="Type")
+    class_id: ExternalId = Field(
+        alias="Class",
+        min_length=1,
+        max_length=255,
+    )
+    property_id: ExternalId = Field(
+        alias="Property",
+        min_length=1,
+        max_length=255,
+    )
+    property_name: ExternalId | None = Field(
+        alias="Name",
+        default=None,
+        min_length=1,
+        max_length=255,
+    )
+    expected_value_type: ExternalId = Field(
+        alias="Type",
+        min_length=1,
+        max_length=255,
+    )
     min_count: int | None = Field(alias="Min Count", default=0)
     max_count: int | None = Field(alias="Max Count", default=None)
     default: Any = Field(None)

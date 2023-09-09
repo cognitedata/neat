@@ -1,6 +1,7 @@
 import logging
 import warnings
-from typing import Literal, overload
+from collections.abc import Collection
+from typing import Any, Literal, cast, overload
 from warnings import warn
 
 import pandas as pd
@@ -27,19 +28,26 @@ def define_relationships(rules: TransformationRules, stop_on_exception: bool = F
         which are used to generate CDF relationships
     """
     relationships = {}
+    if rules.metadata.namespace is None:
+        raise ValueError("Namespace not defined in transformation rules!")
+    if rules.metadata.data_set_id is None:
+        raise ValueError("Data set id not defined in transformation rules!")
+    namespace = rules.metadata.namespace
+    data_set_id = rules.metadata.data_set_id
 
     # Unique ids used to check for redefinitions of relationships
     ids = set()
 
     for row, rule in rules.properties.items():
         if "Relationship" in rule.cdf_resource_type:
+            label_set = {rule.class_id, rule.expected_value_type, "non-historic", rule.property_id}
+            if rule.label:
+                label_set.add(rule.label)
             relationship = RelationshipDefinition(
                 source_class=rule.class_id,
                 target_class=rule.expected_value_type,
                 property_=rule.property_id,
-                labels=list(
-                    set([rule.label, rule.class_id, rule.expected_value_type, "non-historic", rule.property_id])
-                ),
+                labels=list(label_set),
                 target_type=rule.target_type,
                 source_type=rule.source_type,
                 relationship_external_id_rule=rule.relationship_external_id_rule,
@@ -61,10 +69,7 @@ def define_relationships(rules: TransformationRules, stop_on_exception: bool = F
 
     if relationships:
         return RelationshipDefinitions(
-            data_set_id=rules.metadata.data_set_id,
-            prefix=rules.metadata.prefix,
-            namespace=rules.metadata.namespace,
-            relationships=relationships,
+            data_set_id=data_set_id, prefix=rules.metadata.prefix, namespace=namespace, relationships=relationships
         )
 
     msg = "No relationship defined in transformation rule sheet!"
@@ -75,10 +80,7 @@ def define_relationships(rules: TransformationRules, stop_on_exception: bool = F
         warnings.warn(msg, stacklevel=2)
         logging.warning(msg)
         return RelationshipDefinitions(
-            data_set_id=rules.metadata.data_set_id,
-            prefix=rules.metadata.prefix,
-            namespace=rules.metadata.namespace,
-            relationships={},
+            data_set_id=data_set_id, prefix=rules.metadata.prefix, namespace=namespace, relationships={}
         )
 
 
@@ -119,7 +121,7 @@ def rdf2relationships(
     }
     """
 
-    relationship_data_frames = []
+    relationship_dfs = []
     for id_, definition in relationship_definitions.relationships.items():
         try:
             logging.debug("Processing relationship: " + id_)
@@ -146,7 +148,7 @@ def rdf2relationships(
             relationship_data_frame.rename(columns={0: "source_external_id", 1: "target_external_id"}, inplace=True)
 
             # removes namespace
-            relationship_data_frame = relationship_data_frame.map(remove_namespace)
+            relationship_data_frame = relationship_data_frame.map(remove_namespace)  # type: ignore[operator]
 
             # adding prefix
             if transformation_rules.metadata.externalIdPrefix:
@@ -168,24 +170,24 @@ def rdf2relationships(
                 relationship_data_frame["source_external_id"] + ":" + relationship_data_frame["target_external_id"]
             )
             relationship_data_frame["data_set_id"] = transformation_rules.metadata.data_set_id
-            relationship_data_frames += [relationship_data_frame]
+            relationship_dfs += [relationship_data_frame]
         except Exception as e:
             logging.error("Error processing relationship: " + id_)
             if stop_on_exception:
                 raise e
             continue
 
-    if relationship_data_frames:
-        relationship_data_frames = pd.concat(relationship_data_frames)
-        relationship_data_frames.reset_index(inplace=True, drop=True)
+    if relationship_dfs:
+        relationship_df = pd.concat(relationship_dfs)
+        relationship_df.reset_index(inplace=True, drop=True)
 
         # Remove duplicate rows, if any. This should not happen, but it is better to be safe than sorry
-        relationship_data_frames.drop_duplicates(subset=["external_id"], inplace=True)
+        relationship_df.drop_duplicates(subset=["external_id"], inplace=True)
 
         # Remove duplicate rows, if any. This should not happen, but it is better to be safe than sorry
-        relationship_data_frames.drop_duplicates(subset=["external_id"], inplace=True)
-        relationship_data_frames["start_time"] = len(relationship_data_frames) * [epoch_now_ms()]
-        return relationship_data_frames
+        relationship_df.drop_duplicates(subset=["external_id"], inplace=True)
+        relationship_df["start_time"] = len(relationship_dfs) * [epoch_now_ms()]
+        return relationship_df
     else:
         return pd.DataFrame(
             columns=[
@@ -218,7 +220,9 @@ def _filter_relationship_xids(relationship_data_frame: pd.DataFrame, asset_xids:
     )
 
 
-def _categorize_rdf_relationship_xids(rdf_relationships: pd.DataFrame, categorized_asset_ids: dict) -> dict[str, set]:
+def _categorize_rdf_relationship_xids(
+    rdf_relationships: pd.DataFrame, categorized_asset_ids: dict
+) -> dict[str, set[str]]:
     """Categorizes the external ids of the RDF relationship."""
 
     missing_asset_ids = (
@@ -273,12 +277,12 @@ def _relationship_to_create(relationships: pd.DataFrame) -> list[Relationship]:
     if relationships.empty:
         return []
     logging.info("Wrangling assets to be created into their final form")
-    relationship_list = [Relationship(**row) for row in relationships.to_dict(orient="records")]
+    relationship_list = [Relationship(**cast(dict[str, Any], row)) for row in relationships.to_dict(orient="records")]
     logging.info(f"Wrangling completed in {(datetime_utc_now() - start_time).seconds} seconds")
     return relationship_list
 
 
-def _relationships_to_decommission(external_ids: list[str]) -> list[RelationshipUpdate]:
+def _relationships_to_decommission(external_ids: Collection[str]) -> list[RelationshipUpdate]:
     start_time = datetime_utc_now()
     relationships = []
     if not external_ids:
@@ -304,7 +308,7 @@ def _relationships_to_decommission(external_ids: list[str]) -> list[Relationship
     return relationships
 
 
-def _relationships_to_resurrect(external_ids: list[str]) -> list[RelationshipUpdate]:
+def _relationships_to_resurrect(external_ids: Collection[str]) -> list[RelationshipUpdate]:
     start_time = datetime_utc_now()
     relationships = []
     if not external_ids:
@@ -339,9 +343,9 @@ def categorize_relationships(
     client: CogniteClient,
     rdf_relationships: pd.DataFrame,
     data_set_id: int,
-    partitions: int = 40,
     return_report: Literal[False] = False,
-) -> dict[str, list[Relationship | RelationshipUpdate]]:
+    partitions: int = 40,
+) -> dict[str, list[Relationship] | list[RelationshipUpdate]]:
     ...
 
 
@@ -350,9 +354,9 @@ def categorize_relationships(
     client: CogniteClient,
     rdf_relationships: pd.DataFrame,
     data_set_id: int,
+    return_report: Literal[True],
     partitions: int = 40,
-    return_report: Literal[True] = False,
-) -> tuple[dict[str, list[Relationship | RelationshipUpdate]], dict[str, set]]:
+) -> tuple[dict[str, list[Relationship] | list[RelationshipUpdate]], dict[str, set]]:
     ...
 
 
@@ -360,11 +364,11 @@ def categorize_relationships(
     client: CogniteClient,
     rdf_relationships: pd.DataFrame,
     data_set_id: int,
-    partitions: int = 40,
     return_report: bool = False,
+    partitions: int = 40,
 ) -> (
-    tuple[dict[str, list[Relationship | RelationshipUpdate]], dict[str, set]]
-    | dict[str, list[Relationship | RelationshipUpdate]]
+    tuple[dict[str, list[Relationship] | list[RelationshipUpdate]], dict[str, set]]
+    | dict[str, list[Relationship] | list[RelationshipUpdate]]
 ):
     """Categorize relationships on those that are to be created, decommissioned or resurrected
 
@@ -414,7 +418,7 @@ def categorize_relationships(
     logging.info(f"Number of relationships to resurrect: { len(resurrect_xids)}")
 
     report = {"create": create_xids, "resurrect": resurrect_xids, "decommission": decommission_xids}
-    categorized_relationships = {
+    categorized_relationships: dict[str, list[Relationship] | list[RelationshipUpdate]] = {
         "create": _relationship_to_create(rdf_relationships[rdf_relationships.external_id.isin(create_xids)]),
         "resurrect": _relationships_to_resurrect(resurrect_xids),
         "decommission": _relationships_to_decommission(decommission_xids),
@@ -480,7 +484,7 @@ def _micro_batch_push(
 
 def upload_relationships(
     client: CogniteClient,
-    categorized_relationships: dict[str, list[Relationship | RelationshipUpdate]],
+    categorized_relationships: dict[str, list[Relationship]],
     batch_size: int = 5000,
     max_retries: int = 1,
     retry_delay: int = 3,
@@ -549,9 +553,5 @@ def upload_relationships(
         except CogniteDuplicatedError as e:
             # This situation should not happen, but if it does, the code attempts to handle it
             exists = {d["externalId"] for d in e.duplicated}
-            missing_relationships = [
-                t
-                for t in categorized_relationships["create"]
-                if (t._external_id if isinstance(t, RelationshipUpdate) else t.external_id) not in exists
-            ]
+            missing_relationships = [t for t in categorized_relationships["create"] if t.external_id not in exists]
             client.relationships.create(missing_relationships)
