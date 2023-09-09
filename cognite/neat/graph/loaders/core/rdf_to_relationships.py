@@ -83,9 +83,7 @@ def define_relationships(rules: TransformationRules, stop_on_exception: bool = F
 
 
 def rdf2relationships(
-    graph_store: NeatGraphStore,
-    transformation_rules: TransformationRules,
-    stop_on_exception: bool = False,
+    graph_store: NeatGraphStore, transformation_rules: TransformationRules, stop_on_exception: bool = False
 ) -> pd.DataFrame:
     """Converts RDF triples to relationships
 
@@ -204,9 +202,7 @@ def rdf2relationships(
 
 
 def rdf2relationship_data_frame(
-    graph_store: NeatGraphStore,
-    transformation_rules: TransformationRules,
-    stop_on_exception: bool = False,
+    graph_store: NeatGraphStore, transformation_rules: TransformationRules, stop_on_exception: bool = False
 ) -> pd.DataFrame:
     warn("'rdf2relationship_data_frame' is deprecated, please use 'rdf2relationships' instead!", stacklevel=2)
     logging.warning("'rdf2relationship_data_frame' is deprecated, please use 'rdf2relationships' instead!")
@@ -492,9 +488,11 @@ def upload_relationships(
     """Uploads categorized relationships to CDF
 
     Args:
-        client : Instance of CogniteClient
-        categorized_relationships : Categories of relationships to be uploaded
-        batch_size : Size of batch, by default 5000
+        client: Instance of CogniteClient
+        categorized_relationships: Categories of relationships to be uploaded
+        batch_size: Size of batch, by default 5000
+        max_retries: Maximum times to retry the upload, by default 1
+        retry_delay: Time delay before retrying the upload, by default 3
 
     !!! note "batch_size"
         If batch size is set to 1 or None, all relationships will be pushed to CDF in one go.
@@ -549,7 +547,11 @@ def upload_relationships(
         try:
             create_relationships()
         except CogniteDuplicatedError as e:
-            # This situation should not happen but if it does, the code attempts to handle it
+            # This situation should not happen, but if it does, the code attempts to handle it
             exists = {d["externalId"] for d in e.duplicated}
-            missing_relationships = [t for t in categorized_relationships["create"] if t.external_id not in exists]
+            missing_relationships = [
+                t
+                for t in categorized_relationships["create"]
+                if (t._external_id if isinstance(t, RelationshipUpdate) else t.external_id) not in exists
+            ]
             client.relationships.create(missing_relationships)
