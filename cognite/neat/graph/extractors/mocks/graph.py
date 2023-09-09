@@ -92,14 +92,10 @@ def generate_triples(
     }
 
     # create triple for each class instance defining its type
-    triples = []
+    triples: list[tuple] = []
     for class_ in class_count:
         triples += [
-            (
-                class_instance_id,
-                RDF.type,
-                URIRef(transformation_rules.metadata.namespace[class_]),
-            )
+            (class_instance_id, RDF.type, URIRef(transformation_rules.metadata.namespace[class_]))
             for class_instance_id in instance_ids[class_]
         ]
 
@@ -146,7 +142,7 @@ def _get_generation_order(
     return _traverse({}, graph, roots)
 
 
-def _traverse(hierarchy: dict, graph: dict, names: str) -> dict:
+def _traverse(hierarchy: dict, graph: dict, names: list[str]) -> dict:
     """traverse the graph and return the hierarchy"""
     for name in names:
         hierarchy[name] = _traverse({}, graph, graph[name])
@@ -194,7 +190,7 @@ def _remove_higher_occurring_sym_pair(class_linkage: pd.DataFrame, sym_pairs: se
             ].index.values[0]
         rows_to_remove.add(index)
 
-    return class_linkage.drop(rows_to_remove)
+    return class_linkage.drop(list(rows_to_remove))
 
 
 def _remove_non_requested_sym_pairs(class_linkage: pd.DataFrame, class_count: dict) -> pd.DataFrame:
@@ -202,7 +198,7 @@ def _remove_non_requested_sym_pairs(class_linkage: pd.DataFrame, class_count: di
     rows_to_remove = set(class_linkage[~(class_linkage["source_class"].isin(set(class_count.keys())))].index.values)
     rows_to_remove |= set(class_linkage[~(class_linkage["target_class"].isin(set(class_count.keys())))].index.values)
 
-    return class_linkage.drop(rows_to_remove)
+    return class_linkage.drop(list(rows_to_remove))
 
 
 def _generate_mock_data_property_triples(
@@ -211,12 +207,7 @@ def _generate_mock_data_property_triples(
     """Generates triples for data properties."""
     # TODO: we should handle datatype, currently we are assuming everything is string
     return [
-        (
-            id_,
-            URIRef(namespace[property_]),
-            Literal(remove_namespace(id_).replace("-", " ")),
-        )
-        for id_ in instance_ids
+        (id_, URIRef(namespace[property_]), Literal(remove_namespace(id_).replace("-", " "))) for id_ in instance_ids
     ]
 
 
@@ -257,22 +248,10 @@ def _generate_mock_object_property_triples(
 
     for i, source in enumerate(instance_ids[class_]):
         target = instance_ids[property_definition.value_type][i % len(instance_ids[property_definition.value_type])]
-        triples += [
-            (
-                URIRef(source),
-                URIRef(namespace[property_definition.name]),
-                URIRef(target),
-            )
-        ]
+        triples += [(URIRef(source), URIRef(namespace[str(property_definition.name)]), URIRef(target))]
 
         if symmetric_property:
-            triples += [
-                (
-                    URIRef(target),
-                    URIRef(namespace[symmetric_property]),
-                    URIRef(source),
-                )
-            ]
+            triples += [(URIRef(target), URIRef(namespace[symmetric_property]), URIRef(source))]
 
     # remove symmetric property from class definition of downstream class
     # to avoid asymmetric linking in mock graph
@@ -291,20 +270,16 @@ def _generate_triples_per_class(
     stop_on_exception: bool,
 ) -> list[tuple]:
     """Generate triples for a given class."""
-    triples = []
+    triples: list[tuple] = []
     for _, property_definition in class_definitions[class_].iterrows():
         if property_definition.property_type == "DatatypeProperty":
-            triples += _generate_mock_data_property_triples(instance_ids[class_], property_definition.name, namespace)
+            triples += _generate_mock_data_property_triples(
+                instance_ids[class_], str(property_definition.name), namespace
+            )
 
         elif property_definition.property_type == "ObjectProperty":
             triples += _generate_mock_object_property_triples(
-                class_,
-                property_definition,
-                class_definitions,
-                sym_pairs,
-                instance_ids,
-                namespace,
-                stop_on_exception,
+                class_, property_definition, class_definitions, sym_pairs, instance_ids, namespace, stop_on_exception
             )
 
         else:
@@ -325,7 +300,7 @@ def _rules_to_dict(transformation_rules: TransformationRules) -> dict[str, pd.Da
         Simplified representation of the data model
     """
 
-    data_model = {}
+    data_model: dict[str, pd.DataFrame] = {}
 
     defined_classes = get_classes_with_properties(transformation_rules)
 

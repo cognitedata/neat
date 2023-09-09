@@ -220,15 +220,10 @@ class Metadata(RuleModel):
         default=None,
     )
     data_model_name: ExternalId | None = Field(
-        description="Name that uniquely identifies data model",
-        alias="dataModelName",
-        default=None,
+        description="Name that uniquely identifies data model", alias="dataModelName", default=None
     )
 
-    version: str = Field(
-        min_length=1,
-        max_length=43,
-    )
+    version: str = Field(min_length=1, max_length=43)
     is_current_version: bool = Field(alias="isCurrentVersion", default=True)
     created: datetime
     updated: datetime = Field(default_factory=lambda: datetime.utcnow())
@@ -240,19 +235,11 @@ class Metadata(RuleModel):
     externalIdPrefix: str | None = Field(alias="externalIdPrefix", default=None)
     data_set_id: int | None = Field(alias="dataSetId", default=None)
     source: str | Path | None = Field(
-        description="File path to Excel file which was used to produce Transformation Rules",
-        default=None,
+        description="File path to Excel file which was used to produce Transformation Rules", default=None
     )
     dms_compliant: bool = True
 
-    @field_validator(
-        "externalIdPrefix",
-        "contributor",
-        "contributor",
-        "description",
-        "rights",
-        mode="before",
-    )
+    @field_validator("externalIdPrefix", "contributor", "contributor", "description", "rights", mode="before")
     def replace_float_nan_with_default(cls, value, info):
         if isinstance(value, float) and math.isnan(value):
             return cls.model_fields[info.field_name].default
@@ -414,9 +401,7 @@ class Class(Resource):
         parent_asset: The parent asset of the class.
     """
 
-    class_id: ExternalId = Field(
-        alias="Class",
-    )
+    class_id: ExternalId = Field(alias="Class")
     class_name: ExternalId | None = Field(alias="Name", default=None)
     # Solution model
     parent_class: ExternalId | list[ExternalId] | None = Field(alias="Parent Class", default=None)
@@ -811,8 +796,8 @@ class TransformationRules(RuleModel):
     metadata: Metadata
     classes: dict[str, Class]
     properties: dict[str, Property]
-    prefixes: dict[str, Namespace] | None = PREFIXES
-    instances: list[Instance] | None = None
+    prefixes: dict[str, Namespace] = PREFIXES.copy()
+    instances: list[Instance] = Field(default_factory=list)
 
     @property
     def raw_tables(self) -> list[str]:

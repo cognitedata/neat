@@ -11,7 +11,7 @@ from cognite.client import CogniteClient
 from prometheus_client import Gauge
 from pydantic import BaseModel
 from rdflib import RDF, Graph
-from rdflib.term import Literal
+from rdflib.term import Literal, Node
 
 from cognite.neat.graph.transformations.query_generator.sparql import build_sparql_query
 from cognite.neat.rules.models import TransformationRules
@@ -36,12 +36,12 @@ COMMIT_BATCH_SIZE = 10000
 class RuleProcessingReportRec(BaseModel):
     """Report record for rule processing"""
 
-    row_id: str = None
-    rule_name: str = None
-    rule_type: str = None
-    rule_expression: str = None
-    status: str = None
-    error_message: str = None
+    row_id: str | None = None
+    rule_name: str | None = None
+    rule_type: str | None = None
+    rule_expression: str | None = None
+    status: str | None = None
+    error_message: str | None = None
     elapsed_time: float = 0
     rows_in_response: int = 0
 
@@ -60,22 +60,22 @@ class RuleProcessingReport(BaseModel):
 def source2solution_graph(
     source_knowledge_graph: Graph,
     transformation_rules: TransformationRules,
-    solution_knowledge_graph: Graph = None,
-    client: CogniteClient = None,
+    solution_knowledge_graph: Graph | None = None,
+    client: CogniteClient | None = None,
     cdf_lookup_database: str | None = None,
-    extra_triples: list[tuple] | None = None,
+    extra_triples: list[tuple[Node, Node, Node]] | None = None,
     stop_on_exception: bool = False,
     missing_raw_lookup_value: str = "NaN",
-    processing_report: RuleProcessingReport = None,
+    processing_report: RuleProcessingReport | None = None,
 ) -> Graph:
-    """Transforms  solution knowledge graph based on Domain Knowledge Graph
+    """Transforms solution knowledge graph based on Domain Knowledge Graph
 
     Args:
-        domain_knowledge_graph: Domain Knowledge Graph which represent the source graph being
+        source_knowledge_graph: Domain Knowledge Graph which represents the source graph being
                                 transformed to app/solution specific graph
         transformation_rules: Transformation rules holding data model definition and rules to
                               transform source/domain graph to app/solution specific graph
-        app_instance_graph: Graph to store app/solution specific graph.
+        solution_knowledge_graph: Graph to store app/solution specific graph.
                             Defaults to None (i.e., empty graph).
         client: CogniteClient. Defaults to None.
         cdf_lookup_database: CDF RAW database name to use for `rawlookup` rules. Defaults to None.
@@ -109,7 +109,7 @@ def domain2app_knowledge_graph(
     app_instance_graph: Graph = None,
     client: CogniteClient = None,
     cdf_lookup_database: str | None = None,
-    extra_triples: list[tuple] | None = None,
+    extra_triples: list[tuple[Node, Node, Node]] | None = None,
     stop_on_exception: bool = False,
     missing_raw_lookup_value: str = "NaN",
     processing_report: RuleProcessingReport = None,
@@ -226,15 +226,13 @@ def domain2app_knowledge_graph(
                     lookup_map = tables_by_name[rule.table.name].set_index(rule.table.key)[rule.table.value].to_dict()
 
                     def lookup(
-                        literal: Literal,
-                        lookup_table=lookup_map,
-                        missing_raw_lookup_value=missing_raw_lookup_value,
+                        literal: Literal, lookup_table=lookup_map, missing_raw_lookup_value=missing_raw_lookup_value
                     ):
                         if new_value := lookup_table.get(literal.value):
-                            return Literal(new_value, literal.language, literal.datatype, literal.normalize)
+                            return Literal(new_value, literal.language, literal.datatype, bool(literal.normalize))
                         elif missing_raw_lookup_value:
                             return Literal(
-                                missing_raw_lookup_value, literal.language, literal.datatype, literal.normalize
+                                missing_raw_lookup_value, literal.language, literal.datatype, bool(literal.normalize)
                             )
                         else:
                             return literal
@@ -301,16 +299,15 @@ def domain2app_knowledge_graph(
 
     # Add instance - RDF Type relations
     for _, triple in type_df.iterrows():
-        app_instance_graph.add(triple.values)
+        app_instance_graph.add(triple.values)  # type: ignore[arg-type]
         check_commit()
 
-    if extra_triples:
-        for i, triple in enumerate(extra_triples):
-            try:
-                app_instance_graph.add(triple)
-                check_commit()
-            except ValueError as e:
-                raise ValueError(f"Triple {i} in extra_triples is not correct and cannot be added!") from e
+    for i, triple in enumerate(extra_triples or []):
+        try:
+            app_instance_graph.add(triple)  # type: ignore[arg-type]
+            check_commit()
+        except ValueError as e:
+            raise ValueError(f"Triple {i} in extra_triples is not correct and cannot be added!") from e
 
     check_commit(force_commit=True)
     return app_instance_graph
