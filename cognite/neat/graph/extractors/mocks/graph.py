@@ -36,10 +36,10 @@ def generate_triples(
     of class instances
 
     Args:
-        data_model : Data model containing ontology and object shape constraints for each class
-        class_count : Target class count for each class in the ontology
-        stop_on_exception : To stop if exception is encountered or not, default is False
-        allow_isolated_classes : To allow generation of instances for classes that are not
+        transformation_rules : Transformation rules defining the data model
+        class_count: Target class count for each class in the ontology
+        stop_on_exception: To stop if exception is encountered or not, default is False
+        allow_isolated_classes: To allow generation of instances for classes that are not
                                  connected to any other class, default is True
 
     Returns:
@@ -225,7 +225,7 @@ def _generate_mock_object_property_triples(
     property_definition: pd.Series,
     class_definitions: dict[str, pd.DataFrame],
     sym_pairs: set[tuple[str, str]],
-    instance_ids: list[URIRef],
+    instance_ids: dict[str, list[URIRef]],
     namespace: Namespace,
     stop_on_exception: bool,
 ) -> list[tuple[URIRef, URIRef, URIRef]]:
