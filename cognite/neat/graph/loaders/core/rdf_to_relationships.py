@@ -186,7 +186,7 @@ def rdf2relationships(
 
         # Remove duplicate rows, if any. This should not happen, but it is better to be safe than sorry
         relationship_df.drop_duplicates(subset=["external_id"], inplace=True)
-        relationship_df["start_time"] = len(relationship_dfs) * [epoch_now_ms()]
+        relationship_df["start_time"] = len(relationship_df) * [epoch_now_ms()]
         return relationship_df
     else:
         return pd.DataFrame(
