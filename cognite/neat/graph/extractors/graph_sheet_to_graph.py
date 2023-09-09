@@ -69,7 +69,10 @@ def sheet2triples(
     else:
         raise ValueError("Namespace is not defined in the transformation rules!")
 
-    model_namespace = Namespace(transformation_rule.metadata.namespace)
+    if transformation_rule.metadata.namespace is not None:
+        model_namespace = Namespace(transformation_rule.metadata.namespace)
+    else:
+        raise ValueError("Namespace is not defined in the transformation rules!")
 
     # Now create empty graph
     triples: list[tuple] = []
