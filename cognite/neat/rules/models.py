@@ -507,27 +507,10 @@ class Property(Resource):
     """
 
     # Solution model
-    class_id: ExternalId = Field(
-        alias="Class",
-        min_length=1,
-        max_length=255,
-    )
-    property_id: ExternalId = Field(
-        alias="Property",
-        min_length=1,
-        max_length=255,
-    )
-    property_name: ExternalId | None = Field(
-        alias="Name",
-        default=None,
-        min_length=1,
-        max_length=255,
-    )
-    expected_value_type: ExternalId = Field(
-        alias="Type",
-        min_length=1,
-        max_length=255,
-    )
+    class_id: ExternalId = Field(alias="Class", min_length=1, max_length=255)
+    property_id: ExternalId = Field(alias="Property", min_length=1, max_length=255)
+    property_name: ExternalId | None = Field(alias="Name", default=None, min_length=1, max_length=255)
+    expected_value_type: ExternalId = Field(alias="Type", min_length=1, max_length=255)
     min_count: int | None = Field(alias="Min Count", default=0)
     max_count: int | None = Field(alias="Max Count", default=None)
     default: Any = Field(None)
@@ -831,6 +814,12 @@ class TransformationRules(RuleModel):
                 if rule.is_raw_lookup
             }
         )
+
+    @field_validator("instances", mode="before")
+    def none_as_empty_list(cls, value):
+        if value is None:
+            return []
+        return value
 
     @validator("properties", each_item=True)
     def class_property_exist(cls, value, values):
