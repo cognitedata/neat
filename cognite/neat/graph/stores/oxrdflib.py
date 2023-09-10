@@ -102,7 +102,8 @@ class OxigraphStore(Store):
             query = str(query)
         query = "".join(f"PREFIX {prefix}: <{namespace}>\n" for prefix, namespace in init_ns.items()) + query
         if initBindings:
-            # Todo Anders: This is likely a bug as .n3 is not valid the Identifier
+            # Todo Anders: This is likely a bug as .n3 is not valid the Identifier.
+            #  There are no tests reaching this code.
             query += "\nVALUES ( {} ) {{ ({}) }}".format(
                 " ".join(f"?{k}" for k in initBindings),
                 " ".join(v.n3() for v in initBindings.values()),  # type: ignore[attr-defined]
