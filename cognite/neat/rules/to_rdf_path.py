@@ -142,11 +142,10 @@ class Step(BaseModel):
 
 
 class Traversal(BaseModel):
-    pass
+    class_: Entity
 
 
 class SingleProperty(Traversal):
-    class_: Entity
     property: Entity
 
     @classmethod
@@ -155,16 +154,12 @@ class SingleProperty(Traversal):
 
 
 class AllReferences(Traversal):
-    class_: Entity
-
     @classmethod
     def from_string(cls, class_: str) -> Self:
         return cls(class_=Entity.from_string(class_))
 
 
 class AllProperties(Traversal):
-    class_: Entity
-
     @classmethod
     def from_string(cls, class_: str) -> Self:
         return cls(class_=Entity.from_string(class_))
@@ -181,7 +176,6 @@ class Origin(BaseModel):
 class Hop(Traversal):
     """Multi or single hop traversal through graph"""
 
-    class_: Entity
     traversal: list[Step]
 
     @classmethod
