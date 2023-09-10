@@ -464,7 +464,8 @@ def _to_construct_triples(
             raise ValueError("Rule must be string!")
         traversal = parse_rule(property_.rule, property_.rule_type).traversal
 
-        class_ids.append(traversal.class_.id)
+        if isinstance(traversal, Traversal):
+            class_ids.append(traversal.class_.id)
 
         graph_template_triple = Triple(
             subject="?subject",
