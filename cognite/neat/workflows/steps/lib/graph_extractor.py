@@ -1,3 +1,4 @@
+import json
 import logging
 from pathlib import Path
 from typing import ClassVar
@@ -6,9 +7,10 @@ from rdflib import RDF, Literal, URIRef
 
 from cognite.neat.constants import PREFIXES
 from cognite.neat.graph import extractors
+from cognite.neat.graph.extractors.mocks.graph import generate_triples
 from cognite.neat.rules.exporter.rules2triples import get_instances_as_triples
 from cognite.neat.utils.utils import add_triples
-from cognite.neat.workflows.model import FlowMessage
+from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
@@ -16,6 +18,7 @@ __all__ = [
     "InstancesFromRdfFileToSourceGraph",
     "InstancesFromRulesToSolutionGraph",
     "InstancesFromGraphCaptureSpreadsheetToGraph",
+    "GenerateMockGraph",
     "DataModelFromRulesToSourceGraph",
 ]
 
@@ -121,6 +124,58 @@ class InstancesFromGraphCaptureSpreadsheetToGraph(Step):
 
         add_triples(graph_store.graph, triples)
         return FlowMessage(output_text="Graph capture sheet processed")
+
+
+class GenerateMockGraph(Step):
+    """
+    This step generate mock graph based on the defined classes and target number of instances
+    """
+
+    description = "This step extracts instances from graph capture spreadsheet and loads them into solution graph"
+    category = CATEGORY
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="class_count",
+            value='{"GeographicalRegion":5, "SubGeographicalRegion":10,}',
+            label="Target number of instances for each class",
+        ),
+        Configurable(
+            name="graph_name",
+            value="solution",
+            label="The name of target graph.",
+            options=["source", "solution"],
+        ),
+    ]
+
+    def run(
+        self,
+        transformation_rules: RulesData,
+        graph_store: SolutionGraph | SourceGraph,
+    ) -> FlowMessage:
+        logging.info("Initiated generation of mock triples")
+        try:
+            class_count = json.loads(self.configs["class_count"])
+        except Exception:
+            return FlowMessage(
+                error_text="Defected JSON stored in class_count", step_execution_status=StepExecutionStatus.FAILED
+            )
+
+        graph_name = self.configs["graph_name"]
+        if graph_name == "solution":
+            graph_store = self.flow_context["SolutionGraph"]
+        else:
+            graph_store = self.flow_context["SourceGraph"]
+
+        logging.info(class_count)
+        logging.info(transformation_rules.rules.metadata.model_dump())
+        try:
+            triples = generate_triples(transformation_rules=transformation_rules.rules, class_count=class_count)
+        except Exception as e:
+            return FlowMessage(error_text=f"Error: {e}", step_execution_status=StepExecutionStatus.FAILED)
+
+        logging.info("Adding mock triples to graph")
+        add_triples(graph_store.graph, triples)
+        return FlowMessage(output_text=f"Mock graph generated containing total of {len(triples)} triples")
 
 
 class InstancesFromRulesToSolutionGraph(Step):
