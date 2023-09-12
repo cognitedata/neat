@@ -7,7 +7,7 @@ from rdflib import RDF, Literal, URIRef
 
 from cognite.neat.constants import PREFIXES
 from cognite.neat.graph import extractors
-from cognite.neat.graph.extractors.mocks.graph import generate_triples
+from cognite.neat.graph.extractors.mocks.graph import generate_triples as generate_mock_triples
 from cognite.neat.rules.exporter.rules2triples import get_instances_as_triples
 from cognite.neat.utils.utils import add_triples
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
@@ -157,7 +157,8 @@ class GenerateMockGraph(Step):
             class_count = json.loads(self.configs["class_count"])
         except Exception:
             return FlowMessage(
-                error_text="Defected JSON stored in class_count", step_execution_status=StepExecutionStatus.FAILED
+                error_text="Defected JSON stored in class_count",
+                step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
             )
 
         graph_name = self.configs["graph_name"]
@@ -169,9 +170,9 @@ class GenerateMockGraph(Step):
         logging.info(class_count)
         logging.info(transformation_rules.rules.metadata.model_dump())
         try:
-            triples = generate_triples(transformation_rules=transformation_rules.rules, class_count=class_count)
+            triples = generate_mock_triples(transformation_rules=transformation_rules.rules, class_count=class_count)
         except Exception as e:
-            return FlowMessage(error_text=f"Error: {e}", step_execution_status=StepExecutionStatus.FAILED)
+            return FlowMessage(error_text=f"Error: {e}", step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
 
         logging.info("Adding mock triples to graph")
         add_triples(graph_store.graph, triples)

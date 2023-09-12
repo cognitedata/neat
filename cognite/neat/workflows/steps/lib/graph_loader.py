@@ -114,8 +114,11 @@ class UploadCDFNodes(Step):
     category = CATEGORY
 
     def run(self, cdf_client: CogniteClient, nodes: Nodes) -> FlowMessage:
-        upload_nodes(cdf_client, nodes.nodes, max_retries=2, retry_delay=4)
-        return FlowMessage(output_text="CDF nodes uploaded successfully")
+        if nodes.nodes:
+            upload_nodes(cdf_client, nodes.nodes, max_retries=2, retry_delay=4)
+            return FlowMessage(output_text="CDF nodes uploaded successfully")
+        else:
+            return FlowMessage(output_text="No nodes to upload!")
 
 
 class UploadCDFEdges(Step):
@@ -127,8 +130,11 @@ class UploadCDFEdges(Step):
     category = CATEGORY
 
     def run(self, cdf_client: CogniteClient, edges: Edges) -> FlowMessage:
-        upload_edges(cdf_client, edges.edges, max_retries=2, retry_delay=4)
-        return FlowMessage(output_text="CDF edges uploaded successfully")
+        if edges.edges:
+            upload_edges(cdf_client, edges.edges, max_retries=2, retry_delay=4)
+            return FlowMessage(output_text="CDF edges uploaded successfully")
+        else:
+            return FlowMessage(output_text="No edges to upload!")
 
 
 class GenerateCDFAssetsFromGraph(Step):

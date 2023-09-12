@@ -42,11 +42,26 @@ def rdf2nodes_and_edges(
                 for res in graph_store.query(f"SELECT ?instance WHERE {{ ?instance rdf:type <{class_namespace}> . }}")
             ]
 
+            counter = 0
+            start_time = datetime_utc_now()
+            total = len(class_instance_ids)
+
             for class_instance_id in class_instance_ids:
+                counter += 1
                 try:
                     instance = pydantic_models[class_].from_graph(graph_store, transformation_rules, class_instance_id)
                     nodes.append(instance.to_node(data_model))
                     edges.extend(instance.to_edge(data_model))
+
+                    delta_time = datetime_utc_now() - start_time
+                    delta_time = (delta_time.seconds * 1000000 + delta_time.microseconds) / 1000
+                    msg = (
+                        f"{class_} {counter} of {total} instances processed, "
+                        f"instance processing time: {delta_time/counter:.2f} "
+                    )
+                    msg += f"ms ETC: {(delta_time/counter) * (total - counter) / 1000 :.3f} s"
+                    logging.info(msg)
+
                 except Exception as e:
                     logging.error(
                         f"Instance {class_instance_id} of {class_} cannot be resolved to nodes and edges. Reason: {e}"
