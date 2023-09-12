@@ -4,7 +4,7 @@ from typing import Literal, overload
 
 from cognite.neat.exceptions import wrangle_warnings
 from cognite.neat.rules import exceptions
-from cognite.neat.rules.models import TransformationRules, data_model_name_compliance_regex
+from cognite.neat.rules.models import TransformationRules, dms_property_id_compliance_regex, view_id_compliance_regex
 
 
 @overload
@@ -29,7 +29,7 @@ def are_entity_names_dms_compliant(
     flag: bool = True
     with warnings.catch_warnings(record=True) as validation_warnings:
         for class_ in transformation_rules.classes.values():
-            if not re.match(data_model_name_compliance_regex, class_.class_id):
+            if not re.match(view_id_compliance_regex, class_.class_id):
                 warnings.warn(
                     exceptions.EntityIDNotDMSCompliant(
                         "Class", class_.class_id, f"[Classes/Class/{class_.class_id}]"
@@ -40,7 +40,8 @@ def are_entity_names_dms_compliant(
                 flag = False
 
         for row, property_ in transformation_rules.properties.items():
-            if not re.match(data_model_name_compliance_regex, property_.class_id):
+            # check class id which would resolve as view/container id
+            if not re.match(view_id_compliance_regex, property_.class_id):
                 warnings.warn(
                     exceptions.EntityIDNotDMSCompliant(
                         "Class", property_.class_id, f"[Properties/Class/{row}]"
@@ -49,7 +50,9 @@ def are_entity_names_dms_compliant(
                     stacklevel=2,
                 )
                 flag = False
-            if not re.match(data_model_name_compliance_regex, property_.property_id):
+
+            # check property id which would resolve as view/container id
+            if not re.match(dms_property_id_compliance_regex, property_.property_id):
                 warnings.warn(
                     exceptions.EntityIDNotDMSCompliant(
                         "Property", property_.property_id, f"[Properties/Property/{row}]"
@@ -58,7 +61,9 @@ def are_entity_names_dms_compliant(
                     stacklevel=2,
                 )
                 flag = False
-            if not re.match(data_model_name_compliance_regex, property_.expected_value_type):
+
+            # expected value type, as it is case sensitive should be ok
+            if not re.match(view_id_compliance_regex, property_.expected_value_type):
                 warnings.warn(
                     exceptions.EntityIDNotDMSCompliant(
                         "Value type", property_.expected_value_type, f"[Properties/Type/{row}]"

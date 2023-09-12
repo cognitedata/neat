@@ -1,9 +1,11 @@
 """This module is used to generate mock graph data for purposes of testing of NEAT.
 """
 import logging
+import random
 import warnings
 from collections import OrderedDict
 
+import numpy
 import pandas as pd
 from prometheus_client import Gauge
 from rdflib import RDF, Literal, Namespace, URIRef
@@ -15,7 +17,7 @@ from cognite.neat.rules.analysis import (
     get_symmetric_pairs,
 )
 from cognite.neat.rules.exporter.rules2rules import subset_rules
-from cognite.neat.rules.models import TransformationRules
+from cognite.neat.rules.models import DATA_TYPE_MAPPING, TransformationRules
 from cognite.neat.utils.utils import remove_namespace
 
 neat_total_processed_mock_triples = Gauge(
@@ -206,18 +208,39 @@ def _remove_non_requested_sym_pairs(class_linkage: pd.DataFrame, class_count: di
 
 
 def _generate_mock_data_property_triples(
-    instance_ids: list[URIRef], property_: str, namespace: Namespace
+    instance_ids: list[URIRef], property_: str, namespace: Namespace, value_type: str = "string"
 ) -> list[tuple[URIRef, URIRef, Literal]]:
     """Generates triples for data properties."""
-    # TODO: we should handle datatype, currently we are assuming everything is string
-    return [
-        (
-            id_,
-            URIRef(namespace[property_]),
-            Literal(remove_namespace(id_).replace("-", " ")),
-        )
-        for id_ in instance_ids
-    ]
+
+    python_type = DATA_TYPE_MAPPING[value_type]["python"]
+    triples = []
+    for id_ in instance_ids:
+        if python_type == int:
+            triples.append(
+                (
+                    id_,
+                    URIRef(namespace[property_]),
+                    Literal(random.randint(1, 1983)),
+                )
+            )
+        elif python_type == float:
+            triples.append(
+                (
+                    id_,
+                    URIRef(namespace[property_]),
+                    Literal(numpy.float32(random.uniform(1, 1983))),
+                )
+            )
+        # generate string
+        else:
+            triples.append(
+                (
+                    id_,
+                    URIRef(namespace[property_]),
+                    Literal(remove_namespace(id_).replace("-", " ")),
+                )
+            )
+    return triples
 
 
 def _generate_mock_object_property_triples(
@@ -294,7 +317,9 @@ def _generate_triples_per_class(
     triples = []
     for _, property_definition in class_definitions[class_].iterrows():
         if property_definition.property_type == "DatatypeProperty":
-            triples += _generate_mock_data_property_triples(instance_ids[class_], property_definition.name, namespace)
+            triples += _generate_mock_data_property_triples(
+                instance_ids[class_], property_definition.name, namespace, property_definition.value_type
+            )
 
         elif property_definition.property_type == "ObjectProperty":
             triples += _generate_mock_object_property_triples(
@@ -341,5 +366,4 @@ def _rules_to_dict(transformation_rules: TransformationRules) -> dict[str, pd.Da
                 }
 
         data_model[class_] = pd.DataFrame(properties).T
-
     return data_model

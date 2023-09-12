@@ -60,7 +60,7 @@ __all__ = ["Class", "Instance", "Metadata", "Prefixes", "Property", "Resource", 
 DATA_TYPE_MAPPING: dict[str, dict[str, type | str | ListablePropertyType]] = {
     "boolean": {"python": bool, "GraphQL": "Boolean", "dms": Boolean},
     "float": {"python": float, "GraphQL": "Float", "dms": Float32},
-    "integer": {"python": "int", "GraphQL": "Int", "dms": Int32},
+    "integer": {"python": int, "GraphQL": "Int", "dms": Int32},
     "nonPositiveInteger": {"python": int, "GraphQL": "Int", "dms": Int32},
     "nonNegativeInteger": {"python": int, "GraphQL": "Int", "dms": Int32},
     "negativeInteger": {"python": "int", "GraphQL": "Int", "dms": Int32},
@@ -154,9 +154,26 @@ Description: TypeAlias = constr(min_length=1, max_length=255)  # type: ignore[va
 
 # regex expressions for compliance of Metadata sheet parsing
 more_than_one_none_alphanumerics_regex = r"([_-]{2,})"
-prefix_compliance_regex = r"^([a-zA-Z]+)([a-zA-Z0-9]*[_-]{0,1}[a-zA-Z0-9_-]*)([a-zA-Z0-9]+)$"
-cdf_space_name_compliance_regex = rf"(?!^(space|cdf|dms|pg3|shared|system|node|edge)$)({prefix_compliance_regex})"
-data_model_name_compliance_regex = prefix_compliance_regex
+prefix_compliance_regex = r"^([a-zA-Z]+)([a-zA-Z0-9]*[_-]{0,1}[a-zA-Z0-9_-]*)([a-zA-Z0-9]*)$"
+data_model_id_compliance_regex = r"^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$"
+cdf_space_name_compliance_regex = (
+    r"(?!^(space|cdf|dms|pg3|shared|system|node|edge)$)(^[a-zA-Z][a-zA-Z0-9_]{0,41}[a-zA-Z0-9]?$)"
+)
+view_id_compliance_regex = (
+    r"(?!^(Query|Mutation|Subscription|String|Int32|Int64|Int|Float32|Float64|Float|"
+    r"Timestamp|JSONObject|Date|Numeric|Boolean|PageInfo|File|Sequence|TimeSeries)$)"
+    r"(^[a-zA-Z][a-zA-Z0-9_]{0,253}[a-zA-Z0-9]?$)"
+)
+dms_property_id_compliance_regex = (
+    r"(?!^(space|externalId|createdTime|lastUpdatedTime|deletedTime|edge_id|"
+    r"node_id|project_id|property_group|seq|tg_table_name|extensions)$)"
+    r"(^[a-zA-Z][a-zA-Z0-9_]{0,253}[a-zA-Z0-9]?$)"
+)
+
+
+class_id_compliance_regex = r"(?!^(Class|class)$)(^[a-zA-Z][a-zA-Z0-9._-]{0,253}[a-zA-Z0-9]?$)"
+property_id_compliance_regex = r"^(\*)|(?!^(Property|property)$)(^[a-zA-Z][a-zA-Z0-9._-]{0,253}[a-zA-Z0-9]?$)"
+
 version_compliance_regex = (
     r"^([0-9]+[_-]{1}[0-9]+[_-]{1}[0-9]+[_-]{1}[a-zA-Z0-9]+)|"
     r"([0-9]+[_-]{1}[0-9]+[_-]{1}[0-9]+)|([0-9]+[_-]{1}[0-9])|([0-9]+)$"
@@ -316,9 +333,9 @@ class Metadata(RuleModel):
     def is_data_model_name_compliant(cls, value):
         if re.search(more_than_one_none_alphanumerics_regex, value):
             raise exceptions.MoreThanOneNonAlphanumericCharacter("data_model_name", value).to_pydantic_custom_error()
-        if not re.match(data_model_name_compliance_regex, value):
+        if not re.match(data_model_id_compliance_regex, value):
             raise exceptions.DataModelNameRegexViolation(
-                value, data_model_name_compliance_regex
+                value, data_model_id_compliance_regex
             ).to_pydantic_custom_error()
         else:
             return value
@@ -400,9 +417,6 @@ class Resource(RuleModel):
         return replace_nan_floats_with_default(values, cls.model_fields)
 
 
-class_id_compliance_regex = r"^([a-zA-Z]+)([a-zA-Z0-9]*[._-]{0,1}[a-zA-Z0-9._-]*)([a-zA-Z0-9]+)$"
-
-
 class Class(Resource):
     """
     Base class for all classes that are part of the data model.
@@ -479,9 +493,6 @@ class Class(Resource):
                     illegal_ids, class_id_compliance_regex
                 ).to_pydantic_custom_error()
         return value
-
-
-property_id_compliance_regex = r"^(\*)|([a-zA-Z]+)([a-zA-Z0-9]*[._-]{0,1}[a-zA-Z0-9._-]*)([a-zA-Z0-9]+)$"
 
 
 class Property(Resource):
