@@ -157,17 +157,17 @@ more_than_one_none_alphanumerics_regex = r"([_-]{2,})"
 prefix_compliance_regex = r"^([a-zA-Z]+)([a-zA-Z0-9]*[_-]{0,1}[a-zA-Z0-9_-]*)([a-zA-Z0-9]*)$"
 data_model_id_compliance_regex = r"^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$"
 cdf_space_name_compliance_regex = (
-    r"(?!^(space|cdf|dms|pg3|shared|system|node|edge)$)(^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$)"
+    r"(?!^(space|cdf|dms|pg3|shared|system|node|edge)$)(^[a-zA-Z][a-zA-Z0-9_]{0,41}[a-zA-Z0-9]?$)"
 )
 view_id_compliance_regex = (
     r"(?!^(Query|Mutation|Subscription|String|Int32|Int64|Int|Float32|Float64|Float|"
     r"Timestamp|JSONObject|Date|Numeric|Boolean|PageInfo|File|Sequence|TimeSeries)$)"
-    r"(^[a-zA-Z][a-zA-Z0-9_-]{0,253}[a-zA-Z0-9]?$)"
+    r"(^[a-zA-Z][a-zA-Z0-9_]{0,253}[a-zA-Z0-9]?$)"
 )
 dms_property_id_compliance_regex = (
     r"(?!^(space|externalId|createdTime|lastUpdatedTime|deletedTime|edge_id|"
     r"node_id|project_id|property_group|seq|tg_table_name|extensions)$)"
-    r"(^[a-zA-Z][a-zA-Z0-9_-]{0,253}[a-zA-Z0-9]?$)"
+    r"(^[a-zA-Z][a-zA-Z0-9_]{0,253}[a-zA-Z0-9]?$)"
 )
 
 
