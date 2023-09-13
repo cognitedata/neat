@@ -47,9 +47,9 @@ def get_datatype_properties(request: DatatypePropertyRequest):
     try:
         datatype_properties = [
             {
-                "property_id": row[rdflib.Variable("property")],
-                "property_occurrence": row[rdflib.Variable("occurrence")],
-                "property_name": remove_namespace(row[rdflib.Variable("property")]),
+                "id": row[rdflib.Variable("property")],
+                "count": int(row[rdflib.Variable("occurrence")]),
+                "name": remove_namespace(row[rdflib.Variable("property")]),
             }
             for row in results["rows"]
         ]

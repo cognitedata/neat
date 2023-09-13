@@ -67,7 +67,7 @@ class NodesAndEdgesRequest(BaseModel):
 
 class DatatypePropertyRequest(BaseModel):
     graph_name: str = "source"
-    workflow_name: str = "default"
+    workflow_name: str = ""
     cache: bool = False
     limit: int = 10
     
