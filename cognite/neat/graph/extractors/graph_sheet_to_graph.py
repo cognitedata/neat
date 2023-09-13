@@ -8,6 +8,7 @@ from openpyxl import Workbook, load_workbook
 from rdflib import RDF, XSD, Literal, Namespace
 
 from cognite.neat.graph import exceptions
+from cognite.neat.graph.exceptions import NamespaceRequired
 from cognite.neat.rules.analysis import get_defined_classes, to_class_property_pairs
 from cognite.neat.rules.models import TransformationRules
 
@@ -67,12 +68,12 @@ def sheet2triples(
     elif namespace:
         instance_namespace = Namespace(namespace)
     else:
-        raise ValueError("Namespace is not defined in the transformation rules!")
+        raise NamespaceRequired("Extact instances from sheet")
 
     if transformation_rule.metadata.namespace is not None:
         model_namespace = Namespace(transformation_rule.metadata.namespace)
     else:
-        raise ValueError("Namespace is not defined in the transformation rules!")
+        raise NamespaceRequired("Extact instances from sheet")
 
     # Now create empty graph
     triples: list[tuple] = []

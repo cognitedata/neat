@@ -9,6 +9,7 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes import LabelFilter, Relationship, RelationshipUpdate
 from cognite.client.exceptions import CogniteDuplicatedError
 
+from cognite.neat.graph.exceptions import DatasetIdRequired, NamespaceRequired
 from cognite.neat.graph.loaders.core.models import RelationshipDefinition, RelationshipDefinitions
 from cognite.neat.graph.loaders.core.rdf_to_assets import _categorize_cdf_assets
 from cognite.neat.graph.stores import NeatGraphStore
@@ -29,9 +30,9 @@ def define_relationships(rules: TransformationRules, stop_on_exception: bool = F
     """
     relationships = {}
     if rules.metadata.namespace is None:
-        raise ValueError("Namespace not defined in transformation rules!")
+        raise NamespaceRequired("Load Relationships")
     if rules.metadata.data_set_id is None:
-        raise ValueError("Data set id not defined in transformation rules!")
+        raise DatasetIdRequired("Load Relationships")
     namespace = rules.metadata.namespace
     data_set_id = rules.metadata.data_set_id
 
