@@ -150,21 +150,12 @@ class NeatGraphStore:
             except Exception as e:
                 logging.debug("Error closing graph: %s", e)
 
-    def import_from_file(
-        self, file_path: Path | None = None, mime_type: str = "application/rdf+xml", add_base_iri: bool = True
-    ):
+    def import_from_file(self, graph_file: Path, mime_type: str = "application/rdf+xml", add_base_iri: bool = True):
         """Imports graph data from file.
 
         Args:
-            file_path : File path to file containing graph data, by default None
+            graph_file : File path to file containing graph data, by default None
         """
-
-        if not file_path:
-            # Todo Anders: this is likely a bug as I do not know how config is set,
-            # but I do not know how to fix it. Ignoring for now to get mypy to pass.
-            graph_file: Path = self.config.rdf_import_path  # type: ignore[attr-defined]
-        else:
-            graph_file = file_path
 
         if self.rdf_store_type == RdfStoreType.OXIGRAPH:
             if add_base_iri:
