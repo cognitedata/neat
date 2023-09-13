@@ -32,26 +32,29 @@ def get_datatype_properties(request: DatatypePropertyRequest):
     logging.info("Querying datatype properties ordered by usage:")
     if "get_datatype_properties" in cache_store and request.cache:
         return cache_store["get_datatype_properties"]
+    sparql_query: str = (
+        "SELECT DISTINCT ?property (count(?o) as ?occurrence ) "
+        "WHERE { ?s ?property ?o . FILTER(isLiteral(?o))} "
+        "group by ?property order by DESC(?occurrence)"
+    )
+    if request.limit != -1:
+        query = f"{sparql_query} LIMIT {request.limit}"
+    else:
+        query = sparql_query
 
-    if request.sparql_query:
-        if request.limit != -1:
-            query = f"{request.sparql_query} LIMIT {request.limit}"
-        else:
-            query = request.sparql_query
+    results = get_data_from_graph(query, request.graph_name, request.workflow_name)
 
-        results = get_data_from_graph(query, request.graph_name, request.workflow_name)
-
-        try:
-            datatype_properties = [
-                {
-                    "property_id": row[rdflib.Variable("property")],
-                    "property_occurrence": row[rdflib.Variable("occurrence")],
-                    "property_name": remove_namespace(row[rdflib.Variable("property")]),
-                }
-                for row in results["rows"]
-            ]
-        except Exception as e:
-            logging.error(f"Error while parsing datatype properties : {e}")
+    try:
+        datatype_properties = [
+            {
+                "property_id": row[rdflib.Variable("property")],
+                "property_occurrence": row[rdflib.Variable("occurrence")],
+                "property_name": remove_namespace(row[rdflib.Variable("property")]),
+            }
+            for row in results["rows"]
+        ]
+    except Exception as e:
+        logging.error(f"Error while parsing datatype properties : {e}")
 
     merged_result = {
         "datatype_properties": datatype_properties,

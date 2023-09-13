@@ -70,8 +70,4 @@ class DatatypePropertyRequest(BaseModel):
     workflow_name: str = "default"
     cache: bool = False
     limit: int = 10
-    sparql_query: str = (
-        "SELECT DISTINCT ?property (count(?o) as ?occurrence ) "
-        "WHERE { ?s ?property ?o . FILTER(isLiteral(?o))} "
-        "group by ?property order by DESC(?occurrence)"
-    )
+    
