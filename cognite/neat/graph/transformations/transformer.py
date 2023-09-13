@@ -14,6 +14,7 @@ from pydantic import BaseModel
 from rdflib import RDF, Graph
 from rdflib.term import Literal, Node
 
+from cognite.neat.graph.exceptions import NamespaceRequired
 from cognite.neat.graph.transformations.query_generator.sparql import build_sparql_query
 from cognite.neat.rules.models import TransformationRules
 from cognite.neat.rules.to_rdf_path import AllProperties, AllReferences, Query, RawLookup, Traversal, parse_rule
@@ -134,7 +135,7 @@ def domain2app_knowledge_graph(
         Transformed knowledge graph based on transformation rules
     """
     if transformation_rules.metadata.namespace is None:
-        raise ValueError("Transformation rules must have namespace defined!")
+        raise NamespaceRequired("Transform domain to app knowledge graph")
     rule_namespace = transformation_rules.metadata.namespace
 
     if app_instance_graph is None:
