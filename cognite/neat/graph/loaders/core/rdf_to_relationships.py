@@ -34,6 +34,7 @@ def define_relationships(rules: TransformationRules, stop_on_exception: bool = F
     if rules.metadata.data_set_id is None:
         raise DatasetIdRequired("Load Relationships")
     namespace = rules.metadata.namespace
+    prefix = rules.metadata.prefix
     data_set_id = rules.metadata.data_set_id
 
     # Unique ids used to check for redefinitions of relationships
@@ -70,7 +71,7 @@ def define_relationships(rules: TransformationRules, stop_on_exception: bool = F
 
     if relationships:
         return RelationshipDefinitions(
-            data_set_id=data_set_id, prefix=rules.metadata.prefix, namespace=namespace, relationships=relationships
+            data_set_id=data_set_id, prefix=prefix, namespace=namespace, relationships=relationships
         )
 
     msg = "No relationship defined in transformation rule sheet!"
@@ -80,9 +81,7 @@ def define_relationships(rules: TransformationRules, stop_on_exception: bool = F
     else:
         warnings.warn(msg, stacklevel=2)
         logging.warning(msg)
-        return RelationshipDefinitions(
-            data_set_id=data_set_id, prefix=rules.metadata.prefix, namespace=namespace, relationships={}
-        )
+        return RelationshipDefinitions(data_set_id=data_set_id, prefix=prefix, namespace=namespace, relationships={})
 
 
 def rdf2relationships(
