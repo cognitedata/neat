@@ -103,12 +103,7 @@ def generate_triples(
     # generate triples for connected classes
     for class_ in generation_order:
         triples += _generate_triples_per_class(
-            class_,
-            class_definitions,
-            sym_pairs,
-            instance_ids,
-            namespace,
-            stop_on_exception,
+            class_, class_definitions, sym_pairs, instance_ids, namespace, stop_on_exception
         )
 
     # generate triples for isolated classes
@@ -206,30 +201,12 @@ def _generate_mock_data_property_triples(
     triples = []
     for id_ in instance_ids:
         if python_type == int:
-            triples.append(
-                (
-                    id_,
-                    URIRef(namespace[property_]),
-                    Literal(random.randint(1, 1983)),
-                )
-            )
+            triples.append((id_, URIRef(namespace[property_]), Literal(random.randint(1, 1983))))
         elif python_type == float:
-            triples.append(
-                (
-                    id_,
-                    URIRef(namespace[property_]),
-                    Literal(numpy.float32(random.uniform(1, 1983))),
-                )
-            )
+            triples.append((id_, URIRef(namespace[property_]), Literal(numpy.float32(random.uniform(1, 1983)))))
         # generate string
         else:
-            triples.append(
-                (
-                    id_,
-                    URIRef(namespace[property_]),
-                    Literal(remove_namespace(id_).replace("-", " ")),
-                )
-            )
+            triples.append((id_, URIRef(namespace[property_]), Literal(remove_namespace(id_).replace("-", " "))))
     return triples
 
 
@@ -292,22 +269,16 @@ def _generate_triples_per_class(
     stop_on_exception: bool,
 ) -> list[tuple]:
     """Generate triples for a given class."""
-    triples = []
+    triples: list[tuple] = []
     for _, property_definition in class_definitions[class_].iterrows():
         if property_definition.property_type == "DatatypeProperty":
             triples += _generate_mock_data_property_triples(
-                instance_ids[class_], property_definition.name, namespace, property_definition.value_type
+                instance_ids[class_], str(property_definition.name), namespace, property_definition.value_type
             )
 
         elif property_definition.property_type == "ObjectProperty":
             triples += _generate_mock_object_property_triples(
-                class_,
-                property_definition,
-                class_definitions,
-                sym_pairs,
-                instance_ids,
-                namespace,
-                stop_on_exception,
+                class_, property_definition, class_definitions, sym_pairs, instance_ids, namespace, stop_on_exception
             )
 
         else:
