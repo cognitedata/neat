@@ -82,7 +82,7 @@ export default function WorkflowExecutionReport(props: any) {
                   <TimelineConnector />
                 </TimelineSeparator>
                 <TimelineContent> {log.timestamp} - {log.state} : {log.id} in ({log.elapsed_time} sec)
-                  {log.state == "FAILED" && (<div> {log.error} </div>)}
+                  {log.state == "FAILED" && (<div dangerouslySetInnerHTML={ createMarkup(log.error) }></div>)}
                   {log.state == "COMPLETED" && (<div dangerouslySetInnerHTML={ createMarkup(log.output_text) }></div>)}
                   {log.data && ( <NJsonViewer data={log.data} />) }
                 </TimelineContent>

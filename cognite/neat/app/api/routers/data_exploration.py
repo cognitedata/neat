@@ -7,10 +7,16 @@ from fastapi import APIRouter
 
 from cognite.neat.app.api.asgi.metrics import counter
 from cognite.neat.app.api.configuration import cache_store, neat_app
-from cognite.neat.app.api.data_classes.rest import NodesAndEdgesRequest, QueryRequest, RuleRequest
+from cognite.neat.app.api.data_classes.rest import (
+    DatatypePropertyRequest,
+    NodesAndEdgesRequest,
+    QueryRequest,
+    RuleRequest,
+)
 from cognite.neat.app.api.utils.data_mapping import rdf_result_to_api_response
 from cognite.neat.app.api.utils.query_templates import query_templates
 from cognite.neat.graph.transformations import query_generator
+from cognite.neat.utils.utils import remove_namespace
 
 router = APIRouter()
 
@@ -19,6 +25,47 @@ router = APIRouter()
 def list_queries():
     counter.inc()
     return query_templates
+
+
+@router.post("/api/get-datatype-properties")
+def get_datatype_properties(request: DatatypePropertyRequest):
+    logging.info("Querying datatype properties ordered by usage:")
+    if "get_datatype_properties" in cache_store and request.cache:
+        return cache_store["get_datatype_properties"]
+    sparql_query: str = (
+        "SELECT DISTINCT ?property (count(?o) as ?occurrence ) "
+        "WHERE { ?s ?property ?o . FILTER(isLiteral(?o))} "
+        "group by ?property order by DESC(?occurrence)"
+    )
+    if request.limit != -1:
+        query = f"{sparql_query} LIMIT {request.limit}"
+    else:
+        query = sparql_query
+
+    results = get_data_from_graph(query, request.graph_name, request.workflow_name)
+
+    try:
+        datatype_properties = [
+            {
+                "id": row[rdflib.Variable("property")],
+                "count": int(row[rdflib.Variable("occurrence")]),
+                "name": remove_namespace(row[rdflib.Variable("property")]),
+            }
+            for row in results["rows"]
+        ]
+    except Exception as e:
+        logging.error(f"Error while parsing datatype properties : {e}")
+
+    merged_result = {
+        "datatype_properties": datatype_properties,
+        "error": "",
+        "elapsed_time_sec": results["elapsed_time_sec"],
+        "query": query,
+    }
+
+    if request.cache:
+        cache_store["get_datatype_properties"] = merged_result
+    return merged_result
 
 
 @router.post("/api/get-nodes-and-edges")

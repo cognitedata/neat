@@ -14,6 +14,7 @@ import NodeViewer from 'components/NodeViewer';
 import LinearProgress from '@mui/material/LinearProgress';
 import { useWorkerLayoutForceAtlas2,useLayoutForceAtlas2, LayoutForceAtlas2Control } from "@react-sigma/layout-forceatlas2";
 import { useLayoutCircular } from "@react-sigma/layout-circular";
+import Autocomplete from '@mui/material/Autocomplete';
 
 export function LoadGraph(props:{filters:Array<string>,nodeNameProperty:string,sparqlQuery:string,reloader:number,mode:string,limit:number}) {
     const neatApiRootUrl = getNeatApiRootUrl();
@@ -46,16 +47,11 @@ export function LoadGraph(props:{filters:Array<string>,nodeNameProperty:string,s
 
     const loadDataset = () => {
         setLoading(true);
-         console.log("loading dataset");
-        //TODO - this is a hack to get the node name property for the solution graph. Make this configurable.
-        let nodeNameProperty = localStorage.getItem('nodeNameProperty');
-        // if(!props.nodeNameProperty) {
-        //   if (graphName == "solution") {
-        //       nodeNameProperty = ""
-        //   }else {
-        //       nodeNameProperty = ""
-        //   }
-        // }
+        console.log("loading dataset");
+        let nodeNameProperty = ""
+        if (localStorage.getItem('nodeNameProperty'))
+           nodeNameProperty= "<"+localStorage.getItem('nodeNameProperty')+">";
+
         let graph = new Graph();
 
         if (props.mode== "update"){
@@ -121,6 +117,13 @@ export function LoadGraph(props:{filters:Array<string>,nodeNameProperty:string,s
     return (loading &&( <LinearProgress />) );
   };
 
+  class DatatypePropertyRequest {
+    graph_name: string = "source";
+    workflow_name: string = "";
+    cache: boolean = false;
+    limit: number = 10;
+  }
+
 
 export default function GraphExplorer(props:{filters:Array<string>,sparqlQuery:string}) {
     const [nodeNameProperty, setNodeNameProperty] = useState(localStorage.getItem('nodeNameProperty'));
@@ -131,10 +134,13 @@ export default function GraphExplorer(props:{filters:Array<string>,sparqlQuery:s
     const [selectedNodeId, setSelectedNodeId] = useState("");
     const [sparqlQuery, setSparqlQuery] = useState("");
     const [loaderMode, setLoaderMode] = useState("create");
+    const [dataTypeProps, setDataTypeProps] = useState(Array<Map<string,string>>);
+    const {hiddenNsPrefixModeCtx, graphNameCtx} = React.useContext(ExplorerContext);
+    const [graphName, setGraphName] = graphNameCtx;
 
-    const handleNodeNameProperty = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setNodeNameProperty(event.target.value);
-        localStorage.setItem('nodeNameProperty',event.target.value);
+    const handleNodeNameProperty = (event: React.SyntheticEvent, value: Map<string,string>) => {
+        setNodeNameProperty(value["id"]);
+        localStorage.setItem('nodeNameProperty',value["id"]);
         reload();
     };
 
@@ -144,6 +150,10 @@ export default function GraphExplorer(props:{filters:Array<string>,sparqlQuery:s
     const reload = () => {
           setReloader(reloader+1);
     }
+
+    useEffect(() => {
+      loadDataTypeProps();
+    }, []);
 
     useEffect(() => {
       console.log("sparqlQuery changed");
@@ -156,9 +166,30 @@ export default function GraphExplorer(props:{filters:Array<string>,sparqlQuery:s
       setOpenNodeViewer(false);
     }
 
+    const loadDataTypeProps = () => {
+      console.log("--------loading data type props----------");
+      const url = getNeatApiRootUrl()+"/api/get-datatype-properties";
+      const workflowName = getSelectedWorkflowName();
+      const request = new DatatypePropertyRequest();
+      request.graph_name = graphName;
+      request.workflow_name = workflowName;
+      request.cache = false;
+      request.limit = 2000;
+      fetch(url,{ method:"post",body:JSON.stringify(request),headers: {
+        'Content-Type': 'application/json;charset=utf-8'
+      }}).then((response) => response.json()).then((data) => {
+        console.dir(data)
+        setDataTypeProps(data.datatype_properties);
+      }).catch((error) => {
+      })
+    }
+
     const loadLinkedNodes = (nodeRef:string) => {
       let query = ""
-      const nodeNameProperty = localStorage.getItem('nodeNameProperty')
+      let nodeNameProperty = ""
+      if (localStorage.getItem('nodeNameProperty'))
+         nodeNameProperty= "<"+localStorage.getItem('nodeNameProperty')+">";
+
       if (!nodeNameProperty) {
 
         query = `SELECT (?dst_object_ref AS ?node_name) (?linked_obj_type  AS ?node_class) (?dst_object_ref AS ?node_id) ?src_object_ref ?dst_object_ref WHERE {
@@ -289,9 +320,18 @@ export default function GraphExplorer(props:{filters:Array<string>,sparqlQuery:s
     };
     return (
         <Box>
-            <TextField id="propery_name" label="Property to use as node name. Examples neat:Name or <http://purl.org/cognite/tnt/IdentifiedObject.name>" value={nodeNameProperty} size='small' sx={{width:500}} variant="outlined" onChange={handleNodeNameProperty}  />
+           <Box sx={{ display: 'flex', alignItems: 'flex-end', marginBottom:2 }}>
+            <Autocomplete
+              id="datatype-property-selector"
+              options={dataTypeProps}
+              getOptionLabel={(option) => option["name"]}
+              sx={{ width: 500 }}
+              size='small' onChange={handleNodeNameProperty}
+              renderInput={(params) => <TextField {...params} label="Property to be used as node name." />}
+            />
             <TextField id="response_limit" label="Limit max nodes in response" value={limitRecordsInResponse} size='small' type='number' sx={{width:150 , marginLeft:2}} variant="outlined" onChange={handleResponseLimitChange}  />
             <Button sx={{ marginLeft: 2 }} onClick={() => reload()  } variant="contained"> Reload </Button>
+            </Box>
             <SigmaContainer style={{ height: "70vh", width: "100%" }}>
                 <LoadGraph filters={props.filters} nodeNameProperty={nodeNameProperty} reloader={reloader} sparqlQuery={sparqlQuery} mode={loaderMode} limit={limitRecordsInResponse}/>
                 <ControlsContainer position={"top-right"}>
