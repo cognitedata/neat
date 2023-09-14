@@ -47,17 +47,11 @@ export function LoadGraph(props:{filters:Array<string>,nodeNameProperty:string,s
 
     const loadDataset = () => {
         setLoading(true);
-         console.log("loading dataset");
-        //TODO - this is a hack to get the node name property for the solution graph. Make this configurable.
-        let nodeNameProperty = "<"+localStorage.getItem('nodeNameProperty')+">";
+        console.log("loading dataset");
+        let nodeNameProperty = ""
+        if (localStorage.getItem('nodeNameProperty')) 
+           nodeNameProperty= "<"+localStorage.getItem('nodeNameProperty')+">";
 
-        // if(!props.nodeNameProperty) {
-        //   if (graphName == "solution") {
-        //       nodeNameProperty = ""
-        //   }else {
-        //       nodeNameProperty = ""
-        //   }
-        // }
         let graph = new Graph();
 
         if (props.mode== "update"){
@@ -141,6 +135,8 @@ export default function GraphExplorer(props:{filters:Array<string>,sparqlQuery:s
     const [sparqlQuery, setSparqlQuery] = useState("");
     const [loaderMode, setLoaderMode] = useState("create");
     const [dataTypeProps, setDataTypeProps] = useState(Array<Map<string,string>>);
+    const {hiddenNsPrefixModeCtx, graphNameCtx} = React.useContext(ExplorerContext);
+    const [graphName, setGraphName] = graphNameCtx;
 
     const handleNodeNameProperty = (event: React.SyntheticEvent, value: Map<string,string>) => {
         setNodeNameProperty(value["id"]);
@@ -156,7 +152,6 @@ export default function GraphExplorer(props:{filters:Array<string>,sparqlQuery:s
     }
 
     useEffect(() => {
-      console.log("loading data type props");
       loadDataTypeProps();
     }, []);
 
@@ -172,13 +167,14 @@ export default function GraphExplorer(props:{filters:Array<string>,sparqlQuery:s
     }
 
     const loadDataTypeProps = () => {
+      console.log("--------loading data type props----------");
       const url = getNeatApiRootUrl()+"/api/get-datatype-properties";
       const workflowName = getSelectedWorkflowName();
       const request = new DatatypePropertyRequest();
-      request.graph_name = "source";
+      request.graph_name = graphName;
       request.workflow_name = workflowName;
       request.cache = false;
-      request.limit = 1000;
+      request.limit = 2000;
       fetch(url,{ method:"post",body:JSON.stringify(request),headers: {
         'Content-Type': 'application/json;charset=utf-8'
       }}).then((response) => response.json()).then((data) => {
@@ -190,7 +186,10 @@ export default function GraphExplorer(props:{filters:Array<string>,sparqlQuery:s
 
     const loadLinkedNodes = (nodeRef:string) => {
       let query = ""
-      const nodeNameProperty = localStorage.getItem('nodeNameProperty')
+      let nodeNameProperty = ""
+      if (localStorage.getItem('nodeNameProperty')) 
+         nodeNameProperty= "<"+localStorage.getItem('nodeNameProperty')+">";
+
       if (!nodeNameProperty) {
 
         query = `SELECT (?dst_object_ref AS ?node_name) (?linked_obj_type  AS ?node_class) (?dst_object_ref AS ?node_id) ?src_object_ref ?dst_object_ref WHERE {
