@@ -1,4 +1,5 @@
 import logging
+from typing import cast
 
 from rdflib import Literal, URIRef
 
@@ -46,7 +47,7 @@ def simple_entity_matcher(
                     }}
                 """
         triples_to_remove = []
-        r1 = graph_store.query(query)
+        r1 = cast(tuple, graph_store.query(query))
         result = list(r1)
         for row in result:
             val_split = row[1].split(",")
@@ -86,7 +87,7 @@ def simple_entity_matcher(
         logging.error(f"Unknown matching method {matching_method}")
         return 0
     logging.debug(f"Running matcher query {query}")
-    r1 = graph_store.query(query)
+    r1 = cast(tuple, graph_store.query(query))
     result = list(r1)
     logging.debug(f"Identified {len(result)} matches from the graph")
     new_links_counter = 0

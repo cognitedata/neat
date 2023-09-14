@@ -33,7 +33,7 @@ repos:
       name: mypy
       # Gradually, the entire codebase should be checked by mypy, plan is to gradually add mypy for each
       # module as we refactor it.
-      entry: dmypy run -- cognite/neat/utils cognite/neat/rules
+      entry: dmypy run -- cognite/neat/utils cognite/neat/rules cognite/neat/graph
       files: ^.*.(py|pyi)$
       language: system
       pass_filenames: false

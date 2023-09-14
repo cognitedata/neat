@@ -76,8 +76,8 @@ class StepsRegistry:
         self,
         step_name: str,
         flow_context: dict[str, DataContract],
-        metrics: NeatMetricsCollector = None,
-        workflow_configs: WorkflowConfigs = None,
+        metrics: NeatMetricsCollector | None = None,
+        workflow_configs: WorkflowConfigs | None = None,
         step_configs: dict[str, Any] | None = None,
     ) -> T_Output | None:
         for step_cls in self._step_classes:

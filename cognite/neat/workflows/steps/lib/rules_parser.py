@@ -9,7 +9,7 @@ from cognite.neat.rules.parser import parse_rules_from_excel_file
 from cognite.neat.utils.utils import generate_exception_report
 from cognite.neat.workflows import utils
 from cognite.neat.workflows.cdf_store import CdfStore
-from cognite.neat.workflows.model import FlowMessage
+from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.data_contracts import RulesData
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
@@ -26,12 +26,6 @@ class LoadTransformationRules(Step[RulesData]):
     description = "This step loads transformation rules from the file or remote location"
     category = CATEGORY
     configurables: ClassVar[list[Configurable]] = [
-        Configurable(
-            name="validate_rules",
-            value="True",
-            label="To generate validation report",
-            options=["True", "False"],
-        ),
         Configurable(
             name="validation_report_storage_dir",
             value="rules_validation_report",
@@ -60,7 +54,6 @@ class LoadTransformationRules(Step[RulesData]):
         version = self.configs["version"]
 
         # rules validation
-        validate_rules = self.configs["validate_rules"].lower() == "true"
         report_file = self.configs["validation_report_file"]
         report_dir_str = self.configs["validation_report_storage_dir"]
         report_dir = self.data_store_path / Path(report_dir_str)
@@ -79,21 +72,28 @@ class LoadTransformationRules(Step[RulesData]):
         else:
             store.load_rules_file_from_cdf(rules_file, version)
 
-        if validate_rules:
-            transformation_rules, validation_errors, validation_warnings = parse_rules_from_excel_file(
-                rules_file_path, return_report=True
-            )
-            report = generate_exception_report(validation_errors, "Errors") + generate_exception_report(
-                validation_warnings, "Warnings"
-            )
+        transformation_rules, validation_errors, validation_warnings = parse_rules_from_excel_file(
+            rules_file_path, return_report=True
+        )
+        report = generate_exception_report(validation_errors, "Errors") + generate_exception_report(
+            validation_warnings, "Warnings"
+        )
 
-            with report_full_path.open(mode="w") as file:
-                file.write(report)
-        else:
-            transformation_rules = parse_rules_from_excel_file(rules_file_path)
+        with report_full_path.open(mode="w") as file:
+            file.write(report)
+
+        text_for_report = (
+            "<p></p>"
+            "Download rules validation report "
+            f'<a href="http://localhost:8000/data/{report_dir_str}/{report_file}?{time.time()}" '
+            f'target="_blank">here</a>'
+        )
 
         if transformation_rules is None:
-            raise ValueError(f"Failed to load transformation rules from {rules_file_path.name!r}.")
+            return FlowMessage(
+                error_text=f"Failed to load transformation rules! {text_for_report}",
+                step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
+            )
 
         if self.metrics is None:
             raise ValueError(f"Step {type(self).__name__} has not been configured.")
@@ -106,17 +106,6 @@ class LoadTransformationRules(Step[RulesData]):
         rules_metrics.labels({"component": "classes"}).set(len(transformation_rules.classes))
         rules_metrics.labels({"component": "properties"}).set(len(transformation_rules.properties))
         logging.info(f"Loaded prefixes {transformation_rules.prefixes!s} rules from {rules_file_path.name!r}.")
-        output_text = f"<p></p>Loaded {len(transformation_rules.properties)} rules!"
-
-        output_text += (
-            (
-                "<p></p>"
-                " Download rules validation report "
-                f'<a href="http://localhost:8000/data/{report_dir_str}/{report_file}?{time.time()}" '
-                f'target="_blank">here</a>'
-            )
-            if validate_rules
-            else ""
-        )
+        output_text = f"<p></p>Loaded {len(transformation_rules.properties)} rules! {text_for_report}"
 
         return FlowMessage(output_text=output_text), RulesData(rules=transformation_rules)

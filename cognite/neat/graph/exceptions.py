@@ -35,3 +35,57 @@ class UnsupportedPropertyType(NeatException):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
         super().__init__(self.message)
+
+
+class NamespaceRequired(NeatException):
+    """The functionality requires namespace in the TransformationRules.
+
+    Args:
+        functionality: functionality that requires namespace
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+    """
+
+    type_ = "NamespaceRequired"
+    description: str = "The functionality requires namespace in the TransformationRules."
+    example: str = ""
+    fix: str = ""
+
+    def __init__(self, functionality: str, verbose: bool = False):
+        self.message = (
+            f"Namespace is required to be set in the Transformation rules"
+            f"to use {functionality}."
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class DatasetIdRequired(NeatException):
+    """The functionality requires data_set_id in the TransformationRules.
+
+    Args:
+        functionality: functionality that requires namespace
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+    """
+
+    type_ = "DatasetIdRequired"
+    description: str = "The functionality requires data_set_id in the TransformationRules."
+    example: str = ""
+    fix: str = ""
+
+    def __init__(self, functionality: str, verbose: bool = False):
+        self.message = (
+            f"DataSetId is required to be set in the Transformation rules"
+            f"to use {functionality}."
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)

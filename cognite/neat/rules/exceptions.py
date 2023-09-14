@@ -1021,7 +1021,7 @@ class EntityIDNotDMSCompliant(NeatWarning):
         self.message = (
             f"'{entity_id}' {entity_type.lower()}"
             " use character(s) outside of range of allowed characters [a-zA-Z0-9_] or "
-            f"it starts with non-letter character! {loc}"
+            f"it starts with non-letter character or it is reserved word! {loc}"
             f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
         if verbose:

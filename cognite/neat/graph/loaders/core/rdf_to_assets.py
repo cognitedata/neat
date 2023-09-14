@@ -3,7 +3,7 @@ import warnings
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, fields
 from datetime import UTC, datetime
-from typing import Any, Self, overload
+from typing import Any, Literal, Self, TypeAlias, cast, overload
 from warnings import warn
 
 import numpy as np
@@ -11,7 +11,7 @@ import pandas as pd
 from cognite.client import CogniteClient
 from cognite.client.data_classes import Asset, AssetHierarchy, AssetList, AssetUpdate
 from cognite.client.exceptions import CogniteDuplicatedError
-from deepdiff import DeepDiff
+from deepdiff import DeepDiff  # type: ignore[import]
 from rdflib import Graph, Namespace
 from rdflib.term import URIRef
 
@@ -66,7 +66,7 @@ class NeatMetadataKeys:
         return cls(**valid_keys)
 
     def as_aliases(self) -> dict[str, str]:
-        return {field.default: getattr(self, field.name) for field in fields(self)}
+        return {str(field.default): getattr(self, field.name) for field in fields(self)}
 
 
 def _get_class_instance_ids(graph: Graph, class_: str, namespace: Namespace, limit: int = -1) -> list[URIRef]:
@@ -86,7 +86,7 @@ def _get_class_instance_ids(graph: Graph, class_: str, namespace: Namespace, lim
         "class", namespace[class_]
     ).replace("LIMIT X", "" if limit == -1 else f"LIMIT {limit}")
     logging.debug(f"Query statement: {query_statement}")
-    return [res[0] for res in list(graph.query(query_statement))]
+    return [cast(tuple, res)[0] for res in list(graph.query(query_statement))]
 
 
 def _get_class_instance(graph: Graph, instance: URIRef) -> list[tuple]:
@@ -102,15 +102,15 @@ def _get_class_instance(graph: Graph, instance: URIRef) -> list[tuple]:
     query_statement = "SELECT DISTINCT ?predicate ?object WHERE {<subject> ?predicate ?object .}".replace(
         "subject", instance
     )
-    result = list(graph.query(query_statement))
+    result = list(cast(tuple, graph.query(query_statement)))
 
-    # Adds instance id for sake of keep chain of custody
+    # Adds instance id for the sake of keep the chain of custody
     result += [(URIRef("http://purl.org/dc/terms/identifier"), instance)]
 
     return result
 
 
-def _get_class_property_pairs(transformation_rules: TransformationRules) -> dict[list[Property]]:
+def _get_class_property_pairs(transformation_rules: TransformationRules) -> dict[str, list[Property]]:
     """Define classes in terms of their properties
 
     Args:
@@ -120,11 +120,10 @@ def _get_class_property_pairs(transformation_rules: TransformationRules) -> dict
         Dict containing keys as class ids and list of their properties
     """
 
-    classes = {}
+    classes: dict[str, list[Property]] = {}
 
     for property_ in transformation_rules.properties.keys():
         class_ = transformation_rules.properties[property_].class_id
-
         if class_ in classes:
             classes[class_] += [transformation_rules.properties[property_]]
         else:
@@ -133,7 +132,7 @@ def _get_class_property_pairs(transformation_rules: TransformationRules) -> dict
     return classes
 
 
-def _define_asset_class_mapping(transformation_rules: TransformationRules) -> dict:
+def _define_asset_class_mapping(transformation_rules: TransformationRules) -> dict[str, dict[str, list]]:
     """Define mapping from class to asset properties
 
     Args:
@@ -144,7 +143,7 @@ def _define_asset_class_mapping(transformation_rules: TransformationRules) -> di
     """
     solution2cdf_mapping_rules = _get_class_property_pairs(transformation_rules)
 
-    asset_class_mapping = {}
+    asset_class_mapping: dict[str, dict[str, list]] = {}
 
     for class_, properties in solution2cdf_mapping_rules.items():
         asset_class_mapping[class_] = {
@@ -157,7 +156,7 @@ def _define_asset_class_mapping(transformation_rules: TransformationRules) -> di
 
         for property_ in properties:
             if "Asset" in property_.cdf_resource_type and property_.property_name != "*":
-                for resource_type_property in property_.resource_type_property:
+                for resource_type_property in property_.resource_type_property or []:
                     if (
                         resource_type_property in asset_class_mapping[class_]
                         and property_.property_name not in asset_class_mapping[class_][resource_type_property]
@@ -188,10 +187,7 @@ def _remap_class_properties(class_instance: dict, asset_class_mapping: dict) -> 
 
     for property_group, ordered_properties in asset_class_mapping.items():
         if property_group != "metadata" and ordered_properties:
-            if matching_property := next(
-                (a for a in ordered_properties if a in instance_properties),
-                None,
-            ):
+            if matching_property := next((a for a in ordered_properties if a in instance_properties), None):
                 class_instance[property_group] = class_instance[matching_property]
             else:
                 missing_properties.add(property_group)
@@ -243,10 +239,7 @@ def _class2asset_instance(
     if "external_id" in missing_properties or asset_class_mapping["external_id"] == []:
         try:
             __extracted_from___class2asset_instance_49(
-                remapped_class_instance,
-                fallback_property,
-                "external_id",
-                class_,
+                remapped_class_instance, fallback_property, "external_id", class_
             )
         except Exception:
             __extracted_from___class2asset_instance_56(fallback_property, class_, remapped_class_instance)
@@ -303,7 +296,7 @@ def __extracted_from___class2asset_instance_56(fallback_property, class_, remapp
     raise ValueError(msg)
 
 
-def _list2dict(class_instance: list) -> dict:
+def _list2dict(class_instance: list) -> dict[str, Any]:
     """Converting list of class instance properties and values to dictionary
 
     Args:
@@ -313,7 +306,7 @@ def _list2dict(class_instance: list) -> dict:
         Class instance properties and values as dictionary
     """
 
-    class_instance_dict = {}
+    class_instance_dict: dict[str, Any] = {}
     for property_value_pair in class_instance:
         property_ = remove_namespace(property_value_pair[0])
 
@@ -358,10 +351,14 @@ def rdf2assets(
         Dictionary representations of assets by external id.
     """
     meta_keys = NeatMetadataKeys() if meta_keys is None else meta_keys
+    if transformation_rules.metadata.data_set_id is None:
+        raise ValueError("Data set id must be provided in transformation rules!")
+    data_set_id = transformation_rules.metadata.data_set_id
+    if transformation_rules.metadata.namespace is None:
+        raise ValueError("Namespace must be provided in transformation rules!")
+    namespace = transformation_rules.metadata.namespace
 
-    orphanage_asset_external_id = (
-        f"{transformation_rules.metadata.externalIdPrefix or ''}orphanage-{transformation_rules.metadata.data_set_id}"
-    )
+    orphanage_asset_external_id = f"{transformation_rules.metadata.externalIdPrefix or ''}orphanage-{data_set_id}"
 
     graph = graph_store.get_graph()
     # Step 1: Create rdf to asset property mapping
@@ -371,16 +368,13 @@ def rdf2assets(
     # Step 4: Get ids of classes
     logging.info("Get ids of instances of classes")
     assets: dict[str, dict[str, Any]] = {}
-    class_ids = {
-        class_: _get_class_instance_ids(graph, class_, transformation_rules.metadata.namespace)
-        for class_ in asset_class_mapping
-    }
+    class_ids = {class_: _get_class_instance_ids(graph, class_, namespace) for class_ in asset_class_mapping}
     # Step 5: Create Assets based on class instances
     logging.info("Create Assets based on class instances")
     meta_keys_aliases = meta_keys.as_aliases()
     for class_ in asset_class_mapping:
         # TODO: Rename class_id to instance_id
-        class_ns = transformation_rules.metadata.namespace[class_]
+        class_ns = namespace[class_]
         logging.debug(f"Processing class <{class_ns}> . Number of instances: {len(class_ids[class_])}")
         progress_counter = 0
         # loading all instances into cache
@@ -402,7 +396,7 @@ def rdf2assets(
         for instance_id, group_df in grouped_df:
             try:
                 instance_property_values = group_df.filter(items=["property", "value"]).values.tolist()
-                instance_property_values += [(URIRef("http://purl.org/dc/terms/identifier"), URIRef(instance_id))]
+                instance_property_values += [(URIRef("http://purl.org/dc/terms/identifier"), URIRef(str(instance_id)))]
 
                 # this will strip namespace from property names and values
                 class_instance = _list2dict(instance_property_values)
@@ -412,7 +406,7 @@ def rdf2assets(
                     class_,
                     class_instance,
                     asset_class_mapping[class_],
-                    transformation_rules.metadata.data_set_id,
+                    data_set_id,
                     meta_keys,
                     orphanage_asset_external_id if use_orphanage else None,  # we need only base external id
                     transformation_rules.metadata.externalIdPrefix or None,
@@ -434,7 +428,7 @@ def rdf2assets(
                 progress_counter += 1
             except Exception as ValidationError:
                 logging.error(
-                    f"Skipping class <{class_}> instance <{remove_namespace(instance_id)}>, "
+                    f"Skipping class <{class_}> instance <{remove_namespace(str(instance_id))}>, "
                     f"reason:\n{ValidationError}\n"
                 )
                 if stop_on_exception:
@@ -445,9 +439,7 @@ def rdf2assets(
     if orphanage_asset_external_id not in assets:
         logging.warning(f"Orphanage with external id {orphanage_asset_external_id} not found in asset hierarchy!")
         logging.warning(f"Adding default orphanage with external id {orphanage_asset_external_id}")
-        assets[orphanage_asset_external_id] = _create_orphanage(
-            orphanage_asset_external_id, transformation_rules.metadata.data_set_id, meta_keys
-        )
+        assets[orphanage_asset_external_id] = _create_orphanage(orphanage_asset_external_id, data_set_id, meta_keys)
 
     logging.info("Assets dictionary created")
 
@@ -459,7 +451,7 @@ def rdf2asset_dictionary(
     transformation_rules: TransformationRules,
     stop_on_exception: bool = False,
     use_orphanage: bool = True,
-) -> dict[str, Asset]:
+) -> dict[str, dict[str, Any]]:
     warn("'rdf2asset_dictionary' is deprecated, please use 'rdf2assets' instead!", stacklevel=2)
     logging.warning("'rdf2asset_dictionary' is deprecated, please use 'rdf2assets' instead!")
     return rdf2assets(graph_store, transformation_rules, stop_on_exception, use_orphanage)
@@ -536,39 +528,39 @@ def _categorize_cdf_assets(
     Returns:
         CDF assets as pandas dataframe and dictionary with categorized assets
     """
-    cdf_assets = client.assets.list(data_set_ids=data_set_id, limit=None, partitions=partitions)
+    cdf_assets = client.assets.list(data_set_ids=data_set_id, limit=-1, partitions=partitions)
 
     cdf_assets = remove_non_existing_labels(client, cdf_assets)
 
-    cdf_assets = AssetList(resources=cdf_assets).to_pandas()
+    cdf_asset_df = AssetList(resources=cdf_assets).to_pandas()
 
-    logging.info(f"Number of assets in CDF {len(cdf_assets)} that have been fetched")
+    logging.info(f"Number of assets in CDF {len(cdf_asset_df)} that have been fetched")
 
-    if cdf_assets.empty:
+    if cdf_asset_df.empty:
         return None, {"non-historic": set(), "historic": set()}
-    if "labels" not in cdf_assets:
+    if "labels" not in cdf_asset_df:
         # Add empty list for labels column.
-        cdf_assets["labels"] = np.empty((len(cdf_assets), 0)).tolist()
+        cdf_asset_df["labels"] = np.empty((len(cdf_asset_df), 0)).tolist()
 
-    cdf_columns = set(cdf_assets.columns)
+    cdf_columns = set(cdf_asset_df.columns)
     expected_columns = {"external_id", "labels", "parent_external_id", "data_set_id", "name", "description", "metadata"}
 
-    cdf_assets = cdf_assets[list(expected_columns.intersection(cdf_columns))]
-    cdf_assets = cdf_assets.where(pd.notnull(cdf_assets), None)
-    cdf_assets["labels"] = cdf_assets["labels"].apply(_flatten_labels).values  # type: ignore
-    cdf_assets["is_historic"] = cdf_assets.labels.apply(_is_historic).values
+    cdf_asset_df = cdf_asset_df[list(expected_columns.intersection(cdf_columns))]
+    cdf_asset_df = cdf_asset_df.where(pd.notnull(cdf_asset_df), None)
+    cdf_asset_df["labels"] = cdf_asset_df["labels"].apply(_flatten_labels).values  # type: ignore
+    cdf_asset_df["is_historic"] = cdf_asset_df.labels.apply(_is_historic).values
 
     categorized_asset_ids = {
-        "historic": set(cdf_assets[cdf_assets.is_historic].external_id.values),
-        "non-historic": set(cdf_assets[~cdf_assets.is_historic].external_id.values),
+        "historic": set(cdf_asset_df[cdf_asset_df.is_historic].external_id.values),
+        "non-historic": set(cdf_asset_df[~cdf_asset_df.is_historic].external_id.values),
     }
 
-    cdf_assets.drop(["is_historic"], axis=1, inplace=True)
+    cdf_asset_df.drop(["is_historic"], axis=1, inplace=True)
     msg = f"CDF assets categorized into {len(categorized_asset_ids['historic'])} historic"
     msg += f" and {len(categorized_asset_ids['non-historic'])} non-historic assets"
     logging.info(msg)
 
-    return cdf_assets, categorized_asset_ids
+    return cdf_asset_df, categorized_asset_ids
 
 
 def order_assets(assets: dict[str, dict]) -> list[Asset]:
@@ -624,7 +616,7 @@ def _assets_to_create(rdf_assets: dict, asset_ids: set) -> list[Asset]:
 
 def _assets_to_update(
     rdf_assets: dict,
-    cdf_assets: pd.DataFrame,
+    cdf_assets: pd.DataFrame | None,
     asset_ids: set,
     meta_keys: NeatMetadataKeys,
     exclude_paths: list = EXCLUDE_PATHS,
@@ -650,10 +642,13 @@ def _assets_to_update(
     if not asset_ids:
         return [], {}
     logging.info("Wrangling assets to be updated into their final form")
-    cdf_asset_subset = {
-        row["external_id"]: row
-        for row in cdf_assets[cdf_assets["external_id"].isin(asset_ids)].to_dict(orient="records")
-    }
+    if cdf_assets is None:
+        cdf_asset_subset = {}
+    else:
+        cdf_asset_subset = {
+            row["external_id"]: row
+            for row in cdf_assets[cdf_assets["external_id"].isin(asset_ids)].to_dict(orient="records")
+        }
     for external_id in asset_ids:
         cdf_asset = cdf_asset_subset[external_id]
         diffing_result = DeepDiff(cdf_asset, rdf_assets[external_id], exclude_paths=exclude_paths)
@@ -667,14 +662,13 @@ def _assets_to_update(
             else:
                 msg += " Skipping update of this asset!"
                 logging.warning(msg)
-                warnings.warn(
-                    msg,
-                    stacklevel=2,
-                )
+                warnings.warn(msg, stacklevel=2)
                 continue
 
         if diffing_result and f"root['metadata']['{meta_keys.active}']" not in diffing_result.affected_paths:
             asset = Asset(**rdf_assets[external_id])
+            if asset.metadata is None:
+                asset.metadata = {}
             try:
                 asset.metadata[meta_keys.start_time] = cdf_asset[external_id]["metadata"][meta_keys.start_time]
             except KeyError:
@@ -689,7 +683,7 @@ def _assets_to_update(
 
 
 def _assets_to_resurrect(
-    rdf_assets: dict, cdf_assets: pd.DataFrame, asset_ids: set, meta_keys: NeatMetadataKeys
+    rdf_assets: dict, cdf_assets: pd.DataFrame | None, asset_ids: set, meta_keys: NeatMetadataKeys
 ) -> list[Asset]:
     """Returns list of assets to be resurrected
 
@@ -706,14 +700,19 @@ def _assets_to_resurrect(
     if not asset_ids:
         return []
     logging.info("Wrangling assets to be resurrected into their final form")
-    cdf_asset_subset = {
-        row["external_id"]: row
-        for row in cdf_assets[cdf_assets["external_id"].isin(asset_ids)].to_dict(orient="records")
-    }
+    if cdf_assets is None:
+        cdf_asset_subset = {}
+    else:
+        cdf_asset_subset = {
+            row["external_id"]: row
+            for row in cdf_assets[cdf_assets["external_id"].isin(asset_ids)].to_dict(orient="records")
+        }
     for external_id in asset_ids:
         cdf_asset = cdf_asset_subset[external_id]
 
         asset = Asset(**rdf_assets[external_id])
+        if asset.metadata is None:
+            asset.metadata = {}
         now = str(datetime.now(UTC))
         try:
             asset.metadata[meta_keys.start_time] = cdf_asset[external_id]["metadata"][meta_keys.start_time]
@@ -727,17 +726,22 @@ def _assets_to_resurrect(
     return assets
 
 
-def _assets_to_decommission(cdf_assets, asset_ids, meta_keys: NeatMetadataKeys) -> list[Asset]:
+def _assets_to_decommission(
+    cdf_assets: pd.DataFrame | None, asset_ids: set[str], meta_keys: NeatMetadataKeys
+) -> list[Asset]:
     start_time = datetime_utc_now()
 
     assets = []
     if not asset_ids:
         return []
     logging.info("Wrangling assets to be decommissioned into their final form")
-    cdf_asset_subset = {
-        row["external_id"]: row
-        for row in cdf_assets[cdf_assets["external_id"].isin(asset_ids)].to_dict(orient="records")
-    }
+    if cdf_assets is None:
+        cdf_asset_subset: dict[str, dict] = {}
+    else:
+        cdf_asset_subset = {
+            row["external_id"]: row
+            for row in cdf_assets[cdf_assets["external_id"].isin(asset_ids)].to_dict(orient="records")
+        }
 
     for external_id in asset_ids:
         cdf_asset = cdf_asset_subset[external_id]
@@ -759,13 +763,39 @@ def _assets_to_decommission(cdf_assets, asset_ids, meta_keys: NeatMetadataKeys) 
     return assets
 
 
+@overload
 def categorize_assets(
     client: CogniteClient,
     rdf_assets: dict,
     data_set_id: int,
+    return_report: Literal[False] = False,
     partitions: int = 2,
     stop_on_exception: bool = False,
+    meta_keys: NeatMetadataKeys | None = None,
+) -> dict:
+    ...
+
+
+@overload
+def categorize_assets(
+    client: CogniteClient,
+    rdf_assets: dict,
+    data_set_id: int,
+    return_report: Literal[True],
+    partitions: int = 2,
+    stop_on_exception: bool = False,
+    meta_keys: NeatMetadataKeys | None = None,
+) -> tuple[dict, dict]:
+    ...
+
+
+def categorize_assets(
+    client: CogniteClient,
+    rdf_assets: dict,
+    data_set_id: int,
     return_report: bool = False,
+    partitions: int = 2,
+    stop_on_exception: bool = False,
     meta_keys: NeatMetadataKeys | None = None,
 ) -> tuple[dict, dict] | dict:
     """Categorize assets on those that are to be created, updated and decommissioned
@@ -808,24 +838,28 @@ def categorize_assets(
     logging.info(f"Number of assets to decommission: { len(decommission_ids)}")
     logging.info(f"Number of assets to resurrect: { len(resurrect_ids)}")
 
-    report = {"create": create_ids, "resurrect": resurrect_ids, "decommission": decommission_ids, "update": None}
+    categorized_assets_update, report_update = _assets_to_update(
+        rdf_assets, cdf_assets, update_ids, meta_keys=meta_keys, stop_on_exception=stop_on_exception
+    )
+    report = {
+        "create": create_ids,
+        "resurrect": resurrect_ids,
+        "decommission": decommission_ids,
+        "update": report_update,
+    }
     categorized_assets = {
         "create": _assets_to_create(rdf_assets, create_ids),
-        "update": None,
+        "update": categorized_assets_update,
         "resurrect": _assets_to_resurrect(rdf_assets, cdf_assets, resurrect_ids, meta_keys),
         "decommission": _assets_to_decommission(cdf_assets, decommission_ids, meta_keys),
     }
-
-    categorized_assets["update"], report["update"] = _assets_to_update(
-        rdf_assets, cdf_assets, update_ids, meta_keys=meta_keys, stop_on_exception=stop_on_exception
-    )
 
     return (categorized_assets, report) if return_report else categorized_assets
 
 
 def _micro_batch_push(
     client: CogniteClient,
-    assets: list[Asset | AssetUpdate],
+    assets: Sequence[Asset | AssetUpdate],
     batch_size: int = 1000,
     push_type: str = "update",
     message: str = "Updated",
@@ -962,24 +996,22 @@ def upload_assets(
         create_assets()
 
 
+AssetLike: TypeAlias = Asset | dict[str, Any]
+
+
 @overload
-def remove_non_existing_labels(
-    client: CogniteClient, assets: Sequence[Asset | dict[str, Any]]
-) -> Sequence[Asset | dict[str, Any]]:
+def remove_non_existing_labels(client: CogniteClient, assets: Sequence[AssetLike]) -> Sequence[AssetLike]:
     ...
 
 
 @overload
-def remove_non_existing_labels(
-    client: CogniteClient, assets: dict[str, Asset | dict[str, Any]]
-) -> dict[str, Asset] | dict[str, Any]:
+def remove_non_existing_labels(client: CogniteClient, assets: dict[str, AssetLike]) -> dict[str, AssetLike]:
     ...
 
 
-AssetLike = Sequence[Asset | dict[str, Any]] | dict[str, Asset | dict[str, Any]]
-
-
-def remove_non_existing_labels(client: CogniteClient, assets: AssetLike) -> AssetLike:
+def remove_non_existing_labels(
+    client: CogniteClient, assets: Sequence[AssetLike] | dict[str, AssetLike]
+) -> Sequence[AssetLike] | dict[str, AssetLike]:
     cdf_labels = client.labels.list(limit=-1)
     if not cdf_labels:
         # No labels, nothing to check.
@@ -1007,9 +1039,9 @@ def unique_asset_labels(assets: Iterable[Asset | dict[str, Any]]) -> set[str]:
     labels = set()
     for asset in assets:
         if isinstance(asset, Asset):
-            labels |= {label.external_id for label in asset.labels}
-        elif isinstance(asset, dict):
-            labels |= set(asset.get("labels"))
+            labels |= {label.external_id for label in (asset.labels or [])}
+        elif isinstance(asset, dict) and (asset_labels := asset.get("labels")):
+            labels |= set(asset_labels)
         else:
             raise ValueError(f"Unsupported {type(asset)}")
     return labels

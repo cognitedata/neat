@@ -1,6 +1,6 @@
 import shutil
 from collections.abc import Generator, Iterable, Iterator, Mapping
-from typing import Any
+from typing import Any, cast
 
 import pyoxigraph as ox
 from rdflib import Graph
@@ -12,9 +12,11 @@ from rdflib.term import BNode, Identifier, Literal, Node, URIRef, Variable
 
 __all__ = ["OxigraphStore"]
 
-_Triple = tuple[Node, Node, Node]
-_Quad = tuple[Node, Node, Node, Graph]
-_TriplePattern = tuple[Node | None, Node | None, Node | None]
+from typing import TypeAlias
+
+_Triple: TypeAlias = tuple[Node, Node, Node]
+_Quad: TypeAlias = tuple[Node, Node, Node, Graph]
+_TriplePattern: TypeAlias = tuple[Node | None, Node | None, Node | None]
 
 
 class OxigraphStore(Store):
@@ -24,11 +26,7 @@ class OxigraphStore(Store):
     graph_aware: bool = True
 
     def __init__(
-        self,
-        configuration: str | None = None,
-        identifier: Identifier | None = None,
-        *,
-        store: ox.Store | None = None,
+        self, configuration: str | None = None, identifier: Identifier | None = None, *, store: ox.Store | None = None
     ):
         self._store = store
         self._prefix_for_namespace: dict[URIRef, str] = {}
@@ -56,12 +54,7 @@ class OxigraphStore(Store):
             self._store = ox.Store()
         return self._store
 
-    def add(
-        self,
-        triple: _Triple,
-        context: Graph,
-        quoted: bool = False,
-    ) -> None:
+    def add(self, triple: _Triple, context: Graph, quoted: bool = False) -> None:
         if quoted:
             raise ValueError("Oxigraph stores are not formula aware")
         self._inner.add(_to_ox(triple, context))
@@ -73,19 +66,13 @@ class OxigraphStore(Store):
             (s, p, o, g) = quad
             super().add((s, p, o), g)
 
-    def remove(
-        self,
-        triple: _TriplePattern,
-        context: Graph | None = None,
-    ) -> None:
+    def remove(self, triple: _TriplePattern, context: Graph | None = None) -> None:
         for q in self._inner.quads_for_pattern(*_to_ox_quad_pattern(triple, context)):
             self._inner.remove(q)
         super().remove(triple, context)
 
     def triples(
-        self,
-        triple_pattern: _TriplePattern,
-        context: Graph | None = None,
+        self, triple_pattern: _TriplePattern, context: Graph | None = None
     ) -> Iterator[tuple[_Triple, Iterator[Graph | None]]]:
         return (_from_ox(q) for q in self._inner.quads_for_pattern(*_to_ox_quad_pattern(triple_pattern, context)))
 
@@ -111,10 +98,15 @@ class OxigraphStore(Store):
         if isinstance(queryGraph, Query) or kwargs:
             raise NotImplementedError
         init_ns = dict(self._namespace_for_prefix, **initNs)
+        if isinstance(query, Query):
+            query = str(query)
         query = "".join(f"PREFIX {prefix}: <{namespace}>\n" for prefix, namespace in init_ns.items()) + query
         if initBindings:
+            # Todo Anders: This is likely a bug as .n3 is not valid the Identifier.
+            #  There are no tests reaching this code.
             query += "\nVALUES ( {} ) {{ ({}) }}".format(
-                " ".join(f"?{k}" for k in initBindings), " ".join(v.n3() for v in initBindings.values())
+                " ".join(f"?{k}" for k in initBindings),
+                " ".join(v.n3() for v in initBindings.values()),  # type: ignore[attr-defined]
             )
         result = self._inner.query(
             query,
@@ -127,9 +119,9 @@ class OxigraphStore(Store):
         elif isinstance(result, ox.QuerySolutions):
             out = Result("SELECT")
             out.vars = [Variable(v.value) for v in result.variables]
-            out.bindings = (
+            out.bindings = [
                 {v: _from_ox(val) for v, val in zip(out.vars, solution, strict=False)} for solution in result
-            )
+            ]
         elif isinstance(result, ox.QueryTriples):
             out = Result("CONSTRUCT")
             out.graph = Graph()
@@ -197,21 +189,22 @@ class OxigraphStore(Store):
 def _to_ox(term: Node | _Triple | _Quad | Graph, context: Graph | None = None):
     if term is None:
         return None
-    if term == DATASET_DEFAULT_GRAPH_ID:
+    elif term == DATASET_DEFAULT_GRAPH_ID:
         return ox.DefaultGraph()
-    if isinstance(term, URIRef):
+    elif isinstance(term, URIRef):
         return ox.NamedNode(term)
-    if isinstance(term, BNode):
+    elif isinstance(term, BNode):
         return ox.BlankNode(term)
-    if isinstance(term, Literal):
+    elif isinstance(term, Literal):
         return ox.Literal(term, language=term.language, datatype=ox.NamedNode(term.datatype) if term.datatype else None)
-    if isinstance(term, Graph):
+    elif isinstance(term, Graph):
         return _to_ox(term.identifier)
-    if isinstance(term, tuple):
-        if len(term) == 3:
-            return ox.Quad(_to_ox(term[0]), _to_ox(term[1]), _to_ox(term[2]), _to_ox(context))
-        if len(term) == 4:
-            return ox.Quad(_to_ox(term[0]), _to_ox(term[1]), _to_ox(term[2]), _to_ox(term[3]))
+    elif isinstance(term, tuple) and len(term) == 3 and isinstance(context, Graph):
+        triple = cast(_Triple, term)
+        return ox.Quad(_to_ox(triple[0]), _to_ox(triple[1]), _to_ox(triple[2]), _to_ox(context))
+    elif isinstance(term, tuple) and len(term) == 4:
+        quad = cast(_Quad, term)
+        return ox.Quad(_to_ox(quad[0]), _to_ox(quad[1]), _to_ox(quad[2]), _to_ox(quad[3]))
     raise ValueError(f"Unexpected rdflib term: {term!r}")
 
 
@@ -225,11 +218,11 @@ def _to_ox_term_pattern(term):
         return None
     if isinstance(term, URIRef):
         return ox.NamedNode(term)
-    if isinstance(term, BNode):
+    elif isinstance(term, BNode):
         return ox.BlankNode(term)
-    if isinstance(term, Literal):
+    elif isinstance(term, Literal):
         return ox.Literal(term, language=term.language, datatype=ox.NamedNode(term.datatype) if term.datatype else None)
-    if isinstance(term, Graph):
+    elif isinstance(term, Graph):
         return _to_ox(term.identifier)
     raise ValueError(f"Unexpected rdflib term: {term!r}")
 

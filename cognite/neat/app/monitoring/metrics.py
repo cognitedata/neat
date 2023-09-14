@@ -5,7 +5,7 @@ from prometheus_client import REGISTRY, Counter, Gauge, Metric
 
 
 class NeatMetricsCollector:
-    def __init__(self, name: str, cdf_client: CogniteClient = None) -> None:
+    def __init__(self, name: str, cdf_client: CogniteClient | None = None) -> None:
         self.name = name
         self.metrics: dict[str, Gauge | Counter] = {}
 
