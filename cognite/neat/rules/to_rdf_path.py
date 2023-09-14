@@ -142,11 +142,10 @@ class Step(BaseModel):
 
 
 class Traversal(BaseModel):
-    pass
+    class_: Entity
 
 
 class SingleProperty(Traversal):
-    class_: Entity
     property: Entity
 
     @classmethod
@@ -155,16 +154,12 @@ class SingleProperty(Traversal):
 
 
 class AllReferences(Traversal):
-    class_: Entity
-
     @classmethod
     def from_string(cls, class_: str) -> Self:
         return cls(class_=Entity.from_string(class_))
 
 
 class AllProperties(Traversal):
-    class_: Entity
-
     @classmethod
     def from_string(cls, class_: str) -> Self:
         return cls(class_=Entity.from_string(class_))
@@ -181,7 +176,6 @@ class Origin(BaseModel):
 class Hop(Traversal):
     """Multi or single hop traversal through graph"""
 
-    class_: Entity
     traversal: list[Step]
 
     @classmethod
@@ -241,7 +235,7 @@ def parse_table_lookup(raw: str) -> TableLookup:
     raise exceptions.NotValidTableLookUp(raw).to_pydantic_custom_error()
 
 
-def parse_rule(rule_raw: str, rule_type: RuleType) -> RDFPath:
+def parse_rule(rule_raw: str, rule_type: RuleType | None) -> RDFPath:
     match rule_type:
         case RuleType.rdfpath:
             rule_raw = rule_raw.replace(" ", "")
@@ -254,6 +248,8 @@ def parse_rule(rule_raw: str, rule_type: RuleType) -> RDFPath:
             return RawLookup(traversal=parse_traversal(traversal), table=parse_table_lookup(table_lookup))
         case RuleType.sparql:
             return SPARQLQuery(traversal=Query(query=rule_raw))
+        case None:
+            raise ValueError("Rule type must be specified")
 
 
 def is_valid_rule(rule_type: RuleType, rule_raw: str) -> bool:

@@ -68,12 +68,7 @@ def test_asset_diffing(mock_rdf_assets, mock_cdf_assets, transformation_rules):
 
     with monkeypatch_cognite_client() as client_mock:
 
-        def list_assets(
-            data_set_ids: int = 2626756768281823,
-            limit: int = -1,
-            labels=None,
-            **_,
-        ):
+        def list_assets(data_set_ids: int = 2626756768281823, limit: int = -1, labels=None, **_):
             labels = labels or LabelFilter(contains_any=["non-historic"])
             if labels == LabelFilter(contains_any=["non-historic"]):
                 return AssetList([Asset(**asset) for asset in cdf_assets.values()])

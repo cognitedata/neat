@@ -1,8 +1,10 @@
 import logging
+from typing import TypeAlias, cast
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import EdgeApply, NodeApply
 from pydantic_core import ErrorDetails
+from rdflib.term import Node
 
 from cognite.neat.exceptions import NeatException
 from cognite.neat.graph.stores.graph_store import NeatGraphStore
@@ -11,11 +13,11 @@ from cognite.neat.rules.exporter.rules2pydantic_models import rules_to_pydantic_
 from cognite.neat.rules.models import TransformationRules
 from cognite.neat.utils.utils import chunker, datetime_utc_now, retry_decorator
 
+Triple: TypeAlias = tuple[Node, Node, Node]
+
 
 def rdf2nodes_and_edges(
-    graph_store: NeatGraphStore,
-    transformation_rules: TransformationRules,
-    stop_on_exception: bool = False,
+    graph_store: NeatGraphStore, transformation_rules: TransformationRules, stop_on_exception: bool = False
 ) -> tuple[list[NodeApply], list[EdgeApply], list[ErrorDetails]]:
     """Generates DMS nodes and edges from knowledge graph stored as RDF triples
 
@@ -27,6 +29,9 @@ def rdf2nodes_and_edges(
     Returns:
         Tuple holding nodes, edges and exceptions
     """
+    if transformation_rules.metadata.namespace is None:
+        raise ValueError("Namespace is not defined in transformation rules metadata")
+
     nodes = []
     edges = []
     exceptions = []
@@ -38,15 +43,32 @@ def rdf2nodes_and_edges(
         if class_ in data_model.containers:
             class_namespace = transformation_rules.metadata.namespace[class_]
             class_instance_ids = [
-                res[0]
+                cast(Triple, res)[0]
                 for res in graph_store.query(f"SELECT ?instance WHERE {{ ?instance rdf:type <{class_namespace}> . }}")
             ]
 
+            counter = 0
+            start_time = datetime_utc_now()
+            total = len(class_instance_ids)
+
             for class_instance_id in class_instance_ids:
+                counter += 1
                 try:
-                    instance = pydantic_models[class_].from_graph(graph_store, transformation_rules, class_instance_id)
+                    instance = pydantic_models[class_].from_graph(  # type: ignore[attr-defined]
+                        graph_store, transformation_rules, class_instance_id
+                    )
                     nodes.append(instance.to_node(data_model))
                     edges.extend(instance.to_edge(data_model))
+
+                    delta_time = datetime_utc_now() - start_time
+                    delta_time = (delta_time.seconds * 1000000 + delta_time.microseconds) / 1000
+                    msg = (
+                        f"{class_} {counter} of {total} instances processed, "
+                        f"instance processing time: {delta_time/counter:.2f} "
+                    )
+                    msg += f"ms ETC: {(delta_time/counter) * (total - counter) / 1000 :.3f} s"
+                    logging.info(msg)
+
                 except Exception as e:
                     logging.error(
                         f"Instance {class_instance_id} of {class_} cannot be resolved to nodes and edges. Reason: {e}"
@@ -62,11 +84,7 @@ def rdf2nodes_and_edges(
 
 
 def upload_nodes(
-    client: CogniteClient,
-    nodes: list[NodeApply],
-    batch_size: int = 5000,
-    max_retries: int = 1,
-    retry_delay: int = 3,
+    client: CogniteClient, nodes: list[NodeApply], batch_size: int = 5000, max_retries: int = 1, retry_delay: int = 3
 ):
     """Uploads nodes to CDF
 
@@ -82,14 +100,7 @@ def upload_nodes(
     """
     if batch_size:
         logging.info(f"Uploading nodes in batches of {batch_size}")
-        _micro_batch_push(
-            client,
-            nodes,
-            batch_size,
-            message="Upload",
-            max_retries=max_retries,
-            retry_delay=retry_delay,
-        )
+        _micro_batch_push(client, nodes, batch_size, message="Upload", max_retries=max_retries, retry_delay=retry_delay)
 
     else:
         logging.info("Batch size not set, pushing all nodes to CDF in one go!")
@@ -102,11 +113,7 @@ def upload_nodes(
 
 
 def upload_edges(
-    client: CogniteClient,
-    edges: list[EdgeApply],
-    batch_size: int = 5000,
-    max_retries: int = 1,
-    retry_delay: int = 3,
+    client: CogniteClient, edges: list[EdgeApply], batch_size: int = 5000, max_retries: int = 1, retry_delay: int = 3
 ):
     """Uploads edges to CDF
 
@@ -123,14 +130,7 @@ def upload_edges(
     """
     if batch_size:
         logging.info(f"Uploading edges in batches of {batch_size}")
-        _micro_batch_push(
-            client,
-            edges,
-            batch_size,
-            message="Upload",
-            max_retries=max_retries,
-            retry_delay=retry_delay,
-        )
+        _micro_batch_push(client, edges, batch_size, message="Upload", max_retries=max_retries, retry_delay=retry_delay)
 
     else:
         logging.info("Batch size not set, pushing all edges to CDF in one go!")

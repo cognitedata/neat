@@ -18,7 +18,7 @@ UI_PATH = PACKAGE_DIRECTORY / "app" / "ui" / "neat-app" / "build"
 
 
 class NeatApp:
-    def __init__(self, config: Config, cdf_client: CogniteClient = None):
+    def __init__(self, config: Config, cdf_client: CogniteClient | None = None):
         self.config = config
         self.cdf_client: CogniteClient = None
         self.cdf_store: CdfStore = None
@@ -31,7 +31,7 @@ class NeatApp:
         """Set the http server to be used by the triggers manager"""
         self.fast_api_app = fast_api_app
 
-    def start(self, config: Config = None):
+    def start(self, config: Config | None = None):
         logging.info("Starting NeatApp")
         if config:
             self.config = config

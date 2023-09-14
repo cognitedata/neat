@@ -34,23 +34,24 @@ class NeatGraphStore:
 
     def __init__(
         self,
-        graph: Graph = None,
+        graph: Graph | None = None,
         base_prefix: str = "",  # usually empty
         namespace: Namespace = DEFAULT_NAMESPACE,
         prefixes: dict = PREFIXES,
     ):
-        self.graph: Graph = graph
+        self.graph = graph or Graph()
         self.base_prefix: str = base_prefix
         self.namespace: Namespace = namespace
         self.prefixes: dict[str, Namespace] = prefixes
 
         self.rdf_store_type: str = RdfStoreType.MEMORY
-        self.rdf_store_query_url: str = None
-        self.rdf_store_update_url: str = None
-        self.returnFormat: str = None
-        self.df_cache: pd.DataFrame = None
+        self.rdf_store_query_url: str | None = None
+        self.rdf_store_update_url: str | None = None
+        self.returnFormat: str | None = None
+        self.df_cache: pd.DataFrame | None = None
         self.graph_db_rest_url: str = "http://localhost:7200"
-        self.internal_storage_dir: Path = None
+        self.internal_storage_dir: Path | None = None
+        self.graph_name: str | None = None
 
     def init_graph(
         self,
@@ -92,7 +93,8 @@ class NeatGraphStore:
             logging.info("Initializing Oxigraph store")
             # Adding support for both in-memory and file-based storage
             oxstore = None
-            self.internal_storage_dir.mkdir(parents=True, exist_ok=True)
+            if self.internal_storage_dir is not None:
+                self.internal_storage_dir.mkdir(parents=True, exist_ok=True)
             for i in range(4):
                 try:
                     oxstore = pyoxigraph.Store(
@@ -143,34 +145,31 @@ class NeatGraphStore:
         if self.rdf_store_type == RdfStoreType.OXIGRAPH:
             try:
                 if self.graph:
-                    self.graph.store._inner.flush()
+                    self.graph.store._inner.flush()  # type: ignore[attr-defined]
                     self.graph.close()
             except Exception as e:
                 logging.debug("Error closing graph: %s", e)
 
-    def import_from_file(
-        self, file_path: Path | None = None, mime_type: str = "application/rdf+xml", add_base_iri: bool = True
-    ):
+    def import_from_file(self, graph_file: Path, mime_type: str = "application/rdf+xml", add_base_iri: bool = True):
         """Imports graph data from file.
 
         Args:
-            file_path : File path to file containing graph data, by default None
+            graph_file : File path to file containing graph data, by default None
         """
-
-        if not file_path:
-            file_path = self.config.rdf_import_path
 
         if self.rdf_store_type == RdfStoreType.OXIGRAPH:
             if add_base_iri:
-                self.graph.store._inner.bulk_load(str(file_path), mime_type, base_iri=self.namespace)
+                self.graph.store._inner.bulk_load(  # type: ignore[attr-defined]
+                    str(graph_file), mime_type, base_iri=self.namespace
+                )
             else:
-                self.graph.store._inner.bulk_load(str(file_path), mime_type)
-            self.graph.store._inner.optimize()
+                self.graph.store._inner.bulk_load(str(graph_file), mime_type)  # type: ignore[attr-defined]
+            self.graph.store._inner.optimize()  # type: ignore[attr-defined]
         else:
             if add_base_iri:
-                self.graph = rdf_file_to_graph(file_path, base_namespace=self.namespace, prefixes=self.prefixes)
+                self.graph = rdf_file_to_graph(graph_file, base_namespace=self.namespace, prefixes=self.prefixes)
             else:
-                self.graph = rdf_file_to_graph(file_path, prefixes=self.prefixes)
+                self.graph = rdf_file_to_graph(graph_file, prefixes=self.prefixes)
         return
 
     def get_graph(self) -> Graph:
@@ -230,9 +229,7 @@ class NeatGraphStore:
 
         elif self.rdf_store_type == RdfStoreType.GRAPHDB:
             r = requests.delete(f"{self.graph_db_rest_url}/repositories/{self.graph_name}/rdf-graphs/service?default")
-            logging.info(
-                f"Dropped graph with state: {r.text}",
-            )
+            logging.info(f"Dropped graph with state: {r.text}")
 
     def query_to_dataframe(
         self,
@@ -244,10 +241,10 @@ class NeatGraphStore:
         """Returns the result of the query as a dataframe.
 
         Args:
-            query : SPARQL query to execute
-            column_mapping : Columns name mapping, by default None
-            save_to_cache : Save result of query to cache, by default False
-            index_column : Indexing column , by default "instance"
+            query: SPARQL query to execute
+            column_mapping: Columns name mapping, by default None
+            save_to_cache: Save result of query to cache, by default False
+            index_column: Indexing column , by default "instance"
 
         Returns:
             Dataframe with result of query
@@ -274,10 +271,14 @@ class NeatGraphStore:
 
     def get_df(self) -> pd.DataFrame:
         """Returns the cached dataframe."""
+        if self.df_cache is None:
+            raise ValueError("Cache is empty. Run query_to_dataframe() first with save_to_cache.")
         return self.df_cache
 
     def get_instance_properties_from_cache(self, instance_id: str) -> pd.DataFrame:
         """Returns the properties of an instance."""
+        if self.df_cache is None:
+            raise ValueError("Cache is empty. Run query_to_dataframe() first with save_to_cache.")
         return self.df_cache.loc[self.df_cache["instance"] == instance_id]
 
     def print_triples(self):
@@ -299,7 +300,7 @@ def drop_graph_store(graph: NeatGraphStore, storage_path: Path, force: bool = Fa
         if graph.rdf_store_type == RdfStoreType.OXIGRAPH and storage_path:
             if storage_path.exists():
                 graph.__del__()
-                graph = None
+                del graph
                 # remove all files in the storage path except the lock file
                 for f in os.listdir(storage_path):
                     # if f != "LOCK":

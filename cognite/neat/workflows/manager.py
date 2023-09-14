@@ -41,7 +41,7 @@ class WorkflowManager:
 
     def __init__(
         self,
-        client: CogniteClient = None,
+        client: CogniteClient | None = None,
         registry_storage_type: str = "file",
         workflows_storage_path: Path | None = None,
         rules_storage_path: Path | None = None,
@@ -234,7 +234,7 @@ class WorkflowManager:
         return
 
     def start_workflow_instance(
-        self, workflow_name: str, step_id: str = "", flow_msg: FlowMessage = None, sync: bool | None = None
+        self, workflow_name: str, step_id: str = "", flow_msg: FlowMessage | None = None, sync: bool | None = None
     ) -> WorkflowStartStatus:
         workflow = self.get_workflow(workflow_name)
 
