@@ -15,20 +15,17 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-<<<<<<< HEAD
-## [0.25.6] - 5-09-23
+## [0.25.7] - 14-09-23
 ### Added
-- Drop down menue for selection of property which hold value for nodes in Data Explorer
-=======
+- Drop down menu for selection of property which hold value for nodes in Data Explorer
 ## [0.25.6] - 12-09-23
 ### Fixed
 - Fixed Nodes and Edges step
 - Fixed issues with regex
 ### Added
 - Mock Graph Generation Step
-- Regex paterns from CDF API documentation
+- Regex patterns from CDF API documentation
 
->>>>>>> main
 ## [0.25.5] - 5-09-23
 ### Added
 - Support for upload of various RDF formats to `NeatGraph` store
