@@ -79,8 +79,8 @@ class GenerateCDFNodesAndEdgesFromGraph(Step):
         ),
         Configurable(
             name="add_class_prefix",
-            value=False,
-            options=[True, False],
+            value="False",
+            options=["True", "False"],
             label=("Whether to add class name as a prefix to external ids of nodes or not"),
         ),
         
