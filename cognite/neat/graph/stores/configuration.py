@@ -15,9 +15,9 @@ class RdfStoreType(StrEnum):
 
 class RdfStoreConfig(BaseModel):
     type: RdfStoreType
-    file_path: str = None
-    query_url: str = None
-    update_url: str = None
-    user: str = None
-    password: str = None
+    file_path: str | None = None
+    query_url: str | None = None
+    update_url: str | None = None
+    user: str | None = None
+    password: str | None = None
     api_root_url: str = "http://localhost:7200"

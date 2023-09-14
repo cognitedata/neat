@@ -115,17 +115,14 @@ def remove_namespace(
 ) -> tuple[str, ...] | str:
     """Removes namespace from URI
 
-    Parameters
-    ----------
-    URI : URIRef | str
-        URI of an entity
-    special_separator : str
-        Special separator to use instead of # or / if present in URI
-        Set by default to "#_" which covers special client use case
+    Args
+        URI: URIRef | str
+            URI of an entity
+        special_separator : str
+            Special separator to use instead of # or / if present in URI
+            Set by default to "#_" which covers special client use case
 
     Returns
-    -------
-    str
         Entities id without namespace
 
     Examples:

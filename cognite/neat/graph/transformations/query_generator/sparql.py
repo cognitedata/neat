@@ -1,6 +1,7 @@
 import re
 from collections import Counter, defaultdict
 from collections.abc import Iterable
+from typing import cast
 
 from rdflib import Graph, Namespace
 from rdflib.term import URIRef
@@ -71,7 +72,7 @@ def _get_predicate_id(
 
     query = query.replace("insertPrefixes", _generate_prefix_header(prefixes))
     final_query = query.replace("subjectTypeID", subject_type_id).replace("objectTypeID", object_type_id)
-    res = list(graph.query(final_query))
+    res = list(cast(tuple, graph.query(final_query)))
 
     if len(res) != 1:
         raise ValueError("Subject and Object must have exactly 1 relation!")
@@ -279,7 +280,7 @@ def build_sparql_query(
 
     if isinstance(traversal, AllProperties):
         query = _generate_all_properties_query_statement(triples[0].subject)
-    elif isinstance(traversal, AllReferences):
+    elif isinstance(traversal, AllReferences) and isinstance(triples[0].object, str):
         query = _generate_all_references_query_statement(triples[0].object)
     elif isinstance(traversal, SingleProperty):
         query = _generate_single_property_query_statement(triples[0].subject, triples[0].predicate)
@@ -450,68 +451,61 @@ def _to_construct_triples(
     tuple[list[Triple],list[Triple]]
         Tuple of triples that define graph template and graph pattern parts of CONSTRUCT query
     """
+    # TODO: Add handling of UNIONs in rules
 
     templates = []
     patterns = []
 
-    # here pull all properties which are of type `rdfpath` and are defined for the class:
-    properties = [
-        property_.model_copy()
-        for property_ in get_classes_with_properties(transformation_rules)[class_]
-        if property_.rule_type == RuleType.rdfpath and not property_.skip_rule
-    ]
+    class_ids = []
+    for property_ in get_classes_with_properties(transformation_rules)[class_]:
+        if property_.rule_type != RuleType.rdfpath or property_.skip_rule:
+            continue
+        if not isinstance(property_.rule, str):
+            raise ValueError("Rule must be string!")
+        traversal = parse_rule(property_.rule, property_.rule_type).traversal
 
-    # TODO: Add handling of UNIONs in rules
+        if isinstance(traversal, Traversal):
+            class_ids.append(traversal.class_.id)
 
-    # parse rules for those properties
-    for i, property_ in enumerate(properties):
-        properties[i].rule = parse_rule(property_.rule, property_.rule_type).traversal
-
-    # add first triple for graph pattern stating type of object
-    patterns += [
-        Triple(
-            subject="?subject",
-            predicate="a",
-            object=_most_occurring_element([property_.rule.class_.id for property_ in properties]),
-            optional=False,
-        )
-    ]
-
-    for property_ in properties:
         graph_template_triple = Triple(
             subject="?subject",
             predicate=f"{transformation_rules.metadata.prefix}:{property_.property_id}",
             object=f'?{re.sub(r"[^_a-zA-Z0-9/_]", "_", str(property_.property_id).lower())}',
             optional=False,
         )
+        templates.append(graph_template_triple)
 
         # AllReferences should not be "optional" since we are creating their values
         # by binding them to certain property
-        if isinstance(property_.rule, AllReferences):
+        if isinstance(traversal, AllReferences):
             graph_pattern_triple = Triple(
                 subject="BIND(?subject", predicate="AS", object=f"{graph_template_triple.object})", optional=False
             )
 
-        elif isinstance(property_.rule, SingleProperty):
+        elif isinstance(traversal, SingleProperty):
             graph_pattern_triple = Triple(
                 subject=graph_template_triple.subject,
-                predicate=property_.rule.property.id,
+                predicate=traversal.property.id,
                 object=graph_template_triple.object,
                 optional=True if properties_optional else not property_.is_mandatory,
             )
 
-        elif isinstance(property_.rule, Hop):
+        elif isinstance(traversal, Hop):
             graph_pattern_triple = Triple(
                 subject="?subject",
-                predicate=_hop2property_path(graph, property_.rule, transformation_rules.prefixes),
+                predicate=_hop2property_path(graph, traversal, transformation_rules.prefixes),
                 object=graph_template_triple.object,
                 optional=True if properties_optional else not property_.is_mandatory,
             )
         else:
             continue
 
-        patterns += [graph_pattern_triple]
-        templates += [graph_template_triple]
+        patterns.append(graph_pattern_triple)
+
+    # add first triple for graph pattern stating type of object
+    patterns.insert(
+        0, Triple(subject="?subject", predicate="a", object=_most_occurring_element(class_ids), optional=False)
+    )
 
     return templates, patterns
 
@@ -525,7 +519,11 @@ def triples2dictionary(triples: Iterable[tuple[URIRef, URIRef, str | URIRef]]) -
     """Converts list of triples to dictionary"""
     dictionary = defaultdict(list)
     for triple in triples:
-        id_, property_, value = remove_namespace(*triple)
+        id_: str
+        property_: str
+        value: str
+        id_, property_, value = remove_namespace(*triple)  # type: ignore[misc]
+
         if id_ not in dictionary:
             dictionary["external_id"] = [id_]
 

@@ -5,17 +5,19 @@ import logging
 import time
 import traceback
 from enum import StrEnum
+from typing import Any
 
 import pandas as pd
 from cognite.client import CogniteClient
 from prometheus_client import Gauge
 from pydantic import BaseModel
 from rdflib import RDF, Graph
-from rdflib.term import Literal
+from rdflib.term import Literal, Node
 
+from cognite.neat.graph.exceptions import NamespaceRequired
 from cognite.neat.graph.transformations.query_generator.sparql import build_sparql_query
 from cognite.neat.rules.models import TransformationRules
-from cognite.neat.rules.to_rdf_path import AllProperties, AllReferences, RawLookup, parse_rule
+from cognite.neat.rules.to_rdf_path import AllProperties, AllReferences, Query, RawLookup, Traversal, parse_rule
 from cognite.neat.utils.utils import remove_namespace
 
 prom_total_proc_rules_g = Gauge("neat_total_processed_rules", "Number of processed rules", ["state"])
@@ -36,12 +38,12 @@ COMMIT_BATCH_SIZE = 10000
 class RuleProcessingReportRec(BaseModel):
     """Report record for rule processing"""
 
-    row_id: str = None
-    rule_name: str = None
-    rule_type: str = None
-    rule_expression: str = None
-    status: str = None
-    error_message: str = None
+    row_id: str | None = None
+    rule_name: str | None = None
+    rule_type: str | None = None
+    rule_expression: Any | None = None
+    status: str | None = None
+    error_message: str | None = None
     elapsed_time: float = 0
     rows_in_response: int = 0
 
@@ -60,22 +62,22 @@ class RuleProcessingReport(BaseModel):
 def source2solution_graph(
     source_knowledge_graph: Graph,
     transformation_rules: TransformationRules,
-    solution_knowledge_graph: Graph = None,
-    client: CogniteClient = None,
+    solution_knowledge_graph: Graph | None = None,
+    client: CogniteClient | None = None,
     cdf_lookup_database: str | None = None,
-    extra_triples: list[tuple] | None = None,
+    extra_triples: list[tuple[Node, Node, Node]] | None = None,
     stop_on_exception: bool = False,
     missing_raw_lookup_value: str = "NaN",
-    processing_report: RuleProcessingReport = None,
+    processing_report: RuleProcessingReport | None = None,
 ) -> Graph:
-    """Transforms  solution knowledge graph based on Domain Knowledge Graph
+    """Transforms solution knowledge graph based on Domain Knowledge Graph
 
     Args:
-        domain_knowledge_graph: Domain Knowledge Graph which represent the source graph being
+        source_knowledge_graph: Domain Knowledge Graph which represents the source graph being
                                 transformed to app/solution specific graph
         transformation_rules: Transformation rules holding data model definition and rules to
                               transform source/domain graph to app/solution specific graph
-        app_instance_graph: Graph to store app/solution specific graph.
+        solution_knowledge_graph: Graph to store app/solution specific graph.
                             Defaults to None (i.e., empty graph).
         client: CogniteClient. Defaults to None.
         cdf_lookup_database: CDF RAW database name to use for `rawlookup` rules. Defaults to None.
@@ -106,13 +108,13 @@ def source2solution_graph(
 def domain2app_knowledge_graph(
     domain_knowledge_graph: Graph,
     transformation_rules: TransformationRules,
-    app_instance_graph: Graph = None,
-    client: CogniteClient = None,
+    app_instance_graph: Graph | None = None,
+    client: CogniteClient | None = None,
     cdf_lookup_database: str | None = None,
-    extra_triples: list[tuple] | None = None,
+    extra_triples: list[tuple[Node, Node, Node]] | None = None,
     stop_on_exception: bool = False,
     missing_raw_lookup_value: str = "NaN",
-    processing_report: RuleProcessingReport = None,
+    processing_report: RuleProcessingReport | None = None,
 ) -> Graph:
     """Generates application/solution specific knowledge graph based on Domain Knowledge Graph
 
@@ -132,20 +134,24 @@ def domain2app_knowledge_graph(
     Returns:
         Transformed knowledge graph based on transformation rules
     """
+    if transformation_rules.metadata.namespace is None:
+        raise NamespaceRequired("Transform domain to app knowledge graph")
+    rule_namespace = transformation_rules.metadata.namespace
 
     if app_instance_graph is None:
         app_instance_graph = Graph()
         # Bind App namespace and prefix
-        app_instance_graph.bind(transformation_rules.metadata.prefix, transformation_rules.metadata.namespace)
+        app_instance_graph.bind(transformation_rules.metadata.prefix, rule_namespace)
         # Bind other prefixes and namespaces
         for prefix, namespace in transformation_rules.prefixes.items():
             app_instance_graph.bind(prefix, namespace)
 
     tables_by_name = {}
-    for table_name in transformation_rules.raw_tables:
-        logging.debug(f"Loading {table_name} table from database {cdf_lookup_database}")
-        table = client.raw.rows.retrieve_dataframe(cdf_lookup_database, table_name, limit=-1)
-        tables_by_name[table_name] = table
+    if cdf_lookup_database and client:
+        for table_name in transformation_rules.raw_tables:
+            logging.debug(f"Loading {table_name} table from database {cdf_lookup_database}")
+            table = client.raw.rows.retrieve_dataframe(cdf_lookup_database, table_name, limit=-1)
+            tables_by_name[table_name] = table
 
     # Add references with their type first
     types = []
@@ -191,20 +197,21 @@ def domain2app_knowledge_graph(
         try:
             start_time = time.perf_counter()
             # Parse rule:
-            rule = parse_rule(rule_definition.rule, rule_definition.rule_type)
+            rule = parse_rule(rule_definition.rule, rule_definition.rule_type)  # type: ignore[arg-type]
 
             # Build SPARQL if needed:
-            if rule_definition.rule_type == "sparql":
+            if isinstance(rule.traversal, Query) and rule_definition.rule_type == "sparql":
                 query = rule.traversal.query
-            else:
+            elif isinstance(rule.traversal, Traversal | str):
                 query = build_sparql_query(domain_knowledge_graph, rule.traversal, transformation_rules.prefixes)
-
+            else:
+                raise ValueError(f"Unknown traversal type {type(rule.traversal)}")
             logging.info(f"Query: {query}")
 
             if query_results := list(domain_knowledge_graph.query(query)):
                 # Generate URI for class and property in target namespace
-                class_URI = transformation_rules.metadata.namespace[rule_definition.class_id]
-                property_URI = transformation_rules.metadata.namespace[rule_definition.property_name]
+                class_URI = rule_namespace[rule_definition.class_id]
+                property_URI = rule_namespace[rule_definition.property_name]  # type: ignore[index]
 
                 # Turn query results into dataframe
                 instance_df = pd.DataFrame(query_results, columns=list(Triple))
@@ -226,15 +233,13 @@ def domain2app_knowledge_graph(
                     lookup_map = tables_by_name[rule.table.name].set_index(rule.table.key)[rule.table.value].to_dict()
 
                     def lookup(
-                        literal: Literal,
-                        lookup_table=lookup_map,
-                        missing_raw_lookup_value=missing_raw_lookup_value,
+                        literal: Literal, lookup_table=lookup_map, missing_raw_lookup_value=missing_raw_lookup_value
                     ):
                         if new_value := lookup_table.get(literal.value):
-                            return Literal(new_value, literal.language, literal.datatype, literal.normalize)
+                            return Literal(new_value, literal.language, literal.datatype, bool(literal.normalize))
                         elif missing_raw_lookup_value:
                             return Literal(
-                                missing_raw_lookup_value, literal.language, literal.datatype, literal.normalize
+                                missing_raw_lookup_value, literal.language, literal.datatype, bool(literal.normalize)
                             )
                         else:
                             return literal
@@ -243,7 +248,7 @@ def domain2app_knowledge_graph(
 
                 # Add instances
                 for _, triple in instance_df.iterrows():
-                    app_instance_graph.add(triple.values)
+                    app_instance_graph.add(triple.values)  # type: ignore[arg-type]
                     check_commit()
                 # Setting instances type and merging them with df containing instance - type relations
                 instance_df[Triple.predicate] = RDF.type
@@ -300,17 +305,16 @@ def domain2app_knowledge_graph(
     type_df = pd.concat(types).drop_duplicates(Triple.subject).reset_index(drop=True)
 
     # Add instance - RDF Type relations
-    for _, triple in type_df.iterrows():
-        app_instance_graph.add(triple.values)
+    for _, triple in type_df.iterrows():  # type: ignore[assignment]
+        app_instance_graph.add(triple.values)  # type: ignore[arg-type]
         check_commit()
 
-    if extra_triples:
-        for i, triple in enumerate(extra_triples):
-            try:
-                app_instance_graph.add(triple)
-                check_commit()
-            except ValueError as e:
-                raise ValueError(f"Triple {i} in extra_triples is not correct and cannot be added!") from e
+    for i, triple in enumerate(extra_triples or []):  # type: ignore[assignment]
+        try:
+            app_instance_graph.add(triple)  # type: ignore[arg-type]
+            check_commit()
+        except ValueError as e:
+            raise ValueError(f"Triple {i} in extra_triples is not correct and cannot be added!") from e
 
     check_commit(force_commit=True)
     return app_instance_graph

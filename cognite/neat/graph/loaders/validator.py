@@ -47,8 +47,8 @@ def validate_asset_hierarchy(assets: dict[str, Asset]) -> tuple[list[str], list[
         List of orphan assets external ids and list of circular path of external ids.
         If both lists are empty, the hierarchy is healthy.
     """
-    orphan_assets = []
-    circular_reference_paths = []
+    orphan_assets: list[str] = []
+    circular_reference_paths: list[list[str]] = []
     for asset in assets.values():
         parent_external_id = asset.get("parent_external_id")
         if parent_external_id is not None and parent_external_id not in assets:
