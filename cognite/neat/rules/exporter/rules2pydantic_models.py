@@ -423,7 +423,7 @@ def to_relationship(self, transformation_rules: TransformationRules) -> Relation
     raise NotImplementedError()
 
 
-def to_node(self, data_model: DataModel) -> NodeApply:
+def to_node(self, data_model: DataModel, add_class_prefix_to_xid: bool) -> NodeApply:
     """Creates DMS node from pydantic model."""
 
     if set(data_model.containers[self.__class__.__name__].properties.keys()) != set(
@@ -436,11 +436,21 @@ def to_node(self, data_model: DataModel) -> NodeApply:
         )
 
     attributes: dict = {attribute: self.__getattribute__(attribute) for attribute in self.attributes}
-    edges_one_to_one: dict = {
-        edge_one_to_one: {"space": data_model.space, "externalId": self.__getattribute__(edge_one_to_one)}
+    if add_class_prefix_to_xid:
+        self.external_id=add_class_prefix_to_xid(class_name=self.__class__.__name__,
+                                                external_id=self.external_id)
+
+        edges_one_to_one: dict = {
+        edge_one_to_one: {"space": data_model.space, "externalId": add_class_prefix_to_xid(class_name=data_model.views[self.__class__.__name__].properties[edge_one_to_one].source.external_id,
+                                                external_id=self.__getattribute__(edge_one_to_one))}
         for edge_one_to_one in self.edges_one_to_one
     }
-
+    else:
+        edges_one_to_one: dict = {
+            edge_one_to_one: {"space": data_model.space, "externalId": self.__getattribute__(edge_one_to_one)}
+            for edge_one_to_one in self.edges_one_to_one
+        }
+    
     return NodeApply(
         space=data_model.space,
         external_id=self.external_id,
@@ -455,6 +465,7 @@ def to_node(self, data_model: DataModel) -> NodeApply:
 
 def to_edge(self, data_model: DataModel) -> list[EdgeApply]:
     """Creates DMS edge from pydantic model."""
+    #TODO: add class prefix 
     edges: list[EdgeApply] = []
     for edge_one_to_many in self.edges_one_to_many:
         edge_type_id = f"{self.__class__.__name__}.{edge_one_to_many}"
@@ -477,3 +488,9 @@ def to_edge(self, data_model: DataModel) -> list[EdgeApply]:
 def to_graph(self, transformation_rules: TransformationRules, graph: Graph):
     """Writes instance as set of triples to triple store (Graphs)."""
     ...
+
+
+def add_class_prefix_to_xid(class_name:str, external_id:str) -> str:
+    """Adds class name as prefix to the external_id"""
+    external_id_with_prefix=f"{class_name}_{external_id}"
+    return external_id_with_prefix

@@ -17,7 +17,10 @@ Triple: TypeAlias = tuple[Node, Node, Node]
 
 
 def rdf2nodes_and_edges(
-    graph_store: NeatGraphStore, transformation_rules: TransformationRules, stop_on_exception: bool = False
+    graph_store: NeatGraphStore, 
+    transformation_rules: TransformationRules, 
+    stop_on_exception: bool = False,
+    add_class_prefix_to_xid: bool = False
 ) -> tuple[list[NodeApply], list[EdgeApply], list[ErrorDetails]]:
     """Generates DMS nodes and edges from knowledge graph stored as RDF triples
 
@@ -57,7 +60,7 @@ def rdf2nodes_and_edges(
                     instance = pydantic_models[class_].from_graph(  # type: ignore[attr-defined]
                         graph_store, transformation_rules, class_instance_id
                     )
-                    nodes.append(instance.to_node(data_model))
+                    nodes.append(instance.to_node(data_model, add_class_prefix_to_xid))
                     edges.extend(instance.to_edge(data_model))
 
                     delta_time = datetime_utc_now() - start_time

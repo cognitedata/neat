@@ -74,8 +74,16 @@ class GenerateCDFNodesAndEdgesFromGraph(Step):
         Configurable(
             name="graph_name",
             value="source",
+            options=["source", "solution"],
             label=("The name of the graph to be used for matching." " Supported options : source, solution"),
-        )
+        ),
+        Configurable(
+            name="add_class_prefix",
+            value=False,
+            options=[True, False],
+            label=("Whether to add class name as a prefix to external ids of nodes or not"),
+        ),
+        
     ]
 
     def run(self, rules: RulesData, graph: SourceGraph | SolutionGraph) -> (FlowMessage, Nodes, Edges):
@@ -85,7 +93,11 @@ class GenerateCDFNodesAndEdgesFromGraph(Step):
         else:
             graph = self.flow_context["SourceGraph"]
 
-        nodes, edges, exceptions = rdf2nodes_and_edges(graph.graph, rules.rules)
+        add_class_prefix = self.configs.get("add_class_prefix", False)
+        nodes, edges, exceptions = rdf2nodes_and_edges(graph_store=graph.graph,
+                                                       transformation_rules=rules.rules, 
+                                                       stop_on_exception=False,
+                                                       add_class_prefix_to_xid=add_class_prefix)
 
         msg = f"Total count of: <ul><li>{ len(nodes) } nodes</li><li>{ len(edges) } edges</li></ul>"
 
