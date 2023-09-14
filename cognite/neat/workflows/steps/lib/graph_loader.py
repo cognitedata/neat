@@ -93,7 +93,7 @@ class GenerateCDFNodesAndEdgesFromGraph(Step):
         else:
             graph = self.flow_context["SourceGraph"]
 
-        add_class_prefix = self.configs.get("add_class_prefix", False)
+        add_class_prefix = True if self.configs["add_class_prefix"] == "True" else False
         nodes, edges, exceptions = rdf2nodes_and_edges(graph_store=graph.graph,
                                                        transformation_rules=rules.rules, 
                                                        stop_on_exception=False,
