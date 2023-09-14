@@ -272,9 +272,9 @@ def test_get_datatype_properties(
 
     assert response.status_code == 200
     assert {
-        "property_id": "http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject.name",
-        "property_occurrence": "2502",
-        "property_name": "IdentifiedObject.name",
+        "id": "http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject.name",
+        "count": 2502,
+        "name": "IdentifiedObject.name",
     } in content["datatype_properties"]
 
 

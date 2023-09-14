@@ -70,4 +70,3 @@ class DatatypePropertyRequest(BaseModel):
     workflow_name: str = ""
     cache: bool = False
     limit: int = 10
-    

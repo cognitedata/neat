@@ -49,7 +49,7 @@ export function LoadGraph(props:{filters:Array<string>,nodeNameProperty:string,s
         setLoading(true);
         console.log("loading dataset");
         let nodeNameProperty = ""
-        if (localStorage.getItem('nodeNameProperty')) 
+        if (localStorage.getItem('nodeNameProperty'))
            nodeNameProperty= "<"+localStorage.getItem('nodeNameProperty')+">";
 
         let graph = new Graph();
@@ -187,7 +187,7 @@ export default function GraphExplorer(props:{filters:Array<string>,sparqlQuery:s
     const loadLinkedNodes = (nodeRef:string) => {
       let query = ""
       let nodeNameProperty = ""
-      if (localStorage.getItem('nodeNameProperty')) 
+      if (localStorage.getItem('nodeNameProperty'))
          nodeNameProperty= "<"+localStorage.getItem('nodeNameProperty')+">";
 
       if (!nodeNameProperty) {
@@ -326,7 +326,7 @@ export default function GraphExplorer(props:{filters:Array<string>,sparqlQuery:s
               options={dataTypeProps}
               getOptionLabel={(option) => option["name"]}
               sx={{ width: 500 }}
-              size='small' onChange={handleNodeNameProperty} 
+              size='small' onChange={handleNodeNameProperty}
               renderInput={(params) => <TextField {...params} label="Property to be used as node name." />}
             />
             <TextField id="response_limit" label="Limit max nodes in response" value={limitRecordsInResponse} size='small' type='number' sx={{width:150 , marginLeft:2}} variant="outlined" onChange={handleResponseLimitChange}  />

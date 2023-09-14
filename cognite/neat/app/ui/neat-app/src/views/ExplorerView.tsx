@@ -358,7 +358,7 @@ export default function QDataTable() {
 
   const loadObjectAsGraph = (reference:string) => {
     setTabValue(2);
-    if (localStorage.getItem('nodeNameProperty')) 
+    if (localStorage.getItem('nodeNameProperty'))
            nodeNameProperty= "<"+localStorage.getItem('nodeNameProperty')+">";
     let query = ``
     if (!nodeNameProperty) {
