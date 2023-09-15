@@ -1,7 +1,7 @@
 from enum import StrEnum
 from typing import Any
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class WorkflowState(StrEnum):
@@ -104,17 +104,17 @@ class WorkflowDefinition(BaseModel):
     name: str
     description: str | None = None
     implementation_module: str | None = None
-    steps: list[WorkflowStepDefinition] = []
-    system_components: list[WorkflowSystemComponent] | None = None
-    configs: list[WorkflowConfigItem] | None = None
+    steps: list[WorkflowStepDefinition] = Field(default_factory=list)
+    system_components: list[WorkflowSystemComponent] = Field(default_factory=list)
+    configs: list[WorkflowConfigItem] = Field(default_factory=list)
 
-    def get_config_item(self, name: str) -> WorkflowConfigItem:
+    def get_config_item(self, name: str) -> WorkflowConfigItem | None:
         for config in self.configs:
             if config.name == name:
                 return config
         return None
 
-    def upsert_config_item(self, config_item: WorkflowConfigItem):
+    def upsert_config_item(self, config_item: WorkflowConfigItem) -> None:
         for config in self.configs:
             if config.name == config_item.name:
                 config.value = config_item.value
@@ -165,7 +165,7 @@ class WorkflowConfigs(BaseModel):
 
     configs: list[WorkflowConfigItem] = []
 
-    def get_config_item(self, config_name: str) -> WorkflowConfigItem:
+    def get_config_item(self, config_name: str) -> WorkflowConfigItem | None:
         return next((item for item in self.configs if item.name == config_name), None)
 
     def set_config_item(self, config_item: WorkflowConfigItem):
@@ -175,7 +175,9 @@ class WorkflowConfigs(BaseModel):
                 return
         self.configs.append(config_item)
 
-    def get_config_group_values_by_name(self, group_name: str, remove_group_prefix: bool = True) -> dict[str, str]:
+    def get_config_group_values_by_name(
+        self, group_name: str, remove_group_prefix: bool = True
+    ) -> dict[str, str | None]:
         return {
             (item.name.removeprefix(item.group) if remove_group_prefix else item.name): item.value
             for item in self.configs

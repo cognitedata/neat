@@ -16,15 +16,15 @@ from cognite.neat.workflows.utils import get_file_hash
 
 
 class NeatCdfResource(BaseModel):
-    id: int = None
+    id: int | None = None
     name: str
     rtype: str
-    last_updated_time: int = None
-    last_updated_by: str = None
-    version: str = None
-    tag: str = None
-    comments: str = None
-    external_id: str = None
+    last_updated_time: int | None = None
+    last_updated_by: str | None = None
+    version: str | None = None
+    tag: str | None = None
+    comments: str | None = None
+    external_id: str | None = None
     is_latest: bool = False
 
 
@@ -201,11 +201,7 @@ class CdfStore:
                 return
             # removing the latest tag from all files related to this workflow
             files_metada = self.client.files.list(
-                name=file_path.name,
-                metadata={
-                    "workflow_name": workflow_name,
-                    "resource_type": resource_type,
-                },
+                name=file_path.name, metadata={"workflow_name": workflow_name, "resource_type": resource_type}
             )
             for file_meta in files_metada:
                 meta_update = FileMetadataUpdate(id=file_meta.id).labels.remove("neat-latest")
