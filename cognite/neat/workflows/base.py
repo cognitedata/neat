@@ -7,7 +7,7 @@ from pathlib import Path
 from threading import Event
 
 import yaml
-from cognite.client import CogniteClient
+from cognite.client import ClientConfig, CogniteClient
 from prometheus_client import Gauge
 
 from cognite.neat.app.api.configuration import Config
@@ -15,7 +15,7 @@ from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
 from cognite.neat.utils.cdf import CogniteClientConfig
 from cognite.neat.utils.utils import retry_decorator
 from cognite.neat.workflows import cdf_store, utils
-from cognite.neat.workflows._exceptions import InvalidStepOutputException
+from cognite.neat.workflows._exceptions import ConfigurationNotSet, InvalidStepOutputException
 from cognite.neat.workflows.model import (
     FlowMessage,
     StepExecutionStatus,
@@ -51,24 +51,24 @@ class BaseWorkflow:
         self.name = name
         self.module_name = self.__class__.__module__
         self.cdf_client = client
-        self.cdf_client_config: CogniteClientConfig = client.config
+        self.cdf_client_config: ClientConfig = client.config
         self.default_dataset_id = default_dataset_id
         self.state = WorkflowState.CREATED
         self.instance_id = utils.generate_run_id()
         self.run_id = ""
         self.last_error = ""
         self.elapsed_time = 0
-        self.start_time = None
-        self.end_time = None
+        self.start_time: float | None = None
+        self.end_time: float | None = None
         self.execution_log: list[WorkflowStepEvent] = []
-        self.workflow_steps: list[WorkflowStepDefinition] = workflow_steps
+        self.workflow_steps: list[WorkflowStepDefinition] = workflow_steps or []
         self.workflow_system_components: list[WorkflowSystemComponent] = []
         self.configs: list[WorkflowConfigItem] = []
-        self.flow_message: FlowMessage = None
-        self.task_builder: WorkflowTaskBuilder = None
-        self.rules_storage_path = None
-        self.data_store_path = None
-        self.user_steps_path = None  # path to user defined steps
+        self.flow_message: FlowMessage | None = None
+        self.task_builder: WorkflowTaskBuilder | None = None
+        self.rules_storage_path: Path | None = None
+        self.data_store_path: str | None = None
+        self.user_steps_path: Path | None = None  # path to user defined steps
         self.cdf_store = (
             cdf_store.CdfStore(self.cdf_client, data_set_id=self.default_dataset_id)
             if self.default_dataset_id
@@ -78,8 +78,8 @@ class BaseWorkflow:
         self.resume_event = Event()
         self.is_ephemeral = False  # if True, workflow will be deleted after completion
         self.step_clases = None
-        self.data: dict[str, DataContract] = {}
-        self.steps_registry: StepsRegistry = steps_registry
+        self.data: dict[str, DataContract | cdf_store.CdfStore | CogniteClient] = {}
+        self.steps_registry: StepsRegistry = steps_registry or StepsRegistry()
 
     def start(self, sync=False, is_ephemeral=False, **kwargs) -> FlowMessage | None:
         """Starts workflow execution.sync=True will block until workflow is completed and
@@ -88,8 +88,10 @@ class BaseWorkflow:
             logging.error(f"Workflow {self.name} is already running")
             return None
         self.data["StartFlowMessage"] = kwargs.get("flow_message", None)
-        self.data["CdfStore"] = self.cdf_store
-        self.data["CogniteClient"] = self.cdf_client
+        if self.cdf_store:
+            self.data["CdfStore"] = self.cdf_store
+        if self.cdf_client:
+            self.data["CogniteClient"] = self.cdf_client
         self.state = WorkflowState.RUNNING
         self.start_time = time.time()
         self.end_time = None
@@ -387,11 +389,10 @@ class BaseWorkflow:
         self.report_step_execution()
         return new_flow_message
 
-    def resume_workflow(self, flow_message: FlowMessage, step_id: str | None = None):
-        if step_id:
-            if self.current_step != step_id:
-                logging.error(f"Workflow {self.name} is not in step {step_id} , resume is skipped")
-                return
+    def resume_workflow(self, flow_message: FlowMessage, step_id: str):
+        if step_id and self.current_step != step_id:
+            logging.error(f"Workflow {self.name} is not in step {step_id} , resume is skipped")
+            return
         self.flow_message = flow_message
         self.execution_log.append(
             WorkflowStepEvent(
@@ -468,6 +469,8 @@ class BaseWorkflow:
             return json.dumps(workflow_definitions.model_dump(), indent=4)
         elif output_format == "yaml":
             return yaml.dump(workflow_definitions.model_dump(), indent=4)
+        else:
+            raise NotImplementedError(f"Output format {output_format} is not supported.")
 
     @classmethod
     def deserialize_definition(cls, json_string: str, output_format: str = "json") -> WorkflowDefinition:
@@ -484,23 +487,27 @@ class BaseWorkflow:
         self.workflow_system_components = workflow_definition.system_components
         self.configs = workflow_definition.configs
 
-    def set_storage_path(self, storage_type: str, storage_path: str):
+    def set_storage_path(self, storage_type: str, storage_path: str) -> None:
         if storage_type == "transformation_rules":
-            self.rules_storage_path = storage_path
+            self.rules_storage_path = Path(storage_path)
+            if self.default_dataset_id is None:
+                raise ConfigurationNotSet("default_dataset_id")
             self.cdf_store = cdf_store.CdfStore(
                 self.cdf_client, data_set_id=self.default_dataset_id, rules_storage_path=self.rules_storage_path
             )
         elif storage_type == "data_store":
             self.data_store_path = storage_path
-            self.user_steps_path = Path(self.data_store_path, "steps")
+            self.user_steps_path = Path(storage_path, "steps")
 
     def set_task_builder(self, task_builder: WorkflowTaskBuilder):
         self.task_builder = task_builder
 
-    def get_config_item(self, config_name: str) -> WorkflowConfigItem:
+    def get_config_item(self, config_name: str) -> WorkflowConfigItem | None:
         return next((item for item in self.configs if item.name == config_name), None)
 
-    def get_config_group_values_by_name(self, group_name: str, remove_group_prefix: bool = True) -> dict[str, str]:
+    def get_config_group_values_by_name(
+        self, group_name: str, remove_group_prefix: bool = True
+    ) -> dict[str, str | None]:
         return {
             (item.name.removeprefix(item.group) if remove_group_prefix else item.name): item.value
             for item in self.configs
@@ -530,10 +537,10 @@ class BaseWorkflow:
         """
         return CogniteClient(self.cdf_client_config)
 
-    def get_step_by_id(self, step_id: str) -> WorkflowStepDefinition:
+    def get_step_by_id(self, step_id: str) -> WorkflowStepDefinition | None:
         return next((step for step in self.workflow_steps if step.id == step_id), None)
 
-    def get_trigger_step(self, step_id: str | None = None) -> WorkflowStepDefinition:
+    def get_trigger_step(self, step_id: str | None = None) -> WorkflowStepDefinition | None:
         if step_id:
             return next((step for step in self.workflow_steps if step.id == step_id and step.enabled), None)
         else:

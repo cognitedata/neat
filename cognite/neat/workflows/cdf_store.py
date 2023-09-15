@@ -11,6 +11,7 @@ from cognite.client.data_classes import Event, FileMetadataUpdate, LabelDefiniti
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 
+from cognite.neat.workflows._exceptions import ConfigurationNotSet
 from cognite.neat.workflows.model import WorkflowFullStateReport, WorkflowState, WorkflowStepEvent
 from cognite.neat.workflows.utils import get_file_hash
 
@@ -89,9 +90,11 @@ class CdfStore:
                         # Add the file to the archive
                         zipf.write(file_path, os.path.relpath(file_path, folder_path))
 
-    def extract_workflow_package(self, workflow_name: str):
+    def extract_workflow_package(self, workflow_name: str) -> None:
         # Make sure the archive exists
         workflow_name = workflow_name.replace(".zip", "")
+        if self.workflows_storage_path is None:
+            raise ConfigurationNotSet("workflows_storage_path")
         package_full_path = Path(self.workflows_storage_path).joinpath(f"{workflow_name}.zip")
         output_folder = Path(self.workflows_storage_path).joinpath(workflow_name)
         if not package_full_path.is_file():
@@ -108,11 +111,11 @@ class CdfStore:
         with zipfile.ZipFile(package_full_path, "r") as zipf:
             zipf.extractall(output_folder)
 
-    def load_workflows_from_cfg_by_filter(self, config_filter: list[str] | None = None) -> str:
+    def load_workflows_from_cfg_by_filter(self, config_filter: list[str] | None = None) -> None:
         """Load workflow package from CDF and extract it to the storage path"""
         # filter syntax: name:workflow_name=version; tag:tag_name
         try:
-            for filter_item in config_filter:
+            for filter_item in config_filter or []:
                 filter_type = filter_item.split(":")[0]
                 if filter_type == "name":
                     filter_workflow_name_with_version_l = filter_item.split(":")[1].split("=")
@@ -141,6 +144,10 @@ class CdfStore:
     ) -> list[str]:
         """Load workflow package or multiple workfllows from CDF and extract it to the storage path"""
         # TODO: Add workflow and tag filters
+        if self.workflows_storage_path is None:
+            raise ConfigurationNotSet("workflows_storage_path")
+        workflow_storage_path = self.workflows_storage_path
+
         if self.data_set_id and self.client:
             if workflow_name:
                 workflow_name = workflow_name if ".zip" in workflow_name else f"{workflow_name}.zip"
@@ -160,22 +167,27 @@ class CdfStore:
 
             files_external_ids = []
             for file_meta in files_metada:
-                self.client.files.download(self.workflows_storage_path, external_id=file_meta.external_id)
+                self.client.files.download(workflow_storage_path, external_id=file_meta.external_id)
                 logging.info(
                     f"Workflow {file_meta.name} , "
-                    f"external_id = {file_meta.external_id} syccessfully downloaded from CDF"
+                    f"external_id = {file_meta.external_id} successfully downloaded from CDF"
                 )
                 self.extract_workflow_package(file_meta.name)
                 files_external_ids.append(file_meta.external_id)
             return files_external_ids
         else:
             logging.error("No CDF client or data set id provided")
+            return []
 
     def save_workflow_to_cdf(self, name: str, tag: str = "", changed_by: str = "", comments: str = "") -> None:
         """Saves entire workflow (all artifacts) to CDF."""
+        if self.workflows_storage_path is None:
+            raise ConfigurationNotSet("workflows_storage_path")
+        workflows_storage_path = self.workflows_storage_path
+
         self.package_workflow(name)
         if self.data_set_id and self.client:
-            zip_file = Path(self.workflows_storage_path) / f"{name}.zip"
+            zip_file = Path(workflows_storage_path) / f"{name}.zip"
             if zip_file.exists():
                 self.save_resource_to_cdf(name, "workflow-package", zip_file, tag, changed_by, comments)
                 zip_file.unlink()
