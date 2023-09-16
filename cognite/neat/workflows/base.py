@@ -78,8 +78,8 @@ class BaseWorkflow:
         self.resume_event = Event()
         self.is_ephemeral = False  # if True, workflow will be deleted after completion
         self.step_clases = None
-        self.data: dict[str, DataContract | cdf_store.CdfStore | CogniteClient] = {}
-        self.steps_registry: StepsRegistry = steps_registry or StepsRegistry()
+        self.data: dict[str, DataContract] = {}
+        self.steps_registry: StepsRegistry = steps_registry
 
     def start(self, sync=False, is_ephemeral=False, **kwargs) -> FlowMessage | None:
         """Starts workflow execution.sync=True will block until workflow is completed and
@@ -88,10 +88,10 @@ class BaseWorkflow:
             logging.error(f"Workflow {self.name} is already running")
             return None
         self.data["StartFlowMessage"] = kwargs.get("flow_message", None)
-        if self.cdf_store:
-            self.data["CdfStore"] = self.cdf_store
-        if self.cdf_client:
-            self.data["CogniteClient"] = self.cdf_client
+        # if self.cdf_store:
+        self.data["CdfStore"] = self.cdf_store
+        # if self.cdf_client:
+        self.data["CogniteClient"] = self.cdf_client
         self.state = WorkflowState.RUNNING
         self.start_time = time.time()
         self.end_time = None

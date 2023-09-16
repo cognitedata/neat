@@ -88,6 +88,12 @@ class WorkflowStepDefinition(BaseModel):
     max_retries: int = 0
     retry_delay: int = 3
 
+    @field_validator("configs", "params", mode="before")
+    def none_as_empty_dict(cls, value):
+        if value is None:
+            return {}
+        return value
+
 
 class WorkflowSystemComponent(BaseModel):
     # Container for steps
