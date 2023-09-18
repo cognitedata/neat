@@ -384,6 +384,7 @@ const onAddStep = (() => {
     step.id = "step_" + Math.floor(Math.random() * 1000000);
     step.label = "New step";
     step.ui_config = ui_config;
+    step.stype = "stdstep";
     workflowDefinitions.steps.push(step);
   } else {
     const systemComponent = new WorkflowSystemComponent();

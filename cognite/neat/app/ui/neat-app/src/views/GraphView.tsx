@@ -2,7 +2,7 @@ import * as React from 'react';
 import {useState,useEffect, useRef, useImperativeHandle,FC} from 'react';
 import Box from '@mui/material/Box';
 import Graph from "graphology";
-import { SigmaContainer, useLoadGraph,useRegisterEvents } from "@react-sigma/core";
+import { SearchControl, SigmaContainer, useCamera, useLoadGraph,useRegisterEvents } from "@react-sigma/core";
 
 import "@react-sigma/core/lib/react-sigma.min.css";
 import { ControlsContainer, useSigma } from "@react-sigma/core";
@@ -27,6 +27,7 @@ export function LoadGraph(props:{filters:Array<string>,nodeNameProperty:string,s
     const { start, stop,kill } = useWorkerLayoutForceAtlas2({ settings: { slowDown: 5 } });
     const [ bigGraph, setBigGraph] = useState<Graph>();
     const [ loading, setLoading] = useState(false);
+    const {zoomIn, zoomOut, reset, goto, gotoNode } = useCamera();
 
 
     useEffect(() => {
@@ -45,8 +46,11 @@ export function LoadGraph(props:{filters:Array<string>,nodeNameProperty:string,s
       }
     }, [props.reloader,props.sparqlQuery]);
 
+
+
     const loadDataset = () => {
         setLoading(true);
+        reset();
         console.log("loading dataset");
         let nodeNameProperty = ""
         if (localStorage.getItem('nodeNameProperty'))
@@ -75,7 +79,6 @@ export function LoadGraph(props:{filters:Array<string>,nodeNameProperty:string,s
         fetch(url,{ method:"post",body:JSON.stringify(requestFilter),headers: {
             'Content-Type': 'application/json;charset=utf-8'
           }}).then((response) => response.json()).then((data) => {
-            console.dir(data)
             const addedNodes : string[] = [];
             let graphSize = graph.size+data.nodes.length;
             data.nodes.forEach((node) => {
@@ -99,9 +102,11 @@ export function LoadGraph(props:{filters:Array<string>,nodeNameProperty:string,s
 
             });
             // loadGraph(graph);
+            kill();
             setBigGraph(graph);
-            loadGraph(graph);
+            loadGraph(graph,true);
             assign();
+            // start();
             // if (props.mode== "update"){
             // }else {
             //   assign();
@@ -116,6 +121,8 @@ export function LoadGraph(props:{filters:Array<string>,nodeNameProperty:string,s
 
     return (loading &&( <LinearProgress />) );
   };
+
+
 
   class DatatypePropertyRequest {
     graph_name: string = "source";
@@ -137,6 +144,7 @@ export default function GraphExplorer(props:{filters:Array<string>,sparqlQuery:s
     const [dataTypeProps, setDataTypeProps] = useState(Array<Map<string,string>>);
     const {hiddenNsPrefixModeCtx, graphNameCtx} = React.useContext(ExplorerContext);
     const [graphName, setGraphName] = graphNameCtx;
+    
 
     const handleNodeNameProperty = (event: React.SyntheticEvent, value: Map<string,string>) => {
         setNodeNameProperty(value["id"]);
@@ -336,6 +344,9 @@ export default function GraphExplorer(props:{filters:Array<string>,sparqlQuery:s
                 <LoadGraph filters={props.filters} nodeNameProperty={nodeNameProperty} reloader={reloader} sparqlQuery={sparqlQuery} mode={loaderMode} limit={limitRecordsInResponse}/>
                 <ControlsContainer position={"top-right"}>
                     <LayoutForceAtlas2Control settings={{ settings: { slowDown: 10 } }} />
+                </ControlsContainer>
+                <ControlsContainer position={"top-left"}>
+                  <SearchControl style={{ width: "300px" }} />
                 </ControlsContainer>
                 <GraphEvents />
             </SigmaContainer>
