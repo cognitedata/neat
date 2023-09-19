@@ -44,6 +44,7 @@ import { Typography } from '@mui/material';
 
 export interface ExecutionLog {
   id: string;
+  label: string;
   state: string;
   elapsed_time: number;
   timestamp: string;
@@ -100,7 +101,7 @@ export default function WorkflowView() {
     else
       setEditState("Please select one of provided workflows or create new one");
 
-    startStatePolling(selectedWorkflow);
+    
 
   }, []);
 
@@ -109,17 +110,19 @@ export default function WorkflowView() {
       var myHeaders = new Headers();
       myHeaders.append('pragma', 'no-cache');
       myHeaders.append('cache-control', 'no-cache');
-      const response = await fetch(neatApiRootUrl + '/data/workflows/' + selectedWorkflow + '/workflow.py', { method: "get", headers: myHeaders });
+      const response = await fetch(neatApiRootUrl + '/data/workflows/' + selectedWorkflow + '/workflow.yaml', { method: "get", headers: myHeaders });
       const content = await response.text();
-      setFileContent(content);
+      setFileContent(content); 
     } catch (error) {
       console.error('Error fetching file:', error);
     }
   };
 
   useEffect(() => {
-    console.log("workflow definition changed")
     syncWorkflowDefToNodesAndEdges(viewType);
+    console.log("workflow definition updated");
+    console.dir(workflowDefinitions);
+    startStatePolling(selectedWorkflow);
   }, [workflowDefinitions]);
 
   const startStatePolling = (workflowName:string) => {
@@ -200,6 +203,22 @@ const filterStats = (stats: WorkflowStats) => {
   return stats;
 }
 
+const enrichWorkflowStats = (stats: WorkflowStats) => {
+  console.log("enrichWorkflowStats")
+  // set labels from workflow definition
+    for (let i = 0; i < stats.execution_log.length; i++) {
+      const log = stats.execution_log[i];
+      if (workflowDefinitions != null){
+        const step = workflowDefinitions.getStepById(log.id);
+        if (step)
+            log.label = step.label;
+      }else {
+        log.label ="";
+      }
+    }
+    return stats;
+  }
+   
 const loadWorkflowStats = (workflowName: string = "") => {
   if (workflowName == "")
     workflowName = selectedWorkflow;
@@ -207,7 +226,9 @@ const loadWorkflowStats = (workflowName: string = "") => {
   fetch(url).then((response) => response.json()).then((data) => {
 
     // const filteredStats = filterStats(data);
-    setWorkflowStats(data);
+    const enrichedStats = enrichWorkflowStats(data);
+    
+    setWorkflowStats(enrichedStats);
     if (data.state == "RUNNING") {
       // startStatePolling();
     } else if (data.state == "COMPLETED" || data.state == "FAILED") {
@@ -519,9 +540,9 @@ return (
       >
         <ToggleButton value="system">Solution overview</ToggleButton>
         <ToggleButton value="steps">Workflow steps</ToggleButton>
-        <ToggleButton value="configurations">Configurations</ToggleButton>
         <ToggleButton value="src">Source code</ToggleButton>
-        <ToggleButton value="transformations">Transformation rules</ToggleButton>
+        <ToggleButton value="configurations">Configurations</ToggleButton>
+        <ToggleButton value="transformations">Data model and transformations</ToggleButton>
         <ToggleButton value="data_explorer">Data explorer</ToggleButton>
 
       </ToggleButtonGroup>
