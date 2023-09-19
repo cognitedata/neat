@@ -46,6 +46,11 @@ class StepsRegistry:
         except Exception:
             logging.info(f"No user defined modules provided in {self.user_steps_path}")
 
+    def load_workflow_step_classes(self, workflow_name: str):
+        workflow_steps_path = Path(self.data_store_path) / "workflows" / workflow_name
+        if workflow_steps_path.exists():
+            self.load_custom_step_classes(workflow_steps_path, scope="workflow")
+
     def load_custom_step_classes(self, custom_steps_path: Path, scope: str = "global"):
         sys.path.append(str(custom_steps_path))
         for step_module_name in os.listdir(custom_steps_path):
@@ -54,9 +59,13 @@ class StepsRegistry:
                 step_module_path.is_file() and not step_module_name.endswith(".py")
             ):
                 continue
-
-            steps_module = importlib.import_module(step_module_name.replace(".py", ""))
-            logging.info(f"Loading user defined step from {steps_module}")
+            full_module_name = step_module_name.replace(".py", "")
+            if full_module_name in sys.modules:
+                logging.info(f"Reloading existing workflow module {full_module_name}")
+                steps_module = importlib.reload(sys.modules[full_module_name])
+            else:
+                steps_module = importlib.import_module(full_module_name)
+                logging.info(f"Loading user defined step from {steps_module}")
             for name, step_cls in inspect.getmembers(steps_module):
                 base_class = getattr(step_cls, "__bases__", None)
                 if (
@@ -68,9 +77,16 @@ class StepsRegistry:
                     continue
                 logging.info(f"Loading user defined step {name} from {steps_module}")
                 if inspect.isclass(step_cls):
-                    logging.info(f"Loading user defined step {name} class {step_cls.__name__}")
                     step_cls.scope = scope
-                    self._step_classes.append(step_cls)
+                    is_new_class = True
+                    for i, step in enumerate(self._step_classes):
+                        if step.__name__ == step_cls.__name__:
+                            logging.info(f"Reloading user defined step {name} class {step_cls.__name__}")
+                            self._step_classes[i] = step_cls
+                            is_new_class = False
+                    if is_new_class:
+                        logging.info(f"Loading NEW user defined step {name} class {step_cls.__name__}")
+                        self._step_classes.append(step_cls)
 
     def run_step(
         self,

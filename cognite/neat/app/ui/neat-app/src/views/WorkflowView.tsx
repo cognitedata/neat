@@ -34,12 +34,12 @@ import WorkflowExecutionReport from 'components/WorkflowExecutionReport';
 import ConfigView from './ConfigView';
 import TransformationTable from './TransformationView';
 import QDataTable from './ExplorerView';
-import Editor, { DiffEditor, useMonaco, loader } from '@monaco-editor/react';
 import OverviewComponentEditorDialog from 'components/OverviewComponentEditorDialog';
 import StepEditorDialog from 'components/StepEditorDialog';
 import WorkflowMetadataDialog from 'components/WorkflowMetadataDialog';
 import LinearProgress from '@mui/material/LinearProgress';
 import { Typography } from '@mui/material';
+import FileEditor from 'components/FileEditor';
 
 
 export interface ExecutionLog {
@@ -104,19 +104,6 @@ export default function WorkflowView() {
     
 
   }, []);
-
-  const fetchFileContent = async () => {
-    try {
-      var myHeaders = new Headers();
-      myHeaders.append('pragma', 'no-cache');
-      myHeaders.append('cache-control', 'no-cache');
-      const response = await fetch(neatApiRootUrl + '/data/workflows/' + selectedWorkflow + '/workflow.yaml', { method: "get", headers: myHeaders });
-      const content = await response.text();
-      setFileContent(content); 
-    } catch (error) {
-      console.error('Error fetching file:', error);
-    }
-  };
 
   useEffect(() => {
     syncWorkflowDefToNodesAndEdges(viewType);
@@ -352,11 +339,8 @@ const handleViewTypeChange = (
 
   setViewType(newViewType);
   syncWorkflowDefToNodesAndEdges(newViewType);
-  if (newViewType == "src") {
-    fetchFileContent();
-  }
+ 
 };
-
 
 const onConnect = useCallback((params) => {
   console.log('onConnect')
@@ -603,7 +587,7 @@ return (
       <QDataTable />
     )}
     {viewType == "src" && (
-      <Editor height="90vh" defaultLanguage="python" value={fileContent} />
+      <FileEditor/>
     )}
 
   </div>

@@ -1,8 +1,9 @@
 import logging
 from pathlib import Path
+import shutil
 
-from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile
+from fastapi.responses import FileResponse, JSONResponse
 
 from cognite.neat.app.api.configuration import neat_app
 from cognite.neat.app.api.data_classes.rest import DownloadFromCdfRequest, RunWorkflowRequest, UploadToCdfRequest
@@ -38,6 +39,14 @@ def get_workflow_stats(
 @router.get("/api/workflow/workflows")
 def get_workflows():
     return {"workflows": neat_app.workflow_manager.get_list_of_workflows()}
+
+
+@router.get("/api/workflow/files/{workflow_name}")
+def get_workflow_files(workflow_name: str):
+    workflow = neat_app.workflow_manager.get_workflow(workflow_name)
+    if workflow is None:
+        raise HTTPException(status_code=404, detail="workflow not found")
+    return {"files": workflow.get_list_of_workflow_artifacts()}
 
 
 @router.post("/api/workflow/create")
@@ -146,6 +155,28 @@ def get_context(workflow_name: str):
 def get_steps():
     steps_registry = neat_app.workflow_manager.get_steps_registry()
     return {"steps": steps_registry.get_list_of_steps()}
+
+
+@router.post("/api/workflow/file/{workflow_name}")
+async def upload_file(file: UploadFile, workflow_name: str):
+    try:
+        upload_dir = neat_app.workflow_manager.data_store_path / "workflows" / workflow_name
+        # Create a directory to store uploaded files if it doesn't exist
+        # os.makedirs("uploads", exist_ok=True)
+
+        # Define the file path where the uploaded file will be saved
+        file_path = upload_dir / file.filename
+
+        # Save the uploaded file to the specified path
+        with file_path.open("wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        if file.filename.endswith(".py"):
+            neat_app.workflow_manager.steps_registry.load_workflow_step_classes(workflow_name)
+      
+        return JSONResponse(content={"message": "File uploaded successfully"}, status_code=200)
+    except Exception as e:
+        return JSONResponse(content={"message": f"An error occurred: {str(e)}"}, status_code=500)
 
 
 async def get_body(request: Request):
