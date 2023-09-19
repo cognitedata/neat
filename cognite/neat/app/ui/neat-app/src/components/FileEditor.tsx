@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Editor } from '@monaco-editor/react';
 import { getNeatApiRootUrl, getSelectedWorkflowName } from './Utils';
 import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
+import LocalUploader from './LocalUploader';
 
 export default function FileEditor(props: any) {
     const neatApiRootUrl = getNeatApiRootUrl();
@@ -76,6 +77,10 @@ export default function FileEditor(props: any) {
     
     }
 
+    const onUpload = (fileName:string , hash: string) => {
+        console.log("onUpload",fileName,hash)
+        loadListOfFiles();
+    }
       
     const fetchFileContent = async (filePath:string) => {
         let fullPath = neatApiRootUrl + '/data/workflows/' + selectedWorkflow +"/"+ filePath;
@@ -111,6 +116,7 @@ export default function FileEditor(props: any) {
           </FormControl>  
           <Editor height="75vh" defaultLanguage="python" value={data} onMount={handleEditorDidMount}   />
           <Button variant="outlined" sx={{ marginTop: 2, marginRight: 1 }} onClick={saveFile} >Save</Button>
+          <LocalUploader fileType="file_from_editor" action="none" stepId="none" workflowName={selectedWorkflow} onUpload={onUpload} />
         </React.Fragment>
     )
 }

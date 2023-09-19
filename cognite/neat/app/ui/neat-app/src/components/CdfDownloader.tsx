@@ -131,7 +131,7 @@ export default function CdfDownloader(props: any) {
                 <Button onClick={handleDialogDownload}>Download</Button>
             </DialogActions>
           </Dialog>
-          <Button variant="outlined" sx={{ marginTop: 2, marginRight: 1 }} onClick={handleDialogClickOpen} >Download from CDF </Button>
+          <Button variant="outlined" sx={{ marginTop: 2, marginRight: 1 }} onClick={handleDialogClickOpen} >Download from CDF to NEAT </Button>
         </React.Fragment>
     )
 }

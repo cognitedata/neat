@@ -11,6 +11,7 @@ from cognite.neat.workflows import WorkflowFullStateReport
 from cognite.neat.workflows.base import WorkflowDefinition
 from cognite.neat.workflows.migration.wf_manifests import migrate_wf_manifest
 from cognite.neat.workflows.model import FlowMessage
+from cognite.neat.workflows.utils import get_file_hash
 
 router = APIRouter()
 
@@ -47,6 +48,13 @@ def get_workflow_files(workflow_name: str):
     if workflow is None:
         raise HTTPException(status_code=404, detail="workflow not found")
     return {"files": workflow.get_list_of_workflow_artifacts()}
+
+
+@router.post("/api/workflow/package/{workflow_name}")
+def package_workflow(workflow_name: str):
+    package_file = neat_app.cdf_store.package_workflow(workflow_name)
+    hash = get_file_hash(neat_app.config.data_store_path / "workflows" / package_file)
+    return {"package": package_file, "hash": hash}
 
 
 @router.post("/api/workflow/create")

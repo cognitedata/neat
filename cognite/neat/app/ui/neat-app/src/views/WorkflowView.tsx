@@ -40,6 +40,9 @@ import WorkflowMetadataDialog from 'components/WorkflowMetadataDialog';
 import LinearProgress from '@mui/material/LinearProgress';
 import { Typography } from '@mui/material';
 import FileEditor from 'components/FileEditor';
+import ContextViewer from 'components/ContextViewer';
+import LocalUploader from 'components/LocalUploader';
+import WorkflowDeleteDialog from 'components/WorkflowDeleteDialog';
 
 
 export interface ExecutionLog {
@@ -91,8 +94,8 @@ export default function WorkflowView() {
   const [editState, setEditState] = useState<string>("");
   const [loading , setLoading] = useState<boolean>(false);
   const [errorText, setErrorText] = useState<string>("");
-
-
+  const [packageLink, setPackageLink] = useState<string>("");
+  
   useEffect(() => {
     loadListOfWorkflows();
     loadRegisteredSteps();
@@ -100,9 +103,6 @@ export default function WorkflowView() {
       loadWorkflowDefinitions(getSelectedWorkflowName());
     else
       setEditState("Please select one of provided workflows or create new one");
-
-    
-
   }, []);
 
   useEffect(() => {
@@ -244,6 +244,27 @@ const startWorkflow = () => {
   })
 }
 
+const packageWorkflow = () => {
+  const url = neatApiRootUrl + "/api/workflow/package/" + selectedWorkflow;
+  fetch(url, {
+    method: "post", headers: {
+      'Content-Type': 'application/json;charset=utf-8'
+    }
+  }).then((response) => response.json()).then((data) => {
+     const downloadUrl = neatApiRootUrl+"/data/workflows/"+data.package+"?version="+data.hash;
+    //  setPackageLink(downloadUrl);
+     const link = document.createElement("a");
+     link.download = "package.zip";
+     link.href = downloadUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    
+  }).catch((error) => {
+    console.error('Error:', error);
+  })
+}
+
 
 const saveWorkflow = () => {
   console.dir(nodes);
@@ -318,6 +339,7 @@ const reloadWorkflows = () => {
     console.error('Error:', error);
   })
 };
+
 
 const switchToWorkflow = (workflowName: string) => {
   setSelectedWorkflowName(workflowName);
@@ -429,10 +451,7 @@ const handleDialogClose = (step:WorkflowStepDefinition,action:string) => {
       setEditState("Unsaved");
       break;
   }
-
 };
-
-
 const onDownloadSuccess = (fileName: string, hash: string) => {
   console.log("onDownloadSuccess", fileName, hash)
   reloadWorkflows();
@@ -513,6 +532,7 @@ return (
         </Select>
       </FormControl>
       <WorkflowMetadataDialog open = {workflowMetadataDialogOpen} onClose={handleCreateWorkflow}/>
+      <WorkflowDeleteDialog name={selectedWorkflow} onClose={handleDialogClose}/>
       <ToggleButtonGroup
         color="primary"
         value={viewType}
@@ -523,8 +543,8 @@ return (
         aria-label="View type"
       >
         <ToggleButton value="system">Solution overview</ToggleButton>
-        <ToggleButton value="steps">Workflow steps</ToggleButton>
-        <ToggleButton value="src">Source code</ToggleButton>
+        <ToggleButton value="steps">Workflow</ToggleButton>
+        <ToggleButton value="src">Files</ToggleButton>
         <ToggleButton value="configurations">Configurations</ToggleButton>
         <ToggleButton value="transformations">Data model and transformations</ToggleButton>
         <ToggleButton value="data_explorer">Data explorer</ToggleButton>
@@ -564,10 +584,13 @@ return (
 
             <Button variant="outlined" onClick={startWorkflow} sx={{ marginTop: 2, marginRight: 1 }}>Start workflow</Button>
             <Button variant="outlined" onClick={saveWorkflow} sx={{ marginTop: 2, marginRight: 1 }}>Save workflow</Button>
-            <Button variant="outlined" onClick={reloadWorkflows} sx={{ marginTop: 2, marginRight: 1 }} >Reload local workflows</Button>
+            <Button variant="outlined" onClick={reloadWorkflows} sx={{ marginTop: 2, marginRight: 1 }} >Reload</Button>
+            <ContextViewer />
             <Box sx={{ marginTop: 1, marginBottom: 1 }}>
               <CdfPublisher type="workflow" />
               <CdfDownloader type="workflow-package" onDownloadSuccess={onDownloadSuccess} />
+              <LocalUploader fileType="workflow" action="install" stepId="none" workflowName={selectedWorkflow} onUpload={onDownloadSuccess} />
+              <Button variant="outlined" onClick={packageWorkflow} sx={{ marginTop: 2, marginRight: 1 }} >Download from NEAT</Button>
             </Box>
           </div>
 
