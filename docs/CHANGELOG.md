@@ -15,6 +15,15 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.25.8] - 20-09-23
+
+### Improved
+- Many UI improvements and bug fixes.
+- Improved data exploration capabilities.
+
+### Added
+- Added universal JSON to Graph extractor step.
+
 ## [0.25.7] - 14-09-23
 ### Added
 - Drop down menu for selection of property which hold value for nodes in Data Explorer

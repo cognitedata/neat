@@ -55,15 +55,16 @@ export default function LocalUploader(props: any) {
         // Create a form and post it to server
         const neatApiRootUrl = getNeatApiRootUrl();
         const workflowName = getSelectedWorkflowName();
-        let action = ""
-        if (postUploadWorkflowStart && !postUploadConfigUpdate){
-            action = "start_workflow"
-        }else if (postUploadConfigUpdate && !postUploadWorkflowStart){
-            action = "update_config"
-        }else{
-            action = "update_config_and_start_workflow"
+        let action = props.action;
+        if (!action) {
+            if (postUploadWorkflowStart && !postUploadConfigUpdate){
+                action = "start_workflow"
+            }else if (postUploadConfigUpdate && !postUploadWorkflowStart){
+                action = "update_config"
+            }else{
+                action = "update_config_and_start_workflow"
+            }
         }
-
         let formData = new FormData()
         filesToUpload.forEach((file) => formData.append("files", file))
 
@@ -112,7 +113,7 @@ export default function LocalUploader(props: any) {
                 <Button onClick={handleDialogPublish}>Upload</Button>
             </DialogActions>
           </Dialog>
-          <Button variant="outlined" sx={{ marginTop: 2, marginRight: 1 }} onClick={handleDialogClickOpen} >Click here to Upload file to NEAT local storage </Button>
+          <Button variant="outlined" sx={{ marginTop: 2, marginRight: 1 }} onClick={handleDialogClickOpen} >Upload to NEAT </Button>
         </React.Fragment>
     )
 }

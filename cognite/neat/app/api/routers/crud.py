@@ -32,6 +32,10 @@ async def file_upload_handler(files: list[UploadFile], workflow_name: str, file_
     upload_dir = neat_app.config.rules_store_path
     file_name = ""
     file_version = ""
+    if file_type == "file_from_editor":
+        upload_dir = neat_app.workflow_manager.data_store_path / "workflows" / workflow_name
+    elif file_type == "workflow":
+        upload_dir = neat_app.workflow_manager.data_store_path / "workflows"
     for file in files:
         logging.info(
             f"Uploading file : {file.filename} , workflow : {workflow_name} , step_id {step_id} , action : {action}"
@@ -56,7 +60,7 @@ async def file_upload_handler(files: list[UploadFile], workflow_name: str, file_
 
         neat_app.workflow_manager.save_workflow_to_storage(workflow_name)
 
-    if "start_workflow" in action:
+    if "start_workflow" in action and file_type == "rules":
         logging.info("Starting workflow after file upload")
         workflow = neat_app.workflow_manager.get_workflow(workflow_name)
         flow_msg = FlowMessage(
@@ -65,5 +69,9 @@ async def file_upload_handler(files: list[UploadFile], workflow_name: str, file_
         start_step_id = None if step_id == "none" else step_id
 
         workflow.start(sync=False, flow_message=flow_msg, start_step_id=start_step_id)
+
+    if action == "install" and file_type == "workflow":
+        logging.info("Installing workflow after file upload")
+        neat_app.cdf_store.extract_workflow_package(file_name)
 
     return {"file_name": file_name, "hash": file_version}

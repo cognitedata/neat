@@ -14,8 +14,24 @@ import React, { useEffect, useState } from "react"
 import { StepMetadata, StepRegistry, WorkflowDefinition, WorkflowStepDefinition, WorkflowSystemComponent } from "types/WorkflowTypes"
 import { getNeatApiRootUrl } from "./Utils"
 import LocalUploader from "./LocalUploader"
-import { Box, InputLabel, List, ListItem, ListItemText, Typography } from "@mui/material"
+import { Autocomplete, Box, InputLabel, List, ListItem, ListItemText, Typography, darken, lighten, styled } from "@mui/material"
 import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined';
+import { Height } from "@mui/icons-material"
+
+const GroupHeader = styled('div')(({ theme }) => ({
+  position: 'sticky',
+  top: '-8px',
+  padding: '4px 10px',
+  color: theme.palette.primary.main,
+  backgroundColor:
+    theme.palette.mode === 'light'
+      ? lighten(theme.palette.primary.light, 0.85)
+      : darken(theme.palette.primary.main, 0.8),
+}));
+
+const GroupItems = styled('ul')({
+  padding: 0,
+});
 
 export default function StepEditorDialog(props: any)
 {
@@ -213,9 +229,9 @@ export default function StepEditorDialog(props: any)
 
 
 return (
-  <Dialog open={dialogOpen} onClose={handleDialogCancel} fullWidth={true}  maxWidth={"xl"}>
+  <Dialog open={dialogOpen} onClose={handleDialogCancel} fullWidth={true}  maxWidth={"xl"} >
         <DialogTitle>Step configurator</DialogTitle>
-        <DialogContent >
+        <DialogContent sx={{height:"90vh" }}>
           <FormControl  fullWidth>
             <TextField sx={{ marginTop: 1 }} id="step-config-id" fullWidth label="Step id" size='small' variant="outlined" value={selectedStep?.id} onChange={(event) => { handleStepConfigChange("id", event.target.value) }} />
             {showStepIdError && ( <Typography sx={{ marginTop: 1 }} color="error"> Step id must be unique </Typography>)}
@@ -248,23 +264,25 @@ return (
             {(selectedStep?.stype == "stdstep") && (
               <Box>
               <FormControl sx={{ marginTop: 2 }} fullWidth >
-              <InputLabel id="step_name_label">Step name</InputLabel>
-              <Select
-                id="step-stdstep-method"
-                labelId="step_name_label"
-                value={selectedStep?.method}
-                size='small'
-                label="Name of the step"
-                variant="outlined"
-                onChange={(event) => { handleStepConfigChange("method", event.target.value) }}
+              <Autocomplete
+                disablePortal
+                id="std-step-selector"
+                options={stepRegistry.steps.sort((a, b) => -b.category.localeCompare(a.category))}
+                value={selectedStepTemplate}
+                isOptionEqualToValue={(option, value) => option.name === value.name }
+                getOptionLabel={(option) => option.name}
                 sx={{ marginBottom: 2 }}
-              >
-                {
-                  stepRegistry && stepRegistry.steps.map((item, i) => (
-                    <MenuItem value={item.name} key={item.name}> {item.category} : {item.name} </MenuItem>
-                  ))
-                }
-              </Select>
+                size='small'
+                groupBy={(option) => option.category}
+                renderGroup={(params) => (
+                  <li key={params.key}>
+                    <GroupHeader>{params.group}</GroupHeader>
+                    <GroupItems>{params.children}</GroupItems>
+                  </li>
+                )}
+                onChange={(event: React.SyntheticEvent, value, reason, details) => { handleStepConfigChange("method", value.name) }}
+                renderInput={(params) => <TextField {...params} label="Step name" />}
+              />
               </FormControl>
               {selectedStepTemplate && (
               <Box>

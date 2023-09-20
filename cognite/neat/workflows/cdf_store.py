@@ -62,7 +62,7 @@ class CdfStore:
             except Exception as e:
                 logging.debug(f"Failed to create labels.{e}")
 
-    def package_workflow(self, workflow_name):
+    def package_workflow(self, workflow_name) -> str:
         """Creates a zip archive from a folder"""
         folder_path = self.workflows_storage_path / workflow_name
         archive_path = self.workflows_storage_path / f"{workflow_name}.zip"
@@ -78,22 +78,16 @@ class CdfStore:
                 for file in files:
                     file_path = Path(root) / Path(file)
                     # Check if the file has a .json extension
-                    if (
-                        file.endswith(".yaml")
-                        or file.endswith(".py")
-                        or file.endswith(".xlsx")
-                        or file.endswith(".csv")
-                        or file.endswith(".json")
-                        or file.endswith(".parquet")
-                    ):
+                    if not (file.endswith(".pyc") and file.endswith(".DS_Store")):
                         # Add the file to the archive
                         zipf.write(file_path, os.path.relpath(file_path, folder_path))
+        return f"{workflow_name}.zip"
 
     def extract_workflow_package(self, workflow_name: str):
         # Make sure the archive exists
         workflow_name = workflow_name.replace(".zip", "")
-        package_full_path = Path(self.workflows_storage_path).joinpath(f"{workflow_name}.zip")
-        output_folder = Path(self.workflows_storage_path).joinpath(workflow_name)
+        package_full_path = Path(self.workflows_storage_path) / (f"{workflow_name}.zip")
+        output_folder = Path(self.workflows_storage_path) / workflow_name
         if not package_full_path.is_file():
             print(f"Error: {package_full_path} is not a file")
             raise Exception(f"Can't extract workflow package. Error: {package_full_path} is not a file")
