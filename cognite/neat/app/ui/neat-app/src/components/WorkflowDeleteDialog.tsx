@@ -22,7 +22,7 @@ export default function WorkflowDeleteDialog(props: any)
     const handleDialogCancel = () => {
         setDialogOpen(false);
     };
-    
+
     const deleteWorkflow = () => {
         const url = neatApiRootUrl + "/api/workflow/" + getSelectedWorkflowName();
         fetch(url, {
@@ -34,11 +34,11 @@ export default function WorkflowDeleteDialog(props: any)
               props.onDelete();
               setDialogOpen(false);
               window.location.reload();
-          
+
         }).catch((error) => {
           console.error('Error:', error);
         })
-    }  
+    }
 
 return (
 <React.Fragment >

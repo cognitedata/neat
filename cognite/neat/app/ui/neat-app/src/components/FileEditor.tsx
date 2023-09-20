@@ -36,20 +36,20 @@ export default function FileEditor(props: any) {
         setFilePath(event.target.value);
         fetchFileContent(event.target.value);
       };
-    
+
       async function sendStringAsFileToAPI(stringData: string, filePath: string): Promise<void> {
         try {
           const apiUrl = neatApiRootUrl + "/api/workflow/file/" + selectedWorkflow
           // Create a new FormData object
           const formData = new FormData();
-      
+
           // Create a Blob from the string data
           const blob = new Blob([stringData], { type: 'text/plain' });
-      
+
           // Append the Blob to the FormData with a specified filename
           formData.append('file', blob, filePath);
-          
-          
+
+
           // Create headers object with the desired Content-Type
           const headers = new Headers();
           headers.append('Content-Type', 'multipart/form-data');
@@ -59,7 +59,7 @@ export default function FileEditor(props: any) {
             method: 'POST',
             body: formData,
           });
-      
+
           // Check the response status
           if (response.ok) {
             console.log('String data sent successfully as a file.');
@@ -69,19 +69,19 @@ export default function FileEditor(props: any) {
         } catch (error) {
           console.error('Error sending string data as a file:', error);
         }
-      }  
+      }
 
     const saveFile = () => {
         const payload = editorRef.current.getValue();
         sendStringAsFileToAPI(payload, filePath);
-    
+
     }
 
     const onUpload = (fileName:string , hash: string) => {
         console.log("onUpload",fileName,hash)
         loadListOfFiles();
     }
-      
+
     const fetchFileContent = async (filePath:string) => {
         let fullPath = neatApiRootUrl + '/data/workflows/' + selectedWorkflow +"/"+ filePath;
         try {
@@ -90,7 +90,7 @@ export default function FileEditor(props: any) {
           myHeaders.append('cache-control', 'no-cache');
           const response = await fetch(fullPath, { method: "get", headers: myHeaders });
           const content = await response.text();
-          setData(content); 
+          setData(content);
         } catch (error) {
           console.error('Error fetching file:', error);
         }
@@ -113,7 +113,7 @@ export default function FileEditor(props: any) {
                     ))
                 }
                 </Select>
-          </FormControl>  
+          </FormControl>
           <Editor height="75vh" defaultLanguage="python" value={data} onMount={handleEditorDidMount}   />
           <Button variant="outlined" sx={{ marginTop: 2, marginRight: 1 }} onClick={saveFile} >Save</Button>
           <LocalUploader fileType="file_from_editor" action="none" stepId="none" workflowName={selectedWorkflow} onUpload={onUpload} />

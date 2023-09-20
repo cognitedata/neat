@@ -545,19 +545,19 @@ class BaseWorkflow:
 
     def get_configs(self) -> WorkflowConfigs:
         return WorkflowConfigs(configs=self.configs)
-    
+
     def get_list_of_workflow_artifacts(self) -> list[str]:
         # create a list of all files under the data store path
-        
+
         file_list = []
         workflow_data_path = Path(self.data_store_path) / "workflows" / self.name
         try:
-            for root, dirs, files in os.walk(workflow_data_path):
+            for root, _dirs, files in os.walk(workflow_data_path):
                 for file in files:
-                    full_path = os.path.join(root, file)
+                    full_path = Path(root) / file
                     file_list.append(Path(full_path).relative_to(workflow_data_path))
             return file_list
         except OSError as e:
             # Handle exceptions like directory not found, permission denied, etc.
             logging.error(f"Error while listing workflow artifacts for {self.name} : {e}")
-            return []   
+            return []

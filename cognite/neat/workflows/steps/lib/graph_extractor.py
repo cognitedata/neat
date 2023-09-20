@@ -1,11 +1,11 @@
 import hashlib
 import json
 import logging
+import uuid
 from pathlib import Path
 from typing import ClassVar
-import uuid
 
-from rdflib import RDF, XSD, BNode, Literal, Namespace, URIRef
+from rdflib import RDF, XSD, Literal, Namespace, URIRef
 
 from cognite.neat.constants import PREFIXES
 from cognite.neat.graph import extractors
@@ -247,7 +247,7 @@ class DataModelFromRulesToSourceGraph(Step):
 
 class InstancesFromJsonToGraph(Step):
     """
-    This step extracts instances from json file and loads them into a graph store
+    This step extracts instances from json file and loads them into a graph store. Warning : the step is experimental
     """
 
     description = "This step extracts instances from json file and loads them into a graph store"
@@ -269,7 +269,8 @@ class InstancesFromJsonToGraph(Step):
             value="hash_of_json_element",
             label="Method to be used for generating object ids.  \
                  source_object_properties - takes multiple properties from the source object and concatenates them. \
-                 source_object_id_mapping - takes a single property from the source object and maps it to a instance id. \
+                 source_object_id_mapping - takes a single property from the \
+                 source object and maps it to a instance id. \
                       The option should be used when source object already contains stable ids \
                 hash_of_json_element - takes a hash of the JSON element.Very generic method but \
                      can be slow working with big objects. \
@@ -301,7 +302,12 @@ class InstancesFromJsonToGraph(Step):
     ]
 
     def get_json_object_id(
-        self, method, object_name: str, json_object: dict, parent_object_id: str = None, id_mapping: dict = None
+        self,
+        method,
+        object_name: str,
+        json_object: dict,
+        parent_object_id: str | None = None,
+        id_mapping: dict | None = None,
     ):
         if method == "source_object_properties":
             object_id = ""
@@ -349,11 +355,10 @@ class InstancesFromJsonToGraph(Step):
 
         full_path = Path(self.data_store_path) / Path(self.configs["file_name"])
         logging.info(f"Loading data dump from {full_path}")
-        with open(full_path, "r") as f:
+        with full_path.open() as f:
             json_data = json.load(f)
 
         graph = graph_store.graph.graph
-        graph_store.graph
         nodes_counter = 0
         property_counter = 0
         labels_mapping: dict = None

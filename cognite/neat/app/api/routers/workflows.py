@@ -1,6 +1,6 @@
 import logging
-from pathlib import Path
 import shutil
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
@@ -170,7 +170,6 @@ async def upload_file(file: UploadFile, workflow_name: str):
     try:
         upload_dir = neat_app.workflow_manager.data_store_path / "workflows" / workflow_name
         # Create a directory to store uploaded files if it doesn't exist
-        # os.makedirs("uploads", exist_ok=True)
 
         # Define the file path where the uploaded file will be saved
         file_path = upload_dir / file.filename
@@ -181,10 +180,10 @@ async def upload_file(file: UploadFile, workflow_name: str):
 
         if file.filename.endswith(".py"):
             neat_app.workflow_manager.steps_registry.load_workflow_step_classes(workflow_name)
-      
+
         return JSONResponse(content={"message": "File uploaded successfully"}, status_code=200)
     except Exception as e:
-        return JSONResponse(content={"message": f"An error occurred: {str(e)}"}, status_code=500)
+        return JSONResponse(content={"message": f"An error occurred: {e!s}"}, status_code=500)
 
 
 async def get_body(request: Request):

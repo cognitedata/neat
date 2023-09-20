@@ -78,10 +78,7 @@ class CdfStore:
                 for file in files:
                     file_path = Path(root) / Path(file)
                     # Check if the file has a .json extension
-                    if not (
-                        file.endswith(".pyc") and 
-                        file.endswith(".DS_Store")
-                    ):
+                    if not (file.endswith(".pyc") and file.endswith(".DS_Store")):
                         # Add the file to the archive
                         zipf.write(file_path, os.path.relpath(file_path, folder_path))
         return f"{workflow_name}.zip"

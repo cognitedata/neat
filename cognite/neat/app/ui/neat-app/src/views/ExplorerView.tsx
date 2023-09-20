@@ -438,7 +438,7 @@ export default function QDataTable() {
     setFilters(filters);
    }
   const renderCellExpand = (params) => {
-    if (params?.field == "object_ref" || 
+    if (params?.field == "object_ref" ||
         params?.field == "instance" || params?.field == "reference" ||
         (params?.field == "value" && params?.value?.includes("http") && !params?.row?.property.includes("type") ) ) {
       return <Box>{getShortenedString(params.value,10)} <Button onClick={(e)=> {loadObjectProperties(params.value)}}>Table </Button> <Button onClick={(e)=> {loadObjectAsGraph(params.value)}}>Graph </Button></Box>

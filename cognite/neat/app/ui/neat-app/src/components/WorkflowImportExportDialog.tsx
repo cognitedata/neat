@@ -20,12 +20,12 @@ export default function WorkflowImportExportDialog(props: any)
     const handleDialogCancel = () => {
         setDialogOpen(false);
     };
-    
+
     const onDownloadSuccess = (fileName: string, hash: string) => {
         console.log("onDownloadSuccess", fileName, hash)
         props.onDownloaded(fileName, hash);
         setDialogOpen(false);
-    }  
+    }
     const packageWorkflow = () => {
         const url = neatApiRootUrl + "/api/workflow/package/" + getSelectedWorkflowName();
         fetch(url, {
@@ -40,7 +40,7 @@ export default function WorkflowImportExportDialog(props: any)
            document.body.appendChild(link);
            link.click();
            document.body.removeChild(link);
-          
+
         }).catch((error) => {
           console.error('Error:', error);
         })
@@ -49,7 +49,7 @@ export default function WorkflowImportExportDialog(props: any)
 return (
 <React.Fragment >
 <Button variant="outlined" onClick={(event)=>{setDialogOpen(true)}} sx={{ marginTop: 2, marginRight: 1 }} >Import/Export</Button>
-              
+
 <Dialog open={dialogOpen} onClose={handleDialogCancel}>
 <DialogTitle>Workflow Import/Export</DialogTitle>
 <DialogContent>

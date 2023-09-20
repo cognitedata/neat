@@ -94,7 +94,7 @@ export default function WorkflowView() {
   const [loading , setLoading] = useState<boolean>(false);
   const [errorText, setErrorText] = useState<string>("");
   const [packageLink, setPackageLink] = useState<string>("");
-  
+
   useEffect(() => {
     loadListOfWorkflows();
     loadRegisteredSteps();
@@ -204,7 +204,7 @@ const enrichWorkflowStats = (stats: WorkflowStats) => {
     }
     return stats;
   }
-   
+
 const loadWorkflowStats = (workflowName: string = "") => {
   if (workflowName == "")
     workflowName = selectedWorkflow;
@@ -213,7 +213,7 @@ const loadWorkflowStats = (workflowName: string = "") => {
 
     // const filteredStats = filterStats(data);
     const enrichedStats = enrichWorkflowStats(data);
-    
+
     setWorkflowStats(enrichedStats);
     if (data.state == "RUNNING") {
       // startStatePolling();
@@ -342,7 +342,7 @@ const handleViewTypeChange = (
 
   setViewType(newViewType);
   syncWorkflowDefToNodesAndEdges(newViewType);
- 
+
 };
 
 const onConnect = useCallback((params) => {
@@ -564,7 +564,7 @@ return (
             <Button variant="outlined" onClick={reloadWorkflows} sx={{ marginTop: 2, marginRight: 1 }} >Reload</Button>
             <WorkflowImportExportDialog onDownloaded = {()=> reloadWorkflows()} />
             <ContextViewer />
-           
+
           </div>
 
         </Item>

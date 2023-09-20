@@ -75,4 +75,3 @@ async def file_upload_handler(files: list[UploadFile], workflow_name: str, file_
         neat_app.cdf_store.extract_workflow_package(file_name)
 
     return {"file_name": file_name, "hash": file_version}
-

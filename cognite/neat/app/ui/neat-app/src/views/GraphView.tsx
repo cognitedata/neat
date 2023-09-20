@@ -34,14 +34,14 @@ export function GraphStyleDialog(props: any) {
     }
 
     const handleDialogClickOpen = () => {
-       
+
         setDialogOpen(true);
     };
 
     const handleDialogClose = () => {
         setDialogOpen(false);
     };
-    
+
     const handleDialogSave = () => {
       console.log("saving node style");
       const value = editorRef.current.getValue();
@@ -99,7 +99,7 @@ export function LoadGraph(props:{filters:Array<string>,nodeNameProperty:string,s
     let nodeTypeConfigMap = {};
 
     useEffect(() => {
-      
+
       loadDataset();
       // Register the events
        registerEvents({
@@ -124,7 +124,7 @@ export function LoadGraph(props:{filters:Array<string>,nodeNameProperty:string,s
         nodeReducer: (node, data) => {
           const graph = sigma.getGraph();
           const newData: Attributes = { ...data, highlighted: data.highlighted || false };
-  
+
           if (hoveredNode) {
             if (node === hoveredNode || graph.neighbors(hoveredNode).includes(node)) {
               newData.highlighted = true;
@@ -138,7 +138,7 @@ export function LoadGraph(props:{filters:Array<string>,nodeNameProperty:string,s
         edgeReducer: (edge, data) => {
           const graph = sigma.getGraph();
           const newData = { ...data, hidden: false };
-  
+
           if (hoveredNode && !graph.extremities(edge).includes(hoveredNode)) {
             newData.hidden = true;
           }
@@ -234,7 +234,7 @@ export function LoadGraph(props:{filters:Array<string>,nodeNameProperty:string,s
             setBigGraph(graph);
             loadGraph(graph,true);
             assign();
-           
+
             stop();
             start();
             // stop after 5 seconds
@@ -273,8 +273,8 @@ export default function GraphExplorer(props:{filters:Array<string>,sparqlQuery:s
     const {hiddenNsPrefixModeCtx, graphNameCtx} = React.useContext(ExplorerContext);
     const [graphName, setGraphName] = graphNameCtx;
     const [sigma, setSigma] = useState<Sigma | null>(null);
-    
-    
+
+
     const handleNodeNameProperty = (event: React.SyntheticEvent, value: any) => {
         if(value != null)
           setSelectedDataTypeProp(value);
@@ -310,7 +310,7 @@ export default function GraphExplorer(props:{filters:Array<string>,sparqlQuery:s
 
     useEffect(() => {
       console.log("sparqlQuery changed");
-     
+
     }, [props.sparqlQuery]);
 
 
@@ -486,9 +486,9 @@ export default function GraphExplorer(props:{filters:Array<string>,sparqlQuery:s
             />
             <TextField id="response_limit" label="Limit max nodes in response" value={limitRecordsInResponse} size='small' type='number' sx={{width:150 , marginLeft:2}} variant="outlined" onChange={handleResponseLimitChange}  />
             <Button sx={{ marginLeft: 2 , marginRight:2}} onClick={() => reload()  } variant="contained"> Reload </Button>
-            
+
             <GraphStyleDialog onSave ={()=> reload()} />
-            
+
             </Box>
             <SigmaContainer style={{ height: "70vh", width: "100%" }} ref={setSigma} >
                 <LoadGraph filters={props.filters} nodeNameProperty={selectedDataTypeProp["id"]} reloader={reloader} sparqlQuery={sparqlQuery} mode={loaderMode} limit={limitRecordsInResponse}/>
@@ -504,11 +504,9 @@ export default function GraphExplorer(props:{filters:Array<string>,sparqlQuery:s
         </Box>
     );
     }
-  
+
     const nodeTypeConfigMap = {
       "Substation": {"color":"#42f557","size":20},
       "Bay": {"color":"#4842f5","size":20},
       "Line": {"color":"#f59b42","size":20},
     }
-
-    
