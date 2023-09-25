@@ -38,6 +38,10 @@ class Step(ABC, Generic[T_Output]):
     configs: dict[str, str] | None = None
     metrics: NeatMetricsCollector | None = None
     workflow_configs: WorkflowConfigs | None = None
+    version: str = "1.0.0"  # version of the step. All alpha versions considered as experimental
+    source: str = (
+        "cognite"  # source of the step , can be source identifier or url , for instance github url for instance.
+    )
 
     def __init__(self, data_store_path: str | None = None):
         self.log: bool = False

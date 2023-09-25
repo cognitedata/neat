@@ -252,6 +252,7 @@ class InstancesFromJsonToGraph(Step):
 
     description = "This step extracts instances from json file and loads them into a graph store"
     category = CATEGORY
+    version = "0.1.0-alpha"
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
             name="file_name",

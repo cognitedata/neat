@@ -846,7 +846,7 @@ class TransformationRules(RuleModel):
         if classes := values.get("classes"):
             if value.property_type == "ObjectProperty" and value.expected_value_type not in classes:
                 raise exceptions.ValueTypeNotDefinedAsClass(
-                    value.class_i, value.property_id, value.expected_value_type
+                    value.class_id, value.property_id, value.expected_value_type
                 ).to_pydantic_custom_error()
         return value
 

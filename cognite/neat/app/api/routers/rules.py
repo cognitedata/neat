@@ -1,9 +1,12 @@
 import logging
 from pathlib import Path
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Response
+from fastapi.responses import JSONResponse
+from rdflib import Namespace
 
 from cognite.neat.app.api.configuration import neat_app
+from cognite.neat.rules.models import Class, Metadata, Property, TransformationRules
 from cognite.neat.rules.parser import parse_rules_from_excel_file
 from cognite.neat.workflows.utils import get_file_hash
 
@@ -84,3 +87,45 @@ def get_rules(
         "error_text": error_text,
         "src": src,
     }
+
+
+@router.get("/api/rules/from_file")
+def get_original_rules_from_file(
+    file_name: str | None = None,
+):
+    path = Path(neat_app.config.rules_store_path, file_name)
+    rules = parse_rules_from_excel_file(path)
+    return Response(content=rules.model_dump_json(), media_type="application/json")
+
+
+@router.get("/api/rules/from_workflow")
+def get_original_rules_from_workflow(
+    workflow_name: str,
+):
+    workflow = neat_app.workflow_manager.get_workflow(workflow_name)
+    context = workflow.get_context()
+    rules = context["RulesData"].rules
+    return Response(content=rules.model_dump_json(), media_type="application/json")
+
+
+@router.post("/api/rules/model_and_transformations")
+def post_original_rules(request: dict):
+    # MyModel(**json.loads(…))
+    request["metadata"]["namespace"] = Namespace(request["metadata"]["namespace"])
+    metadata = Metadata(**request["metadata"])
+    classes: dict[str:Class] = {}
+    for class_, val in request["classes"].items():
+        classes[class_] = Class(**val)
+    properties: dict[str:Property] = {}    
+    
+    for prop, val in request["properties"].items():
+        val["resource_type_property"] = []
+        properties[prop] = Property(**val)
+
+    prefixes: dict[str, Namespace] = {}
+    for prefix, val in request["prefixes"].items():
+        prefixes[prefix] = Namespace(val)
+
+    rules = TransformationRules(metadata=metadata, classes=classes, properties=properties, prefixes=prefixes, instances=[])
+
+    return {"status": "ok", "metadata": metadata.description, "classes": len(rules.classes)}
