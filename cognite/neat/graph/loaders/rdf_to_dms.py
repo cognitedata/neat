@@ -92,14 +92,14 @@ def rdf2nodes_and_edges(
 
 
 def upload_nodes(
-    client: CogniteClient, nodes: list[NodeApply], batch_size: int = 5000, max_retries: int = 1, retry_delay: int = 3
+    client: CogniteClient, nodes: list[NodeApply], batch_size: int = 1000, max_retries: int = 1, retry_delay: int = 3
 ):
     """Uploads nodes to CDF
 
     Args:
         client: Instance of CogniteClient
         nodes: List of nodes to upload to CDF
-        batch_size: Size of batch. Defaults to 5000.
+        batch_size: Size of batch. Defaults to 1000.
         max_retries: Maximum times to retry the upload. Defaults to 1.
         retry_delay: Time delay before retrying the upload. Defaults to 3.
 
