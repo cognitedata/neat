@@ -423,12 +423,11 @@ def to_relationship(self, transformation_rules: TransformationRules) -> Relation
     raise NotImplementedError()
 
 
-def to_node(self, data_model: DataModel, add_class_prefix_to_xid: bool) -> NodeApply:
+def to_node(self, data_model: DataModel, add_class_prefix: bool) -> NodeApply:
     """Creates DMS node from pydantic model."""
 
-    if set(data_model.containers[self.__class__.__name__].properties.keys()) != set(
-        self.attributes + self.edges_one_to_one + self.edges_one_to_many
-    ):
+    if not set(self.attributes + self.edges_one_to_one + self.edges_one_to_many).issubset(
+        set(data_model.containers[self.__class__.__name__].properties.keys())):
         raise exceptions.InstancePropertiesNotMatchingContainerProperties(
             self.__class__.__name__,
             self.attributes + self.edges_one_to_one + self.edges_one_to_many,
@@ -436,7 +435,7 @@ def to_node(self, data_model: DataModel, add_class_prefix_to_xid: bool) -> NodeA
         )
 
     attributes: dict = {attribute: self.__getattribute__(attribute) for attribute in self.attributes}
-    if add_class_prefix_to_xid:
+    if add_class_prefix:
         self.external_id=add_class_prefix_to_xid(class_name=self.__class__.__name__,
                                                 external_id=self.external_id)
 
@@ -465,7 +464,6 @@ def to_node(self, data_model: DataModel, add_class_prefix_to_xid: bool) -> NodeA
 
 def to_edge(self, data_model: DataModel) -> list[EdgeApply]:
     """Creates DMS edge from pydantic model."""
-    #TODO: add class prefix 
     edges: list[EdgeApply] = []
     for edge_one_to_many in self.edges_one_to_many:
         edge_type_id = f"{self.__class__.__name__}.{edge_one_to_many}"
@@ -492,5 +490,4 @@ def to_graph(self, transformation_rules: TransformationRules, graph: Graph):
 
 def add_class_prefix_to_xid(class_name:str, external_id:str) -> str:
     """Adds class name as prefix to the external_id"""
-    external_id_with_prefix=f"{class_name}_{external_id}"
-    return external_id_with_prefix
+    return f"{class_name}_{external_id}"

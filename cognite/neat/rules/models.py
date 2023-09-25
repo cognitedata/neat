@@ -14,7 +14,7 @@ from typing import Any, ClassVar, TypeAlias
 from cognite.client.data_classes.data_modeling.data_types import (
     Boolean,
     FileReference,
-    Float32,
+    Float64,
     Int32,
     Int64,
     Json,
@@ -59,7 +59,7 @@ __all__ = ["Class", "Instance", "Metadata", "Prefixes", "Property", "Resource", 
 # mapping of XSD types to Python and GraphQL types
 DATA_TYPE_MAPPING: dict[str, dict[str, type | str | ListablePropertyType]] = {
     "boolean": {"python": bool, "GraphQL": "Boolean", "dms": Boolean},
-    "float": {"python": float, "GraphQL": "Float", "dms": Float32},
+    "float": {"python": float, "GraphQL": "Float", "dms": Float64},
     "integer": {"python": int, "GraphQL": "Int", "dms": Int32},
     "nonPositiveInteger": {"python": int, "GraphQL": "Int", "dms": Int32},
     "nonNegativeInteger": {"python": int, "GraphQL": "Int", "dms": Int32},
@@ -846,7 +846,7 @@ class TransformationRules(RuleModel):
         if classes := values.get("classes"):
             if value.property_type == "ObjectProperty" and value.expected_value_type not in classes:
                 raise exceptions.ValueTypeNotDefinedAsClass(
-                    value.class_i, value.property_id, value.expected_value_type
+                    value.class_id, value.property_id, value.expected_value_type
                 ).to_pydantic_custom_error()
         return value
 
