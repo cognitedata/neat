@@ -81,7 +81,7 @@ class GenerateCDFNodesAndEdgesFromGraph(Step):
             name="add_class_prefix",
             value="False",
             options=["True", "False"],
-            label=("Whether to add class name as a prefix to external ids of nodes or not"),
+            label=("Whether to add class name as a prefix to external ids of instances or not"),
         ),
         
     ]
@@ -97,7 +97,7 @@ class GenerateCDFNodesAndEdgesFromGraph(Step):
         nodes, edges, exceptions = rdf2nodes_and_edges(graph_store=graph.graph,
                                                        transformation_rules=rules.rules, 
                                                        stop_on_exception=False,
-                                                       add_class_prefix_to_xid=add_class_prefix)
+                                                       add_class_prefix=add_class_prefix)
 
         msg = f"Total count of: <ul><li>{ len(nodes) } nodes</li><li>{ len(edges) } edges</li></ul>"
 
