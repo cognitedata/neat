@@ -83,7 +83,6 @@ class GenerateCDFNodesAndEdgesFromGraph(Step):
             options=["True", "False"],
             label=("Whether to add class name as a prefix to external ids of instances or not"),
         ),
-        
     ]
 
     def run(self, rules: RulesData, graph: SourceGraph | SolutionGraph) -> (FlowMessage, Nodes, Edges):
@@ -94,10 +93,12 @@ class GenerateCDFNodesAndEdgesFromGraph(Step):
             graph = self.flow_context["SourceGraph"]
 
         add_class_prefix = True if self.configs["add_class_prefix"] == "True" else False
-        nodes, edges, exceptions = rdf2nodes_and_edges(graph_store=graph.graph,
-                                                       transformation_rules=rules.rules, 
-                                                       stop_on_exception=False,
-                                                       add_class_prefix=add_class_prefix)
+        nodes, edges, exceptions = rdf2nodes_and_edges(
+            graph_store=graph.graph,
+            transformation_rules=rules.rules,
+            stop_on_exception=False,
+            add_class_prefix=add_class_prefix,
+        )
 
         msg = f"Total count of: <ul><li>{ len(nodes) } nodes</li><li>{ len(edges) } edges</li></ul>"
 
