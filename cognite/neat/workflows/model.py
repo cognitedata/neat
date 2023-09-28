@@ -11,6 +11,7 @@ class WorkflowState(StrEnum):
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
     EXPIRED = "EXPIRED"
+    UNKNOWN = "UNKNOWN"
 
 
 class StepExecutionStatus(StrEnum):
@@ -158,6 +159,7 @@ class WorkflowFullStateReport(BaseModel):
     elapsed_time: float = 0
     last_error: str | None = None
     execution_log: list[WorkflowStepEvent]
+    last_updated_time: int | None = None
 
     @field_validator("start_time", "end_time", mode="before")
     def float_to_int(cls, value):

@@ -62,7 +62,7 @@ class CdfStore:
             except Exception as e:
                 logging.debug(f"Failed to create labels.{e}")
 
-    def package_workflow(self, workflow_name) -> str:
+    def package_workflow(self, workflow_name: str) -> str:
         """Creates a zip archive from a folder"""
         folder_path = self.workflows_storage_path / workflow_name
         archive_path = self.workflows_storage_path / f"{workflow_name}.zip"
@@ -102,7 +102,7 @@ class CdfStore:
         with zipfile.ZipFile(package_full_path, "r") as zipf:
             zipf.extractall(output_folder)
 
-    def load_workflows_from_cfg_by_filter(self, config_filter: list[str] | None = None) -> str:
+    def load_workflows_from_cfg_by_filter(self, config_filter: list[str] | None = None) -> None:
         """Load workflow package from CDF and extract it to the storage path"""
         # filter syntax: name:workflow_name=version; tag:tag_name
         try:
@@ -164,6 +164,7 @@ class CdfStore:
             return files_external_ids
         else:
             logging.error("No CDF client or data set id provided")
+            return []
 
     def save_workflow_to_cdf(self, name: str, tag: str = "", changed_by: str = "", comments: str = "") -> None:
         """Saves entire workflow (all artifacts) to CDF."""
@@ -239,20 +240,22 @@ class CdfStore:
         label_filter = LabelFilter(contains_any=["neat-workflow"])
         files_metadata = self.client.files.list(labels=label_filter, metadata={"resource_type": resource_type})
 
-        return [
-            NeatCdfResource(
+        output: list[NeatCdfResource] = []
+        for file_meta in files_metadata:
+            metadata = file_meta.metadata or {}
+            neat_cdf_resource = NeatCdfResource(
                 id=file_meta.id,
                 name=file_meta.name,
                 external_id=file_meta.external_id,
-                version=file_meta.metadata["hash"],
-                rtype=file_meta.metadata["resource_type"],
-                comments=file_meta.metadata["comments"],
-                last_updated_by=file_meta.metadata["changed_by"],
-                tag=file_meta.metadata["tag"],
+                version=metadata["hash"],
+                rtype=metadata["resource_type"],
+                comments=metadata["comments"],
+                last_updated_by=metadata["changed_by"],
+                tag=metadata["tag"],
                 last_updated_time=file_meta.last_updated_time,
             )
-            for file_meta in files_metadata
-        ]
+            output.append(neat_cdf_resource)
+        return output
 
     def get_list_of_workflow_executions_from_cdf(self, limit=200) -> list[WorkflowFullStateReport]:
         """Returns list of workflow executions from CDF."""
@@ -262,61 +265,63 @@ class CdfStore:
         events = self.client.events.list(type="neat-workflow-run", source="neat", sort=["startTime:desc"], limit=limit)
         executions = []
         for event in events:
-            if (time.time() - event.start_time > 24 * 60 * 60) and event.subtype == "RUNNING":
+            if (time.time() - (event.start_time or 0) > 24 * 60 * 60) and event.subtype == "RUNNING":
                 event.subtype = "EXPIRED"
-
+            metadata = event.metadata or {}
             try:
                 executions.append(
                     WorkflowFullStateReport(
-                        run_id=event.metadata["run_id"],
-                        elapsed_time=float(event.metadata["elapsed_time"]) if "elapsed_time" in event.metadata else 0,
-                        last_error=event.metadata["error"] if "error" in event.metadata else "",
+                        run_id=metadata["run_id"],
+                        elapsed_time=float(metadata["elapsed_time"]) if "elapsed_time" in metadata else 0,
+                        last_error=metadata["error"] if "error" in metadata else "",
                         execution_log=[],
-                        workflow_name=event.metadata["workflow_name"] if "workflow_name" in event.metadata else "",
+                        workflow_name=metadata["workflow_name"] if "workflow_name" in metadata else "",
                         last_updated_time=event.last_updated_time,
                         start_time=event.start_time,
                         end_time=event.end_time,
-                        state=event.subtype,
+                        state=WorkflowState(event.subtype or WorkflowState.UNKNOWN).upper(),
                     )
                 )
             except Exception as e:
                 logging.info(
                     f"Failed to parse workflow execution event for workflow, "
-                    f"run_id = {event.metadata['run_id']}, error = {e}"
+                    f"run_id = {metadata['run_id']}, error = {e}"
                 )
         return executions
 
-    def get_detailed_workflow_execution_report_from_cdf(self, run_id: str) -> WorkflowFullStateReport:
+    def get_detailed_workflow_execution_report_from_cdf(self, run_id: str) -> WorkflowFullStateReport | None:
         """Returns detailed workflow execution report from CDF"""
         logging.debug(f"Getting detailed workflow execution {run_id} from CDF")
         external_id = f"neat-wf-run-{run_id}"
         if not self.data_set_id:
             return None
         event = self.client.events.retrieve(external_id=external_id)
-        steps_log = []
         if event:
+            metadata = event.metadata or {}
             try:
-                if "execution_log" in event.metadata:
-                    steps_log = json.loads(event.metadata["execution_log"])
+                if "execution_log" in metadata:
+                    steps_log = json.loads(metadata["execution_log"])
                 else:
                     external_id = f"neat-wf-execution-log-{run_id}"
                     steps_log = self.client.files.download_bytes(external_id=external_id)
             except Exception as e:
                 logging.info(
-                    f"Failed to parse execution log for workflow {event.metadata['workflow_name']}, "
-                    f"run_id = {event.metadata['run_id']}, error = {e}"
+                    f"Failed to parse execution log for workflow {metadata['workflow_name']}, "
+                    f"run_id = {metadata['run_id']}, error = {e}"
                 )
                 steps_log = []
+
+            metadata = event.metadata or {}
             return WorkflowFullStateReport(
-                run_id=event.metadata["run_id"],
-                elapsed_time=float(event.metadata["elapsed_time"]) if "elapsed_time" in event.metadata else 0,
-                last_error=event.metadata["error"] if "error" in event.metadata else "",
+                run_id=metadata["run_id"],
+                elapsed_time=float(metadata["elapsed_time"]) if "elapsed_time" in metadata else 0,
+                last_error=metadata["error"] if "error" in metadata else "",
                 execution_log=steps_log,
-                workflow_name=event.metadata["workflow_name"] if "workflow_name" in event.metadata else "",
+                workflow_name=metadata["workflow_name"] if "workflow_name" in metadata else "",
                 last_updated_time=event.last_updated_time,
                 start_time=event.start_time,
                 end_time=event.end_time,
-                state=event.subtype,
+                state=WorkflowState((event.subtype or WorkflowState.UNKNOWN).upper()),
             )
         raise Exception(f"Workflow execution with run_id = {run_id} not found")
 
