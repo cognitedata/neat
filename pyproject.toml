@@ -45,9 +45,7 @@ known-third-party = ["cognite.client"]
 [tool.mypy]
 explicit_package_bases = true
 allow_redefinition = true
-exclude = [
-    "^cognite/neat/workflows/steps",
-]
+
 
 [tool.poetry.scripts]
 neat = "cognite.neat.app.main:run"

@@ -133,7 +133,7 @@ class StepsRegistry:
                     raise InvalidWorkFlowError(step_name, missing_data)
                 return step_obj.run(*input_data)
 
-    def get_list_of_steps(self):
+    def get_list_of_steps(self) -> list[StepMetadata]:
         steps: list[StepMetadata] = []
         for step_cls in self._step_classes:
             try:
