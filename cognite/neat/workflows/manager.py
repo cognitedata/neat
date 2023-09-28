@@ -21,13 +21,10 @@ from cognite.neat.workflows.tasks import WorkflowTaskBuilder
 live_workflow_instances = Gauge("neat_workflow_live_instances", "Count of live workflow instances", ["itype"])
 
 
-class WorkflowStartStatus(BaseModel):
-    workflow_instance: BaseWorkflow = None
+class WorkflowStartStatus(BaseModel, arbitrary_types_allowed=True):
+    workflow_instance: BaseWorkflow | None = None
     is_success: bool = True
-    status_text: str = None
-
-    class Config:
-        arbitrary_types_allowed = True
+    status_text: str | None = None
 
 
 class WorkflowManager:
@@ -85,6 +82,8 @@ class WorkflowManager:
 
     def start_workflow(self, name: str, sync=False, **kwargs):
         workflow = self.get_workflow(name)
+        if workflow is None:
+            raise ValueError(f"Workflow {name} not found")
         workflow.start(sync, kwargs=kwargs)
         return workflow
 
@@ -236,9 +235,18 @@ class WorkflowManager:
     def start_workflow_instance(
         self, workflow_name: str, step_id: str = "", flow_msg: FlowMessage | None = None, sync: bool | None = None
     ) -> WorkflowStartStatus:
-        workflow = self.get_workflow(workflow_name)
-
-        trigger_step = workflow.get_trigger_step(step_id)
+        retrieved = self.get_workflow(workflow_name)
+        if retrieved is None:
+            return WorkflowStartStatus(
+                workflow_instance=None, is_success=False, status_text="Workflow not found in registry"
+            )
+        workflow = retrieved
+        retrieved_step = workflow.get_trigger_step(step_id)
+        if retrieved_step is None:
+            return WorkflowStartStatus(
+                workflow_instance=None, is_success=False, status_text="Step not found in workflow"
+            )
+        trigger_step = retrieved_step
         if not trigger_step.trigger:
             logging.info(f"Step {step_id} is not a trigger step")
             return WorkflowStartStatus(

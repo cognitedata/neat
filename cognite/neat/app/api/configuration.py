@@ -20,11 +20,11 @@ UI_PATH = PACKAGE_DIRECTORY / "app" / "ui" / "neat-app" / "build"
 class NeatApp:
     def __init__(self, config: Config, cdf_client: CogniteClient | None = None):
         self.config = config
-        self.cdf_client: CogniteClient = None
-        self.cdf_store: CdfStore = None
-        self.workflow_manager: WorkflowManager = None
-        self.triggers_manager: TriggerManager = None
-        self.fast_api_app: FastAPI = None
+        self.cdf_client: CogniteClient | None = None
+        self.cdf_store: CdfStore | None = None
+        self.workflow_manager: WorkflowManager | None = None
+        self.triggers_manager: TriggerManager | None = None
+        self.fast_api_app: FastAPI | None = None
         self.cdf_client = cdf_client
 
     def set_http_server(self, fast_api_app: FastAPI):

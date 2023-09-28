@@ -18,7 +18,7 @@ def migrate_wf_manifest(wf_store_path: Path):
             logging.info(f"Loading workflow {wf_module_name} metadata from {metadata_file}")
             if metadata_file.exists():
                 with metadata_file.open() as f:
-                    manifest_yaml = yaml.safe_load(f, Loader=yaml.Loader)
+                    manifest_yaml = yaml.safe_load(f)
                     logging.info(f"Loaded workflow {wf_module_name} metadata from {metadata_file}")
                 if "groups" in manifest_yaml:
                     logging.info(f"Found groups in {metadata_file}, migrating to system_components")
