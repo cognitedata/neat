@@ -7,6 +7,10 @@ class InvalidStepOutputException(NeatError):
     description = "The step output is invalid."
     example = "The step output must be a dictionary."
 
+    def __init__(self, step_type: str):
+        self.message = f"Object type {step_type} is not supported as step output"
+        super().__init__(self.message)
+
 
 class ConfigurationNotSet(NeatError):
     type_ = "configuration_not_set"

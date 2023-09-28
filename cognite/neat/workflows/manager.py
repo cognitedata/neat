@@ -21,13 +21,10 @@ from cognite.neat.workflows.tasks import WorkflowTaskBuilder
 live_workflow_instances = Gauge("neat_workflow_live_instances", "Count of live workflow instances", ["itype"])
 
 
-class WorkflowStartStatus(BaseModel):
-    workflow_instance: BaseWorkflow = None
+class WorkflowStartStatus(BaseModel, arbitrary_types_allowed=True):
+    workflow_instance: BaseWorkflow | None = None
     is_success: bool = True
-    status_text: str = None
-
-    class Config:
-        arbitrary_types_allowed = True
+    status_text: str | None = None
 
 
 class WorkflowManager:
