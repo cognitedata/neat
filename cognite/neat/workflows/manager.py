@@ -233,8 +233,12 @@ class WorkflowManager:
     def start_workflow_instance(
         self, workflow_name: str, step_id: str = "", flow_msg: FlowMessage | None = None, sync: bool | None = None
     ) -> WorkflowStartStatus:
-        workflow = self.get_workflow(workflow_name)
-
+        retrieved = self.get_workflow(workflow_name)
+        if retrieved is None:
+            return WorkflowStartStatus(
+                workflow_instance=None, is_success=False, status_text="Workflow not found in registry"
+            )
+        workflow = retrieved
         trigger_step = workflow.get_trigger_step(step_id)
         if not trigger_step.trigger:
             logging.info(f"Step {step_id} is not a trigger step")

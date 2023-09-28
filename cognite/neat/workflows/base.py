@@ -16,6 +16,7 @@ from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
 from cognite.neat.utils.utils import retry_decorator
 from cognite.neat.workflows import cdf_store, utils
 from cognite.neat.workflows._exceptions import ConfigurationNotSet, InvalidStepOutputException
+from cognite.neat.workflows.cdf_store import CdfStore
 from cognite.neat.workflows.model import (
     FlowMessage,
     StepExecutionStatus,
@@ -78,7 +79,7 @@ class BaseWorkflow:
         self.resume_event = Event()
         self.is_ephemeral = False  # if True, workflow will be deleted after completion
         self.step_classes = None
-        self.data: dict[str, DataContract] = {}
+        self.data: dict[str, DataContract | FlowMessage | CdfStore | CogniteClient] = {}
         self.steps_registry: StepsRegistry = steps_registry or StepsRegistry()
 
     def start(self, sync=False, is_ephemeral=False, **kwargs) -> FlowMessage | None:
@@ -112,7 +113,7 @@ class BaseWorkflow:
         logging.info(f"Starting workflow {self.name}")
         if flow_message := kwargs.get("flow_message"):
             self.flow_message = flow_message
-            self.data["FlowMessage"] = self.flow_message
+            self.data["FlowMessage"] = flow_message
         start_time = time.perf_counter()
         self.report_workflow_execution()
         try:
@@ -545,7 +546,7 @@ class BaseWorkflow:
         else:
             return next((step for step in self.workflow_steps if step.trigger and step.enabled), None)
 
-    def get_context(self) -> dict[str, DataContract]:
+    def get_context(self) -> dict[str, DataContract | FlowMessage | CdfStore | CogniteClient]:
         return self.data
 
     def get_configs(self) -> WorkflowConfigs:
