@@ -6,7 +6,7 @@ from cognite.neat.workflows.model import FlowMessage
 class WorkflowTaskBuilder:
     """Collection of all base tasks for workflows.All tasks must run in the context of a workflow including threads."""
 
-    def __init__(self, cdf_client: CogniteClient, workflow_manager):
+    def __init__(self, cdf_client: CogniteClient | None, workflow_manager):
         # TODO : figure out circular import and set type to WorkflowManager
         self.cdf_client = cdf_client
         self.workflow_manager = workflow_manager

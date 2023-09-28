@@ -16,15 +16,15 @@ from cognite.neat.workflows.utils import get_file_hash
 
 
 class NeatCdfResource(BaseModel):
-    id: int = None
+    id: int | None = None
     name: str
     rtype: str
-    last_updated_time: int = None
-    last_updated_by: str = None
-    version: str = None
-    tag: str = None
-    comments: str = None
-    external_id: str = None
+    last_updated_time: int | None = None
+    last_updated_by: str | None = None
+    version: str | None = None
+    tag: str | None = None
+    comments: str | None = None
+    external_id: str | None = None
     is_latest: bool = False
 
 
@@ -195,11 +195,7 @@ class CdfStore:
                 return
             # removing the latest tag from all files related to this workflow
             files_metada = self.client.files.list(
-                name=file_path.name,
-                metadata={
-                    "workflow_name": workflow_name,
-                    "resource_type": resource_type,
-                },
+                name=file_path.name, metadata={"workflow_name": workflow_name, "resource_type": resource_type}
             )
             for file_meta in files_metada:
                 meta_update = FileMetadataUpdate(id=file_meta.id).labels.remove("neat-latest")
@@ -329,12 +325,12 @@ class CdfStore:
         # or attached file (depends on the size)
         if not self.data_set_id:
             return
-        metadata = {
-            "run_id": report.run_id,
-            "elapsed_time": report.elapsed_time,
-            "error": report.last_error,
+        metadata: dict[str, str] = {
+            "run_id": str(report.run_id),
+            "elapsed_time": str(report.elapsed_time),
+            "error": str(report.last_error),
             "execution_log": "",
-            "workflow_name": report.workflow_name,
+            "workflow_name": str(report.workflow_name),
         }
         external_id = f"neat-wf-run-{report.run_id}"
         serialized_execution_log = json.dumps(jsonable_encoder(report.execution_log))
@@ -362,13 +358,13 @@ class CdfStore:
                 serialized_execution_log,
                 name="neat-workflow-execution-log.json",
                 external_id=f"neat-wf-execution-log-{report.run_id}",
-                metadata={"run_id": report.run_id, "workflow_name": report.workflow_name},
+                metadata={"run_id": str(report.run_id), "workflow_name": str(report.workflow_name)},
                 source="neat",
                 overwrite=True,
                 data_set_id=self.data_set_id,
             )
         elif serialized_execution_log:
-            event.metadata["execution_log"] = serialized_execution_log
+            event.metadata["execution_log"] = serialized_execution_log  # type: ignore[index]
 
         if report.state in [WorkflowState.CREATED, WorkflowState.RUNNING]:
             res = self.client.events.create(event)
