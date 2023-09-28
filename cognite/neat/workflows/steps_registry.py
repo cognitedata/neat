@@ -13,7 +13,7 @@ import cognite.neat.workflows.steps.lib
 from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
 from cognite.neat.exceptions import InvalidWorkFlowError
 from cognite.neat.workflows.model import FlowMessage, WorkflowConfigs
-from cognite.neat.workflows.steps.step_model import Configurable, DataContract, Step, T_Output
+from cognite.neat.workflows.steps.step_model import Configurable, DataContract, Step
 
 
 class StepMetadata(BaseModel):
@@ -28,7 +28,7 @@ class StepMetadata(BaseModel):
 
 class StepsRegistry:
     def __init__(self, data_store_path: Path | None = None):
-        self._step_classes: list[Step] = []
+        self._step_classes: list[type[Step]] = []
         self.user_steps_path = Path(data_store_path) / "steps"
         self.data_store_path = data_store_path
 
@@ -95,7 +95,7 @@ class StepsRegistry:
         metrics: NeatMetricsCollector | None = None,
         workflow_configs: WorkflowConfigs | None = None,
         step_configs: dict[str, Any] | None = None,
-    ) -> T_Output | None:
+    ) -> DataContract | tuple[FlowMessage, DataContract] | FlowMessage:
         for step_cls in self._step_classes:
             if step_cls.__name__ == step_name:
                 step_obj: Step = step_cls(self.data_store_path)
@@ -160,7 +160,7 @@ class StepsRegistry:
                         output_data.append(return_annotation.__name__)
                 steps.append(
                     StepMetadata(
-                        name=step_cls.__name__,
+                        name=type(step_cls).__name__,
                         scope=step_cls.scope,
                         input=input_data,
                         description=step_cls.description,
@@ -170,6 +170,6 @@ class StepsRegistry:
                     )
                 )
             except AttributeError as e:
-                logging.error(f"Step {step_cls.__name__} does not have a run method.Error: {e}")
+                logging.error(f"Step {type(step_cls).__name__} does not have a run method.Error: {e}")
 
         return steps

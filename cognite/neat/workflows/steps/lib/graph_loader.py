@@ -325,7 +325,7 @@ class UploadCDFAssets(Step):
         return FlowMessage(output_text=f"Total count of assets in CDF after update: { total_assets_after }")
 
 
-class GenerateCDFRelationshipsFromGraph(Step[CategorizedRelationships]):
+class GenerateCDFRelationshipsFromGraph(Step):
     """
     This step generates relationships from the graph and saves them to CategorizedRelationships object
     """
