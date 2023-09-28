@@ -232,12 +232,16 @@ export function FilterBar(props:{filterChangeHandler:Function}) {
         // On autofill we get a stringified value.
         typeof value === 'string' ? value.split(',') : value,
       );
-      props.filterChangeHandler(filters)
+      // props.filterChangeHandler(filters)
     };
 
     function sortArrayOfObjectsByName(arr) {
       return
     }
+
+    useEffect(() => {
+      props.filterChangeHandler(filters)
+    }, [filters]);
 
     const loadClassSummary = () => {
       const workflowName = getSelectedWorkflowName();
@@ -434,8 +438,9 @@ export default function QDataTable() {
     setFilters(filters);
    }
   const renderCellExpand = (params) => {
-    console.log(hiddenNsPrefixMode);
-    if (params.value?.includes("#_")) {
+    if (params?.field == "object_ref" ||
+        params?.field == "instance" || params?.field == "reference" ||
+        (params?.field == "value" && params?.value?.includes("http") && !params?.row?.property.includes("type") ) ) {
       return <Box>{getShortenedString(params.value,10)} <Button onClick={(e)=> {loadObjectProperties(params.value)}}>Table </Button> <Button onClick={(e)=> {loadObjectAsGraph(params.value)}}>Graph </Button></Box>
 
       } else if (params.value?.includes("#") && hiddenNsPrefixMode) {

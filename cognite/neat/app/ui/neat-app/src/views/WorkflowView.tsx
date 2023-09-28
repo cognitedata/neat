@@ -28,22 +28,25 @@ import MenuItem from '@mui/material/MenuItem';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import ToggleButton from '@mui/material/ToggleButton';
 import { getNeatApiRootUrl, getSelectedWorkflowName, setSelectedWorkflowName } from 'components/Utils';
-import CdfPublisher from 'components/CdfPublisher';
-import CdfDownloader from 'components/CdfDownloader';
 import WorkflowExecutionReport from 'components/WorkflowExecutionReport';
 import ConfigView from './ConfigView';
 import TransformationTable from './TransformationView';
 import QDataTable from './ExplorerView';
-import Editor, { DiffEditor, useMonaco, loader } from '@monaco-editor/react';
 import OverviewComponentEditorDialog from 'components/OverviewComponentEditorDialog';
 import StepEditorDialog from 'components/StepEditorDialog';
 import WorkflowMetadataDialog from 'components/WorkflowMetadataDialog';
 import LinearProgress from '@mui/material/LinearProgress';
 import { Typography } from '@mui/material';
+import FileEditor from 'components/FileEditor';
+import ContextViewer from 'components/ContextViewer';
+import WorkflowDeleteDialog from 'components/WorkflowDeleteDialog';
+import { ImportExport } from '@mui/icons-material';
+import WorkflowImportExportDialog from 'components/WorkflowImportExportDialog';
 
 
 export interface ExecutionLog {
   id: string;
+  label: string;
   state: string;
   elapsed_time: number;
   timestamp: string;
@@ -90,7 +93,7 @@ export default function WorkflowView() {
   const [editState, setEditState] = useState<string>("");
   const [loading , setLoading] = useState<boolean>(false);
   const [errorText, setErrorText] = useState<string>("");
-
+  const [packageLink, setPackageLink] = useState<string>("");
 
   useEffect(() => {
     loadListOfWorkflows();
@@ -99,27 +102,13 @@ export default function WorkflowView() {
       loadWorkflowDefinitions(getSelectedWorkflowName());
     else
       setEditState("Please select one of provided workflows or create new one");
-
-    startStatePolling(selectedWorkflow);
-
   }, []);
 
-  const fetchFileContent = async () => {
-    try {
-      var myHeaders = new Headers();
-      myHeaders.append('pragma', 'no-cache');
-      myHeaders.append('cache-control', 'no-cache');
-      const response = await fetch(neatApiRootUrl + '/data/workflows/' + selectedWorkflow + '/workflow.py', { method: "get", headers: myHeaders });
-      const content = await response.text();
-      setFileContent(content);
-    } catch (error) {
-      console.error('Error fetching file:', error);
-    }
-  };
-
   useEffect(() => {
-    console.log("workflow definition changed")
     syncWorkflowDefToNodesAndEdges(viewType);
+    console.log("workflow definition updated");
+    console.dir(workflowDefinitions);
+    startStatePolling(selectedWorkflow);
   }, [workflowDefinitions]);
 
   const startStatePolling = (workflowName:string) => {
@@ -200,6 +189,22 @@ const filterStats = (stats: WorkflowStats) => {
   return stats;
 }
 
+const enrichWorkflowStats = (stats: WorkflowStats) => {
+  console.log("enrichWorkflowStats")
+  // set labels from workflow definition
+    for (let i = 0; i < stats.execution_log.length; i++) {
+      const log = stats.execution_log[i];
+      if (workflowDefinitions != null){
+        const step = workflowDefinitions.getStepById(log.id);
+        if (step)
+            log.label = step.label;
+      }else {
+        log.label ="";
+      }
+    }
+    return stats;
+  }
+
 const loadWorkflowStats = (workflowName: string = "") => {
   if (workflowName == "")
     workflowName = selectedWorkflow;
@@ -207,7 +212,9 @@ const loadWorkflowStats = (workflowName: string = "") => {
   fetch(url).then((response) => response.json()).then((data) => {
 
     // const filteredStats = filterStats(data);
-    setWorkflowStats(data);
+    const enrichedStats = enrichWorkflowStats(data);
+
+    setWorkflowStats(enrichedStats);
     if (data.state == "RUNNING") {
       // startStatePolling();
     } else if (data.state == "COMPLETED" || data.state == "FAILED") {
@@ -235,6 +242,8 @@ const startWorkflow = () => {
     console.error('Error:', error);
   })
 }
+
+
 
 
 const saveWorkflow = () => {
@@ -305,11 +314,13 @@ const reloadWorkflows = () => {
     }
   }).then((response) => response.json()).then((data) => {
     loadWorkflowDefinitions();
+    loadListOfWorkflows();
   }
   ).catch((error) => {
     console.error('Error:', error);
   })
 };
+
 
 const switchToWorkflow = (workflowName: string) => {
   setSelectedWorkflowName(workflowName);
@@ -331,11 +342,8 @@ const handleViewTypeChange = (
 
   setViewType(newViewType);
   syncWorkflowDefToNodesAndEdges(newViewType);
-  if (newViewType == "src") {
-    fetchFileContent();
-  }
-};
 
+};
 
 const onConnect = useCallback((params) => {
   console.log('onConnect')
@@ -384,6 +392,7 @@ const onAddStep = (() => {
     step.id = "step_" + Math.floor(Math.random() * 1000000);
     step.label = "New step";
     step.ui_config = ui_config;
+    step.stype = "stdstep";
     workflowDefinitions.steps.push(step);
   } else {
     const systemComponent = new WorkflowSystemComponent();
@@ -423,14 +432,8 @@ const handleDialogClose = (step:WorkflowStepDefinition,action:string) => {
       setEditState("Unsaved");
       break;
   }
-
 };
 
-
-const onDownloadSuccess = (fileName: string, hash: string) => {
-  console.log("onDownloadSuccess", fileName, hash)
-  reloadWorkflows();
-}
 const solutionComponentEditorDialogHandler = (component: WorkflowSystemComponent,action: string) => {
   console.log("OverviewComponentEditorDialogHandler")
   console.dir(component)
@@ -507,6 +510,7 @@ return (
         </Select>
       </FormControl>
       <WorkflowMetadataDialog open = {workflowMetadataDialogOpen} onClose={handleCreateWorkflow}/>
+      <WorkflowDeleteDialog name={selectedWorkflow} onDelete = {()=> loadListOfWorkflows()}/>
       <ToggleButtonGroup
         color="primary"
         value={viewType}
@@ -517,12 +521,11 @@ return (
         aria-label="View type"
       >
         <ToggleButton value="system">Solution overview</ToggleButton>
-        <ToggleButton value="steps">Workflow steps</ToggleButton>
+        <ToggleButton value="steps">Workflow</ToggleButton>
+        <ToggleButton value="src">Files</ToggleButton>
         <ToggleButton value="configurations">Configurations</ToggleButton>
-        <ToggleButton value="src">Source code</ToggleButton>
-        <ToggleButton value="transformations">Transformation rules</ToggleButton>
+        <ToggleButton value="transformations">Data model and transformations</ToggleButton>
         <ToggleButton value="data_explorer">Data explorer</ToggleButton>
-
       </ToggleButtonGroup>
     </Box>
     { editState && (<Typography color={"red"} variant="overline"> {editState} </Typography> ) }
@@ -558,11 +561,10 @@ return (
 
             <Button variant="outlined" onClick={startWorkflow} sx={{ marginTop: 2, marginRight: 1 }}>Start workflow</Button>
             <Button variant="outlined" onClick={saveWorkflow} sx={{ marginTop: 2, marginRight: 1 }}>Save workflow</Button>
-            <Button variant="outlined" onClick={reloadWorkflows} sx={{ marginTop: 2, marginRight: 1 }} >Reload local workflows</Button>
-            <Box sx={{ marginTop: 1, marginBottom: 1 }}>
-              <CdfPublisher type="workflow" />
-              <CdfDownloader type="workflow-package" onDownloadSuccess={onDownloadSuccess} />
-            </Box>
+            <Button variant="outlined" onClick={reloadWorkflows} sx={{ marginTop: 2, marginRight: 1 }} >Reload</Button>
+            <WorkflowImportExportDialog onDownloaded = {()=> reloadWorkflows()} />
+            <ContextViewer />
+
           </div>
 
         </Item>
@@ -581,7 +583,7 @@ return (
       <QDataTable />
     )}
     {viewType == "src" && (
-      <Editor height="90vh" defaultLanguage="python" value={fileContent} />
+      <FileEditor/>
     )}
 
   </div>

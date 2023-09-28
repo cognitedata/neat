@@ -21,7 +21,7 @@ import NJsonViewer from './JsonViewer';
 import { getNeatApiRootUrl, getSelectedWorkflowName } from './Utils';
 
 export default function WorkflowExecutionReport(props: any) {
-    const [workflowStats, setWorkflowStats] = useState<any>(props.report);
+    const [workflowStats, setWorkflowStats] = useState<any>();
     const run_id = props.run_id;
 
     useEffect(() => {
@@ -73,7 +73,7 @@ export default function WorkflowExecutionReport(props: any) {
             },
           }} >
             {workflowStats?.execution_log?.map((log) => (
-              <TimelineItem>
+              <TimelineItem key={log.id}>
                 <TimelineSeparator>
                   {log.state == "STARTED" && (<TimelineDot color="success" variant="outlined" />)}
                   {log.state == "COMPLETED" && (<TimelineDot color="success" />)}
@@ -81,7 +81,7 @@ export default function WorkflowExecutionReport(props: any) {
                   {log.state != "STARTED" && log.state != "COMPLETED" && log.state != "FAILED" && (<TimelineDot />)}
                   <TimelineConnector />
                 </TimelineSeparator>
-                <TimelineContent> {log.timestamp} - {log.state} : {log.id} in ({log.elapsed_time} sec)
+                <TimelineContent> {log.timestamp} - {log.state} : {log.label} ({log.id}) in ({log.elapsed_time} sec)
                   {log.state == "FAILED" && (<div dangerouslySetInnerHTML={ createMarkup(log.error) }></div>)}
                   {log.state == "COMPLETED" && (<div dangerouslySetInnerHTML={ createMarkup(log.output_text) }></div>)}
                   {log.data && ( <NJsonViewer data={log.data} />) }
