@@ -7,17 +7,18 @@ import zipfile
 from pathlib import Path
 
 from cognite.client import CogniteClient
-from cognite.client.data_classes import Event, FileMetadataUpdate, LabelDefinition, LabelFilter
+from cognite.client.data_classes import Event, FileMetadataUpdate, Label, LabelDefinition, LabelFilter
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 
+from cognite.neat.workflows._exceptions import ConfigurationNotSet
 from cognite.neat.workflows.model import WorkflowFullStateReport, WorkflowState, WorkflowStepEvent
 from cognite.neat.workflows.utils import get_file_hash
 
 
 class NeatCdfResource(BaseModel):
     id: int | None = None
-    name: str
+    name: str | None
     rtype: str
     last_updated_time: int | None = None
     last_updated_by: str | None = None
@@ -64,6 +65,8 @@ class CdfStore:
 
     def package_workflow(self, workflow_name: str) -> str:
         """Creates a zip archive from a folder"""
+        if self.workflows_storage_path is None:
+            raise ConfigurationNotSet("workflows_storage_path")
         folder_path = self.workflows_storage_path / workflow_name
         archive_path = self.workflows_storage_path / f"{workflow_name}.zip"
         # Make sure the folder exists
@@ -86,7 +89,9 @@ class CdfStore:
     def extract_workflow_package(self, workflow_name: str):
         # Make sure the archive exists
         workflow_name = workflow_name.replace(".zip", "")
-        package_full_path = Path(self.workflows_storage_path) / (f"{workflow_name}.zip")
+        if self.workflows_storage_path is None:
+            raise ConfigurationNotSet("workflows_storage_path")
+        package_full_path = Path(self.workflows_storage_path) / f"{workflow_name}.zip"
         output_folder = Path(self.workflows_storage_path) / workflow_name
         if not package_full_path.is_file():
             print(f"Error: {package_full_path} is not a file")
@@ -106,7 +111,7 @@ class CdfStore:
         """Load workflow package from CDF and extract it to the storage path"""
         # filter syntax: name:workflow_name=version; tag:tag_name
         try:
-            for filter_item in config_filter:
+            for filter_item in config_filter or []:
                 filter_type = filter_item.split(":")[0]
                 if filter_type == "name":
                     filter_workflow_name_with_version_l = filter_item.split(":")[1].split("=")
@@ -152,15 +157,18 @@ class CdfStore:
             else:
                 raise Exception("Workflow name or metadata_filter is required")
 
-            files_external_ids = []
+            files_external_ids: list[str] = []
+            if self.workflows_storage_path is None:
+                raise Exception("Workflow storage path is not defined")
             for file_meta in files_metada:
                 self.client.files.download(self.workflows_storage_path, external_id=file_meta.external_id)
                 logging.info(
                     f"Workflow {file_meta.name} , "
                     f"external_id = {file_meta.external_id} syccessfully downloaded from CDF"
                 )
-                self.extract_workflow_package(file_meta.name)
-                files_external_ids.append(file_meta.external_id)
+                self.extract_workflow_package(file_meta.name or "Unknown Workflow")
+                if file_meta.external_id:
+                    files_external_ids.append(file_meta.external_id)
             return files_external_ids
         else:
             logging.error("No CDF client or data set id provided")
@@ -169,7 +177,7 @@ class CdfStore:
     def save_workflow_to_cdf(self, name: str, tag: str = "", changed_by: str = "", comments: str = "") -> None:
         """Saves entire workflow (all artifacts) to CDF."""
         self.package_workflow(name)
-        if self.data_set_id and self.client:
+        if self.data_set_id and self.client and self.workflows_storage_path:
             zip_file = Path(self.workflows_storage_path) / f"{name}.zip"
             if zip_file.exists():
                 self.save_resource_to_cdf(name, "workflow-package", zip_file, tag, changed_by, comments)
@@ -178,7 +186,7 @@ class CdfStore:
             else:
                 logging.error(f"Workflow package {name} not found, skipping")
         else:
-            logging.error("No CDF client or data set id provided")
+            logging.error("No CDF client, data set id or workflow_storage_path provided")
 
     def save_resource_to_cdf(
         self,
@@ -204,10 +212,10 @@ class CdfStore:
 
             hash_ = get_file_hash(file_path)
             self.client.files.upload(
-                file_path,
+                str(file_path),
                 name=file_path.name,
                 external_id=f"neat-wf-{hash_}",
-                labels=["neat-workflow", "neat-latest"],
+                labels=[Label(external_id="neat-workflow"), Label(external_id="neat-latest")],
                 metadata={
                     "tag": tag,
                     "hash": hash_,
@@ -226,8 +234,8 @@ class CdfStore:
     def load_rules_file_from_cdf(self, name: str, version: str | None = None):
         logging.info(f"Loading rules file {name} (version = {version} ) from CDF ")
         # TODO: Download latest if version is not specified
-        files_metadata = self.client.files.list(name=name, metadata={"hash": version})
-        if len(files_metadata) > 0:
+        files_metadata = self.client.files.list(name=name, metadata={"hash": str(version)})
+        if len(files_metadata) > 0 and self.rules_storage_path:
             self.client.files.download(self.rules_storage_path, external_id=files_metadata[0].external_id)
         else:
             raise Exception(f"Rules file {name} with version {version} not found in CDF")
@@ -279,7 +287,7 @@ class CdfStore:
                         last_updated_time=event.last_updated_time,
                         start_time=event.start_time,
                         end_time=event.end_time,
-                        state=WorkflowState(event.subtype or WorkflowState.UNKNOWN).upper(),
+                        state=WorkflowState((event.subtype or WorkflowState.UNKNOWN).upper()),
                     )
                 )
             except Exception as e:
