@@ -12,6 +12,7 @@ from pydantic import BaseModel
 import cognite.neat.workflows.steps.lib
 from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
 from cognite.neat.exceptions import InvalidWorkFlowError
+from cognite.neat.workflows._exceptions import ConfigurationNotSet
 from cognite.neat.workflows.model import FlowMessage, WorkflowConfigs
 from cognite.neat.workflows.steps.step_model import Configurable, DataContract, Step
 
@@ -29,7 +30,10 @@ class StepMetadata(BaseModel):
 class StepsRegistry:
     def __init__(self, data_store_path: Path | None = None):
         self._step_classes: list[type[Step]] = []
-        self.user_steps_path = Path(data_store_path) / "steps"
+        if data_store_path:
+            self.user_steps_path: Path | None = Path(data_store_path) / "steps"
+        else:
+            self.user_steps_path = None
         self.data_store_path = data_store_path
 
     def load_step_classes(self):
@@ -47,6 +51,8 @@ class StepsRegistry:
             logging.info(f"No user defined modules provided in {self.user_steps_path}")
 
     def load_workflow_step_classes(self, workflow_name: str):
+        if not self.data_store_path:
+            raise ConfigurationNotSet("data_store_path")
         workflow_steps_path = Path(self.data_store_path) / "workflows" / workflow_name
         if workflow_steps_path.exists():
             self.load_custom_step_classes(workflow_steps_path, scope="workflow")
@@ -132,6 +138,7 @@ class StepsRegistry:
                 if not is_valid:
                     raise InvalidWorkFlowError(step_name, missing_data)
                 return step_obj.run(*input_data)
+        raise InvalidWorkFlowError(step_name, [])
 
     def get_list_of_steps(self) -> list[StepMetadata]:
         steps: list[StepMetadata] = []
