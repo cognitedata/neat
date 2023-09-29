@@ -31,7 +31,12 @@ def get_rules(
                 file_name = step.configs["file_name"]
                 version = step.configs["version"]
 
-    path = Path(neat_app.config.rules_store_path, file_name)
+    rules_file = Path(file_name)
+    if str(rules_file.parent) == ".":
+        path = Path(neat_app.config.rules_store_path) / rules_file
+    else:
+        path = Path(neat_app.config.data_store_path) / rules_file
+
     src = "local"
     if url:
         path = url
@@ -92,6 +97,7 @@ def get_rules(
 def get_original_rules_from_file(
     file_name: str | None = None,
 ):
+    """Endpoing for retrieving raw transformation from file"""
     path = Path(neat_app.config.rules_store_path, file_name)
     rules = parse_rules_from_excel_file(path)
     return Response(content=rules.model_dump_json(), media_type="application/json")
@@ -101,6 +107,7 @@ def get_original_rules_from_file(
 def get_original_rules_from_workflow(
     workflow_name: str,
 ):
+    """Endpoing for retrieving transformation from memmory"""
     workflow = neat_app.workflow_manager.get_workflow(workflow_name)
     context = workflow.get_context()
     rules = context["RulesData"].rules
@@ -109,7 +116,7 @@ def get_original_rules_from_workflow(
 
 @router.post("/api/rules/model_and_transformations")
 def post_original_rules(request: dict):
-    # MyModel(**json.loads(…))
+    """Endpoing for updating transformation rules via API"""
     request["metadata"]["namespace"] = Namespace(request["metadata"]["namespace"])
     metadata = Metadata(**request["metadata"])
     classes: dict[str:Class] = {}
@@ -125,8 +132,6 @@ def post_original_rules(request: dict):
     for prefix, val in request["prefixes"].items():
         prefixes[prefix] = Namespace(val)
 
-    rules = TransformationRules(
-        metadata=metadata, classes=classes, properties=properties, prefixes=prefixes, instances=[]
-    )
+    TransformationRules(metadata=metadata, classes=classes, properties=properties, prefixes=prefixes, instances=[])
 
-    return {"status": "ok", "metadata": metadata.description, "classes": len(rules.classes)}
+    return {"status": "ok"}

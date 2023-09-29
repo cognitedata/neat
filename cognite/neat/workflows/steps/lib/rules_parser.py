@@ -39,7 +39,8 @@ class LoadTransformationRules(Step[RulesData]):
         Configurable(
             name="file_name",
             value="rules.xlsx",
-            label="Full name of the rules file. The file should be stored in the rules directory.",
+            label="Full name of the rules file in rules folder. If includes path, \
+                it will be relative to the neat data folder",
         ),
         Configurable(name="version", value="", label="Optional version of the rules file"),
     ]
@@ -49,8 +50,12 @@ class LoadTransformationRules(Step[RulesData]):
         # rules file
         if self.configs is None:
             raise ValueError(f"Step {type(self).__name__} has not been configured.")
-        rules_file = self.configs["file_name"]
-        rules_file_path = Path(self.data_store_path, "rules", rules_file)
+        rules_file = Path(self.configs["file_name"])
+        if str(rules_file.parent) == ".":
+            rules_file_path = Path(self.data_store_path) / "rules" / rules_file
+        else:
+            rules_file_path = Path(self.data_store_path) / rules_file
+
         version = self.configs["version"]
 
         # rules validation

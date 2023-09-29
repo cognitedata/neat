@@ -151,6 +151,7 @@ def get_pre_cdf_assets(workflow_name: str):
 
 @router.get("/api/workflow/context/{workflow_name}")
 def get_context(workflow_name: str):
+    """Get context from workflow."""
     workflow = neat_app.workflow_manager.get_workflow(workflow_name)
     context = workflow.get_context()
     objects_in_context = []
@@ -161,6 +162,7 @@ def get_context(workflow_name: str):
 
 @router.get("/api/workflow/context/{workflow_name}/item/{item_name}")
 def get_context_item(workflow_name: str, item_name: str):
+    """Get context item from workflow. Should be used for debugging and troubleshooting only."""
     workflow = neat_app.workflow_manager.get_workflow(workflow_name)
     context = workflow.get_context()
 

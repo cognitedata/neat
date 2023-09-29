@@ -1,15 +1,16 @@
-from datetime import datetime
 import json
+import logging
+from datetime import datetime
 from pathlib import Path
+from typing import ClassVar
 
+import yaml
 from rdflib import Namespace
+
 from cognite.neat.rules.models import Class, Metadata, Property, TransformationRules
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import RulesData
-
 from cognite.neat.workflows.steps.step_model import Configurable, Step
-import logging
-import yaml
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
 
@@ -23,7 +24,7 @@ class OpenApiToRules(Step):
     The rules object can be serialized to excel file or used directly in other steps."
     category = CATEGORY
     version = "0.1.0-alpha"
-    configurables = [
+    configurables: ClassVar[list[Configurable]] = [
         Configurable(
             name="openapi_spec_file_path",
             value="workflows/openapi_to_rules/source_data/openapi.json",
@@ -42,7 +43,8 @@ class OpenApiToRules(Step):
         rules = self.open_api_to_rules(openapi_file_path)
         report = f" Generated Rules and source data model from OpenApi specs   \
         <p> Processed {self.processed_classes_counter} classes and {self.processed_properies_counter} properties. </p> \
-        <p> Failed to process {self.failed_classes_counter} classes and {self.failed_properties_counter} properties. </p>"
+        <p> Failed to process {self.failed_classes_counter} classes and \
+        {self.failed_properties_counter} properties. </p>"
         report_obj = {
             "processed_classes_counter": self.processed_classes_counter,
             "processed_properies_counter": self.processed_properies_counter,
@@ -111,7 +113,7 @@ class OpenApiToRules(Step):
         class_id: str,
         class_name: str,
         component: dict,
-        parent_property_name: str = None,
+        parent_property_name: str | None = None,
     ):
         # component can have keys : type, description, properties, required, title, allOf, anyOf, oneOf§
         logging.info(f" OpenAPi parser : Processing properties for class {class_id} , component {component}")
@@ -205,7 +207,9 @@ class OpenApiToRules(Step):
             return name.replace(".", "_")
 
     def remove_underscores_and_capitalize(self, input_string: str):
-        """Remove underscores and capitalize each word in the string , the convertion is done to improve complienc with DMS naming conventions"""
+        """Remove underscores and capitalize each word in the string ,
+        the convertion is done to improve complienc with DMS naming conventions"""
+
         if "_" in input_string:
             words = input_string.split("_")  # Split the string by underscores
             result = "".join([word.capitalize() for word in words])  # Capitalize each word
@@ -232,7 +236,7 @@ class ArbitraryJsonYamlToRules(Step):
     description = "The step extracts schema from arbitrary json file and generates NEAT transformation rules object."
     category = CATEGORY
     version = "0.1.0-alpha"
-    configurables = [
+    configurables: ClassVar[list[Configurable]] = [
         Configurable(
             name="file_path",
             value="workflows/openapi_to_rules/data/data.json",
@@ -252,7 +256,8 @@ class ArbitraryJsonYamlToRules(Step):
         rules = self.dict_to_rules(openapi_file_path)
         report = f" Generated Rules and source data model from json/yaml   \
         <p> Processed {self.processed_classes_counter} classes and {self.processed_properies_counter} properties. </p> \
-        <p> Failed to process {self.failed_classes_counter} classes and {self.failed_properties_counter} properties. </p>"
+        <p> Failed to process {self.failed_classes_counter} classes \
+        and {self.failed_properties_counter} properties. </p>"
         report_obj = {
             "processed_classes_counter": self.processed_classes_counter,
             "processed_properies_counter": self.processed_properies_counter,
@@ -292,7 +297,7 @@ class ArbitraryJsonYamlToRules(Step):
 
         return rules
 
-    def add_class(self, class_name: str, description: str = None, parent_class_name: str = None):
+    def add_class(self, class_name: str, description: str | None = None, parent_class_name: str | None = None):
         if class_name in self.classes:
             return
         class_ = Class(
@@ -308,7 +313,7 @@ class ArbitraryJsonYamlToRules(Step):
         self.processed_classes_counter += 1
         return
 
-    def add_property(self, class_name: str, property_name: str, property_type: str, description: str = None):
+    def add_property(self, class_name: str, property_name: str, property_type: str, description: str | None = None):
         if class_name + property_name in self.properties:
             return
         prop = Property(
@@ -357,7 +362,6 @@ class ArbitraryJsonYamlToRules(Step):
             elif isinstance(data, str):
                 data_type = "string"
             else:
-                # logging.error(f" Unknown data type {type(data)}")
                 data_type = "string"
             if grand_parent_property_name is None:
                 logging.error(" grand_parent_property_name is None")
@@ -388,7 +392,8 @@ class ArbitraryJsonYamlToRules(Step):
             return name.replace(".", "_")
 
     def remove_underscores_and_capitalize(self, input_string: str):
-        """Remove underscores and capitalize each word in the string , the convertion is done to improve complienc with DMS naming conventions"""
+        """Remove underscores and capitalize each word in the string , the convertion is done
+        to improve complienc with DMS naming conventions"""
         if "_" in input_string:
             words = input_string.split("_")  # Split the string by underscores
             result = "".join([word.capitalize() for word in words])  # Capitalize each word

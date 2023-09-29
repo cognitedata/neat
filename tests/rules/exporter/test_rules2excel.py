@@ -1,4 +1,3 @@
-
 from cognite.neat.rules.exporter.rules2excel import RulesToExcel
 
 

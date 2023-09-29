@@ -21,6 +21,7 @@ Changes are grouped as follows:
 - Added rules2excel rules exporter. Now users can export rules from TransformationRules object to excel file.
 - Added rules generator step from arbitrary object (must be in json or yaml formats)
 - Added eperimental rules parser from OpenApi/Swagger specification. Rules generates based on schema part of OpenApi specification.
+- Added version , source and docs_urs metadata to Steps class.
 
 ## [0.25.8] - 20-09-23
 

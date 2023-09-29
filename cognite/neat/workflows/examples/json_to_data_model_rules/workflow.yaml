@@ -64,7 +64,7 @@ steps:
         pos_y: 570
 -   configs:
         db_server_api_root_url: ''
-        disk_store_dir: source-graph-store
+        disk_store_dir: source-graph-store-json-to-dm
         graph_name: source
         init_procedure: reset
         sparql_query_url: ''
@@ -162,7 +162,7 @@ system_components:
         pos_y: 65
 -   description: null
     id: system_comp_975327
-    label: flights and airports json dump
+    label: List of flights and airports as json dump
     transition_to:
     - system_comp_124730
     - system_comp_859097
