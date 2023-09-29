@@ -32,7 +32,7 @@ class StepMetadata(BaseModel):
 
 
 class StepsRegistry:
-    def __init__(self, data_store_path: str | None = None):
+    def __init__(self, data_store_path: Path | None = None):
         self._step_classes: list[Step] = []
         self.user_steps_path = Path(data_store_path) / "steps"
         self.data_store_path = data_store_path

@@ -9,7 +9,7 @@ from rdflib.term import Node
 from cognite.neat.exceptions import NeatException
 from cognite.neat.graph.stores.graph_store import NeatGraphStore
 from cognite.neat.rules.exporter.rules2dms import DataModel
-from cognite.neat.rules.exporter.rules2pydantic_models import rules_to_pydantic_models
+from cognite.neat.rules.exporter.rules2pydantic_models import add_class_prefix_to_xid, rules_to_pydantic_models
 from cognite.neat.rules.models import TransformationRules
 from cognite.neat.utils.utils import chunker, datetime_utc_now, retry_decorator
 
@@ -17,7 +17,10 @@ Triple: TypeAlias = tuple[Node, Node, Node]
 
 
 def rdf2nodes_and_edges(
-    graph_store: NeatGraphStore, transformation_rules: TransformationRules, stop_on_exception: bool = False
+    graph_store: NeatGraphStore,
+    transformation_rules: TransformationRules,
+    stop_on_exception: bool = False,
+    add_class_prefix: bool = False,
 ) -> tuple[list[NodeApply], list[EdgeApply], list[ErrorDetails]]:
     """Generates DMS nodes and edges from knowledge graph stored as RDF triples
 
@@ -25,6 +28,7 @@ def rdf2nodes_and_edges(
         graph_store: Instance of NeatGraphStore holding RDF graph
         transformation_rules: Transformation rules holding data model definition
         stop_on_exception: Whether to stop execution on exception. Defaults to False.
+        add_class_prefix: Whether to add class name as a prefix to instance external id. Defaults to False.
 
     Returns:
         Tuple holding nodes, edges and exceptions
@@ -57,7 +61,11 @@ def rdf2nodes_and_edges(
                     instance = pydantic_models[class_].from_graph(  # type: ignore[attr-defined]
                         graph_store, transformation_rules, class_instance_id
                     )
-                    nodes.append(instance.to_node(data_model))
+                    if add_class_prefix:
+                        instance.external_id = add_class_prefix_to_xid(
+                            class_name=instance.__class__.__name__, external_id=instance.external_id
+                        )
+                    nodes.append(instance.to_node(data_model, add_class_prefix))
                     edges.extend(instance.to_edge(data_model))
 
                     delta_time = datetime_utc_now() - start_time
@@ -84,14 +92,14 @@ def rdf2nodes_and_edges(
 
 
 def upload_nodes(
-    client: CogniteClient, nodes: list[NodeApply], batch_size: int = 5000, max_retries: int = 1, retry_delay: int = 3
+    client: CogniteClient, nodes: list[NodeApply], batch_size: int = 1000, max_retries: int = 1, retry_delay: int = 3
 ):
     """Uploads nodes to CDF
 
     Args:
         client: Instance of CogniteClient
         nodes: List of nodes to upload to CDF
-        batch_size: Size of batch. Defaults to 5000.
+        batch_size: Size of batch. Defaults to 1000.
         max_retries: Maximum times to retry the upload. Defaults to 1.
         retry_delay: Time delay before retrying the upload. Defaults to 3.
 
