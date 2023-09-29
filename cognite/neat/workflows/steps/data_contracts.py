@@ -90,7 +90,7 @@ class CategorizedRelationships(DataContract):
 
     """
 
-    relationships: dict[str, list[Relationship | RelationshipUpdate]]
+    relationships: dict[str, list[Relationship] | list[RelationshipUpdate]]
 
 
 class Nodes(DataContract):

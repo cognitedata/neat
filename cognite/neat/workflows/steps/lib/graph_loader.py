@@ -160,7 +160,7 @@ class GenerateCDFAssetsFromGraph(Step):
     )
     category = CATEGORY
 
-    def run(
+    def run(  # type: ignore[override]
         self, rules: RulesData, cdf_client: CogniteClient, solution_graph: SolutionGraph
     ) -> (FlowMessage, CategorizedAssets):
         meta_keys = NeatMetadataKeys.load(self.configs)
@@ -335,7 +335,7 @@ class GenerateCDFRelationshipsFromGraph(Step):
 
     def run(  # type: ignore[override]
         self, rules: RulesData, cdf_client: CogniteClient, solution_graph: SolutionGraph
-    ) -> (FlowMessage, CategorizedRelationships):
+    ) -> (FlowMessage, CategorizedRelationships):  # type: ignore[arg-type, syntax]
         # create, categorize and upload relationships
         rdf_relationships = rdf2relationships(solution_graph.graph, rules.rules)
 
@@ -385,7 +385,7 @@ class UploadCDFRelationships(Step):
     description = "This step uploads relationships to CDF"
     category = CATEGORY
 
-    def run(  # type: ignore[override]
+    def run(  # type: ignore[override, syntax]
         self, client: CogniteClient, categorized_relationships: CategorizedRelationships
     ) -> FlowMessage:
         upload_relationships(client, categorized_relationships.relationships, max_retries=2, retry_delay=4)
