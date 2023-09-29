@@ -182,7 +182,6 @@ class NeatGraphStore:
 
     def query(self, query: str) -> Result:
         """Returns the result of the query."""
-        logging.info(f"Contexts: {list(self.graph.store.contexts())}")
         start_time = time.perf_counter()
         result = self.graph.query(query)
         stop_time = time.perf_counter()

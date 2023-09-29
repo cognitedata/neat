@@ -42,6 +42,7 @@ class Step(ABC, Generic[T_Output]):
     source: str = (
         "cognite"  # source of the step , can be source identifier or url , for instance github url for instance.
     )
+    docs_url: str = "https://cognite-neat.readthedocs-hosted.com/en/latest/"  # url to the documentation of the step
 
     def __init__(self, data_store_path: str | None = None):
         self.log: bool = False

@@ -25,6 +25,7 @@ class StepMetadata(BaseModel):
     output: list[str]
     configurables: list[Configurable] = []
     version: str = "1.0.0"  # version of the step. All alpha versions considered as experimental
+    docs_url: str = ""  # url to the extended documentation of the step
     source: str = (
         "cognite"  # source of the step , can be source identifier or url , for instance github url for instance.
     )
@@ -44,7 +45,7 @@ class StepsRegistry:
             if inspect.isclass(step_cls):
                 logging.info(f"Loading NEAT step {name}")
                 self._step_classes.append(step_cls)
-        sys.path.append(str(Path(self.data_store_path) / "workflows"))        
+        sys.path.append(str(Path(self.data_store_path) / "workflows"))
         try:
             if self.user_steps_path:
                 sys.path.append(str(self.user_steps_path))
@@ -58,14 +59,13 @@ class StepsRegistry:
             self.load_custom_step_classes(workflow_steps_path, scope="workflow")
 
     def load_custom_step_classes(self, custom_steps_path: Path, scope: str = "global"):
-        
         for step_module_name in os.listdir(custom_steps_path):
             step_module_path = custom_steps_path / Path(step_module_name)
             if step_module_name.startswith("__") or (
                 step_module_path.is_file() and not step_module_name.endswith(".py")
             ):
                 continue
-            full_module_name = custom_steps_path.name +"."+ step_module_name.replace(".py", "")
+            full_module_name = custom_steps_path.name + "." + step_module_name.replace(".py", "")
             logging.info(f"Loading user defined step module {full_module_name}")
             if full_module_name in sys.modules:
                 logging.info(f"Reloading existing workflow module {full_module_name}")
@@ -176,6 +176,7 @@ class StepsRegistry:
                         configurables=step_cls.configurables,
                         version=step_cls.version,
                         source=step_cls.source,
+                        docs_url=step_cls.docs_url,
                     )
                 )
             except AttributeError as e:

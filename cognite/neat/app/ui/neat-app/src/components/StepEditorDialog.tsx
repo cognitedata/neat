@@ -14,7 +14,7 @@ import React, { useEffect, useState } from "react"
 import { StepMetadata, StepRegistry, WorkflowDefinition, WorkflowStepDefinition, WorkflowSystemComponent } from "types/WorkflowTypes"
 import { getNeatApiRootUrl } from "./Utils"
 import LocalUploader from "./LocalUploader"
-import { Autocomplete, Box, InputLabel, List, ListItem, ListItemText, Typography, darken, lighten, styled } from "@mui/material"
+import { Autocomplete, Box, Container, InputLabel, Link, List, ListItem, ListItemText, Stack, Typography, darken, lighten, styled } from "@mui/material"
 import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined';
 import { Height } from "@mui/icons-material"
 
@@ -286,6 +286,10 @@ return (
               </FormControl>
               {selectedStepTemplate && (
               <Box>
+              <Stack direction="row" spacing={2}>
+                <Typography sx={{marginRight:7}}> Version : {selectedStepTemplate?.version} </Typography>
+                <Link href={selectedStepTemplate?.docs_url} target="_blank"> Extended documentation </Link>
+              </Stack>
               <Typography> Description : {selectedStepTemplate?.description} </Typography>
               <Typography> Input : <ul> {selectedStepTemplate?.input.map((item,i)=> (<li>  {workflowDefinitions?.isStepInputConfigured(selectedStep?.id,item, stepRegistry) && (<CheckCircleOutlineOutlinedIcon sx={{ marginBottom: -0.5 }} color="success"/>) }  {item}</li>)) } </ul> </Typography>
               <Typography> Output : <ul> {selectedStepTemplate?.output.map((item,i)=> (<li> {item} </li>))} </ul> </Typography>

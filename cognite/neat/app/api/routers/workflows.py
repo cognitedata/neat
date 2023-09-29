@@ -159,6 +159,14 @@ def get_context(workflow_name: str):
     return {"context": objects_in_context}
 
 
+@router.get("/api/workflow/context/{workflow_name}/item/{item_name}")
+def get_context_item(workflow_name: str, item_name: str):
+    workflow = neat_app.workflow_manager.get_workflow(workflow_name)
+    context = workflow.get_context()
+
+    return {"item": context[item_name].model_dump()}
+
+
 @router.get("/api/workflow/registered-steps")
 def get_steps():
     steps_registry = neat_app.workflow_manager.get_steps_registry()

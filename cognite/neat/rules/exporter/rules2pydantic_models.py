@@ -456,8 +456,16 @@ def to_node(self, data_model: DataModel) -> NodeApply:
 def to_edge(self, data_model: DataModel) -> list[EdgeApply]:
     """Creates DMS edge from pydantic model."""
     edges: list[EdgeApply] = []
+
+    def is_external_id_valid(external_id: str) -> bool:
+        # should match "^[^\x00]{1,255}$" and not be None or none
+        if external_id == "None" or external_id == "none":
+            return False
+        return bool(re.match(r"^[^\x00]{1,255}$", external_id))
+
     for edge_one_to_many in self.edges_one_to_many:
         edge_type_id = f"{self.__class__.__name__}.{edge_one_to_many}"
+
         edges.extend(
             EdgeApply(
                 space=data_model.space,
@@ -470,6 +478,7 @@ def to_edge(self, data_model: DataModel) -> list[EdgeApply]:
                 ),
             )
             for end_node_id in self.__getattribute__(edge_one_to_many)
+            if is_external_id_valid(end_node_id)
         )
     return edges
 

@@ -312,8 +312,9 @@ class InstancesFromJsonToGraph(Step):
     ):
         if method == "source_object_properties":
             object_id = ""
-            for property_name in id_mapping[object_name]:
-                object_id += property_name + json_object[property_name]
+            if object_name in id_mapping:
+                for property_name in id_mapping[object_name]:
+                    object_id += property_name + json_object[property_name]
         elif method == "hash_of_json_element":
             flat_json_object = {}
             for key, value in json_object.items():
@@ -384,7 +385,9 @@ class InstancesFromJsonToGraph(Step):
                 )
 
         # Iterate through the JSON data and convert it to triples
-        def convert_json_to_triples(data, parent_node, parent_object_id, parent_node_path, property_name=None):
+        def convert_json_to_triples(
+            data: dict, parent_node: URIRef, parent_object_id: str, parent_node_path: str, property_name=None
+        ):
             nonlocal nodes_counter, property_counter
             if isinstance(data, dict):
                 if len(data) == 0:

@@ -317,11 +317,11 @@ class ExcelFromRules(Step):
             label="File path to the generated Excel file",
         ),
     ]
-    
+
     def run(self, rules_data: RulesData) -> FlowMessage:
         full_path = Path(self.data_store_path) / Path(self.configs["output_file_path"])
         rules_exporter = rules2excel.RulesToExcel(rules=rules_data.rules)
         rules_exporter.generate_workbook()
         rules_exporter.save_to_file(full_path)
-        
+
         return FlowMessage(output_text="Generated Excel file from rules")

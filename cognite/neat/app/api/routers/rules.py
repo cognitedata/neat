@@ -2,7 +2,6 @@ import logging
 from pathlib import Path
 
 from fastapi import APIRouter, Response
-from fastapi.responses import JSONResponse
 from rdflib import Namespace
 
 from cognite.neat.app.api.configuration import neat_app
@@ -116,8 +115,8 @@ def post_original_rules(request: dict):
     classes: dict[str:Class] = {}
     for class_, val in request["classes"].items():
         classes[class_] = Class(**val)
-    properties: dict[str:Property] = {}    
-    
+    properties: dict[str:Property] = {}
+
     for prop, val in request["properties"].items():
         val["resource_type_property"] = []
         properties[prop] = Property(**val)
@@ -126,6 +125,8 @@ def post_original_rules(request: dict):
     for prefix, val in request["prefixes"].items():
         prefixes[prefix] = Namespace(val)
 
-    rules = TransformationRules(metadata=metadata, classes=classes, properties=properties, prefixes=prefixes, instances=[])
+    rules = TransformationRules(
+        metadata=metadata, classes=classes, properties=properties, prefixes=prefixes, instances=[]
+    )
 
     return {"status": "ok", "metadata": metadata.description, "classes": len(rules.classes)}

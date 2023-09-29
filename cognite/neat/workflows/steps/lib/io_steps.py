@@ -9,7 +9,13 @@ from cognite.client import CogniteClient
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
-__all__ = ["DownloadFileFromGitHub", "UploadFileToGitHub", "DownloadFileFromCDF", "UploadFileToCDF"]
+__all__ = [
+    "DownloadFileFromGitHub",
+    "UploadFileToGitHub",
+    "DownloadFileFromCDF",
+    "UploadFileToCDF",
+    "DownloadDataFromRestApiToFile",
+]
 
 
 class DownloadFileFromGitHub(Step):
@@ -281,3 +287,124 @@ class UploadFileToCDF(Step):
             full_local_file_path, external_id=self.configs["cdf.external_id"], overwrite=True, data_set_id=dataset_id
         )
         return FlowMessage(output_text=f"File {self.configs['local.file_name']} uploaded to CDF successfully")
+
+
+class DownloadDataFromRestApiToFile(Step):
+    """
+    This step downloads the response from a REST API and saves it to a file.
+    """
+
+    description = "This step downloads the response from a REST API and saves it to a file."
+    category = "Input/Output"
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="api_url",
+            value="",
+            label="API URL",
+        ),
+        Configurable(
+            name="output_file_path",
+            value="workflows/workflow_name/output.json",
+            label="Output File Path. The path must be relative to the data store path.",
+        ),
+        Configurable(
+            name="http_method",
+            value="GET",
+            label="HTTP Method (GET/POST/PUT)",
+            options=["GET", "POST", "PUT"],
+        ),
+        Configurable(
+            name="auth_mode",
+            value="none",
+            label="Authentication Mode (basic/token/none)",
+            options=["basic", "token", "none"],
+        ),
+        Configurable(
+            name="username",
+            value="",
+            label="Username (for basic auth)",
+        ),
+        Configurable(
+            name="password",
+            value="",
+            label="Password (for basic auth)",
+            type="password",
+        ),
+        Configurable(
+            name="token",
+            value="",
+            label="Token (for token auth)",
+            type="password",
+        ),
+        Configurable(
+            name="response_destination",
+            value="file",
+            label="Destination for the response (file/flow_message/both)",
+            options=["file", "flow_message", "both"],
+        ),
+    ]
+
+    def run(self) -> FlowMessage:
+        api_url = self.configs["api_url"]
+        output_file_path = self.data_store_path / Path(self.configs["output_file_path"])
+        http_method = self.configs["http_method"].upper()
+        auth_mode = self.configs["auth_mode"]
+        username = self.configs["username"]
+        password = self.configs["password"]
+        token = self.configs["token"]
+
+        try:
+            headers = {}
+            if auth_mode == "basic":
+                if username and password:
+                    headers["Authorization"] = f'Basic {base64.b64encode(f"{username}:{password}".encode()).decode()}'
+                else:
+                    return FlowMessage(
+                        error_text="Username and password are required for Basic Authentication",
+                        step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
+                    )
+            elif auth_mode == "token":
+                if token:
+                    headers["Authorization"] = f"Bearer {token}"
+                else:
+                    return FlowMessage(
+                        error_text="Token is required for Token Authentication",
+                        step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
+                    )
+
+            if http_method not in ("GET", "POST", "PUT"):
+                return FlowMessage(
+                    error_text="Unsupported HTTP method. Supported methods are GET, POST, and PUT.",
+                    step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
+                )
+
+            if http_method == "GET":
+                response = requests.get(api_url, headers=headers, stream=True)
+            elif http_method == "POST":
+                response = requests.post(api_url, headers=headers, stream=True)
+            elif http_method == "PUT":
+                response = requests.put(api_url, headers=headers, stream=True)
+
+            if response.status_code >= 200 and response.status_code < 300:
+                payload = None
+                if self.configs["response_destination"] in ("flow_message", "both"):
+                    payload = response.json()
+                    with output_file_path.open("wb") as output_file:
+                        output_file.write(response.content)
+                else:
+                    with output_file_path.open("wb") as output_file:
+                        for chunk in response.iter_content(chunk_size=1024):
+                            if chunk:
+                                output_file.write(chunk)
+
+                return FlowMessage(output_text="Response downloaded and saved successfully.", payload=payload)
+            else:
+                return FlowMessage(
+                    error_text=f"Failed to fetch response. Status Code: {response.status_code}",
+                    step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
+                )
+        except Exception as e:
+            return FlowMessage(
+                error_text=f"An error occurred: {e!s}",
+                step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
+            )
