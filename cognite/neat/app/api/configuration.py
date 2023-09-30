@@ -83,7 +83,6 @@ class NeatApp:
 
 def configure_neat_app() -> NeatApp:
     logger = logging.getLogger(__name__)  # temporary logger before config is loaded
-    config_path = Path(os.environ.get("NEAT_CONFIG_PATH", "config.yaml"))
 
     if os.environ.get("NEAT_CDF_PROJECT"):
         logger.info("ENV NEAT_CDF_PROJECT is set, loading config from env.")
@@ -101,7 +100,7 @@ def configure_neat_app() -> NeatApp:
 
     configure_logging(config.log_level, config.log_format)
     logging.info(f" Starting NEAT version {neat.__version__}")
-    logging.debug(f" Config: {config.dict(exclude={'cdf_client': {'client_secret': ...}})}")
+    logging.debug(f" Config: {config.model_dump(exclude={'cdf_client': {'client_secret': ...}})}")
 
     return NeatApp(config)
 
