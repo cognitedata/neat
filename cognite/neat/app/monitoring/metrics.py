@@ -1,4 +1,5 @@
 from collections.abc import Iterable
+from typing import cast
 
 from cognite.client import CogniteClient
 from prometheus_client import REGISTRY, Counter, Gauge, Metric
@@ -22,10 +23,10 @@ class NeatMetricsCollector:
 
         metric_name = f"neat_workflow_{self.sanitize_metric_name(self.name)}_{metric_name}"
         if metric_name in REGISTRY._names_to_collectors:
-            self.metrics[metric_name] = REGISTRY._names_to_collectors[metric_name]
+            self.metrics[metric_name] = cast(Gauge | Counter, REGISTRY._names_to_collectors[metric_name])
             return self.metrics[metric_name]
 
-        metric = None
+        metric: Gauge | Counter | None = None
         if m_type == "gauge":
             metric = Gauge(metric_name, metric_description, metric_labels)
         elif m_type == "counter":
@@ -36,12 +37,14 @@ class NeatMetricsCollector:
             return metric
         return None
 
-    def get(self, metric_name: str, labels: dict[str, str] | None = None) -> Gauge | Counter:
+    def get(self, metric_name: str, labels: dict[str, str] | None = None) -> Gauge | Counter | None:
         """Return metric by name"""
         metric_name = self.sanitize_metric_name(metric_name)
         labels = {} if labels is None else labels
         metric_name = f"neat_workflow_{self.sanitize_metric_name(self.name)}_{metric_name}"
-        return self.metrics.get(metric_name).labels(**labels)
+        if metric_name in self.metrics:
+            return self.metrics[metric_name].labels(**(labels or {}))
+        return None
 
     def report_metric_value(
         self,
@@ -49,16 +52,18 @@ class NeatMetricsCollector:
         metric_description: str = "",
         m_type: str = "gauge",
         labels: dict[str, str] | None = None,
-    ) -> Gauge | Counter:
+    ) -> Gauge | Counter | None:
         self.sanitize_metric_name(metric_name)
-        metric = self.register_metric(metric_name, metric_description, m_type, [k for k, v in labels.items()])
-        return metric.labels(**labels)
+        metric = self.register_metric(metric_name, metric_description, m_type, [k for k, v in (labels or {}).items()])
+        if metric:
+            return metric.labels(**(labels or {}))
+        return None
 
     def sanitize_metric_name(self, metric_name: str) -> str:
         return metric_name.replace("-", "_").replace(" ", "_").replace(".", "_").replace(":", "_").lower()
 
     def collect(self) -> Iterable[Metric]:
-        pass
+        return cast(Iterable[Metric], self.metrics.values())
 
-    def report_to_cdf():
+    def report_to_cdf(self):
         pass
