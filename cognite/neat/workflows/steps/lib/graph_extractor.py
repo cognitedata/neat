@@ -113,11 +113,11 @@ class InstancesFromGraphCaptureSpreadsheetToGraph(Step):
             data_capture_sheet_path, transformation_rule=transformation_rules.rules
         )
 
-        graph_name = self.configs["graph_name"]
-        if graph_name == "solution":
-            graph_store = self.flow_context["SolutionGraph"]
+        if self.configs["graph_name"] == "solution":
+            # Todo Anders: Why is the graph fetched from context when it is passed as an argument?
+            graph_store = cast(SourceGraph | SolutionGraph, self.flow_context["SolutionGraph"])
         else:
-            graph_store = self.flow_context["SourceGraph"]
+            graph_store = cast(SourceGraph | SolutionGraph, self.flow_context["SourceGraph"])
 
         add_triples(graph_store.graph, triples)
         return FlowMessage(output_text="Graph capture sheet processed")

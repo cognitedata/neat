@@ -176,6 +176,8 @@ class OntologyFromRules(Step):
     ]
 
     def run(self, transformation_rules: RulesData) -> FlowMessage:  # type: ignore[override, syntax]
+        if self.configs is None:
+            raise StepNotInitialized(type(self).__name__)
         # ontology file
         default_name = (
             f"{transformation_rules.rules.metadata.prefix}-"
