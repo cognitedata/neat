@@ -10,13 +10,18 @@ def _find_circular_reference_path(
     asset: dict[str, Any], assets: dict[str, dict[str, Any]], max_hierarchy_depth: int = 10000
 ) -> list:
     original_external_id = asset.get("external_id", "")
-    circle = [original_external_id]
-    ref = assets.get(asset.get("parent_external_id"), {})
+    circle: list[str] = [original_external_id]
+    parent_external_id = asset.get("parent_external_id")
+    if isinstance(parent_external_id, str):
+        ref = assets.get(parent_external_id)
+    else:
+        ref = None
 
     hop = 0
     while ref is not None and hop < max_hierarchy_depth:
         hop += 1
-        circle.append(ref.get("external_id"))
+        if external_id := ref.get("external_id"):
+            circle.append(external_id)
         if len(circle) != len(set(circle)):
             msg = (
                 f"Found circular reference in asset hierarchy which starts with "
@@ -24,8 +29,10 @@ def _find_circular_reference_path(
             )
             logging.error(msg)
             return circle
-
-        ref = assets.get(ref.get("parent_external_id"))
+        if parent_external_id := ref.get("parent_external_id"):
+            ref = assets.get(parent_external_id)
+        else:
+            ref = None
 
     if hop >= max_hierarchy_depth:
         msg = (
@@ -57,7 +64,8 @@ def validate_asset_hierarchy(assets: dict[str, dict[str, Any]]) -> tuple[list[st
                 f"Found orphan asset {asset.get('external_id')} with parent {parent_external_id} which does not exist."
             )
             logging.error(msg)
-            orphan_assets.append(asset.get("external_id"))
+            if external_id := asset.get("external_id"):
+                orphan_assets.append(external_id)
         circular_reference_path = _find_circular_reference_path(asset, assets)
         if not len(circular_reference_path):
             continue
