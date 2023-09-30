@@ -278,6 +278,10 @@ def test_get_datatype_properties(
     } in content["datatype_properties"]
 
 
+@pytest.mark.skip(
+    "This test is dependent on the data in the graph, thus it is dependens "
+    "on test execution in a specific order. This needs to be fixed before it can be added back in."
+)
 @pytest.mark.parametrize("workflow_name", ["graph_to_asset_hierarchy"])
 def test_object_properties(
     workflow_name: str,
