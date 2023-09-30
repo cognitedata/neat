@@ -167,7 +167,7 @@ class StepsRegistry:
                         output_data.append(return_annotation.__name__)
                 steps.append(
                     StepMetadata(
-                        name=type(step_cls).__name__,
+                        name=step_cls.__name__,
                         scope=step_cls.scope,
                         input=input_data,
                         description=step_cls.description,
