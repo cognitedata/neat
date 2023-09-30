@@ -3,7 +3,7 @@ import logging
 import os
 from enum import StrEnum
 from pathlib import Path
-from typing import Literal, Self
+from typing import Literal, Self, cast
 
 import yaml
 from pydantic import BaseModel, Field
@@ -38,7 +38,7 @@ class WorkflowsStoreType(StrEnum):
 
 
 class Config(BaseModel):
-    workflows_store_type: RulesStoreType = WorkflowsStoreType.FILE
+    workflows_store_type: WorkflowsStoreType = WorkflowsStoreType.FILE
     data_store_path: Path = Field(default_factory=lambda: Path.cwd() / "data")
 
     workflow_downloader_filter: list[str] | None = Field(
@@ -97,15 +97,17 @@ class Config(BaseModel):
             max_workers=int(os.environ.get("NEAT_CDF_CLIENT_MAX_WORKERS", "3")),
         )
 
-        if workflow_downloader_filter := os.environ.get("NEAT_WORKFLOW_DOWNLOADER_FILTER", None):
-            workflow_downloader_filter = workflow_downloader_filter.split(",")
+        if workflow_downloader_filter_value := os.environ.get("NEAT_WORKFLOW_DOWNLOADER_FILTER", None):
+            workflow_downloader_filter = workflow_downloader_filter_value.split(",")
+        else:
+            workflow_downloader_filter = None
 
         return cls(
             cdf_client=cdf_config,
-            workflows_store_type=os.environ.get("NEAT_WORKFLOWS_STORE_TYPE", WorkflowsStoreType.FILE),
-            workflows_store_path=os.environ.get("NEAT_DATA_PATH", "/app/data"),
-            cdf_default_dataset_id=os.environ.get("NEAT_CDF_DEFAULT_DATASET_ID", 6476640149881990),
-            log_level=os.environ.get("NEAT_LOG_LEVEL", "INFO"),
+            workflows_store_type=os.environ.get("NEAT_WORKFLOWS_STORE_TYPE", WorkflowsStoreType.FILE), # type: ignore[arg-type]
+            data_store_path=Path(os.environ.get("NEAT_DATA_PATH", "/app/data")),
+            cdf_default_dataset_id=int(os.environ.get("NEAT_CDF_DEFAULT_DATASET_ID", 6476640149881990)),
+            log_level=cast(Literal["ERROR", "WARNING", "INFO", "DEBUG"], os.environ.get("NEAT_LOG_LEVEL", "INFO")),
             workflow_downloader_filter=workflow_downloader_filter,
             load_examples=bool(os.environ.get("NEAT_LOAD_EXAMPLES", True)),
         )
