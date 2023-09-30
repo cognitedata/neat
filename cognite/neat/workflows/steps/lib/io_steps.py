@@ -6,6 +6,7 @@ from typing import ClassVar
 import requests
 from cognite.client import CogniteClient
 
+from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
@@ -121,6 +122,8 @@ class UploadFileToGitHub(Step):
     ]
 
     def run(self) -> FlowMessage:  # type: ignore[override, syntax]
+        if self.configs is None:
+            raise StepNotInitialized(type(self).__name__)
         github_filepath = self.configs["github.filepath"]
         github_personal_token = self.configs["github.personal_token"]
         github_owner = self.configs["github.owner"]
@@ -221,6 +224,8 @@ class UploadFileToCDF(Step):
     ]
 
     def run(self, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override, syntax]
+        if self.configs is None:
+            raise StepNotInitialized(type(self).__name__)
         full_local_file_path = (
             Path(self.data_store_path) / Path(self.configs["local.storage_dir"]) / self.configs["local.file_name"]
         )

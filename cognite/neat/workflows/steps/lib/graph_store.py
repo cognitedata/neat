@@ -4,6 +4,7 @@ from typing import ClassVar
 
 from cognite.neat.constants import PREFIXES
 from cognite.neat.graph.stores import NeatGraphStore, RdfStoreType, drop_graph_store
+from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
 from cognite.neat.workflows.steps.step_model import Configurable, Step
@@ -53,6 +54,8 @@ class ConfigureDefaultGraphStores(Step):
     ]
 
     def run(self, rules_data: RulesData) -> FlowMessage | SourceGraph | SolutionGraph:  # type: ignore[override, syntax]
+        if self.configs is None:
+            raise StepNotInitialized(type(self).__name__)
         logging.info("Initializing source graph")
         stores_to_configure = self.configs["stores_to_configure"]
         source_store_dir = self.configs["source_rdf_store.disk_store_dir"]
@@ -118,6 +121,8 @@ class ResetGraphStores(Step):
     category = CATEGORY
 
     def run(self) -> FlowMessage:  # type: ignore[override, syntax]
+        if self.configs is None:
+            raise StepNotInitialized(type(self).__name__)
         source_store_type = self.configs["source_rdf_store.type"]
         solution_store_type = self.configs["solution_rdf_store.type"]
         if source_store_type == RdfStoreType.OXIGRAPH and solution_store_type == RdfStoreType.OXIGRAPH:
@@ -184,6 +189,8 @@ class ConfigureGraphStore(Step):
     ]
 
     def run(self, rules_data: RulesData) -> FlowMessage | SourceGraph | SolutionGraph:  # type: ignore[override, syntax]
+        if self.configs is None:
+            raise StepNotInitialized(type(self).__name__)
         logging.info("Initializing graph")
         store_dir = self.configs["disk_store_dir"]
         store_dir = Path(self.data_store_path) / Path(store_dir) if store_dir else None

@@ -10,6 +10,7 @@ from cognite.neat.rules.exporter.rules2dms import DataModel
 from cognite.neat.rules.exporter.rules2graphql import GraphQLSchema
 from cognite.neat.rules.exporter.rules2ontology import Ontology
 from cognite.neat.utils.utils import generate_exception_report
+from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import CogniteClient, DMSDataModel, RulesData
 from cognite.neat.workflows.steps.step_model import Configurable, Step
@@ -79,7 +80,7 @@ class DeleteDMSDataModel(Step):
     description = "This step deletes DMS Data model and all underlying containers and views."
     category = CATEGORY
 
-    def run(self, data_model: DMSDataModel, cdf_client: CogniteClient) -> FlowMessage:
+    def run(self, data_model: DMSDataModel, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override, syntax]
         data_model.data_model.remove_data_model(cdf_client)
 
         output_text = (
@@ -120,6 +121,8 @@ class GraphQLSchemaFromRules(Step):
     ]
 
     def run(self, transformation_rules: RulesData) -> FlowMessage:  # type: ignore[override, syntax]
+        if self.configs is None:
+            raise StepNotInitialized(type(self).__name__)
         data_model_gql = GraphQLSchema.from_rules(transformation_rules.rules, verbose=True).schema
 
         default_name = (
@@ -239,6 +242,8 @@ class SHACLFromRules(Step):
     ]
 
     def run(self, transformation_rules: RulesData) -> FlowMessage:  # type: ignore[override, syntax]
+        if self.configs is None:
+            raise StepNotInitialized(type(self).__name__)
         # ontology file
         default_name = (
             f"{transformation_rules.rules.metadata.prefix}-"
@@ -280,6 +285,8 @@ class GraphCaptureSpreadsheetFromRules(Step):
     ]
 
     def run(self, rules: RulesData) -> FlowMessage:  # type: ignore[override, syntax]
+        if self.configs is None:
+            raise StepNotInitialized(type(self).__name__)
         logging.info("Generate graph capture sheet")
         sheet_name = self.configs["file_name"]
         auto_identifier_type = self.configs["auto_identifier_type"]

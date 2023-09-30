@@ -63,6 +63,8 @@ class InstancesFromRdfFileToSourceGraph(Step):
     ]
 
     def run(self, rules: RulesData, source_graph: SourceGraph) -> FlowMessage:  # type: ignore[override, syntax]
+        if self.configs is None:
+            raise StepNotInitialized(type(self).__name__)
         if source_graph.graph.rdf_store_type.lower() in ("memory", "oxigraph"):
             if source_file := self.configs["file_path"]:
                 source_graph.graph.import_from_file(
@@ -95,6 +97,8 @@ class InstancesFromGraphCaptureSpreadsheetToGraph(Step):
     ]
 
     def run(self, transformation_rules: RulesData, graph_store: SolutionGraph | SourceGraph) -> FlowMessage:  # type: ignore[override, syntax]
+        if self.configs is None:
+            raise StepNotInitialized(type(self).__name__)
         triggered_flow_message = self.flow_context["StartFlowMessage"]
         if "full_path" in triggered_flow_message.payload:
             data_capture_sheet_path = Path(triggered_flow_message.payload["full_path"])
@@ -138,6 +142,8 @@ class GenerateMockGraph(Step):
     ]
 
     def run(self, transformation_rules: RulesData, graph_store: SolutionGraph | SourceGraph) -> FlowMessage:  # type: ignore[override, syntax]
+        if self.configs is None:
+            raise StepNotInitialized(type(self).__name__)
         logging.info("Initiated generation of mock triples")
         try:
             class_count = json.loads(self.configs["class_count"])
@@ -147,11 +153,11 @@ class GenerateMockGraph(Step):
                 step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
             )
 
-        graph_name = self.configs["graph_name"]
-        if graph_name == "solution":
-            graph_store = self.flow_context["SolutionGraph"]
+        if self.configs["graph_name"] == "solution":
+            # Todo Anders: Why is the graph fetched from context when it is passed as an argument?
+            graph_store = cast(SourceGraph | SolutionGraph, self.flow_context["SolutionGraph"])
         else:
-            graph_store = self.flow_context["SourceGraph"]
+            graph_store = cast(SourceGraph | SolutionGraph, self.flow_context["SourceGraph"])
 
         logging.info(class_count)
         logging.info(transformation_rules.rules.metadata.model_dump())
@@ -161,7 +167,7 @@ class GenerateMockGraph(Step):
             return FlowMessage(error_text=f"Error: {e}", step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
 
         logging.info("Adding mock triples to graph")
-        add_triples(graph_store.graph, triples)
+        add_triples(graph_store.graph, triples)  # type: ignore[arg-type]
         return FlowMessage(output_text=f"Mock graph generated containing total of {len(triples)} triples")
 
 
@@ -180,12 +186,12 @@ class InstancesFromRulesToSolutionGraph(Step):
 
         try:
             for triple in triples:
-                solution_graph.graph.graph.add(triple)
+                solution_graph.graph.graph.add(triple)  # type: ignore[arg-type]
         except Exception as e:
             logging.error("Not able to load instances to source graph")
             raise e
 
-        output_text = f"Loaded {len(triples)} statements defining"
+        output_text += f"Loaded {len(triples)} statements defining"
         output_text += f" {len(instance_ids)} instances"
         return FlowMessage(output_text=output_text)
 
