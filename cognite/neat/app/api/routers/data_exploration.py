@@ -75,10 +75,9 @@ def get_nodes_and_edges(request: NodesAndEdgesRequest):
     logging.info("Querying graph nodes and edges :")
     if "get_nodes_and_edges" in cache_store and request.cache:
         return cache_store["get_nodes_and_edges"]
-    nodes_result = {}
-    edges_result = {}
-    query = ""
-    elapsed_time_sec = 0
+    elapsed_time_sec: float
+    edges_result: dict | list
+    nodes_result: dict | list
     """
     "nodes": [
         {
@@ -190,6 +189,8 @@ def query_graph(request: QueryRequest):
 
 @router.post("/api/execute-rule")
 def execute_rule(request: RuleRequest):
+    if neat_app.workflow_manager is None:
+        return {"error": "NeatApp is not initialized"}
     logging.debug(
         f"Executing rule type: { request.rule_type } rule : {request.rule} , workflow : {request.workflow_name} , "
         f"graph : {request.graph_name}"

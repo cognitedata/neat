@@ -15,7 +15,7 @@ class NeatMetricsCollector:
         metric_description: str = "",
         m_type: str = "gauge",
         metric_labels: list[str] | None = None,
-    ) -> Gauge | Counter:
+    ) -> Gauge | Counter | None:
         """Register metric in prometheus"""
         metric_name = self.sanitize_metric_name(metric_name)
         metric_labels = [] if metric_labels is None else metric_labels
@@ -34,6 +34,7 @@ class NeatMetricsCollector:
         if metric:
             self.metrics[metric_name] = metric
             return metric
+        return None
 
     def get(self, metric_name: str, labels: dict[str, str] | None = None) -> Gauge | Counter:
         """Return metric by name"""
