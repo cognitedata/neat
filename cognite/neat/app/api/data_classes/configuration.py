@@ -84,7 +84,7 @@ class Config(BaseModel):
 
     @classmethod
     def from_env(cls) -> Self:
-        missing = 'Missing'
+        missing = "Missing"
         cdf_config = ServiceCogniteClient(
             project=os.environ.get("NEAT_CDF_PROJECT", missing),
             client_name=os.environ.get("NEAT_CDF_CLIENT_NAME", missing),
@@ -104,7 +104,10 @@ class Config(BaseModel):
 
         return cls(
             cdf_client=cdf_config,
-            workflows_store_type=os.environ.get("NEAT_WORKFLOWS_STORE_TYPE", WorkflowsStoreType.FILE), # type: ignore[arg-type]
+            workflows_store_type=os.environ.get(  # type: ignore[arg-type]
+                "NEAT_WORKFLOWS_STORE_TYPE",
+                WorkflowsStoreType.FILE,
+            ),
             data_store_path=Path(os.environ.get("NEAT_DATA_PATH", "/app/data")),
             cdf_default_dataset_id=int(os.environ.get("NEAT_CDF_DEFAULT_DATASET_ID", 6476640149881990)),
             log_level=cast(Literal["ERROR", "WARNING", "INFO", "DEBUG"], os.environ.get("NEAT_LOG_LEVEL", "INFO")),
