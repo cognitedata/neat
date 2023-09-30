@@ -1,7 +1,7 @@
 from rdflib.query import Result
 
 
-def rdf_result_to_api_response(result: Result):
+def rdf_result_to_api_response(result: Result) -> dict[str, list[dict[str, str]]]:
     response = {"fields": [], "rows": []}
     if result.vars is None:
         result.vars = ["s", "p", "o"]

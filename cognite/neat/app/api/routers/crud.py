@@ -27,7 +27,7 @@ def init_neat_cdf_resources(resource_type: str | None = None):
 
 
 @router.post("/api/file/upload/{workflow_name}/{file_type}/{step_id}/{action}")
-async def file_upload_handler(files: list[UploadFile], workflow_name: str, file_type: str, step_id: str, action: str):
+async def file_upload_handler(files: list[UploadFile], workflow_name: str, file_type: str, step_id: str, action: str) -> dict[str, str]:
     # get directory path
     upload_dir = neat_app.config.rules_store_path
     file_name = ""

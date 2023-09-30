@@ -17,12 +17,8 @@ def get_configs():
 @router.post("/api/configs/global")
 def set_configs(request: Config):
     logging.info(f"Updating global config: {request}")
-    global config
-    global cache_store
-    global neat_app
     config = request
     config.to_yaml(Path(os.environ.get("NEAT_CONFIG_PATH", "config.yaml")))
-    cache_store = {}
     neat_app.stop()
     neat_app.start(config=config)
     return config

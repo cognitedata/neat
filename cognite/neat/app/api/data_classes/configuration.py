@@ -84,14 +84,15 @@ class Config(BaseModel):
 
     @classmethod
     def from_env(cls) -> Self:
+        missing = 'Missing'
         cdf_config = ServiceCogniteClient(
-            project=os.environ.get("NEAT_CDF_PROJECT"),
-            client_name=os.environ.get("NEAT_CDF_CLIENT_NAME"),
-            client_id=os.environ.get("NEAT_CDF_CLIENT_ID"),
-            client_secret=os.environ.get("NEAT_CDF_CLIENT_SECRET"),
-            base_url=os.environ.get("NEAT_CDF_BASE_URL"),
-            token_url=os.environ.get("NEAT_CDF_TOKEN_URL"),
-            scopes=[os.environ.get("NEAT_CDF_SCOPES")],
+            project=os.environ.get("NEAT_CDF_PROJECT", missing),
+            client_name=os.environ.get("NEAT_CDF_CLIENT_NAME", missing),
+            client_id=os.environ.get("NEAT_CDF_CLIENT_ID", missing),
+            client_secret=os.environ.get("NEAT_CDF_CLIENT_SECRET", missing),
+            base_url=os.environ.get("NEAT_CDF_BASE_URL", missing),
+            token_url=os.environ.get("NEAT_CDF_TOKEN_URL", missing),
+            scopes=[os.environ.get("NEAT_CDF_SCOPES", missing)],
             timeout=int(os.environ.get("NEAT_CDF_CLIENT_TIMEOUT", "60")),
             max_workers=int(os.environ.get("NEAT_CDF_CLIENT_MAX_WORKERS", "3")),
         )
