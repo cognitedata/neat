@@ -294,6 +294,7 @@ def test_object_properties(
     content = response.json()
 
     assert response.status_code == 200
+    assert "fields" in content, f"Missing fields got {content}"
     assert content["fields"] == ["property", "value"]
     assert {
         "property": "http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject.description",
