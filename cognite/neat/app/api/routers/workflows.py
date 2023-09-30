@@ -96,12 +96,16 @@ def get_workflow_definition(workflow_name: str):
 
 @router.get("/api/workflow/workflow-src/{workflow_name}/{file_name}")
 def get_workflow_src(workflow_name: str, file_name: str):
+    if neat_app.workflow_manager is None:
+        return {"error": "NeatApp is not initialized"}
     src = neat_app.workflow_manager.get_workflow_src(workflow_name, file_name=file_name)
     return FileResponse(src, media_type="text/plain")
 
 
 @router.post("/api/workflow/workflow-definition/{workflow_name}")
 def update_workflow_definition(workflow_name: str, request: WorkflowDefinition):
+    if neat_app.workflow_manager is None:
+        return {"error": "NeatApp is not initialized"}
     neat_app.workflow_manager.update_workflow(workflow_name, request)
     neat_app.workflow_manager.save_workflow_to_storage(workflow_name)
     return {"result": "ok"}
@@ -109,6 +113,8 @@ def update_workflow_definition(workflow_name: str, request: WorkflowDefinition):
 
 @router.post("/api/workflow/upload-wf-to-cdf/{workflow_name}")
 def upload_workflow_to_cdf(workflow_name: str, request: UploadToCdfRequest):
+    if neat_app.cdf_store is None:
+        return {"error": "NeatApp is not initialized"}
     neat_app.cdf_store.save_workflow_to_cdf(
         workflow_name, changed_by=request.author, comments=request.comments, tag=request.tag
     )
@@ -117,6 +123,8 @@ def upload_workflow_to_cdf(workflow_name: str, request: UploadToCdfRequest):
 
 @router.post("/api/workflow/upload-rules-cdf/{workflow_name}")
 def upload_rules_to_cdf(workflow_name: str, request: UploadToCdfRequest):
+    if neat_app.cdf_store is None:
+        return {"error": "NeatApp is not initialized"}
     file_path = Path(neat_app.config.rules_store_path, request.file_name)
     neat_app.cdf_store.save_resource_to_cdf(
         workflow_name, "neat-wf-rules", file_path, changed_by=request.author, comments=request.comments
@@ -126,12 +134,16 @@ def upload_rules_to_cdf(workflow_name: str, request: UploadToCdfRequest):
 
 @router.post("/api/workflow/download-wf-from-cdf")
 def download_wf_from_cdf(request: DownloadFromCdfRequest):
+    if neat_app.cdf_store is None:
+        return {"error": "NeatApp is not initialized"}
     neat_app.cdf_store.load_workflows_from_cdf(request.file_name, request.version)
     return {"result": "ok"}
 
 
 @router.post("/api/workflow/download-rules-from-cdf")
 def download_rules_to_cdf(request: DownloadFromCdfRequest):
+    if neat_app.cdf_store is None:
+        return {"error": "NeatApp is not initialized"}
     neat_app.cdf_store.load_rules_file_from_cdf(request.file_name, request.version)
     return {"file_name": request.file_name, "hash": request.version}
 
@@ -143,6 +155,8 @@ def migrate_workflow():
 
 @router.get("/api/workflow/pre-cdf-assets/{workflow_name}")
 def get_pre_cdf_assets(workflow_name: str):
+    if neat_app.workflow_manager is None:
+        return {"error": "Workflow Manager is not initialized"}
     workflow = neat_app.workflow_manager.get_workflow(workflow_name)
     if workflow is None:
         return {"assets": []}
@@ -154,9 +168,9 @@ def get_context(workflow_name: str):
     if neat_app.workflow_manager is None:
         return {"error": "Workflow Manager is not initialized"}
     workflow = neat_app.workflow_manager.get_workflow(workflow_name)
+    if workflow is None:
+        return {"error": "Workflow is not initialized"}
     context = workflow.get_context()
-    if context is None:
-        return {"error": "Workflow context is not initialized"}
     objects_in_context = []
     for key, value in context.items():
         objects_in_context.append({"name": key, "type": type(value).__name__})
