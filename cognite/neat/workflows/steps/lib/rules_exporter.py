@@ -10,6 +10,7 @@ from cognite.neat.rules.exporter.rules2dms import DataModel
 from cognite.neat.rules.exporter.rules2graphql import GraphQLSchema
 from cognite.neat.rules.exporter.rules2ontology import Ontology
 from cognite.neat.utils.utils import generate_exception_report
+from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import CogniteClient, DMSDataModel, RulesData
 from cognite.neat.workflows.steps.step_model import Configurable, Step
@@ -35,7 +36,7 @@ class DMSDataModelFromRules(Step):
     description = "This step generates DMS Data model from data model defined in transformation rules."
     category = CATEGORY
 
-    def run(self, transformation_rules: RulesData) -> (FlowMessage, DMSDataModel):
+    def run(self, transformation_rules: RulesData) -> (FlowMessage, DMSDataModel):  # type: ignore[override, syntax]
         data_model = DataModel.from_rules(transformation_rules.rules)
 
         output_text = (
@@ -57,7 +58,7 @@ class UploadDMSDataModel(Step):
     description = "This step uploaded generated DMS Data model."
     category = CATEGORY
 
-    def run(self, data_model: DMSDataModel, cdf_client: CogniteClient) -> FlowMessage:
+    def run(self, data_model: DMSDataModel, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override, syntax]
         data_model.data_model.to_cdf(cdf_client)
 
         output_text = (
@@ -79,7 +80,7 @@ class DeleteDMSDataModel(Step):
     description = "This step deletes DMS Data model and all underlying containers and views."
     category = CATEGORY
 
-    def run(self, data_model: DMSDataModel, cdf_client: CogniteClient) -> FlowMessage:
+    def run(self, data_model: DMSDataModel, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override, syntax]
         data_model.data_model.remove_data_model(cdf_client)
 
         output_text = (
@@ -119,7 +120,9 @@ class GraphQLSchemaFromRules(Step):
         Configurable(name="storage_dir", value="staging", label="Directory to store GraphQL schema file"),
     ]
 
-    def run(self, transformation_rules: RulesData) -> FlowMessage:
+    def run(self, transformation_rules: RulesData) -> FlowMessage:  # type: ignore[override, syntax]
+        if self.configs is None or self.data_store_path is None:
+            raise StepNotInitialized(type(self).__name__)
         data_model_gql = GraphQLSchema.from_rules(transformation_rules.rules, verbose=True).schema
 
         default_name = (
@@ -172,7 +175,9 @@ class OntologyFromRules(Step):
         ),
     ]
 
-    def run(self, transformation_rules: RulesData) -> FlowMessage:
+    def run(self, transformation_rules: RulesData) -> FlowMessage:  # type: ignore[override, syntax]
+        if self.configs is None or self.data_store_path is None:
+            raise StepNotInitialized(type(self).__name__)
         # ontology file
         default_name = (
             f"{transformation_rules.rules.metadata.prefix}-"
@@ -238,7 +243,9 @@ class SHACLFromRules(Step):
         Configurable(name="storage_dir", value="staging", label="Directory to store the SHACL file"),
     ]
 
-    def run(self, transformation_rules: RulesData) -> FlowMessage:
+    def run(self, transformation_rules: RulesData) -> FlowMessage:  # type: ignore[override, syntax]
+        if self.configs is None or self.data_store_path is None:
+            raise StepNotInitialized(type(self).__name__)
         # ontology file
         default_name = (
             f"{transformation_rules.rules.metadata.prefix}-"
@@ -274,16 +281,14 @@ class GraphCaptureSpreadsheetFromRules(Step):
     description = "This step generates data capture spreadsheet from data model defined in rules"
     category = CATEGORY
     configurables: ClassVar[list[Configurable]] = [
-        Configurable(
-            name="file_name",
-            value="graph_capture_sheet.xlsx",
-            label="File name of the data capture sheet",
-        ),
+        Configurable(name="file_name", value="graph_capture_sheet.xlsx", label="File name of the data capture sheet"),
         Configurable(name="auto_identifier_type", value="index-based", label="Type of automatic identifier"),
         Configurable(name="storage_dir", value="staging", label="Directory to store data capture sheets"),
     ]
 
-    def run(self, rules: RulesData) -> FlowMessage:
+    def run(self, rules: RulesData) -> FlowMessage:  # type: ignore[override, syntax]
+        if self.configs is None or self.data_store_path is None:
+            raise StepNotInitialized(type(self).__name__)
         logging.info("Generate graph capture sheet")
         sheet_name = self.configs["file_name"]
         auto_identifier_type = self.configs["auto_identifier_type"]

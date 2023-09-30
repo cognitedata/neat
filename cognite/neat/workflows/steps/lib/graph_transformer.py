@@ -6,9 +6,7 @@ from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
 from cognite.neat.workflows.steps.step_model import Step
 
-__all__ = [
-    "TransformSourceToSolutionGraph",
-]
+__all__ = ["TransformSourceToSolutionGraph"]
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
 
@@ -21,7 +19,7 @@ class TransformSourceToSolutionGraph(Step):
     description = "The step transforms source graph to solution graph"
     category = CATEGORY
 
-    def run(
+    def run(  # type: ignore[override, syntax]
         self,
         transformation_rules: RulesData,
         cdf_client: CogniteClient,

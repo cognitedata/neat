@@ -287,7 +287,7 @@ class NeatGraphStore:
             logging.info(f"Triple: {subj} {pred} {obj}")
 
 
-def drop_graph_store(graph: NeatGraphStore, storage_path: Path, force: bool = False):
+def drop_graph_store(graph: NeatGraphStore | None, storage_path: Path | None, force: bool = False):
     """Drops graph store by flushing in-flight data , releasing locks and completely
     removing all files the storage path.
 

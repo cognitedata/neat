@@ -22,7 +22,7 @@ class RulesData(DataContract):
 
     @property
     def dataset_id(self) -> int:
-        return self.rules.metadata.data_set_id
+        return self.rules.metadata.data_set_id or 0
 
 
 class PathData(DataContract):
@@ -90,7 +90,7 @@ class CategorizedRelationships(DataContract):
 
     """
 
-    relationships: dict[str, list[Relationship | RelationshipUpdate]]
+    relationships: dict[str, list[Relationship] | list[RelationshipUpdate]]
 
 
 class Nodes(DataContract):

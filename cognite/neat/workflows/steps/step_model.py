@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import ClassVar, Generic, TypeVar
+from pathlib import Path
+from typing import ClassVar, TypeVar
 
 from pydantic import BaseModel, ConfigDict
 
@@ -30,7 +31,7 @@ T_Input2 = TypeVar("T_Input2", bound=DataContract)
 T_Output = TypeVar("T_Output", bound=DataContract)
 
 
-class Step(ABC, Generic[T_Output]):
+class Step(ABC):
     description: str = ""
     category: str = "default"
     configurables: ClassVar[list[Configurable]] = []
@@ -39,26 +40,26 @@ class Step(ABC, Generic[T_Output]):
     metrics: NeatMetricsCollector | None = None
     workflow_configs: WorkflowConfigs | None = None
 
-    def __init__(self, data_store_path: str | None = None):
+    def __init__(self, data_store_path: Path | None = None):
         self.log: bool = False
-        self.data_store_path: str = data_store_path
+        self.data_store_path = Path(data_store_path) if data_store_path is not None else None
 
     @property
     def _not_configured_message(self) -> str:
         return f"Step {type(self).__name__} has not been configured."
 
-    def set_metrics(self, metrics: NeatMetricsCollector):
+    def set_metrics(self, metrics: NeatMetricsCollector | None):
         self.metrics = metrics
 
-    def set_workflow_configs(self, configs: WorkflowConfigs):
+    def set_workflow_configs(self, configs: WorkflowConfigs | None):
         self.workflow_configs = configs
 
-    def configure(self, configs: dict[str, str]):
+    def configure(self, configs: dict[str, str] | None):
         self.configs = configs
 
     def set_flow_context(self, context: dict[str, DataContract]):
         self.flow_context = context
 
     @abstractmethod
-    def run(self, *input_data: T_Input) -> T_Output | tuple[FlowMessage, T_Output] | FlowMessage:
+    def run(self, *input_data: DataContract) -> DataContract | tuple[FlowMessage, DataContract] | FlowMessage:
         ...
