@@ -1,6 +1,7 @@
 import logging
 import time
 import traceback
+from typing import Any
 
 import rdflib
 from fastapi import APIRouter
@@ -277,8 +278,8 @@ def get_classes(graph_name: str = "source", workflow_name: str = "default", cach
 
 
 def get_data_from_graph(sparq_query: str, graph_name: str = "source", workflow_name: str = "default"):
-    total_elapsed_time = 0
-    api_result = {"error": ""}
+    total_elapsed_time = 0.0
+    api_result: dict[str, Any] = {"error": ""}
     result = None
 
     try:
