@@ -15,6 +15,10 @@ router = APIRouter()
 
 @router.get("/api/cdf/neat-resources")
 def get_neat_resources(resource_type: str | None = None):
+    if neat_app.cdf_store is None:
+        return {"error": "NeatApp is not initialized"}
+    if resource_type is None:
+        return {"error": "Resource type is not specified"}
     result = neat_app.cdf_store.get_list_of_resources_from_cdf(resource_type=resource_type)
     logging.debug(f"Got {len(result)} resources")
     return {"result": result}
@@ -22,12 +26,21 @@ def get_neat_resources(resource_type: str | None = None):
 
 @router.post("/api/cdf/init-neat-resources")
 def init_neat_cdf_resources(resource_type: str | None = None):
+    if neat_app.cdf_store is None:
+        return {"error": "NeatApp is not initialized"}
     neat_app.cdf_store.init_cdf_resources(resource_type=resource_type)
     return {"result": "ok"}
 
 
 @router.post("/api/file/upload/{workflow_name}/{file_type}/{step_id}/{action}")
-async def file_upload_handler(files: list[UploadFile], workflow_name: str, file_type: str, step_id: str, action: str):
+async def file_upload_handler(
+    files: list[UploadFile], workflow_name: str, file_type: str, step_id: str, action: str
+) -> dict[str, str]:
+    if neat_app.cdf_store is None or neat_app.workflow_manager is None:
+        return {"error": "NeatApp is not initialized"}
+    if neat_app.workflow_manager.data_store_path is None:
+        return {"error": "Workflow Manager is not initialized"}
+
     # get directory path
     upload_dir = neat_app.config.rules_store_path
     file_name = ""
@@ -41,16 +54,19 @@ async def file_upload_handler(files: list[UploadFile], workflow_name: str, file_
             f"Uploading file : {file.filename} , workflow : {workflow_name} , step_id {step_id} , action : {action}"
         )
         # save file to disk
-        full_path = upload_dir / file.filename
-        with full_path.open("wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        file_name = file.filename
-        file_version = get_file_hash(full_path)
+        if file.filename:
+            full_path = upload_dir / file.filename
+            with full_path.open("wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+            file_name = file.filename
+            file_version = get_file_hash(full_path)
         break  # only one file is supported for now
 
     if "update_config" in action and file_type == "rules":
         logging.info("Automatically updating workflow config")
         workflow = neat_app.workflow_manager.get_workflow(workflow_name)
+        if workflow is None:
+            return {"error": f"Workflow {workflow_name} not found"}
         workflow_definition = workflow.get_workflow_definition()
 
         for step in workflow_definition.steps:
@@ -63,6 +79,8 @@ async def file_upload_handler(files: list[UploadFile], workflow_name: str, file_
     if "start_workflow" in action and file_type == "rules":
         logging.info("Starting workflow after file upload")
         workflow = neat_app.workflow_manager.get_workflow(workflow_name)
+        if workflow is None:
+            return {"error": f"Workflow {workflow_name} not found"}
         flow_msg = FlowMessage(
             payload={"file_name": file_name, "hash": file_version, "full_path": full_path, "file_type": file_type}
         )

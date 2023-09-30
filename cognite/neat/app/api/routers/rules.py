@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+from typing import Any
 
 from fastapi import APIRouter
 
@@ -19,8 +20,12 @@ def get_rules(
     workflow_name: str = "default",
     file_name: str | None = None,
     version: str | None = None,
-):
+) -> dict[str, Any]:
+    if neat_app.cdf_store is None or neat_app.workflow_manager is None:
+        return {"error": "NeatApp is not initialized"}
     workflow = neat_app.workflow_manager.get_workflow(workflow_name)
+    if workflow is None:
+        return {"error": f"Workflow {workflow_name} is not found"}
     workflow_defintion = workflow.get_workflow_definition()
 
     if not file_name:
@@ -28,17 +33,19 @@ def get_rules(
             if step.method == "LoadTransformationRules":
                 file_name = step.configs["file_name"]
                 version = step.configs["version"]
-
+                break
+    if not file_name:
+        return {"error": "File name is not provided"}
     path = Path(neat_app.config.rules_store_path, file_name)
     src = "local"
     if url:
-        path = url
+        path = Path(url)
 
     if path.exists() and not version:
         logging.info(f"Loading rules from {path}")
     elif path.exists() and version:
-        hash = get_file_hash(path)
-        if hash != version:
+        hash_ = get_file_hash(path)
+        if hash_ != version:
             neat_app.cdf_store.load_rules_file_from_cdf(file_name, version)
             src = "cdf"
     else:

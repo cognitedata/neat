@@ -1,3 +1,4 @@
+from typing import Any
 from warnings import WarningMessage
 
 from pydantic_core import ErrorDetails, PydanticCustomError
@@ -27,11 +28,7 @@ class NeatException(Exception):
             "msg": self.message,
             "input": None,
             "ctx": dict(
-                type_=self.type_,
-                code=self.code,
-                description=self.description,
-                example=self.example,
-                fix=self.fix,
+                type_=self.type_, code=self.code, description=self.description, example=self.example, fix=self.fix
             ),
         }
 
@@ -116,17 +113,18 @@ def wrangle_warnings(list_of_warnings: list[WarningMessage]) -> list[dict]:
 
 
 def _neat_warning_to_dict(warning: WarningMessage) -> dict:
+    category: Any = warning.category
     return {
-        "type": warning.category.type_,
+        "type": category.type_,
         "loc": (),
         "msg": str(warning.message),
         "input": None,
         "ctx": dict(
-            type_=warning.category.type_,
-            code=warning.category.code,
-            description=warning.category.description,
-            example=warning.category.example,
-            fix=warning.category.fix,
+            type_=category.type_,
+            code=category.code,
+            description=category.description,
+            example=category.example,
+            fix=category.fix,
         ),
     }
 
@@ -137,11 +135,5 @@ def _python_warning_to_dict(warning: WarningMessage) -> dict:
         "loc": (),
         "msg": str(warning.message),
         "input": None,
-        "ctx": dict(
-            type_=warning.category,
-            code=None,
-            description=None,
-            example=None,
-            fix=None,
-        ),
+        "ctx": dict(type_=warning.category, code=None, description=None, example=None, fix=None),
     }

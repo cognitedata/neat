@@ -1,6 +1,7 @@
 import logging
 import time
 import traceback
+from typing import Any, cast
 
 import rdflib
 from fastapi import APIRouter
@@ -17,6 +18,7 @@ from cognite.neat.app.api.utils.data_mapping import rdf_result_to_api_response
 from cognite.neat.app.api.utils.query_templates import query_templates
 from cognite.neat.graph.transformations import query_generator
 from cognite.neat.utils.utils import remove_namespace
+from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
 
 router = APIRouter()
 
@@ -73,10 +75,9 @@ def get_nodes_and_edges(request: NodesAndEdgesRequest):
     logging.info("Querying graph nodes and edges :")
     if "get_nodes_and_edges" in cache_store and request.cache:
         return cache_store["get_nodes_and_edges"]
-    nodes_result = {}
-    edges_result = {}
-    query = ""
-    elapsed_time_sec = 0
+    elapsed_time_sec: float
+    edges_result: dict | list
+    nodes_result: dict | list
     """
     "nodes": [
         {
@@ -188,23 +189,29 @@ def query_graph(request: QueryRequest):
 
 @router.post("/api/execute-rule")
 def execute_rule(request: RuleRequest):
+    if neat_app.workflow_manager is None:
+        return {"error": "NeatApp is not initialized"}
     logging.debug(
         f"Executing rule type: { request.rule_type } rule : {request.rule} , workflow : {request.workflow_name} , "
         f"graph : {request.graph_name}"
     )
     workflow = neat_app.workflow_manager.get_workflow(request.workflow_name)
+    if workflow is None:
+        return {"error": f"Workflow {request.workflow_name} not found"}
 
     api_result = {"error": ""}
     workflow_context = workflow.get_context()
+    if workflow_context is None:
+        return {"error": "Workflow context is not initialized"}
     if request.graph_name == "source":
         if "SourceGraph" in workflow_context:
-            graph = workflow_context["SourceGraph"].graph
+            graph = cast(SourceGraph, workflow_context["SourceGraph"]).graph
         else:
             logging.info("Source graph is empty , please load the graph first")
             api_result["error"] = "source graph is empty , please load the graph first"
     elif request.graph_name == "solution":
         if "SolutionGraph" in workflow_context:
-            graph = workflow_context["SolutionGraph"].graph
+            graph = cast(SolutionGraph, workflow_context["SolutionGraph"]).graph
         else:
             logging.info("Solution graph is empty , please load the graph first")
             api_result["error"] = "solution graph is empty , please load the graph first"
@@ -213,17 +220,18 @@ def execute_rule(request: RuleRequest):
 
     if request.rule_type == "rdfpath":
         start_time = time.perf_counter()
-        sparq_query = query_generator.build_sparql_query(
-            graph, request.rule, prefixes=workflow_context["RulesData"].rules.prefixes
+        rules = cast(RulesData, workflow_context["RulesData"]).rules
+        sparql_query = query_generator.build_sparql_query(
+            graph, request.rule, prefixes=rules.prefixes  # type: ignore[arg-type]
         )
     else:
         logging.error("Unknown rule type")
         return {"error": "Unknown rule type"}
     stop_time = time.perf_counter()
     elapsed_time_sec_1 = stop_time - start_time
-    logging.info(f"Computed query : {sparq_query} in {elapsed_time_sec_1 * 1000} ms")
+    logging.info(f"Computed query : {sparql_query} in {elapsed_time_sec_1 * 1000} ms")
 
-    api_result = get_data_from_graph(sparq_query, request.graph_name, workflow_name=request.workflow_name)
+    api_result = get_data_from_graph(sparql_query, request.graph_name, workflow_name=request.workflow_name)
     api_result["elapsed_time_sec"] += elapsed_time_sec_1
     return api_result
 
@@ -276,26 +284,30 @@ def get_classes(graph_name: str = "source", workflow_name: str = "default", cach
     return api_result
 
 
-def get_data_from_graph(sparq_query: str, graph_name: str = "source", workflow_name: str = "default"):
-    total_elapsed_time = 0
-    api_result = {"error": ""}
+def get_data_from_graph(sparq_query: str, graph_name: str = "source", workflow_name: str = "default") -> dict[str, Any]:
+    if neat_app.workflow_manager is None:
+        return {"error": "NeatApp is not initialized"}
+    total_elapsed_time = 0.0
+    api_result: dict[str, Any] = {"error": ""}
     result = None
 
     try:
         logging.info(f"Preparing query :{sparq_query} ")
         start_time = time.perf_counter()
         workflow = neat_app.workflow_manager.get_workflow(workflow_name)
+        if workflow is None:
+            return {"error": f"Workflow {workflow_name} not found"}
         workflow_context = workflow.get_context()
 
         if graph_name == "source":
             if "SourceGraph" in workflow_context:
-                result = workflow_context["SourceGraph"].graph.query(sparq_query)
+                result = cast(SourceGraph, workflow_context["SourceGraph"]).graph.query(sparq_query)
             else:
                 logging.info("Source graph is empty , please load the graph first")
                 api_result["error"] = "source graph is empty , please load the graph first"
         elif graph_name == "solution":
             if "SolutionGraph" in workflow_context:
-                result = workflow_context["SolutionGraph"].graph.query(sparq_query)
+                result = cast(SolutionGraph, workflow_context["SolutionGraph"]).graph.query(sparq_query)
             else:
                 logging.info("Solution graph is empty , please load the graph first")
                 api_result["error"] = "solution graph is empty , please load the graph first"

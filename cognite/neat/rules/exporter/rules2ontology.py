@@ -1,7 +1,7 @@
 import warnings
 from typing import ClassVar, Self
 
-from pydantic import BaseModel, ConfigDict, FieldValidationInfo, field_validator
+from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator
 from rdflib import DCTERMS, OWL, RDF, RDFS, XSD, BNode, Graph, Literal, Namespace, URIRef
 from rdflib.collection import Collection as GraphCollection
 
@@ -288,7 +288,7 @@ class OWLProperty(OntologyModel):
         return owl_property
 
     @field_validator("type_")
-    def is_multi_type(cls, v, info: FieldValidationInfo):
+    def is_multi_type(cls, v, info: ValidationInfo):
         if len(v) > 1:
             warnings.warn(
                 exceptions.OntologyMultiTypeProperty(
@@ -300,7 +300,7 @@ class OWLProperty(OntologyModel):
         return v
 
     @field_validator("range_")
-    def is_multi_range(cls, v, info: FieldValidationInfo):
+    def is_multi_range(cls, v, info: ValidationInfo):
         if len(v) > 1:
             warnings.warn(
                 exceptions.OntologyMultiRangeProperty(
@@ -312,7 +312,7 @@ class OWLProperty(OntologyModel):
         return v
 
     @field_validator("domain")
-    def is_multi_domain(cls, v, info: FieldValidationInfo):
+    def is_multi_domain(cls, v, info: ValidationInfo):
         if len(v) > 1:
             warnings.warn(
                 exceptions.OntologyMultiDomainProperty(
@@ -324,7 +324,7 @@ class OWLProperty(OntologyModel):
         return v
 
     @field_validator("label")
-    def has_multi_name(cls, v, info: FieldValidationInfo):
+    def has_multi_name(cls, v, info: ValidationInfo):
         if len(v) > 1:
             warnings.warn(
                 exceptions.OntologyMultiLabeledProperty(remove_namespace(info.data["id_"]), v).message,
@@ -334,7 +334,7 @@ class OWLProperty(OntologyModel):
         return v
 
     @field_validator("comment")
-    def has_multi_comment(cls, v, info: FieldValidationInfo):
+    def has_multi_comment(cls, v, info: ValidationInfo):
         if len(v) > 1:
             warnings.warn(
                 exceptions.OntologyMultiDefinitionProperty(remove_namespace(info.data["id_"])).message,
