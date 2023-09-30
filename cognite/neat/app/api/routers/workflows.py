@@ -151,8 +151,12 @@ def get_pre_cdf_assets(workflow_name: str):
 
 @router.get("/api/workflow/context/{workflow_name}")
 def get_context(workflow_name: str):
+    if neat_app.workflow_manager is None:
+        return {"error": "Workflow Manager is not initialized"}
     workflow = neat_app.workflow_manager.get_workflow(workflow_name)
     context = workflow.get_context()
+    if context is None:
+        return {"error": "Workflow context is not initialized"}
     objects_in_context = []
     for key, value in context.items():
         objects_in_context.append({"name": key, "type": type(value).__name__})
@@ -167,11 +171,15 @@ def get_steps():
 
 @router.post("/api/workflow/file/{workflow_name}")
 async def upload_file(file: UploadFile, workflow_name: str):
+    if neat_app.workflow_manager is None or neat_app.workflow_manager.data_store_path is None:
+        return JSONResponse(content={"error": "Workflow Manager is not initialized"}, status_code=400)
     try:
         upload_dir = neat_app.workflow_manager.data_store_path / "workflows" / workflow_name
         # Create a directory to store uploaded files if it doesn't exist
 
         # Define the file path where the uploaded file will be saved
+        if file.filename is None:
+            return JSONResponse(content={"message": "File name is not provided"}, status_code=400)
         file_path = upload_dir / file.filename
 
         # Save the uploaded file to the specified path
@@ -195,6 +203,8 @@ fast_api_depends = Depends(get_body)
 
 @router.post("/api/workflow/{workflow_name}/http_trigger/{step_id}")
 def http_trigger_start_workflow(workflow_name: str, step_id: str, request: Request, body: bytes = fast_api_depends):
+    if neat_app.triggers_manager is None:
+        return JSONResponse(content={"error": "Triggers Manager is not initialized"}, status_code=400)
     return neat_app.triggers_manager.start_workflow_from_http_request(workflow_name, step_id, request, body)
 
 
@@ -202,6 +212,8 @@ def http_trigger_start_workflow(workflow_name: str, step_id: str, request: Reque
 def http_trigger_resume_workflow(
     workflow_name: str, step_id: str, instance_id: str, request: Request, body: bytes = fast_api_depends
 ):
+    if neat_app.triggers_manager is None:
+        return JSONResponse(content={"error": "Triggers Manager is not initialized"}, status_code=400)
     return neat_app.triggers_manager.resume_workflow_from_http_request(
         workflow_name, step_id, instance_id, request, body
     )
