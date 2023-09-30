@@ -20,41 +20,25 @@ class DownloadFileFromGitHub(Step):
     description = "This step fetches and stores the file from private Github repository"
     category = "Input/Output"
     configurables: ClassVar[list[Configurable]] = [
-        Configurable(
-            name="github.filepath",
-            value="",
-            label="File path to the file stored on Github",
-        ),
+        Configurable(name="github.filepath", value="", label="File path to the file stored on Github"),
         Configurable(
             name="github.personal_token",
             value="",
             label="Github Personal Access Token which allows fetching file from private Github repository",
             type="password",
         ),
+        Configurable(name="github.owner", value="", label="Github repository owner, also know as github organization"),
+        Configurable(name="github.repo", value="", label="Github repository from which the file is being fetched"),
         Configurable(
-            name="github.owner",
-            value="",
-            label="Github repository owner, also know as github organization",
+            name="github.branch", value="main", label="Github repository branch from which the file is being fetched"
         ),
         Configurable(
-            name="github.repo",
-            value="",
-            label="Github repository from which the file is being fetched",
-        ),
-        Configurable(
-            name="github.branch",
-            value="main",
-            label="Github repository branch from which the file is being fetched",
-        ),
-        Configurable(
-            name="local.file_name",
-            value="",
-            label="The name of the file under which it will be stored locally",
+            name="local.file_name", value="", label="The name of the file under which it will be stored locally"
         ),
         Configurable(name="local.storage_dir", value="rules/", label="The directory where the file will be stored"),
     ]
 
-    def run(self) -> FlowMessage:
+    def run(self) -> FlowMessage:  # type: ignore[override, syntax]
         github_filepath = self.configs["github.filepath"]
         github_personal_token = self.configs["github.personal_token"]
         github_owner = self.configs["github.owner"]
@@ -115,46 +99,28 @@ class UploadFileToGitHub(Step):
     description = "This step uploads file to private Github repository"
     category = "Input/Output"
     configurables: ClassVar[list[Configurable]] = [
-        Configurable(
-            name="github.filepath",
-            value="",
-            label="File path to the file stored on Github",
-        ),
+        Configurable(name="github.filepath", value="", label="File path to the file stored on Github"),
         Configurable(
             name="github.personal_token",
             value="",
             label="Github Personal Access Token which allows uploading file to private Github repository",
             type="password",
         ),
+        Configurable(name="github.owner", value="", label="Github repository owner, also know as github organization"),
+        Configurable(name="github.repo", value="", label="Github repository the file is being uploaded to"),
         Configurable(
-            name="github.owner",
-            value="",
-            label="Github repository owner, also know as github organization",
-        ),
-        Configurable(
-            name="github.repo",
-            value="",
-            label="Github repository the file is being uploaded to",
-        ),
-        Configurable(
-            name="github.branch",
-            value="main",
-            label="Github repository branch the file is being uploaded to",
+            name="github.branch", value="main", label="Github repository branch the file is being uploaded to"
         ),
         Configurable(
             name="github.commit_message",
             value="New file",
             label="The commit message to be used when uploading the file",
         ),
-        Configurable(
-            name="local.file_name",
-            value="",
-            label="The name of the local file to be uploaded to Github",
-        ),
+        Configurable(name="local.file_name", value="", label="The name of the local file to be uploaded to Github"),
         Configurable(name="local.storage_dir", value="rules/", label="Local directory where the file is stored"),
     ]
 
-    def run(self) -> FlowMessage:
+    def run(self) -> FlowMessage:  # type: ignore[override, syntax]
         github_filepath = self.configs["github.filepath"]
         github_personal_token = self.configs["github.personal_token"]
         github_owner = self.configs["github.owner"]
@@ -172,10 +138,7 @@ class UploadFileToGitHub(Step):
         with full_local_file_path.open("rb") as f:
             file_content = f.read()
 
-        headers = {
-            "Authorization": f"Bearer {github_personal_token}",
-            "Content-Type": "application/json",
-        }
+        headers = {"Authorization": f"Bearer {github_personal_token}", "Content-Type": "application/json"}
 
         # Create a content object
         content = {
@@ -219,11 +182,7 @@ class DownloadFileFromCDF(Step):
     description = "This step fetches and stores file from CDF"
     category = "Input/Output"
     configurables: ClassVar[list[Configurable]] = [
-        Configurable(
-            name="cdf.external_id",
-            value="",
-            label="External ID of the file stored in CDF",
-        ),
+        Configurable(name="cdf.external_id", value="", label="External ID of the file stored in CDF"),
         Configurable(
             name="local.file_name",
             value="",
@@ -232,7 +191,7 @@ class DownloadFileFromCDF(Step):
         Configurable(name="local.storage_dir", value="rules/", label="The directory where the file will be stored"),
     ]
 
-    def run(self, cdf_client: CogniteClient) -> FlowMessage:
+    def run(self, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override, syntax]
         full_local_file_path = (
             Path(self.data_store_path) / Path(self.configs["local.storage_dir"]) / self.configs["local.file_name"]
         )
@@ -241,8 +200,7 @@ class DownloadFileFromCDF(Step):
             return FlowMessage(output_text=f"File {self.configs['local.file_name']} downloaded from CDF successfully")
         else:
             return FlowMessage(
-                error_text="Error downloading file from CDF",
-                step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
+                error_text="Error downloading file from CDF", step_execution_status=StepExecutionStatus.ABORT_AND_FAIL
             )
 
 
@@ -254,25 +212,15 @@ class UploadFileToCDF(Step):
     description = "This step uploads file to CDF"
     category = "Input/Output"
     configurables: ClassVar[list[Configurable]] = [
+        Configurable(name="cdf.external_id", value="", label="Exernal Id for the file to be stored in CDF"),
         Configurable(
-            name="cdf.external_id",
-            value="",
-            label="Exernal Id for the file to be stored in CDF",
+            name="cdf.dataset_id", value="", label="Dataset Id for the file to be stored in CDF. Must be a number"
         ),
-        Configurable(
-            name="cdf.dataset_id",
-            value="",
-            label="Dataset Id for the file to be stored in CDF. Must be a number",
-        ),
-        Configurable(
-            name="local.file_name",
-            value="",
-            label="The name of the local file to be uploaded to CDF",
-        ),
+        Configurable(name="local.file_name", value="", label="The name of the local file to be uploaded to CDF"),
         Configurable(name="local.storage_dir", value="rules/", label="Local directory where the file is stored"),
     ]
 
-    def run(self, cdf_client: CogniteClient) -> FlowMessage:
+    def run(self, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override, syntax]
         full_local_file_path = (
             Path(self.data_store_path) / Path(self.configs["local.storage_dir"]) / self.configs["local.file_name"]
         )

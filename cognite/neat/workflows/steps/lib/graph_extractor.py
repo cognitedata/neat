@@ -3,7 +3,7 @@ import json
 import logging
 import uuid
 from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, cast
 
 from rdflib import RDF, XSD, Literal, Namespace, URIRef
 
@@ -12,6 +12,7 @@ from cognite.neat.graph import extractors
 from cognite.neat.graph.extractors.mocks.graph import generate_triples as generate_mock_triples
 from cognite.neat.rules.exporter.rules2triples import get_instances_as_triples
 from cognite.neat.utils.utils import add_triples
+from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
 from cognite.neat.workflows.steps.step_model import Configurable, Step
@@ -61,7 +62,7 @@ class InstancesFromRdfFileToSourceGraph(Step):
         ),
     ]
 
-    def run(self, rules: RulesData, source_graph: SourceGraph) -> FlowMessage:
+    def run(self, rules: RulesData, source_graph: SourceGraph) -> FlowMessage:  # type: ignore[override, syntax]
         if source_graph.graph.rdf_store_type.lower() in ("memory", "oxigraph"):
             if source_file := self.configs["file_path"]:
                 source_graph.graph.import_from_file(
@@ -86,25 +87,14 @@ class InstancesFromGraphCaptureSpreadsheetToGraph(Step):
     description = "This step extracts instances from graph capture spreadsheet and loads them into solution graph"
     category = CATEGORY
     configurables: ClassVar[list[Configurable]] = [
-        Configurable(
-            name="file_name",
-            value="graph_capture_sheet.xlsx",
-            label="File name of the data capture sheet",
-        ),
+        Configurable(name="file_name", value="graph_capture_sheet.xlsx", label="File name of the data capture sheet"),
         Configurable(name="storage_dir", value="staging", label="Directory to store data capture sheets"),
         Configurable(
-            name="graph_name",
-            value="solution",
-            label="The name of target graph.",
-            options=["source", "solution"],
+            name="graph_name", value="solution", label="The name of target graph.", options=["source", "solution"]
         ),
     ]
 
-    def run(
-        self,
-        transformation_rules: RulesData,
-        graph_store: SolutionGraph | SourceGraph,
-    ) -> FlowMessage:
+    def run(self, transformation_rules: RulesData, graph_store: SolutionGraph | SourceGraph) -> FlowMessage:  # type: ignore[override, syntax]
         triggered_flow_message = self.flow_context["StartFlowMessage"]
         if "full_path" in triggered_flow_message.payload:
             data_capture_sheet_path = Path(triggered_flow_message.payload["full_path"])
@@ -143,18 +133,11 @@ class GenerateMockGraph(Step):
             label="Target number of instances for each class",
         ),
         Configurable(
-            name="graph_name",
-            value="solution",
-            label="The name of target graph.",
-            options=["source", "solution"],
+            name="graph_name", value="solution", label="The name of target graph.", options=["source", "solution"]
         ),
     ]
 
-    def run(
-        self,
-        transformation_rules: RulesData,
-        graph_store: SolutionGraph | SourceGraph,
-    ) -> FlowMessage:
+    def run(self, transformation_rules: RulesData, graph_store: SolutionGraph | SourceGraph) -> FlowMessage:  # type: ignore[override, syntax]
         logging.info("Initiated generation of mock triples")
         try:
             class_count = json.loads(self.configs["class_count"])
@@ -190,7 +173,7 @@ class InstancesFromRulesToSolutionGraph(Step):
     description = "This step extracts instances from rules file and loads them into solution graph."
     category = CATEGORY
 
-    def run(self, transformation_rules: RulesData, solution_graph: SolutionGraph) -> FlowMessage:
+    def run(self, transformation_rules: RulesData, solution_graph: SolutionGraph) -> FlowMessage:  # type: ignore[override, syntax]
         triples = get_instances_as_triples(transformation_rules.rules)
         instance_ids = {triple[0] for triple in triples}
         output_text = f"Extracted {len(instance_ids)} instances out of"
@@ -215,7 +198,7 @@ class DataModelFromRulesToSourceGraph(Step):
     description = "This step extracts data model from rules file and loads it into source graph."
     category = CATEGORY
 
-    def run(self, transformation_rules: RulesData, source_graph: SourceGraph) -> FlowMessage:
+    def run(self, transformation_rules: RulesData, source_graph: SourceGraph) -> FlowMessage:  # type: ignore[override, syntax]
         ns = PREFIXES["neat"]
         clases = transformation_rules.rules.classes
         properties = transformation_rules.rules.properties
@@ -226,7 +209,7 @@ class DataModelFromRulesToSourceGraph(Step):
             source_graph.graph.graph.add((rdf_instance_id, RDF.type, URIRef(ns + class_def.class_id)))
             if class_def.parent_class:
                 source_graph.graph.graph.add(
-                    (rdf_instance_id, URIRef(ns + "hasParent"), URIRef(ns + "_" + class_def.parent_class))
+                    (rdf_instance_id, URIRef(ns + "hasParent"), URIRef(ns + "_" + cast(str, class_def.parent_class)))
                 )
             counter += 1
 
@@ -254,15 +237,10 @@ class InstancesFromJsonToGraph(Step):
     category = CATEGORY
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
-            name="file_name",
-            value="data_dump.json",
-            label="Full path to the file containing data dump in JSON format",
+            name="file_name", value="data_dump.json", label="Full path to the file containing data dump in JSON format"
         ),
         Configurable(
-            name="graph_name",
-            value="solution",
-            label="The name of target graph.",
-            options=["source", "solution"],
+            name="graph_name", value="solution", label="The name of target graph.", options=["source", "solution"]
         ),
         Configurable(
             name="object_id_generation_method",
@@ -294,21 +272,10 @@ class InstancesFromJsonToGraph(Step):
             value="http://purl.org/cognite/neat#",
             label="Namespace to be used for the generated objects.",
         ),
-        Configurable(
-            name="namespace_prefix",
-            value="neat",
-            label="The prefix to be used for the namespace.",
-        ),
+        Configurable(name="namespace_prefix", value="neat", label="The prefix to be used for the namespace."),
     ]
 
-    def get_json_object_id(
-        self,
-        method,
-        object_name: str,
-        json_object: dict,
-        parent_object_id: str | None = None,
-        id_mapping: dict | None = None,
-    ):
+    def get_json_object_id(self, method, object_name: str, json_object: dict, parent_object_id: str, id_mapping: dict):
         if method == "source_object_properties":
             object_id = ""
             for property_name in id_mapping[object_name]:
@@ -333,25 +300,27 @@ class InstancesFromJsonToGraph(Step):
                     "hash_of_json_element", object_name, json_object, parent_object_id, id_mapping
                 )
         else:
-            raise ValueError(f"Unknown object_id_generation_method: {self.configs['object_id_generation_method']}")
+            raise ValueError(
+                f"Unknown object_id_generation_method: {(self.configs or {}).get('object_id_generation_method')}"
+            )
 
         return hashlib.sha256(object_id.encode()).hexdigest()
 
-    def run(
-        self,
-        graph_store: SolutionGraph | SourceGraph,
-    ) -> FlowMessage:
+    def run(self, graph_store: SolutionGraph | SourceGraph) -> FlowMessage:  # type: ignore[override, syntax]
+        if self.configs is None:
+            raise StepNotInitialized(type(self).__name__)
+
         ns = PREFIXES["neat"]
         if Namespace(self.configs["namespace_prefix"]) != ns:
             ns = Namespace(self.configs["namespace"])
             graph_store.graph.graph.bind(self.configs["namespace_prefix"], ns)
 
         # self.graph.bind
-        graph_name = self.configs["graph_name"]
-        if graph_name == "solution":
-            graph_store = self.flow_context["SolutionGraph"]
+        if self.configs["graph_name"] == "solution":
+            # Todo Anders: Why is the graph fetched from context when it is passed as an argument?
+            graph_store = cast(SourceGraph | SolutionGraph, self.flow_context["SolutionGraph"])
         else:
-            graph_store = self.flow_context["SourceGraph"]
+            graph_store = cast(SourceGraph | SolutionGraph, self.flow_context["SourceGraph"])
 
         full_path = Path(self.data_store_path) / Path(self.configs["file_name"])
         logging.info(f"Loading data dump from {full_path}")
@@ -361,8 +330,8 @@ class InstancesFromJsonToGraph(Step):
         graph = graph_store.graph.graph
         nodes_counter = 0
         property_counter = 0
-        labels_mapping: dict = None
-        object_id_mapping: dict = None
+        labels_mapping: dict | None = None
+        object_id_mapping: dict | None = None
         if self.configs["json_object_labels_mapping"]:
             labels_mapping = {}
             for label_mapping in self.configs["json_object_labels_mapping"].split(","):

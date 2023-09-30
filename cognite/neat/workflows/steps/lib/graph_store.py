@@ -49,14 +49,10 @@ class ConfigureDefaultGraphStores(Step):
             label="Defines which stores to configure",
             options=["all", "source", "solution"],
         ),
-        Configurable(
-            name="solution_rdf_store.api_root_url",
-            value="",
-            label="Root url for graphdb or sparql endpoint",
-        ),
+        Configurable(name="solution_rdf_store.api_root_url", value="", label="Root url for graphdb or sparql endpoint"),
     ]
 
-    def run(self, rules_data: RulesData) -> FlowMessage | SourceGraph | SolutionGraph:
+    def run(self, rules_data: RulesData) -> FlowMessage | SourceGraph | SolutionGraph:  # type: ignore[override, syntax]
         logging.info("Initializing source graph")
         stores_to_configure = self.configs["stores_to_configure"]
         source_store_dir = self.configs["source_rdf_store.disk_store_dir"]
@@ -121,7 +117,7 @@ class ResetGraphStores(Step):
     description = "This step resets graph stores to their initial state (clears all data)."
     category = CATEGORY
 
-    def run(self) -> FlowMessage:
+    def run(self) -> FlowMessage:  # type: ignore[override, syntax]
         source_store_type = self.configs["source_rdf_store.type"]
         solution_store_type = self.configs["solution_rdf_store.type"]
         if source_store_type == RdfStoreType.OXIGRAPH and solution_store_type == RdfStoreType.OXIGRAPH:
@@ -170,19 +166,13 @@ class ConfigureGraphStore(Step):
             label="Local directory that is used as local graph store.Only for oxigraph, file store types",
         ),
         Configurable(
-            name="sparql_query_url",
-            value="",
-            label="Query url for sparql endpoint.Only for sparql store type",
+            name="sparql_query_url", value="", label="Query url for sparql endpoint.Only for sparql store type"
         ),
         Configurable(
-            name="sparql_update_url",
-            value="",
-            label="Update url for sparql endpoint.Only for sparql store type",
+            name="sparql_update_url", value="", label="Update url for sparql endpoint.Only for sparql store type"
         ),
         Configurable(
-            name="db_server_api_root_url",
-            value="",
-            label="Root url for graphdb or sparql endpoint.Only for graphdb",
+            name="db_server_api_root_url", value="", label="Root url for graphdb or sparql endpoint.Only for graphdb"
         ),
         Configurable(
             name="init_procedure",
@@ -193,7 +183,7 @@ class ConfigureGraphStore(Step):
         ),
     ]
 
-    def run(self, rules_data: RulesData) -> FlowMessage | SourceGraph | SolutionGraph:
+    def run(self, rules_data: RulesData) -> FlowMessage | SourceGraph | SolutionGraph:  # type: ignore[override, syntax]
         logging.info("Initializing graph")
         store_dir = self.configs["disk_store_dir"]
         store_dir = Path(self.data_store_path) / Path(store_dir) if store_dir else None
