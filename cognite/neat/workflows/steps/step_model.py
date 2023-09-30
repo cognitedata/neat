@@ -42,7 +42,7 @@ class Step(ABC):
 
     def __init__(self, data_store_path: Path | None = None):
         self.log: bool = False
-        self.data_store_path: str = data_store_path
+        self.data_store_path = Path(data_store_path) if data_store_path is not None else None
 
     @property
     def _not_configured_message(self) -> str:

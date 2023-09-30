@@ -63,12 +63,12 @@ class InstancesFromRdfFileToSourceGraph(Step):
     ]
 
     def run(self, rules: RulesData, source_graph: SourceGraph) -> FlowMessage:  # type: ignore[override, syntax]
-        if self.configs is None:
+        if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
         if source_graph.graph.rdf_store_type.lower() in ("memory", "oxigraph"):
             if source_file := self.configs["file_path"]:
                 source_graph.graph.import_from_file(
-                    Path(self.data_store_path) / Path(source_file),
+                    self.data_store_path / Path(source_file),
                     mime_type=self.configs["mime_type"],
                     add_base_iri=self.configs["add_base_iri"] == "True",
                 )
@@ -97,7 +97,7 @@ class InstancesFromGraphCaptureSpreadsheetToGraph(Step):
     ]
 
     def run(self, transformation_rules: RulesData, graph_store: SolutionGraph | SourceGraph) -> FlowMessage:  # type: ignore[override, syntax]
-        if self.configs is None:
+        if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
         triggered_flow_message = cast(FlowMessage, self.flow_context["StartFlowMessage"])
         if "full_path" in triggered_flow_message.payload:
@@ -313,7 +313,7 @@ class InstancesFromJsonToGraph(Step):
         return hashlib.sha256(object_id.encode()).hexdigest()
 
     def run(self, graph_store: SolutionGraph | SourceGraph) -> FlowMessage:  # type: ignore[override, syntax]
-        if self.configs is None:
+        if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
 
         ns = PREFIXES["neat"]
@@ -328,7 +328,7 @@ class InstancesFromJsonToGraph(Step):
         else:
             graph_store = cast(SourceGraph | SolutionGraph, self.flow_context["SourceGraph"])
 
-        full_path = Path(self.data_store_path) / Path(self.configs["file_name"])
+        full_path = self.data_store_path / Path(self.configs["file_name"])
         logging.info(f"Loading data dump from {full_path}")
         with full_path.open() as f:
             json_data = json.load(f)

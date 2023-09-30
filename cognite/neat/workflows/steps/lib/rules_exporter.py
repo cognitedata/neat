@@ -121,7 +121,7 @@ class GraphQLSchemaFromRules(Step):
     ]
 
     def run(self, transformation_rules: RulesData) -> FlowMessage:  # type: ignore[override, syntax]
-        if self.configs is None:
+        if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
         data_model_gql = GraphQLSchema.from_rules(transformation_rules.rules, verbose=True).schema
 
@@ -176,7 +176,7 @@ class OntologyFromRules(Step):
     ]
 
     def run(self, transformation_rules: RulesData) -> FlowMessage:  # type: ignore[override, syntax]
-        if self.configs is None:
+        if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
         # ontology file
         default_name = (
@@ -244,7 +244,7 @@ class SHACLFromRules(Step):
     ]
 
     def run(self, transformation_rules: RulesData) -> FlowMessage:  # type: ignore[override, syntax]
-        if self.configs is None:
+        if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
         # ontology file
         default_name = (
@@ -287,7 +287,7 @@ class GraphCaptureSpreadsheetFromRules(Step):
     ]
 
     def run(self, rules: RulesData) -> FlowMessage:  # type: ignore[override, syntax]
-        if self.configs is None:
+        if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
         logging.info("Generate graph capture sheet")
         sheet_name = self.configs["file_name"]

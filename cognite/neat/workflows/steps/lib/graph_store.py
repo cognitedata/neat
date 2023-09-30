@@ -54,7 +54,7 @@ class ConfigureDefaultGraphStores(Step):
     ]
 
     def run(self, rules_data: RulesData) -> FlowMessage | tuple[FlowMessage, SourceGraph] | tuple[FlowMessage, SolutionGraph] | tuple[FlowMessage, SourceGraph, SolutionGraph]:  # type: ignore[override, syntax]
-        if self.configs is None:
+        if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
         logging.info("Initializing source graph")
         stores_to_configure = self.configs["stores_to_configure"]
@@ -82,7 +82,7 @@ class ConfigureDefaultGraphStores(Step):
 
         if stores_to_configure in ["all", "solution"]:
             solution_store_dir = self.configs["solution_rdf_store.disk_store_dir"]
-            solution_store_dir = Path(self.data_store_path) / Path(solution_store_dir) if solution_store_dir else None
+            solution_store_dir = self.data_store_path / Path(solution_store_dir) if solution_store_dir else None
             solution_store_type = self.configs["solution_rdf_store.type"]
 
             if solution_store_type == RdfStoreType.OXIGRAPH and "SolutionGraph" in self.flow_context:
@@ -121,7 +121,7 @@ class ResetGraphStores(Step):
     category = CATEGORY
 
     def run(self) -> FlowMessage:  # type: ignore[override, syntax]
-        if self.configs is None:
+        if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
         source_store_type = self.configs["source_rdf_store.type"]
         solution_store_type = self.configs["solution_rdf_store.type"]
@@ -133,7 +133,7 @@ class ResetGraphStores(Step):
                     else None
                 )
                 solution_store_dir = (
-                    Path(self.data_store_path) / Path(value)
+                    self.data_store_path / Path(value)
                     if (value := self.configs["solution_rdf_store.disk_store_dir"])
                     else None
                 )
@@ -193,10 +193,10 @@ class ConfigureGraphStore(Step):
     ]
 
     def run(self, rules_data: RulesData) -> (FlowMessage, SourceGraph | SolutionGraph):  # type: ignore[override, syntax]
-        if self.configs is None:
+        if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
         logging.info("Initializing graph")
-        store_dir = Path(self.data_store_path) / Path(value) if (value := self.configs["disk_store_dir"]) else None
+        store_dir = self.data_store_path / Path(value) if (value := self.configs["disk_store_dir"]) else None
         store_type = self.configs["store_type"]
         graph_name_mapping = {"source": "SourceGraph", "solution": "SolutionGraph"}
 

@@ -40,7 +40,7 @@ class DownloadFileFromGitHub(Step):
     ]
 
     def run(self) -> FlowMessage:  # type: ignore[override, syntax]
-        if self.configs is None:
+        if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
         github_filepath = self.configs["github.filepath"]
         github_personal_token = self.configs["github.personal_token"]
@@ -49,7 +49,7 @@ class DownloadFileFromGitHub(Step):
         github_branch = self.configs["github.branch"]
         github_file_name = Path(github_filepath).name
         local_file_name = self.configs["local.file_name"] or github_file_name
-        full_local_file_path = Path(self.data_store_path) / Path(self.configs["local.storage_dir"])
+        full_local_file_path = self.data_store_path / Path(self.configs["local.storage_dir"])
 
         if not full_local_file_path.exists():
             full_local_file_path.mkdir(parents=True, exist_ok=True)
@@ -124,7 +124,7 @@ class UploadFileToGitHub(Step):
     ]
 
     def run(self) -> FlowMessage:  # type: ignore[override, syntax]
-        if self.configs is None:
+        if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
         github_filepath = self.configs["github.filepath"]
         github_personal_token = self.configs["github.personal_token"]
@@ -132,7 +132,7 @@ class UploadFileToGitHub(Step):
         github_repo = self.configs["github.repo"]
         github_branch = self.configs["github.branch"]
         local_file_name = self.configs["local.file_name"]
-        full_local_file_path = Path(self.data_store_path) / Path(self.configs["local.storage_dir"]) / local_file_name
+        full_local_file_path = self.data_store_path / Path(self.configs["local.storage_dir"]) / local_file_name
 
         if not full_local_file_path.exists():
             return FlowMessage(
@@ -197,10 +197,10 @@ class DownloadFileFromCDF(Step):
     ]
 
     def run(self, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override, syntax]
-        if self.configs is None:
+        if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
         full_local_file_path = (
-            Path(self.data_store_path) / Path(self.configs["local.storage_dir"]) / self.configs["local.file_name"]
+            self.data_store_path / Path(self.configs["local.storage_dir"]) / self.configs["local.file_name"]
         )
         cdf_client.files.download_to_path(full_local_file_path, external_id=self.configs["cdf.external_id"])
         if full_local_file_path.exists():
@@ -228,13 +228,16 @@ class UploadFileToCDF(Step):
     ]
 
     def run(self, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override, syntax]
-        if self.configs is None:
+        if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
         full_local_file_path = (
-            Path(self.data_store_path) / Path(self.configs["local.storage_dir"]) / self.configs["local.file_name"]
+            self.data_store_path / Path(self.configs["local.storage_dir"]) / self.configs["local.file_name"]
         )
         dataset_id = int(self.configs["cdf.dataset_id"]) if self.configs["cdf.dataset_id"].isdigit() else None
         cdf_client.files.upload(
-            full_local_file_path, external_id=self.configs["cdf.external_id"], overwrite=True, data_set_id=dataset_id
+            str(full_local_file_path),
+            external_id=self.configs["cdf.external_id"],
+            overwrite=True,
+            data_set_id=dataset_id,
         )
         return FlowMessage(output_text=f"File {self.configs['local.file_name']} uploaded to CDF successfully")

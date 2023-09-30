@@ -88,7 +88,7 @@ class GenerateCDFNodesAndEdgesFromGraph(Step):
     ]
 
     def run(self, rules: RulesData, graph: SourceGraph | SolutionGraph) -> (FlowMessage, Nodes, Edges):  # type: ignore[override, syntax]
-        if self.configs is None:
+        if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
         if self.flow_context is None:
             raise StepFlowContextNotInitialized(type(self).__name__)
@@ -112,7 +112,7 @@ class GenerateCDFNodesAndEdgesFromGraph(Step):
 
         if exceptions:
             file_name = f'nodes-and-edges-exceptions_{datetime.now().strftime("%Y%d%m%H%M")}.txt'
-            exceptions_report_dir = Path(self.data_store_path) / "reports"
+            exceptions_report_dir = self.data_store_path / "reports"
             exceptions_report_dir.mkdir(parents=True, exist_ok=True)
             exceptions_report_path = exceptions_report_dir / file_name
 
