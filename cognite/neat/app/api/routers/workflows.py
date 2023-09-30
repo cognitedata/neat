@@ -31,7 +31,7 @@ def start_workflow(request: RunWorkflowRequest):
 @router.get("/api/workflow/stats/{workflow_name}", response_model=WorkflowFullStateReport)
 def get_workflow_stats(
     workflow_name: str,
-) -> WorkflowFullStateReport | None:
+) -> WorkflowFullStateReport | None | dict[str, str]:
     if neat_app.workflow_manager is None:
         return {"error": "NeatApp is not initialized"}
     logging.info("Hit the get_workflow_stats endpoint")
@@ -117,7 +117,7 @@ def get_workflow_src(workflow_name: str, file_name: str):
     if neat_app.workflow_manager is None:
         return {"error": "NeatApp is not initialized"}
     # Todo: Thi sis a bug in the API. The method below does not exist
-    src = neat_app.workflow_manager.get_workflow_src(workflow_name, file_name=file_name) # type: ignore[attr-defined]
+    src = neat_app.workflow_manager.get_workflow_src(workflow_name, file_name=file_name)  # type: ignore[attr-defined]
     return FileResponse(src, media_type="text/plain")
 
 
