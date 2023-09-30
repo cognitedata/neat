@@ -19,6 +19,8 @@ router = APIRouter()
 @router.post("/api/workflow/start")
 def start_workflow(request: RunWorkflowRequest):
     logging.info("Starting workflow endpoint")
+    if neat_app.workflow_manager is None:
+        return {"error": "NeatApp is not initialized"}
     start_status = neat_app.workflow_manager.start_workflow_instance(
         request.name, sync=request.sync, flow_msg=FlowMessage()
     )
@@ -30,6 +32,8 @@ def start_workflow(request: RunWorkflowRequest):
 def get_workflow_stats(
     workflow_name: str,
 ) -> WorkflowFullStateReport | None:
+    if neat_app.workflow_manager is None:
+        return {"error": "NeatApp is not initialized"}
     logging.info("Hit the get_workflow_stats endpoint")
     workflow = neat_app.workflow_manager.get_workflow(workflow_name)
     if workflow is None:
@@ -44,6 +48,8 @@ def get_workflows():
 
 @router.get("/api/workflow/files/{workflow_name}")
 def get_workflow_files(workflow_name: str):
+    if neat_app.workflow_manager is None:
+        return {"error": "NeatApp is not initialized"}
     workflow = neat_app.workflow_manager.get_workflow(workflow_name)
     if workflow is None:
         raise HTTPException(status_code=404, detail="workflow not found")
@@ -52,6 +58,8 @@ def get_workflow_files(workflow_name: str):
 
 @router.post("/api/workflow/package/{workflow_name}")
 def package_workflow(workflow_name: str):
+    if neat_app.cdf_store is None:
+        return {"error": "NeatApp is not initialized"}
     package_file = neat_app.cdf_store.package_workflow(workflow_name)
     hash = get_file_hash(neat_app.config.data_store_path / "workflows" / package_file)
     return {"package": package_file, "hash": hash}
@@ -59,6 +67,8 @@ def package_workflow(workflow_name: str):
 
 @router.post("/api/workflow/create")
 def create_new_workflow(request: WorkflowDefinition):
+    if neat_app.workflow_manager is None:
+        return {"error": "NeatApp is not initialized"}
     new_workflow_definition = neat_app.workflow_manager.create_new_workflow(
         request.name, request.description, "manifest"
     )
@@ -67,6 +77,8 @@ def create_new_workflow(request: WorkflowDefinition):
 
 @router.delete("/api/workflow/{workflow_name}")
 def delete_workflow(workflow_name: str):
+    if neat_app.workflow_manager is None:
+        return {"error": "NeatApp is not initialized"}
     neat_app.workflow_manager.delete_workflow(workflow_name)
     return {"result": "ok"}
 
@@ -78,6 +90,8 @@ def get_list_of_workflow_executions():
 
 @router.get("/api/workflow/detailed-execution-report/{execution_id}")
 def get_detailed_execution(execution_id: str):
+    if neat_app.cdf_store is None:
+        return {"error": "NeatApp is not initialized"}
     return {"report": neat_app.cdf_store.get_detailed_workflow_execution_report_from_cdf(execution_id)}
 
 
@@ -90,7 +104,11 @@ def reload_workflows():
 
 @router.get("/api/workflow/workflow-definition/{workflow_name}")
 def get_workflow_definition(workflow_name: str):
+    if neat_app.workflow_manager is None:
+        return {"error": "NeatApp is not initialized"}
     workflow = neat_app.workflow_manager.get_workflow(workflow_name)
+    if workflow is None:
+        return {"error": "Workflow is not initialized"}
     return {"definition": workflow.get_workflow_definition()}
 
 
@@ -98,7 +116,8 @@ def get_workflow_definition(workflow_name: str):
 def get_workflow_src(workflow_name: str, file_name: str):
     if neat_app.workflow_manager is None:
         return {"error": "NeatApp is not initialized"}
-    src = neat_app.workflow_manager.get_workflow_src(workflow_name, file_name=file_name)
+    # Todo: Thi sis a bug in the API. The method below does not exist
+    src = neat_app.workflow_manager.get_workflow_src(workflow_name, file_name=file_name) # type: ignore[attr-defined]
     return FileResponse(src, media_type="text/plain")
 
 
