@@ -1,6 +1,7 @@
-from typing import ClassVar
+from typing import ClassVar, cast
 
 from cognite.neat.graph.transformations.entity_matcher import simple_entity_matcher
+from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import SolutionGraph, SourceGraph
 from cognite.neat.workflows.steps.step_model import Configurable, Step
@@ -49,27 +50,31 @@ class SimpleGraphEntityMatcher(Step):
         ),
     ]
 
-    def run(self, graph_store: SolutionGraph | SourceGraph) -> FlowMessage:
+    def run(self, graph_store: SolutionGraph | SourceGraph) -> FlowMessage:  # type: ignore[override, syntax]
         # We can't use the graph_store to get the graph as input parameter directly,
         # resolver might resolve the wrong graph
         # if both are present in the flow context
-        graph_name = self.configs["graph_name"]
-        if graph_name == "solution":
-            graph_store = self.flow_context["SolutionGraph"]
+        if self.configs is None:
+            raise StepNotInitialized(type(self).__name__)
+        configs = self.configs
+        if self.configs["graph_name"] == "solution":
+            # Todo Anders: Why is the graph fetched from context when it is passed as an argument?
+            graph_store = cast(SourceGraph | SolutionGraph, self.flow_context["SolutionGraph"])
         else:
-            graph_store = self.flow_context["SourceGraph"]
+            graph_store = cast(SourceGraph | SolutionGraph, self.flow_context["SourceGraph"])
+
         self.graph_store = graph_store.graph
         new_links_counter = simple_entity_matcher(
             graph_store=self.graph_store,
-            source_class=self.configs["source_class"],
-            source_property=self.configs["source_property"],
-            source_value_type=self.configs["source_value_type"],
-            target_class=self.configs["target_class"],
-            target_property=self.configs["target_property"],
-            relationship_name=self.configs["relationship_name"],
-            link_direction=self.configs["link_direction"],
-            matching_method=self.configs["matching_method"],
-            link_namespace=self.configs["link_namespace"],
+            source_class=configs["source_class"],
+            source_property=configs["source_property"],
+            source_value_type=configs["source_value_type"],
+            target_class=configs["target_class"],
+            target_property=configs["target_property"],
+            relationship_name=configs["relationship_name"],
+            link_direction=configs["link_direction"],
+            matching_method=configs["matching_method"],
+            link_namespace=configs["link_namespace"],
         )
         output_text = f"Matcher has created {new_links_counter} links"
         return FlowMessage(output_text=output_text)

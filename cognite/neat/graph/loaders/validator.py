@@ -9,9 +9,9 @@ from typing import Any
 def _find_circular_reference_path(
     asset: dict[str, Any], assets: dict[str, dict[str, Any]], max_hierarchy_depth: int = 10000
 ) -> list:
-    original_external_id = asset.get("external_id")
+    original_external_id = asset.get("external_id", "")
     circle = [original_external_id]
-    ref = assets.get(asset.get("parent_external_id"))
+    ref = assets.get(asset.get("parent_external_id"), {})
 
     hop = 0
     while ref is not None and hop < max_hierarchy_depth:
