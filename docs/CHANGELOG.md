@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.25.9] - 30-09-23
+### Fixed
+* Loading `neat` from environment variables, the variable `NEAT_LOAD_EXAMPLES` would always return `true`
+  even if it was set to `false`. This is now fixed.
+
 ## [0.25.8] - 20-09-23
 
 ### Improved
@@ -27,6 +32,7 @@ Changes are grouped as follows:
 ## [0.25.7] - 14-09-23
 ### Added
 - Drop down menu for selection of property which hold value for nodes in Data Explorer
+-
 ## [0.25.6] - 12-09-23
 ### Fixed
 - Fixed Nodes and Edges step
