@@ -81,7 +81,7 @@ class NeatApp:
         logging.info("NeatApp stopped")
 
 
-def configure_neat_app() -> NeatApp:
+def create_neat_app() -> NeatApp:
     logger = logging.getLogger(__name__)  # temporary logger before config is loaded
 
     if os.environ.get("NEAT_CDF_PROJECT"):
@@ -105,5 +105,5 @@ def configure_neat_app() -> NeatApp:
     return NeatApp(config)
 
 
-neat_app = configure_neat_app()
-cache_store: dict[str, Any] = {}
+NEAT_APP = create_neat_app()
+CACHE_STORE: dict[str, Any] = {}

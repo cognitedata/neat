@@ -6,7 +6,7 @@ from cognite.client import CogniteClient
 from starlette.testclient import TestClient
 
 from cognite import neat
-from cognite.neat.app.api.configuration import neat_app
+from cognite.neat.app.api.configuration import NEAT_APP
 from cognite.neat.app.api.data_classes.rest import (
     DatatypePropertyRequest,
     QueryRequest,
@@ -190,14 +190,14 @@ def test_query(
     fastapi_client: TestClient,
 ):
     # Act
-    workflow = neat_app.workflow_manager.get_workflow(workflow_name)
+    workflow = NEAT_APP.workflow_manager.get_workflow(workflow_name)
     workflow_defintion = workflow.get_workflow_definition()
     for step in workflow_defintion.steps:
         if step.method == "ConfigureGraphStore":
             step.configs["store_type"] = "memory"
 
     workflow.enable_step("step_generate_assets", False)
-    neat_app.workflow_manager.start_workflow_instance(workflow_name, sync=True)
+    NEAT_APP.workflow_manager.start_workflow_instance(workflow_name, sync=True)
 
     response = fastapi_client.post(
         "/api/query",
@@ -222,10 +222,10 @@ def test_execute_rule(
     fastapi_client: TestClient,
 ):
     # Act
-    workflow = neat_app.workflow_manager.get_workflow(workflow_name)
+    workflow = NEAT_APP.workflow_manager.get_workflow(workflow_name)
     if "SourceGraph" not in workflow.get_context():
         workflow.enable_step("step_generate_assets", False)
-        neat_app.workflow_manager.start_workflow_instance(workflow_name, sync=True)
+        NEAT_APP.workflow_manager.start_workflow_instance(workflow_name, sync=True)
 
     response = fastapi_client.post(
         "/api/execute-rule",
@@ -254,10 +254,10 @@ def test_get_datatype_properties(
     fastapi_client: TestClient,
 ):
     # Act
-    workflow = neat_app.workflow_manager.get_workflow(workflow_name)
+    workflow = NEAT_APP.workflow_manager.get_workflow(workflow_name)
     if "SourceGraph" not in workflow.get_context():
         workflow.enable_step("step_generate_assets", False)
-        neat_app.workflow_manager.start_workflow_instance(workflow_name, sync=True)
+        NEAT_APP.workflow_manager.start_workflow_instance(workflow_name, sync=True)
 
     response = fastapi_client.post(
         "/api/get-datatype-properties",
