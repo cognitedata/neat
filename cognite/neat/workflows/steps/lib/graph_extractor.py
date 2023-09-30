@@ -99,7 +99,7 @@ class InstancesFromGraphCaptureSpreadsheetToGraph(Step):
     def run(self, transformation_rules: RulesData, graph_store: SolutionGraph | SourceGraph) -> FlowMessage:  # type: ignore[override, syntax]
         if self.configs is None:
             raise StepNotInitialized(type(self).__name__)
-        triggered_flow_message = self.flow_context["StartFlowMessage"]
+        triggered_flow_message = cast(FlowMessage, self.flow_context["StartFlowMessage"])
         if "full_path" in triggered_flow_message.payload:
             data_capture_sheet_path = Path(triggered_flow_message.payload["full_path"])
         else:
@@ -119,7 +119,7 @@ class InstancesFromGraphCaptureSpreadsheetToGraph(Step):
         else:
             graph_store = cast(SourceGraph | SolutionGraph, self.flow_context["SourceGraph"])
 
-        add_triples(graph_store.graph, triples)
+        add_triples(graph_store.graph, triples)  # type: ignore[arg-type]
         return FlowMessage(output_text="Graph capture sheet processed")
 
 
