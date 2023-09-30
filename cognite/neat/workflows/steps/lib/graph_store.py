@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import ClassVar, cast, Union
+from typing import ClassVar, cast
 
 from cognite.neat.constants import PREFIXES
 from cognite.neat.graph.stores import NeatGraphStore, RdfStoreType, drop_graph_store
@@ -53,7 +53,7 @@ class ConfigureDefaultGraphStores(Step):
         Configurable(name="solution_rdf_store.api_root_url", value="", label="Root url for graphdb or sparql endpoint"),
     ]
 
-    def run(self, rules_data: RulesData) -> FlowMessage | tuple[FlowMessage, SourceGraph] | tuple[FlowMessage, SolutionGraph] | tuple[FlowMessage, SourceGraph, SolutionGraph]:  # type: ignore[override, syntax]
+    def run(self, rules_data: RulesData) -> (FlowMessage, SourceGraph, SolutionGraph):  # type: ignore[override, syntax]
         if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
         logging.info("Initializing source graph")
@@ -192,7 +192,9 @@ class ConfigureGraphStore(Step):
         ),
     ]
 
-    def run(self, rules_data: RulesData) -> (FlowMessage, SourceGraph | SolutionGraph):  # type: ignore[override, syntax]
+    def run(  # type: ignore[override]
+        self, rules_data: RulesData
+    ) -> (FlowMessage, SourceGraph | SolutionGraph):  # type: ignore[syntax]
         if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
         logging.info("Initializing graph")

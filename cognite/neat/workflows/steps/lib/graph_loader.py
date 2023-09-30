@@ -1,7 +1,6 @@
 import logging
 import time
 from datetime import datetime
-from pathlib import Path
 from typing import Any, ClassVar, cast
 
 from cognite.client import CogniteClient
@@ -87,7 +86,9 @@ class GenerateCDFNodesAndEdgesFromGraph(Step):
         ),
     ]
 
-    def run(self, rules: RulesData, graph: SourceGraph | SolutionGraph) -> (FlowMessage, Nodes, Edges):  # type: ignore[override, syntax]
+    def run(  # type: ignore[override, syntax]
+        self, rules: RulesData, graph: SourceGraph | SolutionGraph
+    ) -> (FlowMessage, Nodes, Edges):  # type: ignore[syntax]
         if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
         if self.flow_context is None:

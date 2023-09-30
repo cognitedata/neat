@@ -34,7 +34,7 @@ class StepsRegistry:
             self.user_steps_path: Path | None = Path(data_store_path) / "steps"
         else:
             self.user_steps_path = None
-        self.data_store_path = data_store_path
+        self.data_store_path: str = str(data_store_path)
 
     def load_step_classes(self):
         if self._step_classes:
@@ -104,7 +104,7 @@ class StepsRegistry:
     ) -> DataContract | tuple[FlowMessage, DataContract] | FlowMessage:
         for step_cls in self._step_classes:
             if step_cls.__name__ == step_name:
-                step_obj: Step = step_cls(self.data_store_path)
+                step_obj: Step = step_cls(Path(self.data_store_path))
                 step_obj.configure(step_configs)
                 step_obj.set_flow_context(flow_context)
                 step_obj.set_metrics(metrics)

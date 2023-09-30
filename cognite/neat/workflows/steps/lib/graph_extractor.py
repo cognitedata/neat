@@ -96,7 +96,9 @@ class InstancesFromGraphCaptureSpreadsheetToGraph(Step):
         ),
     ]
 
-    def run(self, transformation_rules: RulesData, graph_store: SolutionGraph | SourceGraph) -> FlowMessage:  # type: ignore[override, syntax]
+    def run(  # type: ignore[override, syntax]
+        self, transformation_rules: RulesData, graph_store: SolutionGraph | SourceGraph
+    ) -> FlowMessage:
         if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
         triggered_flow_message = cast(FlowMessage, self.flow_context["StartFlowMessage"])
@@ -141,7 +143,9 @@ class GenerateMockGraph(Step):
         ),
     ]
 
-    def run(self, transformation_rules: RulesData, graph_store: SolutionGraph | SourceGraph) -> FlowMessage:  # type: ignore[override, syntax]
+    def run(  # type: ignore[override, syntax]
+        self, transformation_rules: RulesData, graph_store: SolutionGraph | SourceGraph
+    ) -> FlowMessage:
         if self.configs is None:
             raise StepNotInitialized(type(self).__name__)
         logging.info("Initiated generation of mock triples")
@@ -179,7 +183,9 @@ class InstancesFromRulesToSolutionGraph(Step):
     description = "This step extracts instances from rules file and loads them into solution graph."
     category = CATEGORY
 
-    def run(self, transformation_rules: RulesData, solution_graph: SolutionGraph) -> FlowMessage:  # type: ignore[override, syntax]
+    def run(  # type: ignore[override, syntax]
+        self, transformation_rules: RulesData, solution_graph: SolutionGraph
+    ) -> FlowMessage:
         triples = get_instances_as_triples(transformation_rules.rules)
         instance_ids = {triple[0] for triple in triples}
         output_text = f"Extracted {len(instance_ids)} instances out of"
@@ -204,7 +210,9 @@ class DataModelFromRulesToSourceGraph(Step):
     description = "This step extracts data model from rules file and loads it into source graph."
     category = CATEGORY
 
-    def run(self, transformation_rules: RulesData, source_graph: SourceGraph) -> FlowMessage:  # type: ignore[override, syntax]
+    def run(  # type: ignore[override, syntax]
+        self, transformation_rules: RulesData, source_graph: SourceGraph
+    ) -> FlowMessage:
         ns = PREFIXES["neat"]
         clases = transformation_rules.rules.classes
         properties = transformation_rules.rules.properties

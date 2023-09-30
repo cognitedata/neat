@@ -1,5 +1,6 @@
-from cognite.neat.rules.models import TransformationRules
 from rdflib.term import Node
+
+from cognite.neat.rules.models import TransformationRules
 
 
 def get_instances_as_triples(transformation_rules: TransformationRules) -> list[tuple[Node, Node, Node]]:
@@ -14,5 +15,8 @@ def get_instances_as_triples(transformation_rules: TransformationRules) -> list[
 
     """
     if transformation_rules.instances:
-        return [(instance.instance, instance.property_, instance.value) for instance in transformation_rules.instances]  # type: ignore[misc]
+        return [
+            (instance.instance, instance.property_, instance.value)  # type: ignore[misc]
+            for instance in transformation_rules.instances
+        ]
     return []
