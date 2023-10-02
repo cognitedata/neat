@@ -4,7 +4,7 @@ from typing import Any
 
 from fastapi import APIRouter
 
-from cognite.neat.app.api.configuration import neat_app
+from cognite.neat.app.api.configuration import NEAT_APP
 from cognite.neat.rules.parser import parse_rules_from_excel_file
 from cognite.neat.workflows.utils import get_file_hash
 
@@ -21,9 +21,9 @@ def get_rules(
     file_name: str | None = None,
     version: str | None = None,
 ) -> dict[str, Any]:
-    if neat_app.cdf_store is None or neat_app.workflow_manager is None:
+    if NEAT_APP.cdf_store is None or NEAT_APP.workflow_manager is None:
         return {"error": "NeatApp is not initialized"}
-    workflow = neat_app.workflow_manager.get_workflow(workflow_name)
+    workflow = NEAT_APP.workflow_manager.get_workflow(workflow_name)
     if workflow is None:
         return {"error": f"Workflow {workflow_name} is not found"}
     workflow_defintion = workflow.get_workflow_definition()
@@ -36,7 +36,7 @@ def get_rules(
                 break
     if not file_name:
         return {"error": "File name is not provided"}
-    path = Path(neat_app.config.rules_store_path, file_name)
+    path = Path(NEAT_APP.config.rules_store_path, file_name)
     src = "local"
     if url:
         path = Path(url)
@@ -46,10 +46,10 @@ def get_rules(
     elif path.exists() and version:
         hash_ = get_file_hash(path)
         if hash_ != version:
-            neat_app.cdf_store.load_rules_file_from_cdf(file_name, version)
+            NEAT_APP.cdf_store.load_rules_file_from_cdf(file_name, version)
             src = "cdf"
     else:
-        neat_app.cdf_store.load_rules_file_from_cdf(file_name, version)
+        NEAT_APP.cdf_store.load_rules_file_from_cdf(file_name, version)
         src = "cdf"
 
     error_text = ""

@@ -7,7 +7,7 @@ import rdflib
 from fastapi import APIRouter
 
 from cognite.neat.app.api.asgi.metrics import counter
-from cognite.neat.app.api.configuration import cache_store, neat_app
+from cognite.neat.app.api.configuration import CACHE_STORE, NEAT_APP
 from cognite.neat.app.api.data_classes.rest import (
     DatatypePropertyRequest,
     NodesAndEdgesRequest,
@@ -32,8 +32,8 @@ def list_queries():
 @router.post("/api/get-datatype-properties")
 def get_datatype_properties(request: DatatypePropertyRequest):
     logging.info("Querying datatype properties ordered by usage:")
-    if "get_datatype_properties" in cache_store and request.cache:
-        return cache_store["get_datatype_properties"]
+    if "get_datatype_properties" in CACHE_STORE and request.cache:
+        return CACHE_STORE["get_datatype_properties"]
     sparql_query: str = (
         "SELECT DISTINCT ?property (count(?o) as ?occurrence ) "
         "WHERE { ?s ?property ?o . FILTER(isLiteral(?o))} "
@@ -66,15 +66,15 @@ def get_datatype_properties(request: DatatypePropertyRequest):
     }
 
     if request.cache:
-        cache_store["get_datatype_properties"] = merged_result
+        CACHE_STORE["get_datatype_properties"] = merged_result
     return merged_result
 
 
 @router.post("/api/get-nodes-and-edges")
 def get_nodes_and_edges(request: NodesAndEdgesRequest):
     logging.info("Querying graph nodes and edges :")
-    if "get_nodes_and_edges" in cache_store and request.cache:
-        return cache_store["get_nodes_and_edges"]
+    if "get_nodes_and_edges" in CACHE_STORE and request.cache:
+        return CACHE_STORE["get_nodes_and_edges"]
     elapsed_time_sec: float
     edges_result: dict | list
     nodes_result: dict | list
@@ -176,7 +176,7 @@ def get_nodes_and_edges(request: NodesAndEdgesRequest):
     }
 
     if request.cache:
-        cache_store["get_nodes_and_edges"] = merged_result
+        CACHE_STORE["get_nodes_and_edges"] = merged_result
     return merged_result
 
 
@@ -189,13 +189,13 @@ def query_graph(request: QueryRequest):
 
 @router.post("/api/execute-rule")
 def execute_rule(request: RuleRequest):
-    if neat_app.workflow_manager is None:
+    if NEAT_APP.workflow_manager is None:
         return {"error": "NeatApp is not initialized"}
     logging.debug(
         f"Executing rule type: { request.rule_type } rule : {request.rule} , workflow : {request.workflow_name} , "
         f"graph : {request.graph_name}"
     )
-    workflow = neat_app.workflow_manager.get_workflow(request.workflow_name)
+    workflow = NEAT_APP.workflow_manager.get_workflow(request.workflow_name)
     if workflow is None:
         return {"error": f"Workflow {request.workflow_name} not found"}
 
@@ -273,19 +273,19 @@ def search(
 def get_classes(graph_name: str = "source", workflow_name: str = "default", cache: bool = True):
     logging.info(f"Querying graph classes from graph name : {graph_name}, cache : {cache}")
     cache_key = f"classes_{graph_name}"
-    if cache_key in cache_store and cache:
-        return cache_store[cache_key]
+    if cache_key in CACHE_STORE and cache:
+        return CACHE_STORE[cache_key]
     query = (
         "SELECT ?class (count(?s) as ?instances ) WHERE { ?s rdf:type ?class . } "
         "group by ?class order by DESC(?instances)"
     )
     api_result = get_data_from_graph(query, graph_name, workflow_name)
-    cache_store["get_classes"] = api_result
+    CACHE_STORE["get_classes"] = api_result
     return api_result
 
 
 def get_data_from_graph(sparq_query: str, graph_name: str = "source", workflow_name: str = "default") -> dict[str, Any]:
-    if neat_app.workflow_manager is None:
+    if NEAT_APP.workflow_manager is None:
         return {"error": "NeatApp is not initialized"}
     total_elapsed_time = 0.0
     api_result: dict[str, Any] = {"error": ""}
@@ -294,7 +294,7 @@ def get_data_from_graph(sparq_query: str, graph_name: str = "source", workflow_n
     try:
         logging.info(f"Preparing query :{sparq_query} ")
         start_time = time.perf_counter()
-        workflow = neat_app.workflow_manager.get_workflow(workflow_name)
+        workflow = NEAT_APP.workflow_manager.get_workflow(workflow_name)
         if workflow is None:
             return {"error": f"Workflow {workflow_name} not found"}
         workflow_context = workflow.get_context()

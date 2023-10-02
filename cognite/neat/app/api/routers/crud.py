@@ -6,7 +6,7 @@ import shutil
 
 from fastapi import APIRouter, UploadFile
 
-from cognite.neat.app.api.configuration import neat_app
+from cognite.neat.app.api.configuration import NEAT_APP
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.utils import get_file_hash
 
@@ -15,20 +15,20 @@ router = APIRouter()
 
 @router.get("/api/cdf/neat-resources")
 def get_neat_resources(resource_type: str | None = None):
-    if neat_app.cdf_store is None:
+    if NEAT_APP.cdf_store is None:
         return {"error": "NeatApp is not initialized"}
     if resource_type is None:
         return {"error": "Resource type is not specified"}
-    result = neat_app.cdf_store.get_list_of_resources_from_cdf(resource_type=resource_type)
+    result = NEAT_APP.cdf_store.get_list_of_resources_from_cdf(resource_type=resource_type)
     logging.debug(f"Got {len(result)} resources")
     return {"result": result}
 
 
 @router.post("/api/cdf/init-neat-resources")
 def init_neat_cdf_resources(resource_type: str | None = None):
-    if neat_app.cdf_store is None:
+    if NEAT_APP.cdf_store is None:
         return {"error": "NeatApp is not initialized"}
-    neat_app.cdf_store.init_cdf_resources(resource_type=resource_type)
+    NEAT_APP.cdf_store.init_cdf_resources(resource_type=resource_type)
     return {"result": "ok"}
 
 
@@ -36,19 +36,19 @@ def init_neat_cdf_resources(resource_type: str | None = None):
 async def file_upload_handler(
     files: list[UploadFile], workflow_name: str, file_type: str, step_id: str, action: str
 ) -> dict[str, str]:
-    if neat_app.cdf_store is None or neat_app.workflow_manager is None:
+    if NEAT_APP.cdf_store is None or NEAT_APP.workflow_manager is None:
         return {"error": "NeatApp is not initialized"}
-    if neat_app.workflow_manager.data_store_path is None:
+    if NEAT_APP.workflow_manager.data_store_path is None:
         return {"error": "Workflow Manager is not initialized"}
 
     # get directory path
-    upload_dir = neat_app.config.rules_store_path
+    upload_dir = NEAT_APP.config.rules_store_path
     file_name = ""
     file_version = ""
     if file_type == "file_from_editor":
-        upload_dir = neat_app.workflow_manager.data_store_path / "workflows" / workflow_name
+        upload_dir = NEAT_APP.workflow_manager.data_store_path / "workflows" / workflow_name
     elif file_type == "workflow":
-        upload_dir = neat_app.workflow_manager.data_store_path / "workflows"
+        upload_dir = NEAT_APP.workflow_manager.data_store_path / "workflows"
     for file in files:
         logging.info(
             f"Uploading file : {file.filename} , workflow : {workflow_name} , step_id {step_id} , action : {action}"
@@ -64,7 +64,7 @@ async def file_upload_handler(
 
     if "update_config" in action and file_type == "rules":
         logging.info("Automatically updating workflow config")
-        workflow = neat_app.workflow_manager.get_workflow(workflow_name)
+        workflow = NEAT_APP.workflow_manager.get_workflow(workflow_name)
         if workflow is None:
             return {"error": f"Workflow {workflow_name} not found"}
         workflow_definition = workflow.get_workflow_definition()
@@ -74,11 +74,11 @@ async def file_upload_handler(
                 step.configs["file_name"] = file_name
                 step.configs["version"] = ""
 
-        neat_app.workflow_manager.save_workflow_to_storage(workflow_name)
+        NEAT_APP.workflow_manager.save_workflow_to_storage(workflow_name)
 
     if "start_workflow" in action and file_type == "rules":
         logging.info("Starting workflow after file upload")
-        workflow = neat_app.workflow_manager.get_workflow(workflow_name)
+        workflow = NEAT_APP.workflow_manager.get_workflow(workflow_name)
         if workflow is None:
             return {"error": f"Workflow {workflow_name} not found"}
         flow_msg = FlowMessage(
@@ -90,6 +90,6 @@ async def file_upload_handler(
 
     if action == "install" and file_type == "workflow":
         logging.info("Installing workflow after file upload")
-        neat_app.cdf_store.extract_workflow_package(file_name)
+        NEAT_APP.cdf_store.extract_workflow_package(file_name)
 
     return {"file_name": file_name, "hash": file_version}

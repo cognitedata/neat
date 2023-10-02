@@ -1,3 +1,8 @@
+import os
+import shutil
+import tempfile
+from pathlib import Path
+
 import pytest
 from rdflib import Namespace
 
@@ -12,6 +17,22 @@ from cognite.neat.rules.models import TransformationRules
 from cognite.neat.rules.parser import RawTables, read_excel_file_to_table_by_name
 from cognite.neat.utils.utils import add_triples
 from tests import config
+
+# Setup config for Neat App
+_TMP_DIR = Path(tempfile.gettempdir()) / "neat" / "data"
+# Cleanup tmp dir
+shutil.rmtree(_TMP_DIR, ignore_errors=True)
+_TMP_DIR.mkdir(parents=True, exist_ok=True)
+os.environ["NEAT_DATA_PATH"] = str(_TMP_DIR)
+os.environ["NEAT_CDF_PROJECT"] = "get-power-grid"
+os.environ["NEAT_CDF_CLIENT_ID"] = "uuid"
+os.environ["NEAT_CDF_CLIENT_SECRET"] = "secret"
+os.environ["NEAT_CDF_CLIENT_NAME"] = "neat-test-service"
+os.environ["NEAT_CDF_BASE_URL"] = "https://bluefield.cognitedata.com"
+os.environ["NEAT_CDF_TOKEN_URL"] = " https://login.microsoftonline.com/uuid4/oauth2/v2.0/token"
+os.environ["NEAT_CDF_SCOPES"] = "https://bluefield.cognitedata.com/.default"
+os.environ["NEAT_CDF_DEFAULT_DATASET_ID"] = "3931920688237191"
+os.environ["NEAT_LOAD_EXAMPLES"] = "1"
 
 
 @pytest.fixture(scope="session")
