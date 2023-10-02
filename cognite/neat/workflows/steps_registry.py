@@ -12,8 +12,9 @@ from pydantic import BaseModel
 import cognite.neat.workflows.steps.lib
 from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
 from cognite.neat.exceptions import InvalidWorkFlowError
+from cognite.neat.workflows._exceptions import ConfigurationNotSet
 from cognite.neat.workflows.model import FlowMessage, WorkflowConfigs
-from cognite.neat.workflows.steps.step_model import Configurable, DataContract, Step, T_Output
+from cognite.neat.workflows.steps.step_model import Configurable, DataContract, Step
 
 
 class StepMetadata(BaseModel):
@@ -33,9 +34,12 @@ class StepMetadata(BaseModel):
 
 class StepsRegistry:
     def __init__(self, data_store_path: Path | None = None):
-        self._step_classes: list[Step] = []
-        self.user_steps_path = Path(data_store_path) / "steps"
-        self.data_store_path = data_store_path
+        self._step_classes: list[type[Step]] = []
+        if data_store_path:
+            self.user_steps_path: Path | None = Path(data_store_path) / "steps"
+        else:
+            self.user_steps_path = None
+        self.data_store_path: str = str(data_store_path)
 
     def load_step_classes(self):
         if self._step_classes:
@@ -54,6 +58,8 @@ class StepsRegistry:
             logging.info(f"No user defined modules provided in {self.user_steps_path}")
 
     def load_workflow_step_classes(self, workflow_name: str):
+        if not self.data_store_path:
+            raise ConfigurationNotSet("data_store_path")
         workflow_steps_path = Path(self.data_store_path) / "workflows" / workflow_name
         if workflow_steps_path.exists():
             self.load_custom_step_classes(workflow_steps_path, scope="workflow")
@@ -102,10 +108,10 @@ class StepsRegistry:
         metrics: NeatMetricsCollector | None = None,
         workflow_configs: WorkflowConfigs | None = None,
         step_configs: dict[str, Any] | None = None,
-    ) -> T_Output | None:
+    ) -> DataContract | tuple[FlowMessage, DataContract] | FlowMessage:
         for step_cls in self._step_classes:
             if step_cls.__name__ == step_name:
-                step_obj: Step = step_cls(self.data_store_path)
+                step_obj: Step = step_cls(Path(self.data_store_path))
                 step_obj.configure(step_configs)
                 step_obj.set_flow_context(flow_context)
                 step_obj.set_metrics(metrics)
@@ -139,8 +145,9 @@ class StepsRegistry:
                 if not is_valid:
                     raise InvalidWorkFlowError(step_name, missing_data)
                 return step_obj.run(*input_data)
+        raise InvalidWorkFlowError(step_name, [])
 
-    def get_list_of_steps(self):
+    def get_list_of_steps(self) -> list[StepMetadata]:
         steps: list[StepMetadata] = []
         for step_cls in self._step_classes:
             try:
@@ -180,6 +187,6 @@ class StepsRegistry:
                     )
                 )
             except AttributeError as e:
-                logging.error(f"Step {step_cls.__name__} does not have a run method.Error: {e}")
+                logging.error(f"Step {type(step_cls).__name__} does not have a run method.Error: {e}")
 
         return steps

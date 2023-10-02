@@ -8,6 +8,7 @@ from prometheus_client import Gauge
 from cognite.neat.rules.parser import parse_rules_from_excel_file
 from cognite.neat.utils.utils import generate_exception_report
 from cognite.neat.workflows import utils
+from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.cdf_store import CdfStore
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.data_contracts import RulesData
@@ -18,7 +19,7 @@ __all__ = ["LoadTransformationRules"]
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
 
 
-class LoadTransformationRules(Step[RulesData]):
+class LoadTransformationRules(Step):
     """
     This step loads transformation rules from the file or remote location
     """
@@ -45,7 +46,9 @@ class LoadTransformationRules(Step[RulesData]):
         Configurable(name="version", value="", label="Optional version of the rules file"),
     ]
 
-    def run(self, cdf_store: CdfStore) -> (FlowMessage, RulesData):  # type: ignore[override]
+    def run(self, cdf_store: CdfStore) -> (FlowMessage, RulesData):  # type: ignore[syntax, override]
+        if self.configs is None or self.data_store_path is None:
+            raise StepNotInitialized(type(self).__name__)
         store = cdf_store
         # rules file
         if self.configs is None:

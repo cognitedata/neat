@@ -1,8 +1,9 @@
 import logging
 import traceback
+from typing import cast
 
 from cognite.client import CogniteClient
-from cognite.client.data_classes import LabelDefinition
+from cognite.client.data_classes import LabelDefinition, LabelDefinitionList
 
 from cognite.neat.rules.exporter.core import get_labels
 from cognite.neat.rules.models import TransformationRules
@@ -50,7 +51,7 @@ def upload_labels(
             LabelDefinition(external_id=label, name=label, data_set_id=transformation_rules.metadata.data_set_id)
             for label in non_existing_labels
         ]
-        res = client.labels.create(labels)
+        res = cast(LabelDefinitionList, client.labels.create(labels))
         logging.debug(f"Created total of {len(res)} new labels in CDF")
     else:
         logging.debug("No new labels created in CDF")

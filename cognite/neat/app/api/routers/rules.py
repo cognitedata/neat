@@ -1,10 +1,11 @@
 import logging
 from pathlib import Path
+from typing import Any
 
 from fastapi import APIRouter, Response
 from rdflib import Namespace
 
-from cognite.neat.app.api.configuration import neat_app
+from cognite.neat.app.api.configuration import NEAT_APP
 from cognite.neat.rules.models import Class, Metadata, Property, TransformationRules
 from cognite.neat.rules.parser import parse_rules_from_excel_file
 from cognite.neat.workflows.utils import get_file_hash
@@ -21,8 +22,12 @@ def get_rules(
     workflow_name: str = "default",
     file_name: str | None = None,
     version: str | None = None,
-):
-    workflow = neat_app.workflow_manager.get_workflow(workflow_name)
+) -> dict[str, Any]:
+    if NEAT_APP.cdf_store is None or NEAT_APP.workflow_manager is None:
+        return {"error": "NeatApp is not initialized"}
+    workflow = NEAT_APP.workflow_manager.get_workflow(workflow_name)
+    if workflow is None:
+        return {"error": f"Workflow {workflow_name} is not found"}
     workflow_defintion = workflow.get_workflow_definition()
 
     if not file_name:
@@ -30,26 +35,28 @@ def get_rules(
             if step.method == "LoadTransformationRules":
                 file_name = step.configs["file_name"]
                 version = step.configs["version"]
-
+                break
+    if not file_name:
+        return {"error": "File name is not provided"}
     rules_file = Path(file_name)
     if str(rules_file.parent) == ".":
-        path = Path(neat_app.config.rules_store_path) / rules_file
+        path = Path(NEAT_APP.config.rules_store_path) / rules_file
     else:
-        path = Path(neat_app.config.data_store_path) / rules_file
+        path = Path(NEAT_APP.config.data_store_path) / rules_file
 
     src = "local"
     if url:
-        path = url
+        path = Path(url)
 
     if path.exists() and not version:
         logging.info(f"Loading rules from {path}")
     elif path.exists() and version:
-        hash = get_file_hash(path)
-        if hash != version:
-            neat_app.cdf_store.load_rules_file_from_cdf(file_name, version)
+        hash_ = get_file_hash(path)
+        if hash_ != version:
+            NEAT_APP.cdf_store.load_rules_file_from_cdf(file_name, version)
             src = "cdf"
     else:
-        neat_app.cdf_store.load_rules_file_from_cdf(file_name, version)
+        NEAT_APP.cdf_store.load_rules_file_from_cdf(file_name, version)
         src = "cdf"
 
     error_text = ""

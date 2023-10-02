@@ -1005,13 +1005,13 @@ def remove_non_existing_labels(client: CogniteClient, assets: Sequence[AssetLike
 
 
 @overload
-def remove_non_existing_labels(client: CogniteClient, assets: dict[str, AssetLike]) -> dict[str, AssetLike]:
+def remove_non_existing_labels(client: CogniteClient, assets: Mapping[str, AssetLike]) -> Mapping[str, AssetLike]:
     ...
 
 
 def remove_non_existing_labels(
-    client: CogniteClient, assets: Sequence[AssetLike] | dict[str, AssetLike]
-) -> Sequence[AssetLike] | dict[str, AssetLike]:
+    client: CogniteClient, assets: Sequence[AssetLike] | Mapping[str, AssetLike]
+) -> Sequence[AssetLike] | Mapping[str, AssetLike]:
     cdf_labels = client.labels.list(limit=-1)
     if not cdf_labels:
         # No labels, nothing to check.

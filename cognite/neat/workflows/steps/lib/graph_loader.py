@@ -1,7 +1,7 @@
 import logging
 import time
 from datetime import datetime
-from typing import ClassVar, cast
+from typing import Any, ClassVar, cast
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import AssetFilter
@@ -24,6 +24,7 @@ from cognite.neat.graph.loaders.core.rdf_to_relationships import (
 from cognite.neat.graph.loaders.rdf_to_dms import rdf2nodes_and_edges, upload_edges, upload_nodes
 from cognite.neat.graph.loaders.validator import validate_asset_hierarchy
 from cognite.neat.utils.utils import generate_exception_report
+from cognite.neat.workflows._exceptions import StepFlowContextNotInitialized, StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import (
     CategorizedAssets,
@@ -58,7 +59,7 @@ class CreateCDFLabels(Step):
     description = "This step creates default NEAT labels in CDF"
     category = CATEGORY
 
-    def run(self, rules: RulesData, cdf_client: CogniteClient) -> None:
+    def run(self, rules: RulesData, cdf_client: CogniteClient) -> None:  # type: ignore[override, syntax]
         upload_labels(cdf_client, rules.rules, extra_labels=["non-historic", "historic"])
 
 
@@ -85,12 +86,20 @@ class GenerateCDFNodesAndEdgesFromGraph(Step):
         ),
     ]
 
-    def run(self, rules: RulesData, graph: SourceGraph | SolutionGraph) -> (FlowMessage, Nodes, Edges):
+    def run(  # type: ignore[override, syntax]
+        self, rules: RulesData, graph: SourceGraph | SolutionGraph
+    ) -> (FlowMessage, Nodes, Edges):  # type: ignore[syntax]
+        if self.configs is None or self.data_store_path is None:
+            raise StepNotInitialized(type(self).__name__)
+        if self.flow_context is None:
+            raise StepFlowContextNotInitialized(type(self).__name__)
+
         graph_name = self.configs["graph_name"] or "source"
         if graph_name == "solution":
-            graph = self.flow_context["SolutionGraph"]
+            # Todo Anders: Why is the graph fetched from context when it is passed as an argument?
+            graph = cast(SourceGraph | SolutionGraph, self.flow_context["SolutionGraph"])
         else:
-            graph = self.flow_context["SourceGraph"]
+            graph = cast(SourceGraph | SolutionGraph, self.flow_context["SourceGraph"])
 
         add_class_prefix = True if self.configs["add_class_prefix"] == "True" else False
         nodes, edges, exceptions = rdf2nodes_and_edges(
@@ -126,7 +135,7 @@ class UploadCDFNodes(Step):
     description = "This step uploads nodes to CDF"
     category = CATEGORY
 
-    def run(self, cdf_client: CogniteClient, nodes: Nodes) -> FlowMessage:
+    def run(self, cdf_client: CogniteClient, nodes: Nodes) -> FlowMessage:  # type: ignore[override, syntax]
         if nodes.nodes:
             upload_nodes(cdf_client, nodes.nodes, max_retries=2, retry_delay=4)
             return FlowMessage(output_text="CDF nodes uploaded successfully")
@@ -142,7 +151,7 @@ class UploadCDFEdges(Step):
     description = "This step uploads edges to CDF"
     category = CATEGORY
 
-    def run(self, cdf_client: CogniteClient, edges: Edges) -> FlowMessage:
+    def run(self, cdf_client: CogniteClient, edges: Edges) -> FlowMessage:  # type: ignore[override, syntax]
         if edges.edges:
             upload_edges(cdf_client, edges.edges, max_retries=2, retry_delay=4)
             return FlowMessage(output_text="CDF edges uploaded successfully")
@@ -160,9 +169,12 @@ class GenerateCDFAssetsFromGraph(Step):
     )
     category = CATEGORY
 
-    def run(
+    def run(  # type: ignore[override]
         self, rules: RulesData, cdf_client: CogniteClient, solution_graph: SolutionGraph
-    ) -> (FlowMessage, CategorizedAssets):
+    ) -> (FlowMessage, CategorizedAssets):  # type: ignore[override, syntax]
+        if self.configs is None:
+            raise StepNotInitialized(type(self).__name__)
+
         meta_keys = NeatMetadataKeys.load(self.configs)
         if self.metrics is None:
             raise ValueError(self._not_configured_message)
@@ -192,7 +204,7 @@ class GenerateCDFAssetsFromGraph(Step):
         labels_before = unique_asset_labels(rdf_asset_dicts.values())
         logging.info(f"Assets have {len(labels_before)} unique labels: {', '.join(sorted(labels_before))}")
 
-        rdf_asset_dicts = remove_non_existing_labels(cdf_client, rdf_asset_dicts)
+        rdf_asset_dicts = cast(dict[str, dict[str, Any]], remove_non_existing_labels(cdf_client, rdf_asset_dicts))
 
         labels_after = unique_asset_labels(rdf_asset_dicts.values())
         removed_labels = labels_before - labels_after
@@ -325,7 +337,7 @@ class UploadCDFAssets(Step):
         return FlowMessage(output_text=f"Total count of assets in CDF after update: { total_assets_after }")
 
 
-class GenerateCDFRelationshipsFromGraph(Step[CategorizedRelationships]):
+class GenerateCDFRelationshipsFromGraph(Step):
     """
     This step generates relationships from the graph and saves them to CategorizedRelationships object
     """
@@ -335,7 +347,7 @@ class GenerateCDFRelationshipsFromGraph(Step[CategorizedRelationships]):
 
     def run(  # type: ignore[override]
         self, rules: RulesData, cdf_client: CogniteClient, solution_graph: SolutionGraph
-    ) -> (FlowMessage, CategorizedRelationships):
+    ) -> (FlowMessage, CategorizedRelationships):  # type: ignore[arg-type, syntax]
         # create, categorize and upload relationships
         rdf_relationships = rdf2relationships(solution_graph.graph, rules.rules)
 
@@ -385,7 +397,7 @@ class UploadCDFRelationships(Step):
     description = "This step uploads relationships to CDF"
     category = CATEGORY
 
-    def run(  # type: ignore[override]
+    def run(  # type: ignore[override, syntax]
         self, client: CogniteClient, categorized_relationships: CategorizedRelationships
     ) -> FlowMessage:
         upload_relationships(client, categorized_relationships.relationships, max_retries=2, retry_delay=4)

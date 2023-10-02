@@ -32,6 +32,7 @@ services:
       - NEAT_CDF_SCOPES=https://az-power-no-northeurope.cognitedata.com/.default
       - NEAT_CDF_DEFAULT_DATASET_ID=2626756768281823
       - NEAT_LOG_LEVEL=DEBUG
+      - NEAT_LOAD_EXAMPLES=true
 
 volumes:
   graphdb: {}

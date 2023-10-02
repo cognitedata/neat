@@ -2,7 +2,7 @@ from collections.abc import Iterator, Sequence
 from contextlib import contextmanager, suppress
 from typing import Any, Literal, TypeVar
 
-from cognite.client._constants import LIST_LIMIT_DEFAULT
+from cognite.client._constants import DEFAULT_LIMIT_READ
 from cognite.client.data_classes import (
     Asset,
     AssetAggregate,
@@ -171,11 +171,7 @@ class AssetsMemory(MemoryClient):
         limit: int | None = None,
         partitions: int | None = None,
     ) -> Iterator[Asset] | Iterator[AssetList]:
-        return iter(
-            self._list(
-                method="POST",
-            )
-        )
+        return iter(self._list(method="POST"))
 
     def retrieve(self, id: int | None = None, external_id: str | None = None) -> Asset | None:
         identifier = IdentifierSequence.load(ids=id, external_ids=external_id).as_singleton()
@@ -262,11 +258,9 @@ class AssetsMemory(MemoryClient):
         external_id_prefix: str | None = None,
         aggregated_properties: Sequence[str] | None = None,
         partitions: int | None = None,
-        limit: int = LIST_LIMIT_DEFAULT,
+        limit: int = DEFAULT_LIMIT_READ,
     ) -> AssetList:
-        return self._list(
-            method="POST",
-        )
+        return self._list(method="POST")
 
 
 class RelationshipsMemory(MemoryClient):
@@ -323,23 +317,15 @@ class RelationshipsMemory(MemoryClient):
         chunk_size: int | None = None,
         partitions: int | None = None,
     ) -> Iterator[Relationship] | Iterator[RelationshipList]:
-        return iter(
-            self._list(
-                method="POST",
-            )
-        )
+        return iter(self._list(method="POST"))
 
     def retrieve(self, external_id: str, fetch_resources: bool = False) -> Relationship | None:
         identifiers = IdentifierSequence.load(ids=None, external_ids=external_id).as_singleton()
-        return self._retrieve_multiple(
-            identifiers=identifiers,
-        )
+        return self._retrieve_multiple(identifiers=identifiers)
 
     def retrieve_multiple(self, external_ids: Sequence[str], fetch_resources: bool = False) -> RelationshipList:
         identifiers = IdentifierSequence.load(ids=None, external_ids=external_ids)
-        return self._retrieve_multiple(
-            identifiers=identifiers,
-        )
+        return self._retrieve_multiple(identifiers=identifiers)
 
     def create(self, relationship: Relationship | Sequence[Relationship]) -> Relationship | RelationshipList:
         if isinstance(relationship, Sequence):
@@ -378,9 +364,7 @@ class RelationshipsMemory(MemoryClient):
         partitions: int | None = None,
         fetch_resources: bool = False,
     ) -> RelationshipList:
-        return self._list(
-            method="POST",
-        )
+        return self._list(method="POST")
 
 
 class LabelsMemory(MemoryClient):
@@ -398,11 +382,7 @@ class LabelsMemory(MemoryClient):
         data_set_ids: int | Sequence[int] | None = None,
         data_set_external_ids: str | Sequence[str] | None = None,
     ) -> Iterator[LabelDefinition] | Iterator[LabelDefinitionList]:
-        return iter(
-            self._list(
-                method="POST",
-            )
-        )
+        return iter(self._list(method="POST"))
 
     def create(self, label: LabelDefinition | Sequence[LabelDefinition]) -> LabelDefinition | LabelDefinitionList:
         if isinstance(label, Sequence):
@@ -421,7 +401,7 @@ class LabelsMemory(MemoryClient):
         external_id_prefix: str | None = None,
         data_set_ids: int | Sequence[int] | None = None,
         data_set_external_ids: str | Sequence[str] | None = None,
-        limit: int = LIST_LIMIT_DEFAULT,
+        limit: int = DEFAULT_LIMIT_READ,
     ) -> LabelDefinitionList:
         return self._list(method="POST", limit=limit)
 

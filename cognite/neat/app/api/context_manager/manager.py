@@ -3,14 +3,14 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from cognite.neat.app.api.configuration import neat_app
+from cognite.neat.app.api.configuration import NEAT_APP
 
 
 @asynccontextmanager
 async def lifespan(app_ref: FastAPI):
     logging.info("Startup FastAPI server")
-    neat_app.set_http_server(app_ref)
-    neat_app.start()
+    NEAT_APP.set_http_server(app_ref)
+    NEAT_APP.start()
     yield
     logging.info("FastApi shutdown event")
-    neat_app.stop()
+    NEAT_APP.stop()
