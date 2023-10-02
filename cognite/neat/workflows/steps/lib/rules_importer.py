@@ -8,6 +8,7 @@ import yaml
 from rdflib import Namespace
 
 from cognite.neat.rules.models import Class, Metadata, Property, TransformationRules
+from cognite.neat.rules.to_rdf_path import RuleType
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import RulesData
 from cognite.neat.workflows.steps.step_model import Configurable, Step
@@ -32,8 +33,8 @@ class OpenApiToRules(Step):
         )
     ]
 
-    def run(self) -> (FlowMessage, RulesData):
-        openapi_file_path = Path(self.data_store_path) / Path(self.configs["openapi_spec_file_path"])
+    def run(self) -> (FlowMessage, RulesData):  # type: ignore[override, syntax]
+        openapi_file_path = self.data_store_path / Path(self.configs["openapi_spec_file_path"])
         self.processed_classes_counter = 0
         self.processed_properies_counter = 0
         self.failed_classes_counter = 0
@@ -69,9 +70,8 @@ class OpenApiToRules(Step):
             created=datetime.utcnow(),
             namespace=Namespace("http://purl.org/cognite/neat#"),
             prefix="neat",
-            dataModelName="OpenAPI",
-            cdf_space_name="OpenAPI",
             data_model_name="OpenAPI",
+            cdf_space_name="OpenAPI",
         )
 
         classes: dict[str, Class] = {}
@@ -88,8 +88,6 @@ class OpenApiToRules(Step):
                     class_id=class_id,
                     class_name=class_name,
                     description=component_info.get("description", component_info.get("title", "empty")),
-                    is_abstract=False,
-                    is_interface=False,
                 )
                 classes[class_id] = class_
                 self.processed_classes_counter += 1
@@ -144,15 +142,14 @@ class OpenApiToRules(Step):
                     try:
                         prop = Property(
                             class_id=class_id,
-                            class_name=class_name,
                             property_id=self.get_dms_compatible_name(prop_id),
                             property_name=self.get_dms_compatible_name(prop_name.replace(".", "_")),
                             property_type="ObjectProperty",
                             description=prop_info.get("description", prop_info.get("title", "empty")),
                             expected_value_type=expected_value_type,
-                            cdf_resource_type="Asset",
-                            resource_type_property="Asset",
-                            rule_type="rdfpath",
+                            cdf_resource_type=["Asset"],
+                            resource_type_property=["Asset"],
+                            rule_type=RuleType("rdfpath"),
                             rule=f"neat:{class_name}(neat:{prop_name})",
                             label="linked to",
                         )
@@ -164,22 +161,21 @@ class OpenApiToRules(Step):
                         self.failed_properties[prop_id] = str(e)
             elif component_name == "$ref":
                 ref_class = self.get_ref_class_name(component_info)
-                logging.debug(f" OpenAPi parser : REF class {ref_class} ")
-                prop = Property(
-                    class_id=class_id,
-                    class_name=class_name,
-                    property_id=parent_property_name,
-                    property_name=parent_property_name,
-                    property_type="ObjectProperty",
-                    description="no",
-                    expected_value_type=ref_class,
-                    cdf_resource_type="Asset",
-                    resource_type_property="Asset",
-                    rule_type="rdfpath",
-                    rule=f"neat:{class_name}(neat:{parent_property_name})",
-                    label="linked to",
-                )
-                rules_properties[class_id + parent_property_name] = prop
+                if parent_property_name is not None:
+                    prop = Property(
+                        class_id=class_id,
+                        property_id=parent_property_name,
+                        property_name=parent_property_name,
+                        property_type="ObjectProperty",
+                        description="no",
+                        expected_value_type=ref_class,
+                        cdf_resource_type=["Asset"],
+                        resource_type_property=["Asset"],
+                        rule_type=RuleType("rdfpath"),
+                        rule=f"neat:{class_name}(neat:{parent_property_name})",
+                        label="linked to",
+                    )
+                    rules_properties[class_id + parent_property_name] = prop
 
     def get_ref_class_name(self, ref: str) -> str:
         return self.get_dms_compatible_name(ref.split("/")[-1])
@@ -244,7 +240,7 @@ class ArbitraryJsonYamlToRules(Step):
         ),
     ]
 
-    def run(self) -> (FlowMessage, RulesData):
+    def run(self) -> (FlowMessage, RulesData):  # type: ignore[override, syntax]
         openapi_file_path = Path(self.data_store_path) / Path(self.configs["file_path"])
         self.processed_classes_counter = 0
         self.processed_properies_counter = 0
@@ -282,7 +278,6 @@ class ArbitraryJsonYamlToRules(Step):
             created=datetime.utcnow(),
             namespace=Namespace("http://purl.org/cognite/neat#"),
             prefix="neat",
-            dataModelName="OpenAPI",
             cdf_space_name="OpenAPI",
             data_model_name="OpenAPI",
         )
@@ -304,8 +299,6 @@ class ArbitraryJsonYamlToRules(Step):
             class_id=class_name,
             class_name=class_name,
             description=description,
-            is_abstract=False,
-            is_interface=False,
         )
         if parent_class_name:
             self.add_property(class_name, "parent", parent_class_name, None)
@@ -318,15 +311,14 @@ class ArbitraryJsonYamlToRules(Step):
             return
         prop = Property(
             class_id=class_name,
-            class_name=class_name,
             property_id=property_name,
             property_name=property_name,
             property_type="ObjectProperty",
             description=description,
             expected_value_type=property_type,
-            cdf_resource_type="Asset",
-            resource_type_property="Asset",
-            rule_type="rdfpath",
+            cdf_resource_type=["Asset"],
+            resource_type_property=["Asset"],
+            rule_type=RuleType("rdfpath"),
             rule=f"neat:{class_name}(neat:{property_name})",
             label="linked to",
         )
@@ -335,7 +327,7 @@ class ArbitraryJsonYamlToRules(Step):
         return
 
     # Iterate through the JSON data and convert it to triples
-    def convert_dict_to_classes_and_props(self, data: any, parent_property_name=None, grand_parent_property_name=None):
+    def convert_dict_to_classes_and_props(self, data: dict, parent_property_name=None, grand_parent_property_name=None):
         if isinstance(data, dict):
             if len(data) == 0:
                 return

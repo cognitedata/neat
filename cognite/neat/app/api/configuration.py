@@ -24,8 +24,6 @@ class NeatApp:
         self.config = config
         self.cdf_client: CogniteClient | None = None
         self.cdf_store: CdfStore | None = None
-        self.workflow_manager: WorkflowManager | None = None
-        self.triggers_manager: TriggerManager | None = None
         self.fast_api_app: FastAPI | None = None
         self.cdf_client = cdf_client
 

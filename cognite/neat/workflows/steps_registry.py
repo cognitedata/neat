@@ -105,9 +105,9 @@ class StepsRegistry:
         self,
         step_name: str,
         flow_context: dict[str, DataContract],
+        step_configs: dict[str, Any],
         metrics: NeatMetricsCollector | None = None,
         workflow_configs: WorkflowConfigs | None = None,
-        step_configs: dict[str, Any] | None = None,
     ) -> DataContract | tuple[FlowMessage, DataContract] | FlowMessage:
         for step_cls in self._step_classes:
             if step_cls.__name__ == step_name:

@@ -76,9 +76,9 @@ class LoadTransformationRules(Step):
         elif rules_file_path.exists() and version:
             hash = utils.get_file_hash(rules_file_path)
             if hash != version:
-                store.load_rules_file_from_cdf(rules_file, version)
+                store.load_rules_file_from_cdf(str(rules_file), version)
         else:
-            store.load_rules_file_from_cdf(rules_file, version)
+            store.load_rules_file_from_cdf(str(rules_file), version)
 
         transformation_rules, validation_errors, validation_warnings = parse_rules_from_excel_file(
             rules_file_path, return_report=True

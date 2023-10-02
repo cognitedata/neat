@@ -304,9 +304,9 @@ class DownloadDataFromRestApiToFile(Step):
         ),
     ]
 
-    def run(self) -> FlowMessage:
+    def run(self) -> FlowMessage:  # type: ignore[override, syntax]
         api_url = self.configs["api_url"]
-        output_file_path = self.data_store_path / Path(self.configs["output_file_path"])
+        output_file_path = Path(self.data_store_path) / Path(self.configs["output_file_path"])
         http_method = self.configs["http_method"].upper()
         auth_mode = self.configs["auth_mode"]
         username = self.configs["username"]

@@ -346,26 +346,23 @@ class InstancesFromJsonToGraph(Step):
         graph = graph_store.graph.graph
         nodes_counter = 0
         property_counter = 0
-        labels_mapping: dict | None = None
-        object_id_mapping: dict | None = None
+        labels_mapping: dict[str, str] = {}
+        object_id_mapping: dict[str, list[str]] = {}
         if self.configs["json_object_labels_mapping"]:
-            labels_mapping = {}
             for label_mapping in self.configs["json_object_labels_mapping"].split(","):
                 object_name, property_name = label_mapping.split(":")
                 labels_mapping[object_name] = property_name
 
         if self.configs["json_object_id_mapping"]:
-            object_id_mapping = {}
             for id_mapping in self.configs["json_object_id_mapping"].split(","):
                 if ":" not in id_mapping:
                     continue
                 object_name, property_name = id_mapping.split(":")
-                object_id_mapping[object_name] = (
-                    # if multiple ids are used for the same object ,the order of the properties is important
+                # if multiple ids are used for the same object ,the order of the properties is important
+                if object_name in object_id_mapping:
                     object_id_mapping[object_name].append(property_name)
-                    if object_name in object_id_mapping
-                    else [property_name]
-                )
+                else:
+                    object_id_mapping[object_name] = [property_name]
 
         # Iterate through the JSON data and convert it to triples
         def convert_json_to_triples(

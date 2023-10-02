@@ -323,7 +323,7 @@ class ExcelFromRules(Step):
         ),
     ]
 
-    def run(self, rules_data: RulesData) -> FlowMessage:
+    def run(self, rules_data: RulesData) -> FlowMessage:  # type: ignore[override, syntax]
         full_path = Path(self.data_store_path) / Path(self.configs["output_file_path"])
         rules_exporter = rules2excel.RulesToExcel(rules=rules_data.rules)
         rules_exporter.generate_workbook()
