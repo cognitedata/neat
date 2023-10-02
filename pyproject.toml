@@ -45,7 +45,12 @@ known-third-party = ["cognite.client"]
 [tool.mypy]
 explicit_package_bases = true
 allow_redefinition = true
+plugins = ["pydantic.mypy"]
 
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
 
 [tool.poetry.scripts]
 neat = "cognite.neat.app.main:run"
