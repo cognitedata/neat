@@ -285,16 +285,20 @@ class ArbitraryJsonYamlToRules(Step):
             return
         if self.is_fdm_compatibility_mode:
             class_name = get_dms_compatible_name(create_fdm_compatibility_class_name(class_name))
-
-        class_ = Class(
-            class_id=class_name,
-            class_name=class_name,
-            description=description,
-        )
-        if parent_class_name:
-            self.add_property(class_name, "parent", parent_class_name, None)
-        self.classes[class_name] = class_
-        self.processed_classes_counter += 1
+        try:
+            class_ = Class(
+                class_id=class_name,
+                class_name=class_name,
+                description=description,
+            )
+            if parent_class_name:
+                self.add_property(class_name, "parent", parent_class_name, None)
+            self.classes[class_name] = class_
+            self.processed_classes_counter += 1
+        except Exception as e:
+            logging.error(f" OpenAPi parser : Error creating class {class_name}: {e}")
+            self.failed_classes_counter += 1
+            self.failed_classes[class_name] = str(e)
         return
 
     def add_property(self, class_name: str, property_name: str, property_type: str, description: str | None = None):
@@ -303,22 +307,26 @@ class ArbitraryJsonYamlToRules(Step):
         if self.is_fdm_compatibility_mode:
             property_name = get_dms_compatible_name(property_name)
             class_name = get_dms_compatible_name(create_fdm_compatibility_class_name(class_name))
-
-        prop = Property(
-            class_id=class_name,
-            property_id=property_name,
-            property_name=property_name,
-            property_type="ObjectProperty",
-            description=description,
-            expected_value_type=property_type,
-            cdf_resource_type=["Asset"],
-            resource_type_property="Asset",  # type: ignore
-            rule_type=RuleType("rdfpath"),
-            rule=f"neat:{class_name}(neat:{property_name})",
-            label="linked to",
-        )
-        self.properties[class_name + property_name] = prop
-        self.processed_properies_counter += 1
+        try:
+            prop = Property(
+                class_id=class_name,
+                property_id=property_name,
+                property_name=property_name,
+                property_type="ObjectProperty",
+                description=description,
+                expected_value_type=property_type,
+                cdf_resource_type=["Asset"],
+                resource_type_property="Asset",  # type: ignore
+                rule_type=RuleType("rdfpath"),
+                rule=f"neat:{class_name}(neat:{property_name})",
+                label="linked to",
+            )
+            self.properties[class_name + property_name] = prop
+            self.processed_properies_counter += 1
+        except Exception as e:
+            logging.error(f" OpenAPi parser : Error creating property {property_name}: {e}")
+            self.failed_properties_counter += 1
+            self.failed_properties[class_name + property_name] = str(e)
         return
 
     # Iterate through the JSON data and convert it to triples
