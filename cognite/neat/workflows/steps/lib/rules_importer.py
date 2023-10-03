@@ -30,7 +30,13 @@ class OpenApiToRules(Step):
             name="openapi_spec_file_path",
             value="workflows/openapi_to_rules/source_data/openapi.json",
             label="Relative path to the OpenAPI spec file.The file can be in either json or in yaml format.",
-        )
+        ),
+        Configurable(
+            name="fdm_compatibility_mode",
+            value="True",
+            label="If set to True, the step will try to convert property names to FDM compatible names.",
+            options=["True", "False"],
+        ),
     ]
 
     def run(self) -> (FlowMessage, RulesData):  # type: ignore[override, syntax]
@@ -41,6 +47,7 @@ class OpenApiToRules(Step):
         self.failed_properties_counter = 0
         self.failed_classes: dict[str, str] = {}
         self.failed_properties: dict[str, str] = {}
+        self.is_fdm_compatibility_mode = self.configs["fdm_compatibility_mode"] == "True"
         rules = self.open_api_to_rules(openapi_file_path)
         report = f" Generated Rules and source data model from OpenApi specs   \
         <p> Processed {self.processed_classes_counter} classes and {self.processed_properies_counter} properties. </p> \
@@ -79,8 +86,10 @@ class OpenApiToRules(Step):
 
         # Loop through OpenAPI components
         for component_name, component_info in openapi_spec.get("components", {}).get("schemas", {}).items():
-            class_name = self.remove_underscores_and_capitalize(component_name)
-            class_name = self.get_dms_compatible_name(class_name)
+            if self.is_fdm_compatibility_mode:
+                class_name = get_dms_compatible_name(create_fdm_compatibility_class_name(component_name))
+            else:
+                class_name = component_name
             class_id = class_name
             logging.info(f" OpenAPi parser : Processing class {class_id} ")
             try:
@@ -142,13 +151,15 @@ class OpenApiToRules(Step):
                     try:
                         prop = Property(
                             class_id=class_id,
-                            property_id=self.get_dms_compatible_name(prop_id),
-                            property_name=self.get_dms_compatible_name(prop_name.replace(".", "_")),
+                            property_id=get_dms_compatible_name(prop_id) if self.is_fdm_compatibility_mode else prop_id,
+                            property_name=get_dms_compatible_name(prop_name)
+                            if self.is_fdm_compatibility_mode
+                            else prop_name,
                             property_type="ObjectProperty",
                             description=prop_info.get("description", prop_info.get("title", "empty")),
                             expected_value_type=expected_value_type,
                             cdf_resource_type=["Asset"],
-                            resource_type_property=["Asset"],
+                            resource_type_property="Asset",  # type: ignore
                             rule_type=RuleType("rdfpath"),
                             rule=f"neat:{class_name}(neat:{prop_name})",
                             label="linked to",
@@ -170,7 +181,7 @@ class OpenApiToRules(Step):
                         description="no",
                         expected_value_type=ref_class,
                         cdf_resource_type=["Asset"],
-                        resource_type_property=["Asset"],
+                        resource_type_property="Asset",  # type: ignore
                         rule_type=RuleType("rdfpath"),
                         rule=f"neat:{class_name}(neat:{parent_property_name})",
                         label="linked to",
@@ -178,40 +189,10 @@ class OpenApiToRules(Step):
                     rules_properties[class_id + parent_property_name] = prop
 
     def get_ref_class_name(self, ref: str) -> str:
-        return self.get_dms_compatible_name(ref.split("/")[-1])
-
-    def get_dms_compatible_name(self, name: str) -> str:
-        """Converts name to DMS compatible name"""
-        # reserverd words in DMS
-        reserved_words_mapping = {
-            "space": "src_space",
-            "externalId": "external_id",
-            "createdTime": "created_time",
-            "lastUpdatedTime": "last_updated_time",
-            "deletedTime": "deleted_time",
-            "edge_id": "src_edge_id",
-            "node_id": "src_node_id",
-            "project_id": "src_project_id",
-            "property_group": "src_property_group",
-            "seq": "src_seq",
-            "tg_table_name": "src__table_name",
-            "extensions": "src_extensions",
-        }
-        if name in reserved_words_mapping:
-            return reserved_words_mapping[name]
-        else:
-            return name.replace(".", "_")
-
-    def remove_underscores_and_capitalize(self, input_string: str):
-        """Remove underscores and capitalize each word in the string ,
-        the convertion is done to improve complienc with DMS naming conventions"""
-
-        if "_" in input_string:
-            words = input_string.split("_")  # Split the string by underscores
-            result = "".join([word.capitalize() for word in words])  # Capitalize each word
-            return result
-        else:
-            return input_string
+        ref_payload = ref.split("/")[-1]
+        if self.is_fdm_compatibility_mode:
+            return get_dms_compatible_name(create_fdm_compatibility_class_name(ref_payload))
+        return ref_payload
 
     def map_open_api_type(self, openapi_type: str) -> str:
         """Map OpenAPI type to NEAT compatible types"""
@@ -238,6 +219,12 @@ class ArbitraryJsonYamlToRules(Step):
             value="workflows/openapi_to_rules/data/data.json",
             label="Relative path to the json file.The file can be in either json or in yaml format.",
         ),
+        Configurable(
+            name="fdm_compatibility_mode",
+            value="True",
+            label="If set to True, the step will try to convert property names to FDM compatible names.",
+            options=["True", "False"],
+        ),
     ]
 
     def run(self) -> (FlowMessage, RulesData):  # type: ignore[override, syntax]
@@ -248,6 +235,7 @@ class ArbitraryJsonYamlToRules(Step):
         self.failed_properties_counter = 0
         self.failed_classes: dict[str, str] = {}
         self.failed_properties: dict[str, str] = {}
+        self.is_fdm_compatibility_mode = self.configs["fdm_compatibility_mode"] == "True"
 
         rules = self.dict_to_rules(openapi_file_path)
         report = f" Generated Rules and source data model from json/yaml   \
@@ -295,6 +283,9 @@ class ArbitraryJsonYamlToRules(Step):
     def add_class(self, class_name: str, description: str | None = None, parent_class_name: str | None = None):
         if class_name in self.classes:
             return
+        if self.is_fdm_compatibility_mode:
+            class_name = get_dms_compatible_name(create_fdm_compatibility_class_name(class_name))
+
         class_ = Class(
             class_id=class_name,
             class_name=class_name,
@@ -309,6 +300,10 @@ class ArbitraryJsonYamlToRules(Step):
     def add_property(self, class_name: str, property_name: str, property_type: str, description: str | None = None):
         if class_name + property_name in self.properties:
             return
+        if self.is_fdm_compatibility_mode:
+            property_name = get_dms_compatible_name(property_name)
+            class_name = get_dms_compatible_name(create_fdm_compatibility_class_name(class_name))
+
         prop = Property(
             class_id=class_name,
             property_id=property_name,
@@ -317,7 +312,7 @@ class ArbitraryJsonYamlToRules(Step):
             description=description,
             expected_value_type=property_type,
             cdf_resource_type=["Asset"],
-            resource_type_property=["Asset"],
+            resource_type_property="Asset",  # type: ignore
             rule_type=RuleType("rdfpath"),
             rule=f"neat:{class_name}(neat:{property_name})",
             label="linked to",
@@ -361,46 +356,37 @@ class ArbitraryJsonYamlToRules(Step):
 
             self.add_property(grand_parent_property_name, parent_property_name, data_type, None)
 
-    def get_dms_compatible_name(self, name: str) -> str:
-        """Converts name to DMS compatible name"""
-        # reserverd words in DMS
-        reserved_words_mapping = {
-            "space": "src_space",
-            "externalId": "external_id",
-            "createdTime": "created_time",
-            "lastUpdatedTime": "last_updated_time",
-            "deletedTime": "deleted_time",
-            "edge_id": "src_edge_id",
-            "node_id": "src_node_id",
-            "project_id": "src_project_id",
-            "property_group": "src_property_group",
-            "seq": "src_seq",
-            "tg_table_name": "src__table_name",
-            "extensions": "src_extensions",
-        }
-        if name in reserved_words_mapping:
-            return reserved_words_mapping[name]
-        else:
-            return name.replace(".", "_")
 
-    def remove_underscores_and_capitalize(self, input_string: str):
-        """Remove underscores and capitalize each word in the string , the convertion is done
-        to improve complienc with DMS naming conventions"""
-        if "_" in input_string:
-            words = input_string.split("_")  # Split the string by underscores
-            result = "".join([word.capitalize() for word in words])  # Capitalize each word
-            return result
-        else:
-            return input_string
+def get_dms_compatible_name(name: str) -> str:
+    """Converts name to DMS compatible name.It applies both to class and property names"""
+    # reserverd words in DMS
+    reserved_words_mapping = {
+        "space": "src_space",
+        "externalId": "external_id",
+        "createdTime": "created_time",
+        "lastUpdatedTime": "last_updated_time",
+        "deletedTime": "deleted_time",
+        "edge_id": "src_edge_id",
+        "node_id": "src_node_id",
+        "project_id": "src_project_id",
+        "property_group": "src_property_group",
+        "seq": "src_seq",
+        "tg_table_name": "src__table_name",
+        "extensions": "src_extensions",
+    }
+    if name in reserved_words_mapping:
+        return reserved_words_mapping[name]
+    else:
+        return name.replace(".", "_")
 
-    def map_open_api_type(self, openapi_type: str) -> str:
-        """Map OpenAPI type to NEAT compatible types"""
-        if openapi_type == "object":
-            datatype = "json"
-        elif openapi_type == "array":
-            datatype = "sequence"
-        elif openapi_type == "number":
-            datatype = "float"
-        else:
-            return openapi_type  # Default to string
-        return datatype
+
+def create_fdm_compatibility_class_name(input_string: str):
+    """Remove underscores and capitalize each word in the string ,
+    the convertion is done to improve complience with DMS naming conventions"""
+
+    if "_" in input_string:
+        words = input_string.split("_")  # Split the string by underscores
+        result = "".join([word.capitalize() for word in words])  # Capitalize each word
+        return result
+    else:
+        return input_string

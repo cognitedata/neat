@@ -21,6 +21,7 @@ steps:
         pos_x: 557
         pos_y: 54
 -   configs:
+        fdm_compatibility_mode: 'True'
         file_path: workflows/json_to_data_model_rules/airport_dump.json
     description: null
     enabled: true

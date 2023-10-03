@@ -20,13 +20,13 @@ class RulesToExcel:
     @classmethod
     def export_rules_to_file(cls, rules: TransformationRules, file_path: Path):
         """Generates workbook from transformation rules and saves it to file."""
-        isinstance = cls(rules=rules)
-        isinstance.generate_workbook()
-        isinstance.save_to_file(file_path=file_path)
+        instance = cls(rules=rules)
+        instance.generate_workbook()
+        instance.save_to_file(file_path=file_path)
 
     def generate_workbook(self):
         """Generates workbook from transformation rules."""
-
+        self.workbook = Workbook()
         # Remove default sheet named "Sheet"
         self.workbook.remove(self.workbook["Sheet"])
         # Serialize the rules to the excel file

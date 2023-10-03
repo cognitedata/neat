@@ -1,0 +1,148 @@
+configs: []
+description: null
+implementation_module: null
+name: openapi_to_rules
+steps:
+-   configs: {}
+    description: null
+    enabled: true
+    id: step_918314
+    label: Trigger OpenApi spect to rules file
+    max_retries: 0
+    method: null
+    params: {}
+    retry_delay: 3
+    stype: http_trigger
+    system_component_id: null
+    transition_to:
+    - step_221331
+    trigger: true
+    ui_config:
+        pos_x: 496
+        pos_y: 71
+-   configs:
+        fdm_compatibility_mode: 'True'
+        openapi_spec_file_path: workflows/openapi_to_rules/data/neat-openapi.json
+    description: null
+    enabled: true
+    id: step_221331
+    label: 'Convert openapi to rules '
+    max_retries: 0
+    method: OpenApiToRules
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+    - step_363510
+    - step_553119
+    trigger: false
+    ui_config:
+        pos_x: 495
+        pos_y: 204
+-   configs:
+        output_file_path: rules/openapi-rules-2.xlsx
+    description: null
+    enabled: true
+    id: step_553119
+    label: Export rules to excel
+    max_retries: 0
+    method: ExcelFromRules
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to: []
+    trigger: false
+    ui_config:
+        pos_x: 494
+        pos_y: 332
+-   configs: {}
+    description: null
+    enabled: true
+    id: step_10598
+    label: Trigger DM generation process
+    max_retries: 0
+    method: null
+    params: {}
+    retry_delay: 3
+    stype: http_trigger
+    system_component_id: null
+    transition_to:
+    - step_759187
+    trigger: true
+    ui_config:
+        pos_x: 818
+        pos_y: 71
+-   configs:
+        file_name: openapi-rules.xlsx
+        validation_report_file: rules_validation_report.txt
+        validation_report_storage_dir: rules_validation_report
+        version: ''
+    description: null
+    enabled: true
+    id: step_759187
+    label: Load rules
+    max_retries: 0
+    method: LoadTransformationRules
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+    - step_929045
+    trigger: false
+    ui_config:
+        pos_x: 818
+        pos_y: 207
+-   configs: {}
+    description: null
+    enabled: true
+    id: step_929045
+    label: Generate DMS data model from rules
+    max_retries: 0
+    method: DMSDataModelFromRules
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+    - step_412880
+    trigger: false
+    ui_config:
+        pos_x: 819
+        pos_y: 308
+-   configs: {}
+    description: null
+    enabled: true
+    id: step_578047
+    label: Upload to DMS api
+    max_retries: 0
+    method: UploadDMSDataModel
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to: []
+    trigger: false
+    ui_config:
+        pos_x: 817
+        pos_y: 540
+-   configs: {}
+    description: null
+    enabled: true
+    id: step_412880
+    label: Delete data model from FDM
+    max_retries: 0
+    method: DeleteDMSDataModel
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+    - step_578047
+    trigger: false
+    ui_config:
+        pos_x: 819
+        pos_y: 441
+system_components: []
