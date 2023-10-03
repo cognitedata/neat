@@ -11,6 +11,7 @@ from cognite.neat.workflows import WorkflowFullStateReport
 from cognite.neat.workflows.base import WorkflowDefinition
 from cognite.neat.workflows.migration.wf_manifests import migrate_wf_manifest
 from cognite.neat.workflows.model import FlowMessage
+from cognite.neat.workflows.steps.step_model import DataContract
 from cognite.neat.workflows.utils import get_file_hash
 
 router = APIRouter()
@@ -194,6 +195,22 @@ def get_context(workflow_name: str):
     for key, value in context.items():
         objects_in_context.append({"name": key, "type": type(value).__name__})
     return {"context": objects_in_context}
+
+
+@router.get("/api/workflow/context/{workflow_name}/object_name/{object_name}")
+def get_context_object(workflow_name: str, object_name: str):
+    """Get context item from workflow. Should be used for debugging and troubleshooting only."""
+    workflow = NEAT_APP.workflow_manager.get_workflow(workflow_name)
+    if workflow is None:
+        return
+    context = workflow.get_context()
+    if object_name not in context:
+        return {"error": f"Item {object_name} is not found in workflow context"}
+    cobject = context[object_name]
+    if isinstance(cobject, DataContract):
+        return {"object": cobject.model_dump()}
+    else:
+        return {"object": cobject}
 
 
 @router.get("/api/workflow/registered-steps")

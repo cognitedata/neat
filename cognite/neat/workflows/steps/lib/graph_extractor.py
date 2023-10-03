@@ -249,6 +249,7 @@ class InstancesFromJsonToGraph(Step):
 
     description = "This step extracts instances from json file and loads them into a graph store"
     category = CATEGORY
+    version = "0.1.0-alpha"
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
             name="file_name", value="data_dump.json", label="Full path to the file containing data dump in JSON format"
@@ -292,8 +293,9 @@ class InstancesFromJsonToGraph(Step):
     def get_json_object_id(self, method, object_name: str, json_object: dict, parent_object_id: str, id_mapping: dict):
         if method == "source_object_properties":
             object_id = ""
-            for property_name in id_mapping[object_name]:
-                object_id += property_name + json_object[property_name]
+            if object_name in id_mapping:
+                for property_name in id_mapping[object_name]:
+                    object_id += property_name + json_object[property_name]
         elif method == "hash_of_json_element":
             flat_json_object = {}
             for key, value in json_object.items():
@@ -344,29 +346,28 @@ class InstancesFromJsonToGraph(Step):
         graph = graph_store.graph.graph
         nodes_counter = 0
         property_counter = 0
-        labels_mapping: dict | None = None
-        object_id_mapping: dict | None = None
+        labels_mapping: dict[str, str] = {}
+        object_id_mapping: dict[str, list[str]] = {}
         if self.configs["json_object_labels_mapping"]:
-            labels_mapping = {}
             for label_mapping in self.configs["json_object_labels_mapping"].split(","):
                 object_name, property_name = label_mapping.split(":")
                 labels_mapping[object_name] = property_name
 
         if self.configs["json_object_id_mapping"]:
-            object_id_mapping = {}
             for id_mapping in self.configs["json_object_id_mapping"].split(","):
                 if ":" not in id_mapping:
                     continue
                 object_name, property_name = id_mapping.split(":")
-                object_id_mapping[object_name] = (
-                    # if multiple ids are used for the same object ,the order of the properties is important
+                # if multiple ids are used for the same object ,the order of the properties is important
+                if object_name in object_id_mapping:
                     object_id_mapping[object_name].append(property_name)
-                    if object_name in object_id_mapping
-                    else [property_name]
-                )
+                else:
+                    object_id_mapping[object_name] = [property_name]
 
         # Iterate through the JSON data and convert it to triples
-        def convert_json_to_triples(data, parent_node, parent_object_id, parent_node_path, property_name=None):
+        def convert_json_to_triples(
+            data: dict, parent_node: URIRef, parent_object_id: str, parent_node_path: str, property_name=None
+        ):
             nonlocal nodes_counter, property_counter
             if isinstance(data, dict):
                 if len(data) == 0:

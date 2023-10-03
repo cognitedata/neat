@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import ClassVar
 
 from cognite.neat.exceptions import wrangle_warnings
-from cognite.neat.rules.exporter import rules2graph_sheet
+from cognite.neat.rules.exporter import rules2excel, rules2graph_sheet
 from cognite.neat.rules.exporter.rules2dms import DataModel
 from cognite.neat.rules.exporter.rules2graphql import GraphQLSchema
 from cognite.neat.rules.exporter.rules2ontology import Ontology
@@ -23,6 +23,7 @@ __all__ = [
     "GraphCaptureSpreadsheetFromRules",
     "UploadDMSDataModel",
     "DeleteDMSDataModel",
+    "ExcelFromRules",
 ]
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
@@ -308,3 +309,24 @@ class GraphCaptureSpreadsheetFromRules(Step):
             f"{sheet_name}</a>"
         )
         return FlowMessage(output_text=output_text)
+
+
+class ExcelFromRules(Step):
+    description = "The step generates Excel file from rules"
+    category = CATEGORY
+    version = "0.1.0-alpha"
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="output_file_path",
+            value="rules/custom-rules.xlsx",
+            label="File path to the generated Excel file",
+        ),
+    ]
+
+    def run(self, rules_data: RulesData) -> FlowMessage:  # type: ignore[override, syntax]
+        full_path = Path(self.data_store_path) / Path(self.configs["output_file_path"])
+        rules_exporter = rules2excel.RulesToExcel(rules=rules_data.rules)
+        rules_exporter.generate_workbook()
+        rules_exporter.save_to_file(full_path)
+
+        return FlowMessage(output_text="Generated Excel file from rules")

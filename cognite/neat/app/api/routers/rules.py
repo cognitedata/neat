@@ -2,10 +2,15 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Response
+from rdflib import Namespace
 
 from cognite.neat.app.api.configuration import NEAT_APP
+from cognite.neat.app.api.data_classes.rest import TransformationRulesUpdateRequest
+from cognite.neat.rules.exporter import rules2excel
+from cognite.neat.rules.models import Class, Metadata, Property, TransformationRules
 from cognite.neat.rules.parser import parse_rules_from_excel_file
+from cognite.neat.workflows.steps.data_contracts import RulesData
 from cognite.neat.workflows.utils import get_file_hash
 
 router = APIRouter()
@@ -36,7 +41,12 @@ def get_rules(
                 break
     if not file_name:
         return {"error": "File name is not provided"}
-    path = Path(NEAT_APP.config.rules_store_path, file_name)
+    rules_file = Path(file_name)
+    if str(rules_file.parent) == ".":
+        path = Path(NEAT_APP.config.rules_store_path) / rules_file
+    else:
+        path = Path(NEAT_APP.config.data_store_path) / rules_file
+
     src = "local"
     if url:
         path = Path(url)
@@ -91,3 +101,64 @@ def get_rules(
         "error_text": error_text,
         "src": src,
     }
+
+
+@router.get("/api/rules/from_file")
+def get_original_rules_from_file(
+    file_name: str,
+):
+    """Endpoing for retrieving raw transformation from file"""
+    path = Path(NEAT_APP.config.rules_store_path) / file_name
+    rules = parse_rules_from_excel_file(path)
+    return Response(content=rules.model_dump_json(), media_type="application/json")
+
+
+@router.get("/api/rules/from_workflow")
+def get_original_rules_from_workflow(
+    workflow_name: str,
+):
+    """Endpoing for retrieving transformation from memmory"""
+    workflow = NEAT_APP.workflow_manager.get_workflow(workflow_name)
+    if workflow is None:
+        return {"error": f"Workflow {workflow_name} is not found"}
+    context = workflow.get_context()
+    rules_data = context["RulesData"]
+    if type(rules_data) != RulesData:
+        return {"error": "RulesData is not found in workflow context"}
+
+    return Response(content=rules_data.rules.model_dump_json(), media_type="application/json")
+
+
+@router.post("/api/rules/model_and_transformations")
+def upsert_rules(request: TransformationRulesUpdateRequest):
+    """Endpoing for updating transformation rules via API . This endpoint is still experimental"""
+    rules = request.rules_object
+    rules["metadata"]["namespace"] = Namespace(rules["metadata"]["namespace"])
+    metadata = Metadata(**rules["metadata"])
+    classes: dict[str, Class] = {}
+    for class_, val in rules["classes"].items():
+        classes[class_] = Class(**val)
+    properties: dict[str, Property] = {}
+
+    for prop, val in rules["properties"].items():
+        val["resource_type_property"] = []
+        properties[prop] = Property(**val)
+
+    prefixes: dict[str, Namespace] = {}
+    for prefix, val in rules["prefixes"].items():
+        prefixes[prefix] = Namespace(val)
+
+    trules = TransformationRules(
+        metadata=metadata, classes=classes, properties=properties, prefixes=prefixes, instances=[]
+    )
+    if request.output_format == "excel":
+        rules_file = Path(request.file_name)
+        if str(rules_file.parent) == ".":
+            path = Path(NEAT_APP.config.rules_store_path) / rules_file
+        else:
+            path = Path(NEAT_APP.config.data_store_path) / rules_file
+
+        rules_exporter = rules2excel.RulesToExcel(rules=trules)
+        rules_exporter.generate_workbook()
+        rules_exporter.save_to_file(path)
+    return {"status": "ok"}

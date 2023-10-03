@@ -36,13 +36,18 @@ class Step(ABC):
     category: str = "default"
     configurables: ClassVar[list[Configurable]] = []
     scope: str = "global"
-    configs: dict[str, str] | None = None
     metrics: NeatMetricsCollector | None = None
     workflow_configs: WorkflowConfigs | None = None
+    version: str = "1.0.0"  # version of the step. All alpha versions considered as experimental
+    source: str = (
+        "cognite"  # source of the step , can be source identifier or url , for instance github url for instance.
+    )
+    docs_url: str = "https://cognite-neat.readthedocs-hosted.com/en/latest/"  # url to the documentation of the step
 
     def __init__(self, data_store_path: Path | None = None):
         self.log: bool = False
-        self.data_store_path = Path(data_store_path) if data_store_path is not None else None
+        self.configs: dict[str, str] = {}
+        self.data_store_path = Path(data_store_path) if data_store_path is not None else Path.cwd()
 
     @property
     def _not_configured_message(self) -> str:
@@ -54,7 +59,7 @@ class Step(ABC):
     def set_workflow_configs(self, configs: WorkflowConfigs | None):
         self.workflow_configs = configs
 
-    def configure(self, configs: dict[str, str] | None):
+    def configure(self, configs: dict[str, str]):
         self.configs = configs
 
     def set_flow_context(self, context: dict[str, DataContract]):

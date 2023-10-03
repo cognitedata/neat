@@ -40,7 +40,8 @@ class LoadTransformationRules(Step):
         Configurable(
             name="file_name",
             value="rules.xlsx",
-            label="Full name of the rules file. The file should be stored in the rules directory.",
+            label="Full name of the rules file in rules folder. If includes path, \
+                it will be relative to the neat data folder",
         ),
         Configurable(name="version", value="", label="Optional version of the rules file"),
     ]
@@ -52,8 +53,12 @@ class LoadTransformationRules(Step):
         # rules file
         if self.configs is None:
             raise ValueError(f"Step {type(self).__name__} has not been configured.")
-        rules_file = self.configs["file_name"]
-        rules_file_path = Path(self.data_store_path, "rules", rules_file)
+        rules_file = Path(self.configs["file_name"])
+        if str(rules_file.parent) == ".":
+            rules_file_path = Path(self.data_store_path) / "rules" / rules_file
+        else:
+            rules_file_path = Path(self.data_store_path) / rules_file
+
         version = self.configs["version"]
 
         # rules validation
@@ -71,9 +76,9 @@ class LoadTransformationRules(Step):
         elif rules_file_path.exists() and version:
             hash = utils.get_file_hash(rules_file_path)
             if hash != version:
-                store.load_rules_file_from_cdf(rules_file, version)
+                store.load_rules_file_from_cdf(str(rules_file), version)
         else:
-            store.load_rules_file_from_cdf(rules_file, version)
+            store.load_rules_file_from_cdf(str(rules_file), version)
 
         transformation_rules, validation_errors, validation_warnings = parse_rules_from_excel_file(
             rules_file_path, return_report=True
