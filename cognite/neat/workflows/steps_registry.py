@@ -53,9 +53,9 @@ class StepsRegistry:
         try:
             if self.user_steps_path:
                 sys.path.append(str(self.user_steps_path))
-                self.load_custom_step_classes(self.user_steps_path, scope="global")
-        except Exception:
-            logging.info(f"No user defined modules provided in {self.user_steps_path}")
+                self.load_custom_step_classes(self.user_steps_path, scope="user_global")
+        except Exception as e:
+            logging.info(f"No user defined modules provided in {self.user_steps_path}. Error: {e}")
 
     def load_workflow_step_classes(self, workflow_name: str):
         if not self.data_store_path:
@@ -71,7 +71,10 @@ class StepsRegistry:
                 step_module_path.is_file() and not step_module_name.endswith(".py")
             ):
                 continue
-            full_module_name = custom_steps_path.name + "." + step_module_name.replace(".py", "")
+            if scope == "user_global":
+                full_module_name = step_module_name.replace(".py", "")
+            else:
+                full_module_name = custom_steps_path.name + "." + step_module_name.replace(".py", "")
             logging.info(f"Loading user defined step module {full_module_name}")
             if full_module_name in sys.modules:
                 logging.info(f"Reloading existing workflow module {full_module_name}")
@@ -108,6 +111,8 @@ class StepsRegistry:
         step_configs: dict[str, Any],
         metrics: NeatMetricsCollector | None = None,
         workflow_configs: WorkflowConfigs | None = None,
+        workflow_id: str = "",
+        workflow_run_id: str = "",
     ) -> DataContract | tuple[FlowMessage, DataContract] | FlowMessage:
         for step_cls in self._step_classes:
             if step_cls.__name__ == step_name:
@@ -116,6 +121,7 @@ class StepsRegistry:
                 step_obj.set_flow_context(flow_context)
                 step_obj.set_metrics(metrics)
                 step_obj.set_workflow_configs(workflow_configs)
+                step_obj.set_workflow_metadata(workflow_id, workflow_run_id)
                 signature = inspect.signature(step_obj.run)
                 parameters = signature.parameters
                 is_valid = True
@@ -169,7 +175,11 @@ class StepsRegistry:
                             output_data.append(annotation.__name__)
                     elif isinstance(return_annotation, tuple):
                         for annotation in return_annotation:
-                            output_data.append(annotation.__name__)
+                            if isinstance(annotation, types.UnionType):
+                                for annotation_l2 in annotation.__args__:
+                                    output_data.append(annotation_l2.__name__)
+                            else:
+                                output_data.append(annotation.__name__)
                     else:
                         output_data.append(return_annotation.__name__)
                 steps.append(
@@ -187,6 +197,8 @@ class StepsRegistry:
                     )
                 )
             except AttributeError as e:
-                logging.error(f"Step {type(step_cls).__name__} does not have a run method.Error: {e}")
+                logging.error(
+                    f"Step {type(step_cls).__name__} does not have a run method or types can't be infered.Error: {e}"
+                )
 
         return steps

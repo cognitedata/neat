@@ -286,6 +286,8 @@ class BaseWorkflow:
                         metrics=self.metrics,
                         workflow_configs=self.get_configs(),
                         step_configs=step.configs,
+                        workflow_id=self.name,
+                        workflow_run_id=self.run_id,
                     )
 
                 output = method_runner()

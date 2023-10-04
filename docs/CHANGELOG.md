@@ -15,7 +15,17 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## [0.26.0] - 29-10-23
+## [0.26.1] - 05-10-23
+
+### Fixed
+- Small fixes related to steps compatibility with mypy.
+- Fixed UI crash in case if workflow state cannot be loaded.
+- Fixed step loader from data_folder/steps path.
+
+### Added
+- Workflow id and run id are now available as step object variables.
+
+## [0.26.0] - 04-10-23
 
 ### Added
 - Added rules2excel rules exporter. Now users can export rules from TransformationRules object to excel file.

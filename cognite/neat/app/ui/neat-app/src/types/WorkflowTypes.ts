@@ -229,7 +229,7 @@ export class WorkflowDefinition {
 
     convertStepsToNodes():any {
         let nodes = [];
-        this.steps.forEach(step => {
+        this.steps?.forEach(step => {
             let style = {};
             if (step.enabled == false) {
                 style = { borderColor: 'red'};
