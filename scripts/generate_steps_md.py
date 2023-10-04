@@ -27,16 +27,16 @@ def step_to_markdown(step):
         markdown += "* **Output**: " + ", ".join(step["output"]) + "\n"
 
     # Render configurables as a Markdown table
-    if step['configurables']:
+    if step["configurables"]:
         markdown += "\n**Configurables:**\n\n"
         markdown += "| Name | Default value | Description |\n"
         markdown += "| ---- | ----- | ----- |\n"
-        for configurable in step['configurables']:
-            name = configurable['name']
-            value = configurable['value']
-            label = configurable['label']
+        for configurable in step["configurables"]:
+            name = configurable["name"]
+            value = configurable["value"]
+            label = configurable["label"]
             markdown += f"| {name} | {value} | {label} |\n"
-    
+
     markdown += "\n---\n\n"
 
     # markdown += f"* **Docs URL**: [{step['docs_url']}]({step['docs_url']})\n"
@@ -59,10 +59,10 @@ markdown_document = ""
 if json_data:
     # Group steps by category
     steps_by_category = {}
-    for step in json_data['steps']:
+    for step in json_data["steps"]:
         if step["scope"] != "core_global":
             continue
-        category = step['category']
+        category = step["category"]
         if category not in steps_by_category:
             steps_by_category[category] = []
         steps_by_category[category].append(step)
@@ -72,7 +72,7 @@ if json_data:
     markdown_document = "## Table of Contents\n\n"
     for category, category_steps in steps_by_category.items():
         markdown_document += f"* [{category}](#{category.lower().replace(' ', '-')})\n"
-    
+
     markdown_document += "\n"
 
     for category, category_steps in steps_by_category.items():
@@ -81,7 +81,7 @@ if json_data:
             markdown_document += step_to_markdown(step)
 
     # Save Markdown document to a file
-    with open(file_name, 'w') as f:
+    with open(file_name, "w") as f:
         f.write(markdown_document)
 
     print("Markdown document generated and saved as 'output.md'")

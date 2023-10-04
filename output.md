@@ -24,13 +24,13 @@
   - *source_rdf_store.type*: oxigraph
   - *solution_rdf_store.type*: oxigraph
   - *source_rdf_store.disk_store_dir*: source-graph-store
-  - *source_rdf_store.query_url*: 
-  - *source_rdf_store.update_url*: 
-  - *solution_rdf_store.query_url*: 
-  - *solution_rdf_store.update_url*: 
+  - *source_rdf_store.query_url*:
+  - *source_rdf_store.update_url*:
+  - *solution_rdf_store.query_url*:
+  - *solution_rdf_store.update_url*:
   - *solution_rdf_store.disk_store_dir*: solution-graph-store
   - *stores_to_configure*: all
-  - *solution_rdf_store.api_root_url*: 
+  - *solution_rdf_store.api_root_url*:
 * **Version**: 1.0.0
 * **Docs URL**: [https://cognite-neat.readthedocs-hosted.com/en/latest/](https://cognite-neat.readthedocs-hosted.com/en/latest/)
 * **Source**: cognite
@@ -48,9 +48,9 @@
   - *graph_name*: source
   - *store_type*: oxigraph
   - *disk_store_dir*: source-graph-store
-  - *sparql_query_url*: 
-  - *sparql_update_url*: 
-  - *db_server_api_root_url*: 
+  - *sparql_query_url*:
+  - *sparql_update_url*:
+  - *db_server_api_root_url*:
   - *init_procedure*: reset
 * **Version**: 1.0.0
 * **Docs URL**: [https://cognite-neat.readthedocs-hosted.com/en/latest/](https://cognite-neat.readthedocs-hosted.com/en/latest/)
@@ -116,13 +116,13 @@
 * **Scope**: core_global
 * **Output**: FlowMessage
 * **Configurables**:
-  - *api_url*: 
+  - *api_url*:
   - *output_file_path*: workflows/workflow_name/output.json
   - *http_method*: GET
   - *auth_mode*: none
-  - *username*: 
-  - *password*: 
-  - *token*: 
+  - *username*:
+  - *password*:
+  - *token*:
   - *response_destination*: file
 * **Version**: 1.0.0
 * **Docs URL**: [https://cognite-neat.readthedocs-hosted.com/en/latest/](https://cognite-neat.readthedocs-hosted.com/en/latest/)
@@ -138,8 +138,8 @@
 * **Input**: CogniteClient
 * **Output**: FlowMessage
 * **Configurables**:
-  - *cdf.external_id*: 
-  - *local.file_name*: 
+  - *cdf.external_id*:
+  - *local.file_name*:
   - *local.storage_dir*: rules/
 * **Version**: 1.0.0
 * **Docs URL**: [https://cognite-neat.readthedocs-hosted.com/en/latest/](https://cognite-neat.readthedocs-hosted.com/en/latest/)
@@ -154,12 +154,12 @@
 * **Scope**: core_global
 * **Output**: FlowMessage
 * **Configurables**:
-  - *github.filepath*: 
-  - *github.personal_token*: 
-  - *github.owner*: 
-  - *github.repo*: 
+  - *github.filepath*:
+  - *github.personal_token*:
+  - *github.owner*:
+  - *github.repo*:
   - *github.branch*: main
-  - *local.file_name*: 
+  - *local.file_name*:
   - *local.storage_dir*: rules/
 * **Version**: 1.0.0
 * **Docs URL**: [https://cognite-neat.readthedocs-hosted.com/en/latest/](https://cognite-neat.readthedocs-hosted.com/en/latest/)
@@ -265,7 +265,7 @@
 * **Input**: RulesData
 * **Output**: FlowMessage
 * **Configurables**:
-  - *file_name*: 
+  - *file_name*:
   - *storage_dir*: staging
 * **Version**: 1.0.0
 * **Docs URL**: [https://cognite-neat.readthedocs-hosted.com/en/latest/](https://cognite-neat.readthedocs-hosted.com/en/latest/)
@@ -302,7 +302,7 @@
   - *graph_name*: solution
   - *object_id_generation_method*: hash_of_json_element
   - *json_object_id_mapping*: name
-  - *json_object_labels_mapping*: 
+  - *json_object_labels_mapping*:
   - *namespace*: http://purl.org/cognite/neat#
   - *namespace_prefix*: neat
 * **Version**: 0.1.0-alpha
@@ -352,7 +352,7 @@
   - *validation_report_storage_dir*: rules_validation_report
   - *validation_report_file*: rules_validation_report.txt
   - *file_name*: rules.xlsx
-  - *version*: 
+  - *version*:
 * **Version**: 1.0.0
 * **Docs URL**: [https://cognite-neat.readthedocs-hosted.com/en/latest/](https://cognite-neat.readthedocs-hosted.com/en/latest/)
 * **Source**: cognite
@@ -367,7 +367,7 @@
 * **Input**: RulesData
 * **Output**: FlowMessage
 * **Configurables**:
-  - *file_name*: 
+  - *file_name*:
   - *storage_dir*: staging
   - *store_warnings*: True
 * **Version**: 1.0.0
@@ -411,7 +411,7 @@
 * **Input**: RulesData
 * **Output**: FlowMessage
 * **Configurables**:
-  - *file_name*: 
+  - *file_name*:
   - *storage_dir*: staging
 * **Version**: 1.0.0
 * **Docs URL**: [https://cognite-neat.readthedocs-hosted.com/en/latest/](https://cognite-neat.readthedocs-hosted.com/en/latest/)
@@ -427,11 +427,11 @@
 * **Input**: SolutionGraph, SourceGraph
 * **Output**: FlowMessage
 * **Configurables**:
-  - *source_class*: 
-  - *source_property*: 
+  - *source_class*:
+  - *source_property*:
   - *source_value_type*: single_value_str
-  - *target_class*: 
-  - *target_property*: 
+  - *target_class*:
+  - *target_property*:
   - *relationship_name*: link
   - *link_direction*: target_to_source
   - *matching_method*: regexp
@@ -529,9 +529,9 @@
 * **Input**: CogniteClient
 * **Output**: FlowMessage
 * **Configurables**:
-  - *cdf.external_id*: 
-  - *cdf.dataset_id*: 
-  - *local.file_name*: 
+  - *cdf.external_id*:
+  - *cdf.dataset_id*:
+  - *local.file_name*:
   - *local.storage_dir*: rules/
 * **Version**: 1.0.0
 * **Docs URL**: [https://cognite-neat.readthedocs-hosted.com/en/latest/](https://cognite-neat.readthedocs-hosted.com/en/latest/)
@@ -546,13 +546,13 @@
 * **Scope**: core_global
 * **Output**: FlowMessage
 * **Configurables**:
-  - *github.filepath*: 
-  - *github.personal_token*: 
-  - *github.owner*: 
-  - *github.repo*: 
+  - *github.filepath*:
+  - *github.personal_token*:
+  - *github.owner*:
+  - *github.repo*:
   - *github.branch*: main
   - *github.commit_message*: New file
-  - *local.file_name*: 
+  - *local.file_name*:
   - *local.storage_dir*: rules/
 * **Version**: 1.0.0
 * **Docs URL**: [https://cognite-neat.readthedocs-hosted.com/en/latest/](https://cognite-neat.readthedocs-hosted.com/en/latest/)
@@ -643,4 +643,3 @@
 * **Source**: cognite
 
 ---
-

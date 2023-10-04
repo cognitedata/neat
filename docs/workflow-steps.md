@@ -1,13 +1,13 @@
-# Workflow Steps 
+# Workflow Steps
 
 
-Step is a block of isolated functionality that is packaged into python class that is inherited from `Step` base class. Steps are organized into workflows and executed in a specific order. Each step can have input , output parameters and each step is configurable. Input parameters are passed to step from Flow context according to their data contract . Output parameters are stored in Flow context and can be used by other steps. 
+Step is a block of isolated functionality that is packaged into python class that is inherited from `Step` base class. Steps are organized into workflows and executed in a specific order. Each step can have input , output parameters and each step is configurable. Input parameters are passed to step from Flow context according to their data contract . Output parameters are stored in Flow context and can be used by other steps.
 
 NEAT project provides a collection of steps that can be used to build workflows.In addition to that, you can create your own steps and use them in your workflows.
 
 ### Creating your own step
 
-To create your own step you need to create a python class that inherits from `Step` base class and implement `run` method. `run` method is the entry point of your step. 
+To create your own step you need to create a python class that inherits from `Step` base class and implement `run` method. `run` method is the entry point of your step.
 Custom step may reside in two places:
 
 - in the same folder as your workflow , for example `neat_data_folder/workflows/my_workflow/my_step.py`
