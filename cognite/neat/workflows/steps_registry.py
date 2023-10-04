@@ -169,7 +169,11 @@ class StepsRegistry:
                             output_data.append(annotation.__name__)
                     elif isinstance(return_annotation, tuple):
                         for annotation in return_annotation:
-                            output_data.append(annotation.__name__)
+                            if isinstance(annotation, types.UnionType):
+                                for annotation_l2 in annotation.__args__:
+                                    output_data.append(annotation_l2.__name__)
+                            else:    
+                                output_data.append(annotation.__name__)
                     else:
                         output_data.append(return_annotation.__name__)
                 steps.append(
@@ -187,6 +191,6 @@ class StepsRegistry:
                     )
                 )
             except AttributeError as e:
-                logging.error(f"Step {type(step_cls).__name__} does not have a run method.Error: {e}")
+                logging.error(f"Step {type(step_cls).__name__} does not have a run method or types can't be infered.Error: {e}")
 
         return steps
