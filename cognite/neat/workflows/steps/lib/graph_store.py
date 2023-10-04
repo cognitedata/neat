@@ -40,6 +40,26 @@ class ConfigureDefaultGraphStores(Step):
             label="Local directory for source graph store",
         ),
         Configurable(
+            name="source_rdf_store.query_url",
+            value="",
+            label="Sparql query endpoint.Only for sparql and graphdb store type",
+        ),
+        Configurable(
+            name="source_rdf_store.update_url",
+            value="",
+            label="Sparql update endpoint.Only for sparql and graphdb store type",
+        ),
+        Configurable(
+            name="solution_rdf_store.query_url",
+            value="",
+            label="Sparql query endpoint.Only for sparql and graphdb store type",
+        ),
+        Configurable(
+            name="solution_rdf_store.update_url",
+            value="",
+            label="Sparql update endpoint.Only for sparql and graphdb store type",
+        ),
+        Configurable(
             name="solution_rdf_store.disk_store_dir",
             value="solution-graph-store",
             label="Local directory for solution graph store",

@@ -1,6 +1,6 @@
 .PHONY: run-explorer run-tests run-linters build-ui build-python build-docker run-docker compose-up
 
-version="0.26.0"
+version="0.26.1"
 run-explorer:
 	@echo "Running explorer API server..."
 	# open "http://localhost:8000/static/index.html" || true
@@ -76,3 +76,7 @@ compose-neat-up:
 run-docs:
 	@echo "Running mkdocs"
 	mkdocs serve --dev-addr 127.0.0.1:8010
+
+gen-steps-md:
+	@echo "Generating step docs"
+	poetry run python scripts/generate_steps_md.py

@@ -11,7 +11,7 @@ __all__ = ["SimpleGraphEntityMatcher"]
 
 class SimpleGraphEntityMatcher(Step):
     description = "The step matches entities in the graph and creates links based on provided configurations"
-    category = "contextualization"
+    category = "Contextualization"
     configurables: ClassVar[list[Configurable]] = [
         Configurable(name="source_class", value="", label="Name of the source class"),
         Configurable(name="source_property", value="", label="Name of the source property"),

@@ -10,14 +10,12 @@ Users can customize the workflow by adding or removing steps, or by modifying th
 
 - **Solution** - a package that contains a set of workflows, rules and other components that are used to solve a specific problem.
 - **Workflow** - a set of steps that are executed in a specific order.
-- **Base workflow** - a workflow that is provided by NEAT project (and is immutable for user) and can be used as a starting point for custom workflows.
 - **Step** - a single block of code (function) that is executed as part of a workflow.
 - **Trigger** - a special type of step that can be used to trigger workflow execution.
-- **Task** - is a special type of step that has provided implementation (no need to implement it in _workflow.py_) and can be used to perform some common tasks.
+- **Task** - is a special type of step that has provided implementation .
 - **Flow message** - a message that is passed between steps. The message is a dictionary that contains information about the current state of the workflow.
-- **Workflow implementation class** - individual steps that make up the workflow and defined as python functions. All steps are aggregated into a single workflow class.
 - **Workflow manifest** - a YAML file that contains information about the workflow configuration , steps transitions , triggers and tasks cofiuration and other workflow related metadat.
-- **Workflow context** - all local variables that are defined in the workflow class and can be accessed by all steps.Information between steps is passed via the workflow context or flow message.
+- **Workflow context** - is local key-value store (scoped to a single workflow) that is used to store objects produced by steps. Objects stored in the context used for data sharing between steps via dependency injection.
 - **Workflow Engine** - internal service that orchestrates steps execution.
 - **Configurations** - a set of configurable parameters that are separated from the workflow logic and stored in manifest file (_workflow.yaml_). Configurations can be updated by a user via UI or API.
 - **Transformation Rules** - Definition of data model and a set of rules that define how the data should be transformed from the source graph to the solution graph to the CDF resources. The rules are defined as Excel file.
@@ -25,30 +23,9 @@ Users can customize the workflow by adding or removing steps, or by modifying th
 - **Data transformation functions** - a collection of functions that define how the data should be transformed from the solution graph to the CDF resources. The functions are defined in a python module and provided by NEAT project.
 - **Workflow Execution History** - a set of records that contain information about workflow execution history. The records are stored in the CDF and can be accessed via UI or API.
 
-### Rules and conventions:
-
-- Each workflow must reside in its own folder and folder name defines workflow name.
-- Workflow class name must end with `NeatWorkflow` , for example `BasicNeatWorkflow` and must implement `BaseWorkflow` class from `from cognite.neat.core.workflow.base`
-- Workflow folder must contain at least 2 files :
-  - `workflow.py` - steps/workflow implementation file
-  - `workflow.yaml` - manifest and configurations
-- Each method that should be orchestrated by workflow engine must be prefixed with `step_` , each method must have single argument of `FlowMessage` type and return `FlowMessage` or `None`.
-- FlowMessage is passed from one step to another and it's captured in execution log.
-- FlowMessage can have `next_step_ids` property that defines which steps should be executed next. If `next_step_ids` is not set, next step will be executed based on execution graph defined in manifest.
-- FlowMessage can have `output_text` property that defines what should be logged in execution log and available in UI. If `output_text` is not set, method name will be used as output text.
-- FlowMessage can have `error_text` property that defines error message that should be logged in execution log and available in UI in case of error.
-
-Manifest file consist of 3 main sections:
-
-- `configs` - workflow configuration parameters.
-- `steps` - steps metadata.
-- `system_components` - system or solutions components, is used for documentation purpose only.
-- `description` - short description of the workflow.
-- `implementation_module` - alternative workflow implementation module name.If not set, `workflow.py` will be used. Can we used to reuse workflow implementation from another workflow.
-
 ### Steps
 
-Step is a single block of code (method of workflow class) that is executed as part of a workflow. Multiple step methods are aggregated into workflow class (_workflow.py_ file).
+Step is a block of isolated functionality that is packaged into python class that is inherited from `Step` base class. Steps are organized into workflows and executed in a specific order. Each step can have input and output parameters. Input parameters are passed to step from Flow context according to their data contract . Output parameters are stored in Flow context and can be used by other steps.
 
 ### Triggers
 
@@ -93,37 +70,17 @@ FlowMessage can have `output_text` property that defines what should be logged i
 ### Static or dynamic execution graph
 
 Execution graph defines which steps should be executed next.
-By default, execution graph is static and defined in manifest file. It's possible to define dynamic execution graph by returning `next_step_ids` property in step method.
+By default, execution graph is static and defined in manifest file. It's possible to define dynamic execution graph by setting `next_step_ids` property of `FlowMessage`.
 
 Example of dynamic routing :
 
 ```python
-def step_run_experiment_1(self, flow_msg: FlowMessage = None):
         if flow_msg.payload["action"] == "approve":
             return FlowMessage(next_step_ids=["cleanup"])
         else :
             return FlowMessage(next_step_ids=["step_45507"])
 ```
 
-### Base workflows and tasks/components
-
-A users can choose to implement workflow from scratch or use one of the base workflows provided by NEAT project. Base workflows are located in `cognite.neat.core.base_workflows` module.
-Base workflows are maintained by NEAT project and can be updated in future releases. If a user chooses to implement workflow completly from scratch, it's his/her responsibility to maintain it.
-
-![Base workflows](./figs/base-components.png)
-
-Example :
-
-```python
-from cognite.client import CogniteClient
-
-from cognite.neat.workflows.base_workflows.graph2assets_relationships import Graph2AssetHierarchyBaseWorkflow
-
-
-class Graph2AssetHierarchyNeatWorkflow(Graph2AssetHierarchyBaseWorkflow):
-    def __init__(self, name: str, client: CogniteClient):
-        super().__init__(name, client)
-```
 
 ### Workflow start methods
 
@@ -153,158 +110,240 @@ Configuring the mode in UI :
 
 ### Workflow configuration parameters
 
-Each workflow can have configuration parameters that can be set in manifest file directly or via UI. In addition to that, workflow can have system configuration parameters that have special meaning .
+Each Step can be configured independently , configuration parameters are defined in manifest file in `configs` section of each step. Configurations can be updated by a user via UI or API.
+In addition to that, workflow can have system configuration parameters that have special meaning .
 Supported system configuration parameters :
 
 - `system.execution_reporting_type` - controls how workflow execution log should be reported to CDF . Supported values : `all_disabled`, `all_enabled`(default)
 
-Example :
-
-```yaml
-- group: system
-  name: system.execution_reporting_type
-  value: all_disabled
-  label: Execution reporting type
-```
 
 ### Basic NEAT workflow definition
 
-```python
-import logging
+??? note "manifest.yaml example"
 
-from cognite.client import CogniteClient
+    ```yaml
+    configs: []
+    description: null
+    implementation_module: null
+    name: sheet2cdf
+    steps:
+    -   configs: null
+        description: null
+        enabled: true
+        id: step_trigger
+        label: Process trigger
+        max_retries: 0
+        method: null
+        params:
+            workflow_start_method: persistent_blocking
+        retry_delay: 3
+        stype: http_trigger
+        system_component_id: null
+        transition_to:
+        - step_load_rules
+        trigger: true
+        ui_config:
+            pos_x: 509
+            pos_y: 93
+    -   configs:
+            file_name: sheet2cdf-transformation-rules.xlsx
+            validate_rules: 'True'
+            validation_report_file: rules_validation_report.txt
+            validation_report_storage_dir: rules_validation_report
+            version: ''
+        description: null
+        enabled: true
+        id: step_load_rules
+        label: Load rules from file
+        max_retries: 0
+        method: LoadTransformationRules
+        params: {}
+        retry_delay: 3
+        stype: stdstep
+        system_component_id: null
+        transition_to:
+        - step_reset_stores
+        - step_configure_solution_store
+        trigger: false
+        ui_config:
+            pos_x: 511
+            pos_y: 165
+    -   configs: {}
+        description: null
+        enabled: true
+        id: step_load_rules_into_store
+        label: Load rules as data into solution graph
+        max_retries: 0
+        method: InstancesFromRulesToSolutionGraph
+        params: {}
+        retry_delay: 3
+        stype: stdstep
+        system_component_id: null
+        transition_to:
+        - step_generate_assets
+        trigger: false
+        ui_config:
+            pos_x: 507
+            pos_y: 459
+    -   configs: {}
+        description: null
+        enabled: true
+        id: step_generate_assets
+        label: Generate assets
+        max_retries: 0
+        method: GenerateCDFAssetsFromGraph
+        params: {}
+        retry_delay: 3
+        stype: stdstep
+        system_component_id: null
+        transition_to:
+        - step_generate_relations
+        trigger: false
+        ui_config:
+            pos_x: 507
+            pos_y: 556
+    -   configs: {}
+        description: null
+        enabled: true
+        id: step_generate_relations
+        label: Generate relationships
+        max_retries: 0
+        method: GenerateCDFRelationshipsFromGraph
+        params: {}
+        retry_delay: 3
+        stype: stdstep
+        system_component_id: null
+        transition_to:
+        - step_upload_assets
+        trigger: false
+        ui_config:
+            pos_x: 507
+            pos_y: 632
+    -   configs: {}
+        description: null
+        enabled: true
+        id: step_upload_assets
+        label: Upload assets
+        max_retries: 0
+        method: UploadCDFAssets
+        params: {}
+        retry_delay: 3
+        stype: stdstep
+        system_component_id: null
+        transition_to:
+        - step_upload_relations
+        trigger: false
+        ui_config:
+            pos_x: 505
+            pos_y: 711
+    -   configs: {}
+        description: null
+        enabled: true
+        id: step_upload_relations
+        label: Upload relationships
+        max_retries: 0
+        method: UploadCDFRelationships
+        params: {}
+        retry_delay: 3
+        stype: stdstep
+        system_component_id: null
+        transition_to: []
+        trigger: false
+        ui_config:
+            pos_x: 506
+            pos_y: 795
+    -   configs: {}
+        description: null
+        enabled: true
+        id: step_create_cdf_labels
+        label: Create CDF labels
+        max_retries: 0
+        method: CreateCDFLabels
+        params: {}
+        retry_delay: 3
+        stype: stdstep
+        system_component_id: null
+        transition_to:
+        - step_load_rules_into_store
+        trigger: false
+        ui_config:
+            pos_x: 508
+            pos_y: 382
+    -   configs:
+            db_server_api_root_url: ''
+            disk_store_dir: solution-graph-store-2
+            graph_name: solution
+            init_procedure: reset
+            sparql_query_url: ''
+            sparql_update_url: ''
+            store_type: oxigraph
+        description: null
+        enabled: true
+        id: step_configure_solution_store
+        label: Configure solution graph store
+        max_retries: 0
+        method: ConfigureGraphStore
+        params: {}
+        retry_delay: 3
+        stype: stdstep
+        system_component_id: null
+        transition_to:
+        - step_create_cdf_labels
+        trigger: false
+        ui_config:
+            pos_x: 509
+            pos_y: 263
+    system_components:
+    -   description: null
+        id: source_excel_sheet
+        label: Transformation Rules
+        transition_to:
+        - excel2rdf_parser
+        - cdf_classic_exporter
+        ui_config:
+            pos_x: 170
+            pos_y: 10
+    -   description: null
+        id: excel2rdf_parser
+        label: Excel to Graph Parser
+        transition_to:
+        - source_graph
+        ui_config:
+            pos_x: 0
+            pos_y: 80
+    -   description: null
+        id: source_graph
+        label: Source Graph
+        transition_to:
+        - in_memmory_store
+        ui_config:
+            pos_x: 0
+            pos_y: 150
+    -   description: null
+        id: in_memmory_store
+        label: In-Memory Graph Database
+        transition_to:
+        - cdf_classic_exporter
+        ui_config:
+            pos_x: 0
+            pos_y: 220
+    -   description: null
+        id: cdf_classic_exporter
+        label: CDF Classic Exporter
+        transition_to:
+        - cdf_classic
+        ui_config:
+            pos_x: 170
+            pos_y: 330
+    -   description: null
+        id: cdf_classic
+        label: CDF Classic (Asset,Relationships, Labels)
+        transition_to: null
+        ui_config:
+            pos_x: 170
+            pos_y: 400
 
-from cognite.neat.workflows import BaseWorkflow
-from cognite.neat.workflows import FlowMessage
-
-
-class BasicNeatWorkflow(BaseWorkflow):
-  def __init__(self, name: str, client: CogniteClient):
-    super().__init__(name, client, [])
-    self.counter = 0
-    self.metrics.register_metric("counter_1", "", "counter", ["step"])
-    self.metrics.register_metric("gauge_1", "", "gauge", ["step"])
-
-  def step_run_experiment_1(self, flow_msg: FlowMessage = None):
-    logging.info("Running experiment 1")
-    logging.info("Done running experiment 4444")
-    self.counter = self.counter + 1
-    logging.info("Counter: " + str(self.counter))
-
-    self.metrics.get("counter_1", {"step": "run_experiment_1"}).inc()
-    self.metrics.get("gauge_1", {"step": "run_experiment_1"}).set(self.counter)
-
-    if self.counter > 5:
-      return FlowMessage(output_text="Done running experiment", next_step_ids=["error_handler"])
-    else:
-      return FlowMessage(
-        output_text=f"Running iteration {self.counter} of xperiment", next_step_ids=["run_experiment_1"]
-      )
-
-  def step_cleanup(self, flow_msg: FlowMessage = None):
-    logging.info("Cleanup")
-
-  def step_error_handler(self, flow_msg: FlowMessage = None):
-    logging.info("Error handler")
-    return FlowMessage(output_text="Error handleed")
-
-```
-
-manifest.yaml example:
-
-```yaml
-configs:
-  - group: source_rdf_store
-    label: null
-    name: source_rdf_store.type
-    options: null
-    required: false
-    type: null
-    value: graphdb
-description: null
-system_components:
-  - description: null
-    id: experimentation_system
-    label: Experimentation playground
-    tranistion_to: null
-    ui_config:
-      pos_x: 171
-      pos_y: 6
-implementation_module: null
-name: playground
-steps:
-  - description: null
-    enabled: true
-    system_component_id: null
-    id: run_experiment_1
-    label: Running experiment
-    method: null
-    params: {}
-    stype: pystep
-    transition_to:
-      - cleanup
-      - error_handler
-    trigger: false
-    ui_config:
-      pos_x: 340
-      pos_y: 144
-  - description: null
-    enabled: true
-    system_component_id: null
-    id: cleanup
-    label: Cleanup
-    method: null
-    params: null
-    stype: pystep
-    transition_to: []
-    trigger: false
-    ui_config:
-      pos_x: 340
-      pos_y: 448
-  - description: null
-    enabled: true
-    system_component_id: null
-    id: step_trigger
-    label: HTTP trigger
-    method: null
-    params: {}
-    stype: http_trigger
-    transition_to:
-      - run_experiment_1
-    trigger: true
-    ui_config:
-      pos_x: 336
-      pos_y: 44
-  - description: null
-    enabled: false
-    system_component_id: null
-    id: step_295076
-    label: Run every 10 sec
-    method: null
-    params:
-      interval: every 10 seconds
-    stype: time_trigger
-    transition_to:
-      - run_experiment_1
-    trigger: true
-    ui_config:
-      pos_x: 544
-      pos_y: 42
-  - description: null
-    enabled: true
-    system_component_id: null
-    id: error_handler
-    label: Error handler
-    method: null
-    params: {}
-    stype: pystep
-    transition_to:
-      - cleanup
-    trigger: false
-    ui_config:
-      pos_x: 496
-      pos_y: 300
-```
+    ```
 
 ### Versioning
 
@@ -314,19 +353,7 @@ Workflows and rule files are versioned automatically or manually. If version is 
 
 Everything in measured in NEAT.
 Metrics are exposed via prometheus compatible endpoint on http://<host:port>/metrics but also available in json format on http://<host:port>/api/metrics
-The neat provides a set of default metrics and each workflow can define custom metrics,first step is to register metric in workflow constructor:
-
-```python
-    self.metrics.register_metric("counter_1", "", "counter", ["step"])
-    self.metrics.register_metric("gauge_1", "", "gauge", ["step"])
-```
-
-after that, metrics can be accessed in any step:
-
-```python
-        self.metrics.get("counter_1", {"step": "run_experiment_1"}).inc()
-        self.metrics.get("gauge_1", {"step": "run_experiment_1"}).set(self.counter)
-```
+The neat provides a set of default metrics and each Step can define custom metrics.
 
 ## Using the Workflow:
 
@@ -335,9 +362,9 @@ after that, metrics can be accessed in any step:
 To set up and configure your first NEAT workflow , follow these steps:
 
 1. Create new workflow package or download existing workflow package from CDF or from GitHub workflow repository(not available yet)
-2. Configure the parameters in the manifest file to match your system requirements
-3. Execute the workflow using the command line or a GUI tool or via http trigger or time schedule trigger
-4. Monitor the progress of the workflow and any errors that may occur
+2. Configure Steps in the manifest file or via UI to match your system requirements.
+3. Execute the workflow using the command line , UI , via http trigger or time schedule trigger.
+4. Monitor the progress of the workflow execution via UI or API.
 
 ### Packaging and automatic resource loading
 
@@ -361,36 +388,22 @@ NEAT stores detailed data lineage in CDF. Produced resources can be tagged with 
 
 Open API docs : http://localhost:8000/docs
 
-### Monitoring and metrics
+### Rules and conventions:
 
-By default NEAT exposes all metric over Prometheus compatible endpoint on http://localhost:8080/metrics and also in json format on http://localhost:8080/api/metrics or via UI .
-Metrics can be accessed and set in any step of the workflow using metrics helper methods:
+- Each workflow must reside in its own folder and folder name defines workflow name.
+- Workflow folder must contain at least 1 file :
+    - `workflow.yaml` - manifest and configurations
+- FlowMessage is passed from one step to another and is captured in execution log.
+- FlowMessage can have `next_step_ids` property that defines which steps should be executed next. If `next_step_ids` is not set, next step will be executed based on execution graph defined in manifest.
+- FlowMessage can have `output_text` property that defines what should be logged in execution log and available in UI. If `output_text` is not set, method name will be used as output text.
+- FlowMessage can have `error_text` property that defines error message that should be logged in execution log and available in UI in case of error.
 
-```python
-        self.metrics.get("counter_1", {"step": "run_experiment_1"}).inc()
-        self.metrics.get("gauge_1", {"step": "run_experiment_1"}).set(self.counter)
-```
+Manifest file consist of 3 main sections:
 
-Complete example:
-
-```python
-import logging
-from cognite.client import CogniteClient
-from cognite.neat.workflows import BaseWorkflow
-from cognite.neat.workflows import FlowMessage
-
-
-class BasicNeatWorkflow(BaseWorkflow):
-  def __init__(self, name: str, client: CogniteClient):
-    super().__init__(name, client, [])
-    self.metrics.register_metric("counter_1", "", "counter", ["step"])
-    self.metrics.register_metric("gauge_1", "", "gauge", ["step"])
-
-  def step_run_experiment_1(self, flow_msg: FlowMessage = None):
-    self.counter = self.counter + 1
-    self.metrics.get("counter_1", {"step": "run_experiment_1"}).inc()
-    self.metrics.get("gauge_1", {"step": "run_experiment_1"}).set(self.counter)
-```
+- `configs` - workflow configuration parameters.
+- `steps` - steps metadata.
+- `system_components` - system or solutions components, is used for documentation purpose only.
+- `description` - short description of the workflow.
 
 ### Troubleshooting:
 

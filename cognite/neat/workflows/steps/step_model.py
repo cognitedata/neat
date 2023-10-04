@@ -35,7 +35,7 @@ class Step(ABC):
     description: str = ""
     category: str = "default"
     configurables: ClassVar[list[Configurable]] = []
-    scope: str = "global"
+    scope: str = "core_global"
     metrics: NeatMetricsCollector | None = None
     workflow_configs: WorkflowConfigs | None = None
     version: str = "1.0.0"  # version of the step. All alpha versions considered as experimental
@@ -47,6 +47,8 @@ class Step(ABC):
     def __init__(self, data_store_path: Path | None = None):
         self.log: bool = False
         self.configs: dict[str, str] = {}
+        self.workflow_id: str = ""
+        self.workflow_run_id: str = ""
         self.data_store_path = Path(data_store_path) if data_store_path is not None else Path.cwd()
 
     @property
@@ -58,6 +60,10 @@ class Step(ABC):
 
     def set_workflow_configs(self, configs: WorkflowConfigs | None):
         self.workflow_configs = configs
+
+    def set_workflow_metadata(self, workflow_id: str, workflow_run_id: str):
+        self.workflow_id = workflow_id
+        self.workflow_run_id = workflow_run_id
 
     def configure(self, configs: dict[str, str]):
         self.configs = configs

@@ -209,11 +209,16 @@ const loadWorkflowStats = (workflowName: string = "") => {
   if (workflowName == "")
     workflowName = selectedWorkflow;
   const url = neatApiRootUrl + "/api/workflow/stats/" + workflowName;
-  fetch(url).then((response) => response.json()).then((data) => {
-
-    // const filteredStats = filterStats(data);
+  fetch(url).then((response) => {
+    if (!response.ok) {
+      setErrorText("Workflow stete can't be saved . Error code :"+response.status+", message :"+response.statusText);
+      return null;
+    }
+    return response.json()
+   }).then((data) => {
+    if(!data)
+      return;
     const enrichedStats = enrichWorkflowStats(data);
-
     setWorkflowStats(enrichedStats);
     if (data.state == "RUNNING") {
       // startStatePolling();
@@ -222,6 +227,7 @@ const loadWorkflowStats = (workflowName: string = "") => {
     }
 
   }).catch((error) => {
+    setErrorText(error);
     console.error('Error:', error);
   })
 }
@@ -239,12 +245,10 @@ const startWorkflow = () => {
     startStatePolling(selectedWorkflow);
     loadWorkflowStats();
   }).catch((error) => {
+    setErrorText(error);
     console.error('Error:', error);
   })
 }
-
-
-
 
 const saveWorkflow = () => {
   console.dir(nodes);

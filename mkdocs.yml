@@ -17,7 +17,10 @@ nav:
       - Transformation Rules:
           - Overview: transformation-rules.md
           - Rule Types: rule-types.md
-      - Workflows: workflows.md
+      - Workflows:
+          - Overview: workflows.md
+          - Steps: workflow-steps.md
+  - Repository of Steps: steps-repository.md
   - Tutorial:
       - Notebooks:
           - Data Model Generation: tutorial/notebooks/part-1-data-model-generation.ipynb
