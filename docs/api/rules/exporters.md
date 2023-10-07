@@ -1,7 +1,5 @@
 ::: cognite.neat.rules.exporter.rules2dms.DataModel
 
-::: cognite.neat.rules.exporter.rules2graph_sheet.rules2graph_capturing_sheet
-
 ::: cognite.neat.rules.exporter.rules2graphql.GraphQLSchema
 
 ::: cognite.neat.rules.exporter.rules2ontology.Ontology
