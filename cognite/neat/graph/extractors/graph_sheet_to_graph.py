@@ -20,6 +20,48 @@ from cognite.neat.rules.exporter.rules2rules import to_dms_name
 from cognite.neat.rules.models import TransformationRules
 
 
+class GraphCapturingSheet:
+    """
+    Graph capturing sheet class that provides methods for creating a graph capturing sheet and extracting RDF triples.
+
+    Args:
+        rules: Transformation rules which holds data model that is used to validate
+                the graph capturing sheet and extract data model instances from it (i.e. RDF triples)
+        filepath: File path to save the sheet to. Defaults to None.
+    """
+
+    def __init__(self, rules: TransformationRules, filepath: Path | None = None):
+        self.rules = rules
+        self.filepath = filepath
+
+    def create_template(self, filepath: Path | None = None, overwrite: bool = False):
+        """
+        Creates a graph capturing sheet template based on the transformation rules.
+
+        Args:
+            filepath: File path to save the sheet to. Defaults to None.
+            overwrite: Overwrite existing file. Defaults to False.
+        """
+        if filepath is None:
+            filepath = self.filepath
+        if filepath is None:
+            raise ValueError("File path to the graph capturing sheet is not provided!")
+        if filepath.exists() and not overwrite:
+            raise FileExistsError(f"File {filepath} already exists! Set overwrite to True to overwrite it!")
+        rules2graph_capturing_sheet(self.rules, filepath)
+
+    def extract_triples_from_sheet(self, separator: str = ",", namespace: str | None = None) -> list[tuple]:
+        """
+        Extracts RDF triples from the graph capturing sheet.
+
+        Returns:
+            List of RDF triples, represented as tuples `(subject, predicate, object)`, that define data model instances
+        """
+        if self.filepath is None:
+            raise ValueError("File path to the graph capturing sheet is not provided!")
+        return extract_graph_from_sheet(self.filepath, self.rules, separator, namespace)
+
+
 def extract_graph_from_sheet(
     filepath: Path, transformation_rule: TransformationRules, separator: str = ",", namespace: str | None = None
 ) -> list[tuple]:
