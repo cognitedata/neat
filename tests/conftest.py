@@ -37,12 +37,12 @@ os.environ["NEAT_LOAD_EXAMPLES"] = "1"
 
 @pytest.fixture(scope="session")
 def transformation_rules() -> TransformationRules:
-    return rules.parse_rules_from_excel_file(config.TNT_TRANSFORMATION_RULES)
+    return rules.parser.parse_rules_from_excel_file(config.TNT_TRANSFORMATION_RULES)
 
 
 @pytest.fixture(scope="session")
 def simple_rules() -> TransformationRules:
-    return rules.parse_rules_from_excel_file(config.SIMPLE_TRANSFORMATION_RULES)
+    return rules.parser.parse_rules_from_excel_file(config.SIMPLE_TRANSFORMATION_RULES)
 
 
 @pytest.fixture(scope="function")

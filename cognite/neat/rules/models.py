@@ -11,6 +11,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, ClassVar, TypeAlias
 
+import pandas as pd
 from cognite.client.data_classes.data_modeling.data_types import (
     Boolean,
     FileReference,
@@ -909,3 +910,13 @@ class TransformationRules(RuleModel):
 
         value[values["metadata"].prefix] = values["metadata"].namespace
         return value
+
+    def _repr_html_(self) -> str:
+        """Pretty display of the TransformationRules object in a Notebook"""
+        dump = self.metadata.model_dump()
+        for key in ["creator", "contributor"]:
+            dump[key] = ", ".join(dump[key]) if isinstance(dump[key], list) else dump[key]
+        dump["class_count"] = len(self.classes)
+        dump["property_count"] = len(self.properties)
+        dump["instance_count"] = len(self.instances)
+        return pd.Series(dump).to_frame("value")._repr_html_()  # type: ignore[operator]
