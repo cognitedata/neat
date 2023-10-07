@@ -59,7 +59,7 @@ jobs:
         run: export PYTHONPATH=$PYTHONPATH:$(pwd); poetry run pytest
 
       - name: Run notebook tests
-        run: export PYTHONPATH=$PYTHONPATH:$(pwd); poetry run pytest ./docs/tutorial/notebooks/ --nb-test-files
+        run: export PYTHONPATH=$PYTHONPATH:$(pwd); poetry run pytest ./docs/tutorial/notebooks/*.ipynb --nb-test-files
 
       - name: Run security checks
         run: poetry check
