@@ -10,7 +10,7 @@ import warnings
 from collections.abc import ItemsView, Iterator, KeysView, ValuesView
 from datetime import datetime
 from pathlib import Path
-from typing import Any, ClassVar, Generic, TypeAlias, TypeVar
+from typing import Any, ClassVar, Generic, Self, TypeAlias, TypeVar
 
 import pandas as pd
 from cognite.client.data_classes.data_modeling.data_types import (
@@ -868,7 +868,7 @@ class TransformationRules(RuleModel):
 
     metadata: Metadata
     classes: Classes
-    properties: dict[str, Property]
+    properties: Properties
     prefixes: dict[str, Namespace] = PREFIXES.copy()
     instances: list[Instance] = Field(default_factory=list)
 
@@ -889,27 +889,34 @@ class TransformationRules(RuleModel):
         return value
 
     @field_validator("classes", mode="before")
-    def to_classes_obj(cls, value: dict) -> Classes:
+    def dict_to_classes_obj(cls, value: dict) -> Classes:
         dict_of_classes = TypeAdapter(dict[str, Class]).validate_python(value)
         return Classes(data=dict_of_classes)
 
-    @validator("properties", each_item=True)
-    def class_property_exist(cls, value, values):
-        if classes := values.get("classes"):
-            if value.class_id not in classes:
-                raise exceptions.PropertyDefinedForUndefinedClass(
-                    value.property_id, value.class_id
-                ).to_pydantic_custom_error()
-        return value
+    @field_validator("properties", mode="before")
+    def dict_to_properties_obj(cls, value: dict) -> Properties:
+        dict_of_properties = TypeAdapter(dict[str, Property]).validate_python(value)
+        return Properties(data=dict_of_properties)
 
-    @validator("properties", each_item=True)
-    def value_type_exist(cls, value, values):
-        if classes := values.get("classes"):
-            if value.property_type == "ObjectProperty" and value.expected_value_type not in classes:
-                raise exceptions.ValueTypeNotDefinedAsClass(
-                    value.class_id, value.property_id, value.expected_value_type
-                ).to_pydantic_custom_error()
-        return value
+    @model_validator(mode="after")
+    def properties_refer_existing_classes(self) -> Self:
+        errors = []
+        for property_ in self.properties.values():
+            if property_.class_id not in self.classes:
+                errors.append(
+                    exceptions.PropertyDefinedForUndefinedClass(
+                        property_.property_id, property_.class_id
+                    ).to_pydantic_custom_error()
+                )
+            if property_.property_type == "ObjectProperty" and property_.expected_value_type not in self.classes:
+                errors.append(
+                    exceptions.ValueTypeNotDefinedAsClass(
+                        property_.class_id, property_.property_id, property_.expected_value_type
+                    ).to_pydantic_custom_error()
+                )
+        if errors:
+            raise exceptions.MultipleExceptions(errors)
+        return self
 
     @validator("properties")
     def is_type_defined_as_object(cls, value):
