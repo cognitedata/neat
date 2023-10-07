@@ -9,6 +9,7 @@ if sys.version_info >= (3, 11):
 else:
     import tomli as tomllib
 
+
 def _extract_version_from_file(filename, search_pattern, error_message):
     changelog = (ROOT / filename).read_text()
     if not (changelog_version_result := re.search(search_pattern, changelog)):

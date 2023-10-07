@@ -17,6 +17,7 @@ else:
     from backports.strenum import StrEnum
     from typing_extensions import Self
 
+
 @dataclass
 class Triple:
     subject: str
