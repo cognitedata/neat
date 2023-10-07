@@ -1,11 +1,18 @@
 import hashlib
 import logging
+import sys
 import time
 from collections import OrderedDict
 from collections.abc import Iterable
-from datetime import UTC, datetime
+from datetime import datetime
 from functools import wraps
 from typing import TypeAlias, cast, overload
+if sys.version_info >= (3, 11):
+    from datetime import UTC
+else:
+    from datetime import timezone
+    UTC = timezone.utc
+
 
 import pandas as pd
 from cognite.client import ClientConfig, CogniteClient

@@ -1,8 +1,15 @@
 import re
+import sys
 import warnings
 from collections.abc import Iterable
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import Any, TypeAlias, cast
+if sys.version_info >= (3, 11):
+    from datetime import UTC
+else:
+    from datetime import timezone
+    UTC = timezone.utc
+
 
 from cognite.client.data_classes import Asset, Relationship
 from cognite.client.data_classes.data_modeling import EdgeApply, MappedPropertyApply, NodeApply, NodeOrEdgeData

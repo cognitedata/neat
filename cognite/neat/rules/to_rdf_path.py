@@ -1,10 +1,18 @@
 """
 """
 import re
+import sys
 from collections import Counter
 from dataclasses import dataclass
-from enum import StrEnum
-from typing import Literal, Self
+from typing import Literal
+
+
+if sys.version_info >= (3, 11):
+    from enum import StrEnum
+    from typing import Self
+else:
+    from backports.strenum import StrEnum
+    from typing_extensions import Self
 
 from pydantic import BaseModel, field_validator
 

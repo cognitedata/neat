@@ -4,8 +4,13 @@
 import logging
 import time
 import traceback
-from enum import StrEnum
+import sys
 from typing import Any
+
+if sys.version_info >= (3, 11):
+    from enum import StrEnum
+else:
+    from backports.strenum import StrEnum
 
 import pandas as pd
 from cognite.client import CogniteClient

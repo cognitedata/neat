@@ -2,9 +2,18 @@ import logging
 import warnings
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, fields
-from datetime import UTC, datetime
-from typing import Any, Literal, Self, TypeAlias, cast, overload
+from datetime import datetime
+from typing import Any, Literal, TypeAlias, cast, overload
 from warnings import warn
+import sys
+
+if sys.version_info >= (3, 11):
+    from datetime import UTC
+    from typing import Self
+else:
+    from typing_extensions import Self
+    from datetime import timezone
+    UTC = timezone.utc
 
 import numpy as np
 import pandas as pd
