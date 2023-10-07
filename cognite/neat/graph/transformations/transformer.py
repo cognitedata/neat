@@ -2,15 +2,10 @@
 """
 
 import logging
+import sys
 import time
 import traceback
-import sys
 from typing import Any
-
-if sys.version_info >= (3, 11):
-    from enum import StrEnum
-else:
-    from backports.strenum import StrEnum
 
 import pandas as pd
 from cognite.client import CogniteClient
@@ -24,6 +19,11 @@ from cognite.neat.graph.transformations.query_generator.sparql import build_spar
 from cognite.neat.rules.models import TransformationRules
 from cognite.neat.rules.to_rdf_path import AllProperties, AllReferences, Query, RawLookup, Traversal, parse_rule
 from cognite.neat.utils.utils import remove_namespace
+
+if sys.version_info >= (3, 11):
+    from enum import StrEnum
+else:
+    from backports.strenum import StrEnum
 
 prom_total_proc_rules_g = Gauge("neat_total_processed_rules", "Number of processed rules", ["state"])
 rules_processing_timing_metric = Gauge(

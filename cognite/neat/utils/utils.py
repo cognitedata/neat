@@ -7,12 +7,6 @@ from collections.abc import Iterable
 from datetime import datetime
 from functools import wraps
 from typing import TypeAlias, cast, overload
-if sys.version_info >= (3, 11):
-    from datetime import UTC
-else:
-    from datetime import timezone
-    UTC = timezone.utc
-
 
 import pandas as pd
 from cognite.client import ClientConfig, CogniteClient
@@ -24,6 +18,13 @@ from rdflib.term import URIRef
 
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.utils.cdf import CogniteClientConfig, InteractiveCogniteClient, ServiceCogniteClient
+
+if sys.version_info >= (3, 11):
+    from datetime import UTC
+else:
+    from datetime import timezone
+    UTC = timezone.utc
+
 
 Triple: TypeAlias = tuple[URIRef, URIRef, Literal | URIRef]
 
@@ -315,7 +316,7 @@ def _order_expectations_by_type(exceptions: list[dict] | list[ErrorDetails]) -> 
     exception_dict: dict[str, list[str]] = {}
     for exception in exceptions:
         if not isinstance(exception["loc"], str) and isinstance(exception["loc"], Iterable):
-            location = f"[{'/'.join((str(e) for e in exception['loc']))}]"
+            location = f"[{'/'.join(str(e) for e in exception['loc'])}]"
         else:
             location = ""
 

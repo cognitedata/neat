@@ -1,19 +1,11 @@
 import logging
+import sys
 import warnings
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, fields
 from datetime import datetime
 from typing import Any, Literal, TypeAlias, cast, overload
 from warnings import warn
-import sys
-
-if sys.version_info >= (3, 11):
-    from datetime import UTC
-    from typing import Self
-else:
-    from typing_extensions import Self
-    from datetime import timezone
-    UTC = timezone.utc
 
 import numpy as np
 import pandas as pd
@@ -28,6 +20,15 @@ from cognite.neat.graph.loaders.core.models import AssetTemplate
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.rules.models import Property, TransformationRules
 from cognite.neat.utils.utils import chunker, datetime_utc_now, remove_namespace, retry_decorator
+
+if sys.version_info >= (3, 11):
+    from datetime import UTC
+    from typing import Self
+else:
+    from datetime import timezone
+    from typing_extensions import Self
+
+    UTC = timezone.utc
 
 EXCLUDE_PATHS = [
     "root['labels']",

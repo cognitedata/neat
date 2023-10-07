@@ -1,13 +1,13 @@
 import re
 import sys
-if sys.version_info >= (3, 11):
-    import tomllib
-else:
-    import tomli as tomllib
 
 from cognite import neat
 from tests.config import PYPROJECT_TOML, ROOT
 
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
 
 def _extract_version_from_file(filename, search_pattern, error_message):
     changelog = (ROOT / filename).read_text()

@@ -6,6 +6,9 @@ from collections import Counter
 from dataclasses import dataclass
 from typing import Literal
 
+from pydantic import BaseModel, field_validator
+
+from . import exceptions
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -13,11 +16,6 @@ if sys.version_info >= (3, 11):
 else:
     from backports.strenum import StrEnum
     from typing_extensions import Self
-
-from pydantic import BaseModel, field_validator
-
-from . import exceptions
-
 
 @dataclass
 class Triple:
