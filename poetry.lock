@@ -194,6 +194,17 @@ files = [
 ]
 
 [[package]]
+name = "backports-strenum"
+version = "1.2.8"
+description = "Base class for creating enumerated constants that are also subclasses of str"
+optional = false
+python-versions = ">=3.8.6,<4.0.0"
+files = [
+    {file = "backports_strenum-1.2.8-py3-none-any.whl", hash = "sha256:fc297cb26971f7d5e15a478a06a78575197f81daea47975771b1aae996dcccf4"},
+    {file = "backports_strenum-1.2.8.tar.gz", hash = "sha256:4dd47365fd427ac8028aeb1ad3628ea38e67c4d0336ceebd5c0f113e0c487ce9"},
+]
+
+[[package]]
 name = "bandit"
 version = "1.7.5"
 description = "Security oriented static analyser for python code."
@@ -4852,4 +4863,4 @@ graphql = ["jinja2"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "16b17a6b10c65564db83f27e32da9a13b39e1f5a280bc6dbbb29a09610ad9ab2"
+content-hash = "412529e7ede7ca08e8255c3670ed4f15576fc453481dc77e9e15433a1a8c17ff"
