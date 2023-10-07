@@ -23,11 +23,11 @@ nav:
   - Repository of Steps: steps-repository.md
   - Tutorial:
       - Notebooks:
-          - Data Model Generation: tutorial/notebooks/part-1-data-model-generation.ipynb
-          - Graph Generation: tutorial/notebooks/part-2-knowledge-graph-generation.ipynb
-          - Graph to Asset Hierarchy: tutorial/notebooks/part-3-knowledge-graph-to-asset-hierarchy.ipynb
-          - Graph Transformation: tutorial/notebooks/part-4-knowledge-graph-transformation.ipynb
-          - Graph to FDM: tutorial/notebooks/part-5-knowledge-graph-to-fdm-instances.ipynb
+          - Part 1 Import Data Model: tutorial/notebooks/part-1-data-model-generation.ipynb
+          - Part 2 Graph Extraction: tutorial/notebooks/part-2-knowledge-graph-generation.ipynb
+          - Part 3 Load Graph to Asset Hierarchy: tutorial/notebooks/part-3-knowledge-graph-to-asset-hierarchy.ipynb
+          - Part 4 Graph Transformation: tutorial/notebooks/part-4-knowledge-graph-transformation.ipynb
+          - Part 5 Load Graph to FDM Containers: tutorial/notebooks/part-5-knowledge-graph-to-fdm-instances.ipynb
       - Workflows:
           - Sheet to CDF Graph: tutorial/workflows/sheet2cdf.md
           - Source to Solution Graph: tutorial/workflows/source2solution-graph.md

@@ -10,7 +10,8 @@ import numpy as np
 import pandas as pd
 from rdflib import DC, DCTERMS, OWL, RDF, RDFS, Graph
 
-from cognite.neat.rules import exceptions, parse_rules_from_excel_file
+from cognite.neat.rules import exceptions
+from cognite.neat.rules.parser import parse_rules_from_excel_file
 from cognite.neat.utils.utils import generate_exception_report, get_namespace, remove_namespace
 
 
