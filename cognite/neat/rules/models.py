@@ -10,7 +10,7 @@ import warnings
 from collections.abc import ItemsView, Iterator, KeysView, ValuesView
 from datetime import datetime
 from pathlib import Path
-from typing import Any, ClassVar, TypeAlias
+from typing import Any, ClassVar, Generic, TypeAlias, TypeVar
 
 import pandas as pd
 from cognite.client.data_classes.data_modeling.data_types import (
@@ -421,6 +421,37 @@ class Resource(RuleModel):
         return replace_nan_floats_with_default(values, cls.model_fields)
 
 
+T_Resource = TypeVar("T_Resource", bound=Resource)
+
+
+class ResourceDict(BaseModel, Generic[T_Resource]):
+    data: dict[str, T_Resource] = Field(default_factory=dict)
+
+    def __getitem__(self, item: str) -> T_Resource:
+        return self.data[item]
+
+    def __setitem__(self, key: str, value: T_Resource):
+        self.data[key] = value
+
+    def __contains__(self, item: str) -> bool:
+        return item in self.data
+
+    def __len__(self) -> int:
+        return len(self.data)
+
+    def __iter__(self) -> Iterator[str]:  # type: ignore[override]
+        return iter(self.data)
+
+    def values(self) -> ValuesView[T_Resource]:
+        return self.data.values()
+
+    def keys(self) -> KeysView[str]:
+        return self.data.keys()
+
+    def items(self) -> ItemsView[str, T_Resource]:
+        return self.data.items()
+
+
 class Class(Resource):
     """
     Base class for all classes that are part of the data model.
@@ -499,32 +530,10 @@ class Class(Resource):
         return value
 
 
-class Classes(BaseModel):
-    data: dict[str, Class] = Field(default_factory=dict)
+class Classes(ResourceDict[Class]):
+    """This represents a collection of classes that are part of the data model."""
 
-    def __getitem__(self, item: str) -> Class:
-        return self.data[item]
-
-    def __setitem__(self, key: str, value: Class):
-        self.data[key] = value
-
-    def __contains__(self, item: str) -> bool:
-        return item in self.data
-
-    def __len__(self) -> int:
-        return len(self.data)
-
-    def __iter__(self) -> Iterator[str]:  # type: ignore[override]
-        return iter(self.data)
-
-    def values(self) -> ValuesView[Class]:
-        return self.data.values()
-
-    def keys(self) -> KeysView[str]:
-        return self.data.keys()
-
-    def items(self) -> ItemsView[str, Class]:
-        return self.data.items()
+    ...
 
 
 class Property(Resource):
@@ -709,11 +718,10 @@ class Property(Resource):
         return self
 
 
-class Properties(BaseModel):
-    data: dict[str, Property]
+class Properties(ResourceDict[Property]):
+    """This represents a collection of properties that are part of the data model."""
 
-    def __getitem__(self, item: str) -> Property:
-        return self.data[item]
+    ...
 
 
 class Prefixes(RuleModel):
