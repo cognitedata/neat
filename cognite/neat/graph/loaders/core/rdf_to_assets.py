@@ -26,6 +26,7 @@ if sys.version_info >= (3, 11):
     from typing import Self
 else:
     from datetime import timezone
+
     from typing_extensions import Self
 
     UTC = timezone.utc

@@ -36,7 +36,7 @@ target-version = "py310"
 exclude = ["examples","examples-pydantic-v1", "scripts"]
 select = ["E","W","F","I","RUF","TID","UP", "B", "FLY", "PTH", "ERA"]
 fixable = ["E","W","F","I","RUF","TID","UP", "B", "FLY", "PTH", "ERA"]
-fix = false
+fix = true
 ignore = []
 
 [tool.ruff.isort]

@@ -5,7 +5,6 @@ from collections.abc import Iterable
 from datetime import datetime
 from typing import Any, TypeAlias, cast
 
-
 from cognite.client.data_classes import Asset, Relationship
 from cognite.client.data_classes.data_modeling import EdgeApply, MappedPropertyApply, NodeApply, NodeOrEdgeData
 from pydantic import BaseModel, ConfigDict, Field, create_model
