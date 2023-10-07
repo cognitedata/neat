@@ -23,6 +23,17 @@ from cognite.neat.exceptions import NeatException, NeatWarning
 DOCS_BASE_URL = f"{DEFAULT_DOCS_URL}api/exceptions.html#{__name__}"
 
 
+class MultipleExceptions(NeatException):
+    """This is used to gather multiple errors."""
+
+    def __init__(self, errors: list[NeatException], verbose: bool = False):
+        self.errors = errors
+        self.message = f"Multiple errors occurred: {self.errors}"
+        if verbose:
+            self.message += f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        super().__init__(self.message)
+
+
 ################################################################################################
 # RULES MODEL REPRESENTATION: 100 - 199 ########################################################
 ################################################################################################

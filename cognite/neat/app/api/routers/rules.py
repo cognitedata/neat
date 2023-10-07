@@ -8,7 +8,7 @@ from rdflib import Namespace
 from cognite.neat.app.api.configuration import NEAT_APP
 from cognite.neat.app.api.data_classes.rest import TransformationRulesUpdateRequest
 from cognite.neat.rules.exporter import rules2excel
-from cognite.neat.rules.models import Class, Classes, Metadata, Property, TransformationRules
+from cognite.neat.rules.models import Class, Classes, Metadata, Properties, Property, TransformationRules
 from cognite.neat.rules.parser import parse_rules_from_excel_file
 from cognite.neat.workflows.steps.data_contracts import RulesData
 from cognite.neat.workflows.utils import get_file_hash
@@ -134,7 +134,7 @@ def upsert_rules(request: TransformationRulesUpdateRequest):
     classes = Classes()
     for class_, val in rules["classes"].items():
         classes[class_] = Class(**val)
-    properties: dict[str, Property] = {}
+    properties = Properties()
 
     for prop, val in rules["properties"].items():
         val["resource_type_property"] = []
