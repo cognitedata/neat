@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.26.2] - 07-10-23
+### Improved
+- Introduced container classes for `Classes` and `Properties` in `TransformationRules`. Implemented `.to_pandas()`
+  methods for both classes.
+
 ## [0.26.1] - 05-10-23
 
 ### Fixed
