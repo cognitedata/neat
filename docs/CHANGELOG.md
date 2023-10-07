@@ -15,7 +15,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## [0.28.1] - 07-10-23
+## [0.28.0] - 07-10-23
 ### Added
 - Classes for extractors `MockGraphGenerator` and `GraphCapturingSheet` available at `cognite.neat.graph.extractors`.
 
