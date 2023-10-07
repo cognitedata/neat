@@ -465,12 +465,24 @@ class ResourceDict(BaseModel, Generic[T_Resource]):
     def items(self) -> ItemsView[str, T_Resource]:
         return self.data.items()
 
-    def to_pandas(self, drop_na_columns: bool = True) -> pd.DataFrame:
+    def to_pandas(self, drop_na_columns: bool = True, include: list[str] | None = None) -> pd.DataFrame:
         """Converts ResourceDict to pandas DataFrame."""
         df = pd.DataFrame([class_.model_dump() for class_ in self.data.values()])
         if drop_na_columns:
             df = df.dropna(axis=1, how="all")
+        if include is not None:
+            df = df[include]
         return df
+
+    def groupby(self, by: str) -> dict[str, ResourceDict[T_Resource]]:
+        """Groups ResourceDict by given column(s)."""
+        groups: dict[str, ResourceDict[T_Resource]] = {}
+        for key, resource in self.data.items():
+            value = getattr(resource, by)
+            if value not in groups:
+                groups[value] = ResourceDict()
+            groups[value][key] = resource
+        return groups
 
     def _repr_html_(self) -> str:
         """Returns HTML representation of ResourceDict."""
