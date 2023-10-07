@@ -7,6 +7,7 @@ from __future__ import annotations
 import math
 import re
 import warnings
+from collections.abc import ItemsView, Iterator, KeysView, ValuesView
 from datetime import datetime
 from pathlib import Path
 from typing import Any, ClassVar, TypeAlias
@@ -31,6 +32,7 @@ from pydantic import (
     ConfigDict,
     Field,
     HttpUrl,
+    TypeAdapter,
     ValidationError,
     constr,
     field_validator,
@@ -55,7 +57,17 @@ from cognite.neat.rules.to_rdf_path import (
     parse_rule,
 )
 
-__all__ = ["Class", "Instance", "Metadata", "Prefixes", "Property", "Resource", "TransformationRules"]
+__all__ = [
+    "Class",
+    "Classes",
+    "Instance",
+    "Metadata",
+    "Prefixes",
+    "Property",
+    "Properties",
+    "Resource",
+    "TransformationRules",
+]
 
 # mapping of XSD types to Python and GraphQL types
 DATA_TYPE_MAPPING: dict[str, dict[str, type | str | ListablePropertyType]] = {
@@ -487,6 +499,34 @@ class Class(Resource):
         return value
 
 
+class Classes(BaseModel):
+    data: dict[str, Class] = Field(default_factory=dict)
+
+    def __getitem__(self, item: str) -> Class:
+        return self.data[item]
+
+    def __setitem__(self, key: str, value: Class):
+        self.data[key] = value
+
+    def __contains__(self, item: str) -> bool:
+        return item in self.data
+
+    def __len__(self) -> int:
+        return len(self.data)
+
+    def __iter__(self) -> Iterator[str]:  # type: ignore[override]
+        return iter(self.data)
+
+    def values(self) -> ValuesView[Class]:
+        return self.data.values()
+
+    def keys(self) -> KeysView[str]:
+        return self.data.keys()
+
+    def items(self) -> ItemsView[str, Class]:
+        return self.data.items()
+
+
 class Property(Resource):
     """
     A property is a characteristic of a class. It is a named attribute of a class that describes a range of values
@@ -669,6 +709,13 @@ class Property(Resource):
         return self
 
 
+class Properties(BaseModel):
+    data: dict[str, Property]
+
+    def __getitem__(self, item: str) -> Property:
+        return self.data[item]
+
+
 class Prefixes(RuleModel):
     """
     Class deals with prefixes used in the data model and data model instances
@@ -812,7 +859,7 @@ class TransformationRules(RuleModel):
     """
 
     metadata: Metadata
-    classes: dict[str, Class]
+    classes: Classes
     properties: dict[str, Property]
     prefixes: dict[str, Namespace] = PREFIXES.copy()
     instances: list[Instance] = Field(default_factory=list)
@@ -832,6 +879,11 @@ class TransformationRules(RuleModel):
         if value is None:
             return []
         return value
+
+    @field_validator("classes", mode="before")
+    def to_classes_obj(cls, value: dict) -> Classes:
+        dict_of_classes = TypeAdapter(dict[str, Class]).validate_python(value)
+        return Classes(data=dict_of_classes)
 
     @validator("properties", each_item=True)
     def class_property_exist(cls, value, values):

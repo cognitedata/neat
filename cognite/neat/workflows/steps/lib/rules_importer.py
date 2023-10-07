@@ -7,7 +7,7 @@ from typing import ClassVar
 import yaml
 from rdflib import Namespace
 
-from cognite.neat.rules.models import Class, Metadata, Property, TransformationRules
+from cognite.neat.rules.models import Class, Classes, Metadata, Property, TransformationRules
 from cognite.neat.rules.to_rdf_path import RuleType
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import RulesData
@@ -81,7 +81,7 @@ class OpenApiToRules(Step):
             cdf_space_name="OpenAPI",
         )
 
-        classes: dict[str, Class] = {}
+        classes = Classes()
         properties: dict[str, Property] = {}
 
         # Loop through OpenAPI components
@@ -270,7 +270,7 @@ class ArbitraryJsonYamlToRules(Step):
             data_model_name="OpenAPI",
         )
 
-        self.classes: dict[str, Class] = {}
+        self.classes = Classes()
         self.properties: dict[str, Property] = {}
 
         self.convert_dict_to_classes_and_props(src_data_obj, None)
@@ -286,11 +286,7 @@ class ArbitraryJsonYamlToRules(Step):
         if self.is_fdm_compatibility_mode:
             class_name = get_dms_compatible_name(create_fdm_compatibility_class_name(class_name))
         try:
-            class_ = Class(
-                class_id=class_name,
-                class_name=class_name,
-                description=description,
-            )
+            class_ = Class(class_id=class_name, class_name=class_name, description=description)
             if parent_class_name:
                 self.add_property(class_name, "parent", parent_class_name, None)
             self.classes[class_name] = class_
