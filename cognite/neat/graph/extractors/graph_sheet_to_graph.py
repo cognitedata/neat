@@ -30,9 +30,9 @@ class GraphCapturingSheet:
         filepath: File path to save the sheet to. Defaults to None.
     """
 
-    def __init__(self, rules: TransformationRules, filepath: Path | None = None):
+    def __init__(self, rules: TransformationRules, filepath: Path | str | None = None):
         self.rules = rules
-        self.filepath = filepath
+        self.filepath = Path(filepath) if isinstance(filepath, str) else None
 
     def create_template(self, filepath: Path | None = None, overwrite: bool = False):
         """
@@ -258,7 +258,6 @@ def rules2graph_capturing_sheet(
     """
 
     workbook = Workbook()
-
     # Remove default sheet named "Sheet"
     workbook.remove(workbook["Sheet"])
 
