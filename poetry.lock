@@ -4862,5 +4862,5 @@ graphql = ["jinja2"]
 
 [metadata]
 lock-version = "2.0"
-python-versions = "^3.10"
-content-hash = "412529e7ede7ca08e8255c3670ed4f15576fc453481dc77e9e15433a1a8c17ff"
+python-versions = ">=3.10,<3.13"
+content-hash = "6ee33360cee90e276d112c7f04adedb28abaca11cd82acf58cfc5ae69dda0edf"
