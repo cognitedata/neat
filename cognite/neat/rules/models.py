@@ -370,6 +370,14 @@ class Metadata(RuleModel):
                 return None
         return value
 
+    def to_pandas(self) -> pd.Series:
+        """Converts Metadata to pandas Series."""
+        return pd.Series(self.model_dump())
+
+    def _repr_html_(self) -> str:
+        """Returns HTML representation of Metadata."""
+        return self.to_pandas().to_frame("value")._repr_html_()  # type: ignore[operator]
+
 
 class Resource(RuleModel):
     """
@@ -450,6 +458,14 @@ class ResourceDict(BaseModel, Generic[T_Resource]):
 
     def items(self) -> ItemsView[str, T_Resource]:
         return self.data.items()
+
+    def to_pandas(self) -> pd.DataFrame:
+        """Converts ResourceDict to pandas DataFrame."""
+        return pd.DataFrame([class_.model_dump() for class_ in self.data.values()])
+
+    def _repr_html_(self) -> str:
+        """Returns HTML representation of ResourceDict."""
+        return self.to_pandas()._repr_html_()  # type: ignore[operator]
 
 
 class Class(Resource):
