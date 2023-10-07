@@ -1,7 +1,8 @@
 import re
+import sys
 import warnings
 from collections.abc import Iterable
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import Any, TypeAlias, cast
 
 from cognite.client.data_classes import Asset, Relationship
@@ -21,6 +22,14 @@ from cognite.neat.rules.analysis import (
 )
 from cognite.neat.rules.exporter.rules2dms import DataModel
 from cognite.neat.rules.models import Property, TransformationRules, type_to_target_convention
+
+if sys.version_info >= (3, 11):
+    from datetime import UTC
+else:
+    from datetime import timezone
+
+    UTC = timezone.utc
+
 
 EdgeOneToOne: TypeAlias = TypeAliasType("EdgeOneToOne", str)  # type: ignore[valid-type]
 EdgeOneToMany: TypeAlias = TypeAliasType("EdgeOneToMany", list[str])  # type: ignore[valid-type]

@@ -1,5 +1,6 @@
+import sys
 import warnings
-from typing import ClassVar, Self
+from typing import ClassVar
 
 from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator
 from rdflib import DCTERMS, OWL, RDF, RDFS, XSD, BNode, Graph, Literal, Namespace, URIRef
@@ -10,6 +11,11 @@ from cognite.neat.rules._validation import are_properties_redefined
 from cognite.neat.rules.analysis import to_class_property_pairs, to_property_dict
 from cognite.neat.rules.models import DATA_TYPE_MAPPING, Class, Metadata, Property, TransformationRules
 from cognite.neat.utils.utils import generate_exception_report, remove_namespace
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 
 class OntologyModel(BaseModel):

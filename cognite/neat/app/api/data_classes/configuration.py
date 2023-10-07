@@ -1,9 +1,16 @@
 import json
 import logging
 import os
-from enum import StrEnum
+import sys
 from pathlib import Path
-from typing import Literal, Self, cast
+from typing import Literal, cast
+
+if sys.version_info >= (3, 11):
+    from enum import StrEnum
+    from typing import Self
+else:
+    from backports.strenum import StrEnum
+    from typing_extensions import Self
 
 import yaml
 from pydantic import BaseModel, Field
