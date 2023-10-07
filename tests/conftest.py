@@ -15,7 +15,6 @@ from cognite.neat.rules.exporter.rules2triples import get_instances_as_triples
 from cognite.neat.rules.importer.ontology2excel import owl2excel
 from cognite.neat.rules.models import TransformationRules
 from cognite.neat.rules.parser import RawTables, read_excel_file_to_table_by_name
-from cognite.neat.utils.utils import add_triples
 from tests import config
 
 # Setup config for Neat App
@@ -88,7 +87,7 @@ def mock_knowledge_graph(transformation_rules):
     }
 
     mock_triples = generate_triples(transformation_rules, class_count)
-    add_triples(mock_graph, mock_triples, batch_size=20000)
+    mock_graph.add_triples(mock_triples, batch_size=20000)
 
     return mock_graph
 

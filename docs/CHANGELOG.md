@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to this project will be documented in t his file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -257,7 +257,7 @@ Changes are grouped as follows:
 
 ## [0.13.1] - 11-06-23
 ### Added
-- Configurable cdf client timeout and max workers size. See [getting started](/getting-started.md) for details.
+- Configurable cdf client timeout and max workers size. See [getting started](getting-started.md) for details.
 - Additional logic for handling `CogniteReadTimeoutError` and `CogniteDuplicatedError` during retries. This is an attempt
   to handle cases when under heavy load, requests to CDF may timeout even though the requests were processed successfully
   in eventual consistancy manner.
