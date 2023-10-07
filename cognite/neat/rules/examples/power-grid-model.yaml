@@ -1,0 +1,124 @@
+description: Demo model from Neat
+externalId: PowerGrid
+name: PowerGrid
+space: workshop
+version: '2'
+views:
+- externalId: GeographicalRegion
+  name: GeographicalRegion
+  properties:
+    name:
+      container:
+        externalId: GeographicalRegion
+        space: workshop
+        type: container
+      containerPropertyIdentifier: name
+      description: 'The name that identifies Greographical
+
+        @name name'
+      name: name
+    subRegions:
+      direction: outwards
+      name: subRegions
+      source:
+        externalId: SubGeographicalRegion
+        space: workshop
+        type: view
+        version: bbe4295878a47f
+      type:
+        externalId: GeographicalRegion.subRegions
+        space: workshop
+  space: workshop
+  version: 8668711f26d9bc
+- description: 'A subset of a geographical region of a power system network model.
+
+    @name SubGeographicalRegion'
+  externalId: SubGeographicalRegion
+  name: SubGeographicalRegion
+  properties:
+    name:
+      container:
+        externalId: SubGeographicalRegion
+        space: workshop
+        type: container
+      containerPropertyIdentifier: name
+      description: 'The name that identifies SubGreographical
+
+        @name name'
+      name: name
+    region:
+      container:
+        externalId: SubGeographicalRegion
+        space: workshop
+        type: container
+      containerPropertyIdentifier: region
+      description: 'Region to which subgeographical region belongs to
+
+        @name region'
+      name: region
+  space: workshop
+  version: bbe4295878a47f
+- description: 'A substation is a part of an electrical generation, transmission,
+    and distribution system.
+
+    @name Substation'
+  externalId: Substation
+  name: Substation
+  properties:
+    name:
+      container:
+        externalId: Substation
+        space: workshop
+        type: container
+      containerPropertyIdentifier: name
+      description: 'The name that identifies Substation
+
+        @name name'
+      name: name
+    subGeographicalRegion:
+      container:
+        externalId: Substation
+        space: workshop
+        type: container
+      containerPropertyIdentifier: subGeographicalRegion
+      description: 'The subgeographical region containing the substation
+
+        @name subGeographicalRegion'
+      name: subGeographicalRegion
+  space: workshop
+  version: 75cce8c469d44e
+- externalId: Terminal
+  name: Terminal
+  properties:
+    aliasName:
+      container:
+        externalId: Terminal
+        space: workshop
+        type: container
+      containerPropertyIdentifier: aliasName
+      description: 'The alternative name that identifies Substation
+
+        @name aliasName'
+      name: aliasName
+    name:
+      container:
+        externalId: Terminal
+        space: workshop
+        type: container
+      containerPropertyIdentifier: name
+      description: 'The name that identifies Terminal
+
+        @name name'
+      name: name
+    substation:
+      container:
+        externalId: Terminal
+        space: workshop
+        type: container
+      containerPropertyIdentifier: substation
+      description: 'Substation to which terminal belongs to
+
+        @name substation'
+      name: substation
+  space: workshop
+  version: c83d2e12ea8ddf
