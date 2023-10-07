@@ -6,11 +6,12 @@ from __future__ import annotations
 
 import math
 import re
+import sys
 import warnings
 from collections.abc import ItemsView, Iterator, KeysView, ValuesView
 from datetime import datetime
 from pathlib import Path
-from typing import Any, ClassVar, Generic, Self, TypeAlias, TypeVar
+from typing import Any, ClassVar, Generic, TypeAlias, TypeVar
 
 import pandas as pd
 from cognite.client.data_classes.data_modeling.data_types import (
@@ -56,6 +57,11 @@ from cognite.neat.rules.to_rdf_path import (
     Traversal,
     parse_rule,
 )
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 __all__ = [
     "Class",
