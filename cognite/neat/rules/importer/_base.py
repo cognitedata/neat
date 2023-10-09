@@ -1,14 +1,13 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-import pandas as pd
-
 from cognite.neat.rules.models import TransformationRules
+from cognite.neat.rules.parser import RawTables
 
 
 class BaseImporter(ABC):
     @abstractmethod
-    def to_tables(self) -> dict[str, pd.DataFrame]:
+    def to_tables(self) -> RawTables:
         raise NotImplementedError
 
     def to_spreadsheet(self, filepath: Path) -> None:

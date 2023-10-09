@@ -11,7 +11,7 @@ import pandas as pd
 from rdflib import DC, DCTERMS, OWL, RDF, RDFS, Graph
 
 from cognite.neat.rules import exceptions
-from cognite.neat.rules.parser import parse_rules_from_excel_file
+from cognite.neat.rules.parser import RawTables, parse_rules_from_excel_file
 from cognite.neat.utils.utils import generate_exception_report, get_namespace, remove_namespace
 
 from ._base import BaseImporter
@@ -27,7 +27,7 @@ class OWLImporter(BaseImporter):
     def __init__(self, owl_filepath: Path):
         self.owl_filepath = owl_filepath
 
-    def to_tables(self) -> dict[str, pd.DataFrame]:
+    def to_tables(self) -> RawTables:
         raise NotImplementedError
 
 

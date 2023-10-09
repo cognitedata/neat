@@ -1,5 +1,6 @@
 import pytest
 
+from cognite.neat.rules import importer
 from cognite.neat.rules.importer import owl2excel
 from cognite.neat.rules.parser import RawTables, read_excel_file_to_table_by_name
 from tests import config
@@ -13,6 +14,14 @@ def owl_based_rules() -> RawTables:
 
 
 def test_owl2transformation_rules(owl_based_rules: RawTables) -> None:
-    raw_tables = owl_based_rules
-    assert raw_tables.Metadata.iloc[0, 1] == "https://kg.cognite.ai/wind/"
-    assert len(set(raw_tables.Classes.Class.values)) == 68
+    # Arrange
+    owl_importer = importer.OWLImporter(config.WIND_ONTOLOGY)
+
+    # Act
+    created_tables = owl_importer.to_tables()
+
+    # Assert
+    assert owl_based_rules.Metadata.iloc[0, 1] == "https://kg.cognite.ai/wind/"
+    assert len(set(owl_based_rules.Classes.Class.values)) == 68
+    assert created_tables.Metadata.iloc[0, 1] == "https://kg.cognite.ai/wind/"
+    assert len(set(created_tables.Classes.Class.values)) == 68
