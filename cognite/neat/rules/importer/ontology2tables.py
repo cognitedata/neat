@@ -26,9 +26,26 @@ class OWLImporter(BaseImporter):
 
     def __init__(self, owl_filepath: Path):
         self.owl_filepath = owl_filepath
+        super().__init__(owl_filepath.parent / "transformation_rules.xlsx")
 
     def to_tables(self) -> RawTables:
-        raise NotImplementedError
+        graph = Graph()
+        try:
+            graph.parse(self.owl_filepath)
+        except Exception as e:
+            raise Exception(f"Could not parse owl file: {e}") from e
+
+        # bind key namespaces
+        graph.bind("owl", OWL)
+        graph.bind("rdf", RDF)
+        graph.bind("rdfs", RDFS)
+        graph.bind("dcterms", DCTERMS)
+        graph.bind("dc", DC)
+        return RawTables(
+            Metadata=_parse_owl_metadata_df(graph),
+            Classes=_parse_owl_classes_df(graph),
+            Properties=_parse_owl_properties_df(graph),
+        )
 
 
 def owl2excel(owl_filepath: Path, excel_filepath: Path | None = None, validate_results: bool = True):
