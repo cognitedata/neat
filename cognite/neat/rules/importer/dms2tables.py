@@ -5,14 +5,13 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import ContainerApply, MappedPropertyApply, ViewApply
 from cognite.client.data_classes.data_modeling.ids import DataModelIdentifier
 
-from cognite.neat.rules.parser import RawTables
-
 from ._base import BaseImporter
 
 if sys.version_info >= (3, 11):
     from typing import Self
 else:
     from typing_extensions import Self
+import pandas as pd
 
 
 class DMSImporter(BaseImporter):
@@ -32,5 +31,5 @@ class DMSImporter(BaseImporter):
     def from_cdf(cls, client: CogniteClient, data_models: DataModelIdentifier | Sequence[DataModelIdentifier]) -> Self:
         raise NotImplementedError
 
-    def to_tables(self) -> RawTables:
+    def to_tables(self) -> dict[str, pd.DataFrame]:
         raise NotImplementedError

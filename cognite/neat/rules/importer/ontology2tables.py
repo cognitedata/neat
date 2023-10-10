@@ -11,7 +11,7 @@ import pandas as pd
 from rdflib import DC, DCTERMS, OWL, RDF, RDFS, Graph
 
 from cognite.neat.rules import exceptions
-from cognite.neat.rules.parser import RawTables, parse_rules_from_excel_file
+from cognite.neat.rules.parser import parse_rules_from_excel_file
 from cognite.neat.utils.utils import generate_exception_report, get_namespace, remove_namespace
 
 from ._base import BaseImporter
@@ -20,15 +20,22 @@ from ._base import BaseImporter
 class OWLImporter(BaseImporter):
     """Convert OWL ontology to tables/ transformation rules / Excel file.
 
-    Args:
-        owl_filepath: Path to OWL ontology
+        Args:
+            owl_filepath: Path to OWL ontology
+
+    !!! Note
+        OWL Ontologies typically lacks some information that is required requires for making a complete
+        data model. This means that the methods .to_rules() will typically fail. Instead, it is recommended
+        that you use the .to_spreadsheet() method to generate an Excel file, and then manually add the missing
+        information to the Excel file. The Excel file can then be converted to a TransformationRules object.
+
     """
 
     def __init__(self, owl_filepath: Path):
         self.owl_filepath = owl_filepath
         super().__init__(owl_filepath.parent / "transformation_rules.xlsx")
 
-    def to_tables(self) -> RawTables:
+    def to_tables(self) -> dict[str, pd.DataFrame]:
         graph = Graph()
         try:
             graph.parse(self.owl_filepath)
@@ -41,10 +48,11 @@ class OWLImporter(BaseImporter):
         graph.bind("rdfs", RDFS)
         graph.bind("dcterms", DCTERMS)
         graph.bind("dc", DC)
-        return RawTables(
-            Metadata=_parse_owl_metadata_df(graph),
-            Classes=_parse_owl_classes_df(graph),
-            Properties=_parse_owl_properties_df(graph),
+
+        return dict(
+            metadata=_parse_owl_metadata_df(graph),
+            classes=_parse_owl_classes_df(graph),
+            properties=_parse_owl_properties_df(graph),
         )
 
 
