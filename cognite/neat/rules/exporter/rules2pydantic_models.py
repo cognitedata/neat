@@ -6,7 +6,8 @@ from datetime import datetime
 from typing import Any, TypeAlias, cast
 
 from cognite.client.data_classes import Asset, Relationship
-from cognite.client.data_classes.data_modeling import EdgeApply, MappedPropertyApply, NodeApply, NodeOrEdgeData, SingleHopConnectionDefinition
+from cognite.client.data_classes.data_modeling import EdgeApply, MappedPropertyApply, NodeApply, NodeOrEdgeData
+from cognite.client.data_classes.data_modeling.views import SingleHopConnectionDefinitionApply
 from pydantic import BaseModel, ConfigDict, Field, create_model
 from pydantic._internal._model_construction import ModelMetaclass
 from rdflib import Graph, URIRef
@@ -501,7 +502,7 @@ def to_edge(self, data_model: DataModel, add_class_prefix: bool) -> list[EdgeApp
                 for end_node in self.__getattribute__(edge_one_to_many):
                     if is_external_id_valid(end_node):
                         mapped_instance = dm_view.properties[edge_one_to_many]
-                        if isinstance(mapped_instance, SingleHopConnectionDefinition):
+                        if isinstance(mapped_instance, SingleHopConnectionDefinitionApply):
                             object_view = mapped_instance.source
                             if object_view:
                                 object_class_name = object_view.external_id
@@ -517,7 +518,7 @@ def to_edge(self, data_model: DataModel, add_class_prefix: bool) -> list[EdgeApp
                                 ),
                             )
                                 edges_list.append(edge_apply)
-            edges.extend(edges_list)
+                edges.extend(edges_list)
         else:
             edges.extend(
             EdgeApply(
