@@ -1,0 +1,113 @@
+- externalId: GeographicalRegion
+  name: GeographicalRegion
+  properties:
+    name:
+      autoIncrement: false
+      defaultValue: null
+      description: 'The name that identifies Greographical
+
+        @name name'
+      name: name
+      nullable: false
+      type:
+        collation: ucs_basic
+        list: false
+        type: text
+  space: workshop
+  usedFor: node
+- externalId: Terminal
+  name: Terminal
+  properties:
+    aliasName:
+      autoIncrement: false
+      defaultValue: null
+      description: 'The alternative name that identifies Substation
+
+        @name aliasName'
+      name: aliasName
+      nullable: false
+      type:
+        collation: ucs_basic
+        list: false
+        type: text
+    name:
+      autoIncrement: false
+      defaultValue: null
+      description: 'The name that identifies Terminal
+
+        @name name'
+      name: name
+      nullable: false
+      type:
+        collation: ucs_basic
+        list: false
+        type: text
+    substation:
+      autoIncrement: false
+      defaultValue: null
+      description: 'Substation to which terminal belongs to
+
+        @name substation'
+      name: substation
+      nullable: true
+      type:
+        container: null
+        type: direct
+  space: workshop
+  usedFor: node
+- externalId: SubGeographicalRegion
+  name: SubGeographicalRegion
+  properties:
+    name:
+      autoIncrement: false
+      defaultValue: null
+      description: 'The name that identifies SubGreographical
+
+        @name name'
+      name: name
+      nullable: false
+      type:
+        collation: ucs_basic
+        list: false
+        type: text
+    region:
+      autoIncrement: false
+      defaultValue: null
+      description: 'Region to which subgeographical region belongs to
+
+        @name region'
+      name: region
+      nullable: true
+      type:
+        container: null
+        type: direct
+  space: workshop
+  usedFor: node
+- externalId: Substation
+  name: Substation
+  properties:
+    name:
+      autoIncrement: false
+      defaultValue: null
+      description: 'The name that identifies Substation
+
+        @name name'
+      name: name
+      nullable: false
+      type:
+        collation: ucs_basic
+        list: false
+        type: text
+    subGeographicalRegion:
+      autoIncrement: false
+      defaultValue: null
+      description: 'The subgeographical region containing the substation
+
+        @name subGeographicalRegion'
+      name: subGeographicalRegion
+      nullable: true
+      type:
+        container: null
+        type: direct
+  space: workshop
+  usedFor: node

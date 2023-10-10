@@ -1,3 +1,4 @@
-from .ontology2excel import owl2excel
+from .dms2tables import DMSImporter
+from .ontology2tables import OWLImporter
 
-__all__ = ["owl2excel"]
+__all__ = ["DMSImporter", "OWLImporter"]

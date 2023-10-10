@@ -5,8 +5,12 @@ from pathlib import Path
 # https://github.com/pydata/xarray/blob/main/xarray/tutorial.py
 # Currently there are simple paths to the examples which are then easily loaded in the notebooks
 
-power_grid_model = Path(__file__).parent / "power-grid-example.xlsx"
-simple_example = Path(__file__).parent / "sheet2cdf-transformation-rules.xlsx"
-source_to_solution_mapping = Path(__file__).parent / "source-to-solution-mapping-rules.xlsx"
-nordic44 = Path(__file__).parent / "Rules-Nordic44-to-TNT.xlsx"
-nordic44_graphql = Path(__file__).parent / "Rules-Nordic44-to-graphql.xlsx"
+_EXAMPLES = Path(__file__).parent
+
+power_grid_model = _EXAMPLES / "power-grid-example.xlsx"
+power_grid_containers = _EXAMPLES / "power-grid-containers.yaml"
+power_grid_data_model = _EXAMPLES / "power-grid-model.yaml"
+simple_example = _EXAMPLES / "sheet2cdf-transformation-rules.xlsx"
+source_to_solution_mapping = _EXAMPLES / "source-to-solution-mapping-rules.xlsx"
+nordic44 = _EXAMPLES / "Rules-Nordic44-to-TNT.xlsx"
+nordic44_graphql = _EXAMPLES / "Rules-Nordic44-to-graphql.xlsx"

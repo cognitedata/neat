@@ -28,214 +28,6 @@ __all__ = [
 ]
 
 
-@overload
-def parse_rules_from_excel_file(filepath: Path, return_report: Literal[False] = False) -> TransformationRules:
-    ...
-
-
-@overload
-def parse_rules_from_excel_file(
-    filepath: Path, return_report: Literal[True]
-) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None]:
-    ...
-
-
-def parse_rules_from_excel_file(
-    filepath: Path, return_report: Literal[True, False] = False
-) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None] | TransformationRules:
-    """Parse transformation rules from an Excel file.
-
-    Args:
-      filepath: Path to the Excel file
-      return_report: Whether to return a report, by default False
-
-    Returns:
-        The transformation rules, and optionally one list of validation errors and a one list of warnings.
-    """
-    return from_tables(read_excel_file_to_table_by_name(filepath), return_report)
-
-
-@overload
-def parse_rules_from_google_sheet(sheet_id: str, return_report: Literal[False] = False) -> TransformationRules:
-    ...
-
-
-@overload
-def parse_rules_from_google_sheet(
-    sheet_id: str, return_report: Literal[True]
-) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None]:
-    ...
-
-
-def parse_rules_from_google_sheet(
-    sheet_id: str, return_report: Literal[True, False] = False
-) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None] | TransformationRules:
-    """Parse transformation rules from a Google sheet.
-
-    Args:
-      sheet_id: The identifier of the Google sheet with the rules.
-      return_report: Whether to return a report, by default False
-
-    Returns:
-        The transformation rules, and optionally one list of validation errors and a one list of warnings.
-    """
-    return from_tables(read_google_sheet_to_table_by_name(sheet_id), return_report)
-
-
-@overload
-def parse_rules_from_github_sheet(
-    filepath: Path,
-    personal_token: str,
-    owner: str,
-    repo: str,
-    return_report: Literal[False] = False,
-    branch: str = "main",
-) -> TransformationRules:
-    ...
-
-
-@overload
-def parse_rules_from_github_sheet(
-    filepath: Path,
-    personal_token: str,
-    owner: str,
-    repo: str,
-    return_report: Literal[True],
-    branch: str = "main",
-) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None]:
-    ...
-
-
-def parse_rules_from_github_sheet(
-    filepath: Path,
-    personal_token: str,
-    owner: str,
-    repo: str,
-    return_report: Literal[True, False] = False,
-    branch: str = "main",
-) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None] | TransformationRules:
-    """Parse transformation rules from a sheet stored in private GitHub.
-
-    Args:
-      filepath: Path to the sheet in the GitHub repository.
-      personal_token: Personal access token to access the GitHub repository.
-      owner: Owner of the GitHub repository.
-      repo: Name of the GitHub repository.
-      branch: Branch of the GitHub repository, by default "main".
-      return_report: Whether to return a report, by default False
-
-    Returns:
-        The transformation rules, and optionally one list of validation errors and a one list of warnings.
-
-    """
-    tables = read_github_sheet_to_table_by_name(str(filepath), personal_token, owner, repo, branch)
-    return from_tables(tables, return_report)
-
-
-def parse_rules_from_yaml(folder_path: Path) -> TransformationRules:
-    """Parse transformation rules from a yaml files.
-
-    The yaml files must be named "metadata.yaml", "classes.yaml", "properties.yaml", "prefixes.yaml"
-    and "instances.yaml". These must be located in the same directory.
-
-    Args:
-      folder_path: The directory where the yaml files are located.
-
-    Returns:
-      The transformation rules.
-
-    """
-    return TransformationRules(**read_yaml_file_to_mapping_by_name(folder_path))  # type: ignore[arg-type]
-
-
-@overload
-def from_tables(raw_dfs: dict[str, pd.DataFrame], return_report: Literal[False] = False) -> TransformationRules:
-    ...
-
-
-@overload
-def from_tables(
-    raw_dfs: dict[str, pd.DataFrame], return_report: Literal[True]
-) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None]:
-    ...
-
-
-def from_tables(
-    raw_dfs: dict[str, pd.DataFrame], return_report: bool = False
-) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None] | TransformationRules:
-    # the only way to suppress warnings from pylense
-    validation_warnings = []
-    try:
-        with warnings.catch_warnings(record=True) as validation_warnings:
-            raw_tables = RawTables.from_raw_dataframes(raw_dfs)
-            rules_dict: dict[str, Any] = {
-                "metadata": _parse_metadata(raw_tables.Metadata),
-                "classes": _parse_classes(raw_tables.Classes),
-                "properties": _parse_properties(raw_tables.Properties),
-                "prefixes": PREFIXES if raw_tables.Prefixes.empty else _parse_prefixes(raw_tables.Prefixes),
-            }
-
-            rules_dict["instances"] = (
-                None
-                if raw_tables.Instances.empty
-                else _parse_instances(raw_tables.Instances, rules_dict["metadata"], rules_dict["prefixes"])
-            )
-            rules = TransformationRules(**rules_dict)
-        return (rules, None, wrangle_warnings(validation_warnings)) if return_report else rules
-
-    except exceptions.ExcelFileMissingMandatorySheets as e:
-        validation_errors = [e.to_error_dict()]
-        if return_report:
-            return None, validation_errors, wrangle_warnings(validation_warnings)
-        else:
-            raise e
-    except ValidationError as e:
-        validation_errors = e.errors()
-        if return_report:
-            return None, validation_errors, wrangle_warnings(validation_warnings)
-        else:
-            raise e
-
-
-def _parse_metadata(meta_df: pd.DataFrame) -> dict[str, Any]:
-    metadata_dict = dict(zip(meta_df[0], meta_df[1], strict=True))
-    metadata_dict["source"] = meta_df.source if "source" in dir(meta_df) else None
-    if "namespace" in metadata_dict:
-        metadata_dict["namespace"] = Namespace(metadata_dict["namespace"])
-    return metadata_dict
-
-
-def _parse_classes(classes_df: pd.DataFrame) -> dict[Any | None, dict[Hashable, Any]]:
-    return {class_.get("Class"): class_ for class_ in classes_df.to_dict(orient="records")}
-
-
-def _parse_properties(properties_df: pd.DataFrame) -> dict[str, dict[Hashable, Any]]:
-    return {f"row {i+3}": property_ for i, property_ in enumerate(properties_df.to_dict(orient="records"))}
-
-
-def _parse_prefixes(prefix_df: pd.DataFrame) -> dict[str, Namespace]:
-    return {row["Prefix"]: Namespace(row["URI"]) for i, row in prefix_df.iterrows()}
-
-
-def _parse_instances(
-    instances_df: pd.DataFrame, metadata: dict[str, Any], prefixes: dict[str, Namespace]
-) -> list[dict] | None:
-    if "prefix" not in metadata or "namespace" not in metadata:
-        logging.warning(exceptions.MissingDataModelPrefixOrNamespace().message)
-        warn(exceptions.MissingDataModelPrefixOrNamespace().message, stacklevel=2)
-        return None
-
-    prefixes[metadata["prefix"]] = metadata["namespace"]
-
-    instances = []
-    for _, row in instances_df.iterrows():
-        row_as_dict = row.to_dict()
-        row_as_dict["namespace"] = metadata["namespace"]
-        row_as_dict["prefixes"] = prefixes
-        instances.append(row_as_dict)
-    return instances
-
-
 class RawTables(RuleModel):
     Metadata: pd.DataFrame
     Properties: pd.DataFrame
@@ -330,6 +122,214 @@ class RawTables(RuleModel):
         columns = [column for column in df.columns[df.columns.notna()] if isinstance(column, str)]
 
         return df[columns]
+
+
+@overload
+def parse_rules_from_excel_file(filepath: Path, return_report: Literal[False] = False) -> TransformationRules:
+    ...
+
+
+@overload
+def parse_rules_from_excel_file(
+    filepath: Path, return_report: Literal[True]
+) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None]:
+    ...
+
+
+def parse_rules_from_excel_file(
+    filepath: Path, return_report: Literal[True, False] = False
+) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None] | TransformationRules:
+    """Parse transformation rules from an Excel file.
+
+    Args:
+      filepath: Path to the Excel file
+      return_report: Whether to return a report, by default False
+
+    Returns:
+        The transformation rules, and optionally one list of validation errors and a one list of warnings.
+    """
+    return from_tables(read_excel_file_to_table_by_name(filepath), return_report)
+
+
+@overload
+def parse_rules_from_google_sheet(sheet_id: str, return_report: Literal[False] = False) -> TransformationRules:
+    ...
+
+
+@overload
+def parse_rules_from_google_sheet(
+    sheet_id: str, return_report: Literal[True]
+) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None]:
+    ...
+
+
+def parse_rules_from_google_sheet(
+    sheet_id: str, return_report: Literal[True, False] = False
+) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None] | TransformationRules:
+    """Parse transformation rules from a Google sheet.
+
+    Args:
+      sheet_id: The identifier of the Google sheet with the rules.
+      return_report: Whether to return a report, by default False
+
+    Returns:
+        The transformation rules, and optionally one list of validation errors and a one list of warnings.
+    """
+    return from_tables(read_google_sheet_to_table_by_name(sheet_id), return_report)
+
+
+@overload
+def parse_rules_from_github_sheet(
+    filepath: Path,
+    personal_token: str,
+    owner: str,
+    repo: str,
+    return_report: Literal[False] = False,
+    branch: str = "main",
+) -> TransformationRules:
+    ...
+
+
+@overload
+def parse_rules_from_github_sheet(
+    filepath: Path, personal_token: str, owner: str, repo: str, return_report: Literal[True], branch: str = "main"
+) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None]:
+    ...
+
+
+def parse_rules_from_github_sheet(
+    filepath: Path,
+    personal_token: str,
+    owner: str,
+    repo: str,
+    return_report: Literal[True, False] = False,
+    branch: str = "main",
+) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None] | TransformationRules:
+    """Parse transformation rules from a sheet stored in private GitHub.
+
+    Args:
+      filepath: Path to the sheet in the GitHub repository.
+      personal_token: Personal access token to access the GitHub repository.
+      owner: Owner of the GitHub repository.
+      repo: Name of the GitHub repository.
+      branch: Branch of the GitHub repository, by default "main".
+      return_report: Whether to return a report, by default False
+
+    Returns:
+        The transformation rules, and optionally one list of validation errors and a one list of warnings.
+
+    """
+    tables = read_github_sheet_to_table_by_name(str(filepath), personal_token, owner, repo, branch)
+    return from_tables(tables, return_report)
+
+
+def parse_rules_from_yaml(folder_path: Path) -> TransformationRules:
+    """Parse transformation rules from a yaml files.
+
+    The yaml files must be named "metadata.yaml", "classes.yaml", "properties.yaml", "prefixes.yaml"
+    and "instances.yaml". These must be located in the same directory.
+
+    Args:
+      folder_path: The directory where the yaml files are located.
+
+    Returns:
+      The transformation rules.
+
+    """
+    return TransformationRules(**read_yaml_file_to_mapping_by_name(folder_path))  # type: ignore[arg-type]
+
+
+@overload
+def from_tables(
+    raw_dfs: dict[str, pd.DataFrame] | RawTables, return_report: Literal[False] = False
+) -> TransformationRules:
+    ...
+
+
+@overload
+def from_tables(
+    raw_dfs: dict[str, pd.DataFrame] | RawTables, return_report: Literal[True]
+) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None]:
+    ...
+
+
+def from_tables(
+    raw_dfs: dict[str, pd.DataFrame] | RawTables, return_report: bool = False
+) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None] | TransformationRules:
+    # the only way to suppress warnings from pylense
+    validation_warnings = []
+    try:
+        with warnings.catch_warnings(record=True) as validation_warnings:
+            if isinstance(raw_dfs, RawTables):
+                raw_tables = raw_dfs
+            else:
+                raw_tables = RawTables.from_raw_dataframes(raw_dfs)
+            rules_dict: dict[str, Any] = {
+                "metadata": _parse_metadata(raw_tables.Metadata),
+                "classes": _parse_classes(raw_tables.Classes),
+                "properties": _parse_properties(raw_tables.Properties),
+                "prefixes": PREFIXES if raw_tables.Prefixes.empty else _parse_prefixes(raw_tables.Prefixes),
+            }
+
+            rules_dict["instances"] = (
+                None
+                if raw_tables.Instances.empty
+                else _parse_instances(raw_tables.Instances, rules_dict["metadata"], rules_dict["prefixes"])
+            )
+            rules = TransformationRules(**rules_dict)
+        return (rules, None, wrangle_warnings(validation_warnings)) if return_report else rules
+
+    except exceptions.ExcelFileMissingMandatorySheets as e:
+        validation_errors = [e.to_error_dict()]
+        if return_report:
+            return None, validation_errors, wrangle_warnings(validation_warnings)
+        else:
+            raise e
+    except ValidationError as e:
+        validation_errors = e.errors()
+        if return_report:
+            return None, validation_errors, wrangle_warnings(validation_warnings)
+        else:
+            raise e
+
+
+def _parse_metadata(meta_df: pd.DataFrame) -> dict[str, Any]:
+    metadata_dict = dict(zip(meta_df[0], meta_df[1], strict=True))
+    metadata_dict["source"] = meta_df.source if "source" in dir(meta_df) else None
+    if "namespace" in metadata_dict:
+        metadata_dict["namespace"] = Namespace(metadata_dict["namespace"])
+    return metadata_dict
+
+
+def _parse_classes(classes_df: pd.DataFrame) -> dict[Any | None, dict[Hashable, Any]]:
+    return {class_.get("Class"): class_ for class_ in classes_df.to_dict(orient="records")}
+
+
+def _parse_properties(properties_df: pd.DataFrame) -> dict[str, dict[Hashable, Any]]:
+    return {f"row {i+3}": property_ for i, property_ in enumerate(properties_df.to_dict(orient="records"))}
+
+
+def _parse_prefixes(prefix_df: pd.DataFrame) -> dict[str, Namespace]:
+    return {row["Prefix"]: Namespace(row["URI"]) for i, row in prefix_df.iterrows()}
+
+
+def _parse_instances(
+    instances_df: pd.DataFrame, metadata: dict[str, Any], prefixes: dict[str, Namespace]
+) -> list[dict] | None:
+    if "prefix" not in metadata or "namespace" not in metadata:
+        logging.warning(exceptions.MissingDataModelPrefixOrNamespace().message)
+        warn(exceptions.MissingDataModelPrefixOrNamespace().message, stacklevel=2)
+        return None
+
+    prefixes[metadata["prefix"]] = metadata["namespace"]
+
+    instances = []
+    for _, row in instances_df.iterrows():
+        row_as_dict = row.to_dict()
+        row_as_dict["namespace"] = metadata["namespace"]
+        row_as_dict["prefixes"] = prefixes
+        instances.append(row_as_dict)
+    return instances
 
 
 class Tables:

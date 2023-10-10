@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.29.0] - 07-10-23
+### Changed
+- The importer `owl2excel` is written as a class `OWLImporter`. **Note** this is a breaking change, but
+  since we are on 0. version, we can do this.
+
 ## [0.28.0] - 07-10-23
 ### Added
 - Classes for extractors `MockGraphGenerator` and `GraphCapturingSheet` available at `cognite.neat.graph.extractors`.
