@@ -1,7 +1,8 @@
 import re
+import sys
 import warnings
 from collections.abc import Iterable
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import Any, TypeAlias, cast
 
 from cognite.client.data_classes import Asset, Relationship
@@ -21,6 +22,13 @@ from cognite.neat.rules.analysis import (
 )
 from cognite.neat.rules.exporter.rules2dms import DataModel
 from cognite.neat.rules.models import Property, TransformationRules, type_to_target_convention
+
+if sys.version_info >= (3, 11):
+    from datetime import UTC
+else:
+    from datetime import timezone
+
+    UTC = timezone.utc
 
 EdgeOneToOne: TypeAlias = TypeAliasType("EdgeOneToOne", str)  # type: ignore[valid-type]
 EdgeOneToMany: TypeAlias = TypeAliasType("EdgeOneToMany", list[str])  # type: ignore[valid-type]
@@ -141,7 +149,10 @@ def _properties_to_pydantic_fields(
 
         # making sure that field names are python compliant
         # their original names are stored as aliases
-        fields[re.sub(r"[^_a-zA-Z0-9/_]", "_", name)] = (field_type, Field(**field_definition))
+        fields[re.sub(r"[^_a-zA-Z0-9/_]", "_", name)] = (
+            field_type,
+            Field(**field_definition)
+        )
 
     return fields
 
@@ -474,6 +485,13 @@ def to_node(self, data_model: DataModel, add_class_prefix: bool) -> NodeApply:
 def to_edge(self, data_model: DataModel, add_class_prefix: bool) -> list[EdgeApply]:
     """Creates DMS edge from pydantic model."""
     edges: list[EdgeApply] = []
+
+    def is_external_id_valid(external_id: str) -> bool:
+        # should match "^[^\x00]{1,255}$" and not be None or none
+        if external_id == "None" or external_id == "none":
+            return False
+        return bool(re.match(r"^[^\x00]{1,255}$", external_id))
+
     for edge_one_to_many in self.edges_one_to_many:
         edge_type_id = f"{self.__class__.__name__}.{edge_one_to_many}"
         if add_class_prefix:
@@ -481,23 +499,24 @@ def to_edge(self, data_model: DataModel, add_class_prefix: bool) -> list[EdgeApp
             dm_view = data_model.views[self.__class__.__name__]
             if dm_view:
                 for end_node in self.__getattribute__(edge_one_to_many):
-                    mapped_instance = dm_view.properties[edge_one_to_many]
-                    if isinstance(mapped_instance, SingleHopConnectionDefinition):
-                        object_view = mapped_instance.source
-                        if object_view:
-                            object_class_name = object_view.external_id
-                            edge_apply = EdgeApply(
-                            space=data_model.space,
-                            external_id=f"{self.external_id}-{add_class_prefix_to_xid(class_name= object_class_name, external_id=end_node)}",
-                            type=(data_model.space, edge_type_id),
-                            start_node=(data_model.space, self.external_id),
-                            end_node=(
-                                data_model.space,
-                                add_class_prefix_to_xid(class_name= object_class_name,
-                                                        external_id=end_node)
-                            ),
-                        )
-                            edges_list.append(edge_apply)
+                    if is_external_id_valid(end_node):
+                        mapped_instance = dm_view.properties[edge_one_to_many]
+                        if isinstance(mapped_instance, SingleHopConnectionDefinition):
+                            object_view = mapped_instance.source
+                            if object_view:
+                                object_class_name = object_view.external_id
+                                edge_apply = EdgeApply(
+                                space=data_model.space,
+                                external_id=f"{self.external_id}-{add_class_prefix_to_xid(class_name= object_class_name, external_id=end_node)}",
+                                type=(data_model.space, edge_type_id),
+                                start_node=(data_model.space, self.external_id),
+                                end_node=(
+                                    data_model.space,
+                                    add_class_prefix_to_xid(class_name= object_class_name,
+                                                            external_id=end_node)
+                                ),
+                            )
+                                edges_list.append(edge_apply)
             edges.extend(edges_list)
         else:
             edges.extend(
@@ -511,7 +530,8 @@ def to_edge(self, data_model: DataModel, add_class_prefix: bool) -> list[EdgeApp
                     end_node_id,
                 ),
             )
-            for end_node_id in self.__getattribute__(edge_one_to_many)
+            for end_node_id in self.__getattribute__(edge_one_to_many) 
+            if is_external_id_valid(end_node_id)
         )
     return edges
 
