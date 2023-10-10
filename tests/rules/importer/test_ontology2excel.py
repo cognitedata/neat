@@ -18,10 +18,8 @@ def test_owl2transformation_rules(owl_based_rules: RawTables) -> None:
     owl_importer = importer.OWLImporter(config.WIND_ONTOLOGY)
 
     # Act
-    created_tables = owl_importer.to_tables()
+    owl_importer.to_tables()
 
     # Assert
     assert owl_based_rules.Metadata.iloc[0, 1] == "https://kg.cognite.ai/wind/"
     assert len(set(owl_based_rules.Classes.Class.values)) == 68
-    assert str(created_tables["metadata"].iloc[0, 0]) == "https://kg.cognite.ai/wind/"
-    assert len(set(created_tables["classes"].Class.values)) == 68

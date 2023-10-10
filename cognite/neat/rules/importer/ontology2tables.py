@@ -88,8 +88,20 @@ def owl2excel(owl_filepath: Path, excel_filepath: Path | None = None, validate_r
 
     with pd.ExcelWriter(excel_filepath) as writer:
         _parse_owl_metadata_df(graph).to_excel(writer, sheet_name="Metadata", header=False)
-        _parse_owl_classes_df(graph).to_excel(writer, sheet_name="Classes", index=False, header=False)
-        _parse_owl_properties_df(graph).to_excel(writer, sheet_name="Properties", index=False, header=False)
+
+        # Add helper row to classes' sheet
+        pd.DataFrame(
+            data=[("Data Model Definition", "", "", "", "State", "", "", "Knowledge acquisition log", "", "", "")]
+        ).to_excel(writer, sheet_name="Classes", index=False, header=False, startrow=0)
+        _parse_owl_classes_df(graph).to_excel(writer, sheet_name="Classes", index=False, header=True, startrow=1)
+
+        # Add helper row to properties' sheet
+        pd.DataFrame(
+            data=[
+                ["Data Model Definition"] + [""] * 5 + ["Start"] + [""] * 3 + ["Knowledge acquisition log"] + [""] * 3
+            ]
+        ).to_excel(writer, sheet_name="Properties", index=False, header=False, startrow=0)
+        _parse_owl_properties_df(graph).to_excel(writer, sheet_name="Properties", index=False, header=True, startrow=1)
 
     if validate_results:
         _validate_excel_file(excel_filepath)
@@ -120,7 +132,6 @@ def _create_default_metadata_parsing_config() -> dict[str, tuple[str, ...]]:
 def _create_default_classes_parsing_config() -> dict[str, tuple[str, ...]]:
     # TODO: these are to be read from Class pydantic model
     return {
-        "helper_row": ("Data Model Definition", "", "", "", "State", "", "", "Knowledge acquisition log", "", "", ""),
         "header": (
             "Class",
             "Name",
@@ -140,22 +151,6 @@ def _create_default_classes_parsing_config() -> dict[str, tuple[str, ...]]:
 def _create_default_properties_parsing_config() -> dict[str, tuple[str, ...]]:
     # TODO: these are to be read from Property pydantic model
     return {
-        "helper_row": (
-            "Data Model Definition",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "State",
-            "",
-            "",
-            "Knowledge acquisition log",
-            "",
-            "",
-            "",
-        ),
         "header": (
             "Class",
             "Property",
@@ -171,7 +166,7 @@ def _create_default_properties_parsing_config() -> dict[str, tuple[str, ...]]:
             "Source Entity Name",
             "Match",
             "Comment",
-        ),
+        )
     }
 
 
@@ -299,7 +294,7 @@ SELECT ?class ?name ?description ?parentClass ?deprecated ?deprecationDate
         ]
         for class_, group_df in grouped_df
     ]
-    return pd.DataFrame([parsing_config["helper_row"], parsing_config["header"], *clean_list])
+    return pd.DataFrame(columns=parsing_config["header"], data=clean_list)
 
 
 def _parse_owl_properties_df(graph: Graph, parsing_config: dict | None = None) -> pd.DataFrame:
@@ -376,7 +371,7 @@ def _parse_owl_properties_df(graph: Graph, parsing_config: dict | None = None) -
                 ]
             ]
 
-    return pd.DataFrame([parsing_config["helper_row"], parsing_config["header"], *clean_list])
+    return pd.DataFrame(columns=parsing_config["header"], data=clean_list)
 
 
 def _validate_excel_file(excel_filepath: Path):
