@@ -6,10 +6,17 @@ from typing import ClassVar
 import requests
 from cognite.client import CogniteClient
 
+from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
-__all__ = ["DownloadFileFromGitHub", "UploadFileToGitHub", "DownloadFileFromCDF", "UploadFileToCDF"]
+__all__ = [
+    "DownloadFileFromGitHub",
+    "UploadFileToGitHub",
+    "DownloadFileFromCDF",
+    "UploadFileToCDF",
+    "DownloadDataFromRestApiToFile",
+]
 
 
 class DownloadFileFromGitHub(Step):
@@ -20,41 +27,27 @@ class DownloadFileFromGitHub(Step):
     description = "This step fetches and stores the file from private Github repository"
     category = "Input/Output"
     configurables: ClassVar[list[Configurable]] = [
-        Configurable(
-            name="github.filepath",
-            value="",
-            label="File path to the file stored on Github",
-        ),
+        Configurable(name="github.filepath", value="", label="File path to the file stored on Github"),
         Configurable(
             name="github.personal_token",
             value="",
             label="Github Personal Access Token which allows fetching file from private Github repository",
             type="password",
         ),
+        Configurable(name="github.owner", value="", label="Github repository owner, also know as github organization"),
+        Configurable(name="github.repo", value="", label="Github repository from which the file is being fetched"),
         Configurable(
-            name="github.owner",
-            value="",
-            label="Github repository owner, also know as github organization",
+            name="github.branch", value="main", label="Github repository branch from which the file is being fetched"
         ),
         Configurable(
-            name="github.repo",
-            value="",
-            label="Github repository from which the file is being fetched",
-        ),
-        Configurable(
-            name="github.branch",
-            value="main",
-            label="Github repository branch from which the file is being fetched",
-        ),
-        Configurable(
-            name="local.file_name",
-            value="",
-            label="The name of the file under which it will be stored locally",
+            name="local.file_name", value="", label="The name of the file under which it will be stored locally"
         ),
         Configurable(name="local.storage_dir", value="rules/", label="The directory where the file will be stored"),
     ]
 
-    def run(self) -> FlowMessage:
+    def run(self) -> FlowMessage:  # type: ignore[override, syntax]
+        if self.configs is None or self.data_store_path is None:
+            raise StepNotInitialized(type(self).__name__)
         github_filepath = self.configs["github.filepath"]
         github_personal_token = self.configs["github.personal_token"]
         github_owner = self.configs["github.owner"]
@@ -62,7 +55,7 @@ class DownloadFileFromGitHub(Step):
         github_branch = self.configs["github.branch"]
         github_file_name = Path(github_filepath).name
         local_file_name = self.configs["local.file_name"] or github_file_name
-        full_local_file_path = Path(self.data_store_path) / Path(self.configs["local.storage_dir"])
+        full_local_file_path = self.data_store_path / Path(self.configs["local.storage_dir"])
 
         if not full_local_file_path.exists():
             full_local_file_path.mkdir(parents=True, exist_ok=True)
@@ -115,53 +108,37 @@ class UploadFileToGitHub(Step):
     description = "This step uploads file to private Github repository"
     category = "Input/Output"
     configurables: ClassVar[list[Configurable]] = [
-        Configurable(
-            name="github.filepath",
-            value="",
-            label="File path to the file stored on Github",
-        ),
+        Configurable(name="github.filepath", value="", label="File path to the file stored on Github"),
         Configurable(
             name="github.personal_token",
             value="",
             label="Github Personal Access Token which allows uploading file to private Github repository",
             type="password",
         ),
+        Configurable(name="github.owner", value="", label="Github repository owner, also know as github organization"),
+        Configurable(name="github.repo", value="", label="Github repository the file is being uploaded to"),
         Configurable(
-            name="github.owner",
-            value="",
-            label="Github repository owner, also know as github organization",
-        ),
-        Configurable(
-            name="github.repo",
-            value="",
-            label="Github repository the file is being uploaded to",
-        ),
-        Configurable(
-            name="github.branch",
-            value="main",
-            label="Github repository branch the file is being uploaded to",
+            name="github.branch", value="main", label="Github repository branch the file is being uploaded to"
         ),
         Configurable(
             name="github.commit_message",
             value="New file",
             label="The commit message to be used when uploading the file",
         ),
-        Configurable(
-            name="local.file_name",
-            value="",
-            label="The name of the local file to be uploaded to Github",
-        ),
+        Configurable(name="local.file_name", value="", label="The name of the local file to be uploaded to Github"),
         Configurable(name="local.storage_dir", value="rules/", label="Local directory where the file is stored"),
     ]
 
-    def run(self) -> FlowMessage:
+    def run(self) -> FlowMessage:  # type: ignore[override, syntax]
+        if self.configs is None or self.data_store_path is None:
+            raise StepNotInitialized(type(self).__name__)
         github_filepath = self.configs["github.filepath"]
         github_personal_token = self.configs["github.personal_token"]
         github_owner = self.configs["github.owner"]
         github_repo = self.configs["github.repo"]
         github_branch = self.configs["github.branch"]
         local_file_name = self.configs["local.file_name"]
-        full_local_file_path = Path(self.data_store_path) / Path(self.configs["local.storage_dir"]) / local_file_name
+        full_local_file_path = self.data_store_path / Path(self.configs["local.storage_dir"]) / local_file_name
 
         if not full_local_file_path.exists():
             return FlowMessage(
@@ -172,10 +149,7 @@ class UploadFileToGitHub(Step):
         with full_local_file_path.open("rb") as f:
             file_content = f.read()
 
-        headers = {
-            "Authorization": f"Bearer {github_personal_token}",
-            "Content-Type": "application/json",
-        }
+        headers = {"Authorization": f"Bearer {github_personal_token}", "Content-Type": "application/json"}
 
         # Create a content object
         content = {
@@ -219,11 +193,7 @@ class DownloadFileFromCDF(Step):
     description = "This step fetches and stores file from CDF"
     category = "Input/Output"
     configurables: ClassVar[list[Configurable]] = [
-        Configurable(
-            name="cdf.external_id",
-            value="",
-            label="External ID of the file stored in CDF",
-        ),
+        Configurable(name="cdf.external_id", value="", label="External ID of the file stored in CDF"),
         Configurable(
             name="local.file_name",
             value="",
@@ -232,17 +202,18 @@ class DownloadFileFromCDF(Step):
         Configurable(name="local.storage_dir", value="rules/", label="The directory where the file will be stored"),
     ]
 
-    def run(self, cdf_client: CogniteClient) -> FlowMessage:
+    def run(self, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override, syntax]
+        if self.configs is None or self.data_store_path is None:
+            raise StepNotInitialized(type(self).__name__)
         full_local_file_path = (
-            Path(self.data_store_path) / Path(self.configs["local.storage_dir"]) / self.configs["local.file_name"]
+            self.data_store_path / Path(self.configs["local.storage_dir"]) / self.configs["local.file_name"]
         )
         cdf_client.files.download_to_path(full_local_file_path, external_id=self.configs["cdf.external_id"])
         if full_local_file_path.exists():
             return FlowMessage(output_text=f"File {self.configs['local.file_name']} downloaded from CDF successfully")
         else:
             return FlowMessage(
-                error_text="Error downloading file from CDF",
-                step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
+                error_text="Error downloading file from CDF", step_execution_status=StepExecutionStatus.ABORT_AND_FAIL
             )
 
 
@@ -254,30 +225,146 @@ class UploadFileToCDF(Step):
     description = "This step uploads file to CDF"
     category = "Input/Output"
     configurables: ClassVar[list[Configurable]] = [
+        Configurable(name="cdf.external_id", value="", label="Exernal Id for the file to be stored in CDF"),
         Configurable(
-            name="cdf.external_id",
-            value="",
-            label="Exernal Id for the file to be stored in CDF",
+            name="cdf.dataset_id", value="", label="Dataset Id for the file to be stored in CDF. Must be a number"
         ),
-        Configurable(
-            name="cdf.dataset_id",
-            value="",
-            label="Dataset Id for the file to be stored in CDF. Must be a number",
-        ),
-        Configurable(
-            name="local.file_name",
-            value="",
-            label="The name of the local file to be uploaded to CDF",
-        ),
+        Configurable(name="local.file_name", value="", label="The name of the local file to be uploaded to CDF"),
         Configurable(name="local.storage_dir", value="rules/", label="Local directory where the file is stored"),
     ]
 
-    def run(self, cdf_client: CogniteClient) -> FlowMessage:
+    def run(self, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override, syntax]
+        if self.configs is None or self.data_store_path is None:
+            raise StepNotInitialized(type(self).__name__)
         full_local_file_path = (
-            Path(self.data_store_path) / Path(self.configs["local.storage_dir"]) / self.configs["local.file_name"]
+            self.data_store_path / Path(self.configs["local.storage_dir"]) / self.configs["local.file_name"]
         )
         dataset_id = int(self.configs["cdf.dataset_id"]) if self.configs["cdf.dataset_id"].isdigit() else None
         cdf_client.files.upload(
-            full_local_file_path, external_id=self.configs["cdf.external_id"], overwrite=True, data_set_id=dataset_id
+            str(full_local_file_path),
+            external_id=self.configs["cdf.external_id"],
+            overwrite=True,
+            data_set_id=dataset_id,
         )
         return FlowMessage(output_text=f"File {self.configs['local.file_name']} uploaded to CDF successfully")
+
+
+class DownloadDataFromRestApiToFile(Step):
+    """
+    This step downloads the response from a REST API and saves it to a file.
+    """
+
+    description = "This step downloads the response from a REST API and saves it to a file."
+    category = "Input/Output"
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="api_url",
+            value="",
+            label="API URL",
+        ),
+        Configurable(
+            name="output_file_path",
+            value="workflows/workflow_name/output.json",
+            label="Output File Path. The path must be relative to the data store path.",
+        ),
+        Configurable(
+            name="http_method",
+            value="GET",
+            label="HTTP Method (GET/POST/PUT)",
+            options=["GET", "POST", "PUT"],
+        ),
+        Configurable(
+            name="auth_mode",
+            value="none",
+            label="Authentication Mode (basic/token/none)",
+            options=["basic", "token", "none"],
+        ),
+        Configurable(
+            name="username",
+            value="",
+            label="Username (for basic auth)",
+        ),
+        Configurable(
+            name="password",
+            value="",
+            label="Password (for basic auth)",
+            type="password",
+        ),
+        Configurable(
+            name="token",
+            value="",
+            label="Token (for token auth)",
+            type="password",
+        ),
+        Configurable(
+            name="response_destination",
+            value="file",
+            label="Destination for the response (file/flow_message/both)",
+            options=["file", "flow_message", "both"],
+        ),
+    ]
+
+    def run(self) -> FlowMessage:  # type: ignore[override, syntax]
+        api_url = self.configs["api_url"]
+        output_file_path = Path(self.data_store_path) / Path(self.configs["output_file_path"])
+        http_method = self.configs["http_method"].upper()
+        auth_mode = self.configs["auth_mode"]
+        username = self.configs["username"]
+        password = self.configs["password"]
+        token = self.configs["token"]
+
+        try:
+            headers = {}
+            if auth_mode == "basic":
+                if username and password:
+                    headers["Authorization"] = f'Basic {base64.b64encode(f"{username}:{password}".encode()).decode()}'
+                else:
+                    return FlowMessage(
+                        error_text="Username and password are required for Basic Authentication",
+                        step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
+                    )
+            elif auth_mode == "token":
+                if token:
+                    headers["Authorization"] = f"Bearer {token}"
+                else:
+                    return FlowMessage(
+                        error_text="Token is required for Token Authentication",
+                        step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
+                    )
+
+            if http_method not in ("GET", "POST", "PUT"):
+                return FlowMessage(
+                    error_text="Unsupported HTTP method. Supported methods are GET, POST, and PUT.",
+                    step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
+                )
+
+            if http_method == "GET":
+                response = requests.get(api_url, headers=headers, stream=True)
+            elif http_method == "POST":
+                response = requests.post(api_url, headers=headers, stream=True)
+            elif http_method == "PUT":
+                response = requests.put(api_url, headers=headers, stream=True)
+
+            if response.status_code >= 200 and response.status_code < 300:
+                payload = None
+                if self.configs["response_destination"] in ("flow_message", "both"):
+                    payload = response.json()
+                    with output_file_path.open("wb") as output_file:
+                        output_file.write(response.content)
+                else:
+                    with output_file_path.open("wb") as output_file:
+                        for chunk in response.iter_content(chunk_size=1024):
+                            if chunk:
+                                output_file.write(chunk)
+
+                return FlowMessage(output_text="Response downloaded and saved successfully.", payload=payload)
+            else:
+                return FlowMessage(
+                    error_text=f"Failed to fetch response. Status Code: {response.status_code}",
+                    step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
+                )
+        except Exception as e:
+            return FlowMessage(
+                error_text=f"An error occurred: {e!s}",
+                step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
+            )

@@ -2,8 +2,14 @@
 """
 
 import logging
+import sys
 import warnings
-from typing import ClassVar, Self, cast
+from typing import ClassVar, cast
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import (

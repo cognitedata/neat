@@ -62,6 +62,8 @@ export class StepMetadata {
     output: string[];
     configurables: StepConfigurable[] = [];
     type: string = "";
+    version: string = "";
+    docs_url: string = "";
 
     constructor(name: string, input: string[], output: string[]) {
         this.name = name;
@@ -227,7 +229,7 @@ export class WorkflowDefinition {
 
     convertStepsToNodes():any {
         let nodes = [];
-        this.steps.forEach(step => {
+        this.steps?.forEach(step => {
             let style = {};
             if (step.enabled == false) {
                 style = { borderColor: 'red'};

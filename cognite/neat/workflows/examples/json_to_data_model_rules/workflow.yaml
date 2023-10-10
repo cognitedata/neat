@@ -1,0 +1,196 @@
+configs: []
+description: null
+implementation_module: null
+name: json_to_data_model_rules
+steps:
+-   configs: {}
+    description: null
+    enabled: true
+    id: step_674652
+    label: Trigger data model and rules generation process
+    max_retries: 0
+    method: null
+    params: {}
+    retry_delay: 3
+    stype: http_trigger
+    system_component_id: null
+    transition_to:
+    - step_371926
+    trigger: true
+    ui_config:
+        pos_x: 557
+        pos_y: 54
+-   configs:
+        fdm_compatibility_mode: 'True'
+        file_path: workflows/json_to_data_model_rules/airport_dump.json
+    description: null
+    enabled: true
+    id: step_371926
+    label: Extract schema from json file
+    max_retries: 0
+    method: ArbitraryJsonYamlToRules
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+    - step_892657
+    trigger: false
+    ui_config:
+        pos_x: 557
+        pos_y: 184
+-   configs:
+        file_name: workflows/json_to_data_model_rules/airport_dump.json
+        graph_name: source
+        json_object_id_mapping: airports:name,airplanes:tailNumber,flights:flightNumber
+        json_object_labels_mapping: airports:name,airplanes:tailNumber,flights:flightNumber
+        namespace: http://purl.org/cognite/neat#
+        namespace_prefix: neat
+        object_id_generation_method: source_object_properties
+    description: null
+    enabled: true
+    id: step_66507
+    label: Load data from json file into source graph
+    max_retries: 0
+    method: InstancesFromJsonToGraph
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+    - step_80611
+    trigger: false
+    ui_config:
+        pos_x: 556
+        pos_y: 570
+-   configs:
+        db_server_api_root_url: ''
+        disk_store_dir: source-graph-store-json-to-dm
+        graph_name: source
+        init_procedure: reset
+        sparql_query_url: ''
+        sparql_update_url: ''
+        store_type: memory
+    description: null
+    enabled: true
+    id: step_350727
+    label: Configure graph store
+    max_retries: 0
+    method: ConfigureGraphStore
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+    - step_66507
+    trigger: false
+    ui_config:
+        pos_x: 556
+        pos_y: 488
+-   configs:
+        output_file_path: rules/airport-dm-rules.xlsx
+    description: null
+    enabled: true
+    id: step_892657
+    label: Save rules to excel file
+    max_retries: 0
+    method: ExcelFromRules
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+    - step_492013
+    trigger: false
+    ui_config:
+        pos_x: 558
+        pos_y: 295
+-   configs:
+        file_name: airport-dm-rules.xlsx
+        validation_report_file: rules_validation_report.txt
+        validation_report_storage_dir: rules_validation_report
+        version: ''
+    description: null
+    enabled: true
+    id: step_492013
+    label: Load rules (just to show how to load rules )
+    max_retries: 0
+    method: LoadTransformationRules
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+    - step_350727
+    trigger: true
+    ui_config:
+        pos_x: 557
+        pos_y: 378
+-   configs:
+        graph_name: source
+        link_direction: source_to_target
+        link_namespace: http://purl.org/cognite/neat#
+        matching_method: exact_match
+        relationship_name: link
+        source_class: flights
+        source_property: airplane
+        source_value_type: single_value_str
+        target_class: airplanes
+        target_property: tailNumber
+    description: null
+    enabled: true
+    id: step_80611
+    label: Link airplanes to flights
+    max_retries: 0
+    method: SimpleGraphEntityMatcher
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to: []
+    trigger: false
+    ui_config:
+        pos_x: 555
+        pos_y: 682
+system_components:
+-   description: null
+    id: system_comp_912026
+    label: Airport
+    transition_to:
+    - system_comp_975327
+    ui_config:
+        pos_x: 509
+        pos_y: 65
+-   description: null
+    id: system_comp_975327
+    label: List of flights and airports as json dump
+    transition_to:
+    - system_comp_124730
+    - system_comp_859097
+    ui_config:
+        pos_x: 510
+        pos_y: 154
+-   description: null
+    id: system_comp_124730
+    label: Data model and rules extractions
+    transition_to:
+    - system_comp_468222
+    ui_config:
+        pos_x: 411
+        pos_y: 317
+-   description: null
+    id: system_comp_859097
+    label: Loading data into source graph
+    transition_to:
+    - system_comp_468222
+    ui_config:
+        pos_x: 617
+        pos_y: 318
+-   description: null
+    id: system_comp_468222
+    label: Rules refinement and data exploration by domain expert
+    transition_to:
+    - system_comp_812846
+    ui_config:
+        pos_x: 513
+        pos_y: 473

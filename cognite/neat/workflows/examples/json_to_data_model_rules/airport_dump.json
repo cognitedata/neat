@@ -1,0 +1,98 @@
+{
+    "airports": [
+      {
+        "name": "Airport A",
+        "code": "AIA",
+        "location": {
+          "latitude": 40.7128,
+          "longitude": -74.0060
+        }
+      },
+      {
+        "name": "Airport B",
+        "code": "BIA",
+        "location": {
+          "latitude": 34.0522,
+          "longitude": -118.2437
+        }
+      },
+      {
+        "name": "Airport X",
+        "code": "XIA",
+        "location": {
+          "latitude": 41.8781,
+          "longitude": -87.6298
+        }
+      },
+      {
+        "name": "Airport Y",
+        "code": "YIA",
+        "location": {
+          "latitude": 51.5074,
+          "longitude": -0.1278
+        }
+      },
+      {
+        "name": "Airport P",
+        "code": "PIA",
+        "location": {
+          "latitude": 48.8566,
+          "longitude": 2.3522
+        }
+      },
+      {
+        "name": "Airport Q",
+        "code": "QIA",
+        "location": {
+          "latitude": 55.7558,
+          "longitude": 37.6176
+        }
+      }
+    ],
+    "airplanes": [
+      {
+        "tailNumber": "T001",
+        "airline": "Airline A",
+        "type": "Boeing 737",
+        "capacity": 150
+      },
+      {
+        "tailNumber": "T002",
+        "airline": "Airline B",
+        "type": "Airbus A320",
+        "capacity": 180
+      },
+      {
+        "tailNumber": "T003",
+        "airline": "Airline C",
+        "type": "Boeing 787",
+        "capacity": 250
+      }
+    ],
+    "flights": [
+      {
+        "flightNumber": "F001",
+        "originAirport": "Airport A",
+        "destinationAirport": "Airport B",
+        "airplane": "T001",
+        "departureTime": "2023-09-15 08:00 AM",
+        "arrivalTime": "2023-09-15 10:30 AM"
+      },
+      {
+        "flightNumber": "F002",
+        "originAirport": "Airport X",
+        "destinationAirport": "Airport Y",
+        "airplane": "T002",
+        "departureTime": "2023-09-16 10:30 AM",
+        "arrivalTime": "2023-09-16 01:00 PM"
+      },
+      {
+        "flightNumber": "F003",
+        "originAirport": "Airport P",
+        "destinationAirport": "Airport Q",
+        "airplane": "T003",
+        "departureTime": "2023-09-17 02:00 PM",
+        "arrivalTime": "2023-09-17 05:30 PM"
+      }
+    ]
+  }

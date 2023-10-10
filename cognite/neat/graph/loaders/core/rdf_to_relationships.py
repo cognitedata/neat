@@ -484,7 +484,7 @@ def _micro_batch_push(
 
 def upload_relationships(
     client: CogniteClient,
-    categorized_relationships: dict[str, list[Relationship]],
+    categorized_relationships: dict[str, list[Relationship] | list[RelationshipUpdate]],
     batch_size: int = 5000,
     max_retries: int = 1,
     retry_delay: int = 3,
@@ -553,5 +553,8 @@ def upload_relationships(
         except CogniteDuplicatedError as e:
             # This situation should not happen, but if it does, the code attempts to handle it
             exists = {d["externalId"] for d in e.duplicated}
-            missing_relationships = [t for t in categorized_relationships["create"] if t.external_id not in exists]
+            missing_relationships = [
+                t for t in cast(list[Relationship], categorized_relationships["create"]) if t.external_id not in exists
+            ]
+
             client.relationships.create(missing_relationships)

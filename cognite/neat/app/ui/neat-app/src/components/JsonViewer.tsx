@@ -10,6 +10,7 @@ import { JsonViewer } from '@textea/json-viewer'
 export default function NJsonViewer(props: any) {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [data, setData] = useState<any>(props.data);
+    const [buttonLabel, setButtonLabel] = useState<any>(props.label ? props.label:"View full report");
     const handleDialogClickOpen = () => {
         setDialogOpen(true);
     };
@@ -28,7 +29,7 @@ export default function NJsonViewer(props: any) {
                 <Button onClick={handleDialogClose}>Close</Button>
             </DialogActions>
           </Dialog>
-          <Button variant="outlined" sx={{ marginTop: 2, marginRight: 1 }} onClick={handleDialogClickOpen} > View full report </Button>
+          <Button variant="outlined" sx={{ marginTop: 2, marginRight: 1 }} onClick={handleDialogClickOpen} > {buttonLabel} </Button>
         </React.Fragment>
     )
 }

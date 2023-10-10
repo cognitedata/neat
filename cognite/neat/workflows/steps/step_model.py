@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import ClassVar, Generic, TypeVar
+from pathlib import Path
+from typing import ClassVar, TypeVar
 
 from pydantic import BaseModel, ConfigDict
 
@@ -30,28 +31,39 @@ T_Input2 = TypeVar("T_Input2", bound=DataContract)
 T_Output = TypeVar("T_Output", bound=DataContract)
 
 
-class Step(ABC, Generic[T_Output]):
+class Step(ABC):
     description: str = ""
     category: str = "default"
     configurables: ClassVar[list[Configurable]] = []
-    scope: str = "global"
-    configs: dict[str, str] | None = None
+    scope: str = "core_global"
     metrics: NeatMetricsCollector | None = None
     workflow_configs: WorkflowConfigs | None = None
+    version: str = "1.0.0"  # version of the step. All alpha versions considered as experimental
+    source: str = (
+        "cognite"  # source of the step , can be source identifier or url , for instance github url for instance.
+    )
+    docs_url: str = "https://cognite-neat.readthedocs-hosted.com/en/latest/"  # url to the documentation of the step
 
-    def __init__(self, data_store_path: str | None = None):
+    def __init__(self, data_store_path: Path | None = None):
         self.log: bool = False
-        self.data_store_path: str = data_store_path
+        self.configs: dict[str, str] = {}
+        self.workflow_id: str = ""
+        self.workflow_run_id: str = ""
+        self.data_store_path = Path(data_store_path) if data_store_path is not None else Path.cwd()
 
     @property
     def _not_configured_message(self) -> str:
         return f"Step {type(self).__name__} has not been configured."
 
-    def set_metrics(self, metrics: NeatMetricsCollector):
+    def set_metrics(self, metrics: NeatMetricsCollector | None):
         self.metrics = metrics
 
-    def set_workflow_configs(self, configs: WorkflowConfigs):
+    def set_workflow_configs(self, configs: WorkflowConfigs | None):
         self.workflow_configs = configs
+
+    def set_workflow_metadata(self, workflow_id: str, workflow_run_id: str):
+        self.workflow_id = workflow_id
+        self.workflow_run_id = workflow_run_id
 
     def configure(self, configs: dict[str, str]):
         self.configs = configs
@@ -60,5 +72,5 @@ class Step(ABC, Generic[T_Output]):
         self.flow_context = context
 
     @abstractmethod
-    def run(self, *input_data: T_Input) -> T_Output | tuple[FlowMessage, T_Output] | FlowMessage:
+    def run(self, *input_data: DataContract) -> DataContract | tuple[FlowMessage, DataContract] | FlowMessage:
         ...

@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import threading
 import time
 import traceback
@@ -7,15 +8,15 @@ from pathlib import Path
 from threading import Event
 
 import yaml
-from cognite.client import CogniteClient
+from cognite.client import ClientConfig, CogniteClient
 from prometheus_client import Gauge
 
 from cognite.neat.app.api.configuration import Config
 from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
-from cognite.neat.utils.cdf import CogniteClientConfig
 from cognite.neat.utils.utils import retry_decorator
 from cognite.neat.workflows import cdf_store, utils
-from cognite.neat.workflows._exceptions import InvalidStepOutputException
+from cognite.neat.workflows._exceptions import ConfigurationNotSet, InvalidStepOutputException
+from cognite.neat.workflows.cdf_store import CdfStore
 from cognite.neat.workflows.model import (
     FlowMessage,
     StepExecutionStatus,
@@ -51,24 +52,24 @@ class BaseWorkflow:
         self.name = name
         self.module_name = self.__class__.__module__
         self.cdf_client = client
-        self.cdf_client_config: CogniteClientConfig = client.config
+        self.cdf_client_config: ClientConfig = client.config
         self.default_dataset_id = default_dataset_id
         self.state = WorkflowState.CREATED
         self.instance_id = utils.generate_run_id()
         self.run_id = ""
         self.last_error = ""
-        self.elapsed_time = 0
-        self.start_time = None
-        self.end_time = None
+        self.elapsed_time: float = 0.0
+        self.start_time: float | None = None
+        self.end_time: float | None = None
         self.execution_log: list[WorkflowStepEvent] = []
-        self.workflow_steps: list[WorkflowStepDefinition] = workflow_steps
+        self.workflow_steps: list[WorkflowStepDefinition] = workflow_steps or []
         self.workflow_system_components: list[WorkflowSystemComponent] = []
         self.configs: list[WorkflowConfigItem] = []
-        self.flow_message: FlowMessage = None
-        self.task_builder: WorkflowTaskBuilder = None
-        self.rules_storage_path = None
-        self.data_store_path = None
-        self.user_steps_path = None  # path to user defined steps
+        self.flow_message: FlowMessage | None = None
+        self.task_builder: WorkflowTaskBuilder | None = None
+        self.rules_storage_path: Path | None = None
+        self.data_store_path: Path | None = None
+        self.user_steps_path: Path | None = None  # path to user defined steps
         self.cdf_store = (
             cdf_store.CdfStore(self.cdf_client, data_set_id=self.default_dataset_id)
             if self.default_dataset_id
@@ -77,9 +78,9 @@ class BaseWorkflow:
         self.metrics = NeatMetricsCollector(self.name, self.cdf_client)
         self.resume_event = Event()
         self.is_ephemeral = False  # if True, workflow will be deleted after completion
-        self.step_clases = None
-        self.data: dict[str, DataContract] = {}
-        self.steps_registry: StepsRegistry = steps_registry
+        self.step_classes = None
+        self.data: dict[str, DataContract | FlowMessage | CdfStore | CogniteClient | None] = {}
+        self.steps_registry: StepsRegistry = steps_registry or StepsRegistry()
 
     def start(self, sync=False, is_ephemeral=False, **kwargs) -> FlowMessage | None:
         """Starts workflow execution.sync=True will block until workflow is completed and
@@ -110,7 +111,7 @@ class BaseWorkflow:
         logging.info(f"Starting workflow {self.name}")
         if flow_message := kwargs.get("flow_message"):
             self.flow_message = flow_message
-            self.data["FlowMessage"] = self.flow_message
+            self.data["FlowMessage"] = flow_message
         start_time = time.perf_counter()
         self.report_workflow_execution()
         try:
@@ -135,7 +136,7 @@ class BaseWorkflow:
         self.report_workflow_execution()
         return self.flow_message
 
-    def get_transition_step(self, transitions: list[str]) -> list[str]:
+    def get_transition_step(self, transitions: list[str] | None) -> list[WorkflowStepDefinition]:
         return [stp for stp in self.workflow_steps if stp.id in transitions and stp.enabled] if transitions else []
 
     def run_workflow_steps(self, start_step_id: str | None = None) -> str:
@@ -212,7 +213,8 @@ class BaseWorkflow:
         new_instance.set_task_builder(self.task_builder)
         new_instance.set_default_dataset_id(self.default_dataset_id)
         new_instance.set_storage_path("transformation_rules", self.rules_storage_path)
-        new_instance.set_storage_path("data_store", self.data_store_path)
+        if self.data_store_path:
+            new_instance.set_storage_path("data_store", self.data_store_path)
         return new_instance
 
     def run_step(self, step: WorkflowStepDefinition) -> FlowMessage | None:
@@ -223,7 +225,7 @@ class BaseWorkflow:
         flow_message = self.flow_message
         if self.state != WorkflowState.RUNNING:
             logging.error(f"Workflow {self.name} is not running , step {step_name} is skipped")
-            return
+            return None
 
         logging.info(f"Running step {step_name}")
         self.current_step = step_name
@@ -284,6 +286,8 @@ class BaseWorkflow:
                         metrics=self.metrics,
                         workflow_configs=self.get_configs(),
                         step_configs=step.configs,
+                        workflow_id=self.name,
+                        workflow_run_id=self.run_id,
                     )
 
                 output = method_runner()
@@ -295,11 +299,7 @@ class BaseWorkflow:
                         elif isinstance(out_obj, DataContract):
                             self.data[type(out_obj).__name__] = out_obj
                         else:
-                            raise InvalidStepOutputException(
-                                type_="InvalidStepOutputType",
-                                code=1,
-                                message=f"Object type {type(out_obj)} is not supported as step output",
-                            )
+                            raise InvalidStepOutputException(step_type=type(out_obj).__name__)
 
             elif step.stype == StepType.START_WORKFLOW_TASK_STEP:
                 if self.task_builder:
@@ -387,11 +387,10 @@ class BaseWorkflow:
         self.report_step_execution()
         return new_flow_message
 
-    def resume_workflow(self, flow_message: FlowMessage, step_id: str | None = None):
-        if step_id:
-            if self.current_step != step_id:
-                logging.error(f"Workflow {self.name} is not in step {step_id} , resume is skipped")
-                return
+    def resume_workflow(self, flow_message: FlowMessage, step_id: str):
+        if step_id and self.current_step != step_id:
+            logging.error(f"Workflow {self.name} is not in step {step_id} , resume is skipped")
+            return
         self.flow_message = flow_message
         self.execution_log.append(
             WorkflowStepEvent(
@@ -468,6 +467,8 @@ class BaseWorkflow:
             return json.dumps(workflow_definitions.model_dump(), indent=4)
         elif output_format == "yaml":
             return yaml.dump(workflow_definitions.model_dump(), indent=4)
+        else:
+            raise NotImplementedError(f"Output format {output_format} is not supported.")
 
     @classmethod
     def deserialize_definition(cls, json_string: str, output_format: str = "json") -> WorkflowDefinition:
@@ -484,23 +485,29 @@ class BaseWorkflow:
         self.workflow_system_components = workflow_definition.system_components
         self.configs = workflow_definition.configs
 
-    def set_storage_path(self, storage_type: str, storage_path: str):
+    def set_storage_path(self, storage_type: str, storage_path: str | Path | None) -> None:
+        if storage_path is None:
+            return None
         if storage_type == "transformation_rules":
-            self.rules_storage_path = storage_path
+            self.rules_storage_path = Path(storage_path)
+            if self.default_dataset_id is None:
+                raise ConfigurationNotSet("default_dataset_id")
             self.cdf_store = cdf_store.CdfStore(
                 self.cdf_client, data_set_id=self.default_dataset_id, rules_storage_path=self.rules_storage_path
             )
         elif storage_type == "data_store":
-            self.data_store_path = storage_path
-            self.user_steps_path = Path(self.data_store_path, "steps")
+            self.data_store_path = Path(storage_path)
+            self.user_steps_path = Path(storage_path, "steps")
 
-    def set_task_builder(self, task_builder: WorkflowTaskBuilder):
+    def set_task_builder(self, task_builder: WorkflowTaskBuilder | None):
         self.task_builder = task_builder
 
-    def get_config_item(self, config_name: str) -> WorkflowConfigItem:
+    def get_config_item(self, config_name: str) -> WorkflowConfigItem | None:
         return next((item for item in self.configs if item.name == config_name), None)
 
-    def get_config_group_values_by_name(self, group_name: str, remove_group_prefix: bool = True) -> dict[str, str]:
+    def get_config_group_values_by_name(
+        self, group_name: str, remove_group_prefix: bool = True
+    ) -> dict[str, str | None]:
         return {
             (item.name.removeprefix(item.group) if remove_group_prefix else item.name): item.value
             for item in self.configs
@@ -510,7 +517,7 @@ class BaseWorkflow:
     def get_config_item_value(self, config_name: str, default_value=None) -> str | None:
         return config.value if (config := self.get_config_item(config_name)) else default_value
 
-    def set_default_dataset_id(self, default_dataset_id: int):
+    def set_default_dataset_id(self, default_dataset_id: int | None):
         self.default_dataset_id = default_dataset_id
         self.cdf_store = (
             cdf_store.CdfStore(self.cdf_client, data_set_id=self.default_dataset_id)
@@ -518,7 +525,7 @@ class BaseWorkflow:
             else None
         )
 
-    def set_cdf_client_config(self, cdf_client_config: CogniteClientConfig):
+    def set_cdf_client_config(self, cdf_client_config: ClientConfig):
         """Set the CogniteClient configuration to be used by the workflow to create new CogniteClient instances."""
         self.cdf_client_config = cdf_client_config
 
@@ -530,17 +537,35 @@ class BaseWorkflow:
         """
         return CogniteClient(self.cdf_client_config)
 
-    def get_step_by_id(self, step_id: str) -> WorkflowStepDefinition:
+    def get_step_by_id(self, step_id: str) -> WorkflowStepDefinition | None:
         return next((step for step in self.workflow_steps if step.id == step_id), None)
 
-    def get_trigger_step(self, step_id: str | None = None) -> WorkflowStepDefinition:
+    def get_trigger_step(self, step_id: str | None = None) -> WorkflowStepDefinition | None:
         if step_id:
             return next((step for step in self.workflow_steps if step.id == step_id and step.enabled), None)
         else:
             return next((step for step in self.workflow_steps if step.trigger and step.enabled), None)
 
-    def get_context(self) -> dict[str, DataContract]:
+    def get_context(self) -> dict[str, DataContract | FlowMessage | CdfStore | CogniteClient | None]:
         return self.data
 
     def get_configs(self) -> WorkflowConfigs:
         return WorkflowConfigs(configs=self.configs)
+
+    def get_list_of_workflow_artifacts(self) -> list[Path]:
+        # create a list of all files under the data store path
+
+        file_list: list[Path] = []
+        if self.data_store_path is None:
+            raise ConfigurationNotSet("data_store_path")
+        workflow_data_path = Path(self.data_store_path) / "workflows" / self.name
+        try:
+            for root, _dirs, files in os.walk(workflow_data_path):
+                for file in files:
+                    full_path = Path(root) / file
+                    file_list.append(Path(full_path).relative_to(workflow_data_path))
+            return file_list
+        except OSError as e:
+            # Handle exceptions like directory not found, permission denied, etc.
+            logging.error(f"Error while listing workflow artifacts for {self.name} : {e}")
+            return []

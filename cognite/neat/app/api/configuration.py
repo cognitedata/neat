@@ -1,6 +1,7 @@
 import logging
 import os
 from pathlib import Path
+from typing import Any
 
 from cognite.client import CogniteClient
 from fastapi import FastAPI
@@ -9,6 +10,7 @@ from cognite import neat
 from cognite.neat.app.api.data_classes.configuration import Config, configure_logging
 from cognite.neat.config import copy_examples_to_directory
 from cognite.neat.constants import PACKAGE_DIRECTORY
+from cognite.neat.utils.cdf import ServiceCogniteClient
 from cognite.neat.utils.utils import get_cognite_client_from_config, get_cognite_client_from_token
 from cognite.neat.workflows.cdf_store import CdfStore
 from cognite.neat.workflows.manager import WorkflowManager
@@ -20,11 +22,9 @@ UI_PATH = PACKAGE_DIRECTORY / "app" / "ui" / "neat-app" / "build"
 class NeatApp:
     def __init__(self, config: Config, cdf_client: CogniteClient | None = None):
         self.config = config
-        self.cdf_client: CogniteClient = None
-        self.cdf_store: CdfStore = None
-        self.workflow_manager: WorkflowManager = None
-        self.triggers_manager: TriggerManager = None
-        self.fast_api_app: FastAPI = None
+        self.cdf_client: CogniteClient | None = None
+        self.cdf_store: CdfStore | None = None
+        self.fast_api_app: FastAPI | None = None
         self.cdf_client = cdf_client
 
     def set_http_server(self, fast_api_app: FastAPI):
@@ -37,11 +37,14 @@ class NeatApp:
             self.config = config
         logging.info("Initializing global objects")
         if not self.cdf_client:
-            if self.config.cdf_client.client_id:
-                self.cdf_client = get_cognite_client_from_config(self.config.cdf_client)
+            if isinstance(self.config.cdf_client, ServiceCogniteClient):
+                if self.config.cdf_client.client_id:
+                    self.cdf_client = get_cognite_client_from_config(self.config.cdf_client)
+                else:
+                    # If no client_id is provided, we assume that the token is provided instead of secret.
+                    self.cdf_client = get_cognite_client_from_token(self.config.cdf_client)
             else:
-                # If no client_id is provided, we assume that the token is provided instead of secret.
-                self.cdf_client = get_cognite_client_from_token(self.config.cdf_client)
+                raise ValueError("Only ServiceCogniteClient is supported at the moment.")
         self.cdf_store = CdfStore(
             self.cdf_client,
             self.config.cdf_default_dataset_id,
@@ -76,9 +79,8 @@ class NeatApp:
         logging.info("NeatApp stopped")
 
 
-def configure_neat_app() -> NeatApp:
+def create_neat_app() -> NeatApp:
     logger = logging.getLogger(__name__)  # temporary logger before config is loaded
-    config_path = Path(os.environ.get("NEAT_CONFIG_PATH", "config.yaml"))
 
     if os.environ.get("NEAT_CDF_PROJECT"):
         logger.info("ENV NEAT_CDF_PROJECT is set, loading config from env.")
@@ -96,10 +98,10 @@ def configure_neat_app() -> NeatApp:
 
     configure_logging(config.log_level, config.log_format)
     logging.info(f" Starting NEAT version {neat.__version__}")
-    logging.debug(f" Config: {config.dict(exclude={'cdf_client': {'client_secret': ...}})}")
+    logging.debug(f" Config: {config.model_dump(exclude={'cdf_client': {'client_secret': ...}})}")
 
     return NeatApp(config)
 
 
-neat_app = configure_neat_app()
-cache_store = {}
+NEAT_APP = create_neat_app()
+CACHE_STORE: dict[str, Any] = {}

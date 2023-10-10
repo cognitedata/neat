@@ -33,7 +33,7 @@ class TriggerManager:
         start_status = self.workflow_manager.start_workflow_instance(
             workflow_name=workflow_name, step_id=step_id, flow_msg=flow_msg
         )
-        if start_status.is_success:
+        if start_status.is_success and start_status.workflow_instance:
             return start_status.workflow_instance.flow_message
 
     def resume_workflow_from_http_request(
@@ -42,7 +42,10 @@ class TriggerManager:
         if instance_id != "default":
             workflow = self.workflow_manager.get_workflow_instance(instance_id)
         else:
-            workflow = self.workflow_manager.get_workflow(workflow_name)
+            returned = self.workflow_manager.get_workflow(workflow_name)
+            if returned is None:
+                return {"result": "Workflow instance not found"}
+            workflow = returned
 
         json_payload = None
         try:

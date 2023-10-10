@@ -1,5 +1,11 @@
+import sys
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 from cognite.neat.rules import exceptions
 from cognite.neat.rules._validation import (

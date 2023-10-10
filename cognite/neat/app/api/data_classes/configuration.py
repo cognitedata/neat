@@ -1,9 +1,16 @@
 import json
 import logging
 import os
-from enum import StrEnum
+import sys
 from pathlib import Path
-from typing import Literal, Self
+from typing import Literal, cast
+
+if sys.version_info >= (3, 11):
+    from enum import StrEnum
+    from typing import Self
+else:
+    from backports.strenum import StrEnum
+    from typing_extensions import Self
 
 import yaml
 from pydantic import BaseModel, Field
@@ -38,7 +45,7 @@ class WorkflowsStoreType(StrEnum):
 
 
 class Config(BaseModel):
-    workflows_store_type: RulesStoreType = WorkflowsStoreType.FILE
+    workflows_store_type: WorkflowsStoreType = WorkflowsStoreType.FILE
     data_store_path: Path = Field(default_factory=lambda: Path.cwd() / "data")
 
     workflow_downloader_filter: list[str] | None = Field(
@@ -84,27 +91,33 @@ class Config(BaseModel):
 
     @classmethod
     def from_env(cls) -> Self:
+        missing = "Missing"
         cdf_config = ServiceCogniteClient(
-            project=os.environ.get("NEAT_CDF_PROJECT"),
-            client_name=os.environ.get("NEAT_CDF_CLIENT_NAME"),
-            client_id=os.environ.get("NEAT_CDF_CLIENT_ID"),
-            client_secret=os.environ.get("NEAT_CDF_CLIENT_SECRET"),
-            base_url=os.environ.get("NEAT_CDF_BASE_URL"),
-            token_url=os.environ.get("NEAT_CDF_TOKEN_URL"),
-            scopes=[os.environ.get("NEAT_CDF_SCOPES")],
+            project=os.environ.get("NEAT_CDF_PROJECT", missing),
+            client_name=os.environ.get("NEAT_CDF_CLIENT_NAME", missing),
+            client_id=os.environ.get("NEAT_CDF_CLIENT_ID", missing),
+            client_secret=os.environ.get("NEAT_CDF_CLIENT_SECRET", missing),
+            base_url=os.environ.get("NEAT_CDF_BASE_URL", missing),
+            token_url=os.environ.get("NEAT_CDF_TOKEN_URL", missing),
+            scopes=[os.environ.get("NEAT_CDF_SCOPES", missing)],
             timeout=int(os.environ.get("NEAT_CDF_CLIENT_TIMEOUT", "60")),
             max_workers=int(os.environ.get("NEAT_CDF_CLIENT_MAX_WORKERS", "3")),
         )
 
-        if workflow_downloader_filter := os.environ.get("NEAT_WORKFLOW_DOWNLOADER_FILTER", None):
-            workflow_downloader_filter = workflow_downloader_filter.split(",")
+        if workflow_downloader_filter_value := os.environ.get("NEAT_WORKFLOW_DOWNLOADER_FILTER", None):
+            workflow_downloader_filter = workflow_downloader_filter_value.split(",")
+        else:
+            workflow_downloader_filter = None
 
         return cls(
             cdf_client=cdf_config,
-            workflows_store_type=os.environ.get("NEAT_WORKFLOWS_STORE_TYPE", WorkflowsStoreType.FILE),
-            workflows_store_path=os.environ.get("NEAT_DATA_PATH", "/app/data"),
-            cdf_default_dataset_id=os.environ.get("NEAT_CDF_DEFAULT_DATASET_ID", 6476640149881990),
-            log_level=os.environ.get("NEAT_LOG_LEVEL", "INFO"),
+            workflows_store_type=os.environ.get(  # type: ignore[arg-type]
+                "NEAT_WORKFLOWS_STORE_TYPE",
+                WorkflowsStoreType.FILE,
+            ),
+            data_store_path=Path(os.environ.get("NEAT_DATA_PATH", "/app/data")),
+            cdf_default_dataset_id=int(os.environ.get("NEAT_CDF_DEFAULT_DATASET_ID", 6476640149881990)),
+            log_level=cast(Literal["ERROR", "WARNING", "INFO", "DEBUG"], os.environ.get("NEAT_LOG_LEVEL", "INFO")),
             workflow_downloader_filter=workflow_downloader_filter,
-            load_examples=bool(os.environ.get("NEAT_LOAD_EXAMPLES", True)),
+            load_examples=bool(os.environ.get("NEAT_LOAD_EXAMPLES", True) in ["True", "true", "1"]),
         )

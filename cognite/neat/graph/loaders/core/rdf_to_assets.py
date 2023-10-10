@@ -1,9 +1,10 @@
 import logging
+import sys
 import warnings
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, fields
-from datetime import UTC, datetime
-from typing import Any, Literal, Self, TypeAlias, cast, overload
+from datetime import datetime
+from typing import Any, Literal, TypeAlias, cast, overload
 from warnings import warn
 
 import numpy as np
@@ -19,6 +20,16 @@ from cognite.neat.graph.loaders.core.models import AssetTemplate
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.rules.models import Property, TransformationRules
 from cognite.neat.utils.utils import chunker, datetime_utc_now, remove_namespace, retry_decorator
+
+if sys.version_info >= (3, 11):
+    from datetime import UTC
+    from typing import Self
+else:
+    from datetime import timezone
+
+    from typing_extensions import Self
+
+    UTC = timezone.utc
 
 EXCLUDE_PATHS = [
     "root['labels']",
@@ -1005,13 +1016,13 @@ def remove_non_existing_labels(client: CogniteClient, assets: Sequence[AssetLike
 
 
 @overload
-def remove_non_existing_labels(client: CogniteClient, assets: dict[str, AssetLike]) -> dict[str, AssetLike]:
+def remove_non_existing_labels(client: CogniteClient, assets: Mapping[str, AssetLike]) -> Mapping[str, AssetLike]:
     ...
 
 
 def remove_non_existing_labels(
-    client: CogniteClient, assets: Sequence[AssetLike] | dict[str, AssetLike]
-) -> Sequence[AssetLike] | dict[str, AssetLike]:
+    client: CogniteClient, assets: Sequence[AssetLike] | Mapping[str, AssetLike]
+) -> Sequence[AssetLike] | Mapping[str, AssetLike]:
     cdf_labels = client.labels.list(limit=-1)
     if not cdf_labels:
         # No labels, nothing to check.

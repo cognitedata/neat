@@ -63,3 +63,16 @@ class NodesAndEdgesRequest(BaseModel):
     limit: int = 1000
     node_name_property: str = ""
     sparql_query: str = ""
+
+
+class DatatypePropertyRequest(BaseModel):
+    graph_name: str = "source"
+    workflow_name: str = ""
+    cache: bool = False
+    limit: int = 10
+
+
+class TransformationRulesUpdateRequest(BaseModel):
+    file_name: str = ""
+    output_format: str = "excel"
+    rules_object: dict = {}
