@@ -1,3 +1,3 @@
 # Importers
 
-::: cognite.neat.rules.importer.ontology2excel.owl2excel
+::: cognite.neat.rules.importer

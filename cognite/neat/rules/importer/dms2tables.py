@@ -16,7 +16,15 @@ else:
 
 
 class DMSImporter(BaseImporter):
+    """
+    Converts a Data Model Storage (DMS) data model to a set of transformation rules.
+
+    !!! Warning
+        This class is not yet implemented.
+    """
+
     def __init__(self, containers: Sequence[ContainerApply], views: Sequence[ViewApply]):
+        super().__init__()
         referenced_containers = {
             prop.container
             for view in views
