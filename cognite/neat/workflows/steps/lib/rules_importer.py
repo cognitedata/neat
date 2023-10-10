@@ -7,7 +7,7 @@ from typing import ClassVar
 import yaml
 from rdflib import Namespace
 
-from cognite.neat.rules.models import Class, Metadata, Property, TransformationRules
+from cognite.neat.rules.models import Class, Classes, Metadata, Properties, Property, TransformationRules
 from cognite.neat.rules.to_rdf_path import RuleType
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import RulesData
@@ -81,8 +81,8 @@ class OpenApiToRules(Step):
             cdf_space_name="OpenAPI",
         )
 
-        classes: dict[str, Class] = {}
-        properties: dict[str, Property] = {}
+        classes = Classes()
+        properties = Properties()
 
         # Loop through OpenAPI components
         for component_name, component_info in openapi_spec.get("components", {}).get("schemas", {}).items():
@@ -116,7 +116,7 @@ class OpenApiToRules(Step):
 
     def process_properies(
         self,
-        rules_properties: dict[str, Property],
+        rules_properties: Properties,
         class_id: str,
         class_name: str,
         component: dict,
@@ -270,8 +270,8 @@ class ArbitraryJsonYamlToRules(Step):
             data_model_name="OpenAPI",
         )
 
-        self.classes: dict[str, Class] = {}
-        self.properties: dict[str, Property] = {}
+        self.classes = Classes()
+        self.properties = Properties()
 
         self.convert_dict_to_classes_and_props(src_data_obj, None)
         rules = TransformationRules(
@@ -286,11 +286,7 @@ class ArbitraryJsonYamlToRules(Step):
         if self.is_fdm_compatibility_mode:
             class_name = get_dms_compatible_name(create_fdm_compatibility_class_name(class_name))
         try:
-            class_ = Class(
-                class_id=class_name,
-                class_name=class_name,
-                description=description,
-            )
+            class_ = Class(class_id=class_name, class_name=class_name, description=description)
             if parent_class_name:
                 self.add_property(class_name, "parent", parent_class_name, None)
             self.classes[class_name] = class_

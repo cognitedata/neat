@@ -11,7 +11,6 @@ from cognite.neat.constants import PREFIXES
 from cognite.neat.graph import extractors
 from cognite.neat.graph.extractors.mocks.graph import generate_triples as generate_mock_triples
 from cognite.neat.rules.exporter.rules2triples import get_instances_as_triples
-from cognite.neat.utils.utils import add_triples
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
@@ -121,7 +120,7 @@ class InstancesFromGraphCaptureSpreadsheetToGraph(Step):
         else:
             graph_store = cast(SourceGraph | SolutionGraph, self.flow_context["SourceGraph"])
 
-        add_triples(graph_store.graph, triples)  # type: ignore[arg-type]
+        graph_store.graph.add_triples(triples, verbose=True)  # type: ignore[arg-type]
         return FlowMessage(output_text="Graph capture sheet processed")
 
 
@@ -171,7 +170,7 @@ class GenerateMockGraph(Step):
             return FlowMessage(error_text=f"Error: {e}", step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
 
         logging.info("Adding mock triples to graph")
-        add_triples(graph_store.graph, triples)  # type: ignore[arg-type]
+        graph_store.graph.add_triples(triples, verbose=True)  # type: ignore[arg-type]
         return FlowMessage(output_text=f"Mock graph generated containing total of {len(triples)} triples")
 
 

@@ -28,6 +28,37 @@ neat_mock_triples_processing_timing = Gauge(
 )
 
 
+class MockGraphGenerator:
+    """
+    Class used to generate mock graph data for purposes of testing of NEAT.
+
+    Args:
+        rules: Transformation rules defining the classes with their properties.
+    """
+
+    def __init__(self, rules: TransformationRules):
+        self.rules = rules
+
+    def generate_triples(
+        self, class_count: dict, stop_on_exception: bool = False, allow_isolated_classes: bool = True
+    ) -> list[tuple]:
+        """Generate mock triples based on data model defined transformation rules and desired number
+        of class instances
+
+        Args:
+            class_count: Target class count for each class in the ontology
+            stop_on_exception: To stop if exception is encountered or not, default is False
+            allow_isolated_classes: To allow generation of instances for classes that are not
+                                     connected to any other class, default is True
+
+        Returns:
+            List of RDF triples, represented as tuples `(subject, predicate, object)`, that define data model instances
+        """
+        return generate_triples(
+            self.rules, class_count, stop_on_exception=stop_on_exception, allow_isolated_classes=allow_isolated_classes
+        )
+
+
 def generate_triples(
     transformation_rules: TransformationRules,
     class_count: dict,
