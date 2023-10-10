@@ -11,7 +11,7 @@ import pandas as pd
 from rdflib import DC, DCTERMS, OWL, RDF, RDFS, Graph
 
 from cognite.neat.rules import exceptions
-from cognite.neat.rules.parser import parse_rules_from_excel_file
+from cognite.neat.rules.parser import RawTables, parse_rules_from_excel_file
 from cognite.neat.utils.utils import generate_exception_report, get_namespace, remove_namespace
 
 from ._base import BaseImporter
@@ -35,7 +35,7 @@ class OWLImporter(BaseImporter):
         self.owl_filepath = owl_filepath
         super().__init__(owl_filepath.parent / "transformation_rules.xlsx")
 
-    def to_tables(self) -> dict[str, pd.DataFrame]:
+    def to_tables(self) -> RawTables:
         graph = Graph()
         try:
             graph.parse(self.owl_filepath)
@@ -49,10 +49,10 @@ class OWLImporter(BaseImporter):
         graph.bind("dcterms", DCTERMS)
         graph.bind("dc", DC)
 
-        return dict(
-            metadata=_parse_owl_metadata_df(graph),
-            classes=_parse_owl_classes_df(graph),
-            properties=_parse_owl_properties_df(graph),
+        return RawTables(
+            Metadata=_parse_owl_metadata_df(graph),
+            Classes=_parse_owl_classes_df(graph),
+            Properties=_parse_owl_properties_df(graph),
         )
 
 
@@ -87,7 +87,7 @@ def owl2excel(owl_filepath: Path, excel_filepath: Path | None = None, validate_r
     graph.bind("dc", DC)
 
     with pd.ExcelWriter(excel_filepath) as writer:
-        _parse_owl_metadata_df(graph).to_excel(writer, sheet_name="Metadata", header=False)
+        _parse_owl_metadata_df(graph).to_excel(writer, sheet_name="Metadata", header=False, index=False)
 
         # Add helper row to classes' sheet
         pd.DataFrame(
@@ -144,7 +144,7 @@ def _create_default_classes_parsing_config() -> dict[str, tuple[str, ...]]:
             "Source Entity Name",
             "Match",
             "Comment",
-        ),
+        )
     }
 
 
@@ -227,7 +227,7 @@ def _parse_owl_metadata_df(graph: Graph, parsing_config: dict | None = None) -> 
         ]
     ]
 
-    return pd.DataFrame(clean_list, columns=parsing_config["header"]).T
+    return pd.DataFrame(np.vstack((parsing_config["header"], clean_list)).T)
 
 
 def _parse_owl_classes_df(graph: Graph, parsing_config: dict | None = None) -> pd.DataFrame:
