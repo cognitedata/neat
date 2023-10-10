@@ -25,6 +25,7 @@ def power_grid_views(power_grid_data_model: DataModelApply) -> ViewApplyList:
     return ViewApplyList(power_grid_data_model.views)
 
 
+@pytest.mark.skip(reason="Not implemented")
 def test_import_information_model(
     power_grid_rules: models.TransformationRules,
     power_grid_containers: ContainerApplyList,

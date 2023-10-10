@@ -3,16 +3,14 @@ there are loaders to TransformationRules pydantic class."""
 
 # TODO: if this module grows too big, split it into several files and place under ./converter directory
 
-import warnings
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from rdflib import DC, DCTERMS, OWL, RDF, RDFS, Graph
 
-from cognite.neat.rules import exceptions
-from cognite.neat.rules.parser import RawTables, parse_rules_from_excel_file
-from cognite.neat.utils.utils import generate_exception_report, get_namespace, remove_namespace
+from cognite.neat.rules.parser import RawTables
+from cognite.neat.utils.utils import get_namespace, remove_namespace
 
 from ._base import BaseImporter
 
@@ -54,57 +52,6 @@ class OWLImporter(BaseImporter):
             Classes=_parse_owl_classes_df(graph),
             Properties=_parse_owl_properties_df(graph),
         )
-
-
-def owl2excel(owl_filepath: Path, excel_filepath: Path | None = None, validate_results: bool = True):
-    """Convert owl ontology to transformation rules and then stored them as an Excel file.
-
-    Args:
-        owl_filepath: Path to OWL ontology
-        excel_filepath: Path to save transformation rules. If None is passed, the
-                        file will be "owl_filepath.parent / transformation_rules.xlsx".
-        validate_results: Whether to validate generated Excel file and create validation report, by default True
-
-    """
-
-    owl_filepath = Path(owl_filepath)
-    if excel_filepath:
-        excel_filepath = Path(excel_filepath)
-    else:
-        excel_filepath = owl_filepath.parent / "transformation_rules.xlsx"
-
-    graph = Graph()
-    try:
-        graph.parse(owl_filepath)
-    except Exception as e:
-        raise Exception(f"Could not parse owl file: {e}") from e
-
-    # bind key namespaces
-    graph.bind("owl", OWL)
-    graph.bind("rdf", RDF)
-    graph.bind("rdfs", RDFS)
-    graph.bind("dcterms", DCTERMS)
-    graph.bind("dc", DC)
-
-    with pd.ExcelWriter(excel_filepath) as writer:
-        _parse_owl_metadata_df(graph).to_excel(writer, sheet_name="Metadata", header=False, index=False)
-
-        # Add helper row to classes' sheet
-        pd.DataFrame(
-            data=[("Data Model Definition", "", "", "", "State", "", "", "Knowledge acquisition log", "", "", "")]
-        ).to_excel(writer, sheet_name="Classes", index=False, header=False, startrow=0)
-        _parse_owl_classes_df(graph).to_excel(writer, sheet_name="Classes", index=False, header=True, startrow=1)
-
-        # Add helper row to properties' sheet
-        pd.DataFrame(
-            data=[
-                ["Data Model Definition"] + [""] * 5 + ["Start"] + [""] * 3 + ["Knowledge acquisition log"] + [""] * 3
-            ]
-        ).to_excel(writer, sheet_name="Properties", index=False, header=False, startrow=0)
-        _parse_owl_properties_df(graph).to_excel(writer, sheet_name="Properties", index=False, header=True, startrow=1)
-
-    if validate_results:
-        _validate_excel_file(excel_filepath)
 
 
 def _create_default_metadata_parsing_config() -> dict[str, tuple[str, ...]]:
@@ -372,28 +319,3 @@ def _parse_owl_properties_df(graph: Graph, parsing_config: dict | None = None) -
             ]
 
     return pd.DataFrame(columns=parsing_config["header"], data=clean_list)
-
-
-def _validate_excel_file(excel_filepath: Path):
-    _, validation_errors, validation_warnings = parse_rules_from_excel_file(excel_filepath, return_report=True)
-
-    report = ""
-    if validation_errors:
-        warnings.warn(
-            exceptions.OWLGeneratedTransformationRulesHasErrors().message,
-            category=exceptions.OWLGeneratedTransformationRulesHasErrors,
-            stacklevel=2,
-        )
-        report = generate_exception_report(validation_errors, "Errors")
-
-    if validation_warnings:
-        warnings.warn(
-            exceptions.OWLGeneratedTransformationRulesHasWarnings().message,
-            category=exceptions.OWLGeneratedTransformationRulesHasWarnings,
-            stacklevel=2,
-        )
-        report += generate_exception_report(validation_warnings, "Warnings")
-
-    if report:
-        with (excel_filepath.parent / "report.txt").open("w") as f:
-            f.write(report)
