@@ -66,7 +66,7 @@ def rdf2nodes_and_edges(
                             class_name=instance.__class__.__name__, external_id=instance.external_id
                         )
                     nodes.append(instance.to_node(data_model, add_class_prefix))
-                    edges.extend(instance.to_edge(data_model))
+                    edges.extend(instance.to_edge(data_model, add_class_prefix))
 
                     delta_time = datetime_utc_now() - start_time
                     delta_time = (delta_time.seconds * 1000000 + delta_time.microseconds) / 1000
