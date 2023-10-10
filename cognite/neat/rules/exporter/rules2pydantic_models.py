@@ -151,7 +151,7 @@ def _properties_to_pydantic_fields(
         # their original names are stored as aliases
         fields[re.sub(r"[^_a-zA-Z0-9/_]", "_", name)] = (
             field_type,
-            Field(**field_definition)
+            Field(**field_definition),  # type: ignore[pydantic-field]
         )
 
     return fields
