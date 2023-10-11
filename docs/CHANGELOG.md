@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.39.0] - 11-10-23
+### Added
+- Three importers `JSONImporter`, `YAMLImporter`, and `DictImporter`.
+
 ## [0.29.0] - 07-10-23
 ### Changed
 - The importer `owl2excel` is written as a class `OWLImporter`. **Note** this is a breaking change, but
