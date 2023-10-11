@@ -15,7 +15,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## [0.39.0] - 11-10-23
+## [0.30.0] - 11-10-23
 ### Added
 - Three importers `JSONImporter`, `YAMLImporter`, and `DictImporter`.
 
