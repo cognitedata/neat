@@ -62,8 +62,7 @@ class _TripleFinder:
             for key, value in data.items():
                 self._convert_dict_to_classes_and_props(value, key)
         elif isinstance(data, dict):
-            description = None
-            self.add_class(parent_property_name, description, grand_parent_property_name)
+            self.add_class(parent_property_name, "missing", grand_parent_property_name)
             for key, value in data.items():
                 self._convert_dict_to_classes_and_props(value, key, parent_property_name)
         elif isinstance(data, list):
@@ -71,19 +70,19 @@ class _TripleFinder:
                 self._convert_dict_to_classes_and_props(item, parent_property_name, grand_parent_property_name)
         elif isinstance(data, bool | int | float | str) and parent_property_name is not None:
             data_type = {bool: "boolean", int: "integer", float: "float", str: "string"}[type(data)]
-            self.add_property(grand_parent_property_name, parent_property_name, data_type, None)
+            self.add_property(grand_parent_property_name, parent_property_name, data_type, "missing")
         else:
             raise ValueError(f"Unknown type {type(data)}")
 
-    def add_class(self, class_name: str, description: str | None = None, parent_class_name: str | None = None):
+    def add_class(self, class_name: str, description: str = "", parent_class_name: str | None = None):
         if class_name in self.classes:
             return
-        class_ = dict(class_id=class_name, class_name=class_name, description=description)
+        class_ = {"Class": class_name, "description": description}
         if parent_class_name:
-            self.add_property(class_name, "parent", parent_class_name, None)
+            self.add_property(class_name, "parent", parent_class_name, "missing")
         self.classes[class_name] = class_
 
-    def add_property(self, class_name: str, property_name: str, property_type: str, description: str | None = None):
+    def add_property(self, class_name: str, property_name: str, property_type: str, description: str = "missing"):
         if class_name + property_name in self.properties:
             return
         prop = dict(

@@ -294,7 +294,9 @@ def from_tables(
 
 
 def _parse_metadata(meta_df: pd.DataFrame) -> dict[str, Any]:
-    metadata_dict = dict(zip(meta_df[0], meta_df[1], strict=True))
+    assert len(meta_df.columns) == 2
+    col1, col2 = meta_df.columns
+    metadata_dict = dict(zip(meta_df[col1], meta_df[col2], strict=True))
     metadata_dict["source"] = meta_df.source if "source" in dir(meta_df) else None
     if "namespace" in metadata_dict:
         metadata_dict["namespace"] = Namespace(metadata_dict["namespace"])
