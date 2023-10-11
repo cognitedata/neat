@@ -19,4 +19,3 @@ class XMLImporter(BaseImporter):
 
     def to_tables(self) -> RawTables:
         raise NotImplementedError
-        # raise NotImplementedError
