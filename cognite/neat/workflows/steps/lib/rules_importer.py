@@ -248,7 +248,7 @@ class ArbitraryJsonYamlToRules(Step):
             "failed_classes": self.failed_classes,
             "failed_properties": self.failed_properties,
         }
-        return (FlowMessage(output_text=report, payload=report_obj), RulesData(rules=rules))
+        return FlowMessage(output_text=report, payload=report_obj), RulesData(rules=rules)
 
     def dict_to_rules(self, open_api_spec_file_path: Path) -> TransformationRules:
         """Converts OpenAPI spec to NEAT transformation rules object."""

@@ -57,8 +57,8 @@ class RawTables(RuleModel):
         return cls(**tables_dict)
 
     @field_validator("Metadata")
-    def has_metadata_mandatory_rows(cls, v):
-        given_rows = set(v[0].values)
+    def has_metadata_mandatory_rows(cls, v: pd.DataFrame):
+        given_rows = set(v.iloc[:, 0].values)
         mandatory_rows = Metadata.mandatory_fields()
         mandatory_rows_alias = Metadata.mandatory_fields(use_alias=True)
 
