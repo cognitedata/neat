@@ -1,17 +1,26 @@
-import pytest
-
 from cognite.neat.rules import importer
-from cognite.neat.rules.parser import RawTables
 from tests import data
 
 
-@pytest.mark.skipif(not data.CAPACITY_MARKET_JSON.exists(), reason="Requires data file")
-def test_json2rules_importer() -> None:
+def test_json2rules_power_grid() -> None:
     # Arrange
-    json_importer = importer.JSONImporter(data.CAPACITY_MARKET_JSON)
+    json_importer = importer.JSONImporter(data.POWER_GRID_JSON)
 
     # Act
-    tables = json_importer.to_tables()
+    rules = json_importer.to_rules()
 
     # Assert
-    assert isinstance(tables, RawTables)
+    assert not (
+        missing := set(rules.classes) - {"GeographicalRegion", "SubGraphicalRegion", "Terminal", "Substation"}
+    ), f"JSONImporter did not find classes {missing}"
+    properties_by_class = rules.properties.groupby("class_id")
+    expected_properties = {
+        "GeographicalRegion": {"name"},
+        "SubGraphicalRegion": {"name", "parent"},
+        "Substation": {"name", "parent"},
+        "Terminal": {"name", "aliasName", "parent"},
+    }
+    for class_name, expected in expected_properties.items():
+        assert not (
+            missing := expected - {prop.property_name for prop in properties_by_class.get(class_name, []).values()}
+        ), f"JSONImporter did not find properties {missing} for class {class_name}"
