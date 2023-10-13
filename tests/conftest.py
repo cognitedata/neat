@@ -4,7 +4,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
-from rdflib import Namespace
+from rdflib import RDF, Literal, Namespace
 
 from cognite.neat import rules
 from cognite.neat.graph import extractors, loaders
@@ -56,6 +56,23 @@ def small_graph(simple_rules) -> NeatGraphStore:
 
     for triple in get_instances_as_triples(simple_rules):
         graph_store.graph.add(triple)
+    return graph_store
+
+
+@pytest.fixture(scope="function")
+def graph_with_numeric_ids(simple_rules) -> NeatGraphStore:
+    graph_store = NeatGraphStore(
+        base_prefix=simple_rules.metadata.prefix,
+        namespace=simple_rules.metadata.namespace,
+        prefixes=simple_rules.prefixes,
+    )
+    graph_store.init_graph()
+
+    namespace = simple_rules.metadata.namespace
+    graph_store.graph.add((namespace["1"], RDF.type, namespace["PriceAreaConnection"]))
+    graph_store.graph.add((namespace["1"], namespace["name"], Literal("Price Area Connection 1")))
+    graph_store.graph.add((namespace["1"], namespace["priceArea"], namespace["2"]))
+    graph_store.graph.add((namespace["1"], namespace["priceArea"], namespace["3"]))
     return graph_store
 
 
