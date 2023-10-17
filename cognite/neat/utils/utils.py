@@ -16,7 +16,6 @@ from pydantic_core import ErrorDetails
 from rdflib import Literal
 from rdflib.term import URIRef
 
-from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.utils.cdf import CogniteClientConfig, InteractiveCogniteClient, ServiceCogniteClient
 
 if sys.version_info >= (3, 11):
@@ -66,47 +65,6 @@ def _get_cognite_client(config: CogniteClientConfig, credentials: CredentialProv
             debug=False,
         )
     )
-
-
-def add_triples(graph_store: NeatGraphStore, triples: list[Triple], batch_size: int = 10000):
-    """Adds triples to the graph store in batches.
-
-    Parameters
-    ----------
-    graph_store : NeatGraphStore
-        Instance of NeatGraphStore
-    triples : list[tuple]
-        list of triples to be added to the graph store
-    batch_size : int, optional
-        Batch size of triples per commit, by default 10000
-    """
-
-    commit_counter = 0
-    logging.info(f"Committing total of {len(triples)} triples to knowledge graph!")
-    total_number_of_triples = len(triples)
-    number_of_uploaded_triples = 0
-
-    def check_commit(force_commit: bool = False):
-        """Commit nodes to the graph if batch counter is reached or if force_commit is True"""
-        nonlocal commit_counter
-        nonlocal number_of_uploaded_triples
-        if force_commit:
-            number_of_uploaded_triples += commit_counter
-            graph_store.graph.commit()
-            logging.info(f"Committed {number_of_uploaded_triples} of {total_number_of_triples} triples")
-            return
-        commit_counter += 1
-        if commit_counter >= batch_size:
-            number_of_uploaded_triples += commit_counter
-            graph_store.graph.commit()
-            logging.info(f"Committed {number_of_uploaded_triples} of {total_number_of_triples} triples")
-            commit_counter = 0
-
-    for triple in triples:
-        graph_store.graph.add(triple)
-        check_commit()
-
-    check_commit(force_commit=True)
 
 
 @overload

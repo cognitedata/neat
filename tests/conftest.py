@@ -12,10 +12,7 @@ from cognite.neat.graph.extractors.mocks import generate_triples
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.graph.transformations.transformer import domain2app_knowledge_graph
 from cognite.neat.rules.exporter.rules2triples import get_instances_as_triples
-from cognite.neat.rules.importer.ontology2excel import owl2excel
 from cognite.neat.rules.models import TransformationRules
-from cognite.neat.rules.parser import RawTables, read_excel_file_to_table_by_name
-from cognite.neat.utils.utils import add_triples
 from tests import config
 
 # Setup config for Neat App
@@ -37,12 +34,12 @@ os.environ["NEAT_LOAD_EXAMPLES"] = "1"
 
 @pytest.fixture(scope="session")
 def transformation_rules() -> TransformationRules:
-    return rules.parse_rules_from_excel_file(config.TNT_TRANSFORMATION_RULES)
+    return rules.parser.parse_rules_from_excel_file(config.TNT_TRANSFORMATION_RULES)
 
 
 @pytest.fixture(scope="session")
 def simple_rules() -> TransformationRules:
-    return rules.parse_rules_from_excel_file(config.SIMPLE_TRANSFORMATION_RULES)
+    return rules.parser.parse_rules_from_excel_file(config.SIMPLE_TRANSFORMATION_RULES)
 
 
 @pytest.fixture(scope="function")
@@ -88,7 +85,7 @@ def mock_knowledge_graph(transformation_rules):
     }
 
     mock_triples = generate_triples(transformation_rules, class_count)
-    add_triples(mock_graph, mock_triples, batch_size=20000)
+    mock_graph.add_triples(mock_triples, batch_size=20000)
 
     return mock_graph
 
@@ -130,10 +127,3 @@ type PriceAreaConnection {
   name: String!
   priceArea: [PriceArea]
 }"""
-
-
-@pytest.fixture(scope="function")
-def owl_based_rules():
-    owl2excel(config.WIND_ONTOLOGY)
-
-    return RawTables(**read_excel_file_to_table_by_name(config.WIND_ONTOLOGY.parent / "transformation_rules.xlsx"))

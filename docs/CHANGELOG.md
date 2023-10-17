@@ -15,6 +15,24 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.30.0] - 11-10-23
+### Added
+- Three importers `JSONImporter`, `YAMLImporter`, and `DictImporter`.
+
+## [0.29.0] - 07-10-23
+### Changed
+- The importer `owl2excel` is written as a class `OWLImporter`. **Note** this is a breaking change, but
+  since we are on 0. version, we can do this.
+
+## [0.28.0] - 07-10-23
+### Added
+- Classes for extractors `MockGraphGenerator` and `GraphCapturingSheet` available at `cognite.neat.graph.extractors`.
+
+## [0.27.1] - 07-10-23
+### Improved
+- Introduced container classes for `Classes` and `Properties` in `TransformationRules`. Implemented `.to_pandas()`
+  methods for both classes.
+
 ## [0.27.0] - 07-10-23
 ### Added
 - `neat` support Python `3.10`.
@@ -252,7 +270,7 @@ Changes are grouped as follows:
 
 ## [0.13.1] - 11-06-23
 ### Added
-- Configurable cdf client timeout and max workers size. See [getting started](/getting-started.md) for details.
+- Configurable cdf client timeout and max workers size. See [getting started](getting-started.md) for details.
 - Additional logic for handling `CogniteReadTimeoutError` and `CogniteDuplicatedError` during retries. This is an attempt
   to handle cases when under heavy load, requests to CDF may timeout even though the requests were processed successfully
   in eventual consistancy manner.

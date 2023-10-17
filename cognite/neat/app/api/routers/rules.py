@@ -8,7 +8,7 @@ from rdflib import Namespace
 from cognite.neat.app.api.configuration import NEAT_APP
 from cognite.neat.app.api.data_classes.rest import TransformationRulesUpdateRequest
 from cognite.neat.rules.exporter import rules2excel
-from cognite.neat.rules.models import Class, Metadata, Property, TransformationRules
+from cognite.neat.rules.models import Class, Classes, Metadata, Properties, Property, TransformationRules
 from cognite.neat.rules.parser import parse_rules_from_excel_file
 from cognite.neat.workflows.steps.data_contracts import RulesData
 from cognite.neat.workflows.utils import get_file_hash
@@ -104,9 +104,7 @@ def get_rules(
 
 
 @router.get("/api/rules/from_file")
-def get_original_rules_from_file(
-    file_name: str,
-):
+def get_original_rules_from_file(file_name: str):
     """Endpoing for retrieving raw transformation from file"""
     path = Path(NEAT_APP.config.rules_store_path) / file_name
     rules = parse_rules_from_excel_file(path)
@@ -114,9 +112,7 @@ def get_original_rules_from_file(
 
 
 @router.get("/api/rules/from_workflow")
-def get_original_rules_from_workflow(
-    workflow_name: str,
-):
+def get_original_rules_from_workflow(workflow_name: str):
     """Endpoing for retrieving transformation from memmory"""
     workflow = NEAT_APP.workflow_manager.get_workflow(workflow_name)
     if workflow is None:
@@ -135,10 +131,10 @@ def upsert_rules(request: TransformationRulesUpdateRequest):
     rules = request.rules_object
     rules["metadata"]["namespace"] = Namespace(rules["metadata"]["namespace"])
     metadata = Metadata(**rules["metadata"])
-    classes: dict[str, Class] = {}
+    classes = Classes()
     for class_, val in rules["classes"].items():
         classes[class_] = Class(**val)
-    properties: dict[str, Property] = {}
+    properties = Properties()
 
     for prop, val in rules["properties"].items():
         val["resource_type_property"] = []

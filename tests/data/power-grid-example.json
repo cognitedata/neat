@@ -1,0 +1,21 @@
+{
+  "GeographicalRegion": {
+    "name": "Norway",
+    "SubGraphicalRegion": [
+      {
+        "name": "NO1",
+        "Substation": [
+          {
+            "name": "Torshov",
+            "Terminal": [
+              {
+                "name": "Skeidoksene",
+                "aliasName": "Oksen"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

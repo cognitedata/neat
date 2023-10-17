@@ -2,14 +2,14 @@ from rdflib import XSD, Literal
 
 from cognite.neat.graph.extractors.graph_sheet_to_graph import sheet2triples
 from cognite.neat.graph.stores import NeatGraphStore
-from cognite.neat.utils.utils import add_triples, remove_namespace
+from cognite.neat.utils.utils import remove_namespace
 
 
 def test_sheet2graph(simple_rules, graph_capturing_sheet):
     graph_store = NeatGraphStore(prefixes=simple_rules.prefixes, namespace=simple_rules.metadata.namespace)
     graph_store.init_graph(base_prefix=simple_rules.metadata.prefix)
 
-    add_triples(graph_store, sheet2triples(graph_capturing_sheet, simple_rules))
+    graph_store.add_triples(sheet2triples(graph_capturing_sheet, simple_rules))
 
     count_dict = {
         remove_namespace(res[0]): int(res[1])

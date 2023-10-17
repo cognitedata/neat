@@ -20,6 +20,109 @@ from cognite.neat.rules import exceptions
 from cognite.neat.rules.models import Class, Metadata, Property, RuleModel, TransformationRules
 from cognite.neat.utils.auxiliary import local_import
 
+__all__ = [
+    "parse_rules_from_excel_file",
+    "parse_rules_from_google_sheet",
+    "parse_rules_from_github_sheet",
+    "parse_rules_from_yaml",
+]
+
+
+class RawTables(RuleModel):
+    Metadata: pd.DataFrame
+    Properties: pd.DataFrame
+    Classes: pd.DataFrame
+    Prefixes: pd.DataFrame = pd.DataFrame()
+    Instances: pd.DataFrame = pd.DataFrame()
+
+    @classmethod
+    def from_raw_dataframes(cls, raw_dfs: dict[str, pd.DataFrame]) -> "RawTables":
+        expected_tables = cls.mandatory_fields()
+
+        # Validate raw tables
+        if missing_tables := (expected_tables - set(raw_dfs)):
+            raise exceptions.ExcelFileMissingMandatorySheets(missing_tables)
+
+        tables_dict = {
+            Tables.metadata: raw_dfs[Tables.metadata],
+            Tables.classes: cls.drop_non_string_columns(raw_dfs[Tables.classes]),
+            Tables.properties: cls.drop_non_string_columns(raw_dfs[Tables.properties]),
+        }
+
+        if Tables.prefixes in raw_dfs:
+            tables_dict[Tables.prefixes] = cls.drop_non_string_columns(raw_dfs[Tables.prefixes])
+        if Tables.instances in raw_dfs:
+            tables_dict[Tables.instances] = cls.drop_non_string_columns(raw_dfs[Tables.instances])
+
+        return cls(**tables_dict)
+
+    @field_validator("Metadata")
+    def has_metadata_mandatory_rows(cls, v: pd.DataFrame):
+        given_rows = set(v.iloc[:, 0].values)
+        mandatory_rows = Metadata.mandatory_fields()
+        mandatory_rows_alias = Metadata.mandatory_fields(use_alias=True)
+
+        if not (mandatory_rows.issubset(given_rows) or mandatory_rows_alias.issubset(given_rows)):
+            missing_rows = mandatory_rows_alias.difference(given_rows)
+            raise exceptions.MetadataSheetMissingMandatoryFields(missing_rows).to_pydantic_custom_error()
+        return v
+
+    @field_validator("Classes")
+    def has_classes_mandatory_columns(cls, v):
+        given_columns = set(v.columns)
+        mandatory_columns = Class.mandatory_fields()
+        mandatory_columns_alias = Class.mandatory_fields(use_alias=True)
+
+        if not (mandatory_columns.issubset(given_columns) or mandatory_columns_alias.issubset(given_columns)):
+            missing_columns = mandatory_columns_alias.difference(given_columns)
+            raise exceptions.ClassesSheetMissingMandatoryColumns(missing_columns).to_pydantic_custom_error()
+        return v
+
+    @field_validator("Properties")
+    def has_properties_mandatory_columns(cls, v):
+        given_columns = set(v.columns)
+        mandatory_columns = Property.mandatory_fields()
+        mandatory_columns_alias = Property.mandatory_fields(use_alias=True)
+
+        if not (mandatory_columns.issubset(given_columns) or mandatory_columns_alias.issubset(given_columns)):
+            missing_columns = mandatory_columns_alias.difference(given_columns)
+            raise exceptions.PropertiesSheetMissingMandatoryColumns(missing_columns).to_pydantic_custom_error()
+        return v
+
+    @field_validator("Prefixes")
+    def has_prefixes_mandatory_columns(cls, v):
+        given_columns = set(v.columns)
+        mandatory_columns = {"Prefix", "URI"}
+
+        if not mandatory_columns.issubset(given_columns):
+            missing_columns = mandatory_columns.difference(given_columns)
+            raise exceptions.PrefixesSheetMissingMandatoryColumns(missing_columns).to_pydantic_custom_error()
+        return v
+
+    @field_validator("Instances")
+    def has_instances_mandatory_columns(cls, v):
+        given_columns = set(v.columns)
+        mandatory_columns = {"Instance", "Property", "Value"}
+
+        if not mandatory_columns.issubset(given_columns):
+            missing_columns = mandatory_columns.difference(given_columns)
+            raise exceptions.InstancesSheetMissingMandatoryColumns(missing_columns).to_pydantic_custom_error()
+        return v
+
+    @staticmethod
+    def drop_non_string_columns(df: pd.DataFrame) -> pd.DataFrame:
+        """Drop non-string columns as this can cause issue when loading rules
+
+        Args:
+            df: data frame
+
+        Returns:
+            dataframe with removed non string columns
+        """
+        columns = [column for column in df.columns[df.columns.notna()] if isinstance(column, str)]
+
+        return df[columns]
+
 
 @overload
 def parse_rules_from_excel_file(filepath: Path, return_report: Literal[False] = False) -> TransformationRules:
@@ -89,12 +192,7 @@ def parse_rules_from_github_sheet(
 
 @overload
 def parse_rules_from_github_sheet(
-    filepath: Path,
-    personal_token: str,
-    owner: str,
-    repo: str,
-    return_report: Literal[True],
-    branch: str = "main",
+    filepath: Path, personal_token: str, owner: str, repo: str, return_report: Literal[True], branch: str = "main"
 ) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None]:
     ...
 
@@ -142,25 +240,30 @@ def parse_rules_from_yaml(folder_path: Path) -> TransformationRules:
 
 
 @overload
-def from_tables(raw_dfs: dict[str, pd.DataFrame], return_report: Literal[False] = False) -> TransformationRules:
+def from_tables(
+    raw_dfs: dict[str, pd.DataFrame] | RawTables, return_report: Literal[False] = False
+) -> TransformationRules:
     ...
 
 
 @overload
 def from_tables(
-    raw_dfs: dict[str, pd.DataFrame], return_report: Literal[True]
+    raw_dfs: dict[str, pd.DataFrame] | RawTables, return_report: Literal[True]
 ) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None]:
     ...
 
 
 def from_tables(
-    raw_dfs: dict[str, pd.DataFrame], return_report: bool = False
+    raw_dfs: dict[str, pd.DataFrame] | RawTables, return_report: bool = False
 ) -> tuple[TransformationRules | None, list[ErrorDetails] | None, list | None] | TransformationRules:
     # the only way to suppress warnings from pylense
     validation_warnings = []
     try:
         with warnings.catch_warnings(record=True) as validation_warnings:
-            raw_tables = RawTables.from_raw_dataframes(raw_dfs)
+            if isinstance(raw_dfs, RawTables):
+                raw_tables = raw_dfs
+            else:
+                raw_tables = RawTables.from_raw_dataframes(raw_dfs)
             rules_dict: dict[str, Any] = {
                 "metadata": _parse_metadata(raw_tables.Metadata),
                 "classes": _parse_classes(raw_tables.Classes),
@@ -191,7 +294,9 @@ def from_tables(
 
 
 def _parse_metadata(meta_df: pd.DataFrame) -> dict[str, Any]:
-    metadata_dict = dict(zip(meta_df[0], meta_df[1], strict=True))
+    assert len(meta_df.columns) == 2
+    col1, col2 = meta_df.columns
+    metadata_dict = dict(zip(meta_df[col1], meta_df[col2], strict=True))
     metadata_dict["source"] = meta_df.source if "source" in dir(meta_df) else None
     if "namespace" in metadata_dict:
         metadata_dict["namespace"] = Namespace(metadata_dict["namespace"])
@@ -227,102 +332,6 @@ def _parse_instances(
         row_as_dict["prefixes"] = prefixes
         instances.append(row_as_dict)
     return instances
-
-
-class RawTables(RuleModel):
-    Metadata: pd.DataFrame
-    Properties: pd.DataFrame
-    Classes: pd.DataFrame
-    Prefixes: pd.DataFrame = pd.DataFrame()
-    Instances: pd.DataFrame = pd.DataFrame()
-
-    @classmethod
-    def from_raw_dataframes(cls, raw_dfs: dict[str, pd.DataFrame]) -> "RawTables":
-        expected_tables = cls.mandatory_fields()
-
-        # Validate raw tables
-        if missing_tables := (expected_tables - set(raw_dfs)):
-            raise exceptions.ExcelFileMissingMandatorySheets(missing_tables)
-
-        tables_dict = {
-            Tables.metadata: raw_dfs[Tables.metadata],
-            Tables.classes: cls.drop_non_string_columns(raw_dfs[Tables.classes]),
-            Tables.properties: cls.drop_non_string_columns(raw_dfs[Tables.properties]),
-        }
-
-        if Tables.prefixes in raw_dfs:
-            tables_dict[Tables.prefixes] = cls.drop_non_string_columns(raw_dfs[Tables.prefixes])
-        if Tables.instances in raw_dfs:
-            tables_dict[Tables.instances] = cls.drop_non_string_columns(raw_dfs[Tables.instances])
-
-        return cls(**tables_dict)
-
-    @field_validator("Metadata")
-    def has_metadata_mandatory_rows(cls, v):
-        given_rows = set(v[0].values)
-        mandatory_rows = Metadata.mandatory_fields()
-        mandatory_rows_alias = Metadata.mandatory_fields(use_alias=True)
-
-        if not (mandatory_rows.issubset(given_rows) or mandatory_rows_alias.issubset(given_rows)):
-            missing_rows = mandatory_rows_alias.difference(given_rows)
-            raise exceptions.MetadataSheetMissingMandatoryFields(missing_rows).to_pydantic_custom_error()
-        return v
-
-    @field_validator("Classes")
-    def has_classes_mandatory_columns(cls, v):
-        given_columns = set(v.columns)
-        mandatory_columns = Class.mandatory_fields()
-        mandatory_columns_alias = Class.mandatory_fields(use_alias=True)
-
-        if not (mandatory_columns.issubset(given_columns) or mandatory_columns_alias.issubset(given_columns)):
-            missing_columns = mandatory_columns_alias.difference(given_columns)
-            raise exceptions.ClassesSheetMissingMandatoryColumns(missing_columns).to_pydantic_custom_error()
-        return v
-
-    @field_validator("Properties")
-    def has_properties_mandatory_columns(cls, v):
-        given_columns = set(v.columns)
-        mandatory_columns = Property.mandatory_fields()
-        mandatory_columns_alias = Property.mandatory_fields(use_alias=True)
-
-        if not (mandatory_columns.issubset(given_columns) or mandatory_columns_alias.issubset(given_columns)):
-            missing_columns = mandatory_columns_alias.difference(given_columns)
-            raise exceptions.PropertiesSheetMissingMandatoryColumns(missing_columns).to_pydantic_custom_error()
-        return v
-
-    @field_validator("Prefixes")
-    def has_prefixes_mandatory_columns(cls, v):
-        given_columns = set(v.columns)
-        mandatory_columns = {"Prefix", "URI"}
-
-        if not mandatory_columns.issubset(given_columns):
-            missing_columns = mandatory_columns.difference(given_columns)
-            raise exceptions.PrefixesSheetMissingMandatoryColumns(missing_columns).to_pydantic_custom_error()
-        return v
-
-    @field_validator("Instances")
-    def has_instances_mandatory_columns(cls, v):
-        given_columns = set(v.columns)
-        mandatory_columns = {"Instance", "Property", "Value"}
-
-        if not mandatory_columns.issubset(given_columns):
-            missing_columns = mandatory_columns.difference(given_columns)
-            raise exceptions.InstancesSheetMissingMandatoryColumns(missing_columns).to_pydantic_custom_error()
-        return v
-
-    @staticmethod
-    def drop_non_string_columns(df: pd.DataFrame) -> pd.DataFrame:
-        """Drop non-string columns as this can cause issue when loading rules
-
-        Args:
-            df: data frame
-
-        Returns:
-            dataframe with removed non string columns
-        """
-        columns = [column for column in df.columns[df.columns.notna()] if isinstance(column, str)]
-
-        return df[columns]
 
 
 class Tables:
