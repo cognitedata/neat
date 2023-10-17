@@ -497,7 +497,6 @@ def to_edge(self, data_model: DataModel, add_class_prefix: bool) -> list[EdgeApp
 
     for edge_one_to_many in self.edges_one_to_many:
         edge_type_id = f"{class_name}.{edge_one_to_many}"
-        edge_list = []
         for end_node_id in getattr(self, edge_one_to_many):
             if not is_external_id_valid(end_node_id):
                 continue
@@ -515,7 +514,7 @@ def to_edge(self, data_model: DataModel, add_class_prefix: bool) -> list[EdgeApp
                 start_node=(data_model.space, self.external_id),
                 end_node=(data_model.space, end_node_external_id),
             )
-            edge_list.append(edge)
+            edges.append(edge)
     return edges
 
 
