@@ -103,7 +103,7 @@ def are_properties_redefined(
             elif property_.class_id in analyzed_properties[property_.property_id]:
                 flag = True
                 warnings.warn(
-                    exceptions.PropertyRedefined(property_.class_id, property_.property_id).message,
+                    exceptions.PropertyRedefined(property_.property_id, property_.class_id).message,
                     category=exceptions.EntityIDNotDMSCompliant,
                     stacklevel=2,
                 )

@@ -1,0 +1,331 @@
+"""This module performs importing of graph to TransformationRules pydantic class.
+In more details, it traverses the graph and abstracts class and properties, basically
+generating a list of rules based on which nodes that form the graph are made.
+"""
+
+
+import warnings
+from datetime import datetime
+from pathlib import Path
+from typing import cast
+
+import numpy as np
+import pandas as pd
+from rdflib import Graph, Literal, Namespace, URIRef
+
+from cognite.neat.rules import exceptions
+from cognite.neat.rules.parser import RawTables
+from cognite.neat.utils.utils import get_namespace, remove_namespace, uri_to_short_form
+
+from ._base import BaseImporter
+from .ontology2tables import _create_default_metadata_parsing_config
+
+
+class GraphImporter(BaseImporter):
+    """Convert RDF graph, containing nodes and edges, to tables/ transformation rules / Excel file.
+
+        Args:
+            graph: RDF graph to be converted to TransformationRules object
+
+    !!! Note
+        Due to high degree of flexibility of RDF graphs, the RDF graph is not guaranteed to be
+        converted to a complete and/or valid TransformationRules object. This means that
+        the methods .to_rules() will typically fail. Instead, it is recommended that you use
+        the .to_spreadsheet() method to generate an Excel file, and then manually add the missing
+        information or correct them in the Excel file. The Excel file can then be converted
+        to a TransformationRules object.
+
+    """
+
+    def __init__(
+        self,
+        graph: Graph,
+        max_number_of_instance: int = -1,
+        spreadsheet_path: Path | None = None,
+        report_path: Path | None = None,
+    ):
+        self.graph = graph
+        self.max_number_of_instance = max_number_of_instance
+        self.spreadsheet_path = spreadsheet_path
+
+        if self.spreadsheet_path and not report_path:
+            self.report_path = self.spreadsheet_path.parent / "report.txt"
+        else:
+            self.report_path = Path.cwd() / "report.txt"
+
+        super().__init__(spreadsheet_path=spreadsheet_path, report_path=report_path)
+
+    def to_tables(self) -> RawTables:
+        data_model, prefixes = _graph_to_data_model_dict(self.graph, self.max_number_of_instance)
+
+        return RawTables(
+            Metadata=_parse_metadata_df(),
+            Classes=_parse_classes_df(data_model, prefixes),
+            Properties=_parse_properties_df(data_model, prefixes),
+            Prefixes=_parse_prefixes_df(prefixes),
+        )
+
+
+def _create_default_properties_parsing_config() -> dict[str, tuple[str, ...]]:
+    # TODO: these are to be read from Property pydantic model
+    return {
+        "header": (
+            "Class",
+            "Property",
+            "Description",
+            "Type",
+            "Min Count",
+            "Max Count",
+            "Rule Type",
+            "Rule",
+            "Source",
+            "Source Entity Name",
+            "Match",
+            "Comment",
+        )
+    }
+
+
+def _create_default_classes_parsing_config() -> dict[str, tuple[str, ...]]:
+    # TODO: these are to be read from Class pydantic model
+    return {
+        "header": (
+            "Class",
+            "Description",
+            "Parent Class",
+            "Source",
+            "Source Entity Name",
+            "Match",
+            "Comment",
+        )
+    }
+
+
+def _parse_prefixes_df(prefixes: dict[str, Namespace]) -> pd.DataFrame:
+    return pd.DataFrame.from_dict({"Prefix": list(prefixes.keys()), "URI": [str(uri) for uri in prefixes.values()]})
+
+
+def _parse_metadata_df(parsing_config: dict | None = None) -> pd.DataFrame:
+    if parsing_config is None:
+        parsing_config = _create_default_metadata_parsing_config()
+
+    default_values = (
+        "http://purl.org/cognite/neat/",
+        "neat",
+        "neat",
+        "playground",
+        "0.0.1",
+        True,
+        datetime.utcnow(),
+        datetime.utcnow(),
+        "RDF Graph Data Model",
+        "Data model parsed from RDF graph using neat",
+        "NEAT",
+        "NEAT",
+        "Unknown rights of usage",
+        "Unknown license",
+    )
+
+    return pd.DataFrame([parsing_config["header"], default_values]).T
+
+
+def _parse_classes_df(data_model: dict, prefixes: dict, parsing_config: dict | None = None) -> pd.DataFrame:
+    if parsing_config is None:
+        parsing_config = _create_default_classes_parsing_config()
+
+    class_rows = []
+
+    for class_ in data_model:
+        class_rows.append(
+            [
+                class_,
+                np.nan,
+                np.nan,
+                str(prefixes[data_model[class_]["uri"].split(":")[0]]),
+                class_,
+                "exact",
+                "Parsed from RDF graph",
+            ]
+        )
+
+    return pd.DataFrame(class_rows, columns=parsing_config["header"])
+
+
+def _parse_properties_df(data_model: dict, prefixes: dict, parsing_config: dict | None = None) -> pd.DataFrame:
+    if parsing_config is None:
+        parsing_config = _create_default_properties_parsing_config()
+
+    property_rows = []
+
+    for class_ in data_model:
+        for property_ in data_model[class_]["properties"]:
+            for type_ in data_model[class_]["properties"][property_]["value_type"]:
+                property_rows.append(
+                    [
+                        class_,
+                        property_,
+                        np.nan,
+                        type_,
+                        0,  # setting min count to 0 to be more flexible (all properties are optional)
+                        max(data_model[class_]["properties"][property_]["occurrence"]),
+                        "rdfpath",
+                        f'{data_model[class_]["uri"]}({data_model[class_]["properties"][property_]["uri"]})',
+                        str(prefixes[data_model[class_]["properties"][property_]["uri"].split(":")[0]]),
+                        property_,
+                        "exact",
+                        "Parsed from RDF graph",
+                    ]
+                )
+
+    return pd.DataFrame(property_rows, columns=parsing_config["header"])
+
+
+def _graph_to_data_model_dict(graph: Graph, max_number_of_instance: int = -1) -> tuple[dict, dict]:
+    """Convert RDF graph to dictionary defining data model and prefixes of the graph
+
+    Args:
+        graph: RDF graph to be converted to TransformationRules object
+        max_number_of_instance: Max number of instances to be considered for each class
+
+    Returns:
+        Tuple of data model and prefixes of the graph
+    """
+    data_model: dict[str, dict] = {}
+    prefixes: dict[str, Namespace] = {}
+
+    for class_ in _get_class_ids(graph):
+        _add_uri_namespace_to_prefixes(class_, prefixes)
+        class_name = remove_namespace(class_)
+
+        if class_name in data_model:
+            warnings.warn(
+                exceptions.GraphClassNameCollision(class_name=class_name).message,
+                category=exceptions.GraphClassNameCollision,
+                stacklevel=2,
+            )
+            class_name = f"{class_name}_{len(data_model)+1}"
+
+        data_model[class_name] = {"properties": {}, "uri": uri_to_short_form(class_, prefixes)}
+
+        for instance in _get_class_instance_ids(graph, class_, max_number_of_instance):
+            for property_, occurrence, data_type, object_type in _define_instance_properties(graph, instance):
+                property_name = remove_namespace(property_)
+                _add_uri_namespace_to_prefixes(property_, prefixes)
+
+                type_ = data_type if data_type else object_type
+
+                # this is to skip rdf:type property
+                if not type_:
+                    continue
+
+                type_name = remove_namespace(type_)
+                _add_uri_namespace_to_prefixes(type_, prefixes)
+
+                if property_name not in data_model[class_name]["properties"]:
+                    data_model[class_name]["properties"][property_name] = {
+                        "occurrence": {occurrence.value},
+                        "value_type": {type_name: {"uri": uri_to_short_form(type_, prefixes)}},
+                        "uri": uri_to_short_form(property_, prefixes),
+                    }
+
+                elif type_name not in data_model[class_name]["properties"][property_name]["value_type"]:
+                    data_model[class_name]["properties"][property_name]["value_type"][type_name] = {
+                        "uri": uri_to_short_form(type_, prefixes)
+                    }
+                    warnings.warn(
+                        exceptions.GraphClassPropertyMultiValueTypes(
+                            class_name=class_name,
+                            property_name=property_name,
+                            types=list(data_model[class_name]["properties"][property_name]["value_type"].keys()),
+                        ).message,
+                        category=exceptions.GraphClassPropertyMultiValueTypes,
+                        stacklevel=3,
+                    )
+
+                elif occurrence.value not in data_model[class_name]["properties"][property_name]["occurrence"]:
+                    data_model[class_name]["properties"][property_name]["occurrence"].add(occurrence.value)
+
+                    warnings.warn(
+                        exceptions.GraphClassPropertyMultiOccurrence(
+                            class_name=class_name,
+                            property_name=property_name,
+                        ).message,
+                        category=exceptions.GraphClassPropertyMultiOccurrence,
+                        stacklevel=3,
+                    )
+                else:
+                    continue
+
+    return data_model, prefixes
+
+
+def _add_uri_namespace_to_prefixes(URI: URIRef, prefixes: dict[str, Namespace]):
+    """Add URI to prefixes dict if not already present
+
+    Args:
+        URI: URI from which namespace is being extracted
+        prefixes: Dict of prefixes and namespaces
+    """
+    if get_namespace(URI) not in prefixes.values():
+        prefixes[f"prefix-{len(prefixes)+1}"] = Namespace(get_namespace(URI))
+
+
+def _get_class_ids(graph: Graph) -> list[URIRef]:
+    """Get instances ids for a given class
+
+    Args:
+        graph: Graph containing class instances
+        class_: Class for which instances are to be found
+        namespace: Namespace of given class (to avoid writing long URIs)
+        limit: Max number of instances to return, by default -1 meaning all instances
+
+    Returns:
+        List of class instance URIs
+    """
+
+    query_statement = """SELECT ?class (count(?s) as ?instances )
+                                WHERE { ?s a ?class . }
+                                group by ?class order by DESC(?instances)"""
+
+    return [cast(tuple[URIRef, int], res)[0] for res in list(graph.query(query_statement))]
+
+
+def _get_class_instance_ids(graph: Graph, class_id: URIRef, max_number_of_instance: int = -1) -> list[URIRef]:
+    """Get instances ids for a given class
+
+    Args:
+        graph: Graph containing class instances
+        class_id: Class id for which instances are to be found
+
+    Returns:
+        List of class instance URIs
+    """
+
+    query_statement = "SELECT DISTINCT ?subject WHERE { ?subject a <class> .}".replace("class", class_id)
+    if max_number_of_instance > 0:
+        query_statement += f" LIMIT {max_number_of_instance}"
+    return [cast(tuple[URIRef], res)[0] for res in list(graph.query(query_statement))]
+
+
+def _define_instance_properties(
+    graph: Graph, instance_id: URIRef
+) -> list[tuple[URIRef, Literal, URIRef | None, None | URIRef]]:
+    """Get properties of a given instance
+
+    Args:
+        graph: Graph containing class instances
+        instance_id: Instance id for which properties are to be found and defined
+
+    Returns:
+        List of properties of a given instance
+    """
+    query_statement = """SELECT ?property (count(?property) as ?occurrence) ?dataType ?objectType
+                         WHERE {<instance_id> ?property ?value .
+                                BIND(datatype(?value) AS ?dataType)
+                                OPTIONAL {?value rdf:type ?objectType .}
+                                }
+                         GROUP BY ?property ?dataType ?objectType"""
+
+    results = graph.query(query_statement.replace("instance_id", instance_id))
+
+    return [cast(tuple[URIRef, Literal, URIRef | None, None | URIRef], res) for res in list(results)]

@@ -1,5 +1,6 @@
 import json
 import logging
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import ClassVar
@@ -7,15 +8,16 @@ from typing import ClassVar
 import yaml
 from rdflib import Namespace
 
+from cognite.neat.rules.importer.graph2tables import GraphImporter
 from cognite.neat.rules.models import Class, Classes, Metadata, Properties, Property, TransformationRules
 from cognite.neat.rules.to_rdf_path import RuleType
 from cognite.neat.workflows.model import FlowMessage
-from cognite.neat.workflows.steps.data_contracts import RulesData
+from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
 
-__all__ = ["OpenApiToRules", "ArbitraryJsonYamlToRules"]
+__all__ = ["OpenApiToRules", "ArbitraryJsonYamlToRules", "GraphToRules"]
 
 
 class OpenApiToRules(Step):
@@ -386,7 +388,7 @@ def get_dms_compatible_name(name: str) -> str:
 
 def create_fdm_compatibility_class_name(input_string: str):
     """Remove underscores and capitalize each word in the string ,
-    the convertion is done to improve complience with DMS naming conventions"""
+    the conversion is done to improve compliance with DMS naming conventions"""
 
     if "_" in input_string:
         words = input_string.split("_")  # Split the string by underscores
@@ -394,3 +396,52 @@ def create_fdm_compatibility_class_name(input_string: str):
         return result
     else:
         return input_string
+
+
+class GraphToRules(Step):
+    """The step extracts data model from RDF graph and generates NEAT transformation rules object."""
+
+    description = "The step extracts data model from RDF graph and generates NEAT transformation rules object. \
+    The rules object can be serialized to excel file or used directly in other steps."
+    category = CATEGORY
+    version = "0.1.0-alpha"
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="file_name",
+            value="inferred_transformations.xlsx",
+            label="File name to store transformation rules.",
+        ),
+        Configurable(name="storage_dir", value="staging", label="Directory to store Transformation Rules spreadsheet"),
+        Configurable(
+            name="max_number_of_instances",
+            value="-1",
+            label="Maximum number of instances per class to process, -1 means all instances",
+        ),
+    ]
+
+    def run(self, graph_store: SourceGraph | SolutionGraph) -> FlowMessage:  # type: ignore[override, syntax]
+        file_name = self.configs["file_name"]
+        staging_dir_str = self.configs["storage_dir"]
+        staging_dir = self.data_store_path / Path(staging_dir_str)
+        staging_dir.mkdir(parents=True, exist_ok=True)
+
+        rules = GraphImporter(
+            graph=graph_store.graph.graph,
+            max_number_of_instance=int(self.configs["max_number_of_instances"]),
+            spreadsheet_path=staging_dir / file_name,
+            report_path=staging_dir / "inference_report.txt",
+        )
+        rules.to_spreadsheet()
+
+        output_text = (
+            "<p></p>"
+            "Transformation Rules generated and can be downloaded here : "
+            f'<a href="http://localhost:8000/data/{staging_dir_str}/{file_name}?{time.time()}" '
+            f'target="_blank">{file_name}</a>'
+            "<p></p>"
+            "The generation report can be downloaded here : "
+            f'<a href="http://localhost:8000/data/{staging_dir_str}/report.txt?{time.time()}" '
+            'target="_blank">inference_report.txt</a>'
+        )
+
+        return FlowMessage(output_text=output_text)
