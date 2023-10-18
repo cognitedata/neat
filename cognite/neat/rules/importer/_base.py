@@ -59,7 +59,7 @@ class BaseImporter(ABC):
             if not tables.Prefixes.empty:
                 tables.Prefixes.to_excel(writer, sheet_name="Prefixes", index=False)
 
-        if validate_results:
+        if validate_results and self.report_path:
             self._validate_rules(tables)
 
     @overload

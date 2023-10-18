@@ -6,6 +6,7 @@ generating a list of rules based on which nodes that form the graph are made.
 
 import warnings
 from datetime import datetime
+from pathlib import Path
 from typing import cast
 
 import numpy as np
@@ -36,9 +37,23 @@ class GraphImporter(BaseImporter):
 
     """
 
-    def __init__(self, graph: Graph, max_number_of_instance: int = -1):
+    def __init__(
+        self,
+        graph: Graph,
+        max_number_of_instance: int = -1,
+        spreadsheet_path: Path | None = None,
+        report_path: Path | None = None,
+    ):
         self.graph = graph
         self.max_number_of_instance = max_number_of_instance
+        self.spreadsheet_path = spreadsheet_path
+        self.spreadsheet_path = spreadsheet_path
+        if self.spreadsheet_path and not report_path:
+            self.report_path = self.spreadsheet_path.parent / "report.txt"
+        else:
+            self.report_path = Path.cwd() / "report.txt"
+
+        super().__init__(spreadsheet_path=spreadsheet_path, report_path=report_path)
 
     def to_tables(self) -> RawTables:
         data_model, prefixes = _graph_to_data_model_dict(self.graph, self.max_number_of_instance)
@@ -151,7 +166,9 @@ def _parse_properties_df(data_model: dict, prefixes: dict, parsing_config: dict 
                         property_,
                         np.nan,
                         type_,
-                        min(data_model[class_]["properties"][property_]["occurrence"]),
+                        min(data_model[class_]["properties"][property_]["occurrence"])
+                        if min(data_model[class_]["properties"][property_]["occurrence"]) > 1
+                        else 0,
                         max(data_model[class_]["properties"][property_]["occurrence"]),
                         "rdfpath",
                         f'{data_model[class_]["uri"]}({data_model[class_]["properties"][property_]["uri"]})',
