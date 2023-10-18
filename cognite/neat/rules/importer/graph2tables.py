@@ -47,7 +47,7 @@ class GraphImporter(BaseImporter):
         self.graph = graph
         self.max_number_of_instance = max_number_of_instance
         self.spreadsheet_path = spreadsheet_path
-        self.spreadsheet_path = spreadsheet_path
+
         if self.spreadsheet_path and not report_path:
             self.report_path = self.spreadsheet_path.parent / "report.txt"
         else:
