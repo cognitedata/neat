@@ -13,7 +13,7 @@ from cognite.client import ClientConfig, CogniteClient
 from cognite.client.credentials import CredentialProvider, OAuthClientCredentials, OAuthInteractive, Token
 from cognite.client.exceptions import CogniteDuplicatedError, CogniteReadTimeout
 from pydantic_core import ErrorDetails
-from rdflib import Literal
+from rdflib import Literal, Namespace
 from rdflib.term import URIRef
 
 from cognite.neat.utils.cdf import CogniteClientConfig, InteractiveCogniteClient, ServiceCogniteClient
@@ -135,6 +135,24 @@ def get_namespace(URI: URIRef, special_separator: str = "#_") -> str:
         return URI.split("#")[0] + "#"
     else:
         return "/".join(URI.split("/")[:-1]) + "/"
+
+
+def uri_to_short_form(URI: URIRef, prefixes: dict[str, Namespace]) -> str | URIRef:
+    """Returns the short form of a URI if its namespace is present in the prefixes dict,
+    otherwise returns the URI itself
+
+    Args:
+        URI: URI to be converted to form prefix:entityName
+        prefixes: dict of prefixes
+
+    Returns:
+        short form of the URI if its namespace is present in the prefixes dict,
+        otherwise returns the URI itself
+    """
+    for prefix, namespace in prefixes.items():
+        if URI.startswith(namespace):
+            return f"{prefix}:{URI.replace(namespace, '')}"
+    return URI
 
 
 def _traverse(hierarchy: dict, graph: dict, names: list[str]) -> dict:

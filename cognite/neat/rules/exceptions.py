@@ -1380,29 +1380,29 @@ class NotValidRAWLookUp(NeatException):
 ################################################################################################
 # RULES IMPORTERS: 200 - 299 ###################################################################
 ################################################################################################
-class OWLGeneratedTransformationRulesHasErrors(NeatWarning):
-    """This warning occurs when transformation rules generated from OWL ontology are invalid/incomplete.
+class GeneratedTransformationRulesHasErrors(NeatWarning):
+    """This warning occurs when generated transformation rules are invalid/incomplete.
 
     Args:
+        importer_type: type of importer that is used to generate transformation rules
         verbose: flag that indicates whether to provide enhanced exception message, by default False
 
     Notes:
-        OWL ontology is not guaranteed to contain all information needed to generate
-        transformation rules. In such cases, transformation rules generated from OWL ontology
-        will be incomplete and invalid. Go through the generated report file and fix the warnings
+        Generated transformation rules are not guaranteed to be valid and complete.
+        Go through the generated report file and fix the errors and warnings.
     """
 
-    type_: str = "OWLGeneratedTransformationRulesHasErrors"
+    type_: str = "GeneratedTransformationRulesHasErrors"
     code: int = 200
     description: str = (
-        "This warning occurs when transformation rules generated from OWL ontology are invalid/incomplete."
+        "This warning occurs when transformation rules generated using an importer are invalid/incomplete."
     )
     example: str = ""
     fix: str = "Go through the generated report file and fix the warnings in generated Transformation Rules."
 
-    def __init__(self, verbose: bool = False):
+    def __init__(self, importer_type: str = "OWL ontology", verbose: bool = False):
         self.message = (
-            "Transformation rules generated from OWL ontology are invalid!"
+            f"Transformation rules generated using {importer_type} importer are invalid!"
             " Consult report.txt for details on the errors and fix them before using the rules file."
             f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
@@ -1412,10 +1412,11 @@ class OWLGeneratedTransformationRulesHasErrors(NeatWarning):
             self.message += f"\nFix: {self.fix}"
 
 
-class OWLGeneratedTransformationRulesHasWarnings(NeatWarning):
-    """This warning occurs when transformation rules generated from OWL ontology are invalid/incomplete.
+class GeneratedTransformationRulesHasWarnings(NeatWarning):
+    """This warning occurs when th generated transformation rules are invalid/incomplete.
 
     Args:
+    importer_type: type of importer that is used to generate transformation rules
         verbose: flag that indicates whether to provide enhanced exception message, by default False
 
     Notes:
@@ -1424,18 +1425,124 @@ class OWLGeneratedTransformationRulesHasWarnings(NeatWarning):
         will be incomplete and invalid. Go through the generated report file and fix the warnings
     """
 
-    type_: str = "OWLGeneratedTransformationRulesHasWarnings"
+    type_: str = "GeneratedTransformationRulesHasWarnings"
     code: int = 201
     description: str = (
-        "This warning occurs when transformation rules generated from OWL ontology are invalid/incomplete."
+        "This warning occurs when transformation rules generated using an importer are invalid/incomplete."
     )
     example: str = ""
     fix: str = "Go through the generated report file and fix the warnings in generated Transformation Rules."
 
-    def __init__(self, verbose: bool = False):
+    def __init__(self, importer_type: str = "OWL ontology", verbose: bool = False):
         self.message = (
-            "Transformation rules generated from OWL ontology raised warnings!"
+            f"Transformation rules generated using {importer_type} importer raised warnings!"
             " Consult report.txt for details on warnings, and fix them prior using the rules file."
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+
+
+class GraphClassNameCollision(NeatWarning):
+    """This warning occurs when graph contains instances of classes with same name, but
+    belonging to different namespaces.
+
+    Args:
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        Since the RDF graph is fully flexible and based on URIs, it is possible to have
+        instances of classes with same name, but belonging to different namespaces. This
+        warning is raised when such collision occurs.
+    """
+
+    type_: str = "GraphClassNameCollision"
+    code: int = 202
+    description: str = (
+        "This warning occurs when graph contains instances of classes with same name, but"
+        " belonging to different namespaces."
+    )
+    example: str = ""
+    fix: str = "Be caution when reviewing the generated transformation rules."
+
+    def __init__(self, class_name: str, verbose: bool = False):
+        self.message = f"Class name collision detected in the graph for class name {class_name}!"
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+
+
+class GraphClassPropertyMultiValueTypes(NeatWarning):
+    """This warning occurs when a same property is define for two object/classes where
+    its expected value type is different in one definition, e.g. acts as an edge, while in
+    other definition acts as and attribute
+
+    Args:
+        class_id: class id that raised warning due to multi type definition
+        property_id: property id that raised warning due to multi type definition
+        types: list of types of property
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        If a property takes different value types for different objects, simply define
+        new property. It is bad practice to have multi type property!
+    """
+
+    type_: str = "GraphClassPropertyMultiValueTypes"
+    code: int = 203
+    description: str = (
+        "This warning occurs when a same property is define for two object/classes where"
+        " its expected value type is different in one definition, e.g. acts as an edge, while in "
+        "other definition acts as and attribute"
+    )
+    example: str = ""
+    fix: str = "If a property takes different value types for different objects, simply define new property"
+
+    def __init__(
+        self, class_name: str = "", property_name: str = "", types: list[str] | None = None, verbose: bool = False
+    ):
+        self.message = (
+            "It is bad practice to have multi type property! "
+            f"Currently property '{property_name}' for class {class_name} has"
+            f" multi type property: {', '.join(types or [])}"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+
+
+class GraphClassPropertyMultiOccurrence(NeatWarning):
+    """This warning occurs when there is multiple different occurrences of the same property
+    across various class instances.
+
+    Args:
+        class_id: class id that raised warning due to multi type definition
+        property_id: property id that raised warning due to multi type definition
+        occurrences: list of property occurrences
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        If a property takes different value types for different objects, simply define
+        new property. It is bad practice to have multi type property!
+    """
+
+    type_: str = "GraphClassPropertyMultiOccurrence"
+    code: int = 204
+    description: str = (
+        "This warning occurs when there is multiple different occurrences of the same property "
+        " across various class instances"
+    )
+    example: str = ""
+    fix: str = "There"
+
+    def __init__(self, class_name: str = "", property_name: str = "", verbose: bool = False):
+        self.message = (
+            f"Currently property '{property_name}' for class {class_name} has multi occurrences"
             f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
         if verbose:

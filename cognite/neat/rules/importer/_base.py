@@ -24,7 +24,11 @@ class BaseImporter(ABC):
     def to_tables(self) -> RawTables:
         raise NotImplementedError
 
-    def to_spreadsheet(self, filepath: Path | None = None, validate_results: bool = True) -> None:
+    def to_spreadsheet(
+        self,
+        filepath: Path | None = None,
+        validate_results: bool = True,
+    ) -> None:
         filepath = filepath or self.spreadsheet_path
         if not filepath:
             raise ValueError("No filepath given")
@@ -52,6 +56,9 @@ class BaseImporter(ABC):
             ).to_excel(writer, sheet_name="Properties", index=False, header=False, startrow=0)
             tables.Properties.to_excel(writer, sheet_name="Properties", index=False, header=True, startrow=1)
 
+            if not tables.Prefixes.empty:
+                tables.Prefixes.to_excel(writer, sheet_name="Prefixes", index=False)
+
         if validate_results:
             self._validate_rules(tables)
 
@@ -78,16 +85,16 @@ class BaseImporter(ABC):
         report = ""
         if validation_errors:
             warnings.warn(
-                exceptions.OWLGeneratedTransformationRulesHasErrors().message,
-                category=exceptions.OWLGeneratedTransformationRulesHasErrors,
+                exceptions.GeneratedTransformationRulesHasErrors(importer_type=self.__class__.__name__).message,
+                category=exceptions.GeneratedTransformationRulesHasErrors,
                 stacklevel=2,
             )
             report = generate_exception_report(validation_errors, "Errors")
 
         if validation_warnings:
             warnings.warn(
-                exceptions.OWLGeneratedTransformationRulesHasWarnings().message,
-                category=exceptions.OWLGeneratedTransformationRulesHasWarnings,
+                exceptions.GeneratedTransformationRulesHasWarnings(importer_type=self.__class__.__name__).message,
+                category=exceptions.GeneratedTransformationRulesHasWarnings,
                 stacklevel=2,
             )
             report += generate_exception_report(validation_warnings, "Warnings")
