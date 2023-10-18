@@ -4,17 +4,15 @@ generating a list of rules based on which nodes that form the graph are made.
 """
 
 
-from datetime import datetime
-from pathlib import Path
-from typing import cast, overload
 import warnings
+from datetime import datetime
+from typing import cast
 
 import numpy as np
 import pandas as pd
-from rdflib import DC, DCTERMS, OWL, RDF, RDFS, Graph, Literal, Namespace, URIRef
-from cognite.neat.graph.stores.graph_store import NeatGraphStore
-from cognite.neat.rules import exceptions
+from rdflib import Graph, Literal, Namespace, URIRef
 
+from cognite.neat.rules import exceptions
 from cognite.neat.rules.parser import RawTables
 from cognite.neat.utils.utils import get_namespace, remove_namespace, uri_to_short_form
 
@@ -201,6 +199,7 @@ def _graph_to_data_model_dict(graph: Graph, max_number_of_instance: int = -1) ->
 
                 type_ = data_type if data_type else object_type
 
+                # this is to skip rdf:type property
                 if not type_:
                     continue
 
