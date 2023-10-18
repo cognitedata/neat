@@ -166,9 +166,7 @@ def _parse_properties_df(data_model: dict, prefixes: dict, parsing_config: dict 
                         property_,
                         np.nan,
                         type_,
-                        min(data_model[class_]["properties"][property_]["occurrence"])
-                        if min(data_model[class_]["properties"][property_]["occurrence"]) > 1
-                        else 0,
+                        0,  # setting min count to 0 to be more flexible (all properties are optional)
                         max(data_model[class_]["properties"][property_]["occurrence"]),
                         "rdfpath",
                         f'{data_model[class_]["uri"]}({data_model[class_]["properties"][property_]["uri"]})',
