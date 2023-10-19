@@ -264,18 +264,7 @@ def from_tables(
                 raw_tables = raw_dfs
             else:
                 raw_tables = RawTables.from_raw_dataframes(raw_dfs)
-            rules_dict: dict[str, Any] = {
-                "metadata": _parse_metadata(raw_tables.Metadata),
-                "classes": _parse_classes(raw_tables.Classes),
-                "properties": _parse_properties(raw_tables.Properties),
-                "prefixes": PREFIXES if raw_tables.Prefixes.empty else _parse_prefixes(raw_tables.Prefixes),
-            }
-
-            rules_dict["instances"] = (
-                None
-                if raw_tables.Instances.empty
-                else _parse_instances(raw_tables.Instances, rules_dict["metadata"], rules_dict["prefixes"])
-            )
+            rules_dict = raw_tables_to_rules_dict(raw_tables)
             rules = TransformationRules(**rules_dict)
         return (rules, None, wrangle_warnings(validation_warnings)) if return_report else rules
 
@@ -291,6 +280,24 @@ def from_tables(
             return None, validation_errors, wrangle_warnings(validation_warnings)
         else:
             raise e
+
+
+def raw_tables_to_rules_dict(raw_tables: RawTables) -> dict[str, Any]:
+    """Converts raw tables to a dictionary of rules."""
+    rules_dict: dict[str, Any] = {
+        "metadata": _parse_metadata(raw_tables.Metadata),
+        "classes": _parse_classes(raw_tables.Classes),
+        "properties": _parse_properties(raw_tables.Properties),
+        "prefixes": PREFIXES if raw_tables.Prefixes.empty else _parse_prefixes(raw_tables.Prefixes),
+    }
+
+    rules_dict["instances"] = (
+        None
+        if raw_tables.Instances.empty
+        else _parse_instances(raw_tables.Instances, rules_dict["metadata"], rules_dict["prefixes"])
+    )
+
+    return rules_dict
 
 
 def _parse_metadata(meta_df: pd.DataFrame) -> dict[str, Any]:

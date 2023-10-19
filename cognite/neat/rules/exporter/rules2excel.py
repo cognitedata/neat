@@ -5,20 +5,25 @@ from openpyxl import Workbook
 from openpyxl.cell import Cell
 from openpyxl.styles import Alignment, Border, Font, NamedStyle, PatternFill, Side
 
-from cognite.neat.rules.models import TransformationRules
+from cognite.neat.rules.models import Class, Metadata, Property, TransformationRules
+from cognite.neat.rules.parser import RawTables, raw_tables_to_rules_dict
 
 
 class RulesToExcel:
     """Class for exporting transformation rules object to excel file."""
 
-    def __init__(self, rules: TransformationRules):
-        self.rules = rules
+    def __init__(self, rules: TransformationRules | RawTables):
+        if rules.__class__.__name__ == RawTables.__name__:
+            self.rules = self.tables_to_rules(rules=cast(RawTables, rules))
+        else:
+            self.rules = cast(TransformationRules, rules)
+
         self.workbook = Workbook()
         self.class_counter = 0
         self.property_counter = 0
 
     @classmethod
-    def export_rules_to_file(cls, rules: TransformationRules, file_path: Path):
+    def export_rules_to_file(cls, rules: TransformationRules | RawTables, file_path: Path):
         """Generates workbook from transformation rules and saves it to file."""
         instance = cls(rules=rules)
         instance.generate_workbook()
@@ -44,7 +49,6 @@ class RulesToExcel:
         metadata_sheet.append(["created", metadata.created])
         metadata_sheet.append(["dataModelName", metadata.data_model_name])
         metadata_sheet.append(["cdfSpaceName", metadata.cdf_space_name])
-
         metadata_sheet.append(["prefix", metadata.prefix])
         metadata_sheet.append(["namespace", metadata.namespace])
 
@@ -157,3 +161,18 @@ class RulesToExcel:
                     cell.alignment = Alignment(horizontal="center", vertical="center")
                     adjusted_width = (len(str(cell.value)) + 5) * 1.2
                     self.workbook[sheet].column_dimensions[cell.column_letter].width = adjusted_width
+
+    @staticmethod
+    def tables_to_rules(rules: RawTables) -> TransformationRules:
+        rules = raw_tables_to_rules_dict(rules)
+        args = {
+            "metadata": Metadata.model_construct(**rules["metadata"]),
+            "classes": {class_: Class.model_construct(**definition) for class_, definition in rules["classes"].items()},
+            "properties": {
+                property_: Property.model_construct(**definition)
+                for property_, definition in rules["properties"].items()
+            },
+            "prefixes": rules["prefixes"],
+        }
+
+        return TransformationRules.model_construct(**args)
