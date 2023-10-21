@@ -5,40 +5,52 @@ from openpyxl import Workbook
 from openpyxl.cell import Cell
 from openpyxl.styles import Alignment, Border, Font, NamedStyle, PatternFill, Side
 
-from cognite.neat.rules.models import Class, Metadata, Property, TransformationRules
-from cognite.neat.rules.parser import RawTables, raw_tables_to_rules_dict
+from cognite.neat.rules.models.raw_rules import RawRules
+from cognite.neat.rules.models.rules import Rules
+
+from ._base import BaseExporter
 
 
-class RulesToExcel:
+class ExcelExporter(BaseExporter):
     """Class for exporting transformation rules object to excel file."""
 
-    def __init__(self, rules: TransformationRules | RawTables):
-        if rules.__class__.__name__ == RawTables.__name__:
-            self.rules = self.tables_to_rules(rules=cast(RawTables, rules))
+    def __init__(self, rules: Rules | RawRules, filepath: Path, report_path: Path | None = None):
+        if rules.__class__.__name__ == RawRules.__name__:
+            self.rules = cast(RawRules, rules).to_rules(skip_validation=True)
+            self.report = cast(RawRules, rules).validate_rules()
         else:
-            self.rules = cast(TransformationRules, rules)
+            self.rules = cast(Rules, rules)
+            self.report = None
 
-        self.workbook = Workbook()
+        self.filepath = filepath
+        self.report_path = report_path
         self.class_counter = 0
         self.property_counter = 0
+        self.data = self.generate_workbook()
+        super().__init__(self.rules, self.filepath, self.report_path)
 
-    @classmethod
-    def export_rules_to_file(cls, rules: TransformationRules | RawTables, file_path: Path):
-        """Generates workbook from transformation rules and saves it to file."""
-        instance = cls(rules=rules)
-        instance.generate_workbook()
-        instance.save_to_file(file_path=file_path)
+    def export(self, filepath: Path | None = None):
+        """Exports transformation rules to excel file."""
+        filepath = filepath or self.filepath
+        if not filepath:
+            raise ValueError("No filepath given")
+
+        self.data.save(self.filepath)
+        self.data.close()
+
+        if self.report and self.report_path:
+            self.report_path.write_text(self.report)
 
     def generate_workbook(self):
         """Generates workbook from transformation rules."""
-        self.workbook = Workbook()
+        self.data = Workbook()
         # Remove default sheet named "Sheet"
-        self.workbook.remove(self.workbook["Sheet"])
+        self.data.remove(self.data["Sheet"])
         # Serialize the rules to the excel file
 
         # map rules metadata to excel
         metadata = self.rules.metadata
-        metadata_sheet = self.workbook.create_sheet("Metadata")
+        metadata_sheet = self.data.create_sheet("Metadata")
 
         # add each metadata property to the sheet as a row
 
@@ -53,7 +65,7 @@ class RulesToExcel:
         metadata_sheet.append(["namespace", metadata.namespace])
 
         # map classes to excel sheet named "Classes" and add each class as a row
-        classes_sheet = self.workbook.create_sheet("Classes")
+        classes_sheet = self.data.create_sheet("Classes")
 
         classes_sheet.append(["Solution model", "", ""])
         classes_sheet.merge_cells("A1:C1")
@@ -64,7 +76,7 @@ class RulesToExcel:
             classes_sheet.append([class_.class_id, class_.description, class_.parent_class])
 
         # map properties to excel sheet named "Properties" and add each property as a row
-        properties_sheet = self.workbook.create_sheet("Properties")
+        properties_sheet = self.data.create_sheet("Properties")
         properties_sheet.append(
             [
                 "Solution model",  # A
@@ -127,23 +139,19 @@ class RulesToExcel:
             )
         self.set_header_style()
 
-    def save_to_file(self, file_path: Path):
-        self.workbook.save(file_path)
-        self.workbook.close()
-
     def set_header_style(self):
         """Sets the header style for all sheets in the self.workbook"""
         style = NamedStyle(name="header style")
         style.font = Font(bold=True, size=16)
         side = Side(style="thin", color="000000")
         style.border = Border(left=side, right=side, top=side, bottom=side)
-        self.workbook.add_named_style(style)
+        self.data.add_named_style(style)
 
-        for sheet in self.workbook.sheetnames:
+        for sheet in self.data.sheetnames:
             if sheet == "Metadata":
                 continue
             if sheet == "Classes" or sheet == "Properties":
-                sheet_obj = self.workbook[sheet]
+                sheet_obj = self.data[sheet]
                 if sheet == "Classes":
                     sheet_obj.freeze_panes = "A3"
                 else:
@@ -160,19 +168,4 @@ class RulesToExcel:
                     cell.fill = PatternFill("solid", start_color="d5dbd5")
                     cell.alignment = Alignment(horizontal="center", vertical="center")
                     adjusted_width = (len(str(cell.value)) + 5) * 1.2
-                    self.workbook[sheet].column_dimensions[cell.column_letter].width = adjusted_width
-
-    @staticmethod
-    def tables_to_rules(rules: RawTables) -> TransformationRules:
-        rules = raw_tables_to_rules_dict(rules)
-        args = {
-            "metadata": Metadata.model_construct(**rules["metadata"]),
-            "classes": {class_: Class.model_construct(**definition) for class_, definition in rules["classes"].items()},
-            "properties": {
-                property_: Property.model_construct(**definition)
-                for property_, definition in rules["properties"].items()
-            },
-            "prefixes": rules["prefixes"],
-        }
-
-        return TransformationRules.model_construct(**args)
+                    self.data[sheet].column_dimensions[cell.column_letter].width = adjusted_width

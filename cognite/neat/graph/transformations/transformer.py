@@ -16,8 +16,8 @@ from rdflib.term import Literal, Node
 
 from cognite.neat.graph.exceptions import NamespaceRequired
 from cognite.neat.graph.transformations.query_generator.sparql import build_sparql_query
-from cognite.neat.rules.models import TransformationRules
-from cognite.neat.rules.to_rdf_path import AllProperties, AllReferences, Query, RawLookup, Traversal, parse_rule
+from cognite.neat.rules.models.rdfpath import AllProperties, AllReferences, Query, RawLookup, Traversal, parse_rule
+from cognite.neat.rules.models.rules import Rules
 from cognite.neat.utils.utils import remove_namespace
 
 if sys.version_info >= (3, 11):
@@ -66,7 +66,7 @@ class RuleProcessingReport(BaseModel):
 
 def source2solution_graph(
     source_knowledge_graph: Graph,
-    transformation_rules: TransformationRules,
+    transformation_rules: Rules,
     solution_knowledge_graph: Graph | None = None,
     client: CogniteClient | None = None,
     cdf_lookup_database: str | None = None,
@@ -112,7 +112,7 @@ def source2solution_graph(
 
 def domain2app_knowledge_graph(
     domain_knowledge_graph: Graph,
-    transformation_rules: TransformationRules,
+    transformation_rules: Rules,
     app_instance_graph: Graph | None = None,
     client: CogniteClient | None = None,
     cdf_lookup_database: str | None = None,

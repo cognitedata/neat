@@ -1,5 +1,6 @@
 import sys
 from dataclasses import dataclass
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 if sys.version_info >= (3, 11):
@@ -8,16 +9,35 @@ else:
     from typing_extensions import Self
 
 from cognite.neat.rules import exceptions
-from cognite.neat.rules._validation import (
+from cognite.neat.rules.analysis import to_class_property_pairs
+from cognite.neat.rules.exporter._validation import (
     are_entity_names_dms_compliant,
     are_properties_redefined,
 )
-from cognite.neat.rules.analysis import to_class_property_pairs
-from cognite.neat.rules.models import DATA_TYPE_MAPPING, TransformationRules
+from cognite.neat.rules.models.rules import DATA_TYPE_MAPPING, Rules
 from cognite.neat.utils.utils import generate_exception_report
+
+from ._base import BaseExporter
 
 if TYPE_CHECKING:
     from jinja2 import Template
+
+
+class GraphQLSchemaExporter(BaseExporter):
+    def __init__(self, rules: Rules, filepath: Path):
+        self.rules = rules
+        self.filepath = filepath
+        self.data = GraphQLSchema.from_rules(self.rules).schema
+
+        super().__init__(self.rules, self.filepath)
+
+    def export(self, filepath: Path | None = None):
+        filepath = filepath or self.filepath
+        if not filepath:
+            raise ValueError("No filepath given")
+
+        filepath.write_text(self.data)
+
 
 _TYPE = (
     "{% include 'type_header' %}type {{ class_definition.class_id }} {{'{'}}"
@@ -99,7 +119,7 @@ class GraphQLSchema:
     schema: str
 
     @classmethod
-    def from_rules(cls, transformation_rules: TransformationRules, verbose: bool = False) -> Self:
+    def from_rules(cls, transformation_rules: Rules, verbose: bool = False) -> Self:
         """
         Generates a GraphQL schema from TransformationRules.
 
@@ -121,7 +141,7 @@ class GraphQLSchema:
         return cls(schema=cls.generate_schema(transformation_rules, verbose))
 
     @staticmethod
-    def generate_schema(transformation_rules: TransformationRules, verbose: bool) -> str:
+    def generate_schema(transformation_rules: Rules, verbose: bool) -> str:
         """
         Generates a GraphQL schema from TransformationRules.
 

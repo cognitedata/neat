@@ -6,7 +6,6 @@ generating a list of rules based on which nodes that form the graph are made.
 
 import warnings
 from datetime import datetime
-from pathlib import Path
 from typing import cast
 
 import numpy as np
@@ -14,18 +13,18 @@ import pandas as pd
 from rdflib import Graph, Literal, Namespace, URIRef
 
 from cognite.neat.rules import exceptions
-from cognite.neat.rules.parser import RawTables
+from cognite.neat.rules.importer._base import BaseImporter
+from cognite.neat.rules.importer.owl2rules import _create_default_metadata_parsing_config
+from cognite.neat.rules.models.tables import Tables
 from cognite.neat.utils.utils import get_namespace, remove_namespace, uri_to_short_form
-
-from ._base import BaseImporter
-from .ontology2tables import _create_default_metadata_parsing_config
 
 
 class GraphImporter(BaseImporter):
     """Convert RDF graph, containing nodes and edges, to tables/ transformation rules / Excel file.
 
         Args:
-            graph: RDF graph to be converted to TransformationRules object
+            graph: RDF graph to be imported
+            max_number_of_instance: Max number of instances to be considered for each class in RDF graph
 
     !!! Note
         Due to high degree of flexibility of RDF graphs, the RDF graph is not guaranteed to be
@@ -41,29 +40,19 @@ class GraphImporter(BaseImporter):
         self,
         graph: Graph,
         max_number_of_instance: int = -1,
-        spreadsheet_path: Path | None = None,
-        report_path: Path | None = None,
     ):
         self.graph = graph
         self.max_number_of_instance = max_number_of_instance
-        self.spreadsheet_path = spreadsheet_path
 
-        if self.spreadsheet_path and not report_path:
-            self.report_path = self.spreadsheet_path.parent / "report.txt"
-        else:
-            self.report_path = Path.cwd() / "report.txt"
-
-        super().__init__(spreadsheet_path=spreadsheet_path, report_path=report_path)
-
-    def to_tables(self) -> RawTables:
+    def to_tables(self) -> dict[str, pd.DataFrame]:
         data_model, prefixes = _graph_to_data_model_dict(self.graph, self.max_number_of_instance)
 
-        return RawTables(
-            Metadata=_parse_metadata_df(),
-            Classes=_parse_classes_df(data_model, prefixes),
-            Properties=_parse_properties_df(data_model, prefixes),
-            Prefixes=_parse_prefixes_df(prefixes),
-        )
+        return {
+            Tables.metadata: _parse_metadata_df(),
+            Tables.classes: _parse_classes_df(data_model, prefixes),
+            Tables.properties: _parse_properties_df(data_model, prefixes),
+            Tables.prefixes: _parse_prefixes_df(prefixes),
+        }
 
 
 def _create_default_properties_parsing_config() -> dict[str, tuple[str, ...]]:

@@ -4,25 +4,23 @@ from typing import Literal, overload
 
 from cognite.neat.exceptions import wrangle_warnings
 from cognite.neat.rules import exceptions
-from cognite.neat.rules.models import TransformationRules, dms_property_id_compliance_regex, view_id_compliance_regex
+from cognite.neat.rules.models.rules import Rules, dms_property_id_compliance_regex, view_id_compliance_regex
 
 
 @overload
 def are_entity_names_dms_compliant(
-    transformation_rules: TransformationRules, return_report: Literal[True]
+    transformation_rules: Rules, return_report: Literal[True]
 ) -> tuple[bool, list[dict]]:
     ...
 
 
 @overload
-def are_entity_names_dms_compliant(
-    transformation_rules: TransformationRules, return_report: Literal[False] = False
-) -> bool:
+def are_entity_names_dms_compliant(transformation_rules: Rules, return_report: Literal[False] = False) -> bool:
     ...
 
 
 def are_entity_names_dms_compliant(
-    transformation_rules: TransformationRules, return_report: bool = False
+    transformation_rules: Rules, return_report: bool = False
 ) -> bool | tuple[bool, list[dict]]:
     """Check if data model definitions are valid."""
 
@@ -80,19 +78,17 @@ def are_entity_names_dms_compliant(
 
 
 @overload
-def are_properties_redefined(
-    transformation_rules: TransformationRules, return_report: Literal[True]
-) -> tuple[bool, list[dict]]:
+def are_properties_redefined(transformation_rules: Rules, return_report: Literal[True]) -> tuple[bool, list[dict]]:
     ...
 
 
 @overload
-def are_properties_redefined(transformation_rules: TransformationRules, return_report: Literal[False] = False) -> bool:
+def are_properties_redefined(transformation_rules: Rules, return_report: Literal[False] = False) -> bool:
     ...
 
 
 def are_properties_redefined(
-    transformation_rules: TransformationRules, return_report: bool = False
+    transformation_rules: Rules, return_report: bool = False
 ) -> bool | tuple[bool, list[dict]]:
     flag: bool = False
     with warnings.catch_warnings(record=True) as validation_warnings:

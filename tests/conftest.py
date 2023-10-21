@@ -12,7 +12,7 @@ from cognite.neat.graph.extractors.mocks import generate_triples
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.graph.transformations.transformer import domain2app_knowledge_graph
 from cognite.neat.rules.exporter.rules2triples import get_instances_as_triples
-from cognite.neat.rules.models import TransformationRules
+from cognite.neat.rules.models.rules import Rules
 from tests import config
 
 # Setup config for Neat App
@@ -33,12 +33,12 @@ os.environ["NEAT_LOAD_EXAMPLES"] = "1"
 
 
 @pytest.fixture(scope="session")
-def transformation_rules() -> TransformationRules:
+def transformation_rules() -> Rules:
     return rules.parser.parse_rules_from_excel_file(config.TNT_TRANSFORMATION_RULES)
 
 
 @pytest.fixture(scope="session")
-def simple_rules() -> TransformationRules:
+def simple_rules() -> Rules:
     return rules.parser.parse_rules_from_excel_file(config.SIMPLE_TRANSFORMATION_RULES)
 
 
