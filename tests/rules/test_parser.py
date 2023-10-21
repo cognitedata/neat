@@ -9,15 +9,15 @@ from tests import config
 
 
 @pytest.fixture(scope="session")
-def raw_transformation_tables() -> dict[str, pd.DataFrame]:
+def raw_rules() -> dict[str, pd.DataFrame]:
     return importer.ExcelImporter(config.TNT_TRANSFORMATION_RULES).to_raw_rules()
 
 
-def test_parse_transformation_rules(raw_transformation_tables):
-    assert raw_transformation_tables.to_rules()
+def test_raw_rules_validation(raw_rules):
+    assert raw_rules.to_rules()
 
 
-def generate_parse_transformation_invalid_rules_test_data():
+def generate_invalid_raw_rules_test_data():
     raw_tables = importer.ExcelImporter(config.TNT_TRANSFORMATION_RULES).to_tables()
 
     invalid_class_label = raw_tables
@@ -26,7 +26,7 @@ def generate_parse_transformation_invalid_rules_test_data():
     yield pytest.param(invalid_class_label, id="Invalid mapping rule")
 
 
-@pytest.mark.parametrize("raw_tables", generate_parse_transformation_invalid_rules_test_data())
+@pytest.mark.parametrize("raw_tables", generate_invalid_raw_rules_test_data())
 def test_parse_transformation_invalid_rules(raw_tables: dict[str, pd.DataFrame]):
     with pytest.raises(ValidationError):
         RawRules.from_tables(raw_tables).to_rules()
