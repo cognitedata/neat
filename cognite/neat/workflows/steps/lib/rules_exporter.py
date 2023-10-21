@@ -313,7 +313,7 @@ class GraphCaptureSpreadsheetFromRules(Step):
 
 
 class ExcelFromRules(Step):
-    description = "The step generates Excel file from rules"
+    description = "This step generates Excel file from rules"
     category = CATEGORY
     version = "0.1.0-alpha"
     configurables: ClassVar[list[Configurable]] = [

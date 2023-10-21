@@ -15,18 +15,18 @@ class ExcelExporter(BaseExporter):
     """Class for exporting transformation rules object to excel file."""
 
     def __init__(self, rules: Rules | RawRules, filepath: Path, report_path: Path | None = None):
+        self.report = None
         if rules.__class__.__name__ == RawRules.__name__:
             self.rules = cast(RawRules, rules).to_rules(skip_validation=True)
             self.report = cast(RawRules, rules).validate_rules()
         else:
             self.rules = cast(Rules, rules)
-            self.report = None
 
         self.filepath = filepath
         self.report_path = report_path
         self.class_counter = 0
         self.property_counter = 0
-        self.data = self.generate_workbook()
+        self.generate_workbook()
         super().__init__(self.rules, self.filepath, self.report_path)
 
     def export(self, filepath: Path | None = None):
