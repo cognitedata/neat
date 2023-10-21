@@ -1,9 +1,13 @@
+import getpass
 import sys
 from collections.abc import Sequence
+from datetime import date
 
+import pandas as pd
 from cognite.client import CogniteClient
-from cognite.client.data_classes.data_modeling import ContainerApply, MappedPropertyApply, ViewApply
-from cognite.client.data_classes.data_modeling.ids import DataModelIdentifier
+from cognite.client.data_classes.data_modeling import MappedProperty, SingleHopConnectionDefinition, View
+from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
+from cognite.client.data_classes.data_modeling.ids import DataModelIdentifier, ViewId
 
 from cognite.neat.rules.parser import RawTables
 
@@ -19,26 +23,83 @@ class DMSImporter(BaseImporter):
     """
     Converts a Data Model Storage (DMS) data model to a set of transformation rules.
 
-    !!! Warning
-        This class is not yet implemented.
+    Args:
+        views: List of views to convert to transformation rules.
     """
 
-    def __init__(self, containers: Sequence[ContainerApply], views: Sequence[ViewApply]):
+    def __init__(self, views: Sequence[View]):
         super().__init__()
-        referenced_containers = {
-            prop.container
-            for view in views
-            for prop in (view.properties or {}).values()
-            if isinstance(prop, MappedPropertyApply)
-        }
-        if missing_containers := referenced_containers - {container.as_id() for container in containers}:
-            raise ValueError(f"Missing containers: {missing_containers}")
-        self.containers = containers
         self.views = views
 
     @classmethod
     def from_cdf(cls, client: CogniteClient, data_models: DataModelIdentifier | Sequence[DataModelIdentifier]) -> Self:
-        raise NotImplementedError
+        """
+        Converts a Data Model Storage (DMS) data model to a set of transformation rules.
+
+        Args:
+            client: Cognite client to use for fetching data models.
+            data_models: List of data models to convert to transformation rules.
+        """
+        data_models = client.data_modeling.data_models.retrieve(data_models, inline_views=True)
+
+        # Avoid duplicate views (same view can be used by multiple data models)
+        views_by_id: dict[ViewId, View] = {}
+        for data_model in data_models:
+            for view in data_model.views:
+                views_by_id[view.as_id()] = view
+
+        return cls(list(views_by_id.values()))
 
     def to_tables(self) -> RawTables:
-        raise NotImplementedError
+        classes: list[dict[str, str | float]] = []
+        properties: list[dict[str, str | float]] = []
+        for view in self.views:
+            class_name = view.name or view.external_id
+            classes.append(
+                {
+                    "Class": class_name,
+                    "Description": view.description or float("nan"),
+                    "Resource Type": "Asset",
+                    "Parent Asset": "",
+                }
+            )
+            for prop_name, prop in view.properties.items():
+                if not isinstance(prop, MappedProperty | SingleHopConnectionDefinition):
+                    raise NotImplementedError(f"Property type {type(prop)} not supported")
+
+                max_count = "1"
+                if isinstance(prop, SingleHopConnectionDefinition) or (
+                    isinstance(prop, MappedProperty)
+                    and isinstance(prop.type, ListablePropertyType)
+                    and prop.type.is_list
+                ):
+                    max_count = ""
+
+                properties.append(
+                    {
+                        "Class": class_name,
+                        "Property": prop_name,
+                        "Description": prop.description or float("nan"),
+                        "Type": "",
+                        "Min Count": "1",
+                        "Max Count": max_count,
+                        "Resource Type": "Asset",
+                        "Resource Type Property": "name",
+                        "Relationship Label": float("nan"),
+                        "Rule Type": "rdfpath",
+                        "Rule": f"cim:{class_name}(cim:{prop_name}.name)",
+                    }
+                )
+        metadata = {
+            "shortName": "",
+            "version": "0.1.0",
+            "created": date.today().isoformat(),
+            "creator": getpass.getuser(),
+            "description": "",
+        }
+
+        return RawTables(
+            Classes=pd.DataFrame(classes),
+            Properties=pd.DataFrame(properties),
+            Metadata=pd.Series(metadata).to_frame("value"),
+        )
