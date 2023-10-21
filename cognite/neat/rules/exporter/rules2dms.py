@@ -33,12 +33,10 @@ from cognite.client.data_classes.data_modeling.views import (
 from pydantic import BaseModel, ConfigDict
 
 from cognite.neat.rules import exceptions
-from cognite.neat.rules._validation import (
-    are_entity_names_dms_compliant,
-    are_properties_redefined,
-)
+from cognite.neat.rules._validation import are_entity_names_dms_compliant, are_properties_redefined
 from cognite.neat.rules.analysis import to_class_property_pairs
-from cognite.neat.rules.models import DATA_TYPE_MAPPING, Property, TransformationRules
+from cognite.neat.rules.models import Property, TransformationRules
+from cognite.neat.rules.type_mapping import DATA_TYPE_MAPPING
 from cognite.neat.utils.utils import generate_exception_report
 
 

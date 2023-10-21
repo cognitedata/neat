@@ -9,7 +9,8 @@ from rdflib.collection import Collection as GraphCollection
 from cognite.neat.rules import exceptions
 from cognite.neat.rules._validation import are_properties_redefined
 from cognite.neat.rules.analysis import to_class_property_pairs, to_property_dict
-from cognite.neat.rules.models import DATA_TYPE_MAPPING, Class, Metadata, Property, TransformationRules
+from cognite.neat.rules.models import Class, Metadata, Property, TransformationRules
+from cognite.neat.rules.type_mapping import DATA_TYPE_MAPPING
 from cognite.neat.utils.utils import generate_exception_report, remove_namespace
 
 if sys.version_info >= (3, 11):
@@ -63,17 +64,11 @@ class Ontology(OntologyModel):
 
         return cls(
             properties=[
-                OWLProperty.from_list_of_properties(
-                    definition,
-                    transformation_rules.metadata.namespace,
-                )
+                OWLProperty.from_list_of_properties(definition, transformation_rules.metadata.namespace)
                 for definition in to_property_dict(transformation_rules).values()
             ],
             classes=[
-                OWLClass.from_class(
-                    definition,
-                    transformation_rules.metadata.namespace,
-                )
+                OWLClass.from_class(definition, transformation_rules.metadata.namespace)
                 for definition in transformation_rules.classes.values()
             ],
             shapes=[

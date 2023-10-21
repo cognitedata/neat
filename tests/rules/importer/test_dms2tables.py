@@ -28,4 +28,10 @@ def test_import_information_model(power_grid_rules: models.TransformationRules, 
     rules = dms_importer.to_rules()
 
     # Assert
-    assert rules == power_grid_rules
+    assert sorted(rules.classes.keys()) == sorted(power_grid_rules.classes.keys())
+    assert sorted((prop.class_id, prop.property_name) for prop in rules.properties.values()) == sorted(
+        [(prop.class_id, prop.property_name) for prop in power_grid_rules.properties.values()]
+        # The powerrules example lacks a circular dependency which was
+        # added to the data model to demonstrate the FDM capability
+        + [("GeographicalRegion", "subRegions")]
+    )

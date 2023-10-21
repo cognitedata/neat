@@ -8,12 +8,10 @@ else:
     from typing_extensions import Self
 
 from cognite.neat.rules import exceptions
-from cognite.neat.rules._validation import (
-    are_entity_names_dms_compliant,
-    are_properties_redefined,
-)
+from cognite.neat.rules._validation import are_entity_names_dms_compliant, are_properties_redefined
 from cognite.neat.rules.analysis import to_class_property_pairs
-from cognite.neat.rules.models import DATA_TYPE_MAPPING, TransformationRules
+from cognite.neat.rules.models import TransformationRules
+from cognite.neat.rules.type_mapping import DATA_TYPE_MAPPING
 from cognite.neat.utils.utils import generate_exception_report
 
 if TYPE_CHECKING:

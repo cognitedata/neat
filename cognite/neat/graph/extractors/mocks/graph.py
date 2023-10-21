@@ -17,7 +17,8 @@ from cognite.neat.rules.analysis import (
     get_symmetric_pairs,
 )
 from cognite.neat.rules.exporter.rules2rules import subset_rules
-from cognite.neat.rules.models import DATA_TYPE_MAPPING, TransformationRules
+from cognite.neat.rules.models import TransformationRules
+from cognite.neat.rules.type_mapping import DATA_TYPE_MAPPING
 from cognite.neat.utils.utils import remove_namespace
 
 neat_total_processed_mock_triples = Gauge(

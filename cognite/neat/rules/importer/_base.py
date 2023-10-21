@@ -1,5 +1,7 @@
+import getpass
 import warnings
 from abc import ABC, abstractmethod
+from datetime import datetime
 from pathlib import Path
 from typing import Literal, overload
 
@@ -24,11 +26,7 @@ class BaseImporter(ABC):
     def to_tables(self) -> RawTables:
         raise NotImplementedError
 
-    def to_spreadsheet(
-        self,
-        filepath: Path | None = None,
-        validate_results: bool = True,
-    ) -> None:
+    def to_spreadsheet(self, filepath: Path | None = None, validate_results: bool = True) -> None:
         filepath = filepath or self.spreadsheet_path
         if not filepath:
             raise ValueError("No filepath given")
@@ -101,3 +99,14 @@ class BaseImporter(ABC):
 
         if report:
             self.report_path.write_text(report)
+
+    def _default_metadata(self):
+        return {
+            "shortName": "NeatImport",
+            "version": "0.1.0",
+            "title": "Neat Imported Data Model",
+            "created": datetime.now().replace(microsecond=0).isoformat(),
+            "creator": getpass.getuser(),
+            "description": f"Imported using {type(self).__name__}",
+            "prefix": "neat",
+        }

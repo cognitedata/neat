@@ -1,7 +1,5 @@
-import getpass
 import sys
 from collections.abc import Sequence
-from datetime import date
 
 import pandas as pd
 from cognite.client import CogniteClient
@@ -10,6 +8,7 @@ from cognite.client.data_classes.data_modeling.data_types import ListablePropert
 from cognite.client.data_classes.data_modeling.ids import DataModelIdentifier, ViewId
 
 from cognite.neat.rules.parser import RawTables
+from cognite.neat.rules.type_mapping import DMS_TO_DATA_TYPE
 
 from ._base import BaseImporter
 
@@ -54,33 +53,37 @@ class DMSImporter(BaseImporter):
         classes: list[dict[str, str | float]] = []
         properties: list[dict[str, str | float]] = []
         for view in self.views:
-            class_name = view.name or view.external_id
+            class_name = view.external_id
             classes.append(
                 {
                     "Class": class_name,
                     "Description": view.description or float("nan"),
                     "Resource Type": "Asset",
-                    "Parent Asset": "",
+                    "Parent Asset": "Missing",
                 }
             )
             for prop_name, prop in view.properties.items():
-                if not isinstance(prop, MappedProperty | SingleHopConnectionDefinition):
+                if isinstance(prop, MappedProperty):
+                    type_ = DMS_TO_DATA_TYPE.get(type(prop.type), "string")
+                elif isinstance(prop, SingleHopConnectionDefinition):
+                    type_ = prop.source.external_id
+                else:
                     raise NotImplementedError(f"Property type {type(prop)} not supported")
 
-                max_count = "1"
+                max_count: str | float = "1"
                 if isinstance(prop, SingleHopConnectionDefinition) or (
                     isinstance(prop, MappedProperty)
                     and isinstance(prop.type, ListablePropertyType)
                     and prop.type.is_list
                 ):
-                    max_count = ""
+                    max_count = float("nan")
 
                 properties.append(
                     {
                         "Class": class_name,
                         "Property": prop_name,
                         "Description": prop.description or float("nan"),
-                        "Type": "",
+                        "Type": type_,
                         "Min Count": "1",
                         "Max Count": max_count,
                         "Resource Type": "Asset",
@@ -90,16 +93,10 @@ class DMSImporter(BaseImporter):
                         "Rule": f"cim:{class_name}(cim:{prop_name}.name)",
                     }
                 )
-        metadata = {
-            "shortName": "",
-            "version": "0.1.0",
-            "created": date.today().isoformat(),
-            "creator": getpass.getuser(),
-            "description": "",
-        }
+        metadata = self._default_metadata()
 
         return RawTables(
             Classes=pd.DataFrame(classes),
             Properties=pd.DataFrame(properties),
-            Metadata=pd.Series(metadata).to_frame("value"),
+            Metadata=pd.Series(metadata).to_frame("value").reset_index(),
         )
