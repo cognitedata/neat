@@ -23,7 +23,6 @@ def test_rules2shacl(transformation_rules):
 def test_rules2semantic_model(transformation_rules):
     semantic_model_exporter = SemanticDataModelExporter(rules=transformation_rules, filepath=None)
 
-    # however we have 6 node shapes since for one class there are no properties defined
     assert (
         len(semantic_model_exporter.data.query("SELECT ?s WHERE {?s rdf:type sh:NodeShape Filter (!isBlank(?s))}")) == 6
     )
