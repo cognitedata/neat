@@ -926,12 +926,16 @@ class TransformationRules(RuleModel):
         return value
 
     @field_validator("classes", mode="before")
-    def dict_to_classes_obj(cls, value: dict) -> Classes:
+    def dict_to_classes_obj(cls, value: dict | Classes) -> Classes:
+        if not isinstance(value, dict):
+            return value
         dict_of_classes = TypeAdapter(dict[str, Class]).validate_python(value)
         return Classes(data=dict_of_classes)
 
     @field_validator("properties", mode="before")
-    def dict_to_properties_obj(cls, value: dict) -> Properties:
+    def dict_to_properties_obj(cls, value: dict | Properties) -> Properties:
+        if not isinstance(value, dict):
+            return value
         dict_of_properties = TypeAdapter(dict[str, Property]).validate_python(value)
         return Properties(data=dict_of_properties)
 
