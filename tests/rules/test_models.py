@@ -23,4 +23,6 @@ def tests_create_empty_rules():
     # Act
     rules = TransformationRules(metadata=metadata, classes=classes, properties=properties, prefixes={}, instances=[])
 
+    # Assert
+    # Main point is that the rules are created without errors
     assert rules.metadata.title == "Dummy Title"

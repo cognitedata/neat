@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.31.1] - 21-10-23
+### Fixed
+- Creating `TransformationRules` with the new `Classes` and `Properties` object caused a validation error. This is now
+  fixed.
+
 ## [0.31.0] - 18-10-23
 ### Added
 - Importer `GraphImporter`
