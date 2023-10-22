@@ -61,7 +61,7 @@ class InstancesFromRdfFileToSourceGraph(Step):
         ),
     ]
 
-    def run(self, rules: RulesData, source_graph: SourceGraph) -> FlowMessage:  # type: ignore[override, syntax]
+    def run(self, source_graph: SourceGraph) -> FlowMessage:  # type: ignore[override, syntax]
         if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
         if source_graph.graph.rdf_store_type.lower() in ("memory", "oxigraph"):

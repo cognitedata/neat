@@ -10,7 +10,7 @@ from typing import cast
 
 import numpy as np
 import pandas as pd
-from rdflib import Graph, Literal, Namespace, URIRef
+from rdflib import DCTERMS, OWL, RDF, RDFS, SKOS, Graph, Literal, Namespace, URIRef
 
 from cognite.neat.rules import exceptions
 from cognite.neat.rules.importer._base import BaseImporter
@@ -180,7 +180,14 @@ def _graph_to_data_model_dict(graph: Graph, max_number_of_instance: int = -1) ->
         Tuple of data model and prefixes of the graph
     """
     data_model: dict[str, dict] = {}
-    prefixes: dict[str, Namespace] = {}
+
+    prefixes: dict[str, Namespace] = {
+        "rdf": Namespace(str(RDF)),
+        "rdfs": Namespace(str(RDFS)),
+        "dct": Namespace(str(DCTERMS)),
+        "skos": Namespace(str(SKOS)),
+        "owl": Namespace(str(OWL)),
+    }
 
     for class_ in _get_class_ids(graph):
         _add_uri_namespace_to_prefixes(class_, prefixes)
@@ -255,7 +262,7 @@ def _add_uri_namespace_to_prefixes(URI: URIRef, prefixes: dict[str, Namespace]):
         URI: URI from which namespace is being extracted
         prefixes: Dict of prefixes and namespaces
     """
-    if get_namespace(URI) not in prefixes.values():
+    if Namespace(get_namespace(URI)) not in prefixes.values():
         prefixes[f"prefix-{len(prefixes)+1}"] = Namespace(get_namespace(URI))
 
 
