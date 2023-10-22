@@ -15,6 +15,13 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.40.0] - 22-10-23
+### Improved
+- Refactor importers
+- Simplified data modeling flow by introducing RawRules as a first class citizen
+- Fix small bugs
+- Initiated refactor of exporters
+
 ## [0.31.0] - 18-10-23
 ### Added
 - Importer `GraphImporter`
