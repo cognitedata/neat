@@ -160,11 +160,10 @@ class RawRules(RuleModel):
         else:
             return _to_validated_rules(rules_dict, return_report)
 
-        return _to_invalidated_rules(rules_dict) if skip_validation else _to_validated_rules(rules_dict, return_report)
-
     def validate_rules(self) -> str | None:
         _, errors, warnings_ = self.to_rules(return_report=True, skip_validation=False)
 
+        report = ""
         if errors:
             warnings.warn(
                 exceptions.RulesHasErrors(importer_type=self.importer_type).message,

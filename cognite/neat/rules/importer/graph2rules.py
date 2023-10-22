@@ -69,7 +69,7 @@ def _create_default_properties_parsing_config() -> dict[str, tuple[str, ...]]:
             "Rule",
             "Source",
             "Source Entity Name",
-            "Match",
+            "Match Type",
             "Comment",
         )
     }
@@ -84,7 +84,7 @@ def _create_default_classes_parsing_config() -> dict[str, tuple[str, ...]]:
             "Parent Class",
             "Source",
             "Source Entity Name",
-            "Match",
+            "Match Type",
             "Comment",
         )
     }

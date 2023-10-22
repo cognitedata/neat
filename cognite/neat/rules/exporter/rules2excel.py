@@ -53,27 +53,57 @@ class ExcelExporter(BaseExporter):
         metadata_sheet = self.data.create_sheet("Metadata")
 
         # add each metadata property to the sheet as a row
-
+        metadata_sheet.append(["prefix", metadata.prefix])
+        metadata_sheet.append(["namespace", metadata.namespace])
+        metadata_sheet.append(["dataModelName", metadata.data_model_name])
+        metadata_sheet.append(["cdfSpaceName", metadata.cdf_space_name])
         metadata_sheet.append(["title", metadata.title])
         metadata_sheet.append(["description", metadata.description])
         metadata_sheet.append(["version", metadata.version])
-        metadata_sheet.append(["creator", ",".join(metadata.creator)])
+        metadata_sheet.append(["isCurrentVersion", metadata.is_current_version])
+        metadata_sheet.append(
+            [
+                "creator",
+                ",".join(metadata.creator if isinstance(metadata.creator, list) else [metadata.creator])
+                if metadata.creator
+                else "",
+            ]
+        )
+        metadata_sheet.append(
+            [
+                "contributor",
+                ",".join(metadata.contributor if isinstance(metadata.contributor, list) else [metadata.contributor])
+                if metadata.contributor
+                else "",
+            ]
+        )
         metadata_sheet.append(["created", metadata.created])
-        metadata_sheet.append(["dataModelName", metadata.data_model_name])
-        metadata_sheet.append(["cdfSpaceName", metadata.cdf_space_name])
-        metadata_sheet.append(["prefix", metadata.prefix])
-        metadata_sheet.append(["namespace", metadata.namespace])
+        metadata_sheet.append(["updated", metadata.updated])
+        metadata_sheet.append(["rights", metadata.rights])
 
         # map classes to excel sheet named "Classes" and add each class as a row
         classes_sheet = self.data.create_sheet("Classes")
 
-        classes_sheet.append(["Solution model", "", ""])
+        classes_sheet.append(["Solution model", "", "", "Knowledge acquisition", "", "", ""])
         classes_sheet.merge_cells("A1:C1")
-        classes_sheet.append(["Class", "Description", "Parent Class"])  # A  # B  # C
+        classes_sheet.merge_cells("D1:G1")
+        classes_sheet.append(
+            ["Class", "Description", "Parent Class", "Source", "Source Entity Name", "Match Type", "Comment"]
+        )  # A  ... # G
 
         for class_ in self.rules.classes.values():
             self.class_counter += 1
-            classes_sheet.append([class_.class_id, class_.description, class_.parent_class])
+            classes_sheet.append(
+                [
+                    class_.class_id,
+                    class_.description,
+                    class_.parent_class,
+                    class_.source,
+                    class_.source_entity_name,
+                    class_.match_type,
+                    class_.comment,
+                ]
+            )
 
         # map properties to excel sheet named "Properties" and add each property as a row
         properties_sheet = self.data.create_sheet("Properties")
@@ -93,11 +123,16 @@ class ExcelExporter(BaseExporter):
                 "",  # L
                 "Transformation rules",  # M
                 "",  # N
+                "Knowledge acquisition",  # O
+                "",  # P
+                "",  # Q
+                "",  # R
             ]
         )
         properties_sheet.merge_cells("A1:F1")
         properties_sheet.merge_cells("G1:L1")
         properties_sheet.merge_cells("M1:N1")
+        properties_sheet.merge_cells("O1:R1")
         properties_sheet.append(
             [
                 "Class",  # A
@@ -114,6 +149,10 @@ class ExcelExporter(BaseExporter):
                 "Relationship ExternalID Rule",  # L
                 "Rule Type",  # M
                 "Rule",  # N
+                "Source",  # O
+                "Source Entity Name",  # P
+                "Match Type",  # Q
+                "Comment",  # R
             ]
         )
 
@@ -135,6 +174,10 @@ class ExcelExporter(BaseExporter):
                     property_.relationship_external_id_rule,  # L
                     property_.rule_type,  # M
                     property_.rule,  # N
+                    property_.source,  # O
+                    property_.source_entity_name,  # P
+                    property_.match_type,  # Q
+                    property_.comment,  # R
                 ]
             )
         self.set_header_style()
@@ -160,12 +203,12 @@ class ExcelExporter(BaseExporter):
                 for cell in sheet_obj[1]:
                     cell = cast(Cell, cell)  # type: ignore[index]
                     cell.style = style
-                    cell.fill = PatternFill("solid", start_color="3fd968")
+                    cell.fill = PatternFill("solid", start_color="D5B2CF")
                     cell.alignment = Alignment(horizontal="center", vertical="center")
                 for cell in sheet_obj[2]:
                     cell = cast(Cell, cell)  # type: ignore[index]
                     cell.style = style
-                    cell.fill = PatternFill("solid", start_color="d5dbd5")
+                    cell.fill = PatternFill("solid", start_color="D5DBD5")
                     cell.alignment = Alignment(horizontal="center", vertical="center")
                     adjusted_width = (len(str(cell.value)) + 5) * 1.2
                     self.data[sheet].column_dimensions[cell.column_letter].width = adjusted_width

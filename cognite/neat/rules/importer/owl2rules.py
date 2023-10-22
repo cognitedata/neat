@@ -7,7 +7,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from rdflib import DC, DCTERMS, OWL, RDF, RDFS, Graph
+from rdflib import DC, DCTERMS, OWL, RDF, RDFS, SKOS, Graph
 
 from cognite.neat.rules.importer._base import BaseImporter
 from cognite.neat.rules.models.tables import Tables
@@ -44,6 +44,7 @@ class OWLImporter(BaseImporter):
         graph.bind("rdfs", RDFS)
         graph.bind("dcterms", DCTERMS)
         graph.bind("dc", DC)
+        graph.bind("skos", SKOS)
 
         return {
             Tables.metadata: _parse_owl_metadata_df(graph),
@@ -135,7 +136,7 @@ def _parse_owl_metadata_df(graph: Graph, parsing_config: dict | None = None) -> 
         ?namespace a owl:Ontology .
         OPTIONAL {?namespace owl:versionInfo ?version }.
         OPTIONAL {?namespace dcterms:creator ?creator }.
-        OPTIONAL {?namespace dcterms:title ?title }.
+        OPTIONAL {?namespace dcterms:title|rdfs:label|skos:prefLabel ?title }.
         OPTIONAL {?namespace dcterms:contributor ?contributor }.
         OPTIONAL {?namespace dcterms:modified ?updated }.
         OPTIONAL {?namespace dcterms:created ?created }.
