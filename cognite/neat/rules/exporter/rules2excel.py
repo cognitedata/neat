@@ -180,6 +180,23 @@ class ExcelExporter(BaseExporter):
                     property_.comment,  # R
                 ]
             )
+
+        prefixes_sheet = self.data.create_sheet("Prefixes")
+        prefixes_sheet.append(
+            [
+                "Prefix",  # A
+                "URI",  # B
+            ]
+        )
+
+        for prefix, uri in self.rules.prefixes.items():
+            prefixes_sheet.append(
+                [
+                    prefix,  # A
+                    uri,  # B
+                ]
+            )
+
         self.set_header_style()
 
     def set_header_style(self):
