@@ -1,7 +1,7 @@
-from cognite.neat.rules.models import TransformationRules
+from cognite.neat.rules.models.rules import Rules
 
 
-def get_labels(transformation_rules: TransformationRules) -> set[str]:
+def get_labels(transformation_rules: Rules) -> set[str]:
     """
     Return CDF labels for classes and relationships.
 

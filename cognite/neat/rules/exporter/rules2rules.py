@@ -10,12 +10,10 @@ import warnings
 from typing import Any
 
 from cognite.neat.rules.analysis import get_defined_classes
-from cognite.neat.rules.models import TransformationRules
+from cognite.neat.rules.models.rules import Rules
 
 
-def subset_rules(
-    transformation_rules: TransformationRules, desired_classes: set, skip_validation: bool = False
-) -> TransformationRules:
+def subset_rules(rules: Rules, desired_classes: set, skip_validation: bool = False) -> Rules:
     """
     Subset transformation rules to only include desired classes and their properties.
 
@@ -33,7 +31,7 @@ def subset_rules(
 
     """
 
-    defined_classes = get_defined_classes(transformation_rules)
+    defined_classes = get_defined_classes(rules)
     possible_classes = defined_classes.intersection(desired_classes)
     impossible_classes = desired_classes - possible_classes
 
@@ -48,28 +46,28 @@ def subset_rules(
         )
 
     reduced_data_model: dict[str, Any] = {
-        "metadata": transformation_rules.metadata.model_copy(),
-        "prefixes": (transformation_rules.prefixes or {}).copy(),
+        "metadata": rules.metadata.model_copy(),
+        "prefixes": (rules.prefixes or {}).copy(),
         "classes": {},
         "properties": {},
-        "instances": (transformation_rules.instances or []).copy(),
+        "instances": (rules.instances or []).copy(),
     }
 
     logging.info(f"Reducing data model to only include the following classes: {possible_classes}")
     for class_ in possible_classes:
-        reduced_data_model["classes"][class_] = transformation_rules.classes[class_]
+        reduced_data_model["classes"][class_] = rules.classes[class_]
 
-    for id_, property_definition in transformation_rules.properties.items():
+    for id_, property_definition in rules.properties.items():
         if property_definition.class_id in possible_classes:
             reduced_data_model["properties"][id_] = property_definition
 
     if skip_validation:
-        return TransformationRules.model_construct(**reduced_data_model)
+        return Rules.model_construct(**reduced_data_model)
     else:
-        return TransformationRules(**reduced_data_model)
+        return Rules(**reduced_data_model)
 
 
-def to_dms_compliant_rules(rules: TransformationRules) -> TransformationRules:
+def to_dms_compliant_rules(rules: Rules) -> Rules:
     raise NotImplementedError()
 
 

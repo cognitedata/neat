@@ -8,7 +8,7 @@ from typing import Literal
 
 from pydantic import BaseModel, field_validator
 
-from . import exceptions
+from cognite.neat.rules import exceptions
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -34,7 +34,7 @@ class OWL(StrEnum):
     annotation_property = "annotation_property"
 
 
-class RuleType(StrEnum):
+class TransformationRuleType(StrEnum):
     rdfpath = "rdfpath"
     rawlookup = "rawlookup"
     sparql = "sparql"
@@ -242,25 +242,27 @@ def parse_table_lookup(raw: str) -> TableLookup:
     raise exceptions.NotValidTableLookUp(raw).to_pydantic_custom_error()
 
 
-def parse_rule(rule_raw: str, rule_type: RuleType | None) -> RDFPath:
+def parse_rule(rule_raw: str, rule_type: TransformationRuleType | None) -> RDFPath:
     match rule_type:
-        case RuleType.rdfpath:
+        case TransformationRuleType.rdfpath:
             rule_raw = rule_raw.replace(" ", "")
             return RDFPath(traversal=parse_traversal(rule_raw))
-        case RuleType.rawlookup:
+        case TransformationRuleType.rawlookup:
             rule_raw = rule_raw.replace(" ", "")
             if Counter(rule_raw).get("|") != 1:
                 raise exceptions.NotValidRAWLookUp(rule_raw).to_pydantic_custom_error()
             traversal, table_lookup = rule_raw.split("|")
             return RawLookup(traversal=parse_traversal(traversal), table=parse_table_lookup(table_lookup))
-        case RuleType.sparql:
+        case TransformationRuleType.sparql:
             return SPARQLQuery(traversal=Query(query=rule_raw))
         case None:
             raise ValueError("Rule type must be specified")
 
 
-def is_valid_rule(rule_type: RuleType, rule_raw: str) -> bool:
-    is_valid_rule = {RuleType.rdfpath: is_rdfpath, RuleType.rawlookup: is_rawlookup}[rule_type]
+def is_valid_rule(rule_type: TransformationRuleType, rule_raw: str) -> bool:
+    is_valid_rule = {TransformationRuleType.rdfpath: is_rdfpath, TransformationRuleType.rawlookup: is_rawlookup}[
+        rule_type
+    ]
     return is_valid_rule(rule_raw)
 
 
@@ -274,7 +276,7 @@ def is_rdfpath(raw: str) -> bool:
 
 def is_rawlookup(raw: str) -> bool:
     try:
-        parse_rule(raw, RuleType.rawlookup)
+        parse_rule(raw, TransformationRuleType.rawlookup)
     except ValueError:
         return False
     return True

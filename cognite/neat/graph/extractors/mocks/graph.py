@@ -17,7 +17,7 @@ from cognite.neat.rules.analysis import (
     get_symmetric_pairs,
 )
 from cognite.neat.rules.exporter.rules2rules import subset_rules
-from cognite.neat.rules.models import DATA_TYPE_MAPPING, TransformationRules
+from cognite.neat.rules.models.rules import DATA_TYPE_MAPPING, Rules
 from cognite.neat.utils.utils import remove_namespace
 
 neat_total_processed_mock_triples = Gauge(
@@ -36,7 +36,7 @@ class MockGraphGenerator:
         rules: Transformation rules defining the classes with their properties.
     """
 
-    def __init__(self, rules: TransformationRules):
+    def __init__(self, rules: Rules):
         self.rules = rules
 
     def generate_triples(
@@ -60,7 +60,7 @@ class MockGraphGenerator:
 
 
 def generate_triples(
-    transformation_rules: TransformationRules,
+    transformation_rules: Rules,
     class_count: dict,
     stop_on_exception: bool = False,
     allow_isolated_classes: bool = True,
@@ -319,7 +319,7 @@ def _generate_triples_per_class(
     return triples
 
 
-def _rules_to_dict(transformation_rules: TransformationRules) -> dict[str, pd.DataFrame]:
+def _rules_to_dict(transformation_rules: Rules) -> dict[str, pd.DataFrame]:
     """Represent data model as a dictionary of data frames, where each data frame
     represents properties defined for a given class.
 

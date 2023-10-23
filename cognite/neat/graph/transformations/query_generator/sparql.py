@@ -8,19 +8,19 @@ from rdflib.term import URIRef
 
 from cognite.neat.constants import PREFIXES
 from cognite.neat.rules.analysis import get_classes_with_properties
-from cognite.neat.rules.models import TransformationRules
-from cognite.neat.rules.to_rdf_path import (
+from cognite.neat.rules.models.rdfpath import (
     AllProperties,
     AllReferences,
     Hop,
-    RuleType,
     SingleProperty,
     Step,
+    TransformationRuleType,
     Traversal,
     Triple,
     parse_rule,
     parse_traversal,
 )
+from cognite.neat.rules.models.rules import Rules
 from cognite.neat.utils.utils import remove_namespace
 
 
@@ -368,7 +368,7 @@ def _hop2property_path(graph: Graph, hop: Hop, prefixes: dict[str, Namespace]) -
 def build_construct_query(
     graph: Graph,
     class_: str,
-    transformation_rules: TransformationRules,
+    transformation_rules: Rules,
     properties_optional: bool = True,
     class_instances: list[URIRef] | None = None,
 ) -> str:
@@ -433,7 +433,7 @@ def _triples2sparql_statement(triples: list[Triple]):
 
 
 def _to_construct_triples(
-    graph: Graph, class_: str, transformation_rules: TransformationRules, properties_optional: bool = True
+    graph: Graph, class_: str, transformation_rules: Rules, properties_optional: bool = True
 ) -> tuple[list[Triple], list[Triple]]:
     """Converts class definition to CONSTRUCT triples which are used to generate CONSTRUCT query
 
@@ -458,7 +458,7 @@ def _to_construct_triples(
 
     class_ids = []
     for property_ in get_classes_with_properties(transformation_rules)[class_]:
-        if property_.rule_type != RuleType.rdfpath or property_.skip_rule:
+        if property_.rule_type != TransformationRuleType.rdfpath or property_.skip_rule:
             continue
         if not isinstance(property_.rule, str):
             raise ValueError("Rule must be string!")

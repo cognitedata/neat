@@ -2,7 +2,7 @@ from datetime import datetime
 
 from rdflib import Namespace
 
-from cognite.neat.rules.models import Classes, Metadata, Properties, TransformationRules
+from cognite.neat.rules.models.rules import Classes, Metadata, Properties, Rules
 
 
 def tests_create_empty_rules():
@@ -21,7 +21,7 @@ def tests_create_empty_rules():
     properties = Properties()
 
     # Act
-    rules = TransformationRules(metadata=metadata, classes=classes, properties=properties, prefixes={}, instances=[])
+    rules = Rules(metadata=metadata, classes=classes, properties=properties, prefixes={}, instances=[])
 
     # Assert
     # Main point is that the rules are created without errors

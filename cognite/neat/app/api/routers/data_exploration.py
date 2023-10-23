@@ -134,10 +134,10 @@ def get_nodes_and_edges(request: NodesAndEdgesRequest):
         if request.node_name_property:
             nodes_query = f"SELECT DISTINCT ?node_id ?node_class ?node_name WHERE \
             {{ {nodes_filter} \
-            ?node_id {request.node_name_property} ?node_name . ?node_id rdf:type ?node_class }} "
+            ?node_id {request.node_name_property} ?node_name . ?node_id a ?node_class }} "
         else:
             nodes_query = f"SELECT DISTINCT ?node_id ?node_class (?node_id AS ?node_name) WHERE \
-            {{ {nodes_filter} ?node_id rdf:type ?node_class }} "
+            {{ {nodes_filter} ?node_id a ?node_class }} "
 
         if len(request.src_edge_filter) > 0:
             edges_src_filter = (
@@ -153,8 +153,8 @@ def get_nodes_and_edges(request: NodesAndEdgesRequest):
             {edges_src_filter} \
             {edges_dst_filter} \
             ?src_object_ref ?conn  ?dst_object_ref . \
-            ?src_object_ref  rdf:type ?src_object_class . \
-            ?dst_object_ref  rdf:type ?dst_object_class .\
+            ?src_object_ref  a ?src_object_class . \
+            ?dst_object_ref  a ?dst_object_class .\
             }} "
         nodes_query = f"{nodes_query} LIMIT {request.limit}"
         edges_query = f"{edges_query} LIMIT {request.limit}"
@@ -257,13 +257,13 @@ def search(
     elif search_type == "value_exact_match":
         query = (
             f"select ?object_ref ?type ?property ?value where "
-            f"{{ ?object_ref ?property ?value . ?object_ref rdf:type ?type . "
+            f"{{ ?object_ref ?property ?value . ?object_ref a ?type . "
             f'FILTER(?value="{search_str}") }} limit 10000'
         )
     elif search_type == "value_regexp":
         query = (
             f"select ?object_ref ?type ?property ?value where "
-            f"{{ ?object_ref ?property ?value . ?object_ref rdf:type ?type .  "
+            f"{{ ?object_ref ?property ?value . ?object_ref a ?type .  "
             f'FILTER regex(?value, "{search_str}","i") }} limit 10000'
         )
     return get_data_from_graph(query, graph_name, workflow_name=workflow_name)
@@ -276,8 +276,7 @@ def get_classes(graph_name: str = "source", workflow_name: str = "default", cach
     if cache_key in CACHE_STORE and cache:
         return CACHE_STORE[cache_key]
     query = (
-        "SELECT ?class (count(?s) as ?instances ) WHERE { ?s rdf:type ?class . } "
-        "group by ?class order by DESC(?instances)"
+        "SELECT ?class (count(?s) as ?instances ) WHERE { ?s a ?class . } " "group by ?class order by DESC(?instances)"
     )
     api_result = get_data_from_graph(query, graph_name, workflow_name)
     CACHE_STORE["get_classes"] = api_result

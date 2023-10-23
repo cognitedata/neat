@@ -17,7 +17,7 @@ from cognite.neat.graph import exceptions
 from cognite.neat.graph.exceptions import NamespaceRequired
 from cognite.neat.rules.analysis import get_defined_classes, to_class_property_pairs
 from cognite.neat.rules.exporter.rules2rules import to_dms_name
-from cognite.neat.rules.models import TransformationRules
+from cognite.neat.rules.models.rules import Rules
 
 
 class GraphCapturingSheet:
@@ -30,7 +30,7 @@ class GraphCapturingSheet:
         filepath: File path to save the sheet to. Defaults to None.
     """
 
-    def __init__(self, rules: TransformationRules, filepath: Path | str | None = None):
+    def __init__(self, rules: Rules, filepath: Path | str | None = None):
         self.rules = rules
         self.filepath = Path(filepath) if isinstance(filepath, str) else None
 
@@ -63,7 +63,7 @@ class GraphCapturingSheet:
 
 
 def extract_graph_from_sheet(
-    filepath: Path, transformation_rule: TransformationRules, separator: str = ",", namespace: str | None = None
+    filepath: Path, transformation_rule: Rules, separator: str = ",", namespace: str | None = None
 ) -> list[tuple]:
     """Converts a graph capturing sheet to RDF triples that define data model instances
 
@@ -86,7 +86,7 @@ def extract_graph_from_sheet(
 
 def sheet2triples(
     graph_capturing_sheet: dict[str, pd.DataFrame],
-    transformation_rule: TransformationRules,
+    transformation_rule: Rules,
     separator: str = ",",
     namespace: str | None = None,
 ) -> list[tuple]:
@@ -188,7 +188,7 @@ def validate_if_graph_capturing_sheet_empty(graph_capturing_sheet: dict[str, pd.
         raise ValueError(msg)
 
 
-def validate_rules_graph_pair(graph_capturing_sheet: dict[str, pd.DataFrame], transformation_rule: TransformationRules):
+def validate_rules_graph_pair(graph_capturing_sheet: dict[str, pd.DataFrame], transformation_rule: Rules):
     """Validate if the graph capturing sheet is based on the transformation rules
 
     Args:
@@ -235,7 +235,7 @@ def read_graph_excel_file_to_table_by_name(filepath: Path) -> dict[str, pd.DataF
 
 
 def rules2graph_capturing_sheet(
-    transformation_rules: TransformationRules,
+    transformation_rules: Rules,
     file_path: Path,
     no_rows: int = 1000,
     auto_identifier_type: str = "index-based",
