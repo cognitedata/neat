@@ -16,8 +16,6 @@ class ExcelExporter(BaseExporter):
 
     def __init__(self, rules: Rules | RawRules, filepath: Path, report_path: Path | None = None):
         super().__init__(rules, filepath, report_path)
-        
-        
 
     def export(self, filepath: Path | None = None):
         """Exports transformation rules to excel file."""
@@ -193,7 +191,7 @@ class ExcelExporter(BaseExporter):
         return self.set_header_style(data)
 
     @staticmethod
-    def set_header_style(data:Workbook):
+    def set_header_style(data: Workbook):
         """Sets the header style for all sheets in the self.workbook"""
         style = NamedStyle(name="header style")
         style.font = Font(bold=True, size=16)
@@ -223,5 +221,5 @@ class ExcelExporter(BaseExporter):
                     cell.alignment = Alignment(horizontal="center", vertical="center")
                     adjusted_width = (len(str(cell.value)) + 5) * 1.2
                     data[sheet].column_dimensions[cell.column_letter].width = adjusted_width
-        
+
         return data

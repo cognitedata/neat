@@ -7,7 +7,7 @@ from cognite.neat.rules.models.rules import Rules
 
 
 class BaseExporter(ABC):
-    def __init__(self, rules: Rules, filepath: Path | None = None, report_path: Path | None = None):
+    def __init__(self, rules: Rules | RawRules, filepath: Path | None = None, report_path: Path | None = None):
         self.report = None
         if rules.__class__.__name__ == RawRules.__name__:
             self.rules = cast(RawRules, rules).to_rules(skip_validation=True)
