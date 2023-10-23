@@ -499,34 +499,31 @@ def to_edge(self, data_model: DataModel, add_class_prefix: bool) -> list[EdgeApp
     for edge_one_to_many in self.edges_one_to_many:
         edge_type_id = f"{class_name}.{edge_one_to_many}"
         for end_node_id in getattr(self, edge_one_to_many):
-            try:
-                if not is_external_id_valid(end_node_id):
+            if not is_external_id_valid(end_node_id):
+                warnings.warn(
+                exceptions.EdgeConditionUnmet(edge_one_to_many).message,
+                category=exceptions.EdgeConditionUnmet(edge_one_to_many),
+                stacklevel=2,
+            )
+            end_node_external_id = end_node_id
+            if add_class_prefix:
+                end_node_class_name = _get_end_node_class_name(data_model.views[class_name], edge_one_to_many)
+                if end_node_class_name is None:
                     warnings.warn(
-                    exceptions.EdgeConditionUnmet(edge_one_to_many).message,
-                    category=exceptions.EdgeConditionUnmet(edge_one_to_many),
-                    stacklevel=2,
-                )
-                end_node_external_id = end_node_id
-                if add_class_prefix:
-                    end_node_class_name = _get_end_node_class_name(data_model.views[class_name], edge_one_to_many)
-                    if end_node_class_name is None:
-                        warnings.warn(
-                            exceptions.EdgeConditionUnmet(edge_one_to_many).message,
-                            category=exceptions.EdgeConditionUnmet(edge_one_to_many),
-                            stacklevel=2,
-                        )
-                    end_node_external_id = add_class_prefix_to_xid(end_node_class_name, end_node_id)
+                        exceptions.EdgeConditionUnmet(edge_one_to_many).message,
+                        category=exceptions.EdgeConditionUnmet(edge_one_to_many),
+                        stacklevel=2,
+                    )
+                end_node_external_id = add_class_prefix_to_xid(end_node_class_name, end_node_id)
 
-                edge = EdgeApply(
-                    space=data_model.space,
-                    external_id=f"{self.external_id}-{end_node_external_id}",
-                    type=(data_model.space, edge_type_id),
-                    start_node=(data_model.space, self.external_id),
-                    end_node=(data_model.space, end_node_external_id),
-                )
-                edges.append(edge)
-            except exceptions.EdgeConditionUnmet as e:
-                exceptions.append(e)
+            edge = EdgeApply(
+                space=data_model.space,
+                external_id=f"{self.external_id}-{end_node_external_id}",
+                type=(data_model.space, edge_type_id),
+                start_node=(data_model.space, self.external_id),
+                end_node=(data_model.space, end_node_external_id),
+            )
+            edges.append(edge)
     return edges, exceptions
 
 def _get_end_node_class_name(view: ViewApply, edge: str) -> str | None:
