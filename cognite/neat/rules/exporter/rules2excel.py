@@ -22,8 +22,6 @@ class ExcelExporter(BaseExporter):
         else:
             self.rules = cast(Rules, rules)
 
-        self.filepath = filepath
-        self.report_path = report_path
         self.class_counter = 0
         self.property_counter = 0
         self.generate_workbook()
