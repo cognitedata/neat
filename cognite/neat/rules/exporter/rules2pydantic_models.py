@@ -492,7 +492,7 @@ def to_edge(self, data_model: DataModel, add_class_prefix: bool) -> list[EdgeApp
         # should match "^[^\x00]{1,255}$" and not be None or none
         if external_id == "None" or external_id == "none":
             return False
-        return bool(re.match(r"^[^\x00]{2,3}$", external_id))
+        return bool(re.match(r"^[^\x00]{1,255}$", external_id))
 
     class_name = type(self).__name__
 
