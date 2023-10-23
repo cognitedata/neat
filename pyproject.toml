@@ -1,18 +1,18 @@
 [tool.poetry]
 name = "cognite-neat"
-version = "0.40.0"
+version = "0.32.0"
 readme = "README.md"
 description = "Knowledge graph transformation"
-authors = ["Nikola Vasiljevic <nikola.vasiljevic@cognite.com>",
+authors = [
+    "Nikola Vasiljevic <nikola.vasiljevic@cognite.com>",
     "Anders Albert <anders.albert@cognite.com>",
-    "Aleksandrs Livincovs <aleksandrs.livincovs@cognite.com>"]
+    "Aleksandrs Livincovs <aleksandrs.livincovs@cognite.com>",
+]
 license = "Apache-2.0"
 documentation = "https://cognite-neat.readthedocs-hosted.com/"
 homepage = "https://cognite-neat.readthedocs-hosted.com/"
 repository = "https://github.com/cognitedata/neat"
-packages = [
-    { include="cognite", from="." },
-]
+packages = [{ include = "cognite", from = "." }]
 exclude = [
     "cognite/neat/app/ui/neat-app/public/**",
     "cognite/neat/app/ui/neat-app/src/**",
@@ -21,7 +21,6 @@ exclude = [
 ]
 [tool.poetry.group.docs.dependencies]
 mkdocs-autorefs = "^0.5.0"
-
 
 
 [tool.black]
@@ -33,9 +32,9 @@ include = '\.py$'
 # See https://beta.ruff.rs/docs/rules for an overview of ruff rules
 line-length = 120
 target-version = "py310"
-exclude = ["examples","examples-pydantic-v1", "scripts"]
-select = ["E","W","F","I","RUF","TID","UP", "B", "FLY", "PTH", "ERA"]
-fixable = ["E","W","F","I","RUF","TID","UP", "B", "FLY", "PTH", "ERA"]
+exclude = ["examples", "examples-pydantic-v1", "scripts"]
+select = ["E", "W", "F", "I", "RUF", "TID", "UP", "B", "FLY", "PTH", "ERA"]
+fixable = ["E", "W", "F", "I", "RUF", "TID", "UP", "B", "FLY", "PTH", "ERA"]
 fix = true
 ignore = []
 
@@ -65,43 +64,59 @@ PyYAML = "*"
 requests = "*"
 urllib3 = "^1.26"
 # Backport from Python 3.11
-exceptiongroup = {version = "^1.1.3",  python = "<3.11"}
-'backports.strenum' = {version = "^1.2",  python = "<3.11"}
-typing_extensions = {version = "^4.8",  python = "<3.11"}
-tomli = {version = "^2.0.1", python = "<3.11"}
+exceptiongroup = { version = "^1.1.3", python = "<3.11" }
+'backports.strenum' = { version = "^1.2", python = "<3.11" }
+typing_extensions = { version = "^4.8", python = "<3.11" }
+tomli = { version = "^2.0.1", python = "<3.11" }
 
-uvicorn = {extras = ["standard"], version = "^0.21.0"}
+uvicorn = { extras = ["standard"], version = "^0.21.0" }
 prometheus-client = "^0.17.0"
 cognite-sdk = "^6"
 deepdiff = "*"
 fastapi = "^0.100"
 schedule = "^1"
 python-multipart = "^0.0.6"
-oxrdflib = {version = "^0.3.3", extras = ["oxigraph"]}
+oxrdflib = { version = "^0.3.3", extras = ["oxigraph"] }
 
-openpyxl = {version="*", optional=true}
+openpyxl = { version = "*", optional = true }
 
-gspread = {version="*", optional=true}
-google-api-python-client = {version="*", optional=true}
-google-auth-oauthlib = {version="*", optional=true}
+gspread = { version = "*", optional = true }
+google-api-python-client = { version = "*", optional = true }
+google-auth-oauthlib = { version = "*", optional = true }
 
-mkdocs =  {version="*", optional=true}
-mkdocs-jupyter = {version="*", optional=true}
-mkdocs-material-extensions = {version="*", optional=true}
-mkdocs-git-revision-date-localized-plugin = {version="*", optional=true}
-mkdocs-git-authors-plugin = {version="*", optional=true}
-mkdocs-gitbook = {version="*", optional=true}
-mkdocs-glightbox = {version="*", optional=true}
-pymdown-extensions = {version="*", optional=true}
-mkdocstrings = {version="*", optional=true, extras=["python"]}
-jinja2 = {version = "^3.1.2", optional=true}
+mkdocs = { version = "*", optional = true }
+mkdocs-jupyter = { version = "*", optional = true }
+mkdocs-material-extensions = { version = "*", optional = true }
+mkdocs-git-revision-date-localized-plugin = { version = "*", optional = true }
+mkdocs-git-authors-plugin = { version = "*", optional = true }
+mkdocs-gitbook = { version = "*", optional = true }
+mkdocs-glightbox = { version = "*", optional = true }
+pymdown-extensions = { version = "*", optional = true }
+mkdocstrings = { version = "*", optional = true, extras = ["python"] }
+jinja2 = { version = "^3.1.2", optional = true }
 
 [tool.poetry.extras]
-docs = ["mkdocs", "mkdocs-jupyter", "mkdocs-material-extensions", "mkdocs-git-revision-date-localized-plugin", "mkdocs-git-authors-plugin", "mkdocs-gitbook", "mkdocs-glightbox", "pymdown-extensions", "mkdocstrings"]
+docs = [
+    "mkdocs",
+    "mkdocs-jupyter",
+    "mkdocs-material-extensions",
+    "mkdocs-git-revision-date-localized-plugin",
+    "mkdocs-git-authors-plugin",
+    "mkdocs-gitbook",
+    "mkdocs-glightbox",
+    "pymdown-extensions",
+    "mkdocstrings",
+]
 google = ["gspread", "google-api-python-client", "google-auth-oauthlib"]
 excel = ["openpyxl"]
 graphql = ["jinja2"]
-all = ["gspread", "google-api-python-client", "google-auth-oauthlib", "openpyxl", "jinja2"]
+all = [
+    "gspread",
+    "google-api-python-client",
+    "google-auth-oauthlib",
+    "openpyxl",
+    "jinja2",
+]
 
 [tool.poetry.dev-dependencies]
 twine = "*"
@@ -113,8 +128,10 @@ safety = "*"
 bandit = "*"
 jupyter = "*"
 pytest-regressions = "*"
-memray = [{version = "^1.7", platform = "darwin"},
-            {version = "^1.7", platform = "linux"}]
+memray = [
+    { version = "^1.7", platform = "darwin" },
+    { version = "^1.7", platform = "linux" },
+]
 httpx = "*"
 mypy = "^1.4"
 pandas-stubs = "^2"

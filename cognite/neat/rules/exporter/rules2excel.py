@@ -15,17 +15,9 @@ class ExcelExporter(BaseExporter):
     """Class for exporting transformation rules object to excel file."""
 
     def __init__(self, rules: Rules | RawRules, filepath: Path, report_path: Path | None = None):
-        self.report = None
-        if rules.__class__.__name__ == RawRules.__name__:
-            self.rules = cast(RawRules, rules).to_rules(skip_validation=True)
-            self.report = cast(RawRules, rules).validate_rules()
-        else:
-            self.rules = cast(Rules, rules)
-
-        self.class_counter = 0
-        self.property_counter = 0
-        self.generate_workbook()
-        super().__init__(self.rules, self.filepath, self.report_path)
+        super().__init__(rules, filepath, report_path)
+        
+        
 
     def export(self, filepath: Path | None = None):
         """Exports transformation rules to excel file."""
@@ -33,22 +25,27 @@ class ExcelExporter(BaseExporter):
         if not filepath:
             raise ValueError("No filepath given")
 
-        self.data.save(self.filepath)
-        self.data.close()
+        data = self.generate_workbook()
+        try:
+            data.save(filepath)
+            data.close()
+        except Exception as e:
+            data.close()
+            raise e
 
         if self.report and self.report_path:
             self.report_path.write_text(self.report)
 
-    def generate_workbook(self):
+    def generate_workbook(self) -> Workbook:
         """Generates workbook from transformation rules."""
-        self.data = Workbook()
+        data = Workbook()
         # Remove default sheet named "Sheet"
-        self.data.remove(self.data["Sheet"])
+        data.remove(data["Sheet"])
         # Serialize the rules to the excel file
 
         # map rules metadata to excel
         metadata = self.rules.metadata
-        metadata_sheet = self.data.create_sheet("Metadata")
+        metadata_sheet = data.create_sheet("Metadata")
 
         # add each metadata property to the sheet as a row
         metadata_sheet.append(["prefix", metadata.prefix])
@@ -80,7 +77,7 @@ class ExcelExporter(BaseExporter):
         metadata_sheet.append(["rights", metadata.rights])
 
         # map classes to excel sheet named "Classes" and add each class as a row
-        classes_sheet = self.data.create_sheet("Classes")
+        classes_sheet = data.create_sheet("Classes")
 
         classes_sheet.append(["Solution model", "", "", "Knowledge acquisition", "", "", ""])
         classes_sheet.merge_cells("A1:C1")
@@ -90,7 +87,6 @@ class ExcelExporter(BaseExporter):
         )  # A  ... # G
 
         for class_ in self.rules.classes.values():
-            self.class_counter += 1
             classes_sheet.append(
                 [
                     class_.class_id,
@@ -104,7 +100,7 @@ class ExcelExporter(BaseExporter):
             )
 
         # map properties to excel sheet named "Properties" and add each property as a row
-        properties_sheet = self.data.create_sheet("Properties")
+        properties_sheet = data.create_sheet("Properties")
         properties_sheet.append(
             [
                 "Solution model",  # A
@@ -155,7 +151,6 @@ class ExcelExporter(BaseExporter):
         )
 
         for property_ in self.rules.properties.values():
-            self.property_counter += 1
             properties_sheet.append(
                 [
                     property_.class_id,  # A
@@ -179,7 +174,7 @@ class ExcelExporter(BaseExporter):
                 ]
             )
 
-        prefixes_sheet = self.data.create_sheet("Prefixes")
+        prefixes_sheet = data.create_sheet("Prefixes")
         prefixes_sheet.append(
             [
                 "Prefix",  # A
@@ -195,21 +190,22 @@ class ExcelExporter(BaseExporter):
                 ]
             )
 
-        self.set_header_style()
+        return self.set_header_style(data)
 
-    def set_header_style(self):
+    @staticmethod
+    def set_header_style(data:Workbook):
         """Sets the header style for all sheets in the self.workbook"""
         style = NamedStyle(name="header style")
         style.font = Font(bold=True, size=16)
         side = Side(style="thin", color="000000")
         style.border = Border(left=side, right=side, top=side, bottom=side)
-        self.data.add_named_style(style)
+        data.add_named_style(style)
 
-        for sheet in self.data.sheetnames:
+        for sheet in data.sheetnames:
             if sheet == "Metadata":
                 continue
             if sheet == "Classes" or sheet == "Properties":
-                sheet_obj = self.data[sheet]
+                sheet_obj = data[sheet]
                 if sheet == "Classes":
                     sheet_obj.freeze_panes = "A3"
                 else:
@@ -226,4 +222,6 @@ class ExcelExporter(BaseExporter):
                     cell.fill = PatternFill("solid", start_color="D5DBD5")
                     cell.alignment = Alignment(horizontal="center", vertical="center")
                     adjusted_width = (len(str(cell.value)) + 5) * 1.2
-                    self.data[sheet].column_dimensions[cell.column_letter].width = adjusted_width
+                    data[sheet].column_dimensions[cell.column_letter].width = adjusted_width
+        
+        return data

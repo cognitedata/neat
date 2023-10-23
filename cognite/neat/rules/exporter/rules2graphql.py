@@ -25,18 +25,14 @@ if TYPE_CHECKING:
 
 class GraphQLSchemaExporter(BaseExporter):
     def __init__(self, rules: Rules, filepath: Path | None = None):
-        self.rules = rules
-        self.filepath = filepath
-        self.data = GraphQLSchema.from_rules(self.rules).schema
-
-        super().__init__(self.rules, self.filepath)
+        super().__init__(rules, filepath)
 
     def export(self, filepath: Path | None = None):
         filepath = filepath or self.filepath
         if not filepath:
             raise ValueError("No filepath given")
-
-        filepath.write_text(self.data)
+        data = GraphQLSchema.from_rules(self.rules).schema
+        filepath.write_text(data)
 
 
 _TYPE = (
