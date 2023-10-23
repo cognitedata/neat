@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import cast
-from cognite.neat.rules.models.raw_rules import RawRules
 
+from cognite.neat.rules.models.raw_rules import RawRules
 from cognite.neat.rules.models.rules import Rules
 
 
