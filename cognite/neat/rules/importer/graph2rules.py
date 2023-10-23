@@ -20,19 +20,20 @@ from cognite.neat.utils.utils import get_namespace, remove_namespace, uri_to_sho
 
 
 class GraphImporter(BaseImporter):
-    """Convert RDF graph, containing nodes and edges, to tables/ transformation rules / Excel file.
+    """
+    Convert RDF graph, containing nodes and edges, to tables/ transformation rules / Excel file.
 
-        Args:
-            graph: RDF graph to be imported
-            max_number_of_instance: Max number of instances to be considered for each class in RDF graph
+    Args:
+        graph: RDF graph to be imported
+        max_number_of_instance: Max number of instances to be analyzed for each class in RDF graph
+
 
     !!! Note
         Due to high degree of flexibility of RDF graphs, the RDF graph is not guaranteed to be
-        converted to a complete and/or valid TransformationRules object. This means that
-        the methods .to_rules() will typically fail. Instead, it is recommended that you use
-        the .to_spreadsheet() method to generate an Excel file, and then manually add the missing
-        information or correct them in the Excel file. The Excel file can then be converted
-        to a TransformationRules object.
+        converted to a complete and/or valid `Rules` object. Therefore, it is recommended to
+        call method `to_raw_rules` to get the raw rules which one should export to Excel file
+        using `exporter.ExcelExporter` and then manually edit the Excel file by checking
+        validation report file produced by the exporter.
 
     """
 

@@ -24,11 +24,25 @@ __all__ = ["RawRules"]
 
 
 class RawRules(RuleModel):
-    """This class represents an ephemeral representation of Rules in the form of raw tables."""
+    """
+    RawRules represent invalidated form of Rules, which is a core concept in `neat`.
+    RawRules are used as staging area for Rules, and are often used when importing rules
+    from sources other than Excel rules, e.g. from a json schema or owl ontology. Often
+    these sources are not validated, and are missing information to be able to create
+    a valid Rules object.
+
+    Args:
+        Metadata: Data model metadata
+        classes: Classes defined in the data model
+        properties: Class properties defined in the data model with accompanying transformation rules
+                    to transform data from source to target representation
+        prefixes: Prefixes used in the data model. Defaults to PREFIXES
+        instances: Instances defined in the data model. Defaults to None
+    """
 
     Metadata: pd.DataFrame
-    Properties: pd.DataFrame
     Classes: pd.DataFrame
+    Properties: pd.DataFrame
     Prefixes: pd.DataFrame = pd.DataFrame()
     Instances: pd.DataFrame = pd.DataFrame()
     importer_type: str = "RawTablesImporter"
@@ -87,7 +101,7 @@ class RawRules(RuleModel):
         return v
 
     @staticmethod
-    def drop_non_string_columns(df: pd.DataFrame) -> pd.DataFrame:
+    def _drop_non_string_columns(df: pd.DataFrame) -> pd.DataFrame:
         """Drop non-string columns as this can cause issue when loading rules
 
         Args:
@@ -120,14 +134,14 @@ class RawRules(RuleModel):
 
         tables_dict = {
             Tables.metadata: tables[Tables.metadata],
-            Tables.classes: cls.drop_non_string_columns(tables[Tables.classes]),
-            Tables.properties: cls.drop_non_string_columns(tables[Tables.properties]),
+            Tables.classes: cls._drop_non_string_columns(tables[Tables.classes]),
+            Tables.properties: cls._drop_non_string_columns(tables[Tables.properties]),
         }
 
         if Tables.prefixes in tables:
-            tables_dict[Tables.prefixes] = cls.drop_non_string_columns(tables[Tables.prefixes])
+            tables_dict[Tables.prefixes] = cls._drop_non_string_columns(tables[Tables.prefixes])
         if Tables.instances in tables:
-            tables_dict[Tables.instances] = cls.drop_non_string_columns(tables[Tables.instances])
+            tables_dict[Tables.instances] = cls._drop_non_string_columns(tables[Tables.instances])
 
         return cls(**tables_dict, importer_type=importer_type)
 
@@ -151,7 +165,7 @@ class RawRules(RuleModel):
 
         !!! Note
             `skip_validation` flag should be only used for purpose when `Rules` object
-            is exported to excel file. Do not use this flag for any other purpose!
+            is exported to an Excel file. Do not use this flag for any other purpose!
         """
 
         rules_dict = _raw_tables_to_rules_dict(self)

@@ -1,3 +1,4 @@
+from ._base import BaseImporter
 from .dict2rules import DictImporter
 from .dms2rules import DMSImporter
 from .graph2rules import GraphImporter
@@ -8,6 +9,7 @@ from .xml2rules import XMLImporter
 from .yaml2rules import YAMLImporter
 
 __all__ = [
+    "BaseImporter",
     "DictImporter",
     "JSONImporter",
     "YAMLImporter",

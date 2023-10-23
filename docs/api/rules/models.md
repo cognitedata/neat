@@ -1,5 +1,3 @@
-::: cognite.neat.rules.models.raw_rules.RawRules
-
 ::: cognite.neat.rules.models.rules.Rules
 
 ::: cognite.neat.rules.models.rules.Metadata
@@ -13,3 +11,5 @@
 ::: cognite.neat.rules.models.rules.Instance
 
 ::: cognite.neat.rules.models.rules.Resource
+
+::: cognite.neat.rules.models.raw_rules.RawRules
