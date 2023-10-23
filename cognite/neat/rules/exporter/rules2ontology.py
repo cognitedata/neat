@@ -21,35 +21,45 @@ else:
 
 
 class OWLExporter(BaseExporter):
-    def __init__(self, rules: Rules, filepath: Path):
+    def __init__(self, rules: Rules, filepath: Path | None = None):
         self.filepath = filepath
         self.rules = rules
         self.data = Ontology.from_rules(self.rules).as_owl()
         super().__init__(self.rules, self.filepath)
 
-    def export(self):
+    def export(self, filepath: Path | None = None):
+        filepath = filepath or self.filepath
+        if not filepath:
+            raise ValueError("No filepath given")
+
         self.data.serialize(destination=self.filepath)
 
 
 class SHACLExporter(BaseExporter):
-    def __init__(self, rules: Rules, filepath: Path):
+    def __init__(self, rules: Rules, filepath: Path | None = None):
         self.filepath = filepath
         self.rules = rules
         self.data = Ontology.from_rules(self.rules).as_shacl()
         super().__init__(self.rules, self.filepath)
 
-    def export(self):
+    def export(self, filepath: Path | None = None):
+        filepath = filepath or self.filepath
+        if not filepath:
+            raise ValueError("No filepath given")
         self.data.serialize(destination=self.filepath)
 
 
 class SemanticDataModelExporter(BaseExporter):
-    def __init__(self, rules: Rules, filepath: Path):
+    def __init__(self, rules: Rules, filepath: Path | None = None):
         self.filepath = filepath
         self.rules = rules
         self.data = Ontology.from_rules(self.rules).as_semantic_data_model()
         super().__init__(self.rules, self.filepath)
 
-    def export(self):
+    def export(self, filepath: Path | None = None):
+        filepath = filepath or self.filepath
+        if not filepath:
+            raise ValueError("No filepath given")
         self.data.serialize(destination=self.filepath)
 
 

@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 
 class GraphQLSchemaExporter(BaseExporter):
-    def __init__(self, rules: Rules, filepath: Path):
+    def __init__(self, rules: Rules, filepath: Path | None = None):
         self.rules = rules
         self.filepath = filepath
         self.data = GraphQLSchema.from_rules(self.rules).schema
