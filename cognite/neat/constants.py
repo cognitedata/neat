@@ -1,7 +1,6 @@
 from pathlib import Path
 
-from rdflib import Namespace
-from rdflib import DCTERMS, OWL, RDF, RDFS, SKOS, XSD
+from rdflib import DCTERMS, OWL, RDF, RDFS, SKOS, XSD, Namespace
 
 from cognite import neat
 

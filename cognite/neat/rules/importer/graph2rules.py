@@ -11,8 +11,8 @@ from typing import cast
 import numpy as np
 import pandas as pd
 from rdflib import Graph, Literal, Namespace, URIRef
-from cognite.neat.constants import PREFIXES
 
+from cognite.neat.constants import PREFIXES
 from cognite.neat.rules import exceptions
 from cognite.neat.rules.importer._base import BaseImporter
 from cognite.neat.rules.importer.owl2rules import _create_default_metadata_parsing_config
