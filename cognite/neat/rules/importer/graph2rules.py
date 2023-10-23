@@ -10,7 +10,8 @@ from typing import cast
 
 import numpy as np
 import pandas as pd
-from rdflib import DCTERMS, OWL, RDF, RDFS, SKOS, XSD, Graph, Literal, Namespace, URIRef
+from rdflib import Graph, Literal, Namespace, URIRef
+from cognite.neat.constants import PREFIXES
 
 from cognite.neat.rules import exceptions
 from cognite.neat.rules.importer._base import BaseImporter
@@ -182,14 +183,7 @@ def _graph_to_data_model_dict(graph: Graph, max_number_of_instance: int = -1) ->
     """
     data_model: dict[str, dict] = {}
 
-    prefixes: dict[str, Namespace] = {
-        "rdf": Namespace(str(RDF)),
-        "rdfs": Namespace(str(RDFS)),
-        "dct": Namespace(str(DCTERMS)),
-        "skos": Namespace(str(SKOS)),
-        "owl": Namespace(str(OWL)),
-        "xsd": Namespace(str(XSD)),
-    }
+    prefixes: dict[str, Namespace] = PREFIXES
 
     for class_ in _get_class_ids(graph):
         _add_uri_namespace_to_prefixes(class_, prefixes)

@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from rdflib import Namespace
+from rdflib import DCTERMS, OWL, RDF, RDFS, SKOS, XSD
 
 from cognite import neat
 
@@ -13,8 +14,12 @@ EXAMPLE_WORKFLOWS = PACKAGE_DIRECTORY / "workflows" / "examples"
 
 
 PREFIXES = {
-    "dct": Namespace("http://purl.org/dc/terms/"),
-    "skos": Namespace("http://www.w3.org/2004/02/skos/core#"),
+    "rdf": RDF._NS,
+    "rdfs": RDFS._NS,
+    "dct": DCTERMS._NS,
+    "skos": SKOS._NS,
+    "owl": OWL._NS,
+    "xsd": XSD._NS,
     "pav": Namespace("http://purl.org/pav/"),
     "cim": Namespace("http://iec.ch/TC57/2013/CIM-schema-cim16#"),
     "icim": Namespace("http://iec.ch/TC57/2013/CIM-schema-cim16-info#"),
