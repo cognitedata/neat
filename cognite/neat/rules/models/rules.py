@@ -46,14 +46,14 @@ from rdflib import XSD, Literal, Namespace, URIRef
 
 from cognite.neat.constants import PREFIXES
 from cognite.neat.rules import exceptions
-from cognite.neat.rules.to_rdf_path import (
+from cognite.neat.rules.models.rdfpath import (
     AllReferences,
     Entity,
     Hop,
     RawLookup,
-    RuleType,
     SingleProperty,
     SPARQLQuery,
+    TransformationRuleType,
     Traversal,
     parse_rule,
 )
@@ -72,7 +72,7 @@ __all__ = [
     "Property",
     "Properties",
     "Resource",
-    "TransformationRules",
+    "Rules",
 ]
 
 # mapping of XSD types to Python and GraphQL types
@@ -624,7 +624,7 @@ class Property(Resource):
     relationship_external_id_rule: str | None = Field(alias="Relationship ExternalID Rule", default=None)
 
     # Transformation rule (domain to solution)
-    rule_type: RuleType | None = Field(alias="Rule Type", default=None)
+    rule_type: TransformationRuleType | None = Field(alias="Rule Type", default=None)
     rule: str | AllReferences | SingleProperty | Hop | RawLookup | SPARQLQuery | Traversal | None = Field(
         alias="Rule", default=None
     )
@@ -636,7 +636,7 @@ class Property(Resource):
 
     @property
     def is_raw_lookup(self) -> bool:
-        return self.rule_type == RuleType.rawlookup
+        return self.rule_type == TransformationRuleType.rawlookup
 
     @model_validator(mode="before")
     def replace_float_nan_with_default(cls, values: dict) -> dict:
@@ -875,14 +875,14 @@ class Instance(RuleModel):
             return a == b
 
 
-class TransformationRules(RuleModel):
+class Rules(RuleModel):
     """
-    Transformation rules is a core concept in `neat`. This represents fusion of data model
-    definitions and the associated rules that are used to transform the data from the
-    source representation to the target representation defined by the data model.
-    The rules are defined in a Excel sheet and then parsed into a `TransformationRules`
-    object. The `TransformationRules` object is then used to generate data model and the
-    `RDF` graph made of data model instances.
+    Rules is a core concept in `neat`. This represents fusion of data model
+    definitions and (optionally) the transformation rules used to transform the data/graph
+    from the source representation to the target representation defined by the data model.
+    The rules are defined in a Excel sheet and then parsed into a `Rules` object. The
+    `Rules` object is then used to generate data model and the`RDF` graph made of data
+    model instances.
 
     Args:
         metadata: Data model metadata
@@ -894,10 +894,6 @@ class TransformationRules(RuleModel):
 
     !!! note "Importers"
         Neat supports importing data from different sources. See the importers section for more details.
-
-    !!! note "Parsers"
-        Neat supports parsing data from different sources into `TransformationRules` instance.
-        See the parsers section for more details.
 
     !!! note "Exporters"
         Neat supports exporting data to different sources. See the exporters section for more details.
@@ -913,7 +909,7 @@ class TransformationRules(RuleModel):
     def raw_tables(self) -> list[str]:
         return list(
             {
-                parse_rule(rule.rule, RuleType.rawlookup).table.name  # type: ignore[arg-type, attr-defined]
+                parse_rule(rule.rule, TransformationRuleType.rawlookup).table.name  # type: ignore[arg-type, attr-defined]
                 for rule in self.properties.values()
                 if rule.is_raw_lookup
             }
@@ -926,12 +922,16 @@ class TransformationRules(RuleModel):
         return value
 
     @field_validator("classes", mode="before")
-    def dict_to_classes_obj(cls, value: dict) -> Classes:
+    def dict_to_classes_obj(cls, value: dict | Classes) -> Classes:
+        if not isinstance(value, dict):
+            return value
         dict_of_classes = TypeAdapter(dict[str, Class]).validate_python(value)
         return Classes(data=dict_of_classes)
 
     @field_validator("properties", mode="before")
-    def dict_to_properties_obj(cls, value: dict) -> Properties:
+    def dict_to_properties_obj(cls, value: dict | Properties) -> Properties:
+        if not isinstance(value, dict):
+            return value
         dict_of_properties = TypeAdapter(dict[str, Property]).validate_python(value)
         return Properties(data=dict_of_properties)
 

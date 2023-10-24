@@ -22,7 +22,7 @@ from cognite.neat.rules.analysis import (
     to_class_property_pairs,
 )
 from cognite.neat.rules.exporter.rules2dms import DataModel
-from cognite.neat.rules.models import Property, TransformationRules, type_to_target_convention
+from cognite.neat.rules.models.rules import Property, Rules, type_to_target_convention
 
 if sys.version_info >= (3, 11):
     from datetime import UTC
@@ -50,7 +50,7 @@ def default_model_property_attributes():
 
 
 def rules_to_pydantic_models(
-    transformation_rules: TransformationRules, methods: list | None = None, property_attributes: list | None = None
+    transformation_rules: Rules, methods: list | None = None, property_attributes: list | None = None
 ) -> dict[str, ModelMetaclass]:
     """
     Generate pydantic models from transformation rules.
@@ -263,7 +263,7 @@ def edges_one_to_many(self) -> list[str]:
 def from_graph(
     cls,
     graph: Graph,
-    transformation_rules: TransformationRules,
+    transformation_rules: Rules,
     external_id: URIRef,
     incomplete_instance_allowed: bool = True,
 ):
@@ -430,7 +430,7 @@ def _class_to_asset_instance_dictionary(class_instance_dictionary, mapping_confi
     return mapping_config
 
 
-def to_relationship(self, transformation_rules: TransformationRules) -> Relationship:
+def to_relationship(self, transformation_rules: Rules) -> Relationship:
     """Creates relationship instance from model instance."""
     raise NotImplementedError()
 
@@ -527,6 +527,7 @@ def to_edge(self, data_model: DataModel, add_class_prefix: bool) -> list[EdgeApp
     return edges
 
 
+<<<<<<< HEAD
 def _get_end_node_class_name(view: ViewApply, edge: str) -> str | None:
     """Get the class name of the end node of an edge."""
     if view.properties is None:
@@ -538,6 +539,9 @@ def _get_end_node_class_name(view: ViewApply, edge: str) -> str | None:
 
 
 def to_graph(self, transformation_rules: TransformationRules, graph: Graph):
+=======
+def to_graph(self, transformation_rules: Rules, graph: Graph):
+>>>>>>> db04192c37dd5af2bebfc437d9c97061e3828bdd
     """Writes instance as set of triples to triple store (Graphs)."""
     ...
 

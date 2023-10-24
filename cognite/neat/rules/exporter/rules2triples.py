@@ -1,9 +1,9 @@
 from rdflib.term import Node
 
-from cognite.neat.rules.models import TransformationRules
+from cognite.neat.rules.models.rules import Rules
 
 
-def get_instances_as_triples(transformation_rules: TransformationRules) -> list[tuple[Node, Node, Node]]:
+def get_instances_as_triples(transformation_rules: Rules) -> list[tuple[Node, Node, Node]]:
     """
     Converts transformation rules instances sheet to RDF triples
 
