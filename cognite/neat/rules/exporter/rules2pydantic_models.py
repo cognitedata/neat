@@ -486,7 +486,6 @@ def to_node(self, data_model: DataModel, add_class_prefix: bool) -> NodeApply:
 def to_edge(self, data_model: DataModel, add_class_prefix: bool) -> list[EdgeApply]:
     """Creates DMS edge from pydantic model."""
     edges: list[EdgeApply] = []
-    exceptions: list[exceptions.EdgeConditionUnmet] = []
 
     def is_external_id_valid(external_id: str) -> bool:
         # should match "^[^\x00]{1,255}$" and not be None or none
@@ -501,20 +500,21 @@ def to_edge(self, data_model: DataModel, add_class_prefix: bool) -> list[EdgeApp
         for end_node_id in getattr(self, edge_one_to_many):
             if not is_external_id_valid(end_node_id):
                 warnings.warn(
-                exceptions.EdgeConditionUnmet(edge_one_to_many).message,
-                category=exceptions.EdgeConditionUnmet(edge_one_to_many),
-                stacklevel=2,
-            )
+                    message=exceptions.EdgeConditionUnmet(edge_one_to_many).message,
+                    category=exceptions.EdgeConditionUnmet,
+                    stacklevel=2,
+                )
             end_node_external_id = end_node_id
             if add_class_prefix:
                 end_node_class_name = _get_end_node_class_name(data_model.views[class_name], edge_one_to_many)
-                if end_node_class_name is None:
+                if end_node_class_name:
+                    end_node_external_id = add_class_prefix_to_xid(end_node_class_name, end_node_id)
+                else:
                     warnings.warn(
-                        exceptions.EdgeConditionUnmet(edge_one_to_many).message,
-                        category=exceptions.EdgeConditionUnmet(edge_one_to_many),
+                        message=exceptions.EdgeConditionUnmet(edge_one_to_many).message,
+                        category=exceptions.EdgeConditionUnmet,
                         stacklevel=2,
                     )
-                end_node_external_id = add_class_prefix_to_xid(end_node_class_name, end_node_id)
 
             edge = EdgeApply(
                 space=data_model.space,
@@ -524,7 +524,8 @@ def to_edge(self, data_model: DataModel, add_class_prefix: bool) -> list[EdgeApp
                 end_node=(data_model.space, end_node_external_id),
             )
             edges.append(edge)
-    return edges, exceptions
+    return edges
+
 
 def _get_end_node_class_name(view: ViewApply, edge: str) -> str | None:
     """Get the class name of the end node of an edge."""

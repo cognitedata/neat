@@ -2455,7 +2455,7 @@ class DataModelAlreadyExist(NeatWarning):
 
 
 class EdgeConditionUnmet(NeatWarning):
-    """This warning occurs when attempting to create an edge but not all conditions are met. 
+    """This warning occurs when attempting to create an edge but not all conditions are met.
 
     Args:
         edge: data model id that already exist in DMS
