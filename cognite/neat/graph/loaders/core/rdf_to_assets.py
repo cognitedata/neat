@@ -1,6 +1,5 @@
 import logging
 import sys
-import warnings
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, fields
 from datetime import datetime
@@ -663,18 +662,6 @@ def _assets_to_update(
     for external_id in asset_ids:
         cdf_asset = cdf_asset_subset[external_id]
         diffing_result = DeepDiff(cdf_asset, rdf_assets[external_id], exclude_paths=exclude_paths)
-
-        if "parent_external_id" in diffing_result.affected_root_keys:
-            msg = f"Asset <{external_id}> is changing its parent from <{cdf_asset['parent_external_id']}>"
-            msg += f" to <{rdf_assets[external_id]['parent_external_id']}>! This is not allowed!"
-            if stop_on_exception:
-                logging.error(msg)
-                raise ValueError(msg)
-            else:
-                msg += " Skipping update of this asset!"
-                logging.warning(msg)
-                warnings.warn(msg, stacklevel=2)
-                continue
 
         if diffing_result and f"root['metadata']['{meta_keys.active}']" not in diffing_result.affected_paths:
             asset = Asset(**rdf_assets[external_id])
