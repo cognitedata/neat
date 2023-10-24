@@ -2561,3 +2561,29 @@ class DataModelAlreadyExist(NeatWarning):
             self.message += f"\nDescription: {self.description}"
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
+
+
+class EdgeConditionUnmet(NeatWarning):
+    """This warning occurs when attempting to create an edge but not all conditions are met.
+
+    Args:
+        edge: data model id that already exist in DMS
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+    """
+
+    type_: str = "EdgeConditionUnmet"
+    code: int = 412
+    description: str = "This warning occurs when attempting to create an edge, but the conditions are not met."
+    example: str = ""
+    fix: str = "Check if the edge is valid and that the lenght of the external_id is < 255"
+
+    def __init__(self, edge: str, verbose: bool = False):
+        self.message = (
+            f"Ignoring edge {edge} as its format is not valid"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"

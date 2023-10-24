@@ -7,6 +7,7 @@ from typing import Any, TypeAlias, cast
 
 from cognite.client.data_classes import Asset, Relationship
 from cognite.client.data_classes.data_modeling import EdgeApply, MappedPropertyApply, NodeApply, NodeOrEdgeData
+from cognite.client.data_classes.data_modeling.views import SingleHopConnectionDefinitionApply, ViewApply
 from pydantic import BaseModel, ConfigDict, Field, create_model
 from pydantic._internal._model_construction import ModelMetaclass
 from rdflib import Graph, URIRef
@@ -29,7 +30,6 @@ else:
     from datetime import timezone
 
     UTC = timezone.utc
-
 
 EdgeOneToOne: TypeAlias = TypeAliasType("EdgeOneToOne", str)  # type: ignore[valid-type]
 EdgeOneToMany: TypeAlias = TypeAliasType("EdgeOneToMany", list[str])  # type: ignore[valid-type]
@@ -439,18 +439,18 @@ def to_node(self, data_model: DataModel, add_class_prefix: bool) -> NodeApply:
     """Creates DMS node from pydantic model."""
 
     if not set(self.attributes + self.edges_one_to_one + self.edges_one_to_many).issubset(
-        set(data_model.containers[self.__class__.__name__].properties.keys())
+        set(data_model.containers[type(self).__name__].properties.keys())
     ):
         raise exceptions.InstancePropertiesNotMatchingContainerProperties(
             self.__class__.__name__,
             self.attributes + self.edges_one_to_one + self.edges_one_to_many,
-            list(data_model.containers[self.__class__.__name__].properties.keys()),
+            list(data_model.containers[type(self).__name__].properties.keys()),
         )
 
-    attributes: dict = {attribute: self.__getattribute__(attribute) for attribute in self.attributes}
+    attributes: dict = {attribute: getattr(self, attribute) for attribute in self.attributes}
     if add_class_prefix:
         edges_one_to_one: dict = {}
-        dm_view = data_model.views[self.__class__.__name__]
+        dm_view = data_model.views[type(self).__name__]
         if dm_view.properties:
             for edge in self.edges_one_to_one:
                 mapped_property = dm_view.properties[edge]
@@ -462,12 +462,12 @@ def to_node(self, data_model: DataModel, add_class_prefix: bool) -> NodeApply:
                         "space": data_model.space,
                         "externalId": add_class_prefix_to_xid(
                             class_name=object_class_name,
-                            external_id=self.__getattribute__(edge),
+                            external_id=getattr(self, edge),
                         ),
                     }
     else:
         edges_one_to_one = {
-            edge_one_to_one: {"space": data_model.space, "externalId": self.__getattribute__(edge_one_to_one)}
+            edge_one_to_one: {"space": data_model.space, "externalId": getattr(self, edge_one_to_one)}
             for edge_one_to_one in self.edges_one_to_one
         }
 
@@ -476,14 +476,14 @@ def to_node(self, data_model: DataModel, add_class_prefix: bool) -> NodeApply:
         external_id=self.external_id,
         sources=[
             NodeOrEdgeData(
-                source=data_model.views[self.__class__.__name__].as_id(),
+                source=data_model.views[type(self).__name__].as_id(),
                 properties=attributes | edges_one_to_one,
             )
         ],
     )
 
 
-def to_edge(self, data_model: DataModel) -> list[EdgeApply]:
+def to_edge(self, data_model: DataModel, add_class_prefix: bool) -> list[EdgeApply]:
     """Creates DMS edge from pydantic model."""
     edges: list[EdgeApply] = []
 
@@ -493,24 +493,48 @@ def to_edge(self, data_model: DataModel) -> list[EdgeApply]:
             return False
         return bool(re.match(r"^[^\x00]{1,255}$", external_id))
 
-    for edge_one_to_many in self.edges_one_to_many:
-        edge_type_id = f"{self.__class__.__name__}.{edge_one_to_many}"
+    class_name = type(self).__name__
 
-        edges.extend(
-            EdgeApply(
+    for edge_one_to_many in self.edges_one_to_many:
+        edge_type_id = f"{class_name}.{edge_one_to_many}"
+        for end_node_id in getattr(self, edge_one_to_many):
+            if not is_external_id_valid(end_node_id):
+                warnings.warn(
+                    message=exceptions.EdgeConditionUnmet(edge_one_to_many).message,
+                    category=exceptions.EdgeConditionUnmet,
+                    stacklevel=2,
+                )
+            end_node_external_id = end_node_id
+            if add_class_prefix:
+                end_node_class_name = _get_end_node_class_name(data_model.views[class_name], edge_one_to_many)
+                if end_node_class_name:
+                    end_node_external_id = add_class_prefix_to_xid(end_node_class_name, end_node_id)
+                else:
+                    warnings.warn(
+                        message=exceptions.EdgeConditionUnmet(edge_one_to_many).message,
+                        category=exceptions.EdgeConditionUnmet,
+                        stacklevel=2,
+                    )
+
+            edge = EdgeApply(
                 space=data_model.space,
-                external_id=f"{self.external_id}-{end_node_id}",
+                external_id=f"{self.external_id}-{end_node_external_id}",
                 type=(data_model.space, edge_type_id),
                 start_node=(data_model.space, self.external_id),
-                end_node=(
-                    data_model.space,
-                    end_node_id,
-                ),
+                end_node=(data_model.space, end_node_external_id),
             )
-            for end_node_id in self.__getattribute__(edge_one_to_many)
-            if is_external_id_valid(end_node_id)
-        )
+            edges.append(edge)
     return edges
+
+
+def _get_end_node_class_name(view: ViewApply, edge: str) -> str | None:
+    """Get the class name of the end node of an edge."""
+    if view.properties is None:
+        return None
+    mapped_instance = view.properties[edge]
+    if isinstance(mapped_instance, SingleHopConnectionDefinitionApply) and mapped_instance.source:
+        return mapped_instance.source.external_id
+    return None
 
 
 def to_graph(self, transformation_rules: Rules, graph: Graph):
