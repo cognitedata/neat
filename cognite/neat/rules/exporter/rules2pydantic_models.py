@@ -527,7 +527,6 @@ def to_edge(self, data_model: DataModel, add_class_prefix: bool) -> list[EdgeApp
     return edges
 
 
-<<<<<<< HEAD
 def _get_end_node_class_name(view: ViewApply, edge: str) -> str | None:
     """Get the class name of the end node of an edge."""
     if view.properties is None:
@@ -538,10 +537,7 @@ def _get_end_node_class_name(view: ViewApply, edge: str) -> str | None:
     return None
 
 
-def to_graph(self, transformation_rules: TransformationRules, graph: Graph):
-=======
 def to_graph(self, transformation_rules: Rules, graph: Graph):
->>>>>>> db04192c37dd5af2bebfc437d9c97061e3828bdd
     """Writes instance as set of triples to triple store (Graphs)."""
     ...
 
