@@ -96,6 +96,7 @@ def get_class_linkage(transformation_rules: Rules) -> pd.DataFrame:
                     "target_class": property_.expected_value_type,
                     "connecting_property": property_.property_id,
                     "max_occurrence": property_.max_count,
+                    "linking_type": "hierarchy" if property_.resource_type_property else "relationship",
                 }
             )
             class_linkage = pd.concat([class_linkage, new_row.to_frame().T], ignore_index=True)
@@ -103,6 +104,12 @@ def get_class_linkage(transformation_rules: Rules) -> pd.DataFrame:
     class_linkage.drop_duplicates(inplace=True)
 
     return class_linkage
+
+
+def get_class_hierarchy_linkage(rules: Rules) -> pd.DataFrame:
+    """Remove linkage which is not creating asset hierarchy."""
+    class_linkage = get_class_linkage(rules)
+    return class_linkage[class_linkage.linking_type == "hierarchy"]
 
 
 def get_connected_classes(transformation_rules: Rules) -> set[str]:

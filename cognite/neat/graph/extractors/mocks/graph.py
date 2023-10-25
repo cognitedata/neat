@@ -181,6 +181,11 @@ def _prettify_generation_order(generation_order: dict, depth: dict | None = None
     return OrderedDict(sorted(depth.items(), key=lambda item: item[1]))
 
 
+def _remove_non_hierarchy_linking(class_linkage: pd.DataFrame) -> pd.DataFrame:
+    """Remove linkage which is not creating asset hierarchy."""
+    return class_linkage[class_linkage.linking_type == "hierarchy"]
+
+
 def _remove_higher_occurring_sym_pair(class_linkage: pd.DataFrame, sym_pairs: set[tuple[str, str]]) -> pd.DataFrame:
     """Remove symmetric pair which is higher in occurrence."""
     rows_to_remove = set()
