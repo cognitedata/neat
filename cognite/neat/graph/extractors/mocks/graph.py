@@ -17,7 +17,7 @@ from cognite.neat.rules.analysis import (
     get_symmetric_pairs,
 )
 from cognite.neat.rules.exporter.rules2rules import subset_rules
-from cognite.neat.rules.models import DATA_TYPE_MAPPING, TransformationRules
+from cognite.neat.rules.models.rules import DATA_TYPE_MAPPING, Rules
 from cognite.neat.utils.utils import remove_namespace
 
 neat_total_processed_mock_triples = Gauge(
@@ -28,8 +28,39 @@ neat_mock_triples_processing_timing = Gauge(
 )
 
 
+class MockGraphGenerator:
+    """
+    Class used to generate mock graph data for purposes of testing of NEAT.
+
+    Args:
+        rules: Transformation rules defining the classes with their properties.
+    """
+
+    def __init__(self, rules: Rules):
+        self.rules = rules
+
+    def generate_triples(
+        self, class_count: dict, stop_on_exception: bool = False, allow_isolated_classes: bool = True
+    ) -> list[tuple]:
+        """Generate mock triples based on data model defined transformation rules and desired number
+        of class instances
+
+        Args:
+            class_count: Target class count for each class in the ontology
+            stop_on_exception: To stop if exception is encountered or not, default is False
+            allow_isolated_classes: To allow generation of instances for classes that are not
+                                     connected to any other class, default is True
+
+        Returns:
+            List of RDF triples, represented as tuples `(subject, predicate, object)`, that define data model instances
+        """
+        return generate_triples(
+            self.rules, class_count, stop_on_exception=stop_on_exception, allow_isolated_classes=allow_isolated_classes
+        )
+
+
 def generate_triples(
-    transformation_rules: TransformationRules,
+    transformation_rules: Rules,
     class_count: dict,
     stop_on_exception: bool = False,
     allow_isolated_classes: bool = True,
@@ -288,7 +319,7 @@ def _generate_triples_per_class(
     return triples
 
 
-def _rules_to_dict(transformation_rules: TransformationRules) -> dict[str, pd.DataFrame]:
+def _rules_to_dict(transformation_rules: Rules) -> dict[str, pd.DataFrame]:
     """Represent data model as a dictionary of data frames, where each data frame
     represents properties defined for a given class.
 

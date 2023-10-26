@@ -4,18 +4,15 @@ import tempfile
 from pathlib import Path
 
 import pytest
-from rdflib import Namespace
+from rdflib import RDF, Literal, Namespace
 
-from cognite.neat import rules
 from cognite.neat.graph import extractors, loaders
 from cognite.neat.graph.extractors.mocks import generate_triples
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.graph.transformations.transformer import domain2app_knowledge_graph
+from cognite.neat.rules import importer
 from cognite.neat.rules.exporter.rules2triples import get_instances_as_triples
-from cognite.neat.rules.importer.ontology2excel import owl2excel
-from cognite.neat.rules.models import TransformationRules
-from cognite.neat.rules.parser import RawTables, read_excel_file_to_table_by_name
-from cognite.neat.utils.utils import add_triples
+from cognite.neat.rules.models.rules import Rules
 from tests import config
 
 # Setup config for Neat App
@@ -36,13 +33,13 @@ os.environ["NEAT_LOAD_EXAMPLES"] = "1"
 
 
 @pytest.fixture(scope="session")
-def transformation_rules() -> TransformationRules:
-    return rules.parse_rules_from_excel_file(config.TNT_TRANSFORMATION_RULES)
+def transformation_rules() -> Rules:
+    return importer.ExcelImporter(config.TNT_TRANSFORMATION_RULES).to_rules()
 
 
 @pytest.fixture(scope="session")
-def simple_rules() -> TransformationRules:
-    return rules.parse_rules_from_excel_file(config.SIMPLE_TRANSFORMATION_RULES)
+def simple_rules() -> Rules:
+    return importer.ExcelImporter(config.SIMPLE_TRANSFORMATION_RULES).to_rules()
 
 
 @pytest.fixture(scope="function")
@@ -56,6 +53,23 @@ def small_graph(simple_rules) -> NeatGraphStore:
 
     for triple in get_instances_as_triples(simple_rules):
         graph_store.graph.add(triple)
+    return graph_store
+
+
+@pytest.fixture(scope="function")
+def graph_with_numeric_ids(simple_rules) -> NeatGraphStore:
+    graph_store = NeatGraphStore(
+        base_prefix=simple_rules.metadata.prefix,
+        namespace=simple_rules.metadata.namespace,
+        prefixes=simple_rules.prefixes,
+    )
+    graph_store.init_graph()
+
+    namespace = simple_rules.metadata.namespace
+    graph_store.graph.add((namespace["1"], RDF.type, namespace["PriceAreaConnection"]))
+    graph_store.graph.add((namespace["1"], namespace["name"], Literal("Price Area Connection 1")))
+    graph_store.graph.add((namespace["1"], namespace["priceArea"], namespace["2"]))
+    graph_store.graph.add((namespace["1"], namespace["priceArea"], namespace["3"]))
     return graph_store
 
 
@@ -88,7 +102,7 @@ def mock_knowledge_graph(transformation_rules):
     }
 
     mock_triples = generate_triples(transformation_rules, class_count)
-    add_triples(mock_graph, mock_triples, batch_size=20000)
+    mock_graph.add_triples(mock_triples, batch_size=20000)
 
     return mock_graph
 
@@ -130,10 +144,3 @@ type PriceAreaConnection {
   name: String!
   priceArea: [PriceArea]
 }"""
-
-
-@pytest.fixture(scope="function")
-def owl_based_rules():
-    owl2excel(config.WIND_ONTOLOGY)
-
-    return RawTables(**read_excel_file_to_table_by_name(config.WIND_ONTOLOGY.parent / "transformation_rules.xlsx"))

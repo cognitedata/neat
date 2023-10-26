@@ -4,8 +4,9 @@ import warnings
 from pathlib import Path
 from typing import ClassVar
 
+import cognite.neat.graph.extractors.graph_sheet_to_graph
 from cognite.neat.exceptions import wrangle_warnings
-from cognite.neat.rules.exporter import rules2excel, rules2graph_sheet
+from cognite.neat.rules import exporter
 from cognite.neat.rules.exporter.rules2dms import DataModel
 from cognite.neat.rules.exporter.rules2graphql import GraphQLSchema
 from cognite.neat.rules.exporter.rules2ontology import Ontology
@@ -299,7 +300,7 @@ class GraphCaptureSpreadsheetFromRules(Step):
         staging_dir.mkdir(parents=True, exist_ok=True)
         data_capture_sheet_path = staging_dir / sheet_name
 
-        rules2graph_sheet.rules2graph_capturing_sheet(
+        cognite.neat.graph.extractors.graph_sheet_to_graph.rules2graph_capturing_sheet(
             rules.rules, data_capture_sheet_path, auto_identifier_type=auto_identifier_type
         )
 
@@ -312,21 +313,16 @@ class GraphCaptureSpreadsheetFromRules(Step):
 
 
 class ExcelFromRules(Step):
-    description = "The step generates Excel file from rules"
+    description = "This step generates Excel file from rules"
     category = CATEGORY
     version = "0.1.0-alpha"
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
-            name="output_file_path",
-            value="rules/custom-rules.xlsx",
-            label="File path to the generated Excel file",
-        ),
+            name="output_file_path", value="rules/custom-rules.xlsx", label="File path to the generated Excel file"
+        )
     ]
 
     def run(self, rules_data: RulesData) -> FlowMessage:  # type: ignore[override, syntax]
         full_path = Path(self.data_store_path) / Path(self.configs["output_file_path"])
-        rules_exporter = rules2excel.RulesToExcel(rules=rules_data.rules)
-        rules_exporter.generate_workbook()
-        rules_exporter.save_to_file(full_path)
-
+        exporter.ExcelExporter(rules=rules_data.rules, filepath=full_path).export()
         return FlowMessage(output_text="Generated Excel file from rules")

@@ -3,7 +3,7 @@ query_templates = [
     {
         "name": "Get all classes with stats",
         "query": "SELECT ?class (count(?s) as ?instances ) "
-        "WHERE { ?s rdf:type ?class . } group by ?class order by DESC(?instances)",
+        "WHERE { ?s a ?class . } group by ?class order by DESC(?instances)",
     },
     {"name": "Describe object", "query": " DESCRIBE <http://cog.com/neat#_30b297b4-8e19-da40-9f52-fb9175136a22>"},
     {"name": "Count all classes", "query": " SELECT (COUNT(DISTINCT ?class) AS ?count) WHERE { ?s a ?class }"},
@@ -60,7 +60,7 @@ query_templates = [
     {
         "name": "Get list of all properties of Substations",
         "query": "SELECT ?subject ?p ?object "
-        "WHERE { ?subject rdf:type cim:Substation . ?subject ?p ?object . } "
+        "WHERE { ?subject a cim:Substation . ?subject ?p ?object . } "
         "order by ?subject limit 12",
     },
     {
@@ -79,13 +79,13 @@ query_templates = [
         "query": """
 SELECT (?parentName AS ?node_name)  (?parentClass AS ?node_class) ?parentPath (?parentInst AS ?node_id )
  (?parentInst AS ?src_object_ref) (?parentInst2 AS ?dst_object_ref) WHERE {
- ?tagInst rdf:type neat:AttributeTag .
+ ?tagInst a neat:AttributeTag .
  ?tagInst neat:Path ?tagPath .
  ?tagInst neat:Value ?tagValue .
  ?tagInst neat:hasParent+ ?parentInst .
  ?parentInst neat:Name ?parentName .
  ?parentInst neat:Path ?parentPath .
- ?parentInst rdf:type ?parentClass .
+ ?parentInst a ?parentClass .
  ?parentInst neat:hasParent ?parentInst2
   }  limit 100""",
     },

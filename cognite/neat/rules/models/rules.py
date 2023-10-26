@@ -6,11 +6,14 @@ from __future__ import annotations
 
 import math
 import re
+import sys
 import warnings
+from collections.abc import ItemsView, Iterator, KeysView, ValuesView
 from datetime import datetime
 from pathlib import Path
-from typing import Any, ClassVar, TypeAlias
+from typing import Any, ClassVar, Generic, TypeAlias, TypeVar
 
+import pandas as pd
 from cognite.client.data_classes.data_modeling.data_types import (
     Boolean,
     FileReference,
@@ -30,6 +33,7 @@ from pydantic import (
     ConfigDict,
     Field,
     HttpUrl,
+    TypeAdapter,
     ValidationError,
     constr,
     field_validator,
@@ -42,19 +46,34 @@ from rdflib import XSD, Literal, Namespace, URIRef
 
 from cognite.neat.constants import PREFIXES
 from cognite.neat.rules import exceptions
-from cognite.neat.rules.to_rdf_path import (
+from cognite.neat.rules.models.rdfpath import (
     AllReferences,
     Entity,
     Hop,
     RawLookup,
-    RuleType,
     SingleProperty,
     SPARQLQuery,
+    TransformationRuleType,
     Traversal,
     parse_rule,
 )
 
-__all__ = ["Class", "Instance", "Metadata", "Prefixes", "Property", "Resource", "TransformationRules"]
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
+
+__all__ = [
+    "Class",
+    "Classes",
+    "Instance",
+    "Metadata",
+    "Prefixes",
+    "Property",
+    "Properties",
+    "Resource",
+    "Rules",
+]
 
 # mapping of XSD types to Python and GraphQL types
 DATA_TYPE_MAPPING: dict[str, dict[str, type | str | ListablePropertyType]] = {
@@ -357,6 +376,14 @@ class Metadata(RuleModel):
                 return None
         return value
 
+    def to_pandas(self) -> pd.Series:
+        """Converts Metadata to pandas Series."""
+        return pd.Series(self.model_dump())
+
+    def _repr_html_(self) -> str:
+        """Returns HTML representation of Metadata."""
+        return self.to_pandas().to_frame("value")._repr_html_()  # type: ignore[operator]
+
 
 class Resource(RuleModel):
     """
@@ -406,6 +433,60 @@ class Resource(RuleModel):
     @model_validator(mode="before")
     def replace_float_nan_with_default(cls, values: dict) -> dict:
         return replace_nan_floats_with_default(values, cls.model_fields)
+
+
+T_Resource = TypeVar("T_Resource", bound=Resource)
+
+
+class ResourceDict(BaseModel, Generic[T_Resource]):
+    data: dict[str, T_Resource] = Field(default_factory=dict)
+
+    def __getitem__(self, item: str) -> T_Resource:
+        return self.data[item]
+
+    def __setitem__(self, key: str, value: T_Resource):
+        self.data[key] = value
+
+    def __contains__(self, item: str) -> bool:
+        return item in self.data
+
+    def __len__(self) -> int:
+        return len(self.data)
+
+    def __iter__(self) -> Iterator[str]:  # type: ignore[override]
+        return iter(self.data)
+
+    def values(self) -> ValuesView[T_Resource]:
+        return self.data.values()
+
+    def keys(self) -> KeysView[str]:
+        return self.data.keys()
+
+    def items(self) -> ItemsView[str, T_Resource]:
+        return self.data.items()
+
+    def to_pandas(self, drop_na_columns: bool = True, include: list[str] | None = None) -> pd.DataFrame:
+        """Converts ResourceDict to pandas DataFrame."""
+        df = pd.DataFrame([class_.model_dump() for class_ in self.data.values()])
+        if drop_na_columns:
+            df = df.dropna(axis=1, how="all")
+        if include is not None:
+            df = df[include]
+        return df
+
+    def groupby(self, by: str) -> dict[str, ResourceDict[T_Resource]]:
+        """Groups ResourceDict by given column(s)."""
+        groups: dict[str, ResourceDict[T_Resource]] = {}
+        for key, resource in self.data.items():
+            value = getattr(resource, by)
+            if value not in groups:
+                groups[value] = ResourceDict()
+            groups[value][key] = resource
+        return groups
+
+    def _repr_html_(self) -> str:
+        """Returns HTML representation of ResourceDict."""
+        return self.to_pandas(drop_na_columns=True)._repr_html_()  # type: ignore[operator]
 
 
 class Class(Resource):
@@ -486,6 +567,12 @@ class Class(Resource):
         return value
 
 
+class Classes(ResourceDict[Class]):
+    """This represents a collection of classes that are part of the data model."""
+
+    ...
+
+
 class Property(Resource):
     """
     A property is a characteristic of a class. It is a named attribute of a class that describes a range of values
@@ -537,7 +624,7 @@ class Property(Resource):
     relationship_external_id_rule: str | None = Field(alias="Relationship ExternalID Rule", default=None)
 
     # Transformation rule (domain to solution)
-    rule_type: RuleType | None = Field(alias="Rule Type", default=None)
+    rule_type: TransformationRuleType | None = Field(alias="Rule Type", default=None)
     rule: str | AllReferences | SingleProperty | Hop | RawLookup | SPARQLQuery | Traversal | None = Field(
         alias="Rule", default=None
     )
@@ -549,7 +636,7 @@ class Property(Resource):
 
     @property
     def is_raw_lookup(self) -> bool:
-        return self.rule_type == RuleType.rawlookup
+        return self.rule_type == TransformationRuleType.rawlookup
 
     @model_validator(mode="before")
     def replace_float_nan_with_default(cls, values: dict) -> dict:
@@ -668,6 +755,12 @@ class Property(Resource):
         return self
 
 
+class Properties(ResourceDict[Property]):
+    """This represents a collection of properties that are part of the data model."""
+
+    ...
+
+
 class Prefixes(RuleModel):
     """
     Class deals with prefixes used in the data model and data model instances
@@ -782,14 +875,14 @@ class Instance(RuleModel):
             return a == b
 
 
-class TransformationRules(RuleModel):
+class Rules(RuleModel):
     """
-    Transformation rules is a core concept in `neat`. This represents fusion of data model
-    definitions and the associated rules that are used to transform the data from the
-    source representation to the target representation defined by the data model.
-    The rules are defined in a Excel sheet and then parsed into a `TransformationRules`
-    object. The `TransformationRules` object is then used to generate data model and the
-    `RDF` graph made of data model instances.
+    Rules is a core concept in `neat`. This represents fusion of data model
+    definitions and (optionally) the transformation rules used to transform the data/graph
+    from the source representation to the target representation defined by the data model.
+    The rules are defined in a Excel sheet and then parsed into a `Rules` object. The
+    `Rules` object is then used to generate data model and the`RDF` graph made of data
+    model instances.
 
     Args:
         metadata: Data model metadata
@@ -802,17 +895,13 @@ class TransformationRules(RuleModel):
     !!! note "Importers"
         Neat supports importing data from different sources. See the importers section for more details.
 
-    !!! note "Parsers"
-        Neat supports parsing data from different sources into `TransformationRules` instance.
-        See the parsers section for more details.
-
     !!! note "Exporters"
         Neat supports exporting data to different sources. See the exporters section for more details.
     """
 
     metadata: Metadata
-    classes: dict[str, Class]
-    properties: dict[str, Property]
+    classes: Classes
+    properties: Properties
     prefixes: dict[str, Namespace] = PREFIXES.copy()
     instances: list[Instance] = Field(default_factory=list)
 
@@ -820,7 +909,7 @@ class TransformationRules(RuleModel):
     def raw_tables(self) -> list[str]:
         return list(
             {
-                parse_rule(rule.rule, RuleType.rawlookup).table.name  # type: ignore[arg-type, attr-defined]
+                parse_rule(rule.rule, TransformationRuleType.rawlookup).table.name  # type: ignore[arg-type, attr-defined]
                 for rule in self.properties.values()
                 if rule.is_raw_lookup
             }
@@ -832,23 +921,39 @@ class TransformationRules(RuleModel):
             return []
         return value
 
-    @validator("properties", each_item=True)
-    def class_property_exist(cls, value, values):
-        if classes := values.get("classes"):
-            if value.class_id not in classes:
-                raise exceptions.PropertyDefinedForUndefinedClass(
-                    value.property_id, value.class_id
-                ).to_pydantic_custom_error()
-        return value
+    @field_validator("classes", mode="before")
+    def dict_to_classes_obj(cls, value: dict | Classes) -> Classes:
+        if not isinstance(value, dict):
+            return value
+        dict_of_classes = TypeAdapter(dict[str, Class]).validate_python(value)
+        return Classes(data=dict_of_classes)
 
-    @validator("properties", each_item=True)
-    def value_type_exist(cls, value, values):
-        if classes := values.get("classes"):
-            if value.property_type == "ObjectProperty" and value.expected_value_type not in classes:
-                raise exceptions.ValueTypeNotDefinedAsClass(
-                    value.class_id, value.property_id, value.expected_value_type
-                ).to_pydantic_custom_error()
-        return value
+    @field_validator("properties", mode="before")
+    def dict_to_properties_obj(cls, value: dict | Properties) -> Properties:
+        if not isinstance(value, dict):
+            return value
+        dict_of_properties = TypeAdapter(dict[str, Property]).validate_python(value)
+        return Properties(data=dict_of_properties)
+
+    @model_validator(mode="after")
+    def properties_refer_existing_classes(self) -> Self:
+        errors = []
+        for property_ in self.properties.values():
+            if property_.class_id not in self.classes:
+                errors.append(
+                    exceptions.PropertyDefinedForUndefinedClass(
+                        property_.property_id, property_.class_id
+                    ).to_pydantic_custom_error()
+                )
+            if property_.property_type == "ObjectProperty" and property_.expected_value_type not in self.classes:
+                errors.append(
+                    exceptions.ValueTypeNotDefinedAsClass(
+                        property_.class_id, property_.property_id, property_.expected_value_type
+                    ).to_pydantic_custom_error()
+                )
+        if errors:
+            raise exceptions.MultipleExceptions(errors)
+        return self
 
     @validator("properties")
     def is_type_defined_as_object(cls, value):
@@ -909,3 +1014,13 @@ class TransformationRules(RuleModel):
 
         value[values["metadata"].prefix] = values["metadata"].namespace
         return value
+
+    def _repr_html_(self) -> str:
+        """Pretty display of the TransformationRules object in a Notebook"""
+        dump = self.metadata.model_dump()
+        for key in ["creator", "contributor"]:
+            dump[key] = ", ".join(dump[key]) if isinstance(dump[key], list) else dump[key]
+        dump["class_count"] = len(self.classes)
+        dump["property_count"] = len(self.properties)
+        dump["instance_count"] = len(self.instances)
+        return pd.Series(dump).to_frame("value")._repr_html_()  # type: ignore[operator]

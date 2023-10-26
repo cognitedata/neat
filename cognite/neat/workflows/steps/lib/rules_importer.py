@@ -1,5 +1,6 @@
 import json
 import logging
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import ClassVar
@@ -7,15 +8,16 @@ from typing import ClassVar
 import yaml
 from rdflib import Namespace
 
-from cognite.neat.rules.models import Class, Metadata, Property, TransformationRules
-from cognite.neat.rules.to_rdf_path import RuleType
+from cognite.neat.rules import exporter, importer
+from cognite.neat.rules.models.rdfpath import TransformationRuleType
+from cognite.neat.rules.models.rules import Class, Classes, Metadata, Properties, Property, Rules
 from cognite.neat.workflows.model import FlowMessage
-from cognite.neat.workflows.steps.data_contracts import RulesData
+from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
 
-__all__ = ["OpenApiToRules", "ArbitraryJsonYamlToRules"]
+__all__ = ["OpenApiToRules", "ArbitraryJsonYamlToRules", "GraphToRules"]
 
 
 class OpenApiToRules(Step):
@@ -61,7 +63,7 @@ class OpenApiToRules(Step):
         }
         return (FlowMessage(output_text=report, payload=report_obj), RulesData(rules=rules))
 
-    def open_api_to_rules(self, open_api_spec_file_path: Path) -> TransformationRules:
+    def open_api_to_rules(self, open_api_spec_file_path: Path) -> Rules:
         """Converts OpenAPI spec to NEAT transformation rules object."""
         with open_api_spec_file_path.open("r") as openapi_file:
             if open_api_spec_file_path.suffix == ".json":
@@ -81,8 +83,8 @@ class OpenApiToRules(Step):
             cdf_space_name="OpenAPI",
         )
 
-        classes: dict[str, Class] = {}
-        properties: dict[str, Property] = {}
+        classes = Classes()
+        properties = Properties()
 
         # Loop through OpenAPI components
         for component_name, component_info in openapi_spec.get("components", {}).get("schemas", {}).items():
@@ -108,15 +110,13 @@ class OpenApiToRules(Step):
                 self.failed_classes_counter += 1
                 self.failed_classes[class_id] = str(e)
 
-        rules = TransformationRules(
-            metadata=metadata, classes=classes, properties=properties, prefixes={}, instances=[]
-        )
+        rules = Rules(metadata=metadata, classes=classes, properties=properties, prefixes={}, instances=[])
 
         return rules
 
     def process_properies(
         self,
-        rules_properties: dict[str, Property],
+        rules_properties: Properties,
         class_id: str,
         class_name: str,
         component: dict,
@@ -160,7 +160,7 @@ class OpenApiToRules(Step):
                             expected_value_type=expected_value_type,
                             cdf_resource_type=["Asset"],
                             resource_type_property="Asset",  # type: ignore
-                            rule_type=RuleType("rdfpath"),
+                            rule_type=TransformationRuleType("rdfpath"),
                             rule=f"neat:{class_name}(neat:{prop_name})",
                             label="linked to",
                         )
@@ -182,7 +182,7 @@ class OpenApiToRules(Step):
                         expected_value_type=ref_class,
                         cdf_resource_type=["Asset"],
                         resource_type_property="Asset",  # type: ignore
-                        rule_type=RuleType("rdfpath"),
+                        rule_type=TransformationRuleType("rdfpath"),
                         rule=f"neat:{class_name}(neat:{parent_property_name})",
                         label="linked to",
                     )
@@ -248,9 +248,9 @@ class ArbitraryJsonYamlToRules(Step):
             "failed_classes": self.failed_classes,
             "failed_properties": self.failed_properties,
         }
-        return (FlowMessage(output_text=report, payload=report_obj), RulesData(rules=rules))
+        return FlowMessage(output_text=report, payload=report_obj), RulesData(rules=rules)
 
-    def dict_to_rules(self, open_api_spec_file_path: Path) -> TransformationRules:
+    def dict_to_rules(self, open_api_spec_file_path: Path) -> Rules:
         """Converts OpenAPI spec to NEAT transformation rules object."""
         with open_api_spec_file_path.open("r") as openapi_file:
             if open_api_spec_file_path.suffix == ".json":
@@ -270,13 +270,11 @@ class ArbitraryJsonYamlToRules(Step):
             data_model_name="OpenAPI",
         )
 
-        self.classes: dict[str, Class] = {}
-        self.properties: dict[str, Property] = {}
+        self.classes = Classes()
+        self.properties = Properties()
 
         self.convert_dict_to_classes_and_props(src_data_obj, None)
-        rules = TransformationRules(
-            metadata=metadata, classes=self.classes, properties=self.properties, prefixes={}, instances=[]
-        )
+        rules = Rules(metadata=metadata, classes=self.classes, properties=self.properties, prefixes={}, instances=[])
 
         return rules
 
@@ -286,11 +284,7 @@ class ArbitraryJsonYamlToRules(Step):
         if self.is_fdm_compatibility_mode:
             class_name = get_dms_compatible_name(create_fdm_compatibility_class_name(class_name))
         try:
-            class_ = Class(
-                class_id=class_name,
-                class_name=class_name,
-                description=description,
-            )
+            class_ = Class(class_id=class_name, class_name=class_name, description=description)
             if parent_class_name:
                 self.add_property(class_name, "parent", parent_class_name, None)
             self.classes[class_name] = class_
@@ -317,7 +311,7 @@ class ArbitraryJsonYamlToRules(Step):
                 expected_value_type=property_type,
                 cdf_resource_type=["Asset"],
                 resource_type_property="Asset",  # type: ignore
-                rule_type=RuleType("rdfpath"),
+                rule_type=TransformationRuleType("rdfpath"),
                 rule=f"neat:{class_name}(neat:{property_name})",
                 label="linked to",
             )
@@ -390,7 +384,7 @@ def get_dms_compatible_name(name: str) -> str:
 
 def create_fdm_compatibility_class_name(input_string: str):
     """Remove underscores and capitalize each word in the string ,
-    the convertion is done to improve complience with DMS naming conventions"""
+    the conversion is done to improve compliance with DMS naming conventions"""
 
     if "_" in input_string:
         words = input_string.split("_")  # Split the string by underscores
@@ -398,3 +392,53 @@ def create_fdm_compatibility_class_name(input_string: str):
         return result
     else:
         return input_string
+
+
+class GraphToRules(Step):
+    """The step extracts data model from RDF graph and generates NEAT transformation rules object."""
+
+    description = "The step extracts data model from RDF graph and generates NEAT transformation rules object. \
+    The rules object can be serialized to excel file or used directly in other steps."
+    category = CATEGORY
+    version = "0.1.0-alpha"
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="file_name",
+            value="inferred_transformations.xlsx",
+            label="File name to store transformation rules.",
+        ),
+        Configurable(name="storage_dir", value="staging", label="Directory to store Transformation Rules spreadsheet"),
+        Configurable(
+            name="max_number_of_instances",
+            value="-1",
+            label="Maximum number of instances per class to process, -1 means all instances",
+        ),
+    ]
+
+    def run(self, graph_store: SourceGraph | SolutionGraph) -> FlowMessage:  # type: ignore[override, syntax]
+        file_name = self.configs["file_name"]
+        staging_dir_str = self.configs["storage_dir"]
+        staging_dir = self.data_store_path / Path(staging_dir_str)
+        staging_dir.mkdir(parents=True, exist_ok=True)
+
+        spreadsheet_path = staging_dir / file_name
+        report_path = staging_dir / f"{spreadsheet_path.stem}_validation_report.txt"
+
+        raw_rules = importer.GraphImporter(
+            graph_store.graph.graph, int(self.configs["max_number_of_instances"])
+        ).to_raw_rules()
+        exporter.ExcelExporter(raw_rules, spreadsheet_path, report_path).export()
+
+        output_text = (
+            "<p></p>"
+            "Rules imported using GraphImporter and can be downloaded as the Excel file:"
+            f'<a href="http://localhost:8000/data/{staging_dir_str}/{file_name}?{time.time()}" '
+            f'target="_blank">{file_name}</a>'
+            "<p></p>"
+            "Rules validation report can be downloaded as TXT file: "
+            f'<a href="http://localhost:8000/data/{staging_dir_str}/{spreadsheet_path.stem}'
+            f'_validation_report.txt?{time.time()}" '
+            f'target="_blank">{spreadsheet_path.stem}_validation_report.txt</a>'
+        )
+
+        return FlowMessage(output_text=output_text)

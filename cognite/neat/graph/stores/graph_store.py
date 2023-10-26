@@ -1,24 +1,34 @@
 import logging
 import os
 import shutil
+import sys
 import time
 from pathlib import Path
+from typing import TypeAlias
 
 import pandas as pd
 import pyoxigraph
 import requests
 from prometheus_client import Gauge, Summary
-from rdflib import Graph, Namespace
+from rdflib import Graph, Literal, Namespace
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 from rdflib.query import Result
+from rdflib.term import URIRef
 
 from cognite.neat.constants import DEFAULT_NAMESPACE, PREFIXES
 from cognite.neat.graph.extractors.rdf_to_graph import rdf_file_to_graph
 from cognite.neat.graph.stores import oxrdflib
 from cognite.neat.graph.stores.configuration import RdfStoreType
+from cognite.neat.rules.models.rules import Rules
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 prom_qsm = Summary("store_query_time_summary", "Time spent processing queries", ["query"])
 prom_sq = Gauge("store_single_query_time", "Time spent processing a single query", ["query"])
+Triple: TypeAlias = tuple[URIRef, URIRef, Literal | URIRef]
 
 
 class NeatGraphStore:
@@ -52,6 +62,26 @@ class NeatGraphStore:
         self.graph_db_rest_url: str = "http://localhost:7200"
         self.internal_storage_dir: Path | None = None
         self.graph_name: str | None = None
+
+    @classmethod
+    def from_rules(cls, rules: Rules) -> Self:
+        """
+        Creates a new instance of NeatGraphStore from TransformationRules and runs the .init_graph() method on it.
+
+        Args:
+            rules: TransformationRules object containing information about the graph store.
+
+        Returns:
+            An instantiated instance of NeatGraphStore
+
+        """
+        if rules.metadata.namespace is None:
+            namespace = DEFAULT_NAMESPACE
+        else:
+            namespace = rules.metadata.namespace
+        store = cls(prefixes=rules.prefixes, namespace=namespace)
+        store.init_graph(base_prefix=rules.metadata.prefix)
+        return store
 
     def init_graph(
         self,
@@ -284,6 +314,45 @@ class NeatGraphStore:
         """Prints the triples of the graph."""
         for subj, pred, obj in self.graph:
             logging.info(f"Triple: {subj} {pred} {obj}")
+
+    def add_triples(self, triples: list[Triple], batch_size: int = 10_000, verbose: bool = False):
+        """Adds triples to the graph store in batches.
+
+        Args:
+            triples: list of triples to be added to the graph store
+            batch_size: Batch size of triples per commit, by default 10_000
+            verbose: Verbose mode, by default False
+        """
+
+        commit_counter = 0
+        if verbose:
+            logging.info(f"Committing total of {len(triples)} triples to knowledge graph!")
+        total_number_of_triples = len(triples)
+        number_of_uploaded_triples = 0
+
+        def check_commit(force_commit: bool = False):
+            """Commit nodes to the graph if batch counter is reached or if force_commit is True"""
+            nonlocal commit_counter
+            nonlocal number_of_uploaded_triples
+            if force_commit:
+                number_of_uploaded_triples += commit_counter
+                self.graph.commit()
+                if verbose:
+                    logging.info(f"Committed {number_of_uploaded_triples} of {total_number_of_triples} triples")
+                return
+            commit_counter += 1
+            if commit_counter >= batch_size:
+                number_of_uploaded_triples += commit_counter
+                self.graph.commit()
+                if verbose:
+                    logging.info(f"Committed {number_of_uploaded_triples} of {total_number_of_triples} triples")
+                commit_counter = 0
+
+        for triple in triples:
+            self.graph.add(triple)
+            check_commit()
+
+        check_commit(force_commit=True)
 
 
 def drop_graph_store(graph: NeatGraphStore | None, storage_path: Path | None, force: bool = False):

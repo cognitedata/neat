@@ -6,7 +6,7 @@ from cognite.client.data_classes.data_modeling import EdgeApply, NodeApply
 
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.rules.exporter.rules2dms import DataModel
-from cognite.neat.rules.models import TransformationRules
+from cognite.neat.rules.models.rules import Rules
 from cognite.neat.workflows.steps.step_model import DataContract
 
 
@@ -18,7 +18,7 @@ class RulesData(DataContract):
         rules: The TransformationRules object.
     """
 
-    rules: TransformationRules
+    rules: Rules
 
     @property
     def dataset_id(self) -> int:

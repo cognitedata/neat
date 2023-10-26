@@ -3,15 +3,54 @@ there are loaders to TransformationRules pydantic class."""
 
 # TODO: if this module grows too big, split it into several files and place under ./converter directory
 
-import warnings
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from rdflib import DC, DCTERMS, OWL, RDF, RDFS, Graph
+from rdflib import DC, DCTERMS, OWL, RDF, RDFS, SKOS, Graph
 
-from cognite.neat.rules import exceptions, parse_rules_from_excel_file
-from cognite.neat.utils.utils import generate_exception_report, get_namespace, remove_namespace
+from cognite.neat.rules.importer._base import BaseImporter
+from cognite.neat.rules.models.tables import Tables
+from cognite.neat.utils.utils import get_namespace, remove_namespace
+
+
+class OWLImporter(BaseImporter):
+    """Convert OWL ontology to tables/ transformation rules / Excel file.
+
+        Args:
+            owl_filepath: Path to OWL ontology
+
+    !!! Note
+        OWL Ontologies typically lacks some information that is required for making a complete
+        data model. This means that the methods .to_rules() will typically fail. Instead, it is recommended
+        that you use the .to_spreadsheet() method to generate an Excel file, and then manually add the missing
+        information to the Excel file. The Excel file can then be converted to a TransformationRules object.
+
+    """
+
+    def __init__(self, owl_filepath: Path):
+        self.owl_filepath = owl_filepath
+
+    def to_tables(self) -> dict[str, pd.DataFrame]:
+        graph = Graph()
+        try:
+            graph.parse(self.owl_filepath)
+        except Exception as e:
+            raise Exception(f"Could not parse owl file: {e}") from e
+
+        # bind key namespaces
+        graph.bind("owl", OWL)
+        graph.bind("rdf", RDF)
+        graph.bind("rdfs", RDFS)
+        graph.bind("dcterms", DCTERMS)
+        graph.bind("dc", DC)
+        graph.bind("skos", SKOS)
+
+        return {
+            Tables.metadata: _parse_owl_metadata_df(graph),
+            Tables.classes: _parse_owl_classes_df(graph),
+            Tables.properties: _parse_owl_properties_df(graph),
+        }
 
 
 def _create_default_metadata_parsing_config() -> dict[str, tuple[str, ...]]:
@@ -39,7 +78,6 @@ def _create_default_metadata_parsing_config() -> dict[str, tuple[str, ...]]:
 def _create_default_classes_parsing_config() -> dict[str, tuple[str, ...]]:
     # TODO: these are to be read from Class pydantic model
     return {
-        "helper_row": ("Data Model Definition", "", "", "", "State", "", "", "Knowledge acquisition log", "", "", ""),
         "header": (
             "Class",
             "Name",
@@ -52,29 +90,13 @@ def _create_default_classes_parsing_config() -> dict[str, tuple[str, ...]]:
             "Source Entity Name",
             "Match",
             "Comment",
-        ),
+        )
     }
 
 
 def _create_default_properties_parsing_config() -> dict[str, tuple[str, ...]]:
     # TODO: these are to be read from Property pydantic model
     return {
-        "helper_row": (
-            "Data Model Definition",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "State",
-            "",
-            "",
-            "Knowledge acquisition log",
-            "",
-            "",
-            "",
-        ),
         "header": (
             "Class",
             "Property",
@@ -90,47 +112,8 @@ def _create_default_properties_parsing_config() -> dict[str, tuple[str, ...]]:
             "Source Entity Name",
             "Match",
             "Comment",
-        ),
+        )
     }
-
-
-def owl2excel(owl_filepath: Path, excel_filepath: Path | None = None, validate_results: bool = True):
-    """Convert owl ontology to transformation rules and then stored them as an Excel file.
-
-    Args:
-        owl_filepath: Path to OWL ontology
-        excel_filepath: Path to save transformation rules. If None is passed, the
-                        file will be "owl_filepath.parent / transformation_rules.xlsx".
-        validate_results: Whether to validate generated Excel file and create validation report, by default True
-
-    """
-
-    owl_filepath = Path(owl_filepath)
-    if excel_filepath:
-        excel_filepath = Path(excel_filepath)
-    else:
-        excel_filepath = owl_filepath.parent / "transformation_rules.xlsx"
-
-    graph = Graph()
-    try:
-        graph.parse(owl_filepath)
-    except Exception as e:
-        raise Exception(f"Could not parse owl file: {e}") from e
-
-    # bind key namespaces
-    graph.bind("owl", OWL)
-    graph.bind("rdf", RDF)
-    graph.bind("rdfs", RDFS)
-    graph.bind("dcterms", DCTERMS)
-    graph.bind("dc", DC)
-
-    with pd.ExcelWriter(excel_filepath) as writer:
-        _parse_owl_metadata_df(graph).to_excel(writer, sheet_name="Metadata", header=False)
-        _parse_owl_classes_df(graph).to_excel(writer, sheet_name="Classes", index=False, header=False)
-        _parse_owl_properties_df(graph).to_excel(writer, sheet_name="Properties", index=False, header=False)
-
-    if validate_results:
-        _validate_excel_file(excel_filepath)
 
 
 def _parse_owl_metadata_df(graph: Graph, parsing_config: dict | None = None) -> pd.DataFrame:
@@ -153,7 +136,7 @@ def _parse_owl_metadata_df(graph: Graph, parsing_config: dict | None = None) -> 
         ?namespace a owl:Ontology .
         OPTIONAL {?namespace owl:versionInfo ?version }.
         OPTIONAL {?namespace dcterms:creator ?creator }.
-        OPTIONAL {?namespace dcterms:title ?title }.
+        OPTIONAL {?namespace dcterms:title|rdfs:label|skos:prefLabel ?title }.
         OPTIONAL {?namespace dcterms:contributor ?contributor }.
         OPTIONAL {?namespace dcterms:modified ?updated }.
         OPTIONAL {?namespace dcterms:created ?created }.
@@ -190,7 +173,7 @@ def _parse_owl_metadata_df(graph: Graph, parsing_config: dict | None = None) -> 
         ]
     ]
 
-    return pd.DataFrame(clean_list, columns=parsing_config["header"]).T
+    return pd.DataFrame(np.vstack((parsing_config["header"], clean_list)).T)
 
 
 def _parse_owl_classes_df(graph: Graph, parsing_config: dict | None = None) -> pd.DataFrame:
@@ -257,7 +240,7 @@ SELECT ?class ?name ?description ?parentClass ?deprecated ?deprecationDate
         ]
         for class_, group_df in grouped_df
     ]
-    return pd.DataFrame([parsing_config["helper_row"], parsing_config["header"], *clean_list])
+    return pd.DataFrame(columns=parsing_config["header"], data=clean_list)
 
 
 def _parse_owl_properties_df(graph: Graph, parsing_config: dict | None = None) -> pd.DataFrame:
@@ -334,29 +317,4 @@ def _parse_owl_properties_df(graph: Graph, parsing_config: dict | None = None) -
                 ]
             ]
 
-    return pd.DataFrame([parsing_config["helper_row"], parsing_config["header"], *clean_list])
-
-
-def _validate_excel_file(excel_filepath: Path):
-    _, validation_errors, validation_warnings = parse_rules_from_excel_file(excel_filepath, return_report=True)
-
-    report = ""
-    if validation_errors:
-        warnings.warn(
-            exceptions.OWLGeneratedTransformationRulesHasErrors().message,
-            category=exceptions.OWLGeneratedTransformationRulesHasErrors,
-            stacklevel=2,
-        )
-        report = generate_exception_report(validation_errors, "Errors")
-
-    if validation_warnings:
-        warnings.warn(
-            exceptions.OWLGeneratedTransformationRulesHasWarnings().message,
-            category=exceptions.OWLGeneratedTransformationRulesHasWarnings,
-            stacklevel=2,
-        )
-        report += generate_exception_report(validation_warnings, "Warnings")
-
-    if report:
-        with (excel_filepath.parent / "report.txt").open("w") as f:
-            f.write(report)
+    return pd.DataFrame(columns=parsing_config["header"], data=clean_list)

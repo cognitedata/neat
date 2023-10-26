@@ -5,7 +5,7 @@ from typing import ClassVar, cast
 
 from prometheus_client import Gauge
 
-from cognite.neat.rules.parser import parse_rules_from_excel_file
+from cognite.neat.rules import importer
 from cognite.neat.utils.utils import generate_exception_report
 from cognite.neat.workflows import utils
 from cognite.neat.workflows._exceptions import StepNotInitialized
@@ -80,12 +80,9 @@ class LoadTransformationRules(Step):
         else:
             store.load_rules_file_from_cdf(str(rules_file), version)
 
-        transformation_rules, validation_errors, validation_warnings = parse_rules_from_excel_file(
-            rules_file_path, return_report=True
-        )
-        report = generate_exception_report(validation_errors, "Errors") + generate_exception_report(
-            validation_warnings, "Warnings"
-        )
+        raw_rules = importer.ExcelImporter(rules_file_path).to_raw_rules()
+        rules, errors, warnings_ = raw_rules.to_rules(return_report=True, skip_validation=False)
+        report = generate_exception_report(errors, "Errors") + generate_exception_report(warnings_, "Warnings")
 
         with report_full_path.open(mode="w") as file:
             file.write(report)
@@ -97,7 +94,7 @@ class LoadTransformationRules(Step):
             f'target="_blank">here</a>'
         )
 
-        if transformation_rules is None:
+        if rules is None:
             return FlowMessage(
                 error_text=f"Failed to load transformation rules! {text_for_report}",
                 step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
@@ -111,9 +108,9 @@ class LoadTransformationRules(Step):
                 "data_model_rules", "Transformation rules stats", m_type="gauge", metric_labels=["component"]
             ),
         )
-        rules_metrics.labels({"component": "classes"}).set(len(transformation_rules.classes))
-        rules_metrics.labels({"component": "properties"}).set(len(transformation_rules.properties))
-        logging.info(f"Loaded prefixes {transformation_rules.prefixes!s} rules from {rules_file_path.name!r}.")
-        output_text = f"<p></p>Loaded {len(transformation_rules.properties)} rules! {text_for_report}"
+        rules_metrics.labels({"component": "classes"}).set(len(rules.classes))
+        rules_metrics.labels({"component": "properties"}).set(len(rules.properties))
+        logging.info(f"Loaded prefixes {rules.prefixes!s} rules from {rules_file_path.name!r}.")
+        output_text = f"<p></p>Loaded {len(rules.properties)} rules! {text_for_report}"
 
-        return FlowMessage(output_text=output_text), RulesData(rules=transformation_rules)
+        return FlowMessage(output_text=output_text), RulesData(rules=rules)
