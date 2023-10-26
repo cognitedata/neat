@@ -496,46 +496,6 @@ def to_edge(self, data_model: DataModel, add_class_prefix: bool) -> list[EdgeApp
     class_name = type(self).__name__
 
     for edge_one_to_many in self.edges_one_to_many:
-<<<<<<< HEAD
-        edge_type_id = f"{self.__class__.__name__}.{edge_one_to_many}"
-        if add_class_prefix:
-            edges_list = []
-            dm_view = data_model.views[self.__class__.__name__]
-            if dm_view.properties:
-                for end_node in self.__getattribute__(edge_one_to_many):
-                    if is_external_id_valid(end_node):
-                        mapped_instance = dm_view.properties[edge_one_to_many]
-                        if isinstance(mapped_instance, SingleHopConnectionDefinitionApply):
-                            object_view = mapped_instance.source
-                            if object_view:
-                                object_class_name = object_view.external_id
-                                ext_id_object = add_class_prefix_to_xid(
-                                    class_name=object_class_name, external_id=end_node
-                                )
-                                edge_apply = EdgeApply(
-                                    space=data_model.space,
-                                    external_id=f"{self.external_id}-{ext_id_object}",
-                                    type=(data_model.space, edge_type_id),
-                                    start_node=(data_model.space, self.external_id),
-                                    end_node=(
-                                        data_model.space,
-                                        ext_id_object,
-                                    ),
-                                )
-                                edges_list.append(edge_apply)
-                edges.extend(edges_list)
-        else:
-            edges.extend(
-                EdgeApply(
-                    space=data_model.space,
-                    external_id=f"{self.external_id}-{end_node_id}",
-                    type=(data_model.space, edge_type_id),
-                    start_node=(data_model.space, self.external_id),
-                    end_node=(
-                        data_model.space,
-                        end_node_id,
-                    ),
-=======
         edge_type_id = f"{class_name}.{edge_one_to_many}"
         for end_node_id in getattr(self, edge_one_to_many):
             if not is_external_id_valid(end_node_id):
@@ -543,7 +503,6 @@ def to_edge(self, data_model: DataModel, add_class_prefix: bool) -> list[EdgeApp
                     message=exceptions.EdgeConditionUnmet(edge_one_to_many).message,
                     category=exceptions.EdgeConditionUnmet,
                     stacklevel=2,
->>>>>>> c6fa719e18fa6fce86f01def311a354ce9ed659e
                 )
             end_node_external_id = end_node_id
             if add_class_prefix:

@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.33.0] - 22-10-23
+
+### Improved
+- Implementation of class prefix to external ids for edges
+
 ## [0.32.0] - 22-10-23
 
 ### Improved
