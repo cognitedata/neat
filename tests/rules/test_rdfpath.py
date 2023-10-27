@@ -7,20 +7,20 @@ from pydantic import ValidationError
 from cognite.neat.constants import PREFIXES
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.graph.transformations.query_generator import build_sparql_query
-from cognite.neat.rules.models import Property
-from cognite.neat.rules.to_rdf_path import (
+from cognite.neat.rules.models.rdfpath import (
     AllProperties,
     AllReferences,
     Entity,
     Hop,
-    RuleType,
     SingleProperty,
     Step,
+    TransformationRuleType,
     is_rawlookup,
     is_rdfpath,
     parse_rule,
     parse_traversal,
 )
+from cognite.neat.rules.models.rules import Property
 from tests import config
 
 nan = float("nan")
@@ -272,8 +272,8 @@ def display_test_parse_traversal(
     pp = pprint.PrettyPrinter(indent=4)
     pp.pprint(expected_traversal.dict())
 
-    rule = parse_rule(raw, RuleType.rdfpath)
-    if isinstance(rule, RuleType):
+    rule = parse_rule(raw, TransformationRuleType.rdfpath)
+    if isinstance(rule, TransformationRuleType):
         # Picking up rdf:type is done by default
         query = ""
     else:

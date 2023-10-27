@@ -7,12 +7,11 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from rdflib import DC, DCTERMS, OWL, RDF, RDFS, Graph
+from rdflib import DC, DCTERMS, OWL, RDF, RDFS, SKOS, Graph
 
-from cognite.neat.rules.parser import RawTables
+from cognite.neat.rules.importer._base import BaseImporter
+from cognite.neat.rules.models.tables import Tables
 from cognite.neat.utils.utils import get_namespace, remove_namespace
-
-from ._base import BaseImporter
 
 
 class OWLImporter(BaseImporter):
@@ -22,7 +21,7 @@ class OWLImporter(BaseImporter):
             owl_filepath: Path to OWL ontology
 
     !!! Note
-        OWL Ontologies typically lacks some information that is required requires for making a complete
+        OWL Ontologies typically lacks some information that is required for making a complete
         data model. This means that the methods .to_rules() will typically fail. Instead, it is recommended
         that you use the .to_spreadsheet() method to generate an Excel file, and then manually add the missing
         information to the Excel file. The Excel file can then be converted to a TransformationRules object.
@@ -31,9 +30,8 @@ class OWLImporter(BaseImporter):
 
     def __init__(self, owl_filepath: Path):
         self.owl_filepath = owl_filepath
-        super().__init__(owl_filepath.parent / "transformation_rules.xlsx")
 
-    def to_tables(self) -> RawTables:
+    def to_tables(self) -> dict[str, pd.DataFrame]:
         graph = Graph()
         try:
             graph.parse(self.owl_filepath)
@@ -46,12 +44,13 @@ class OWLImporter(BaseImporter):
         graph.bind("rdfs", RDFS)
         graph.bind("dcterms", DCTERMS)
         graph.bind("dc", DC)
+        graph.bind("skos", SKOS)
 
-        return RawTables(
-            Metadata=_parse_owl_metadata_df(graph),
-            Classes=_parse_owl_classes_df(graph),
-            Properties=_parse_owl_properties_df(graph),
-        )
+        return {
+            Tables.metadata: _parse_owl_metadata_df(graph),
+            Tables.classes: _parse_owl_classes_df(graph),
+            Tables.properties: _parse_owl_properties_df(graph),
+        }
 
 
 def _create_default_metadata_parsing_config() -> dict[str, tuple[str, ...]]:
@@ -137,7 +136,7 @@ def _parse_owl_metadata_df(graph: Graph, parsing_config: dict | None = None) -> 
         ?namespace a owl:Ontology .
         OPTIONAL {?namespace owl:versionInfo ?version }.
         OPTIONAL {?namespace dcterms:creator ?creator }.
-        OPTIONAL {?namespace dcterms:title ?title }.
+        OPTIONAL {?namespace dcterms:title|rdfs:label|skos:prefLabel ?title }.
         OPTIONAL {?namespace dcterms:contributor ?contributor }.
         OPTIONAL {?namespace dcterms:modified ?updated }.
         OPTIONAL {?namespace dcterms:created ?created }.

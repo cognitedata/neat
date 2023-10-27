@@ -18,7 +18,7 @@ from rdflib.term import URIRef
 
 from cognite.neat.graph.loaders.core.models import AssetTemplate
 from cognite.neat.graph.stores import NeatGraphStore
-from cognite.neat.rules.models import Property, TransformationRules
+from cognite.neat.rules.models.rules import Property, Rules
 from cognite.neat.utils.utils import chunker, datetime_utc_now, remove_namespace, retry_decorator
 
 if sys.version_info >= (3, 11):
@@ -121,7 +121,7 @@ def _get_class_instance(graph: Graph, instance: URIRef) -> list[tuple]:
     return result
 
 
-def _get_class_property_pairs(transformation_rules: TransformationRules) -> dict[str, list[Property]]:
+def _get_class_property_pairs(transformation_rules: Rules) -> dict[str, list[Property]]:
     """Define classes in terms of their properties
 
     Args:
@@ -143,7 +143,7 @@ def _get_class_property_pairs(transformation_rules: TransformationRules) -> dict
     return classes
 
 
-def _define_asset_class_mapping(transformation_rules: TransformationRules) -> dict[str, dict[str, list]]:
+def _define_asset_class_mapping(transformation_rules: Rules) -> dict[str, dict[str, list]]:
     """Define mapping from class to asset properties
 
     Args:
@@ -344,7 +344,7 @@ def _list2dict(class_instance: list) -> dict[str, Any]:
 
 def rdf2assets(
     graph_store: NeatGraphStore,
-    transformation_rules: TransformationRules,
+    transformation_rules: Rules,
     stop_on_exception: bool = False,
     use_orphanage: bool = True,
     meta_keys: NeatMetadataKeys | None = None,
@@ -459,7 +459,7 @@ def rdf2assets(
 
 def rdf2asset_dictionary(
     graph_store: NeatGraphStore,
-    transformation_rules: TransformationRules,
+    transformation_rules: Rules,
     stop_on_exception: bool = False,
     use_orphanage: bool = True,
 ) -> dict[str, dict[str, Any]]:

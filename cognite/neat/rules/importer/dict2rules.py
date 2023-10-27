@@ -1,29 +1,25 @@
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any
 
 import pandas as pd
 
-from cognite.neat.rules.parser import RawTables
+from cognite.neat.rules.models.tables import Tables
 
 from ._base import BaseImporter
 
 
 class DictImporter(BaseImporter):
     """
-    Importer for an arbitrary dictionary.
+    Importer for an arbitrary dictionary to tables.
 
     Args:
-        data: file with JSON.
-        spreadsheet_path: Path to write the transformation rules to in the .to_spreadsheet() method.
-        report_path: Path to write the report to in the .to_spreadsheet() method.
+        data: dictionary containing Rules definitions.
     """
 
-    def __init__(self, data: dict[str, Any], spreadsheet_path: Path | None = None, report_path: Path | None = None):
+    def __init__(self, data: dict[str, Any]):
         self.data = data
-        super().__init__(spreadsheet_path=spreadsheet_path, report_path=report_path)
 
-    def to_tables(self) -> RawTables:
+    def to_tables(self) -> dict[str, pd.DataFrame]:
         metadata = pd.Series(
             dict(
                 title="OpenAPI to DM transformation rules",
@@ -40,9 +36,11 @@ class DictImporter(BaseImporter):
         finder = _TripleFinder()
         finder.find_triples(self.data)
 
-        return RawTables(
-            Metadata=metadata, Classes=pd.DataFrame(finder.classes).T, Properties=pd.DataFrame(finder.properties).T
-        )
+        return {
+            Tables.metadata: metadata,
+            Tables.classes: pd.DataFrame(finder.classes).T,
+            Tables.properties: pd.DataFrame(finder.properties).T,
+        }
 
 
 class _TripleFinder:

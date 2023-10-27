@@ -2,11 +2,11 @@ from cognite.neat.graph import loaders
 from cognite.neat.graph.extractors.mocks import generate_triples
 from cognite.neat.graph.loaders.core import rdf_to_relationships
 from cognite.neat.graph.stores import NeatGraphStore
-from cognite.neat.rules.models import TransformationRules
+from cognite.neat.rules.models.rules import Rules
 from cognite.neat.utils.utils import remove_namespace
 
 
-def test_mock_graph(transformation_rules: TransformationRules):
+def test_mock_graph(transformation_rules: Rules):
     rules = transformation_rules
 
     class_count = {

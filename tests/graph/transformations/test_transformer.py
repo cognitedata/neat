@@ -3,11 +3,11 @@ from cognite.client.testing import monkeypatch_cognite_client
 from rdflib import Graph, Namespace
 
 from cognite.neat.graph.transformations.transformer import domain2app_knowledge_graph
-from cognite.neat.rules.models import TransformationRules
-from cognite.neat.rules.to_rdf_path import RuleType
+from cognite.neat.rules.models.rdfpath import TransformationRuleType
+from cognite.neat.rules.models.rules import Rules
 
 
-def test_domain2app_knowledge_graph(transformation_rules: TransformationRules, source_knowledge_graph: Graph):
+def test_domain2app_knowledge_graph(transformation_rules: Rules, source_knowledge_graph: Graph):
     # Arrange
     rules = transformation_rules
     domain_graph = source_knowledge_graph
@@ -22,13 +22,11 @@ def test_domain2app_knowledge_graph(transformation_rules: TransformationRules, s
     assert next(iter(res))[0] == Namespace("http://purl.org/cognite/tnt#").Substation
 
 
-def test_domain2app_knowledge_graph_raw_lookup(
-    transformation_rules: TransformationRules, source_knowledge_graph: Graph
-):
+def test_domain2app_knowledge_graph_raw_lookup(transformation_rules: Rules, source_knowledge_graph: Graph):
     # Arrange
     rules = transformation_rules.copy(deep=True)
     rules.properties["row 18"].rule += " | TerminalName(NordicName, TNTName)"
-    rules.properties["row 18"].rule_type = RuleType.rawlookup
+    rules.properties["row 18"].rule_type = TransformationRuleType.rawlookup
     domain_graph = source_knowledge_graph
     database_name = "look_up"
 

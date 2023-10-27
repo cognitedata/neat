@@ -1380,7 +1380,7 @@ class NotValidRAWLookUp(NeatException):
 ################################################################################################
 # RULES IMPORTERS: 200 - 299 ###################################################################
 ################################################################################################
-class GeneratedTransformationRulesHasErrors(NeatWarning):
+class RulesHasErrors(NeatWarning):
     """This warning occurs when generated transformation rules are invalid/incomplete.
 
     Args:
@@ -1402,8 +1402,9 @@ class GeneratedTransformationRulesHasErrors(NeatWarning):
 
     def __init__(self, importer_type: str = "OWL ontology", verbose: bool = False):
         self.message = (
-            f"Transformation rules generated using {importer_type} importer are invalid!"
-            " Consult report.txt for details on the errors and fix them before using the rules file."
+            f"Rules generated using {importer_type} are invalid!"
+            " Consult generated validation report for details on the errors and fix them"
+            " before using the rules file."
             f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
         if verbose:
@@ -1412,7 +1413,7 @@ class GeneratedTransformationRulesHasErrors(NeatWarning):
             self.message += f"\nFix: {self.fix}"
 
 
-class GeneratedTransformationRulesHasWarnings(NeatWarning):
+class RulesHasWarnings(NeatWarning):
     """This warning occurs when th generated transformation rules are invalid/incomplete.
 
     Args:
@@ -1435,8 +1436,9 @@ class GeneratedTransformationRulesHasWarnings(NeatWarning):
 
     def __init__(self, importer_type: str = "OWL ontology", verbose: bool = False):
         self.message = (
-            f"Transformation rules generated using {importer_type} importer raised warnings!"
-            " Consult report.txt for details on warnings, and fix them prior using the rules file."
+            f"Rules generated using {importer_type} raised warnings!"
+            " Consult generated validation report for details on the warnings and optionally fix them"
+            " before using the rules file."
             f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
         if verbose:
@@ -1554,19 +1556,19 @@ class GraphClassPropertyMultiOccurrence(NeatWarning):
 ################################################################################################
 # RULES PARSERS: 300 - 399 #####################################################################
 ################################################################################################
-class ExcelFileMissingMandatorySheets(NeatException):
-    """Given Excel file is missing one or more mandatory sheets
+class SourceObjectDoesNotProduceMandatorySheets(NeatException):
+    """Given object (e.g., Excel file) does not produce one or more mandatory sheets
 
     Args:
         missing_mandatory_sheets: set of missing mandatory sheets
         verbose: flag that indicates whether to provide enhanced exception message, by default False
 
     Notes:
-        This exception is raised when Excel file is missing one or more mandatory sheets.
+        This exception is raised when source object converted to is missing one or more mandatory sheets.
         The mandatory sheets are: `Metadata`, `Classes`, `Properties`.
     """
 
-    type_: str = "ExcelFileMissingMandatorySheets"
+    type_: str = "SourceObjectDoesProduceMandatorySheets"
     code: int = 300
     description: str = "Given Excel file is missing one or more mandatory sheets"
     example: str = "An Excel file is missing sheet named 'Metadata'"
@@ -2552,6 +2554,32 @@ class DataModelAlreadyExist(NeatWarning):
             "Since update of data model can raise issues, "
             "remove it first or update its version!"
             "Aborting data model creation!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+
+
+class EdgeConditionUnmet(NeatWarning):
+    """This warning occurs when attempting to create an edge but not all conditions are met.
+
+    Args:
+        edge: data model id that already exist in DMS
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+    """
+
+    type_: str = "EdgeConditionUnmet"
+    code: int = 412
+    description: str = "This warning occurs when attempting to create an edge, but the conditions are not met."
+    example: str = ""
+    fix: str = "Check if the edge is valid and that the lenght of the external_id is < 255"
+
+    def __init__(self, edge: str, verbose: bool = False):
+        self.message = (
+            f"Ignoring edge {edge} as its format is not valid"
             f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
 

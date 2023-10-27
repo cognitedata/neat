@@ -6,12 +6,12 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes import LabelDefinition, LabelDefinitionList
 
 from cognite.neat.rules.exporter.core import get_labels
-from cognite.neat.rules.models import TransformationRules
+from cognite.neat.rules.models.rules import Rules
 
 
 def upload_labels(
     client: CogniteClient,
-    transformation_rules: TransformationRules,
+    transformation_rules: Rules,
     extra_labels: list | None = None,
     stop_on_exception: bool = False,
 ):

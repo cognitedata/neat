@@ -17,7 +17,7 @@ from cognite.neat.rules.analysis import (
     get_symmetric_pairs,
 )
 from cognite.neat.rules.exporter.rules2rules import subset_rules
-from cognite.neat.rules.models import TransformationRules
+from cognite.neat.rules.models import Rules
 from cognite.neat.rules.type_mapping import DATA_TYPE_MAPPING
 from cognite.neat.utils.utils import remove_namespace
 
@@ -37,7 +37,7 @@ class MockGraphGenerator:
         rules: Transformation rules defining the classes with their properties.
     """
 
-    def __init__(self, rules: TransformationRules):
+    def __init__(self, rules: Rules):
         self.rules = rules
 
     def generate_triples(
@@ -61,7 +61,7 @@ class MockGraphGenerator:
 
 
 def generate_triples(
-    transformation_rules: TransformationRules,
+    transformation_rules: Rules,
     class_count: dict,
     stop_on_exception: bool = False,
     allow_isolated_classes: bool = True,
@@ -180,6 +180,11 @@ def _prettify_generation_order(generation_order: dict, depth: dict | None = None
         if isinstance(value, dict):
             _prettify_generation_order(value, depth, start=start + 1)
     return OrderedDict(sorted(depth.items(), key=lambda item: item[1]))
+
+
+def _remove_non_hierarchy_linking(class_linkage: pd.DataFrame) -> pd.DataFrame:
+    """Remove linkage which is not creating asset hierarchy."""
+    return class_linkage[class_linkage.linking_type == "hierarchy"]
 
 
 def _remove_higher_occurring_sym_pair(class_linkage: pd.DataFrame, sym_pairs: set[tuple[str, str]]) -> pd.DataFrame:
@@ -320,7 +325,7 @@ def _generate_triples_per_class(
     return triples
 
 
-def _rules_to_dict(transformation_rules: TransformationRules) -> dict[str, pd.DataFrame]:
+def _rules_to_dict(transformation_rules: Rules) -> dict[str, pd.DataFrame]:
     """Represent data model as a dictionary of data frames, where each data frame
     represents properties defined for a given class.
 

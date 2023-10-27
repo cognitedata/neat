@@ -1,5 +1,6 @@
 import sys
 import warnings
+from pathlib import Path
 from typing import ClassVar
 
 from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator
@@ -7,16 +8,49 @@ from rdflib import DCTERMS, OWL, RDF, RDFS, XSD, BNode, Graph, Literal, Namespac
 from rdflib.collection import Collection as GraphCollection
 
 from cognite.neat.rules import exceptions
-from cognite.neat.rules._validation import are_properties_redefined
 from cognite.neat.rules.analysis import to_class_property_pairs, to_property_dict
-from cognite.neat.rules.models import Class, Metadata, Property, TransformationRules
-from cognite.neat.rules.type_mapping import DATA_TYPE_MAPPING
+from cognite.neat.rules.exporter._base import BaseExporter
+from cognite.neat.rules.exporter._validation import are_properties_redefined
+from cognite.neat.rules.models.rules import DATA_TYPE_MAPPING, Class, Metadata, Property, Rules
 from cognite.neat.utils.utils import generate_exception_report, remove_namespace
 
 if sys.version_info >= (3, 11):
     from typing import Self
 else:
     from typing_extensions import Self
+
+
+class OWLExporter(BaseExporter):
+    def __init__(self, rules: Rules, filepath: Path | None = None):
+        super().__init__(rules, filepath)
+
+    def export(self, filepath: Path | None = None):
+        filepath = filepath or self.filepath
+        if not filepath:
+            raise ValueError("No filepath given")
+        Ontology.from_rules(self.rules).as_owl().serialize(destination=self.filepath)
+
+
+class SHACLExporter(BaseExporter):
+    def __init__(self, rules: Rules, filepath: Path | None = None):
+        super().__init__(rules, filepath)
+
+    def export(self, filepath: Path | None = None):
+        filepath = filepath or self.filepath
+        if not filepath:
+            raise ValueError("No filepath given")
+        Ontology.from_rules(self.rules).as_shacl().serialize(destination=self.filepath)
+
+
+class SemanticDataModelExporter(BaseExporter):
+    def __init__(self, rules: Rules, filepath: Path | None = None):
+        super().__init__(rules, filepath)
+
+    def export(self, filepath: Path | None = None):
+        filepath = filepath or self.filepath
+        if not filepath:
+            raise ValueError("No filepath given")
+        Ontology.from_rules(self.rules).as_semantic_data_model().serialize(destination=self.filepath)
 
 
 class OntologyModel(BaseModel):
@@ -42,7 +76,7 @@ class Ontology(OntologyModel):
     prefixes: dict[str, Namespace]
 
     @classmethod
-    def from_rules(cls, transformation_rules: TransformationRules) -> Self:
+    def from_rules(cls, transformation_rules: Rules) -> Self:
         """
         Generates an ontology from a set of transformation rules.
 
@@ -130,6 +164,9 @@ class Ontology(OntologyModel):
             owl.add(triple)  # type: ignore[arg-type]
 
         return owl
+
+    def as_semantic_data_model(self) -> Graph:
+        return self.as_owl() + self.as_shacl()
 
     @property
     def owl_triples(self) -> list[tuple]:

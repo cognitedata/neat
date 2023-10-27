@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from cognite.neat.rules.parser import RawTables
+import pandas as pd
 
-from ._base import BaseImporter
+from cognite.neat.rules.importer._base import BaseImporter
 
 
 class XMLImporter(BaseImporter):
@@ -15,7 +15,6 @@ class XMLImporter(BaseImporter):
 
     def __init__(self, xml_directory: Path):
         self.xml_directory = xml_directory
-        super().__init__(spreadsheet_path=xml_directory / "transformation_rules.xlsx")
 
-    def to_tables(self) -> RawTables:
+    def to_tables(self) -> dict[str, pd.DataFrame]:
         raise NotImplementedError

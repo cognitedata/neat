@@ -33,9 +33,12 @@ from cognite.client.data_classes.data_modeling.views import (
 from pydantic import BaseModel, ConfigDict
 
 from cognite.neat.rules import exceptions
-from cognite.neat.rules._validation import are_entity_names_dms_compliant, are_properties_redefined
 from cognite.neat.rules.analysis import to_class_property_pairs
-from cognite.neat.rules.models import Property, TransformationRules
+from cognite.neat.rules.exporter._validation import (
+    are_entity_names_dms_compliant,
+    are_properties_redefined,
+)
+from cognite.neat.rules.models.rules import Property, Rules
 from cognite.neat.rules.type_mapping import DATA_TYPE_MAPPING
 from cognite.neat.utils.utils import generate_exception_report
 
@@ -70,16 +73,16 @@ class DataModel(BaseModel):
     )
 
     @classmethod
-    def from_rules(cls, transformation_rules: TransformationRules) -> Self:
-        """Generates a DataModel class instance from a TransformationRules instance.
+    def from_rules(cls, rule: Rules) -> Self:
+        """Generates a DataModel class instance from a Rules instance.
 
         Args:
-            transformation_rules: instance of TransformationRules.
+            rule: instance of Rules.
 
         Returns:
             Instance of DataModel.
         """
-        names_compliant, name_warnings = are_entity_names_dms_compliant(transformation_rules, return_report=True)
+        names_compliant, name_warnings = are_entity_names_dms_compliant(rule, return_report=True)
         if not names_compliant:
             logging.error(
                 exceptions.EntitiesContainNonDMSCompliantCharacters(
@@ -88,44 +91,44 @@ class DataModel(BaseModel):
             )
             raise exceptions.EntitiesContainNonDMSCompliantCharacters(report=generate_exception_report(name_warnings))
 
-        properties_redefined, redefinition_warnings = are_properties_redefined(transformation_rules, return_report=True)
+        properties_redefined, redefinition_warnings = are_properties_redefined(rule, return_report=True)
         if properties_redefined:
             logging.error(
                 exceptions.PropertiesDefinedMultipleTimes(report=generate_exception_report(redefinition_warnings))
             )
             raise exceptions.PropertiesDefinedMultipleTimes(report=generate_exception_report(redefinition_warnings))
 
-        if transformation_rules.metadata.data_model_name is None:
-            logging.error(exceptions.DataModelNameMissing(prefix=transformation_rules.metadata.prefix).message)
-            raise exceptions.DataModelNameMissing(prefix=transformation_rules.metadata.prefix)
+        if rule.metadata.data_model_name is None:
+            logging.error(exceptions.DataModelNameMissing(prefix=rule.metadata.prefix).message)
+            raise exceptions.DataModelNameMissing(prefix=rule.metadata.prefix)
 
         return cls(
-            space=transformation_rules.metadata.cdf_space_name,
-            external_id=transformation_rules.metadata.data_model_name,
-            version=transformation_rules.metadata.version,
-            description=transformation_rules.metadata.description,
-            name=transformation_rules.metadata.title,
-            containers=cls.containers_from_rules(transformation_rules),
-            views=cls.views_from_rules(transformation_rules),
+            space=rule.metadata.cdf_space_name,
+            external_id=rule.metadata.data_model_name,
+            version=rule.metadata.version,
+            description=rule.metadata.description,
+            name=rule.metadata.title,
+            containers=cls.containers_from_rules(rule),
+            views=cls.views_from_rules(rule),
         )
 
     @staticmethod
-    def containers_from_rules(transformation_rules: TransformationRules) -> dict[str, ContainerApply]:
-        """Create a dictionary of ContainerApply instances from a TransformationRules instance.
+    def containers_from_rules(rule: Rules) -> dict[str, ContainerApply]:
+        """Create a dictionary of ContainerApply instances from a Rules instance.
 
         Args:
-            transformation_rules: instance of TransformationRules.`
+            rule: instance of Rules.`
 
         Returns:
             Dictionary of ContainerApply instances.
         """
-        class_properties = to_class_property_pairs(transformation_rules)
+        class_properties = to_class_property_pairs(rule)
         return {
             class_id: ContainerApply(
-                space=transformation_rules.metadata.cdf_space_name,
+                space=rule.metadata.cdf_space_name,
                 external_id=class_id,
-                name=transformation_rules.classes[class_id].class_name,
-                description=transformation_rules.classes[class_id].description,
+                name=rule.classes[class_id].class_name,
+                description=rule.classes[class_id].description,
                 properties=DataModel.container_properties_from_dict(properties),
             )
             for class_id, properties in class_properties.items()
@@ -177,26 +180,26 @@ class DataModel(BaseModel):
         return container_properties
 
     @staticmethod
-    def views_from_rules(transformation_rules: TransformationRules) -> dict[str, ViewApply]:
-        """Generates a dictionary of ViewApply instances from a TransformationRules instance.
+    def views_from_rules(rule: Rules) -> dict[str, ViewApply]:
+        """Generates a dictionary of ViewApply instances from a Rules instance.
 
         Args:
-            transformation_rules: Iinstance of TransformationRules.
+            rule: Instance of Rules.
 
         Returns:
             Dictionary of ViewApply instances.
         """
-        class_properties = to_class_property_pairs(transformation_rules)
+        class_properties = to_class_property_pairs(rule)
         return {
             class_id: ViewApply(
-                space=transformation_rules.metadata.cdf_space_name,
+                space=rule.metadata.cdf_space_name,
                 external_id=class_id,
-                name=transformation_rules.classes[class_id].class_name,
-                description=transformation_rules.classes[class_id].description,
+                name=rule.classes[class_id].class_name,
+                description=rule.classes[class_id].description,
                 properties=DataModel.view_properties_from_dict(
-                    properties, transformation_rules.metadata.cdf_space_name, transformation_rules.metadata.version
+                    properties, rule.metadata.cdf_space_name, rule.metadata.version
                 ),
-                version=transformation_rules.metadata.version,
+                version=rule.metadata.version,
             )
             for class_id, properties in class_properties.items()
         }

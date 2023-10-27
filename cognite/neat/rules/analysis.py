@@ -3,11 +3,11 @@ from collections import defaultdict
 
 import pandas as pd
 
-from cognite.neat.rules.models import Property, TransformationRules
-from cognite.neat.rules.to_rdf_path import RuleType
+from cognite.neat.rules.models.rdfpath import TransformationRuleType
+from cognite.neat.rules.models.rules import Property, Rules
 
 
-def get_defined_classes(transformation_rules: TransformationRules) -> set[str]:
+def get_defined_classes(transformation_rules: Rules) -> set[str]:
     """Returns classes that have properties defined for them in the data model.
 
     Args:
@@ -19,7 +19,7 @@ def get_defined_classes(transformation_rules: TransformationRules) -> set[str]:
     return {property.class_id for property in transformation_rules.properties.values()}
 
 
-def get_classes_with_properties(transformation_rules: TransformationRules) -> dict[str, list[Property]]:
+def get_classes_with_properties(transformation_rules: Rules) -> dict[str, list[Property]]:
     """Returns classes that have been defined in the data model.
 
     Args:
@@ -41,9 +41,7 @@ def get_classes_with_properties(transformation_rules: TransformationRules) -> di
     return class_property_pairs
 
 
-def to_class_property_pairs(
-    transformation_rules: TransformationRules, only_rdfpath: bool = False
-) -> dict[str, dict[str, Property]]:
+def to_class_property_pairs(transformation_rules: Rules, only_rdfpath: bool = False) -> dict[str, dict[str, Property]]:
     """Returns a dictionary of classes with a dictionary of properties associated with them.
 
     Args:
@@ -72,14 +70,14 @@ def to_class_property_pairs(
                 )
                 continue
 
-            if (only_rdfpath and property_.rule_type == RuleType.rdfpath) or not only_rdfpath:
+            if (only_rdfpath and property_.rule_type == TransformationRuleType.rdfpath) or not only_rdfpath:
                 processed_properties[property_.property_id] = property_
         class_property_pairs[class_] = processed_properties
 
     return class_property_pairs
 
 
-def get_class_linkage(transformation_rules: TransformationRules) -> pd.DataFrame:
+def get_class_linkage(transformation_rules: Rules) -> pd.DataFrame:
     """Returns a dataframe with the class linkage of the data model.
 
     Args:
@@ -98,6 +96,7 @@ def get_class_linkage(transformation_rules: TransformationRules) -> pd.DataFrame
                     "target_class": property_.expected_value_type,
                     "connecting_property": property_.property_id,
                     "max_occurrence": property_.max_count,
+                    "linking_type": "hierarchy" if property_.resource_type_property else "relationship",
                 }
             )
             class_linkage = pd.concat([class_linkage, new_row.to_frame().T], ignore_index=True)
@@ -107,7 +106,13 @@ def get_class_linkage(transformation_rules: TransformationRules) -> pd.DataFrame
     return class_linkage
 
 
-def get_connected_classes(transformation_rules: TransformationRules) -> set[str]:
+def get_class_hierarchy_linkage(rules: Rules) -> pd.DataFrame:
+    """Remove linkage which is not creating asset hierarchy."""
+    class_linkage = get_class_linkage(rules)
+    return class_linkage[class_linkage.linking_type == "hierarchy"]
+
+
+def get_connected_classes(transformation_rules: Rules) -> set[str]:
     """Return a set of classes that are connected to other classes.
 
     Args:
@@ -120,7 +125,7 @@ def get_connected_classes(transformation_rules: TransformationRules) -> set[str]
     return set(class_linkage.source_class.values).union(set(class_linkage.target_class.values))
 
 
-def get_disconnected_classes(transformation_rules: TransformationRules) -> set[str]:
+def get_disconnected_classes(transformation_rules: Rules) -> set[str]:
     """Return a set of classes that are disconnected (i.e. isolated) from other classes.
 
     Args:
@@ -132,7 +137,7 @@ def get_disconnected_classes(transformation_rules: TransformationRules) -> set[s
     return get_defined_classes(transformation_rules) - get_connected_classes(transformation_rules)
 
 
-def get_symmetric_pairs(transformation_rules: TransformationRules) -> set[tuple[str, str]]:
+def get_symmetric_pairs(transformation_rules: Rules) -> set[tuple[str, str]]:
     """Returns a set of pairs of symmetrically linked classes.
 
     Args:
@@ -158,7 +163,7 @@ def get_symmetric_pairs(transformation_rules: TransformationRules) -> set[tuple[
     return sym_pairs
 
 
-def get_entity_ids(transformation_rules: TransformationRules) -> set[str]:
+def get_entity_ids(transformation_rules: Rules) -> set[str]:
     """Returns a set of entity ids (classes and properties) defined in the data model.
 
     Args:
@@ -172,7 +177,7 @@ def get_entity_ids(transformation_rules: TransformationRules) -> set[str]:
     )
 
 
-def to_property_dict(transformation_rules: TransformationRules) -> dict[str, list[Property]]:
+def to_property_dict(transformation_rules: Rules) -> dict[str, list[Property]]:
     """Convert list of properties to a dictionary of lists of properties with property_id as key.
 
     Args:
@@ -202,7 +207,7 @@ def get_asset_related_properties(properties: list[Property]) -> list[Property]:
     return [prop for prop in properties if "Asset" in prop.cdf_resource_type]
 
 
-def define_class_asset_mapping(transformation_rules: TransformationRules, class_: str) -> dict[str, list[str]]:
+def define_class_asset_mapping(transformation_rules: Rules, class_: str) -> dict[str, list[str]]:
     """Define mapping between class and asset properties
 
     Args:
@@ -226,7 +231,7 @@ def define_class_asset_mapping(transformation_rules: TransformationRules, class_
     return mapping_dict
 
 
-def define_class_relationship_mapping(transformation_rules: TransformationRules, class_: str) -> dict[str, list[str]]:
+def define_class_relationship_mapping(transformation_rules: Rules, class_: str) -> dict[str, list[str]]:
     # Todo Nikola: This function is used in rules2pydantic models. Is this the expected behavior?
     # Functions that are not implemented should raise an NotImplementedError instead of returning an empty dict or None
     return {}

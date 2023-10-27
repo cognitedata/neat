@@ -15,7 +15,7 @@ from cognite.neat.app.api.data_classes.rest import (
 )
 from cognite.neat.app.api.utils.query_templates import query_templates
 from cognite.neat.constants import EXAMPLE_WORKFLOWS
-from cognite.neat.rules.models import TransformationRules
+from cognite.neat.rules.models.rules import Rules
 from cognite.neat.workflows.base import BaseWorkflow
 from cognite.neat.workflows.model import WorkflowDefinition
 from tests.app.api.memory_cognite_client import MemoryClient
@@ -54,7 +54,7 @@ def test_workflow_workflows(workflow_names: list[str], fastapi_client: TestClien
     assert sorted(result["workflows"]) == sorted(workflow_names)
 
 
-def test_rules(transformation_rules: TransformationRules, fastapi_client: TestClient):
+def test_rules(transformation_rules: Rules, fastapi_client: TestClient):
     # transformation_rules load Rules-Nordic44-to-TNT.xlsx
     # /api/rules fetch rules related to default workflow which are Rules-Nordic44-to-TNT.xlsx
     response = fastapi_client.get("/api/rules", params={"workflow_name": "graph_to_asset_hierarchy"})
