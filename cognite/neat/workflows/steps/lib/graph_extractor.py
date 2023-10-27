@@ -331,19 +331,19 @@ class InstancesFromJsonToGraph(Step):
         # self.graph.bind
         if self.configs["graph_name"] == "solution":
             # Todo Anders: Why is the graph fetched from context when it is passed as an argument?
-            graph_store = cast(SourceGraph | SolutionGraph, self.flow_context["SolutionGraph"])
+            graph_store = cast(SolutionGraph, self.flow_context["SolutionGraph"])
         else:
-            graph_store = cast(SourceGraph | SolutionGraph, self.flow_context["SourceGraph"])
+            graph_store = cast(SourceGraph, self.flow_context["SourceGraph"])
 
         ns = Namespace(self.configs["namespace"])
-        graph_store.graph.graph.bind(self.configs["namespace_prefix"], ns)    
+        graph_store.graph.graph.bind(self.configs["namespace_prefix"], ns)
 
         full_path = self.data_store_path / Path(self.configs["file_name"])
         logging.info(f"Loading data dump from {full_path}")
         with full_path.open() as f:
             json_data = json.load(f)
 
-        graph = graph_store.graph.graph
+        graph = graph_store.graph
         nodes_counter = 0
         property_counter = 0
         labels_mapping: dict[str, str] = {}
@@ -384,12 +384,12 @@ class InstancesFromJsonToGraph(Step):
                         object_id_mapping,
                     )
                     new_node = URIRef(ns + object_id)
-                    graph.add((new_node, RDF.type, URIRef(ns + property_name)))
+                    graph.graph.add((new_node, RDF.type, URIRef(ns + property_name)))
                     if labels_mapping and property_name in labels_mapping:
-                        graph.add((new_node, URIRef(ns + "label"), Literal(data[labels_mapping[property_name]])))
+                        graph.graph.add((new_node, URIRef(ns + "label"), Literal(data[labels_mapping[property_name]])))
                     else:
-                        graph.add((new_node, URIRef(ns + "label"), Literal(property_name)))
-                    graph.add((new_node, URIRef(ns + "parent"), parent_node))
+                        graph.graph.add((new_node, URIRef(ns + "label"), Literal(property_name)))
+                    graph.graph.add((new_node, URIRef(ns + "parent"), parent_node))
                     nodes_counter += 1
                     for key, value in data.items():
                         new_node_path = parent_node_path + "/" + key
@@ -414,14 +414,14 @@ class InstancesFromJsonToGraph(Step):
                 else:
                     data = Literal(str(data))
                 property_counter += 1
-                graph.add((parent_node, URIRef(ns + property_name), data))
+                graph.graph.add((parent_node, URIRef(ns + property_name), data))
 
         # Start conversion with a root node
         root_node = URIRef(ns + "root")
-        graph.add((root_node, URIRef(ns + "label"), Literal("root node")))
-        graph.add((root_node, RDF.type, URIRef(ns + "root_node_id")))
+        graph.graph.add((root_node, URIRef(ns + "label"), Literal("root node")))
+        graph.graph.add((root_node, RDF.type, URIRef(ns + "root_node_id")))
         convert_json_to_triples(json_data, root_node, "root", "root", None)
-
+        graph_store.graph.restart()  # restarting the graph to release the memory
         return FlowMessage(
             output_text=f"Data from source file imported successfully. Imported {nodes_counter} objects \
                             and {property_counter} properties ."
@@ -483,7 +483,7 @@ class InstancesFromAvevaPiAF(Step):
     ) -> FlowMessage:
         if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
-        
+
         if source_file := self.configs["file_name"]:
             source_pi_dump = Path(self.data_store_path) / source_file
         else:
@@ -497,8 +497,8 @@ class InstancesFromAvevaPiAF(Step):
             self.graph_store = cast(SourceGraph | SolutionGraph, self.flow_context["SourceGraph"]).graph
 
         self.ns = Namespace(self.configs["namespace"])
-        graph_store.graph.graph.bind(self.configs["namespace_prefix"], self.ns)
-        
+        self.graph_store.graph.bind(self.configs["namespace_prefix"], self.ns)
+
         cdf_root_instance_id = self.add_root_asset_to_source_graph()
         # Parse the XML data into an ElementTree object
         root = ET.parse(source_pi_dump).getroot()
@@ -565,8 +565,7 @@ class InstancesFromAvevaPiAF(Step):
             return element_id
 
         process_af_element(root_af_element, "root", cdf_root_instance_id)
-        self.graph_store.graph.commit()
-
+        self.graph_store.restart()  # restarting the graph to release the memory
         return FlowMessage(output_text=f" {counter} PI assets loaded into the graph")
 
     def convert_attribute(self, attribute):
