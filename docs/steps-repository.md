@@ -31,6 +31,27 @@
 
 ---
 
+### GraphToRules
+
+* **Category**: Rules Importer
+* **Version**: 0.1.0-alpha
+* **Description**: The step extracts data model from RDF graph and generates NEAT transformation rules object.     The rules object can be serialized to excel file or used directly in other steps.
+* **Input**: SourceGraph, SolutionGraph
+* **Output**: FlowMessage
+
+**Configurables:**
+
+| Name | Default value | Description |
+| ---- | ----- | ----- |
+| file_name | inferred_transformations.xlsx | File name to store transformation rules. |
+| storage_dir | staging | Directory to store Transformation Rules spreadsheet |
+| max_number_of_instances | -1 | Maximum number of instances per class to process, -1 means all instances |
+
+---
+
+
+---
+
 ### OpenApiToRules
 
 * **Category**: Rules Importer
@@ -57,7 +78,7 @@
 * **Category**: Graph Store
 * **Version**: 1.0.0
 * **Description**: This step initializes the source and solution graph stores.
-* **Input**: RulesData
+* **Input**: RulesData, NoneType
 * **Output**: FlowMessage, SourceGraph, SolutionGraph
 
 **Configurables:**
@@ -111,6 +132,12 @@
 * **Version**: 1.0.0
 * **Description**: This step resets graph stores to their initial state (clears all data).
 * **Output**: FlowMessage
+
+**Configurables:**
+
+| Name | Default value | Description |
+| ---- | ----- | ----- |
+| graph_name | source | Name of the data store. Supported: solution, source  |
 
 ---
 
@@ -261,7 +288,7 @@
 
 * **Category**: Rules Exporter
 * **Version**: 0.1.0-alpha
-* **Description**: The step generates Excel file from rules
+* **Description**: This step generates Excel file from rules
 * **Input**: RulesData
 * **Output**: FlowMessage
 
@@ -406,6 +433,31 @@
 
 ---
 
+### InstancesFromAvevaPiAF
+
+* **Category**: Graph Extractor
+* **Version**: 0.1.0-alpha
+* **Description**: This step extracts instances from Aveva PI AF and loads them into a graph store
+* **Input**: FlowMessage, SolutionGraph, SourceGraph
+* **Output**: FlowMessage
+
+**Configurables:**
+
+| Name | Default value | Description |
+| ---- | ----- | ----- |
+| file_name | staging/pi_af_dump.xml | Full path to the file             containing data dump in XML format |
+| graph_name | solution | The name of target graph. |
+| root_node_external_id | root | External id of the root node. The node will be created if it doesn't exist |
+| root_node_name | root | Name of the root node. The node will be created if it doesn't exist |
+| root_node_type | Asset | Type of the root node. The node will be created if it doesn't exist |
+| namespace | http://purl.org/cognite/neat# | Namespace to be used for the generated objects. |
+| namespace_prefix | neat | The prefix to be used for the namespace. |
+
+---
+
+
+---
+
 ### InstancesFromGraphCaptureSpreadsheetToGraph
 
 * **Category**: Graph Extractor
@@ -457,7 +509,7 @@
 * **Category**: Graph Extractor
 * **Version**: 1.0.0
 * **Description**: This step extract instances from a file into the source graph. The file must be in RDF format.
-* **Input**: RulesData, SourceGraph
+* **Input**: SourceGraph
 * **Output**: FlowMessage
 
 **Configurables:**
