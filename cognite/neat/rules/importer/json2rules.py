@@ -1,12 +1,12 @@
 import json
 from pathlib import Path
 
-from .dict2tables import DictImporter
+from .dict2rules import DictImporter
 
 
 class JSONImporter(DictImporter):
     """
-    Importer for JSON files.
+    Importer for JSON files to raw dataframes.
 
     Args:
         json_path: Path to file with JSON.
@@ -20,4 +20,4 @@ class JSONImporter(DictImporter):
             raise ValueError(f"File {json_path} is not a JSON file")
         self.json_path = json_path
         data = json.loads(json_path.read_text())
-        super().__init__(data=data, spreadsheet_path=json_path.parent / "transformation_rules.xlsx")
+        super().__init__(data=data)

@@ -33,12 +33,12 @@ from cognite.client.data_classes.data_modeling.views import (
 from pydantic import BaseModel, ConfigDict
 
 from cognite.neat.rules import exceptions
-from cognite.neat.rules._validation import (
+from cognite.neat.rules.analysis import to_class_property_pairs
+from cognite.neat.rules.exporter._validation import (
     are_entity_names_dms_compliant,
     are_properties_redefined,
 )
-from cognite.neat.rules.analysis import to_class_property_pairs
-from cognite.neat.rules.models import DATA_TYPE_MAPPING, Property, TransformationRules
+from cognite.neat.rules.models.rules import DATA_TYPE_MAPPING, Property, Rules
 from cognite.neat.utils.utils import generate_exception_report
 
 
@@ -72,7 +72,7 @@ class DataModel(BaseModel):
     )
 
     @classmethod
-    def from_rules(cls, transformation_rules: TransformationRules) -> Self:
+    def from_rules(cls, transformation_rules: Rules) -> Self:
         """Generates a DataModel class instance from a TransformationRules instance.
 
         Args:
@@ -112,7 +112,7 @@ class DataModel(BaseModel):
         )
 
     @staticmethod
-    def containers_from_rules(transformation_rules: TransformationRules) -> dict[str, ContainerApply]:
+    def containers_from_rules(transformation_rules: Rules) -> dict[str, ContainerApply]:
         """Create a dictionary of ContainerApply instances from a TransformationRules instance.
 
         Args:
@@ -179,7 +179,7 @@ class DataModel(BaseModel):
         return container_properties
 
     @staticmethod
-    def views_from_rules(transformation_rules: TransformationRules) -> dict[str, ViewApply]:
+    def views_from_rules(transformation_rules: Rules) -> dict[str, ViewApply]:
         """Generates a dictionary of ViewApply instances from a TransformationRules instance.
 
         Args:

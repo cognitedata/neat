@@ -19,7 +19,7 @@ from cognite.neat.constants import DEFAULT_NAMESPACE, PREFIXES
 from cognite.neat.graph.extractors.rdf_to_graph import rdf_file_to_graph
 from cognite.neat.graph.stores import oxrdflib
 from cognite.neat.graph.stores.configuration import RdfStoreType
-from cognite.neat.rules.models import TransformationRules
+from cognite.neat.rules.models.rules import Rules
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -66,7 +66,7 @@ class NeatGraphStore:
         self.storage_dirs_to_delete: list[Path] = []
 
     @classmethod
-    def from_rules(cls, rules: TransformationRules) -> Self:
+    def from_rules(cls, rules: Rules) -> Self:
         """
         Creates a new instance of NeatGraphStore from TransformationRules and runs the .init_graph() method on it.
 

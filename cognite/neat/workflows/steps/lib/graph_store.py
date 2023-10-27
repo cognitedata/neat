@@ -73,7 +73,9 @@ class ConfigureDefaultGraphStores(Step):
         Configurable(name="solution_rdf_store.api_root_url", value="", label="Root url for graphdb or sparql endpoint"),
     ]
 
-    def run(self, rules_data: RulesData) -> (FlowMessage, SourceGraph, SolutionGraph):  # type: ignore[override, syntax]
+    def run(self, rules_data: RulesData | None = None) -> (FlowMessage, SourceGraph, SolutionGraph):  # type: ignore[override, syntax]
+        prefixes = rules_data.rules.prefixes if rules_data else PREFIXES
+
         if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
         logging.info("Initializing source graph")
@@ -85,9 +87,7 @@ class ConfigureDefaultGraphStores(Step):
             if source_store_type == RdfStoreType.OXIGRAPH and "SourceGraph" in self.flow_context:
                 return FlowMessage(output_text="Stores already configured")
 
-            source_graph = NeatGraphStore(
-                prefixes=rules_data.rules.prefixes, base_prefix="neat", namespace=PREFIXES["neat"]
-            )
+            source_graph = NeatGraphStore(prefixes=prefixes, base_prefix="neat", namespace=PREFIXES["neat"])
             source_graph.init_graph(
                 source_store_type,
                 self.configs["source_rdf_store.query_url"],
@@ -107,9 +107,7 @@ class ConfigureDefaultGraphStores(Step):
 
             if solution_store_type == RdfStoreType.OXIGRAPH and "SolutionGraph" in self.flow_context:
                 return FlowMessage(output_text="Stores already configured")
-            solution_graph = NeatGraphStore(
-                prefixes=rules_data.rules.prefixes, base_prefix="neat", namespace=PREFIXES["neat"]
-            )
+            solution_graph = NeatGraphStore(prefixes=prefixes, base_prefix="neat", namespace=PREFIXES["neat"])
 
             solution_graph.init_graph(
                 solution_store_type,

@@ -1,6 +1,5 @@
 import logging
 import sys
-import warnings
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, fields
 from datetime import datetime
@@ -18,7 +17,7 @@ from rdflib.term import URIRef
 
 from cognite.neat.graph.loaders.core.models import AssetTemplate
 from cognite.neat.graph.stores import NeatGraphStore
-from cognite.neat.rules.models import Property, TransformationRules
+from cognite.neat.rules.models.rules import Property, Rules
 from cognite.neat.utils.utils import chunker, datetime_utc_now, remove_namespace, retry_decorator
 
 if sys.version_info >= (3, 11):
@@ -121,7 +120,7 @@ def _get_class_instance(graph: Graph, instance: URIRef) -> list[tuple]:
     return result
 
 
-def _get_class_property_pairs(transformation_rules: TransformationRules) -> dict[str, list[Property]]:
+def _get_class_property_pairs(transformation_rules: Rules) -> dict[str, list[Property]]:
     """Define classes in terms of their properties
 
     Args:
@@ -143,7 +142,7 @@ def _get_class_property_pairs(transformation_rules: TransformationRules) -> dict
     return classes
 
 
-def _define_asset_class_mapping(transformation_rules: TransformationRules) -> dict[str, dict[str, list]]:
+def _define_asset_class_mapping(transformation_rules: Rules) -> dict[str, dict[str, list]]:
     """Define mapping from class to asset properties
 
     Args:
@@ -344,7 +343,7 @@ def _list2dict(class_instance: list) -> dict[str, Any]:
 
 def rdf2assets(
     graph_store: NeatGraphStore,
-    transformation_rules: TransformationRules,
+    transformation_rules: Rules,
     stop_on_exception: bool = False,
     use_orphanage: bool = True,
     meta_keys: NeatMetadataKeys | None = None,
@@ -459,7 +458,7 @@ def rdf2assets(
 
 def rdf2asset_dictionary(
     graph_store: NeatGraphStore,
-    transformation_rules: TransformationRules,
+    transformation_rules: Rules,
     stop_on_exception: bool = False,
     use_orphanage: bool = True,
 ) -> dict[str, dict[str, Any]]:
@@ -631,7 +630,6 @@ def _assets_to_update(
     asset_ids: set,
     meta_keys: NeatMetadataKeys,
     exclude_paths: list = EXCLUDE_PATHS,
-    stop_on_exception: bool = False,
 ) -> tuple[list[Asset], dict[str, dict]]:
     """Return list of assets to be updated
 
@@ -641,7 +639,6 @@ def _assets_to_update(
         asset_ids : Candidate assets to be updated
         meta_keys : The neat meta data keys.
         exclude_paths : Paths not to be checked when diffing rdf and cdf assets, by default EXCLUDE_PATHS
-        stop_on_exception: Whether to stop on exception or not, by default False
 
     Returns:
         List of assets to be updated and detailed report of changes per asset
@@ -663,18 +660,6 @@ def _assets_to_update(
     for external_id in asset_ids:
         cdf_asset = cdf_asset_subset[external_id]
         diffing_result = DeepDiff(cdf_asset, rdf_assets[external_id], exclude_paths=exclude_paths)
-
-        if "parent_external_id" in diffing_result.affected_root_keys:
-            msg = f"Asset <{external_id}> is changing its parent from <{cdf_asset['parent_external_id']}>"
-            msg += f" to <{rdf_assets[external_id]['parent_external_id']}>! This is not allowed!"
-            if stop_on_exception:
-                logging.error(msg)
-                raise ValueError(msg)
-            else:
-                msg += " Skipping update of this asset!"
-                logging.warning(msg)
-                warnings.warn(msg, stacklevel=2)
-                continue
 
         if diffing_result and f"root['metadata']['{meta_keys.active}']" not in diffing_result.affected_paths:
             asset = Asset(**rdf_assets[external_id])
@@ -850,7 +835,7 @@ def categorize_assets(
     logging.info(f"Number of assets to resurrect: { len(resurrect_ids)}")
 
     categorized_assets_update, report_update = _assets_to_update(
-        rdf_assets, cdf_assets, update_ids, meta_keys=meta_keys, stop_on_exception=stop_on_exception
+        rdf_assets, cdf_assets, update_ids, meta_keys=meta_keys
     )
     report = {
         "create": create_ids,

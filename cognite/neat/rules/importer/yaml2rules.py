@@ -2,7 +2,7 @@ from pathlib import Path
 
 import yaml
 
-from .dict2tables import DictImporter
+from cognite.neat.rules.importer.dict2rules import DictImporter
 
 
 class YAMLImporter(DictImporter):
@@ -21,4 +21,4 @@ class YAMLImporter(DictImporter):
             raise ValueError(f"File {yaml_path} is not a YAML file")
         self.json_path = yaml_path
         data = yaml.safe_load(yaml_path.read_text())
-        super().__init__(data=data, spreadsheet_path=yaml_path.parent / "transformation_rules.xlsx")
+        super().__init__(data=data)

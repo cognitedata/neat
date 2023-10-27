@@ -10,7 +10,7 @@ from cognite.neat.exceptions import NeatException
 from cognite.neat.graph.stores.graph_store import NeatGraphStore
 from cognite.neat.rules.exporter.rules2dms import DataModel
 from cognite.neat.rules.exporter.rules2pydantic_models import add_class_prefix_to_xid, rules_to_pydantic_models
-from cognite.neat.rules.models import TransformationRules
+from cognite.neat.rules.models.rules import Rules
 from cognite.neat.utils.utils import chunker, datetime_utc_now, retry_decorator
 
 Triple: TypeAlias = tuple[Node, Node, Node]
@@ -18,7 +18,7 @@ Triple: TypeAlias = tuple[Node, Node, Node]
 
 def rdf2nodes_and_edges(
     graph_store: NeatGraphStore,
-    transformation_rules: TransformationRules,
+    transformation_rules: Rules,
     stop_on_exception: bool = False,
     add_class_prefix: bool = False,
 ) -> tuple[list[NodeApply], list[EdgeApply], list[ErrorDetails]]:
@@ -66,7 +66,7 @@ def rdf2nodes_and_edges(
                             class_name=instance.__class__.__name__, external_id=instance.external_id
                         )
                     nodes.append(instance.to_node(data_model, add_class_prefix))
-                    edges.extend(instance.to_edge(data_model))
+                    edges.extend(instance.to_edge(data_model, add_class_prefix))
 
                     delta_time = datetime_utc_now() - start_time
                     delta_time = (delta_time.seconds * 1000000 + delta_time.microseconds) / 1000

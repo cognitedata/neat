@@ -1,15 +1,14 @@
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from fastapi import APIRouter, Response
 from rdflib import Namespace
 
 from cognite.neat.app.api.configuration import NEAT_APP
 from cognite.neat.app.api.data_classes.rest import TransformationRulesUpdateRequest
-from cognite.neat.rules.exporter import rules2excel
-from cognite.neat.rules.models import Class, Classes, Metadata, Properties, Property, TransformationRules
-from cognite.neat.rules.parser import parse_rules_from_excel_file
+from cognite.neat.rules import exporter, importer
+from cognite.neat.rules.models.rules import Class, Classes, Metadata, Properties, Property, Rules
 from cognite.neat.workflows.steps.data_contracts import RulesData
 from cognite.neat.workflows.utils import get_file_hash
 
@@ -66,7 +65,8 @@ def get_rules(
     properties = []
     classes = []
     try:
-        rules = parse_rules_from_excel_file(path)
+        rules = cast(Rules, importer.ExcelImporter(path).to_rules(return_report=False, skip_validation=False))
+
         properties = [
             {
                 "class": value.class_id,
@@ -105,9 +105,9 @@ def get_rules(
 
 @router.get("/api/rules/from_file")
 def get_original_rules_from_file(file_name: str):
-    """Endpoing for retrieving raw transformation from file"""
+    # """Endpoint for retrieving raw transformation from file"""
     path = Path(NEAT_APP.config.rules_store_path) / file_name
-    rules = parse_rules_from_excel_file(path)
+    rules = cast(Rules, importer.ExcelImporter(filepath=path).to_rules(return_report=False, skip_validation=False))
     return Response(content=rules.model_dump_json(), media_type="application/json")
 
 
@@ -144,9 +144,7 @@ def upsert_rules(request: TransformationRulesUpdateRequest):
     for prefix, val in rules["prefixes"].items():
         prefixes[prefix] = Namespace(val)
 
-    trules = TransformationRules(
-        metadata=metadata, classes=classes, properties=properties, prefixes=prefixes, instances=[]
-    )
+    rules = Rules(metadata=metadata, classes=classes, properties=properties, prefixes=prefixes, instances=[])
     if request.output_format == "excel":
         rules_file = Path(request.file_name)
         if str(rules_file.parent) == ".":
@@ -154,7 +152,5 @@ def upsert_rules(request: TransformationRulesUpdateRequest):
         else:
             path = Path(NEAT_APP.config.data_store_path) / rules_file
 
-        rules_exporter = rules2excel.RulesToExcel(rules=trules)
-        rules_exporter.generate_workbook()
-        rules_exporter.save_to_file(path)
+        exporter.ExcelExporter(rules=rules, filepath=path).export()
     return {"status": "ok"}

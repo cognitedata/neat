@@ -2,12 +2,13 @@ import pytest
 from cognite.client.data_classes.data_modeling import ContainerApplyList, DataModelApply, ViewApplyList
 from yaml import safe_load
 
-from cognite.neat.rules import examples, importer, models, parser
+from cognite.neat.rules import examples, importer
+from cognite.neat.rules.models import rules
 
 
 @pytest.fixture(scope="session")
-def power_grid_rules() -> models.TransformationRules:
-    return parser.parse_rules_from_excel_file(examples.power_grid_model)
+def power_grid_rules() -> rules.Rules:
+    return importer.rawtables.RawTables.from_excel_file(examples.power_grid_model).to_transformation_rules()
 
 
 @pytest.fixture(scope="session")
@@ -27,7 +28,7 @@ def power_grid_views(power_grid_data_model: DataModelApply) -> ViewApplyList:
 
 @pytest.mark.skip(reason="Not implemented")
 def test_import_information_model(
-    power_grid_rules: models.TransformationRules,
+    power_grid_rules: rules.Rules,
     power_grid_containers: ContainerApplyList,
     power_grid_views: ViewApplyList,
 ) -> None:

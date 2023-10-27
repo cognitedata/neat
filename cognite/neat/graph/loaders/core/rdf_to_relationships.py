@@ -13,11 +13,11 @@ from cognite.neat.graph.exceptions import DatasetIdRequired, NamespaceRequired
 from cognite.neat.graph.loaders.core.models import RelationshipDefinition, RelationshipDefinitions
 from cognite.neat.graph.loaders.core.rdf_to_assets import _categorize_cdf_assets
 from cognite.neat.graph.stores import NeatGraphStore
-from cognite.neat.rules.models import TransformationRules
+from cognite.neat.rules.models.rules import Rules
 from cognite.neat.utils.utils import chunker, datetime_utc_now, epoch_now_ms, remove_namespace, retry_decorator
 
 
-def define_relationships(rules: TransformationRules, stop_on_exception: bool = False) -> RelationshipDefinitions:
+def define_relationships(rules: Rules, stop_on_exception: bool = False) -> RelationshipDefinitions:
     """Define relationships from transformation rules
 
     Args:
@@ -85,7 +85,7 @@ def define_relationships(rules: TransformationRules, stop_on_exception: bool = F
 
 
 def rdf2relationships(
-    graph_store: NeatGraphStore, transformation_rules: TransformationRules, stop_on_exception: bool = False
+    graph_store: NeatGraphStore, transformation_rules: Rules, stop_on_exception: bool = False
 ) -> pd.DataFrame:
     """Converts RDF triples to relationships
 
@@ -204,7 +204,7 @@ def rdf2relationships(
 
 
 def rdf2relationship_data_frame(
-    graph_store: NeatGraphStore, transformation_rules: TransformationRules, stop_on_exception: bool = False
+    graph_store: NeatGraphStore, transformation_rules: Rules, stop_on_exception: bool = False
 ) -> pd.DataFrame:
     warn("'rdf2relationship_data_frame' is deprecated, please use 'rdf2relationships' instead!", stacklevel=2)
     logging.warning("'rdf2relationship_data_frame' is deprecated, please use 'rdf2relationships' instead!")
