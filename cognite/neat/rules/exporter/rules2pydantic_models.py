@@ -96,7 +96,12 @@ def rules_to_pydantic_models(
             Field(define_class_relationship_mapping(transformation_rules, class_)),
         )
 
-        fields["data_set_id"] = (int, Field(transformation_rules.metadata.data_set_id or None))
+        fields["data_set_id"] = (
+            int,
+            Field(
+                transformation_rules.metadata.data_set_id or None,
+            ),
+        )
 
         model = _dictionary_to_pydantic_model(class_, fields, methods=methods, property_attributes=property_attributes)
 
@@ -106,7 +111,7 @@ def rules_to_pydantic_models(
 
 
 def _properties_to_pydantic_fields(
-    properties: dict[str, Property]
+    properties: dict[str, Property],
 ) -> dict[str, tuple[EdgeOneToMany | EdgeOneToOne | type | list[type], Any]]:
     """Turns definition of properties into pydantic fields.
 
@@ -315,7 +320,10 @@ def from_graph(
         if field.annotation.__name__ not in [EdgeOneToMany.__name__, list.__name__]:
             if isinstance(result[field.alias], list) and len(result[field.alias]) > 1:
                 warnings.warn(
-                    exceptions.FieldContainsMoreThanOneValue(field.alias, len(result[field.alias])).message,
+                    exceptions.FieldContainsMoreThanOneValue(
+                        field.alias,
+                        len(result[field.alias]),
+                    ).message,
                     category=exceptions.FieldContainsMoreThanOneValue,
                     stacklevel=2,
                 )
@@ -454,7 +462,8 @@ def to_node(self, data_model: DataModel, add_class_prefix: bool) -> NodeApply:
                     edges_one_to_one[edge] = {
                         "space": data_model.space,
                         "externalId": add_class_prefix_to_xid(
-                            class_name=object_class_name, external_id=self.__getattribute__(edge)
+                            class_name=object_class_name,
+                            external_id=getattr(self, edge),
                         ),
                     }
     else:
@@ -468,7 +477,8 @@ def to_node(self, data_model: DataModel, add_class_prefix: bool) -> NodeApply:
         external_id=self.external_id,
         sources=[
             NodeOrEdgeData(
-                source=data_model.views[self.__class__.__name__].as_id(), properties=attributes | edges_one_to_one
+                source=data_model.views[type(self).__name__].as_id(),
+                properties=attributes | edges_one_to_one,
             )
         ],
     )
@@ -512,7 +522,7 @@ def to_edge(self, data_model: DataModel, add_class_prefix: bool) -> list[EdgeApp
                 external_id=f"{self.external_id}-{end_node_external_id}",
                 type=(data_model.space, edge_type_id),
                 start_node=(data_model.space, self.external_id),
-                end_node=(data_model.space, end_node_id),
+                end_node=(data_model.space, end_node_external_id),
             )
             edges.append(edge)
     return edges

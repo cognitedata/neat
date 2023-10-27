@@ -73,7 +73,7 @@ class DataModel(BaseModel):
     )
 
     @classmethod
-    def from_rules(cls, rule: Rules) -> Self:
+    def from_rules(cls, rules: Rules) -> Self:
         """Generates a DataModel class instance from a Rules instance.
 
         Args:
@@ -82,7 +82,7 @@ class DataModel(BaseModel):
         Returns:
             Instance of DataModel.
         """
-        names_compliant, name_warnings = are_entity_names_dms_compliant(rule, return_report=True)
+        names_compliant, name_warnings = are_entity_names_dms_compliant(rules, return_report=True)
         if not names_compliant:
             logging.error(
                 exceptions.EntitiesContainNonDMSCompliantCharacters(
@@ -91,25 +91,25 @@ class DataModel(BaseModel):
             )
             raise exceptions.EntitiesContainNonDMSCompliantCharacters(report=generate_exception_report(name_warnings))
 
-        properties_redefined, redefinition_warnings = are_properties_redefined(rule, return_report=True)
+        properties_redefined, redefinition_warnings = are_properties_redefined(rules, return_report=True)
         if properties_redefined:
             logging.error(
                 exceptions.PropertiesDefinedMultipleTimes(report=generate_exception_report(redefinition_warnings))
             )
             raise exceptions.PropertiesDefinedMultipleTimes(report=generate_exception_report(redefinition_warnings))
 
-        if rule.metadata.data_model_name is None:
-            logging.error(exceptions.DataModelNameMissing(prefix=rule.metadata.prefix).message)
-            raise exceptions.DataModelNameMissing(prefix=rule.metadata.prefix)
+        if rules.metadata.data_model_name is None:
+            logging.error(exceptions.DataModelNameMissing(prefix=rules.metadata.prefix).message)
+            raise exceptions.DataModelNameMissing(prefix=rules.metadata.prefix)
 
         return cls(
-            space=rule.metadata.cdf_space_name,
-            external_id=rule.metadata.data_model_name,
-            version=rule.metadata.version,
-            description=rule.metadata.description,
-            name=rule.metadata.title,
-            containers=cls.containers_from_rules(rule),
-            views=cls.views_from_rules(rule),
+            space=rules.metadata.cdf_space_name,
+            external_id=rules.metadata.data_model_name,
+            version=rules.metadata.version,
+            description=rules.metadata.description,
+            name=rules.metadata.title,
+            containers=cls.containers_from_rules(rules),
+            views=cls.views_from_rules(rules),
         )
 
     @staticmethod

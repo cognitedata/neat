@@ -8,7 +8,7 @@ from cognite.neat.rules.models import rules
 
 @pytest.fixture(scope="session")
 def power_grid_rules() -> rules.Rules:
-    return importer.rawtables.RawTables.from_excel_file(examples.power_grid_model).to_transformation_rules()
+    return importer.ExcelImporter(examples.power_grid_model).to_rules()
 
 
 @pytest.fixture(scope="session")
