@@ -22,7 +22,8 @@ from cognite.neat.rules.analysis import (
     to_class_property_pairs,
 )
 from cognite.neat.rules.exporter.rules2dms import DataModel
-from cognite.neat.rules.models.rules import Property, Rules, type_to_target_convention
+from cognite.neat.rules.models.rules import Property, Rules
+from cognite.neat.rules.type_mapping import type_to_target_convention
 
 if sys.version_info >= (3, 11):
     from datetime import UTC

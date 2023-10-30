@@ -1,4 +1,6 @@
+import getpass
 from abc import ABC, abstractmethod
+from datetime import datetime
 
 import pandas as pd
 from pydantic_core import ErrorDetails
@@ -48,3 +50,13 @@ class BaseImporter(ABC):
         """
         raw_rules = self.to_raw_rules()
         return raw_rules.to_rules(return_report, skip_validation)
+
+    def _default_metadata(self):
+        return {
+            "prefix": "neat",
+            "version": "0.1.0",
+            "title": "Neat Imported Data Model",
+            "created": datetime.now().replace(microsecond=0).isoformat(),
+            "creator": getpass.getuser(),
+            "description": f"Imported using {type(self).__name__}",
+        }
