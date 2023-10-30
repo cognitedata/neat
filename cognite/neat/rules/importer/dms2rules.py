@@ -84,8 +84,6 @@ class DMSImporter(BaseImporter):
                 {
                     "Class": class_name,
                     "Description": view.description or float("nan"),
-                    "Resource Type": "Asset",
-                    "Parent Asset": "Missing",
                 }
             )
             for prop_name, prop in view.properties.items():
@@ -118,9 +116,6 @@ class DMSImporter(BaseImporter):
                         "Type": type_,
                         "Min Count": "1",
                         "Max Count": max_count,
-                        "Resource Type": "Asset",
-                        "Resource Type Property": "name",
-                        "Relationship Label": float("nan"),
                         "Rule Type": "rdfpath",
                         "Rule": f"cim:{class_name}(cim:{prop_name}.name)",
                     }
