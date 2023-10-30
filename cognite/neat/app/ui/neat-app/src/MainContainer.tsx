@@ -15,6 +15,7 @@ import BuildRoundedIcon from '@mui/icons-material/BuildRounded';
 import HelpIcon from '@mui/icons-material/Help';
 import GlobalConfigView from 'views/GlobalConfigView';
 import AboutView from 'views/AboutView';
+import NeatWizard from 'components/Wizard';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -65,6 +66,7 @@ export default function BasicTabs() {
           <Tab label="Statistics" {...a11yProps(2)} />
           <Tab icon={<BuildRoundedIcon />} aria-label="Global config" {...a11yProps(3)} />
           <Tab icon={<HelpIcon />} aria-label="Global config" {...a11yProps(4)} />
+          <Tab label="Wiz" {...a11yProps(5)} />
         </Tabs>
       </Box>
       <TabPanel value={value} index={0}>
@@ -81,6 +83,9 @@ export default function BasicTabs() {
       </TabPanel>
       <TabPanel value={value} index={4}>
         <AboutView />
+      </TabPanel>
+      <TabPanel value={value} index={5}>
+        <NeatWizard />
       </TabPanel>
 
     </Box>
