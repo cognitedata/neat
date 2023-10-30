@@ -142,7 +142,7 @@ class NeatGraphStore:
 
             self.graph = Graph(store=oxrdflib.OxigraphStore(store=oxstore))
             self.graph.default_union = True
-            self.gc()
+            self.garbage_collector()
 
         elif self.rdf_store_type == RdfStoreType.GRAPHDB:
             logging.info("Initializing graph store with GraphDB")
@@ -263,7 +263,7 @@ class NeatGraphStore:
             r = requests.delete(f"{self.graph_db_rest_url}/repositories/{self.graph_name}/rdf-graphs/service?default")
             logging.info(f"Dropped graph with state: {r.text}")
 
-    def gc(self):
+    def garbage_collector(self):
         """Garbage collection of the graph store."""
         if self.rdf_store_type == RdfStoreType.OXIGRAPH:
             # delete all directoreis in self.storage_dirs_to_delete
