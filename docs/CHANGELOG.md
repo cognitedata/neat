@@ -15,6 +15,20 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.35.0] - 27-10-23
+
+### Improved
+
+- Improved stability and resource usage of Oxigraph when working with large graphs.
+
+### Added
+
+- Added `InstancesFromAvevaPiAF` step.
+
+### Fixed
+
+- UI bug fixes and improvements.
+
 ## [0.34.0] - 27-10-23
 
 ### Improved
