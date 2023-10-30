@@ -18,7 +18,7 @@ Changes are grouped as follows:
 ## [0.36.0] - 30-10-23
 ### Added
 - Added `DMSImporter`
-- 
+-
 ## [0.35.0] - 27-10-23
 
 ### Improved
