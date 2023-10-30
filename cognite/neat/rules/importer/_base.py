@@ -53,11 +53,10 @@ class BaseImporter(ABC):
 
     def _default_metadata(self):
         return {
-            "shortName": "NeatImport",
+            "prefix": "neat",
             "version": "0.1.0",
             "title": "Neat Imported Data Model",
             "created": datetime.now().replace(microsecond=0).isoformat(),
             "creator": getpass.getuser(),
             "description": f"Imported using {type(self).__name__}",
-            "prefix": "neat",
         }

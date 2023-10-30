@@ -23,6 +23,7 @@ def power_grid_views(power_grid_data_model: DataModelApply) -> ViewList:
 
 def test_import_information_model(power_grid_rules: rules.Rules, power_grid_views: ViewList) -> None:
     # Arrange
+    # add views
     dms_importer = importer.DMSImporter(power_grid_views)
 
     # Act
