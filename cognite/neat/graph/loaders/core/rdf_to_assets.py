@@ -1,6 +1,5 @@
 import logging
 import sys
-import warnings
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, fields
 from datetime import datetime
@@ -631,7 +630,6 @@ def _assets_to_update(
     asset_ids: set,
     meta_keys: NeatMetadataKeys,
     exclude_paths: list = EXCLUDE_PATHS,
-    stop_on_exception: bool = False,
 ) -> tuple[list[Asset], dict[str, dict]]:
     """Return list of assets to be updated
 
@@ -641,7 +639,6 @@ def _assets_to_update(
         asset_ids : Candidate assets to be updated
         meta_keys : The neat meta data keys.
         exclude_paths : Paths not to be checked when diffing rdf and cdf assets, by default EXCLUDE_PATHS
-        stop_on_exception: Whether to stop on exception or not, by default False
 
     Returns:
         List of assets to be updated and detailed report of changes per asset
@@ -663,18 +660,6 @@ def _assets_to_update(
     for external_id in asset_ids:
         cdf_asset = cdf_asset_subset[external_id]
         diffing_result = DeepDiff(cdf_asset, rdf_assets[external_id], exclude_paths=exclude_paths)
-
-        if "parent_external_id" in diffing_result.affected_root_keys:
-            msg = f"Asset <{external_id}> is changing its parent from <{cdf_asset['parent_external_id']}>"
-            msg += f" to <{rdf_assets[external_id]['parent_external_id']}>! This is not allowed!"
-            if stop_on_exception:
-                logging.error(msg)
-                raise ValueError(msg)
-            else:
-                msg += " Skipping update of this asset!"
-                logging.warning(msg)
-                warnings.warn(msg, stacklevel=2)
-                continue
 
         if diffing_result and f"root['metadata']['{meta_keys.active}']" not in diffing_result.affected_paths:
             asset = Asset(**rdf_assets[external_id])
@@ -850,7 +835,7 @@ def categorize_assets(
     logging.info(f"Number of assets to resurrect: { len(resurrect_ids)}")
 
     categorized_assets_update, report_update = _assets_to_update(
-        rdf_assets, cdf_assets, update_ids, meta_keys=meta_keys, stop_on_exception=stop_on_exception
+        rdf_assets, cdf_assets, update_ids, meta_keys=meta_keys
     )
     report = {
         "create": create_ids,
