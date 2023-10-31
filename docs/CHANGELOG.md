@@ -15,6 +15,14 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.38.0] - 31-10-23
+## Added
+ - Ability to partially validate Rules
+ - Description and name of fields added to rules generated pydantic models
+
+## Improved
+ - Improved naming of internal variables in `cognite/neat/rules/exporter/rules2pydantic_models.py`
+
 ## [0.37.0] - 31-10-23
 
 ## Added
