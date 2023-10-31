@@ -4,6 +4,7 @@ its sub-models and validators.
 
 from __future__ import annotations
 
+import inspect
 import math
 import re
 import sys
@@ -850,14 +851,18 @@ class Rules(RuleModel):
                     to transform data from source to target representation
         prefixes: Prefixes used in the data model. Defaults to PREFIXES
         instances: Instances defined in the data model. Defaults to None
+        validators_to_skip: List of validators to skip. Defaults to []
 
     !!! note "Importers"
         Neat supports importing data from different sources. See the importers section for more details.
 
     !!! note "Exporters"
         Neat supports exporting data to different sources. See the exporters section for more details.
+
+    !!! note "validators_to_skip" use this only if you are sure what you are doing
     """
 
+    validators_to_skip: list[str] = Field(default_factory=list, exclude=True)
     metadata: Metadata
     classes: Classes
     properties: Properties
@@ -897,6 +902,10 @@ class Rules(RuleModel):
     @model_validator(mode="after")
     def properties_refer_existing_classes(self) -> Self:
         errors = []
+
+        if inspect.currentframe().f_code.co_name in self.validators_to_skip:  # type: ignore
+            return self
+
         for property_ in self.properties.values():
             if property_.class_id not in self.classes:
                 errors.append(
@@ -915,7 +924,10 @@ class Rules(RuleModel):
         return self
 
     @validator("properties")
-    def is_type_defined_as_object(cls, value):
+    def is_type_defined_as_object(cls, value, values):
+        if inspect.currentframe().f_code.co_name in values["validators_to_skip"]:
+            return value
+
         defined_objects = {property_.class_id for property_ in value.values()}
 
         if undefined_objects := [
