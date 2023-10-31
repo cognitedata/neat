@@ -12,7 +12,8 @@ import warnings
 from collections.abc import ItemsView, Iterator, KeysView, ValuesView
 from datetime import datetime
 from pathlib import Path
-from typing import Any, ClassVar, Generic, TypeAlias, TypeVar
+from types import FrameType
+from typing import Any, ClassVar, Generic, TypeAlias, TypeVar, cast
 
 import pandas as pd
 from pydantic import (
@@ -903,7 +904,7 @@ class Rules(RuleModel):
     def properties_refer_existing_classes(self) -> Self:
         errors = []
 
-        if inspect.currentframe().f_code.co_name in self.validators_to_skip:  # type: ignore
+        if cast(FrameType, inspect.currentframe()).f_code.co_name in self.validators_to_skip:
             return self
 
         for property_ in self.properties.values():
