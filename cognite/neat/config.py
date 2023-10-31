@@ -9,11 +9,8 @@ def copy_examples_to_directory(target_data_dir: Path):
     Copier over all the examples to the target_data_directory,
     without overwriting
 
-
-    Parameters
-    ----------
-    target_data_dir : The target directory
-
+    Args:
+        target_data_dir : The target directory
 
     """
 
@@ -27,9 +24,8 @@ def create_data_dir_structure(target_data_dir: Path):
     """
     Create the data directory structure in empty directory
 
-    Parameters
-    ----------
-    target_data_dir : The target directory
+    Args:
+        target_data_dir : The target directory
 
     """
 

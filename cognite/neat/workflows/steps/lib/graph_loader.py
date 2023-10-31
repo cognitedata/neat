@@ -25,7 +25,7 @@ from cognite.neat.graph.loaders.rdf_to_dms import rdf2nodes_and_edges, upload_ed
 from cognite.neat.graph.loaders.validator import validate_asset_hierarchy
 from cognite.neat.utils.utils import generate_exception_report
 from cognite.neat.workflows._exceptions import StepFlowContextNotInitialized, StepNotInitialized
-from cognite.neat.workflows.model import FlowMessage
+from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.data_contracts import (
     CategorizedAssets,
     CategorizedRelationships,
@@ -255,7 +255,9 @@ class GenerateCDFAssetsFromGraph(Step):
                 if orphanage_asset_external_id not in rdf_asset_dicts:
                     msg = f"You dont have Orphanage asset {orphanage_asset_external_id} in asset hierarchy!"
                     logging.error(msg)
-                    raise Exception(msg)
+                    return FlowMessage(
+                        error_text=msg, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL
+                    ), CategorizedAssets(assets={})
 
                 logging.error("Orphaned assets will be assigned to 'Orphanage' root asset")
 
@@ -274,17 +276,20 @@ class GenerateCDFAssetsFromGraph(Step):
         else:
             logging.info("No circular dependency among assets found, your assets hierarchy look healthy !")
 
-        # if full cleanup is selected, we dont need to check for circular and orphan assets [OPTIMIZATION]
-        if asset_cleanup_type != "full":
+        if orphan_assets or circular_assets:
             orphan_assets, circular_assets = validate_asset_hierarchy(rdf_asset_dicts)
             if circular_assets:
                 msg = f"Found circular dependencies: {circular_assets!s}"
                 logging.error(msg)
-                raise Exception(msg)
+                return FlowMessage(
+                    error_text=msg, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL
+                ), CategorizedAssets(assets={})
             elif orphan_assets:
                 msg = f"Not able to fix orphans: {', '.join(orphan_assets)}"
                 logging.error(msg)
-                raise Exception(msg)
+                return FlowMessage(
+                    error_text=msg, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL
+                ), CategorizedAssets(assets={})
             else:
                 logging.info("No circular dependency among assets found, your assets hierarchy look healthy !")
 
@@ -307,12 +312,15 @@ class GenerateCDFAssetsFromGraph(Step):
         logging.info(f"Total count of assets to be decommission: { count_decommission_assets }")
         logging.info(f"Total count of assets to be resurrect: { count_resurrect_assets }")
 
-        msg = f"Total count of assets { len(rdf_asset_dicts) } of which: { count_create_assets } to be created"
-        msg += f", { count_update_assets } to be updated"
-        msg += f", { count_decommission_assets } to be decommissioned"
-        msg += f", { count_resurrect_assets } to be resurrected"
-        msg += f". Found { orphan_assets_count } orphan assets and"
-        msg += f" { circular_assets_count } circular assets"
+        msg = f"Total count of assets { len(rdf_asset_dicts) } of which:"
+        msg += f"<p> { count_create_assets } to be created </p>"
+        msg += f"<p> { count_update_assets } to be updated </p>"
+        msg += f"<p> { count_decommission_assets } to be decommissioned </p>"
+        msg += f"<p> { count_resurrect_assets } to be resurrected </p>"
+        msg += f"<p> Found { orphan_assets_count } orphan assets and"
+        msg += f" { circular_assets_count } circular assets </p>"
+        if asset_cleanup_type != "nothing":
+            msg += " <p> All circular and orphan assets were removed successfully </p>"
         number_of_updates = len(report["decommission"])
         logging.info(f"Total number of updates: {number_of_updates}")
 
