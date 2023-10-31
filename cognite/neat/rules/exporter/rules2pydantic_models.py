@@ -43,7 +43,7 @@ def default_model_configuration():
 
 
 def default_model_methods():
-    return [from_graph, to_asset, to_relationship, to_node, to_edge, to_graph]
+    return [from_graph, to_asset, to_relationship, to_node, to_edge, to_graph, get_field_description]
 
 
 def default_model_property_attributes():
@@ -135,6 +135,7 @@ def _properties_to_pydantic_fields(
 
         field_definition: dict = {
             "alias": name,
+            "description": property_.description if property_.description else None,
             # keys below will be available under json_schema_extra
             "property_type": field_type.__name__ if field_type in [EdgeOneToOne, EdgeOneToMany] else "NodeAttribute",
             "property_value_type": property_.expected_value_type,
@@ -541,6 +542,15 @@ def _get_end_node_class_name(view: ViewApply, edge: str) -> str | None:
 def to_graph(self, transformation_rules: Rules, graph: Graph):
     """Writes instance as set of triples to triple store (Graphs)."""
     ...
+
+
+@classmethod  # type: ignore
+def get_field_description(cls, field_name: str) -> str | None:
+    """Returns description of the field if one exists"""
+    if field_name in cls.model_fields:
+        return cls.model_fields[field_name].description
+    else:
+        return None
 
 
 def add_class_prefix_to_xid(class_name: str, external_id: str) -> str:
