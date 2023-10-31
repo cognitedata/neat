@@ -79,14 +79,14 @@ class DMSImporter(BaseImporter):
         classes: list[dict[str, str | float]] = []
         properties: list[dict[str, str | float]] = []
         for view in self.views:
-            class_name = view.external_id
+            class_id = view.external_id
             classes.append(
                 {
-                    "Class": class_name,
+                    "Class": class_id,
                     "Description": view.description or float("nan"),
                 }
             )
-            for prop_name, prop in view.properties.items():
+            for prop_id, prop in view.properties.items():
                 if isinstance(prop, MappedProperty):
                     # Edge 1-1
                     if isinstance(prop.type, DirectRelation):
@@ -110,14 +110,15 @@ class DMSImporter(BaseImporter):
 
                 properties.append(
                     {
-                        "Class": class_name,
-                        "Property": prop_name,
+                        "Class": class_id,
+                        "Property": prop_id,
+                        "Name": prop.name if prop.name else prop_id,
                         "Description": prop.description or float("nan"),
                         "Type": type_,
                         "Min Count": "1",
                         "Max Count": max_count,
                         "Rule Type": "rdfpath",
-                        "Rule": f"cim:{class_name}(cim:{prop_name}.name)",
+                        "Rule": f"cim:{class_id}(cim:{prop_id}.name)",
                     }
                 )
 

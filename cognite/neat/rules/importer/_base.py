@@ -30,7 +30,7 @@ class BaseImporter(ABC):
         return RawRules.from_tables(tables=tables, importer_type=self.__class__.__name__)
 
     def to_rules(
-        self, return_report: bool = False, skip_validation: bool = False
+        self, return_report: bool = False, skip_validation: bool = False, validators_to_skip: list[str] | None = None
     ) -> tuple[Rules | None, list[ErrorDetails] | None, list | None] | Rules:
         """
         Creates `Rules` object from the data.
@@ -38,10 +38,12 @@ class BaseImporter(ABC):
         Args:
             return_report: To return validation report. Defaults to False.
             skip_validation: Bypasses Rules validation. Defaults to False.
+            validators_to_skip: List of validators to skip. Defaults to None.
 
         Returns:
-            Instance of `Rules`, which can be validated or not validated based on
-            `skip_validation` flag, and optional list of errors and warnings if
+            Instance of `Rules`, which can be validated, not validated based on
+            `skip_validation` flag, or partially validated if `validators_to_skip` is set,
+            and optional list of errors and warnings if
             `return_report` is set to True.
 
         !!! Note
@@ -49,7 +51,7 @@ class BaseImporter(ABC):
             is exported to an Excel file. Do not use this flag for any other purpose!
         """
         raw_rules = self.to_raw_rules()
-        return raw_rules.to_rules(return_report, skip_validation)
+        return raw_rules.to_rules(return_report, skip_validation, validators_to_skip)
 
     def _default_metadata(self):
         return {
