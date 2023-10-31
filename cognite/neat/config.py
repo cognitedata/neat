@@ -23,6 +23,21 @@ def copy_examples_to_directory(target_data_dir: Path):
     _copy_examples(EXAMPLE_WORKFLOWS, target_data_dir / "workflows")
 
 
+def create_data_dir_structure(target_data_dir: Path):
+    """
+    Create the data directory structure in empty directory
+
+    Parameters
+    ----------
+    target_data_dir : The target directory
+
+    """
+
+    (target_data_dir / "rules").mkdir(exist_ok=True, parents=True)
+    (target_data_dir / "source-graphs").mkdir(exist_ok=True, parents=True)
+    (target_data_dir / "workflows").mkdir(exist_ok=True, parents=True)
+
+
 def _copy_examples(source_dir: Path, target_dir: Path):
     for current in source_dir.rglob("*"):
         if current.is_dir():

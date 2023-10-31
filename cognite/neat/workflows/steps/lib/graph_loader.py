@@ -174,9 +174,11 @@ class GenerateCDFAssetsFromGraph(Step):
             name="assets_cleanup_type",
             value="nothing",
             options=["nothing", "orphans", "circular", "full"],
-            label=("Configures asset cleanup process. Supported options: nothing - no cleanup, \
+            label=(
+                "Configures asset cleanup process. Supported options: nothing - no cleanup, \
                     orphans - all oraphan assets will be removed, circular - all circular assets will be removed , \
-                    full - full cleanup , both orphans and circular assets will be removed. "),
+                    full - full cleanup , both orphans and circular assets will be removed. "
+            ),
         ),
     ]
 
@@ -210,7 +212,7 @@ class GenerateCDFAssetsFromGraph(Step):
         total_assets_before = cdf_client.assets.aggregate(filter=AssetFilter(data_set_ids=[{"id": rules.dataset_id}]))[
             0
         ]["count"]
-       
+
         # Label Validation
         labels_before = unique_asset_labels(rdf_asset_dicts.values())
         logging.info(f"Assets have {len(labels_before)} unique labels: {', '.join(sorted(labels_before))}")
@@ -227,7 +229,7 @@ class GenerateCDFAssetsFromGraph(Step):
 
         prom_cdf_resource_stats.labels(resource_type="asset", state="count_before_neat_update").set(total_assets_before)
         logging.info(f"Total count of assets in CDF before upload: { total_assets_before }")
-        
+
         orphan_assets, circular_assets = validate_asset_hierarchy(rdf_asset_dicts)
         orphan_assets_count = len(orphan_assets)
         circular_assets_count = len(circular_assets)
@@ -266,13 +268,14 @@ class GenerateCDFAssetsFromGraph(Step):
             logging.error(f"Found circular dependencies: {circular_assets}")
             if asset_cleanup_type in ["circular", "full"]:
                 logging.info("Removing circular assets")
-                for external_id in circular_assets:
-                    del rdf_asset_dicts[external_id]
+                for circular_path in circular_assets:
+                    circular_external_id = circular_path[-1]
+                    del rdf_asset_dicts[circular_external_id]
         else:
-            logging.info("No circular dependency among assets found, your assets hierarchy look healthy !")            
-        
+            logging.info("No circular dependency among assets found, your assets hierarchy look healthy !")
+
         # if full cleanup is selected, we dont need to check for circular and orphan assets [OPTIMIZATION]
-        if asset_cleanup_type != "full":  
+        if asset_cleanup_type != "full":
             orphan_assets, circular_assets = validate_asset_hierarchy(rdf_asset_dicts)
             if circular_assets:
                 msg = f"Found circular dependencies: {circular_assets!s}"
