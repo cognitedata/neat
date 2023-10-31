@@ -17,7 +17,7 @@ Changes are grouped as follows:
 
 ## [0.36.1] - 31-10-23
 
-## Added 
+## Added
  - Configurable assets cleanup in GenerateCDFAssetsFromGraph step. Now user can specify if he/she wants to delete all ophan or circular assets or keep them.
 
 ### Fixed
