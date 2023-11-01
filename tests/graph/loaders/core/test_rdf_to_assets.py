@@ -1,5 +1,6 @@
 from copy import deepcopy
 
+import pandas as pd
 import pytest
 from cognite.client.data_classes import Asset, AssetList, Label, LabelDefinition, LabelDefinitionList, LabelFilter
 from cognite.client.testing import monkeypatch_cognite_client
@@ -7,6 +8,7 @@ from cognite.client.testing import monkeypatch_cognite_client
 from cognite.neat.graph.loaders.core.rdf_to_assets import (
     AssetLike,
     NeatMetadataKeys,
+    _assets_to_update,
     categorize_assets,
     order_assets,
     remove_non_existing_labels,
@@ -168,3 +170,29 @@ def test_neat_metadata_keys_alias():
 
     # Assert
     assert aliases == expected
+
+
+def test_assets_to_update(mock_rdf_assets, mock_cdf_assets):
+    rdf_assets = mock_rdf_assets
+    rdf_asset_ids = set(rdf_assets.keys())
+    cdf_assets = mock_cdf_assets
+
+    rdf_assets["Terminal-0"]["parent_external_id"] = "Substation-0"
+    cdf_assets["Terminal-0"]["parent_external_id"] = "Substation-1"
+    cdf_assets_df = pd.DataFrame.from_records([asset for asset in cdf_assets.values()])
+
+    assets, report = _assets_to_update(
+        rdf_assets=rdf_assets,
+        cdf_assets=cdf_assets_df,
+        asset_ids=rdf_asset_ids,
+        meta_keys=NeatMetadataKeys(),
+    )
+
+    expected_report = {
+        "Terminal-0": {
+            "values_changed": {"root['parent_external_id']": {"new_value": "Substation-0", "old_value": "Substation-1"}}
+        }
+    }
+
+    assert report == expected_report
+    assert len(assets) == 1

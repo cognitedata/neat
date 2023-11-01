@@ -62,6 +62,8 @@ class NeatGraphStore:
         self.graph_db_rest_url: str = "http://localhost:7200"
         self.internal_storage_dir: Path | None = None
         self.graph_name: str | None = None
+        self.internal_storage_dir_orig: Path | None = None
+        self.storage_dirs_to_delete: list[Path] = []
 
     @classmethod
     def from_rules(cls, rules: Rules) -> Self:
@@ -115,6 +117,9 @@ class NeatGraphStore:
         self.graph_name = graph_name
         self.returnFormat = returnFormat
         self.internal_storage_dir = Path(internal_storage_dir) if internal_storage_dir else None
+        self.internal_storage_dir_orig = (
+            self.internal_storage_dir if self.internal_storage_dir_orig is None else self.internal_storage_dir_orig
+        )
 
         if self.rdf_store_type in ["", RdfStoreType.MEMORY]:
             logging.info("Initializing graph in memory")
@@ -122,9 +127,6 @@ class NeatGraphStore:
         elif self.rdf_store_type == RdfStoreType.OXIGRAPH:
             logging.info("Initializing Oxigraph store")
             # Adding support for both in-memory and file-based storage
-            oxstore = None
-            if self.internal_storage_dir is not None:
-                self.internal_storage_dir.mkdir(parents=True, exist_ok=True)
             for i in range(4):
                 try:
                     oxstore = pyoxigraph.Store(
@@ -135,13 +137,12 @@ class NeatGraphStore:
                     if "lock" in str(e) and i < 3:
                         # lock originated from another instance of the store
                         logging.error("Error initializing Oxigraph store: %s", e)
-                        logging.info("Removing LOCK file and retrying")
-                        time.sleep(1)
                     else:
                         raise e
 
             self.graph = Graph(store=oxrdflib.OxigraphStore(store=oxstore))
             self.graph.default_union = True
+            self.garbage_collector()
 
         elif self.rdf_store_type == RdfStoreType.GRAPHDB:
             logging.info("Initializing graph store with GraphDB")
@@ -170,15 +171,34 @@ class NeatGraphStore:
         logging.info("Adding prefix %s with namespace %s", self.base_prefix, self.namespace)
         logging.info("Graph initialized")
 
+    def reinit_graph(self):
+        """Reinitializes the graph."""
+        self.init_graph(
+            self.rdf_store_type,
+            self.rdf_store_query_url,
+            self.rdf_store_update_url,
+            self.graph_name,
+            self.base_prefix,
+            self.returnFormat,
+            self.internal_storage_dir,
+        )
+
     def close(self):
         """Closes the graph."""
         if self.rdf_store_type == RdfStoreType.OXIGRAPH:
             try:
                 if self.graph:
                     self.graph.store._inner.flush()  # type: ignore[attr-defined]
-                    self.graph.close()
+                    self.graph.close(True)
             except Exception as e:
                 logging.debug("Error closing graph: %s", e)
+
+    def restart(self):
+        """Restarts the graph"""
+        if self.rdf_store_type == RdfStoreType.OXIGRAPH:
+            self.close()
+            self.reinit_graph()
+            logging.info("GraphStore restarted")
 
     def import_from_file(self, graph_file: Path, mime_type: str = "application/rdf+xml", add_base_iri: bool = True):
         """Imports graph data from file.
@@ -226,39 +246,30 @@ class NeatGraphStore:
             # In case of in-memory graph, we just reinitialize the graph
             # otherwise we would lose the prefixes and bindings which fails
             # workflow
-            self.init_graph(
-                self.rdf_store_type,
-                self.rdf_store_query_url,
-                self.rdf_store_update_url,
-                self.graph_name,
-                self.base_prefix,
-                self.returnFormat,
-            )
+            self.reinit_graph()
         if self.rdf_store_type == RdfStoreType.OXIGRAPH:
             try:
-                files_before = os.listdir(self.internal_storage_dir)
-                self.graph.store._inner.flush()
-                self.graph.store._inner.clear()
-                time.sleep(1)  # delay to allow the store finish file operations
-                files_after = os.listdir(self.internal_storage_dir)
-                new_files = set(files_after) - set(files_before)
-                static_files = [f for f in files_before if f.startswith("MANIFEST") or f.startswith("OPTIONS")]
-                static_files.extend(["CURRENT", "IDENTITY", "LOCK"])
+                self.close()
+                # Due to the specifics of Oxigraph, storage directory cannot be deleted immediately
+                # after closing the graph and creating a new one
+                if self.internal_storage_dir.exists():
+                    self.storage_dirs_to_delete.append(self.internal_storage_dir)
+                self.internal_storage_dir = Path(str(self.internal_storage_dir_orig) + "_" + str(time.time()))
 
-                files_to_keep = set(static_files) | new_files
-                logging.info(f"Files to keep: {files_to_keep}")
-                for f in os.listdir(self.internal_storage_dir):
-                    if f not in files_to_keep:
-                        try:
-                            (self.internal_storage_dir / f).unlink()
-                        except Exception as e:
-                            logging.error(f"Error deleting file {f}: {e}")
             except Exception as e:
                 logging.error(f"Error dropping graph : {e}")
 
         elif self.rdf_store_type == RdfStoreType.GRAPHDB:
             r = requests.delete(f"{self.graph_db_rest_url}/repositories/{self.graph_name}/rdf-graphs/service?default")
             logging.info(f"Dropped graph with state: {r.text}")
+
+    def garbage_collector(self):
+        """Garbage collection of the graph store."""
+        if self.rdf_store_type == RdfStoreType.OXIGRAPH:
+            # delete all directoreis in self.storage_dirs_to_delete
+            for d in self.storage_dirs_to_delete:
+                shutil.rmtree(d)
+            self.storage_dirs_to_delete = []
 
     def query_to_dataframe(
         self,
@@ -297,6 +308,16 @@ class NeatGraphStore:
                     self.graph.store._inner.flush()
                 self.graph.close()
             # It requires more investigation os.remove(self.internal_storage_dir / "LOCK")
+
+    def commit(self):
+        """Commits the graph."""
+        if self.rdf_store_type == RdfStoreType.OXIGRAPH:
+            if self.graph:
+                if self.graph.store:
+                    logging.info("Committing graph - flushing and optimizing")
+                    self.graph.store._inner.flush()
+                    self.graph.store._inner.optimize()
+        self.graph.commit()
 
     def get_df(self) -> pd.DataFrame:
         """Returns the cached dataframe."""
@@ -355,31 +376,20 @@ class NeatGraphStore:
         check_commit(force_commit=True)
 
 
-def drop_graph_store(graph: NeatGraphStore | None, storage_path: Path | None, force: bool = False):
-    """Drops graph store by flushing in-flight data , releasing locks and completely
-    removing all files the storage path.
+def drop_graph_store_storage(rdf_store_type: str, storage_path: Path | None, force: bool = False):
+    """Drop graph store storage on disk.
 
     Args:
         graph : Instance of NeatGraphStore
         storage_path : Path to storage directory
         force : Forcefully drop of graph. Defaults to False.
     """
-    if graph:
-        if graph.rdf_store_type == RdfStoreType.OXIGRAPH and storage_path:
-            if storage_path.exists():
-                graph.__del__()
-                del graph
-                # remove all files in the storage path except the lock file
-                for f in os.listdir(storage_path):
-                    # if f != "LOCK":
-                    (storage_path / f).unlink()
-                logging.info("Graph store dropped.")
-            else:
-                logging.info(f"Storage path {storage_path} does not exist. Skipping drop.")
-        else:
-            logging.info(
-                "Graph store {graph.rdf_store_type} is not Oxigraph or storage path is not provided. Skipping drop."
-            )
-    elif force and storage_path:
+    if rdf_store_type == RdfStoreType.OXIGRAPH and storage_path:
         if storage_path.exists():
-            shutil.rmtree(storage_path)
+            for f in os.listdir(storage_path):
+                (storage_path / f).unlink()
+            logging.info("Graph store dropped.")
+        else:
+            logging.info(f"Storage path {storage_path} does not exist. Skipping drop.")
+    else:
+        logging.info(f"Graph store {rdf_store_type} is not Oxigraph or storage path is not provided. Skipping drop.")

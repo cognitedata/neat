@@ -22,7 +22,8 @@ from cognite.neat.rules.analysis import (
     to_class_property_pairs,
 )
 from cognite.neat.rules.exporter.rules2dms import DataModel
-from cognite.neat.rules.models.rules import Property, Rules, type_to_target_convention
+from cognite.neat.rules.models.rules import Property, Rules
+from cognite.neat.rules.type_mapping import type_to_target_convention
 
 if sys.version_info >= (3, 11):
     from datetime import UTC
@@ -42,7 +43,7 @@ def default_model_configuration():
 
 
 def default_model_methods():
-    return [from_graph, to_asset, to_relationship, to_node, to_edge, to_graph]
+    return [from_graph, to_asset, to_relationship, to_node, to_edge, to_graph, get_field_description, get_field_name]
 
 
 def default_model_property_attributes():
@@ -129,14 +130,16 @@ def _properties_to_pydantic_fields(
 
     fields = {"external_id": (str, Field(..., alias="external_id"))}
 
-    for name, property_ in properties.items():
+    for property_id, property_ in properties.items():
         field_type = _define_field_type(property_)
-
         field_definition: dict = {
-            "alias": name,
+            "alias": property_.property_id,
+            "description": property_.description if property_.description else None,
             # keys below will be available under json_schema_extra
             "property_type": field_type.__name__ if field_type in [EdgeOneToOne, EdgeOneToMany] else "NodeAttribute",
             "property_value_type": property_.expected_value_type,
+            "property_name": property_.property_name,
+            "property_id": property_.property_id,
         }
 
         if field_type.__name__ in [EdgeOneToMany.__name__, list.__name__]:
@@ -150,7 +153,7 @@ def _properties_to_pydantic_fields(
 
         # making sure that field names are python compliant
         # their original names are stored as aliases
-        fields[re.sub(r"[^_a-zA-Z0-9/_]", "_", name)] = (
+        fields[re.sub(r"[^_a-zA-Z0-9/_]", "_", property_id)] = (
             field_type,
             Field(**field_definition),  # type: ignore[pydantic-field]
         )
@@ -540,6 +543,24 @@ def _get_end_node_class_name(view: ViewApply, edge: str) -> str | None:
 def to_graph(self, transformation_rules: Rules, graph: Graph):
     """Writes instance as set of triples to triple store (Graphs)."""
     ...
+
+
+@classmethod  # type: ignore
+def get_field_description(cls, field_id: str) -> str | None:
+    """Returns description of the field if one exists"""
+    if field_id in cls.model_fields:
+        return cls.model_fields[field_id].description
+    else:
+        return None
+
+
+@classmethod  # type: ignore
+def get_field_name(cls, field_id: str) -> str | None:
+    """Returns name of the field if one exists"""
+    if field_id in cls.model_fields and cls.model_fields[field_id].json_schema_extra:
+        if "property_name" in cls.model_fields[field_id].json_schema_extra:
+            return cls.model_fields[field_id].json_schema_extra["property_name"]
+    return None
 
 
 def add_class_prefix_to_xid(class_name: str, external_id: str) -> str:

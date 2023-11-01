@@ -15,6 +15,46 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.38.0] - 31-10-23
+## Added
+ - Ability to partially validate Rules
+ - Description and name of fields added to rules generated pydantic models
+
+## Improved
+ - Improved naming of internal variables in `cognite/neat/rules/exporter/rules2pydantic_models.py`
+
+## [0.37.0] - 31-10-23
+
+## Added
+ - Configurable assets cleanup in GenerateCDFAssetsFromGraph step. Now user can specify if he/she wants to delete all ophan or circular assets or keep them.
+
+### Fixed
+ - https://github.com/cognitedata/neat/issues/146
+ - https://github.com/cognitedata/neat/issues/139
+
+## [0.36.0] - 30-10-23
+### Added
+- Added `DMSImporter`
+-
+## [0.35.0] - 27-10-23
+
+### Improved
+
+- Improved stability and resource usage of Oxigraph when working with large graphs.
+
+### Added
+
+- Added `InstancesFromAvevaPiAF` step.
+
+### Fixed
+
+- UI bug fixes and improvements.
+
+## [0.34.0] - 27-10-23
+
+### Improved
+- Bug fix: Removed condition not allowing an asset to change its parent asset.
+
 ## [0.33.0] - 22-10-23
 
 ### Improved

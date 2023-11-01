@@ -211,7 +211,7 @@ def domain2app_knowledge_graph(
                 query = build_sparql_query(domain_knowledge_graph, rule.traversal, transformation_rules.prefixes)
             else:
                 raise ValueError(f"Unknown traversal type {type(rule.traversal)}")
-            logging.info(f"Query: {query}")
+            logging.debug(f"Query: {query}")
 
             if query_results := list(domain_knowledge_graph.query(query)):
                 # Generate URI for class and property in target namespace

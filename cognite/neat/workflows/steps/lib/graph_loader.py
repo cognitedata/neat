@@ -25,7 +25,7 @@ from cognite.neat.graph.loaders.rdf_to_dms import rdf2nodes_and_edges, upload_ed
 from cognite.neat.graph.loaders.validator import validate_asset_hierarchy
 from cognite.neat.utils.utils import generate_exception_report
 from cognite.neat.workflows._exceptions import StepFlowContextNotInitialized, StepNotInitialized
-from cognite.neat.workflows.model import FlowMessage
+from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.data_contracts import (
     CategorizedAssets,
     CategorizedRelationships,
@@ -169,12 +169,25 @@ class GenerateCDFAssetsFromGraph(Step):
     )
     category = CATEGORY
 
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="assets_cleanup_type",
+            value="nothing",
+            options=["nothing", "orphans", "circular", "full"],
+            label=(
+                "Configures asset cleanup process. Supported options: nothing - no cleanup, \
+                    orphans - all oraphan assets will be removed, circular - all circular assets will be removed , \
+                    full - full cleanup , both orphans and circular assets will be removed. "
+            ),
+        ),
+    ]
+
     def run(  # type: ignore[override]
         self, rules: RulesData, cdf_client: CogniteClient, solution_graph: SolutionGraph
     ) -> (FlowMessage, CategorizedAssets):  # type: ignore[override, syntax]
         if self.configs is None:
             raise StepNotInitialized(type(self).__name__)
-
+        asset_cleanup_type = self.configs.get("assets_cleanup_type", "nothing")
         meta_keys = NeatMetadataKeys.load(self.configs)
         if self.metrics is None:
             raise ValueError(self._not_configured_message)
@@ -218,47 +231,67 @@ class GenerateCDFAssetsFromGraph(Step):
         logging.info(f"Total count of assets in CDF before upload: { total_assets_before }")
 
         orphan_assets, circular_assets = validate_asset_hierarchy(rdf_asset_dicts)
-
+        orphan_assets_count = len(orphan_assets)
+        circular_assets_count = len(circular_assets)
         prom_data_issues_stats.labels(resource_type="circular_assets").set(len(circular_assets))
         prom_data_issues_stats.labels(resource_type="orphan_assets").set(len(orphan_assets))
 
         if orphan_assets:
             logging.error(f"Found orphaned assets: {', '.join(orphan_assets)}")
 
-            orphanage_asset_external_id = (
-                f"{rules.rules.metadata.externalIdPrefix}orphanage-{rules.dataset_id}"
-                if rules.rules.metadata.externalIdPrefix
-                else "orphanage"
-            )
+            if asset_cleanup_type in ["orphans", "full"]:
+                logging.info("Removing orphaned assets")
+                for external_id in orphan_assets:
+                    del rdf_asset_dicts[external_id]
+            else:
+                orphanage_asset_external_id = (
+                    f"{rules.rules.metadata.externalIdPrefix}orphanage-{rules.dataset_id}"
+                    if rules.rules.metadata.externalIdPrefix
+                    else "orphanage"
+                )
 
-            # Kill the process if you dont have orphanage asset in your asset hierarchy
-            # and inform the user that it is missing !
-            if orphanage_asset_external_id not in rdf_asset_dicts:
-                msg = f"You dont have Orphanage asset {orphanage_asset_external_id} in asset hierarchy!"
-                logging.error(msg)
-                raise Exception(msg)
+                # Kill the process if you dont have orphanage asset in your asset hierarchy
+                # and inform the user that it is missing !
+                if orphanage_asset_external_id not in rdf_asset_dicts:
+                    msg = f"You dont have Orphanage asset {orphanage_asset_external_id} in asset hierarchy!"
+                    logging.error(msg)
+                    return FlowMessage(
+                        error_text=msg, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL
+                    ), CategorizedAssets(assets={})
 
-            logging.error("Orphaned assets will be assigned to 'Orphanage' root asset")
+                logging.error("Orphaned assets will be assigned to 'Orphanage' root asset")
 
-            for external_id in orphan_assets:
-                rdf_asset_dicts[external_id]["parent_external_id"] = orphanage_asset_external_id
-
-            orphan_assets, circular_assets = validate_asset_hierarchy(rdf_asset_dicts)
-
-            logging.info(orphan_assets)
+                for external_id in orphan_assets:
+                    rdf_asset_dicts[external_id]["parent_external_id"] = orphanage_asset_external_id
         else:
             logging.info("No orphaned assets found, your assets look healthy !")
 
         if circular_assets:
-            msg = f"Found circular dependencies: {circular_assets!s}"
-            logging.error(msg)
-            raise Exception(msg)
-        elif orphan_assets:
-            msg = f"Not able to fix orphans: {', '.join(orphan_assets)}"
-            logging.error(msg)
-            raise Exception(msg)
+            logging.error(f"Found circular dependencies: {circular_assets}")
+            if asset_cleanup_type in ["circular", "full"]:
+                logging.info("Removing circular assets")
+                for circular_path in circular_assets:
+                    circular_external_id = circular_path[-1]
+                    del rdf_asset_dicts[circular_external_id]
         else:
             logging.info("No circular dependency among assets found, your assets hierarchy look healthy !")
+
+        if orphan_assets or circular_assets:
+            orphan_assets, circular_assets = validate_asset_hierarchy(rdf_asset_dicts)
+            if circular_assets:
+                msg = f"Found circular dependencies: {circular_assets!s}"
+                logging.error(msg)
+                return FlowMessage(
+                    error_text=msg, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL
+                ), CategorizedAssets(assets={})
+            elif orphan_assets:
+                msg = f"Not able to fix orphans: {', '.join(orphan_assets)}"
+                logging.error(msg)
+                return FlowMessage(
+                    error_text=msg, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL
+                ), CategorizedAssets(assets={})
+            else:
+                logging.info("No circular dependency among assets found, your assets hierarchy look healthy !")
 
         categorized_assets, report = categorize_assets(
             cdf_client, rdf_asset_dicts, rules.dataset_id, return_report=True
@@ -279,10 +312,15 @@ class GenerateCDFAssetsFromGraph(Step):
         logging.info(f"Total count of assets to be decommission: { count_decommission_assets }")
         logging.info(f"Total count of assets to be resurrect: { count_resurrect_assets }")
 
-        msg = f"Total count of assets { len(rdf_asset_dicts) } of which: { count_create_assets } to be created"
-        msg += f", { count_update_assets } to be updated"
-        msg += f", { count_decommission_assets } to be decommissioned"
-        msg += f", { count_resurrect_assets } to be resurrected"
+        msg = f"Total count of assets { len(rdf_asset_dicts) } of which:"
+        msg += f"<p> { count_create_assets } to be created </p>"
+        msg += f"<p> { count_update_assets } to be updated </p>"
+        msg += f"<p> { count_decommission_assets } to be decommissioned </p>"
+        msg += f"<p> { count_resurrect_assets } to be resurrected </p>"
+        msg += f"<p> Found { orphan_assets_count } orphan assets and"
+        msg += f" { circular_assets_count } circular assets </p>"
+        if asset_cleanup_type != "nothing":
+            msg += " <p> All circular and orphan assets were removed successfully </p>"
         number_of_updates = len(report["decommission"])
         logging.info(f"Total number of updates: {number_of_updates}")
 
