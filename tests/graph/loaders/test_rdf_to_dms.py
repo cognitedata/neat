@@ -44,3 +44,13 @@ def test_add_class_prefix_to_external_ids(simple_rules, graph_with_numeric_ids):
     assert nodes[0].external_id == "PriceAreaConnection_1"
     assert start_node_xid == {"PriceAreaConnection_1"}
     assert end_node_xid == {"PriceArea_2", "PriceArea_3"}
+
+
+def test_rdf2nodes_property_date(graph_with_date, transformation_rules_date):
+    print (graph_with_date)
+    nodes, edges, exceptions = rdf2nodes_and_edges(graph_with_date, transformation_rules_date)
+
+    assert exceptions == []
+    assert len(nodes) == 1
+    assert len(edges) == 2
+    assert nodes[0].sources[0].properties["endDate"] == "2020-01-01"
