@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.38.1] - 01-11-23
+## Fixed
+ - Proper min_count for `DMSImporter` base on CDF `View` implementation
+
 ## [0.38.0] - 31-10-23
 ## Added
  - Ability to partially validate Rules

@@ -108,6 +108,12 @@ class DMSImporter(BaseImporter):
                 ):
                     max_count = float("nan")
 
+                min_count: str | float = "1"
+                if isinstance(prop, SingleHopConnectionDefinition) or (
+                    isinstance(prop, MappedProperty) and prop.nullable
+                ):
+                    min_count = "0"
+
                 properties.append(
                     {
                         "Class": class_id,
@@ -115,7 +121,7 @@ class DMSImporter(BaseImporter):
                         "Name": prop.name if prop.name else prop_id,
                         "Description": prop.description or float("nan"),
                         "Type": type_,
-                        "Min Count": "1",
+                        "Min Count": min_count,
                         "Max Count": max_count,
                         "Rule Type": "rdfpath",
                         "Rule": f"cim:{class_id}(cim:{prop_id}.name)",
