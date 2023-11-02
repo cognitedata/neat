@@ -47,10 +47,6 @@ def transformation_rules_date() -> Rules:
     return importer.ExcelImporter(config.SIMPLE_TRANSFORMATION_RULES_DATES).to_rules()
 
 
-# @pytest.fixture(scope="session")
-# def simple_rules_with_dates() -> Rules:
-
-
 @pytest.fixture(scope="function")
 def small_graph(simple_rules) -> NeatGraphStore:
     graph_store = NeatGraphStore(

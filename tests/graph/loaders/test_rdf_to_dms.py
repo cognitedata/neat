@@ -47,7 +47,7 @@ def test_add_class_prefix_to_external_ids(simple_rules, graph_with_numeric_ids):
 
 
 def test_rdf2nodes_property_date(graph_with_date, transformation_rules_date):
-    print (graph_with_date)
+    print(graph_with_date)
     nodes, edges, exceptions = rdf2nodes_and_edges(graph_with_date, transformation_rules_date)
 
     assert exceptions == []

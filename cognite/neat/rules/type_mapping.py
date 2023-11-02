@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from datetime import datetime, date
+from datetime import date, datetime
 from typing import cast
 
 from cognite.client.data_classes.data_modeling import (
     Boolean,
+    Date,
     FileReference,
     Float64,
     Int32,
@@ -15,7 +16,6 @@ from cognite.client.data_classes.data_modeling import (
     Text,
     TimeSeriesReference,
     Timestamp,
-    Date
 )
 
 _DATA_TYPES: list[dict[str, str | type]] = [
