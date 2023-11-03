@@ -2,7 +2,7 @@ import re
 import sys
 import warnings
 from collections.abc import Iterable
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any, TypeAlias, cast
 
 from cognite.client.data_classes import Asset, Relationship
@@ -517,7 +517,12 @@ def to_node(self, data_model: DataModel, add_class_prefix: bool) -> NodeApply:
             list(data_model.containers[type(self).__name__].properties.keys()),
         )
 
-    attributes: dict = {attribute: getattr(self, attribute) for attribute in self.attributes}
+    attributes: dict = {
+        attribute: getattr(self, attribute).isoformat()
+        if isinstance(getattr(self, attribute), date)
+        else getattr(self, attribute)
+        for attribute in self.attributes
+    }
     if add_class_prefix:
         edges_one_to_one: dict = {}
         dm_view = data_model.views[type(self).__name__]

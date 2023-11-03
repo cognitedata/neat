@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.38.2] - 03-11-23
+## Fixed
+ - Added type mapping for data type Date
+
 ## [0.38.1] - 01-11-23
 ## Fixed
  - Proper min_count for `DMSImporter` base on CDF `View` implementation
