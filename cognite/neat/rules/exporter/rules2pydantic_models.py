@@ -16,14 +16,12 @@ from typing_extensions import TypeAliasType
 from cognite.neat.graph.loaders.core.rdf_to_assets import NeatMetadataKeys
 from cognite.neat.graph.transformations.query_generator.sparql import build_construct_query, triples2dictionary
 from cognite.neat.rules import exceptions
-from cognite.neat.rules.analysis import (
-    define_class_asset_mapping,
-    define_class_relationship_mapping,
-    to_class_property_pairs,
-)
+from cognite.neat.rules.analysis import define_class_asset_mapping, to_class_property_pairs
+from cognite.neat.rules.exporter._validation import are_entity_names_dms_compliant
 from cognite.neat.rules.exporter.rules2dms import DataModel
 from cognite.neat.rules.models.rules import Property, Rules
 from cognite.neat.rules.type_mapping import type_to_target_convention
+from cognite.neat.utils.utils import generate_exception_report
 
 if sys.version_info >= (3, 11):
     from datetime import UTC
@@ -36,74 +34,138 @@ EdgeOneToOne: TypeAlias = TypeAliasType("EdgeOneToOne", str)  # type: ignore[val
 EdgeOneToMany: TypeAlias = TypeAliasType("EdgeOneToMany", list[str])  # type: ignore[valid-type]
 
 
-def default_model_configuration():
+def default_model_configuration(
+    class_id: str | None = None, class_name: str | None = None, description: str | None = None
+) -> ConfigDict:
     return ConfigDict(
-        populate_by_name=True, str_strip_whitespace=True, arbitrary_types_allowed=True, strict=False, extra="allow"
+        populate_by_name=True,
+        str_strip_whitespace=True,
+        arbitrary_types_allowed=True,
+        strict=False,
+        extra="allow",
+        json_schema_extra={
+            "title": class_name,
+            "description": description,
+            "class_id": class_id,
+            "class_name": class_name,
+        },
     )
 
 
-def default_model_methods():
-    return [from_graph, to_asset, to_relationship, to_node, to_edge, to_graph, get_field_description, get_field_name]
+def default_class_methods():
+    return [
+        from_graph,
+        to_asset,
+        to_relationship,
+        to_node,
+        to_edge,
+        get_field_description,
+        get_field_name,
+    ]
 
 
-def default_model_property_attributes():
+def default_class_property_methods():
+    return [model_name, model_external_id, model_description]
+
+
+def default_instance_property_methods():
     return [attributes, edges_one_to_one, edges_one_to_many]
 
 
 def rules_to_pydantic_models(
-    transformation_rules: Rules, methods: list | None = None, property_attributes: list | None = None
+    rules: Rules,
+    methods: list | None = None,
+    add_extra_fields: bool = False,
 ) -> dict[str, ModelMetaclass]:
     """
-    Generate pydantic models from transformation rules.
+    Generate pydantic models from rules.
 
     Args:
-        transformation_rules: Transformation rules
-        methods: List of methods to register for pydantic models, by default None.
-        property_attributes: List of property attributes to register for pydantic models, by default None.
+        rules: Rules to generate pydantic models from
+        methods: List of methods to register for pydantic models,
+                 by default None meaning defaulting to base neat methods.
+        add_extra_fields: Flag indicating to add extra fields to pydantic models, by default False
 
     Returns:
-        Dictionary containing pydantic models
+        Dictionary containing pydantic models with class ids as key and pydantic model as value
+        containing properties defined for the given class(es) in the rules.
+
+
+    !!! note "Default NEAT methods"
+        Default NEAT methods which are added to the generated pydantic models are:
+        - `get_field_description`: Returns description of the field if one exists.
+        - `get_field_name`: Returns name of the field if one exists.
+        - `model_name`: Returns the name of the model if one exists.
+        - `model_external_id`: Returns the external id of the model if one exists.
+        - `model_description`: Returns the description of the model if one exists.
+        - `from_graph`: Creates model instance from class instance stored in RDF graph.
+        - `to_asset`: Creates CDF Asset instance from model instance.
+        - `to_node`: Creates DMS node from model instance.
+        - `to_edge`: Creates DMS edge from model instance.
+        - `attributes`: Returns list of node attributes.
+        - `edges_one_to_one`: Returns list of node edges one to one.
+        - `edges_one_to_many`: Returns list of node edges one to many.
+
 
     !!! note "Limitations"
         Currently this will take only unique properties and those which column rule_type
         is set to rdfpath, hence only_rdfpath = True. This means that at the moment
         we do not support UNION, i.e. ability to handle multiple rdfpaths for the same
         property. This is needed option and should be added in the second version of the exporter.
-    """
-    if methods is None:
-        methods = default_model_methods()
-    if property_attributes is None:
-        property_attributes = default_model_property_attributes()
 
-    class_property_pairs = to_class_property_pairs(transformation_rules, only_rdfpath=True)
+    !!! note "Classes and Properties must be DMS Compliant"
+        Rules must be DMS compliant, i.e. class and property ids must obey the following regex:
+        r`(^[a-zA-Z][a-zA-Z0-9_]{0,253}[a-zA-Z0-9]?$)` and must not contain reserved keywords.
+
+        Classes reserved keywords: `Query`, `Mutation`, `Subscription`, `String`, `Int32`,
+        `Int64`, `Int`, `Float32`, `Float64`, `Float`,`Timestamp`, `JSONObject`, `Date`,
+        `Numeric`, `Boolean`, `PageInfo`, `File`, `Sequence`, `TimeSeries`
+
+        Properties reserved keywords: `space`, `externalId`, `createdTime`, `lastUpdatedTime`,
+        `deletedTime`, `edge_id` `node_id`, `project_id`, `property_group`, `seq`, `tg_table_name`, `extensions`
+    """
+
+    names_compliant, name_warnings = are_entity_names_dms_compliant(rules, return_report=True)
+    if not names_compliant:
+        raise exceptions.EntitiesContainNonDMSCompliantCharacters(report=generate_exception_report(name_warnings))
+
+    if methods is None:
+        methods = default_class_methods() + default_class_property_methods() + default_instance_property_methods()
+
+    class_property_pairs = to_class_property_pairs(rules, only_rdfpath=True)
 
     models: dict[str, ModelMetaclass] = {}
     for class_, properties in class_property_pairs.items():
         # generate fields from define properties
         fields = _properties_to_pydantic_fields(properties)
+        print(fields)
 
-        # store default class to relationship mapping field
-        # which is used by the `to_relationship` method
-        fields["class_to_asset_mapping"] = (
-            dict[str, list[str]],
-            Field(define_class_asset_mapping(transformation_rules, class_)),
+        if add_extra_fields:
+            # store default class to relationship mapping field
+            # which is used by the `to_relationship` method
+            fields["class_to_asset_mapping"] = (
+                dict[str, list[str]],
+                Field(
+                    define_class_asset_mapping(rules, class_),
+                    description="This is a helper field used for generating CDF Asset out of model instance",
+                ),
+            )
+
+            fields["data_set_id"] = (
+                int,
+                Field(
+                    rules.metadata.data_set_id or None,
+                    description="This is a helper field used for generating CDF Asset out of model instance",
+                ),
+            )
+
+        model = _dictionary_to_pydantic_model(
+            model_id=class_,
+            model_fields_definition=fields,
+            model_name=rules.classes[class_].class_name,
+            model_description=rules.classes[class_].description,
+            model_methods=methods,
         )
-
-        # store default class to relationship mapping field
-        # which is used by the `to_relationship` method
-        fields["class_to_relationship_mapping"] = (
-            dict[str, list[str]],
-            Field(define_class_relationship_mapping(transformation_rules, class_)),
-        )
-
-        fields["data_set_id"] = (
-            int,
-            Field(
-                transformation_rules.metadata.data_set_id or None,
-            ),
-        )
-
-        model = _dictionary_to_pydantic_model(class_, fields, methods=methods, property_attributes=property_attributes)
 
         models[class_] = model
 
@@ -133,7 +195,7 @@ def _properties_to_pydantic_fields(
     for property_id, property_ in properties.items():
         field_type = _define_field_type(property_)
         field_definition: dict = {
-            "alias": property_.property_id,
+            "alias": property_.property_name,
             "description": property_.description if property_.description else None,
             # keys below will be available under json_schema_extra
             "property_type": field_type.__name__ if field_type in [EdgeOneToOne, EdgeOneToMany] else "NodeAttribute",
@@ -151,13 +213,10 @@ def _properties_to_pydantic_fields(
         elif property_.default:
             field_definition["default"] = property_.default
 
-        # making sure that field names are python compliant
-        # their original names are stored as aliases
-        fields[re.sub(r"[^_a-zA-Z0-9/_]", "_", property_id)] = (
+        fields[property_id] = (
             field_type,
             Field(**field_definition),  # type: ignore[pydantic-field]
         )
-
     return fields
 
 
@@ -174,11 +233,12 @@ def _define_field_type(property_: Property):
 
 
 def _dictionary_to_pydantic_model(
-    name: str,
-    model_definition: dict,
+    model_id: str,
+    model_fields_definition: dict,
+    model_name: str | None = None,
+    model_description: str | None = None,
     model_configuration: ConfigDict | None = None,
-    methods: list | None = None,
-    property_attributes: list | None = None,
+    model_methods: list | None = None,
     validators: list | None = None,
 ) -> type[BaseModel]:
     """Generates pydantic model from dictionary containing definition of fields.
@@ -186,9 +246,9 @@ def _dictionary_to_pydantic_model(
 
     Parameters
     ----------
-    name : str
-        Name of the model
-    model_definition : dict
+    model_name : str
+        Name of the model, typically an id of the class
+    model_fields_definition : dict
         Dictionary containing definition of fields
     model_configuration : ConfigDict, optional
         Configuration of pydantic model, by default None
@@ -205,27 +265,33 @@ def _dictionary_to_pydantic_model(
         Pydantic model
     """
 
-    if model_configuration:
-        model_configuration = default_model_configuration()
+    if not model_configuration:
+        model_configuration = default_model_configuration(
+            class_id=model_id, class_name=model_name, description=model_description
+        )
 
     fields: dict[str, tuple | type[BaseModel]] = {}
 
-    for field_name, value in model_definition.items():
+    for field_name, value in model_fields_definition.items():
         if isinstance(value, tuple):
             fields[field_name] = value
+        # Nested classes
         elif isinstance(value, dict):
-            fields[field_name] = (_dictionary_to_pydantic_model(f"{name}_{field_name}", value), ...)
+            fields[field_name] = (_dictionary_to_pydantic_model(f"{model_id}_{field_name}", value), ...)
         else:
             raise exceptions.FieldValueOfUnknownType(field_name, value)
 
-    model = create_model(name, __config__=model_configuration, **fields)  # type: ignore[call-overload]
+    model = create_model(model_id, __config__=model_configuration, **fields)  # type: ignore[call-overload]
 
-    if methods:
-        for method in methods:
-            setattr(model, method.__name__, method)
-    if property_attributes:
-        for property_attribute in property_attributes:
-            setattr(model, property_attribute.fget.__name__, property_attribute)
+    if model_methods:
+        for method in model_methods:
+            try:
+                setattr(model, method.__name__, method)
+            except AttributeError:
+                try:
+                    setattr(model, method.fget.__name__, method)
+                except AttributeError:
+                    setattr(model, method.__func__.fget.__name__, method)
 
     # any additional validators to be added
     if validators:
@@ -540,9 +606,25 @@ def _get_end_node_class_name(view: ViewApply, edge: str) -> str | None:
     return None
 
 
-def to_graph(self, transformation_rules: Rules, graph: Graph):
-    """Writes instance as set of triples to triple store (Graphs)."""
-    ...
+@classmethod  # type: ignore
+@property
+def model_name(cls) -> str | None:
+    """Returns the name of the model if one exists"""
+    return cls.model_json_schema().get("class_name", None)
+
+
+@classmethod  # type: ignore
+@property
+def model_external_id(cls) -> str | None:
+    """Returns the external id of the model if one exists"""
+    return cls.model_json_schema().get("class_id", None)
+
+
+@classmethod  # type: ignore
+@property
+def model_description(cls) -> str | None:
+    """Returns the description of the model if one exists"""
+    return cls.model_json_schema().get("description", None)
 
 
 @classmethod  # type: ignore
