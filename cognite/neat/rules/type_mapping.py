@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import cast
 
 from cognite.client.data_classes.data_modeling import (
     Boolean,
+    Date,
     FileReference,
     Float64,
     Int32,
@@ -29,8 +30,9 @@ _DATA_TYPES: list[dict[str, str | type]] = [
     {"name": "anyURI", "python": str, "GraphQL": "String", "dms": Text},
     {"name": "normalizedString", "python": str, "GraphQL": "String", "dms": Text},
     {"name": "token", "python": str, "GraphQL": "String", "dms": Text},
-    # Graphql does not have a datetime type this is CDF specific
+    # Graphql does not have a datetime/date type this is CDF specific
     {"name": "dateTime", "python": datetime, "GraphQL": "Timestamp", "dms": Timestamp},
+    {"name": "date", "python": date, "GraphQL": "String", "dms": Date},
     # CDF specific types, not in XSD
     {"name": "timeseries", "python": TimeSeriesReference, "GraphQL": "TimeSeries", "dms": TimeSeriesReference},
     {"name": "file", "python": FileReference, "GraphQL": "File", "dms": FileReference},
