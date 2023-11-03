@@ -246,4 +246,11 @@ SELECT DISTINCT ?subject ?predicate ?object WHERE {
 
 ## `rawlookup` rule
 
+Example of rawlookup rule:  `cim:Substation(cim:IdentifiedObject.name) | substation_code_lookup(NAME,CODE)`
+
+- cim:Substation(cim:IdentifiedObject.name) - rdfpath rule which will fetch all Substation instances and their names from the graph . The name is used as key for the lookup
+- substation_code_lookup(NAME,CODE) - substation_code_lookup is a name of the table in CDF RAW. The lookup table has at least two columns NAME and CODE . The NAME column is used as key for the lookup, while the CODE column is used as value for the lookup.
+
+
+
 <!-- Anders Albert to write this section. -->
