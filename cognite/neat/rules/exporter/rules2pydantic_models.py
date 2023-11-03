@@ -93,6 +93,7 @@ def rules_to_pydantic_models(
 
     !!! note "Default NEAT methods"
         Default NEAT methods which are added to the generated pydantic models are:
+
         - `get_field_description`: Returns description of the field if one exists.
         - `get_field_name`: Returns name of the field if one exists.
         - `model_name`: Returns the name of the model if one exists.
