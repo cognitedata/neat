@@ -1,4 +1,5 @@
 from typing import ClassVar
+
 from cognite.client import CogniteClient
 
 from cognite.neat.graph.transformations.transformer import RuleProcessingReport, domain2app_knowledge_graph

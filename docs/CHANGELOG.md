@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.38.3] - 03-11-23
+
+## Fixed
+ - Fixed CDF database configuration for rawlookup rule in TransformSourceToSolutionGraph .  https://github.com/cognitedata/neat/issues/157
+
 ## [0.38.2] - 03-11-23
 ## Fixed
  - Added type mapping for data type Date
