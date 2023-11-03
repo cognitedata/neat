@@ -6,7 +6,7 @@ from datetime import date, datetime
 from typing import Any, TypeAlias, cast
 
 from cognite.client.data_classes import Asset, Relationship
-from cognite.client.data_classes.data_modeling import EdgeApply, MappedPropertyApply, NodeApply, NodeOrEdgeData
+from cognite.client.data_classes.data_modeling import EdgeApply, MappedPropertyApply, NodeApply, NodeOrEdgeData, ViewId
 from cognite.client.data_classes.data_modeling.views import SingleHopConnectionDefinitionApply, ViewApply
 from pydantic import BaseModel, ConfigDict, Field, create_model
 from pydantic._internal._model_construction import ModelMetaclass
@@ -35,7 +35,11 @@ EdgeOneToMany: TypeAlias = TypeAliasType("EdgeOneToMany", list[str])  # type: ig
 
 
 def default_model_configuration(
-    class_id: str | None = None, class_name: str | None = None, description: str | None = None
+    external_id: str | None = None,
+    name: str | None = None,
+    description: str | None = None,
+    space: str | None = None,
+    version: str | None = None,
 ) -> ConfigDict:
     return ConfigDict(
         populate_by_name=True,
@@ -44,10 +48,12 @@ def default_model_configuration(
         strict=False,
         extra="allow",
         json_schema_extra={
-            "title": class_name,
+            "title": name,
             "description": description,
-            "class_id": class_id,
-            "class_name": class_name,
+            "external_id": external_id,
+            "name": name,
+            "space": space,
+            "version": version,
         },
     )
 
@@ -166,6 +172,8 @@ def rules_to_pydantic_models(
             model_name=rules.classes[class_].class_name,
             model_description=rules.classes[class_].description,
             model_methods=methods,
+            space=rules.metadata.cdf_space_name,
+            version=rules.metadata.version,
         )
 
         models[class_] = model
@@ -236,6 +244,8 @@ def _define_field_type(property_: Property):
 def _dictionary_to_pydantic_model(
     model_id: str,
     model_fields_definition: dict,
+    space: str | None = None,
+    version: str | None = None,
     model_name: str | None = None,
     model_description: str | None = None,
     model_configuration: ConfigDict | None = None,
@@ -268,7 +278,7 @@ def _dictionary_to_pydantic_model(
 
     if not model_configuration:
         model_configuration = default_model_configuration(
-            class_id=model_id, class_name=model_name, description=model_description
+            external_id=model_id, space=space, version=version, name=model_name, description=model_description
         )
 
     fields: dict[str, tuple | type[BaseModel]] = {}
@@ -505,9 +515,45 @@ def to_relationship(self, transformation_rules: Rules) -> Relationship:
     raise NotImplementedError()
 
 
-def to_node(self, data_model: DataModel, add_class_prefix: bool) -> NodeApply:
-    """Creates DMS node from pydantic model."""
+def to_node(self, data_model: DataModel | None = None, add_class_prefix: bool = False) -> NodeApply:
+    """Creates DMS node from the instance of pydantic model."""
 
+    if data_model:
+        return _to_node_using_data_model(self, data_model, add_class_prefix)
+    else:
+        return _to_node_using_view(self)
+
+
+def _to_node_using_view(self) -> NodeApply:
+    view_id = ViewId(
+        self.model_json_schema()["space"], self.model_json_schema()["external_id"], self.model_json_schema()["version"]
+    )
+
+    attributes: dict = {
+        attribute: getattr(self, attribute).isoformat()
+        if isinstance(getattr(self, attribute), date)
+        else getattr(self, attribute)
+        for attribute in self.attributes
+    }
+
+    edges_one_to_one: dict = {
+        edge_one_to_one: {"space": self.model_json_schema()["space"], "externalId": getattr(self, edge_one_to_one)}
+        for edge_one_to_one in self.edges_one_to_one
+    }
+
+    return NodeApply(
+        space=self.model_json_schema()["space"],
+        external_id=self.external_id,
+        sources=[
+            NodeOrEdgeData(
+                source=view_id,
+                properties=attributes | edges_one_to_one,
+            )
+        ],
+    )
+
+
+def _to_node_using_data_model(self, data_model, add_class_prefix) -> NodeApply:
     if not set(self.attributes + self.edges_one_to_one + self.edges_one_to_many).issubset(
         set(data_model.containers[type(self).__name__].properties.keys())
     ):
@@ -558,7 +604,7 @@ def to_node(self, data_model: DataModel, add_class_prefix: bool) -> NodeApply:
     )
 
 
-def to_edge(self, data_model: DataModel, add_class_prefix: bool) -> list[EdgeApply]:
+def to_edge(self, data_model: DataModel, add_class_prefix: bool = False) -> list[EdgeApply]:
     """Creates DMS edge from pydantic model."""
     edges: list[EdgeApply] = []
 
