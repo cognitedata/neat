@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import ClassVar, cast
 
 from cognite.neat.constants import PREFIXES
-from cognite.neat.graph.stores import NeatGraphStore, RdfStoreType, drop_graph_store
+from cognite.neat.graph.stores import NeatGraphStore, RdfStoreType, drop_graph_store_storage
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
@@ -137,39 +137,34 @@ class ResetGraphStores(Step):
 
     description = "This step resets graph stores to their initial state (clears all data)."
     category = CATEGORY
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="graph_name",
+            value="source",
+            label="Name of the data store. Supported: solution, source ",
+            options=["source", "solution"],
+        )
+    ]
 
     def run(self) -> FlowMessage:  # type: ignore[override, syntax]
         if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
-        source_store_type = self.configs["source_rdf_store.type"]
-        solution_store_type = self.configs["solution_rdf_store.type"]
-        if source_store_type == RdfStoreType.OXIGRAPH and solution_store_type == RdfStoreType.OXIGRAPH:
-            if "SourceGraph" not in self.flow_context or "SolutionGraph" not in self.flow_context:
-                source_store_dir = (
-                    Path(self.data_store_path) / Path(value)
-                    if (value := self.configs["source_rdf_store.disk_store_dir"])
-                    else None
-                )
-                solution_store_dir = (
-                    self.data_store_path / Path(value)
-                    if (value := self.configs["solution_rdf_store.disk_store_dir"])
-                    else None
-                )
-                if solution_store_dir:
-                    drop_graph_store(None, source_store_dir, force=True)
-                if solution_store_dir:
-                    drop_graph_store(None, solution_store_dir, force=True)
-            else:
-                if "SourceGraph" in self.flow_context:
-                    cast(SourceGraph, self.flow_context["SourceGraph"]).graph.drop()
-                if "SolutionGraph" in self.flow_context:
-                    cast(SolutionGraph, self.flow_context["SolutionGraph"]).graph.drop()
-        return FlowMessage(output_text="Stores Reset")
+        graph_name_mapping = {"source": "SourceGraph", "solution": "SolutionGraph"}
+
+        graph_name = graph_name_mapping[self.configs["graph_name"]]
+        graph_store = cast(SourceGraph | SolutionGraph | None, self.flow_context.get(graph_name, None))
+        if graph_store is not None:
+            reset_store(
+                graph_store.graph.rdf_store_type, graph_name, graph_store.graph.internal_storage_dir, graph_store.graph
+            )
+            return FlowMessage(output_text="Reset operation completed")
+        else:
+            return FlowMessage(output_text="Stores already reset")
 
 
 class ConfigureGraphStore(Step):
     """
-    This step initializes source and solution graph store
+    This step initializes source OR solution graph store
     """
 
     description = "This step initializes the source and solution graph stores."
@@ -221,16 +216,20 @@ class ConfigureGraphStore(Step):
         graph_name_mapping = {"source": "SourceGraph", "solution": "SolutionGraph"}
 
         graph_name = graph_name_mapping[self.configs["graph_name"]]
-
+        graph_store = cast(SourceGraph | SolutionGraph | None, self.flow_context.get(graph_name, None))
         if self.configs["init_procedure"] == "reset":
-            self.reset_store(store_type, graph_name, store_dir)
+            logging.info("Resetting graph")
+            reset_store(store_type, graph_name, store_dir, graph_store.graph if graph_store else None)
+            logging.info("Graph reset complete")
 
-        if store_type == RdfStoreType.OXIGRAPH and graph_name in self.flow_context:
+        if store_type == RdfStoreType.OXIGRAPH and graph_store is not None:
             # OXIGRAPH doesn't like to be initialized twice without a good reason
             return FlowMessage(output_text="Stores already configured")
 
-        graph_store = NeatGraphStore(prefixes=rules_data.rules.prefixes, base_prefix="neat", namespace=PREFIXES["neat"])
-        graph_store.init_graph(
+        new_graph_store = NeatGraphStore(
+            prefixes=rules_data.rules.prefixes, base_prefix="neat", namespace=PREFIXES["neat"]
+        )
+        new_graph_store.init_graph(
             store_type,
             self.configs["sparql_query_url"],
             self.configs["sparql_update_url"],
@@ -240,14 +239,17 @@ class ConfigureGraphStore(Step):
 
         return (
             FlowMessage(output_text="Graph store configured successfully"),
-            SourceGraph(graph=graph_store) if graph_name == "SourceGraph" else SolutionGraph(graph=graph_store),
+            SourceGraph(graph=new_graph_store) if graph_name == "SourceGraph" else SolutionGraph(graph=new_graph_store),
         )
 
-    def reset_store(self, store_type: str, graph_name: str, data_store_dir: Path | None):
-        if store_type == RdfStoreType.OXIGRAPH:
-            if graph_name not in self.flow_context:
-                if data_store_dir:
-                    drop_graph_store(None, data_store_dir, force=True)
-            else:
-                cast(SourceGraph | SolutionGraph, self.flow_context[graph_name]).graph.drop()
-        return
+
+def reset_store(
+    store_type: str, graph_name: str, data_store_dir: Path | None, graph_store: NeatGraphStore | None = None
+):
+    if store_type == RdfStoreType.OXIGRAPH:
+        if graph_store:
+            graph_store.drop()
+            graph_store.reinit_graph()
+        elif data_store_dir:
+            drop_graph_store_storage(store_type, data_store_dir, force=True)
+    return

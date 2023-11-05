@@ -5,7 +5,7 @@ from cognite.neat.rules.exporter.rules2dms import DataModel
 
 
 def test_rules2dms(simple_rules):
-    data_model = DataModel.from_rules(transformation_rules=simple_rules)
+    data_model = DataModel.from_rules(rules=simple_rules)
 
     assert len(data_model.containers) == 4
     assert len(data_model.views) == 4
@@ -18,4 +18,4 @@ def test_rules2dms(simple_rules):
 
 def test_raise_error10(transformation_rules):
     with pytest.raises(EntitiesContainNonDMSCompliantCharacters):
-        _ = DataModel.from_rules(transformation_rules=transformation_rules)
+        _ = DataModel.from_rules(rules=transformation_rules)

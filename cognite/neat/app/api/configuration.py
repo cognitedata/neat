@@ -8,7 +8,7 @@ from fastapi import FastAPI
 
 from cognite import neat
 from cognite.neat.app.api.data_classes.configuration import Config, configure_logging
-from cognite.neat.config import copy_examples_to_directory
+from cognite.neat.config import copy_examples_to_directory, create_data_dir_structure
 from cognite.neat.constants import PACKAGE_DIRECTORY
 from cognite.neat.utils.cdf import ServiceCogniteClient
 from cognite.neat.utils.utils import get_cognite_client_from_config, get_cognite_client_from_token
@@ -95,6 +95,8 @@ def create_neat_app() -> NeatApp:
 
     if config.load_examples:
         copy_examples_to_directory(config.data_store_path)
+    else:
+        create_data_dir_structure(config.data_store_path)
 
     configure_logging(config.log_level, config.log_format)
     logging.info(f" Starting NEAT version {neat.__version__}")

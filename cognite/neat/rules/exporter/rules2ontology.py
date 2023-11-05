@@ -98,17 +98,11 @@ class Ontology(OntologyModel):
 
         return cls(
             properties=[
-                OWLProperty.from_list_of_properties(
-                    definition,
-                    transformation_rules.metadata.namespace,
-                )
+                OWLProperty.from_list_of_properties(definition, transformation_rules.metadata.namespace)
                 for definition in to_property_dict(transformation_rules).values()
             ],
             classes=[
-                OWLClass.from_class(
-                    definition,
-                    transformation_rules.metadata.namespace,
-                )
+                OWLClass.from_class(definition, transformation_rules.metadata.namespace)
                 for definition in transformation_rules.classes.values()
             ],
             shapes=[

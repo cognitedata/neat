@@ -273,7 +273,7 @@ def test_get_datatype_properties(
     assert response.status_code == 200
     assert {
         "id": "http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject.name",
-        "count": 2502,
+        "count": 2503,
         "name": "IdentifiedObject.name",
     } in content["datatype_properties"]
 
@@ -346,5 +346,5 @@ def test_get_classes(
 
     assert response.status_code == 200
     assert content["fields"] == ["class", "instances"]
-    assert {"class": "http://iec.ch/TC57/2013/CIM-schema-cim16#Substation", "instances": "44"} in content["rows"]
+    assert {"class": "http://iec.ch/TC57/2013/CIM-schema-cim16#Substation", "instances": "45"} in content["rows"]
     assert len(content["rows"]) == 59

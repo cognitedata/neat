@@ -209,9 +209,10 @@ const loadWorkflowStats = (workflowName: string = "") => {
   if (workflowName == "")
     workflowName = selectedWorkflow;
   const url = neatApiRootUrl + "/api/workflow/stats/" + workflowName;
+  setErrorText("");
   fetch(url).then((response) => {
     if (!response.ok) {
-      setErrorText("Workflow stete can't be saved . Error code :"+response.status+", message :"+response.statusText);
+      setErrorText("Workflow state can't be saved . Error code :"+response.status+", message :"+response.statusText);
       return null;
     }
     return response.json()
@@ -227,7 +228,7 @@ const loadWorkflowStats = (workflowName: string = "") => {
     }
 
   }).catch((error) => {
-    setErrorText(error);
+    setErrorText("Workflow state can't be fetched from API , most likely backend is not running")
     console.error('Error:', error);
   })
 }
@@ -245,7 +246,7 @@ const startWorkflow = () => {
     startStatePolling(selectedWorkflow);
     loadWorkflowStats();
   }).catch((error) => {
-    setErrorText(error);
+    setErrorText(error.message);
     console.error('Error:', error);
   })
 }

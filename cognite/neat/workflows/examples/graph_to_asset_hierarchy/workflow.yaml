@@ -3,7 +3,7 @@ description: null
 implementation_module: null
 name: graph_to_asset_hierarchy
 steps:
--   configs: null
+-   configs: {}
     description: null
     enabled: true
     id: step_http_trigger
@@ -46,7 +46,7 @@ steps:
         pos_y: 167
 -   configs:
         add_base_iri: 'True'
-        file_path: source-graphs/Knowledge-Graph-Nordic44.xml
+        file_path: source-graphs/Knowledge-Graph-Nordic44-dirty.xml
         mime_type: application/rdf+xml
     description: null
     enabled: true
@@ -81,7 +81,8 @@ steps:
     ui_config:
         pos_x: 452
         pos_y: 592
--   configs: {}
+-   configs:
+        assets_cleanup_type: full
     description: null
     enabled: true
     id: step_generate_assets

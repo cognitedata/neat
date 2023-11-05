@@ -362,19 +362,22 @@ export default function QDataTable() {
 
   const loadObjectAsGraph = (reference:string) => {
     setTabValue(2);
-    if (localStorage.getItem('nodeNameProperty'))
-           nodeNameProperty= "<"+localStorage.getItem('nodeNameProperty')+">";
+    if (localStorage.getItem('nodeNameProperty')) {
+      const nodeNamePropObj =  JSON.parse(localStorage.getItem('nodeNameProperty_'+getSelectedWorkflowName()))
+      nodeNameProperty= "<"+nodeNamePropObj["id"]+">";
+    }
+
     let query = ``
     if (!nodeNameProperty) {
       query = `SELECT (?inst AS ?node_name) ?node_class (?inst AS ?node_id) WHERE {
         BIND( <`+reference+`> AS ?inst)
-        ?inst rdf:type ?node_class .
+        ?inst a ?node_class .
         } `
     } else {
       query = `SELECT ?node_name ?node_class (?inst AS ?node_id) WHERE {
         BIND( <`+reference+`> AS ?inst)
         ?inst `+nodeNameProperty+` ?node_name .
-        ?inst rdf:type ?node_class .
+        ?inst a ?node_class .
         } `
     }
 
@@ -516,7 +519,7 @@ export default function QDataTable() {
   const activateTable= (className:string) => {
     setTabValue(1);
     let sparqlQuery = `SELECT ?instance ?property ?value  WHERE {
-      ?instance rdf:type <`+className+`> .
+      ?instance a <`+className+`> .
       ?instance ?property ?value
      } LIMIT 10000`
     loadDataset(sparqlQuery,"query");

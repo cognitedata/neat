@@ -151,12 +151,14 @@ class RawRules(RuleModel):
         self,
         return_report: bool = False,
         skip_validation: bool = False,
+        validators_to_skip: list[str] | None = None,
     ) -> tuple[Rules | None, list[ErrorDetails] | None, list | None] | Rules:
         """Validates RawRules instances and returns Rules instance.
 
         Args:
             return_report: To return validation report. Defaults to False.
             skip_validation: Bypasses Rules validation. Defaults to False.
+            validators_to_skip: List of validators to skip. Defaults to None.
 
         Returns:
             Instance of `Rules`, which can be validated or not validated based on
@@ -171,6 +173,8 @@ class RawRules(RuleModel):
         rules_dict = _raw_tables_to_rules_dict(self)
         if skip_validation:
             return _to_invalidated_rules(rules_dict)
+        elif validators_to_skip:
+            return _to_partially_validated_rules(rules_dict, validators_to_skip)
         else:
             return _to_validated_rules(rules_dict, return_report)
 
@@ -212,6 +216,10 @@ def _to_validated_rules(
             return None, validation_errors, wrangle_warnings(validation_warnings)
         else:
             raise e
+
+
+def _to_partially_validated_rules(rules_dict: dict, validators_to_skip: list[str]) -> Rules:
+    return Rules(validators_to_skip=validators_to_skip, **rules_dict)
 
 
 def _to_invalidated_rules(rules_dict: dict) -> Rules:

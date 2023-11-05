@@ -26,7 +26,6 @@ class TransformSourceToSolutionGraph(Step):
         source_graph: SourceGraph,
         solution_graph: SolutionGraph,
     ) -> FlowMessage:
-        solution_graph.graph.drop()
         report = RuleProcessingReport()
         # run transformation and generate new graph
         solution_graph.graph.set_graph(

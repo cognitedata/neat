@@ -23,6 +23,7 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import { Editor } from '@monaco-editor/react';
+import Typography from '@mui/material/Typography';
 
 export function GraphStyleDialog(props: any) {
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -34,7 +35,6 @@ export function GraphStyleDialog(props: any) {
     }
 
     const handleDialogClickOpen = () => {
-
         setDialogOpen(true);
     };
 
@@ -79,8 +79,7 @@ export function GraphStyleDialog(props: any) {
     )
 }
 
-
-export function LoadGraph(props:{filters:Array<string>,nodeNameProperty:string,sparqlQuery:string,reloader:number,mode:string,limit:number}) {
+export function LoadGraph(props:{filters:Array<string>,nodeNameProperty:string,sparqlQuery:string,reloader:number,mode:string,limit:number,onLoaded:(state:boolean,msg:string) => void}) {
     const neatApiRootUrl = getNeatApiRootUrl();
     const {hiddenNsPrefixModeCtx, graphNameCtx} = React.useContext(ExplorerContext);
     const [graphName, setGraphName] = graphNameCtx;
@@ -99,7 +98,6 @@ export function LoadGraph(props:{filters:Array<string>,nodeNameProperty:string,s
     let nodeTypeConfigMap = {};
 
     useEffect(() => {
-
       loadDataset();
       // Register the events
        registerEvents({
@@ -124,7 +122,6 @@ export function LoadGraph(props:{filters:Array<string>,nodeNameProperty:string,s
         nodeReducer: (node, data) => {
           const graph = sigma.getGraph();
           const newData: Attributes = { ...data, highlighted: data.highlighted || false };
-
           if (hoveredNode) {
             if (node === hoveredNode || graph.neighbors(hoveredNode).includes(node)) {
               newData.highlighted = true;
@@ -172,6 +169,7 @@ export function LoadGraph(props:{filters:Array<string>,nodeNameProperty:string,s
 
     const loadDataset = () => {
         setLoading(true);
+        props.onLoaded(true,"loading graph data ...");
         reset();
         setHoveredNode(null);
         if (localStorage.getItem('nodeTypeConfigMap_'+getSelectedWorkflowName())) {
@@ -209,7 +207,12 @@ export function LoadGraph(props:{filters:Array<string>,nodeNameProperty:string,s
         }
         fetch(url,{ method:"post",body:JSON.stringify(requestFilter),headers: {
             'Content-Type': 'application/json;charset=utf-8'
-          }}).then((response) => response.json()).then((data) => {
+          }}).then((response) => {
+            if (!response.ok) {
+              props.onLoaded(false,"Can't load graph data from server.Error code: "+response.status + " message: "+response.statusText);
+            }
+            return response.json()
+          }).then((data) => {
             const addedNodes : string[] = [];
             let graphSize = graph.size+data.nodes.length;
             data.nodes.forEach((node) => {
@@ -229,8 +232,7 @@ export function LoadGraph(props:{filters:Array<string>,nodeNameProperty:string,s
                   graph.mergeEdge(edge.src_object_ref,edge.dst_object_ref);
                 }
               }
-
-            });
+            }) ;
             setBigGraph(graph);
             loadGraph(graph,true);
             assign();
@@ -243,9 +245,11 @@ export function LoadGraph(props:{filters:Array<string>,nodeNameProperty:string,s
             }, 1000);
             console.log("graph loaded");
           }).catch((error) => {
+            props.onLoaded(false,"Error loading graph data from server");
             console.log('Error:', error);
           }).finally(() => {
             setLoading(false);
+            props.onLoaded(false,"");
            });
     }
 
@@ -273,6 +277,8 @@ export default function GraphExplorer(props:{filters:Array<string>,sparqlQuery:s
     const {hiddenNsPrefixModeCtx, graphNameCtx} = React.useContext(ExplorerContext);
     const [graphName, setGraphName] = graphNameCtx;
     const [sigma, setSigma] = useState<Sigma | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [errorText, setErrorText] = useState("");
 
 
     const handleNodeNameProperty = (event: React.SyntheticEvent, value: any) => {
@@ -313,7 +319,6 @@ export default function GraphExplorer(props:{filters:Array<string>,sparqlQuery:s
 
     }, [props.sparqlQuery]);
 
-
     const onViewerClose = () => {
       setOpenNodeViewer(false);
     }
@@ -350,12 +355,12 @@ export default function GraphExplorer(props:{filters:Array<string>,sparqlQuery:s
           BIND( <`+nodeRef+`> AS ?src_object_ref )
           {
            ?src_object_ref ?rel_propery ?dst_object_ref .
-           ?dst_object_ref rdf:type ?linked_obj_type
+           ?dst_object_ref a ?linked_obj_type
           }
           UNION
           {
            ?dst_object_ref ?rel_propery ?src_object_ref .
-           ?dst_object_ref rdf:type ?linked_obj_type .
+           ?dst_object_ref a ?linked_obj_type .
           }
           }  `
       }else {
@@ -363,19 +368,18 @@ export default function GraphExplorer(props:{filters:Array<string>,sparqlQuery:s
           BIND( <`+nodeRef+`> AS ?src_object_ref )
           {
            ?src_object_ref ?rel_propery ?dst_object_ref .
-           ?dst_object_ref rdf:type ?linked_obj_type .
+           ?dst_object_ref a ?linked_obj_type .
            ?dst_object_ref `+nodeNamePropertyMod+` ?node_name .
           }
           UNION
           {
            ?dst_object_ref ?rel_propery ?src_object_ref .
-           ?dst_object_ref rdf:type ?linked_obj_type .
+           ?dst_object_ref a ?linked_obj_type .
            ?dst_object_ref `+nodeNamePropertyMod+` ?node_name .
           }
           } `
       }
       console.log("requesting linked nodes");
-
       setSparqlQuery(query);
     }
 
@@ -469,29 +473,28 @@ export default function GraphExplorer(props:{filters:Array<string>,sparqlQuery:s
           // updated: (event) => console.log("updated", event.x, event.y, event.angle, event.ratio),
         });
       }, [registerEvents, sigma, draggedNode]);
-
       return null;
     };
     return (
         <Box>
            <Box sx={{ display: 'flex', alignItems: 'flex-end', marginBottom:2 }}>
-            <Autocomplete
-              id="datatype-property-selector"
-              options={dataTypeProps}
-              getOptionLabel={(option) => option["name"]}
-              sx={{ width: 500 }}
-              value={selectedDataTypeProp}
-              size='small' onChange={handleNodeNameProperty}
-              renderInput={(params) => <TextField {...params} label="Property to be used as node name." />}
-            />
-            <TextField id="response_limit" label="Limit max nodes in response" value={limitRecordsInResponse} size='small' type='number' sx={{width:150 , marginLeft:2}} variant="outlined" onChange={handleResponseLimitChange}  />
-            <Button sx={{ marginLeft: 2 , marginRight:2}} onClick={() => reload()  } variant="contained"> Reload </Button>
-
-            <GraphStyleDialog onSave ={()=> reload()} />
-
+              <Autocomplete
+                id="datatype-property-selector"
+                options={dataTypeProps}
+                getOptionLabel={(option) => option["name"]}
+                sx={{ width: 500 }}
+                value={selectedDataTypeProp}
+                size='small' onChange={handleNodeNameProperty}
+                renderInput={(params) => <TextField {...params} label="Property to be used as node name." />}
+              />
+              <TextField id="response_limit" label="Limit max nodes in response" value={limitRecordsInResponse} size='small' type='number' sx={{width:150 , marginLeft:2}} variant="outlined" onChange={handleResponseLimitChange}  />
+              <Button sx={{ marginLeft: 2 , marginRight:2}} onClick={() => reload()  } variant="contained"> Reload </Button>
+              <GraphStyleDialog onSave ={()=> reload()} />
             </Box>
+            {loading &&( <LinearProgress />) }
+            { errorText && (<Typography color={"red"} variant="caption"> {errorText} </Typography> ) }
             <SigmaContainer style={{ height: "70vh", width: "100%" }} ref={setSigma} >
-                <LoadGraph filters={props.filters} nodeNameProperty={selectedDataTypeProp["id"]} reloader={reloader} sparqlQuery={sparqlQuery} mode={loaderMode} limit={limitRecordsInResponse}/>
+                <LoadGraph filters={props.filters} nodeNameProperty={selectedDataTypeProp["id"]} reloader={reloader} sparqlQuery={sparqlQuery} mode={loaderMode} limit={limitRecordsInResponse} onLoaded={(state:boolean,msg:string) => {setLoading(state);setErrorText(msg)} }/>
                 <ControlsContainer position={"top-right"}>
                     <LayoutForceAtlas2Control settings={{ settings: { slowDown: 10  } }} />
                 </ControlsContainer>
@@ -504,7 +507,6 @@ export default function GraphExplorer(props:{filters:Array<string>,sparqlQuery:s
         </Box>
     );
     }
-
     const nodeTypeConfigMap = {
       "Substation": {"color":"#42f557","size":20},
       "Bay": {"color":"#4842f5","size":20},

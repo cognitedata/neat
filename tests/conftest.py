@@ -42,6 +42,11 @@ def simple_rules() -> Rules:
     return importer.ExcelImporter(config.SIMPLE_TRANSFORMATION_RULES).to_rules()
 
 
+@pytest.fixture(scope="session")
+def transformation_rules_date() -> Rules:
+    return importer.ExcelImporter(config.SIMPLE_TRANSFORMATION_RULES_DATES).to_rules()
+
+
 @pytest.fixture(scope="function")
 def small_graph(simple_rules) -> NeatGraphStore:
     graph_store = NeatGraphStore(
@@ -70,6 +75,24 @@ def graph_with_numeric_ids(simple_rules) -> NeatGraphStore:
     graph_store.graph.add((namespace["1"], namespace["name"], Literal("Price Area Connection 1")))
     graph_store.graph.add((namespace["1"], namespace["priceArea"], namespace["2"]))
     graph_store.graph.add((namespace["1"], namespace["priceArea"], namespace["3"]))
+    return graph_store
+
+
+@pytest.fixture(scope="function")
+def graph_with_date(transformation_rules_date) -> NeatGraphStore:
+    graph_store = NeatGraphStore(
+        base_prefix=transformation_rules_date.metadata.prefix,
+        namespace=transformation_rules_date.metadata.namespace,
+        prefixes=transformation_rules_date.prefixes,
+    )
+    graph_store.init_graph()
+
+    namespace = transformation_rules_date.metadata.namespace
+    graph_store.graph.add((namespace["1"], RDF.type, namespace["PriceAreaConnection"]))
+    graph_store.graph.add((namespace["1"], namespace["name"], Literal("Price Area Connection 1")))
+    graph_store.graph.add((namespace["1"], namespace["priceArea"], namespace["2"]))
+    graph_store.graph.add((namespace["1"], namespace["priceArea"], namespace["3"]))
+    graph_store.graph.add((namespace["1"], namespace["endDate"], Literal("2020-01-01")))
     return graph_store
 
 

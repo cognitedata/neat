@@ -4,6 +4,7 @@ its sub-models and validators.
 
 from __future__ import annotations
 
+import inspect
 import math
 import re
 import sys
@@ -11,23 +12,10 @@ import warnings
 from collections.abc import ItemsView, Iterator, KeysView, ValuesView
 from datetime import datetime
 from pathlib import Path
-from typing import Any, ClassVar, Generic, TypeAlias, TypeVar
+from types import FrameType
+from typing import Any, ClassVar, Generic, TypeAlias, TypeVar, cast
 
 import pandas as pd
-from cognite.client.data_classes.data_modeling.data_types import (
-    Boolean,
-    FileReference,
-    Float64,
-    Int32,
-    Int64,
-    Json,
-    ListablePropertyType,
-    PropertyType,
-    SequenceReference,
-    Text,
-    TimeSeriesReference,
-    Timestamp,
-)
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -57,6 +45,7 @@ from cognite.neat.rules.models.rdfpath import (
     Traversal,
     parse_rule,
 )
+from cognite.neat.rules.type_mapping import DATA_TYPE_MAPPING
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -74,34 +63,6 @@ __all__ = [
     "Resource",
     "Rules",
 ]
-
-# mapping of XSD types to Python and GraphQL types
-DATA_TYPE_MAPPING: dict[str, dict[str, type | str | ListablePropertyType]] = {
-    "boolean": {"python": bool, "GraphQL": "Boolean", "dms": Boolean},
-    "float": {"python": float, "GraphQL": "Float", "dms": Float64},
-    "integer": {"python": int, "GraphQL": "Int", "dms": Int32},
-    "nonPositiveInteger": {"python": int, "GraphQL": "Int", "dms": Int32},
-    "nonNegativeInteger": {"python": int, "GraphQL": "Int", "dms": Int32},
-    "negativeInteger": {"python": "int", "GraphQL": "Int", "dms": Int32},
-    "long": {"python": int, "GraphQL": "Int", "dms": Int64},
-    "string": {"python": str, "GraphQL": "String", "dms": Text},
-    "anyURI": {"python": str, "GraphQL": "String", "dms": Text},
-    "normalizedString": {"python": str, "GraphQL": "String", "dms": Text},
-    "token": {"python": str, "GraphQL": "String", "dms": Text},
-    # Graphql does not have a datetime type this is CDF specific
-    "dateTime": {"python": datetime, "GraphQL": "Timestamp", "dms": Timestamp},
-    # CDF specific types, not in XSD
-    "timeseries": {"python": TimeSeriesReference, "GraphQL": "TimeSeries", "dms": TimeSeriesReference},
-    "file": {"python": FileReference, "GraphQL": "File", "dms": FileReference},
-    "sequence": {"python": SequenceReference, "GraphQL": "Sequence", "dms": TimeSeriesReference},
-    "json": {"python": Json, "GraphQL": "Json", "dms": Json},
-}
-
-
-def type_to_target_convention(type_: str, target_type_convention: str) -> type | str | PropertyType:
-    """Returns the GraphQL type for a given XSD type."""
-    return DATA_TYPE_MAPPING[type_][target_type_convention]
-
 
 METADATA_VALUE_MAX_LENGTH = 5120
 
@@ -891,14 +852,18 @@ class Rules(RuleModel):
                     to transform data from source to target representation
         prefixes: Prefixes used in the data model. Defaults to PREFIXES
         instances: Instances defined in the data model. Defaults to None
+        validators_to_skip: List of validators to skip. Defaults to []
 
     !!! note "Importers"
         Neat supports importing data from different sources. See the importers section for more details.
 
     !!! note "Exporters"
         Neat supports exporting data to different sources. See the exporters section for more details.
+
+    !!! note "validators_to_skip" use this only if you are sure what you are doing
     """
 
+    validators_to_skip: list[str] = Field(default_factory=list, exclude=True)
     metadata: Metadata
     classes: Classes
     properties: Properties
@@ -938,6 +903,10 @@ class Rules(RuleModel):
     @model_validator(mode="after")
     def properties_refer_existing_classes(self) -> Self:
         errors = []
+
+        if cast(FrameType, inspect.currentframe()).f_code.co_name in self.validators_to_skip:
+            return self
+
         for property_ in self.properties.values():
             if property_.class_id not in self.classes:
                 errors.append(
@@ -956,7 +925,10 @@ class Rules(RuleModel):
         return self
 
     @validator("properties")
-    def is_type_defined_as_object(cls, value):
+    def is_type_defined_as_object(cls, value, values):
+        if inspect.currentframe().f_code.co_name in values["validators_to_skip"]:
+            return value
+
         defined_objects = {property_.class_id for property_ in value.values()}
 
         if undefined_objects := [
