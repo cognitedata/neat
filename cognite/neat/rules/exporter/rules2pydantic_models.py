@@ -515,20 +515,51 @@ def to_relationship(self, transformation_rules: Rules) -> Relationship:
     raise NotImplementedError()
 
 
-def to_node(self, data_model: DataModel | None = None, add_class_prefix: bool = False) -> NodeApply:
-    """Creates DMS node from the instance of pydantic model."""
+def to_node(self, data_model_or_view_id: DataModel | ViewId | None = None, add_class_prefix: bool = False) -> NodeApply:
+    """Creates DMS node from the instance of pydantic model.
 
-    if data_model:
-        return _to_node_using_data_model(self, data_model, add_class_prefix)
+    Args:
+        data_model_or_view_id: Instance of DataModel or ViewID. Defaults to None.
+        add_class_prefix: Whether to add class id (i.e.model name) prefix to external_id of View. Defaults to False.
+
+    Returns:
+        Instance of NodeApply containing node information.
+
+
+    !!! note "Default Behavior"
+        If no DataModel or ViewID is passed, then the default behavior is to create node
+        using View information which is by default stored under `model_json_schema` attribute of pydantic model.
+    !!! note "Limitations"
+        Currently adding class prefix is only possible if the node is created if ViewID is passed or
+        if pydantic model already contains View information (which default behavior).
+    """
+
+    if isinstance(data_model_or_view_id, DataModel):
+        return _to_node_using_data_model(self, data_model_or_view_id, add_class_prefix)
+    elif isinstance(data_model_or_view_id, ViewId):
+        if not ViewId.space:
+            raise exceptions.SpaceNotDefined()
+        if not ViewId.external_id:
+            raise exceptions.ViewExternalIdNotDefined()
+        if not ViewId.version:
+            raise exceptions.ViewVersionNotDefined()
+        return _to_node_using_view_id(self, data_model_or_view_id)
     else:
-        return _to_node_using_view(self)
+        space = self.model_json_schema().get("space", None)
+        external_id = self.model_json_schema().get("external_id", None)
+        version = self.model_json_schema().get("version", None)
+
+        if not space:
+            raise exceptions.SpaceNotDefined()
+        if not external_id:
+            raise exceptions.ViewExternalIdNotDefined()
+        if not version:
+            raise exceptions.ViewVersionNotDefined()
+
+        return _to_node_using_view_id(self, ViewId(space, external_id, version))
 
 
-def _to_node_using_view(self) -> NodeApply:
-    view_id = ViewId(
-        self.model_json_schema()["space"], self.model_json_schema()["external_id"], self.model_json_schema()["version"]
-    )
-
+def _to_node_using_view_id(self, view_id: ViewId) -> NodeApply:
     attributes: dict = {
         attribute: getattr(self, attribute).isoformat()
         if isinstance(getattr(self, attribute), date)

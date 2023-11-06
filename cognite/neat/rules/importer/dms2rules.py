@@ -1,7 +1,7 @@
 import sys
 from collections.abc import Sequence
 from datetime import datetime
-from typing import cast
+from typing import Any, cast
 
 import pandas as pd
 from cognite.client import CogniteClient
@@ -94,9 +94,12 @@ class DMSImporter(BaseImporter):
                     else:
                         type_ = DMS_TO_DATA_TYPE.get(type(prop.type), "string")
 
+                    default_value = prop.default_value
+
                 # Edge 1-many
                 elif isinstance(prop, SingleHopConnectionDefinition):
                     type_ = prop.source.external_id
+                    default_value = None
                 else:
                     raise NotImplementedError(f"Property type {type(prop)} not supported")
 
@@ -121,10 +124,11 @@ class DMSImporter(BaseImporter):
                         "Name": prop.name if prop.name else prop_id,
                         "Description": prop.description or float("nan"),
                         "Type": type_,
+                        "Default": cast(Any, default_value),  # fixes issues with mypy
                         "Min Count": min_count,
                         "Max Count": max_count,
                         "Rule Type": "rdfpath",
-                        "Rule": f"cim:{class_id}(cim:{prop_id}.name)",
+                        "Rule": f"cim:{class_id}(cim:{prop_id})",
                     }
                 )
 
