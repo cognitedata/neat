@@ -9,6 +9,7 @@ PYPROJECT_TOML = ROOT / "pyproject.toml"
 
 # Example rule files
 TNT_TRANSFORMATION_RULES = PACKAGE_DIRECTORY / "rules" / "examples" / "Rules-Nordic44-to-TNT.xlsx"
+TNT_TRANSFORMATION_RULES_DMS_COMPLIANT = PACKAGE_DIRECTORY / "rules" / "examples" / "Rules-Nordic44-to-graphql.xlsx"
 SIMPLE_TRANSFORMATION_RULES = PACKAGE_DIRECTORY / "rules" / "examples" / "sheet2cdf-transformation-rules.xlsx"
 SIMPLE_TRANSFORMATION_RULES_DATES = TEST_FOLDER / "data" / "sheet2cdf-transformation-rules-date.xlsx"
 

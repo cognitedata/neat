@@ -15,8 +15,20 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## [0.38.3] - 03-11-23
+## [0.39.0] - 03-11-23
+## Fixed
+ - Not allowing DMS non-compliant Rules to be turned into pydantic models
 
+## Added
+ - class property methods to the generated pydantic models accessing descriptions and names of models and fields
+ - controlling whether `neat` specific fields should be added or not to pydantic models using arg `add_extra_fields`
+ - `OntologyToRules` step added to the step library
+
+## Improves
+ - Documentation of `rules_to_pydantic_models`
+
+
+## [0.38.3] - 03-11-23
 ## Fixed
  - Fixed CDF database configuration for rawlookup rule in TransformSourceToSolutionGraph .  https://github.com/cognitedata/neat/issues/157
 

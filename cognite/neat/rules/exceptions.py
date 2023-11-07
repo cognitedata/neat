@@ -963,6 +963,154 @@ class MoreThanOneNonAlphanumericCharacter(NeatException):
         super().__init__(self.message)
 
 
+class ViewExternalIdNotDefined(NeatException):
+    """This exceptions is raised when external id of View is not defined.
+
+    Args:
+        field_name: filed on which regex validation failed
+        value: value that failed regex validation
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    """
+
+    type_: str = "ViewExternalIdNotDefined"
+    code: int = 22
+    description: str = "This exceptions is raised when external id of View is not defined"
+    example: str = ""
+    fix: str = ""
+
+    def __init__(self, verbose: bool = False):
+        self.message = (
+            f"Missing View external id!" f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class SpaceNotDefined(NeatException):
+    """This exceptions is raised when CDF space name is missing.
+
+    Args:
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    """
+
+    type_: str = "SpaceNotDefined"
+    code: int = 23
+    description: str = "This exceptions is raised when CDF space name is missing"
+    example: str = ""
+    fix: str = ""
+
+    def __init__(self, verbose: bool = False):
+        self.message = (
+            f"Missing CDF space name!" f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class ViewVersionNotDefined(NeatException):
+    """This exceptions is raised when View version is not provided.
+
+    Args:
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    """
+
+    type_: str = "ViewVersionNotDefined"
+    code: int = 24
+    description: str = "This exceptions is raised when View version is not provided"
+    example: str = ""
+    fix: str = ""
+
+    def __init__(self, verbose: bool = False):
+        self.message = (
+            f"Missing View version!" f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class DefaultValueTypeNotProper(NeatException):
+    """This exceptions is raised when default value type is not proper, i.e. it is not
+    according to the expected value type set in Rules.
+
+
+    Args:
+        default_value_type: default value type that raised exception
+        expected_value_type: expected value type that raised exception
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    """
+
+    type_: str = "DefaultValueTypeNotProper"
+    code: int = 25
+    description: str = (
+        "This exceptions is raised when default value type is not proper, i.e. it is not "
+        "according to the expected value type set in Rules."
+    )
+    example: str = ""
+    fix: str = ""
+
+    def __init__(self, property_id: str, default_value_type: str, expected_value_type: str, verbose: bool = False):
+        self.default_value_type = default_value_type
+        self.expected_value_type = expected_value_type
+
+        self.message = (
+            f"Default value for property {property_id} is of type {default_value_type} which is different from "
+            f"the expected value type {expected_value_type}!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class ClassToAssetMappingNotDefined(NeatException):
+    """This exceptions is raised when deriving class to asset mapping when there is no
+    mapping available.
+
+
+    Args:
+        class_id: Id of the class that raised exception
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    """
+
+    type_: str = "ClassToAssetMappingNotDefined"
+    code: int = 26
+    description: str = (
+        "This exceptions is raised when deriving class to asset mapping when there is no mapping available"
+    )
+    example: str = ""
+    fix: str = ""
+
+    def __init__(self, class_id: str, verbose: bool = False):
+        self.class_id = class_id
+
+        self.message = (
+            f"Requested serialization from pydantic model instance of class {class_id} is"
+            " not possible since there is no class to asset mapping available!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
 # Warnings:
 
 
@@ -1274,6 +1422,83 @@ class VersionDotsConvertedToUnderscores(NeatWarning):
             self.message += f"\nExample: {self.example}"
             self.message += f"\nFix: {self.fix}"
             # hint on a specific web docs page
+
+
+class DefaultValueTypeConverted(NeatWarning):
+    """This exceptions is warning is raised when default value type is being converted to
+    the expected value type set in Rules.
+
+
+    Args:
+        default_value_type: default value type that raised exception
+        expected_value_type: expected value type that raised exception
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        Make sure not to use more than non-alphanumeric character in the row
+
+    """
+
+    type_: str = "DefaultValueTypeConverted"
+    code: int = 10
+    description: str = (
+        "This exceptions is warning is raised when default value type is being converted to "
+        "the expected value type set in Rules."
+    )
+    example: str = ""
+    fix: str = ""
+
+    def __init__(
+        self, property_id: str = "", default_value_type: str = "", expected_value_type: str = "", verbose: bool = False
+    ):
+        self.default_value_type = default_value_type
+        self.expected_value_type = expected_value_type
+
+        self.message = (
+            f"Default value for property {property_id} is of type {default_value_type} "
+            f"has been converted to the expected value type {expected_value_type}!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class DefaultValueNotList(NeatWarning):
+    """This exceptions is warning is raised when default value is not a list while it is
+    expected to be due to set maximum cardinality being different than 1.
+
+
+    Args:
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        Make sure not to use more than non-alphanumeric character in the row
+
+    """
+
+    type_: str = "DefaultValueNotList"
+    code: int = 11
+    description: str = (
+        "This exceptions is warning is raised when default value is not a list while it is "
+        "expected to be due to set maximum cardinality being different than 1"
+    )
+    example: str = ""
+    fix: str = ""
+
+    def __init__(self, property_id: str, verbose: bool = False):
+        self.message = (
+            f"Default value for property {property_id} is not a list, "
+            "while it is expected to be due to set maximum cardinality being different than 1!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
 
 
 ################################################################################################
