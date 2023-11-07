@@ -27,6 +27,10 @@ Changes are grouped as follows:
  - Documentation of `rules_to_pydantic_models`
 
 
+## [0.38.3] - 03-11-23
+## Fixed
+ - Fixed CDF database configuration for rawlookup rule in TransformSourceToSolutionGraph .  https://github.com/cognitedata/neat/issues/157
+
 ## [0.38.2] - 03-11-23
 ## Fixed
  - Added type mapping for data type Date
