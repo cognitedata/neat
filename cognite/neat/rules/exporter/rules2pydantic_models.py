@@ -540,11 +540,11 @@ def to_node(self, data_model_or_view_id: DataModel | ViewId | None = None, add_c
     if isinstance(data_model_or_view_id, DataModel):
         return _to_node_using_data_model(self, data_model_or_view_id, add_class_prefix)
     elif isinstance(data_model_or_view_id, ViewId):
-        if not ViewId.space:
+        if not data_model_or_view_id.space:
             raise exceptions.SpaceNotDefined()
-        if not ViewId.external_id:
+        if not data_model_or_view_id.external_id:
             raise exceptions.ViewExternalIdNotDefined()
-        if not ViewId.version:
+        if not data_model_or_view_id.version:
             raise exceptions.ViewVersionNotDefined()
         return _to_node_using_view_id(self, data_model_or_view_id)
     else:
