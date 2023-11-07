@@ -971,9 +971,6 @@ class ViewExternalIdNotDefined(NeatException):
         value: value that failed regex validation
         verbose: flag that indicates whether to provide enhanced exception message, by default False
 
-    Notes:
-        Make sure not to use more than non-alphanumeric character in the row
-
     """
 
     type_: str = "ViewExternalIdNotDefined"
@@ -999,9 +996,6 @@ class SpaceNotDefined(NeatException):
     Args:
         verbose: flag that indicates whether to provide enhanced exception message, by default False
 
-    Notes:
-        Make sure not to use more than non-alphanumeric character in the row
-
     """
 
     type_: str = "SpaceNotDefined"
@@ -1026,9 +1020,6 @@ class ViewVersionNotDefined(NeatException):
 
     Args:
         verbose: flag that indicates whether to provide enhanced exception message, by default False
-
-    Notes:
-        Make sure not to use more than non-alphanumeric character in the row
 
     """
 
@@ -1059,9 +1050,6 @@ class DefaultValueTypeNotProper(NeatException):
         expected_value_type: expected value type that raised exception
         verbose: flag that indicates whether to provide enhanced exception message, by default False
 
-    Notes:
-        Make sure not to use more than non-alphanumeric character in the row
-
     """
 
     type_: str = "DefaultValueTypeNotProper"
@@ -1080,6 +1068,40 @@ class DefaultValueTypeNotProper(NeatException):
         self.message = (
             f"Default value for property {property_id} is of type {default_value_type} which is different from "
             f"the expected value type {expected_value_type}!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class ClassToAssetMappingNotDefined(NeatException):
+    """This exceptions is raised when deriving class to asset mapping when there is no
+    mapping available.
+
+
+    Args:
+        class_id: Id of the class that raised exception
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    """
+
+    type_: str = "ClassToAssetMappingNotDefined"
+    code: int = 26
+    description: str = (
+        "This exceptions is raised when deriving class to asset mapping when there is no mapping available"
+    )
+    example: str = ""
+    fix: str = ""
+
+    def __init__(self, class_id: str, verbose: bool = False):
+        self.class_id = class_id
+
+        self.message = (
+            f"Requested serialization from pydantic model instance of class {class_id} is"
+            " not possible since there is no class to asset mapping available!"
             f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
         if verbose:

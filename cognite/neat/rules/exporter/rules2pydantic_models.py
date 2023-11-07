@@ -441,6 +441,9 @@ def to_asset(
         Asset instance
     """
     # Needs copy otherwise modifications impact all instances
+    if not self.class_to_asset_mapping:
+        raise exceptions.ClassToAssetMappingNotDefined(self.__class__.__name__)
+
     class_instance_dictionary = self.model_dump(by_alias=True)
     adapted_mapping_config = _adapt_mapping_config_by_instance(
         self.external_id, class_instance_dictionary, self.class_to_asset_mapping

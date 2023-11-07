@@ -1,8 +1,9 @@
+import pytest
 from cognite.client.data_classes.data_modeling import DataModel as CogniteDataModel
 from rdflib import URIRef
 from yaml import safe_load
 
-from cognite.neat.rules import examples
+from cognite.neat.rules import examples, exceptions
 from cognite.neat.rules.exporter.rules2pydantic_models import rules_to_pydantic_models
 from cognite.neat.rules.importer.dms2rules import DMSImporter
 
@@ -56,3 +57,7 @@ def test_views2pydantic_models(dms_compliant_rules, source_knowledge_graph):
     node = instance.to_node()
     assert node.external_id == "2dd9019e-bdfb-11e5-94fa-c8f73332c8f4"
     assert node.space == "playground"
+
+    # there is no class_to_asset_mapping defined for this view so it should fail
+    with pytest.raises(exceptions.ClassToAssetMappingNotDefined):
+        _ = instance.to_asset()
