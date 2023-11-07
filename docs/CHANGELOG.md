@@ -22,6 +22,7 @@ Changes are grouped as follows:
 ## Added
  - class property methods to the generated pydantic models accessing descriptions and names of models and fields
  - controlling whether `neat` specific fields should be added or not to pydantic models using arg `add_extra_fields`
+ - `OntologyToRules` step added to the step library
 
 ## Improves
  - Documentation of `rules_to_pydantic_models`

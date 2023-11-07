@@ -157,7 +157,7 @@ def _parse_owl_metadata_df(graph: Graph, parsing_config: dict | None = None) -> 
     clean_list = [
         [
             raw_df.namespace.unique()[0],
-            raw_df.prefix.unique()[0],
+            "neat",
             raw_df.dataModelName.unique()[0],
             raw_df.cdfSpaceName.unique()[0],
             raw_df.version.unique()[0],
@@ -173,7 +173,10 @@ def _parse_owl_metadata_df(graph: Graph, parsing_config: dict | None = None) -> 
         ]
     ]
 
-    return pd.DataFrame(np.vstack((parsing_config["header"], clean_list)).T)
+    df = pd.DataFrame(np.vstack((parsing_config["header"], clean_list)).T)
+    df.fillna("", inplace=True)
+
+    return df
 
 
 def _parse_owl_classes_df(graph: Graph, parsing_config: dict | None = None) -> pd.DataFrame:
@@ -240,7 +243,11 @@ SELECT ?class ?name ?description ?parentClass ?deprecated ?deprecationDate
         ]
         for class_, group_df in grouped_df
     ]
-    return pd.DataFrame(columns=parsing_config["header"], data=clean_list)
+
+    df = pd.DataFrame(columns=parsing_config["header"], data=clean_list)
+    df.fillna("", inplace=True)
+
+    return df
 
 
 def _parse_owl_properties_df(graph: Graph, parsing_config: dict | None = None) -> pd.DataFrame:
@@ -317,4 +324,7 @@ def _parse_owl_properties_df(graph: Graph, parsing_config: dict | None = None) -
                 ]
             ]
 
-    return pd.DataFrame(columns=parsing_config["header"], data=clean_list)
+    df = pd.DataFrame(columns=parsing_config["header"], data=clean_list)
+    df.fillna("", inplace=True)
+
+    return df

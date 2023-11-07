@@ -14,7 +14,6 @@ class BaseExporter(ABC):
             self.report = cast(RawRules, rules).validate_rules()
         else:
             self.rules = cast(Rules, rules)
-        self.rules = rules
         self.filepath = filepath
         self.report_path = report_path
 
