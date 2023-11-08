@@ -34,13 +34,18 @@ from pydantic import BaseModel, ConfigDict
 
 from cognite.neat.rules import exceptions
 from cognite.neat.rules.analysis import to_class_property_pairs
-from cognite.neat.rules.exporter._validation import (
-    are_entity_names_dms_compliant,
-    are_properties_redefined,
-)
+from cognite.neat.rules.exporter._base import BaseExporter
+from cognite.neat.rules.exporter._validation import are_entity_names_dms_compliant, are_properties_redefined
 from cognite.neat.rules.models.rules import Property, Rules
 from cognite.neat.rules.type_mapping import DATA_TYPE_MAPPING
 from cognite.neat.utils.utils import generate_exception_report
+
+
+class DMSExporter(BaseExporter):
+    """Class for exporting transformation rules object to CDF Data Model Storage (DMS)."""
+
+    def export(self):
+        pass
 
 
 class DataModel(BaseModel):

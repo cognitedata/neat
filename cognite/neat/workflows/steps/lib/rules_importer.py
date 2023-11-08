@@ -3,7 +3,7 @@ import logging
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import ClassVar, cast
+from typing import ClassVar
 
 import yaml
 from rdflib import Namespace
@@ -29,14 +29,10 @@ class OntologyToRules(Step):
     version = "0.1.0-alpha"
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
-            name="ontology_file_path",
-            value="staging/ontology.ttl",
-            label="Relative path to the OWL ontology file.",
+            name="ontology_file_path", value="staging/ontology.ttl", label="Relative path to the OWL ontology file."
         ),
         Configurable(
-            name="excel_file_path",
-            value="staging/rules.xlsx",
-            label="Relative path for the Excel rules storage.",
+            name="excel_file_path", value="staging/rules.xlsx", label="Relative path for the Excel rules storage."
         ),
     ]
 
@@ -46,7 +42,8 @@ class OntologyToRules(Step):
         report_file_path = excel_file_path.parent / f"report_{excel_file_path.stem}.txt"
 
         rules = importer.OWLImporter(ontology_file_path).to_rules(skip_validation=True)
-        exporter.ExcelExporter(rules=cast(Rules, rules), filepath=excel_file_path).export()
+        assert isinstance(rules, Rules)
+        exporter.ExcelExporter.from_rules(rules).export_to_file(excel_file_path)
 
         if report := importer.ExcelImporter(filepath=excel_file_path).to_raw_rules().validate_rules():
             report_file_path.write_text(report)
@@ -451,9 +448,7 @@ class GraphToRules(Step):
     version = "0.1.0-alpha"
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
-            name="file_name",
-            value="inferred_transformations.xlsx",
-            label="File name to store transformation rules.",
+            name="file_name", value="inferred_transformations.xlsx", label="File name to store transformation rules."
         ),
         Configurable(name="storage_dir", value="staging", label="Directory to store Transformation Rules spreadsheet"),
         Configurable(
@@ -470,12 +465,11 @@ class GraphToRules(Step):
         staging_dir.mkdir(parents=True, exist_ok=True)
 
         spreadsheet_path = staging_dir / file_name
-        report_path = staging_dir / f"{spreadsheet_path.stem}_validation_report.txt"
 
         raw_rules = importer.GraphImporter(
             graph_store.graph.graph, int(self.configs["max_number_of_instances"])
         ).to_raw_rules()
-        exporter.ExcelExporter(raw_rules, spreadsheet_path, report_path).export()
+        exporter.ExcelExporter.from_rules(raw_rules).export_to_file(spreadsheet_path)
 
         output_text = (
             "<p></p>"

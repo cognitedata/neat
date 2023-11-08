@@ -324,5 +324,5 @@ class ExcelFromRules(Step):
 
     def run(self, rules_data: RulesData) -> FlowMessage:  # type: ignore[override, syntax]
         full_path = Path(self.data_store_path) / Path(self.configs["output_file_path"])
-        exporter.ExcelExporter(rules=rules_data.rules, filepath=full_path).export()
+        exporter.ExcelExporter.from_rules(rules=rules_data.rules).export_to_file(filepath=full_path)
         return FlowMessage(output_text="Generated Excel file from rules")
