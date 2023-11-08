@@ -4,7 +4,11 @@
 import logging
 import sys
 import warnings
+from dataclasses import dataclass
+from pathlib import Path
 from typing import ClassVar, cast
+
+import yaml
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -14,6 +18,7 @@ else:
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import (
     ContainerApply,
+    ContainerApplyList,
     ContainerId,
     ContainerProperty,
     DataModelApply,
@@ -41,11 +46,42 @@ from cognite.neat.rules.type_mapping import DATA_TYPE_MAPPING
 from cognite.neat.utils.utils import generate_exception_report
 
 
-class DMSExporter(BaseExporter):
+@dataclass
+class DMSSchema:
+    data_model: DataModelApply
+    containers: ContainerApplyList
+
+
+class DMSExporter(BaseExporter[DMSSchema]):
     """Class for exporting transformation rules object to CDF Data Model Storage (DMS)."""
 
-    def export(self):
-        pass
+    def _export_to_file(self, filepath: Path) -> None:
+        if filepath.suffix not in {".yaml", ".yml"}:
+            warnings.warn("File extension is not .yaml, adding it to the file name", stacklevel=2)
+            filepath = filepath.with_suffix(".yaml")
+        schema = self.export()
+        filepath.write_text(
+            yaml.safe_dump(
+                {
+                    "data_models": [schema.data_model.dump(camel_case=True)],
+                    "containers": schema.containers.dump(camel_case=True),
+                }
+            )
+        )
+
+    def export(self) -> DMSSchema:
+        model = DataModel.from_rules(self.rules)
+        return DMSSchema(
+            data_model=DataModelApply(
+                space=model.space,
+                external_id=model.external_id,
+                version=model.version,
+                description=model.description,
+                name=model.name,
+                views=list(model.views.values()),
+            ),
+            containers=ContainerApplyList(model.containers),
+        )
 
 
 class DataModel(BaseModel):
