@@ -6,7 +6,7 @@ import sys
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
-from typing import ClassVar, cast
+from typing import ClassVar, Literal, cast
 
 import yaml
 
@@ -16,6 +16,7 @@ else:
     from typing_extensions import Self
 
 from cognite.client import CogniteClient
+from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import (
     ContainerApply,
     ContainerApplyList,
@@ -54,6 +55,19 @@ class DMSSchema:
 
 class DMSExporter(BaseExporter[DMSSchema]):
     """Class for exporting transformation rules object to CDF Data Model Storage (DMS)."""
+
+    def __init__(
+        self,
+        rules: Rules,
+        container_policy: Literal["one-to-one-view", "extend-existing", "neat-optimized"] = "one-to-one-view",
+        existing_model: dm.DataModel[dm.View] | None = None,
+        report: str | None = None,
+    ):
+        super().__init__(rules, report)
+        self.container_policy = container_policy
+        if container_policy == "extend-existing" and existing_model is None:
+            raise ValueError("Container policy is extend-existing, but no existing model is provided")
+        self.existing_model = existing_model
 
     def _export_to_file(self, filepath: Path) -> None:
         if filepath.suffix not in {".yaml", ".yml"}:
