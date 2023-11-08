@@ -141,7 +141,6 @@ def rules_to_pydantic_models(
     for class_, properties in class_property_pairs.items():
         # generate fields from define properties
         fields = _properties_to_pydantic_fields(properties)
-        print(fields)
 
         if add_extra_fields:
             # store default class to relationship mapping field
