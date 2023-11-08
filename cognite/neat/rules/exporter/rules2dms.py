@@ -67,6 +67,8 @@ class DMSExporter(BaseExporter[DMSSchema]):
         self.container_policy = container_policy
         if container_policy == "extend-existing" and existing_model is None:
             raise ValueError("Container policy is extend-existing, but no existing model is provided")
+        if container_policy != "one-to-one-view":
+            raise NotImplementedError("Only one-to-one-view container policy is currently supported")
         self.existing_model = existing_model
 
     def _export_to_file(self, filepath: Path) -> None:
