@@ -34,9 +34,12 @@ class DMSImporter(BaseImporter):
         views: List of views to convert to transformation rules.
     """
 
-    def __init__(self, views: Sequence[View], metadata: dict[str, str | float] | None = None):
+    def __init__(self, views: Sequence[View] | DataModel[View], metadata: dict[str, str | float] | None = None):
         super().__init__()
-        self.views = views
+        if isinstance(views, DataModel):
+            self.views = views.views
+        else:
+            self.views = list(views)
 
         if metadata is None:
             self.metadata = self._default_metadata()
