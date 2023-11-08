@@ -1,9 +1,15 @@
+import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Generic, Self, TypeVar
+from typing import Generic, TypeVar
 
 from cognite.neat.rules.models.raw_rules import RawRules
 from cognite.neat.rules.models.rules import Rules
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 T_Export = TypeVar("T_Export")
 
