@@ -309,31 +309,31 @@ def _dictionary_to_pydantic_model(
 
 @classmethod  # type: ignore
 @property
-def attributes(self) -> list[str]:
+def attributes(cls) -> list[str]:
     return [
         field
-        for field in self.model_fields
-        if (schema := self.model_fields[field].json_schema_extra) and schema.get("property_type") == "NodeAttribute"
+        for field in cls.model_fields
+        if (schema := cls.model_fields[field].json_schema_extra) and schema.get("property_type") == "NodeAttribute"
     ]
 
 
 @classmethod  # type: ignore
 @property
-def edges_one_to_one(self) -> list[str]:
+def edges_one_to_one(cls) -> list[str]:
     return [
         field
-        for field in self.model_fields
-        if (schema := self.model_fields[field].json_schema_extra) and schema.get("property_type") == "EdgeOneToOne"
+        for field in cls.model_fields
+        if (schema := cls.model_fields[field].json_schema_extra) and schema.get("property_type") == "EdgeOneToOne"
     ]
 
 
 @classmethod  # type: ignore
 @property
-def edges_one_to_many(self) -> list[str]:
+def edges_one_to_many(cls) -> list[str]:
     return [
         field
-        for field in self.model_fields
-        if (schema := self.model_fields[field].json_schema_extra) and schema.get("property_type") == "EdgeOneToMany"
+        for field in cls.model_fields
+        if (schema := cls.model_fields[field].json_schema_extra) and schema.get("property_type") == "EdgeOneToMany"
     ]
 
 
