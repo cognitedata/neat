@@ -71,11 +71,7 @@ def default_class_methods():
 
 
 def default_class_property_methods():
-    return [model_name, model_external_id, model_description]
-
-
-def default_instance_property_methods():
-    return [attributes, edges_one_to_one, edges_one_to_many]
+    return [model_name, model_external_id, model_description, attributes, edges_one_to_one, edges_one_to_many]
 
 
 def rules_to_pydantic_models(
@@ -137,7 +133,7 @@ def rules_to_pydantic_models(
         raise exceptions.EntitiesContainNonDMSCompliantCharacters(report=generate_exception_report(name_warnings))
 
     if methods is None:
-        methods = default_class_methods() + default_class_property_methods() + default_instance_property_methods()
+        methods = default_class_methods() + default_class_property_methods()
 
     class_property_pairs = to_class_property_pairs(rules, only_rdfpath=True)
 
@@ -145,7 +141,6 @@ def rules_to_pydantic_models(
     for class_, properties in class_property_pairs.items():
         # generate fields from define properties
         fields = _properties_to_pydantic_fields(properties)
-        print(fields)
 
         if add_extra_fields:
             # store default class to relationship mapping field
@@ -311,30 +306,33 @@ def _dictionary_to_pydantic_model(
     return model
 
 
-@property  # type: ignore[misc]
-def attributes(self) -> list[str]:
+@classmethod  # type: ignore
+@property
+def attributes(cls) -> list[str]:
     return [
         field
-        for field in self.model_fields_set
-        if (schema := self.model_fields[field].json_schema_extra) and schema.get("property_type") == "NodeAttribute"
+        for field in cls.model_fields
+        if (schema := cls.model_fields[field].json_schema_extra) and schema.get("property_type") == "NodeAttribute"
     ]
 
 
-@property  # type: ignore[misc]
-def edges_one_to_one(self) -> list[str]:
+@classmethod  # type: ignore
+@property
+def edges_one_to_one(cls) -> list[str]:
     return [
         field
-        for field in self.model_fields_set
-        if (schema := self.model_fields[field].json_schema_extra) and schema.get("property_type") == "EdgeOneToOne"
+        for field in cls.model_fields
+        if (schema := cls.model_fields[field].json_schema_extra) and schema.get("property_type") == "EdgeOneToOne"
     ]
 
 
-@property  # type: ignore[misc]
-def edges_one_to_many(self) -> list[str]:
+@classmethod  # type: ignore
+@property
+def edges_one_to_many(cls) -> list[str]:
     return [
         field
-        for field in self.model_fields_set
-        if (schema := self.model_fields[field].json_schema_extra) and schema.get("property_type") == "EdgeOneToMany"
+        for field in cls.model_fields
+        if (schema := cls.model_fields[field].json_schema_extra) and schema.get("property_type") == "EdgeOneToMany"
     ]
 
 
