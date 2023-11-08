@@ -1,4 +1,5 @@
 import sys
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -10,10 +11,7 @@ else:
 
 from cognite.neat.rules import exceptions
 from cognite.neat.rules.analysis import to_class_property_pairs
-from cognite.neat.rules.exporter._validation import (
-    are_entity_names_dms_compliant,
-    are_properties_redefined,
-)
+from cognite.neat.rules.exporter._validation import are_entity_names_dms_compliant, are_properties_redefined
 from cognite.neat.rules.models.rules import DATA_TYPE_MAPPING, Rules
 from cognite.neat.utils.utils import generate_exception_report
 
@@ -23,16 +21,15 @@ if TYPE_CHECKING:
     from jinja2 import Template
 
 
-class GraphQLSchemaExporter(BaseExporter):
-    def __init__(self, rules: Rules, filepath: Path | None = None):
-        super().__init__(rules, filepath)
+class GraphQLSchemaExporter(BaseExporter[str]):
+    def _export_to_file(self, filepath: Path):
+        if filepath.suffix != ".graphql":
+            warnings.warn("File extension is not .graphql, adding it to the file name", stacklevel=2)
+            filepath = filepath.with_suffix(".graphql")
+        filepath.write_text(self.export())
 
-    def export(self, filepath: Path | None = None):
-        filepath = filepath or self.filepath
-        if not filepath:
-            raise ValueError("No filepath given")
-        data = GraphQLSchema.from_rules(self.rules).schema
-        filepath.write_text(data)
+    def export(self) -> str:
+        return GraphQLSchema.from_rules(self.rules).schema
 
 
 _TYPE = (

@@ -5,36 +5,21 @@ from openpyxl import Workbook
 from openpyxl.cell import Cell
 from openpyxl.styles import Alignment, Border, Font, NamedStyle, PatternFill, Side
 
-from cognite.neat.rules.models.raw_rules import RawRules
-from cognite.neat.rules.models.rules import Rules
-
 from ._base import BaseExporter
 
 
-class ExcelExporter(BaseExporter):
+class ExcelExporter(BaseExporter[Workbook]):
     """Class for exporting transformation rules object to excel file."""
 
-    def __init__(self, rules: Rules | RawRules, filepath: Path, report_path: Path | None = None):
-        super().__init__(rules, filepath, report_path)
-
-    def export(self, filepath: Path | None = None):
+    def _export_to_file(self, filepath: Path) -> None:
         """Exports transformation rules to excel file."""
-        filepath = filepath or self.filepath
-        if not filepath:
-            raise ValueError("No filepath given")
-
-        data = self.generate_workbook()
+        data = self.export()
         try:
             data.save(filepath)
+        finally:
             data.close()
-        except Exception as e:
-            data.close()
-            raise e
 
-        if self.report and self.report_path:
-            self.report_path.write_text(self.report)
-
-    def generate_workbook(self) -> Workbook:
+    def export(self) -> Workbook:
         """Generates workbook from transformation rules."""
         data = Workbook()
         # Remove default sheet named "Sheet"
@@ -173,25 +158,15 @@ class ExcelExporter(BaseExporter):
             )
 
         prefixes_sheet = data.create_sheet("Prefixes")
-        prefixes_sheet.append(
-            [
-                "Prefix",  # A
-                "URI",  # B
-            ]
-        )
+        prefixes_sheet.append(["Prefix", "URI"])  # A  # B
 
         for prefix, uri in self.rules.prefixes.items():
-            prefixes_sheet.append(
-                [
-                    prefix,  # A
-                    uri,  # B
-                ]
-            )
+            prefixes_sheet.append([prefix, uri])  # A  # B
 
-        return self.set_header_style(data)
+        return self._set_header_style(data)
 
     @staticmethod
-    def set_header_style(data: Workbook):
+    def _set_header_style(data: Workbook):
         """Sets the header style for all sheets in the self.workbook"""
         style = NamedStyle(name="header style")
         style.font = Font(bold=True, size=16)

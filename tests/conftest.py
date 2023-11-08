@@ -38,6 +38,11 @@ def transformation_rules() -> Rules:
 
 
 @pytest.fixture(scope="session")
+def dms_compliant_rules() -> Rules:
+    return importer.ExcelImporter(config.TNT_TRANSFORMATION_RULES_DMS_COMPLIANT).to_rules()
+
+
+@pytest.fixture(scope="session")
 def simple_rules() -> Rules:
     return importer.ExcelImporter(config.SIMPLE_TRANSFORMATION_RULES).to_rules()
 

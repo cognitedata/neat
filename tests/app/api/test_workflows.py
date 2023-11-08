@@ -68,11 +68,7 @@ def test_rules(transformation_rules: Rules, fastapi_client: TestClient):
 
 @pytest.mark.parametrize("workflow_name", ["graph_to_asset_hierarchy"])
 def test_workflow_start(
-    workflow_name: str,
-    cognite_client: CogniteClient,
-    fastapi_client: TestClient,
-    data_regression,
-    tmp_path,
+    workflow_name: str, cognite_client: CogniteClient, fastapi_client: TestClient, data_regression, tmp_path
 ):
     # Arrange
     if workflow_name == "graph_to_asset_hierarchy":
@@ -105,28 +101,18 @@ def test_workflow_start(
 
 
 @pytest.mark.parametrize("workflow_name", ["graph_to_asset_hierarchy"])
-def test_workflow_stats(
-    workflow_name: str,
-    fastapi_client: TestClient,
-):
+def test_workflow_stats(workflow_name: str, fastapi_client: TestClient):
     # Act
-    response = fastapi_client.get(
-        f"/api/workflow/stats/{workflow_name}",
-    )
+    response = fastapi_client.get(f"/api/workflow/stats/{workflow_name}")
 
     assert response.status_code == 200
     assert response.json()["workflow_name"] == workflow_name
     assert response.json()["state"] == "COMPLETED"
 
 
-def test_workflow_reload_workflows(
-    workflow_names: list[str],
-    fastapi_client: TestClient,
-):
+def test_workflow_reload_workflows(workflow_names: list[str], fastapi_client: TestClient):
     # Act
-    response = fastapi_client.post(
-        "/api/workflow/reload-workflows",
-    )
+    response = fastapi_client.post("/api/workflow/reload-workflows")
 
     assert response.status_code == 200
     assert response.json()["result"] == "ok"
@@ -134,61 +120,41 @@ def test_workflow_reload_workflows(
 
 
 @pytest.mark.parametrize("workflow_name", ["graph_to_asset_hierarchy"])
-def test_workflow_workflow_definition_get(
-    workflow_name: str,
-    fastapi_client: TestClient,
-):
+def test_workflow_workflow_definition_get(workflow_name: str, fastapi_client: TestClient):
     # Act
-    response = fastapi_client.get(
-        f"/api/workflow/workflow-definition/{workflow_name}",
-    )
+    response = fastapi_client.get(f"/api/workflow/workflow-definition/{workflow_name}")
 
     assert response.status_code == 200
     assert response.json()["definition"]["name"] == workflow_name
 
 
-def test_about(
-    fastapi_client: TestClient,
-):
+def test_about(fastapi_client: TestClient):
     # Act
-    response = fastapi_client.get(
-        "/api/about",
-    )
+    response = fastapi_client.get("/api/about")
 
     assert response.status_code == 200
     assert response.json()["version"] == neat.__version__
 
 
-def test_configs_global(
-    fastapi_client: TestClient,
-):
+def test_configs_global(fastapi_client: TestClient):
     # Act
-    response = fastapi_client.get(
-        "/api/configs/global",
-    )
+    response = fastapi_client.get("/api/configs/global")
 
     assert response.status_code == 200
     assert response.json()["log_level"] == "INFO"
     assert response.json()["workflows_store_type"] == "file"
 
 
-def test_list_queries(
-    fastapi_client: TestClient,
-):
+def test_list_queries(fastapi_client: TestClient):
     # Act
-    response = fastapi_client.get(
-        "/api/list-queries",
-    )
+    response = fastapi_client.get("/api/list-queries")
 
     assert response.status_code == 200
     assert response.json() == query_templates
 
 
 @pytest.mark.parametrize("workflow_name", ["graph_to_asset_hierarchy"])
-def test_query(
-    workflow_name: str,
-    fastapi_client: TestClient,
-):
+def test_query(workflow_name: str, fastapi_client: TestClient):
     # Act
     workflow = NEAT_APP.workflow_manager.get_workflow(workflow_name)
     workflow_defintion = workflow.get_workflow_definition()
@@ -217,10 +183,7 @@ def test_query(
 
 
 @pytest.mark.parametrize("workflow_name", ["graph_to_asset_hierarchy"])
-def test_execute_rule(
-    workflow_name: str,
-    fastapi_client: TestClient,
-):
+def test_execute_rule(workflow_name: str, fastapi_client: TestClient):
     # Act
     workflow = NEAT_APP.workflow_manager.get_workflow(workflow_name)
     if "SourceGraph" not in workflow.get_context():
@@ -249,10 +212,7 @@ def test_execute_rule(
 
 
 @pytest.mark.parametrize("workflow_name", ["graph_to_asset_hierarchy"])
-def test_get_datatype_properties(
-    workflow_name: str,
-    fastapi_client: TestClient,
-):
+def test_get_datatype_properties(workflow_name: str, fastapi_client: TestClient):
     # Act
     workflow = NEAT_APP.workflow_manager.get_workflow(workflow_name)
     if "SourceGraph" not in workflow.get_context():
@@ -261,11 +221,7 @@ def test_get_datatype_properties(
 
     response = fastapi_client.post(
         "/api/get-datatype-properties",
-        json=DatatypePropertyRequest(
-            graph_name="source",
-            workflow_name=workflow_name,
-            limit=1,
-        ).model_dump(),
+        json=DatatypePropertyRequest(graph_name="source", workflow_name=workflow_name, limit=1).model_dump(),
     )
 
     content = response.json()
@@ -283,16 +239,13 @@ def test_get_datatype_properties(
     "on test execution in a specific order. This needs to be fixed before it can be added back in."
 )
 @pytest.mark.parametrize("workflow_name", ["graph_to_asset_hierarchy"])
-def test_object_properties(
-    workflow_name: str,
-    fastapi_client: TestClient,
-):
+def test_object_properties(workflow_name: str, fastapi_client: TestClient):
     reference = quote("http://purl.org/cognite/neat#_lazarevac")
     graph_name = "source"
 
     # Act
     response = fastapi_client.get(
-        f"/api/object-properties?reference={reference}&graph_name={graph_name}&workflow_name={workflow_name}",
+        f"/api/object-properties?reference={reference}&graph_name={graph_name}&workflow_name={workflow_name}"
     )
 
     content = response.json()
@@ -307,17 +260,14 @@ def test_object_properties(
 
 
 @pytest.mark.parametrize("workflow_name", ["graph_to_asset_hierarchy"])
-def test_search(
-    workflow_name: str,
-    fastapi_client: TestClient,
-):
+def test_search(workflow_name: str, fastapi_client: TestClient):
     search_str = "Serbia"
     graph_name = "source"
     search_type = "value_exact_match"
 
     # Act
     response = fastapi_client.get(
-        f"/api/search?search_str={search_str}&graph_name={graph_name}&search_type={search_type}&workflow_name={workflow_name}",
+        f"/api/search?search_str={search_str}&graph_name={graph_name}&search_type={search_type}&workflow_name={workflow_name}"
     )
 
     content = response.json()
@@ -333,14 +283,9 @@ def test_search(
 
 
 @pytest.mark.parametrize("workflow_name", ["graph_to_asset_hierarchy"])
-def test_get_classes(
-    workflow_name: str,
-    fastapi_client: TestClient,
-):
+def test_get_classes(workflow_name: str, fastapi_client: TestClient):
     # Act
-    response = fastapi_client.get(
-        f"/api/get-classes?graph_name=source&workflow_name={workflow_name}&cache=true",
-    )
+    response = fastapi_client.get(f"/api/get-classes?graph_name=source&workflow_name={workflow_name}&cache=true")
 
     content = response.json()
 

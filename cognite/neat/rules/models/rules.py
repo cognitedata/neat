@@ -45,7 +45,7 @@ from cognite.neat.rules.models.rdfpath import (
     Traversal,
     parse_rule,
 )
-from cognite.neat.rules.type_mapping import DATA_TYPE_MAPPING
+from cognite.neat.rules.type_mapping import DATA_TYPE_MAPPING, type_to_target_convention
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -572,7 +572,7 @@ class Property(Resource):
     expected_value_type: ExternalId = Field(alias="Type", min_length=1, max_length=255)
     min_count: int | None = Field(alias="Min Count", default=0)
     max_count: int | None = Field(alias="Max Count", default=None)
-    default: Any = Field(None)
+    default: Any | None = Field(alias="Default", default=None)
 
     # OWL property
     property_type: str = "DatatypeProperty"
@@ -713,6 +713,59 @@ class Property(Resource):
             self.skip_rule = True
         else:
             self.skip_rule = False
+        return self
+
+    @model_validator(mode="after")
+    def set_default_as_list(self):
+        if (
+            self.property_type == "DatatypeProperty"
+            and self.default
+            and self.max_count
+            and self.max_count != 1
+            and not isinstance(self.default, list)
+        ):
+            warnings.warn(
+                exceptions.DefaultValueNotList(self.property_id).message,
+                category=exceptions.DefaultValueNotList,
+                stacklevel=2,
+            )
+            if isinstance(self.default, str):
+                if self.default:
+                    self.default = self.default.replace(", ", ",").split(",")
+                else:
+                    self.default = [self.default]
+        return self
+
+    @model_validator(mode="after")
+    def is_default_value_type_proper(self):
+        if self.property_type == "DatatypeProperty" and self.default:
+            default_value = self.default[0] if isinstance(self.default, list) else self.default
+
+            if type(default_value) != type_to_target_convention(self.expected_value_type, "python"):
+                try:
+                    if isinstance(self.default, list):
+                        updated_list = []
+                        for value in self.default:
+                            updated_list.append(type_to_target_convention(self.expected_value_type, "python")(value))
+                        self.default = updated_list
+                    else:
+                        self.default = type_to_target_convention(self.expected_value_type, "python")(self.default)
+
+                    warnings.warn(
+                        exceptions.DefaultValueTypeConverted(
+                            self.property_id,
+                            type(self.default),
+                            type_to_target_convention(self.expected_value_type, "python"),
+                        ).message,
+                        category=exceptions.DefaultValueTypeConverted,
+                        stacklevel=2,
+                    )
+                except Exception:
+                    exceptions.DefaultValueTypeNotProper(
+                        self.property_id,
+                        type(self.default),
+                        type_to_target_convention(self.expected_value_type, "python"),
+                    )
         return self
 
 

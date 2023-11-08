@@ -1,5 +1,6 @@
 import sys
 import warnings
+from abc import ABC
 from pathlib import Path
 from typing import ClassVar
 
@@ -20,37 +21,24 @@ else:
     from typing_extensions import Self
 
 
-class OWLExporter(BaseExporter):
-    def __init__(self, rules: Rules, filepath: Path | None = None):
-        super().__init__(rules, filepath)
-
-    def export(self, filepath: Path | None = None):
-        filepath = filepath or self.filepath
-        if not filepath:
-            raise ValueError("No filepath given")
-        Ontology.from_rules(self.rules).as_owl().serialize(destination=self.filepath)
+class GraphExporter(BaseExporter[Graph], ABC):
+    def _export_to_file(self, filepath: Path) -> None:
+        self.export().serialize(destination=filepath)
 
 
-class SHACLExporter(BaseExporter):
-    def __init__(self, rules: Rules, filepath: Path | None = None):
-        super().__init__(rules, filepath)
-
-    def export(self, filepath: Path | None = None):
-        filepath = filepath or self.filepath
-        if not filepath:
-            raise ValueError("No filepath given")
-        Ontology.from_rules(self.rules).as_shacl().serialize(destination=self.filepath)
+class OWLExporter(GraphExporter):
+    def export(self) -> Graph:
+        return Ontology.from_rules(self.rules).as_owl()
 
 
-class SemanticDataModelExporter(BaseExporter):
-    def __init__(self, rules: Rules, filepath: Path | None = None):
-        super().__init__(rules, filepath)
+class SHACLExporter(GraphExporter):
+    def export(self) -> Graph:
+        return Ontology.from_rules(self.rules).as_shacl()
 
-    def export(self, filepath: Path | None = None):
-        filepath = filepath or self.filepath
-        if not filepath:
-            raise ValueError("No filepath given")
-        Ontology.from_rules(self.rules).as_semantic_data_model().serialize(destination=self.filepath)
+
+class SemanticDataModelExporter(GraphExporter):
+    def export(self) -> Graph:
+        return Ontology.from_rules(self.rules).as_semantic_data_model()
 
 
 class OntologyModel(BaseModel):

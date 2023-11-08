@@ -152,5 +152,5 @@ def upsert_rules(request: TransformationRulesUpdateRequest):
         else:
             path = Path(NEAT_APP.config.data_store_path) / rules_file
 
-        exporter.ExcelExporter(rules=rules, filepath=path).export()
+        exporter.ExcelExporter(rules=rules).export_to_file(path)
     return {"status": "ok"}

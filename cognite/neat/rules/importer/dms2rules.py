@@ -1,7 +1,7 @@
 import sys
 from collections.abc import Sequence
 from datetime import datetime
-from typing import cast
+from typing import Any, cast
 
 import pandas as pd
 from cognite.client import CogniteClient
@@ -80,12 +80,7 @@ class DMSImporter(BaseImporter):
         properties: list[dict[str, str | float]] = []
         for view in self.views:
             class_id = view.external_id
-            classes.append(
-                {
-                    "Class": class_id,
-                    "Description": view.description or float("nan"),
-                }
-            )
+            classes.append({"Class": class_id, "Description": view.description or float("nan")})
             for prop_id, prop in view.properties.items():
                 if isinstance(prop, MappedProperty):
                     # Edge 1-1
@@ -94,9 +89,12 @@ class DMSImporter(BaseImporter):
                     else:
                         type_ = DMS_TO_DATA_TYPE.get(type(prop.type), "string")
 
+                    default_value = prop.default_value
+
                 # Edge 1-many
                 elif isinstance(prop, SingleHopConnectionDefinition):
                     type_ = prop.source.external_id
+                    default_value = None
                 else:
                     raise NotImplementedError(f"Property type {type(prop)} not supported")
 
@@ -121,10 +119,11 @@ class DMSImporter(BaseImporter):
                         "Name": prop.name if prop.name else prop_id,
                         "Description": prop.description or float("nan"),
                         "Type": type_,
+                        "Default": cast(Any, default_value),  # fixes issues with mypy
                         "Min Count": min_count,
                         "Max Count": max_count,
                         "Rule Type": "rdfpath",
-                        "Rule": f"cim:{class_id}(cim:{prop_id}.name)",
+                        "Rule": f"cim:{class_id}(cim:{prop_id})",
                     }
                 )
 
@@ -135,7 +134,7 @@ class DMSImporter(BaseImporter):
         }
 
     @staticmethod
-    def _to_metadata(data_mode: DataModel) -> dict:
+    def _to_metadata(data_model: DataModel) -> dict:
         mapping = {
             "space": "cdf_space_name",
             "external_id": "data_model_name",
@@ -146,7 +145,7 @@ class DMSImporter(BaseImporter):
             "name": "title",
         }
 
-        metadata = {mapping.get(k, k): v for k, v in data_mode.to_pandas().value.to_dict().items() if k in mapping}
+        metadata = {mapping.get(k, k): v for k, v in data_model.to_pandas().value.to_dict().items() if k in mapping}
 
         metadata["prefix"] = metadata["data_model_name"]
         metadata["creator"] = "Unknown"

@@ -17,7 +17,52 @@ from cognite.neat.workflows.steps.step_model import Configurable, Step
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
 
-__all__ = ["OpenApiToRules", "ArbitraryJsonYamlToRules", "GraphToRules"]
+__all__ = ["OpenApiToRules", "ArbitraryJsonYamlToRules", "GraphToRules", "OntologyToRules"]
+
+
+class OntologyToRules(Step):
+    """The step extracts schema from OpenApi/Swagger specification and generates NEAT transformation rules object."""
+
+    description = "The step extracts NEAT rules object from OWL Ontology and \
+        exports them as an Excel rules files for further editing."
+    category = CATEGORY
+    version = "0.1.0-alpha"
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="ontology_file_path", value="staging/ontology.ttl", label="Relative path to the OWL ontology file."
+        ),
+        Configurable(
+            name="excel_file_path", value="staging/rules.xlsx", label="Relative path for the Excel rules storage."
+        ),
+    ]
+
+    def run(self) -> FlowMessage:  # type: ignore[override, syntax]
+        ontology_file_path = self.data_store_path / Path(self.configs["ontology_file_path"])
+        excel_file_path = self.data_store_path / Path(self.configs["excel_file_path"])
+        report_file_path = excel_file_path.parent / f"report_{excel_file_path.stem}.txt"
+
+        rules = importer.OWLImporter(ontology_file_path).to_rules(skip_validation=True)
+        assert isinstance(rules, Rules)
+        exporter.ExcelExporter.from_rules(rules).export_to_file(excel_file_path)
+
+        if report := importer.ExcelImporter(filepath=excel_file_path).to_raw_rules().validate_rules():
+            report_file_path.write_text(report)
+
+        relative_excel_file_path = str(excel_file_path).split("/data/")[1]
+        relative_report_file_path = str(report_file_path).split("/data/")[1]
+
+        output_text = (
+            "<p></p>"
+            "Rules generated from OWL Ontology can be downloaded here : "
+            f'<a href="http://localhost:8000/data/{relative_excel_file_path}?{time.time()}" '
+            f'target="_blank">{excel_file_path.stem}.xlsx</a>'
+            "<p></p>"
+            "Report can be downloaded here : "
+            f'<a href="http://localhost:8000/data/{relative_report_file_path}?{time.time()}" '
+            f'target="_blank">{report_file_path.stem}.txt</a>'
+        )
+
+        return FlowMessage(output_text=output_text)
 
 
 class OpenApiToRules(Step):
@@ -403,9 +448,7 @@ class GraphToRules(Step):
     version = "0.1.0-alpha"
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
-            name="file_name",
-            value="inferred_transformations.xlsx",
-            label="File name to store transformation rules.",
+            name="file_name", value="inferred_transformations.xlsx", label="File name to store transformation rules."
         ),
         Configurable(name="storage_dir", value="staging", label="Directory to store Transformation Rules spreadsheet"),
         Configurable(
@@ -422,12 +465,11 @@ class GraphToRules(Step):
         staging_dir.mkdir(parents=True, exist_ok=True)
 
         spreadsheet_path = staging_dir / file_name
-        report_path = staging_dir / f"{spreadsheet_path.stem}_validation_report.txt"
 
         raw_rules = importer.GraphImporter(
             graph_store.graph.graph, int(self.configs["max_number_of_instances"])
         ).to_raw_rules()
-        exporter.ExcelExporter(raw_rules, spreadsheet_path, report_path).export()
+        exporter.ExcelExporter.from_rules(raw_rules).export_to_file(spreadsheet_path)
 
         output_text = (
             "<p></p>"
