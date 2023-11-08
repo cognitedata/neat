@@ -10,7 +10,7 @@ from cognite.neat.rules.exporter import OWLExporter, SemanticDataModelExporter, 
 
 def test_rules2owl(transformation_rules, tmp_path):
     filepath = tmp_path / "test.ttl"
-    OWLExporter(rules=transformation_rules, filepath=filepath).export()
+    OWLExporter(rules=transformation_rules).export_to_file(filepath)
 
     graph = Graph().parse(filepath)
     graph.bind("owl", "http://www.w3.org/2002/07/owl#")
@@ -22,7 +22,7 @@ def test_rules2owl(transformation_rules, tmp_path):
 
 def test_rules2shacl(transformation_rules, tmp_path: Path):
     filepath = tmp_path / "test.ttl"
-    SHACLExporter(rules=transformation_rules, filepath=filepath).export()
+    SHACLExporter(rules=transformation_rules).export_to_file(filepath=filepath)
     graph = Graph().parse(filepath)
     graph.bind("owl", "http://www.w3.org/2002/07/owl#")
     graph.bind("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#")
@@ -32,7 +32,7 @@ def test_rules2shacl(transformation_rules, tmp_path: Path):
 
 def test_rules2semantic_model(transformation_rules, tmp_path: Path):
     filepath = tmp_path / "test.ttl"
-    SemanticDataModelExporter(rules=transformation_rules, filepath=filepath).export()
+    SemanticDataModelExporter(rules=transformation_rules).export_to_file(filepath=filepath)
 
     graph = Graph().parse(filepath)
     graph.bind("owl", "http://www.w3.org/2002/07/owl#")
@@ -48,4 +48,4 @@ def test_rules2ontology_raise(transformation_rules, tmp_path: Path):
     rules.properties["row 150"] = rules.properties["row 15"]
 
     with pytest.raises(PropertiesDefinedMultipleTimes):
-        OWLExporter(rules=rules, filepath=filepath).export()
+        OWLExporter(rules=rules).export_to_file(filepath=filepath)
