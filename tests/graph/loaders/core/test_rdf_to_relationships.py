@@ -37,12 +37,7 @@ def test_relationship_diffing(mock_knowledge_graph, transformation_rules):
 
     with monkeypatch_cognite_client() as client_mock:
 
-        def list_relationships(
-            data_set_ids: int = 2626756768281823,
-            limit: int = -1,
-            labels=None,
-            **_,
-        ):
+        def list_relationships(data_set_ids: int = 2626756768281823, limit: int = -1, labels=None, **_):
             labels = labels or LabelFilter(contains_any=["non-historic"])
             if labels == LabelFilter(contains_any=["non-historic"]):
                 return RelationshipList(
@@ -55,12 +50,7 @@ def test_relationship_diffing(mock_knowledge_graph, transformation_rules):
             else:
                 return None
 
-        def list_assets(
-            data_set_ids: int = 2626756768281823,
-            limit: int = -1,
-            labels=None,
-            **_,
-        ):
+        def list_assets(data_set_ids: int = 2626756768281823, limit: int = -1, labels=None, **_):
             historic_asset_list = AssetList([Asset(**asset) for asset in historic_assets.values()])
             non_historic_asset_list = AssetList([Asset(**asset) for asset in non_historic_assets.values()])
             if labels == LabelFilter(contains_any=["non-historic"]):

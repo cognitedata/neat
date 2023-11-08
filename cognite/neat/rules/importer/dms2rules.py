@@ -80,12 +80,7 @@ class DMSImporter(BaseImporter):
         properties: list[dict[str, str | float]] = []
         for view in self.views:
             class_id = view.external_id
-            classes.append(
-                {
-                    "Class": class_id,
-                    "Description": view.description or float("nan"),
-                }
-            )
+            classes.append({"Class": class_id, "Description": view.description or float("nan")})
             for prop_id, prop in view.properties.items():
                 if isinstance(prop, MappedProperty):
                     # Edge 1-1
@@ -139,7 +134,7 @@ class DMSImporter(BaseImporter):
         }
 
     @staticmethod
-    def _to_metadata(data_mode: DataModel) -> dict:
+    def _to_metadata(data_model: DataModel) -> dict:
         mapping = {
             "space": "cdf_space_name",
             "external_id": "data_model_name",
@@ -150,7 +145,7 @@ class DMSImporter(BaseImporter):
             "name": "title",
         }
 
-        metadata = {mapping.get(k, k): v for k, v in data_mode.to_pandas().value.to_dict().items() if k in mapping}
+        metadata = {mapping.get(k, k): v for k, v in data_model.to_pandas().value.to_dict().items() if k in mapping}
 
         metadata["prefix"] = metadata["data_model_name"]
         metadata["creator"] = "Unknown"

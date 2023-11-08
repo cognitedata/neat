@@ -93,16 +93,8 @@ def test_creating_invalid_property(raw_input: dict):
 
 
 def generate_is_rdfpath_test_data():
-    yield pytest.param(
-        "GeographicalRegion(*)",
-        False,
-        id="One to many missing namespace",
-    )
-    yield pytest.param(
-        "cim:GeographicalRegion(*)",
-        True,
-        id="Valid One to many",
-    )
+    yield pytest.param("GeographicalRegion(*)", False, id="One to many missing namespace")
+    yield pytest.param("cim:GeographicalRegion(*)", True, id="Valid One to many")
     yield pytest.param(
         "cim:Terminal->cim:ConnectivityNode->cim:VoltageLevel->cim:Substation", True, id="Valid parent path"
     )
@@ -124,11 +116,7 @@ def generate_is_rawlookup_test_data():
         False,
         id="Missing piping operator",
     )
-    yield pytest.param(
-        "cim:GeographicalRegion(*) | TableName(Lookup,)",
-        False,
-        id="Missing value column",
-    )
+    yield pytest.param("cim:GeographicalRegion(*) | TableName(Lookup,)", False, id="Missing value column")
 
 
 @pytest.mark.parametrize("raw_input, is_rawlookup_expected", generate_is_rawlookup_test_data())
@@ -152,9 +140,7 @@ def generate_parse_traversal():
     )
     yield pytest.param(
         "cim:GeographicalRegion",
-        AllReferences(
-            class_=Entity(prefix="cim", name="GeographicalRegion"),
-        ),
+        AllReferences(class_=Entity(prefix="cim", name="GeographicalRegion")),
         id="All references",
     )
     yield pytest.param(
@@ -259,9 +245,7 @@ GRAPH = None
 
 
 def display_test_parse_traversal(
-    raw: str,
-    expected_traversal: AllProperties | AllReferences | Entity | Hop | SingleProperty,
-    name: str | None = None,
+    raw: str, expected_traversal: AllProperties | AllReferences | Entity | Hop | SingleProperty, name: str | None = None
 ):
     global GRAPH
     if name:
