@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.39.1] - 03-11-23
+## Fixed
+ - Changed `attributes`, `edges_one_to_one`, `edges_one_to_many` instance to class property methods
+
 ## [0.39.0] - 03-11-23
 ## Fixed
  - Not allowing DMS non-compliant Rules to be turned into pydantic models
