@@ -46,6 +46,12 @@ class DMSImporter(BaseImporter):
         else:
             self.metadata = metadata
 
+        if isinstance(views, DataModel):
+            if views.name:
+                self.metadata["title"] = views.name
+            if views.description:
+                self.metadata["description"] = views.description
+
     @classmethod
     def from_cdf(cls, client: CogniteClient, data_model: DataModelIdentifier) -> Self:
         """

@@ -1,5 +1,5 @@
 - created_time: 1695443606683
-  description: ''
+  description: 'A model for organizing price scenario price forecasts'
   external_id: ScenarioInstance
   is_global: false
   last_updated_time: 1695443621156
@@ -132,5 +132,5 @@
           type: timestamp
     space: IntegrationTestsImmutable
     used_for: node
-    version: ee2b79fd98b5bb
+    version: '0_1_0'
     writable: true
