@@ -15,6 +15,14 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.40.1] - 10-11-23
+
+## Fixed
+- Updated cognite-sdk
+
+## Improved
+- Improved Nodes and Edges validation and data validation reporting in rdf2nodes_and_edges and GenerateCDFNodesAndEdgesFromGraph steps.
+
 ## [0.40.0] - 08-11-23
 ## Changed
 - The interface for `cognite.neat.rules.exporters`. Now, they have the following methods `.export()`, `.export_to_file()`,

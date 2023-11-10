@@ -36,9 +36,9 @@ def rdf2nodes_and_edges(
     if transformation_rules.metadata.namespace is None:
         raise ValueError("Namespace is not defined in transformation rules metadata")
 
-    nodes = []
-    edges = []
-    exceptions = []
+    nodes: list[NodeApply] = []
+    edges: list[EdgeApply] = []
+    exceptions: list[ErrorDetails] = []
 
     data_model = DataModel.from_rules(transformation_rules)
     pydantic_models = rules_to_pydantic_models(transformation_rules)
@@ -65,8 +65,34 @@ def rdf2nodes_and_edges(
                         instance.external_id = add_class_prefix_to_xid(
                             class_name=instance.__class__.__name__, external_id=instance.external_id
                         )
-                    nodes.append(instance.to_node(data_model, add_class_prefix))
-                    edges.extend(instance.to_edge(data_model, add_class_prefix))
+                    new_node = instance.to_node(data_model, add_class_prefix)
+                    is_valid, reason = is_node_valid(new_node)
+                    if not is_valid:
+                        exceptions.append(
+                            ErrorDetails(
+                                input=class_instance_id,
+                                loc=tuple(["Nodes"]),
+                                msg=f"Not valid node {new_node.external_id}. Reason: {reason}",
+                                type="Node validation error",
+                            )
+                        )
+                        continue
+                    nodes.append(new_node)
+
+                    new_edges = instance.to_edge(data_model, add_class_prefix)
+                    for new_edge in new_edges:
+                        is_valid, reason = is_edge_valid(new_edge)
+                        if not is_valid:
+                            exceptions.append(
+                                ErrorDetails(
+                                    input=class_instance_id,
+                                    loc=tuple(["Edges"]),
+                                    msg=f"Not valid edge {new_edge.external_id}. Reason: {reason}",
+                                    type="Edge validation error",
+                                )
+                            )
+                            continue
+                        edges.append(new_edge)
 
                     delta_time = datetime_utc_now() - start_time
                     delta_time = (delta_time.seconds * 1000000 + delta_time.microseconds) / 1000
@@ -86,9 +112,39 @@ def rdf2nodes_and_edges(
 
                     if isinstance(e, NeatException):
                         exceptions.append(e.to_error_dict())
+                    else:
+                        exceptions.append(
+                            ErrorDetails(
+                                input=class_instance_id,
+                                loc=tuple(["rdf2nodes_and_edges"]),
+                                msg=str(e),
+                                type=f"Exception of type {type(e).__name__} occurred  \
+                                when processing instance of {class_}",
+                            )
+                        )
                     continue
 
     return nodes, edges, exceptions
+
+
+def is_node_valid(node: NodeApply) -> tuple[bool, str]:
+    if node.external_id is None or node.external_id == "" or len(node.external_id) >= 255:
+        return False, f"external_id {node.external_id} is empty of too long"
+    return True, ""
+
+
+def is_edge_valid(edge: EdgeApply) -> tuple[bool, str]:
+    if edge.external_id is None or edge.external_id == "" or len(edge.external_id) >= 255:
+        return False, f"external_id {edge.external_id} is empty of too long"
+    if (
+        edge.start_node.external_id is None
+        or edge.start_node.external_id == ""
+        or len(edge.start_node.external_id) >= 255
+    ):
+        return False, f"start_node.external_id {edge.start_node.external_id} is empty of too long"
+    if edge.end_node.external_id is None or edge.end_node.external_id == "" or len(edge.end_node.external_id) >= 255:
+        return False, f"end_node.external_id {edge.end_node.external_id} is empty of too long"
+    return True, ""
 
 
 def upload_nodes(
