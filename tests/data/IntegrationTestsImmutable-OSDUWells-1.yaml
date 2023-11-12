@@ -5,7 +5,7 @@
   last_updated_time: 1698485392322
   name: OSDUWells
   space: IntegrationTestsImmutable
-  version: '1'
+  version: '0_1_0'
   views:
   - created_time: 1698485391011
     external_id: HistoricalInterests
@@ -60,7 +60,7 @@
           type: text
     space: IntegrationTestsImmutable
     used_for: node
-    version: 7399eff7364ba6
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: VerticalMeasurements
@@ -279,7 +279,7 @@
           type: text
     space: IntegrationTestsImmutable
     used_for: node
-    version: d8c3b28a0d0dfb
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: FacilitySpecifications
@@ -407,7 +407,7 @@
           type: text
     space: IntegrationTestsImmutable
     used_for: node
-    version: 1b7ddbd5d36655
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: FacilityEvents
@@ -477,7 +477,7 @@
           type: text
     space: IntegrationTestsImmutable
     used_for: node
-    version: 1b7526673ad990
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: FacilityStates
@@ -547,7 +547,7 @@
           type: text
     space: IntegrationTestsImmutable
     used_for: node
-    version: a12316ff3d8033
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: FacilityOperators
@@ -632,7 +632,7 @@
           type: text
     space: IntegrationTestsImmutable
     used_for: node
-    version: 935498861713d0
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: UnacceptableUsage
@@ -717,7 +717,7 @@
           type: text
     space: IntegrationTestsImmutable
     used_for: node
-    version: 24f60e09e7bb1b
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: AcceptableUsage
@@ -802,7 +802,7 @@
           type: text
     space: IntegrationTestsImmutable
     used_for: node
-    version: d7e8986cd55d22
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: Reviewers
@@ -887,7 +887,7 @@
           type: text
     space: IntegrationTestsImmutable
     used_for: node
-    version: a7b641adc001b9
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: TechnicalAssurances
@@ -904,7 +904,7 @@
           external_id: AcceptableUsage
           space: IntegrationTestsImmutable
           type: view
-          version: d7e8986cd55d22
+          version: '0_1_0'
         type:
           external_id: TechnicalAssurances.AcceptableUsage
           space: IntegrationTestsImmutable
@@ -947,7 +947,7 @@
           external_id: Reviewers
           space: IntegrationTestsImmutable
           type: view
-          version: a7b641adc001b9
+          version: '0_1_0'
         type:
           external_id: TechnicalAssurances.Reviewers
           space: IntegrationTestsImmutable
@@ -975,13 +975,13 @@
           external_id: UnacceptableUsage
           space: IntegrationTestsImmutable
           type: view
-          version: 24f60e09e7bb1b
+          version: '0_1_0'
         type:
           external_id: TechnicalAssurances.UnacceptableUsage
           space: IntegrationTestsImmutable
     space: IntegrationTestsImmutable
     used_for: node
-    version: 20cfc9c180f3df
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: Geometry
@@ -1034,7 +1034,7 @@
           type: text
     space: IntegrationTestsImmutable
     used_for: node
-    version: fc702ec6877c79
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: Features
@@ -1071,7 +1071,7 @@
           source:
             external_id: Geometry
             space: IntegrationTestsImmutable
-            version: fc702ec6877c79
+            version: '0_1_0'
           type: direct
       type:
         auto_increment: false
@@ -1090,7 +1090,7 @@
           type: text
     space: IntegrationTestsImmutable
     used_for: node
-    version: df91e0a3bad68c
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: Wgs84Coordinates
@@ -1121,7 +1121,7 @@
           external_id: Features
           space: IntegrationTestsImmutable
           type: view
-          version: df91e0a3bad68c
+          version: '0_1_0'
         type:
           external_id: Wgs84Coordinates.features
           space: IntegrationTestsImmutable
@@ -1142,7 +1142,7 @@
           type: text
     space: IntegrationTestsImmutable
     used_for: node
-    version: d6030081373896
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: AsIngestedCoordinates
@@ -1218,7 +1218,7 @@
           external_id: Features
           space: IntegrationTestsImmutable
           type: view
-          version: df91e0a3bad68c
+          version: '0_1_0'
         type:
           external_id: AsIngestedCoordinates.features
           space: IntegrationTestsImmutable
@@ -1284,7 +1284,7 @@
           type: text
     space: IntegrationTestsImmutable
     used_for: node
-    version: da1e4eb90494da
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: SpatialLocation
@@ -1322,7 +1322,7 @@
           source:
             external_id: AsIngestedCoordinates
             space: IntegrationTestsImmutable
-            version: da1e4eb90494da
+            version: '0_1_0'
           type: direct
       CoordinateQualityCheckDateTime:
         auto_increment: false
@@ -1459,11 +1459,11 @@
           source:
             external_id: Wgs84Coordinates
             space: IntegrationTestsImmutable
-            version: d6030081373896
+            version: '0_1_0'
           type: direct
     space: IntegrationTestsImmutable
     used_for: node
-    version: 697432f011ef60
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: GeoContexts
@@ -1563,7 +1563,7 @@
           type: text
     space: IntegrationTestsImmutable
     used_for: node
-    version: cec36d5139aade
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: NameAliases
@@ -1648,7 +1648,7 @@
           type: text
     space: IntegrationTestsImmutable
     used_for: node
-    version: b0ef9b17280885
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: WellData
@@ -1785,7 +1785,7 @@
           external_id: FacilityEvents
           space: IntegrationTestsImmutable
           type: view
-          version: 1b7526673ad990
+          version: '0_1_0'
         type:
           external_id: WellData.FacilityEvents
           space: IntegrationTestsImmutable
@@ -1828,7 +1828,7 @@
           external_id: FacilityOperators
           space: IntegrationTestsImmutable
           type: view
-          version: 935498861713d0
+          version: '0_1_0'
         type:
           external_id: WellData.FacilityOperators
           space: IntegrationTestsImmutable
@@ -1841,7 +1841,7 @@
           external_id: FacilitySpecifications
           space: IntegrationTestsImmutable
           type: view
-          version: 1b7ddbd5d36655
+          version: '0_1_0'
         type:
           external_id: WellData.FacilitySpecifications
           space: IntegrationTestsImmutable
@@ -1854,7 +1854,7 @@
           external_id: FacilityStates
           space: IntegrationTestsImmutable
           type: view
-          version: a12316ff3d8033
+          version: '0_1_0'
         type:
           external_id: WellData.FacilityStates
           space: IntegrationTestsImmutable
@@ -1882,7 +1882,7 @@
           external_id: GeoContexts
           space: IntegrationTestsImmutable
           type: view
-          version: cec36d5139aade
+          version: '0_1_0'
         type:
           external_id: WellData.GeoContexts
           space: IntegrationTestsImmutable
@@ -1895,7 +1895,7 @@
           external_id: HistoricalInterests
           space: IntegrationTestsImmutable
           type: view
-          version: 7399eff7364ba6
+          version: '0_1_0'
         type:
           external_id: WellData.HistoricalInterests
           space: IntegrationTestsImmutable
@@ -1938,7 +1938,7 @@
           external_id: NameAliases
           space: IntegrationTestsImmutable
           type: view
-          version: b0ef9b17280885
+          version: '0_1_0'
         type:
           external_id: WellData.NameAliases
           space: IntegrationTestsImmutable
@@ -2092,7 +2092,7 @@
           source:
             external_id: SpatialLocation
             space: IntegrationTestsImmutable
-            version: 697432f011ef60
+            version: '0_1_0'
           type: direct
       StatusSummaryID:
         auto_increment: false
@@ -2133,7 +2133,7 @@
           external_id: TechnicalAssurances
           space: IntegrationTestsImmutable
           type: view
-          version: 20cfc9c180f3df
+          version: '0_1_0'
         type:
           external_id: WellData.TechnicalAssurances
           space: IntegrationTestsImmutable
@@ -2161,7 +2161,7 @@
           external_id: VerticalMeasurements
           space: IntegrationTestsImmutable
           type: view
-          version: d8c3b28a0d0dfb
+          version: '0_1_0'
         type:
           external_id: WellData.VerticalMeasurements
           space: IntegrationTestsImmutable
@@ -2223,7 +2223,7 @@
           type: boolean
     space: IntegrationTestsImmutable
     used_for: node
-    version: ed82310421bd56
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: Meta
@@ -2308,7 +2308,7 @@
           type: text
     space: IntegrationTestsImmutable
     used_for: node
-    version: bf181692a967b6
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: Ancestry
@@ -2333,7 +2333,7 @@
           type: text
     space: IntegrationTestsImmutable
     used_for: node
-    version: 624b46e28cdd69
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: Tags
@@ -2358,7 +2358,7 @@
           type: text
     space: IntegrationTestsImmutable
     used_for: node
-    version: 77ace80e524925
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: Legal
@@ -2413,7 +2413,7 @@
           type: text
     space: IntegrationTestsImmutable
     used_for: node
-    version: 508188c6379675
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: Acl
@@ -2453,7 +2453,7 @@
           type: text
     space: IntegrationTestsImmutable
     used_for: node
-    version: 1c4f4a5942a9a8
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: Well
@@ -2476,7 +2476,7 @@
           source:
             external_id: Acl
             space: IntegrationTestsImmutable
-            version: 1c4f4a5942a9a8
+            version: '0_1_0'
           type: direct
       ancestry:
         auto_increment: false
@@ -2493,7 +2493,7 @@
           source:
             external_id: Ancestry
             space: IntegrationTestsImmutable
-            version: 624b46e28cdd69
+            version: '0_1_0'
           type: direct
       createTime:
         auto_increment: false
@@ -2540,7 +2540,7 @@
           source:
             external_id: WellData
             space: IntegrationTestsImmutable
-            version: ed82310421bd56
+            version: '0_1_0'
           type: direct
       id:
         auto_increment: false
@@ -2587,7 +2587,7 @@
           source:
             external_id: Legal
             space: IntegrationTestsImmutable
-            version: 508188c6379675
+            version: '0_1_0'
           type: direct
       meta:
         description: null
@@ -2598,7 +2598,7 @@
           external_id: Meta
           space: IntegrationTestsImmutable
           type: view
-          version: bf181692a967b6
+          version: '0_1_0'
         type:
           external_id: Well.meta
           space: IntegrationTestsImmutable
@@ -2647,7 +2647,7 @@
           source:
             external_id: Tags
             space: IntegrationTestsImmutable
-            version: 77ace80e524925
+            version: '0_1_0'
           type: direct
       version:
         auto_increment: false
@@ -2665,7 +2665,7 @@
           type: int64
     space: IntegrationTestsImmutable
     used_for: node
-    version: 952d7e55cdf2cc
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: WellboreCosts
@@ -2704,7 +2704,7 @@
           type: float64
     space: IntegrationTestsImmutable
     used_for: node
-    version: b4f71248f398a2
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: GeographicBottomHoleLocation
@@ -2742,7 +2742,7 @@
           source:
             external_id: AsIngestedCoordinates
             space: IntegrationTestsImmutable
-            version: da1e4eb90494da
+            version: '0_1_0'
           type: direct
       CoordinateQualityCheckDateTime:
         auto_increment: false
@@ -2879,11 +2879,11 @@
           source:
             external_id: Wgs84Coordinates
             space: IntegrationTestsImmutable
-            version: d6030081373896
+            version: '0_1_0'
           type: direct
     space: IntegrationTestsImmutable
     used_for: node
-    version: a82995ae29bc5c
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: ProjectedBottomHoleLocation
@@ -2921,7 +2921,7 @@
           source:
             external_id: AsIngestedCoordinates
             space: IntegrationTestsImmutable
-            version: da1e4eb90494da
+            version: '0_1_0'
           type: direct
       CoordinateQualityCheckDateTime:
         auto_increment: false
@@ -3058,11 +3058,11 @@
           source:
             external_id: Wgs84Coordinates
             space: IntegrationTestsImmutable
-            version: d6030081373896
+            version: '0_1_0'
           type: direct
     space: IntegrationTestsImmutable
     used_for: node
-    version: 447a307957e5b7
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: DrillingReasons
@@ -3132,7 +3132,7 @@
           type: text
     space: IntegrationTestsImmutable
     used_for: node
-    version: 220055a8165644
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: WellboreData
@@ -3239,7 +3239,7 @@
           external_id: DrillingReasons
           space: IntegrationTestsImmutable
           type: view
-          version: 220055a8165644
+          version: '0_1_0'
         type:
           external_id: WellboreData.DrillingReasons
           space: IntegrationTestsImmutable
@@ -3282,7 +3282,7 @@
           external_id: FacilityEvents
           space: IntegrationTestsImmutable
           type: view
-          version: 1b7526673ad990
+          version: '0_1_0'
         type:
           external_id: WellboreData.FacilityEvents
           space: IntegrationTestsImmutable
@@ -3325,7 +3325,7 @@
           external_id: FacilityOperators
           space: IntegrationTestsImmutable
           type: view
-          version: 935498861713d0
+          version: '0_1_0'
         type:
           external_id: WellboreData.FacilityOperators
           space: IntegrationTestsImmutable
@@ -3338,7 +3338,7 @@
           external_id: FacilitySpecifications
           space: IntegrationTestsImmutable
           type: view
-          version: 1b7ddbd5d36655
+          version: '0_1_0'
         type:
           external_id: WellboreData.FacilitySpecifications
           space: IntegrationTestsImmutable
@@ -3351,7 +3351,7 @@
           external_id: FacilityStates
           space: IntegrationTestsImmutable
           type: view
-          version: a12316ff3d8033
+          version: '0_1_0'
         type:
           external_id: WellboreData.FacilityStates
           space: IntegrationTestsImmutable
@@ -3409,7 +3409,7 @@
           external_id: GeoContexts
           space: IntegrationTestsImmutable
           type: view
-          version: cec36d5139aade
+          version: '0_1_0'
         type:
           external_id: WellboreData.GeoContexts
           space: IntegrationTestsImmutable
@@ -3428,7 +3428,7 @@
           source:
             external_id: GeographicBottomHoleLocation
             space: IntegrationTestsImmutable
-            version: a82995ae29bc5c
+            version: '0_1_0'
           type: direct
       HistoricalInterests:
         description: null
@@ -3439,7 +3439,7 @@
           external_id: HistoricalInterests
           space: IntegrationTestsImmutable
           type: view
-          version: 7399eff7364ba6
+          version: '0_1_0'
         type:
           external_id: WellboreData.HistoricalInterests
           space: IntegrationTestsImmutable
@@ -3497,7 +3497,7 @@
           external_id: NameAliases
           space: IntegrationTestsImmutable
           type: view
-          version: b0ef9b17280885
+          version: '0_1_0'
         type:
           external_id: WellboreData.NameAliases
           space: IntegrationTestsImmutable
@@ -3561,7 +3561,7 @@
           source:
             external_id: ProjectedBottomHoleLocation
             space: IntegrationTestsImmutable
-            version: 447a307957e5b7
+            version: '0_1_0'
           type: direct
       ResourceCurationStatus:
         auto_increment: false
@@ -3727,7 +3727,7 @@
           source:
             external_id: SpatialLocation
             space: IntegrationTestsImmutable
-            version: 697432f011ef60
+            version: '0_1_0'
           type: direct
       StatusSummaryID:
         auto_increment: false
@@ -3783,7 +3783,7 @@
           external_id: TechnicalAssurances
           space: IntegrationTestsImmutable
           type: view
-          version: 20cfc9c180f3df
+          version: '0_1_0'
         type:
           external_id: WellboreData.TechnicalAssurances
           space: IntegrationTestsImmutable
@@ -3841,7 +3841,7 @@
           external_id: VerticalMeasurements
           space: IntegrationTestsImmutable
           type: view
-          version: d8c3b28a0d0dfb
+          version: '0_1_0'
         type:
           external_id: WellboreData.VerticalMeasurements
           space: IntegrationTestsImmutable
@@ -3925,7 +3925,7 @@
           external_id: WellboreCosts
           space: IntegrationTestsImmutable
           type: view
-          version: b4f71248f398a2
+          version: '0_1_0'
         type:
           external_id: WellboreData.WellboreCosts
           space: IntegrationTestsImmutable
@@ -3946,7 +3946,7 @@
           type: text
     space: IntegrationTestsImmutable
     used_for: node
-    version: 6349cf734b294e
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: Wellbore
@@ -3969,7 +3969,7 @@
           source:
             external_id: Acl
             space: IntegrationTestsImmutable
-            version: 1c4f4a5942a9a8
+            version: '0_1_0'
           type: direct
       ancestry:
         auto_increment: false
@@ -3986,7 +3986,7 @@
           source:
             external_id: Ancestry
             space: IntegrationTestsImmutable
-            version: 624b46e28cdd69
+            version: '0_1_0'
           type: direct
       createTime:
         auto_increment: false
@@ -4033,7 +4033,7 @@
           source:
             external_id: WellboreData
             space: IntegrationTestsImmutable
-            version: 6349cf734b294e
+            version: '0_1_0'
           type: direct
       id:
         auto_increment: false
@@ -4080,7 +4080,7 @@
           source:
             external_id: Legal
             space: IntegrationTestsImmutable
-            version: 508188c6379675
+            version: '0_1_0'
           type: direct
       meta:
         description: null
@@ -4091,7 +4091,7 @@
           external_id: Meta
           space: IntegrationTestsImmutable
           type: view
-          version: bf181692a967b6
+          version: '0_1_0'
         type:
           external_id: Wellbore.meta
           space: IntegrationTestsImmutable
@@ -4140,7 +4140,7 @@
           source:
             external_id: Tags
             space: IntegrationTestsImmutable
-            version: 77ace80e524925
+            version: '0_1_0'
           type: direct
       version:
         auto_increment: false
@@ -4158,7 +4158,7 @@
           type: int64
     space: IntegrationTestsImmutable
     used_for: node
-    version: 7a44cf38aa4fe7
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: AvailableTrajectoryStationProperties
@@ -4213,7 +4213,7 @@
           type: text
     space: IntegrationTestsImmutable
     used_for: node
-    version: e1c516b799081a
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: VerticalMeasurement
@@ -4402,7 +4402,7 @@
           type: text
     space: IntegrationTestsImmutable
     used_for: node
-    version: fd63ec6e91292f
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: LineageAssertions
@@ -4442,7 +4442,7 @@
           type: text
     space: IntegrationTestsImmutable
     used_for: node
-    version: ef344f6030d778
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: SpatialArea
@@ -4480,7 +4480,7 @@
           source:
             external_id: AsIngestedCoordinates
             space: IntegrationTestsImmutable
-            version: da1e4eb90494da
+            version: '0_1_0'
           type: direct
       CoordinateQualityCheckDateTime:
         auto_increment: false
@@ -4617,11 +4617,11 @@
           source:
             external_id: Wgs84Coordinates
             space: IntegrationTestsImmutable
-            version: d6030081373896
+            version: '0_1_0'
           type: direct
     space: IntegrationTestsImmutable
     used_for: node
-    version: 312323f14f3d3f
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: SpatialPoint
@@ -4659,7 +4659,7 @@
           source:
             external_id: AsIngestedCoordinates
             space: IntegrationTestsImmutable
-            version: da1e4eb90494da
+            version: '0_1_0'
           type: direct
       CoordinateQualityCheckDateTime:
         auto_increment: false
@@ -4796,11 +4796,11 @@
           source:
             external_id: Wgs84Coordinates
             space: IntegrationTestsImmutable
-            version: d6030081373896
+            version: '0_1_0'
           type: direct
     space: IntegrationTestsImmutable
     used_for: node
-    version: 7af8800660eef4
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: Artefacts
@@ -4855,7 +4855,7 @@
           type: text
     space: IntegrationTestsImmutable
     used_for: node
-    version: 7a44a1f4dac367
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: WellboreTrajectoryData
@@ -4976,7 +4976,7 @@
           external_id: Artefacts
           space: IntegrationTestsImmutable
           type: view
-          version: 7a44a1f4dac367
+          version: '0_1_0'
         type:
           external_id: WellboreTrajectoryData.Artefacts
           space: IntegrationTestsImmutable
@@ -5004,7 +5004,7 @@
           external_id: AvailableTrajectoryStationProperties
           space: IntegrationTestsImmutable
           type: view
-          version: e1c516b799081a
+          version: '0_1_0'
         type:
           external_id: WellboreTrajectoryData.AvailableTrajectoryStationProperties
           space: IntegrationTestsImmutable
@@ -5210,7 +5210,7 @@
           external_id: GeoContexts
           space: IntegrationTestsImmutable
           type: view
-          version: cec36d5139aade
+          version: '0_1_0'
         type:
           external_id: WellboreTrajectoryData.GeoContexts
           space: IntegrationTestsImmutable
@@ -5266,7 +5266,7 @@
           external_id: LineageAssertions
           space: IntegrationTestsImmutable
           type: view
-          version: ef344f6030d778
+          version: '0_1_0'
         type:
           external_id: WellboreTrajectoryData.LineageAssertions
           space: IntegrationTestsImmutable
@@ -5294,7 +5294,7 @@
           external_id: NameAliases
           space: IntegrationTestsImmutable
           type: view
-          version: b0ef9b17280885
+          version: '0_1_0'
         type:
           external_id: WellboreTrajectoryData.NameAliases
           space: IntegrationTestsImmutable
@@ -5433,7 +5433,7 @@
           source:
             external_id: SpatialArea
             space: IntegrationTestsImmutable
-            version: 312323f14f3d3f
+            version: '0_1_0'
           type: direct
       SpatialPoint:
         auto_increment: false
@@ -5450,7 +5450,7 @@
           source:
             external_id: SpatialPoint
             space: IntegrationTestsImmutable
-            version: 7af8800660eef4
+            version: '0_1_0'
           type: direct
       StartDateTime:
         auto_increment: false
@@ -5594,7 +5594,7 @@
           external_id: TechnicalAssurances
           space: IntegrationTestsImmutable
           type: view
-          version: 20cfc9c180f3df
+          version: '0_1_0'
         type:
           external_id: WellboreTrajectoryData.TechnicalAssurances
           space: IntegrationTestsImmutable
@@ -5669,7 +5669,7 @@
           source:
             external_id: VerticalMeasurement
             space: IntegrationTestsImmutable
-            version: fd63ec6e91292f
+            version: '0_1_0'
           type: direct
       WellboreID:
         auto_increment: false
@@ -5688,7 +5688,7 @@
           type: text
     space: IntegrationTestsImmutable
     used_for: node
-    version: d35eace9691587
+    version: '0_1_0'
     writable: true
   - created_time: 1698485391011
     external_id: WellboreTrajectory
@@ -5711,7 +5711,7 @@
           source:
             external_id: Acl
             space: IntegrationTestsImmutable
-            version: 1c4f4a5942a9a8
+            version: '0_1_0'
           type: direct
       ancestry:
         auto_increment: false
@@ -5728,7 +5728,7 @@
           source:
             external_id: Ancestry
             space: IntegrationTestsImmutable
-            version: 624b46e28cdd69
+            version: '0_1_0'
           type: direct
       createTime:
         auto_increment: false
@@ -5775,7 +5775,7 @@
           source:
             external_id: WellboreTrajectoryData
             space: IntegrationTestsImmutable
-            version: d35eace9691587
+            version: '0_1_0'
           type: direct
       id:
         auto_increment: false
@@ -5822,7 +5822,7 @@
           source:
             external_id: Legal
             space: IntegrationTestsImmutable
-            version: 508188c6379675
+            version: '0_1_0'
           type: direct
       meta:
         description: null
@@ -5833,7 +5833,7 @@
           external_id: Meta
           space: IntegrationTestsImmutable
           type: view
-          version: bf181692a967b6
+          version: '0_1_0'
         type:
           external_id: WellboreTrajectory.meta
           space: IntegrationTestsImmutable
@@ -5882,7 +5882,7 @@
           source:
             external_id: Tags
             space: IntegrationTestsImmutable
-            version: 77ace80e524925
+            version: '0_1_0'
           type: direct
       version:
         auto_increment: false
@@ -5900,5 +5900,5 @@
           type: int64
     space: IntegrationTestsImmutable
     used_for: node
-    version: 5c4afa33e6bd65
+    version: '0_1_0'
     writable: true

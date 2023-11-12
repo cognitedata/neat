@@ -54,7 +54,16 @@ class DMSSchema:
 
 
 class DMSExporter(BaseExporter[DMSSchema]):
-    """Class for exporting transformation rules object to CDF Data Model Storage (DMS)."""
+    """Class for exporting transformation rules object to CDF Data Model Storage (DMS).
+
+    Args:
+        rules: Transformation rules object.
+        data_model_id: The id of the data model to be created.
+        container_policy: How to create/reuse existing containers.
+        existing_model: In the case of updating an existing model, this is the existing model.
+        set_expected_source: Whether to set the expected source on views with direct relation properties.
+        report: Report. This is used when the exporter object is created from RawRules
+    """
 
     def __init__(
         self,
@@ -62,6 +71,7 @@ class DMSExporter(BaseExporter[DMSSchema]):
         data_model_id: dm.DataModelId | None = None,
         container_policy: Literal["one-to-one-view", "extend-existing", "neat-optimized"] = "one-to-one-view",
         existing_model: dm.DataModel[dm.View] | None = None,
+        set_expected_source: bool = True,
         report: str | None = None,
     ):
         super().__init__(rules, report)
@@ -72,6 +82,7 @@ class DMSExporter(BaseExporter[DMSSchema]):
         if container_policy != "one-to-one-view":
             raise NotImplementedError("Only one-to-one-view container policy is currently supported")
         self.existing_model = existing_model
+        self.set_expected_source = set_expected_source
 
     def _export_to_file(self, filepath: Path) -> None:
         if filepath.suffix not in {".yaml", ".yml"}:
@@ -88,7 +99,7 @@ class DMSExporter(BaseExporter[DMSSchema]):
         )
 
     def export(self) -> DMSSchema:
-        model = DataModel.from_rules(self.rules, self.data_model_id)
+        model = DataModel.from_rules(self.rules, self.data_model_id, self.set_expected_source)
         return DMSSchema(
             data_model=DataModelApply(
                 space=model.space,
@@ -132,11 +143,15 @@ class DataModel(BaseModel):
     )
 
     @classmethod
-    def from_rules(cls, rules: Rules, data_model_id: dm.DataModelId | None = None) -> Self:
+    def from_rules(
+        cls, rules: Rules, data_model_id: dm.DataModelId | None = None, set_expected_source: bool = True
+    ) -> Self:
         """Generates a DataModel class instance from a Rules instance.
 
         Args:
-            rule: instance of Rules.
+            rules: instance of Rules.
+            data_model_id: The id of the data model to be created.
+            set_expected_source: Whether to set the expected source on views with direct relation properties.
 
         Returns:
             Instance of DataModel.
@@ -171,7 +186,7 @@ class DataModel(BaseModel):
             description=rules.metadata.description,
             name=rules.metadata.title,
             containers=cls.containers_from_rules(rules, space),
-            views=cls.views_from_rules(rules, space),
+            views=cls.views_from_rules(rules, space, set_expected_source),
         )
 
     @staticmethod
@@ -243,12 +258,15 @@ class DataModel(BaseModel):
         return container_properties
 
     @staticmethod
-    def views_from_rules(rule: Rules, space: str | None = None) -> dict[str, ViewApply]:
+    def views_from_rules(
+        rule: Rules, space: str | None = None, set_expected_source: bool = True
+    ) -> dict[str, ViewApply]:
         """Generates a dictionary of ViewApply instances from a Rules instance.
 
         Args:
             rule: Instance of Rules.
             space: Name of the space to place the views.
+            set_expected_source: Whether to set the expected source on views with direct relation properties.
 
         Returns:
             Dictionary of ViewApply instances.
@@ -261,7 +279,9 @@ class DataModel(BaseModel):
                 external_id=class_id,
                 name=rule.classes[class_id].class_name,
                 description=rule.classes[class_id].description,
-                properties=DataModel.view_properties_from_dict(properties, space, rule.metadata.version),
+                properties=DataModel.view_properties_from_dict(
+                    properties, space, rule.metadata.version, set_expected_source
+                ),
                 version=rule.metadata.version,
             )
             for class_id, properties in class_properties.items()
@@ -269,7 +289,7 @@ class DataModel(BaseModel):
 
     @staticmethod
     def view_properties_from_dict(
-        properties: dict[str, Property], space: str, version: str
+        properties: dict[str, Property], space: str, version: str, set_expected_source: bool = True
     ) -> dict[str, MappedPropertyApply | ConnectionDefinitionApply]:
         view_properties: dict[str, MappedPropertyApply | ConnectionDefinitionApply] = {}
         for property_id, property_definition in properties.items():
@@ -289,7 +309,9 @@ class DataModel(BaseModel):
                     container_property_identifier=property_id,
                     name=property_definition.property_name,
                     description=property_definition.description,
-                    source=ViewId(space=space, external_id=property_definition.expected_value_type, version=version),
+                    source=ViewId(space=space, external_id=property_definition.expected_value_type, version=version)
+                    if set_expected_source
+                    else None,
                 )
 
             # edge 1-many
