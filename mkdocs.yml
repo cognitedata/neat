@@ -6,6 +6,9 @@ theme:
   features:
     - content.code.copy
     - content.tooltips
+  logo: figs/logo.png
+  palette:
+    primary: indigo
 
 nav:
   - Home: index.md
