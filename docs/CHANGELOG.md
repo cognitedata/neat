@@ -495,7 +495,7 @@ Changes are grouped as follows:
 
 ### Added
 
-- Configurable cdf client timeout and max workers size. See [getting started](getting-started.md) for details.
+- Configurable cdf client timeout and max workers size. See [getting started](installation.md) for details.
 - Additional logic for handling `CogniteReadTimeoutError` and `CogniteDuplicatedError` during retries. This is an attempt
   to handle cases when under heavy load, requests to CDF may timeout even though the requests were processed successfully
   in eventual consistancy manner.

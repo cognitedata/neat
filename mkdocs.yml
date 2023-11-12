@@ -12,7 +12,10 @@ nav:
   - Features:
       - Overview: feature-overview.md
       - Data Exploration: ui-data-exploration.md
-  - Quick Start: getting-started.md
+  - Installation: installation.md
+  - Quickstart:
+      - Overview: quickstart/overview.md
+      - Data Model Import: quickstart/data-model-import.ipynb
   - Fundamental Concepts:
       - Transformation Rules:
           - Overview: transformation-rules.md
