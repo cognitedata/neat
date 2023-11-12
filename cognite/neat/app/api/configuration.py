@@ -17,6 +17,7 @@ from cognite.neat.workflows.manager import WorkflowManager
 from cognite.neat.workflows.triggers import TriggerManager
 
 UI_PATH = PACKAGE_DIRECTORY / "app" / "ui" / "neat-app" / "build"
+WORKFLOW_TEMPLATES_PATH = PACKAGE_DIRECTORY / "workflows" / "templates"
 
 
 class NeatApp:

@@ -1,0 +1,327 @@
+{
+  "name": "neat_default_wizard",
+  "steps": [
+    {
+      "id": "start",
+      "question": "Which problem are you going to solve with NEAT today ?",
+      "description": "Please select one of the following options",
+      "options": [
+        {
+          "label": "Use NEAT for data modelling",
+          "value": "modelling",
+          "nextStep": "modelling"
+        },
+        {
+          "label": "Use NEAT for data transformation (ETL)",
+          "value": "etl",
+          "nextStep": "etl_extraction_source"
+        },
+        {
+          "label": "Create new NEAT workflow based on template",
+          "value": "workflow_template",
+          "nextStep": "workflow_template"
+        },
+        {
+          "label": "Define my own NEAT workflow from scratch",
+          "value": "workflow_from_scratch",
+          "nextStep": "last_step"
+        },
+        {
+          "label": "Finish setup and generate NEAT workflow",
+          "value": "finish",
+          "nextStep": "last_step"
+        }
+      ],
+      "default_next_step": "modelling",
+      "type": "single choice",
+      "answer": {}
+    },
+    {
+      "id": "modelling",
+      "question": "How do you want to start your data modelling journey?",
+      "description": "",
+      "img": "/static/img/neat-dm.jpg",
+      "options": [
+        {
+          "label": "Define data model from scratch",
+          "value": "scratch",
+          "nextStep": "model_from_scratch"
+        },
+        {
+          "label": "Load existing data model from NEAT Rules file",
+          "value": "model_load_from_rules",
+          "nextStep": "model_load_from_rules"
+        },
+        {
+          "label": "Import or infer data model from external system",
+          "value": "import_from_source",
+          "nextStep": "model_import_from_source"
+        },
+        {
+          "label": "Generate model using GenAI",
+          "value": "gen_ai",
+          "nextStep": "model_gen_ai"
+        }
+      ],
+      "default_next_step": "",
+      "type": "single choice",
+      "answer": {}
+    },
+    {
+      "id": "model_from_scratch",
+      "question": "Select a template for your data model",
+      "img": "/static/img/neat-dm.jpg",
+      "description": "",
+      "options": [
+        {
+          "label": "basic",
+          "value": "basic",
+          "nextStep": null
+        },
+        {
+          "label": "advanced",
+          "value": "advanced",
+          "nextStep": null
+        }
+      ],
+      "default_next_step": "start",
+      "type": "single choice",
+      "answer": {}
+    },
+    {
+      "id": "model_load_from_rules",
+      "question": "Which source system or format do you want to import data model from ?",
+      "img": "/static/img/neat-dm.jpg",
+      "description": "",
+      "options": [
+        {
+          "label": "Load from JSON or YAML NEAT rules file",
+          "value": "json_yaml_neat_rules",
+          "nextStep": null
+        },
+        {
+          "label": "Load from Excel NEAT rules file",
+          "value": "json_yaml_dump",
+          "nextStep": null
+        }
+      ],
+      "default_next_step": "start",
+      "type": "single choice",
+      "answer": {}
+    },
+    {
+      "id": "model_import_from_source",
+      "question": "Which source system or format do you want to import data model from ?",
+      "description": "",
+      "img": "/static/img/neat-dm.jpg",
+      "options": [
+        {
+          "label": "Infer from RDF data dump",
+          "value": "rdf",
+          "nextStep": null
+        },
+        {
+          "label": "Infer from JSON or YAML data dump",
+          "value": "json_yaml_dump",
+          "nextStep": null
+        },
+        {
+          "label": "Generate from Open API spec",
+          "value": "open_api_spec",
+          "nextStep": null
+        },
+        {
+          "label": "Generate from CDF DMS view",
+          "value": "dms_view",
+          "nextStep": null
+        },
+        {
+          "label": "Generate from OWL file",
+          "value": "owl",
+          "nextStep": null
+        },
+        {
+          "label": "Generate from SQL DDL",
+          "value": "sql_ddl",
+          "nextStep": null
+        },
+        {
+          "label": "Generate from XML schema",
+          "value": "sql_ddl",
+          "nextStep": null
+        }
+      ],
+      "default_next_step": "model_import_transport",
+      "type": "single choice",
+      "answer": {}
+    },
+    {
+      "id": "model_import_transport",
+      "question": "How do you want to load data model from external system ?",
+      "description": "",
+      "img": "/static/img/neat-dm.jpg",
+      "options": [
+        {
+          "label": "Download data dump from REST api",
+          "value": "rest",
+          "nextStep": null
+        },
+        {
+          "label": "Download data dump from CDF",
+          "value": "cdf",
+          "nextStep": null
+        },
+        {
+          "label": "Download data dump from Github",
+          "value": "github",
+          "nextStep": null
+        },
+        {
+          "label": "Load data dump from local file system",
+          "value": "local_fs",
+          "nextStep": null
+        },
+        {
+          "label": "Upload data dump file through NEAT UI",
+          "value": "neat_ui",
+          "nextStep": null
+        },
+        {
+          "label": "I will decide later",
+          "value": "later",
+          "nextStep": null
+        }
+      ],
+      "default_next_step": "model_export_format",
+      "type": "single choice",
+      "answer": {}
+    },
+    {
+      "id": "model_export_format",
+      "question": "Which format do you want to export your model to ?",
+      "img": "/static/img/neat-dm.jpg",
+      "description": "",
+      "options": [
+        {
+          "label": "Export to NEAT Json/Yaml rules files",
+          "value": "json_yaml_rule_format",
+          "nextStep": null
+        },
+        {
+          "label": "Export to NEAT excel rules file",
+          "value": "excel_rules_format",
+          "nextStep": null
+        },
+        {
+          "label": "Export to NEAT excel rules file and generate Data Capturing Spreadsheet",
+          "value": "excel_rules_format_and_data_capturing",
+          "nextStep": null
+        },
+        {
+          "label": "Export to CDF DMS container",
+          "value": "dms_model",
+          "nextStep": null
+        },
+        {
+          "label": "Export to CDF DMS view",
+          "value": "dms_view",
+          "nextStep": null
+        },
+        {
+          "label": "Export to OWL file",
+          "value": "owl",
+          "nextStep": null
+        },
+        {
+          "label": "Export to SHACL file",
+          "value": "shacl",
+          "nextStep": null
+        },
+        {
+          "label": "Export to GraphQL schema file",
+          "value": "graphql",
+          "nextStep": null
+        },
+        {
+          "label": "Export to SQL DDL file",
+          "value": "sql_ddl_file",
+          "nextStep": null
+        }
+      ],
+      "default_next_step": "start",
+      "type": "single choice",
+      "answer": {}
+    },
+    {
+      "id": "etl_extraction_source",
+      "question": "Which source system or format do you want to import data from ?",
+      "description": "",
+      "img": "/static/img/neat-etl.jpg",
+      "options": [
+        {
+          "label": "Extract data from RDF data dump",
+          "value": "rdf_dump",
+          "nextStep": null
+        },
+        {
+          "label": "Extract data from AVEVA PI Asset Framewowrk",
+          "value": "pi_af_dump",
+          "nextStep": null
+        },
+        {
+          "label": "Extract data from arbitrary JSON dump",
+          "value": "json_model",
+          "nextStep": null
+        },
+        {
+          "label": "Generate mock Graph",
+          "value": "generate_mock_graph",
+          "nextStep": null
+        },
+        {
+          "label": "Upload data from Data Capturing Spreadsheet",
+          "value": "data_capture",
+          "nextStep": null
+        }
+      ],
+      "default_next_step": "etl_load_target",
+      "type": "single choice",
+      "answer": {}
+    },
+    {
+      "id": "etl_load_target",
+      "question": "Where do you want to load data to ?",
+      "description": "",
+      "img": "/static/img/neat-etl.jpg",
+      "options": [
+        {
+          "label": "Load to CDF as CDF classic resources (Assets, Relationships)",
+          "value": "cdf_classic",
+          "nextStep": null
+        },
+        {
+          "label": "Load to CDF as FDM resources (nodes and edges)",
+          "value": "cdf_fdm",
+          "nextStep": null
+        },
+        {
+          "label": "Export as RDF graph file",
+          "value": "rdf",
+          "nextStep": null
+        }
+      ],
+      "default_next_step": "start",
+      "type": "single choice",
+      "answer": {}
+    },
+    {
+      "id": "last_step",
+      "question": "Congratulations, you have successfully completed the NEAT wizard.",
+      "description": "Neat wizard has generated workflow for you. Please proceed to workflow configuration.",
+      "options": [],
+      "default_next_step": "",
+      "type": "submit",
+      "answer": {}
+    }
+  ]
+}

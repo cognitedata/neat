@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 
 from cognite import neat
 from cognite.neat.app.api.asgi.metrics import prometheus_app
-from cognite.neat.app.api.configuration import NEAT_APP, UI_PATH
+from cognite.neat.app.api.configuration import NEAT_APP, UI_PATH, WORKFLOW_TEMPLATES_PATH
 from cognite.neat.app.api.context_manager import lifespan
 from cognite.neat.app.api.routers import configuration, crud, data_exploration, metrics, rules, workflows
 
@@ -30,7 +30,7 @@ app.add_middleware(
 app.mount("/metrics", prometheus_app)
 app.mount("/static", StaticFiles(directory=UI_PATH), name="static")
 app.mount("/data", StaticFiles(directory=NEAT_APP.config.data_store_path), name="data")
-
+app.mount("/templates", StaticFiles(directory=WORKFLOW_TEMPLATES_PATH), name="templates")
 
 # Mount routers
 app.include_router(configuration.router)

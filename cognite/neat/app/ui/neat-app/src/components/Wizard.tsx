@@ -20,19 +20,20 @@ import { getNeatApiRootUrl } from './Utils';
 interface Option {
   label: string;
   value: string;
-  nextStep: string[];
+  nextStep: string;
 }
 
 interface Answer {
   value: string;
   label?: string;
-  nextSteps: string[];
+  nextSteps: string;
   previousStep: string;
 }
 
 interface Step {
   id: string;
   question: string;
+  img: string;
   description: string;
   options: Option[];
   default_next_step: string;
@@ -55,7 +56,7 @@ function NeatWizard() {
 
   useEffect(() => {
     // Fetch the steps from an API endpoint
-    let fullPath = neatApiRootUrl + '/data/staging/wizard_steps.json?nocache=' + Date.now();
+    let fullPath = neatApiRootUrl + '/templates/default_wizard.json?nocache=' + Date.now();
     fetch(fullPath)
       .then((response) => response.json())
       .then((data) => {
@@ -68,13 +69,33 @@ function NeatWizard() {
       });
   }, []);
 
+  const sendResults = () => {
+    console.log('Sending results to API');
+    console.log(wizardData);
+   
+    fetch(neatApiRootUrl + '/api/wizard', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(wizardData),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log('Success:', data);
+      })
+      .catch((error) => {
+        console.error('Error sending results:', error);
+      });
+  }
+
   const handleNext = () => {
     console.log('Next step id: ' + nextStepId);
     getStepById(nextStepId).answer = currentStep.answer;
     console.dir(wizardData);
     setActiveStepId(nextStepId);
     const nextStep = getStepById(nextStepId);
-    nextStep.answer = {value: "",label:"", nextSteps: [""], previousStep: activeStepId}
+    nextStep.answer = {value: "",label:"", nextSteps: "", previousStep: activeStepId}
     setCurrentStep(nextStep);
     // setAnsweredSteps([...answeredSteps, { question: currentStep.question, step_id: currentStep.id}]);
 
@@ -84,7 +105,7 @@ function NeatWizard() {
     // setActiveStepId(previousStepId);
     console.dir(currentStep)
     const previousStepId = currentStep.answer.previousStep;
-    currentStep.answer = {value: "",label:"", nextSteps: [""], previousStep: ""}
+    currentStep.answer = {value: "",label:"", nextSteps: "", previousStep: ""}
     setActiveStepId(previousStepId);
     setCurrentStep(getStepById(previousStepId));
   };
@@ -105,28 +126,29 @@ function NeatWizard() {
   const handleAnswerChange = (event) => {
     const { name, value } = event.target;
     console.log('name: ' + name + ' value: ' + value);
-
     const nextSteps = currentStep.options.find((option) => option.value === value).nextStep;
     currentStep.answer.value = value;
     if (nextSteps) {
-      setNextStepId(nextSteps[0]);
+      setNextStepId(nextSteps);
       currentStep.answer.nextSteps = nextSteps;
     }else {
+      console.log('No next step found, using default '+ currentStep.default_next_step);
       setNextStepId(currentStep.default_next_step);
-      currentStep.answer.nextSteps = [currentStep.default_next_step];
+      currentStep.answer.nextSteps = currentStep.default_next_step;
     }
-
+    setCurrentStep({...currentStep})
+    
   };
-
-
   return (
     <Container>
     {currentStep && (
-
     <Card variant="outlined">
       <CardContent>
         <Typography variant="h5">{currentStep.question}</Typography>
         <Typography variant="subtitle1">{currentStep.description}</Typography>
+        { currentStep.img && (
+          <img src={neatApiRootUrl + currentStep.img} alt={currentStep.question} style={{width: '100%'}} />
+        )}
         <FormControl component="fieldset">
           <FormLabel component="legend">Select an option:</FormLabel>
           <RadioGroup
