@@ -11,6 +11,6 @@ from tests.data import OSDUWELLS_MODEL, SCENARIO_INSTANCE_MODEL
 def test_import_export_data_model(data_model: dm.DataModel[dm.View]):
     rules = importer.DMSImporter(data_model).to_rules()
 
-    exported = exporter.DMSExporter(rules, data_model_id=data_model.as_id(), set_expected_source=False).export()
+    exported = exporter.DMSExporter(rules, data_model_id=data_model.as_id()).export()
 
     assert exported.data_model.dump() == data_model.as_apply().dump()
