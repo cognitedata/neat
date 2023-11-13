@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.40.1] - 08-11-23
+## Changed
+- The `DMSExporter` is now configurable with `datamodel_id`. The `DMSImporter` also accepts a data model as input.
+
 ## [0.40.0] - 08-11-23
 ## Changed
 - The interface for `cognite.neat.rules.exporters`. Now, they have the following methods `.export()`, `.export_to_file()`,
