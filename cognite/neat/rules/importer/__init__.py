@@ -1,12 +1,12 @@
 from ._base import BaseImporter
-from .dict2rules import DictImporter
-from .dms2rules import DMSImporter
-from .graph2rules import GraphImporter
-from .json2rules import JSONImporter
-from .owl2rules import OWLImporter
-from .spreadsheet2rules import ExcelImporter, GoogleSheetImporter
-from .xml2rules import XMLImporter
-from .yaml2rules import YAMLImporter
+from ._dict2rules import DictImporter
+from ._dms2rules import DMSImporter
+from ._graph2rules import GraphImporter
+from ._json2rules import JSONImporter
+from ._owl2rules import OWLImporter
+from ._spreadsheet2rules import ExcelImporter, GoogleSheetImporter
+from ._xml2rules import XMLImporter
+from ._yaml2rules import YAMLImporter
 
 __all__ = [
     "BaseImporter",

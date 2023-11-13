@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from .dict2rules import DictImporter
+from ._dict2rules import DictImporter
 
 
 class JSONImporter(DictImporter):

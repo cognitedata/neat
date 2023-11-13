@@ -2,7 +2,7 @@ from pathlib import Path
 
 import yaml
 
-from cognite.neat.rules.importer.dict2rules import DictImporter
+from cognite.neat.rules.importer._dict2rules import DictImporter
 
 
 class YAMLImporter(DictImporter):
