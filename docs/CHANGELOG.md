@@ -18,7 +18,7 @@ Changes are grouped as follows:
 ## [0.40.1] - 10-11-23
 
 ## Fixed
-- Updated cognite-sdk
+- Set lower bound of `cognite-sdk` to `6.39.2` as it is required due to a bug in earlier SDK versions. 
 
 ## Improved
 - Improved Nodes and Edges validation and data validation reporting in rdf2nodes_and_edges and GenerateCDFNodesAndEdgesFromGraph steps.

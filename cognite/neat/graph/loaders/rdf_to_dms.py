@@ -128,22 +128,19 @@ def rdf2nodes_and_edges(
 
 
 def is_node_valid(node: NodeApply) -> tuple[bool, str]:
-    if node.external_id is None or node.external_id == "" or len(node.external_id) >= 255:
-        return False, f"external_id {node.external_id} is empty of too long"
-    return True, ""
+    return is_valid_external_id(node.external_id)
 
 
 def is_edge_valid(edge: EdgeApply) -> tuple[bool, str]:
-    if edge.external_id is None or edge.external_id == "" or len(edge.external_id) >= 255:
-        return False, f"external_id {edge.external_id} is empty of too long"
-    if (
-        edge.start_node.external_id is None
-        or edge.start_node.external_id == ""
-        or len(edge.start_node.external_id) >= 255
-    ):
-        return False, f"start_node.external_id {edge.start_node.external_id} is empty of too long"
-    if edge.end_node.external_id is None or edge.end_node.external_id == "" or len(edge.end_node.external_id) >= 255:
-        return False, f"end_node.external_id {edge.end_node.external_id} is empty of too long"
+    for external_id in [edge.external_id, edge.start_node.external_id, edge.end_node.external_id]:
+        is_valid, reason = is_valid_external_id(external_id)
+        if not is_valid:
+            return False, reason
+    return True, ""
+
+def is_valid_external_id(external_id: str) -> tuple[bool, str]:
+    if external_id is None or external_id == "" or len(external_id) >= 255:
+        return False, f"external_id {external_id} is empty of too long"
     return True, ""
 
 
