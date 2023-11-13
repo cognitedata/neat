@@ -6,24 +6,28 @@ theme:
   features:
     - content.code.copy
     - content.tooltips
+  logo: figs/logo.png
+  palette:
+    primary: indigo
 
 nav:
   - Home: index.md
-  - Features:
-      - Overview: feature-overview.md
-      - Data Exploration: ui-data-exploration.md
+  - Features: feature-overview.md
   - Installation: installation.md
   - Quickstart:
       - Overview: quickstart/overview.md
       - Data Model Import: quickstart/data-model-import.ipynb
   - Fundamental Concepts:
-      - Transformation Rules:
-          - Overview: transformation-rules.md
+      - NEAT Flows:
+          - Data Modeling: data-modeling-flow.md
+          - Graph ETL: graph-etl-flow.md
+      - Rules:
+          - Overview: rules.md
           - Rule Types: rule-types.md
       - Workflows:
           - Overview: workflows.md
           - Steps: workflow-steps.md
-  - Repository of Steps: steps-repository.md
+          - Steps Library: steps-library.md
   - Tutorial:
       - Notebooks:
           - Part 1 Neat Data Model - Transformation Rules: tutorial/notebooks/part-1-data-model-generation.ipynb
@@ -53,6 +57,7 @@ nav:
               - Rules: api/workflows/steps/rules.md
               - Graph: api/workflows/steps/graph.md
       - Exceptions: api/exceptions.md
+  - Component Lifecycle Policy: componenets-lifecycle-policy.md
   - Changelog​: CHANGELOG.md
 
 markdown_extensions:
