@@ -138,6 +138,7 @@ def is_edge_valid(edge: EdgeApply) -> tuple[bool, str]:
             return False, reason
     return True, ""
 
+
 def is_valid_external_id(external_id: str) -> tuple[bool, str]:
     if external_id is None or external_id == "" or len(external_id) >= 255:
         return False, f"external_id {external_id} is empty of too long"
