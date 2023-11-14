@@ -55,7 +55,7 @@ views:
         external_id: BidDocumentHeader
         space: power
       container_property_identifier: BidInterval
-      description: null
+      description: missing
       name: BidInterval
       source:
         external_id: BidInterval
@@ -184,7 +184,7 @@ views:
         external_id: Periods
         space: power
       container_property_identifier: TimeInterval
-      description: null
+      description: missing
       name: TimeInterval
       source:
         external_id: TimeInterval
@@ -193,14 +193,14 @@ views:
     BidCurves:
       type:
         space: power
-        externalId: ReserveBidTimeSeries.BidCurves
+        externalId: Periods.BidCurves
       source:
         space: power
         externalId: BidCurves
         version: '0_1'
         type: view
       direction: outwards
-      name: Periods
+      name: BidCurves
       description: missing
 - space: power
   externalId: TimeInterval
