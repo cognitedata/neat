@@ -15,6 +15,15 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.41.0] - 14-11-23
+## Added
+- Support for configuring the direction for child-parent relationship in `JSONImporter`, `YAMLImporter`, `DictImporter`.
+- Support for `datetime` in `JSONImporter`, `YAMLImporter`, `DictImporter`.
+## Fixed
+- `DMSExporter` does not write one-to-many edges to containers any more.
+- In the importers `JSONImporter`, `YAMLImporter`, `DictImporter` the `max_count` were not set leading all triples to
+  be a one-to-many relationship. Now, only data which are of type `list` skips the `max_count` all other set it to 1.
+
 ## [0.40.1] - 08-11-23
 ## Changed
 - The `DMSExporter` is now configurable with `datamodel_id`. The `DMSImporter` also accepts a data model as input.
