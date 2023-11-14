@@ -16,6 +16,7 @@ import HelpIcon from '@mui/icons-material/Help';
 import GlobalConfigView from 'views/GlobalConfigView';
 import AboutView from 'views/AboutView';
 import NeatWizard from 'components/Wizard';
+import { alignProperty } from '@mui/material/styles/cssUtils';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -51,7 +52,7 @@ function a11yProps(index: number) {
 }
 
 export default function BasicTabs() {
-  const [value, setValue] = React.useState(0);
+  const [value, setValue] = React.useState(1);
 
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
     setValue(newValue);
@@ -61,30 +62,31 @@ export default function BasicTabs() {
     <Box sx={{ width: '100%' }}>
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
-          <Tab label="Solutions" {...a11yProps(0)} />
-          <Tab label="Execution history" {...a11yProps(1)} />
-          <Tab label="Statistics" {...a11yProps(2)} />
-          <Tab icon={<BuildRoundedIcon />} aria-label="Global config" {...a11yProps(3)} />
-          <Tab icon={<HelpIcon />} aria-label="Global config" {...a11yProps(4)} />
-          <Tab label="Wiz" {...a11yProps(5)} />
+          <img src='/neat-logo.png' alt='Neat logo' width={25} height={25} style={{margin:5,marginTop:9}}/>
+          <Tab label="Solutions" {...a11yProps(1)} />
+          <Tab label="Execution history" {...a11yProps(2)} />
+          <Tab label="Statistics" {...a11yProps(3)} />
+          <Tab icon={<BuildRoundedIcon />} aria-label="Global config" {...a11yProps(4)} />
+          <Tab icon={<HelpIcon />} aria-label="Global config" {...a11yProps(5)} />
+          <Tab label="Wiz" {...a11yProps(6)} />
         </Tabs>
       </Box>
-      <TabPanel value={value} index={0}>
+      <TabPanel value={value} index={1}>
         <WorkflowView/>
       </TabPanel>
-      <TabPanel value={value} index={1}>
+      <TabPanel value={value} index={2}>
         <ExecutionsTable />
       </TabPanel>
-      <TabPanel value={value} index={2}>
+      <TabPanel value={value} index={3}>
         <MetricsTable />
       </TabPanel>
-      <TabPanel value={value} index={3}>
+      <TabPanel value={value} index={4}>
         <GlobalConfigView />
       </TabPanel>
-      <TabPanel value={value} index={4}>
+      <TabPanel value={value} index={5}>
         <AboutView />
       </TabPanel>
-      <TabPanel value={value} index={5}>
+      <TabPanel value={value} index={6}>
         <NeatWizard />
       </TabPanel>
 
