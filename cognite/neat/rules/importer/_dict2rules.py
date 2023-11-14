@@ -8,9 +8,11 @@ from cognite.neat.rules.models.tables import Tables
 from ._base import BaseImporter
 
 
-class DictImporter(BaseImporter):
+class ArbitraryDictImporter(BaseImporter):
     """
-    Importer for an arbitrary dictionary to tables.
+    Importer for an arbitrary dictionary.
+
+    This importer infers the data model from the dictionary based on the shape of the data.
 
     Args:
         data: dictionary containing Rules definitions.

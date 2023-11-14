@@ -26,7 +26,7 @@ def test_import_json_export_data_model():
     expected_model = CAPACITY_BID_MODEL
     expected_containers = CAPACITY_BID_CONTAINERS
 
-    rules = importer.JSONImporter(CAPACITY_BID_JSON).to_rules()
+    rules = importer.ArbitraryJSONImporter(CAPACITY_BID_JSON).to_rules()
     exported = exporter.DMSExporter(rules, data_model_id=expected_model.as_id()).export()
 
     exported.data_model.name = expected_model.name

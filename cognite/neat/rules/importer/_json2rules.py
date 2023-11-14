@@ -2,12 +2,14 @@ import json
 from pathlib import Path
 from typing import Literal
 
-from ._dict2rules import DictImporter
+from ._dict2rules import ArbitraryDictImporter
 
 
-class JSONImporter(DictImporter):
+class ArbitraryJSONImporter(ArbitraryDictImporter):
     """
-    Importer for JSON files to raw dataframes.
+    Importer for data given in a JSON file or string.
+
+    This importer infers the data model from the JSON string based on the shape of the data.
 
     Args:
         json_path_or_str: Path to file with JSON or a JSON string.

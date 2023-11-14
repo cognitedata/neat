@@ -3,12 +3,14 @@ from typing import Literal
 
 import yaml
 
-from cognite.neat.rules.importer._dict2rules import DictImporter
+from cognite.neat.rules.importer._dict2rules import ArbitraryDictImporter
 
 
-class YAMLImporter(DictImporter):
+class YAMLImporterArbitrary(ArbitraryDictImporter):
     """
-    Importer for yaml file.
+    Importer for data given in a YAML file or string.
+
+    This importer infers the data model from the YAML string based on the shape of the data.
 
     Args:
         yaml_path_or_str: Path to file with YAML.
