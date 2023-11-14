@@ -52,6 +52,25 @@
 
 ---
 
+### OntologyToRules
+
+* **Category**: Rules Importer
+* **Version**: 0.1.0-alpha
+* **Description**: The step extracts NEAT rules object from OWL Ontology and         exports them as an Excel rules files for further editing.
+* **Output**: FlowMessage
+
+**Configurables:**
+
+| Name | Default value | Description |
+| ---- | ----- | ----- |
+| ontology_file_path | staging/ontology.ttl | Relative path to the OWL ontology file. |
+| excel_file_path | staging/rules.xlsx | Relative path for the Excel rules storage. |
+
+---
+
+
+---
+
 ### OpenApiToRules
 
 * **Category**: Rules Importer
@@ -166,6 +185,12 @@
 * **Input**: RulesData, CogniteClient, SolutionGraph
 * **Output**: FlowMessage, CategorizedAssets
 
+**Configurables:**
+
+| Name | Default value | Description |
+| ---- | ----- | ----- |
+| assets_cleanup_type | nothing | Configures asset cleanup process. Supported options: nothing - no cleanup,                     orphans - all oraphan assets will be removed, circular - all circular assets will be removed ,                     full - full cleanup , both orphans and circular assets will be removed.  |
+
 ---
 
 
@@ -185,6 +210,7 @@
 | ---- | ----- | ----- |
 | graph_name | source | The name of the graph to be used for matching. Supported options : source, solution |
 | add_class_prefix | False | Whether to add class name as a prefix to external ids of instances or not |
+| data_validatation_error_handling_strategy | skip_and_report | The strategy for handling data validation errors. Supported options:                    skip_and_report - failed instance (node or edge) will be skipped and reported ,                    fail_and_report - failed instance  (node or edge) will fail the workflow and report the error |
 
 ---
 
@@ -720,6 +746,12 @@
 * **Description**: The step transforms source graph to solution graph
 * **Input**: RulesData, CogniteClient, SourceGraph, SolutionGraph
 * **Output**: FlowMessage
+
+**Configurables:**
+
+| Name | Default value | Description |
+| ---- | ----- | ----- |
+| cdf_lookup_database |  | Name of the CDF raw database to use for data lookup (rawlookup rules).            Applicable only for transformations with rawlookup rules. |
 
 ---
 

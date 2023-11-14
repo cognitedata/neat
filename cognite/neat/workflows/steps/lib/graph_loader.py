@@ -84,6 +84,16 @@ class GenerateCDFNodesAndEdgesFromGraph(Step):
             options=["True", "False"],
             label=("Whether to add class name as a prefix to external ids of instances or not"),
         ),
+        Configurable(
+            name="data_validatation_error_handling_strategy",
+            value="skip_and_report",
+            options=["skip_and_report", "fail_and_report"],
+            label=(
+                "The strategy for handling data validation errors. Supported options: \
+                   skip_and_report - failed instance (node or edge) will be skipped and reported , \
+                   fail_and_report - failed instance  (node or edge) will fail the workflow and report the error"
+            ),
+        ),
     ]
 
     def run(  # type: ignore[override, syntax]
@@ -95,6 +105,9 @@ class GenerateCDFNodesAndEdgesFromGraph(Step):
             raise StepFlowContextNotInitialized(type(self).__name__)
 
         graph_name = self.configs["graph_name"] or "source"
+        data_validatation_error_handling_strategy = self.configs.get(
+            "data_validatation_error_handling_strategy", "skip_and_report"
+        )
         if graph_name == "solution":
             # Todo Anders: Why is the graph fetched from context when it is passed as an argument?
             graph = cast(SourceGraph | SolutionGraph, self.flow_context["SolutionGraph"])
@@ -121,8 +134,10 @@ class GenerateCDFNodesAndEdgesFromGraph(Step):
             msg += (
                 f"<p>There is total of { len(exceptions) } exceptions</p>"
                 f'<a href="http://localhost:8000/data/reports/{file_name}?{time.time()}" '
-                f'target="_blank">here</a>'
+                f'target="_blank">Full error report </a>'
             )
+            if data_validatation_error_handling_strategy == "fail_and_report":
+                return FlowMessage(error_text=msg, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
 
         return FlowMessage(output_text=msg), Nodes(nodes=nodes), Edges(edges=edges)
 

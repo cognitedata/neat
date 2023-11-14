@@ -6,7 +6,7 @@ import sys
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
-from typing import ClassVar, cast
+from typing import ClassVar, Literal, cast
 
 import yaml
 
@@ -16,6 +16,7 @@ else:
     from typing_extensions import Self
 
 from cognite.client import CogniteClient
+from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import (
     ContainerApply,
     ContainerApplyList,
@@ -53,7 +54,32 @@ class DMSSchema:
 
 
 class DMSExporter(BaseExporter[DMSSchema]):
-    """Class for exporting transformation rules object to CDF Data Model Storage (DMS)."""
+    """Class for exporting transformation rules object to CDF Data Model Storage (DMS).
+
+    Args:
+        rules: Transformation rules object.
+        data_model_id: The id of the data model to be created.
+        container_policy: How to create/reuse existing containers.
+        existing_model: In the case of updating an existing model, this is the existing model.
+        report: Report. This is used when the exporter object is created from RawRules
+    """
+
+    def __init__(
+        self,
+        rules: Rules,
+        data_model_id: dm.DataModelId | None = None,
+        container_policy: Literal["one-to-one-view", "extend-existing", "neat-optimized"] = "one-to-one-view",
+        existing_model: dm.DataModel[dm.View] | None = None,
+        report: str | None = None,
+    ):
+        super().__init__(rules, report)
+        self.data_model_id = data_model_id
+        self.container_policy = container_policy
+        if container_policy == "extend-existing" and existing_model is None:
+            raise ValueError("Container policy is extend-existing, but no existing model is provided")
+        if container_policy != "one-to-one-view":
+            raise NotImplementedError("Only one-to-one-view container policy is currently supported")
+        self.existing_model = existing_model
 
     def _export_to_file(self, filepath: Path) -> None:
         if filepath.suffix not in {".yaml", ".yml"}:
@@ -70,7 +96,7 @@ class DMSExporter(BaseExporter[DMSSchema]):
         )
 
     def export(self) -> DMSSchema:
-        model = DataModel.from_rules(self.rules)
+        model = DataModel.from_rules(self.rules, self.data_model_id)
         return DMSSchema(
             data_model=DataModelApply(
                 space=model.space,
@@ -80,7 +106,7 @@ class DMSExporter(BaseExporter[DMSSchema]):
                 name=model.name,
                 views=list(model.views.values()),
             ),
-            containers=ContainerApplyList(model.containers),
+            containers=ContainerApplyList(model.containers.values()),
         )
 
 
@@ -114,15 +140,22 @@ class DataModel(BaseModel):
     )
 
     @classmethod
-    def from_rules(cls, rules: Rules) -> Self:
+    def from_rules(
+        cls, rules: Rules, data_model_id: dm.DataModelId | None = None, set_expected_source: bool = True
+    ) -> Self:
         """Generates a DataModel class instance from a Rules instance.
 
         Args:
-            rule: instance of Rules.
+            rules: instance of Rules.
+            data_model_id: The id of the data model to be created.
+            set_expected_source: Whether to set the expected source on views with direct relation properties.
 
         Returns:
             Instance of DataModel.
         """
+        space = (data_model_id and data_model_id.space) or rules.metadata.cdf_space_name
+        external_id = (data_model_id and data_model_id.external_id) or rules.metadata.data_model_name or "missing"
+        version = (data_model_id and data_model_id.version) or rules.metadata.version
         names_compliant, name_warnings = are_entity_names_dms_compliant(rules, return_report=True)
         if not names_compliant:
             logging.error(
@@ -144,21 +177,22 @@ class DataModel(BaseModel):
             raise exceptions.DataModelNameMissing(prefix=rules.metadata.prefix)
 
         return cls(
-            space=rules.metadata.cdf_space_name,
-            external_id=rules.metadata.data_model_name,
-            version=rules.metadata.version,
+            space=space,
+            external_id=external_id,
+            version=version,
             description=rules.metadata.description,
             name=rules.metadata.title,
-            containers=cls.containers_from_rules(rules),
-            views=cls.views_from_rules(rules),
+            containers=cls.containers_from_rules(rules, space),
+            views=cls.views_from_rules(rules, space),
         )
 
     @staticmethod
-    def containers_from_rules(rule: Rules) -> dict[str, ContainerApply]:
+    def containers_from_rules(rule: Rules, space: str | None = None) -> dict[str, ContainerApply]:
         """Create a dictionary of ContainerApply instances from a Rules instance.
 
         Args:
             rule: instance of Rules.`
+            space: Name of the space to place the containers.
 
         Returns:
             Dictionary of ContainerApply instances.
@@ -166,7 +200,7 @@ class DataModel(BaseModel):
         class_properties = to_class_property_pairs(rule)
         return {
             class_id: ContainerApply(
-                space=rule.metadata.cdf_space_name,
+                space=space or rule.metadata.cdf_space_name,
                 external_id=class_id,
                 name=rule.classes[class_id].class_name,
                 description=rule.classes[class_id].description,
@@ -221,25 +255,25 @@ class DataModel(BaseModel):
         return container_properties
 
     @staticmethod
-    def views_from_rules(rule: Rules) -> dict[str, ViewApply]:
+    def views_from_rules(rule: Rules, space: str | None = None) -> dict[str, ViewApply]:
         """Generates a dictionary of ViewApply instances from a Rules instance.
 
         Args:
             rule: Instance of Rules.
+            space: Name of the space to place the views.
 
         Returns:
             Dictionary of ViewApply instances.
         """
         class_properties = to_class_property_pairs(rule)
+        space = space or rule.metadata.cdf_space_name
         return {
             class_id: ViewApply(
-                space=rule.metadata.cdf_space_name,
+                space=space,
                 external_id=class_id,
                 name=rule.classes[class_id].class_name,
                 description=rule.classes[class_id].description,
-                properties=DataModel.view_properties_from_dict(
-                    properties, rule.metadata.cdf_space_name, rule.metadata.version
-                ),
+                properties=DataModel.view_properties_from_dict(properties, space, rule.metadata.version),
                 version=rule.metadata.version,
             )
             for class_id, properties in class_properties.items()
