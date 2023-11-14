@@ -55,7 +55,7 @@
     BidInterval:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: missing
       name: BidInterval
       nullable: true
       type:

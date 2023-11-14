@@ -75,8 +75,14 @@ class _TripleFinder:
         elif isinstance(data, list):
             for item in data:
                 self._convert_dict_to_classes_and_props(item, parent_property_name, grand_parent_property_name)
-        elif isinstance(data, bool | int | float | str) and parent_property_name is not None:
-            data_type = {bool: "boolean", int: "integer", float: "float", str: "string"}[type(data)]
+        elif isinstance(data, bool | int | float) and parent_property_name is not None:
+            data_type = {bool: "boolean", int: "integer", float: "float"}[type(data)]
+            self.add_property(grand_parent_property_name, parent_property_name, data_type, "missing")
+        elif isinstance(data, str) and parent_property_name is not None:
+            if pd.isna(pd.to_datetime(data, errors="coerce")):
+                data_type = "string"
+            else:
+                data_type = "dateTime"
             self.add_property(grand_parent_property_name, parent_property_name, data_type, "missing")
         else:
             raise ValueError(f"Unknown type {type(data)}")
