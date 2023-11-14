@@ -1,0 +1,226 @@
+description: A model for storing capacity bids
+external_id: CapacityBid
+name: CapacityBid
+space: power
+version: '1'
+views:
+- space: power
+  externalId: BidDocumentHeader
+  description: missing
+  name: BidDocumentHeader
+  version: '0_1'
+  properties:
+    DocumentTypeName:
+      container:
+        space: power
+        externalId: BidDocumentHeader
+        type: container
+      containerPropertyIdentifier: DocumentTypeName
+      name: DocumentTypeName
+      description: missing
+    ProcessTypeName:
+      container:
+        space: power
+        externalId: BidDocumentHeader
+        type: container
+      containerPropertyIdentifier: ProcessTypeName
+      name: ProcessTypeName
+      description: missing
+    TSO:
+      container:
+        space: power
+        externalId: BidDocumentHeader
+        type: container
+      containerPropertyIdentifier: TSO
+      name: TSO
+      description: missing
+    Owner:
+      container:
+        space: power
+        externalId: BidDocumentHeader
+        type: container
+      containerPropertyIdentifier: Owner
+      name: Owner
+      description: missing
+    CreatedDateTime:
+      container:
+        space: power
+        externalId: BidDocumentHeader
+        type: container
+      containerPropertyIdentifier: CreatedDateTime
+      name: CreatedDateTime
+      description: missing
+    BidInterval:
+      container:
+        external_id: BidDocumentHeader
+        space: power
+      container_property_identifier: BidInterval
+      description: null
+      name: BidInterval
+      source:
+        external_id: TimeInterval
+        space: power
+        version: '0_1'
+    Country:
+      container:
+        space: power
+        externalId: BidDocumentHeader
+        type: container
+      containerPropertyIdentifier: Country
+      name: Country
+      description: missing
+    Origin:
+      container:
+        space: power
+        externalId: BidDocumentHeader
+        type: container
+      containerPropertyIdentifier: Origin
+      name: Origin
+      description: missing
+- space: power
+  externalId: ReserveBidTimeSeries
+  description: missing
+  name: ReserveBidTimeSeries
+  version: '0_1'
+  properties:
+    BidType:
+      container:
+        space: power
+        externalId: ReserveBidTimeSeries
+        type: container
+      containerPropertyIdentifier: BidType
+      name: BidType
+      description: missing
+    MeasureUnit:
+      container:
+        space: power
+        externalId: ReserveBidTimeSeries
+        type: container
+      containerPropertyIdentifier: MeasureUnit
+      name: MeasureUnit
+      description: missing
+    Currency:
+      container:
+        space: power
+        externalId: ReserveBidTimeSeries
+        type: container
+      containerPropertyIdentifier: Currency
+      name: Currency
+      description: missing
+    Price:
+      container:
+        space: power
+        externalId: ReserveBidTimeSeries
+        type: container
+      containerPropertyIdentifier: Price
+      name: Price
+      description: missing
+    DirectionName:
+      container:
+        space: power
+        externalId: ReserveBidTimeSeries
+        type: container
+      containerPropertyIdentifier: DirectionName
+      name: DirectionName
+      description: missing
+    ReserveObject:
+      container:
+        space: power
+        externalId: ReserveBidTimeSeries
+        type: container
+      containerPropertyIdentifier: ReserveObject
+      name: ReserveObject
+      description: missing
+    Periods:
+      type:
+        space: power
+        externalId: ReserveBidTimeSeries.Periods
+      source:
+        space: power
+        externalId: Periods
+        version: '0_1'
+        type: view
+      direction: outwards
+      name: Periods
+      description: missing
+- space: power
+  externalId: Periods
+  description: missing
+  name: Periods
+  version: '0_1'
+  properties:
+    Resolution:
+      container:
+        space: power
+        externalId: Periods
+        type: container
+      containerPropertyIdentifier: Resolution
+      name: Resolution
+      description: missing
+    TimeInterval:
+      container:
+        external_id: Periods
+        space: power
+      container_property_identifier: TimeInterval
+      description: null
+      name: TimeInterval
+      source:
+        external_id: TimeInterval
+        space: power
+        version: '0_1'
+    BidCurves:
+      type:
+        space: power
+        externalId: ReserveBidTimeSeries.BidCurves
+      source:
+        space: power
+        externalId: BidCurves
+        version: '0_1'
+        type: view
+      direction: outwards
+      name: Periods
+      description: missing
+- space: power
+  externalId: TimeInterval
+  description: missing
+  name: TimeInterval
+  version: '0_1'
+  properties:
+    Start:
+      container:
+        space: power
+        externalId: TimeInterval
+        type: container
+      containerPropertyIdentifier: Start
+      name: Start
+      description: missing
+    End:
+      container:
+        space: power
+        externalId: TimeInterval
+        type: container
+      containerPropertyIdentifier: End
+      name: End
+      description: missing
+- space: power
+  externalId: BidCurves
+  description: missing
+  name: BidCurves
+  version: '0_1'
+  properties:
+    ReserveObject:
+      container:
+        space: power
+        externalId: BidCurves
+        type: container
+      containerPropertyIdentifier: ReserveObject
+      name: ReserveObject
+      description: missing
+    Qty:
+      container:
+        space: power
+        externalId: BidCurves
+        type: container
+      containerPropertyIdentifier: Qty
+      name: Qty
+      description: missing

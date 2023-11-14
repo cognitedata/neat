@@ -14,3 +14,8 @@ _SCENARIO_INSTANCE = DATA_DIR / "IntegrationTestsImmutable-ScenarioInstance-1.ya
 
 OSDUWELLS_MODEL: dm.DataModel[dm.View] = dm.DataModel.load(yaml.safe_load(_OSDUWElls.read_text())[0])
 SCENARIO_INSTANCE_MODEL: dm.DataModel[dm.View] = dm.DataModel.load(yaml.safe_load(_SCENARIO_INSTANCE.read_text())[0])
+
+CAPACITY_BID_MODEL: dm.DataModelApply = dm.DataModelApply.load(
+    yaml.safe_load((DATA_DIR / "power-CapacityBid-1.yaml").read_text())
+)
+CAPACITY_BID_JSON = DATA_DIR / "mock_capacity_bid.json"
