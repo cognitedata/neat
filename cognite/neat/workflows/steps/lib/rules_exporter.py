@@ -7,9 +7,9 @@ from typing import ClassVar
 import cognite.neat.graph.extractors.graph_sheet_to_graph
 from cognite.neat.exceptions import wrangle_warnings
 from cognite.neat.rules import exporter
-from cognite.neat.rules.exporter.rules2dms import DataModel
-from cognite.neat.rules.exporter.rules2graphql import GraphQLSchema
-from cognite.neat.rules.exporter.rules2ontology import Ontology
+from cognite.neat.rules.exporter._rules2dms import DataModel
+from cognite.neat.rules.exporter._rules2graphql import GraphQLSchema
+from cognite.neat.rules.exporter._rules2ontology import Ontology
 from cognite.neat.utils.utils import generate_exception_report
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage

@@ -1,7 +1,7 @@
-from .rules2dms import DMSExporter
-from .rules2excel import ExcelExporter
-from .rules2graphql import GraphQLSchemaExporter
-from .rules2ontology import OWLExporter, SemanticDataModelExporter, SHACLExporter
+from ._rules2dms import DMSExporter
+from ._rules2excel import ExcelExporter
+from ._rules2graphql import GraphQLSchemaExporter
+from ._rules2ontology import OWLExporter, SemanticDataModelExporter, SHACLExporter
 
 __all__ = [
     "ExcelExporter",

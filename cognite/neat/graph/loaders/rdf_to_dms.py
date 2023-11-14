@@ -8,7 +8,7 @@ from rdflib.term import Node
 
 from cognite.neat.exceptions import NeatException
 from cognite.neat.graph.stores.graph_store import NeatGraphStore
-from cognite.neat.rules.exporter.rules2dms import DataModel
+from cognite.neat.rules.exporter._rules2dms import DataModel
 from cognite.neat.rules.exporter.rules2pydantic_models import add_class_prefix_to_xid, rules_to_pydantic_models
 from cognite.neat.rules.models.rules import Rules
 from cognite.neat.utils.utils import chunker, datetime_utc_now, retry_decorator
