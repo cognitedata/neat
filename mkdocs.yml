@@ -13,7 +13,10 @@ theme:
 nav:
   - Home: index.md
   - Features: feature-overview.md
-  - Quick Start: getting-started.md
+  - Installation: installation.md
+  - Quickstart:
+      - Overview: quickstart/overview.md
+      - Data Model Import: quickstart/data-model-import.ipynb
   - Fundamental Concepts:
       - NEAT Flows:
           - Data Modeling: data-modeling-flow.md
@@ -80,6 +83,9 @@ plugins:
       execute: false
       ignore_h1_titles: True
       include_source: True
+      remove_tag_config:
+        remove_input_tags:
+          - hide
   - glightbox:
       width: 100%
       height: auto

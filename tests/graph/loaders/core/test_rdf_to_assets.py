@@ -13,7 +13,7 @@ from cognite.neat.graph.loaders.core.rdf_to_assets import (
     order_assets,
     remove_non_existing_labels,
 )
-from cognite.neat.rules.exporter.core.rules2labels import get_labels
+from cognite.neat.rules.exporter._core.rules2labels import get_labels
 
 
 def test_asset_hierarchy_ordering(mock_rdf_assets):
@@ -182,10 +182,7 @@ def test_assets_to_update(mock_rdf_assets, mock_cdf_assets):
     cdf_assets_df = pd.DataFrame.from_records([asset for asset in cdf_assets.values()])
 
     assets, report = _assets_to_update(
-        rdf_assets=rdf_assets,
-        cdf_assets=cdf_assets_df,
-        asset_ids=rdf_asset_ids,
-        meta_keys=NeatMetadataKeys(),
+        rdf_assets=rdf_assets, cdf_assets=cdf_assets_df, asset_ids=rdf_asset_ids, meta_keys=NeatMetadataKeys()
     )
 
     expected_report = {

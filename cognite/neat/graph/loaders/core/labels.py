@@ -5,7 +5,7 @@ from typing import cast
 from cognite.client import CogniteClient
 from cognite.client.data_classes import LabelDefinition, LabelDefinitionList
 
-from cognite.neat.rules.exporter.core import get_labels
+from cognite.neat.rules.exporter._core import get_labels
 from cognite.neat.rules.models.rules import Rules
 
 

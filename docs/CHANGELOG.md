@@ -15,19 +15,28 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.41.0] - 14-11-23
+## Changed
+- Renamed `JSONImporter`, `YAMLImporter`, `DictImporter` to `ArbitraryJSONmporter`, `ArbitraryYAMLImporter`, `ArbitraryDictImporter` to
+  reflect that these importers infer the data model from raw input data, and are not reading a serialized file.
+-
+## Added
+- Support for configuring the direction for child-parent relationship in `ArbitraryJSONmporter`, `ArbitraryYAMLImporter`, `ArbitraryDictImporter`.
+- Support for `datetime` in `ArbitraryJSONmporter`, `ArbitraryYAMLImporter`, `ArbitraryDictImporter`.
+## Fixed
+- `DMSExporter` does not write one-to-many edges to containers any more.
+- In the importers `ArbitraryJSONmporter`, `ArbitraryYAMLImporter`, `ArbitraryDictImporter` the `max_count` were not set leading all triples to
+  be a one-to-many relationship. Now, only data which are of type `list` skips the `max_count` all other set it to 1.
 
 ## [0.40.2] - 14-11-23
-
 ## Fixed
 - Set lower bound of `cognite-sdk` to `6.39.2` as it is required due to a bug in earlier SDK versions.
-
 ## Improved
 - Improved Nodes and Edges validation and data validation reporting in rdf2nodes_and_edges and GenerateCDFNodesAndEdgesFromGraph steps.
 
 ## [0.40.1] - 08-11-23
 ## Changed
 - The `DMSExporter` is now configurable with `datamodel_id`. The `DMSImporter` also accepts a data model as input.
-
 
 ## [0.40.0] - 08-11-23
 ## Changed
@@ -505,7 +514,7 @@ Changes are grouped as follows:
 
 ### Added
 
-- Configurable cdf client timeout and max workers size. See [getting started](getting-started.md) for details.
+- Configurable cdf client timeout and max workers size. See [getting started](installation.md) for details.
 - Additional logic for handling `CogniteReadTimeoutError` and `CogniteDuplicatedError` during retries. This is an attempt
   to handle cases when under heavy load, requests to CDF may timeout even though the requests were processed successfully
   in eventual consistancy manner.

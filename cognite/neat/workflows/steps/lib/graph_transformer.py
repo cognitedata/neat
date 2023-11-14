@@ -3,7 +3,7 @@ from typing import ClassVar
 from cognite.client import CogniteClient
 
 from cognite.neat.graph.transformations.transformer import RuleProcessingReport, domain2app_knowledge_graph
-from cognite.neat.rules.exporter.rules2triples import get_instances_as_triples
+from cognite.neat.rules.exporter._rules2triples import get_instances_as_triples
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
 from cognite.neat.workflows.steps.step_model import Configurable, Step
@@ -26,7 +26,7 @@ class TransformSourceToSolutionGraph(Step):
             value="",
             label="Name of the CDF raw database to use for data lookup (rawlookup rules).\
             Applicable only for transformations with rawlookup rules.",
-        ),
+        )
     ]
 
     def run(  # type: ignore[override, syntax]

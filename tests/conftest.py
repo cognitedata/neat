@@ -11,7 +11,7 @@ from cognite.neat.graph.extractors.mocks import generate_triples
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.graph.transformations.transformer import domain2app_knowledge_graph
 from cognite.neat.rules import importer
-from cognite.neat.rules.exporter.rules2triples import get_instances_as_triples
+from cognite.neat.rules.exporter._rules2triples import get_instances_as_triples
 from cognite.neat.rules.models.rules import Rules
 from tests import config
 
