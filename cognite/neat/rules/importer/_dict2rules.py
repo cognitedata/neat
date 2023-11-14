@@ -73,16 +73,13 @@ class _TripleFinder:
             for key, value in data.items():
                 self._convert_dict_to_classes_and_props(value, key, parent_property_name)
         elif isinstance(data, list):
+            if parent_property_name is not None and grand_parent_property_name is not None:
+                data_type = self._get_list_type(data, parent_property_name)
+                self.add_property(grand_parent_property_name, parent_property_name, data_type, "missing", is_list=True)
             for item in data:
                 self._convert_dict_to_classes_and_props(item, parent_property_name, grand_parent_property_name)
-        elif isinstance(data, bool | int | float) and parent_property_name is not None:
-            data_type = {bool: "boolean", int: "integer", float: "float"}[type(data)]
-            self.add_property(grand_parent_property_name, parent_property_name, data_type, "missing")
-        elif isinstance(data, str) and parent_property_name is not None:
-            if pd.isna(pd.to_datetime(data, errors="coerce")):
-                data_type = "string"
-            else:
-                data_type = "dateTime"
+        elif isinstance(data, bool | int | float | str) and parent_property_name is not None:
+            data_type = self._get_primitive_data_type(data)
             self.add_property(grand_parent_property_name, parent_property_name, data_type, "missing")
         else:
             raise ValueError(f"Unknown type {type(data)}")
@@ -127,3 +124,33 @@ class _TripleFinder:
             label="linked to",
         )
         self.properties[class_name + property_name] = prop
+
+    @staticmethod
+    def _get_primitive_data_type(data: Any, errors: Literal["raise", "empty"] = "raise") -> str:
+        data_type = type(data)
+        if data_type is bool:
+            return "boolean"
+        elif data_type is int:
+            return "integer"
+        elif data_type is float:
+            return "float"
+        elif data_type is str and not pd.isna(pd.to_datetime(data, errors="coerce")):
+            return "dateTime"
+        elif data_type is str:
+            return "string"
+
+        if errors == "empty":
+            return ""
+        else:
+            raise ValueError(f"Unknown primitive type {data_type}")
+
+    @classmethod
+    def _get_list_type(cls, data: list[Any], class_name: str) -> str:
+        if isinstance(data[0], dict):
+            return class_name
+
+        data_types = {cls._get_primitive_data_type(item, "empty") for item in data}
+        if "" in data_types or len(data_types) > 1:
+            # Fallback to string
+            return "string"
+        return data_types.pop()
