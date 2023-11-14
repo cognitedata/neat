@@ -13,18 +13,21 @@ import {
   Stepper,
   Step,
   StepLabel,
+  TextField,
 } from '@mui/material';
 import { getNeatApiRootUrl } from './Utils';
 
 
 interface Option {
+  name: string;
   label: string;
   value: string;
   nextStep: string;
+  workflowSteps: string[];
 }
 
 interface Answer {
-  value: string;
+  values: any;
   label?: string;
   nextSteps: string;
   previousStep: string;
@@ -32,7 +35,8 @@ interface Answer {
 
 interface Step {
   id: string;
-  question: string;
+  question: string; 
+  workflowTemplate: string;
   img: string;
   description: string;
   options: Option[];
@@ -40,6 +44,7 @@ interface Step {
   type: string;
   answer: Answer;
   previousStep: string;
+  action: string;
 
 }
 
@@ -69,6 +74,25 @@ function NeatWizard() {
       });
   }, []);
 
+  const createWorkflow = () => {
+    console.log('Creating workflow');
+    console.log(wizardData);
+    fetch(neatApiRootUrl + '/api/wizard', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(wizardData),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log('Success:', data);
+      })
+      .catch((error) => {
+        console.error('Error creating workflow:', error);
+      });
+  }
+
   const sendResults = () => {
     console.log('Sending results to API');
     console.log(wizardData);
@@ -92,11 +116,12 @@ function NeatWizard() {
   const handleNext = () => {
     console.log('Next step id: ' + nextStepId);
     getStepById(nextStepId).answer = currentStep.answer;
-    console.dir(wizardData);
+  
     setActiveStepId(nextStepId);
     const nextStep = getStepById(nextStepId);
-    nextStep.answer = {value: "",label:"", nextSteps: "", previousStep: activeStepId}
+    nextStep.answer = {values: {},label:"", nextSteps: "", previousStep: activeStepId}
     setCurrentStep(nextStep);
+    console.dir(wizardData);
     // setAnsweredSteps([...answeredSteps, { question: currentStep.question, step_id: currentStep.id}]);
 
   };
@@ -105,7 +130,7 @@ function NeatWizard() {
     // setActiveStepId(previousStepId);
     console.dir(currentStep)
     const previousStepId = currentStep.answer.previousStep;
-    currentStep.answer = {value: "",label:"", nextSteps: "", previousStep: ""}
+    currentStep.answer = {values: {},label:"", nextSteps: "", previousStep: ""}
     setActiveStepId(previousStepId);
     setCurrentStep(getStepById(previousStepId));
   };
@@ -127,7 +152,10 @@ function NeatWizard() {
     const { name, value } = event.target;
     console.log('name: ' + name + ' value: ' + value);
     const nextSteps = currentStep.options.find((option) => option.value === value).nextStep;
-    currentStep.answer.value = value;
+    if (currentStep.answer.values == null) {
+      currentStep.answer.values = {};
+    }
+    currentStep.answer.values["selected"] = value;
     if (nextSteps) {
       setNextStepId(nextSteps);
       currentStep.answer.nextSteps = nextSteps;
@@ -139,6 +167,14 @@ function NeatWizard() {
     setCurrentStep({...currentStep})
     
   };
+
+  const handleTextFieldChange = (name, value) => {
+    currentStep.answer.values[name] = value;
+    setNextStepId(currentStep.default_next_step);
+    currentStep.answer.nextSteps = currentStep.default_next_step;
+    setCurrentStep({...currentStep})
+  }
+
   return (
     <Container>
     {currentStep && (
@@ -149,11 +185,12 @@ function NeatWizard() {
         { currentStep.img && (
           <img src={neatApiRootUrl + currentStep.img} alt={currentStep.question} style={{width: '100%'}} />
         )}
+        { currentStep.type === "single_choice" &&  (
         <FormControl component="fieldset">
           <FormLabel component="legend">Select an option:</FormLabel>
           <RadioGroup
             name="answer"
-            value={currentStep?.answer.value || ''}
+            value={currentStep?.answer?.values?.selected || ''}
             onChange={handleAnswerChange}
           >
             {currentStep?.options?.map((option, index) => (
@@ -166,15 +203,33 @@ function NeatWizard() {
             ))}
           </RadioGroup>
         </FormControl>
+        ) }
+        { currentStep.type === "text_fields" &&  (
+          <FormControl fullWidth>
+            {currentStep?.options?.map((option, index) => (
+             <Container key={index} >
+              <Typography sx={{marginRight:7}}>{option?.label} :  </Typography>
+              <TextField sx={{ marginTop: 1 }} id="text-field" key={index} fullWidth label="" size='small' variant="outlined" value={currentStep?.answer?.values[option?.name]} onChange={(event) => { handleTextFieldChange(option?.name, event.target.value) }} />
+            </Container>
+            ))}  
+          </FormControl>
+        )}
+
         <div style={{marginTop:15}}>
+        {(currentStep?.action != "save_workflow") && (
           <Button
             variant="contained"
             color="primary"
             onClick={handleNext}
             // disabled={(activeStepId=="1")}
-          >
-            Next
+          > Next
           </Button>
+        )}
+          {(currentStep?.action == "save_workflow") && (
+            <Button variant="contained" color="primary" onClick={sendResults} sx={{marginLeft:2}} >
+              Create workflow
+            </Button>
+          )}
           {(activeStepId!="1") && (
             <Button variant="contained" color="secondary" onClick={handleBack} sx={{marginLeft:2}} >
               Back
@@ -183,6 +238,9 @@ function NeatWizard() {
         </div>
       </CardContent>
     </Card>
+    )}
+     {(currentStep?.action == "debug") && (
+            <pre>{JSON.stringify(wizardData, null, 2)}</pre>
     )}
   </Container>
   );

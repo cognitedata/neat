@@ -62,15 +62,17 @@ export default function BasicTabs() {
     <Box sx={{ width: '100%' }}>
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
-          <img src='/neat-logo.png' alt='Neat logo' width={25} height={25} style={{margin:5,marginTop:9}}/>
+          <Tab icon={<img src='/neat-logo.png' alt='Neat logo' width={35} height={35} />} />
           <Tab label="Solutions" {...a11yProps(1)} />
           <Tab label="Execution history" {...a11yProps(2)} />
           <Tab label="Statistics" {...a11yProps(3)} />
           <Tab icon={<BuildRoundedIcon />} aria-label="Global config" {...a11yProps(4)} />
           <Tab icon={<HelpIcon />} aria-label="Global config" {...a11yProps(5)} />
-          <Tab label="Wiz" {...a11yProps(6)} />
         </Tabs>
       </Box>
+      <TabPanel value={value} index={0}>
+        <NeatWizard />
+      </TabPanel>
       <TabPanel value={value} index={1}>
         <WorkflowView/>
       </TabPanel>
@@ -86,10 +88,7 @@ export default function BasicTabs() {
       <TabPanel value={value} index={5}>
         <AboutView />
       </TabPanel>
-      <TabPanel value={value} index={6}>
-        <NeatWizard />
-      </TabPanel>
-
+      
     </Box>
   );
 }

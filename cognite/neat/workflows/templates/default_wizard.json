@@ -33,7 +33,7 @@
         }
       ],
       "default_next_step": "modelling",
-      "type": "single choice",
+      "type": "single_choice",
       "answer": {}
     },
     {
@@ -64,7 +64,7 @@
         }
       ],
       "default_next_step": "",
-      "type": "single choice",
+      "type": "single_choice",
       "answer": {}
     },
     {
@@ -84,8 +84,8 @@
           "nextStep": null
         }
       ],
-      "default_next_step": "start",
-      "type": "single choice",
+      "default_next_step": "modelling_workflow_submit",
+      "type": "single_choice",
       "answer": {}
     },
     {
@@ -97,16 +97,18 @@
         {
           "label": "Load from JSON or YAML NEAT rules file",
           "value": "json_yaml_neat_rules",
-          "nextStep": null
+          "nextStep": null,
+          "workflowSteps": []
         },
         {
           "label": "Load from Excel NEAT rules file",
           "value": "json_yaml_dump",
-          "nextStep": null
+          "nextStep": null,
+          "workflowSteps": []
         }
       ],
-      "default_next_step": "start",
-      "type": "single choice",
+      "default_next_step": "modelling_workflow_submit",
+      "type": "single_choice",
       "answer": {}
     },
     {
@@ -118,41 +120,48 @@
         {
           "label": "Infer from RDF data dump",
           "value": "rdf",
-          "nextStep": null
+          "nextStep": null,
+          "workflowSteps": []
         },
         {
           "label": "Infer from JSON or YAML data dump",
           "value": "json_yaml_dump",
-          "nextStep": null
+          "nextStep": null,
+          "workflowSteps": []
         },
         {
           "label": "Generate from Open API spec",
           "value": "open_api_spec",
-          "nextStep": null
+          "nextStep": null,
+          "workflowSteps": []
         },
         {
           "label": "Generate from CDF DMS view",
           "value": "dms_view",
-          "nextStep": null
+          "nextStep": null,
+          "workflowSteps": []
         },
         {
           "label": "Generate from OWL file",
           "value": "owl",
-          "nextStep": null
+          "nextStep": null,
+          "workflowSteps": []
         },
         {
           "label": "Generate from SQL DDL",
           "value": "sql_ddl",
-          "nextStep": null
+          "nextStep": null,
+          "workflowSteps": []
         },
         {
           "label": "Generate from XML schema",
           "value": "sql_ddl",
-          "nextStep": null
+          "nextStep": null,
+          "workflowSteps": []
         }
       ],
       "default_next_step": "model_import_transport",
-      "type": "single choice",
+      "type": "single_choice",
       "answer": {}
     },
     {
@@ -164,36 +173,42 @@
         {
           "label": "Download data dump from REST api",
           "value": "rest",
-          "nextStep": null
+          "nextStep": null,
+          "workflowSteps": []
         },
         {
           "label": "Download data dump from CDF",
           "value": "cdf",
-          "nextStep": null
+          "nextStep": null,
+          "workflowSteps": []
         },
         {
           "label": "Download data dump from Github",
           "value": "github",
-          "nextStep": null
+          "nextStep": null,
+          "workflowSteps": []
         },
         {
           "label": "Load data dump from local file system",
           "value": "local_fs",
-          "nextStep": null
+          "nextStep": null,
+          "workflowSteps": []
         },
         {
           "label": "Upload data dump file through NEAT UI",
           "value": "neat_ui",
-          "nextStep": null
+          "nextStep": null,
+          "workflowSteps": []
         },
         {
           "label": "I will decide later",
           "value": "later",
-          "nextStep": null
+          "nextStep": null,
+          "workflowSteps": []
         }
       ],
       "default_next_step": "model_export_format",
-      "type": "single choice",
+      "type": "single_choice",
       "answer": {}
     },
     {
@@ -205,51 +220,85 @@
         {
           "label": "Export to NEAT Json/Yaml rules files",
           "value": "json_yaml_rule_format",
-          "nextStep": null
+          "nextStep": null,
+          "workflowSteps": []
         },
         {
           "label": "Export to NEAT excel rules file",
           "value": "excel_rules_format",
-          "nextStep": null
+          "nextStep": null,
+          "workflowSteps": []
         },
         {
           "label": "Export to NEAT excel rules file and generate Data Capturing Spreadsheet",
           "value": "excel_rules_format_and_data_capturing",
-          "nextStep": null
+          "nextStep": null,
+          "workflowSteps": []
         },
         {
           "label": "Export to CDF DMS container",
           "value": "dms_model",
-          "nextStep": null
+          "nextStep": null,
+          "workflowSteps": []
         },
         {
           "label": "Export to CDF DMS view",
           "value": "dms_view",
-          "nextStep": null
+          "nextStep": null,
+          "workflowSteps": []
         },
         {
           "label": "Export to OWL file",
           "value": "owl",
-          "nextStep": null
+          "nextStep": null,
+          "workflowSteps": []
         },
         {
           "label": "Export to SHACL file",
           "value": "shacl",
-          "nextStep": null
+          "nextStep": null,
+          "workflowSteps": []
         },
         {
           "label": "Export to GraphQL schema file",
           "value": "graphql",
-          "nextStep": null
+          "nextStep": null,
+          "workflowSteps": []
         },
         {
           "label": "Export to SQL DDL file",
           "value": "sql_ddl_file",
+          "nextStep": null,
+          "workflowSteps": []
+        }
+      ],
+      "default_next_step": "modelling_workflow_submit",
+      "type": "single_choice",
+      "answer": {}
+    },
+    {
+      "id": "modelling_workflow_submit",
+      "question": "It's a last step , please choose a name for your data modelling workflow",
+      "description": "",
+      "img": "/static/img/neat-dm.jpg",
+      "workflowTemplate": "data_modelling.yaml",
+      "options": [
+        {
+          "name": "workflow_name",
+          "label": "Workflow name",
+          "value": "",
+          "nextStep": null
+        },
+        {
+          "name": "workflow_description",
+          "label": "Description",
+          "value": "",
           "nextStep": null
         }
       ],
-      "default_next_step": "start",
-      "type": "single choice",
+      "default_next_step": "debug",
+      "type": "text_fields",
+      "action": "",
       "answer": {}
     },
     {
@@ -261,31 +310,36 @@
         {
           "label": "Extract data from RDF data dump",
           "value": "rdf_dump",
-          "nextStep": null
+          "nextStep": null,
+          "workflowSteps": []
         },
         {
           "label": "Extract data from AVEVA PI Asset Framewowrk",
           "value": "pi_af_dump",
-          "nextStep": null
+          "nextStep": null,
+          "workflowSteps": []
         },
         {
           "label": "Extract data from arbitrary JSON dump",
           "value": "json_model",
-          "nextStep": null
+          "nextStep": null,
+          "workflowSteps": []
         },
         {
           "label": "Generate mock Graph",
           "value": "generate_mock_graph",
-          "nextStep": null
+          "nextStep": null,
+          "workflowSteps": []
         },
         {
           "label": "Upload data from Data Capturing Spreadsheet",
           "value": "data_capture",
-          "nextStep": null
+          "nextStep": null,
+          "workflowSteps": []
         }
       ],
       "default_next_step": "etl_load_target",
-      "type": "single choice",
+      "type": "single_choice",
       "answer": {}
     },
     {
@@ -297,30 +351,59 @@
         {
           "label": "Load to CDF as CDF classic resources (Assets, Relationships)",
           "value": "cdf_classic",
-          "nextStep": null
+          "nextStep": null,
+          "workflowSteps": []
         },
         {
           "label": "Load to CDF as FDM resources (nodes and edges)",
           "value": "cdf_fdm",
-          "nextStep": null
+          "nextStep": null,
+          "workflowSteps": []
         },
         {
           "label": "Export as RDF graph file",
           "value": "rdf",
-          "nextStep": null
+          "nextStep": null,
+          "workflowSteps": []
         }
       ],
-      "default_next_step": "start",
-      "type": "single choice",
+      "default_next_step": "etl_workflow_submit",
+      "type": "single_choice",
       "answer": {}
     },
     {
-      "id": "last_step",
+      "id": "etl_workflow_submit",
+      "question": "It's a last step , please choose a name for your data transformation workflow",
+      "description": "",
+      "workflowTemplate": "etl.yaml",
+      "img": "/static/img/neat-etl.jpg",
+      "options": [
+        {
+          "name": "workflow_name",
+          "label": "Workflow name",
+          "value": "",
+          "nextStep": null
+        },
+        {
+          "name": "workflow_description",
+          "label": "Description",
+          "value": "",
+          "nextStep": null
+        }
+      ],
+      "default_next_step": "debug",
+      "type": "text_fields",
+      "action": "save_workflow",
+      "answer": {}
+    },
+    {
+      "id": "debug",
       "question": "Congratulations, you have successfully completed the NEAT wizard.",
       "description": "Neat wizard has generated workflow for you. Please proceed to workflow configuration.",
       "options": [],
       "default_next_step": "",
-      "type": "submit",
+      "type": "debug",
+      "action": "debug",
       "answer": {}
     }
   ]
