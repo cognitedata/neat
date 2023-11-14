@@ -16,7 +16,7 @@ from rdflib import RDF, XSD, Literal, Namespace
 from cognite.neat.graph import exceptions
 from cognite.neat.graph.exceptions import NamespaceRequired
 from cognite.neat.rules.analysis import get_defined_classes, to_class_property_pairs
-from cognite.neat.rules.exporter.rules2rules import to_dms_name
+from cognite.neat.rules.exporter._rules2rules import to_dms_name
 from cognite.neat.rules.models.rules import Rules
 
 

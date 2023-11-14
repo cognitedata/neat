@@ -221,18 +221,22 @@ class DataModel(BaseModel):
         """
         container_properties = {}
         for property_id, property_definition in properties.items():
+            is_one_to_many = property_definition.max_count != 1
             # Literal, i.e. attribute
             if property_definition.property_type == "DatatypeProperty":
                 property_type = cast(
                     type[ListablePropertyType], DATA_TYPE_MAPPING[property_definition.expected_value_type]["dms"]
                 )
                 container_properties[property_id] = ContainerProperty(
-                    type=property_type(is_list=property_definition.max_count != 1),
+                    type=property_type(is_list=is_one_to_many),
                     nullable=property_definition.min_count == 0,
                     default_value=property_definition.default,
                     name=property_definition.property_name,
                     description=property_definition.description,
                 )
+            elif property_definition.property_type == "ObjectProperty" and is_one_to_many:
+                # One to many edges are only in views and not containers.
+                continue
 
             # URIRef, i.e. edge
             elif property_definition.property_type == "ObjectProperty":
@@ -242,6 +246,7 @@ class DataModel(BaseModel):
                     name=property_definition.property_name,
                     description=property_definition.description,
                 )
+
             else:
                 logging.warning(
                     exceptions.ContainerPropertyTypeUnsupported(property_id, property_definition.property_type).message

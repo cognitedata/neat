@@ -16,7 +16,7 @@ from cognite.neat.rules.analysis import (
     get_defined_classes,
     get_symmetric_pairs,
 )
-from cognite.neat.rules.exporter.rules2rules import subset_rules
+from cognite.neat.rules.exporter._rules2rules import subset_rules
 from cognite.neat.rules.models import Rules
 from cognite.neat.rules.type_mapping import DATA_TYPE_MAPPING
 from cognite.neat.utils.utils import remove_namespace
@@ -61,10 +61,7 @@ class MockGraphGenerator:
 
 
 def generate_triples(
-    transformation_rules: Rules,
-    class_count: dict,
-    stop_on_exception: bool = False,
-    allow_isolated_classes: bool = True,
+    transformation_rules: Rules, class_count: dict, stop_on_exception: bool = False, allow_isolated_classes: bool = True
 ) -> list[tuple]:
     """Generate mock triples based on data model defined transformation rules and desired number
     of class instances
