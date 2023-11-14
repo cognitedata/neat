@@ -586,7 +586,7 @@ def _to_node_using_view_id(self, view_id: ViewId) -> NodeApply:
 
 
 def _to_node_using_data_model(self, data_model, add_class_prefix) -> NodeApply:
-    if not set(self.attributes + self.edges_one_to_one + self.edges_one_to_many).issubset(
+    if not set(self.attributes + self.edges_one_to_one).issubset(
         set(data_model.containers[type(self).__name__].properties.keys())
     ):
         raise exceptions.InstancePropertiesNotMatchingContainerProperties(
