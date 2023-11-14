@@ -16,12 +16,16 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 ## [0.41.0] - 14-11-23
+## Changed
+- Renamed `JSONImporter`, `YAMLImporter`, `DictImporter` to `ArbitraryJSONmporter`, `ArbitraryYAMLImporter`, `ArbitraryDictImporter` to
+  reflect that these importers infer the data model from raw input data, and are not reading a serialized file.
+-
 ## Added
-- Support for configuring the direction for child-parent relationship in `JSONImporter`, `YAMLImporter`, `DictImporter`.
-- Support for `datetime` in `JSONImporter`, `YAMLImporter`, `DictImporter`.
+- Support for configuring the direction for child-parent relationship in `ArbitraryJSONmporter`, `ArbitraryYAMLImporter`, `ArbitraryDictImporter`.
+- Support for `datetime` in `ArbitraryJSONmporter`, `ArbitraryYAMLImporter`, `ArbitraryDictImporter`.
 ## Fixed
 - `DMSExporter` does not write one-to-many edges to containers any more.
-- In the importers `JSONImporter`, `YAMLImporter`, `DictImporter` the `max_count` were not set leading all triples to
+- In the importers `ArbitraryJSONmporter`, `ArbitraryYAMLImporter`, `ArbitraryDictImporter` the `max_count` were not set leading all triples to
   be a one-to-many relationship. Now, only data which are of type `list` skips the `max_count` all other set it to 1.
 
 ## [0.40.2] - 14-11-23
