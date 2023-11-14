@@ -110,4 +110,4 @@ In typical scenario we would have knowledge graph, to which we would relate as `
 
 ![Rules: Properties Sheet](./figs/dm-source-to-solution-mapping.png)
 
-Various types of mappings are are defined in [Rule Type](./rule-types) section of this documentation. Make sure to check them out.
+Various types of mappings are are defined in [Rule Type](./transformation-directive-types.md) section of this documentation. Make sure to check them out.
