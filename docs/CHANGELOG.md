@@ -15,9 +15,19 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+
+## [0.40.2] - 14-11-23
+
+## Fixed
+- Set lower bound of `cognite-sdk` to `6.39.2` as it is required due to a bug in earlier SDK versions.
+
+## Improved
+- Improved Nodes and Edges validation and data validation reporting in rdf2nodes_and_edges and GenerateCDFNodesAndEdgesFromGraph steps.
+
 ## [0.40.1] - 08-11-23
 ## Changed
 - The `DMSExporter` is now configurable with `datamodel_id`. The `DMSImporter` also accepts a data model as input.
+
 
 ## [0.40.0] - 08-11-23
 ## Changed
