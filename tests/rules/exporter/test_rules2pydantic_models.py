@@ -4,7 +4,7 @@ from rdflib import URIRef
 from yaml import safe_load
 
 from cognite.neat.rules import examples, exceptions
-from cognite.neat.rules.exporter.rules2pydantic_models import rules_to_pydantic_models
+from cognite.neat.rules.exporter._rules2pydantic_models import rules_to_pydantic_models
 from cognite.neat.rules.importer._dms2rules import DMSImporter
 
 
