@@ -58,7 +58,7 @@ views:
       description: null
       name: BidInterval
       source:
-        external_id: TimeInterval
+        external_id: BidInterval
         space: power
         version: '0_1'
     Country:
@@ -76,6 +76,28 @@ views:
         type: container
       containerPropertyIdentifier: Origin
       name: Origin
+      description: missing
+- space: power
+  externalId: BidInterval
+  description: missing
+  name: BidInterval
+  version: '0_1'
+  properties:
+    Start:
+      container:
+        space: power
+        externalId: TimeInterval
+        type: container
+      containerPropertyIdentifier: Start
+      name: Start
+      description: missing
+    End:
+      container:
+        space: power
+        externalId: TimeInterval
+        type: container
+      containerPropertyIdentifier: End
+      name: End
       description: missing
 - space: power
   externalId: ReserveBidTimeSeries

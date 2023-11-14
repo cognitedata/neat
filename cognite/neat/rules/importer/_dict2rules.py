@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Literal
 
 import pandas as pd
 
@@ -14,10 +14,18 @@ class DictImporter(BaseImporter):
 
     Args:
         data: dictionary containing Rules definitions.
+        relationship_direction: Direction of relationships, either "parent-to-child" or "child-to-parent". Dictionaries
+            are nested with children nested inside parents. This option determines whether the resulting rules
+            will have an edge from parents to children or from children to parents.
     """
 
-    def __init__(self, data: dict[str, Any]):
+    def __init__(
+        self,
+        data: dict[str, Any],
+        relationship_direction: Literal["parent-to-child", "child-to-parent"] = "parent-to-child",
+    ):
         self.data = data
+        self.relationship_direction = relationship_direction
 
     def to_tables(self) -> dict[str, pd.DataFrame]:
         metadata = pd.Series(
@@ -33,7 +41,7 @@ class DictImporter(BaseImporter):
                 cdf_space_name="OpenAPI",
             )
         ).reset_index()
-        finder = _TripleFinder()
+        finder = _TripleFinder(self.relationship_direction)
         finder.find_triples(self.data)
 
         return {
@@ -44,9 +52,10 @@ class DictImporter(BaseImporter):
 
 
 class _TripleFinder:
-    def __init__(self) -> None:
+    def __init__(self, relationship_direction: Literal["parent-to-child", "child-to-parent"]) -> None:
         self.classes: dict[str, dict[str, Any]] = {}
         self.properties: dict[str, dict[str, Any]] = {}
+        self.relationship_direction = relationship_direction
 
     def find_triples(self, data: dict[str, Any]) -> None:
         self._convert_dict_to_classes_and_props(data)
@@ -77,7 +86,12 @@ class _TripleFinder:
             return
         class_ = {"Class": class_name, "description": description}
         if parent_class_name:
-            self.add_property(class_name, "parent", parent_class_name, "missing")
+            if self.relationship_direction == "child-to-parent":
+                self.add_property(class_name, "parent", parent_class_name, "missing")
+            elif self.relationship_direction == "parent-to-child":
+                self.add_property(parent_class_name, class_name, class_name, "missing")
+            else:
+                raise ValueError(f"Unknown relationship direction {self.relationship_direction}")
         self.classes[class_name] = class_
 
     def add_property(self, class_name: str, property_name: str, property_type: str, description: str = "missing"):

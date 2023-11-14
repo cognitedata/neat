@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal
 
 import yaml
 
@@ -10,15 +11,27 @@ class YAMLImporter(DictImporter):
     Importer for yaml file.
 
     Args:
-        yaml_path: Path to file with YAML.
-
+        yaml_path_or_str: Path to file with YAML.
+        relationship_direction: Direction of relationships, either "parent-to-child" or "child-to-parent". JSON
+            files are nested with children nested inside parents. This option determines whether the resulting rules
+            will have an edge from parents to children or from children to parents.
     """
 
-    def __init__(self, yaml_path: Path):
-        if not yaml_path.exists():
-            raise ValueError(f"File {yaml_path} does not exist")
-        if yaml_path.suffix not in {".yml", "yaml"}:
-            raise ValueError(f"File {yaml_path} is not a YAML file")
-        self.json_path = yaml_path
-        data = yaml.safe_load(yaml_path.read_text())
-        super().__init__(data=data)
+    def __init__(
+        self,
+        yaml_path_or_str: Path,
+        relationship_direction: Literal["parent-to-child", "child-to-parent"] = "parent-to-child",
+    ):
+        if isinstance(yaml_path_or_str, str):
+            data = yaml.safe_load(yaml_path_or_str)
+            super().__init__(data, relationship_direction)
+        elif isinstance(yaml_path_or_str, Path):
+            if not yaml_path_or_str.exists():
+                raise ValueError(f"File {yaml_path_or_str} does not exist")
+            if yaml_path_or_str.suffix != ".json":
+                raise ValueError(f"File {yaml_path_or_str} is not a JSON file")
+            self.json_path = yaml_path_or_str
+            data = yaml.safe_load(yaml_path_or_str.read_text())
+            super().__init__(data, relationship_direction)
+        else:
+            raise TypeError(f"Expected Path or str, got {type(yaml_path_or_str)}")
