@@ -24,6 +24,12 @@ Changes are grouped as follows:
 - In the importers `JSONImporter`, `YAMLImporter`, `DictImporter` the `max_count` were not set leading all triples to
   be a one-to-many relationship. Now, only data which are of type `list` skips the `max_count` all other set it to 1.
 
+## [0.40.2] - 14-11-23
+## Fixed
+- Set lower bound of `cognite-sdk` to `6.39.2` as it is required due to a bug in earlier SDK versions.
+## Improved
+- Improved Nodes and Edges validation and data validation reporting in rdf2nodes_and_edges and GenerateCDFNodesAndEdgesFromGraph steps.
+
 ## [0.40.1] - 08-11-23
 ## Changed
 - The `DMSExporter` is now configurable with `datamodel_id`. The `DMSImporter` also accepts a data model as input.
