@@ -18,4 +18,7 @@ SCENARIO_INSTANCE_MODEL: dm.DataModel[dm.View] = dm.DataModel.load(yaml.safe_loa
 CAPACITY_BID_MODEL: dm.DataModelApply = dm.DataModelApply.load(
     yaml.safe_load((DATA_DIR / "power-CapacityBid-1.yaml").read_text())
 )
+CAPACITY_BID_CONTAINERS: dm.ContainerApplyList = dm.ContainerApplyList._load(
+    yaml.safe_load((DATA_DIR / "power-CapacityBid-containers.yaml").read_text())
+)
 CAPACITY_BID_JSON = DATA_DIR / "mock_capacity_bid.json"

@@ -86,7 +86,7 @@ views:
     Start:
       container:
         space: power
-        externalId: TimeInterval
+        externalId: BidInterval
         type: container
       containerPropertyIdentifier: Start
       name: Start
@@ -94,7 +94,7 @@ views:
     End:
       container:
         space: power
-        externalId: TimeInterval
+        externalId: BidInterval
         type: container
       containerPropertyIdentifier: End
       name: End

@@ -69,7 +69,7 @@ class _TripleFinder:
             for key, value in data.items():
                 self._convert_dict_to_classes_and_props(value, key)
         elif isinstance(data, dict):
-            self.add_class(parent_property_name, "missing", grand_parent_property_name)
+            self.add_class(parent_property_name, "missing", grand_parent_property_name, is_list=False)
             for key, value in data.items():
                 self._convert_dict_to_classes_and_props(value, key, parent_property_name)
         elif isinstance(data, list):
@@ -81,20 +81,29 @@ class _TripleFinder:
         else:
             raise ValueError(f"Unknown type {type(data)}")
 
-    def add_class(self, class_name: str, description: str = "", parent_class_name: str | None = None):
+    def add_class(
+        self, class_name: str, description: str = "", parent_class_name: str | None = None, is_list: bool = False
+    ):
         if class_name in self.classes:
             return
         class_ = {"Class": class_name, "description": description}
         if parent_class_name:
             if self.relationship_direction == "child-to-parent":
-                self.add_property(class_name, "parent", parent_class_name, "missing")
+                self.add_property(class_name, "parent", parent_class_name, "missing", is_list=False)
             elif self.relationship_direction == "parent-to-child":
-                self.add_property(parent_class_name, class_name, class_name, "missing")
+                self.add_property(parent_class_name, class_name, class_name, "missing", is_list)
             else:
                 raise ValueError(f"Unknown relationship direction {self.relationship_direction}")
         self.classes[class_name] = class_
 
-    def add_property(self, class_name: str, property_name: str, property_type: str, description: str = "missing"):
+    def add_property(
+        self,
+        class_name: str,
+        property_name: str,
+        property_type: str,
+        description: str = "missing",
+        is_list: bool = False,
+    ):
         if class_name + property_name in self.properties:
             return
         prop = dict(
@@ -104,6 +113,7 @@ class _TripleFinder:
             property_type="ObjectProperty",
             description=description,
             expected_value_type=property_type,
+            max_count=1 if not is_list else None,
             cdf_resource_type="Asset",
             resource_type_property="Asset",
             rule_type="rdfpath",
