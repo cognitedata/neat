@@ -6,7 +6,7 @@ import yaml
 from cognite.neat.rules.importer._dict2rules import ArbitraryDictImporter
 
 
-class YAMLImporterArbitrary(ArbitraryDictImporter):
+class ArbitraryYAMLImporter(ArbitraryDictImporter):
     """
     Importer for data given in a YAML file or string.
 
