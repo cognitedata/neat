@@ -43,6 +43,10 @@ class DMSImporter(BaseImporter):
 
         if metadata is None:
             self.metadata = self._default_metadata()
+            if len(self.views) == 1:
+                self.metadata["version"] = self.views[0].version
+                self.metadata["cdfSpaceName"] = self.views[0].space
+
         else:
             self.metadata = metadata
 

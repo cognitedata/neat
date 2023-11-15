@@ -7,7 +7,7 @@ views:
   - space: workshop
     externalId: GeographicalRegion
     name: GeographicalRegion
-    version: 8668711f26d9bc
+    version: "1"
     writable: true
     usedFor: node
     isGlobal: false
@@ -36,7 +36,7 @@ views:
         source:
           space: workshop
           externalId: SubGeographicalRegion
-          version: bbe4295878a47f
+          version: "1"
           type: view
         name: subRegions
         description: null
@@ -51,7 +51,7 @@ views:
 
       @name SubGeographicalRegion"
     name: SubGeographicalRegion
-    version: bbe4295878a47f
+    version: "1"
     writable: true
     usedFor: node
     isGlobal: false
@@ -84,7 +84,7 @@ views:
           source:
             space: workshop
             externalId: GeographicalRegion
-            version: 8668711f26d9bc
+            version: "1"
         nullable: true
         autoIncrement: false
         defaultValue: null
@@ -102,7 +102,7 @@ views:
 
       @name Substation"
     name: Substation
-    version: 75cce8c469d44e
+    version: "1"
     writable: true
     usedFor: node
     isGlobal: false
@@ -148,7 +148,7 @@ views:
   - space: workshop
     externalId: Terminal
     name: Terminal
-    version: c83d2e12ea8ddf
+    version: "1"
     writable: true
     usedFor: node
     isGlobal: false
@@ -198,7 +198,7 @@ views:
           source:
             space: workshop
             externalId: Substation
-            version: 75cce8c469d44e
+            version: "1"
         nullable: true
         autoIncrement: false
         defaultValue: null
