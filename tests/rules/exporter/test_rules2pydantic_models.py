@@ -53,7 +53,7 @@ def test_views2pydantic_models(dms_compliant_rules, source_knowledge_graph):
 
     node = instance.to_node()
     assert node.external_id == "2dd9019e-bdfb-11e5-94fa-c8f73332c8f4"
-    assert node.space == "playground"
+    assert node.space == "workshop"
 
     # there is no class_to_asset_mapping defined for this view so it should fail
     with pytest.raises(exceptions.ClassToAssetMappingNotDefined):

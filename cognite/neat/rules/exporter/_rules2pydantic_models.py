@@ -568,10 +568,14 @@ def _to_node_using_view_id(self, view_id: ViewId) -> NodeApply:
         for attribute in self.attributes
     }
 
-    edges_one_to_one: dict = {
-        edge_one_to_one: {"space": self.model_json_schema()["space"], "externalId": getattr(self, edge_one_to_one)}
-        for edge_one_to_one in self.edges_one_to_one
-    }
+    edges_one_to_one: dict = {}
+
+    for edge in self.edges_one_to_one:
+        if external_id := getattr(self, edge):
+            edges_one_to_one[edge] = {
+                "space": self.model_json_schema()["space"],
+                "externalId": external_id,
+            }
 
     return NodeApply(
         space=self.model_json_schema()["space"],
@@ -611,18 +615,24 @@ def _to_node_using_data_model(self, data_model, add_class_prefix) -> NodeApply:
                     object_view = mapped_property.source
                 if object_view:
                     object_class_name = object_view.external_id
-                    edges_one_to_one[edge] = {
-                        "space": data_model.space,
-                        "externalId": add_class_prefix_to_xid(
-                            class_name=object_class_name,
-                            external_id=getattr(self, edge),
-                        ),
-                    }
+
+                    if external_id := getattr(self, edge):
+                        edges_one_to_one[edge] = {
+                            "space": data_model.space,
+                            "externalId": add_class_prefix_to_xid(
+                                class_name=object_class_name,
+                                external_id=getattr(self, edge),
+                            ),
+                        }
     else:
-        edges_one_to_one = {
-            edge_one_to_one: {"space": data_model.space, "externalId": getattr(self, edge_one_to_one)}
-            for edge_one_to_one in self.edges_one_to_one
-        }
+        edges_one_to_one = {}
+
+        for edge in self.edges_one_to_one:
+            if external_id := getattr(self, edge):
+                edges_one_to_one[edge] = {
+                    "space": self.model_json_schema()["space"],
+                    "externalId": external_id,
+                }
 
     return NodeApply(
         space=data_model.space,

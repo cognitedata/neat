@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.41.1] - 14-11-23
+## Fixed
+- Fixed `DMSImporter` to properly set `version` and `cdfSpaceName` when using single View as input.
+- Fixed `rules_to_pydantic_models` to skip creating `edges-one-to-one` if `externalID` is missing
+
 ## [0.41.0] - 14-11-23
 ## Changed
 - Renamed `JSONImporter`, `YAMLImporter`, `DictImporter` to `ArbitraryJSONmporter`, `ArbitraryYAMLImporter`, `ArbitraryDictImporter` to
