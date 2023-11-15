@@ -19,7 +19,6 @@ Changes are grouped as follows:
 ## Changed
 - Renamed `JSONImporter`, `YAMLImporter`, `DictImporter` to `ArbitraryJSONmporter`, `ArbitraryYAMLImporter`, `ArbitraryDictImporter` to
   reflect that these importers infer the data model from raw input data, and are not reading a serialized file.
--
 ## Added
 - Support for configuring the direction for child-parent relationship in `ArbitraryJSONmporter`, `ArbitraryYAMLImporter`, `ArbitraryDictImporter`.
 - Support for `datetime` in `ArbitraryJSONmporter`, `ArbitraryYAMLImporter`, `ArbitraryDictImporter`.
