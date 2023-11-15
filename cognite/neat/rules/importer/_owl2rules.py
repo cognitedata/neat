@@ -26,12 +26,15 @@ class OWLImporter(BaseImporter):
         that you use the .to_spreadsheet() method to generate an Excel file, and then manually add the missing
         information to the Excel file. The Excel file can then be converted to a TransformationRules object.
 
+        One can set the `use_default_values` parameter to True to allow neat to set default
+        values for missing information.
+
     """
 
     def __init__(self, owl_filepath: Path):
         self.owl_filepath = owl_filepath
 
-    def to_tables(self) -> dict[str, pd.DataFrame]:
+    def to_tables(self, use_default_values: bool = False) -> dict[str, pd.DataFrame]:
         graph = Graph()
         try:
             graph.parse(self.owl_filepath)
@@ -47,9 +50,9 @@ class OWLImporter(BaseImporter):
         graph.bind("skos", SKOS)
 
         return {
-            Tables.metadata: _parse_owl_metadata_df(graph),
-            Tables.classes: _parse_owl_classes_df(graph),
-            Tables.properties: _parse_owl_properties_df(graph),
+            Tables.metadata: _parse_owl_metadata_df(graph, use_default_values=use_default_values),
+            Tables.classes: _parse_owl_classes_df(graph, use_default_values=use_default_values),
+            Tables.properties: _parse_owl_properties_df(graph, use_default_values=use_default_values),
         }
 
 
@@ -116,7 +119,9 @@ def _create_default_properties_parsing_config() -> dict[str, tuple[str, ...]]:
     }
 
 
-def _parse_owl_metadata_df(graph: Graph, parsing_config: dict | None = None) -> pd.DataFrame:
+def _parse_owl_metadata_df(
+    graph: Graph, parsing_config: dict | None = None, use_default_values: bool = False
+) -> pd.DataFrame:
     """Parse owl metadata from graph to pandas dataframe.
 
     Args:
@@ -129,9 +134,29 @@ def _parse_owl_metadata_df(graph: Graph, parsing_config: dict | None = None) -> 
     if parsing_config is None:
         parsing_config = _create_default_metadata_parsing_config()
 
-    query = """
-    SELECT ?namespace ?prefix ?dataModelName ?cdfSpaceName ?version ?isCurrentVersion
-           ?created ?updated ?title ?description ?creator ?contributor ?rights ?license
+    if use_default_values:
+        query = (
+            'SELECT ?namespace (COALESCE(?prefix, "neat") AS ?prefix)'
+            ' (COALESCE(?dataModelName, "neat") AS ?dataModelName)'
+            ' (COALESCE(?cdfSpaceName, "playground") AS ?cdfSpaceName)'
+            ' (COALESCE(?version, "1.0.0") AS ?version)'
+            ' (COALESCE(?isCurrentVersion, "true"^^xsd:boolean) AS ?isCurrentVersion)'
+            ' (COALESCE(?created, "1983-01-22T02:00:00Z"^^xsd:dateTime) AS ?created)'
+            ' (COALESCE(?updated, "2021-11-13T00:00:00Z"^^xsd:dateTime) AS ?updated)'
+            ' (COALESCE(?title, "OWL Inferred Data Model") AS ?title)'
+            ' (COALESCE(?creator, "NEAT") AS ?creator)'
+            ' (COALESCE(?contributor, "NEAT") AS ?contributor)'
+            ' (COALESCE(?description, "This data model has been inferred with NEAT") AS ?description)'
+            ' (COALESCE(?rights, "Unknown rights of usage") AS ?rights)'
+            ' (COALESCE(?license, "Unknown license") AS ?license)'
+        )
+    else:
+        query = (
+            "SELECT ?namespace ?prefix ?dataModelName ?cdfSpaceName ?version ?isCurrentVersion "
+            "?created ?updated ?title ?description ?creator ?contributor ?rights ?license"
+        )
+
+    query += """
     WHERE {
         ?namespace a owl:Ontology .
         OPTIONAL {?namespace owl:versionInfo ?version }.
@@ -141,7 +166,9 @@ def _parse_owl_metadata_df(graph: Graph, parsing_config: dict | None = None) -> 
         OPTIONAL {?namespace dcterms:modified ?updated }.
         OPTIONAL {?namespace dcterms:created ?created }.
         OPTIONAL {?namespace dcterms:description ?description }.
+
         OPTIONAL {?namespace dcterms:rights|dc:rights ?rights }.
+
         OPTIONAL {?namespace dcterms:license|dc:license ?license }.
         FILTER (!isBlank(?namespace))
         FILTER (!bound(?description) || LANG(?description) = "" || LANGMATCHES(LANG(?description), "en"))
@@ -179,7 +206,9 @@ def _parse_owl_metadata_df(graph: Graph, parsing_config: dict | None = None) -> 
     return df
 
 
-def _parse_owl_classes_df(graph: Graph, parsing_config: dict | None = None) -> pd.DataFrame:
+def _parse_owl_classes_df(
+    graph: Graph, parsing_config: dict | None = None, use_default_values: bool = False
+) -> pd.DataFrame:
     """Get all classes from the graph and their parent classes.
 
     Parameters
@@ -250,7 +279,9 @@ SELECT ?class ?name ?description ?parentClass ?deprecated ?deprecationDate
     return df
 
 
-def _parse_owl_properties_df(graph: Graph, parsing_config: dict | None = None) -> pd.DataFrame:
+def _parse_owl_properties_df(
+    graph: Graph, parsing_config: dict | None = None, use_default_values: bool = False
+) -> pd.DataFrame:
     """Get all properties from the OWL ontology
 
     Parameters
