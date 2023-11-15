@@ -21,9 +21,8 @@ nav:
       - NEAT Flows:
           - Data Modeling: data-modeling-flow.md
           - Graph ETL: graph-etl-flow.md
-      - Rules:
-          - Overview: rules.md
-          - Rule Types: rule-types.md
+      - Rules: rules.md
+      - Transformation Engine: transformation-directive-types.md
       - Workflows:
           - Overview: workflows.md
           - Steps: workflow-steps.md
