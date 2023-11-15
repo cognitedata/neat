@@ -40,7 +40,7 @@ interface Step {
   img: string;
   description: string;
   options: Option[];
-  default_next_step: string;
+  defaultNextStep: string;
   type: string;
   answer: Answer;
   previousStep: string;
@@ -77,20 +77,21 @@ function NeatWizard() {
   const createWorkflow = () => {
     console.log('Creating workflow');
     console.log(wizardData);
-    fetch(neatApiRootUrl + '/api/wizard', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(wizardData),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log('Success:', data);
-      })
-      .catch((error) => {
-        console.error('Error creating workflow:', error);
-      });
+    window.location.reload();
+    // fetch(neatApiRootUrl + '/api/wizard', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //   },
+    //   body: JSON.stringify(wizardData),
+    // })
+    //   .then((response) => response.json())
+    //   .then((data) => {
+    //     console.log('Success:', data);
+    //   })
+    //   .catch((error) => {
+    //     console.error('Error creating workflow:', error);
+    //   });
   }
 
   const sendResults = () => {
@@ -152,17 +153,17 @@ function NeatWizard() {
     const { name, value } = event.target;
     console.log('name: ' + name + ' value: ' + value);
     const nextSteps = currentStep.options.find((option) => option.value === value).nextStep;
-    if (currentStep.answer.values == null) {
-      currentStep.answer.values = {};
+    if (currentStep.answer == null) {
+      currentStep.answer = {values: {},label:"", nextSteps: "", previousStep: ""}
     }
     currentStep.answer.values["selected"] = value;
     if (nextSteps) {
       setNextStepId(nextSteps);
       currentStep.answer.nextSteps = nextSteps;
     }else {
-      console.log('No next step found, using default '+ currentStep.default_next_step);
-      setNextStepId(currentStep.default_next_step);
-      currentStep.answer.nextSteps = currentStep.default_next_step;
+      console.log('No next step found, using default '+ currentStep.defaultNextStep);
+      setNextStepId(currentStep.defaultNextStep);
+      currentStep.answer.nextSteps = currentStep.defaultNextStep;
     }
     setCurrentStep({...currentStep})
     
@@ -170,10 +171,11 @@ function NeatWizard() {
 
   const handleTextFieldChange = (name, value) => {
     currentStep.answer.values[name] = value;
-    setNextStepId(currentStep.default_next_step);
-    currentStep.answer.nextSteps = currentStep.default_next_step;
+    setNextStepId(currentStep.defaultNextStep);
+    currentStep.answer.nextSteps = currentStep.defaultNextStep;
     setCurrentStep({...currentStep})
   }
+
 
   return (
     <Container>
@@ -226,7 +228,7 @@ function NeatWizard() {
           </Button>
         )}
           {(currentStep?.action == "save_workflow") && (
-            <Button variant="contained" color="primary" onClick={sendResults} sx={{marginLeft:2}} >
+            <Button variant="contained" color="primary" onClick={createWorkflow} sx={{marginLeft:2}} >
               Create workflow
             </Button>
           )}

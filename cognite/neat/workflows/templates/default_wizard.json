@@ -32,9 +32,9 @@
           "nextStep": "last_step"
         }
       ],
-      "default_next_step": "modelling",
+      "defaultNextStep": "modelling",
       "type": "single_choice",
-      "answer": {}
+      "answer": null
     },
     {
       "id": "modelling",
@@ -63,9 +63,9 @@
           "nextStep": "model_gen_ai"
         }
       ],
-      "default_next_step": "",
+      "defaultNextStep": "",
       "type": "single_choice",
-      "answer": {}
+      "answer": null
     },
     {
       "id": "model_from_scratch",
@@ -84,9 +84,9 @@
           "nextStep": null
         }
       ],
-      "default_next_step": "modelling_workflow_submit",
+      "defaultNextStep": "model_export_format",
       "type": "single_choice",
-      "answer": {}
+      "answer": null
     },
     {
       "id": "model_load_from_rules",
@@ -98,18 +98,18 @@
           "label": "Load from JSON or YAML NEAT rules file",
           "value": "json_yaml_neat_rules",
           "nextStep": null,
-          "workflowSteps": []
+          "workflowSteps": null
         },
         {
           "label": "Load from Excel NEAT rules file",
           "value": "json_yaml_dump",
           "nextStep": null,
-          "workflowSteps": []
+          "workflowSteps": null
         }
       ],
-      "default_next_step": "modelling_workflow_submit",
+      "defaultNextStep": "model_export_format",
       "type": "single_choice",
-      "answer": {}
+      "answer": null
     },
     {
       "id": "model_import_from_source",
@@ -160,9 +160,9 @@
           "workflowSteps": []
         }
       ],
-      "default_next_step": "model_import_transport",
+      "defaultNextStep": "model_import_transport",
       "type": "single_choice",
-      "answer": {}
+      "answer": null
     },
     {
       "id": "model_import_transport",
@@ -207,9 +207,9 @@
           "workflowSteps": []
         }
       ],
-      "default_next_step": "model_export_format",
+      "defaultNextStep": "model_export_format",
       "type": "single_choice",
-      "answer": {}
+      "answer": null
     },
     {
       "id": "model_export_format",
@@ -272,9 +272,9 @@
           "workflowSteps": []
         }
       ],
-      "default_next_step": "modelling_workflow_submit",
+      "defaultNextStep": "modelling_workflow_submit",
       "type": "single_choice",
-      "answer": {}
+      "answer": null
     },
     {
       "id": "modelling_workflow_submit",
@@ -296,10 +296,10 @@
           "nextStep": null
         }
       ],
-      "default_next_step": "debug",
+      "defaultNextStep": "",
       "type": "text_fields",
-      "action": "",
-      "answer": {}
+      "action": "save_workflow",
+      "answer": null
     },
     {
       "id": "etl_extraction_source",
@@ -338,9 +338,9 @@
           "workflowSteps": []
         }
       ],
-      "default_next_step": "etl_load_target",
+      "defaultNextStep": "etl_load_target",
       "type": "single_choice",
-      "answer": {}
+      "answer": null
     },
     {
       "id": "etl_load_target",
@@ -367,9 +367,9 @@
           "workflowSteps": []
         }
       ],
-      "default_next_step": "etl_workflow_submit",
+      "defaultNextStep": "etl_workflow_submit",
       "type": "single_choice",
-      "answer": {}
+      "answer": null
     },
     {
       "id": "etl_workflow_submit",
@@ -391,20 +391,20 @@
           "nextStep": null
         }
       ],
-      "default_next_step": "debug",
+      "defaultNextStep": "",
       "type": "text_fields",
       "action": "save_workflow",
-      "answer": {}
+      "answer": null
     },
     {
       "id": "debug",
       "question": "Congratulations, you have successfully completed the NEAT wizard.",
       "description": "Neat wizard has generated workflow for you. Please proceed to workflow configuration.",
       "options": [],
-      "default_next_step": "",
+      "defaultNextStep": "",
       "type": "debug",
       "action": "debug",
-      "answer": {}
+      "answer": null
     }
   ]
 }
