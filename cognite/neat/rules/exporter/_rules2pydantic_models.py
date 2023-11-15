@@ -621,7 +621,7 @@ def _to_node_using_data_model(self, data_model, add_class_prefix) -> NodeApply:
                             "space": data_model.space,
                             "externalId": add_class_prefix_to_xid(
                                 class_name=object_class_name,
-                                external_id=getattr(self, edge),
+                                external_id=external_id,
                             ),
                         }
     else:
