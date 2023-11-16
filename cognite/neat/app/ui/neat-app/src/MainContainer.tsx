@@ -62,7 +62,7 @@ export default function BasicTabs() {
     <Box sx={{ width: '100%' }}>
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
-          <Tab icon={<img src='/neat-logo.png' alt='Neat logo' width={35} height={35} />} />
+          <Tab icon={<img src='/static/neat-logo.png' alt='Neat logo' width={35} height={35} />} />
           <Tab label="Solutions" {...a11yProps(1)} />
           <Tab label="Execution history" {...a11yProps(2)} />
           <Tab label="Statistics" {...a11yProps(3)} />
