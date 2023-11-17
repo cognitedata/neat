@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.41.2] - 17-11-23
+## Changed
+- Python depedency from `python = ">=3.10,<3.13"` to `python = "^3.10"`
+
 ## [0.41.1] - 14-11-23
 ## Fixed
 - Fixed `DMSImporter` to properly set `version` and `cdfSpaceName` when using single View as input.
