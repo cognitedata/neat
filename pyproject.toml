@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cognite-neat"
-version = "0.41.1"
+version = "0.41.2"
 readme = "README.md"
 description = "Knowledge graph transformation"
 authors = [
@@ -54,7 +54,7 @@ neat = "cognite.neat.app.main:run"
 
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.13"
+python = "^3.10"
 pandas = "*"
 rdflib = "*"
 pydantic = "^2"
