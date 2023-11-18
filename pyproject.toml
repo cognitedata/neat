@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cognite-neat"
-version = "0.41.3"
+version = "0.41.4"
 readme = "README.md"
 description = "Knowledge graph transformation"
 authors = [
@@ -108,7 +108,6 @@ docs = [
     "mkdocs-autorefs",
 ]
 google = ["gspread", "google-api-python-client", "google-auth-oauthlib"]
-excel = ["openpyxl"]
 oxi = ["oxrdflib"]
 graphql = ["jinja2"]
 all = [

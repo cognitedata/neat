@@ -7,7 +7,7 @@ on:
       - main
 
 env:
-  PYTHON_VERSION: '3.11'
+  PYTHON_VERSION: "3.11"
 
 jobs:
   lint:
@@ -23,7 +23,7 @@ jobs:
         run: |
           python3 -m pip install --upgrade pip poetry
           poetry config virtualenvs.create false
-          poetry install
+          poetry install -E all
 
       - name: Linting and static code checks
         run: |

@@ -7,6 +7,7 @@ generating a list of rules based on which nodes that form the graph are made.
 from pathlib import Path
 
 import pandas as pd
+from openpyxl import Workbook, load_workbook
 
 from cognite.neat.rules.importer._base import BaseImporter
 from cognite.neat.utils.auxiliary import local_import
@@ -17,9 +18,6 @@ class ExcelImporter(BaseImporter):
         self.filepath = filepath
 
     def to_tables(self) -> dict[str, pd.DataFrame]:
-        local_import("openpyxl", "excel")
-        from openpyxl import Workbook, load_workbook
-
         workbook: Workbook = load_workbook(self.filepath)
 
         return {
