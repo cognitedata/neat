@@ -55,7 +55,7 @@ jobs:
         with:
           version: 1.5.1
 
-      - run: poetry install --all-extras
+      - run: poetry install -E all
 
       - name: Run tests
         run: export PYTHONPATH=$PYTHONPATH:$(pwd); poetry run pytest

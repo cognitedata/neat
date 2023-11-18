@@ -116,7 +116,7 @@ all = [
     "google-api-python-client",
     "google-auth-oauthlib",
     "jinja2",
-    "oxigraph",
+    "oxrdflib",
 ]
 
 [tool.poetry.dev-dependencies]
