@@ -19,18 +19,25 @@ class BaseImporter(ABC):
         ...
 
     @abstractmethod
-    def to_tables(self) -> dict[str, pd.DataFrame]:
+    def to_tables(self, use_default_values: bool | None = None) -> dict[str, pd.DataFrame]:
         """Creates raw tables from the data."""
         raise NotImplementedError
 
-    def to_raw_rules(self) -> RawRules:
+    def to_raw_rules(self, use_default_values: bool | None = None) -> RawRules:
         """Creates `RawRules` object from the data."""
-        tables = self.to_tables()
+        if use_default_values:
+            tables = self.to_tables(use_default_values=use_default_values)
+        else:
+            tables = self.to_tables()
 
         return RawRules.from_tables(tables=tables, importer_type=self.__class__.__name__)
 
     def to_rules(
-        self, return_report: bool = False, skip_validation: bool = False, validators_to_skip: list[str] | None = None
+        self,
+        return_report: bool = False,
+        skip_validation: bool = False,
+        validators_to_skip: list[str] | None = None,
+        use_default_values: bool | None = None,
     ) -> tuple[Rules | None, list[ErrorDetails] | None, list | None] | Rules:
         """
         Creates `Rules` object from the data.
@@ -50,7 +57,11 @@ class BaseImporter(ABC):
             `skip_validation` flag should be only used for purpose when `Rules` object
             is exported to an Excel file. Do not use this flag for any other purpose!
         """
-        raw_rules = self.to_raw_rules()
+        if use_default_values:
+            raw_rules = self.to_raw_rules(use_default_values=use_default_values)
+        else:
+            raw_rules = self.to_raw_rules()
+
         return raw_rules.to_rules(return_report, skip_validation, validators_to_skip)
 
     def _default_metadata(self):

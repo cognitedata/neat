@@ -15,7 +15,6 @@ from rdflib import Graph, Literal, Namespace, URIRef
 from cognite.neat.constants import PREFIXES
 from cognite.neat.rules import exceptions
 from cognite.neat.rules.importer._base import BaseImporter
-from cognite.neat.rules.importer._owl2rules import _create_default_metadata_parsing_config
 from cognite.neat.rules.models.tables import Tables
 from cognite.neat.utils.utils import get_namespace, remove_namespace, uri_to_short_form
 
@@ -82,28 +81,25 @@ def _parse_prefixes_df(prefixes: dict[str, Namespace]) -> pd.DataFrame:
     return pd.DataFrame.from_dict({"Prefix": list(prefixes.keys()), "URI": [str(uri) for uri in prefixes.values()]})
 
 
-def _parse_metadata_df(parsing_config: dict | None = None) -> pd.DataFrame:
-    if parsing_config is None:
-        parsing_config = _create_default_metadata_parsing_config()
+def _parse_metadata_df() -> pd.DataFrame:
+    clean_list = {
+        "namespace": "http://purl.org/cognite/neat/",
+        "prefix": "neat",
+        "dataModelName": "neat",
+        "cdfSpaceName": "playground",
+        "version": "1.0.0",
+        "isCurrentVersion": True,
+        "created": datetime.utcnow(),
+        "updated": datetime.utcnow(),
+        "title": "RDF Graph Inferred Data Model",
+        "description": "This data model has been inferred with NEAT",
+        "creator": "NEAT",
+        "contributor": "NEAT",
+        "rights": "Unknown rights of usage",
+        "license": "Unknown license",
+    }
 
-    default_values = (
-        "http://purl.org/cognite/neat/",
-        "neat",
-        "neat",
-        "playground",
-        "0.0.1",
-        True,
-        datetime.utcnow(),
-        datetime.utcnow(),
-        "RDF Graph Data Model",
-        "Data model parsed from RDF graph using neat",
-        "NEAT",
-        "NEAT",
-        "Unknown rights of usage",
-        "Unknown license",
-    )
-
-    return pd.DataFrame([parsing_config["header"], default_values]).T
+    return pd.DataFrame([clean_list]).T
 
 
 def _parse_classes_df(data_model: dict, prefixes: dict, parsing_config: dict | None = None) -> pd.DataFrame:
