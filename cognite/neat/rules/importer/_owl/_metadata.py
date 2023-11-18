@@ -1,13 +1,15 @@
 import datetime
 import re
 from typing import Any
+
 import pandas as pd
-from rdflib import Graph, Namespace, Literal, URIRef
+from rdflib import Graph, Literal, Namespace, URIRef
+
 from cognite.neat.rules.models.rules import (
-    version_compliance_regex,
-    prefix_compliance_regex,
-    data_model_id_compliance_regex,
     cdf_space_name_compliance_regex,
+    data_model_id_compliance_regex,
+    prefix_compliance_regex,
+    version_compliance_regex,
 )
 
 

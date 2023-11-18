@@ -11,7 +11,7 @@ from rdflib import DC, DCTERMS, OWL, RDF, RDFS, SKOS, Graph, Namespace
 
 from cognite.neat.rules.importer._base import BaseImporter
 from cognite.neat.rules.models.tables import Tables
-from cognite.neat.utils.utils import get_namespace, remove_namespace
+from cognite.neat.utils.utils import remove_namespace
 
 
 class OWLImporter(BaseImporter):
