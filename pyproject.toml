@@ -109,16 +109,14 @@ docs = [
 ]
 google = ["gspread", "google-api-python-client", "google-auth-oauthlib"]
 excel = ["openpyxl"]
-oxi = ["oxrdflib", "oxigraph", "pyoxigraph"]
+oxi = ["oxrdflib"]
 graphql = ["jinja2"]
 all = [
     "gspread",
     "google-api-python-client",
     "google-auth-oauthlib",
     "jinja2",
-    "oxrdflib",
     "oxigraph",
-    "pyoxigraph",
 ]
 
 [tool.poetry.dev-dependencies]

@@ -5154,7 +5154,7 @@ docs = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.link
 testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-ignore-flaky", "pytest-mypy (>=0.9.1)", "pytest-ruff"]
 
 [extras]
-all = ["gspread", "google-api-python-client", "google-auth-oauthlib", "jinja2", "oxrdflib"]
+all = ["gspread", "google-api-python-client", "google-auth-oauthlib", "jinja2"]
 docs = ["mkdocs", "mkdocs-jupyter", "mkdocs-material-extensions", "mkdocs-git-revision-date-localized-plugin", "mkdocs-git-authors-plugin", "mkdocs-gitbook", "mkdocs-glightbox", "pymdown-extensions", "mkdocstrings", "mkdocs-autorefs"]
 excel = ["openpyxl"]
 google = ["gspread", "google-api-python-client", "google-auth-oauthlib"]
@@ -5164,4 +5164,4 @@ oxi = ["oxrdflib"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "d2aeb0d003744b8d41b7b12353bff827be7304eb8c2d253f512f598493a27efc"
+content-hash = "06aa4f1caf6a2496e0d613f11baa22062c1b9fb6ba4b7d5de30f57af59b433dd"
