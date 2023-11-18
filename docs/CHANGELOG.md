@@ -20,6 +20,11 @@ Changes are grouped as follows:
 ## Changed
 
 - Python depedency `openpyxl` made mandatory
+
+## [0.41.3] - 18-11-23
+
+## Changed
+
 - Python depedency `pyoxigraph` made optional
 
 ## [0.41.2] - 17-11-23
