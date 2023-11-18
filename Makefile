@@ -40,7 +40,7 @@ start-ui-dev:
 
 poetry-export:
 	@echo "Exporting poetry dependencies"
-	poetry export -f requirements.txt --output requirements.txt --extras "excel graphql"
+	poetry export -f requirements.txt --output requirements.txt --extras "graphql"
 
 build-docker: poetry-export
 	@echo "Building docker image"
