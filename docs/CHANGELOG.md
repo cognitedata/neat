@@ -15,92 +15,136 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## [0.41.2] - 17-11-23
+## [0.41.3] - 18-11-23
+
 ## Changed
+
+- Python depedency `openpyxl` made mandatory
+- Python depedency `pyoxigraph` made optional
+
+## [0.41.2] - 17-11-23
+
+## Changed
+
 - Python depedency from `python = ">=3.10,<3.13"` to `python = "^3.10"`
 
 ## [0.41.1] - 14-11-23
+
 ## Fixed
+
 - Fixed `DMSImporter` to properly set `version` and `cdfSpaceName` when using single View as input.
 - Fixed `rules_to_pydantic_models` to skip creating `edges-one-to-one` if `externalID` is missing
 
 ## [0.41.0] - 14-11-23
+
 ## Changed
+
 - Renamed `JSONImporter`, `YAMLImporter`, `DictImporter` to `ArbitraryJSONmporter`, `ArbitraryYAMLImporter`, `ArbitraryDictImporter` to
   reflect that these importers infer the data model from raw input data, and are not reading a serialized file.
+
 ## Added
+
 - Support for configuring the direction for child-parent relationship in `ArbitraryJSONmporter`, `ArbitraryYAMLImporter`, `ArbitraryDictImporter`.
 - Support for `datetime` in `ArbitraryJSONmporter`, `ArbitraryYAMLImporter`, `ArbitraryDictImporter`.
+
 ## Fixed
+
 - `DMSExporter` does not write one-to-many edges to containers any more.
 - In the importers `ArbitraryJSONmporter`, `ArbitraryYAMLImporter`, `ArbitraryDictImporter` the `max_count` were not set leading all triples to
   be a one-to-many relationship. Now, only data which are of type `list` skips the `max_count` all other set it to 1.
 
 ## [0.40.2] - 14-11-23
+
 ## Fixed
+
 - Set lower bound of `cognite-sdk` to `6.39.2` as it is required due to a bug in earlier SDK versions.
+
 ## Improved
+
 - Improved Nodes and Edges validation and data validation reporting in rdf2nodes_and_edges and GenerateCDFNodesAndEdgesFromGraph steps.
 
 ## [0.40.1] - 08-11-23
+
 ## Changed
+
 - The `DMSExporter` is now configurable with `datamodel_id`. The `DMSImporter` also accepts a data model as input.
 
 ## [0.40.0] - 08-11-23
+
 ## Changed
+
 - The interface for `cognite.neat.rules.exporters`. Now, they have the following methods `.export()`, `.export_to_file()`,
   `.from_rule()`.
 
 ## [0.39.1] - 08-11-23
+
 ## Fixed
- - Changed `attributes`, `edges_one_to_one`, `edges_one_to_many` instance to class property methods
+
+- Changed `attributes`, `edges_one_to_one`, `edges_one_to_many` instance to class property methods
 
 ## [0.39.0] - 03-11-23
+
 ## Fixed
- - Not allowing DMS non-compliant Rules to be turned into pydantic models
+
+- Not allowing DMS non-compliant Rules to be turned into pydantic models
 
 ## Added
- - class property methods to the generated pydantic models accessing descriptions and names of models and fields
- - controlling whether `neat` specific fields should be added or not to pydantic models using arg `add_extra_fields`
- - `OntologyToRules` step added to the step library
+
+- class property methods to the generated pydantic models accessing descriptions and names of models and fields
+- controlling whether `neat` specific fields should be added or not to pydantic models using arg `add_extra_fields`
+- `OntologyToRules` step added to the step library
 
 ## Improves
- - Documentation of `rules_to_pydantic_models`
 
+- Documentation of `rules_to_pydantic_models`
 
 ## [0.38.3] - 03-11-23
+
 ## Fixed
- - Fixed CDF database configuration for rawlookup rule in TransformSourceToSolutionGraph .  https://github.com/cognitedata/neat/issues/157
+
+- Fixed CDF database configuration for rawlookup rule in TransformSourceToSolutionGraph . https://github.com/cognitedata/neat/issues/157
 
 ## [0.38.2] - 03-11-23
+
 ## Fixed
- - Added type mapping for data type Date
+
+- Added type mapping for data type Date
 
 ## [0.38.1] - 01-11-23
+
 ## Fixed
- - Proper min_count for `DMSImporter` base on CDF `View` implementation
+
+- Proper min_count for `DMSImporter` base on CDF `View` implementation
 
 ## [0.38.0] - 31-10-23
+
 ## Added
- - Ability to partially validate Rules
- - Description and name of fields added to rules generated pydantic models
+
+- Ability to partially validate Rules
+- Description and name of fields added to rules generated pydantic models
 
 ## Improved
- - Improved naming of internal variables in `cognite/neat/rules/exporter/rules2pydantic_models.py`
+
+- Improved naming of internal variables in `cognite/neat/rules/exporter/rules2pydantic_models.py`
 
 ## [0.37.0] - 31-10-23
 
 ## Added
- - Configurable assets cleanup in GenerateCDFAssetsFromGraph step. Now user can specify if he/she wants to delete all ophan or circular assets or keep them.
+
+- Configurable assets cleanup in GenerateCDFAssetsFromGraph step. Now user can specify if he/she wants to delete all ophan or circular assets or keep them.
 
 ### Fixed
- - https://github.com/cognitedata/neat/issues/146
- - https://github.com/cognitedata/neat/issues/139
+
+- https://github.com/cognitedata/neat/issues/146
+- https://github.com/cognitedata/neat/issues/139
 
 ## [0.36.0] - 30-10-23
+
 ### Added
+
 - Added `DMSImporter`
 -
+
 ## [0.35.0] - 27-10-23
 
 ### Improved
@@ -118,11 +162,13 @@ Changes are grouped as follows:
 ## [0.34.0] - 27-10-23
 
 ### Improved
+
 - Bug fix: Removed condition not allowing an asset to change its parent asset.
 
 ## [0.33.0] - 22-10-23
 
 ### Improved
+
 - Implementation of class prefix to external ids for edges
 
 ## [0.32.0] - 22-10-23
