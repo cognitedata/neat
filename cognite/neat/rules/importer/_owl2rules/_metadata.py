@@ -52,7 +52,7 @@ def parse_owl_metadata(graph: Graph, make_compliant: bool = False) -> pd.DataFra
     }
     """
 
-    results = [{item for item in sublist} for sublist in list(zip(*graph.query(query)))]
+    results = [{item for item in sublist} for sublist in list(zip(*graph.query(query), strict=True))]
 
     clean_list = convert_rdflib_terms(
         {
@@ -101,14 +101,14 @@ def make_metadata_compliant(metadata: dict) -> dict:
         Dictionary containing metadata with fixed errors
     """
 
-    metadata = fix_namespace(metadata)
+    metadata = fix_namespace(metadata, default=Namespace("http://purl.org/cognite/neat#"))
     metadata = fix_prefix(metadata)
     metadata = fix_dataModelName(metadata)
     metadata = fix_cdfSpaceName(metadata)
     metadata = fix_version(metadata)
     metadata = fix_isCurrentVersion(metadata)
-    metadata = fix_date(metadata, date_type="created")
-    metadata = fix_date(metadata, date_type="updated")
+    metadata = fix_date(metadata, date_type="created", default=datetime.datetime.now().replace(microsecond=0))
+    metadata = fix_date(metadata, date_type="updated", default=datetime.datetime.now().replace(microsecond=0))
     metadata = fix_title(metadata)
     metadata = fix_description(metadata)
     metadata = fix_author(metadata, "creator")
@@ -156,8 +156,8 @@ def fix_description(metadata: dict, default: str = "This model has been inferred
     if description := metadata.get("description", None):
         if not isinstance(description, str) or len(description) == 0:
             metadata["description"] = default
-        elif isinstance(description, str) and len(description) > 255:
-            metadata["description"] = metadata["description"][:255]
+        elif isinstance(description, str) and len(description) > 1028:
+            metadata["description"] = metadata["description"][:1028]
     else:
         metadata["description"] = default
     return metadata
@@ -190,7 +190,7 @@ def fix_prefix(metadata: dict, default: str = "neat") -> dict:
     return metadata
 
 
-def fix_namespace(metadata: dict, default: Namespace = Namespace("http://purl.org/cognite/neat#")) -> dict:
+def fix_namespace(metadata: dict, default: Namespace) -> dict:
     if namespace := metadata.get("namespace", None):
         if not isinstance(namespace, Namespace):
             try:
@@ -205,8 +205,8 @@ def fix_namespace(metadata: dict, default: Namespace = Namespace("http://purl.or
 
 def fix_date(
     metadata: dict,
-    date_type: str = "created",
-    default: datetime.datetime = datetime.datetime.now().replace(microsecond=0),
+    date_type: str,
+    default: datetime.datetime,
 ) -> dict:
     if date := metadata.get(date_type, None):
         try:
