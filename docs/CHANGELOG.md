@@ -15,6 +15,12 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.41.5] - 20-11-23
+
+## Changed
+
+- version regex
+
 ## [0.41.4] - 18-11-23
 
 ## Changed
