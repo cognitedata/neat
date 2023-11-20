@@ -7,5 +7,5 @@ def test_graph2tables_nordic44(source_knowledge_graph):
 
     assert len(rules.classes) == 59
     assert len(rules.properties) == 296
-    assert len(warnings) == 402
+    assert len(warnings) == 401
     assert "Substation" in rules.classes
