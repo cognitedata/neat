@@ -748,7 +748,7 @@ pipenv = ["pipenv (<=2022.12.19)"]
 name = "et-xmlfile"
 version = "1.1.0"
 description = "An implementation of lxml.xmlfile for the standard library"
-optional = true
+optional = false
 python-versions = ">=3.6"
 files = [
     {file = "et_xmlfile-1.1.0-py3-none-any.whl", hash = "sha256:a2ba85d1d6a74ef63837eed693bcb89c3f752169b0e3e7ae5b16ca5e1b3deada"},
@@ -2135,13 +2135,22 @@ pygments = ">2.12.0"
 
 [[package]]
 name = "mkdocs-material"
+<<<<<<< HEAD
 version = "9.4.10"
+=======
+version = "9.4.9"
+>>>>>>> main
 description = "Documentation that simply works"
 optional = true
 python-versions = ">=3.8"
 files = [
+<<<<<<< HEAD
     {file = "mkdocs_material-9.4.10-py3-none-any.whl", hash = "sha256:207c4ebc07faebb220437d2c626edb0c9760c82ccfc484500bd3eb30dfce988c"},
     {file = "mkdocs_material-9.4.10.tar.gz", hash = "sha256:421adedaeaa461dcaf55b8d406673934ade3d4f05ed9819e4cc7b4ee1d646a62"},
+=======
+    {file = "mkdocs_material-9.4.9-py3-none-any.whl", hash = "sha256:b93d6e916b93346d433bfb2a00148efed0b545aaf0092cef31c2da27ad4169e6"},
+    {file = "mkdocs_material-9.4.9.tar.gz", hash = "sha256:dd9ce8b48c5284578224d34992357d0b7bb86c35cb31d0f9fee0ad90c81a2a44"},
+>>>>>>> main
 ]
 
 [package.dependencies]
@@ -2564,7 +2573,7 @@ signedtoken = ["cryptography (>=3.0.0)", "pyjwt (>=2.0.0,<3)"]
 name = "openpyxl"
 version = "3.1.2"
 description = "A Python library to read/write Excel 2010 xlsx/xlsm files"
-optional = true
+optional = false
 python-versions = ">=3.6"
 files = [
     {file = "openpyxl-3.1.2-py2.py3-none-any.whl", hash = "sha256:f91456ead12ab3c6c2e9491cf33ba6d08357d802192379bb482f1033ade496f5"},
@@ -2603,7 +2612,7 @@ files = [
 name = "oxrdflib"
 version = "0.3.6"
 description = "rdflib stores based on pyoxigraph"
-optional = false
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "oxrdflib-0.3.6-py3-none-any.whl", hash = "sha256:a645a3e5ba86e0c8ff33f6429ca623fe01d93d30234c8f2ad1f553636b4b756a"},
@@ -3175,7 +3184,7 @@ extra = ["pygments (>=2.12)"]
 name = "pyoxigraph"
 version = "0.3.20"
 description = "Python bindings of Oxigraph, a SPARQL database and RDF toolkit"
-optional = false
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "pyoxigraph-0.3.20-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:fb0011e782bbe8b209d942b1d89dd2beefffd2f01ae269766bb32e51b47e429e"},
@@ -4901,13 +4910,13 @@ docs = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.link
 testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-ignore-flaky", "pytest-mypy (>=0.9.1)", "pytest-ruff"]
 
 [extras]
-all = ["google-api-python-client", "google-auth-oauthlib", "gspread", "jinja2", "openpyxl"]
+all = ["google-api-python-client", "google-auth-oauthlib", "gspread", "jinja2", "oxrdflib"]
 docs = ["mkdocs", "mkdocs-autorefs", "mkdocs-git-authors-plugin", "mkdocs-git-revision-date-localized-plugin", "mkdocs-gitbook", "mkdocs-glightbox", "mkdocs-jupyter", "mkdocs-material-extensions", "mkdocstrings", "pymdown-extensions"]
-excel = ["openpyxl"]
 google = ["google-api-python-client", "google-auth-oauthlib", "gspread"]
 graphql = ["jinja2"]
+oxi = ["oxrdflib"]
 
 [metadata]
 lock-version = "2.0"
-python-versions = ">=3.10,<3.13"
-content-hash = "73c4dc95ce22ed9374f487b8af5d90707b3d34a623b944ad122142b93b5cb7d1"
+python-versions = "^3.10"
+content-hash = "81d700febd44e3b8fc0026c75b4733b02d7849c35aff3ae7db40a738ca197c2d"

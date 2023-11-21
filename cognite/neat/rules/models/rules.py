@@ -137,7 +137,7 @@ more_than_one_none_alphanumerics_regex = r"([_-]{2,})"
 prefix_compliance_regex = r"^([a-zA-Z]+)([a-zA-Z0-9]*[_-]{0,1}[a-zA-Z0-9_-]*)([a-zA-Z0-9]*)$"
 data_model_id_compliance_regex = r"^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$"
 cdf_space_name_compliance_regex = (
-    r"(?!^(space|cdf|dms|pg3|shared|system|node|edge)$)(^[a-zA-Z][a-zA-Z0-9_]{0,41}[a-zA-Z0-9]?$)"
+    r"(?!^(space|cdf|dms|pg3|shared|system|node|edge)$)(^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$)"
 )
 view_id_compliance_regex = (
     r"(?!^(Query|Mutation|Subscription|String|Int32|Int64|Int|Float32|Float64|Float|"
@@ -154,10 +154,7 @@ dms_property_id_compliance_regex = (
 class_id_compliance_regex = r"(?!^(Class|class)$)(^[a-zA-Z][a-zA-Z0-9._-]{0,253}[a-zA-Z0-9]?$)"
 property_id_compliance_regex = r"^(\*)|(?!^(Property|property)$)(^[a-zA-Z][a-zA-Z0-9._-]{0,253}[a-zA-Z0-9]?$)"
 
-version_compliance_regex = (
-    r"^([0-9]+[_-]{1}[0-9]+[_-]{1}[0-9]+[_-]{1}[a-zA-Z0-9]+)|"
-    r"([0-9]+[_-]{1}[0-9]+[_-]{1}[0-9]+)|([0-9]+[_-]{1}[0-9])|([0-9]+)$"
-)
+version_compliance_regex = r"^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$"
 
 Prefix: TypeAlias = str
 ExternalId: TypeAlias = str
@@ -314,15 +311,9 @@ class Metadata(RuleModel):
     @validator("version", always=True)
     def is_version_compliant(cls, value):
         # turn "." into "_" to avoid issues with CDF
-        if "." in value:
-            warnings.warn(
-                exceptions.VersionDotsConvertedToUnderscores().message,
-                category=exceptions.VersionDotsConvertedToUnderscores,
-                stacklevel=2,
-            )
-            value = value.replace(".", "_")
-        if re.search(more_than_one_none_alphanumerics_regex, value):
-            raise exceptions.MoreThanOneNonAlphanumericCharacter("version", value).to_pydantic_custom_error()
+        # if "." in value:
+        #     warnings.warn(
+        # if re.search(more_than_one_none_alphanumerics_regex, value):
         if not re.match(version_compliance_regex, value):
             raise exceptions.VersionRegexViolation(value, version_compliance_regex).to_pydantic_custom_error()
         else:
