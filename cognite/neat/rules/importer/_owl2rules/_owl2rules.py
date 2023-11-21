@@ -140,6 +140,7 @@ def _add_missing_classes(tables: dict[str, pd.DataFrame]) -> dict[str, pd.DataFr
                 "Source Entity Name": None,
                 "Match Type": None,
                 "Comment": (
+                    "Added by NEAT. "
                     "This is a class that a domain of a property but was not defined in the ontology. "
                     "It is added by NEAT to make the ontology compliant with CDF."
                 ),
@@ -184,6 +185,7 @@ def _add_missing_value_types(tables: dict[str, pd.DataFrame]) -> dict[str, pd.Da
                 "Source Entity Name": None,
                 "Match Type": None,
                 "Comment": (
+                    "Added by NEAT. "
                     "This is a class that a domain of a property but was not defined in the ontology. "
                     "It is added by NEAT to make the ontology compliant with CDF."
                 ),
@@ -212,7 +214,7 @@ def _add_properties_to_dangling_classes(
     """
 
     if properties_to_add is None:
-        properties_to_add = ["label", "entityType"]
+        properties_to_add = ["label"]
     undefined_classes = set(tables[Tables.classes].Class.to_list()) - set(tables[Tables.properties].Class.to_list())
 
     rows = []
@@ -233,7 +235,7 @@ def _add_properties_to_dangling_classes(
                     "Source": None,
                     "Source Entity Name": None,
                     "Match Type": None,
-                    "Comment": "Default property added by NEAT to make the ontology compliant with CDF.",
+                    "Comment": "Added by NEAT. Default property to make the ontology compliant with CDF.",
                 }
             ]
 
@@ -247,4 +249,34 @@ def _add_properties_to_dangling_classes(
 
 
 def _add_entity_type_property(tables: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
+    missing_entity_type = set(
+        tables[Tables.properties].groupby("Class").filter(lambda x: "entityType" not in x.Property.to_list()).Class
+    )
+
+    rows = []
+    for class_ in missing_entity_type:
+        rows += [
+            {
+                "Class": class_,
+                "Property": "entityType",
+                "Name": "entityType",
+                "Description": None,
+                "Type": "string",
+                "Min Count": None,
+                "Max Count": 1,
+                "Deprecated": False,
+                "Deprecation Date": None,
+                "Replaced By": None,
+                "Source": None,
+                "Source Entity Name": None,
+                "Match Type": None,
+                "Comment": "Added by NEAT. Default property added to make the ontology compliant with CDF.",
+            }
+        ]
+
+    if rows:
+        tables[Tables.properties] = pd.concat(
+            [tables[Tables.properties], pd.DataFrame(rows)],
+            ignore_index=True,
+        )
     return tables

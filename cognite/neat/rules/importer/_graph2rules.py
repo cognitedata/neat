@@ -98,8 +98,7 @@ def _parse_metadata_df() -> pd.DataFrame:
         "rights": "Unknown rights of usage",
         "license": "Unknown license",
     }
-
-    return pd.DataFrame([clean_list]).T
+    return pd.DataFrame(list(clean_list.items()), columns=["Key", "Value"])
 
 
 def _parse_classes_df(data_model: dict, prefixes: dict, parsing_config: dict | None = None) -> pd.DataFrame:
