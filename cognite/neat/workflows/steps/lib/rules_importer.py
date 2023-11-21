@@ -49,9 +49,7 @@ class OntologyToRules(Step):
 
         make_compliant = self.configs["make_compliant"] == "True"
         try:
-            rules = importer.OWLImporter(ontology_file_path).to_rules(
-                skip_validation=True, make_compliant=make_compliant
-            )
+            rules = importer.OWLImporter(ontology_file_path).to_rules(make_compliant=make_compliant)
         except Exception:
             rules = importer.OWLImporter(ontology_file_path).to_rules(
                 skip_validation=True, make_compliant=make_compliant
