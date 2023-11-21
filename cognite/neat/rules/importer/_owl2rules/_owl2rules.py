@@ -31,8 +31,9 @@ class OWLImporter(BaseImporter):
         that you use the .to_spreadsheet() method to generate an Excel file, and then manually add the missing
         information to the Excel file. The Excel file can then be converted to a TransformationRules object.
 
-        One can set the `use_default_values` parameter to True to allow neat to set default
-        values for missing information.
+        One can set the `make_compliant` parameter to True to allow neat to attempt to make
+        the rules compliant by adding default values for missing information, attaching dangling
+        properties to default containers based on the property type, etc.
 
     """
 
