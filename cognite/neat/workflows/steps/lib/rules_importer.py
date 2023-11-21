@@ -34,6 +34,12 @@ class OntologyToRules(Step):
         Configurable(
             name="excel_file_path", value="staging/rules.xlsx", label="Relative path for the Excel rules storage."
         ),
+        Configurable(
+            name="make_compliant",
+            value="True",
+            label="Relative path for the Excel rules storage.",
+            options=["True", "False"],
+        ),
     ]
 
     def run(self) -> FlowMessage:  # type: ignore[override, syntax]
@@ -41,7 +47,15 @@ class OntologyToRules(Step):
         excel_file_path = self.data_store_path / Path(self.configs["excel_file_path"])
         report_file_path = excel_file_path.parent / f"report_{excel_file_path.stem}.txt"
 
-        rules = importer.OWLImporter(ontology_file_path).to_rules(skip_validation=True)
+        make_compliant = self.configs["make_compliant"] == "True"
+        try:
+            rules = importer.OWLImporter(ontology_file_path).to_rules(
+                skip_validation=True, make_compliant=make_compliant
+            )
+        except Exception:
+            rules = importer.OWLImporter(ontology_file_path).to_rules(
+                skip_validation=True, make_compliant=make_compliant
+            )
         assert isinstance(rules, Rules)
         exporter.ExcelExporter.from_rules(rules).export_to_file(excel_file_path)
 
