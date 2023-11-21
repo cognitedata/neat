@@ -55,11 +55,20 @@ class OWLImporter(BaseImporter):
         graph.bind("dc", DC)
         graph.bind("skos", SKOS)
 
-        return {
+        tables: dict[str, pd.DataFrame] = {
             Tables.metadata: parse_owl_metadata(graph, make_compliant=make_compliant),
             Tables.classes: parse_owl_classes(graph, make_compliant=make_compliant),
             Tables.properties: parse_owl_properties(graph, make_compliant=make_compliant),
         }
+
+        if make_compliant:
+            tables = _add_missing_classes(tables)
+            tables = _add_properties_to_dangling_classes(tables)
+            tables = _add_missing_value_types(tables)
+            tables = _add_entity_type_property(tables)
+        # add sorting of classes and properties prior exporting
+
+        return tables
 
     def to_raw_rules(self, make_compliant: bool = False) -> RawRules:
         """Creates `RawRules` object from the data."""
@@ -98,3 +107,50 @@ class OWLImporter(BaseImporter):
         raw_rules = self.to_raw_rules(make_compliant=make_compliant)
 
         return raw_rules.to_rules(return_report, skip_validation, validators_to_skip)
+
+
+def _add_missing_classes(tables: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
+    """Add missing classes to containers.
+
+    Args:
+        tables: imported tables from owl ontology
+
+    Returns:
+        Updated tables with missing classes added to containers
+    """
+
+    return tables
+
+
+def _add_properties_to_dangling_classes(
+    tables: dict[str, pd.DataFrame], properties_to_add: list[str] | None = None
+) -> dict[str, pd.DataFrame]:
+    """Add properties to classes that do not have any properties defined to them
+
+    Args:
+        tables: imported tables from owl ontology
+
+    Returns:
+        Updated tables with missing properties added to containers
+    """
+
+    if properties_to_add is None:
+        properties_to_add = ["label", "entityType"]
+    return tables
+
+
+def _add_missing_value_types(tables: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
+    """Add properties to classes that do not have any properties defined to them
+
+    Args:
+        tables: imported tables from owl ontology
+
+    Returns:
+        Updated tables with missing properties added to containers
+    """
+
+    return tables
+
+
+def _add_entity_type_property(tables: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
+    return tables

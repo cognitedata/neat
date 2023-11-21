@@ -1,11 +1,15 @@
+from typing import cast
+
 import numpy as np
 import pandas as pd
 from rdflib import Graph
 
 from cognite.neat.utils.utils import remove_namespace
 
+from ._owl2classes import _data_type_property_class, _object_property_class
 
-def parse_owl_properties(graph: Graph, make_compliant: bool = False) -> pd.DataFrame:
+
+def parse_owl_properties(graph: Graph, make_compliant: bool = False, language: str = "en") -> pd.DataFrame:
     """Get all properties from the OWL ontology
 
     Parameters
@@ -21,24 +25,11 @@ def parse_owl_properties(graph: Graph, make_compliant: bool = False) -> pd.DataF
         Dataframe with columns: class, property, name, ...
     """
 
-    if make_compliant:
-        query = (
-            "SELECT ?class ?property ?name ?description ?type ?minCount"
-            ' (COALESCE(?maxCount, "1") AS ?maxCount)'
-            ' (COALESCE(?deprecated, "False"^^xsd:boolean) AS ?deprecated)'
-            " ?deprecationDate ?replacedBy ?source ?sourceEntity ?match"
-            ' (COALESCE(?comment, "Extracted using NEAT") AS ?comment) ?propertyType'
-        )
-        print("Using default values")
-    else:
-        print("Not default values")
-        query = (
-            "SELECT ?class ?property ?name ?description ?type ?minCount ?maxCount"
-            " ?deprecated ?deprecationDate ?replacedBy ?source ?sourceEntity"
-            " ?match ?comment ?propertyType"
-        )
+    query = """
 
-    query += """
+    SELECT ?class ?property ?name ?description ?type ?minCount ?maxCount
+     ?deprecated ?deprecationDate ?replacedBy ?source ?sourceEntity
+     ?match ?comment ?propertyType
     WHERE {
         ?property a ?propertyType.
         FILTER (?propertyType IN (owl:ObjectProperty, owl:DatatypeProperty ) )
@@ -57,8 +48,23 @@ def parse_owl_properties(graph: Graph, make_compliant: bool = False) -> pd.DataF
     }
     """
 
-    raw_df = pd.DataFrame(
-        list(graph.query(query)),
+    raw_df = _parse_raw_dataframe(cast(list[tuple], list(graph.query(query.replace("en", language)))))
+    if raw_df.empty:
+        return pd.concat([raw_df, pd.DataFrame([len(raw_df) * [""]])], ignore_index=True)
+
+    # group values and clean up
+    processed_df = _clean_up_properties(raw_df)
+
+    # make compliant
+    if make_compliant:
+        processed_df = make_properties_compliant(processed_df)
+
+    return processed_df
+
+
+def _parse_raw_dataframe(query_results: list[tuple]) -> pd.DataFrame:
+    df = pd.DataFrame(
+        query_results,
         columns=[
             "Class",
             "Property",
@@ -74,39 +80,27 @@ def parse_owl_properties(graph: Graph, make_compliant: bool = False) -> pd.DataF
             "Source Entity Name",
             "Match Type",
             "Comment",
-            "Property Type",
+            "_property_type",
         ],
     )
-    if raw_df.empty:
-        return raw_df
-    raw_df.replace(np.nan, "", regex=True, inplace=True)
+    if df.empty:
+        return df
 
-    raw_df.Source = raw_df.Property
-    raw_df.Class = raw_df.Class.apply(lambda x: remove_namespace(x))
-    raw_df.Property = raw_df.Property.apply(lambda x: remove_namespace(x))
-    raw_df.Type = raw_df.Type.apply(lambda x: remove_namespace(x))
-    raw_df["Source Entity Name"] = raw_df.Property
-    raw_df["Match Type"] = len(raw_df) * ["exact"]
+    df.replace(np.nan, "", regex=True, inplace=True)
 
-    raw_df.replace("", None, inplace=True)
+    df.Source = df.Property
+    df.Class = df.Class.apply(lambda x: remove_namespace(x))
+    df.Property = df.Property.apply(lambda x: remove_namespace(x))
+    df.Type = df.Type.apply(lambda x: remove_namespace(x))
+    df["Source Entity Name"] = df.Property
+    df["Match Type"] = len(df) * ["exact"]
+    df["_property_type"] = df["_property_type"].apply(lambda x: remove_namespace(x))
 
-    raw_df["Property Type"] = raw_df["Property Type"].apply(lambda x: remove_namespace(x))
+    return df
 
-    if make_compliant:
-        raw_df["Class"] = raw_df["Class"].fillna(raw_df["Property Type"])
-        raw_df["Type"] = raw_df.apply(
-            lambda row: "Thing"
-            if row["Property Type"] == "ObjectProperty" and pd.isna(row["Type"])
-            else "string"
-            if pd.isna(row["Type"])
-            else row["Type"],
-            axis=1,
-        )
 
-    raw_df.drop("Property Type", axis=1, inplace=True)
-    raw_df.fillna("", inplace=True)
-
-    class_grouped_dfs = raw_df.groupby("Class")
+def _clean_up_properties(df: pd.DataFrame) -> pd.DataFrame:
+    class_grouped_dfs = df.groupby("Class")
 
     clean_list = []
 
@@ -129,6 +123,7 @@ def parse_owl_properties(graph: Graph, make_compliant: bool = False) -> pd.DataF
                     "Source Entity Name": property_grouped_df["Source Entity Name"].unique()[0],
                     "Match Type": property_grouped_df["Match Type"].unique()[0],
                     "Comment": property_grouped_df["Comment"].unique()[0],
+                    "_property_type": property_grouped_df["_property_type"].unique()[0],
                 }
             ]
 
@@ -136,3 +131,84 @@ def parse_owl_properties(graph: Graph, make_compliant: bool = False) -> pd.DataF
     df.replace("", None, inplace=True)
 
     return df
+
+
+def make_properties_compliant(properties: pd.DataFrame) -> pd.DataFrame:
+    # default to None if "Min Count" is not specified
+    properties["Min Count"] = properties["Min Count"].apply(lambda x: None if not isinstance(x, int) or x == "" else x)
+
+    # default to None if "Max Count" is not specified
+    properties["Max Count"] = properties["Max Count"].apply(lambda x: 1 if not isinstance(x, int) or x == "" else x)
+
+    # Replace empty or non-string values in "Match Type" column with "exact"
+    properties["Match Type"] = properties["Match Type"].fillna("exact")
+    properties["Match Type"] = properties["Match Type"].apply(
+        lambda x: "exact" if not isinstance(x, str) or len(x) == 0 else x
+    )
+
+    # Replace empty or non-string values in "Comment" column with a default value
+    properties["Comment"] = properties["Comment"].fillna("Generated by NEAT")
+    properties["Comment"] = properties["Comment"].apply(
+        lambda x: "Generated by NEAT" if not isinstance(x, str) or len(x) == 0 else x
+    )
+
+    # Replace empty or non-boolean values in "Deprecated" column with False
+    properties["Deprecated"] = properties["Deprecated"].fillna(False)
+    properties["Deprecated"] = properties["Deprecated"].apply(lambda x: False if not isinstance(x, bool) else x)
+
+    # Reduce length of elements in the "Description" column to 1028 characters
+    properties["Description"] = properties["Description"].apply(lambda x: x[:1028] if isinstance(x, str) else None)
+
+    # fixes and additions
+    properties = fix_dangling_properties(properties)
+    properties = fix_missing_property_value_type(properties)
+
+    return properties
+
+
+def fix_dangling_properties(properties: pd.DataFrame) -> pd.DataFrame:
+    """This method fixes properties which are missing a domain definition in the ontology.
+
+    Args:
+        properties: Dataframe containing properties
+
+    Returns:
+        Dataframe containing properties with fixed domain
+    """
+    domain = {
+        "ObjectProperty": _object_property_class()["Class"],
+        "DatatypeProperty": _data_type_property_class()["Class"],
+    }
+
+    # apply missing range
+    properties["Class"] = properties.apply(
+        lambda row: domain[row._property_type]
+        if row._property_type == "ObjectProperty" and pd.isna(row["Class"])
+        else domain["DatatypeProperty"]
+        if pd.isna(row["Class"])
+        else row["Class"],
+        axis=1,
+    )
+    return properties
+
+
+def fix_missing_property_value_type(properties: pd.DataFrame) -> pd.DataFrame:
+    """This method fixes properties which are missing a range definition in the ontology.
+
+    Args:
+        properties: Dataframe containing properties
+
+    Returns:
+        Dataframe containing properties with fixed range
+    """
+    # apply missing range
+    properties["Type"] = properties.apply(
+        lambda row: "Thing"
+        if row._property_type == "ObjectProperty" and pd.isna(row["Type"])
+        else "string"
+        if pd.isna(row["Type"])
+        else row["Type"],
+        axis=1,
+    )
+
+    return properties
