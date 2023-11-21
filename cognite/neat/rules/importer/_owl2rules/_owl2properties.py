@@ -59,6 +59,9 @@ def parse_owl_properties(graph: Graph, make_compliant: bool = False, language: s
     if make_compliant:
         processed_df = make_properties_compliant(processed_df)
 
+    # drop column _property_type, which was a helper column:
+    processed_df.drop(columns=["_property_type"], inplace=True)
+
     return processed_df
 
 

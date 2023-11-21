@@ -13,6 +13,7 @@ from cognite.neat.rules.importer._base import BaseImporter
 from cognite.neat.rules.models.raw_rules import RawRules
 from cognite.neat.rules.models.rules import Rules
 from cognite.neat.rules.models.tables import Tables
+from cognite.neat.rules.type_mapping import DATA_TYPE_MAPPING
 
 from ._owl2classes import parse_owl_classes
 from ._owl2metadata import parse_owl_metadata
@@ -63,10 +64,13 @@ class OWLImporter(BaseImporter):
 
         if make_compliant:
             tables = _add_missing_classes(tables)
-            tables = _add_properties_to_dangling_classes(tables)
             tables = _add_missing_value_types(tables)
+            tables = _add_properties_to_dangling_classes(tables)
             tables = _add_entity_type_property(tables)
         # add sorting of classes and properties prior exporting
+
+        tables[Tables.classes] = tables[Tables.classes].sort_values(by=["Class"])
+        tables[Tables.properties] = tables[Tables.properties].sort_values(by=["Class", "Property"])
 
         return tables
 
@@ -119,6 +123,79 @@ def _add_missing_classes(tables: dict[str, pd.DataFrame]) -> dict[str, pd.DataFr
         Updated tables with missing classes added to containers
     """
 
+    missing_classes = set(tables[Tables.properties].Class.to_list()) - set(tables[Tables.classes].Class.to_list())
+
+    rows = []
+    for class_ in missing_classes:
+        rows += [
+            {
+                "Class": class_,
+                "Name": None,
+                "Description": None,
+                "Parent Class": None,
+                "Deprecated": False,
+                "Deprecation Date": None,
+                "Replaced By": None,
+                "Source": None,
+                "Source Entity Name": None,
+                "Match Type": None,
+                "Comment": (
+                    "This is a class that a domain of a property but was not defined in the ontology. "
+                    "It is added by NEAT to make the ontology compliant with CDF."
+                ),
+            }
+        ]
+
+    if rows:
+        tables[Tables.classes] = pd.concat(
+            [tables[Tables.classes], pd.DataFrame(rows)],
+            ignore_index=True,
+        )
+
+    return tables
+
+
+def _add_missing_value_types(tables: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
+    """Add properties to classes that do not have any properties defined to them
+
+    Args:
+        tables: imported tables from owl ontology
+
+    Returns:
+        Updated tables with missing properties added to containers
+    """
+
+    xsd_types = set(DATA_TYPE_MAPPING.keys())
+    referred_types = set(tables[Tables.properties]["Type"].to_list())
+    defined_classes = set(tables[Tables.classes]["Class"].to_list())
+
+    rows = []
+    for class_ in referred_types.difference(defined_classes).difference(xsd_types):
+        rows += [
+            {
+                "Class": class_,
+                "Name": None,
+                "Description": None,
+                "Parent Class": None,
+                "Deprecated": False,
+                "Deprecation Date": None,
+                "Replaced By": None,
+                "Source": None,
+                "Source Entity Name": None,
+                "Match Type": None,
+                "Comment": (
+                    "This is a class that a domain of a property but was not defined in the ontology. "
+                    "It is added by NEAT to make the ontology compliant with CDF."
+                ),
+            }
+        ]
+
+    if rows:
+        tables[Tables.classes] = pd.concat(
+            [tables[Tables.classes], pd.DataFrame(rows)],
+            ignore_index=True,
+        )
+
     return tables
 
 
@@ -136,18 +213,35 @@ def _add_properties_to_dangling_classes(
 
     if properties_to_add is None:
         properties_to_add = ["label", "entityType"]
-    return tables
+    undefined_classes = set(tables[Tables.classes].Class.to_list()) - set(tables[Tables.properties].Class.to_list())
 
+    rows = []
+    for class_ in undefined_classes:
+        for property_ in properties_to_add:
+            rows += [
+                {
+                    "Class": class_,
+                    "Property": property_,
+                    "Name": property_,
+                    "Description": None,
+                    "Type": "string",
+                    "Min Count": None,
+                    "Max Count": 1,
+                    "Deprecated": False,
+                    "Deprecation Date": None,
+                    "Replaced By": None,
+                    "Source": None,
+                    "Source Entity Name": None,
+                    "Match Type": None,
+                    "Comment": "Default property added by NEAT to make the ontology compliant with CDF.",
+                }
+            ]
 
-def _add_missing_value_types(tables: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
-    """Add properties to classes that do not have any properties defined to them
-
-    Args:
-        tables: imported tables from owl ontology
-
-    Returns:
-        Updated tables with missing properties added to containers
-    """
+    if rows:
+        tables[Tables.properties] = pd.concat(
+            [tables[Tables.properties], pd.DataFrame(rows)],
+            ignore_index=True,
+        )
 
     return tables
 

@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 from rdflib import OWL, Graph
 
+from cognite.neat.utils.utils import remove_namespace
+
 
 def parse_owl_classes(graph: Graph, make_compliant: bool = False, language: str = "en") -> pd.DataFrame:
     """Parse owl classes from graph to pandas dataframe.
@@ -39,14 +41,19 @@ def parse_owl_classes(graph: Graph, make_compliant: bool = False, language: str 
     if raw_df.empty:
         return pd.concat([raw_df, pd.DataFrame([len(raw_df) * [""]])], ignore_index=True)
 
-    return raw_df
-    # # group values and clean up
+    # group values and clean up
+    processed_df = _clean_up_classes(raw_df)
 
-    # # make compliant
-    # if make_compliant:
+    # make compliant
+    if make_compliant:
+        processed_df = make_classes_compliant(processed_df)
 
-    # # Make Parent Class list elements into string joined with comma
-    # processed_df["Parent Class"] = processed_df["Parent Class"].apply(
+    # Make Parent Class list elements into string joined with comma
+    processed_df["Parent Class"] = processed_df["Parent Class"].apply(
+        lambda x: ", ".join(x) if isinstance(x, list) and x else None
+    )
+
+    return processed_df
 
 
 def _parse_raw_dataframe(query_results: list[tuple]) -> pd.DataFrame:
@@ -71,6 +78,12 @@ def _parse_raw_dataframe(query_results: list[tuple]) -> pd.DataFrame:
 
     # # remove NaNs
     df.replace(np.nan, "", regex=True, inplace=True)
+
+    df.Source = df.Class
+    df.Class = df.Class.apply(lambda x: remove_namespace(x))
+    df["Source Entity Name"] = df.Class
+    df["Match"] = len(df) * ["exact"]
+    df["Parent Class"] = df["Parent Class"].apply(lambda x: remove_namespace(x))
 
     return df
 
