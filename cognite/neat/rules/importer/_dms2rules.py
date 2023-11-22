@@ -72,8 +72,8 @@ class DMSImporter(BaseImporter):
             e.g. `[(space, external_id, version)]`, or two element tuples,
             e.g. `[(space, external_id)]`, where `space` represents CDF space name,
             `external_id` represents data model external ID, and `version`
-            represents data model version. If `version` is not provided, the latest version
-            of the data model will be used.
+            represents data model version. If `version` is not provided, whatever is
+            the first version CDF returns it will give you that one.
 
         """
         data_model = client.data_modeling.data_models.retrieve(data_model, inline_views=True)[0]

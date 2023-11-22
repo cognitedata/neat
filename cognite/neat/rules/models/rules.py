@@ -130,7 +130,7 @@ class URL(BaseModel):
     url: HttpUrl
 
 
-Description: TypeAlias = constr(min_length=1, max_length=255)  # type: ignore[valid-type]
+Description: TypeAlias = constr(min_length=1, max_length=1028)  # type: ignore[valid-type]
 
 # regex expressions for compliance of Metadata sheet parsing
 more_than_one_none_alphanumerics_regex = r"([_-]{2,})"

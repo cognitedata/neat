@@ -74,8 +74,10 @@ class ExcelExporter(BaseExporter[Workbook]):
                 [
                     class_.class_id,
                     class_.description,
-                    class_.parent_class,
-                    class_.source,
+                    ",".join(class_.parent_class if isinstance(class_.parent_class, list) else [class_.parent_class])
+                    if class_.parent_class
+                    else None,
+                    str(class_.source),
                     class_.source_entity_name,
                     class_.match_type,
                     class_.comment,
@@ -150,7 +152,7 @@ class ExcelExporter(BaseExporter[Workbook]):
                     property_.relationship_external_id_rule,  # L
                     property_.rule_type,  # M
                     property_.rule,  # N
-                    property_.source,  # O
+                    str(property_.source),  # O
                     property_.source_entity_name,  # P
                     property_.match_type,  # Q
                     property_.comment,  # R

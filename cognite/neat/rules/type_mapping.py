@@ -32,6 +32,7 @@ _DATA_TYPES: list[dict[str, str | type]] = [
     {"name": "token", "python": str, "GraphQL": "String", "dms": Text},
     # Graphql does not have a datetime/date type this is CDF specific
     {"name": "dateTime", "python": datetime, "GraphQL": "Timestamp", "dms": Timestamp},
+    {"name": "dateTimeStamp", "python": datetime, "GraphQL": "Timestamp", "dms": Timestamp},
     {"name": "date", "python": date, "GraphQL": "String", "dms": Date},
     # CDF specific types, not in XSD
     {"name": "timeseries", "python": TimeSeriesReference, "GraphQL": "TimeSeries", "dms": TimeSeriesReference},
