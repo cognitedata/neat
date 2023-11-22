@@ -93,7 +93,7 @@ class DownloadFileFromGitHub(Step):
         output_text += (
             "<p></p>"
             " Downloaded rules accessible locally under file name "
-            f'<a href="http://localhost:8000/data/{local_download_path}?{time.time()}" '
+            f'<a href="/data/{local_download_path}?{time.time()}" '
             f'target="_blank">{local_file_name}</a>'
         )
 

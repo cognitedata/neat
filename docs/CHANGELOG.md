@@ -15,6 +15,12 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.42.2] - 22-11-23
+
+## Fixed
+
+- Fixed absolute path in `neat` steps.
+
 ## [0.42.1] - 22-11-23
 
 ## Fixed
