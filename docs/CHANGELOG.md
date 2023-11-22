@@ -15,6 +15,13 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.42.1] - 22-11-23
+
+## Fixed
+
+- `DownloadFileFromCDF` now can autocreate missing folders
+- `DownloadDataFromRestApiToFile` now can autocreate missing folders
+
 ## [0.42.0] - 22-11-23
 
 ## Improved
