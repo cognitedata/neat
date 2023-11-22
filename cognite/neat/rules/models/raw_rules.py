@@ -170,11 +170,9 @@ class RawRules(RuleModel):
             is exported to an Excel file. Do not use this flag for any other purpose!
         """
 
-        rules_dict = _raw_tables_to_rules_dict(self)
+        rules_dict = _raw_tables_to_rules_dict(self, validators_to_skip)
         if skip_validation:
             return _to_invalidated_rules(rules_dict)
-        elif validators_to_skip:
-            return _to_partially_validated_rules(rules_dict, validators_to_skip)
         else:
             return _to_validated_rules(rules_dict, return_report)
 
@@ -238,8 +236,10 @@ def _to_invalidated_rules(rules_dict: dict) -> Rules:
     return cast(Rules, Rules.model_construct(**args))
 
 
-def _raw_tables_to_rules_dict(raw_tables: RawRules) -> dict[str, Any]:
+def _raw_tables_to_rules_dict(raw_tables: RawRules, validators_to_skip: list | None = None) -> dict[str, Any]:
     """Converts raw tables to a dictionary of rules."""
+    if validators_to_skip is None:
+        validators_to_skip = []
     rules_dict: dict[str, Any] = {
         "metadata": _metadata_table2dict(raw_tables.Metadata),
         "classes": _classes_table2dict(raw_tables.Classes),
@@ -252,6 +252,14 @@ def _raw_tables_to_rules_dict(raw_tables: RawRules) -> dict[str, Any]:
         if raw_tables.Instances.empty
         else _instances_table2dict(raw_tables.Instances, rules_dict["metadata"], rules_dict["prefixes"])
     )
+
+    if validators_to_skip:
+        rules_dict["validators_to_skip"] = validators_to_skip
+        rules_dict["metadata"]["validators_to_skip"] = validators_to_skip
+        for class_ in rules_dict["classes"].keys():
+            rules_dict["classes"][class_]["validators_to_skip"] = validators_to_skip
+        for property_ in rules_dict["properties"].keys():
+            rules_dict["properties"][property_]["validators_to_skip"] = validators_to_skip
 
     return rules_dict
 
