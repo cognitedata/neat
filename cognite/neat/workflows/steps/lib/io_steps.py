@@ -205,9 +205,11 @@ class DownloadFileFromCDF(Step):
     def run(self, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override, syntax]
         if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
-        full_local_file_path = (
-            self.data_store_path / Path(self.configs["local.storage_dir"]) / self.configs["local.file_name"]
-        )
+
+        output_dir = self.data_store_path / Path(self.configs["local.storage_dir"])
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        full_local_file_path = output_dir / self.configs["local.file_name"]
         cdf_client.files.download_to_path(full_local_file_path, external_id=self.configs["cdf.external_id"])
         if full_local_file_path.exists():
             return FlowMessage(output_text=f"File {self.configs['local.file_name']} downloaded from CDF successfully")
@@ -307,6 +309,9 @@ class DownloadDataFromRestApiToFile(Step):
     def run(self) -> FlowMessage:  # type: ignore[override, syntax]
         api_url = self.configs["api_url"]
         output_file_path = Path(self.data_store_path) / Path(self.configs["output_file_path"])
+
+        output_file_path.parent.mkdir(parents=True, exist_ok=True)
+
         http_method = self.configs["http_method"].upper()
         auth_mode = self.configs["auth_mode"]
         username = self.configs["username"]
