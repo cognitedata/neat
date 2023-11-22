@@ -31,6 +31,7 @@ jobs:
 
   tests:
     runs-on: ubuntu-latest
+    environment: CD
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
