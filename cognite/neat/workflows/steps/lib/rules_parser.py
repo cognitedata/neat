@@ -90,7 +90,7 @@ class LoadTransformationRules(Step):
         text_for_report = (
             "<p></p>"
             "Download rules validation report "
-            f'<a href="http://localhost:8000/data/{report_dir_str}/{report_file}?{time.time()}" '
+            f'<a href="/data/{report_dir_str}/{report_file}?{time.time()}" '
             f'target="_blank">here</a>'
         )
 

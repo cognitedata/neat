@@ -133,7 +133,7 @@ class GenerateCDFNodesAndEdgesFromGraph(Step):
             exceptions_report_path.write_text(generate_exception_report(exceptions, "Errors"))
             msg += (
                 f"<p>There is total of { len(exceptions) } exceptions</p>"
-                f'<a href="http://localhost:8000/data/reports/{file_name}?{time.time()}" '
+                f'<a href="/data/reports/{file_name}?{time.time()}" '
                 f'target="_blank">Full error report </a>'
             )
             if data_validatation_error_handling_strategy == "fail_and_report":

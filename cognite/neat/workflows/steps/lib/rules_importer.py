@@ -66,11 +66,11 @@ class OntologyToRules(Step):
         output_text = (
             "<p></p>"
             "Rules generated from OWL Ontology can be downloaded here : "
-            f'<a href="http://localhost:8000/data/{relative_excel_file_path}?{time.time()}" '
+            f'<a href="/data/{relative_excel_file_path}?{time.time()}" '
             f'target="_blank">{excel_file_path.stem}.xlsx</a>'
             "<p></p>"
             "Report can be downloaded here : "
-            f'<a href="http://localhost:8000/data/{relative_report_file_path}?{time.time()}" '
+            f'<a href="/data/{relative_report_file_path}?{time.time()}" '
             f'target="_blank">{report_file_path.stem}.txt</a>'
         )
 
@@ -486,11 +486,11 @@ class GraphToRules(Step):
         output_text = (
             "<p></p>"
             "Rules imported using GraphImporter and can be downloaded as the Excel file:"
-            f'<a href="http://localhost:8000/data/{staging_dir_str}/{file_name}?{time.time()}" '
+            f'<a href="/data/{staging_dir_str}/{file_name}?{time.time()}" '
             f'target="_blank">{file_name}</a>'
             "<p></p>"
             "Rules validation report can be downloaded as TXT file: "
-            f'<a href="http://localhost:8000/data/{staging_dir_str}/{spreadsheet_path.stem}'
+            f'<a href="/data/{staging_dir_str}/{spreadsheet_path.stem}'
             f'_validation_report.txt?{time.time()}" '
             f'target="_blank">{spreadsheet_path.stem}_validation_report.txt</a>'
         )
