@@ -15,6 +15,12 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.42.4] - 22-11-23
+
+## Fixed
+
+- Fixed missing oxi graph in docker
+
 ## [0.42.3] - 22-11-23
 
 ## Fixed
