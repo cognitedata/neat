@@ -15,6 +15,22 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.42.0] - 22-11-23
+
+## Improved
+
+- `OWLImporter` improved to handle exceptions often found in OWL files
+
+## Added
+
+- `OWLImporter` supports conversion of information to data model through flag `make_compliant`
+
+
+## Fixed
+
+- Description of properties, classes and data model updated to allow for 1028 characters
+
+
 ## [0.41.6] - 20-11-23
 
 ## Changed

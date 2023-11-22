@@ -1,9 +1,8 @@
 import datetime
 import re
-from typing import Any
 
 import pandas as pd
-from rdflib import Graph, Literal, Namespace, URIRef
+from rdflib import Graph, Namespace
 
 from cognite.neat.rules.models.rules import (
     cdf_space_name_compliance_regex,
@@ -11,6 +10,7 @@ from cognite.neat.rules.models.rules import (
     prefix_compliance_regex,
     version_compliance_regex,
 )
+from cognite.neat.utils.utils import convert_rdflib_content, remove_none_elements_from_set
 
 
 def parse_owl_metadata(graph: Graph, make_compliant: bool = False) -> pd.DataFrame:
@@ -54,7 +54,7 @@ def parse_owl_metadata(graph: Graph, make_compliant: bool = False) -> pd.DataFra
 
     results = [{item for item in sublist} for sublist in list(zip(*graph.query(query), strict=True))]
 
-    clean_list = convert_rdflib_terms(
+    clean_list = convert_rdflib_content(
         {
             "namespace": Namespace(results[0].pop()),
             "prefix": results[1].pop(),
@@ -66,8 +66,12 @@ def parse_owl_metadata(graph: Graph, make_compliant: bool = False) -> pd.DataFra
             "updated": results[7].pop(),
             "title": results[8].pop(),
             "description": results[9].pop(),
-            "creator": ", ".join(remove_none_elements(results[10])) if remove_none_elements(results[10]) else None,
-            "contributor": ", ".join(remove_none_elements(results[11])) if remove_none_elements(results[11]) else None,
+            "creator": ", ".join(remove_none_elements_from_set(results[10]))
+            if remove_none_elements_from_set(results[10])
+            else None,
+            "contributor": ", ".join(remove_none_elements_from_set(results[11]))
+            if remove_none_elements_from_set(results[11])
+            else None,
             "rights": results[12].pop(),
             "license": results[13].pop(),
         }
@@ -78,17 +82,6 @@ def parse_owl_metadata(graph: Graph, make_compliant: bool = False) -> pd.DataFra
         return pd.DataFrame(list(make_metadata_compliant(clean_list).items()), columns=["Key", "Value"])
 
     return pd.DataFrame(list(clean_list.items()), columns=["Key", "Value"])
-
-
-def convert_rdflib_terms(metadata: Literal | URIRef | dict | list) -> Any:
-    if isinstance(metadata, Literal) or isinstance(metadata, URIRef):
-        return metadata.toPython()
-    elif isinstance(metadata, dict):
-        return {key: convert_rdflib_terms(value) for key, value in metadata.items()}
-    elif isinstance(metadata, list):
-        return [convert_rdflib_terms(item) for item in metadata]
-    else:
-        return metadata
 
 
 def make_metadata_compliant(metadata: dict) -> dict:
@@ -260,7 +253,3 @@ def fix_title(metadata: dict, default: str = "OWL Inferred Data Model") -> dict:
         metadata["title"] = default
 
     return metadata
-
-
-def remove_none_elements(s):
-    return {x for x in s if x is not None}

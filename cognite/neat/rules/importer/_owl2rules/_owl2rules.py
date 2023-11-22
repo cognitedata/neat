@@ -30,11 +30,13 @@ class OWLImporter(BaseImporter):
         OWL Ontologies typically lacks some information that is required for making a complete
         data model. This means that the methods .to_rules() will typically fail. Instead, it is recommended
         that you use the .to_spreadsheet() method to generate an Excel file, and then manually add the missing
-        information to the Excel file. The Excel file can then be converted to a TransformationRules object.
+        information to the Excel file. The Excel file can then be converted to a `Rules` object.
 
-        One can set the `make_compliant` parameter to True to allow neat to attempt to make
-        the rules compliant by adding default values for missing information, attaching dangling
-        properties to default containers based on the property type, etc.
+        Alternatively, one can set the `make_compliant` parameter to True to allow neat to attempt to make
+        the imported rules compliant by adding default values for missing information, attaching dangling
+        properties to default containers based on the property type, etc. One has to be aware
+        that NEAT will be opinionated about how to make the ontology compliant, and that the resulting
+        rules may not be what you expect.
 
     """
 
@@ -63,10 +65,7 @@ class OWLImporter(BaseImporter):
         }
 
         if make_compliant:
-            tables = _add_missing_classes(tables)
-            tables = _add_missing_value_types(tables)
-            tables = _add_properties_to_dangling_classes(tables)
-            tables = _add_entity_type_property(tables)
+            tables = make_tables_compliant(tables)
         # add sorting of classes and properties prior exporting
 
         tables[Tables.classes] = tables[Tables.classes].sort_values(by=["Class"])
@@ -111,6 +110,15 @@ class OWLImporter(BaseImporter):
         raw_rules = self.to_raw_rules(make_compliant=make_compliant)
 
         return raw_rules.to_rules(return_report, skip_validation, validators_to_skip)
+
+
+def make_tables_compliant(tables: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
+    tables = _add_missing_classes(tables)
+    tables = _add_missing_value_types(tables)
+    tables = _add_properties_to_dangling_classes(tables)
+    tables = _add_entity_type_property(tables)
+
+    return tables
 
 
 def _add_missing_classes(tables: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:

@@ -17,6 +17,10 @@ def parse_owl_classes(graph: Graph, make_compliant: bool = False, language: str 
 
     Returns:
         Dataframe containing owl classes
+
+    !!! note "make_compliant"
+        If `make_compliant` is set to True, in presence of errors, default values will be used instead.
+        This makes the method very opinionated, but results in a compliant classes.
     """
 
     query = """

@@ -13,6 +13,7 @@ from cognite.client import ClientConfig, CogniteClient
 from cognite.client.credentials import CredentialProvider, OAuthClientCredentials, OAuthInteractive, Token
 from cognite.client.exceptions import CogniteDuplicatedError, CogniteReadTimeout
 from pydantic_core import ErrorDetails
+from pyparsing import Any
 from rdflib import Literal, Namespace
 from rdflib.term import URIRef
 
@@ -135,6 +136,17 @@ def get_namespace(URI: URIRef, special_separator: str = "#_") -> str:
         return URI.split("#")[0] + "#"
     else:
         return "/".join(URI.split("/")[:-1]) + "/"
+
+
+def convert_rdflib_content(content: Literal | URIRef | dict | list) -> Any:
+    if isinstance(content, Literal) or isinstance(content, URIRef):
+        return content.toPython()
+    elif isinstance(content, dict):
+        return {key: convert_rdflib_content(value) for key, value in content.items()}
+    elif isinstance(content, list):
+        return [convert_rdflib_content(item) for item in content]
+    else:
+        return content
 
 
 def uri_to_short_form(URI: URIRef, prefixes: dict[str, Namespace]) -> str | URIRef:
@@ -304,3 +316,7 @@ def _order_expectations_by_type(exceptions: list[dict] | list[ErrorDetails]) -> 
         else:
             exception_dict[exception["type"]].append(issue)
     return exception_dict
+
+
+def remove_none_elements_from_set(s):
+    return {x for x in s if x is not None}
