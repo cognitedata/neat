@@ -149,8 +149,8 @@ def fix_description(metadata: dict, default: str = "This model has been inferred
     if description := metadata.get("description", None):
         if not isinstance(description, str) or len(description) == 0:
             metadata["description"] = default
-        elif isinstance(description, str) and len(description) > 1028:
-            metadata["description"] = metadata["description"][:1028]
+        elif isinstance(description, str) and len(description) > 1024:
+            metadata["description"] = metadata["description"][:1024]
     else:
         metadata["description"] = default
     return metadata

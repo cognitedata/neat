@@ -115,7 +115,7 @@ def _clean_up_properties(df: pd.DataFrame) -> pd.DataFrame:
                     "Class": class_,
                     "Property": property_,
                     "Name": property_grouped_df["Name"].unique()[0],
-                    "Description": "\n".join(list(property_grouped_df.Description.unique()))[:1028],
+                    "Description": "\n".join(list(property_grouped_df.Description.unique()))[:1024],
                     "Type": property_grouped_df.Type.unique()[0],
                     "Min Count": property_grouped_df["Min Count"].unique()[0],
                     "Max Count": property_grouped_df["Max Count"].unique()[0],
@@ -159,8 +159,8 @@ def make_properties_compliant(properties: pd.DataFrame) -> pd.DataFrame:
     properties["Deprecated"] = properties["Deprecated"].fillna(False)
     properties["Deprecated"] = properties["Deprecated"].apply(lambda x: False if not isinstance(x, bool) else x)
 
-    # Reduce length of elements in the "Description" column to 1028 characters
-    properties["Description"] = properties["Description"].apply(lambda x: x[:1028] if isinstance(x, str) else None)
+    # Reduce length of elements in the "Description" column to 1024 characters
+    properties["Description"] = properties["Description"].apply(lambda x: x[:1024] if isinstance(x, str) else None)
 
     # fixes and additions
     properties = fix_dangling_properties(properties)
