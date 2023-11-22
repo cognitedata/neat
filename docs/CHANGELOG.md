@@ -15,6 +15,12 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.42.3] - 22-11-23
+
+## Fixed
+
+- Fixed max character length for `Description` to 1024 characters.
+
 ## [0.42.2] - 22-11-23
 
 ## Fixed

@@ -156,8 +156,8 @@ def make_classes_compliant(classes: pd.DataFrame) -> pd.DataFrame:
         ignore_index=True,
     )
 
-    # Reduce length of elements in the "Description" column to 1028 characters
-    classes["Description"] = classes["Description"].apply(lambda x: x[:1028] if isinstance(x, str) else None)
+    # Reduce length of elements in the "Description" column to 1024 characters
+    classes["Description"] = classes["Description"].apply(lambda x: x[:1024] if isinstance(x, str) else None)
 
     # Add missing parent classes to the dataframe
     classes = pd.concat(
