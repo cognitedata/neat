@@ -28,7 +28,7 @@ jobs:
 
       - name: Export dependencies
         run: |
-          poetry export -f requirements.txt --output requirements.txt --extras "graphql"
+          poetry export -f requirements.txt --output requirements.txt --extras "all"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
