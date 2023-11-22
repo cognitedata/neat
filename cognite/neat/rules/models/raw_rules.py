@@ -216,10 +216,6 @@ def _to_validated_rules(
             raise e
 
 
-def _to_partially_validated_rules(rules_dict: dict, validators_to_skip: list[str]) -> Rules:
-    return Rules(validators_to_skip=validators_to_skip, **rules_dict)
-
-
 def _to_invalidated_rules(rules_dict: dict) -> Rules:
     args = {
         "metadata": Metadata.model_construct(**rules_dict["metadata"]),
@@ -238,8 +234,6 @@ def _to_invalidated_rules(rules_dict: dict) -> Rules:
 
 def _raw_tables_to_rules_dict(raw_tables: RawRules, validators_to_skip: list | None = None) -> dict[str, Any]:
     """Converts raw tables to a dictionary of rules."""
-    if validators_to_skip is None:
-        validators_to_skip = []
     rules_dict: dict[str, Any] = {
         "metadata": _metadata_table2dict(raw_tables.Metadata),
         "classes": _classes_table2dict(raw_tables.Classes),
