@@ -1085,3 +1085,7 @@ class Rules(RuleModel):
         dump["property_count"] = len(self.properties)
         dump["instance_count"] = len(self.instances)
         return pd.Series(dump).to_frame("value")._repr_html_()  # type: ignore[operator]
+
+
+def _neat_validators() -> list[str]:
+    return ["add_data_model_prefix_namespace", "are_namespaces_compliant"]
