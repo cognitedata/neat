@@ -144,6 +144,11 @@ def generate_parse_traversal():
         id="All references",
     )
     yield pytest.param(
+        "cim:G",
+        AllReferences(class_=Entity(prefix="cim", name="G")),
+        id="All references single character name",
+    )
+    yield pytest.param(
         "cim:Terminal->cim:ConnectivityNode->cim:VoltageLevel->cim:Substation",
         Hop.from_string(
             class_="cim:Terminal",
@@ -153,6 +158,14 @@ def generate_parse_traversal():
             ],
         ),
         id="Child traversal without property",
+    )
+    yield pytest.param(
+        "cim:T->cim:C->cim:V->cim:S",
+        Hop.from_string(
+            class_="cim:T",
+            traversal=[Step.from_string(raw=step) for step in ["->cim:C", "->cim:V", "->cim:S"]],
+        ),
+        id="Child traversal without property single character name",
     )
     yield pytest.param(
         "cim:Substation<-cim:VoltageLevel<-cim:ConnectivityNode<-cim:Terminal",
@@ -191,6 +204,21 @@ def generate_parse_traversal():
             ],
         ),
         id="Child traversal with property",
+    )
+    yield pytest.param(
+        "cim:Terminal->cim:ConnectivityNode->cim:VoltageLevel->cim:S(cim:n)",
+        Hop.from_string(
+            class_="cim:Terminal",
+            traversal=[
+                Step.from_string(raw=step)
+                for step in [
+                    "->cim:ConnectivityNode",
+                    "->cim:VoltageLevel",
+                    "->cim:S(cim:n)",
+                ]
+            ],
+        ),
+        id="Child traversal with single character property",
     )
     yield pytest.param(
         "cim:Substation<-cim:VoltageLevel<-cim:ConnectivityNode<-cim:Terminal(cim:IdentifiedObject.name)",
