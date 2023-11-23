@@ -51,11 +51,10 @@ class Lookup(StrEnum):
 # this causes super long processing time for some reason
 
 _prefix = r"[a-zA-Z]+[a-zA-Z0-9]*[-_.]*[a-zA-Z0-9]+"
-_name = r"[a-zA-Z0-9-_.]+[a-zA-Z0-9]+"
-
+_name = r"[a-zA-Z0-9-_.]+[a-zA-Z0-9]|[-_.]*[a-zA-Z0-9]+"
 
 # entity can be either anything except literal value!
-_entity = rf"{_prefix}:{_name}"
+_entity = rf"{_prefix}:({_name})"
 
 entity = re.compile(rf"^(?P<prefix>{_prefix}):(?P<name>{_name})$")
 

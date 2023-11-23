@@ -15,6 +15,18 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.43.0] - 23-11-23
+
+## Added
+
+- All neat specific validators for `Rules` can be now skipped by specifying them in `validators_to_skip`, alternatively one can set `validators_to_skip=["all"]` to skip all validators.
+
+
+## Fixed
+
+- Single character properties/classes are now allowed in `rdfpath`
+
+
 ## [0.42.4] - 22-11-23
 
 ## Fixed
