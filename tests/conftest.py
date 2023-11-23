@@ -110,6 +110,21 @@ def source_knowledge_graph():
 
 
 @pytest.fixture(scope="session")
+def source_knowledge_graph_dirty(transformation_rules):
+    graph = NeatGraphStore(namespace=Namespace("http://purl.org/nordic44#"))
+    graph.init_graph()
+    graph.import_from_file(config.NORDIC44_KNOWLEDGE_GRAPH_DIRTY)
+    for triple in get_instances_as_triples(transformation_rules):
+        graph.graph.add(triple)
+    return graph
+
+
+@pytest.fixture(scope="session")
+def solution_knowledge_graph_dirty(source_knowledge_graph_dirty, transformation_rules):
+    return domain2app_knowledge_graph(source_knowledge_graph_dirty, transformation_rules)
+
+
+@pytest.fixture(scope="session")
 def solution_knowledge_graph(source_knowledge_graph, transformation_rules):
     return domain2app_knowledge_graph(source_knowledge_graph, transformation_rules)
 

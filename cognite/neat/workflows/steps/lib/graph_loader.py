@@ -245,7 +245,7 @@ class GenerateCDFAssetsFromGraph(Step):
         prom_cdf_resource_stats.labels(resource_type="asset", state="count_before_neat_update").set(total_assets_before)
         logging.info(f"Total count of assets in CDF before upload: { total_assets_before }")
 
-        orphan_assets, circular_assets = validate_asset_hierarchy(rdf_asset_dicts)
+        orphan_assets, circular_assets, parent_children_map = validate_asset_hierarchy(rdf_asset_dicts)
         orphan_assets_count = len(orphan_assets)
         circular_assets_count = len(circular_assets)
         prom_data_issues_stats.labels(resource_type="circular_assets").set(len(circular_assets))
@@ -255,9 +255,46 @@ class GenerateCDFAssetsFromGraph(Step):
             logging.error(f"Found orphaned assets: {', '.join(orphan_assets)}")
 
             if asset_cleanup_type in ["orphans", "full"]:
-                logging.info("Removing orphaned assets")
+                logging.info("Removing orphaned assets and its children")
+
+                
+                # #Option 3
+                # def delete_orphan_assets_recursive(rdf_asset_dicts):
+                #     orphan_assets, _ = validate_asset_hierarchy(rdf_asset_dicts)
+
+                #     if not orphan_assets:
+                #         # Base case: No orphan assets found, stop recursion
+                #         return
+
+                #     for orphan_asset in orphan_assets:
+                #         del rdf_asset_dicts[orphan_asset]
+
+                #     delete_orphan_assets_recursive(rdf_asset_dicts)
+
+                
+                ##Option 1
+                #parent_children_map = {}
+                # for asset in rdf_asset_dicts.values():
+                #     parent_ext_id = asset.get("parent_external_id")
+                #     asset_ext_id = asset.get("external_id")
+                #     if parent_ext_id in parent_children_map:
+                #         parent_children_map[parent_ext_id].append(asset_ext_id)
+                #     else:
+                #         parent_children_map[parent_ext_id] = [asset_ext_id]
+
                 for external_id in orphan_assets:
                     del rdf_asset_dicts[external_id]
+
+                    #Option 1/2
+                    if external_id in parent_children_map:
+                        for child_external_id in parent_children_map[external_id]:
+                            del rdf_asset_dicts[child_external_id]
+
+                #Option 3
+                #validate assets again (until no childern of orphan assets all level down) and delete orphan assets
+                #delete_orphan_assets_recursive(rdf_asset_dicts)
+
+
             else:
                 orphanage_asset_external_id = (
                     f"{rules.rules.metadata.externalIdPrefix}orphanage-{rules.dataset_id}"
@@ -292,7 +329,7 @@ class GenerateCDFAssetsFromGraph(Step):
             logging.info("No circular dependency among assets found, your assets hierarchy look healthy !")
 
         if orphan_assets or circular_assets:
-            orphan_assets, circular_assets = validate_asset_hierarchy(rdf_asset_dicts)
+            orphan_assets, circular_assets, _ = validate_asset_hierarchy(rdf_asset_dicts)
             if circular_assets:
                 msg = f"Found circular dependencies: {circular_assets!s}"
                 logging.error(msg)
