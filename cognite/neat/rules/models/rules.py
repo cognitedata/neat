@@ -4,16 +4,15 @@ its sub-models and validators.
 
 from __future__ import annotations
 
-import inspect
 import math
 import re
 import sys
 import warnings
 from collections.abc import ItemsView, Iterator, KeysView, ValuesView
 from datetime import datetime
+from functools import wraps
 from pathlib import Path
-from types import FrameType
-from typing import Any, ClassVar, Generic, TypeAlias, TypeVar, cast
+from typing import Any, ClassVar, Generic, TypeAlias, TypeVar
 
 import pandas as pd
 from pydantic import (
@@ -87,10 +86,47 @@ def replace_nan_floats_with_default(values: dict, model_fields: dict[str, FieldI
     return output
 
 
+def skip_field_validator(validators_field):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(cls, value, values):
+            if isinstance(values, dict):
+                to_skip = values.get(validators_field, set())
+            else:
+                try:
+                    to_skip = values.data.get(validators_field, set())
+                except Exception:
+                    to_skip = set()
+
+            if "all" in to_skip or func.__name__ in to_skip:
+                return value
+            return func(cls, value, values)
+
+        return wrapper
+
+    return decorator
+
+
+def skip_model_validator(validators_field):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(self):
+            to_skip = getattr(self, validators_field, set())
+            if "all" in to_skip or func.__name__ in to_skip:
+                return self
+
+            return func(self)
+
+        return wrapper
+
+    return decorator
+
+
 class RuleModel(BaseModel):
     model_config: ClassVar[ConfigDict] = ConfigDict(
         populate_by_name=True, str_strip_whitespace=True, arbitrary_types_allowed=True, strict=False, extra="allow"
     )
+    validators_to_skip: set[str] = Field(default_factory=set, exclude=True)
 
     @classmethod
     def mandatory_fields(cls, use_alias=False) -> set[str]:
@@ -197,10 +233,6 @@ class Metadata(RuleModel):
 
     """
 
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, str_strip_whitespace=True, arbitrary_types_allowed=True
-    )
-    validators_to_skip: list[str] = Field(default_factory=list, exclude=True)
     prefix: Prefix = Field(
         alias="shortName",
         description="This is used as prefix for generation of RDF OWL/SHACL data model representation",
@@ -254,12 +286,8 @@ class Metadata(RuleModel):
         return str(value)
 
     @validator("prefix", always=True)
+    @skip_field_validator("validators_to_skip")
     def is_prefix_compliant(cls, value, values):
-        if isinstance(values["validators_to_skip"], list) and (
-            inspect.currentframe().f_code.co_name in values["validators_to_skip"]
-            or "all" in values["validators_to_skip"]
-        ):
-            return value
         if re.search(more_than_one_none_alphanumerics_regex, value):
             raise exceptions.MoreThanOneNonAlphanumericCharacter("prefix", value).to_pydantic_custom_error()
         if not re.match(prefix_compliance_regex, value):
@@ -268,12 +296,8 @@ class Metadata(RuleModel):
             return value
 
     @validator("cdf_space_name", always=True)
+    @skip_field_validator("validators_to_skip")
     def is_cdf_space_name_compliant(cls, value, values):
-        if isinstance(values["validators_to_skip"], list) and (
-            inspect.currentframe().f_code.co_name in values["validators_to_skip"]
-            or "all" in values["validators_to_skip"]
-        ):
-            return value
         if re.search(more_than_one_none_alphanumerics_regex, value):
             raise exceptions.MoreThanOneNonAlphanumericCharacter("cdf_space_name", value).to_pydantic_custom_error()
         if not re.match(cdf_space_name_compliance_regex, value):
@@ -282,12 +306,8 @@ class Metadata(RuleModel):
             return value
 
     @validator("namespace", always=True)
+    @skip_field_validator("validators_to_skip")
     def set_namespace_if_none(cls, value, values):
-        if isinstance(values["validators_to_skip"], list) and (
-            inspect.currentframe().f_code.co_name in values["validators_to_skip"]
-            or "all" in values["validators_to_skip"]
-        ):
-            return value
         if value is None:
             if values["cdf_space_name"] == "playground":
                 return Namespace(f"http://purl.org/cognite/{values['prefix']}#")
@@ -299,12 +319,8 @@ class Metadata(RuleModel):
             raise exceptions.MetadataSheetNamespaceNotValidURL(value).to_pydantic_custom_error() from e
 
     @validator("namespace", always=True)
+    @skip_field_validator("validators_to_skip")
     def fix_namespace_ending(cls, value, values):
-        if isinstance(values["validators_to_skip"], list) and (
-            inspect.currentframe().f_code.co_name in values["validators_to_skip"]
-            or "all" in values["validators_to_skip"]
-        ):
-            return value
         if value.endswith("#") or value.endswith("/"):
             return value
         warnings.warn(
@@ -313,12 +329,8 @@ class Metadata(RuleModel):
         return Namespace(f"{value}#")
 
     @validator("data_model_name", always=True)
+    @skip_field_validator("validators_to_skip")
     def set_data_model_name_if_none(cls, value, values):
-        if isinstance(values["validators_to_skip"], list) and (
-            inspect.currentframe().f_code.co_name in values["validators_to_skip"]
-            or "all" in values["validators_to_skip"]
-        ):
-            return value
         if value is not None:
             return value
         warnings.warn(
@@ -329,12 +341,8 @@ class Metadata(RuleModel):
         return values["prefix"].replace("-", "_")
 
     @validator("data_model_name", always=True)
+    @skip_field_validator("validators_to_skip")
     def is_data_model_name_compliant(cls, value, values):
-        if isinstance(values["validators_to_skip"], list) and (
-            inspect.currentframe().f_code.co_name in values["validators_to_skip"]
-            or "all" in values["validators_to_skip"]
-        ):
-            return value
         if re.search(more_than_one_none_alphanumerics_regex, value):
             raise exceptions.MoreThanOneNonAlphanumericCharacter("data_model_name", value).to_pydantic_custom_error()
         if not re.match(data_model_id_compliance_regex, value):
@@ -345,23 +353,19 @@ class Metadata(RuleModel):
             return value
 
     @validator("version", always=True)
+    @skip_field_validator("validators_to_skip")
     def is_version_compliant(cls, value, values):
-        if isinstance(values["validators_to_skip"], list) and (
-            inspect.currentframe().f_code.co_name in values["validators_to_skip"]
-            or "all" in values["validators_to_skip"]
-        ):
-            return value
         if not re.match(version_compliance_regex, value):
             raise exceptions.VersionRegexViolation(value, version_compliance_regex).to_pydantic_custom_error()
         else:
             return value
 
     @field_validator("creator", "contributor", mode="before")
-    def to_list_if_comma(cls, value, info):
+    def to_list_if_comma(cls, value, values):
         if isinstance(value, str):
             if value:
                 return value.replace(", ", ",").split(",")
-            if cls.model_fields[info.field_name].default is None:
+            if cls.model_fields[values.field_name].default is None:
                 return None
         return value
 
@@ -390,8 +394,6 @@ class Resource(RuleModel):
         comment: Additional comment about mapping between the resource being described and the source entity.
 
     """
-
-    validators_to_skip: list[str] = Field(default_factory=list, exclude=True)
 
     # Solution model
     description: Description | None = Field(alias="Description", default=None)
@@ -506,12 +508,8 @@ class Class(Resource):
         return replace_nan_floats_with_default(values, cls.model_fields)
 
     @validator("class_id", always=True)
+    @skip_field_validator("validators_to_skip")
     def is_class_id_compliant(cls, value, values):
-        if isinstance(values["validators_to_skip"], list) and (
-            inspect.currentframe().f_code.co_name in values["validators_to_skip"]
-            or "all" in values["validators_to_skip"]
-        ):
-            return value
         if re.search(more_than_one_none_alphanumerics_regex, value):
             raise exceptions.MoreThanOneNonAlphanumericCharacter("class_id", value).to_pydantic_custom_error()
         if not re.match(class_id_compliance_regex, value):
@@ -535,12 +533,8 @@ class Class(Resource):
         return value
 
     @field_validator("parent_class", mode="before")
+    @skip_field_validator("validators_to_skip")
     def to_list_if_comma(cls, value, values):
-        if isinstance(values.data["validators_to_skip"], list) and (
-            inspect.currentframe().f_code.co_name in values.data["validators_to_skip"]
-            or "all" in values.data["validators_to_skip"]
-        ):
-            return value
         if isinstance(value, str):
             if value:
                 return value.replace(", ", ",").split(",")
@@ -548,12 +542,8 @@ class Class(Resource):
                 return None
 
     @field_validator("parent_class", mode="after")
+    @skip_field_validator("validators_to_skip")
     def is_parent_class_id_compliant(cls, value, values):
-        if isinstance(values.data["validators_to_skip"], list) and (
-            inspect.currentframe().f_code.co_name in values.data["validators_to_skip"]
-            or "all" in values.data["validators_to_skip"]
-        ):
-            return value
         if isinstance(value, str):
             if re.search(more_than_one_none_alphanumerics_regex, value):
                 raise exceptions.MoreThanOneNonAlphanumericCharacter("parent_class", value).to_pydantic_custom_error()
@@ -649,12 +639,8 @@ class Property(Resource):
         return replace_nan_floats_with_default(values, cls.model_fields)
 
     @validator("class_id", always=True)
+    @skip_field_validator("validators_to_skip")
     def is_class_id_compliant(cls, value, values):
-        if isinstance(values["validators_to_skip"], list) and (
-            inspect.currentframe().f_code.co_name in values["validators_to_skip"]
-            or "all" in values["validators_to_skip"]
-        ):
-            return value
         if re.search(more_than_one_none_alphanumerics_regex, value):
             raise exceptions.MoreThanOneNonAlphanumericCharacter("class_id", value).to_pydantic_custom_error()
         if not re.match(class_id_compliance_regex, value):
@@ -665,12 +651,8 @@ class Property(Resource):
             return value
 
     @validator("property_id", always=True)
+    @skip_field_validator("validators_to_skip")
     def is_property_id_compliant(cls, value, values):
-        if isinstance(values["validators_to_skip"], list) and (
-            inspect.currentframe().f_code.co_name in values["validators_to_skip"]
-            or "all" in values["validators_to_skip"]
-        ):
-            return value
         if re.search(more_than_one_none_alphanumerics_regex, value):
             raise exceptions.MoreThanOneNonAlphanumericCharacter("property_id", value).to_pydantic_custom_error()
         if not re.match(property_id_compliance_regex, value):
@@ -679,12 +661,8 @@ class Property(Resource):
             return value
 
     @validator("expected_value_type", always=True)
+    @skip_field_validator("validators_to_skip")
     def is_expected_value_type_compliant(cls, value, values):
-        if isinstance(values["validators_to_skip"], list) and (
-            inspect.currentframe().f_code.co_name in values["validators_to_skip"]
-            or "all" in values["validators_to_skip"]
-        ):
-            return value
         if re.search(more_than_one_none_alphanumerics_regex, value):
             raise exceptions.MoreThanOneNonAlphanumericCharacter(
                 "expected_value_type", value
@@ -705,12 +683,8 @@ class Property(Resource):
         return value
 
     @validator("rule")
+    @skip_field_validator("validators_to_skip")
     def is_valid_rule(cls, value, values):
-        if isinstance(values["validators_to_skip"], list) and (
-            inspect.currentframe().f_code.co_name in values["validators_to_skip"]
-            or "all" in values["validators_to_skip"]
-        ):
-            return value
         if rule_type := values.get("rule_type"):
             if not value:
                 raise exceptions.RuleTypeProvidedButRuleMissing(
@@ -759,9 +733,8 @@ class Property(Resource):
         return self
 
     @model_validator(mode="after")
+    @skip_model_validator("validators_to_skip")
     def set_relationship_label(self):
-        if cast(FrameType, inspect.currentframe()).f_code.co_name in self.validators_to_skip:
-            return self
         if self.label is None:
             warnings.warn(
                 exceptions.MissingLabel(self.property_id).message, category=exceptions.MissingLabel, stacklevel=2
@@ -770,9 +743,8 @@ class Property(Resource):
         return self
 
     @model_validator(mode="after")
+    @skip_model_validator("validators_to_skip")
     def set_skip_rule(self):
-        if cast(FrameType, inspect.currentframe()).f_code.co_name in self.validators_to_skip:
-            return self
         if self.rule_type is None:
             warnings.warn(
                 exceptions.NoTransformationRules(class_id=self.class_id, property_id=self.property_id).message,
@@ -806,9 +778,8 @@ class Property(Resource):
         return self
 
     @model_validator(mode="after")
+    @skip_model_validator("validators_to_skip")
     def is_default_value_type_proper(self):
-        if cast(FrameType, inspect.currentframe()).f_code.co_name in self.validators_to_skip:
-            return self
         if self.property_type == "DatatypeProperty" and self.default:
             default_value = self.default[0] if isinstance(self.default, list) else self.default
 
@@ -987,7 +958,6 @@ class Rules(RuleModel):
     !!! note "validators_to_skip" use this only if you are sure what you are doing
     """
 
-    validators_to_skip: list[str] = Field(default_factory=list, exclude=True)
     metadata: Metadata
     classes: Classes
     properties: Properties
@@ -1025,13 +995,8 @@ class Rules(RuleModel):
         return Properties(data=dict_of_properties)
 
     @model_validator(mode="after")
+    @skip_model_validator("validators_to_skip")
     def properties_refer_existing_classes(self) -> Self:
-        if isinstance(self.validators_to_skip, list) and (
-            cast(FrameType, inspect.currentframe()).f_code.co_name in self.validators_to_skip
-            or "all" in self.validators_to_skip
-        ):
-            return self
-
         errors = []
 
         for property_ in self.properties.values():
@@ -1052,13 +1017,8 @@ class Rules(RuleModel):
         return self
 
     @validator("properties")
+    @skip_field_validator("validators_to_skip")
     def is_type_defined_as_object(cls, value, values):
-        if isinstance(values["validators_to_skip"], list) and (
-            inspect.currentframe().f_code.co_name in values["validators_to_skip"]
-            or "all" in values["validators_to_skip"]
-        ):
-            return value
-
         defined_objects = {property_.class_id for property_ in value.values()}
 
         if undefined_objects := [
@@ -1071,13 +1031,8 @@ class Rules(RuleModel):
             return value
 
     @validator("prefixes")
+    @skip_field_validator("validators_to_skip")
     def are_prefixes_compliant(cls, value, values):
-        if isinstance(values["validators_to_skip"], list) and (
-            inspect.currentframe().f_code.co_name in values["validators_to_skip"]
-            or "all" in values["validators_to_skip"]
-        ):
-            return value
-
         if ill_formed_prefixes := [
             prefix for prefix, _ in value.items() if re.search(more_than_one_none_alphanumerics_regex, prefix)
         ]:
@@ -1094,12 +1049,8 @@ class Rules(RuleModel):
             return value
 
     @validator("prefixes")
+    @skip_field_validator("validators_to_skip")
     def are_namespaces_compliant(cls, value, values):
-        if isinstance(values["validators_to_skip"], list) and (
-            inspect.currentframe().f_code.co_name in values["validators_to_skip"]
-            or "all" in values["validators_to_skip"]
-        ):
-            return value
         ill_formed_namespaces = []
         for _, namespace in value.items():
             try:
@@ -1113,12 +1064,8 @@ class Rules(RuleModel):
             return value
 
     @validator("prefixes")
+    @skip_field_validator("validators_to_skip")
     def add_data_model_prefix_namespace(cls, value, values):
-        if isinstance(values["validators_to_skip"], list) and (
-            inspect.currentframe().f_code.co_name in values["validators_to_skip"]
-            or "all" in values["validators_to_skip"]
-        ):
-            return value
         if "metadata" not in values:
             raise exceptions.MetadataSheetMissingOrFailedValidation().to_pydantic_custom_error()
         if "prefix" not in values["metadata"].dict():
@@ -1142,7 +1089,3 @@ class Rules(RuleModel):
         dump["property_count"] = len(self.properties)
         dump["instance_count"] = len(self.instances)
         return pd.Series(dump).to_frame("value")._repr_html_()  # type: ignore[operator]
-
-
-def _neat_validators() -> list[str]:
-    return ["add_data_model_prefix_namespace", "are_namespaces_compliant"]

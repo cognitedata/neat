@@ -84,7 +84,7 @@ class OWLImporter(BaseImporter):
         self,
         return_report: bool = False,
         skip_validation: bool = False,
-        validators_to_skip: list[str] | None = None,
+        validators_to_skip: set[str] | None = None,
         make_compliant: bool = False,
     ) -> tuple[Rules | None, list[ErrorDetails] | None, list | None] | Rules:
         """

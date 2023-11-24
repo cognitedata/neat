@@ -15,6 +15,14 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.45.0] - 24-11-23
+
+## Improved
+
+- Validators skipping now made through two decorators `skip_field_validator` and `skip_model_validator`
+- Small fixes in `cognite.neat.rules.models.rules`
+- Allow single character properties/classes in `rdfpath`
+
 ## [0.44.0] - 24-11-23
 
 ## Fixed
