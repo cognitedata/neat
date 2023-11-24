@@ -3366,6 +3366,10 @@ Change log:
 		<cim:ConnectivityNode.ConnectivityNodeContainer rdf:resource="#_f1769600-9aeb-11e5-91da-b8763fd99c5f"/>
 		<cim:IdentifiedObject.name>AJAURE      </cim:IdentifiedObject.name>
 	</cim:ConnectivityNode>
+	<cim:ConnectivityNode rdf:ID="_f17695fd-9aeb-11e5-91da-b8763fd99c5f-test">
+		<cim:ConnectivityNode.ConnectivityNodeContainer rdf:resource="#_f1769600-9aeb-11e5-91da-b8763fd99c5f-test"/>
+		<cim:IdentifiedObject.name>AJAURE test     </cim:IdentifiedObject.name>
+	</cim:ConnectivityNode>
 	<cim:ConnectivityNode rdf:ID="_eb3421d2-80ad-7747-b602-3be10cb30599">
 		<cim:ConnectivityNode.ConnectivityNodeContainer rdf:resource="#_1f4fabd4-8c57-c245-b107-4e64c9007ae3"/>
 		<cim:IdentifiedObject.name>ARENDAL CN 001</cim:IdentifiedObject.name>
@@ -16141,6 +16145,11 @@ Change log:
 		<cim:Terminal.ConnectivityNode rdf:resource="#_f17695fd-9aeb-11e5-91da-b8763fd99c5f"/>
 		<cim:IdentifiedObject.name>T1</cim:IdentifiedObject.name>
 	</cim:Terminal>
+		<cim:Terminal rdf:ID="_2dd90176-bdfb-11e5-94fa-c8f73332c8f4-terminal-orphan-test">
+		<cim:Terminal.ConductingEquipment rdf:resource="#_2dd90175-bdfb-11e5-94fa-c8f73332c8f4"/>
+		<cim:Terminal.ConnectivityNode rdf:resource="#_f17695fd-9aeb-11e5-91da-b8763fd99c5f-test"/>
+		<cim:IdentifiedObject.name>T1-test</cim:IdentifiedObject.name>
+	</cim:Terminal>
 	<cim:Terminal rdf:ID="_2dd90178-bdfb-11e5-94fa-c8f73332c8f4">
 		<cim:Terminal.ConductingEquipment rdf:resource="#_2dd90177-bdfb-11e5-94fa-c8f73332c8f4"/>
 		<cim:Terminal.ConnectivityNode rdf:resource="#_f1769603-9aeb-11e5-91da-b8763fd99c5f"/>
@@ -18118,6 +18127,11 @@ Change log:
 		<cim:VoltageLevel.BaseVoltage rdf:resource="#_2dd90169-bdfb-11e5-94fa-c8f73332c8f4"/>
 		<cim:VoltageLevel.Substation rdf:resource="#_f17695fe-9aeb-11e5-91da-b8763fd99c5f"/>
 		<cim:IdentifiedObject.name>AJAURE  300</cim:IdentifiedObject.name>
+	</cim:VoltageLevel>
+		<cim:VoltageLevel rdf:ID="_f1769600-9aeb-11e5-91da-b8763fd99c5f-test">
+		<cim:VoltageLevel.BaseVoltage rdf:resource="#_2dd90169-bdfb-11e5-94fa-c8f73332c8f4"/>
+		<cim:VoltageLevel.Substation rdf:resource="#_f17695fe-9aeb-11e5-91da-b8763fd99c5f-orphan-test"/>
+		<cim:IdentifiedObject.name>AJAURE  300 - o test</cim:IdentifiedObject.name>
 	</cim:VoltageLevel>
 	<cim:VoltageLevel rdf:ID="_f1769672-9aeb-11e5-91da-b8763fd99c5f">
 		<cim:VoltageLevel.BaseVoltage rdf:resource="#_2dd90169-bdfb-11e5-94fa-c8f73332c8f4"/>
