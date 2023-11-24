@@ -114,7 +114,8 @@ class RawRules(RuleModel):
 
         return df[columns]
 
-    # Basic method for creating RawRules from different sources:
+    # mypy complains "RawRules" has incompatible type "**dict[str, DataFrame]"; expected "set[str]" , which is wrong!
+    @no_type_check
     @classmethod
     def from_tables(cls, tables: dict[str, pd.DataFrame], importer_type: str = "RawTablesImporter") -> "RawRules":
         """Create RawRules from raw tables.
@@ -132,7 +133,7 @@ class RawRules(RuleModel):
         if missing_tables := (expected_tables - set(tables)):
             raise exceptions.SourceObjectDoesNotProduceMandatorySheets(missing_tables)
 
-        tables_dict = {
+        tables_dict: dict[str, pd.DataFrame] = {
             Tables.metadata: tables[Tables.metadata],
             Tables.classes: cls._drop_non_string_columns(tables[Tables.classes]),
             Tables.properties: cls._drop_non_string_columns(tables[Tables.properties]),
@@ -144,15 +145,7 @@ class RawRules(RuleModel):
             tables_dict[Tables.instances] = cls._drop_non_string_columns(tables[Tables.instances])
 
         return cls(
-            Metadata=tables[Tables.metadata],
-            Classes=cls._drop_non_string_columns(tables[Tables.classes]),
-            Properties=cls._drop_non_string_columns(tables[Tables.properties]),
-            Prefixes=cls._drop_non_string_columns(tables[Tables.prefixes])
-            if Tables.prefixes in tables
-            else pd.DataFrame(),
-            Instances=cls._drop_non_string_columns(tables[Tables.instances])
-            if Tables.instances in tables
-            else pd.DataFrame(),
+            **tables_dict,
             importer_type=importer_type,
         )
 
