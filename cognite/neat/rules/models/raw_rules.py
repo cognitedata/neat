@@ -144,9 +144,15 @@ class RawRules(RuleModel):
             tables_dict[Tables.instances] = cls._drop_non_string_columns(tables[Tables.instances])
 
         return cls(
-            Classes=tables_dict[Tables.classes],
-            Properties=tables_dict[Tables.properties],
-            Metadata=tables_dict[Tables.metadata],
+            Metadata=tables[Tables.metadata],
+            Classes=cls._drop_non_string_columns(tables[Tables.classes]),
+            Properties=cls._drop_non_string_columns(tables[Tables.properties]),
+            Prefixes=cls._drop_non_string_columns(tables[Tables.prefixes])
+            if Tables.prefixes in tables
+            else pd.DataFrame(),
+            Instances=cls._drop_non_string_columns(tables[Tables.instances])
+            if Tables.instances in tables
+            else pd.DataFrame(),
             importer_type=importer_type,
         )
 
