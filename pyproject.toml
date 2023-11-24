@@ -93,6 +93,7 @@ pymdown-extensions = { version = "*", optional = true }
 mkdocs-autorefs = { version = "^0.5.0", optional = true }
 mkdocstrings = { version = "*", optional = true, extras = ["python"] }
 jinja2 = { version = "^3.1.2", optional = true }
+pyoxigraph = "0.3.19"
 
 [tool.poetry.extras]
 docs = [

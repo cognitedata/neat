@@ -56,6 +56,9 @@ run-clean-docker:
 	@echo "Running docker image with temp data folder"
 	docker run --rm -p 8000:8000 --name neat cognite/neat:latest
 
+test-docker: build-docker run-clean-docker
+	@echo "Building new docker image and running neat from latest image"
+
 defaults-cleanup:
 	@echo "Running defaults cleanup"
 	rm -r ./docker/vol_data/*
