@@ -245,7 +245,7 @@ class GenerateCDFAssetsFromGraph(Step):
         prom_cdf_resource_stats.labels(resource_type="asset", state="count_before_neat_update").set(total_assets_before)
         logging.info(f"Total count of assets in CDF before upload: { total_assets_before }")
 
-        orphan_assets, circular_assets = validate_asset_hierarchy(rdf_asset_dicts)
+        orphan_assets, circular_assets, parent_children_map = validate_asset_hierarchy(rdf_asset_dicts)
         orphan_assets_count = len(orphan_assets)
         circular_assets_count = len(circular_assets)
         prom_data_issues_stats.labels(resource_type="circular_assets").set(len(circular_assets))
@@ -255,9 +255,23 @@ class GenerateCDFAssetsFromGraph(Step):
             logging.error(f"Found orphaned assets: {', '.join(orphan_assets)}")
 
             if asset_cleanup_type in ["orphans", "full"]:
-                logging.info("Removing orphaned assets")
-                for external_id in orphan_assets:
-                    del rdf_asset_dicts[external_id]
+                logging.info("Removing orphaned assets and its children")
+
+                def delete_asset_and_children_recursive(asset_id, rdf_asset_dicts, parent_children_map):
+                    if asset_id in rdf_asset_dicts:
+                        del rdf_asset_dicts[asset_id]
+
+                    if asset_id in parent_children_map:
+                        for child_id in parent_children_map[asset_id]:
+                            delete_asset_and_children_recursive(child_id, rdf_asset_dicts, parent_children_map)
+
+                def delete_orphan_assets_recursive(orphan_assets, rdf_asset_dicts, parent_children_map):
+                    for orphan_asset in orphan_assets:
+                        delete_asset_and_children_recursive(orphan_asset, rdf_asset_dicts, parent_children_map)
+
+                # Make sure children, grand-children, great-grandchildren .... are deleted
+                delete_orphan_assets_recursive(orphan_assets, rdf_asset_dicts, parent_children_map)
+
             else:
                 orphanage_asset_external_id = (
                     f"{rules.rules.metadata.externalIdPrefix}orphanage-{rules.dataset_id}"
@@ -292,7 +306,7 @@ class GenerateCDFAssetsFromGraph(Step):
             logging.info("No circular dependency among assets found, your assets hierarchy look healthy !")
 
         if orphan_assets or circular_assets:
-            orphan_assets, circular_assets = validate_asset_hierarchy(rdf_asset_dicts)
+            orphan_assets, circular_assets, _ = validate_asset_hierarchy(rdf_asset_dicts)
             if circular_assets:
                 msg = f"Found circular dependencies: {circular_assets!s}"
                 logging.error(msg)
