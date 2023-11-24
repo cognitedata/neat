@@ -143,7 +143,12 @@ class RawRules(RuleModel):
         if Tables.instances in tables:
             tables_dict[Tables.instances] = cls._drop_non_string_columns(tables[Tables.instances])
 
-        return cls(**tables_dict, importer_type=importer_type)
+        return cls(
+            Classes=tables_dict[Tables.classes],
+            Properties=tables_dict[Tables.properties],
+            Metadata=tables_dict[Tables.metadata],
+            importer_type=importer_type,
+        )
 
     # mypy unsatisfied with overload , tried all combination and gave up
     @no_type_check
@@ -151,7 +156,7 @@ class RawRules(RuleModel):
         self,
         return_report: bool = False,
         skip_validation: bool = False,
-        validators_to_skip: list[str] | None = None,
+        validators_to_skip: set[str] | None = None,
     ) -> tuple[Rules | None, list[ErrorDetails] | None, list | None] | Rules:
         """Validates RawRules instances and returns Rules instance.
 
@@ -232,7 +237,7 @@ def _to_invalidated_rules(rules_dict: dict) -> Rules:
     return cast(Rules, Rules.model_construct(**args))
 
 
-def _raw_tables_to_rules_dict(raw_tables: RawRules, validators_to_skip: list | None = None) -> dict[str, Any]:
+def _raw_tables_to_rules_dict(raw_tables: RawRules, validators_to_skip: set | None = None) -> dict[str, Any]:
     """Converts raw tables to a dictionary of rules."""
     rules_dict: dict[str, Any] = {
         "metadata": _metadata_table2dict(raw_tables.Metadata),

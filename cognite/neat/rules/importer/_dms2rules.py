@@ -94,7 +94,11 @@ class DMSImporter(BaseImporter):
         for view in self.views:
             class_id = view.external_id
             classes.append(
-                {"Class": class_id, "Name": view.name or float("nan"), "Description": view.description or float("nan")}
+                {
+                    "Class": class_id,
+                    "Name": view.name or float("nan"),
+                    "Description": view.description or float("nan"),
+                }
             )
             for prop_id, prop in view.properties.items():
                 if isinstance(prop, MappedProperty):
