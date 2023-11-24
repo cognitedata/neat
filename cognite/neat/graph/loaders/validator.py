@@ -45,7 +45,9 @@ def _find_circular_reference_path(
         return []
 
 
-def validate_asset_hierarchy(assets: dict[str, dict[str, Any]]) -> tuple[list[str], list[list[str]], dict[str, list[str]]]:
+def validate_asset_hierarchy(
+    assets: dict[str, dict[str, Any]]
+) -> tuple[list[str], list[list[str]], dict[str, list[str]]]:
     """Validates asset hierarchy and reports on orphan assets and circular dependency
 
     Args:
@@ -59,13 +61,14 @@ def validate_asset_hierarchy(assets: dict[str, dict[str, Any]]) -> tuple[list[st
     circular_reference_paths: list[list[str]] = []
     parent_children_map: dict[str, list[str]] = {}
 
-    #Option 2 - create parent_children_map here, as we are aldready looping through assets
     for asset in assets.values():
         parent_external_id = asset.get("parent_external_id")
-        if parent_external_id in parent_children_map:
-            parent_children_map[parent_external_id ].append(asset.get("external_id"))
-        else:
-            parent_children_map[parent_external_id] = [asset.get("external_id")]
+        asset_extarnal_id = asset.get("external_id")
+        if asset_extarnal_id and parent_external_id:
+            if parent_external_id in parent_children_map:
+                parent_children_map[parent_external_id].append(asset_extarnal_id)
+            else:
+                parent_children_map[parent_external_id] = [asset_extarnal_id]
         if parent_external_id is not None and parent_external_id not in assets:
             msg = (
                 f"Found orphan asset {asset.get('external_id')} with parent {parent_external_id} which does not exist."

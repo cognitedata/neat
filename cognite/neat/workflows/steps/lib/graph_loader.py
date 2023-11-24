@@ -257,43 +257,20 @@ class GenerateCDFAssetsFromGraph(Step):
             if asset_cleanup_type in ["orphans", "full"]:
                 logging.info("Removing orphaned assets and its children")
 
-                
-                # #Option 3
-                # def delete_orphan_assets_recursive(rdf_asset_dicts):
-                #     orphan_assets, _ = validate_asset_hierarchy(rdf_asset_dicts)
+                def delete_asset_and_children_recursive(asset_id, rdf_asset_dicts, parent_children_map):
+                    if asset_id in rdf_asset_dicts:
+                        del rdf_asset_dicts[asset_id]
 
-                #     if not orphan_assets:
-                #         # Base case: No orphan assets found, stop recursion
-                #         return
+                    if asset_id in parent_children_map:
+                        for child_id in parent_children_map[asset_id]:
+                            delete_asset_and_children_recursive(child_id, rdf_asset_dicts, parent_children_map)
 
-                #     for orphan_asset in orphan_assets:
-                #         del rdf_asset_dicts[orphan_asset]
+                def delete_orphan_assets_recursive(orphan_assets, rdf_asset_dicts, parent_children_map):
+                    for orphan_asset in orphan_assets:
+                        delete_asset_and_children_recursive(orphan_asset, rdf_asset_dicts, parent_children_map)
 
-                #     delete_orphan_assets_recursive(rdf_asset_dicts)
-
-                
-                ##Option 1
-                #parent_children_map = {}
-                # for asset in rdf_asset_dicts.values():
-                #     parent_ext_id = asset.get("parent_external_id")
-                #     asset_ext_id = asset.get("external_id")
-                #     if parent_ext_id in parent_children_map:
-                #         parent_children_map[parent_ext_id].append(asset_ext_id)
-                #     else:
-                #         parent_children_map[parent_ext_id] = [asset_ext_id]
-
-                for external_id in orphan_assets:
-                    del rdf_asset_dicts[external_id]
-
-                    #Option 1/2
-                    if external_id in parent_children_map:
-                        for child_external_id in parent_children_map[external_id]:
-                            del rdf_asset_dicts[child_external_id]
-
-                #Option 3
-                #validate assets again (until no childern of orphan assets all level down) and delete orphan assets
-                #delete_orphan_assets_recursive(rdf_asset_dicts)
-
+                # Make sure children, grand-children, great-grandchildren .... are deleted
+                delete_orphan_assets_recursive(orphan_assets, rdf_asset_dicts, parent_children_map)
 
             else:
                 orphanage_asset_external_id = (
