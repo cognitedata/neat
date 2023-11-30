@@ -1,10 +1,9 @@
 import logging
-from typing import TypeAlias, cast
+from typing import cast
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import EdgeApply, NodeApply
 from pydantic_core import ErrorDetails
-from rdflib.term import Node
 
 from cognite.neat.exceptions import NeatException
 from cognite.neat.graph.stores.graph_store import NeatGraphStore
@@ -12,8 +11,6 @@ from cognite.neat.rules.exporter._rules2dms import DataModel
 from cognite.neat.rules.exporter._rules2pydantic_models import add_class_prefix_to_xid, rules_to_pydantic_models
 from cognite.neat.rules.models.rules import Rules
 from cognite.neat.utils.utils import chunker, datetime_utc_now, retry_decorator
-
-Triple: TypeAlias = tuple[Node, Node, Node]
 
 
 def rdf2nodes_and_edges(
@@ -47,7 +44,7 @@ def rdf2nodes_and_edges(
         if class_ in data_model.containers:
             class_namespace = transformation_rules.metadata.namespace[class_]
             class_instance_ids = [
-                cast(Triple, res)[0]
+                cast(tuple, res)[0]
                 for res in graph_store.query(f"SELECT ?instance WHERE {{ ?instance rdf:type <{class_namespace}> . }}")
             ]
 

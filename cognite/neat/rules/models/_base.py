@@ -66,7 +66,10 @@ class Entity(BaseModel):
 
     @classmethod
     def from_list(cls, entity_strings: list[str], base_prefix: str | None = None, **kwargs) -> list[Self]:
-        return [cls(entity_string=entity_string, base_prefix=base_prefix, **kwargs) for entity_string in entity_strings]
+        return [
+            cls.from_string(entity_string=entity_string, base_prefix=base_prefix, **kwargs)
+            for entity_string in entity_strings
+        ]
 
 
 class Triple(BaseModel):
@@ -76,8 +79,12 @@ class Triple(BaseModel):
 
     subject: str | URIRef | Entity
     predicate: str | URIRef | Entity
-    object: str | URIRef | Literal | Entity = None
+    object: str | URIRef | Literal | Entity | None = None
     optional: bool = Field(
         description="Indicates whether a triple is optional, used when building SPARQL query",
         default=False,
     )
+
+    @classmethod
+    def from_rdflib_triple(cls, triple: tuple[URIRef, URIRef, URIRef | Literal]) -> Self:
+        return cls(subject=triple[0], predicate=triple[1], object=triple[2])
