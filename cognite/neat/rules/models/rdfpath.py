@@ -27,8 +27,6 @@ else:
     from typing_extensions import Self
 
 
-# @dataclass
-# class Triple:
 
 
 class TransformationRuleType(StrEnum):
