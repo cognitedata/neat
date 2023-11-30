@@ -15,6 +15,19 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.46.0] - 30-11-23
+
+## Improved
+
+- Improved `Triple` pydantic class to be used across the package as prep for advanced data modeling
+- Improved `Entity` pydantic class to be used across the package as prep for advanced data modeling
+- Moved all base regex patterns to `neat.rules.models._base`
+- Reduced and cleaned up `neat.rules.models.rdfpath`
+
+## Added
+- `neat.rules.value_types` to create default ValueType class to be used to improve `Rules`
+
+
 ## [0.45.0] - 24-11-23
 
 ## Improved
