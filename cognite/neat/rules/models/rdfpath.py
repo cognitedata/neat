@@ -3,12 +3,21 @@
 import re
 import sys
 from collections import Counter
-from dataclasses import dataclass
 from typing import Literal
 
 from pydantic import BaseModel, field_validator
 
 from cognite.neat.rules import exceptions
+
+from ._base import (
+    CLASS_ID_REGEX,
+    CLASS_ID_REGEX_COMPILED,
+    ENTITY_ID_REGEX,
+    PROPERTY_ID_REGEX,
+    SUFFIX_REGEX,
+    Entity,
+    EntityTypes,
+)
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -16,22 +25,6 @@ if sys.version_info >= (3, 11):
 else:
     from backports.strenum import StrEnum
     from typing_extensions import Self
-
-
-@dataclass
-class Triple:
-    subject: str
-    predicate: str
-    object: str | None = None
-    optional: bool = False
-
-
-class OWL(StrEnum):
-    class_ = "class"
-    property_ = "property"
-    object_property = "object_property"
-    data_property = "data_property"
-    annotation_property = "annotation_property"
 
 
 class TransformationRuleType(StrEnum):
@@ -46,77 +39,34 @@ class Lookup(StrEnum):
     value = "value"  # type: ignore
 
 
-# here word can be any alphanumeric character, dash, underscore or dot
-# which are used to define prefixes and entity names
-# this causes super long processing time for some reason
-
-_prefix = r"[a-zA-Z]+[a-zA-Z0-9]*[-_.]*[a-zA-Z0-9]+"
-_name = r"[a-zA-Z0-9-_.]+[a-zA-Z0-9]|[-_.]*[a-zA-Z0-9]+"
-
-# entity can be either anything except literal value!
-_entity = rf"{_prefix}:({_name})"
-
-entity = re.compile(rf"^(?P<prefix>{_prefix}):(?P<name>{_name})$")
-
 # traversal direction
-_direction = r"(?P<direction>(->|<-))"
+direction_re = r"(?P<direction>(->|<-))"
 
-# we are defining classes and their properties
-# though we have implicit way of defining object properties and that is using -> or <- operators
-_class = rf"(?P<{OWL.class_}>{_entity})"
-_property = rf"\((?P<{OWL.property_}>{_entity})\)"
-
-
-_class_only = re.compile(rf"^{_class}$")
-
-_step = rf"((->|<-){_class}({_property})?)"
-_steps = re.compile(_step)
-_step_class_only = re.compile(rf"(^{_direction}{_class})$")
-_step_class_and_property = re.compile(rf"(^{_direction}{_class}{_property}$)")
+# steps
+step_re = rf"((->|<-){CLASS_ID_REGEX}({PROPERTY_ID_REGEX})?)"
+step_re_compiled = re.compile(step_re)
+step_class_re_compiled = re.compile(rf"(^{direction_re}{CLASS_ID_REGEX})$")
+step_class_and_property_re_compiled = re.compile(rf"(^{direction_re}{CLASS_ID_REGEX}{PROPERTY_ID_REGEX}$)")
 
 
 _traversal = "traversal"
-_origin = rf"(?P<origin>{_entity})"
+origin_re = rf"(?P<origin>{ENTITY_ID_REGEX})"
 
-_hop = re.compile(rf"^{_origin}(?P<{_traversal}>{_step}+)$")
+hop_re_compiled = re.compile(rf"^{origin_re}(?P<{_traversal}>{step_re}+)$")
 
 # grabbing specific property for a class, property can be either object, annotation or data property
-_single_property = re.compile(rf"^{_class}{_property}$")
+single_property_re_compiled = re.compile(rf"^{CLASS_ID_REGEX}{PROPERTY_ID_REGEX}$")
 
 # grabbing all properties for a class
-_all_properties = re.compile(rf"^{_class}\(\*\)$")
+all_properties_re_compiled = re.compile(rf"^{CLASS_ID_REGEX}\(\*\)$")
 
-_all_traversal = rf"({_class}\(\*\)|{_class}{_property}|{_origin}(?P<{_traversal}>{_step}+))"
+all_traversal_re_compiled = (
+    rf"({CLASS_ID_REGEX}\(\*\)|{CLASS_ID_REGEX}{PROPERTY_ID_REGEX}|{origin_re}(?P<{_traversal}>{step_re}+))"
+)
 
-_table = re.compile(rf"^(?P<{Lookup.table}>{_name})\((?P<{Lookup.key}>{_name}),\s*(?P<{Lookup.value}>{_name})\)$")
-
-
-class Entity(BaseModel):
-    """Entity is a class or property in OWL/RDF sense."""
-
-    prefix: str
-    name: str
-
-    @property
-    def id(self) -> str:
-        return f"{self.prefix}:{self.name}"
-
-    def __repr__(self):
-        return self.id
-
-    @classmethod
-    def from_string(cls, raw: str, **kwargs) -> Self:
-        if result := entity.match(raw):
-            return cls(prefix=result.group("prefix"), name=result.group("name"), **kwargs)
-        else:
-            raise ValueError(f"{cls.__name__} is expected to be prefix:name, got {raw}")
-
-    @classmethod
-    def from_list(cls, prefix, names: list[str]) -> list[Self]:
-        # TODO: Prefixes should be a list of prefixes as you might instances of classes
-        # from different namespaces. This is a case when a given data model reuses classes
-        # from different ontologies/data models, which is in case of Statnett.
-        return [cls(prefix=prefix, name=name) for name in names]
+table_re_compiled = re.compile(
+    rf"^(?P<{Lookup.table}>{SUFFIX_REGEX})\((?P<{Lookup.key}>{SUFFIX_REGEX}),\s*(?P<{Lookup.value}>{SUFFIX_REGEX})\)$"
+)
 
 
 StepDirection = Literal["source", "target", "origin"]
@@ -130,20 +80,20 @@ class Step(BaseModel):
 
     @classmethod
     def from_string(cls, raw: str, **kwargs) -> Self:
-        if result := _step_class_and_property.match(raw):
+        if result := step_class_and_property_re_compiled.match(raw):
             return cls(
-                class_=Entity.from_string(result.group(OWL.class_)),
-                property=Entity.from_string(result.group(OWL.property_)),
+                class_=Entity.from_string(result.group(EntityTypes.class_), type_="class"),
+                property=Entity.from_string(result.group(EntityTypes.property_), type_="property"),
                 direction=_direction_by_symbol[result.group("direction")],
                 **kwargs,
             )
-        elif result := _step_class_only.match(raw):
+        elif result := step_class_re_compiled.match(raw):
             return cls(
-                class_=Entity.from_string(result.group(OWL.class_)),
+                class_=Entity.from_string(result.group(EntityTypes.class_)),
                 direction=_direction_by_symbol[result.group("direction")],
             )  # type: ignore
         msg = f"Invalid step {raw}, expected in one of the following forms:"
-        msg += " ->prefix:name, <-prefix:name, ->prefix:name(prefix:name) or <-prefix:name(prefix:name)"
+        msg += " ->prefix:suffix, <-prefix:suffix, ->prefix:suffix(prefix:suffix) or <-prefix:suffix(prefix:suffix)"
         raise ValueError(msg)
 
 
@@ -156,19 +106,21 @@ class SingleProperty(Traversal):
 
     @classmethod
     def from_string(cls, class_: str, property_: str) -> Self:
-        return cls(class_=Entity.from_string(class_), property=Entity.from_string(property_))
+        return cls(
+            class_=Entity.from_string(class_, type_="class"), property=Entity.from_string(property_, type_="property")
+        )
 
 
 class AllReferences(Traversal):
     @classmethod
     def from_string(cls, class_: str) -> Self:
-        return cls(class_=Entity.from_string(class_))
+        return cls(class_=Entity.from_string(class_, type_="class"))
 
 
 class AllProperties(Traversal):
     @classmethod
     def from_string(cls, class_: str) -> Self:
-        return cls(class_=Entity.from_string(class_))
+        return cls(class_=Entity.from_string(class_, type_="class"))
 
 
 class Origin(BaseModel):
@@ -188,7 +140,7 @@ class Hop(Traversal):
     def from_string(cls, class_: str, traversal: str | list[Step]) -> Self:
         return cls(
             class_=Entity.from_string(class_),
-            traversal=[Step.from_string(result[0]) for result in _steps.findall(traversal)]
+            traversal=[Step.from_string(result[0]) for result in step_re_compiled.findall(traversal)]
             if isinstance(traversal, str)
             else traversal,
         )
@@ -221,20 +173,22 @@ class SPARQLQuery(RDFPath):
 
 
 def parse_traversal(raw: str) -> AllReferences | AllProperties | SingleProperty | Hop:
-    if result := _class_only.match(raw):
-        return AllReferences.from_string(class_=result.group(OWL.class_))
-    elif result := _all_properties.match(raw):
-        return AllProperties.from_string(class_=result.group(OWL.class_))
-    elif result := _single_property.match(raw):
-        return SingleProperty.from_string(class_=result.group(OWL.class_), property_=result.group(OWL.property_))
-    elif result := _hop.match(raw):
+    if result := CLASS_ID_REGEX_COMPILED.match(raw):
+        return AllReferences.from_string(class_=result.group(EntityTypes.class_))
+    elif result := all_properties_re_compiled.match(raw):
+        return AllProperties.from_string(class_=result.group(EntityTypes.class_))
+    elif result := single_property_re_compiled.match(raw):
+        return SingleProperty.from_string(
+            class_=result.group(EntityTypes.class_), property_=result.group(EntityTypes.property_)
+        )
+    elif result := hop_re_compiled.match(raw):
         return Hop.from_string(class_=result.group("origin"), traversal=result.group(_traversal))
     else:
         raise exceptions.NotValidRDFPath(raw).to_pydantic_custom_error()
 
 
 def parse_table_lookup(raw: str) -> TableLookup:
-    if result := _table.match(raw):
+    if result := table_re_compiled.match(raw):
         return TableLookup(
             name=result.group(Lookup.table), key=result.group(Lookup.key), value=result.group(Lookup.value)
         )
