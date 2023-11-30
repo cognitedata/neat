@@ -2,7 +2,6 @@
 """
 
 import logging
-import sys
 import time
 import traceback
 from typing import Any
@@ -16,25 +15,15 @@ from rdflib.term import Literal, Node
 
 from cognite.neat.graph.exceptions import NamespaceRequired
 from cognite.neat.graph.transformations.query_generator.sparql import build_sparql_query
+from cognite.neat.rules.models._base import EntityTypes
 from cognite.neat.rules.models.rdfpath import AllProperties, AllReferences, Query, RawLookup, Traversal, parse_rule
 from cognite.neat.rules.models.rules import Rules
 from cognite.neat.utils.utils import remove_namespace
-
-if sys.version_info >= (3, 11):
-    from enum import StrEnum
-else:
-    from backports.strenum import StrEnum
 
 prom_total_proc_rules_g = Gauge("neat_total_processed_rules", "Number of processed rules", ["state"])
 rules_processing_timing_metric = Gauge(
     "neat_rules_processing_timing", "Transformation rules processing timing metrics", ["aggregation"]
 )
-
-
-class Triple(StrEnum):
-    subject = "subject"
-    predicate = "predicate"
-    object = "object"
 
 
 COMMIT_BATCH_SIZE = 10000
@@ -219,18 +208,20 @@ def domain2app_knowledge_graph(
                 property_URI = rule_namespace[rule_definition.property_name]  # type: ignore[index]
 
                 # Turn query results into dataframe
-                instance_df = pd.DataFrame(query_results, columns=list(Triple))
+                instance_df = pd.DataFrame(
+                    query_results, columns=[EntityTypes.subject, EntityTypes.predicate, EntityTypes.object]
+                )
 
                 # If we are not grabbing all properties for class instances
                 # then we are able to replace source property URI with target property URI
                 # otherwise we should keep source property URI
                 if not isinstance(rule.traversal, AllProperties):
-                    instance_df[Triple.predicate] = property_URI
+                    instance_df[EntityTypes.predicate] = property_URI
 
                 # If we are storing object from the source graph as literal value(propety type being Datatype Property)
                 # in the target graph then we should remove namespace from the object URI and store it as literal
                 if isinstance(rule.traversal, AllReferences) and rule_definition.property_type == "DatatypeProperty":
-                    instance_df[Triple.object] = instance_df[Triple.object].apply(
+                    instance_df[EntityTypes.object] = instance_df[EntityTypes.object].apply(
                         lambda x: Literal(remove_namespace(x))
                     )
 
@@ -249,15 +240,15 @@ def domain2app_knowledge_graph(
                         else:
                             return literal
 
-                    instance_df[Triple.object] = instance_df[Triple.object].apply(lookup)
+                    instance_df[EntityTypes.object] = instance_df[EntityTypes.object].apply(lookup)
 
                 # Add instances
                 for _, triple in instance_df.iterrows():
                     app_instance_graph.add(triple.values)  # type: ignore[arg-type]
                     check_commit()
                 # Setting instances type and merging them with df containing instance - type relations
-                instance_df[Triple.predicate] = RDF.type
-                instance_df[Triple.object] = class_URI
+                instance_df[EntityTypes.predicate] = RDF.type
+                instance_df[EntityTypes.object] = class_URI
                 types.append(instance_df)
                 success += 1
                 prom_total_proc_rules_g.labels(state="success").inc()
@@ -307,7 +298,7 @@ def domain2app_knowledge_graph(
         rules_processing_timing_metric.labels(aggregation="max").set(df.max())
         rules_processing_timing_metric.labels(aggregation="mean").set(df.mean())
 
-    type_df = pd.concat(types).drop_duplicates(Triple.subject).reset_index(drop=True)
+    type_df = pd.concat(types).drop_duplicates(EntityTypes.subject).reset_index(drop=True)
 
     # Add instance - RDF Type relations
     for _, triple in type_df.iterrows():  # type: ignore[assignment]

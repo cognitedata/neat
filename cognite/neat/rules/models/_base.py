@@ -14,6 +14,9 @@ else:
 
 
 class EntityTypes(StrEnum):
+    subject = "subject"
+    predicate = "predicate"
+    object = "object"
     class_ = "class"
     property_ = "property"
     object_property = "object_property"
