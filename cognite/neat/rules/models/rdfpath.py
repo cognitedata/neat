@@ -27,8 +27,6 @@ else:
     from typing_extensions import Self
 
 
-
-
 class TransformationRuleType(StrEnum):
     rdfpath = "rdfpath"
     rawlookup = "rawlookup"
