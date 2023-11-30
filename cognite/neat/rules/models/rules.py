@@ -863,7 +863,7 @@ class Instance(RuleModel):
         except ValidationError:
             try:
                 entity = Entity.from_string(value)
-                return URIRef(prefixes[entity.prefix][entity.name])
+                return URIRef(prefixes[entity.prefix][entity.suffix])
             except ValueError:
                 return value
 

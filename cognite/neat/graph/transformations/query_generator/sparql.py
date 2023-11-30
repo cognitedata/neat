@@ -8,6 +8,7 @@ from rdflib.term import URIRef
 
 from cognite.neat.constants import PREFIXES
 from cognite.neat.rules.analysis import get_classes_with_properties
+from cognite.neat.rules.models._base import Triple
 from cognite.neat.rules.models.rdfpath import (
     AllProperties,
     AllReferences,
@@ -16,7 +17,6 @@ from cognite.neat.rules.models.rdfpath import (
     Step,
     TransformationRuleType,
     Traversal,
-    Triple,
     parse_rule,
     parse_traversal,
 )
@@ -81,50 +81,52 @@ def _get_predicate_id(
 
 
 def _get_direct_mapping_triples(subject, predicate) -> list[Triple]:
-    return [Triple(subject, predicate, "?object")]
+    return [Triple(subject=subject, predicate=predicate, object="?object")]
 
 
 def _get_all_references_mapping_triples(object) -> list[Triple]:
-    return [Triple("?subject", "a", object)]
+    return [Triple(subject="?subject", predicate="a", object=object)]
 
 
 def _get_entire_object_mapping(subject) -> list[Triple]:
-    return [Triple(subject, "*")]
+    return [Triple(subject=subject, predicate="*")]
 
 
 def _get_hop_triples(graph, path: Hop, prefixes) -> list[Triple]:
-    triples = [Triple("?subject", "a", path.class_.id)]
+    triples = [Triple(subject="?subject", predicate="a", object=path.class_.id)]
     previous_step = Step(class_=path.class_, direction="origin")
 
     # add triples for all steps until destination
-    for curret_step in path.traversal:
+    for current_step in path.traversal:
         sub_entity, obj_entity = (
-            (curret_step, previous_step) if curret_step.direction == "source" else (previous_step, curret_step)
+            (current_step, previous_step) if current_step.direction == "source" else (previous_step, current_step)
         )
 
         predicate = _get_predicate_id(graph, sub_entity.class_.id, obj_entity.class_.id, prefixes)
 
         # if this is first step after origin
         if previous_step.class_.id == path.class_.id:
-            if curret_step.direction == "source":
-                sub, obj = f"?{sub_entity.class_.name}ID", "?subject"
+            if current_step.direction == "source":
+                sub, obj = f"?{sub_entity.class_.suffix}ID", "?subject"
             else:
-                sub, obj = "?subject", f"?{obj_entity.class_.name}ID"
+                sub, obj = "?subject", f"?{obj_entity.class_.suffix}ID"
 
         # Any other step after hoping from origin to first step
         else:
-            sub = f"?{sub_entity.class_.name}ID"
-            obj = f"?{obj_entity.class_.name}ID"
+            sub = f"?{sub_entity.class_.suffix}ID"
+            obj = f"?{obj_entity.class_.suffix}ID"
 
-        triples.append(Triple(sub, predicate, obj))
-        previous_step = curret_step
+        triples.append(Triple(subject=sub, predicate=predicate, object=obj))
+        previous_step = current_step
 
     if previous_step.property:
         triples.extend(
             [
-                Triple(f"?{previous_step.class_.name}ID", "a", previous_step.class_.id),
-                Triple(f"?{previous_step.class_.name}ID", previous_step.property.id, "?object"),
-                Triple("?predicate", "a", previous_step.property.id),
+                Triple(subject=f"?{previous_step.class_.suffix}ID", predicate="a", object=previous_step.class_.id),
+                Triple(
+                    subject=f"?{previous_step.class_.suffix}ID", predicate=previous_step.property.id, object="?object"
+                ),
+                Triple(subject="?predicate", predicate="a", object=previous_step.property.id),
             ]
         )
     else:
@@ -132,7 +134,7 @@ def _get_hop_triples(graph, path: Hop, prefixes) -> list[Triple]:
             triples[-1].subject = "?object"
         else:
             triples[-1].object = "?object"
-        triples.append(Triple("?object", "a", previous_step.class_.id))
+        triples.append(Triple(subject="?object", predicate="a", object=previous_step.class_.id))
 
     return triples
 
@@ -279,11 +281,13 @@ def build_sparql_query(
     triples = _get_path_triples(graph, traversal, prefixes)
 
     if isinstance(traversal, AllProperties):
-        query = _generate_all_properties_query_statement(triples[0].subject)
+        query = _generate_all_properties_query_statement(cast(str, triples[0].subject))
     elif isinstance(traversal, AllReferences) and isinstance(triples[0].object, str):
         query = _generate_all_references_query_statement(triples[0].object)
     elif isinstance(traversal, SingleProperty):
-        query = _generate_single_property_query_statement(triples[0].subject, triples[0].predicate)
+        query = _generate_single_property_query_statement(
+            cast(str, triples[0].subject), cast(str, triples[0].predicate)
+        )
     elif isinstance(traversal, Hop):
         query = _generate_hop_query_statement(triples)
     else:

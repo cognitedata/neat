@@ -127,25 +127,29 @@ def test_is_rawlookup(raw_input: str, is_rawlookup_expected: bool):
 def generate_parse_traversal():
     yield pytest.param(
         "cim:GeographicalRegion(*)",
-        AllProperties(class_=Entity(prefix="cim", name="GeographicalRegion")),
+        AllProperties(
+            class_=Entity(prefix="cim", suffix="GeographicalRegion", name="GeographicalRegion", type_="class")
+        ),
         id="All properties",
     )
     yield pytest.param(
         "cim:GeographicalRegion(cim:RootCIMNode.node)",
         SingleProperty(
-            class_=Entity(prefix="cim", name="GeographicalRegion"),
-            property=Entity(prefix="cim", name="RootCIMNode.node"),
+            class_=Entity(prefix="cim", suffix="GeographicalRegion", name="GeographicalRegion", type_="class"),
+            property=Entity(prefix="cim", suffix="RootCIMNode.node", name="RootCIMNode.node", type_="property"),
         ),
         id="Single property",
     )
     yield pytest.param(
         "cim:GeographicalRegion",
-        AllReferences(class_=Entity(prefix="cim", name="GeographicalRegion")),
+        AllReferences(
+            class_=Entity(prefix="cim", suffix="GeographicalRegion", name="GeographicalRegion", type_="class")
+        ),
         id="All references",
     )
     yield pytest.param(
         "cim:G",
-        AllReferences(class_=Entity(prefix="cim", name="G")),
+        AllReferences(class_=Entity(prefix="cim", suffix="G", name="G", type_="class")),
         id="All references single character name",
     )
     yield pytest.param(
@@ -301,4 +305,4 @@ def display_test_parse_traversal(
 
 if __name__ == "__main__":
     for parameters in generate_parse_traversal():
-        display_test_parse_traversal(*parameters.values, name=parameters.id)
+        display_test_parse_traversal(*parameters.values, suffix=parameters.id)
