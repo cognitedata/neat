@@ -44,7 +44,7 @@ from cognite.neat.rules.models.rdfpath import (
     Traversal,
     parse_rule,
 )
-from cognite.neat.rules.type_mapping import DATA_TYPE_MAPPING, type_to_target_convention
+from cognite.neat.rules.value_types import XSD_VALUE_TYPE_MAPPINGS
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -715,7 +715,7 @@ class Property(Resource):
 
     @model_validator(mode="after")
     def set_property_type(self):
-        if self.expected_value_type in DATA_TYPE_MAPPING.keys():
+        if self.expected_value_type in XSD_VALUE_TYPE_MAPPINGS.keys():
             self.property_type = "DatatypeProperty"
         else:
             self.property_type = "ObjectProperty"
@@ -783,21 +783,21 @@ class Property(Resource):
         if self.property_type == "DatatypeProperty" and self.default:
             default_value = self.default[0] if isinstance(self.default, list) else self.default
 
-            if type(default_value) != type_to_target_convention(self.expected_value_type, "python"):
+            if type(default_value) != XSD_VALUE_TYPE_MAPPINGS[self.expected_value_type].python:
                 try:
                     if isinstance(self.default, list):
                         updated_list = []
                         for value in self.default:
-                            updated_list.append(type_to_target_convention(self.expected_value_type, "python")(value))
+                            updated_list.append(XSD_VALUE_TYPE_MAPPINGS[self.expected_value_type].python(value))
                         self.default = updated_list
                     else:
-                        self.default = type_to_target_convention(self.expected_value_type, "python")(self.default)
+                        self.default = XSD_VALUE_TYPE_MAPPINGS[self.expected_value_type].python(self.default)
 
                     warnings.warn(
                         exceptions.DefaultValueTypeConverted(
                             self.property_id,
                             type(self.default),
-                            type_to_target_convention(self.expected_value_type, "python"),
+                            XSD_VALUE_TYPE_MAPPINGS[self.expected_value_type].python,
                         ).message,
                         category=exceptions.DefaultValueTypeConverted,
                         stacklevel=2,
@@ -806,7 +806,7 @@ class Property(Resource):
                     exceptions.DefaultValueTypeNotProper(
                         self.property_id,
                         type(self.default),
-                        type_to_target_convention(self.expected_value_type, "python"),
+                        XSD_VALUE_TYPE_MAPPINGS[self.expected_value_type].python,
                     )
         return self
 
