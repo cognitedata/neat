@@ -15,6 +15,12 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.47.0] - 01-12-23
+
+## Deprecated
+- `type_mapping` in `rules` replaced by `value_types`
+
+
 ## [0.46.0] - 30-11-23
 
 ## Improved
