@@ -21,6 +21,8 @@ class EntityTypes(StrEnum):
     property_ = "property"
     object_property = "object_property"
     data_property = "data_property"
+    data_value_type = "data_value_type"
+    object_value_type = "object_value_type"
     annotation_property = "annotation_property"
     view = "view"
     container = "container"
@@ -48,6 +50,7 @@ class Entity(BaseModel):
     name: str | None = None
     description: str | None = None
     type_: EntityTypes | None = None
+    version: str | None = None
 
     @property
     def id(self) -> str:

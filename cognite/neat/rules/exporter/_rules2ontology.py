@@ -12,7 +12,8 @@ from cognite.neat.rules import exceptions
 from cognite.neat.rules.analysis import to_class_property_pairs, to_property_dict
 from cognite.neat.rules.exporter._base import BaseExporter
 from cognite.neat.rules.exporter._validation import are_properties_redefined
-from cognite.neat.rules.models.rules import DATA_TYPE_MAPPING, Class, Metadata, Property, Rules
+from cognite.neat.rules.models.rules import Class, Metadata, Property, Rules
+from cognite.neat.rules.value_types import XSD_VALUE_TYPE_MAPPINGS
 from cognite.neat.utils.utils import generate_exception_report, remove_namespace
 
 if sys.version_info >= (3, 11):
@@ -301,7 +302,7 @@ class OWLProperty(OntologyModel):
             owl_property.type_.add(OWL[definition.property_type])
             owl_property.range_.add(
                 XSD[definition.expected_value_type]
-                if definition.expected_value_type in DATA_TYPE_MAPPING
+                if definition.expected_value_type in XSD_VALUE_TYPE_MAPPINGS
                 else namespace[definition.expected_value_type]
             )
             owl_property.domain.add(namespace[definition.class_id])

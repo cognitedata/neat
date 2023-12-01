@@ -43,7 +43,7 @@ from cognite.neat.rules.analysis import to_class_property_pairs
 from cognite.neat.rules.exporter._base import BaseExporter
 from cognite.neat.rules.exporter._validation import are_entity_names_dms_compliant, are_properties_redefined
 from cognite.neat.rules.models.rules import Property, Rules
-from cognite.neat.rules.type_mapping import DATA_TYPE_MAPPING
+from cognite.neat.rules.value_types import XSD_VALUE_TYPE_MAPPINGS
 from cognite.neat.utils.utils import generate_exception_report
 
 
@@ -225,7 +225,7 @@ class DataModel(BaseModel):
             # Literal, i.e. attribute
             if property_definition.property_type == "DatatypeProperty":
                 property_type = cast(
-                    type[ListablePropertyType], DATA_TYPE_MAPPING[property_definition.expected_value_type]["dms"]
+                    type[ListablePropertyType], XSD_VALUE_TYPE_MAPPINGS[property_definition.expected_value_type].dms
                 )
                 container_properties[property_id] = ContainerProperty(
                     type=property_type(is_list=is_one_to_many),

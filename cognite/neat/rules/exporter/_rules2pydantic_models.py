@@ -20,7 +20,7 @@ from cognite.neat.rules.analysis import define_class_asset_mapping, to_class_pro
 from cognite.neat.rules.exporter._rules2dms import DataModel
 from cognite.neat.rules.exporter._validation import are_entity_names_dms_compliant
 from cognite.neat.rules.models.rules import Property, Rules
-from cognite.neat.rules.type_mapping import type_to_target_convention
+from cognite.neat.rules.value_types import XSD_VALUE_TYPE_MAPPINGS
 from cognite.neat.utils.utils import generate_exception_report
 
 if sys.version_info >= (3, 11):
@@ -230,9 +230,9 @@ def _define_field_type(property_: Property):
     elif property_.property_type == "ObjectProperty":
         return EdgeOneToMany
     elif property_.property_type == "DatatypeProperty" and property_.max_count == 1:
-        return type_to_target_convention(property_.expected_value_type, "python")
+        return XSD_VALUE_TYPE_MAPPINGS[property_.expected_value_type].python
     else:
-        inner_type = type_to_target_convention(property_.expected_value_type, "python")
+        inner_type = XSD_VALUE_TYPE_MAPPINGS[property_.expected_value_type].python
         return list[inner_type]  # type: ignore[valid-type]
 
 
