@@ -33,6 +33,7 @@ from rdflib import XSD, Literal, Namespace, URIRef
 
 from cognite.neat.constants import PREFIXES
 from cognite.neat.rules import exceptions
+from cognite.neat.rules.models._base import EntityTypes
 from cognite.neat.rules.models.rdfpath import (
     AllReferences,
     Entity,
@@ -44,7 +45,7 @@ from cognite.neat.rules.models.rdfpath import (
     Traversal,
     parse_rule,
 )
-from cognite.neat.rules.value_types import XSD_VALUE_TYPE_MAPPINGS
+from cognite.neat.rules.value_types import XSD_VALUE_TYPE_MAPPINGS, ValueType
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -124,7 +125,11 @@ def skip_model_validator(validators_field):
 
 class RuleModel(BaseModel):
     model_config: ClassVar[ConfigDict] = ConfigDict(
-        populate_by_name=True, str_strip_whitespace=True, arbitrary_types_allowed=True, strict=False, extra="allow"
+        populate_by_name=True,
+        str_strip_whitespace=True,
+        arbitrary_types_allowed=True,
+        strict=False,
+        extra="allow",
     )
     validators_to_skip: set[str] = Field(default_factory=set, exclude=True)
 
@@ -604,7 +609,7 @@ class Property(Resource):
     class_id: ExternalId = Field(alias="Class", min_length=1, max_length=255)
     property_id: ExternalId = Field(alias="Property", min_length=1, max_length=255)
     property_name: ExternalId | None = Field(alias="Name", default=None, min_length=1, max_length=255)
-    expected_value_type: ExternalId = Field(alias="Type", min_length=1, max_length=255)
+    expected_value_type: ValueType = Field(alias="Type")
     min_count: int | None = Field(alias="Min Count", default=0)
     max_count: int | None = Field(alias="Max Count", default=None)
     default: Any | None = Field(alias="Default", default=None)
@@ -638,6 +643,25 @@ class Property(Resource):
     def replace_float_nan_with_default(cls, values: dict) -> dict:
         return replace_nan_floats_with_default(values, cls.model_fields)
 
+    @validator("expected_value_type", pre=True)
+    def replace_string_with_entity(cls, value):
+        # handles simple types
+        if value in XSD_VALUE_TYPE_MAPPINGS.keys():
+            return XSD_VALUE_TYPE_MAPPINGS[value]
+
+        # handles typically object types
+        else:
+            # handles when entity type is provides as prefix:suffix  or prefix:suffix(version=value)
+            try:
+                return ValueType.from_string(entity_string=value)
+
+            # if all fails defaults "neat" object which ends up being updated to proper
+            # prefix and version upon completion of Rules validation
+            except ValueError:
+                return ValueType(
+                    prefix="undefined", suffix=value, name=value, type_=EntityTypes.object_value_type, mapping=None
+                )
+
     @validator("class_id", always=True)
     @skip_field_validator("validators_to_skip")
     def is_class_id_compliant(cls, value, values):
@@ -663,11 +687,11 @@ class Property(Resource):
     @validator("expected_value_type", always=True)
     @skip_field_validator("validators_to_skip")
     def is_expected_value_type_compliant(cls, value, values):
-        if re.search(more_than_one_none_alphanumerics_regex, value):
+        if re.search(more_than_one_none_alphanumerics_regex, value.suffix):
             raise exceptions.MoreThanOneNonAlphanumericCharacter(
                 "expected_value_type", value
             ).to_pydantic_custom_error()
-        if not re.match(class_id_compliance_regex, value):
+        if not re.match(class_id_compliance_regex, value.suffix):
             raise exceptions.ValueTypeIDRegexViolation(value, class_id_compliance_regex).to_pydantic_custom_error()
         else:
             return value
@@ -715,10 +739,10 @@ class Property(Resource):
 
     @model_validator(mode="after")
     def set_property_type(self):
-        if self.expected_value_type in XSD_VALUE_TYPE_MAPPINGS.keys():
-            self.property_type = "DatatypeProperty"
+        if self.expected_value_type.type_ == EntityTypes.data_value_type:
+            self.property_type = EntityTypes.data_property
         else:
-            self.property_type = "ObjectProperty"
+            self.property_type = EntityTypes.object_property
         return self
 
     @model_validator(mode="after")
@@ -1006,15 +1030,55 @@ class Rules(RuleModel):
                         property_.property_id, property_.class_id
                     ).to_pydantic_custom_error()
                 )
-            if property_.property_type == "ObjectProperty" and property_.expected_value_type not in self.classes:
+            if property_.property_type == "ObjectProperty" and property_.expected_value_type.suffix not in self.classes:
                 errors.append(
                     exceptions.ValueTypeNotDefinedAsClass(
-                        property_.class_id, property_.property_id, property_.expected_value_type
+                        property_.class_id, property_.property_id, property_.expected_value_type.suffix
                     ).to_pydantic_custom_error()
                 )
         if errors:
             raise exceptions.MultipleExceptions(errors)
         return self
+
+    @model_validator(mode="after")
+    @skip_model_validator("validators_to_skip")
+    def update_prefix_version_entities(self) -> Self:
+        version = self.metadata.version
+        prefix = self.metadata.prefix
+
+        for id_ in self.properties.keys():
+            if self.properties[id_].expected_value_type.prefix == "undefined":
+                self.properties[id_].expected_value_type.prefix = prefix
+            if not self.properties[id_].expected_value_type.version:
+                self.properties[id_].expected_value_type.version = version
+
+        return self
+
+    def update_prefix(self, prefix: str):
+        # check if prefix is according to the regex
+        if re.match(prefix_compliance_regex, prefix):
+            old_prefix = self.metadata.prefix
+            self.metadata.prefix = prefix
+
+            for id_ in self.properties.keys():
+                if self.properties[id_].expected_value_type.prefix == old_prefix:
+                    self.properties[id_].expected_value_type.prefix = prefix
+        else:
+            warnings.warn("Skipping !!! Version is not according to the regex!", stacklevel=2)
+
+    def update_version(self, version: str):
+        # check if version is according to the regex
+        if re.match(version_compliance_regex, version):
+            old_version = self.metadata.version
+            self.metadata.version = version
+            for id_ in self.properties.keys():
+                if (
+                    self.properties[id_].expected_value_type.prefix == self.metadata.prefix
+                    and self.properties[id_].expected_value_type.version == old_version
+                ):
+                    self.properties[id_].expected_value_type.version = version
+        else:
+            warnings.warn("Skipping !!! Version is not according to the regex!", stacklevel=2)
 
     @validator("properties")
     @skip_field_validator("validators_to_skip")
@@ -1022,9 +1086,10 @@ class Rules(RuleModel):
         defined_objects = {property_.class_id for property_ in value.values()}
 
         if undefined_objects := [
-            property_.expected_value_type
+            property_.expected_value_type.suffix
             for _, property_ in value.items()
-            if property_.property_type == "ObjectProperty" and property_.expected_value_type not in defined_objects
+            if property_.property_type == "ObjectProperty"
+            and property_.expected_value_type.suffix not in defined_objects
         ]:
             raise exceptions.UndefinedObjectsAsExpectedValueTypes(undefined_objects).to_pydantic_custom_error()
         else:
