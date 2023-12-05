@@ -11,6 +11,7 @@ from rdflib import Namespace
 from cognite.neat.rules import exporter, importer
 from cognite.neat.rules.models.rdfpath import TransformationRuleType
 from cognite.neat.rules.models.rules import Class, Classes, Metadata, Properties, Property, Rules
+from cognite.neat.rules.value_types import ValueType
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
 from cognite.neat.workflows.steps.step_model import Configurable, Step
@@ -214,7 +215,7 @@ class OpenApiToRules(Step):
                             else prop_name,
                             property_type="ObjectProperty",
                             description=prop_info.get("description", prop_info.get("title", "empty")),
-                            expected_value_type=expected_value_type,
+                            expected_value_type=ValueType(prefix="neat", suffix=expected_value_type),
                             cdf_resource_type=["Asset"],
                             resource_type_property="Asset",  # type: ignore
                             rule_type=TransformationRuleType("rdfpath"),
@@ -236,7 +237,7 @@ class OpenApiToRules(Step):
                         property_name=parent_property_name,
                         property_type="ObjectProperty",
                         description="no",
-                        expected_value_type=ref_class,
+                        expected_value_type=ValueType(prefix="neat", suffix=ref_class),
                         cdf_resource_type=["Asset"],
                         resource_type_property="Asset",  # type: ignore
                         rule_type=TransformationRuleType("rdfpath"),
@@ -365,7 +366,7 @@ class ArbitraryJsonYamlToRules(Step):
                 property_name=property_name,
                 property_type="ObjectProperty",
                 description=description,
-                expected_value_type=property_type,
+                expected_value_type=ValueType(prefix="neat", suffix=property_type),
                 cdf_resource_type=["Asset"],
                 resource_type_property="Asset",  # type: ignore
                 rule_type=TransformationRuleType("rdfpath"),

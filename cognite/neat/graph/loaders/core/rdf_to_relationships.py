@@ -42,12 +42,12 @@ def define_relationships(rules: Rules, stop_on_exception: bool = False) -> Relat
 
     for row, rule in rules.properties.items():
         if "Relationship" in rule.cdf_resource_type:
-            label_set = {rule.class_id, rule.expected_value_type, "non-historic", rule.property_id}
+            label_set = {rule.class_id, rule.expected_value_type.suffix, "non-historic", rule.property_id}
             if rule.label:
                 label_set.add(rule.label)
             relationship = RelationshipDefinition(
                 source_class=rule.class_id,
-                target_class=rule.expected_value_type,
+                target_class=rule.expected_value_type.suffix,
                 property_=rule.property_id,
                 labels=list(label_set),
                 target_type=rule.target_type,

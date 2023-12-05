@@ -301,9 +301,9 @@ class OWLProperty(OntologyModel):
         for definition in definitions:
             owl_property.type_.add(OWL[definition.property_type])
             owl_property.range_.add(
-                XSD[definition.expected_value_type]
-                if definition.expected_value_type in XSD_VALUE_TYPE_MAPPINGS
-                else namespace[definition.expected_value_type]
+                XSD[definition.expected_value_type.suffix]
+                if definition.expected_value_type.suffix in XSD_VALUE_TYPE_MAPPINGS
+                else namespace[definition.expected_value_type.suffix]
             )
             owl_property.domain.add(namespace[definition.class_id])
 

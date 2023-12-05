@@ -279,7 +279,7 @@ def rules2graph_capturing_sheet(
         for i, property_ in enumerate(properties.values()):
             if property_.property_type == "ObjectProperty" and add_drop_down_list:
                 _add_drop_down_list(
-                    workbook, class_, get_column_letter(i + 2), no_rows, property_.expected_value_type, "A"
+                    workbook, class_, get_column_letter(i + 2), no_rows, property_.expected_value_type.suffix, "A"
                 )
 
     _adjust_column_width(workbook)

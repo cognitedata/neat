@@ -10,6 +10,8 @@ from typing import ClassVar, Literal, cast
 
 import yaml
 
+from cognite.neat.rules.value_types import ValueTypeMapping
+
 if sys.version_info >= (3, 11):
     from typing import Self
 else:
@@ -43,7 +45,6 @@ from cognite.neat.rules.analysis import to_class_property_pairs
 from cognite.neat.rules.exporter._base import BaseExporter
 from cognite.neat.rules.exporter._validation import are_entity_names_dms_compliant, are_properties_redefined
 from cognite.neat.rules.models.rules import Property, Rules
-from cognite.neat.rules.value_types import XSD_VALUE_TYPE_MAPPINGS
 from cognite.neat.utils.utils import generate_exception_report
 
 
@@ -225,7 +226,8 @@ class DataModel(BaseModel):
             # Literal, i.e. attribute
             if property_definition.property_type == "DatatypeProperty":
                 property_type = cast(
-                    type[ListablePropertyType], XSD_VALUE_TYPE_MAPPINGS[property_definition.expected_value_type].dms
+                    type[ListablePropertyType],
+                    cast(ValueTypeMapping, property_definition.expected_value_type.mapping).dms,
                 )
                 container_properties[property_id] = ContainerProperty(
                     type=property_type(is_list=is_one_to_many),
@@ -299,14 +301,21 @@ class DataModel(BaseModel):
                     description=property_definition.description,
                 )
 
-            # edge 1-1
+            # edge 1-1 == directRelation
             elif property_definition.property_type == "ObjectProperty" and property_definition.max_count == 1:
                 view_properties[property_id] = MappedPropertyApply(
                     container=ContainerId(space=space, external_id=property_definition.class_id),
                     container_property_identifier=property_id,
                     name=property_definition.property_name,
                     description=property_definition.description,
-                    source=ViewId(space=space, external_id=property_definition.expected_value_type, version=version),
+                    source=ViewId(
+                        # prefix maps to space
+                        space=property_definition.expected_value_type.prefix,
+                        # suffix maps to external_id
+                        external_id=property_definition.expected_value_type.suffix,
+                        # version to version
+                        version=property_definition.expected_value_type.version,
+                    ),
                 )
 
             # edge 1-many
@@ -315,7 +324,15 @@ class DataModel(BaseModel):
                     type=DirectRelationReference(
                         space=space, external_id=f"{property_definition.class_id}.{property_definition.property_id}"
                     ),
-                    source=ViewId(space=space, external_id=property_definition.expected_value_type, version=version),
+                    # Here we create ViewID to the container that the edge is pointing to.
+                    source=ViewId(
+                        # prefix maps to space
+                        space=property_definition.expected_value_type.prefix,
+                        # suffix maps to external_id
+                        external_id=property_definition.expected_value_type.suffix,
+                        # version to version
+                        version=property_definition.expected_value_type.version,
+                    ),
                     direction="outwards",
                     name=property_definition.property_name,
                     description=property_definition.description,
