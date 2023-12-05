@@ -10,10 +10,16 @@ Changes are grouped as follows:
 - `Added` for new features.
 - `Changed` for changes in existing functionality.
 - `Deprecated` for soon-to-be removed features.
-- `Improved` for transparent changes, e.`g. better performance.
+- `Improved` for transparent changes, e.g. better performance.
 - `Removed` for now removed features.
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
+
+## [0.48.0] - 05-12-23
+
+## Added
+- Value types are now resolved as `ValueType` object instances
+
 
 ## [0.47.0] - 01-12-23
 
