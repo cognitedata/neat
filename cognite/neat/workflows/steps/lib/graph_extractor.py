@@ -216,10 +216,10 @@ class DataModelFromRulesToSourceGraph(Step):
         self, transformation_rules: RulesData, source_graph: SourceGraph
     ) -> FlowMessage:
         ns = PREFIXES["neat"]
-        clases = transformation_rules.rules.classes
+        classes = transformation_rules.rules.classes
         properties = transformation_rules.rules.properties
         counter = 0
-        for class_name, class_def in clases.items():
+        for class_name, class_def in classes.items():
             rdf_instance_id = URIRef(ns + "_" + class_def.class_id)
             source_graph.graph.graph.add((rdf_instance_id, URIRef(ns + "Name"), Literal(class_name)))
             source_graph.graph.graph.add((rdf_instance_id, RDF.type, URIRef(ns + class_def.class_id)))
@@ -234,9 +234,13 @@ class DataModelFromRulesToSourceGraph(Step):
             source_graph.graph.graph.add(
                 (rdf_instance_id, URIRef(ns + property_def.property_id), Literal(property_def.expected_value_type))
             )
-            if property_def.expected_value_type not in ("string", "integer", "float", "boolean"):
+            if property_def.expected_value_type.suffix not in ("string", "integer", "float", "boolean"):
                 source_graph.graph.graph.add(
-                    (rdf_instance_id, URIRef(ns + "connectedTo"), URIRef(ns + "_" + property_def.expected_value_type))
+                    (
+                        rdf_instance_id,
+                        URIRef(ns + "connectedTo"),
+                        URIRef(ns + "_" + property_def.expected_value_type.suffix),
+                    )
                 )
             counter += 1
 

@@ -301,9 +301,9 @@ class OWLProperty(OntologyModel):
         for definition in definitions:
             owl_property.type_.add(OWL[definition.property_type])
             owl_property.range_.add(
-                XSD[definition.expected_value_type]
-                if definition.expected_value_type in XSD_VALUE_TYPE_MAPPINGS
-                else namespace[definition.expected_value_type]
+                XSD[definition.expected_value_type.suffix]
+                if definition.expected_value_type.suffix in XSD_VALUE_TYPE_MAPPINGS
+                else namespace[definition.expected_value_type.suffix]
             )
             owl_property.domain.add(namespace[definition.class_id])
 
@@ -510,9 +510,9 @@ class SHACLPropertyShape(OntologyModel):
             path=namespace[definition.property_id],
             node_kind=SHACL.IRI if definition.property_type == "ObjectProperty" else SHACL.Literal,
             expected_value_type=(
-                namespace[f"{definition.expected_value_type}Shape"]
+                namespace[f"{definition.expected_value_type.suffix}Shape"]
                 if definition.property_type == "ObjectProperty"
-                else XSD[definition.expected_value_type]
+                else XSD[definition.expected_value_type.suffix]
             ),
             min_count=definition.min_count,
             max_count=definition.max_count,

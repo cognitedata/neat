@@ -19,11 +19,11 @@ class EntityTypes(StrEnum):
     object = "object"
     class_ = "class"
     property_ = "property"
-    object_property = "object_property"
-    data_property = "data_property"
+    object_property = "ObjectProperty"
+    data_property = "DatatypeProperty"
+    annotation_property = "AnnotationProperty"
     data_value_type = "data_value_type"
     object_value_type = "object_value_type"
-    annotation_property = "annotation_property"
     view = "view"
     container = "container"
 
@@ -31,15 +31,19 @@ class EntityTypes(StrEnum):
 # REGEX expressions
 PREFIX_REGEX = r"[a-zA-Z]+[a-zA-Z0-9]*[-_.]*[a-zA-Z0-9]+"
 SUFFIX_REGEX = r"[a-zA-Z0-9-_.]+[a-zA-Z0-9]|[-_.]*[a-zA-Z0-9]+"
-
+VERSION_REGEX = r"[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])"
 
 ENTITY_ID_REGEX = rf"{PREFIX_REGEX}:({SUFFIX_REGEX})"
 ENTITY_ID_REGEX_COMPILED = re.compile(rf"^(?P<prefix>{PREFIX_REGEX}):(?P<suffix>{SUFFIX_REGEX})$")
+VERSIONED_ENTITY_REGEX_COMPILED = re.compile(
+    rf"^(?P<prefix>{PREFIX_REGEX}):(?P<suffix>{SUFFIX_REGEX})\(version=(?P<version>{VERSION_REGEX})\)$"
+)
 
 CLASS_ID_REGEX = rf"(?P<{EntityTypes.class_}>{ENTITY_ID_REGEX})"
 CLASS_ID_REGEX_COMPILED = re.compile(rf"^{CLASS_ID_REGEX}$")
 
 PROPERTY_ID_REGEX = rf"\((?P<{EntityTypes.property_}>{ENTITY_ID_REGEX})\)"
+VERSION_ID_REGEX = rf"\(version=(?P<version>{VERSION_REGEX})\)"
 
 
 class Entity(BaseModel):
@@ -56,12 +60,27 @@ class Entity(BaseModel):
     def id(self) -> str:
         return f"{self.prefix}:{self.suffix}"
 
+    @property
+    def versioned_id(self) -> str:
+        if self.version:
+            return f"{self.prefix}:{self.suffix}(version={self.version})"
+        else:
+            return self.id
+
     def __repr__(self):
         return self.id
 
     @classmethod
     def from_string(cls, entity_string: str, base_prefix: str | None = None, **kwargs) -> Self:
-        if result := ENTITY_ID_REGEX_COMPILED.match(entity_string):
+        if result := VERSIONED_ENTITY_REGEX_COMPILED.match(entity_string):
+            return cls(
+                prefix=result.group("prefix"),
+                suffix=result.group("suffix"),
+                name=result.group("suffix"),
+                version=result.group("version"),
+                **kwargs,
+            )
+        elif result := ENTITY_ID_REGEX_COMPILED.match(entity_string):
             return cls(
                 prefix=result.group("prefix"), suffix=result.group("suffix"), name=result.group("suffix"), **kwargs
             )

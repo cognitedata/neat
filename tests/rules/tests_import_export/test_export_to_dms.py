@@ -22,15 +22,27 @@ def test_import_export_data_model(data_model: dm.DataModel[dm.View]):
     assert exported.data_model.dump() == data_model.as_apply().dump()
 
 
-def test_import_json_export_data_model():
-    expected_model = CAPACITY_BID_MODEL
-    expected_containers = CAPACITY_BID_CONTAINERS
+def test_import_arbitrary_json_export_data_model():
+    original_model = CAPACITY_BID_MODEL
 
     rules = importer.ArbitraryJSONImporter(CAPACITY_BID_JSON).to_rules()
-    exported = exporter.DMSExporter(rules, data_model_id=expected_model.as_id()).export()
+    imported_model = exporter.DMSExporter(rules, data_model_id=original_model.as_id()).export()
 
-    exported.data_model.name = expected_model.name
-    exported.data_model.description = expected_model.description
+    imported_model.data_model.name = original_model.name
+    imported_model.data_model.description = original_model.description
 
-    assert exported.containers.dump() == expected_containers.dump()
-    assert exported.data_model.dump() == expected_model.dump()
+    assert imported_model.data_model.dump() == original_model.dump()
+
+
+def test_import_arbitrary_json_export_containers():
+    original_model = CAPACITY_BID_MODEL
+
+    rules = importer.ArbitraryJSONImporter(CAPACITY_BID_JSON).to_rules()
+    imported_model = exporter.DMSExporter(rules, data_model_id=original_model.as_id()).export()
+
+    imported_model.data_model.name = original_model.name
+    imported_model.data_model.description = original_model.description
+
+    original_containers = CAPACITY_BID_CONTAINERS
+
+    assert imported_model.containers.dump() == original_containers.dump()
