@@ -97,7 +97,6 @@ def get_rules(
     except Exception as e:
         error_text = str(e)
 
-    print(properties)
     return {
         "properties": properties,
         "classes": classes,
