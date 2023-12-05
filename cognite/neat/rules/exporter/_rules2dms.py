@@ -154,9 +154,18 @@ class DataModel(BaseModel):
         Returns:
             Instance of DataModel.
         """
-        space = (data_model_id and data_model_id.space) or rules.metadata.cdf_space_name
-        external_id = (data_model_id and data_model_id.external_id) or rules.metadata.data_model_name or "missing"
-        version = (data_model_id and data_model_id.version) or rules.metadata.version
+        if data_model_id and data_model_id.space:
+            # update prefix in rules to match space
+            rules.update_prefix(data_model_id.space)
+
+        if data_model_id and data_model_id.version:
+            # update version in rules to match version
+            rules.update_version(data_model_id.version)
+
+        if data_model_id and data_model_id.external_id:
+            # update data model name to match external_id
+            rules.metadata.data_model_name = data_model_id.external_id
+
         names_compliant, name_warnings = are_entity_names_dms_compliant(rules, return_report=True)
         if not names_compliant:
             logging.error(
@@ -178,13 +187,13 @@ class DataModel(BaseModel):
             raise exceptions.DataModelNameMissing(prefix=rules.metadata.prefix)
 
         return cls(
-            space=space,
-            external_id=external_id,
-            version=version,
+            space=rules.metadata.prefix,
+            external_id=rules.metadata.data_model_name,
+            version=rules.metadata.version,
             description=rules.metadata.description,
             name=rules.metadata.title,
-            containers=cls.containers_from_rules(rules, space),
-            views=cls.views_from_rules(rules, space),
+            containers=cls.containers_from_rules(rules),
+            views=cls.views_from_rules(rules),
         )
 
     @staticmethod
@@ -198,10 +207,14 @@ class DataModel(BaseModel):
         Returns:
             Dictionary of ContainerApply instances.
         """
+
+        if space:
+            rule.update_prefix(space)
+
         class_properties = to_class_property_pairs(rule)
         return {
             class_id: ContainerApply(
-                space=space or rule.metadata.cdf_space_name,
+                space=rule.metadata.prefix,
                 external_id=class_id,
                 name=rule.classes[class_id].class_name,
                 description=rule.classes[class_id].description,
@@ -272,15 +285,17 @@ class DataModel(BaseModel):
         Returns:
             Dictionary of ViewApply instances.
         """
+        if space:
+            rule.update_prefix(space)
         class_properties = to_class_property_pairs(rule)
-        space = space or rule.metadata.cdf_space_name
+
         return {
             class_id: ViewApply(
-                space=space,
+                space=rule.metadata.prefix,
                 external_id=class_id,
                 name=rule.classes[class_id].class_name,
                 description=rule.classes[class_id].description,
-                properties=DataModel.view_properties_from_dict(properties, space, rule.metadata.version),
+                properties=DataModel.view_properties_from_dict(properties, rule.metadata.prefix),
                 version=rule.metadata.version,
             )
             for class_id, properties in class_properties.items()
@@ -288,7 +303,7 @@ class DataModel(BaseModel):
 
     @staticmethod
     def view_properties_from_dict(
-        properties: dict[str, Property], space: str, version: str
+        properties: dict[str, Property], space: str
     ) -> dict[str, MappedPropertyApply | ConnectionDefinitionApply]:
         view_properties: dict[str, MappedPropertyApply | ConnectionDefinitionApply] = {}
         for property_id, property_definition in properties.items():

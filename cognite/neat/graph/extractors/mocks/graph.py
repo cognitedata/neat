@@ -343,7 +343,7 @@ def _rules_to_dict(transformation_rules: Rules) -> dict[str, pd.DataFrame]:
             if property_.property_id not in properties:
                 properties[property_.property_id] = {
                     "property_type": property_.property_type,
-                    "value_type": property_.expected_value_type,
+                    "value_type": property_.expected_value_type.suffix,
                     "min_count": property_.min_count,
                     "max_count": property_.max_count,
                 }

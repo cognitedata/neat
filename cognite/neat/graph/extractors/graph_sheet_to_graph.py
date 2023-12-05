@@ -167,7 +167,7 @@ def sheet2triples(
                         (
                             instance_namespace[row.identifier],
                             model_namespace[property_name],
-                            Literal(v.strip(), datatype=XSD[property_.expected_value_type]),
+                            Literal(v.strip(), datatype=XSD[property_.expected_value_type.suffix]),
                         )
                         for v in values
                     )

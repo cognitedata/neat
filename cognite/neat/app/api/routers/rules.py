@@ -8,6 +8,7 @@ from rdflib import Namespace
 from cognite.neat.app.api.configuration import NEAT_APP
 from cognite.neat.app.api.data_classes.rest import TransformationRulesUpdateRequest
 from cognite.neat.rules import exporter, importer
+from cognite.neat.rules.models._base import EntityTypes
 from cognite.neat.rules.models.rules import Class, Classes, Metadata, Properties, Property, Rules
 from cognite.neat.workflows.steps.data_contracts import RulesData
 from cognite.neat.workflows.utils import get_file_hash
@@ -72,7 +73,9 @@ def get_rules(
                 "class": value.class_id,
                 "property": value.property_id,
                 "property_description": value.description,
-                "property_type": value.expected_value_type,
+                "property_type": value.expected_value_type.versioned_id
+                if value.property_type == EntityTypes.object_property
+                else value.expected_value_type.suffix,
                 "cdf_resource_type": value.cdf_resource_type,
                 "cdf_metadata_type": value.resource_type_property,
                 "rule_type": value.rule_type,
@@ -90,9 +93,11 @@ def get_rules(
             }
             for value in rules.classes.values()
         ]
+
     except Exception as e:
         error_text = str(e)
 
+    print(properties)
     return {
         "properties": properties,
         "classes": classes,

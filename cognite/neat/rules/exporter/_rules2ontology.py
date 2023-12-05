@@ -510,9 +510,9 @@ class SHACLPropertyShape(OntologyModel):
             path=namespace[definition.property_id],
             node_kind=SHACL.IRI if definition.property_type == "ObjectProperty" else SHACL.Literal,
             expected_value_type=(
-                namespace[f"{definition.expected_value_type}Shape"]
+                namespace[f"{definition.expected_value_type.suffix}Shape"]
                 if definition.property_type == "ObjectProperty"
-                else XSD[definition.expected_value_type]
+                else XSD[definition.expected_value_type.suffix]
             ),
             min_count=definition.min_count,
             max_count=definition.max_count,

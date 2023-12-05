@@ -55,9 +55,11 @@ def rdf2nodes_and_edges(
             for class_instance_id in class_instance_ids:
                 counter += 1
                 try:
+                    print(class_instance_id)
                     instance = pydantic_models[class_].from_graph(  # type: ignore[attr-defined]
                         graph_store, transformation_rules, class_instance_id
                     )
+                    print(instance)
                     if add_class_prefix:
                         instance.external_id = add_class_prefix_to_xid(
                             class_name=instance.__class__.__name__, external_id=instance.external_id

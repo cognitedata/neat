@@ -93,9 +93,9 @@ _EDGE_OCCURRENCE = (
     "{%- endif -%}"
 )
 
-_FIELD_VALUE_TYPE = """{{value_type_mapping[property_definition.expected_value_type].graphql
-                if property_definition.expected_value_type in value_type_mapping
-                else property_definition.expected_value_type}}"""
+_FIELD_VALUE_TYPE = """{{property_definition.expected_value_type.mapping.graphql
+                if property_definition.expected_value_type.suffix in value_type_mapping
+                else property_definition.expected_value_type.suffix}}"""
 
 
 @dataclass

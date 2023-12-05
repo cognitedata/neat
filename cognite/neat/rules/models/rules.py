@@ -615,7 +615,7 @@ class Property(Resource):
     default: Any | None = Field(alias="Default", default=None)
 
     # OWL property
-    property_type: str = "DatatypeProperty"
+    property_type: str = EntityTypes.data_property
 
     # Solution CDF resource
     resource_type_property: list[str] | None = Field(alias="Resource Type Property", default=None)
@@ -653,7 +653,7 @@ class Property(Resource):
         else:
             # handles when entity type is provides as prefix:suffix  or prefix:suffix(version=value)
             try:
-                return ValueType.from_string(entity_string=value)
+                return ValueType.from_string(entity_string=value, type_=EntityTypes.object_value_type, mapping=None)
 
             # if all fails defaults "neat" object which ends up being updated to proper
             # prefix and version upon completion of Rules validation
@@ -1047,10 +1047,15 @@ class Rules(RuleModel):
         prefix = self.metadata.prefix
 
         for id_ in self.properties.keys():
+            # only update version of expected value type which are part of this data model
+            if (
+                not self.properties[id_].expected_value_type.version
+                and self.properties[id_].expected_value_type.prefix == "undefined"
+            ):
+                self.properties[id_].expected_value_type.version = version
+
             if self.properties[id_].expected_value_type.prefix == "undefined":
                 self.properties[id_].expected_value_type.prefix = prefix
-            if not self.properties[id_].expected_value_type.version:
-                self.properties[id_].expected_value_type.version = version
 
         return self
 

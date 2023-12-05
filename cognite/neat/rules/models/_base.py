@@ -60,6 +60,13 @@ class Entity(BaseModel):
     def id(self) -> str:
         return f"{self.prefix}:{self.suffix}"
 
+    @property
+    def versioned_id(self) -> str:
+        if self.version:
+            return f"{self.prefix}:{self.suffix}(version={self.version})"
+        else:
+            return self.id
+
     def __repr__(self):
         return self.id
 

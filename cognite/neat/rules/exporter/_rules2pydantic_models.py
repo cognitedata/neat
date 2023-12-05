@@ -203,7 +203,7 @@ def _properties_to_pydantic_fields(
             "description": property_.description if property_.description else None,
             # keys below will be available under json_schema_extra
             "property_type": field_type.__name__ if field_type in [EdgeOneToOne, EdgeOneToMany] else "NodeAttribute",
-            "property_value_type": property_.expected_value_type,
+            "property_value_type": property_.expected_value_type.suffix,
             "property_name": property_.property_name,
             "property_id": property_.property_id,
         }

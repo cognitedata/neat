@@ -8,7 +8,7 @@ views:
     externalId: BidDocumentHeader
     description: missing
     name: BidDocumentHeader
-    version: "0.1"
+    version: "1"
     properties:
       DocumentTypeName:
         container:
@@ -60,7 +60,7 @@ views:
         source:
           external_id: BidInterval
           space: power
-          version: "0.1"
+          version: "1"
       Country:
         container:
           space: power
@@ -81,7 +81,7 @@ views:
     externalId: BidInterval
     description: missing
     name: BidInterval
-    version: "0.1"
+    version: "1"
     properties:
       Start:
         container:
@@ -103,7 +103,7 @@ views:
     externalId: ReserveBidTimeSeries
     description: missing
     name: ReserveBidTimeSeries
-    version: "0.1"
+    version: "1"
     properties:
       BidType:
         container:
@@ -160,7 +160,7 @@ views:
         source:
           space: power
           externalId: Periods
-          version: "0.1"
+          version: "1"
           type: view
         direction: outwards
         name: Periods
@@ -169,7 +169,7 @@ views:
     externalId: Periods
     description: missing
     name: Periods
-    version: "0.1"
+    version: "1"
     properties:
       Resolution:
         container:
@@ -189,7 +189,7 @@ views:
         source:
           external_id: TimeInterval
           space: power
-          version: "0.1"
+          version: "1"
       BidCurves:
         type:
           space: power
@@ -197,7 +197,7 @@ views:
         source:
           space: power
           externalId: BidCurves
-          version: "0.1"
+          version: "1"
           type: view
         direction: outwards
         name: BidCurves
@@ -206,7 +206,7 @@ views:
     externalId: TimeInterval
     description: missing
     name: TimeInterval
-    version: "0.1"
+    version: "1"
     properties:
       Start:
         container:
@@ -228,7 +228,7 @@ views:
     externalId: BidCurves
     description: missing
     name: BidCurves
-    version: "0.1"
+    version: "1"
     properties:
       ReserveObject:
         container:
