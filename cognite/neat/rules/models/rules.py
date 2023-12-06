@@ -213,30 +213,19 @@ class Metadata(RuleModel):
 
     Args:
         prefix: This is used as prefix for generation of RDF OWL/SHACL data model representation
-        cdf_space_name: This is used as CDF space name to which model is intend to be stored. By default it is set to
-                        'playground'
+        suffix: Suffix is used as the data model external id when resolving rules as CDF data model
         namespace: This is used as RDF namespace for generation of RDF OWL/SHACL data model representation and/or for
                    generation of RDF graphs
-        data_model_name: This is used as RDF data model name for generation of RDF OWL/SHACL data model representation
-                         and/or for generation of RDF graphs
-        version: This is used as RDF data model version for generation of RDF OWL/SHACL data model representation
-                 and/or for generation of RDF graphs
-        is_current_version: This is used as RDF data model version for generation of RDF OWL/SHACL data model
+        name: This is used as data model name in CDF, or as a data model title in RDF
+        version: This is used as RDF and CDF data model version
         created: This is used as RDF data model creation date for generation of RDF OWL/SHACL data model representation
         updated: This is used as RDF data model update date for generation of RDF OWL/SHACL data model representation
-        title: This is used as RDF data model title for generation of RDF OWL/SHACL data model representation
         description: This is used as RDF data model description for generation of RDF
                      OWL/SHACL data model representation
         creator: This is used as RDF data model creator for generation of RDF OWL/SHACL data model representation
         contributor: This is used as RDF data model contributor for generation of
                      RDF OWL/SHACL data model representation
         rights: This is used as RDF data model rights for generation of RDF OWL/SHACL data model representation
-        externalIdPrefix: This is used as RDF data model externalIdPrefix for generation of RDF OWL/SHACL data model
-        data_set_id: This is used as RDF data model data_set_id for generation of
-                     RDF OWL/SHACL data model representation
-        source: This is used as RDF data model source for generation of RDF OWL/SHACL data model representation
-        dms_compliant: This is used as RDF data model dms_compliant for generation of RDF OWL/SHACL data model
-
     """
 
     prefix: Prefix = Field(
