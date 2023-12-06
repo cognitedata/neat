@@ -152,12 +152,12 @@ def mock_knowledge_graph(transformation_rules):
 
 @pytest.fixture(scope="function")
 def mock_rdf_assets(mock_knowledge_graph, transformation_rules):
-    return loaders.rdf2assets(mock_knowledge_graph, transformation_rules)
+    return loaders.rdf2assets(mock_knowledge_graph, transformation_rules, data_set_id=123456)
 
 
 @pytest.fixture(scope="function")
 def mock_cdf_assets(mock_knowledge_graph, transformation_rules):
-    return loaders.rdf2assets(mock_knowledge_graph, transformation_rules)
+    return loaders.rdf2assets(mock_knowledge_graph, transformation_rules, data_set_id=123456)
 
 
 @pytest.fixture(scope="function")

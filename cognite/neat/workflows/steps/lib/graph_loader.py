@@ -62,7 +62,7 @@ class CreateCDFLabels(Step):
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
             name="data_set_id",
-            value=None,
+            value="",
             label=("CDF dataset id to which the labels will be added."),
         ),
     ]
@@ -200,12 +200,12 @@ class GenerateCDFAssetsFromGraph(Step):
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
             name="data_set_id",
-            value=None,
+            value="",
             label=("CDF dataset id to which the labels will be added."),
         ),
         Configurable(
             name="asset_external_id_prefix",
-            value=None,
+            value="",
             label=("Prefix to be added to all asset external ids, default None."),
         ),
         Configurable(

@@ -24,7 +24,7 @@ def test_rules2pydantic_models(dms_compliant_rules, source_knowledge_graph):
     assert instance.name == "ARENDAL 300 A T1"
     assert instance.class_to_asset_mapping == {"metadata": ["mRID"], "name": ["name", "aliasName"]}
 
-    asset = instance.to_asset()
+    asset = instance.to_asset(data_set_id=123456)
 
     assert asset.name == "ARENDAL 300 A T1"
     assert asset.metadata["type"] == "Terminal"
@@ -53,8 +53,8 @@ def test_views2pydantic_models(dms_compliant_rules, source_knowledge_graph):
 
     node = instance.to_node()
     assert node.external_id == "2dd9019e-bdfb-11e5-94fa-c8f73332c8f4"
-    assert node.space == "workshop"
+    assert node.space == "neat"
 
     # there is no class_to_asset_mapping defined for this view so it should fail
     with pytest.raises(exceptions.ClassToAssetMappingNotDefined):
-        _ = instance.to_asset()
+        _ = instance.to_asset(data_set_id=123456)

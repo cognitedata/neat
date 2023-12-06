@@ -15,7 +15,6 @@ from typing import Any, ClassVar, Generic, TypeAlias, TypeVar
 
 import pandas as pd
 from pydantic import (
-    AliasChoices,
     BaseModel,
     ConfigDict,
     Field,
@@ -240,16 +239,8 @@ class Metadata(RuleModel):
 
     """
 
-    namespace: Namespace | None = Field(
-        description="This is used as RDF namespace for generation of RDF OWL/SHACL data model representation "
-        "and/or for generation of RDF graphs.",
-        min_length=1,
-        max_length=2048,
-        default=None,
-    )
-
     prefix: Prefix = Field(
-        validation_alias=AliasChoices("space", "cdfSpaceName"),
+        alias="space",
         description=(
             "This is used as prefix for generation of RDF OWL/SHACL data model representation"
             " and/or as CDF space name to which model is intend to be stored"
@@ -261,23 +252,29 @@ class Metadata(RuleModel):
             "Suffix is used as the data model external id when resolving rules as CDF data model"
             " This field is optional and if not provided it will be generated from prefix."
         ),
-        validation_alias=AliasChoices("external_id", "dataModelId", "shortName"),
+        alias="external_id",
         default=None,
         min_length=1,
         max_length=255,
     )
 
-    version: str = Field(min_length=1, max_length=43)
-    name: str = Field(
-        validation_alias=AliasChoices("title", "prefLabel", "label", "dataModelName"), min_length=1, max_length=255
+    namespace: Namespace | None = Field(
+        description="This is used as RDF namespace for generation of RDF OWL/SHACL data model representation "
+        "and/or for generation of RDF graphs.",
+        min_length=1,
+        max_length=2048,
+        default=None,
     )
 
-    description: Description
+    version: str = Field(min_length=1, max_length=43)
+    name: str | None = Field(alias="title", min_length=1, max_length=255, default=None)
 
-    created: datetime
+    description: Description | None = Field(alias="Description", default=None)
+
+    created: datetime = Field(default_factory=lambda: datetime.utcnow())
     updated: datetime = Field(default_factory=lambda: datetime.utcnow())
 
-    creator: str | list[str]
+    creator: str | list[str] | None = None
     contributor: str | list[str] | None = None
     rights: str | None = "Restricted for Internal Use of Cognite"
     license: str | None = "Proprietary License"
@@ -343,6 +340,32 @@ class Metadata(RuleModel):
             raise exceptions.DataModelIdRegexViolation(value, data_model_id_compliance_regex).to_pydantic_custom_error()
         else:
             return value
+
+    @validator("name", always=True)
+    @skip_field_validator("validators_to_skip")
+    def set_name_if_none(cls, value, values):
+        if value is not None:
+            return value
+        elif values["suffix"]:
+            return values["suffix"]
+        else:
+            return values["prefix"]
+
+    @validator("creator", always=True)
+    @skip_field_validator("validators_to_skip")
+    def set_creator_if_none(cls, value, values):
+        if value is not None:
+            return value
+        else:
+            return ["neat"]
+
+    @validator("contributor", always=True)
+    @skip_field_validator("validators_to_skip")
+    def set_contributor_if_none(cls, value, values):
+        if value is not None:
+            return value
+        else:
+            return ["Cognite"]
 
     @validator("version", always=True)
     @skip_field_validator("validators_to_skip")
