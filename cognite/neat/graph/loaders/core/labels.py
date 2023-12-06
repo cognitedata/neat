@@ -11,7 +11,8 @@ from cognite.neat.rules.models.rules import Rules
 
 def upload_labels(
     client: CogniteClient,
-    transformation_rules: Rules,
+    rules: Rules,
+    data_set_id: int,
     extra_labels: list | None = None,
     stop_on_exception: bool = False,
 ):
@@ -20,6 +21,7 @@ def upload_labels(
     Args:
         client : Instance of CogniteClient
         transformation_rules : Instance of TransformationRules which contains the labels to upload
+        data_set_id : Id of the dataset to upload the labels to
         extra_labels : Any additional labels not defined in TransformationRules ,
                        by default ["historic", "non-historic"]
         stop_on_exception : If this function fails to stop the process, by default False
@@ -43,13 +45,12 @@ def upload_labels(
             raise e
         existing_labels = set()
 
-    non_existing_labels = set(list(get_labels(transformation_rules)) + extra_labels).difference(existing_labels)
+    non_existing_labels = set(list(get_labels(rules)) + extra_labels).difference(existing_labels)
 
     if non_existing_labels:
         logging.debug(f"Creating total of {len(existing_labels)} new labels in CDF")
         labels = [
-            LabelDefinition(external_id=label, name=label, data_set_id=transformation_rules.metadata.data_set_id)
-            for label in non_existing_labels
+            LabelDefinition(external_id=label, name=label, data_set_id=data_set_id) for label in non_existing_labels
         ]
         res = cast(LabelDefinitionList, client.labels.create(labels))
         logging.debug(f"Created total of {len(res)} new labels in CDF")

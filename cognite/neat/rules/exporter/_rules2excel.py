@@ -35,12 +35,10 @@ class ExcelExporter(BaseExporter[Workbook]):
         # add each metadata property to the sheet as a row
         metadata_sheet.append(["prefix", metadata.prefix])
         metadata_sheet.append(["namespace", metadata.namespace])
-        metadata_sheet.append(["dataModelName", metadata.data_model_name])
-        metadata_sheet.append(["cdfSpaceName", metadata.prefix])
-        metadata_sheet.append(["title", metadata.title])
+        metadata_sheet.append(["dataModelId", metadata.suffix])
+        metadata_sheet.append(["title", metadata.name])
         metadata_sheet.append(["description", metadata.description])
         metadata_sheet.append(["version", metadata.version])
-        metadata_sheet.append(["isCurrentVersion", metadata.is_current_version])
         metadata_sheet.append(
             [
                 "creator",

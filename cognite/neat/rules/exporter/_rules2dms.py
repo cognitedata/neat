@@ -164,7 +164,7 @@ class DataModel(BaseModel):
 
         if data_model_id and data_model_id.external_id:
             # update data model name to match external_id
-            rules.metadata.data_model_name = data_model_id.external_id
+            rules.metadata.suffix = data_model_id.external_id
 
         names_compliant, name_warnings = are_entity_names_dms_compliant(rules, return_report=True)
         if not names_compliant:
@@ -182,16 +182,16 @@ class DataModel(BaseModel):
             )
             raise exceptions.PropertiesDefinedMultipleTimes(report=generate_exception_report(redefinition_warnings))
 
-        if rules.metadata.data_model_name is None:
-            logging.error(exceptions.DataModelNameMissing(prefix=rules.metadata.prefix).message)
-            raise exceptions.DataModelNameMissing(prefix=rules.metadata.prefix)
+        if rules.metadata.suffix is None:
+            logging.error(exceptions.DataModelIdMissing(prefix=rules.metadata.prefix).message)
+            raise exceptions.DataModelIdMissing(prefix=rules.metadata.prefix)
 
         return cls(
             space=rules.metadata.prefix,
-            external_id=rules.metadata.data_model_name,
+            external_id=rules.metadata.suffix,
             version=rules.metadata.version,
             description=rules.metadata.description,
-            name=rules.metadata.title,
+            name=rules.metadata.name,
             containers=cls.containers_from_rules(rules),
             views=cls.views_from_rules(rules),
         )

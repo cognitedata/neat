@@ -130,15 +130,14 @@ class OpenApiToRules(Step):
                 openapi_spec = yaml.safe_load(openapi_file)
 
         metadata = Metadata(
-            title="OpenAPI to DM transformation rules",
+            name="OpenAPI to DM transformation rules",
             description="OpenAPI to DM transformation rules",
             version="0.1",
             creator="Cognite",
             created=datetime.utcnow(),
             namespace=Namespace("http://purl.org/cognite/neat#"),
             prefix="neat",
-            data_model_name="OpenAPI",
-            cdf_space_name="OpenAPI",
+            suffix="OpenAPI",
         )
 
         classes = Classes()
@@ -317,15 +316,14 @@ class ArbitraryJsonYamlToRules(Step):
                 src_data_obj = yaml.safe_load(openapi_file)
 
         metadata = Metadata(
-            title="OpenAPI to DM transformation rules",
+            name="OpenAPI to DM transformation rules",
             description="OpenAPI to DM transformation rules",
             version="0.1",
             creator="Cognite",
             created=datetime.utcnow(),
             namespace=Namespace("http://purl.org/cognite/neat#"),
             prefix="neat",
-            cdf_space_name="OpenAPI",
-            data_model_name="OpenAPI",
+            suffix="OpenAPI",
         )
 
         self.classes = Classes()

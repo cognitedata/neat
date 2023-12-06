@@ -153,21 +153,13 @@ def rules_to_pydantic_models(
                 ),
             )
 
-            fields["data_set_id"] = (
-                int,
-                Field(
-                    rules.metadata.data_set_id or None,
-                    description="This is a helper field used for generating CDF Asset out of model instance",
-                ),
-            )
-
         model = _dictionary_to_pydantic_model(
             model_id=class_,
             model_fields_definition=fields,
             model_name=rules.classes[class_].class_name,
             model_description=rules.classes[class_].description,
             model_methods=methods,
-            space=rules.metadata.cdf_space_name,
+            space=rules.metadata.prefix,
             version=rules.metadata.version,
         )
 
@@ -415,10 +407,10 @@ def from_graph(
 # define methods that creates asset out of model id (default)
 def to_asset(
     self,
+    data_set_id: int,
     add_system_metadata: bool = True,
     metadata_keys: NeatMetadataKeys | None = None,
     add_labels: bool = True,
-    data_set_id: int | None = None,
 ) -> Asset:
     """Convert model instance to asset.
 
@@ -458,10 +450,7 @@ def to_asset(
     if add_labels:
         asset["labels"] = [asset["metadata"][metadata_keys.type], "non-historic"]
 
-    if data_set_id:
-        return Asset(**asset, data_set_id=data_set_id)
-    else:
-        return Asset(**asset, data_set_id=self.data_set_id)
+    return Asset(**asset, data_set_id=data_set_id)
 
 
 def _add_system_metadata(self, metadata_keys: NeatMetadataKeys, asset: dict):

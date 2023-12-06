@@ -11,11 +11,11 @@ import warnings
 from collections.abc import ItemsView, Iterator, KeysView, ValuesView
 from datetime import datetime
 from functools import wraps
-from pathlib import Path
 from typing import Any, ClassVar, Generic, TypeAlias, TypeVar
 
 import pandas as pd
 from pydantic import (
+    AliasChoices,
     BaseModel,
     ConfigDict,
     Field,
@@ -177,11 +177,13 @@ class URL(BaseModel):
 Description: TypeAlias = constr(min_length=1, max_length=1024)  # type: ignore[valid-type]
 
 more_than_one_none_alphanumerics_regex = r"([_-]{2,})"
+
 prefix_compliance_regex = r"^([a-zA-Z]+)([a-zA-Z0-9]*[_-]{0,1}[a-zA-Z0-9_-]*)([a-zA-Z0-9]*)$"
 data_model_id_compliance_regex = r"^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$"
-cdf_space_name_compliance_regex = (
+cdf_space_compliance_regex = (
     r"(?!^(space|cdf|dms|pg3|shared|system|node|edge)$)(^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$)"
 )
+
 view_id_compliance_regex = (
     r"(?!^(Query|Mutation|Subscription|String|Int32|Int64|Int|Float32|Float64|Float|"
     r"Timestamp|JSONObject|Date|Numeric|Boolean|PageInfo|File|Sequence|TimeSeries)$)"
@@ -238,49 +240,49 @@ class Metadata(RuleModel):
 
     """
 
-    prefix: Prefix = Field(
-        alias="shortName",
-        description="This is used as prefix for generation of RDF OWL/SHACL data model representation",
-    )
-    cdf_space_name: Prefix = Field(
-        description="This is used as CDF space name to which model is intend to be stored. "
-        "By default it is set to 'playground'",
-        alias="cdfSpaceName",
-        default="playground",
-    )
-
     namespace: Namespace | None = Field(
         description="This is used as RDF namespace for generation of RDF OWL/SHACL data model representation "
-        "and/or for generation of RDF graphs",
+        "and/or for generation of RDF graphs.",
         min_length=1,
         max_length=2048,
         default=None,
     )
-    data_model_name: ExternalId | None = Field(
-        description="Name that uniquely identifies data model",
-        alias="dataModelName",
+
+    prefix: Prefix = Field(
+        validation_alias=AliasChoices("space", "cdfSpaceName"),
+        description=(
+            "This is used as prefix for generation of RDF OWL/SHACL data model representation"
+            " and/or as CDF space name to which model is intend to be stored"
+        ),
+    )
+
+    suffix: ExternalId | None = Field(
+        description=(
+            "Suffix is used as the data model external id when resolving rules as CDF data model"
+            " This field is optional and if not provided it will be generated from prefix."
+        ),
+        validation_alias=AliasChoices("external_id", "dataModelId", "shortName"),
         default=None,
         min_length=1,
         max_length=255,
     )
 
     version: str = Field(min_length=1, max_length=43)
-    is_current_version: bool = Field(alias="isCurrentVersion", default=True)
+    name: str = Field(
+        validation_alias=AliasChoices("title", "prefLabel", "label", "dataModelName"), min_length=1, max_length=255
+    )
+
+    description: Description
+
     created: datetime
     updated: datetime = Field(default_factory=lambda: datetime.utcnow())
-    title: str = Field(min_length=1, max_length=255)
-    description: Description
+
     creator: str | list[str]
     contributor: str | list[str] | None = None
     rights: str | None = "Restricted for Internal Use of Cognite"
-    externalIdPrefix: str = Field(alias="externalIdPrefix", default="")
-    data_set_id: int | None = Field(alias="dataSetId", default=None)
-    source: str | Path | None = Field(
-        description="File path to Excel file which was used to produce Transformation Rules", default=None
-    )
-    dms_compliant: bool = True
+    license: str | None = "Proprietary License"
 
-    @field_validator("externalIdPrefix", "contributor", "contributor", "description", "rights", mode="before")
+    @field_validator("contributor", "contributor", "description", "rights", mode="before")
     def replace_float_nan_with_default(cls, value, info):
         if isinstance(value, float) and math.isnan(value):
             return cls.model_fields[info.field_name].default
@@ -295,18 +297,8 @@ class Metadata(RuleModel):
     def is_prefix_compliant(cls, value, values):
         if re.search(more_than_one_none_alphanumerics_regex, value):
             raise exceptions.MoreThanOneNonAlphanumericCharacter("prefix", value).to_pydantic_custom_error()
-        if not re.match(prefix_compliance_regex, value):
-            raise exceptions.PrefixRegexViolation(value, prefix_compliance_regex).to_pydantic_custom_error()
-        else:
-            return value
-
-    @validator("cdf_space_name", always=True)
-    @skip_field_validator("validators_to_skip")
-    def is_cdf_space_name_compliant(cls, value, values):
-        if re.search(more_than_one_none_alphanumerics_regex, value):
-            raise exceptions.MoreThanOneNonAlphanumericCharacter("cdf_space_name", value).to_pydantic_custom_error()
-        if not re.match(cdf_space_name_compliance_regex, value):
-            raise exceptions.CDFSpaceRegexViolation(value, cdf_space_name_compliance_regex).to_pydantic_custom_error()
+        if not re.match(cdf_space_compliance_regex, value):
+            raise exceptions.PrefixRegexViolation(value, cdf_space_compliance_regex).to_pydantic_custom_error()
         else:
             return value
 
@@ -314,10 +306,7 @@ class Metadata(RuleModel):
     @skip_field_validator("validators_to_skip")
     def set_namespace_if_none(cls, value, values):
         if value is None:
-            if values["cdf_space_name"] == "playground":
-                return Namespace(f"http://purl.org/cognite/{values['prefix']}#")
-            else:
-                return Namespace(f"http://purl.org/cognite/{values['cdf_space_name']}/{values['prefix']}#")
+            return Namespace(f"http://purl.org/cognite/{values['prefix']}#")
         try:
             return Namespace(parse_obj_as(HttpUrl, value))
         except ValidationError as e:
@@ -333,27 +322,25 @@ class Metadata(RuleModel):
         )
         return Namespace(f"{value}#")
 
-    @validator("data_model_name", always=True)
+    @validator("suffix", always=True)
     @skip_field_validator("validators_to_skip")
-    def set_data_model_name_if_none(cls, value, values):
+    def set_suffix_if_none(cls, value, values):
         if value is not None:
             return value
         warnings.warn(
-            exceptions.DataModelNameMissing(values["prefix"].replace("-", "_")).message,
-            category=exceptions.DataModelNameMissing,
+            exceptions.DataModelIdMissing(values["prefix"].replace("-", "_")).message,
+            category=exceptions.DataModelIdMissing,
             stacklevel=2,
         )
         return values["prefix"].replace("-", "_")
 
-    @validator("data_model_name", always=True)
+    @validator("suffix", always=True)
     @skip_field_validator("validators_to_skip")
-    def is_data_model_name_compliant(cls, value, values):
+    def is_suffix_compliant(cls, value, values):
         if re.search(more_than_one_none_alphanumerics_regex, value):
-            raise exceptions.MoreThanOneNonAlphanumericCharacter("data_model_name", value).to_pydantic_custom_error()
+            raise exceptions.MoreThanOneNonAlphanumericCharacter("suffix", value).to_pydantic_custom_error()
         if not re.match(data_model_id_compliance_regex, value):
-            raise exceptions.DataModelNameRegexViolation(
-                value, data_model_id_compliance_regex
-            ).to_pydantic_custom_error()
+            raise exceptions.DataModelIdRegexViolation(value, data_model_id_compliance_regex).to_pydantic_custom_error()
         else:
             return value
 
@@ -649,7 +636,7 @@ class Property(Resource):
         if value in XSD_VALUE_TYPE_MAPPINGS.keys():
             return XSD_VALUE_TYPE_MAPPINGS[value]
 
-        # handles typically object types
+        # handles object types
         else:
             # handles when entity type is provides as prefix:suffix  or prefix:suffix(version=value)
             try:
@@ -1061,7 +1048,7 @@ class Rules(RuleModel):
 
     def update_prefix(self, prefix: str):
         # check if prefix is according to the regex
-        if re.match(prefix_compliance_regex, prefix):
+        if re.match(cdf_space_compliance_regex, prefix):
             old_prefix = self.metadata.prefix
             self.metadata.prefix = prefix
 

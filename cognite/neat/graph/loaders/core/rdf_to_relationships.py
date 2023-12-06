@@ -9,7 +9,7 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes import LabelFilter, Relationship, RelationshipUpdate
 from cognite.client.exceptions import CogniteDuplicatedError
 
-from cognite.neat.graph.exceptions import DatasetIdRequired, NamespaceRequired
+from cognite.neat.graph.exceptions import NamespaceRequired
 from cognite.neat.graph.loaders.core.models import RelationshipDefinition, RelationshipDefinitions
 from cognite.neat.graph.loaders.core.rdf_to_assets import _categorize_cdf_assets
 from cognite.neat.graph.stores import NeatGraphStore
@@ -17,11 +17,12 @@ from cognite.neat.rules.models.rules import Rules
 from cognite.neat.utils.utils import chunker, datetime_utc_now, epoch_now_ms, remove_namespace, retry_decorator
 
 
-def define_relationships(rules: Rules, stop_on_exception: bool = False) -> RelationshipDefinitions:
+def define_relationships(rules: Rules, data_set_id: int, stop_on_exception: bool = False) -> RelationshipDefinitions:
     """Define relationships from transformation rules
 
     Args:
         rules: Transformation rules which holds data model
+        data_set_id: CDF data set id to which relationships belong to
         stop_on_exception: Whether to stop on exception or to continue. Defaults to False.
 
     Returns:
@@ -31,11 +32,8 @@ def define_relationships(rules: Rules, stop_on_exception: bool = False) -> Relat
     relationships = {}
     if rules.metadata.namespace is None:
         raise NamespaceRequired("Load Relationships")
-    if rules.metadata.data_set_id is None:
-        raise DatasetIdRequired("Load Relationships")
     namespace = rules.metadata.namespace
     prefix = rules.metadata.prefix
-    data_set_id = rules.metadata.data_set_id
 
     # Unique ids used to check for redefinitions of relationships
     ids = set()
@@ -85,20 +83,24 @@ def define_relationships(rules: Rules, stop_on_exception: bool = False) -> Relat
 
 
 def rdf2relationships(
-    graph_store: NeatGraphStore, transformation_rules: Rules, stop_on_exception: bool = False
+    graph_store: NeatGraphStore,
+    rules: Rules,
+    data_set_id: int,
+    relationship_external_id_prefix: str | None = None,
+    stop_on_exception: bool = False,
 ) -> pd.DataFrame:
     """Converts RDF triples to relationships
 
     Args:
         graph : Graph instance holding RDF triples
-        transformation_rules : Transformation rules which holds data model and relationship definitions
+        rules : Transformation rules which holds data model and relationship definitions
 
     Returns:
         Dataframe holding relationships
     """
 
     # Step 1: Generate relationship definitions
-    relationship_definitions = define_relationships(transformation_rules, stop_on_exception)
+    relationship_definitions = define_relationships(rules, stop_on_exception)
 
     # Step 2: Generation relationships
 
@@ -151,12 +153,12 @@ def rdf2relationships(
             relationship_data_frame = relationship_data_frame.map(remove_namespace)  # type: ignore[operator]
 
             # adding prefix
-            if transformation_rules.metadata.externalIdPrefix:
+            if relationship_external_id_prefix:
                 relationship_data_frame["source_external_id"] = (
-                    transformation_rules.metadata.externalIdPrefix + relationship_data_frame["source_external_id"]
+                    relationship_external_id_prefix + relationship_data_frame["source_external_id"]
                 )
                 relationship_data_frame["target_external_id"] = (
-                    transformation_rules.metadata.externalIdPrefix + relationship_data_frame["target_external_id"]
+                    relationship_external_id_prefix + relationship_data_frame["target_external_id"]
                 )
 
             relationship_data_frame["target_type"] = definition.target_type
@@ -169,7 +171,7 @@ def rdf2relationships(
             relationship_data_frame["external_id"] = (
                 relationship_data_frame["source_external_id"] + ":" + relationship_data_frame["target_external_id"]
             )
-            relationship_data_frame["data_set_id"] = transformation_rules.metadata.data_set_id
+            relationship_data_frame["data_set_id"] = data_set_id
             relationship_dfs += [relationship_data_frame]
         except Exception as e:
             logging.error("Error processing relationship: " + id_)
