@@ -23,7 +23,7 @@ def rdf2nodes_and_edges(
 
     Args:
         graph_store: Instance of NeatGraphStore holding RDF graph
-        transformation_rules: Transformation rules holding data model definition
+        rules: Rules holding data model definition
         stop_on_exception: Whether to stop execution on exception. Defaults to False.
         add_class_prefix: Whether to add class name as a prefix to instance external id. Defaults to False.
 
