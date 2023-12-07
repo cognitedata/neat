@@ -130,7 +130,7 @@ class OpenApiToRules(Step):
                 openapi_spec = yaml.safe_load(openapi_file)
 
         metadata = Metadata(
-            name="OpenAPI to DM transformation rules",
+            title="OpenAPI to DM transformation rules",
             description="OpenAPI to DM transformation rules",
             version="0.1",
             creator="Cognite",
@@ -316,7 +316,7 @@ class ArbitraryJsonYamlToRules(Step):
                 src_data_obj = yaml.safe_load(openapi_file)
 
         metadata = Metadata(
-            name="OpenAPI to DM transformation rules",
+            title="OpenAPI to DM transformation rules",
             description="OpenAPI to DM transformation rules",
             version="0.1",
             creator="Cognite",

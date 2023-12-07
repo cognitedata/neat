@@ -1111,6 +1111,36 @@ class ClassToAssetMappingNotDefined(NeatException):
         super().__init__(self.message)
 
 
+class PrefixAlreadyInUse(NeatException):
+    """This exceptions is raised when trying to update base prefix/space of Rules object
+
+
+    Args:
+        class_id: Id of the class that raised exception
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    """
+
+    type_: str = "PrefixAlreadyInUse"
+    code: int = 27
+    description: str = "This exceptions is raised when trying to update base prefix/space of Rules object"
+    example: str = ""
+    fix: str = ""
+
+    def __init__(self, prefix: str, verbose: bool = False):
+        self.prefix = prefix
+
+        self.message = (
+            f"Prefix {prefix} exist in self.prefixes, please use another prefix!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
 # Warnings:
 
 

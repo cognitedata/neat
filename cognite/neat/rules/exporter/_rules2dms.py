@@ -187,8 +187,8 @@ class DataModel(BaseModel):
             raise exceptions.DataModelIdMissing(prefix=rules.metadata.prefix)
 
         return cls(
-            space=rules.metadata.prefix,
-            external_id=rules.metadata.suffix,
+            space=rules.metadata.space,
+            external_id=rules.metadata.external_id,
             version=rules.metadata.version,
             description=rules.metadata.description,
             name=rules.metadata.name,

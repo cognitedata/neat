@@ -11,7 +11,7 @@ import warnings
 from collections.abc import ItemsView, Iterator, KeysView, ValuesView
 from datetime import datetime
 from functools import wraps
-from typing import Any, ClassVar, Generic, TypeAlias, TypeVar
+from typing import Any, ClassVar, Generic, TypeAlias, TypeVar, cast
 
 import pandas as pd
 from pydantic import (
@@ -216,7 +216,7 @@ class Metadata(RuleModel):
         suffix: Suffix is used as the data model external id when resolving rules as CDF data model
         namespace: This is used as RDF namespace for generation of RDF OWL/SHACL data model representation and/or for
                    generation of RDF graphs
-        name: This is used as data model name in CDF, or as a data model title in RDF
+        title: This is used as data model name in CDF, or as a data model title in RDF
         version: This is used as RDF and CDF data model version
         created: This is used as RDF data model creation date for generation of RDF OWL/SHACL data model representation
         updated: This is used as RDF data model update date for generation of RDF OWL/SHACL data model representation
@@ -256,9 +256,9 @@ class Metadata(RuleModel):
     )
 
     version: str = Field(min_length=1, max_length=43)
-    name: str | None = Field(alias="title", min_length=1, max_length=255, default=None)
+    title: str | None = Field(alias="name", min_length=1, max_length=255, default=None)
 
-    description: Description | None = Field(alias="Description", default=None)
+    description: Description | None = None
 
     created: datetime = Field(default_factory=lambda: datetime.utcnow())
     updated: datetime = Field(default_factory=lambda: datetime.utcnow())
@@ -330,9 +330,9 @@ class Metadata(RuleModel):
         else:
             return value
 
-    @validator("name", always=True)
+    @validator("title", always=True)
     @skip_field_validator("validators_to_skip")
-    def set_name_if_none(cls, value, values):
+    def set_title_if_none(cls, value, values):
         if value is not None:
             return value
         elif values["suffix"]:
@@ -372,6 +372,21 @@ class Metadata(RuleModel):
             if cls.model_fields[values.field_name].default is None:
                 return None
         return value
+
+    @property
+    def space(self) -> str:
+        """Returns data model space."""
+        return cast(str, self.prefix)
+
+    @property
+    def external_id(self) -> str:
+        """Returns data model external."""
+        return cast(str, self.suffix)
+
+    @property
+    def name(self) -> str:
+        """Returns data model name."""
+        return cast(str, self.title)
 
     def to_pandas(self) -> pd.Series:
         """Converts Metadata to pandas Series."""
@@ -1059,20 +1074,34 @@ class Rules(RuleModel):
         return self
 
     def update_prefix(self, prefix: str):
-        # check if prefix is according to the regex
-        if re.match(cdf_space_compliance_regex, prefix):
+        if prefix == self.metadata.prefix:
+            warnings.warn("Prefix is already in use, no changes made!", stacklevel=2)
+        elif prefix in self.prefixes.keys():
+            raise exceptions.PrefixAlreadyInUse(prefix).to_pydantic_custom_error()
+        elif not re.match(cdf_space_compliance_regex, prefix):
+            raise exceptions.PrefixRegexViolation(prefix, cdf_space_compliance_regex).to_pydantic_custom_error()
+        else:
             old_prefix = self.metadata.prefix
             self.metadata.prefix = prefix
 
+            # update entity ids for expected_value_types
             for id_ in self.properties.keys():
                 if self.properties[id_].expected_value_type.prefix == old_prefix:
                     self.properties[id_].expected_value_type.prefix = prefix
-        else:
-            warnings.warn("Skipping !!! Version is not according to the regex!", stacklevel=2)
+
+            # update prefixes
+            self.prefixes[prefix] = self.prefixes.pop(old_prefix)
+
+    def update_space(self, space: str):
+        "Convenience method for updating prefix more intuitive to CDF users"
+        return self.update_prefix(space)
 
     def update_version(self, version: str):
-        # check if version is according to the regex
-        if re.match(version_compliance_regex, version):
+        if version == self.metadata.version:
+            warnings.warn("Version is already in use, no changes made!", stacklevel=2)
+        elif not re.match(version_compliance_regex, version):
+            raise exceptions.VersionRegexViolation(version, version_compliance_regex).to_pydantic_custom_error()
+        else:
             old_version = self.metadata.version
             self.metadata.version = version
             for id_ in self.properties.keys():
@@ -1081,8 +1110,6 @@ class Rules(RuleModel):
                     and self.properties[id_].expected_value_type.version == old_version
                 ):
                     self.properties[id_].expected_value_type.version = version
-        else:
-            warnings.warn("Skipping !!! Version is not according to the regex!", stacklevel=2)
 
     @validator("properties")
     @skip_field_validator("validators_to_skip")
@@ -1149,9 +1176,24 @@ class Rules(RuleModel):
         value[values["metadata"].prefix] = values["metadata"].namespace
         return value
 
+    @property
+    def space(self) -> str:
+        """Returns data model space."""
+        return cast(str, self.metadata.prefix)
+
+    @property
+    def external_id(self) -> str:
+        """Returns data model external."""
+        return cast(str, self.metadata.suffix)
+
+    @property
+    def name(self) -> str:
+        """Returns data model name."""
+        return cast(str, self.metadata.title)
+
     def _repr_html_(self) -> str:
         """Pretty display of the TransformationRules object in a Notebook"""
-        dump = self.metadata.model_dump()
+        dump = self.metadata.model_dump(by_alias=True)
         for key in ["creator", "contributor"]:
             dump[key] = ", ".join(dump[key]) if isinstance(dump[key], list) else dump[key]
         dump["class_count"] = len(self.classes)

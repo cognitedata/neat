@@ -287,12 +287,13 @@ def _prefixes_table2dict(prefix_df: pd.DataFrame) -> dict[str, Namespace]:
 def _instances_table2dict(
     instances_df: pd.DataFrame, metadata: dict[str, Any], prefixes: dict[str, Namespace]
 ) -> list[dict] | None:
-    if "prefix" not in metadata or "namespace" not in metadata:
+    if ("prefix" not in metadata and "namespace" not in metadata) or "namespace" not in metadata:
         logging.warning(exceptions.MissingDataModelPrefixOrNamespace().message)
         warn(exceptions.MissingDataModelPrefixOrNamespace().message, stacklevel=2)
         return None
 
-    prefixes[metadata["prefix"]] = metadata["namespace"]
+    prefix = metadata["prefix"] if "prefix" in metadata else metadata["space"]
+    prefixes[prefix] = metadata["namespace"]
 
     instances = []
     for _, row in instances_df.iterrows():

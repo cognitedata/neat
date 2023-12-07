@@ -13,7 +13,7 @@ def test_rules2dms(simple_rules):
     assert list(data_model.containers.keys()) == ["CountryGroup", "Country", "PriceArea", "PriceAreaConnection"]
     assert data_model.version == "0.1"
     assert data_model.space == "neat"
-    assert data_model.external_id == "neat"
+    assert data_model.external_id == "playground_model"
 
 
 def test_raise_error10(transformation_rules):
