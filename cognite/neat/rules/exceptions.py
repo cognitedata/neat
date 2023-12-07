@@ -215,7 +215,7 @@ class MetadataSheetNamespaceNotDefined(NeatException):
         super().__init__(self.message)
 
 
-class DataModelNameRegexViolation(NeatException):
+class DataModelIdRegexViolation(NeatException):
     """dataModelName, which is in the 'Metadata' sheet, does not respect defined regex expression
 
     Args:
@@ -229,24 +229,24 @@ class DataModelNameRegexViolation(NeatException):
 
     """
 
-    type_: str = "DataModelNameRegexViolation"
+    type_: str = "DataModelIdRegexViolation"
     code: int = 3
-    description: str = "dataModelName, which is in the 'Metadata' sheet, does not respect defined regex expression"
+    description: str = "external_id, which is in the 'Metadata' sheet, does not respect defined regex expression"
     example: str = (
-        "If dataModelName is set to 'power grid data model', while regex expression does not "
+        "If external_id is set to 'power grid data model', while regex expression does not "
         "allow spaces, the expression will be violated thus raising this error"
     )
     fix: str = (
-        "Check if dataModelName in the 'Metadata' sheet contains any illegal "
+        "Check if external_id in the 'Metadata' sheet contains any illegal "
         "characters and respects the regex expression"
     )
 
-    def __init__(self, data_model_name: str, regex_expression: str, verbose: bool = False):
-        self.data_model_name = data_model_name
+    def __init__(self, data_model_id: str, regex_expression: str, verbose: bool = False):
+        self.data_model_id = data_model_id
         self.regex_expression = regex_expression
 
         self.message = (
-            f"Invalid dataModelName '{self.data_model_name}' stored in 'Metadata' sheet, "
+            f"Invalid data model external_id '{self.data_model_id}' stored in 'Metadata' sheet, "
             f"it must obey regex {self.regex_expression}!"
             f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
@@ -1111,6 +1111,36 @@ class ClassToAssetMappingNotDefined(NeatException):
         super().__init__(self.message)
 
 
+class PrefixAlreadyInUse(NeatException):
+    """This exceptions is raised when trying to update base prefix/space of Rules object
+
+
+    Args:
+        class_id: Id of the class that raised exception
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    """
+
+    type_: str = "PrefixAlreadyInUse"
+    code: int = 27
+    description: str = "This exceptions is raised when trying to update base prefix/space of Rules object"
+    example: str = ""
+    fix: str = ""
+
+    def __init__(self, prefix: str, verbose: bool = False):
+        self.prefix = prefix
+
+        self.message = (
+            f"Prefix {prefix} exist in self.prefixes, please use another prefix!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
 # Warnings:
 
 
@@ -1358,7 +1388,7 @@ class NamespaceEndingFixed(NeatWarning):
             # hint on a specific web docs page
 
 
-class DataModelNameMissing(NeatWarning):
+class DataModelIdMissing(NeatWarning):
     """This warning occurs when data model name is not provided in 'Metadata' sheet
 
     Args:
@@ -1370,15 +1400,18 @@ class DataModelNameMissing(NeatWarning):
         `#` at the end !
     """
 
-    type_: str = "DataModelNameMissing"
+    type_: str = "DataModelIdMissing"
     code: int = 8
-    description: str = "This warning occurs when data model name is not provided in 'Metadata' sheet"
+    description: str = "This warning occurs when data model id is not provided in 'Metadata' sheet"
     example: str = ""
-    fix: str = "Provide data model name to avoid this warning and otherwise it will default to prefix"
+    fix: str = (
+        "Provide data model id by setting value for `external_id`,"
+        " to avoid this warning and otherwise it will default to prefix"
+    )
 
     def __init__(self, prefix: str, verbose: bool = False):
         self.message = (
-            f"Data model name not provided, defaulting to prefix {prefix}!"
+            f"Data model id not provided, defaulting to prefix {prefix}!"
             f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
         if verbose:

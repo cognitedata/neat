@@ -137,8 +137,7 @@ class OpenApiToRules(Step):
             created=datetime.utcnow(),
             namespace=Namespace("http://purl.org/cognite/neat#"),
             prefix="neat",
-            data_model_name="OpenAPI",
-            cdf_space_name="OpenAPI",
+            suffix="OpenAPI",
         )
 
         classes = Classes()
@@ -324,8 +323,7 @@ class ArbitraryJsonYamlToRules(Step):
             created=datetime.utcnow(),
             namespace=Namespace("http://purl.org/cognite/neat#"),
             prefix="neat",
-            cdf_space_name="OpenAPI",
-            data_model_name="OpenAPI",
+            suffix="OpenAPI",
         )
 
         self.classes = Classes()

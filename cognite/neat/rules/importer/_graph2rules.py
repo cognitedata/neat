@@ -84,9 +84,8 @@ def _parse_prefixes_df(prefixes: dict[str, Namespace]) -> pd.DataFrame:
 def _parse_metadata_df() -> pd.DataFrame:
     clean_list = {
         "namespace": "http://purl.org/cognite/neat/",
-        "prefix": "neat",
-        "dataModelName": "neat",
-        "cdfSpaceName": "playground",
+        "prefix": "playground",
+        "external_id": "neat",
         "version": "1.0.0",
         "isCurrentVersion": True,
         "created": datetime.utcnow(),

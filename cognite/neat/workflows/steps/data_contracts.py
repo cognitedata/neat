@@ -20,10 +20,6 @@ class RulesData(DataContract):
 
     rules: Rules
 
-    @property
-    def dataset_id(self) -> int:
-        return self.rules.metadata.data_set_id or 0
-
 
 class PathData(DataContract):
     """

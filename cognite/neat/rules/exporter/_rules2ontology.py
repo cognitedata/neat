@@ -191,8 +191,8 @@ class OWLMetadata(Metadata):
         triples: list[tuple] = [
             (URIRef(self.namespace), DCTERMS.hasVersion, Literal(self.version)),
             (URIRef(self.namespace), OWL.versionInfo, Literal(self.version)),
-            (URIRef(self.namespace), RDFS.label, Literal(self.title)),
-            (URIRef(self.namespace), DCTERMS.title, Literal(self.title)),
+            (URIRef(self.namespace), RDFS.label, Literal(self.name)),
+            (URIRef(self.namespace), DCTERMS.title, Literal(self.name)),
             (URIRef(self.namespace), DCTERMS.created, Literal(self.created, datatype=XSD.dateTime)),
             (URIRef(self.namespace), DCTERMS.description, Literal(self.description)),
         ]

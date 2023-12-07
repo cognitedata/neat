@@ -164,7 +164,7 @@ class DataModel(BaseModel):
 
         if data_model_id and data_model_id.external_id:
             # update data model name to match external_id
-            rules.metadata.data_model_name = data_model_id.external_id
+            rules.metadata.suffix = data_model_id.external_id
 
         names_compliant, name_warnings = are_entity_names_dms_compliant(rules, return_report=True)
         if not names_compliant:
@@ -182,16 +182,16 @@ class DataModel(BaseModel):
             )
             raise exceptions.PropertiesDefinedMultipleTimes(report=generate_exception_report(redefinition_warnings))
 
-        if rules.metadata.data_model_name is None:
-            logging.error(exceptions.DataModelNameMissing(prefix=rules.metadata.prefix).message)
-            raise exceptions.DataModelNameMissing(prefix=rules.metadata.prefix)
+        if rules.metadata.external_id is None:
+            logging.error(exceptions.DataModelIdMissing(prefix=rules.metadata.space).message)
+            raise exceptions.DataModelIdMissing(prefix=rules.metadata.space)
 
         return cls(
-            space=rules.metadata.prefix,
-            external_id=rules.metadata.data_model_name,
+            space=rules.metadata.space,
+            external_id=rules.metadata.external_id,
             version=rules.metadata.version,
             description=rules.metadata.description,
-            name=rules.metadata.title,
+            name=rules.metadata.name,
             containers=cls.containers_from_rules(rules),
             views=cls.views_from_rules(rules),
         )
@@ -214,7 +214,7 @@ class DataModel(BaseModel):
         class_properties = to_class_property_pairs(rule)
         return {
             class_id: ContainerApply(
-                space=rule.metadata.prefix,
+                space=rule.metadata.space,
                 external_id=class_id,
                 name=rule.classes[class_id].class_name,
                 description=rule.classes[class_id].description,
@@ -291,11 +291,11 @@ class DataModel(BaseModel):
 
         return {
             class_id: ViewApply(
-                space=rule.metadata.prefix,
+                space=rule.metadata.space,
                 external_id=class_id,
                 name=rule.classes[class_id].class_name,
                 description=rule.classes[class_id].description,
-                properties=DataModel.view_properties_from_dict(properties, rule.metadata.prefix),
+                properties=DataModel.view_properties_from_dict(properties, rule.metadata.space),
                 version=rule.metadata.version,
             )
             for class_id, properties in class_properties.items()
@@ -325,9 +325,9 @@ class DataModel(BaseModel):
                     description=property_definition.description,
                     source=ViewId(
                         # prefix maps to space
-                        space=property_definition.expected_value_type.prefix,
+                        space=property_definition.expected_value_type.space,
                         # suffix maps to external_id
-                        external_id=property_definition.expected_value_type.suffix,
+                        external_id=property_definition.expected_value_type.external_id,
                         # version to version
                         version=property_definition.expected_value_type.version,
                     ),
@@ -342,9 +342,9 @@ class DataModel(BaseModel):
                     # Here we create ViewID to the container that the edge is pointing to.
                     source=ViewId(
                         # prefix maps to space
-                        space=property_definition.expected_value_type.prefix,
+                        space=property_definition.expected_value_type.space,
                         # suffix maps to external_id
-                        external_id=property_definition.expected_value_type.suffix,
+                        external_id=property_definition.expected_value_type.external_id,
                         # version to version
                         version=property_definition.expected_value_type.version,
                     ),

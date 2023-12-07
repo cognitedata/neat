@@ -9,7 +9,8 @@ from cognite.neat.rules.exporter._core.rules2labels import get_labels
 
 
 def test_relationship_diffing(mock_knowledge_graph, transformation_rules):
-    cdf_relationship = rdf2relationships(mock_knowledge_graph, transformation_rules)
+    data_set_id = 123456
+    cdf_relationship = rdf2relationships(mock_knowledge_graph, transformation_rules, data_set_id=data_set_id)
 
     # Categorize ids
     create_id = "SubGeographicalRegion-0:GeographicalRegion-0"
@@ -30,14 +31,14 @@ def test_relationship_diffing(mock_knowledge_graph, transformation_rules):
 
     # Here we are setting an asset to be historic, and accordingly we expect to see
     # two relationships being decommissioned, one for each direction.
-    non_historic_assets = rdf2assets(mock_knowledge_graph, transformation_rules)
+    non_historic_assets = rdf2assets(mock_knowledge_graph, transformation_rules, data_set_id=data_set_id)
     historic_assets = {"Terminal-0": deepcopy(non_historic_assets["Terminal-0"])}
     historic_assets["Terminal-0"]["labels"] = ["historic"]
     non_historic_assets.pop("Terminal-0")
 
     with monkeypatch_cognite_client() as client_mock:
 
-        def list_relationships(data_set_ids: int = 2626756768281823, limit: int = -1, labels=None, **_):
+        def list_relationships(data_set_ids: int = data_set_id, limit: int = -1, labels=None, **_):
             labels = labels or LabelFilter(contains_any=["non-historic"])
             if labels == LabelFilter(contains_any=["non-historic"]):
                 return RelationshipList(
@@ -50,7 +51,7 @@ def test_relationship_diffing(mock_knowledge_graph, transformation_rules):
             else:
                 return None
 
-        def list_assets(data_set_ids: int = 2626756768281823, limit: int = -1, labels=None, **_):
+        def list_assets(data_set_ids: int = data_set_id, limit: int = -1, labels=None, **_):
             historic_asset_list = AssetList([Asset(**asset) for asset in historic_assets.values()])
             non_historic_asset_list = AssetList([Asset(**asset) for asset in non_historic_assets.values()])
             if labels == LabelFilter(contains_any=["non-historic"]):
@@ -71,12 +72,12 @@ def test_relationship_diffing(mock_knowledge_graph, transformation_rules):
 
     # Removing object from graph which should trigger decommissioning of relationships
     mock_knowledge_graph.graph.remove((transformation_rules.metadata.namespace["Terminal-1"], None, None))
-    rdf_relationships = rdf2relationships(mock_knowledge_graph, transformation_rules)
+    rdf_relationships = rdf2relationships(mock_knowledge_graph, transformation_rules, data_set_id=data_set_id)
 
     categorized_relationships, report = categorize_relationships(
         client=client_mock,
         rdf_relationships=rdf_relationships,
-        data_set_id=transformation_rules.metadata.data_set_id,
+        data_set_id=data_set_id,
         return_report=True,
     )
 

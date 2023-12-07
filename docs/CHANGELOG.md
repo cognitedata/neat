@@ -15,6 +15,17 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.49.0] - 05-12-23
+
+## Deprecated
+- `data_set_id`, `cdfSpaceName`, `externalIdPrefix` in `Metadata` sheet has been removed
+
+## Improved
+- `Metadata` sheet now contains only two mandatory fields, namely: `prefix`, `version`, other fields are optional or generated automatically
+- Generation of `Labels`, `Asset` and `Relationship` requires explicit configuration of `data_set_id` and external id prefixes, enabling reuse of same rules for multiple data sets
+
+
+
 ## [0.48.0] - 05-12-23
 
 ## Added
