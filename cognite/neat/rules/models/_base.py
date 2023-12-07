@@ -67,6 +67,16 @@ class Entity(BaseModel):
         else:
             return self.id
 
+    @property
+    def space(self) -> str:
+        """Returns entity space in CDF."""
+        return self.prefix
+
+    @property
+    def external_id(self) -> str:
+        """Returns entity external id in CDF."""
+        return self.suffix
+
     def __repr__(self):
         return self.id
 
