@@ -220,181 +220,182 @@ class GenerateCDFAssetsFromGraph(Step):
         ),
     ]
 
+    def run(  # type: ignore[override]
+        self, rules: RulesData, cdf_client: CogniteClient, solution_graph: SolutionGraph
+    ) -> (FlowMessage, CategorizedAssets):  # type: ignore[override, syntax]
+        if self.configs is None:
+            raise StepNotInitialized(type(self).__name__)
+        asset_cleanup_type = self.configs.get("assets_cleanup_type", "nothing")
+        data_set_id = int(self.configs["data_set_id"])
+        asset_external_id_prefix = self.configs.get("asset_external_id_prefix", None)
 
-def run(  # type: ignore[override]
-    self, rules: RulesData, cdf_client: CogniteClient, solution_graph: SolutionGraph
-) -> (FlowMessage, CategorizedAssets):  # type: ignore[override, syntax]
-    if self.configs is None:
-        raise StepNotInitialized(type(self).__name__)
-    asset_cleanup_type = self.configs.get("assets_cleanup_type", "nothing")
-    data_set_id = int(self.configs["data_set_id"])
-    asset_external_id_prefix = self.configs.get("asset_external_id_prefix", None)
+        meta_keys = NeatMetadataKeys.load(self.configs)
 
-    meta_keys = NeatMetadataKeys.load(self.configs)
+        if self.metrics is None:
+            raise ValueError(self._not_configured_message)
+        prom_cdf_resource_stats = cast(
+            Gauge,
+            self.metrics.register_metric(
+                "cdf_resources_stats",
+                "CDF resource stats before and after running the workflow",
+                m_type="gauge",
+                metric_labels=["resource_type", "state"],
+            ),
+        )
+        prom_data_issues_stats = cast(
+            Gauge,
+            self.metrics.register_metric(
+                "data_issues_stats", "Data validation issues", m_type="gauge", metric_labels=["resource_type"]
+            ),
+        )
 
-    if self.metrics is None:
-        raise ValueError(self._not_configured_message)
-    prom_cdf_resource_stats = cast(
-        Gauge,
-        self.metrics.register_metric(
-            "cdf_resources_stats",
-            "CDF resource stats before and after running the workflow",
-            m_type="gauge",
-            metric_labels=["resource_type", "state"],
-        ),
-    )
-    prom_data_issues_stats = cast(
-        Gauge,
-        self.metrics.register_metric(
-            "data_issues_stats", "Data validation issues", m_type="gauge", metric_labels=["resource_type"]
-        ),
-    )
+        rdf_asset_dicts = rdf2assets(
+            solution_graph.graph,
+            rules.rules,
+            data_set_id=data_set_id,
+            asset_external_id_prefix=asset_external_id_prefix,
+            stop_on_exception=True,
+            meta_keys=meta_keys,
+        )
 
-    rdf_asset_dicts = rdf2assets(
-        solution_graph.graph,
-        rules.rules,
-        data_set_id=data_set_id,
-        asset_external_id_prefix=asset_external_id_prefix,
-        stop_on_exception=True,
-        meta_keys=meta_keys,
-    )
+        # UPDATE: 2023-04-05 - correct aggregation of assets in CDF for specific dataset
+        total_assets_before = cdf_client.assets.aggregate(filter=AssetFilter(data_set_ids=[{"id": data_set_id}]))[0][
+            "count"
+        ]
 
-    # UPDATE: 2023-04-05 - correct aggregation of assets in CDF for specific dataset
-    total_assets_before = cdf_client.assets.aggregate(filter=AssetFilter(data_set_ids=[{"id": data_set_id}]))[0][
-        "count"
-    ]
+        # Label Validation
+        labels_before = unique_asset_labels(rdf_asset_dicts.values())
+        logging.info(f"Assets have {len(labels_before)} unique labels: {', '.join(sorted(labels_before))}")
 
-    # Label Validation
-    labels_before = unique_asset_labels(rdf_asset_dicts.values())
-    logging.info(f"Assets have {len(labels_before)} unique labels: {', '.join(sorted(labels_before))}")
+        rdf_asset_dicts = cast(dict[str, dict[str, Any]], remove_non_existing_labels(cdf_client, rdf_asset_dicts))
 
-    rdf_asset_dicts = cast(dict[str, dict[str, Any]], remove_non_existing_labels(cdf_client, rdf_asset_dicts))
+        labels_after = unique_asset_labels(rdf_asset_dicts.values())
+        removed_labels = labels_before - labels_after
+        logging.info(
+            f"Removed {len(removed_labels)} labels as these do not exists in CDF. "
+            f"Removed labels: {', '.join(sorted(removed_labels))}"
+        )
+        ######################
 
-    labels_after = unique_asset_labels(rdf_asset_dicts.values())
-    removed_labels = labels_before - labels_after
-    logging.info(
-        f"Removed {len(removed_labels)} labels as these do not exists in CDF. "
-        f"Removed labels: {', '.join(sorted(removed_labels))}"
-    )
-    ######################
+        prom_cdf_resource_stats.labels(resource_type="asset", state="count_before_neat_update").set(total_assets_before)
+        logging.info(f"Total count of assets in CDF before upload: { total_assets_before }")
 
-    prom_cdf_resource_stats.labels(resource_type="asset", state="count_before_neat_update").set(total_assets_before)
-    logging.info(f"Total count of assets in CDF before upload: { total_assets_before }")
+        orphanage_asset_external_id = (
+            f"{asset_external_id_prefix}orphanage-{data_set_id}"
+            if asset_external_id_prefix
+            else f"orphanage-{data_set_id}"
+        )
+        orphan_assets, circular_assets, parent_children_map = validate_asset_hierarchy(rdf_asset_dicts)
 
-    orphanage_asset_external_id = (
-        f"{asset_external_id_prefix}orphanage-{data_set_id}" if asset_external_id_prefix else "orphanage"
-    )
-    orphan_assets, circular_assets, parent_children_map = validate_asset_hierarchy(rdf_asset_dicts)
+        # There could be assets already under a created orphan assets. Include those in oprhan assets list
+        orphan_assets.extend(parent_children_map[orphanage_asset_external_id])
 
-    # There could be assets already under a created orphan assets. Include those in oprhan assets list
-    orphan_assets.extend(parent_children_map[orphanage_asset_external_id])
+        orphan_assets_count = len(orphan_assets)
+        circular_assets_count = len(circular_assets)
+        prom_data_issues_stats.labels(resource_type="circular_assets").set(len(circular_assets))
+        prom_data_issues_stats.labels(resource_type="orphan_assets").set(len(orphan_assets))
 
-    orphan_assets_count = len(orphan_assets)
-    circular_assets_count = len(circular_assets)
-    prom_data_issues_stats.labels(resource_type="circular_assets").set(len(circular_assets))
-    prom_data_issues_stats.labels(resource_type="orphan_assets").set(len(orphan_assets))
+        if orphan_assets:
+            logging.error(f"Found orphaned assets: {', '.join(orphan_assets)}")
 
-    if orphan_assets:
-        logging.error(f"Found orphaned assets: {', '.join(orphan_assets)}")
+            if asset_cleanup_type in ["orphans", "full"]:
+                logging.info("Removing orphaned assets and its children")
 
-        if asset_cleanup_type in ["orphans", "full"]:
-            logging.info("Removing orphaned assets and its children")
+                def delete_asset_and_children_recursive(asset_id, rdf_asset_dicts, parent_children_map):
+                    if asset_id in rdf_asset_dicts:
+                        del rdf_asset_dicts[asset_id]
 
-            def delete_asset_and_children_recursive(asset_id, rdf_asset_dicts, parent_children_map):
-                if asset_id in rdf_asset_dicts:
-                    del rdf_asset_dicts[asset_id]
+                    if asset_id in parent_children_map:
+                        for child_id in parent_children_map[asset_id]:
+                            delete_asset_and_children_recursive(child_id, rdf_asset_dicts, parent_children_map)
 
-                if asset_id in parent_children_map:
-                    for child_id in parent_children_map[asset_id]:
-                        delete_asset_and_children_recursive(child_id, rdf_asset_dicts, parent_children_map)
+                def delete_orphan_assets_recursive(orphan_assets, rdf_asset_dicts, parent_children_map):
+                    for orphan_asset in orphan_assets:
+                        delete_asset_and_children_recursive(orphan_asset, rdf_asset_dicts, parent_children_map)
 
-            def delete_orphan_assets_recursive(orphan_assets, rdf_asset_dicts, parent_children_map):
-                for orphan_asset in orphan_assets:
-                    delete_asset_and_children_recursive(orphan_asset, rdf_asset_dicts, parent_children_map)
+                # Make sure children, grand-children, great-grandchildren .... are deleted
+                delete_orphan_assets_recursive(orphan_assets, rdf_asset_dicts, parent_children_map)
 
-            # Make sure children, grand-children, great-grandchildren .... are deleted
-            delete_orphan_assets_recursive(orphan_assets, rdf_asset_dicts, parent_children_map)
+                # delete orphange asset
+                if orphanage_asset_external_id in rdf_asset_dicts:
+                    del rdf_asset_dicts[orphanage_asset_external_id]
 
-            # delete orphange asset
-            if orphanage_asset_external_id in rdf_asset_dicts:
-                del rdf_asset_dicts[orphanage_asset_external_id]
+            else:
+                # Kill the process if you dont have orphanage asset in your asset hierarchy
+                # and inform the user that it is missing !
+                if orphanage_asset_external_id not in rdf_asset_dicts:
+                    msg = f"You dont have Orphanage asset {orphanage_asset_external_id} in asset hierarchy!"
+                    logging.error(msg)
+                    return FlowMessage(
+                        error_text=msg, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL
+                    ), CategorizedAssets(assets={})
 
+                logging.error("Orphaned assets will be assigned to 'Orphanage' root asset")
+
+                for external_id in orphan_assets:
+                    rdf_asset_dicts[external_id]["parent_external_id"] = orphanage_asset_external_id
         else:
-            # Kill the process if you dont have orphanage asset in your asset hierarchy
-            # and inform the user that it is missing !
-            if orphanage_asset_external_id not in rdf_asset_dicts:
-                msg = f"You dont have Orphanage asset {orphanage_asset_external_id} in asset hierarchy!"
+            logging.info("No orphaned assets found, your assets look healthy !")
+
+        if circular_assets:
+            logging.error(f"Found circular dependencies: {circular_assets}")
+            if asset_cleanup_type in ["circular", "full"]:
+                logging.info("Removing circular assets")
+                for circular_path in circular_assets:
+                    circular_external_id = circular_path[-1]
+                    del rdf_asset_dicts[circular_external_id]
+        else:
+            logging.info("No circular dependency among assets found, your assets hierarchy look healthy !")
+
+        if orphan_assets or circular_assets:
+            orphan_assets, circular_assets, _ = validate_asset_hierarchy(rdf_asset_dicts)
+            if circular_assets:
+                msg = f"Found circular dependencies: {circular_assets!s}"
                 logging.error(msg)
                 return FlowMessage(
                     error_text=msg, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL
                 ), CategorizedAssets(assets={})
+            elif orphan_assets:
+                msg = f"Not able to fix orphans: {', '.join(orphan_assets)}"
+                logging.error(msg)
+                return FlowMessage(
+                    error_text=msg, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL
+                ), CategorizedAssets(assets={})
+            else:
+                logging.info("No circular dependency among assets found, your assets hierarchy look healthy !")
 
-            logging.error("Orphaned assets will be assigned to 'Orphanage' root asset")
+        categorized_assets, report = categorize_assets(
+            cdf_client, rdf_asset_dicts, data_set_id=data_set_id, return_report=True
+        )
 
-            for external_id in orphan_assets:
-                rdf_asset_dicts[external_id]["parent_external_id"] = orphanage_asset_external_id
-    else:
-        logging.info("No orphaned assets found, your assets look healthy !")
+        count_create_assets = len(categorized_assets["create"])
+        count_update_assets = len(categorized_assets["update"])
+        count_decommission_assets = len(categorized_assets["decommission"])
+        count_resurrect_assets = len(categorized_assets["resurrect"])
 
-    if circular_assets:
-        logging.error(f"Found circular dependencies: {circular_assets}")
-        if asset_cleanup_type in ["circular", "full"]:
-            logging.info("Removing circular assets")
-            for circular_path in circular_assets:
-                circular_external_id = circular_path[-1]
-                del rdf_asset_dicts[circular_external_id]
-    else:
-        logging.info("No circular dependency among assets found, your assets hierarchy look healthy !")
+        prom_cdf_resource_stats.labels(resource_type="asset", state="create").set(count_create_assets)
+        prom_cdf_resource_stats.labels(resource_type="asset", state="update").set(count_update_assets)
+        prom_cdf_resource_stats.labels(resource_type="asset", state="decommission").set(count_decommission_assets)
+        prom_cdf_resource_stats.labels(resource_type="asset", state="resurrect").set(count_resurrect_assets)
 
-    if orphan_assets or circular_assets:
-        orphan_assets, circular_assets, _ = validate_asset_hierarchy(rdf_asset_dicts)
-        if circular_assets:
-            msg = f"Found circular dependencies: {circular_assets!s}"
-            logging.error(msg)
-            return FlowMessage(
-                error_text=msg, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL
-            ), CategorizedAssets(assets={})
-        elif orphan_assets:
-            msg = f"Not able to fix orphans: {', '.join(orphan_assets)}"
-            logging.error(msg)
-            return FlowMessage(
-                error_text=msg, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL
-            ), CategorizedAssets(assets={})
-        else:
-            logging.info("No circular dependency among assets found, your assets hierarchy look healthy !")
+        logging.info(f"Total count of assets to be created: { count_create_assets }")
+        logging.info(f"Total count of assets to be updated: { count_update_assets }")
+        logging.info(f"Total count of assets to be decommission: { count_decommission_assets }")
+        logging.info(f"Total count of assets to be resurrect: { count_resurrect_assets }")
 
-    categorized_assets, report = categorize_assets(
-        cdf_client, rdf_asset_dicts, data_set_id=data_set_id, return_report=True
-    )
+        msg = f"Total count of assets { len(rdf_asset_dicts) } of which:"
+        msg += f"<p> { count_create_assets } to be created </p>"
+        msg += f"<p> { count_update_assets } to be updated </p>"
+        msg += f"<p> { count_decommission_assets } to be decommissioned </p>"
+        msg += f"<p> { count_resurrect_assets } to be resurrected </p>"
+        msg += f"<p> Found { orphan_assets_count } orphan assets and"
+        msg += f" { circular_assets_count } circular assets </p>"
+        if asset_cleanup_type != "nothing":
+            msg += " <p> All circular and orphan assets were removed successfully </p>"
+        number_of_updates = len(report["decommission"])
+        logging.info(f"Total number of updates: {number_of_updates}")
 
-    count_create_assets = len(categorized_assets["create"])
-    count_update_assets = len(categorized_assets["update"])
-    count_decommission_assets = len(categorized_assets["decommission"])
-    count_resurrect_assets = len(categorized_assets["resurrect"])
-
-    prom_cdf_resource_stats.labels(resource_type="asset", state="create").set(count_create_assets)
-    prom_cdf_resource_stats.labels(resource_type="asset", state="update").set(count_update_assets)
-    prom_cdf_resource_stats.labels(resource_type="asset", state="decommission").set(count_decommission_assets)
-    prom_cdf_resource_stats.labels(resource_type="asset", state="resurrect").set(count_resurrect_assets)
-
-    logging.info(f"Total count of assets to be created: { count_create_assets }")
-    logging.info(f"Total count of assets to be updated: { count_update_assets }")
-    logging.info(f"Total count of assets to be decommission: { count_decommission_assets }")
-    logging.info(f"Total count of assets to be resurrect: { count_resurrect_assets }")
-
-    msg = f"Total count of assets { len(rdf_asset_dicts) } of which:"
-    msg += f"<p> { count_create_assets } to be created </p>"
-    msg += f"<p> { count_update_assets } to be updated </p>"
-    msg += f"<p> { count_decommission_assets } to be decommissioned </p>"
-    msg += f"<p> { count_resurrect_assets } to be resurrected </p>"
-    msg += f"<p> Found { orphan_assets_count } orphan assets and"
-    msg += f" { circular_assets_count } circular assets </p>"
-    if asset_cleanup_type != "nothing":
-        msg += " <p> All circular and orphan assets were removed successfully </p>"
-    number_of_updates = len(report["decommission"])
-    logging.info(f"Total number of updates: {number_of_updates}")
-
-    return FlowMessage(output_text=msg), CategorizedAssets(assets=categorized_assets)
+        return FlowMessage(output_text=msg), CategorizedAssets(assets=categorized_assets)
 
 
 class UploadCDFAssets(Step):

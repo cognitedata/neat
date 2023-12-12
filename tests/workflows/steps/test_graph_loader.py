@@ -11,7 +11,7 @@ from cognite.neat.workflows.steps.lib.graph_loader import GenerateCDFAssetsFromG
 def test_graph_loader_clean_orphans(solution_knowledge_graph_dirty, transformation_rules, mock_cdf_assets):
     with monkeypatch_cognite_client() as client_mock:
 
-        def list_assets(data_set_ids: int = 2626756768281823, limit: int = -1, labels=None, **_):
+        def list_assets(data_set_ids: int = 123456, limit: int = -1, labels=None, **_):
             return AssetList([Asset(**asset) for asset in mock_cdf_assets.values()])
 
         def list_labels(**_):
@@ -30,7 +30,7 @@ def test_graph_loader_clean_orphans(solution_knowledge_graph_dirty, transformati
         )
     )
     test_assets_from_graph = GenerateCDFAssetsFromGraph()
-    test_assets_from_graph.configs = {"assets_cleanup_type": "orphans"}
+    test_assets_from_graph.configs = {"assets_cleanup_type": "orphans", "data_set_id": 123456}
     test_assets_from_graph.metrics = NeatMetricsCollector("TestMetrics")
 
     _, assets = test_assets_from_graph.run(rules=rules, cdf_client=client_mock, solution_graph=solution_graph)
@@ -46,7 +46,7 @@ def test_graph_loader_clean_orphans(solution_knowledge_graph_dirty, transformati
 def test_graph_loader_no_orphans_cleanup(solution_knowledge_graph_dirty, transformation_rules, mock_cdf_assets):
     with monkeypatch_cognite_client() as client_mock:
 
-        def list_assets(data_set_ids: int = 2626756768281823, limit: int = -1, labels=None, **_):
+        def list_assets(data_set_ids: int = 123456, limit: int = -1, labels=None, **_):
             return AssetList([Asset(**asset) for asset in mock_cdf_assets.values()])
 
         def list_labels(**_):
@@ -65,7 +65,7 @@ def test_graph_loader_no_orphans_cleanup(solution_knowledge_graph_dirty, transfo
         )
     )
     test_assets_from_graph = GenerateCDFAssetsFromGraph()
-    test_assets_from_graph.configs = {"assets_cleanup_type": "nothing"}
+    test_assets_from_graph.configs = {"assets_cleanup_type": "nothing", "data_set_id": 123456}
     test_assets_from_graph.metrics = NeatMetricsCollector("TestMetrics")
 
     _, assets = test_assets_from_graph.run(rules=rules, cdf_client=client_mock, solution_graph=solution_graph)
