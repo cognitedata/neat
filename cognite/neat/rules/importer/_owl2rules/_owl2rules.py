@@ -13,7 +13,7 @@ from cognite.neat.rules.importer._base import BaseImporter
 from cognite.neat.rules.models.raw_rules import RawRules
 from cognite.neat.rules.models.rules import Rules
 from cognite.neat.rules.models.tables import Tables
-from cognite.neat.rules.type_mapping import DATA_TYPE_MAPPING
+from cognite.neat.rules.value_types import XSD_VALUE_TYPE_MAPPINGS
 
 from ._owl2classes import parse_owl_classes
 from ._owl2metadata import parse_owl_metadata
@@ -84,7 +84,7 @@ class OWLImporter(BaseImporter):
         self,
         return_report: bool = False,
         skip_validation: bool = False,
-        validators_to_skip: list[str] | None = None,
+        validators_to_skip: set[str] | None = None,
         make_compliant: bool = False,
     ) -> tuple[Rules | None, list[ErrorDetails] | None, list | None] | Rules:
         """
@@ -174,7 +174,7 @@ def _add_missing_value_types(tables: dict[str, pd.DataFrame]) -> dict[str, pd.Da
         Updated tables with missing properties added to containers
     """
 
-    xsd_types = set(DATA_TYPE_MAPPING.keys())
+    xsd_types = set(XSD_VALUE_TYPE_MAPPINGS.keys())
     referred_types = set(tables[Tables.properties]["Type"].to_list())
     defined_classes = set(tables[Tables.classes]["Class"].to_list())
 

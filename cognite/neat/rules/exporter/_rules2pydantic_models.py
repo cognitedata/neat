@@ -20,7 +20,7 @@ from cognite.neat.rules.analysis import define_class_asset_mapping, to_class_pro
 from cognite.neat.rules.exporter._rules2dms import DataModel
 from cognite.neat.rules.exporter._validation import are_entity_names_dms_compliant
 from cognite.neat.rules.models.rules import Property, Rules
-from cognite.neat.rules.type_mapping import type_to_target_convention
+from cognite.neat.rules.value_types import ValueTypeMapping
 from cognite.neat.utils.utils import generate_exception_report
 
 if sys.version_info >= (3, 11):
@@ -153,21 +153,13 @@ def rules_to_pydantic_models(
                 ),
             )
 
-            fields["data_set_id"] = (
-                int,
-                Field(
-                    rules.metadata.data_set_id or None,
-                    description="This is a helper field used for generating CDF Asset out of model instance",
-                ),
-            )
-
         model = _dictionary_to_pydantic_model(
             model_id=class_,
             model_fields_definition=fields,
             model_name=rules.classes[class_].class_name,
             model_description=rules.classes[class_].description,
             model_methods=methods,
-            space=rules.metadata.cdf_space_name,
+            space=rules.metadata.prefix,
             version=rules.metadata.version,
         )
 
@@ -203,7 +195,7 @@ def _properties_to_pydantic_fields(
             "description": property_.description if property_.description else None,
             # keys below will be available under json_schema_extra
             "property_type": field_type.__name__ if field_type in [EdgeOneToOne, EdgeOneToMany] else "NodeAttribute",
-            "property_value_type": property_.expected_value_type,
+            "property_value_type": property_.expected_value_type.suffix,
             "property_name": property_.property_name,
             "property_id": property_.property_id,
         }
@@ -230,9 +222,9 @@ def _define_field_type(property_: Property):
     elif property_.property_type == "ObjectProperty":
         return EdgeOneToMany
     elif property_.property_type == "DatatypeProperty" and property_.max_count == 1:
-        return type_to_target_convention(property_.expected_value_type, "python")
+        return cast(ValueTypeMapping, property_.expected_value_type.mapping).python
     else:
-        inner_type = type_to_target_convention(property_.expected_value_type, "python")
+        inner_type = cast(ValueTypeMapping, property_.expected_value_type.mapping).python
         return list[inner_type]  # type: ignore[valid-type]
 
 
@@ -415,10 +407,10 @@ def from_graph(
 # define methods that creates asset out of model id (default)
 def to_asset(
     self,
+    data_set_id: int,
     add_system_metadata: bool = True,
     metadata_keys: NeatMetadataKeys | None = None,
     add_labels: bool = True,
-    data_set_id: int | None = None,
 ) -> Asset:
     """Convert model instance to asset.
 
@@ -458,10 +450,7 @@ def to_asset(
     if add_labels:
         asset["labels"] = [asset["metadata"][metadata_keys.type], "non-historic"]
 
-    if data_set_id:
-        return Asset(**asset, data_set_id=data_set_id)
-    else:
-        return Asset(**asset, data_set_id=self.data_set_id)
+    return Asset(**asset, data_set_id=data_set_id)
 
 
 def _add_system_metadata(self, metadata_keys: NeatMetadataKeys, asset: dict):

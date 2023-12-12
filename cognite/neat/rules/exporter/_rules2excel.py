@@ -5,6 +5,8 @@ from openpyxl import Workbook
 from openpyxl.cell import Cell
 from openpyxl.styles import Alignment, Border, Font, NamedStyle, PatternFill, Side
 
+from cognite.neat.rules.models._base import EntityTypes
+
 from ._base import BaseExporter
 
 
@@ -33,12 +35,10 @@ class ExcelExporter(BaseExporter[Workbook]):
         # add each metadata property to the sheet as a row
         metadata_sheet.append(["prefix", metadata.prefix])
         metadata_sheet.append(["namespace", metadata.namespace])
-        metadata_sheet.append(["dataModelName", metadata.data_model_name])
-        metadata_sheet.append(["cdfSpaceName", metadata.cdf_space_name])
-        metadata_sheet.append(["title", metadata.title])
+        metadata_sheet.append(["dataModelId", metadata.suffix])
+        metadata_sheet.append(["title", metadata.name])
         metadata_sheet.append(["description", metadata.description])
         metadata_sheet.append(["version", metadata.version])
-        metadata_sheet.append(["isCurrentVersion", metadata.is_current_version])
         metadata_sheet.append(
             [
                 "creator",
@@ -141,7 +141,9 @@ class ExcelExporter(BaseExporter[Workbook]):
                     property_.class_id,  # A
                     property_.property_id,  # B
                     property_.description,  # C
-                    property_.expected_value_type,  # D
+                    property_.expected_value_type.versioned_id
+                    if property_.property_type == EntityTypes.object_property
+                    else property_.expected_value_type.suffix,  # D
                     property_.min_count,  # E
                     property_.max_count,  # F
                     ",".join(property_.cdf_resource_type) if property_.cdf_resource_type else "",  # G

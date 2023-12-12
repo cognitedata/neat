@@ -16,7 +16,7 @@ from cognite.client.data_classes.data_modeling.data_types import ListablePropert
 from cognite.client.data_classes.data_modeling.ids import DataModelIdentifier, ViewId
 
 from cognite.neat.rules.models.tables import Tables
-from cognite.neat.rules.type_mapping import DMS_TO_DATA_TYPE
+from cognite.neat.rules.value_types import DMS_VALUE_TYPE_MAPPINGS, XSD_VALUE_TYPE_MAPPINGS
 
 from ._base import BaseImporter
 
@@ -94,7 +94,11 @@ class DMSImporter(BaseImporter):
         for view in self.views:
             class_id = view.external_id
             classes.append(
-                {"Class": class_id, "Name": view.name or float("nan"), "Description": view.description or float("nan")}
+                {
+                    "Class": class_id,
+                    "Name": view.name or float("nan"),
+                    "Description": view.description or float("nan"),
+                }
             )
             for prop_id, prop in view.properties.items():
                 if isinstance(prop, MappedProperty):
@@ -102,7 +106,9 @@ class DMSImporter(BaseImporter):
                     if isinstance(prop.type, DirectRelation):
                         type_ = cast(ViewId, prop.source).external_id
                     else:
-                        type_ = DMS_TO_DATA_TYPE.get(type(prop.type), "string")
+                        type_ = cast(
+                            str, DMS_VALUE_TYPE_MAPPINGS.get(type(prop.type), XSD_VALUE_TYPE_MAPPINGS["string"]).xsd
+                        )
 
                     default_value = prop.default_value
 

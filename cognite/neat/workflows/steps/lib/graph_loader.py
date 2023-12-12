@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any, ClassVar, cast
 
 from cognite.client import CogniteClient
-from cognite.client.data_classes import AssetFilter
+from cognite.client.data_classes import Asset, AssetFilter
 from prometheus_client import Gauge
 
 from cognite.neat.graph.loaders import upload_labels
@@ -59,8 +59,21 @@ class CreateCDFLabels(Step):
     description = "This step creates default NEAT labels in CDF"
     category = CATEGORY
 
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="data_set_id",
+            value="",
+            label=("CDF dataset id to which the labels will be added."),
+        ),
+    ]
+
     def run(self, rules: RulesData, cdf_client: CogniteClient) -> None:  # type: ignore[override, syntax]
-        upload_labels(cdf_client, rules.rules, extra_labels=["non-historic", "historic"])
+        upload_labels(
+            cdf_client,
+            rules.rules,
+            data_set_id=int(self.configs["data_set_id"]),
+            extra_labels=["non-historic", "historic"],
+        )
 
 
 class GenerateCDFNodesAndEdgesFromGraph(Step):
@@ -186,6 +199,16 @@ class GenerateCDFAssetsFromGraph(Step):
 
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
+            name="data_set_id",
+            value="",
+            label=("CDF dataset id to which the labels will be added."),
+        ),
+        Configurable(
+            name="asset_external_id_prefix",
+            value="",
+            label=("Prefix to be added to all asset external ids, default None."),
+        ),
+        Configurable(
             name="assets_cleanup_type",
             value="nothing",
             options=["nothing", "orphans", "circular", "full"],
@@ -203,6 +226,9 @@ class GenerateCDFAssetsFromGraph(Step):
         if self.configs is None:
             raise StepNotInitialized(type(self).__name__)
         asset_cleanup_type = self.configs.get("assets_cleanup_type", "nothing")
+        data_set_id = int(self.configs["data_set_id"])
+        asset_external_id_prefix = self.configs.get("asset_external_id_prefix", None)
+
         meta_keys = NeatMetadataKeys.load(self.configs)
         if self.metrics is None:
             raise ValueError(self._not_configured_message)
@@ -222,11 +248,18 @@ class GenerateCDFAssetsFromGraph(Step):
             ),
         )
 
-        rdf_asset_dicts = rdf2assets(solution_graph.graph, rules.rules, stop_on_exception=True, meta_keys=meta_keys)
+        rdf_asset_dicts = rdf2assets(
+            solution_graph.graph,
+            rules.rules,
+            data_set_id=data_set_id,
+            asset_external_id_prefix=asset_external_id_prefix,
+            stop_on_exception=True,
+            meta_keys=meta_keys,
+        )
         # UPDATE: 2023-04-05 - correct aggregation of assets in CDF for specific dataset
-        total_assets_before = cdf_client.assets.aggregate(filter=AssetFilter(data_set_ids=[{"id": rules.dataset_id}]))[
-            0
-        ]["count"]
+        total_assets_before = cdf_client.assets.aggregate(filter=AssetFilter(data_set_ids=[{"id": data_set_id}]))[0][
+            "count"
+        ]
 
         # Label Validation
         labels_before = unique_asset_labels(rdf_asset_dicts.values())
@@ -245,6 +278,7 @@ class GenerateCDFAssetsFromGraph(Step):
         prom_cdf_resource_stats.labels(resource_type="asset", state="count_before_neat_update").set(total_assets_before)
         logging.info(f"Total count of assets in CDF before upload: { total_assets_before }")
 
+<<<<<<< HEAD
         orphanage_asset_external_id = (
             f"{rules.rules.metadata.externalIdPrefix or ''}orphanage-{rules.rules.metadata.data_set_id}"
         )
@@ -253,6 +287,9 @@ class GenerateCDFAssetsFromGraph(Step):
         # There could be assets already under created orphan assets. Include those in oprhan assets list
         orphan_assets.extend(parent_children_map[orphanage_asset_external_id])
 
+=======
+        orphan_assets, circular_assets, parent_children_map = validate_asset_hierarchy(rdf_asset_dicts)
+>>>>>>> c3cd42c11edfbe1296bb68a5b720bbb30e7bc8de
         orphan_assets_count = len(orphan_assets)
         circular_assets_count = len(circular_assets)
         prom_data_issues_stats.labels(resource_type="circular_assets").set(len(circular_assets))
@@ -263,6 +300,29 @@ class GenerateCDFAssetsFromGraph(Step):
 
             if asset_cleanup_type in ["orphans", "full"]:
                 logging.info("Removing orphaned assets and its children")
+<<<<<<< HEAD
+=======
+
+                def delete_asset_and_children_recursive(asset_id, rdf_asset_dicts, parent_children_map):
+                    if asset_id in rdf_asset_dicts:
+                        del rdf_asset_dicts[asset_id]
+
+                    if asset_id in parent_children_map:
+                        for child_id in parent_children_map[asset_id]:
+                            delete_asset_and_children_recursive(child_id, rdf_asset_dicts, parent_children_map)
+
+                def delete_orphan_assets_recursive(orphan_assets, rdf_asset_dicts, parent_children_map):
+                    for orphan_asset in orphan_assets:
+                        delete_asset_and_children_recursive(orphan_asset, rdf_asset_dicts, parent_children_map)
+
+                # Make sure children, grand-children, great-grandchildren .... are deleted
+                delete_orphan_assets_recursive(orphan_assets, rdf_asset_dicts, parent_children_map)
+
+            else:
+                orphanage_asset_external_id = (
+                    f"{asset_external_id_prefix}orphanage-{data_set_id}" if asset_external_id_prefix else "orphanage"
+                )
+>>>>>>> c3cd42c11edfbe1296bb68a5b720bbb30e7bc8de
 
                 def delete_asset_and_children_recursive(asset_id, rdf_asset_dicts, parent_children_map):
                     if asset_id in rdf_asset_dicts:
@@ -328,7 +388,7 @@ class GenerateCDFAssetsFromGraph(Step):
                 logging.info("No circular dependency among assets found, your assets hierarchy look healthy !")
 
         categorized_assets, report = categorize_assets(
-            cdf_client, rdf_asset_dicts, rules.dataset_id, return_report=True
+            cdf_client, rdf_asset_dicts, data_set_id=data_set_id, return_report=True
         )
 
         count_create_assets = len(categorized_assets["create"])
@@ -370,7 +430,7 @@ class UploadCDFAssets(Step):
     category = CATEGORY
 
     def run(  # type: ignore[override]
-        self, rules: RulesData, cdf_client: CogniteClient, categorized_assets: CategorizedAssets, flow_msg: FlowMessage
+        self, cdf_client: CogniteClient, categorized_assets: CategorizedAssets, flow_msg: FlowMessage
     ) -> FlowMessage:
         if flow_msg and flow_msg.payload and "action" in flow_msg.payload:
             if flow_msg.payload["action"] != "approve":
@@ -389,24 +449,34 @@ class UploadCDFAssets(Step):
         )
         upload_assets(cdf_client, categorized_assets.assets, max_retries=2, retry_delay=4)
         count_create_assets = len(categorized_assets.assets["create"])
-        for _ in range(1000):
-            total_assets_after = cdf_client.assets.aggregate(
-                filter=AssetFilter(data_set_ids=[{"id": rules.dataset_id}])
-            )[0]["count"]
-            if total_assets_after >= count_create_assets:
-                break
-            logging.info(f"Waiting for assets to be created, current count {total_assets_after}")
-            time.sleep(2)
 
-        # UPDATE: 2023-04-05 - correct aggregation of assets in CDF for specific dataset
-        total_assets_after = cdf_client.assets.aggregate(filter=AssetFilter(data_set_ids=[{"id": rules.dataset_id}]))[
-            0
-        ]["count"]
+        # gets first asset available irrespective of its category
+        asset_example = next((assets[0] for assets in categorized_assets.assets.values() if assets), None)
 
-        prom_cdf_resource_stats.labels(resource_type="asset", state="count_after_neat_update").set(total_assets_after)
-        logging.info(f"Total count of assets in CDF after update: { total_assets_after }")
-        del categorized_assets.assets  # free up memory after upload .
-        return FlowMessage(output_text=f"Total count of assets in CDF after update: { total_assets_after }")
+        if asset_example:
+            data_set_id = cast(Asset, asset_example).data_set_id
+            for _ in range(1000):
+                total_assets_after = cdf_client.assets.aggregate(
+                    filter=AssetFilter(data_set_ids=[{"id": data_set_id}])
+                )[0]["count"]
+                if total_assets_after >= count_create_assets:
+                    break
+                logging.info(f"Waiting for assets to be created, current count {total_assets_after}")
+                time.sleep(2)
+
+            # UPDATE: 2023-04-05 - correct aggregation of assets in CDF for specific dataset
+            total_assets_after = cdf_client.assets.aggregate(filter=AssetFilter(data_set_ids=[{"id": data_set_id}]))[0][
+                "count"
+            ]
+
+            prom_cdf_resource_stats.labels(resource_type="asset", state="count_after_neat_update").set(
+                total_assets_after
+            )
+            logging.info(f"Total count of assets in CDF after update: { total_assets_after }")
+            del categorized_assets.assets  # free up memory after upload .
+            return FlowMessage(output_text=f"Total count of assets in CDF after update: { total_assets_after }")
+        else:
+            return FlowMessage(output_text="No assets to upload!")
 
 
 class GenerateCDFRelationshipsFromGraph(Step):
@@ -417,13 +487,34 @@ class GenerateCDFRelationshipsFromGraph(Step):
     description = "This step generates relationships from the graph and saves them to CategorizedRelationships object"
     category = CATEGORY
 
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="data_set_id",
+            value="",
+            label=("CDF dataset id to which the labels will be added."),
+        ),
+        Configurable(
+            name="relationship_external_id_prefix",
+            value="",
+            label=("Prefix to be added to all asset external ids, default None."),
+        ),
+    ]
+
     def run(  # type: ignore[override]
         self, rules: RulesData, cdf_client: CogniteClient, solution_graph: SolutionGraph
     ) -> (FlowMessage, CategorizedRelationships):  # type: ignore[arg-type, syntax]
         # create, categorize and upload relationships
-        rdf_relationships = rdf2relationships(solution_graph.graph, rules.rules)
+        data_set_id = int(self.configs["data_set_id"])
+        relationship_external_id_prefix = self.configs.get("relationship_external_id_prefix", None)
 
-        categorized_relationships = categorize_relationships(cdf_client, rdf_relationships, rules.dataset_id)
+        rdf_relationships = rdf2relationships(
+            solution_graph.graph,
+            rules.rules,
+            data_set_id=data_set_id,
+            relationship_external_id_prefix=relationship_external_id_prefix,
+        )
+
+        categorized_relationships = categorize_relationships(cdf_client, rdf_relationships, data_set_id)
         count_defined_relationships = len(rdf_relationships)
         count_create_relationships = len(categorized_relationships["create"])
         count_decommission_relationships = len(categorized_relationships["decommission"])

@@ -18,7 +18,7 @@ from cognite.neat.rules.analysis import (
 )
 from cognite.neat.rules.exporter._rules2rules import subset_rules
 from cognite.neat.rules.models import Rules
-from cognite.neat.rules.type_mapping import DATA_TYPE_MAPPING
+from cognite.neat.rules.value_types import XSD_VALUE_TYPE_MAPPINGS
 from cognite.neat.utils.utils import remove_namespace
 
 neat_total_processed_mock_triples = Gauge(
@@ -231,7 +231,7 @@ def _generate_mock_data_property_triples(
 ) -> list[tuple[URIRef, URIRef, Literal]]:
     """Generates triples for data properties."""
 
-    python_type = DATA_TYPE_MAPPING[value_type]["python"]
+    python_type = XSD_VALUE_TYPE_MAPPINGS[value_type].python
     triples = []
     for id_ in instance_ids:
         if python_type == int:
@@ -343,7 +343,7 @@ def _rules_to_dict(transformation_rules: Rules) -> dict[str, pd.DataFrame]:
             if property_.property_id not in properties:
                 properties[property_.property_id] = {
                     "property_type": property_.property_type,
-                    "value_type": property_.expected_value_type,
+                    "value_type": property_.expected_value_type.suffix,
                     "min_count": property_.min_count,
                     "max_count": property_.max_count,
                 }

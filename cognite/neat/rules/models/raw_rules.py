@@ -114,7 +114,8 @@ class RawRules(RuleModel):
 
         return df[columns]
 
-    # Basic method for creating RawRules from different sources:
+    # mypy complains "RawRules" has incompatible type "**dict[str, DataFrame]"; expected "set[str]" , which is wrong!
+    @no_type_check
     @classmethod
     def from_tables(cls, tables: dict[str, pd.DataFrame], importer_type: str = "RawTablesImporter") -> "RawRules":
         """Create RawRules from raw tables.
@@ -132,7 +133,7 @@ class RawRules(RuleModel):
         if missing_tables := (expected_tables - set(tables)):
             raise exceptions.SourceObjectDoesNotProduceMandatorySheets(missing_tables)
 
-        tables_dict = {
+        tables_dict: dict[str, pd.DataFrame] = {
             Tables.metadata: tables[Tables.metadata],
             Tables.classes: cls._drop_non_string_columns(tables[Tables.classes]),
             Tables.properties: cls._drop_non_string_columns(tables[Tables.properties]),
@@ -143,7 +144,10 @@ class RawRules(RuleModel):
         if Tables.instances in tables:
             tables_dict[Tables.instances] = cls._drop_non_string_columns(tables[Tables.instances])
 
-        return cls(**tables_dict, importer_type=importer_type)
+        return cls(
+            **tables_dict,
+            importer_type=importer_type,
+        )
 
     # mypy unsatisfied with overload , tried all combination and gave up
     @no_type_check
@@ -151,7 +155,7 @@ class RawRules(RuleModel):
         self,
         return_report: bool = False,
         skip_validation: bool = False,
-        validators_to_skip: list[str] | None = None,
+        validators_to_skip: set[str] | None = None,
     ) -> tuple[Rules | None, list[ErrorDetails] | None, list | None] | Rules:
         """Validates RawRules instances and returns Rules instance.
 
@@ -232,7 +236,7 @@ def _to_invalidated_rules(rules_dict: dict) -> Rules:
     return cast(Rules, Rules.model_construct(**args))
 
 
-def _raw_tables_to_rules_dict(raw_tables: RawRules, validators_to_skip: list | None = None) -> dict[str, Any]:
+def _raw_tables_to_rules_dict(raw_tables: RawRules, validators_to_skip: set | None = None) -> dict[str, Any]:
     """Converts raw tables to a dictionary of rules."""
     rules_dict: dict[str, Any] = {
         "metadata": _metadata_table2dict(raw_tables.Metadata),
@@ -283,12 +287,13 @@ def _prefixes_table2dict(prefix_df: pd.DataFrame) -> dict[str, Namespace]:
 def _instances_table2dict(
     instances_df: pd.DataFrame, metadata: dict[str, Any], prefixes: dict[str, Namespace]
 ) -> list[dict] | None:
-    if "prefix" not in metadata or "namespace" not in metadata:
+    if ("prefix" not in metadata and "namespace" not in metadata) or "namespace" not in metadata:
         logging.warning(exceptions.MissingDataModelPrefixOrNamespace().message)
         warn(exceptions.MissingDataModelPrefixOrNamespace().message, stacklevel=2)
         return None
 
-    prefixes[metadata["prefix"]] = metadata["namespace"]
+    prefix = metadata["prefix"] if "prefix" in metadata else metadata["space"]
+    prefixes[prefix] = metadata["namespace"]
 
     instances = []
     for _, row in instances_df.iterrows():

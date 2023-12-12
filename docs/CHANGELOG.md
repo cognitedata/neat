@@ -10,10 +10,54 @@ Changes are grouped as follows:
 - `Added` for new features.
 - `Changed` for changes in existing functionality.
 - `Deprecated` for soon-to-be removed features.
-- `Improved` for transparent changes, e.`g. better performance.
+- `Improved` for transparent changes, e.g. better performance.
 - `Removed` for now removed features.
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
+
+## [0.49.0] - 05-12-23
+
+## Deprecated
+- `data_set_id`, `cdfSpaceName`, `externalIdPrefix` in `Metadata` sheet has been removed
+
+## Improved
+- `Metadata` sheet now contains only two mandatory fields, namely: `prefix`, `version`, other fields are optional or generated automatically
+- Generation of `Labels`, `Asset` and `Relationship` requires explicit configuration of `data_set_id` and external id prefixes, enabling reuse of same rules for multiple data sets
+
+
+
+## [0.48.0] - 05-12-23
+
+## Added
+- Value types are now resolved as `ValueType` object instances
+
+
+## [0.47.0] - 01-12-23
+
+## Deprecated
+- `type_mapping` in `rules` replaced by `value_types`
+
+
+## [0.46.0] - 30-11-23
+
+## Improved
+
+- Improved `Triple` pydantic class to be used across the package as prep for advanced data modeling
+- Improved `Entity` pydantic class to be used across the package as prep for advanced data modeling
+- Moved all base regex patterns to `neat.rules.models._base`
+- Reduced and cleaned up `neat.rules.models.rdfpath`
+
+## Added
+- `neat.rules.value_types` to create default ValueType class to be used to improve `Rules`
+
+
+## [0.45.0] - 24-11-23
+
+## Improved
+
+- Validators skipping now made through two decorators `skip_field_validator` and `skip_model_validator`
+- Small fixes in `cognite.neat.rules.models.rules`
+- Allow single character properties/classes in `rdfpath`
 
 ## [0.44.0] - 24-11-23
 

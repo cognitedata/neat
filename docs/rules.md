@@ -18,33 +18,20 @@ Instead of explaining each sheet on its own we will explain how each part of the
 ## Semantic Data Model Definition
 First we start with the semantic data model definition. `Metadata` sheet contains metadata about data model. From the screenshot below one can see that the `Metadata` sheet is in a form of key value pairs. The `Key` column contains the name of the metadata attribute and the `Value` column contains the value of the metadata attribute. The metadata attributes are as follows:
 
-
+- `prefix`: the data model prefix which is used as a short form of the namespace when data model is resolved as an RDF based data model, or it represents value for `space` when the model is resolved in CDF. This attribute is mandatory.
+- `suffix`: used as represents an external id of data model, which will be used as DMS Data Model external id. This attribute is optional, if not provided NEAT will use `prefix` as the name of the data model.
 - `namespace`: the data model namespace provided as URI. This attribute is optional, if not provided NEAT will automatically generate namespace based on the template `http://purl.org/cognite/{prefix}#`.
-- `prefix`: the data model prefix which is used as a short form of the namespace. This attribute is mandatory.
-- `dataModelName`: the name of the data model, which will be used as DMS Data Model external id. This attribute is optional, if not provided NEAT will use `prefix` as the name of the data model.
 - `version`: version of the data model. This attribute is mandatory.
-- `isCurrentVersion`: indicates whether or not the current `Rules` holds the current version of the data model definitions. This attribute is optional.
-- `created`: data model creation date. This attribute is mandatory.
-- `title`: title of the data model. This attribute is mandatory.
+- `created`: data model creation date. This attribute is optional, defaults to date when Rules are loaded.
+- `title`: title of the data model, when resolved as an RDF based data model, or as data model name when resolved in CDF. This attribute is optional, if not provided it will default to `suffix` attribute.
 - `description`: short description of the data model. This attribute is optional but strongly advised.
-- `creator`: creators of the data model separated by comma. This attribute is mandatory.
-- `contributor`: contributors to the data model separated by comma. This attribute is optional.
+- `creator`: creators of the data model separated by comma. This attribute is optional, defaults to `NEAT`.
+- `contributor`: contributors to the data model separated by comma. This attribute is optional, defaults to `Cognite`.
 - `rights`: usage right of the data model. This attribute is optional but strongly advised.
 - `license`: license of the data model. This attribute is optional but strongly advised.
 
 
-In the current version of NEAT, the `Metadata` sheet contains also following attributes:
-
-- `cdfSpaceName`: CDF space name where the data model will be ingested. This attribute is optional.
-- `dataSetId`: CDF dataset id where the data model will be ingested. This attribute is optional.
-- `externalIdPrefix`: any prefix that will be added to CDF resource external identifies, this is to avoid conflicts with the identifiers since CDF does not allow the same external identifier to be used for different resources even if they are in different datasets. This attribute is optional, and typically used in development phase of the data model, when multiple users are ingesting the same data model/knowledge graph into CDF.
-
-
 ![Rules: Metadata Sheet](./figs/metadata-sheet.png)
-
-!!! note annotate "Deprecation"
-    `Metadata` attributes `cdfSpaceName`, `dataSetId` and `externalIdPrefix` will be removed in NEAT version 1.0
-
 
 
 `Prefixes` sheet contains the definition of the prefixes that are used in the semantic data model and knowledge graph.

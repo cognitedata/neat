@@ -12,7 +12,8 @@ from cognite.neat.rules import exceptions
 from cognite.neat.rules.analysis import to_class_property_pairs, to_property_dict
 from cognite.neat.rules.exporter._base import BaseExporter
 from cognite.neat.rules.exporter._validation import are_properties_redefined
-from cognite.neat.rules.models.rules import DATA_TYPE_MAPPING, Class, Metadata, Property, Rules
+from cognite.neat.rules.models.rules import Class, Metadata, Property, Rules
+from cognite.neat.rules.value_types import XSD_VALUE_TYPE_MAPPINGS
 from cognite.neat.utils.utils import generate_exception_report, remove_namespace
 
 if sys.version_info >= (3, 11):
@@ -190,8 +191,8 @@ class OWLMetadata(Metadata):
         triples: list[tuple] = [
             (URIRef(self.namespace), DCTERMS.hasVersion, Literal(self.version)),
             (URIRef(self.namespace), OWL.versionInfo, Literal(self.version)),
-            (URIRef(self.namespace), RDFS.label, Literal(self.title)),
-            (URIRef(self.namespace), DCTERMS.title, Literal(self.title)),
+            (URIRef(self.namespace), RDFS.label, Literal(self.name)),
+            (URIRef(self.namespace), DCTERMS.title, Literal(self.name)),
             (URIRef(self.namespace), DCTERMS.created, Literal(self.created, datatype=XSD.dateTime)),
             (URIRef(self.namespace), DCTERMS.description, Literal(self.description)),
         ]
@@ -300,9 +301,9 @@ class OWLProperty(OntologyModel):
         for definition in definitions:
             owl_property.type_.add(OWL[definition.property_type])
             owl_property.range_.add(
-                XSD[definition.expected_value_type]
-                if definition.expected_value_type in DATA_TYPE_MAPPING
-                else namespace[definition.expected_value_type]
+                XSD[definition.expected_value_type.suffix]
+                if definition.expected_value_type.suffix in XSD_VALUE_TYPE_MAPPINGS
+                else namespace[definition.expected_value_type.suffix]
             )
             owl_property.domain.add(namespace[definition.class_id])
 
@@ -509,9 +510,9 @@ class SHACLPropertyShape(OntologyModel):
             path=namespace[definition.property_id],
             node_kind=SHACL.IRI if definition.property_type == "ObjectProperty" else SHACL.Literal,
             expected_value_type=(
-                namespace[f"{definition.expected_value_type}Shape"]
+                namespace[f"{definition.expected_value_type.suffix}Shape"]
                 if definition.property_type == "ObjectProperty"
-                else XSD[definition.expected_value_type]
+                else XSD[definition.expected_value_type.suffix]
             ),
             min_count=definition.min_count,
             max_count=definition.max_count,

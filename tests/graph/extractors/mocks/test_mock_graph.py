@@ -34,8 +34,8 @@ def test_mock_graph(transformation_rules: Rules):
         )
     }
 
-    assets = loaders.rdf2assets(graph_store, rules)
-    relationships = rdf_to_relationships.rdf2relationships(graph_store, rules)
+    assets = loaders.rdf2assets(graph_store, rules, data_set_id=123456)
+    relationships = rdf_to_relationships.rdf2relationships(graph_store, rules, data_set_id=123456)
 
     assert len(mock_triples) == 503
     assert len(assets) == 97

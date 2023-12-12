@@ -5,7 +5,7 @@ import pandas as pd
 from rdflib import Graph, Namespace
 
 from cognite.neat.rules.models.rules import (
-    cdf_space_name_compliance_regex,
+    cdf_space_compliance_regex,
     data_model_id_compliance_regex,
     prefix_compliance_regex,
     version_compliance_regex,
@@ -158,7 +158,7 @@ def fix_description(metadata: dict, default: str = "This model has been inferred
 
 def fix_cdfSpaceName(metadata: dict, default: str = "playground") -> dict:
     if space := metadata.get("cdfSpaceName", None):
-        if not isinstance(space, str) or not re.match(cdf_space_name_compliance_regex, space):
+        if not isinstance(space, str) or not re.match(cdf_space_compliance_regex, space):
             metadata["cdfSpaceName"] = default
     else:
         metadata["cdfSpaceName"] = default
