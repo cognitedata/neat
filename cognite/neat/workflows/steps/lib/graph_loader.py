@@ -245,7 +245,14 @@ class GenerateCDFAssetsFromGraph(Step):
         prom_cdf_resource_stats.labels(resource_type="asset", state="count_before_neat_update").set(total_assets_before)
         logging.info(f"Total count of assets in CDF before upload: { total_assets_before }")
 
+        orphanage_asset_external_id = (
+            f"{rules.rules.metadata.externalIdPrefix or ''}orphanage-{rules.rules.metadata.data_set_id}"
+        )
         orphan_assets, circular_assets, parent_children_map = validate_asset_hierarchy(rdf_asset_dicts)
+
+        # There could be assets already under created orphan assets. Include those in oprhan assets list
+        orphan_assets.extend(parent_children_map[orphanage_asset_external_id])
+
         orphan_assets_count = len(orphan_assets)
         circular_assets_count = len(circular_assets)
         prom_data_issues_stats.labels(resource_type="circular_assets").set(len(circular_assets))
@@ -272,13 +279,11 @@ class GenerateCDFAssetsFromGraph(Step):
                 # Make sure children, grand-children, great-grandchildren .... are deleted
                 delete_orphan_assets_recursive(orphan_assets, rdf_asset_dicts, parent_children_map)
 
-            else:
-                orphanage_asset_external_id = (
-                    f"{rules.rules.metadata.externalIdPrefix}orphanage-{rules.dataset_id}"
-                    if rules.rules.metadata.externalIdPrefix
-                    else "orphanage"
-                )
+                # delete orphange asset
+                if orphanage_asset_external_id in rdf_asset_dicts:
+                    del rdf_asset_dicts[orphanage_asset_external_id]
 
+            else:
                 # Kill the process if you dont have orphanage asset in your asset hierarchy
                 # and inform the user that it is missing !
                 if orphanage_asset_external_id not in rdf_asset_dicts:

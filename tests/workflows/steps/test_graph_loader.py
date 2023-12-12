@@ -38,8 +38,9 @@ def test_graph_loader_clean_orphans(solution_knowledge_graph_dirty, transformati
     assets_external_ids = [asset.external_id for asset in assets.assets["create"]]
     assert "2dd90176-bdfb-11e5-94fa-c8f73332c8f4-terminal-orphan-test" not in assets_external_ids
     assert "f17695fe-9aeb-11e5-91da-b8763fd99c5f-orphan-test" not in assets_external_ids
-    assert "f17695fe-9aeb-11e5-91da-b8763fd99c5f" in assets_external_ids
-    assert "2dd90176-bdfb-11e5-94fa-c8f73332c8f4" in assets_external_ids
+    assert "f17695fe-9aeb-11e5-91da-b8763fd99c5f" not in assets_external_ids
+    assert "2dd90176-bdfb-11e5-94fa-c8f73332c8f4" not in assets_external_ids
+    assert "root-node" in assets_external_ids
 
 
 def test_graph_loader_no_orphans_cleanup(solution_knowledge_graph_dirty, transformation_rules, mock_cdf_assets):
@@ -74,3 +75,4 @@ def test_graph_loader_no_orphans_cleanup(solution_knowledge_graph_dirty, transfo
     assert "f17695fe-9aeb-11e5-91da-b8763fd99c5f-orphan-test" in assets_external_ids
     assert "f17695fe-9aeb-11e5-91da-b8763fd99c5f" in assets_external_ids
     assert "2dd90176-bdfb-11e5-94fa-c8f73332c8f4" in assets_external_ids
+    assert "orphanage" in assets_external_ids
