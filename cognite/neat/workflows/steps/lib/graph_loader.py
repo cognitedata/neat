@@ -288,7 +288,8 @@ class GenerateCDFAssetsFromGraph(Step):
         orphan_assets, circular_assets, parent_children_map = validate_asset_hierarchy(rdf_asset_dicts)
 
         # There could be assets already under a created orphan assets. Include those in oprhan assets list
-        orphan_assets.extend(parent_children_map[orphanage_asset_external_id])
+        if orphanage_asset_external_id in parent_children_map:
+            orphan_assets.extend(parent_children_map[orphanage_asset_external_id])
 
         orphan_assets_count = len(orphan_assets)
         circular_assets_count = len(circular_assets)
