@@ -32,7 +32,7 @@ from rdflib import XSD, Literal, Namespace, URIRef
 
 from cognite.neat.constants import PREFIXES
 from cognite.neat.rules import exceptions
-from cognite.neat.rules.models._base import EntityTypes
+from cognite.neat.rules.models._base import EntityTypes, ParentClass
 from cognite.neat.rules.models.rdfpath import (
     AllReferences,
     Entity,
@@ -288,26 +288,6 @@ class Metadata(RuleModel):
         else:
             return value
 
-    @validator("namespace", always=True)
-    @skip_field_validator("validators_to_skip")
-    def set_namespace_if_none(cls, value, values):
-        if value is None:
-            return Namespace(f"http://purl.org/cognite/{values['prefix']}#")
-        try:
-            return Namespace(parse_obj_as(HttpUrl, value))
-        except ValidationError as e:
-            raise exceptions.MetadataSheetNamespaceNotValidURL(value).to_pydantic_custom_error() from e
-
-    @validator("namespace", always=True)
-    @skip_field_validator("validators_to_skip")
-    def fix_namespace_ending(cls, value, values):
-        if value.endswith("#") or value.endswith("/"):
-            return value
-        warnings.warn(
-            exceptions.NamespaceEndingFixed(value).message, category=exceptions.NamespaceEndingFixed, stacklevel=2
-        )
-        return Namespace(f"{value}#")
-
     @validator("suffix", always=True)
     @skip_field_validator("validators_to_skip")
     def set_suffix_if_none(cls, value, values):
@@ -329,6 +309,29 @@ class Metadata(RuleModel):
             raise exceptions.DataModelIdRegexViolation(value, data_model_id_compliance_regex).to_pydantic_custom_error()
         else:
             return value
+
+    @validator("namespace", always=True)
+    @skip_field_validator("validators_to_skip")
+    def set_namespace_if_none(cls, value, values):
+        if value is None:
+            if values["prefix"] == values["suffix"]:
+                return Namespace(f"http://purl.org/cognite/{values['prefix']}#")
+            else:
+                return Namespace(f"http://purl.org/cognite/{values['prefix']}/{values['suffix']}#")
+        try:
+            return Namespace(parse_obj_as(HttpUrl, value))
+        except ValidationError as e:
+            raise exceptions.MetadataSheetNamespaceNotValidURL(value).to_pydantic_custom_error() from e
+
+    @validator("namespace", always=True)
+    @skip_field_validator("validators_to_skip")
+    def fix_namespace_ending(cls, value, values):
+        if value.endswith("#") or value.endswith("/"):
+            return value
+        warnings.warn(
+            exceptions.NamespaceEndingFixed(value).message, category=exceptions.NamespaceEndingFixed, stacklevel=2
+        )
+        return Namespace(f"{value}#")
 
     @validator("title", always=True)
     @skip_field_validator("validators_to_skip")
@@ -509,18 +512,13 @@ class Class(Resource):
         class_id: The class ID of the class.
         class_name: The name of the class.
         parent_class: The parent class of the class.
-        parent_asset: The parent asset of the class.
     """
 
     class_id: ExternalId = Field(alias="Class", min_length=1, max_length=255)
     class_name: ExternalId | None = Field(alias="Name", default=None, min_length=1, max_length=255)
     # Solution model
-    parent_class: ExternalId | list[ExternalId] | None = Field(
-        alias="Parent Class", default=None, min_length=1, max_length=255
-    )
-
-    # Solution CDF resource
-    parent_asset: ExternalId | None = Field(alias="Parent Asset", default=None, min_length=1, max_length=255)
+    parent_class: list[ParentClass] | None = Field(alias="Parent Class", default=None, min_length=1, max_length=255)
+    filter_: str | None = Field(alias="Filter", default=None, min_length=1)
 
     @model_validator(mode="before")
     def replace_nan_floats_with_default(cls, values: dict) -> dict:
@@ -553,29 +551,31 @@ class Class(Resource):
 
     @field_validator("parent_class", mode="before")
     @skip_field_validator("validators_to_skip")
-    def to_list_if_comma(cls, value, values):
+    def to_list_of_entities(cls, value, values):
         if isinstance(value, str):
             if value:
-                return value.replace(", ", ",").split(",")
+                parent_classes = []
+                for v in value.replace(", ", ",").split(","):
+                    try:
+                        parent_classes.append(ParentClass.from_string(entity_string=v))
+                    # if all fails defaults "neat" object which ends up being updated to proper
+                    # prefix and version upon completion of Rules validation
+                    except ValueError:
+                        parent_classes.append(ParentClass(prefix="undefined", suffix=value, name=value))
+
+                return parent_classes
             if cls.model_fields[values.field_name].default is None:
                 return None
 
     @field_validator("parent_class", mode="after")
     @skip_field_validator("validators_to_skip")
     def is_parent_class_id_compliant(cls, value, values):
-        if isinstance(value, str):
-            if re.search(more_than_one_none_alphanumerics_regex, value):
-                raise exceptions.MoreThanOneNonAlphanumericCharacter("parent_class", value).to_pydantic_custom_error()
-            if not re.match(class_id_compliance_regex, value):
-                raise exceptions.ClassSheetParentClassIDRegexViolation(
-                    [value], class_id_compliance_regex
-                ).to_pydantic_custom_error()
-        elif isinstance(value, list):
-            if illegal_ids := [v for v in value if re.search(more_than_one_none_alphanumerics_regex, v)]:
+        if isinstance(value, list):
+            if illegal_ids := [v for v in value if re.search(more_than_one_none_alphanumerics_regex, v.suffix)]:
                 raise exceptions.MoreThanOneNonAlphanumericCharacter(
                     "parent_class", ", ".join(illegal_ids)
                 ).to_pydantic_custom_error()
-            if illegal_ids := [v for v in value if not re.match(class_id_compliance_regex, v)]:
+            if illegal_ids := [v for v in value if not re.match(class_id_compliance_regex, v.suffix)]:
                 raise exceptions.ClassSheetParentClassIDRegexViolation(
                     illegal_ids, class_id_compliance_regex
                 ).to_pydantic_custom_error()
@@ -1060,6 +1060,7 @@ class Rules(RuleModel):
         version = self.metadata.version
         prefix = self.metadata.prefix
 
+        # update expected_value_types
         for id_ in self.properties.keys():
             # only update version of expected value type which are part of this data model
             if (
@@ -1070,6 +1071,10 @@ class Rules(RuleModel):
 
             if self.properties[id_].expected_value_type.prefix == "undefined":
                 self.properties[id_].expected_value_type.prefix = prefix
+
+        # update parent classes
+        for id_ in self.classes.keys():
+            print(id_)
 
         return self
 
