@@ -15,6 +15,12 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.50.0] - 15-12-23
+
+## Fixed
+
+- Fixed bug in GenerateCDFAssetsFromGraph class for assets_cleanup_type "orphans"/"full" where not all orphans assets were removed. No all asset under a created orphan parent asset are removed.
+
 ## [0.49.0] - 05-12-23
 
 ## Deprecated
