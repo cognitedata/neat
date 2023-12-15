@@ -91,7 +91,7 @@ class Ontology(OntologyModel):
                 for definition in to_property_dict(transformation_rules).values()
             ],
             classes=[
-                OWLClass.from_class(definition, transformation_rules.metadata.namespace)
+                OWLClass.from_class(definition, transformation_rules.metadata.namespace, transformation_rules.prefixes)
                 for definition in transformation_rules.classes.values()
             ],
             shapes=[
@@ -229,11 +229,14 @@ class OWLClass(OntologyModel):
     namespace: Namespace
 
     @classmethod
-    def from_class(cls, definition: Class, namespace: Namespace) -> Self:
+    def from_class(cls, definition: Class, namespace: Namespace, prefixes: dict) -> Self:
         if definition.parent_class and isinstance(definition.parent_class, list):
-            sub_class_of = [namespace[parent_class] for parent_class in definition.parent_class]
-        elif definition.parent_class and isinstance(definition.parent_class, str):
-            sub_class_of = [namespace[definition.parent_class]]
+            sub_class_of = []
+            for parent_class in definition.parent_class:
+                try:
+                    sub_class_of.append(prefixes[parent_class.prefix][parent_class.suffix])
+                except KeyError:
+                    sub_class_of.append(namespace[parent_class.suffix])
         else:
             sub_class_of = None
 

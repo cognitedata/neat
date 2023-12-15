@@ -111,6 +111,14 @@ class ParentClass(Entity):
     type_: EntityTypes = EntityTypes.class_
 
 
+class Container(Entity):
+    type_: EntityTypes = EntityTypes.container
+
+
+class ContainerProperty(Entity):
+    type_: EntityTypes = EntityTypes.property_
+
+
 class Triple(BaseModel):
     model_config: ClassVar[ConfigDict] = ConfigDict(
         populate_by_name=True, arbitrary_types_allowed=True, strict=False, extra="allow"
