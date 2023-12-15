@@ -74,7 +74,9 @@ class ExcelExporter(BaseExporter[Workbook]):
                 [
                     class_.class_id,
                     class_.description,
-                    ",".join([pc.versioned_id for pc in class_.parent_class]) if class_.parent_class else None,
+                    ",".join([parent_class.versioned_id for parent_class in class_.parent_class])
+                    if class_.parent_class
+                    else None,
                     str(class_.source),
                     class_.source_entity_name,
                     class_.match_type,
