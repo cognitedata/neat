@@ -69,16 +69,16 @@ class DMSExporter(BaseExporter[DMSSchema]):
         self,
         rules: Rules,
         data_model_id: dm.DataModelId | None = None,
-        container_policy: Literal["one-to-one-view", "extend-existing", "neat-optimized"] = "one-to-one-view",
+        container_policy: Literal["create", "reuse", "extend", "optimize"] = "create",
         existing_model: dm.DataModel[dm.View] | None = None,
         report: str | None = None,
     ):
         super().__init__(rules, report)
         self.data_model_id = data_model_id
         self.container_policy = container_policy
-        if container_policy == "extend-existing" and existing_model is None:
+        if container_policy == "extend" and existing_model is None:
             raise ValueError("Container policy is extend-existing, but no existing model is provided")
-        if container_policy != "one-to-one-view":
+        if container_policy != "create":
             raise NotImplementedError("Only one-to-one-view container policy is currently supported")
         self.existing_model = existing_model
 
