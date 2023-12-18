@@ -63,6 +63,13 @@ class DMSExporter(BaseExporter[DMSSchema]):
         container_policy: How to create/reuse existing containers.
         existing_model: In the case of updating an existing model, this is the existing model.
         report: Report. This is used when the exporter object is created from RawRules
+    
+    !!! note "Container policy"
+        Here is more information about the different container policies:
+        - `create`: assumes no containers exist in CDF, will attempt to create them
+        - `reuse`: assumes containers exists in CDF, will attempt to only re-use them
+        - `extend`: will re-use existing, extend and/or create only missing containers
+        - `optimize`: create container of ideal size  
     """
 
     def __init__(
