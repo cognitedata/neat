@@ -15,28 +15,39 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.51.0] - 05-12-23
+
+## Improved
+
+- Turning `ParentClass` string into `Entity`
+- Added new fields to Class and Property as last step to enable advance data modeling
+
+## Removed
+
+- Removed two validators from Rules which would otherwise block advance data modeling, specifically referring to Views and/or Containers in different spaces
+
 ## [0.49.0] - 05-12-23
 
 ## Deprecated
+
 - `data_set_id`, `cdfSpaceName`, `externalIdPrefix` in `Metadata` sheet has been removed
 
 ## Improved
+
 - `Metadata` sheet now contains only two mandatory fields, namely: `prefix`, `version`, other fields are optional or generated automatically
 - Generation of `Labels`, `Asset` and `Relationship` requires explicit configuration of `data_set_id` and external id prefixes, enabling reuse of same rules for multiple data sets
-
-
 
 ## [0.48.0] - 05-12-23
 
 ## Added
-- Value types are now resolved as `ValueType` object instances
 
+- Value types are now resolved as `ValueType` object instances
 
 ## [0.47.0] - 01-12-23
 
 ## Deprecated
-- `type_mapping` in `rules` replaced by `value_types`
 
+- `type_mapping` in `rules` replaced by `value_types`
 
 ## [0.46.0] - 30-11-23
 
@@ -48,8 +59,8 @@ Changes are grouped as follows:
 - Reduced and cleaned up `neat.rules.models.rdfpath`
 
 ## Added
-- `neat.rules.value_types` to create default ValueType class to be used to improve `Rules`
 
+- `neat.rules.value_types` to create default ValueType class to be used to improve `Rules`
 
 ## [0.45.0] - 24-11-23
 
@@ -71,11 +82,9 @@ Changes are grouped as follows:
 
 - All neat specific validators for `Rules` can be now skipped by specifying them in `validators_to_skip`, alternatively one can set `validators_to_skip=["all"]` to skip all validators.
 
-
 ## Fixed
 
 - Single character properties/classes are now allowed in `rdfpath`
-
 
 ## [0.42.4] - 22-11-23
 
@@ -112,11 +121,9 @@ Changes are grouped as follows:
 
 - `OWLImporter` supports conversion of information to data model through flag `make_compliant`
 
-
 ## Fixed
 
 - Description of properties, classes and data model updated to allow for 1028 characters
-
 
 ## [0.41.6] - 20-11-23
 
