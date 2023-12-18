@@ -26,6 +26,14 @@ Changes are grouped as follows:
 
 - Removed two validators from Rules which would otherwise block advance data modeling, specifically referring to Views and/or Containers in different spaces
 
+
+## [0.50.0] - 15-12-23
+
+## Fixed
+
+- Fixed bug in GenerateCDFAssetsFromGraph class for assets_cleanup_type "orphans"/"full" where not all orphans assets were removed. No all asset under a created orphan parent asset are removed.
+
+
 ## [0.49.0] - 05-12-23
 
 ## Deprecated
