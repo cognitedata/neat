@@ -24,7 +24,6 @@ from pydantic import (
     constr,
     field_validator,
     model_validator,
-    parse_obj_as,
     validator,
 )
 from pydantic.fields import FieldInfo
@@ -314,12 +313,10 @@ class Metadata(RuleModel):
     @skip_field_validator("validators_to_skip")
     def set_namespace_if_none(cls, value, values):
         if value is None:
-            if values["prefix"] == values["suffix"]:
-                return Namespace(f"http://purl.org/cognite/{values['prefix']}#")
-            else:
-                return Namespace(f"http://purl.org/cognite/{values['prefix']}/{values['suffix']}#")
+            suffix = f"/{values['suffix']}" if values["prefix"] != values["suffix"] else ""
+            return Namespace(f"http://purl.org/cognite/{values['prefix']}{suffix}#")
         try:
-            return Namespace(parse_obj_as(HttpUrl, value))
+            return Namespace(TypeAdapter(HttpUrl).validate_python(value))
         except ValidationError as e:
             raise exceptions.MetadataSheetNamespaceNotValidURL(value).to_pydantic_custom_error() from e
 
@@ -517,7 +514,7 @@ class Class(Resource):
     class_id: ExternalId = Field(alias="Class", min_length=1, max_length=255)
     class_name: ExternalId | None = Field(alias="Name", default=None, min_length=1, max_length=255)
     # Solution model
-    parent_class: list[ParentClass] | None = Field(alias="Parent Class", default=None, min_length=1, max_length=255)
+    parent_class: list[ParentClass] | None = Field(alias="Parent Class", default=None)
     filter_: str | None = Field(alias="Filter", default=None, min_length=1)
 
     @model_validator(mode="before")
@@ -551,21 +548,20 @@ class Class(Resource):
 
     @field_validator("parent_class", mode="before")
     @skip_field_validator("validators_to_skip")
-    def to_list_of_entities(cls, value, values):
-        if isinstance(value, str):
-            if value:
-                parent_classes = []
-                for v in value.replace(", ", ",").split(","):
-                    try:
-                        parent_classes.append(ParentClass.from_string(entity_string=v))
-                    # if all fails defaults "neat" object which ends up being updated to proper
-                    # prefix and version upon completion of Rules validation
-                    except ValueError:
-                        parent_classes.append(ParentClass(prefix="undefined", suffix=value, name=value))
+    def parent_class_to_list_of_entities(cls, value, values):
+        if isinstance(value, str) and value:
+            parent_classes = []
+            for v in value.replace(", ", ",").split(","):
+                try:
+                    parent_classes.append(ParentClass.from_string(entity_string=v))
+                # if all fails defaults "neat" object which ends up being updated to proper
+                # prefix and version upon completion of Rules validation
+                except ValueError:
+                    parent_classes.append(ParentClass(prefix="undefined", suffix=value, name=value))
 
-                return parent_classes
-            if cls.model_fields[values.field_name].default is None:
-                return None
+            return parent_classes
+        else:
+            return None
 
     @field_validator("parent_class", mode="after")
     @skip_field_validator("validators_to_skip")
@@ -665,11 +661,13 @@ class Property(Resource):
 
     @field_validator("container", mode="before")
     def container_string_to_entity(cls, value):
-        if value:
-            try:
-                return Container.from_string(entity_string=value)
-            except ValueError:
-                return Container(prefix="undefined", suffix=value, name=value)
+        if not value:
+            return value
+
+        try:
+            return Container.from_string(entity_string=value)
+        except ValueError:
+            return Container(prefix="undefined", suffix=value, name=value)
 
     @field_validator("expected_value_type", mode="before")
     def expected_value_type_string_to_entity(cls, value):

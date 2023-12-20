@@ -69,7 +69,7 @@ class DMSExporter(BaseExporter[DMSSchema]):
         - `create`: assumes no containers exist in CDF, will attempt to create them
         - `reuse`: assumes containers exists in CDF, will attempt to only re-use them
         - `extend`: will re-use existing, extend and/or create only missing containers
-        - `optimize`: create container of ideal size
+        - `optimize`: create containers of size's prescribed by NEAT's optimization algorithm
     """
 
     def __init__(
