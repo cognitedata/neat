@@ -17,6 +17,7 @@ from pyparsing import Any
 from rdflib import Literal, Namespace
 from rdflib.term import URIRef
 
+from cognite.neat import _version
 from cognite.neat.utils.cdf import CogniteClientConfig, InteractiveCogniteClient, ServiceCogniteClient
 
 if sys.version_info >= (3, 11):
@@ -55,9 +56,12 @@ def get_cognite_client_interactive(config: InteractiveCogniteClient) -> CogniteC
 
 def _get_cognite_client(config: CogniteClientConfig, credentials: CredentialProvider) -> CogniteClient:
     logging.info(f"Creating CogniteClient with parameters : {config}")
+
+    # The client name is used for aggregated logging of Neat Usage
+    client_name = f"CogniteNeat:{_version.__version__}"
     return CogniteClient(
         ClientConfig(
-            client_name=config.client_name,
+            client_name=client_name,
             base_url=config.base_url,
             project=config.project,
             credentials=credentials,
