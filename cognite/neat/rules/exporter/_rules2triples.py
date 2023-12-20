@@ -1,6 +1,21 @@
+from pathlib import Path
+
 from rdflib.term import Node
 
+from cognite.neat.rules.exporter._base import BaseExporter
 from cognite.neat.rules.models.rules import Rules
+
+
+class TripleExporter(BaseExporter[list[tuple[Node, Node, Node]]]):
+    """
+    Exporter for transformation rules instances sheet to RDF triples
+    """
+
+    def _export_to_file(self, filepath: Path) -> None:
+        raise NotImplementedError("Export to file not implemented")
+
+    def export(self) -> list[tuple[Node, Node, Node]]:
+        return get_instances_as_triples(self.rules)
 
 
 def get_instances_as_triples(transformation_rules: Rules) -> list[tuple[Node, Node, Node]]:

@@ -1,0 +1,3617 @@
+{
+    "BidDocumentHeader": {
+        "DocumentTypeName": "Capacity",
+        "ProcessTypeName": "aFRR",
+        "TSO": "Cognite",
+        "Owner": "Fornebu",
+        "CreatedDateTime": "2023-06-17T13:12:38.738432Z",
+        "BidInterval": {
+            "Start": "2023-06-18T22:00:00Z",
+            "End": "2023-06-19T22:00:00Z"
+        },
+        "Country": "Norway",
+        "Origin": "Cognite"
+    },
+    "ReserveBidTimeSeries": [
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 41.052372868387124,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-18T22:00:00Z",
+                        "End": "2023-06-18T23:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 8.195432497601946,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-18T23:00:00Z",
+                        "End": "2023-06-19T00:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 15.155461827060261,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building B",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T00:00:00Z",
+                        "End": "2023-06-19T01:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building B",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 8.201417450471151,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T01:00:00Z",
+                        "End": "2023-06-19T02:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 31.81226383045827,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T02:00:00Z",
+                        "End": "2023-06-19T03:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 33.822342213601694,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T03:00:00Z",
+                        "End": "2023-06-19T04:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 38.93055831149334,
+            "DirectionName": "DOWN",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T04:00:00Z",
+                        "End": "2023-06-19T05:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 12.60332012573029,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building B",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T05:00:00Z",
+                        "End": "2023-06-19T06:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building B",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 29.47446469834599,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T06:00:00Z",
+                        "End": "2023-06-19T07:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 35.017793235622044,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T07:00:00Z",
+                        "End": "2023-06-19T08:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 29.984254395559496,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T08:00:00Z",
+                        "End": "2023-06-19T09:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 50.14417800521143,
+            "DirectionName": "DOWN",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T09:00:00Z",
+                        "End": "2023-06-19T10:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 51.46249956296073,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T10:00:00Z",
+                        "End": "2023-06-19T11:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 41.45102899468372,
+            "DirectionName": "DOWN",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T11:00:00Z",
+                        "End": "2023-06-19T12:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 27.328481739233368,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T12:00:00Z",
+                        "End": "2023-06-19T13:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 47.860838538991636,
+            "DirectionName": "DOWN",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T13:00:00Z",
+                        "End": "2023-06-19T14:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 24.85820137040455,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T14:00:00Z",
+                        "End": "2023-06-19T15:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 40.442912902444846,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building B",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T15:00:00Z",
+                        "End": "2023-06-19T16:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building B",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 25.872911764252756,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T16:00:00Z",
+                        "End": "2023-06-19T17:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 41.131043874964895,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T17:00:00Z",
+                        "End": "2023-06-19T18:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 39.74586477601735,
+            "DirectionName": "DOWN",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T18:00:00Z",
+                        "End": "2023-06-19T19:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 26.34764112867321,
+            "DirectionName": "DOWN",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T19:00:00Z",
+                        "End": "2023-06-19T20:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 23.988758410410952,
+            "DirectionName": "DOWN",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T20:00:00Z",
+                        "End": "2023-06-19T21:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 23.705073694640646,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T21:00:00Z",
+                        "End": "2023-06-19T22:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 21.952271129797307,
+            "DirectionName": "UP",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-18T22:00:00Z",
+                        "End": "2023-06-18T23:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 44.546812868731806,
+            "DirectionName": "UP",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-18T23:00:00Z",
+                        "End": "2023-06-19T00:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 12.356836110182302,
+            "DirectionName": "UP",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T00:00:00Z",
+                        "End": "2023-06-19T01:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 10.305437087134708,
+            "DirectionName": "UP",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T01:00:00Z",
+                        "End": "2023-06-19T02:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 31.77756894317342,
+            "DirectionName": "UP",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T02:00:00Z",
+                        "End": "2023-06-19T03:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 33.41986217529528,
+            "DirectionName": "UP",
+            "ReserveObject": "building B",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T03:00:00Z",
+                        "End": "2023-06-19T04:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building B",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 36.20361533541686,
+            "DirectionName": "UP",
+            "ReserveObject": "building B",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T04:00:00Z",
+                        "End": "2023-06-19T05:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building B",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 41.945576418380476,
+            "DirectionName": "UP",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T05:00:00Z",
+                        "End": "2023-06-19T06:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 32.62977523407231,
+            "DirectionName": "UP",
+            "ReserveObject": "building B",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T06:00:00Z",
+                        "End": "2023-06-19T07:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building B",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 26.76769304331738,
+            "DirectionName": "UP",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T07:00:00Z",
+                        "End": "2023-06-19T08:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 50.89602897258536,
+            "DirectionName": "UP",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T08:00:00Z",
+                        "End": "2023-06-19T09:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 8.60979448555741,
+            "DirectionName": "UP",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T09:00:00Z",
+                        "End": "2023-06-19T10:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 21.821881659719175,
+            "DirectionName": "UP",
+            "ReserveObject": "building B",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T10:00:00Z",
+                        "End": "2023-06-19T11:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building B",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 50.42746625689196,
+            "DirectionName": "UP",
+            "ReserveObject": "building B",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T11:00:00Z",
+                        "End": "2023-06-19T12:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building B",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 19.682461446649736,
+            "DirectionName": "UP",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T12:00:00Z",
+                        "End": "2023-06-19T13:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 41.510124805373025,
+            "DirectionName": "UP",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T13:00:00Z",
+                        "End": "2023-06-19T14:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 32.843926868705545,
+            "DirectionName": "UP",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T14:00:00Z",
+                        "End": "2023-06-19T15:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 12.368625656806149,
+            "DirectionName": "UP",
+            "ReserveObject": "building B",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T15:00:00Z",
+                        "End": "2023-06-19T16:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building B",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 51.35681102800512,
+            "DirectionName": "UP",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T16:00:00Z",
+                        "End": "2023-06-19T17:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 45.61320210076021,
+            "DirectionName": "UP",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T17:00:00Z",
+                        "End": "2023-06-19T18:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 19.588172053746604,
+            "DirectionName": "UP",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T18:00:00Z",
+                        "End": "2023-06-19T19:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 42.47515812375943,
+            "DirectionName": "UP",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T19:00:00Z",
+                        "End": "2023-06-19T20:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 41.847012699966285,
+            "DirectionName": "UP",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T20:00:00Z",
+                        "End": "2023-06-19T21:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 40.94112787991134,
+            "DirectionName": "UP",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T21:00:00Z",
+                        "End": "2023-06-19T22:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 27.239859125429398,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-18T22:00:00Z",
+                        "End": "2023-06-18T23:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 30.51454179302946,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-18T23:00:00Z",
+                        "End": "2023-06-19T00:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 17.988940370203554,
+            "DirectionName": "DOWN",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T00:00:00Z",
+                        "End": "2023-06-19T01:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 24.241146611001305,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T01:00:00Z",
+                        "End": "2023-06-19T02:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 38.25699446189674,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building B",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T02:00:00Z",
+                        "End": "2023-06-19T03:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building B",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 50.388973031557285,
+            "DirectionName": "DOWN",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T03:00:00Z",
+                        "End": "2023-06-19T04:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 15.544604492261362,
+            "DirectionName": "DOWN",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T04:00:00Z",
+                        "End": "2023-06-19T05:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 21.514736861498186,
+            "DirectionName": "DOWN",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T05:00:00Z",
+                        "End": "2023-06-19T06:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 47.1223045756067,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T06:00:00Z",
+                        "End": "2023-06-19T07:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 18.704170120885415,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building B",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T07:00:00Z",
+                        "End": "2023-06-19T08:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building B",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 15.983107272726121,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T08:00:00Z",
+                        "End": "2023-06-19T09:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 46.90153356616513,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T09:00:00Z",
+                        "End": "2023-06-19T10:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 28.258039176523127,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T10:00:00Z",
+                        "End": "2023-06-19T11:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 9.436969845244235,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building B",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T11:00:00Z",
+                        "End": "2023-06-19T12:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building B",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 36.7368811620809,
+            "DirectionName": "DOWN",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T12:00:00Z",
+                        "End": "2023-06-19T13:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 8.165745340213421,
+            "DirectionName": "DOWN",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T13:00:00Z",
+                        "End": "2023-06-19T14:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 37.25315465444086,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T14:00:00Z",
+                        "End": "2023-06-19T15:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 27.595770771886336,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T15:00:00Z",
+                        "End": "2023-06-19T16:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 25.451619746724695,
+            "DirectionName": "DOWN",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T16:00:00Z",
+                        "End": "2023-06-19T17:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 9.607665333256136,
+            "DirectionName": "DOWN",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T17:00:00Z",
+                        "End": "2023-06-19T18:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 40.435816808072126,
+            "DirectionName": "DOWN",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T18:00:00Z",
+                        "End": "2023-06-19T19:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 32.26391232132584,
+            "DirectionName": "DOWN",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T19:00:00Z",
+                        "End": "2023-06-19T20:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 49.17616553199914,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building B",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T20:00:00Z",
+                        "End": "2023-06-19T21:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building B",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 45.301161041019625,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building B",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T21:00:00Z",
+                        "End": "2023-06-19T22:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building B",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 13.782194875939645,
+            "DirectionName": "UP",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-18T22:00:00Z",
+                        "End": "2023-06-18T23:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 30.796941396060866,
+            "DirectionName": "UP",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-18T23:00:00Z",
+                        "End": "2023-06-19T00:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 27.697225017837994,
+            "DirectionName": "UP",
+            "ReserveObject": "building B",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T00:00:00Z",
+                        "End": "2023-06-19T01:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building B",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 30.301658631286543,
+            "DirectionName": "UP",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T01:00:00Z",
+                        "End": "2023-06-19T02:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 33.906963994590164,
+            "DirectionName": "UP",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T02:00:00Z",
+                        "End": "2023-06-19T03:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 32.84416216666946,
+            "DirectionName": "UP",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T03:00:00Z",
+                        "End": "2023-06-19T04:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 43.40149001892529,
+            "DirectionName": "UP",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T04:00:00Z",
+                        "End": "2023-06-19T05:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 21.63165697234286,
+            "DirectionName": "UP",
+            "ReserveObject": "building B",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T05:00:00Z",
+                        "End": "2023-06-19T06:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building B",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 33.06103274164779,
+            "DirectionName": "UP",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T06:00:00Z",
+                        "End": "2023-06-19T07:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 19.925422156470667,
+            "DirectionName": "UP",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T07:00:00Z",
+                        "End": "2023-06-19T08:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 10.82344026649875,
+            "DirectionName": "UP",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T08:00:00Z",
+                        "End": "2023-06-19T09:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 18.00655468864324,
+            "DirectionName": "UP",
+            "ReserveObject": "building B",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T09:00:00Z",
+                        "End": "2023-06-19T10:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building B",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 22.955661946203243,
+            "DirectionName": "UP",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T10:00:00Z",
+                        "End": "2023-06-19T11:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 23.374122798227923,
+            "DirectionName": "UP",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T11:00:00Z",
+                        "End": "2023-06-19T12:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 41.97967968583207,
+            "DirectionName": "UP",
+            "ReserveObject": "building B",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T12:00:00Z",
+                        "End": "2023-06-19T13:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building B",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 39.63372554771224,
+            "DirectionName": "UP",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T13:00:00Z",
+                        "End": "2023-06-19T14:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 16.111510004965574,
+            "DirectionName": "UP",
+            "ReserveObject": "building B",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T14:00:00Z",
+                        "End": "2023-06-19T15:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building B",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 45.40473091892627,
+            "DirectionName": "UP",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T15:00:00Z",
+                        "End": "2023-06-19T16:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 45.18186751894037,
+            "DirectionName": "UP",
+            "ReserveObject": "building B",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T16:00:00Z",
+                        "End": "2023-06-19T17:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building B",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 17.481572869272,
+            "DirectionName": "UP",
+            "ReserveObject": "building B",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T17:00:00Z",
+                        "End": "2023-06-19T18:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building B",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 22.280653403966742,
+            "DirectionName": "UP",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T18:00:00Z",
+                        "End": "2023-06-19T19:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 19.13814084336184,
+            "DirectionName": "UP",
+            "ReserveObject": "building B",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T19:00:00Z",
+                        "End": "2023-06-19T20:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building B",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 34.14937027878943,
+            "DirectionName": "UP",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T20:00:00Z",
+                        "End": "2023-06-19T21:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 36.498675001717224,
+            "DirectionName": "UP",
+            "ReserveObject": "building B",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T21:00:00Z",
+                        "End": "2023-06-19T22:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building B",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 38.30812895281976,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building B",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-18T22:00:00Z",
+                        "End": "2023-06-18T23:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building B",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 20.487359035674675,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building B",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-18T23:00:00Z",
+                        "End": "2023-06-19T00:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building B",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 36.46675987463011,
+            "DirectionName": "DOWN",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T00:00:00Z",
+                        "End": "2023-06-19T01:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 45.75739194267806,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T01:00:00Z",
+                        "End": "2023-06-19T02:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 51.235797858246414,
+            "DirectionName": "DOWN",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T02:00:00Z",
+                        "End": "2023-06-19T03:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 20.870829162867274,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T03:00:00Z",
+                        "End": "2023-06-19T04:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 7.90669146176381,
+            "DirectionName": "DOWN",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T04:00:00Z",
+                        "End": "2023-06-19T05:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 28.274677819523994,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T05:00:00Z",
+                        "End": "2023-06-19T06:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 42.443541742736784,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building B",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T06:00:00Z",
+                        "End": "2023-06-19T07:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building B",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 32.852051673668186,
+            "DirectionName": "DOWN",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T07:00:00Z",
+                        "End": "2023-06-19T08:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 12.120674865886624,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building B",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T08:00:00Z",
+                        "End": "2023-06-19T09:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building B",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 27.354842037214148,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T09:00:00Z",
+                        "End": "2023-06-19T10:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 11.982680907703166,
+            "DirectionName": "DOWN",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T10:00:00Z",
+                        "End": "2023-06-19T11:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 47.385448905418805,
+            "DirectionName": "DOWN",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T11:00:00Z",
+                        "End": "2023-06-19T12:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 29.845466420306856,
+            "DirectionName": "DOWN",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T12:00:00Z",
+                        "End": "2023-06-19T13:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 30.383049120402667,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T13:00:00Z",
+                        "End": "2023-06-19T14:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 13.619030275416518,
+            "DirectionName": "DOWN",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T14:00:00Z",
+                        "End": "2023-06-19T15:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 46.95231192936676,
+            "DirectionName": "DOWN",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T15:00:00Z",
+                        "End": "2023-06-19T16:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 11.874374267431829,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T16:00:00Z",
+                        "End": "2023-06-19T17:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 13.988969833863578,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T17:00:00Z",
+                        "End": "2023-06-19T18:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 25.119553242397984,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T18:00:00Z",
+                        "End": "2023-06-19T19:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 11.45595493888438,
+            "DirectionName": "DOWN",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T19:00:00Z",
+                        "End": "2023-06-19T20:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 49.227936705138426,
+            "DirectionName": "DOWN",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T20:00:00Z",
+                        "End": "2023-06-19T21:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 49.85602039430509,
+            "DirectionName": "DOWN",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T21:00:00Z",
+                        "End": "2023-06-19T22:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 26.971332516288513,
+            "DirectionName": "UP",
+            "ReserveObject": "building B",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-18T22:00:00Z",
+                        "End": "2023-06-18T23:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building B",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 37.771724197678516,
+            "DirectionName": "UP",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-18T23:00:00Z",
+                        "End": "2023-06-19T00:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 41.605154241448176,
+            "DirectionName": "UP",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T00:00:00Z",
+                        "End": "2023-06-19T01:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 51.243456252607345,
+            "DirectionName": "UP",
+            "ReserveObject": "building B",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T01:00:00Z",
+                        "End": "2023-06-19T02:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building B",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 18.37346104074583,
+            "DirectionName": "UP",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T02:00:00Z",
+                        "End": "2023-06-19T03:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 34.63766132718927,
+            "DirectionName": "UP",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T03:00:00Z",
+                        "End": "2023-06-19T04:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 46.7227012695222,
+            "DirectionName": "UP",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T04:00:00Z",
+                        "End": "2023-06-19T05:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 50.72674013479218,
+            "DirectionName": "UP",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T05:00:00Z",
+                        "End": "2023-06-19T06:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 22.32094542656068,
+            "DirectionName": "UP",
+            "ReserveObject": "building B",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T06:00:00Z",
+                        "End": "2023-06-19T07:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building B",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 51.012445503600865,
+            "DirectionName": "UP",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T07:00:00Z",
+                        "End": "2023-06-19T08:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 22.72187953427678,
+            "DirectionName": "UP",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T08:00:00Z",
+                        "End": "2023-06-19T09:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 22.062596181410882,
+            "DirectionName": "UP",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T09:00:00Z",
+                        "End": "2023-06-19T10:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 31.596768422085695,
+            "DirectionName": "UP",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T10:00:00Z",
+                        "End": "2023-06-19T11:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 47.583956121536524,
+            "DirectionName": "UP",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T11:00:00Z",
+                        "End": "2023-06-19T12:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 50.60252269992803,
+            "DirectionName": "UP",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T12:00:00Z",
+                        "End": "2023-06-19T13:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 47.86425071329122,
+            "DirectionName": "UP",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T13:00:00Z",
+                        "End": "2023-06-19T14:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 22.276583194069232,
+            "DirectionName": "UP",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T14:00:00Z",
+                        "End": "2023-06-19T15:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 40.32834667863622,
+            "DirectionName": "UP",
+            "ReserveObject": "building B",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T15:00:00Z",
+                        "End": "2023-06-19T16:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building B",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 26.561693619125542,
+            "DirectionName": "UP",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T16:00:00Z",
+                        "End": "2023-06-19T17:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 24.900390977487753,
+            "DirectionName": "UP",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T17:00:00Z",
+                        "End": "2023-06-19T18:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 25.597753594599247,
+            "DirectionName": "UP",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T18:00:00Z",
+                        "End": "2023-06-19T19:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 29.724119210031596,
+            "DirectionName": "UP",
+            "ReserveObject": "building A",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T19:00:00Z",
+                        "End": "2023-06-19T20:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building A",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 48.43061171803337,
+            "DirectionName": "UP",
+            "ReserveObject": "aker tech house",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T20:00:00Z",
+                        "End": "2023-06-19T21:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "aker tech house",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "BidType": "aFRR",
+            "MeasureUnit": "MW",
+            "Currency": "EUR",
+            "Price": 20.136388860235392,
+            "DirectionName": "UP",
+            "ReserveObject": "building B",
+            "Periods": [
+                {
+                    "Resolution": "PT1H",
+                    "TimeInterval": {
+                        "Start": "2023-06-19T21:00:00Z",
+                        "End": "2023-06-19T22:00:00Z"
+                    },
+                    "BidCurves": [
+                        {
+                            "ReserveObject": "building B",
+                            "Qty": [
+                                20.0
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

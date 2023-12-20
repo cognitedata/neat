@@ -134,7 +134,6 @@ cdf_client:
   project: get-power-grid
   client_id: "623c2450-cfc2-43d6-9036-10e14dad8ccf"
   client_secret: "my-super-secret"
-  client_name: neat-test-service
   base_url: https://az-power-no-northeurope.cognitedata.com
   scopes:
     - https://az-power-no-northeurope.cognitedata.com/.default

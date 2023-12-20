@@ -13,9 +13,11 @@ from cognite.client import ClientConfig, CogniteClient
 from cognite.client.credentials import CredentialProvider, OAuthClientCredentials, OAuthInteractive, Token
 from cognite.client.exceptions import CogniteDuplicatedError, CogniteReadTimeout
 from pydantic_core import ErrorDetails
+from pyparsing import Any
 from rdflib import Literal, Namespace
 from rdflib.term import URIRef
 
+from cognite.neat import _version
 from cognite.neat.utils.cdf import CogniteClientConfig, InteractiveCogniteClient, ServiceCogniteClient
 
 if sys.version_info >= (3, 11):
@@ -54,9 +56,12 @@ def get_cognite_client_interactive(config: InteractiveCogniteClient) -> CogniteC
 
 def _get_cognite_client(config: CogniteClientConfig, credentials: CredentialProvider) -> CogniteClient:
     logging.info(f"Creating CogniteClient with parameters : {config}")
+
+    # The client name is used for aggregated logging of Neat Usage
+    client_name = f"CogniteNeat:{_version.__version__}"
     return CogniteClient(
         ClientConfig(
-            client_name=config.client_name,
+            client_name=client_name,
             base_url=config.base_url,
             project=config.project,
             credentials=credentials,
@@ -135,6 +140,17 @@ def get_namespace(URI: URIRef, special_separator: str = "#_") -> str:
         return URI.split("#")[0] + "#"
     else:
         return "/".join(URI.split("/")[:-1]) + "/"
+
+
+def convert_rdflib_content(content: Literal | URIRef | dict | list) -> Any:
+    if isinstance(content, Literal) or isinstance(content, URIRef):
+        return content.toPython()
+    elif isinstance(content, dict):
+        return {key: convert_rdflib_content(value) for key, value in content.items()}
+    elif isinstance(content, list):
+        return [convert_rdflib_content(item) for item in content]
+    else:
+        return content
 
 
 def uri_to_short_form(URI: URIRef, prefixes: dict[str, Namespace]) -> str | URIRef:
@@ -304,3 +320,7 @@ def _order_expectations_by_type(exceptions: list[dict] | list[ErrorDetails]) -> 
         else:
             exception_dict[exception["type"]].append(issue)
     return exception_dict
+
+
+def remove_none_elements_from_set(s):
+    return {x for x in s if x is not None}

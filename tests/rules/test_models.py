@@ -7,7 +7,7 @@ from cognite.neat.rules.models.rules import Classes, Metadata, Properties, Rules
 
 def tests_create_empty_rules():
     metadata = Metadata(
-        title="Dummy Title",
+        name="Dummy Title",
         description="A description",
         version="0_1",
         creator="Cognite",
@@ -25,4 +25,4 @@ def tests_create_empty_rules():
 
     # Assert
     # Main point is that the rules are created without errors
-    assert rules.metadata.title == "Dummy Title"
+    assert rules.metadata.name == "Dummy Title"

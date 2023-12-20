@@ -15,7 +15,6 @@ from rdflib import Graph, Literal, Namespace, URIRef
 from cognite.neat.constants import PREFIXES
 from cognite.neat.rules import exceptions
 from cognite.neat.rules.importer._base import BaseImporter
-from cognite.neat.rules.importer.owl2rules import _create_default_metadata_parsing_config
 from cognite.neat.rules.models.tables import Tables
 from cognite.neat.utils.utils import get_namespace, remove_namespace, uri_to_short_form
 
@@ -38,11 +37,7 @@ class GraphImporter(BaseImporter):
 
     """
 
-    def __init__(
-        self,
-        graph: Graph,
-        max_number_of_instance: int = -1,
-    ):
+    def __init__(self, graph: Graph, max_number_of_instance: int = -1):
         self.graph = graph
         self.max_number_of_instance = max_number_of_instance
 
@@ -79,45 +74,30 @@ def _create_default_properties_parsing_config() -> dict[str, tuple[str, ...]]:
 
 def _create_default_classes_parsing_config() -> dict[str, tuple[str, ...]]:
     # TODO: these are to be read from Class pydantic model
-    return {
-        "header": (
-            "Class",
-            "Description",
-            "Parent Class",
-            "Source",
-            "Source Entity Name",
-            "Match Type",
-            "Comment",
-        )
-    }
+    return {"header": ("Class", "Description", "Parent Class", "Source", "Source Entity Name", "Match Type", "Comment")}
 
 
 def _parse_prefixes_df(prefixes: dict[str, Namespace]) -> pd.DataFrame:
     return pd.DataFrame.from_dict({"Prefix": list(prefixes.keys()), "URI": [str(uri) for uri in prefixes.values()]})
 
 
-def _parse_metadata_df(parsing_config: dict | None = None) -> pd.DataFrame:
-    if parsing_config is None:
-        parsing_config = _create_default_metadata_parsing_config()
-
-    default_values = (
-        "http://purl.org/cognite/neat/",
-        "neat",
-        "neat",
-        "playground",
-        "0.0.1",
-        True,
-        datetime.utcnow(),
-        datetime.utcnow(),
-        "RDF Graph Data Model",
-        "Data model parsed from RDF graph using neat",
-        "NEAT",
-        "NEAT",
-        "Unknown rights of usage",
-        "Unknown license",
-    )
-
-    return pd.DataFrame([parsing_config["header"], default_values]).T
+def _parse_metadata_df() -> pd.DataFrame:
+    clean_list = {
+        "namespace": "http://purl.org/cognite/neat/",
+        "prefix": "playground",
+        "external_id": "neat",
+        "version": "1.0.0",
+        "isCurrentVersion": True,
+        "created": datetime.utcnow(),
+        "updated": datetime.utcnow(),
+        "title": "RDF Graph Inferred Data Model",
+        "description": "This data model has been inferred with NEAT",
+        "creator": "NEAT",
+        "contributor": "NEAT",
+        "rights": "Unknown rights of usage",
+        "license": "Unknown license",
+    }
+    return pd.DataFrame(list(clean_list.items()), columns=["Key", "Value"])
 
 
 def _parse_classes_df(data_model: dict, prefixes: dict, parsing_config: dict | None = None) -> pd.DataFrame:
@@ -239,8 +219,7 @@ def _graph_to_data_model_dict(graph: Graph, max_number_of_instance: int = -1) ->
 
                     warnings.warn(
                         exceptions.GraphClassPropertyMultiOccurrence(
-                            class_name=class_name,
-                            property_name=property_name,
+                            class_name=class_name, property_name=property_name
                         ).message,
                         category=exceptions.GraphClassPropertyMultiOccurrence,
                         stacklevel=3,

@@ -12,7 +12,8 @@ else:
 from cognite.neat.rules import exceptions
 from cognite.neat.rules.analysis import to_class_property_pairs
 from cognite.neat.rules.exporter._validation import are_entity_names_dms_compliant, are_properties_redefined
-from cognite.neat.rules.models.rules import DATA_TYPE_MAPPING, Rules
+from cognite.neat.rules.models.rules import Rules
+from cognite.neat.rules.value_types import XSD_VALUE_TYPE_MAPPINGS
 from cognite.neat.utils.utils import generate_exception_report
 
 from ._base import BaseExporter
@@ -92,9 +93,9 @@ _EDGE_OCCURRENCE = (
     "{%- endif -%}"
 )
 
-_FIELD_VALUE_TYPE = """{{value_type_mapping[property_definition.expected_value_type]['GraphQL']
-                if property_definition.expected_value_type in value_type_mapping
-                else property_definition.expected_value_type}}"""
+_FIELD_VALUE_TYPE = """{{property_definition.expected_value_type.mapping.graphql
+                if property_definition.expected_value_type.suffix in value_type_mapping
+                else property_definition.expected_value_type.suffix}}"""
 
 
 @dataclass
@@ -153,7 +154,7 @@ class GraphQLSchema:
             parameters = {
                 "class_definition": transformation_rules.classes[class_id],
                 "class_properties": list(class_properties[class_id].values()),
-                "value_type_mapping": DATA_TYPE_MAPPING,
+                "value_type_mapping": XSD_VALUE_TYPE_MAPPINGS,
                 "header": verbose,
             }
 

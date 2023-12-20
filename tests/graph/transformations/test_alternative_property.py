@@ -23,6 +23,7 @@ def test_missing_name(source_knowledge_graph, transformation_rules):
     assets = rdf2assets(
         NeatGraphStore(tnt_knowledge_graph),
         transformation_rules,
+        data_set_id=123456,
     )
 
     assert assets[no_name_id]["name"] == no_name_id
@@ -53,6 +54,7 @@ def test_alias_name(source_knowledge_graph, transformation_rules):
     assets = rdf2assets(
         NeatGraphStore(tnt_knowledge_graph),
         transformation_rules,
+        data_set_id=123456,
     )
 
     assert assets[only_alias_name_id]["name"] == "Terminal Alias Name"
@@ -75,6 +77,7 @@ def test_all_name_property(source_knowledge_graph, transformation_rules):
     assets = rdf2assets(
         NeatGraphStore(tnt_knowledge_graph),
         transformation_rules,
+        data_set_id=123456,
     )
 
     assert assets[all_names_id]["name"] == "T2"

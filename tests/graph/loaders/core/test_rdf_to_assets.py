@@ -13,7 +13,7 @@ from cognite.neat.graph.loaders.core.rdf_to_assets import (
     order_assets,
     remove_non_existing_labels,
 )
-from cognite.neat.rules.exporter.core.rules2labels import get_labels
+from cognite.neat.rules.exporter._core.rules2labels import get_labels
 
 
 def test_asset_hierarchy_ordering(mock_rdf_assets):
@@ -25,7 +25,7 @@ def test_asset_hierarchy_ordering(mock_rdf_assets):
         "Substation-0",
         "Terminal-0",
         "Terminal-1",
-        "orphanage-2626756768281823",
+        "orphanage-123456",
     ]
 
 
@@ -41,7 +41,7 @@ def test_asset_hierarchy_ordering_orphan(mock_rdf_assets):
         "SubGeographicalRegion-0",
         "Terminal-0",
         "Terminal-1",
-        "orphanage-2626756768281823",
+        "orphanage-123456",
     ]
 
 
@@ -70,7 +70,7 @@ def test_asset_diffing(mock_rdf_assets, mock_cdf_assets, transformation_rules):
 
     with monkeypatch_cognite_client() as client_mock:
 
-        def list_assets(data_set_ids: int = 2626756768281823, limit: int = -1, labels=None, **_):
+        def list_assets(data_set_ids: int = 123456, limit: int = -1, labels=None, **_):
             labels = labels or LabelFilter(contains_any=["non-historic"])
             if labels == LabelFilter(contains_any=["non-historic"]):
                 return AssetList([Asset(**asset) for asset in cdf_assets.values()])
@@ -84,9 +84,7 @@ def test_asset_diffing(mock_rdf_assets, mock_cdf_assets, transformation_rules):
         client_mock.assets.list = list_assets
         client_mock.labels.list = list_labels
 
-    categorized_assets, report = categorize_assets(
-        client_mock, rdf_assets, transformation_rules.metadata.data_set_id, return_report=True
-    )
+    categorized_assets, report = categorize_assets(client_mock, rdf_assets, data_set_id=123456, return_report=True)
     assert len(categorized_assets["create"]) == 1
     assert len(report["create"]) == 1
     assert create_id == categorized_assets["create"][0].external_id
@@ -182,10 +180,7 @@ def test_assets_to_update(mock_rdf_assets, mock_cdf_assets):
     cdf_assets_df = pd.DataFrame.from_records([asset for asset in cdf_assets.values()])
 
     assets, report = _assets_to_update(
-        rdf_assets=rdf_assets,
-        cdf_assets=cdf_assets_df,
-        asset_ids=rdf_asset_ids,
-        meta_keys=NeatMetadataKeys(),
+        rdf_assets=rdf_assets, cdf_assets=cdf_assets_df, asset_ids=rdf_asset_ids, meta_keys=NeatMetadataKeys()
     )
 
     expected_report = {

@@ -93,7 +93,7 @@ def get_class_linkage(transformation_rules: Rules) -> pd.DataFrame:
             new_row = pd.Series(
                 {
                     "source_class": property_.class_id,
-                    "target_class": property_.expected_value_type,
+                    "target_class": property_.expected_value_type.suffix,
                     "connecting_property": property_.property_id,
                     "max_occurrence": property_.max_count,
                     "linking_type": "hierarchy" if property_.resource_type_property else "relationship",

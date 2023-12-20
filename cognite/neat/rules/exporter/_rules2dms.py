@@ -10,6 +10,8 @@ from typing import ClassVar, Literal, cast
 
 import yaml
 
+from cognite.neat.rules.value_types import ValueTypeMapping
+
 if sys.version_info >= (3, 11):
     from typing import Self
 else:
@@ -43,7 +45,6 @@ from cognite.neat.rules.analysis import to_class_property_pairs
 from cognite.neat.rules.exporter._base import BaseExporter
 from cognite.neat.rules.exporter._validation import are_entity_names_dms_compliant, are_properties_redefined
 from cognite.neat.rules.models.rules import Property, Rules
-from cognite.neat.rules.type_mapping import DATA_TYPE_MAPPING
 from cognite.neat.utils.utils import generate_exception_report
 
 
@@ -62,22 +63,29 @@ class DMSExporter(BaseExporter[DMSSchema]):
         container_policy: How to create/reuse existing containers.
         existing_model: In the case of updating an existing model, this is the existing model.
         report: Report. This is used when the exporter object is created from RawRules
+
+    !!! note "Container policy"
+        Here is more information about the different container policies:
+        - `create`: assumes no containers exist in CDF, will attempt to create them
+        - `reuse`: assumes containers exists in CDF, will attempt to only re-use them
+        - `extend`: will re-use existing, extend and/or create only missing containers
+        - `optimize`: create containers of size's prescribed by NEAT's optimization algorithm
     """
 
     def __init__(
         self,
         rules: Rules,
         data_model_id: dm.DataModelId | None = None,
-        container_policy: Literal["one-to-one-view", "extend-existing", "neat-optimized"] = "one-to-one-view",
+        container_policy: Literal["create", "reuse", "extend", "optimize"] = "create",
         existing_model: dm.DataModel[dm.View] | None = None,
         report: str | None = None,
     ):
         super().__init__(rules, report)
         self.data_model_id = data_model_id
         self.container_policy = container_policy
-        if container_policy == "extend-existing" and existing_model is None:
+        if container_policy == "extend" and existing_model is None:
             raise ValueError("Container policy is extend-existing, but no existing model is provided")
-        if container_policy != "one-to-one-view":
+        if container_policy != "create":
             raise NotImplementedError("Only one-to-one-view container policy is currently supported")
         self.existing_model = existing_model
 
@@ -153,9 +161,18 @@ class DataModel(BaseModel):
         Returns:
             Instance of DataModel.
         """
-        space = (data_model_id and data_model_id.space) or rules.metadata.cdf_space_name
-        external_id = (data_model_id and data_model_id.external_id) or rules.metadata.data_model_name or "missing"
-        version = (data_model_id and data_model_id.version) or rules.metadata.version
+        if data_model_id and data_model_id.space:
+            # update prefix in rules to match space
+            rules.update_prefix(data_model_id.space)
+
+        if data_model_id and data_model_id.version:
+            # update version in rules to match version
+            rules.update_version(data_model_id.version)
+
+        if data_model_id and data_model_id.external_id:
+            # update data model name to match external_id
+            rules.metadata.suffix = data_model_id.external_id
+
         names_compliant, name_warnings = are_entity_names_dms_compliant(rules, return_report=True)
         if not names_compliant:
             logging.error(
@@ -172,18 +189,18 @@ class DataModel(BaseModel):
             )
             raise exceptions.PropertiesDefinedMultipleTimes(report=generate_exception_report(redefinition_warnings))
 
-        if rules.metadata.data_model_name is None:
-            logging.error(exceptions.DataModelNameMissing(prefix=rules.metadata.prefix).message)
-            raise exceptions.DataModelNameMissing(prefix=rules.metadata.prefix)
+        if rules.metadata.external_id is None:
+            logging.error(exceptions.DataModelIdMissing(prefix=rules.metadata.space).message)
+            raise exceptions.DataModelIdMissing(prefix=rules.metadata.space)
 
         return cls(
-            space=space,
-            external_id=external_id,
-            version=version,
+            space=rules.metadata.space,
+            external_id=rules.metadata.external_id,
+            version=rules.metadata.version,
             description=rules.metadata.description,
-            name=rules.metadata.title,
-            containers=cls.containers_from_rules(rules, space),
-            views=cls.views_from_rules(rules, space),
+            name=rules.metadata.name,
+            containers=cls.containers_from_rules(rules),
+            views=cls.views_from_rules(rules),
         )
 
     @staticmethod
@@ -197,10 +214,14 @@ class DataModel(BaseModel):
         Returns:
             Dictionary of ContainerApply instances.
         """
+
+        if space:
+            rule.update_prefix(space)
+
         class_properties = to_class_property_pairs(rule)
         return {
             class_id: ContainerApply(
-                space=space or rule.metadata.cdf_space_name,
+                space=rule.metadata.space,
                 external_id=class_id,
                 name=rule.classes[class_id].class_name,
                 description=rule.classes[class_id].description,
@@ -221,18 +242,23 @@ class DataModel(BaseModel):
         """
         container_properties = {}
         for property_id, property_definition in properties.items():
+            is_one_to_many = property_definition.max_count != 1
             # Literal, i.e. attribute
             if property_definition.property_type == "DatatypeProperty":
                 property_type = cast(
-                    type[ListablePropertyType], DATA_TYPE_MAPPING[property_definition.expected_value_type]["dms"]
+                    type[ListablePropertyType],
+                    cast(ValueTypeMapping, property_definition.expected_value_type.mapping).dms,
                 )
                 container_properties[property_id] = ContainerProperty(
-                    type=property_type(is_list=property_definition.max_count != 1),
+                    type=property_type(is_list=is_one_to_many),
                     nullable=property_definition.min_count == 0,
                     default_value=property_definition.default,
                     name=property_definition.property_name,
                     description=property_definition.description,
                 )
+            elif property_definition.property_type == "ObjectProperty" and is_one_to_many:
+                # One to many edges are only in views and not containers.
+                continue
 
             # URIRef, i.e. edge
             elif property_definition.property_type == "ObjectProperty":
@@ -242,6 +268,7 @@ class DataModel(BaseModel):
                     name=property_definition.property_name,
                     description=property_definition.description,
                 )
+
             else:
                 logging.warning(
                     exceptions.ContainerPropertyTypeUnsupported(property_id, property_definition.property_type).message
@@ -265,15 +292,17 @@ class DataModel(BaseModel):
         Returns:
             Dictionary of ViewApply instances.
         """
+        if space:
+            rule.update_prefix(space)
         class_properties = to_class_property_pairs(rule)
-        space = space or rule.metadata.cdf_space_name
+
         return {
             class_id: ViewApply(
-                space=space,
+                space=rule.metadata.space,
                 external_id=class_id,
                 name=rule.classes[class_id].class_name,
                 description=rule.classes[class_id].description,
-                properties=DataModel.view_properties_from_dict(properties, space, rule.metadata.version),
+                properties=DataModel.view_properties_from_dict(properties, rule.metadata.space),
                 version=rule.metadata.version,
             )
             for class_id, properties in class_properties.items()
@@ -281,7 +310,7 @@ class DataModel(BaseModel):
 
     @staticmethod
     def view_properties_from_dict(
-        properties: dict[str, Property], space: str, version: str
+        properties: dict[str, Property], space: str
     ) -> dict[str, MappedPropertyApply | ConnectionDefinitionApply]:
         view_properties: dict[str, MappedPropertyApply | ConnectionDefinitionApply] = {}
         for property_id, property_definition in properties.items():
@@ -294,14 +323,21 @@ class DataModel(BaseModel):
                     description=property_definition.description,
                 )
 
-            # edge 1-1
+            # edge 1-1 == directRelation
             elif property_definition.property_type == "ObjectProperty" and property_definition.max_count == 1:
                 view_properties[property_id] = MappedPropertyApply(
                     container=ContainerId(space=space, external_id=property_definition.class_id),
                     container_property_identifier=property_id,
                     name=property_definition.property_name,
                     description=property_definition.description,
-                    source=ViewId(space=space, external_id=property_definition.expected_value_type, version=version),
+                    source=ViewId(
+                        # prefix maps to space
+                        space=property_definition.expected_value_type.space,
+                        # suffix maps to external_id
+                        external_id=property_definition.expected_value_type.external_id,
+                        # version to version
+                        version=property_definition.expected_value_type.version,
+                    ),
                 )
 
             # edge 1-many
@@ -310,7 +346,15 @@ class DataModel(BaseModel):
                     type=DirectRelationReference(
                         space=space, external_id=f"{property_definition.class_id}.{property_definition.property_id}"
                     ),
-                    source=ViewId(space=space, external_id=property_definition.expected_value_type, version=version),
+                    # Here we create ViewID to the container that the edge is pointing to.
+                    source=ViewId(
+                        # prefix maps to space
+                        space=property_definition.expected_value_type.space,
+                        # suffix maps to external_id
+                        external_id=property_definition.expected_value_type.external_id,
+                        # version to version
+                        version=property_definition.expected_value_type.version,
+                    ),
                     direction="outwards",
                     name=property_definition.property_name,
                     description=property_definition.description,

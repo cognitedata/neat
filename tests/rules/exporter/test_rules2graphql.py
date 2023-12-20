@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from cognite.neat.rules.exceptions import EntitiesContainNonDMSCompliantCharacters
-from cognite.neat.rules.exporter.rules2graphql import GraphQLSchemaExporter
+from cognite.neat.rules.exporter._rules2graphql import GraphQLSchemaExporter
 
 
 def test_rules2graphql(simple_rules, grid_graphql_schema, tmp_path: Path):

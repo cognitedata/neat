@@ -7,9 +7,9 @@ from typing import ClassVar
 import cognite.neat.graph.extractors.graph_sheet_to_graph
 from cognite.neat.exceptions import wrangle_warnings
 from cognite.neat.rules import exporter
-from cognite.neat.rules.exporter.rules2dms import DataModel
-from cognite.neat.rules.exporter.rules2graphql import GraphQLSchema
-from cognite.neat.rules.exporter.rules2ontology import Ontology
+from cognite.neat.rules.exporter._rules2dms import DataModel
+from cognite.neat.rules.exporter._rules2graphql import GraphQLSchema
+from cognite.neat.rules.exporter._rules2ontology import Ontology
 from cognite.neat.utils.utils import generate_exception_report
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage
@@ -145,7 +145,7 @@ class GraphQLSchemaFromRules(Step):
         output_text = (
             "<p></p>"
             "GraphQL Schema generated and can be downloaded here : "
-            f'<a href="http://localhost:8000/data/{staging_dir_str}/{schema_name}?{time.time()}" '
+            f'<a href="/data/{staging_dir_str}/{schema_name}?{time.time()}" '
             f'target="_blank">{schema_name}</a>'
         )
 
@@ -208,7 +208,7 @@ class OntologyFromRules(Step):
         output_text = (
             "<p></p>"
             "Ontology generated and can be downloaded here : "
-            f'<a href="http://localhost:8000/data/{storage_dir_str}/{ontology_file}?{time.time()}" '
+            f'<a href="/data/{storage_dir_str}/{ontology_file}?{time.time()}" '
             f'target="_blank">{ontology_file}</a>'
         )
 
@@ -216,7 +216,7 @@ class OntologyFromRules(Step):
             (
                 "<p></p>"
                 " Download conversion report "
-                f'<a href="http://localhost:8000/data/{storage_dir_str}/report.txt?{time.time()}" '
+                f'<a href="/data/{storage_dir_str}/report.txt?{time.time()}" '
                 f'target="_blank">here</a>'
             )
             if validation_warnings
@@ -269,7 +269,7 @@ class SHACLFromRules(Step):
         output_text = (
             "<p></p>"
             "SHACL generated and can be downloaded here : "
-            f'<a href="http://localhost:8000/data/{storage_dir_str}/{shacl_file}?{time.time()}" '
+            f'<a href="/data/{storage_dir_str}/{shacl_file}?{time.time()}" '
             f'target="_blank">{shacl_file}</a>'
         )
         return FlowMessage(output_text=output_text)
@@ -306,7 +306,7 @@ class GraphCaptureSpreadsheetFromRules(Step):
 
         output_text = (
             "Data capture sheet generated and can be downloaded here : "
-            f'<a href="http://localhost:8000/data/{staging_dir_str}/{sheet_name}?{time.time()}" target="_blank">'
+            f'<a href="/data/{staging_dir_str}/{sheet_name}?{time.time()}" target="_blank">'
             f"{sheet_name}</a>"
         )
         return FlowMessage(output_text=output_text)

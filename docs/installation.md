@@ -1,17 +1,15 @@
-# Getting Started
-
-## Installation
+# Installation
 `neat` is distributed as a Python package and as a docker image. These two distributions have different use cases:
 
 * **Running in production**: `Docker`. This ensures that you have the correct version of all `neat` dependencies.
 * **Experimenting**: `Python` or `Docker` whichever you are the most comfortable.
 * **Developing custom workflows**: `Python` this enables you to import parts of `neat` to use in your workflow.
 
-### Docker
+## Docker
 
 **Prerequisites**: Installed Docker, see [docker.com](https://docs.docker.com/get-docker/) for installation instructions.
 
-#### Run latest `neat` version from Docker Hub
+### Run latest `neat` version from Docker Hub
 
 ``` bash
 docker run -p 8000:8000 --name neat cognite/neat:latest
@@ -36,7 +34,7 @@ docker run -p 8000:8000 --name neat -v /tmp/neat-data:/app/data  cognite/neat:la
 Open `neat` in your browser: [http://localhost:8000](http://localhost:8000)
 
 
-### Python package
+## Python package
 
 **Prerequisites**: Installed Python 3.11, see [python.org](https://www.python.org/downloads/)
 
@@ -86,7 +84,7 @@ Open `neat` in your browser: [http://localhost:8000](http://localhost:8000)
     ```
 
 
-## Configuration
+# Configuration
 
 `neat` has a global configuration which most importantly contains the credentials for connecting to CDF. In addition,
 it also controls behavior such as logging, and storing and downloading of workflows.
@@ -138,7 +136,7 @@ to use the configuration file.
 
 
 
-### File `config.yaml`
+## File `config.yaml`
 
 When `neat` starts up it looks for `config.yaml` in the directory you start up. You can control the location
 of this file with the environmental variable `NEAT_CONFIG_PATH`.
@@ -150,7 +148,6 @@ cdf_client:
     project: get-power-grid
     client_id: ca4b8f9c6-7d6e-4d7b-9cf3-6d4a32f8b7e1
     client_secret: Zy7!nM4cFp9sH3gR6tB8kL0oP7eU6wD5vQ4zN9yF
-    client_name: neat-test-service
     base_url: https://az-power-no-northeurope.cognitedata.com
     scopes:
       - https://az-power-no-northeurope.cognitedata.com/.default
@@ -166,11 +163,11 @@ workflow_downloader_filter:
 log_level: DEBUG
 ```
 
-### Environment
+## Environment
 You can load the configuration from the environment instead of file by setting the environmental variable
 `NEAT_CDF_PROJECT`. If this environment variable exists, then all the rest of the configuration
 
-### Configuration Variables
+## Configuration Variables
 
 | `yaml` Variable Name       | ENV variable name               | Description                                                    | Example                                                                                  |
 |----------------------------|---------------------------------|----------------------------------------------------------------|------------------------------------------------------------------------------------------|

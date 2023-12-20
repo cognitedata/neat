@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import TypeAlias
 
 import pandas as pd
-import pyoxigraph
 import requests
 from prometheus_client import Gauge, Summary
 from rdflib import Graph, Literal, Namespace
@@ -17,9 +16,9 @@ from rdflib.term import URIRef
 
 from cognite.neat.constants import DEFAULT_NAMESPACE, PREFIXES
 from cognite.neat.graph.extractors.rdf_to_graph import rdf_file_to_graph
-from cognite.neat.graph.stores import oxrdflib
 from cognite.neat.graph.stores.configuration import RdfStoreType
 from cognite.neat.rules.models.rules import Rules
+from cognite.neat.utils.auxiliary import local_import
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -126,6 +125,11 @@ class NeatGraphStore:
             self.graph = Graph()
         elif self.rdf_store_type == RdfStoreType.OXIGRAPH:
             logging.info("Initializing Oxigraph store")
+            local_import("pyoxigraph", "oxi")
+            import pyoxigraph
+
+            from cognite.neat.graph.stores import oxrdflib
+
             # Adding support for both in-memory and file-based storage
             for i in range(4):
                 try:

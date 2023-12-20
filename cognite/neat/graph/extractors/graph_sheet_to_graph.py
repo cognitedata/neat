@@ -16,7 +16,7 @@ from rdflib import RDF, XSD, Literal, Namespace
 from cognite.neat.graph import exceptions
 from cognite.neat.graph.exceptions import NamespaceRequired
 from cognite.neat.rules.analysis import get_defined_classes, to_class_property_pairs
-from cognite.neat.rules.exporter.rules2rules import to_dms_name
+from cognite.neat.rules.exporter._rules2rules import to_dms_name
 from cognite.neat.rules.models.rules import Rules
 
 
@@ -167,7 +167,7 @@ def sheet2triples(
                         (
                             instance_namespace[row.identifier],
                             model_namespace[property_name],
-                            Literal(v.strip(), datatype=XSD[property_.expected_value_type]),
+                            Literal(v.strip(), datatype=XSD[property_.expected_value_type.suffix]),
                         )
                         for v in values
                     )
@@ -279,7 +279,7 @@ def rules2graph_capturing_sheet(
         for i, property_ in enumerate(properties.values()):
             if property_.property_type == "ObjectProperty" and add_drop_down_list:
                 _add_drop_down_list(
-                    workbook, class_, get_column_letter(i + 2), no_rows, property_.expected_value_type, "A"
+                    workbook, class_, get_column_letter(i + 2), no_rows, property_.expected_value_type.suffix, "A"
                 )
 
     _adjust_column_width(workbook)

@@ -4,7 +4,6 @@ from pydantic import BaseModel, field_validator
 class CogniteClientConfig(BaseModel):
     project: str = "dev"
     client_id: str = "neat"
-    client_name: str = "neat"
     base_url: str = "https://api.cognitedata.com"
     scopes: list[str] = ["project:read", "project:write"]
     timeout: int = 60

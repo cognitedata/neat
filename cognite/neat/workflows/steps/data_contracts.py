@@ -5,7 +5,7 @@ from cognite.client.data_classes import Asset, AssetUpdate, Relationship, Relati
 from cognite.client.data_classes.data_modeling import EdgeApply, NodeApply
 
 from cognite.neat.graph.stores import NeatGraphStore
-from cognite.neat.rules.exporter.rules2dms import DataModel
+from cognite.neat.rules.exporter._rules2dms import DataModel
 from cognite.neat.rules.models.rules import Rules
 from cognite.neat.workflows.steps.step_model import DataContract
 
@@ -19,10 +19,6 @@ class RulesData(DataContract):
     """
 
     rules: Rules
-
-    @property
-    def dataset_id(self) -> int:
-        return self.rules.metadata.data_set_id or 0
 
 
 class PathData(DataContract):

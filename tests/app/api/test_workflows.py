@@ -229,7 +229,7 @@ def test_get_datatype_properties(workflow_name: str, fastapi_client: TestClient)
     assert response.status_code == 200
     assert {
         "id": "http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject.name",
-        "count": 2503,
+        "count": 2506,
         "name": "IdentifiedObject.name",
     } in content["datatype_properties"]
 

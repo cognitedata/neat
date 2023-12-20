@@ -15,6 +15,7 @@ SIMPLE_TRANSFORMATION_RULES_DATES = TEST_FOLDER / "data" / "sheet2cdf-transforma
 
 # Example graph files
 NORDIC44_KNOWLEDGE_GRAPH = PACKAGE_DIRECTORY / "graph" / "examples" / "Knowledge-Graph-Nordic44.xml"
+NORDIC44_KNOWLEDGE_GRAPH_DIRTY = PACKAGE_DIRECTORY / "graph" / "examples" / "Knowledge-Graph-Nordic44-dirty.xml"
 
 GRAPH_CAPTURING_SHEET = DATA_FOLDER / "sheet2cdf-graph-capturing.xlsx"
 WIND_ONTOLOGY = DATA_FOLDER / "wind-energy.owl"

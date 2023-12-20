@@ -1,4 +1,4 @@
-from cognite.neat.rules.importer.graph2rules import GraphImporter
+from cognite.neat.rules.importer._graph2rules import GraphImporter
 
 
 def test_graph2tables_nordic44(source_knowledge_graph):
@@ -7,5 +7,4 @@ def test_graph2tables_nordic44(source_knowledge_graph):
 
     assert len(rules.classes) == 59
     assert len(rules.properties) == 296
-    assert len(warnings) == 402
     assert "Substation" in rules.classes

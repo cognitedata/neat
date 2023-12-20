@@ -2,7 +2,6 @@ cdf_client:
     project: get-power-grid
     client_id: ca4b8f9c6-7d6e-4d7b-9cf3-6d4a32f8b7e1
     client_secret: Zy7!nM4cFp9sH3gR6tB8kL0oP7eU6wD5vQ4zN9yF
-    client_name: neat-test-service
     base_url: https://az-power-no-northeurope.cognitedata.com
     scopes:
       - https://az-power-no-northeurope.cognitedata.com/.default

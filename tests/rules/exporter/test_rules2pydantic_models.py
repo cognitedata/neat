@@ -4,8 +4,8 @@ from rdflib import URIRef
 from yaml import safe_load
 
 from cognite.neat.rules import examples, exceptions
-from cognite.neat.rules.exporter.rules2pydantic_models import rules_to_pydantic_models
-from cognite.neat.rules.importer.dms2rules import DMSImporter
+from cognite.neat.rules.exporter._rules2pydantic_models import rules_to_pydantic_models
+from cognite.neat.rules.importer._dms2rules import DMSImporter
 
 
 def test_rules2pydantic_models(dms_compliant_rules, source_knowledge_graph):
@@ -22,12 +22,9 @@ def test_rules2pydantic_models(dms_compliant_rules, source_knowledge_graph):
 
     assert instance.external_id == "2dd9019e-bdfb-11e5-94fa-c8f73332c8f4"
     assert instance.name == "ARENDAL 300 A T1"
-    assert instance.class_to_asset_mapping == {
-        "metadata": ["mRID"],
-        "name": ["name", "aliasName"],
-    }
+    assert instance.class_to_asset_mapping == {"metadata": ["mRID"], "name": ["name", "aliasName"]}
 
-    asset = instance.to_asset()
+    asset = instance.to_asset(data_set_id=123456)
 
     assert asset.name == "ARENDAL 300 A T1"
     assert asset.metadata["type"] == "Terminal"
@@ -56,8 +53,8 @@ def test_views2pydantic_models(dms_compliant_rules, source_knowledge_graph):
 
     node = instance.to_node()
     assert node.external_id == "2dd9019e-bdfb-11e5-94fa-c8f73332c8f4"
-    assert node.space == "playground"
+    assert node.space == "neat"
 
     # there is no class_to_asset_mapping defined for this view so it should fail
     with pytest.raises(exceptions.ClassToAssetMappingNotDefined):
-        _ = instance.to_asset()
+        _ = instance.to_asset(data_set_id=123456)

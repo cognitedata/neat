@@ -11,7 +11,7 @@ from cognite.neat.graph.extractors.mocks import generate_triples
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.graph.transformations.transformer import domain2app_knowledge_graph
 from cognite.neat.rules import importer
-from cognite.neat.rules.exporter.rules2triples import get_instances_as_triples
+from cognite.neat.rules.exporter._rules2triples import get_instances_as_triples
 from cognite.neat.rules.models.rules import Rules
 from tests import config
 
@@ -110,6 +110,21 @@ def source_knowledge_graph():
 
 
 @pytest.fixture(scope="session")
+def source_knowledge_graph_dirty(transformation_rules):
+    graph = NeatGraphStore(namespace=Namespace("http://purl.org/nordic44#"))
+    graph.init_graph()
+    graph.import_from_file(config.NORDIC44_KNOWLEDGE_GRAPH_DIRTY)
+    for triple in get_instances_as_triples(transformation_rules):
+        graph.graph.add(triple)
+    return graph
+
+
+@pytest.fixture(scope="session")
+def solution_knowledge_graph_dirty(source_knowledge_graph_dirty, transformation_rules):
+    return domain2app_knowledge_graph(source_knowledge_graph_dirty, transformation_rules)
+
+
+@pytest.fixture(scope="session")
 def solution_knowledge_graph(source_knowledge_graph, transformation_rules):
     return domain2app_knowledge_graph(source_knowledge_graph, transformation_rules)
 
@@ -137,12 +152,12 @@ def mock_knowledge_graph(transformation_rules):
 
 @pytest.fixture(scope="function")
 def mock_rdf_assets(mock_knowledge_graph, transformation_rules):
-    return loaders.rdf2assets(mock_knowledge_graph, transformation_rules)
+    return loaders.rdf2assets(mock_knowledge_graph, transformation_rules, data_set_id=123456)
 
 
 @pytest.fixture(scope="function")
 def mock_cdf_assets(mock_knowledge_graph, transformation_rules):
-    return loaders.rdf2assets(mock_knowledge_graph, transformation_rules)
+    return loaders.rdf2assets(mock_knowledge_graph, transformation_rules, data_set_id=123456)
 
 
 @pytest.fixture(scope="function")

@@ -16,7 +16,7 @@ from cognite.client.data_classes.data_modeling.data_types import ListablePropert
 from cognite.client.data_classes.data_modeling.ids import DataModelIdentifier, ViewId
 
 from cognite.neat.rules.models.tables import Tables
-from cognite.neat.rules.type_mapping import DMS_TO_DATA_TYPE
+from cognite.neat.rules.value_types import DMS_VALUE_TYPE_MAPPINGS, XSD_VALUE_TYPE_MAPPINGS
 
 from ._base import BaseImporter
 
@@ -43,6 +43,10 @@ class DMSImporter(BaseImporter):
 
         if metadata is None:
             self.metadata = self._default_metadata()
+            if len(self.views) == 1:
+                self.metadata["version"] = self.views[0].version
+                self.metadata["cdfSpaceName"] = self.views[0].space
+
         else:
             self.metadata = metadata
 
@@ -68,8 +72,8 @@ class DMSImporter(BaseImporter):
             e.g. `[(space, external_id, version)]`, or two element tuples,
             e.g. `[(space, external_id)]`, where `space` represents CDF space name,
             `external_id` represents data model external ID, and `version`
-            represents data model version. If `version` is not provided, the latest version
-            of the data model will be used.
+            represents data model version. If `version` is not provided, whatever is
+            the first version CDF returns it will give you that one.
 
         """
         data_model = client.data_modeling.data_models.retrieve(data_model, inline_views=True)[0]
@@ -89,14 +93,22 @@ class DMSImporter(BaseImporter):
         properties: list[dict[str, str | float]] = []
         for view in self.views:
             class_id = view.external_id
-            classes.append({"Class": class_id, "Description": view.description or float("nan")})
+            classes.append(
+                {
+                    "Class": class_id,
+                    "Name": view.name or float("nan"),
+                    "Description": view.description or float("nan"),
+                }
+            )
             for prop_id, prop in view.properties.items():
                 if isinstance(prop, MappedProperty):
                     # Edge 1-1
                     if isinstance(prop.type, DirectRelation):
                         type_ = cast(ViewId, prop.source).external_id
                     else:
-                        type_ = DMS_TO_DATA_TYPE.get(type(prop.type), "string")
+                        type_ = cast(
+                            str, DMS_VALUE_TYPE_MAPPINGS.get(type(prop.type), XSD_VALUE_TYPE_MAPPINGS["string"]).xsd
+                        )
 
                     default_value = prop.default_value
 

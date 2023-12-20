@@ -26,7 +26,6 @@ export default function GlobalConfigView() {
     "cdf_client": {
       "project": "",
       "client_id": "",
-      "client_name": "neat",
       "base_url": "https://az-power-no-northeurope.cognitedata.com",
       "scopes": [
         "https://az-power-no-northeurope.cognitedata.com/.default"
@@ -125,7 +124,6 @@ export default function GlobalConfigView() {
               <TextField id="project_name" label="Project name" size='small' variant="outlined" value={configs.cdf_client.project} onChange={(event) => { handleCdfConfigChange("project", event.target.value) }} />
               <TextField id="client_id" label="Client id" size='small' variant="outlined" value={configs.cdf_client.client_id} onChange={(event) => { handleCdfConfigChange("client_id", event.target.value) }} />
               <TextField id="client_secret" label="Client secret" type="password" size='small' variant="outlined" value={configs.cdf_client.client_secret} onChange={(event) => { handleCdfConfigChange("client_secret", event.target.value) }} />
-              <TextField id="client_name" label="Client name" size='small' variant="outlined" value={configs.cdf_client.client_name} onChange={(event) => { handleCdfConfigChange("client_name", event.target.value) }} />
               <TextField id="cdf_api_base_url" label="CDF api base url" size='small' variant="outlined" value={configs.cdf_client.base_url} onChange={(event) => { handleCdfConfigChange("base_url", event.target.value) }} />
               <TextField id="scopes" label="Scopes" size='small' variant="outlined" value={configs.cdf_client.scopes} onChange={(event) => { handleCdfConfigChange("scopes", event.target.value) }} />
               <TextField id="oidc_token_url" label="OIDC token url" size='small' variant="outlined" value={configs.cdf_client.token_url} onChange={(event) => { handleCdfConfigChange("token_url", event.target.value) }} />

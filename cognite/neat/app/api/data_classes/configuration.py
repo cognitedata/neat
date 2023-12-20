@@ -94,7 +94,6 @@ class Config(BaseModel):
         missing = "Missing"
         cdf_config = ServiceCogniteClient(
             project=os.environ.get("NEAT_CDF_PROJECT", missing),
-            client_name=os.environ.get("NEAT_CDF_CLIENT_NAME", missing),
             client_id=os.environ.get("NEAT_CDF_CLIENT_ID", missing),
             client_secret=os.environ.get("NEAT_CDF_CLIENT_SECRET", missing),
             base_url=os.environ.get("NEAT_CDF_BASE_URL", missing),
@@ -112,8 +111,7 @@ class Config(BaseModel):
         return cls(
             cdf_client=cdf_config,
             workflows_store_type=os.environ.get(  # type: ignore[arg-type]
-                "NEAT_WORKFLOWS_STORE_TYPE",
-                WorkflowsStoreType.FILE,
+                "NEAT_WORKFLOWS_STORE_TYPE", WorkflowsStoreType.FILE
             ),
             data_store_path=Path(os.environ.get("NEAT_DATA_PATH", "/app/data")),
             cdf_default_dataset_id=int(os.environ.get("NEAT_CDF_DEFAULT_DATASET_ID", 6476640149881990)),

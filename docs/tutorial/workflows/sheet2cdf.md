@@ -12,7 +12,7 @@ This workflow enables you to ingest a data model with data into CDF's core data 
 
 **Note** That this workflow requires access to across all datasets for labels.
 
-**Prerequisite** Created configuration with the above capabilities, [see configuration](../../getting-started.md#configuration)
+**Prerequisite** Created configuration with the above capabilities, [see configuration](../../installation.md#configuration)
 
 
 This workflow is purely based on [Transformation Rules](../../transformation-rules.md), a specially tailored Excel template,

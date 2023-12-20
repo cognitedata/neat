@@ -61,10 +61,10 @@ def are_entity_names_dms_compliant(
                 flag = False
 
             # expected value type, as it is case sensitive should be ok
-            if not re.match(view_id_compliance_regex, property_.expected_value_type):
+            if not re.match(view_id_compliance_regex, property_.expected_value_type.suffix):
                 warnings.warn(
                     exceptions.EntityIDNotDMSCompliant(
-                        "Value type", property_.expected_value_type, f"[Properties/Type/{row}]"
+                        "Value type", property_.expected_value_type.suffix, f"[Properties/Type/{row}]"
                     ).message,
                     category=exceptions.EntityIDNotDMSCompliant,
                     stacklevel=2,

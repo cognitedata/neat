@@ -343,16 +343,19 @@ def _list2dict(class_instance: list) -> dict[str, Any]:
 
 def rdf2assets(
     graph_store: NeatGraphStore,
-    transformation_rules: Rules,
+    rules: Rules,
+    data_set_id: int,
     stop_on_exception: bool = False,
     use_orphanage: bool = True,
     meta_keys: NeatMetadataKeys | None = None,
+    asset_external_id_prefix: str | None = None,
 ) -> dict[str, dict[str, Any]]:
     """Creates assets from RDF graph
 
     Args:
         graph_store : Graph containing RDF data
-        transformation_rules : Instance of TransformationRules class containing transformation rules
+        rules : Instance of TransformationRules class containing transformation rules
+        data_set_id: data set id to which assets belong
         stop_on_exception : Whether to stop upon exception.
         use_orphanage : Whether to use an orphanage for assets without parent_external_id
         meta_keys : The names of neat metadat keys to use.
@@ -361,19 +364,16 @@ def rdf2assets(
         Dictionary representations of assets by external id.
     """
     meta_keys = NeatMetadataKeys() if meta_keys is None else meta_keys
-    if transformation_rules.metadata.data_set_id is None:
-        raise ValueError("Data set id must be provided in transformation rules!")
-    data_set_id = transformation_rules.metadata.data_set_id
-    if transformation_rules.metadata.namespace is None:
+    if rules.metadata.namespace is None:
         raise ValueError("Namespace must be provided in transformation rules!")
-    namespace = transformation_rules.metadata.namespace
+    namespace = rules.metadata.namespace
 
-    orphanage_asset_external_id = f"{transformation_rules.metadata.externalIdPrefix or ''}orphanage-{data_set_id}"
+    orphanage_asset_external_id = f"{asset_external_id_prefix or ''}orphanage-{data_set_id}"
 
     graph = graph_store.get_graph()
     # Step 1: Create rdf to asset property mapping
     logging.info("Generating rdf to asset property mapping")
-    asset_class_mapping = _define_asset_class_mapping(transformation_rules)
+    asset_class_mapping = _define_asset_class_mapping(rules)
 
     # Step 4: Get ids of classes
     logging.info("Get ids of instances of classes")
@@ -419,7 +419,7 @@ def rdf2assets(
                     data_set_id,
                     meta_keys,
                     orphanage_asset_external_id if use_orphanage else None,  # we need only base external id
-                    transformation_rules.metadata.externalIdPrefix or None,
+                    asset_external_id_prefix or None,
                     fallback_property=meta_keys.identifier,
                 )
 

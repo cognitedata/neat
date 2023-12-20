@@ -30,7 +30,7 @@ Source graph is stored in [NeatGraphStore](./api/graph/stores.md#neatgraph-store
 
 
 ## Transformer
-NEAT contains its own transformation engine which, as mentioned earlier, is configured through `Rules` via [transformation rules](./rule-types.md). Predominately, the transformation engine leverages on graph traversal via `SPARQL` queries against the source graph. These queries are either explicitly stated through `sparql` directives, or implicitly constructed using `rdfpath` ([see more details](./rule-types.md#rdfpath-rule-singleproperty)). The library module for this step in the graph ETL flow consists of a single method which is described in more details in [the reference library](./api/graph/transformers.md).
+NEAT contains its own transformation engine which, as mentioned earlier, is configured through `Rules` via [transformation rules](./transformation-directive-types.md). Predominately, the transformation engine leverages on graph traversal via `SPARQL` queries against the source graph. These queries are either explicitly stated through `sparql` directives, or implicitly constructed using `rdfpath` ([see more details](./transformation-directive-types.md#rdfpath-rule-singleproperty)). The library module for this step in the graph ETL flow consists of a single method which is described in more details in [the reference library](./api/graph/transformers.md).
 
 
 ## Transformed Graph

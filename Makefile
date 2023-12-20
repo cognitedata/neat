@@ -1,6 +1,6 @@
 .PHONY: run-explorer run-tests run-linters build-ui build-python build-docker run-docker compose-up
 
-version="0.40.2"
+version="0.51.0"
 run-explorer:
 	@echo "Running explorer API server..."
 	# open "http://localhost:8000/static/index.html" || true
@@ -40,7 +40,7 @@ start-ui-dev:
 
 poetry-export:
 	@echo "Exporting poetry dependencies"
-	poetry export -f requirements.txt --output requirements.txt --extras "excel graphql"
+	poetry export -f requirements.txt --output requirements.txt --extras "graphql"
 
 build-docker: poetry-export
 	@echo "Building docker image"
@@ -55,6 +55,9 @@ run-docker:
 run-clean-docker:
 	@echo "Running docker image with temp data folder"
 	docker run --rm -p 8000:8000 --name neat cognite/neat:latest
+
+test-docker: build-docker run-clean-docker
+	@echo "Building new docker image and running neat from latest image"
 
 defaults-cleanup:
 	@echo "Running defaults cleanup"

@@ -11,6 +11,7 @@ from rdflib import Namespace
 from cognite.neat.rules import exporter, importer
 from cognite.neat.rules.models.rdfpath import TransformationRuleType
 from cognite.neat.rules.models.rules import Class, Classes, Metadata, Properties, Property, Rules
+from cognite.neat.rules.value_types import ValueType
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
 from cognite.neat.workflows.steps.step_model import Configurable, Step
@@ -34,6 +35,12 @@ class OntologyToRules(Step):
         Configurable(
             name="excel_file_path", value="staging/rules.xlsx", label="Relative path for the Excel rules storage."
         ),
+        Configurable(
+            name="make_compliant",
+            value="True",
+            label="Relative path for the Excel rules storage.",
+            options=["True", "False"],
+        ),
     ]
 
     def run(self) -> FlowMessage:  # type: ignore[override, syntax]
@@ -41,7 +48,13 @@ class OntologyToRules(Step):
         excel_file_path = self.data_store_path / Path(self.configs["excel_file_path"])
         report_file_path = excel_file_path.parent / f"report_{excel_file_path.stem}.txt"
 
-        rules = importer.OWLImporter(ontology_file_path).to_rules(skip_validation=True)
+        make_compliant = self.configs["make_compliant"] == "True"
+        try:
+            rules = importer.OWLImporter(ontology_file_path).to_rules(make_compliant=make_compliant)
+        except Exception:
+            rules = importer.OWLImporter(ontology_file_path).to_rules(
+                skip_validation=True, make_compliant=make_compliant
+            )
         assert isinstance(rules, Rules)
         exporter.ExcelExporter.from_rules(rules).export_to_file(excel_file_path)
 
@@ -54,11 +67,11 @@ class OntologyToRules(Step):
         output_text = (
             "<p></p>"
             "Rules generated from OWL Ontology can be downloaded here : "
-            f'<a href="http://localhost:8000/data/{relative_excel_file_path}?{time.time()}" '
+            f'<a href="/data/{relative_excel_file_path}?{time.time()}" '
             f'target="_blank">{excel_file_path.stem}.xlsx</a>'
             "<p></p>"
             "Report can be downloaded here : "
-            f'<a href="http://localhost:8000/data/{relative_report_file_path}?{time.time()}" '
+            f'<a href="/data/{relative_report_file_path}?{time.time()}" '
             f'target="_blank">{report_file_path.stem}.txt</a>'
         )
 
@@ -124,8 +137,7 @@ class OpenApiToRules(Step):
             created=datetime.utcnow(),
             namespace=Namespace("http://purl.org/cognite/neat#"),
             prefix="neat",
-            data_model_name="OpenAPI",
-            cdf_space_name="OpenAPI",
+            suffix="OpenAPI",
         )
 
         classes = Classes()
@@ -202,7 +214,7 @@ class OpenApiToRules(Step):
                             else prop_name,
                             property_type="ObjectProperty",
                             description=prop_info.get("description", prop_info.get("title", "empty")),
-                            expected_value_type=expected_value_type,
+                            expected_value_type=ValueType(prefix="neat", suffix=expected_value_type),
                             cdf_resource_type=["Asset"],
                             resource_type_property="Asset",  # type: ignore
                             rule_type=TransformationRuleType("rdfpath"),
@@ -224,7 +236,7 @@ class OpenApiToRules(Step):
                         property_name=parent_property_name,
                         property_type="ObjectProperty",
                         description="no",
-                        expected_value_type=ref_class,
+                        expected_value_type=ValueType(prefix="neat", suffix=ref_class),
                         cdf_resource_type=["Asset"],
                         resource_type_property="Asset",  # type: ignore
                         rule_type=TransformationRuleType("rdfpath"),
@@ -311,8 +323,7 @@ class ArbitraryJsonYamlToRules(Step):
             created=datetime.utcnow(),
             namespace=Namespace("http://purl.org/cognite/neat#"),
             prefix="neat",
-            cdf_space_name="OpenAPI",
-            data_model_name="OpenAPI",
+            suffix="OpenAPI",
         )
 
         self.classes = Classes()
@@ -353,7 +364,7 @@ class ArbitraryJsonYamlToRules(Step):
                 property_name=property_name,
                 property_type="ObjectProperty",
                 description=description,
-                expected_value_type=property_type,
+                expected_value_type=ValueType(prefix="neat", suffix=property_type),
                 cdf_resource_type=["Asset"],
                 resource_type_property="Asset",  # type: ignore
                 rule_type=TransformationRuleType("rdfpath"),
@@ -474,11 +485,11 @@ class GraphToRules(Step):
         output_text = (
             "<p></p>"
             "Rules imported using GraphImporter and can be downloaded as the Excel file:"
-            f'<a href="http://localhost:8000/data/{staging_dir_str}/{file_name}?{time.time()}" '
+            f'<a href="/data/{staging_dir_str}/{file_name}?{time.time()}" '
             f'target="_blank">{file_name}</a>'
             "<p></p>"
             "Rules validation report can be downloaded as TXT file: "
-            f'<a href="http://localhost:8000/data/{staging_dir_str}/{spreadsheet_path.stem}'
+            f'<a href="/data/{staging_dir_str}/{spreadsheet_path.stem}'
             f'_validation_report.txt?{time.time()}" '
             f'target="_blank">{spreadsheet_path.stem}_validation_report.txt</a>'
         )
