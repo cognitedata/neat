@@ -63,22 +63,29 @@ class DMSExporter(BaseExporter[DMSSchema]):
         container_policy: How to create/reuse existing containers.
         existing_model: In the case of updating an existing model, this is the existing model.
         report: Report. This is used when the exporter object is created from RawRules
+
+    !!! note "Container policy"
+        Here is more information about the different container policies:
+        - `create`: assumes no containers exist in CDF, will attempt to create them
+        - `reuse`: assumes containers exists in CDF, will attempt to only re-use them
+        - `extend`: will re-use existing, extend and/or create only missing containers
+        - `optimize`: create containers of size's prescribed by NEAT's optimization algorithm
     """
 
     def __init__(
         self,
         rules: Rules,
         data_model_id: dm.DataModelId | None = None,
-        container_policy: Literal["one-to-one-view", "extend-existing", "neat-optimized"] = "one-to-one-view",
+        container_policy: Literal["create", "reuse", "extend", "optimize"] = "create",
         existing_model: dm.DataModel[dm.View] | None = None,
         report: str | None = None,
     ):
         super().__init__(rules, report)
         self.data_model_id = data_model_id
         self.container_policy = container_policy
-        if container_policy == "extend-existing" and existing_model is None:
+        if container_policy == "extend" and existing_model is None:
             raise ValueError("Container policy is extend-existing, but no existing model is provided")
-        if container_policy != "one-to-one-view":
+        if container_policy != "create":
             raise NotImplementedError("Only one-to-one-view container policy is currently supported")
         self.existing_model = existing_model
 

@@ -26,6 +26,7 @@ class EntityTypes(StrEnum):
     object_value_type = "object_value_type"
     view = "view"
     container = "container"
+    undefined = "undefined"
 
 
 # REGEX expressions
@@ -49,11 +50,12 @@ VERSION_ID_REGEX = rf"\(version=(?P<version>{VERSION_REGEX})\)"
 class Entity(BaseModel):
     """Entity is a class or property in OWL/RDF sense."""
 
+    model_config: ClassVar[ConfigDict] = ConfigDict(use_enum_values=True)
     prefix: str
     suffix: str
+    type_: EntityTypes = Field(default=EntityTypes.undefined)
     name: str | None = None
     description: str | None = None
-    type_: EntityTypes | None = None
     version: str | None = None
 
     @property
@@ -105,6 +107,14 @@ class Entity(BaseModel):
             cls.from_string(entity_string=entity_string, base_prefix=base_prefix, **kwargs)
             for entity_string in entity_strings
         ]
+
+
+class ParentClass(Entity):
+    type_: EntityTypes = EntityTypes.class_
+
+
+class Container(Entity):
+    type_: EntityTypes = EntityTypes.container
 
 
 class Triple(BaseModel):

@@ -89,7 +89,6 @@ def get_rules(
                 "class": value.class_id,
                 "class_description": value.description,
                 "cdf_resource_type": value.cdf_resource_type,
-                "cdf_parent_resource": value.parent_asset,
             }
             for value in rules.classes.values()
         ]
