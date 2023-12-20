@@ -225,10 +225,8 @@ class DataModel(BaseModel):
                     # Break if property is redefined with different type
                     if not isinstance(existing_property.type, type(container_property.type)):
                         raise ValueError(
-                            (
-                                f"Property {property_.container_property} redefined with "
-                                f"different type {property_.property_type.external_id}"
-                            )
+                            f"Property {property_.container_property} redefined with "
+                            f"different type {property_.property_type.external_id}"
                         )
 
                     # Only for attributes: remove default value if it is changed
