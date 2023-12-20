@@ -15,7 +15,7 @@ from cognite.neat.utils.utils import chunker, datetime_utc_now, retry_decorator
 
 def rdf2nodes_and_edges(
     graph_store: NeatGraphStore,
-    transformation_rules: Rules,
+    rules: Rules,
     stop_on_exception: bool = False,
     add_class_prefix: bool = False,
 ) -> tuple[list[NodeApply], list[EdgeApply], list[ErrorDetails]]:
@@ -30,22 +30,23 @@ def rdf2nodes_and_edges(
     Returns:
         Tuple holding nodes, edges and exceptions
     """
-    if transformation_rules.metadata.namespace is None:
+    if rules.metadata.namespace is None:
         raise ValueError("Namespace is not defined in transformation rules metadata")
 
     nodes: list[NodeApply] = []
     edges: list[EdgeApply] = []
     exceptions: list[ErrorDetails] = []
 
-    data_model = DataModel.from_rules(transformation_rules)
-    pydantic_models = rules_to_pydantic_models(transformation_rules)
+    data_model = DataModel.from_rules(rules)
+    pydantic_models = rules_to_pydantic_models(rules)
 
-    for class_ in transformation_rules.classes:
-        if class_ in data_model.containers:
-            class_namespace = transformation_rules.metadata.namespace[class_]
+    for class_ in rules.classes:
+        print(f"{rules.space}:{class_}")
+        if f"{rules.space}:{class_}" in data_model.containers:
+            class_uri = rules.metadata.namespace[class_]
             class_instance_ids = [
                 cast(tuple, res)[0]
-                for res in graph_store.query(f"SELECT ?instance WHERE {{ ?instance rdf:type <{class_namespace}> . }}")
+                for res in graph_store.query(f"SELECT ?instance WHERE {{ ?instance rdf:type <{class_uri}> . }}")
             ]
 
             counter = 0
@@ -56,7 +57,7 @@ def rdf2nodes_and_edges(
                 counter += 1
                 try:
                     instance = pydantic_models[class_].from_graph(  # type: ignore[attr-defined]
-                        graph_store, transformation_rules, class_instance_id
+                        graph_store, rules, class_instance_id
                     )
                     if add_class_prefix:
                         instance.external_id = add_class_prefix_to_xid(

@@ -1,6 +1,7 @@
 """Exports rules to CDF Data Model Storage (DMS) through cognite-sdk.
 """
 
+import dataclasses
 import logging
 import sys
 import warnings
@@ -43,7 +44,7 @@ from pydantic import BaseModel, ConfigDict
 from cognite.neat.rules import exceptions
 from cognite.neat.rules.analysis import to_class_property_pairs
 from cognite.neat.rules.exporter._base import BaseExporter
-from cognite.neat.rules.exporter._validation import are_entity_names_dms_compliant, are_properties_redefined
+from cognite.neat.rules.exporter._validation import are_entity_names_dms_compliant
 from cognite.neat.rules.models.rules import Property, Rules
 from cognite.neat.utils.utils import generate_exception_report
 
@@ -162,8 +163,8 @@ class DataModel(BaseModel):
             Instance of DataModel.
         """
         if data_model_id and data_model_id.space:
-            # update prefix in rules to match space
-            rules.update_prefix(data_model_id.space)
+            # update space in rules to match space
+            rules.update_space(data_model_id.space)
 
         if data_model_id and data_model_id.version:
             # update version in rules to match version
@@ -175,22 +176,9 @@ class DataModel(BaseModel):
 
         names_compliant, name_warnings = are_entity_names_dms_compliant(rules, return_report=True)
         if not names_compliant:
-            logging.error(
-                exceptions.EntitiesContainNonDMSCompliantCharacters(
-                    report=generate_exception_report(name_warnings)
-                ).message
-            )
             raise exceptions.EntitiesContainNonDMSCompliantCharacters(report=generate_exception_report(name_warnings))
 
-        properties_redefined, redefinition_warnings = are_properties_redefined(rules, return_report=True)
-        if properties_redefined:
-            logging.error(
-                exceptions.PropertiesDefinedMultipleTimes(report=generate_exception_report(redefinition_warnings))
-            )
-            raise exceptions.PropertiesDefinedMultipleTimes(report=generate_exception_report(redefinition_warnings))
-
         if rules.metadata.external_id is None:
-            logging.error(exceptions.DataModelIdMissing(prefix=rules.metadata.space).message)
             raise exceptions.DataModelIdMissing(prefix=rules.metadata.space)
 
         return cls(
@@ -204,82 +192,101 @@ class DataModel(BaseModel):
         )
 
     @staticmethod
-    def containers_from_rules(rule: Rules, space: str | None = None) -> dict[str, ContainerApply]:
+    def containers_from_rules(rules: Rules) -> dict[str, ContainerApply]:
         """Create a dictionary of ContainerApply instances from a Rules instance.
 
         Args:
             rule: instance of Rules.`
-            space: Name of the space to place the containers.
 
         Returns:
             Dictionary of ContainerApply instances.
         """
 
-        if space:
-            rule.update_prefix(space)
+        containers = {}
 
-        class_properties = to_class_property_pairs(rule)
-        return {
-            class_id: ContainerApply(
-                space=rule.metadata.space,
-                external_id=class_id,
-                name=rule.classes[class_id].class_name,
-                description=rule.classes[class_id].description,
-                properties=DataModel.container_properties_from_dict(properties),
-            )
-            for class_id, properties in class_properties.items()
-        }
+        for property_ in rules.properties.values():
+            if property_.container:
+                container_property = DataModel.container_property_from_rules_property(property_)
+                id_ = property_.container.id
+
+                if id_ not in containers and container_property:
+                    containers[id_] = ContainerApply(
+                        space=property_.container.space,
+                        external_id=property_.container.external_id,
+                        properties={property_.container_property: container_property},
+                    )
+
+                elif container_property and property_.container_property not in containers[id_].properties:
+                    containers[id_].properties[property_.container_property] = container_property
+
+                elif container_property and property_.container_property in containers[id_].properties:
+                    existing_property = containers[id_].properties[property_.container_property]
+
+                    # Break if property is redefined with different type
+                    if not isinstance(existing_property.type, type(container_property.type)):
+                        raise ValueError(
+                            (
+                                f"Property {property_.container_property} redefined with "
+                                f"different type {property_.property_type.external_id}"
+                            )
+                        )
+
+                    # Only for attributes: remove default value if it is changed
+                    if (
+                        not isinstance(existing_property.type, DirectRelation)
+                        and existing_property.default_value != container_property.default_value
+                    ):
+                        containers[property_.container.external_id].properties[
+                            property_.container_property
+                        ] = dataclasses.replace(existing_property, default_value=None)
+
+                    # Only for attributes: set is_list to True if the property is redefined as a list
+                    if (
+                        not isinstance(existing_property.type, DirectRelation)
+                        and existing_property.type.is_list != container_property.type.is_list
+                    ):
+                        containers[property_.container.external_id].properties[
+                            property_.container_property
+                        ].type.is_list = True
+
+        return containers
 
     @staticmethod
-    def container_properties_from_dict(properties: dict[str, Property]) -> dict[str, ContainerProperty]:
-        """Generates a dictionary of ContainerProperty instances from a dictionary of Property instances.
+    def container_property_from_rules_property(property_: Property) -> ContainerProperty | None:
+        is_one_to_many = property_.max_count != 1
 
-        Args:
-            properties: Dictionary of Property instances.
+        # Literal, i.e. Node attribute
+        if property_.property_type == "DatatypeProperty":
+            property_type = cast(
+                type[ListablePropertyType],
+                cast(ValueTypeMapping, property_.expected_value_type.mapping).dms,
+            )
+            return ContainerProperty(
+                type=property_type(is_list=is_one_to_many),
+                nullable=property_.min_count == 0,
+                default_value=property_.default,
+                name=property_.property_name,
+                description=property_.description,
+            )
 
-        Returns:
-            Dictionary of ContainerProperty instances.
-        """
-        container_properties = {}
-        for property_id, property_definition in properties.items():
-            is_one_to_many = property_definition.max_count != 1
-            # Literal, i.e. attribute
-            if property_definition.property_type == "DatatypeProperty":
-                property_type = cast(
-                    type[ListablePropertyType],
-                    cast(ValueTypeMapping, property_definition.expected_value_type.mapping).dms,
-                )
-                container_properties[property_id] = ContainerProperty(
-                    type=property_type(is_list=is_one_to_many),
-                    nullable=property_definition.min_count == 0,
-                    default_value=property_definition.default,
-                    name=property_definition.property_name,
-                    description=property_definition.description,
-                )
-            elif property_definition.property_type == "ObjectProperty" and is_one_to_many:
-                # One to many edges are only in views and not containers.
-                continue
+        # URIRef, i.e. edge 1-1 , aka direct relation between Nodes
+        elif property_.property_type == "ObjectProperty" and not is_one_to_many:
+            return ContainerProperty(
+                type=DirectRelation(),
+                nullable=True,
+                name=property_.property_name,
+                description=property_.description,
+            )
 
-            # URIRef, i.e. edge
-            elif property_definition.property_type == "ObjectProperty":
-                container_properties[property_id] = ContainerProperty(
-                    type=DirectRelation(),
-                    nullable=True,
-                    name=property_definition.property_name,
-                    description=property_definition.description,
-                )
+        else:
+            # One to many edges are only in views and not containers.
+            warnings.warn(
+                exceptions.ContainerPropertyTypeUnsupported(property_.property_id, property_.property_type).message,
+                category=exceptions.ContainerPropertyTypeUnsupported,
+                stacklevel=2,
+            )
 
-            else:
-                logging.warning(
-                    exceptions.ContainerPropertyTypeUnsupported(property_id, property_definition.property_type).message
-                )
-                warnings.warn(
-                    exceptions.ContainerPropertyTypeUnsupported(property_id, property_definition.property_type).message,
-                    category=exceptions.ContainerPropertyTypeUnsupported,
-                    stacklevel=2,
-                )
-
-        return container_properties
+            return None
 
     @staticmethod
     def views_from_rules(rule: Rules, space: str | None = None) -> dict[str, ViewApply]:
