@@ -44,6 +44,7 @@ from pydantic import BaseModel, ConfigDict
 from cognite.neat.rules import exceptions
 from cognite.neat.rules.exporter._base import BaseExporter
 from cognite.neat.rules.exporter._validation import are_entity_names_dms_compliant
+from cognite.neat.rules.models._base import Container, ParentClass
 from cognite.neat.rules.models.rules import Property, Rules
 from cognite.neat.utils.utils import generate_exception_report
 
@@ -216,11 +217,15 @@ class DataModel(BaseModel):
                     containers[id_] = ContainerApply(
                         space=property_.container.space,
                         external_id=property_.container.external_id,
-                        properties={property_.container_property: container_property},
+                        properties={
+                            cast(str, property_.container_property): cast(ContainerProperty, container_property)
+                        },
                     )
 
                 elif container_property and property_.container_property not in containers[id_].properties:
-                    containers[id_].properties[property_.container_property] = container_property
+                    containers[id_].properties[cast(str, property_.container_property)] = cast(
+                        ContainerProperty, container_property
+                    )
 
                 elif container_property and property_.container_property in containers[id_].properties:
                     existing_property = containers[id_].properties[property_.container_property]
@@ -252,9 +257,12 @@ class DataModel(BaseModel):
                     if (
                         not isinstance(existing_property.type, DirectRelation)
                         and not isinstance(container_property.type, DirectRelation)
-                        and existing_property.type.is_list != container_property.type.is_list
+                        and cast(ListablePropertyType, existing_property.type).is_list
+                        != cast(ListablePropertyType, container_property.type).is_list
                     ):
-                        containers[id_].properties[property_.container_property].type.is_list = True
+                        cast(
+                            ListablePropertyType, containers[id_].properties[property_.container_property].type
+                        ).is_list = True
 
         if errors:
             raise ExceptionGroup("Properties value types have been redefined! This is prohibited! Aborting!", errors)
@@ -305,12 +313,13 @@ class DataModel(BaseModel):
         views: dict[str, ViewApply] = {}
         errors: list = []
 
+        # Create views from property-class definitions
         for row, property_ in rules.properties.items():
             view_property = DataModel.view_property_from_rules_property(property_, rules.metadata.space)
             id_ = f"{rules.metadata.space}:{property_.class_id}"
 
             # scenario: view does not exist
-            if id_ not in views and view_property:
+            if view_property and id_ not in views:
                 views[id_] = ViewApply(
                     space=rules.metadata.space,
                     external_id=property_.class_id,
@@ -320,27 +329,51 @@ class DataModel(BaseModel):
                     if property_.class_id in rules.classes
                     else None,
                     properties={property_.property_id: view_property},
-                    implements=[parent_class.view_id for parent_class in rules.classes[property_.class_id].parent_class]
+                    implements=[
+                        parent_class.view_id
+                        for parent_class in cast(list[ParentClass], rules.classes[property_.class_id].parent_class)
+                    ]
                     if (property_.class_id in rules.classes and rules.classes[property_.class_id].parent_class)
                     else None,
                 )
 
             # scenario: view exist but property does not so it is added
-            elif view_property and property_.property_id not in views[id_].properties:
-                views[id_].properties[property_.property_id] = view_property
+            elif view_property and (
+                property_.property_id
+                not in cast(dict[str, MappedPropertyApply | ConnectionDefinitionApply], views[id_].properties)
+            ):
+                cast(dict[str, MappedPropertyApply | ConnectionDefinitionApply], views[id_].properties)[
+                    property_.property_id
+                ] = view_property
 
             # scenario: view exist, property exists but it is differently defined -> raise error
             elif (
                 view_property
-                and property_.property_id in views[id_].properties
-                and view_property is not views[id_].properties[property_.property_id]
+                and property_.property_id
+                in cast(dict[str, MappedPropertyApply | ConnectionDefinitionApply], views[id_].properties)
+                and view_property
+                is not cast(dict[str, MappedPropertyApply | ConnectionDefinitionApply], views[id_].properties)[
+                    property_.property_id
+                ]
             ):
                 errors.append(
                     exceptions.ViewPropertyRedefinition(
                         view_id=id_,
-                        property_id=property_.container_property,
+                        property_id=cast(str, property_.container_property),
                         loc=f"[Properties/Property/{row}]",
                     )
+                )
+
+        # Create views from class definitions (i.e. no properties only implements/parent classes)
+        for id_, class_ in rules.classes.items():
+            if id_ not in views and class_.parent_class:
+                views[id_] = ViewApply(
+                    space=rules.metadata.space,
+                    external_id=property_.class_id,
+                    version=rules.metadata.version,
+                    name=class_.class_name,
+                    description=class_.description,
+                    implements=[parent_class.view_id for parent_class in cast(list[ParentClass], class_.parent_class)],
                 )
 
         if errors:
@@ -352,6 +385,8 @@ class DataModel(BaseModel):
     def view_property_from_rules_property(
         property_: Property, space: str
     ) -> MappedPropertyApply | ConnectionDefinitionApply | None:
+        property_.container = cast(Container, property_.container)
+        property_.container_property = cast(str, property_.container_property)
         if property_.property_type == "DatatypeProperty":
             return MappedPropertyApply(
                 container=ContainerId(space=property_.container.space, external_id=property_.container.external_id),
