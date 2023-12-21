@@ -844,30 +844,21 @@ class Property(Resource):
         if self.property_type == "DatatypeProperty" and self.default:
             default_value = self.default[0] if isinstance(self.default, list) else self.default
 
-            if type(default_value) != XSD_VALUE_TYPE_MAPPINGS[self.expected_value_type.xsd].python:
+            if type(default_value) != self.expected_value_type.python:
                 try:
                     if isinstance(self.default, list):
                         updated_list = []
                         for value in self.default:
-                            updated_list.append(XSD_VALUE_TYPE_MAPPINGS[self.expected_value_type].python(value))
+                            updated_list.append(self.expected_value_type.python(value))
                         self.default = updated_list
                     else:
-                        self.default = XSD_VALUE_TYPE_MAPPINGS[self.expected_value_type].python(self.default)
+                        self.default = self.expected_value_type.python(self.default)
 
-                    warnings.warn(
-                        exceptions.DefaultValueTypeConverted(
-                            self.property_id,
-                            type(self.default),
-                            XSD_VALUE_TYPE_MAPPINGS[self.expected_value_type].python,
-                        ).message,
-                        category=exceptions.DefaultValueTypeConverted,
-                        stacklevel=2,
-                    )
                 except Exception:
                     exceptions.DefaultValueTypeNotProper(
                         self.property_id,
                         type(self.default),
-                        XSD_VALUE_TYPE_MAPPINGS[self.expected_value_type].python,
+                        self.expected_value_type.python,
                     )
         return self
 

@@ -2,6 +2,7 @@ import re
 import sys
 from typing import ClassVar
 
+from cognite.client.data_classes.data_modeling import ViewId
 from pydantic import BaseModel, ConfigDict, Field
 from rdflib import Literal, URIRef
 
@@ -111,6 +112,10 @@ class Entity(BaseModel):
 
 class ParentClass(Entity):
     type_: EntityTypes = EntityTypes.class_
+
+    @property
+    def view_id(self) -> ViewId:
+        return ViewId(space=self.space, external_id=self.external_id, version=self.version)
 
 
 class Container(Entity):

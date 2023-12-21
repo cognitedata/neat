@@ -42,11 +42,13 @@ from cognite.client.data_classes.data_modeling.views import (
 from pydantic import BaseModel, ConfigDict
 
 from cognite.neat.rules import exceptions
-from cognite.neat.rules.analysis import to_class_property_pairs
 from cognite.neat.rules.exporter._base import BaseExporter
 from cognite.neat.rules.exporter._validation import are_entity_names_dms_compliant
 from cognite.neat.rules.models.rules import Property, Rules
 from cognite.neat.utils.utils import generate_exception_report
+
+if sys.version_info < (3, 11):
+    from exceptiongroup import ExceptionGroup
 
 
 @dataclass
@@ -202,9 +204,10 @@ class DataModel(BaseModel):
             Dictionary of ContainerApply instances.
         """
 
-        containers = {}
+        containers: dict[str, ContainerApply] = {}
+        errors: list = []
 
-        for property_ in rules.properties.values():
+        for row, property_ in rules.properties.items():
             if property_.container:
                 container_property = DataModel.container_property_from_rules_property(property_)
                 id_ = property_.container.id
@@ -222,30 +225,39 @@ class DataModel(BaseModel):
                 elif container_property and property_.container_property in containers[id_].properties:
                     existing_property = containers[id_].properties[property_.container_property]
 
-                    # Break if property is redefined with different type
+                    # Break if property is redefined with different type, this includes
+                    # redefining to a direct relation
                     if not isinstance(existing_property.type, type(container_property.type)):
-                        raise ValueError(
-                            f"Property {property_.container_property} redefined with "
-                            f"different type {property_.property_type.external_id}"
+                        errors.append(
+                            exceptions.ContainerPropertyValueTypeRedefinition(
+                                container_id=id_,
+                                property_id=property_.container_property,
+                                current_value_type=str(existing_property.type),
+                                redefined_value_type=str(container_property.type),
+                                loc=f"[Properties/Type/{row}]",
+                            )
                         )
 
                     # Only for attributes: remove default value if it is changed
                     if (
                         not isinstance(existing_property.type, DirectRelation)
+                        and not isinstance(container_property.type, DirectRelation)
                         and existing_property.default_value != container_property.default_value
                     ):
-                        containers[property_.container.external_id].properties[
-                            property_.container_property
-                        ] = dataclasses.replace(existing_property, default_value=None)
+                        containers[id_].properties[property_.container_property] = dataclasses.replace(
+                            existing_property, default_value=None
+                        )
 
                     # Only for attributes: set is_list to True if the property is redefined as a list
                     if (
                         not isinstance(existing_property.type, DirectRelation)
+                        and not isinstance(container_property.type, DirectRelation)
                         and existing_property.type.is_list != container_property.type.is_list
                     ):
-                        containers[property_.container.external_id].properties[
-                            property_.container_property
-                        ].type.is_list = True
+                        containers[id_].properties[property_.container_property].type.is_list = True
+
+        if errors:
+            raise ExceptionGroup("Properties value types have been redefined! This is prohibited! Aborting!", errors)
 
         return containers
 
@@ -277,17 +289,10 @@ class DataModel(BaseModel):
             )
 
         else:
-            # One to many edges are only in views and not containers.
-            warnings.warn(
-                exceptions.ContainerPropertyTypeUnsupported(property_.property_id, property_.property_type).message,
-                category=exceptions.ContainerPropertyTypeUnsupported,
-                stacklevel=2,
-            )
-
             return None
 
     @staticmethod
-    def views_from_rules(rule: Rules, space: str | None = None) -> dict[str, ViewApply]:
+    def views_from_rules(rules: Rules) -> dict[str, ViewApply]:
         """Generates a dictionary of ViewApply instances from a Rules instance.
 
         Args:
@@ -297,82 +302,94 @@ class DataModel(BaseModel):
         Returns:
             Dictionary of ViewApply instances.
         """
-        if space:
-            rule.update_prefix(space)
-        class_properties = to_class_property_pairs(rule)
+        views: dict[str, ViewApply] = {}
+        errors: list = []
 
-        return {
-            class_id: ViewApply(
-                space=rule.metadata.space,
-                external_id=class_id,
-                name=rule.classes[class_id].class_name,
-                description=rule.classes[class_id].description,
-                properties=DataModel.view_properties_from_dict(properties, rule.metadata.space),
-                version=rule.metadata.version,
-            )
-            for class_id, properties in class_properties.items()
-        }
+        for row, property_ in rules.properties.items():
+            view_property = DataModel.view_property_from_rules_property(property_, rules.metadata.space)
+            id_ = f"{rules.metadata.space}:{property_.class_id}"
+
+            # scenario: view does not exist
+            if id_ not in views and view_property:
+                views[id_] = ViewApply(
+                    space=rules.metadata.space,
+                    external_id=property_.class_id,
+                    version=rules.metadata.version,
+                    name=rules.classes[property_.class_id].class_name if property_.class_id in rules.classes else None,
+                    description=rules.classes[property_.class_id].description
+                    if property_.class_id in rules.classes
+                    else None,
+                    properties={property_.property_id: view_property},
+                    implements=[parent_class.view_id for parent_class in rules.classes[property_.class_id].parent_class]
+                    if (property_.class_id in rules.classes and rules.classes[property_.class_id].parent_class)
+                    else None,
+                )
+
+            # scenario: view exist but property does not so it is added
+            elif view_property and property_.property_id not in views[id_].properties:
+                views[id_].properties[property_.property_id] = view_property
+
+            # scenario: view exist, property exists but it is differently defined -> raise error
+            elif (
+                view_property
+                and property_.property_id in views[id_].properties
+                and view_property is not views[id_].properties[property_.property_id]
+            ):
+                errors.append(
+                    exceptions.ViewPropertyRedefinition(
+                        view_id=id_,
+                        property_id=property_.container_property,
+                        loc=f"[Properties/Property/{row}]",
+                    )
+                )
+
+        if errors:
+            raise ExceptionGroup("View properties have been redefined! This is prohibited! Aborting!", errors)
+
+        return views
 
     @staticmethod
-    def view_properties_from_dict(
-        properties: dict[str, Property], space: str
-    ) -> dict[str, MappedPropertyApply | ConnectionDefinitionApply]:
-        view_properties: dict[str, MappedPropertyApply | ConnectionDefinitionApply] = {}
-        for property_id, property_definition in properties.items():
-            # attribute
-            if property_definition.property_type == "DatatypeProperty":
-                view_properties[property_id] = MappedPropertyApply(
-                    container=ContainerId(space=space, external_id=property_definition.class_id),
-                    container_property_identifier=property_id,
-                    name=property_definition.property_name,
-                    description=property_definition.description,
-                )
+    def view_property_from_rules_property(
+        property_: Property, space: str
+    ) -> MappedPropertyApply | ConnectionDefinitionApply | None:
+        if property_.property_type == "DatatypeProperty":
+            return MappedPropertyApply(
+                container=ContainerId(space=property_.container.space, external_id=property_.container.external_id),
+                container_property_identifier=property_.container_property,
+                name=property_.property_name,
+                description=property_.description,
+            )
 
-            # edge 1-1 == directRelation
-            elif property_definition.property_type == "ObjectProperty" and property_definition.max_count == 1:
-                view_properties[property_id] = MappedPropertyApply(
-                    container=ContainerId(space=space, external_id=property_definition.class_id),
-                    container_property_identifier=property_id,
-                    name=property_definition.property_name,
-                    description=property_definition.description,
-                    source=ViewId(
-                        # prefix maps to space
-                        space=property_definition.expected_value_type.space,
-                        # suffix maps to external_id
-                        external_id=property_definition.expected_value_type.external_id,
-                        # version to version
-                        version=property_definition.expected_value_type.version,
-                    ),
-                )
+        # edge 1-1 == directRelation
+        elif property_.property_type == "ObjectProperty" and property_.max_count == 1:
+            return MappedPropertyApply(
+                container=ContainerId(space=property_.container.space, external_id=property_.container.external_id),
+                container_property_identifier=property_.container_property,
+                name=property_.property_name,
+                description=property_.description,
+                source=ViewId(
+                    space=property_.expected_value_type.space,
+                    external_id=property_.expected_value_type.external_id,
+                    version=property_.expected_value_type.version,
+                ),
+            )
 
-            # edge 1-many
-            elif property_definition.property_type == "ObjectProperty" and property_definition.max_count != 1:
-                view_properties[property_id] = SingleHopConnectionDefinitionApply(
-                    type=DirectRelationReference(
-                        space=space, external_id=f"{property_definition.class_id}.{property_definition.property_id}"
-                    ),
-                    # Here we create ViewID to the container that the edge is pointing to.
-                    source=ViewId(
-                        # prefix maps to space
-                        space=property_definition.expected_value_type.space,
-                        # suffix maps to external_id
-                        external_id=property_definition.expected_value_type.external_id,
-                        # version to version
-                        version=property_definition.expected_value_type.version,
-                    ),
-                    direction="outwards",
-                    name=property_definition.property_name,
-                    description=property_definition.description,
-                )
-            else:
-                logging.warning(exceptions.ViewPropertyTypeUnsupported(property_id).message)
-                warnings.warn(
-                    exceptions.ViewPropertyTypeUnsupported(property_id).message,
-                    category=exceptions.ViewPropertyTypeUnsupported,
-                    stacklevel=2,
-                )
-
-        return view_properties
+        # edge 1-many == EDGE, this does not have container! type is here source ViewId ?!
+        elif property_.property_type == "ObjectProperty" and property_.max_count != 1:
+            return SingleHopConnectionDefinitionApply(
+                type=DirectRelationReference(space=space, external_id=f"{property_.class_id}.{property_.property_id}"),
+                # Here we create ViewID to the container that the edge is pointing to.
+                source=ViewId(
+                    space=property_.expected_value_type.space,
+                    external_id=property_.expected_value_type.external_id,
+                    version=property_.expected_value_type.version,
+                ),
+                direction="outwards",
+                name=property_.property_name,
+                description=property_.description,
+            )
+        else:
+            return None
 
     def to_cdf(self, client: CogniteClient):
         """Write the the data model to CDF.
