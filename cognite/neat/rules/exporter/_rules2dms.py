@@ -476,7 +476,7 @@ class DataModel(BaseModel):
             return cdf_data_model.as_id()
         return None
 
-    def find_existing_containers(self, client: CogniteClient) -> set[ContainerId]:
+    def find_existing_containers(self, client: CogniteClient) -> set:
         """Checks if the containers exist in CDF.
 
         Args:
@@ -486,25 +486,15 @@ class DataModel(BaseModel):
             True if the containers exist, False otherwise.
         """
 
-        cdf_containers = {}
-        if containers := client.data_modeling.containers.list(space=self.space, limit=-1):
-            cdf_containers = {container.as_id(): container for container in containers}
+        existing_containers = set()
 
-        if existing_containers := {c.as_id() for c in self.containers.values()}.intersection(
-            set(cdf_containers.keys())
-        ):
-            logging.warning(exceptions.ContainersAlreadyExist(existing_containers, self.space).message)
-            warnings.warn(
-                exceptions.ContainersAlreadyExist(existing_containers, self.space).message,
-                category=exceptions.ContainersAlreadyExist,
-                stacklevel=2,
-            )
+        for id_, container in self.containers.items():
+            if client.data_modeling.containers.retrieve(container.as_id()):
+                existing_containers.add(id_)
 
-            return existing_containers
-        else:
-            return set()
+        return existing_containers
 
-    def find_existing_views(self, client: CogniteClient) -> set[ViewId]:
+    def find_existing_views(self, client: CogniteClient) -> set:
         """Checks if the views exist in CDF.
 
         Args:
@@ -513,24 +503,24 @@ class DataModel(BaseModel):
         Returns:
             True if the views exist, False otherwise.
         """
-        cdf_views = {}
-        if views := client.data_modeling.views.list(space=self.space, limit=-1):
-            cdf_views = {view.as_id(): view for view in views if view.version == self.version}
 
-        if existing_views := {v.as_id() for v in self.views.values()}.intersection(set(cdf_views.keys())):
-            logging.warning(exceptions.ViewsAlreadyExist(existing_views, self.version, self.space).message)
-            warnings.warn(
-                exceptions.ViewsAlreadyExist(existing_views, self.version, self.space).message,
-                category=exceptions.ViewsAlreadyExist,
-                stacklevel=2,
-            )
-            return existing_views
-        else:
-            return set()
+        existing_views = set()
+
+        for id_, view in self.views.items():
+            if client.data_modeling.views.retrieve(view.as_id()):
+                existing_views.add(id_)
+
+        return existing_views
 
     def create_space(self, client: CogniteClient):
         logging.info(f"Creating space {self.space}")
-        _ = client.data_modeling.spaces.apply(SpaceApply(space=self.space))
+        if spaces := set(
+            [container.space for container in self.containers.values()]
+            + [self.space]
+            + [view.space for view in self.views.values()]
+        ):
+            for space in spaces:
+                _ = client.data_modeling.spaces.apply(SpaceApply(space=space))
 
     def create_containers(self, client: CogniteClient):
         for container_id in self.containers:
