@@ -9,7 +9,12 @@ def test_rules2dms(simple_rules):
 
     assert len(data_model.containers) == 4
     assert len(data_model.views) == 4
-    assert list(data_model.views.keys()) == ["CountryGroup", "Country", "PriceArea", "PriceAreaConnection"]
+    assert list(data_model.views.keys()) == [
+        "neat:CountryGroup",
+        "neat:Country",
+        "neat:PriceArea",
+        "neat:PriceAreaConnection",
+    ]
     assert list(data_model.containers.keys()) == [
         "neat:CountryGroup",
         "neat:Country",
