@@ -2362,7 +2362,7 @@ class DataModelOrItsComponentsAlreadyExist(NeatException):
         super().__init__(self.message)
 
 
-class InstancePropertiesNotMatchingContainerProperties(NeatException):
+class InstancePropertiesNotMatchingViewProperties(NeatException):
     """This error is raised when an instance of a class has properties which are not
     defined in the DMS container
 
@@ -2376,18 +2376,16 @@ class InstancePropertiesNotMatchingContainerProperties(NeatException):
         Make sure that all properties of a class are defined in the DMS container.
     """
 
-    type_: str = "InstancePropertiesNotMatchingContainerProperties"
+    type_: str = "InstancePropertiesNotMatchingViewProperties"
     code: int = 407
-    description: str = "Instance of a class has properties which are not defined in the DMS container"
+    description: str = "Instance of a class has properties which are not defined in the DMS view"
     example: str = ""
-    fix: str = "Make sure that all properties of a class are defined in the DMS container"
+    fix: str = "Make sure that all properties of a class are defined in the DMS view"
 
-    def __init__(
-        self, class_name: str, class_properties: list[str], container_properties: list[str], verbose: bool = False
-    ):
+    def __init__(self, class_name: str, class_properties: list[str], view_properties: list[str], verbose: bool = False):
         self.message = (
             f"Instance of class {class_name} has properties {class_properties}"
-            f" while DMS container  {class_name} has properties {container_properties}!"
+            f" while DMS view  {class_name} has properties {view_properties}!"
             f" Cannot create instance in DMS as properties do not match!"
             f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
