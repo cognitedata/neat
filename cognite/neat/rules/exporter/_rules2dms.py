@@ -217,6 +217,14 @@ class DataModel(BaseModel):
                     containers[id_] = ContainerApply(
                         space=property_.container.space,
                         external_id=property_.container.external_id,
+                        description=rules.classes[property_.container.external_id].description
+                        if property_.container.external_id in rules.classes
+                        and property_.container.space == rules.metadata.space
+                        else None,
+                        name=rules.classes[property_.container.external_id].class_name
+                        if property_.container.external_id in rules.classes
+                        and property_.container.space == rules.metadata.space
+                        else None,
                         properties={
                             cast(str, property_.container_property): cast(ContainerProperty, container_property)
                         },

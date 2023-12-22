@@ -31,7 +31,13 @@ from rdflib import XSD, Literal, Namespace, URIRef
 
 from cognite.neat.constants import PREFIXES
 from cognite.neat.rules import exceptions
-from cognite.neat.rules.models._base import Container, EntityTypes, ParentClass
+from cognite.neat.rules.models._base import (
+    ENTITY_ID_REGEX_COMPILED,
+    VERSIONED_ENTITY_REGEX_COMPILED,
+    Container,
+    EntityTypes,
+    ParentClass,
+)
 from cognite.neat.rules.models.rdfpath import (
     AllReferences,
     Entity,
@@ -552,11 +558,11 @@ class Class(Resource):
         if isinstance(value, str) and value:
             parent_classes = []
             for v in value.replace(", ", ",").split(","):
-                try:
+                if ENTITY_ID_REGEX_COMPILED.match(v) or VERSIONED_ENTITY_REGEX_COMPILED.match(v):
                     parent_classes.append(ParentClass.from_string(entity_string=v))
-                # if all fails defaults "neat" object which ends up being updated to proper
-                # prefix and version upon completion of Rules validation
-                except ValueError:
+                else:
+                    # if all fails defaults "neat" object which ends up being updated to proper
+                    # prefix and version upon completion of Rules validation
                     parent_classes.append(ParentClass(prefix="undefined", suffix=value, name=value))
 
             return parent_classes
@@ -664,9 +670,9 @@ class Property(Resource):
         if not value:
             return value
 
-        try:
+        if ENTITY_ID_REGEX_COMPILED.match(value) or VERSIONED_ENTITY_REGEX_COMPILED.match(value):
             return Container.from_string(entity_string=value)
-        except ValueError:
+        else:
             return Container(prefix="undefined", suffix=value, name=value)
 
     @field_validator("expected_value_type", mode="before")
@@ -676,12 +682,13 @@ class Property(Resource):
             return XSD_VALUE_TYPE_MAPPINGS[value]
 
         # complex types correspond to relations to other classes
-        try:
+        if ENTITY_ID_REGEX_COMPILED.match(value) or VERSIONED_ENTITY_REGEX_COMPILED.match(value):
             return ValueType.from_string(entity_string=value, type_=EntityTypes.object_value_type, mapping=None)
-        except ValueError:
+        else:
             return ValueType(
                 prefix="undefined", suffix=value, name=value, type_=EntityTypes.object_value_type, mapping=None
             )
+        #     return ValueType(
 
     @validator("class_id", always=True)
     @skip_field_validator("validators_to_skip")
@@ -1092,10 +1099,16 @@ class Rules(RuleModel):
             old_prefix = self.metadata.prefix
             self.metadata.prefix = prefix
 
-            # update entity ids for expected_value_types
+            # update entity ids for expected_value_types and containers
             for id_ in self.properties.keys():
                 if self.properties[id_].expected_value_type.prefix == old_prefix:
                     self.properties[id_].expected_value_type.prefix = prefix
+
+                if (
+                    self.properties[id_].container
+                    and cast(Container, self.properties[id_].container).prefix == old_prefix
+                ):
+                    cast(Container, self.properties[id_].container).prefix = prefix
 
             # update parent classes
             for id_ in self.classes.keys():
