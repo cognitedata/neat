@@ -41,7 +41,6 @@ def rdf2nodes_and_edges(
     pydantic_models = rules_to_pydantic_models(rules)
 
     for class_ in rules.classes:
-        print(f"{rules.space}:{class_}")
         if f"{rules.space}:{class_}" in data_model.containers:
             class_uri = rules.metadata.namespace[class_]
             class_instance_ids = [
