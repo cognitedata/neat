@@ -151,6 +151,14 @@ class DataModel(BaseModel):
         populate_by_name=True, str_strip_whitespace=True, arbitrary_types_allowed=True, strict=False, extra="allow"
     )
 
+    @property
+    def spaces(self):
+        return set(
+            [container.space for container in self.containers.values()]
+            + [self.space]
+            + [view.space for view in self.views.values()]
+        )
+
     @classmethod
     def from_rules(
         cls, rules: Rules, data_model_id: dm.DataModelId | None = None, set_expected_source: bool = True
@@ -372,18 +380,6 @@ class DataModel(BaseModel):
                     )
                 )
 
-        # Create views from class definitions (i.e. no properties only implements/parent classes)
-        for id_, class_ in rules.classes.items():
-            if id_ not in views and class_.parent_class:
-                views[id_] = ViewApply(
-                    space=rules.metadata.space,
-                    external_id=property_.class_id,
-                    version=rules.metadata.version,
-                    name=class_.class_name,
-                    description=class_.description,
-                    implements=[parent_class.view_id for parent_class in cast(list[ParentClass], class_.parent_class)],
-                )
-
         if errors:
             raise ExceptionGroup("View properties have been redefined! This is prohibited! Aborting!", errors)
 
@@ -514,13 +510,9 @@ class DataModel(BaseModel):
 
     def create_space(self, client: CogniteClient):
         logging.info(f"Creating space {self.space}")
-        if spaces := set(
-            [container.space for container in self.containers.values()]
-            + [self.space]
-            + [view.space for view in self.views.values()]
-        ):
-            for space in spaces:
-                _ = client.data_modeling.spaces.apply(SpaceApply(space=space))
+
+        for space in self.spaces:
+            _ = client.data_modeling.spaces.apply(SpaceApply(space=space))
 
     def create_containers(self, client: CogniteClient):
         for container_id in self.containers:
