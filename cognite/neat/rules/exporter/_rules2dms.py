@@ -207,7 +207,7 @@ class DataModel(BaseModel):
         """Create a dictionary of ContainerApply instances from a Rules instance.
 
         Args:
-            rule: instance of Rules.`
+            rules: instance of Rules.`
 
         Returns:
             Dictionary of ContainerApply instances.
