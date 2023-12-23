@@ -34,7 +34,7 @@ from cognite.neat.rules import exceptions
 from cognite.neat.rules.models._base import (
     ENTITY_ID_REGEX_COMPILED,
     VERSIONED_ENTITY_REGEX_COMPILED,
-    Container,
+    ContainerEntity,
     EntityTypes,
     ParentClass,
 )
@@ -652,7 +652,7 @@ class Property(Resource):
     cdf_resource_type: list[str] = Field(alias="Resource Type", default_factory=list)
 
     # container specific things, only used for advance modeling or auto-filled by neat
-    container: Container | None = Field(alias="Container", default=None)
+    container: ContainerEntity | None = Field(alias="Container", default=None)
     container_property: str | None = Field(alias="Container Property", default=None)
     index: bool | None = Field(alias="Index", default=False)
     constraints: str | None = Field(alias="Constraints", default=None, min_length=1)
@@ -671,9 +671,9 @@ class Property(Resource):
             return value
 
         if ENTITY_ID_REGEX_COMPILED.match(value) or VERSIONED_ENTITY_REGEX_COMPILED.match(value):
-            return Container.from_string(entity_string=value)
+            return ContainerEntity.from_string(entity_string=value)
         else:
-            return Container(prefix="undefined", suffix=value, name=value)
+            return ContainerEntity(prefix="undefined", suffix=value, name=value)
 
     @field_validator("expected_value_type", mode="before")
     def expected_value_type_string_to_entity(cls, value):
@@ -778,7 +778,7 @@ class Property(Resource):
         if not self.container and (
             self.expected_value_type.type_ == EntityTypes.data_value_type or self.max_count == 1
         ):
-            self.container = Container(prefix="undefined", suffix=self.class_id, name=self.class_id)
+            self.container = ContainerEntity(prefix="undefined", suffix=self.class_id, name=self.class_id)
         return self
 
     @model_validator(mode="after")
@@ -1074,8 +1074,11 @@ class Rules(RuleModel):
         # update container
         for id_ in self.properties.keys():
             # only update version of expected value type which are part of this data model
-            if self.properties[id_].container and cast(Container, self.properties[id_].container).prefix == "undefined":
-                cast(Container, self.properties[id_].container).prefix = prefix
+            if (
+                self.properties[id_].container
+                and cast(ContainerEntity, self.properties[id_].container).prefix == "undefined"
+            ):
+                cast(ContainerEntity, self.properties[id_].container).prefix = prefix
 
         # update parent classes
         for id_ in self.classes.keys():
@@ -1106,9 +1109,9 @@ class Rules(RuleModel):
 
                 if (
                     self.properties[id_].container
-                    and cast(Container, self.properties[id_].container).prefix == old_prefix
+                    and cast(ContainerEntity, self.properties[id_].container).prefix == old_prefix
                 ):
-                    cast(Container, self.properties[id_].container).prefix = prefix
+                    cast(ContainerEntity, self.properties[id_].container).prefix = prefix
 
             # update parent classes
             for id_ in self.classes.keys():

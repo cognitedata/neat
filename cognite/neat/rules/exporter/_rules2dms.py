@@ -30,6 +30,7 @@ from cognite.client.data_classes.data_modeling import (
     DirectRelation,
     DirectRelationReference,
     MappedPropertyApply,
+    PropertyType,
     SpaceApply,
     ViewApply,
     ViewId,
@@ -44,12 +45,17 @@ from pydantic import BaseModel, ConfigDict
 from cognite.neat.rules import exceptions
 from cognite.neat.rules.exporter._base import BaseExporter
 from cognite.neat.rules.exporter._validation import are_entity_names_dms_compliant
-from cognite.neat.rules.models._base import Container, ParentClass
+from cognite.neat.rules.models._base import ContainerEntity, ParentClass
 from cognite.neat.rules.models.rules import Property, Rules
 from cognite.neat.utils.utils import generate_exception_report
 
 if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup
+
+
+@dataclass
+class EmptyPropertyType(PropertyType):
+    _type = "No property"
 
 
 @dataclass
@@ -218,43 +224,35 @@ class DataModel(BaseModel):
 
         for row, property_ in rules.properties.items():
             if property_.container:
-                container_property = DataModel.container_property_from_rules_property(property_)
+                api_container_property = DataModel.as_api_container_property(property_)
+                container_property_id: str = cast(str, property_.container_property)
                 id_ = property_.container.id
 
-                if id_ not in containers and container_property:
-                    containers[id_] = ContainerApply(
-                        space=property_.container.space,
-                        external_id=property_.container.external_id,
-                        description=rules.classes[property_.container.external_id].description
-                        if property_.container.external_id in rules.classes
-                        and property_.container.space == rules.metadata.space
-                        else None,
-                        name=rules.classes[property_.container.external_id].class_name
-                        if property_.container.external_id in rules.classes
-                        and property_.container.space == rules.metadata.space
-                        else None,
-                        properties={
-                            cast(str, property_.container_property): cast(ContainerProperty, container_property)
-                        },
-                    )
+                if not isinstance(api_container_property.type, EmptyPropertyType) and id_ not in containers:
+                    containers[id_] = property_.container.as_api_container(rules)
+                    containers[id_].properties[container_property_id] = api_container_property
 
-                elif container_property and property_.container_property not in containers[id_].properties:
-                    containers[id_].properties[cast(str, property_.container_property)] = cast(
-                        ContainerProperty, container_property
-                    )
+                elif (
+                    not isinstance(api_container_property.type, EmptyPropertyType)
+                    and container_property_id not in containers[id_].properties
+                ):
+                    containers[id_].properties[container_property_id] = api_container_property
 
-                elif container_property and property_.container_property in containers[id_].properties:
-                    existing_property = containers[id_].properties[property_.container_property]
+                elif (
+                    not isinstance(api_container_property.type, EmptyPropertyType)
+                    and container_property_id in containers[id_].properties
+                ):
+                    existing_property = containers[id_].properties[container_property_id]
 
                     # Break if property is redefined with different type, this includes
                     # redefining to a direct relation
-                    if not isinstance(existing_property.type, type(container_property.type)):
+                    if not isinstance(existing_property.type, type(api_container_property.type)):
                         errors.append(
                             exceptions.ContainerPropertyValueTypeRedefinition(
                                 container_id=id_,
-                                property_id=property_.container_property,
+                                property_id=container_property_id,
                                 current_value_type=str(existing_property.type),
-                                redefined_value_type=str(container_property.type),
+                                redefined_value_type=str(api_container_property.type),
                                 loc=f"[Properties/Type/{row}]",
                             )
                         )
@@ -262,22 +260,22 @@ class DataModel(BaseModel):
                     # Only for attributes: remove default value if it is changed
                     if (
                         not isinstance(existing_property.type, DirectRelation)
-                        and not isinstance(container_property.type, DirectRelation)
-                        and existing_property.default_value != container_property.default_value
+                        and not isinstance(api_container_property.type, DirectRelation)
+                        and existing_property.default_value != api_container_property.default_value
                     ):
-                        containers[id_].properties[property_.container_property] = dataclasses.replace(
+                        containers[id_].properties[container_property_id] = dataclasses.replace(
                             existing_property, default_value=None
                         )
 
                     # Only for attributes: set is_list to True if the property is redefined as a list
                     if (
                         not isinstance(existing_property.type, DirectRelation)
-                        and not isinstance(container_property.type, DirectRelation)
+                        and not isinstance(api_container_property.type, DirectRelation)
                         and cast(ListablePropertyType, existing_property.type).is_list
-                        != cast(ListablePropertyType, container_property.type).is_list
+                        != cast(ListablePropertyType, api_container_property.type).is_list
                     ):
                         cast(
-                            ListablePropertyType, containers[id_].properties[property_.container_property].type
+                            ListablePropertyType, containers[id_].properties[container_property_id].type
                         ).is_list = True
 
         if errors:
@@ -286,7 +284,7 @@ class DataModel(BaseModel):
         return containers
 
     @staticmethod
-    def container_property_from_rules_property(property_: Property) -> ContainerProperty | None:
+    def as_api_container_property(property_: Property) -> ContainerProperty:
         is_one_to_many = property_.max_count != 1
 
         # Literal, i.e. Node attribute
@@ -312,8 +310,9 @@ class DataModel(BaseModel):
                 description=property_.description,
             )
 
+        # return type=None if property cannot be created
         else:
-            return None
+            return ContainerProperty(type=EmptyPropertyType())
 
     @staticmethod
     def views_from_rules(rules: Rules) -> dict[str, ViewApply]:
@@ -389,7 +388,7 @@ class DataModel(BaseModel):
     def view_property_from_rules_property(
         property_: Property, space: str
     ) -> MappedPropertyApply | ConnectionDefinitionApply | None:
-        property_.container = cast(Container, property_.container)
+        property_.container = cast(ContainerEntity, property_.container)
         property_.container_property = cast(str, property_.container_property)
         if property_.property_type == "DatatypeProperty":
             return MappedPropertyApply(
