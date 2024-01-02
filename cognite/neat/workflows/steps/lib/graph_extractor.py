@@ -10,7 +10,7 @@ from rdflib import RDF, XSD, Literal, Namespace, URIRef
 
 from cognite.neat.constants import PREFIXES
 from cognite.neat.graph import extractors
-from cognite.neat.graph.extractors.mocks._mock_graph_generator import generate_triples as generate_mock_triples
+from cognite.neat.graph.extractors._mock_graph_generator import generate_triples as generate_mock_triples
 from cognite.neat.rules.exporter._rules2triples import get_instances_as_triples
 from cognite.neat.utils.utils import create_sha256_hash
 from cognite.neat.workflows._exceptions import StepNotInitialized

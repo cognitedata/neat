@@ -1,5 +1,5 @@
 from cognite.neat.graph import loaders
-from cognite.neat.graph.extractors.mocks import generate_triples
+from cognite.neat.graph.extractors._mock_graph_generator import generate_triples
 from cognite.neat.graph.loaders.core import rdf_to_relationships
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.rules.models.rules import Rules

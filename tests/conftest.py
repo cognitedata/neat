@@ -7,7 +7,7 @@ import pytest
 from rdflib import RDF, Literal, Namespace
 
 from cognite.neat.graph import extractors, loaders
-from cognite.neat.graph.extractors.mocks import generate_triples
+from cognite.neat.graph.extractors._mock_graph_generator import generate_triples
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.graph.transformations.transformer import domain2app_knowledge_graph
 from cognite.neat.rules import importer
