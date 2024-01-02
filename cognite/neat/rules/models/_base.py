@@ -2,7 +2,7 @@ import re
 import sys
 from typing import ClassVar
 
-from cognite.client.data_classes.data_modeling import ContainerApply, ViewId
+from cognite.client.data_classes.data_modeling import ViewId
 from pydantic import BaseModel, ConfigDict, Field
 from rdflib import Literal, URIRef
 
@@ -120,20 +120,6 @@ class ParentClass(Entity):
 
 class ContainerEntity(Entity):
     type_: EntityTypes = EntityTypes.container
-
-    def as_api_container(self, rules) -> ContainerApply:
-        """Returns ContainerApply object for the entity, without properties."""
-        return ContainerApply(
-            space=self.space,
-            external_id=self.external_id,
-            description=rules.classes[self.external_id].description
-            if self.external_id in rules.classes and self.space == rules.metadata.space
-            else None,
-            name=rules.classes[self.external_id].class_name
-            if self.external_id in rules.classes and self.space == rules.metadata.space
-            else None,
-            properties={},
-        )
 
 
 # class ViewEntity(Entity):

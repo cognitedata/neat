@@ -224,32 +224,36 @@ class DataModel(BaseModel):
 
         for row, property_ in rules.properties.items():
             if property_.container:
-                api_container_property = DataModel.as_api_container_property(property_)
                 container_property_id: str = cast(str, property_.container_property)
-                id_ = property_.container.id
+                container_id = property_.container.id
 
-                if not isinstance(api_container_property.type, EmptyPropertyType) and id_ not in containers:
-                    containers[id_] = property_.container.as_api_container(rules)
-                    containers[id_].properties[container_property_id] = api_container_property
+                api_container = DataModel.as_api_container(property_.container)
+                api_container_property = DataModel.as_api_container_property(property_)
 
+                # scenario: adding new container to the data model for the first time
+                if not isinstance(api_container_property.type, EmptyPropertyType) and container_id not in containers:
+                    containers[container_id] = api_container
+                    containers[container_id].properties[container_property_id] = api_container_property
+
+                # scenario: adding new property to an existing container
                 elif (
                     not isinstance(api_container_property.type, EmptyPropertyType)
-                    and container_property_id not in containers[id_].properties
+                    and container_property_id not in containers[container_id].properties
                 ):
-                    containers[id_].properties[container_property_id] = api_container_property
+                    containers[container_id].properties[container_property_id] = api_container_property
 
+                # scenario: property is redefined checking for potential sub-scenarios
                 elif (
                     not isinstance(api_container_property.type, EmptyPropertyType)
-                    and container_property_id in containers[id_].properties
+                    and container_property_id in containers[container_id].properties
                 ):
-                    existing_property = containers[id_].properties[container_property_id]
+                    existing_property = containers[container_id].properties[container_property_id]
 
-                    # Break if property is redefined with different type, this includes
-                    # redefining to a direct relation
+                    # scenario: property is redefined with a different value type -> raise error
                     if not isinstance(existing_property.type, type(api_container_property.type)):
                         errors.append(
                             exceptions.ContainerPropertyValueTypeRedefinition(
-                                container_id=id_,
+                                container_id=container_id,
                                 property_id=container_property_id,
                                 current_value_type=str(existing_property.type),
                                 redefined_value_type=str(api_container_property.type),
@@ -257,17 +261,17 @@ class DataModel(BaseModel):
                             )
                         )
 
-                    # Only for attributes: remove default value if it is changed
+                    # scenario: default value is redefined -> set default value to None
                     if (
                         not isinstance(existing_property.type, DirectRelation)
                         and not isinstance(api_container_property.type, DirectRelation)
                         and existing_property.default_value != api_container_property.default_value
                     ):
-                        containers[id_].properties[container_property_id] = dataclasses.replace(
+                        containers[container_id].properties[container_property_id] = dataclasses.replace(
                             existing_property, default_value=None
                         )
 
-                    # Only for attributes: set is_list to True if the property is redefined as a list
+                    # scenario: property hold multiple values -> set is_list to True
                     if (
                         not isinstance(existing_property.type, DirectRelation)
                         and not isinstance(api_container_property.type, DirectRelation)
@@ -275,7 +279,7 @@ class DataModel(BaseModel):
                         != cast(ListablePropertyType, api_container_property.type).is_list
                     ):
                         cast(
-                            ListablePropertyType, containers[id_].properties[container_property_id].type
+                            ListablePropertyType, containers[container_id].properties[container_property_id].type
                         ).is_list = True
 
         if errors:
@@ -313,6 +317,17 @@ class DataModel(BaseModel):
         # return type=None if property cannot be created
         else:
             return ContainerProperty(type=EmptyPropertyType())
+
+    @staticmethod
+    def as_api_container(container: ContainerEntity) -> ContainerApply:
+        return ContainerApply(
+            space=container.space,
+            external_id=container.external_id,
+            description=container.description,
+            name=container.name,
+            # properties are added later
+            properties={},
+        )
 
     @staticmethod
     def views_from_rules(rules: Rules) -> dict[str, ViewApply]:

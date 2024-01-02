@@ -1091,6 +1091,23 @@ class Rules(RuleModel):
 
         return self
 
+    @model_validator(mode="after")
+    def update_container_description_and_name(self):
+        for id_ in self.properties.keys():
+            if (
+                self.properties[id_].container
+                and self.properties[id_].container.external_id in self.classes
+                and self.properties[id_].container.space == self.metadata.space
+            ):
+                self.properties[id_].container.description = self.classes[
+                    self.properties[id_].container.external_id
+                ].description
+
+                self.properties[id_].container.name = self.classes[
+                    self.properties[id_].container.external_id
+                ].class_name
+        return self
+
     def update_prefix(self, prefix: str):
         if prefix == self.metadata.prefix:
             warnings.warn("Prefix is already in use, no changes made!", stacklevel=2)
