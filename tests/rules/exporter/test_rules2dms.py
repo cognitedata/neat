@@ -1,3 +1,4 @@
+import sys
 from datetime import datetime
 
 import pytest
@@ -7,6 +8,9 @@ from cognite.neat.rules.exceptions import EntitiesContainNonDMSCompliantCharacte
 from cognite.neat.rules.exporter._rules2dms import DataModel
 from cognite.neat.rules.models._base import ParentClass
 from cognite.neat.rules.models.rules import Class, Metadata, Property, Rules
+
+if sys.version_info < (3, 11):
+    from exceptiongroup import ExceptionGroup
 
 
 def test_rules2dms_single_space(simple_rules):
