@@ -45,7 +45,7 @@ from pydantic import BaseModel, ConfigDict
 from cognite.neat.rules import exceptions
 from cognite.neat.rules.exporter._base import BaseExporter
 from cognite.neat.rules.exporter._validation import are_entity_names_dms_compliant
-from cognite.neat.rules.models._base import ContainerEntity, ParentClass
+from cognite.neat.rules.models._base import ContainerEntity, EntityTypes, ParentClass
 from cognite.neat.rules.models.rules import Property, Rules
 from cognite.neat.utils.utils import generate_exception_report
 
@@ -292,7 +292,7 @@ class DataModel(BaseModel):
         is_one_to_many = property_.max_count != 1
 
         # Literal, i.e. Node attribute
-        if property_.property_type == "DatatypeProperty":
+        if property_.property_type is EntityTypes.data_property:
             property_type = cast(
                 type[ListablePropertyType],
                 cast(ValueTypeMapping, property_.expected_value_type.mapping).dms,
@@ -306,7 +306,7 @@ class DataModel(BaseModel):
             )
 
         # URIRef, i.e. edge 1-1 , aka direct relation between Nodes
-        elif property_.property_type == "ObjectProperty" and not is_one_to_many:
+        elif property_.property_type is EntityTypes.object_property and not is_one_to_many:
             return ContainerProperty(
                 type=DirectRelation(),
                 nullable=True,
@@ -405,7 +405,7 @@ class DataModel(BaseModel):
     ) -> MappedPropertyApply | ConnectionDefinitionApply | None:
         property_.container = cast(ContainerEntity, property_.container)
         property_.container_property = cast(str, property_.container_property)
-        if property_.property_type == "DatatypeProperty":
+        if property_.property_type is EntityTypes.data_property:
             return MappedPropertyApply(
                 container=ContainerId(space=property_.container.space, external_id=property_.container.external_id),
                 container_property_identifier=property_.container_property,
@@ -414,7 +414,7 @@ class DataModel(BaseModel):
             )
 
         # edge 1-1 == directRelation
-        elif property_.property_type == "ObjectProperty" and property_.max_count == 1:
+        elif property_.property_type is EntityTypes.object_property and property_.max_count == 1:
             return MappedPropertyApply(
                 container=ContainerId(space=property_.container.space, external_id=property_.container.external_id),
                 container_property_identifier=property_.container_property,
@@ -428,7 +428,7 @@ class DataModel(BaseModel):
             )
 
         # edge 1-many == EDGE, this does not have container! type is here source ViewId ?!
-        elif property_.property_type == "ObjectProperty" and property_.max_count != 1:
+        elif property_.property_type is EntityTypes.object_property and property_.max_count != 1:
             return SingleHopConnectionDefinitionApply(
                 type=DirectRelationReference(space=space, external_id=f"{property_.class_id}.{property_.property_id}"),
                 # Here we create ViewID to the container that the edge is pointing to.
