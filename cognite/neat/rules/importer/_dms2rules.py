@@ -36,6 +36,7 @@ class DMSImporter(BaseImporter):
 
     def __init__(self, views: Sequence[View] | DataModel[View], metadata: dict[str, str | float] | None = None):
         super().__init__()
+
         if isinstance(views, DataModel):
             self.views = views.views
         else:
@@ -45,8 +46,7 @@ class DMSImporter(BaseImporter):
             self.metadata = self._default_metadata()
             if len(self.views) == 1:
                 self.metadata["version"] = self.views[0].version
-                self.metadata["cdfSpaceName"] = self.views[0].space
-
+                self.metadata["prefix"] = self.views[0].space
         else:
             self.metadata = metadata
 
@@ -55,6 +55,12 @@ class DMSImporter(BaseImporter):
                 self.metadata["title"] = views.name
             if views.description:
                 self.metadata["description"] = views.description
+            if views.space:
+                self.metadata["prefix"] = views.space
+            if views.external_id:
+                self.metadata["suffix"] = views.external_id
+            if views.version:
+                self.metadata["version"] = views.version
 
     @classmethod
     def from_cdf(cls, client: CogniteClient, data_model: DataModelIdentifier) -> Self:

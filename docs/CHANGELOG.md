@@ -15,6 +15,14 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.52.0] - 22-12-23
+
+## Added
+
+- Advance data modeling support introduced
+- Multi space containers support introduced
+
+
 ## [0.51.0] - 05-12-23
 
 ## Improved

@@ -86,8 +86,6 @@ def test_workflow_start(
         json=RunWorkflowRequest(name=workflow_name, sync=True, config={}, start_step="").model_dump(),
     )
 
-    print(response.json()["result"])
-
     assert response.status_code == 200
     result = response.json()["result"]
     assert result["is_success"]

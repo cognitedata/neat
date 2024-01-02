@@ -60,11 +60,35 @@ def are_entity_names_dms_compliant(
                 )
                 flag = False
 
-            # expected value type, as it is case sensitive should be ok
-            if not re.match(view_id_compliance_regex, property_.expected_value_type.suffix):
+            # check container external id
+            if property_.container and not re.match(dms_property_id_compliance_regex, property_.container.external_id):
                 warnings.warn(
                     exceptions.EntityIDNotDMSCompliant(
-                        "Value type", property_.expected_value_type.suffix, f"[Properties/Type/{row}]"
+                        "Container", property_.container.external_id, f"[Properties/Container/{row}]"
+                    ).message,
+                    category=exceptions.EntityIDNotDMSCompliant,
+                    stacklevel=2,
+                )
+                flag = False
+
+            # check container property external id
+            if property_.container_property and not re.match(
+                dms_property_id_compliance_regex, property_.container_property
+            ):
+                warnings.warn(
+                    exceptions.EntityIDNotDMSCompliant(
+                        "Container Property", property_.container_property, f"[Properties/Container Property/{row}]"
+                    ).message,
+                    category=exceptions.EntityIDNotDMSCompliant,
+                    stacklevel=2,
+                )
+                flag = False
+
+            # expected value type, as it is case sensitive should be ok
+            if not re.match(view_id_compliance_regex, property_.expected_value_type.external_id):
+                warnings.warn(
+                    exceptions.EntityIDNotDMSCompliant(
+                        "Value type", property_.expected_value_type.external_id, f"[Properties/Type/{row}]"
                     ).message,
                     category=exceptions.EntityIDNotDMSCompliant,
                     stacklevel=2,
