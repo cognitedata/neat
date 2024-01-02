@@ -19,8 +19,10 @@ from cognite.neat.rules.analysis import get_defined_classes, to_class_property_p
 from cognite.neat.rules.exporter._rules2rules import to_dms_name
 from cognite.neat.rules.models.rules import Rules
 
+from ._base import BaseExtractor
 
-class GraphCapturingSheet:
+
+class GraphCapturingSheet(BaseExtractor):
     """
     Graph capturing sheet class that provides methods for creating a graph capturing sheet and extracting RDF triples.
 
@@ -28,13 +30,21 @@ class GraphCapturingSheet:
         rules: Transformation rules which holds data model that is used to validate
                 the graph capturing sheet and extract data model instances from it (i.e. RDF triples)
         filepath: File path to save the sheet to. Defaults to None.
+        separator: Multi value separator at cell level. Defaults to ",".
+        namespace: Optional custom namespace to use for extracted triples that define data
+                    model instances. Defaults to None.
+
     """
 
-    def __init__(self, rules: Rules, filepath: Path | str | None = None):
+    def __init__(
+        self, rules: Rules, filepath: Path | str | None = None, separator: str = ",", namespace: str | None = None
+    ):
         self.rules = rules
         self.filepath = Path(filepath) if isinstance(filepath, str) else None
+        self.separator = separator
+        self.namespace = namespace
 
-    def create_template(self, filepath: Path | None = None, overwrite: bool = False):
+    def create_template(self, filepath: Path | None = None, overwrite: bool = False) -> None:
         """
         Creates a graph capturing sheet template based on the transformation rules.
 
@@ -50,7 +60,7 @@ class GraphCapturingSheet:
             raise FileExistsError(f"File {filepath} already exists! Set overwrite to True to overwrite it!")
         rules2graph_capturing_sheet(self.rules, filepath)
 
-    def extract_triples_from_sheet(self, separator: str = ",", namespace: str | None = None) -> list[tuple]:
+    def extract(self) -> list[tuple]:
         """
         Extracts RDF triples from the graph capturing sheet.
 
@@ -59,7 +69,7 @@ class GraphCapturingSheet:
         """
         if self.filepath is None:
             raise ValueError("File path to the graph capturing sheet is not provided!")
-        return extract_graph_from_sheet(self.filepath, self.rules, separator, namespace)
+        return extract_graph_from_sheet(self.filepath, self.rules, self.separator, self.namespace)
 
 
 def extract_graph_from_sheet(

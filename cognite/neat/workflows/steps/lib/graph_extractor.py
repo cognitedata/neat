@@ -113,9 +113,7 @@ class InstancesFromGraphCaptureSpreadsheetToGraph(Step):
 
         logging.info(f"Processing graph capture sheet {data_capture_sheet_path}")
 
-        triples = extractors.extract_graph_from_sheet(
-            data_capture_sheet_path, transformation_rule=transformation_rules.rules
-        )
+        triples = extractors.GraphCapturingSheet(transformation_rules.rules, data_capture_sheet_path).extract()
 
         if self.configs["graph_name"] == "solution":
             # Todo Anders: Why is the graph fetched from context when it is passed as an argument?
