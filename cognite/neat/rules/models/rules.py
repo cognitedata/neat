@@ -1092,6 +1092,7 @@ class Rules(RuleModel):
         return self
 
     @model_validator(mode="after")
+    @skip_model_validator("validators_to_skip")
     def update_container_description_and_name(self):
         for id_ in self.properties.keys():
             if (
@@ -1106,6 +1107,18 @@ class Rules(RuleModel):
                 self.properties[id_].container.name = self.classes[
                     self.properties[id_].container.external_id
                 ].class_name
+        return self
+
+    @model_validator(mode="after")
+    @skip_model_validator("validators_to_skip")
+    def add_missing_classes(self):
+        for property_ in self.properties.values():
+            if property_.class_id not in self.classes:
+                self.classes[property_.class_id] = Class(
+                    class_id=property_.class_id,
+                    class_name=property_.class_id,
+                    comment="This class was automatically added by neat",
+                )
         return self
 
     def update_prefix(self, prefix: str):

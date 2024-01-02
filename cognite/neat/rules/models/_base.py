@@ -122,12 +122,8 @@ class ContainerEntity(Entity):
     type_: EntityTypes = EntityTypes.container
 
 
-# class ViewEntity(Entity):
-
-#     def as_sdk_view(self, rules: Rules) -> ContainerApply:
-#         """Returns ViewApply object for the entity, without properties."""
-
-#     ...
+class ViewEntity(Entity):
+    type_: EntityTypes = EntityTypes.view
 
 
 class Triple(BaseModel):
