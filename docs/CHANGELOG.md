@@ -15,6 +15,12 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.TBD] - TBD
+## Changed
+- `cognite.neat.extractors` module. This now only has three classes: `BaseExtractor`, `MockGraphGenerator`, `GraphCapturingSheet`.
+   all the functions that were in the module is replaced with the above classes. The exception is the the function
+   `rdf_file_to_graph` which is moved to `cognite.neat.graph.stores`.
+
 ## [0.52.0] - 22-12-23
 
 ## Added
