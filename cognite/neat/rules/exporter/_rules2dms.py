@@ -40,7 +40,7 @@ from cognite.client.data_classes.data_modeling.views import (
     ConnectionDefinitionApply,
     SingleHopConnectionDefinitionApply,
 )
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 
 from cognite.neat.rules import exceptions
 from cognite.neat.rules.exporter._base import BaseExporter
@@ -156,6 +156,15 @@ class DataModel(BaseModel):
     model_config: ClassVar[ConfigDict] = ConfigDict(
         populate_by_name=True, str_strip_whitespace=True, arbitrary_types_allowed=True, strict=False, extra="allow"
     )
+
+    @field_validator("views", mode="after")
+    def remove_empty_views(cls, value):
+        """This validator removes views that do not have any properties or implements."""
+        for view_id, view in list(value.items()):
+            if not view.properties and not view.implements:
+                del value[view_id]
+
+        return value
 
     @property
     def spaces(self):
