@@ -1,8 +1,15 @@
+from cognite.neat.graph import extractors
 from cognite.neat.graph.extractors._graph_capturing_sheet import rules2graph_capturing_sheet
 from cognite.neat.rules.importer import ExcelImporter
+from tests import config
 
 
-def test_graph_capturing_sheet(tmp_path, simple_rules, graph_capturing_sheet):
+def test_graph_capturing_sheet(tmp_path, simple_rules):
+    extractor = extractors.GraphCapturingSheet(
+        simple_rules, config.GRAPH_CAPTURING_SHEET, store_graph_capturing_sheet=True
+    )
+    _ = extractor.extract()
+    graph_capturing_sheet = extractor.sheet
     tmp_sheet = tmp_path / "temp_graph_capturing.xlsx"
 
     rules2graph_capturing_sheet(simple_rules, tmp_sheet, add_drop_down_list=True, auto_identifier_type="uuid")

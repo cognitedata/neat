@@ -3,7 +3,6 @@ import shutil
 import tempfile
 from pathlib import Path
 
-import pandas as pd
 import pytest
 from rdflib import RDF, Literal, Namespace
 
@@ -158,11 +157,6 @@ def mock_rdf_assets(mock_knowledge_graph, transformation_rules):
 @pytest.fixture(scope="function")
 def mock_cdf_assets(mock_knowledge_graph, transformation_rules):
     return loaders.rdf2assets(mock_knowledge_graph, transformation_rules, data_set_id=123456)
-
-
-@pytest.fixture(scope="function")
-def graph_capturing_sheet() -> dict[str, pd.DataFrame]:
-    return extractors.read_graph_excel_file_to_table_by_name(config.GRAPH_CAPTURING_SHEET)
 
 
 @pytest.fixture(scope="function")

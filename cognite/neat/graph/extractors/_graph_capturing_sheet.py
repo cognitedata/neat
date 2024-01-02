@@ -33,16 +33,25 @@ class GraphCapturingSheet(BaseExtractor):
         separator: Multi value separator at cell level. Defaults to ",".
         namespace: Optional custom namespace to use for extracted triples that define data
                     model instances. Defaults to None.
+        store_graph_capturing_sheet: Whether to store the graph capturing sheet in the object. Will be stored in the
+                                     `sheet` attribute. Defaults to False.
 
     """
 
     def __init__(
-        self, rules: Rules, filepath: Path | str | None = None, separator: str = ",", namespace: str | None = None
+        self,
+        rules: Rules,
+        filepath: Path | str | None = None,
+        separator: str = ",",
+        namespace: str | None = None,
+        store_graph_capturing_sheet: bool = False,
     ):
         self.rules = rules
-        self.filepath = Path(filepath) if isinstance(filepath, str) else None
+        self.filepath = Path(filepath) if isinstance(filepath, str | Path) else None
         self.separator = separator
         self.namespace = namespace
+        self.store_graph_capturing_sheet = store_graph_capturing_sheet
+        self.sheet: dict[str, pd.DataFrame] = {}
 
     def create_template(self, filepath: Path | None = None, overwrite: bool = False) -> None:
         """
@@ -69,7 +78,11 @@ class GraphCapturingSheet(BaseExtractor):
         """
         if self.filepath is None:
             raise ValueError("File path to the graph capturing sheet is not provided!")
-        return extract_graph_from_sheet(self.filepath, self.rules, self.separator, self.namespace)
+        graph_capturing_sheet = read_graph_excel_file_to_table_by_name(self.filepath)
+        if self.store_graph_capturing_sheet:
+            self.sheet = graph_capturing_sheet
+
+        return sheet2triples(graph_capturing_sheet, self.rules, self.separator, self.namespace)
 
 
 def extract_graph_from_sheet(
