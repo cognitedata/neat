@@ -1,4 +1,4 @@
-from cognite.neat.graph.extractors.graph_sheet_to_graph import rules2graph_capturing_sheet
+from cognite.neat.graph.extractors._graph_capturing_sheet import rules2graph_capturing_sheet
 from cognite.neat.rules.importer import ExcelImporter
 
 

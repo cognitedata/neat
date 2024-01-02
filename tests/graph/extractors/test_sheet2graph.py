@@ -1,6 +1,6 @@
 from rdflib import XSD, Literal
 
-from cognite.neat.graph.extractors.graph_sheet_to_graph import sheet2triples
+from cognite.neat.graph.extractors._graph_capturing_sheet import sheet2triples
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.utils.utils import remove_namespace
 
