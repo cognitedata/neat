@@ -15,12 +15,15 @@ from rdflib import RDF, XSD, Literal, Namespace
 
 from cognite.neat.graph import exceptions
 from cognite.neat.graph.exceptions import NamespaceRequired
+from cognite.neat.graph.models import Triple
 from cognite.neat.rules.analysis import get_defined_classes, to_class_property_pairs
 from cognite.neat.rules.exporter._rules2rules import to_dms_name
 from cognite.neat.rules.models.rules import Rules
 
+from ._base import BaseExtractor
 
-class GraphCapturingSheet:
+
+class GraphCapturingSheet(BaseExtractor):
     """
     Graph capturing sheet class that provides methods for creating a graph capturing sheet and extracting RDF triples.
 
@@ -28,13 +31,30 @@ class GraphCapturingSheet:
         rules: Transformation rules which holds data model that is used to validate
                 the graph capturing sheet and extract data model instances from it (i.e. RDF triples)
         filepath: File path to save the sheet to. Defaults to None.
+        separator: Multi value separator at cell level. Defaults to ",".
+        namespace: Optional custom namespace to use for extracted triples that define data
+                    model instances. Defaults to None.
+        store_graph_capturing_sheet: Whether to store the graph capturing sheet in the object. Will be stored in the
+                                     `sheet` attribute. Defaults to False.
+
     """
 
-    def __init__(self, rules: Rules, filepath: Path | str | None = None):
+    def __init__(
+        self,
+        rules: Rules,
+        filepath: Path | str | None = None,
+        separator: str = ",",
+        namespace: str | None = None,
+        store_graph_capturing_sheet: bool = False,
+    ):
         self.rules = rules
-        self.filepath = Path(filepath) if isinstance(filepath, str) else None
+        self.filepath = Path(filepath) if isinstance(filepath, str | Path) else None
+        self.separator = separator
+        self.namespace = namespace
+        self.store_graph_capturing_sheet = store_graph_capturing_sheet
+        self.sheet: dict[str, pd.DataFrame] = {}
 
-    def create_template(self, filepath: Path | None = None, overwrite: bool = False):
+    def create_template(self, filepath: Path | None = None, overwrite: bool = False) -> None:
         """
         Creates a graph capturing sheet template based on the transformation rules.
 
@@ -50,7 +70,7 @@ class GraphCapturingSheet:
             raise FileExistsError(f"File {filepath} already exists! Set overwrite to True to overwrite it!")
         rules2graph_capturing_sheet(self.rules, filepath)
 
-    def extract_triples_from_sheet(self, separator: str = ",", namespace: str | None = None) -> list[tuple]:
+    def extract(self) -> list[Triple]:
         """
         Extracts RDF triples from the graph capturing sheet.
 
@@ -59,12 +79,16 @@ class GraphCapturingSheet:
         """
         if self.filepath is None:
             raise ValueError("File path to the graph capturing sheet is not provided!")
-        return extract_graph_from_sheet(self.filepath, self.rules, separator, namespace)
+        graph_capturing_sheet = read_graph_excel_file_to_table_by_name(self.filepath)
+        if self.store_graph_capturing_sheet:
+            self.sheet = graph_capturing_sheet
+
+        return sheet2triples(graph_capturing_sheet, self.rules, self.separator, self.namespace)
 
 
 def extract_graph_from_sheet(
     filepath: Path, transformation_rule: Rules, separator: str = ",", namespace: str | None = None
-) -> list[tuple]:
+) -> list[Triple]:
     """Converts a graph capturing sheet to RDF triples that define data model instances
 
     Args:
@@ -89,7 +113,7 @@ def sheet2triples(
     transformation_rule: Rules,
     separator: str = ",",
     namespace: str | None = None,
-) -> list[tuple]:
+) -> list[Triple]:
     """Converts a graph capturing sheet represented as dictionary of dataframes to rdf triples
 
     Args:
@@ -125,7 +149,7 @@ def sheet2triples(
         raise NamespaceRequired("Extact instances from sheet")
 
     # Now create empty graph
-    triples: list[tuple] = []
+    triples: list[Triple] = []
 
     # Add triples from the capturing sheet to the graph by iterating over the capturing sheet
     # iterate over sheets

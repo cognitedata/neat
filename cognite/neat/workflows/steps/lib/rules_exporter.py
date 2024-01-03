@@ -4,7 +4,7 @@ import warnings
 from pathlib import Path
 from typing import ClassVar
 
-import cognite.neat.graph.extractors.graph_sheet_to_graph
+import cognite.neat.graph.extractors._graph_capturing_sheet
 from cognite.neat.exceptions import wrangle_warnings
 from cognite.neat.rules import exporter
 from cognite.neat.rules.exporter._rules2dms import DataModel
@@ -300,7 +300,7 @@ class GraphCaptureSpreadsheetFromRules(Step):
         staging_dir.mkdir(parents=True, exist_ok=True)
         data_capture_sheet_path = staging_dir / sheet_name
 
-        cognite.neat.graph.extractors.graph_sheet_to_graph.rules2graph_capturing_sheet(
+        cognite.neat.graph.extractors._graph_capturing_sheet.rules2graph_capturing_sheet(
             rules.rules, data_capture_sheet_path, auto_identifier_type=auto_identifier_type
         )
 
