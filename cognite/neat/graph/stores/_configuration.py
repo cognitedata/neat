@@ -12,7 +12,6 @@ class RdfStoreType(StrEnum):
     """RDF Store type"""
 
     MEMORY = "memory"
-    FILE = "file"
     GRAPHDB = "graphdb"
     SPARQL = "sparql"
     OXIGRAPH = "oxigraph"

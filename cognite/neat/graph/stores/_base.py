@@ -2,7 +2,7 @@ import logging
 import os
 import sys
 import time
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from pathlib import Path
 
 import pandas as pd
@@ -25,7 +25,7 @@ prom_qsm = Summary("store_query_time_summary", "Time spent processing queries", 
 prom_sq = Gauge("store_single_query_time", "Time spent processing a single query", ["query"])
 
 
-class NeatGraphStoreBase:
+class NeatGraphStoreBase(ABC):
     """NeatGraphStore is a class that stores the graph and provides methods to read/write data it contains
 
 
@@ -35,6 +35,8 @@ class NeatGraphStoreBase:
         namespace : Namespace (aka URI) used to resolve any relative URI in the graph
         prefixes : Dictionary of additional prefixes used in the graph
     """
+
+    rdf_store_type: str
 
     def __init__(
         self,
@@ -80,7 +82,7 @@ class NeatGraphStoreBase:
         return store
 
     @abstractmethod
-    def _init_graph(self) -> Graph:
+    def _set_graph(self) -> None:
         raise NotImplementedError()
 
     def init_graph(
@@ -116,7 +118,7 @@ class NeatGraphStoreBase:
             self.internal_storage_dir if self.internal_storage_dir_orig is None else self.internal_storage_dir_orig
         )
 
-        self.graph = self._init_graph()
+        self._set_graph()
 
         if self.prefixes:
             for prefix, namespace in self.prefixes.items():

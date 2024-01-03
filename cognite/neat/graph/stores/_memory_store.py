@@ -30,9 +30,9 @@ class MemoryStore(NeatGraphStoreBase):
         # Init repeated to get nice docstring
         super().__init__(graph, base_prefix, namespace, prefixes)
 
-    def _init_graph(self):
+    def _set_graph(self):
         logging.info("Initializing graph in memory")
-        return Graph()
+        self.graph = Graph()
 
     def drop(self):
         """Drops the graph."""

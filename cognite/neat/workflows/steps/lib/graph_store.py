@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import ClassVar, cast
 
 from cognite.neat.constants import PREFIXES
+from cognite.neat.graph import stores
 from cognite.neat.graph.stores import NeatGraphStoreBase, RdfStoreType, drop_graph_store_storage
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage
@@ -86,10 +87,13 @@ class ConfigureDefaultGraphStores(Step):
         if stores_to_configure in ["all", "source"]:
             if source_store_type == RdfStoreType.OXIGRAPH and "SourceGraph" in self.flow_context:
                 return FlowMessage(output_text="Stores already configured")
+            try:
+                store_cls = stores.STORE_BY_TYPE[source_store_type]
+            except KeyError:
+                return FlowMessage(output_text="Invalid store type")
+            source_graph = store_cls(prefixes=prefixes, base_prefix="neat", namespace=PREFIXES["neat"])
 
-            source_graph = NeatGraphStoreBase(prefixes=prefixes, base_prefix="neat", namespace=PREFIXES["neat"])
             source_graph.init_graph(
-                source_store_type,
                 self.configs["source_rdf_store.query_url"],
                 self.configs["source_rdf_store.update_url"],
                 "neat-tnt",
@@ -99,6 +103,8 @@ class ConfigureDefaultGraphStores(Step):
                 return FlowMessage(output_text="Source graph store configured successfully"), SourceGraph(
                     graph=source_graph
                 )
+        else:
+            source_graph = None
 
         if stores_to_configure in ["all", "solution"]:
             solution_store_dir = self.configs["solution_rdf_store.disk_store_dir"]
@@ -107,10 +113,15 @@ class ConfigureDefaultGraphStores(Step):
 
             if solution_store_type == RdfStoreType.OXIGRAPH and "SolutionGraph" in self.flow_context:
                 return FlowMessage(output_text="Stores already configured")
-            solution_graph = NeatGraphStoreBase(prefixes=prefixes, base_prefix="neat", namespace=PREFIXES["neat"])
+
+            try:
+                solution_graph = stores.STORE_BY_TYPE[solution_store_type](
+                    prefixes=prefixes, base_prefix="neat", namespace=PREFIXES["neat"]
+                )
+            except KeyError:
+                return FlowMessage(output_text="Invalid store type")
 
             solution_graph.init_graph(
-                solution_store_type,
                 self.configs["solution_rdf_store.query_url"],
                 self.configs["solution_rdf_store.update_url"],
                 "tnt-solution",
@@ -122,11 +133,13 @@ class ConfigureDefaultGraphStores(Step):
                 return FlowMessage(output_text="Solution graph store configured successfully"), SolutionGraph(
                     graph=solution_graph
                 )
+        else:
+            solution_graph = None
 
         return (
             FlowMessage(output_text="All graph stores configured successfully"),
-            SourceGraph(graph=source_graph),
-            SolutionGraph(graph=solution_graph),
+            SourceGraph(graph=source_graph) if source_graph else None,
+            SolutionGraph(graph=solution_graph) if solution_graph else None,
         )
 
 
@@ -226,11 +239,13 @@ class ConfigureGraphStore(Step):
             # OXIGRAPH doesn't like to be initialized twice without a good reason
             return FlowMessage(output_text="Stores already configured")
 
-        new_graph_store = NeatGraphStoreBase(
-            prefixes=rules_data.rules.prefixes, base_prefix="neat", namespace=PREFIXES["neat"]
-        )
+        try:
+            store_cls = stores.STORE_BY_TYPE[store_type]
+        except KeyError:
+            return FlowMessage(output_text="Invalid store type")
+
+        new_graph_store = store_cls(prefixes=rules_data.rules.prefixes, base_prefix="neat", namespace=PREFIXES["neat"])
         new_graph_store.init_graph(
-            store_type,
             self.configs["sparql_query_url"],
             self.configs["sparql_update_url"],
             "neat-tnt",
