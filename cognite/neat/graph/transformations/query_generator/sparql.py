@@ -519,20 +519,22 @@ def _most_occurring_element(list_of_elements: list):
     return counts.most_common(1)[0][0]
 
 
-def triples2dictionary(triples: Iterable[tuple[URIRef, URIRef, str | URIRef]]) -> dict[str, dict[str, list[str]]]:
+def triples2dictionary(triples: Iterable[tuple[URIRef, URIRef, str | URIRef]]) -> dict[URIRef, dict[str, list[str]]]:
     """Converts list of triples to dictionary"""
-    dictionary: dict[str, dict[str, list[str]]] = {}
+    dictionary: dict[URIRef, dict[str, list[str]]] = {}
     for triple in triples:
         id_: str
         property_: str
         value: str
+        uri: URIRef
         id_, property_, value = remove_namespace(*triple)  # type: ignore[misc]
+        uri = triple[0]
 
-        if id_ not in dictionary:
-            dictionary[id_] = {"external_id": [id_]}
+        if uri not in dictionary:
+            dictionary[uri] = {"external_id": [id_]}
 
-        if property_ not in dictionary[id_]:
-            dictionary[id_][property_] = [value]
+        if property_ not in dictionary[uri]:
+            dictionary[uri][property_] = [value]
         else:
-            dictionary[id_][property_].append(value)
+            dictionary[uri][property_].append(value)
     return dictionary

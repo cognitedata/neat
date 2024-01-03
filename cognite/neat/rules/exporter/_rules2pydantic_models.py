@@ -21,7 +21,7 @@ from cognite.neat.rules.exporter._rules2dms import DataModel
 from cognite.neat.rules.exporter._validation import are_entity_names_dms_compliant
 from cognite.neat.rules.models.rules import Property, Rules
 from cognite.neat.rules.value_types import ValueTypeMapping
-from cognite.neat.utils.utils import generate_exception_report, remove_namespace
+from cognite.neat.utils.utils import generate_exception_report
 
 if sys.version_info >= (3, 11):
     from datetime import UTC
@@ -403,7 +403,7 @@ def from_graph(
     # Not sure if the triple will be URIRef or Literal
     query_result = cast(Iterable[tuple[URIRef, URIRef, str | URIRef]], graph.query(sparql_construct_query))
 
-    dictionary = triples2dictionary(query_result)[remove_namespace(external_id)]
+    dictionary = triples2dictionary(query_result)[external_id]
 
     if not dictionary:
         raise exceptions.MissingInstanceTriples(external_id)
