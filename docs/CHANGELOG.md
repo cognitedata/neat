@@ -19,7 +19,7 @@ Changes are grouped as follows:
 ## [0.TBD] - TBD-01-24
 
 ## Changed
-- `cognite.neat.stores` module. This now only has fours classes: `NeatGraphStoreBase`, `MemoryStore`, `OxiGraphStore`,
+- `cognite.neat.stores` module. This now only has four classes: `NeatGraphStoreBase`, `MemoryStore`, `OxiGraphStore`,
   and `GraphDBStore` as well as the constants `STORE_BY_TYPE` and `AVAILABLE_STORES`. All functions, enums, and previous
   classes are removed. Note `NeatGraphStoreBase` is a rename from `NeatGraphStore` and is now an abstract class.
 
