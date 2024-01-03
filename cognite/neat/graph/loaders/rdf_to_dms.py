@@ -1,12 +1,15 @@
 import logging
+from collections.abc import Iterable
 from typing import cast
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import EdgeApply, NodeApply
 from pydantic_core import ErrorDetails
+from rdflib import URIRef
 
 from cognite.neat.exceptions import NeatException
 from cognite.neat.graph.stores.graph_store import NeatGraphStore
+from cognite.neat.graph.transformations.query_generator.sparql import build_construct_query, triples2dictionary
 from cognite.neat.rules.exporter._rules2dms import DataModel
 from cognite.neat.rules.exporter._rules2pydantic_models import add_class_prefix_to_xid, rules_to_pydantic_models
 from cognite.neat.rules.models.rules import Rules
@@ -42,32 +45,32 @@ def rdf2nodes_and_edges(
 
     for class_ in rules.classes:
         if f"{rules.space}:{class_}" in data_model.containers:
-            class_uri = rules.metadata.namespace[class_]
-            class_instance_ids = [
-                cast(tuple, res)[0]
-                for res in graph_store.query(f"SELECT ?instance WHERE {{ ?instance rdf:type <{class_uri}> . }}")
-            ]
+            sparql_construct_query = build_construct_query(
+                graph_store.graph,
+                class_,
+                rules,
+                properties_optional=True,
+            )
 
             counter = 0
             start_time = datetime_utc_now()
-            total = len(class_instance_ids)
 
-            for class_instance_id in class_instance_ids:
+            for instance_dict in triples2dictionary(
+                cast(Iterable[tuple[URIRef, URIRef, str | URIRef]], graph_store.query(sparql_construct_query))
+            ).values():
                 counter += 1
                 try:
-                    instance = pydantic_models[class_].from_graph(  # type: ignore[attr-defined]
-                        graph_store, rules, class_instance_id
-                    )
+                    instance = pydantic_models[class_].from_dict(instance_dict)  # type: ignore[attr-defined]
                     if add_class_prefix:
                         instance.external_id = add_class_prefix_to_xid(
-                            class_name=instance.__class__.__name__, external_id=instance.external_id
+                            class_name=type(instance).__name__, external_id=instance.external_id
                         )
-                    new_node = instance.to_node(data_model, add_class_prefix)
+                    new_node = instance.to_node(data_model, add_class_prefix)  # type: ignore[attr-defined]
                     is_valid, reason = is_node_valid(new_node)
                     if not is_valid:
                         exceptions.append(
                             ErrorDetails(
-                                input=class_instance_id,
+                                input=instance_dict["external_id"],
                                 loc=tuple(["Nodes"]),
                                 msg=f"Not valid node {new_node.external_id}. Reason: {reason}",
                                 type="Node validation error",
@@ -82,7 +85,7 @@ def rdf2nodes_and_edges(
                         if not is_valid:
                             exceptions.append(
                                 ErrorDetails(
-                                    input=class_instance_id,
+                                    input=instance_dict["external_id"],
                                     loc=tuple(["Edges"]),
                                     msg=f"Not valid edge {new_edge.external_id}. Reason: {reason}",
                                     type="Edge validation error",
@@ -94,15 +97,15 @@ def rdf2nodes_and_edges(
                     delta_time = datetime_utc_now() - start_time
                     delta_time = (delta_time.seconds * 1000000 + delta_time.microseconds) / 1000
                     msg = (
-                        f"{class_} {counter} of {total} instances processed, "
+                        f"{class_} {counter} instances processed, "
                         f"instance processing time: {delta_time/counter:.2f} "
                     )
-                    msg += f"ms ETC: {(delta_time/counter) * (total - counter) / 1000 :.3f} s"
                     logging.info(msg)
 
                 except Exception as e:
                     logging.error(
-                        f"Instance {class_instance_id} of {class_} cannot be resolved to nodes and edges. Reason: {e}"
+                        f"Instance {instance_dict['external_id']} of {class_}"
+                        f" cannot be resolved to nodes and edges. Reason: {e}"
                     )
                     if stop_on_exception:
                         raise e
@@ -112,7 +115,7 @@ def rdf2nodes_and_edges(
                     else:
                         exceptions.append(
                             ErrorDetails(
-                                input=class_instance_id,
+                                input=instance_dict["external_id"],
                                 loc=tuple(["rdf2nodes_and_edges"]),
                                 msg=str(e),
                                 type=f"Exception of type {type(e).__name__} occurred  \
@@ -120,6 +123,119 @@ def rdf2nodes_and_edges(
                             )
                         )
                     continue
+
+    return nodes, edges, exceptions
+
+
+def rdf2nodes_and_edges_old(
+    graph_store: NeatGraphStore,
+    rules: Rules,
+    stop_on_exception: bool = False,
+    add_class_prefix: bool = False,
+) -> tuple[list[NodeApply], list[EdgeApply], list[ErrorDetails]]:
+    """Generates DMS nodes and edges from knowledge graph stored as RDF triples
+
+    Args:
+        graph_store: Instance of NeatGraphStore holding RDF graph
+        rules: Rules holding data model definition
+        stop_on_exception: Whether to stop execution on exception. Defaults to False.
+        add_class_prefix: Whether to add class name as a prefix to instance external id. Defaults to False.
+
+    Returns:
+        Tuple holding nodes, edges and exceptions
+    """
+    if rules.metadata.namespace is None:
+        raise ValueError("Namespace is not defined in transformation rules metadata")
+
+    nodes: list[NodeApply] = []
+    edges: list[EdgeApply] = []
+    exceptions: list[ErrorDetails] = []
+
+    data_model = DataModel.from_rules(rules)
+    pydantic_models = rules_to_pydantic_models(rules)
+
+    for class_ in rules.classes:
+        if f"{rules.space}:{class_}" not in data_model.containers:
+            continue
+
+        class_uri = rules.metadata.namespace[class_]
+        class_instance_ids = [
+            cast(tuple, res)[0]
+            for res in graph_store.query(f"SELECT ?instance WHERE {{ ?instance rdf:type <{class_uri}> . }}")
+        ]
+
+        counter = 0
+        start_time = datetime_utc_now()
+        total = len(class_instance_ids)
+
+        for class_instance_id in class_instance_ids:
+            counter += 1
+            try:
+                instance = pydantic_models[class_].from_graph(  # type: ignore[attr-defined]
+                    graph_store, rules, class_instance_id
+                )
+                if add_class_prefix:
+                    instance.external_id = add_class_prefix_to_xid(
+                        class_name=instance.__class__.__name__, external_id=instance.external_id
+                    )
+                new_node = instance.to_node(data_model, add_class_prefix)
+                is_valid, reason = is_node_valid(new_node)
+                if not is_valid:
+                    exceptions.append(
+                        ErrorDetails(
+                            input=class_instance_id,
+                            loc=tuple(["Nodes"]),
+                            msg=f"Not valid node {new_node.external_id}. Reason: {reason}",
+                            type="Node validation error",
+                        )
+                    )
+                    continue
+                nodes.append(new_node)
+
+                new_edges = instance.to_edge(data_model, add_class_prefix)
+                for new_edge in new_edges:
+                    is_valid, reason = is_edge_valid(new_edge)
+                    if not is_valid:
+                        exceptions.append(
+                            ErrorDetails(
+                                input=class_instance_id,
+                                loc=tuple(["Edges"]),
+                                msg=f"Not valid edge {new_edge.external_id}. Reason: {reason}",
+                                type="Edge validation error",
+                            )
+                        )
+                        continue
+                    edges.append(new_edge)
+
+                delta_time = datetime_utc_now() - start_time
+                delta_time = (delta_time.seconds * 1000000 + delta_time.microseconds) / 1000
+                msg = (
+                    f"{class_} {counter} of {total} instances processed, "
+                    f"instance processing time: {delta_time/counter:.2f} "
+                )
+                msg += f"ms ETC: {(delta_time/counter) * (total - counter) / 1000 :.3f} s"
+                logging.info(msg)
+
+            except Exception as e:
+                logging.error(
+                    f"Instance {class_instance_id} of {class_} cannot be resolved to nodes and edges. Reason: {e}"
+                )
+                if stop_on_exception:
+                    raise e
+
+                if isinstance(e, NeatException):
+                    exceptions.append(e.to_error_dict())
+                else:
+                    exceptions.append(
+                        ErrorDetails(
+                            input=class_instance_id,
+                            loc=tuple(["rdf2nodes_and_edges"]),
+                            msg=str(e),
+                            type=f"Exception of type {type(e).__name__} occurred  \
+                            when processing instance of {class_}",
+                        )
+                    )
+                continue
 
     return nodes, edges, exceptions
 

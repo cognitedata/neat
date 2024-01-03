@@ -15,7 +15,13 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## [0.TBD] - TBD
+
+## [0.53.0] - 03-01-24
+
+## Improved
+
+- Speed of nodes & edges generation
+
 ## Changed
 - `cognite.neat.extractors` module. This now only has three classes: `BaseExtractor`, `MockGraphGenerator`, `GraphCapturingSheet`.
    all the functions that were in the module is replaced with the above classes. The exception is the the function
