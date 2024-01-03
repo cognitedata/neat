@@ -15,6 +15,7 @@ from rdflib import RDF, XSD, Literal, Namespace
 
 from cognite.neat.graph import exceptions
 from cognite.neat.graph.exceptions import NamespaceRequired
+from cognite.neat.graph.models import Triple
 from cognite.neat.rules.analysis import get_defined_classes, to_class_property_pairs
 from cognite.neat.rules.exporter._rules2rules import to_dms_name
 from cognite.neat.rules.models.rules import Rules
@@ -69,7 +70,7 @@ class GraphCapturingSheet(BaseExtractor):
             raise FileExistsError(f"File {filepath} already exists! Set overwrite to True to overwrite it!")
         rules2graph_capturing_sheet(self.rules, filepath)
 
-    def extract(self) -> list[tuple]:
+    def extract(self) -> list[Triple]:
         """
         Extracts RDF triples from the graph capturing sheet.
 
@@ -87,7 +88,7 @@ class GraphCapturingSheet(BaseExtractor):
 
 def extract_graph_from_sheet(
     filepath: Path, transformation_rule: Rules, separator: str = ",", namespace: str | None = None
-) -> list[tuple]:
+) -> list[Triple]:
     """Converts a graph capturing sheet to RDF triples that define data model instances
 
     Args:
@@ -112,7 +113,7 @@ def sheet2triples(
     transformation_rule: Rules,
     separator: str = ",",
     namespace: str | None = None,
-) -> list[tuple]:
+) -> list[Triple]:
     """Converts a graph capturing sheet represented as dictionary of dataframes to rdf triples
 
     Args:
@@ -148,7 +149,7 @@ def sheet2triples(
         raise NamespaceRequired("Extact instances from sheet")
 
     # Now create empty graph
-    triples: list[tuple] = []
+    triples: list[Triple] = []
 
     # Add triples from the capturing sheet to the graph by iterating over the capturing sheet
     # iterate over sheets

@@ -10,6 +10,7 @@ import pandas as pd
 from prometheus_client import Gauge
 from rdflib import RDF, Literal, Namespace, URIRef
 
+from cognite.neat.graph.models import Triple
 from cognite.neat.rules.analysis import (
     get_class_linkage,
     get_classes_with_properties,
@@ -51,7 +52,7 @@ class MockGraphGenerator(BaseExtractor):
         self.stop_on_exception = stop_on_exception
         self.allow_isolated_classes = allow_isolated_classes
 
-    def extract(self) -> list[tuple]:
+    def extract(self) -> list[Triple]:
         """Generate mock triples based on data model defined transformation rules and desired number
         of class instances
 
@@ -68,7 +69,7 @@ class MockGraphGenerator(BaseExtractor):
 
 def generate_triples(
     transformation_rules: Rules, class_count: dict, stop_on_exception: bool = False, allow_isolated_classes: bool = True
-) -> list[tuple]:
+) -> list[Triple]:
     """Generate mock triples based on data model defined transformation rules and desired number
     of class instances
 
@@ -129,7 +130,7 @@ def generate_triples(
     instance_ids = {key: [URIRef(namespace[f"{key}-{i}"]) for i in range(value)] for key, value in class_count.items()}
 
     # create triple for each class instance defining its type
-    triples: list[tuple] = []
+    triples: list[Triple] = []
     for class_ in class_count:
         triples += [
             (class_instance_id, RDF.type, URIRef(namespace[class_])) for class_instance_id in instance_ids[class_]
@@ -307,9 +308,9 @@ def _generate_triples_per_class(
     instance_ids: dict[str, list[URIRef]],
     namespace: Namespace,
     stop_on_exception: bool,
-) -> list[tuple]:
+) -> list[Triple]:
     """Generate triples for a given class."""
-    triples: list[tuple] = []
+    triples: list[Triple] = []
     for _, property_definition in class_definitions[class_].iterrows():
         if property_definition.property_type == "DatatypeProperty":
             triples += _generate_mock_data_property_triples(
