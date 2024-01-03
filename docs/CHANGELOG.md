@@ -22,7 +22,6 @@ Changes are grouped as follows:
 
 - Speed of nodes & edges generation
 
-## [0.TBD] - TBD
 ## Changed
 - `cognite.neat.extractors` module. This now only has three classes: `BaseExtractor`, `MockGraphGenerator`, `GraphCapturingSheet`.
    all the functions that were in the module is replaced with the above classes. The exception is the the function
