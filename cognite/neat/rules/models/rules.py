@@ -31,7 +31,13 @@ from rdflib import XSD, Literal, Namespace, URIRef
 
 from cognite.neat.constants import PREFIXES
 from cognite.neat.rules import exceptions
-from cognite.neat.rules.models._base import Container, EntityTypes, ParentClass
+from cognite.neat.rules.models._base import (
+    ENTITY_ID_REGEX_COMPILED,
+    VERSIONED_ENTITY_REGEX_COMPILED,
+    ContainerEntity,
+    EntityTypes,
+    ParentClass,
+)
 from cognite.neat.rules.models.rdfpath import (
     AllReferences,
     Entity,
@@ -552,11 +558,11 @@ class Class(Resource):
         if isinstance(value, str) and value:
             parent_classes = []
             for v in value.replace(", ", ",").split(","):
-                try:
+                if ENTITY_ID_REGEX_COMPILED.match(v) or VERSIONED_ENTITY_REGEX_COMPILED.match(v):
                     parent_classes.append(ParentClass.from_string(entity_string=v))
-                # if all fails defaults "neat" object which ends up being updated to proper
-                # prefix and version upon completion of Rules validation
-                except ValueError:
+                else:
+                    # if all fails defaults "neat" object which ends up being updated to proper
+                    # prefix and version upon completion of Rules validation
                     parent_classes.append(ParentClass(prefix="undefined", suffix=value, name=value))
 
             return parent_classes
@@ -646,7 +652,7 @@ class Property(Resource):
     cdf_resource_type: list[str] = Field(alias="Resource Type", default_factory=list)
 
     # container specific things, only used for advance modeling or auto-filled by neat
-    container: Container | None = Field(alias="Container", default=None)
+    container: ContainerEntity | None = Field(alias="Container", default=None)
     container_property: str | None = Field(alias="Container Property", default=None)
     index: bool | None = Field(alias="Index", default=False)
     constraints: str | None = Field(alias="Constraints", default=None, min_length=1)
@@ -664,10 +670,10 @@ class Property(Resource):
         if not value:
             return value
 
-        try:
-            return Container.from_string(entity_string=value)
-        except ValueError:
-            return Container(prefix="undefined", suffix=value, name=value)
+        if ENTITY_ID_REGEX_COMPILED.match(value) or VERSIONED_ENTITY_REGEX_COMPILED.match(value):
+            return ContainerEntity.from_string(entity_string=value)
+        else:
+            return ContainerEntity(prefix="undefined", suffix=value, name=value)
 
     @field_validator("expected_value_type", mode="before")
     def expected_value_type_string_to_entity(cls, value):
@@ -676,12 +682,13 @@ class Property(Resource):
             return XSD_VALUE_TYPE_MAPPINGS[value]
 
         # complex types correspond to relations to other classes
-        try:
+        if ENTITY_ID_REGEX_COMPILED.match(value) or VERSIONED_ENTITY_REGEX_COMPILED.match(value):
             return ValueType.from_string(entity_string=value, type_=EntityTypes.object_value_type, mapping=None)
-        except ValueError:
+        else:
             return ValueType(
                 prefix="undefined", suffix=value, name=value, type_=EntityTypes.object_value_type, mapping=None
             )
+        #     return ValueType(
 
     @validator("class_id", always=True)
     @skip_field_validator("validators_to_skip")
@@ -771,7 +778,7 @@ class Property(Resource):
         if not self.container and (
             self.expected_value_type.type_ == EntityTypes.data_value_type or self.max_count == 1
         ):
-            self.container = Container(prefix="undefined", suffix=self.class_id, name=self.class_id)
+            self.container = ContainerEntity(prefix="undefined", suffix=self.class_id, name=self.class_id)
         return self
 
     @model_validator(mode="after")
@@ -844,30 +851,21 @@ class Property(Resource):
         if self.property_type == "DatatypeProperty" and self.default:
             default_value = self.default[0] if isinstance(self.default, list) else self.default
 
-            if type(default_value) != XSD_VALUE_TYPE_MAPPINGS[self.expected_value_type.xsd].python:
+            if type(default_value) != self.expected_value_type.python:
                 try:
                     if isinstance(self.default, list):
                         updated_list = []
                         for value in self.default:
-                            updated_list.append(XSD_VALUE_TYPE_MAPPINGS[self.expected_value_type].python(value))
+                            updated_list.append(self.expected_value_type.python(value))
                         self.default = updated_list
                     else:
-                        self.default = XSD_VALUE_TYPE_MAPPINGS[self.expected_value_type].python(self.default)
+                        self.default = self.expected_value_type.python(self.default)
 
-                    warnings.warn(
-                        exceptions.DefaultValueTypeConverted(
-                            self.property_id,
-                            type(self.default),
-                            XSD_VALUE_TYPE_MAPPINGS[self.expected_value_type].python,
-                        ).message,
-                        category=exceptions.DefaultValueTypeConverted,
-                        stacklevel=2,
-                    )
                 except Exception:
                     exceptions.DefaultValueTypeNotProper(
                         self.property_id,
                         type(self.default),
-                        XSD_VALUE_TYPE_MAPPINGS[self.expected_value_type].python,
+                        self.expected_value_type.python,
                     )
         return self
 
@@ -1076,8 +1074,11 @@ class Rules(RuleModel):
         # update container
         for id_ in self.properties.keys():
             # only update version of expected value type which are part of this data model
-            if self.properties[id_].container and cast(Container, self.properties[id_].container).prefix == "undefined":
-                cast(Container, self.properties[id_].container).prefix = prefix
+            if (
+                self.properties[id_].container
+                and cast(ContainerEntity, self.properties[id_].container).prefix == "undefined"
+            ):
+                cast(ContainerEntity, self.properties[id_].container).prefix = prefix
 
         # update parent classes
         for id_ in self.classes.keys():
@@ -1088,6 +1089,36 @@ class Rules(RuleModel):
                     if not parent_class.version:
                         parent_class.version = version
 
+        return self
+
+    @model_validator(mode="after")
+    @skip_model_validator("validators_to_skip")
+    def update_container_description_and_name(self):
+        for id_ in self.properties.keys():
+            if (
+                self.properties[id_].container
+                and self.properties[id_].container.external_id in self.classes
+                and self.properties[id_].container.space == self.metadata.space
+            ):
+                self.properties[id_].container.description = self.classes[
+                    self.properties[id_].container.external_id
+                ].description
+
+                self.properties[id_].container.name = self.classes[
+                    self.properties[id_].container.external_id
+                ].class_name
+        return self
+
+    @model_validator(mode="after")
+    @skip_model_validator("validators_to_skip")
+    def add_missing_classes(self):
+        for property_ in self.properties.values():
+            if property_.class_id not in self.classes:
+                self.classes[property_.class_id] = Class(
+                    class_id=property_.class_id,
+                    class_name=property_.class_id,
+                    comment="This class was automatically added by neat",
+                )
         return self
 
     def update_prefix(self, prefix: str):
@@ -1101,10 +1132,16 @@ class Rules(RuleModel):
             old_prefix = self.metadata.prefix
             self.metadata.prefix = prefix
 
-            # update entity ids for expected_value_types
+            # update entity ids for expected_value_types and containers
             for id_ in self.properties.keys():
                 if self.properties[id_].expected_value_type.prefix == old_prefix:
                     self.properties[id_].expected_value_type.prefix = prefix
+
+                if (
+                    self.properties[id_].container
+                    and cast(ContainerEntity, self.properties[id_].container).prefix == old_prefix
+                ):
+                    cast(ContainerEntity, self.properties[id_].container).prefix = prefix
 
             # update parent classes
             for id_ in self.classes.keys():

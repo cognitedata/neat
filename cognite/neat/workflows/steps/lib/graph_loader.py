@@ -130,7 +130,7 @@ class GenerateCDFNodesAndEdgesFromGraph(Step):
         add_class_prefix = True if self.configs["add_class_prefix"] == "True" else False
         nodes, edges, exceptions = rdf2nodes_and_edges(
             graph_store=graph.graph,
-            transformation_rules=rules.rules,
+            rules=rules.rules,
             stop_on_exception=False,
             add_class_prefix=add_class_prefix,
         )

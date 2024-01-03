@@ -2362,7 +2362,7 @@ class DataModelOrItsComponentsAlreadyExist(NeatException):
         super().__init__(self.message)
 
 
-class InstancePropertiesNotMatchingContainerProperties(NeatException):
+class InstancePropertiesNotMatchingViewProperties(NeatException):
     """This error is raised when an instance of a class has properties which are not
     defined in the DMS container
 
@@ -2376,19 +2376,98 @@ class InstancePropertiesNotMatchingContainerProperties(NeatException):
         Make sure that all properties of a class are defined in the DMS container.
     """
 
-    type_: str = "InstancePropertiesNotMatchingContainerProperties"
+    type_: str = "InstancePropertiesNotMatchingViewProperties"
     code: int = 407
-    description: str = "Instance of a class has properties which are not defined in the DMS container"
+    description: str = "Instance of a class has properties which are not defined in the DMS view"
     example: str = ""
-    fix: str = "Make sure that all properties of a class are defined in the DMS container"
+    fix: str = "Make sure that all properties of a class are defined in the DMS view"
 
-    def __init__(
-        self, class_name: str, class_properties: list[str], container_properties: list[str], verbose: bool = False
-    ):
+    def __init__(self, class_name: str, class_properties: list[str], view_properties: list[str], verbose: bool = False):
         self.message = (
             f"Instance of class {class_name} has properties {class_properties}"
-            f" while DMS container  {class_name} has properties {container_properties}!"
+            f" while DMS view  {class_name} has properties {view_properties}!"
             f" Cannot create instance in DMS as properties do not match!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class ContainerPropertyValueTypeRedefinition(NeatException):
+    """This error is raised when building up container where a property being redefined
+    with different value type
+
+    Args:
+        container_id: container id that raised exception
+        property_id: container property id that raised exception
+        value_type: value type of container property that raised exception
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        Make sure that when redefining property in container, value type is the same
+    """
+
+    type_: str = "ContainerPropertyValueTypeRedefinition"
+    code: int = 408
+    description: str = "Container property value type is being redefined"
+    example: str = ""
+    fix: str = "Make sure that when redefining property in container, value type remains the same"
+
+    def __init__(
+        self,
+        container_id: str,
+        property_id: str,
+        current_value_type: str,
+        redefined_value_type: str,
+        loc: str,
+        verbose: bool = False,
+    ):
+        self.message = (
+            f"Container {container_id} property {property_id}"
+            f" value type {current_value_type} redefined to {redefined_value_type}!"
+            f"{loc}"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class ViewPropertyRedefinition(NeatException):
+    """This error is raised when building up views where a property being redefined differently
+
+    Args:
+        view_id: view id that raised exception
+        property_id: view property id that raised exception
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    Notes:
+        Avoid redefining property in the same view
+    """
+
+    type_: str = "ViewPropertyRedefinition"
+    code: int = 409
+    description: str = "View property is being redefined in the same view but differently"
+    example: str = ""
+    fix: str = "Avoid redefining property in the same view"
+
+    def __init__(
+        self,
+        view_id: str,
+        property_id: str,
+        loc: str,
+        verbose: bool = False,
+    ):
+        self.message = (
+            f"View {view_id} property {property_id} has been redefined in the same view!"
+            f"{loc}"
             f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
 

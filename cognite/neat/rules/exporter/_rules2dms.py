@@ -1,6 +1,7 @@
 """Exports rules to CDF Data Model Storage (DMS) through cognite-sdk.
 """
 
+import dataclasses
 import logging
 import sys
 import warnings
@@ -29,6 +30,7 @@ from cognite.client.data_classes.data_modeling import (
     DirectRelation,
     DirectRelationReference,
     MappedPropertyApply,
+    PropertyType,
     SpaceApply,
     ViewApply,
     ViewId,
@@ -38,14 +40,22 @@ from cognite.client.data_classes.data_modeling.views import (
     ConnectionDefinitionApply,
     SingleHopConnectionDefinitionApply,
 )
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 
 from cognite.neat.rules import exceptions
-from cognite.neat.rules.analysis import to_class_property_pairs
 from cognite.neat.rules.exporter._base import BaseExporter
-from cognite.neat.rules.exporter._validation import are_entity_names_dms_compliant, are_properties_redefined
-from cognite.neat.rules.models.rules import Property, Rules
+from cognite.neat.rules.exporter._validation import are_entity_names_dms_compliant
+from cognite.neat.rules.models._base import ContainerEntity, EntityTypes, ParentClass
+from cognite.neat.rules.models.rules import Class, Property, Rules
 from cognite.neat.utils.utils import generate_exception_report
+
+if sys.version_info < (3, 11):
+    from exceptiongroup import ExceptionGroup
+
+
+@dataclass
+class EmptyPropertyType(PropertyType):
+    _type = "No property"
 
 
 @dataclass
@@ -147,6 +157,23 @@ class DataModel(BaseModel):
         populate_by_name=True, str_strip_whitespace=True, arbitrary_types_allowed=True, strict=False, extra="allow"
     )
 
+    @field_validator("views", mode="after")
+    def remove_empty_views(cls, value):
+        """This validator removes views that do not have any properties or implements."""
+        for view_id, view in list(value.items()):
+            if not view.properties and not view.implements:
+                del value[view_id]
+
+        return value
+
+    @property
+    def spaces(self):
+        return set(
+            [container.space for container in self.containers.values()]
+            + [self.space]
+            + [view.space for view in self.views.values()]
+        )
+
     @classmethod
     def from_rules(
         cls, rules: Rules, data_model_id: dm.DataModelId | None = None, set_expected_source: bool = True
@@ -162,8 +189,8 @@ class DataModel(BaseModel):
             Instance of DataModel.
         """
         if data_model_id and data_model_id.space:
-            # update prefix in rules to match space
-            rules.update_prefix(data_model_id.space)
+            # update space in rules to match space
+            rules.update_space(data_model_id.space)
 
         if data_model_id and data_model_id.version:
             # update version in rules to match version
@@ -175,22 +202,9 @@ class DataModel(BaseModel):
 
         names_compliant, name_warnings = are_entity_names_dms_compliant(rules, return_report=True)
         if not names_compliant:
-            logging.error(
-                exceptions.EntitiesContainNonDMSCompliantCharacters(
-                    report=generate_exception_report(name_warnings)
-                ).message
-            )
             raise exceptions.EntitiesContainNonDMSCompliantCharacters(report=generate_exception_report(name_warnings))
 
-        properties_redefined, redefinition_warnings = are_properties_redefined(rules, return_report=True)
-        if properties_redefined:
-            logging.error(
-                exceptions.PropertiesDefinedMultipleTimes(report=generate_exception_report(redefinition_warnings))
-            )
-            raise exceptions.PropertiesDefinedMultipleTimes(report=generate_exception_report(redefinition_warnings))
-
         if rules.metadata.external_id is None:
-            logging.error(exceptions.DataModelIdMissing(prefix=rules.metadata.space).message)
             raise exceptions.DataModelIdMissing(prefix=rules.metadata.space)
 
         return cls(
@@ -204,85 +218,128 @@ class DataModel(BaseModel):
         )
 
     @staticmethod
-    def containers_from_rules(rule: Rules, space: str | None = None) -> dict[str, ContainerApply]:
+    def containers_from_rules(rules: Rules) -> dict[str, ContainerApply]:
         """Create a dictionary of ContainerApply instances from a Rules instance.
 
         Args:
-            rule: instance of Rules.`
-            space: Name of the space to place the containers.
+            rules: instance of Rules.`
 
         Returns:
             Dictionary of ContainerApply instances.
         """
 
-        if space:
-            rule.update_prefix(space)
+        containers: dict[str, ContainerApply] = {}
+        errors: list = []
 
-        class_properties = to_class_property_pairs(rule)
-        return {
-            class_id: ContainerApply(
-                space=rule.metadata.space,
-                external_id=class_id,
-                name=rule.classes[class_id].class_name,
-                description=rule.classes[class_id].description,
-                properties=DataModel.container_properties_from_dict(properties),
+        for row, property_ in rules.properties.items():
+            if property_.container:
+                container_property_id: str = cast(str, property_.container_property)
+                container_id = property_.container.id
+
+                api_container = DataModel.as_api_container(property_.container)
+                api_container_property = DataModel.as_api_container_property(property_)
+
+                # scenario: adding new container to the data model for the first time
+                if not isinstance(api_container_property.type, EmptyPropertyType) and container_id not in containers:
+                    containers[container_id] = api_container
+                    containers[container_id].properties[container_property_id] = api_container_property
+
+                # scenario: adding new property to an existing container
+                elif (
+                    not isinstance(api_container_property.type, EmptyPropertyType)
+                    and container_property_id not in containers[container_id].properties
+                ):
+                    containers[container_id].properties[container_property_id] = api_container_property
+
+                # scenario: property is redefined checking for potential sub-scenarios
+                elif (
+                    not isinstance(api_container_property.type, EmptyPropertyType)
+                    and container_property_id in containers[container_id].properties
+                ):
+                    existing_property = containers[container_id].properties[container_property_id]
+
+                    # scenario: property is redefined with a different value type -> raise error
+                    if not isinstance(existing_property.type, type(api_container_property.type)):
+                        errors.append(
+                            exceptions.ContainerPropertyValueTypeRedefinition(
+                                container_id=container_id,
+                                property_id=container_property_id,
+                                current_value_type=str(existing_property.type),
+                                redefined_value_type=str(api_container_property.type),
+                                loc=f"[Properties/Type/{row}]",
+                            )
+                        )
+
+                    # scenario: default value is redefined -> set default value to None
+                    if (
+                        not isinstance(existing_property.type, DirectRelation)
+                        and not isinstance(api_container_property.type, DirectRelation)
+                        and existing_property.default_value != api_container_property.default_value
+                    ):
+                        containers[container_id].properties[container_property_id] = dataclasses.replace(
+                            existing_property, default_value=None
+                        )
+
+                    # scenario: property hold multiple values -> set is_list to True
+                    if (
+                        not isinstance(existing_property.type, DirectRelation)
+                        and not isinstance(api_container_property.type, DirectRelation)
+                        and cast(ListablePropertyType, existing_property.type).is_list
+                        != cast(ListablePropertyType, api_container_property.type).is_list
+                    ):
+                        cast(
+                            ListablePropertyType, containers[container_id].properties[container_property_id].type
+                        ).is_list = True
+
+        if errors:
+            raise ExceptionGroup("Properties value types have been redefined! This is prohibited! Aborting!", errors)
+
+        return containers
+
+    @staticmethod
+    def as_api_container_property(property_: Property) -> ContainerProperty:
+        is_one_to_many = property_.max_count != 1
+
+        # Literal, i.e. Node attribute
+        if property_.property_type is EntityTypes.data_property:
+            property_type = cast(
+                type[ListablePropertyType],
+                cast(ValueTypeMapping, property_.expected_value_type.mapping).dms,
             )
-            for class_id, properties in class_properties.items()
-        }
+            return ContainerProperty(
+                type=property_type(is_list=is_one_to_many),
+                nullable=property_.min_count == 0,
+                default_value=property_.default,
+                name=property_.property_name,
+                description=property_.description,
+            )
+
+        # URIRef, i.e. edge 1-1 , aka direct relation between Nodes
+        elif property_.property_type is EntityTypes.object_property and not is_one_to_many:
+            return ContainerProperty(
+                type=DirectRelation(),
+                nullable=True,
+                name=property_.property_name,
+                description=property_.description,
+            )
+
+        # return type=None if property cannot be created
+        else:
+            return ContainerProperty(type=EmptyPropertyType())
 
     @staticmethod
-    def container_properties_from_dict(properties: dict[str, Property]) -> dict[str, ContainerProperty]:
-        """Generates a dictionary of ContainerProperty instances from a dictionary of Property instances.
-
-        Args:
-            properties: Dictionary of Property instances.
-
-        Returns:
-            Dictionary of ContainerProperty instances.
-        """
-        container_properties = {}
-        for property_id, property_definition in properties.items():
-            is_one_to_many = property_definition.max_count != 1
-            # Literal, i.e. attribute
-            if property_definition.property_type == "DatatypeProperty":
-                property_type = cast(
-                    type[ListablePropertyType],
-                    cast(ValueTypeMapping, property_definition.expected_value_type.mapping).dms,
-                )
-                container_properties[property_id] = ContainerProperty(
-                    type=property_type(is_list=is_one_to_many),
-                    nullable=property_definition.min_count == 0,
-                    default_value=property_definition.default,
-                    name=property_definition.property_name,
-                    description=property_definition.description,
-                )
-            elif property_definition.property_type == "ObjectProperty" and is_one_to_many:
-                # One to many edges are only in views and not containers.
-                continue
-
-            # URIRef, i.e. edge
-            elif property_definition.property_type == "ObjectProperty":
-                container_properties[property_id] = ContainerProperty(
-                    type=DirectRelation(),
-                    nullable=True,
-                    name=property_definition.property_name,
-                    description=property_definition.description,
-                )
-
-            else:
-                logging.warning(
-                    exceptions.ContainerPropertyTypeUnsupported(property_id, property_definition.property_type).message
-                )
-                warnings.warn(
-                    exceptions.ContainerPropertyTypeUnsupported(property_id, property_definition.property_type).message,
-                    category=exceptions.ContainerPropertyTypeUnsupported,
-                    stacklevel=2,
-                )
-
-        return container_properties
+    def as_api_container(container: ContainerEntity) -> ContainerApply:
+        return ContainerApply(
+            space=container.space,
+            external_id=container.external_id,
+            description=container.description,
+            name=container.name,
+            # properties are added later
+            properties={},
+        )
 
     @staticmethod
-    def views_from_rules(rule: Rules, space: str | None = None) -> dict[str, ViewApply]:
+    def views_from_rules(rules: Rules) -> dict[str, ViewApply]:
         """Generates a dictionary of ViewApply instances from a Rules instance.
 
         Args:
@@ -292,82 +349,99 @@ class DataModel(BaseModel):
         Returns:
             Dictionary of ViewApply instances.
         """
-        if space:
-            rule.update_prefix(space)
-        class_properties = to_class_property_pairs(rule)
-
-        return {
-            class_id: ViewApply(
-                space=rule.metadata.space,
-                external_id=class_id,
-                name=rule.classes[class_id].class_name,
-                description=rule.classes[class_id].description,
-                properties=DataModel.view_properties_from_dict(properties, rule.metadata.space),
-                version=rule.metadata.version,
+        views: dict[str, ViewApply] = {
+            f"{rules.metadata.space}:{class_.class_id}": DataModel.as_api_view(
+                class_, rules.metadata.space, rules.metadata.version
             )
-            for class_id, properties in class_properties.items()
+            for class_ in rules.classes.values()
         }
+        errors: list = []
+
+        # Create views from property-class definitions
+        for row, property_ in rules.properties.items():
+            view_property = DataModel.as_api_view_property(property_, rules.metadata.space)
+            id_ = f"{rules.metadata.space}:{property_.class_id}"
+
+            # scenario: view exist but property does not so it is added
+            if view_property and (property_.property_id not in cast(dict, views[id_].properties)):
+                cast(dict, views[id_].properties)[property_.property_id] = view_property
+
+            # scenario: view exist, property exists but it is differently defined -> raise error
+            # type: ignore
+            elif (
+                view_property
+                and property_.property_id in cast(dict, views[id_].properties)
+                and view_property is not cast(dict, views[id_].properties)[property_.property_id]
+            ):
+                errors.append(
+                    exceptions.ViewPropertyRedefinition(
+                        view_id=id_,
+                        property_id=cast(str, property_.property_id),
+                        loc=f"[Properties/Property/{row}]",
+                    )
+                )
+
+        if errors:
+            raise ExceptionGroup("View properties have been redefined! This is prohibited! Aborting!", errors)
+
+        return views
 
     @staticmethod
-    def view_properties_from_dict(
-        properties: dict[str, Property], space: str
-    ) -> dict[str, MappedPropertyApply | ConnectionDefinitionApply]:
-        view_properties: dict[str, MappedPropertyApply | ConnectionDefinitionApply] = {}
-        for property_id, property_definition in properties.items():
-            # attribute
-            if property_definition.property_type == "DatatypeProperty":
-                view_properties[property_id] = MappedPropertyApply(
-                    container=ContainerId(space=space, external_id=property_definition.class_id),
-                    container_property_identifier=property_id,
-                    name=property_definition.property_name,
-                    description=property_definition.description,
-                )
+    def as_api_view(class_: Class, space: str, version: str) -> ViewApply:
+        return ViewApply(
+            space=space,
+            external_id=class_.class_id,
+            version=version,
+            name=class_.class_name,
+            description=class_.description,
+            properties={},
+            implements=[parent_class.view_id for parent_class in cast(list[ParentClass], class_.parent_class)]
+            if class_.parent_class
+            else None,
+        )
 
-            # edge 1-1 == directRelation
-            elif property_definition.property_type == "ObjectProperty" and property_definition.max_count == 1:
-                view_properties[property_id] = MappedPropertyApply(
-                    container=ContainerId(space=space, external_id=property_definition.class_id),
-                    container_property_identifier=property_id,
-                    name=property_definition.property_name,
-                    description=property_definition.description,
-                    source=ViewId(
-                        # prefix maps to space
-                        space=property_definition.expected_value_type.space,
-                        # suffix maps to external_id
-                        external_id=property_definition.expected_value_type.external_id,
-                        # version to version
-                        version=property_definition.expected_value_type.version,
-                    ),
-                )
+    @staticmethod
+    def as_api_view_property(property_: Property, space: str) -> MappedPropertyApply | ConnectionDefinitionApply | None:
+        property_.container = cast(ContainerEntity, property_.container)
+        property_.container_property = cast(str, property_.container_property)
+        if property_.property_type is EntityTypes.data_property:
+            return MappedPropertyApply(
+                container=ContainerId(space=property_.container.space, external_id=property_.container.external_id),
+                container_property_identifier=property_.container_property,
+                name=property_.property_name,
+                description=property_.description,
+            )
 
-            # edge 1-many
-            elif property_definition.property_type == "ObjectProperty" and property_definition.max_count != 1:
-                view_properties[property_id] = SingleHopConnectionDefinitionApply(
-                    type=DirectRelationReference(
-                        space=space, external_id=f"{property_definition.class_id}.{property_definition.property_id}"
-                    ),
-                    # Here we create ViewID to the container that the edge is pointing to.
-                    source=ViewId(
-                        # prefix maps to space
-                        space=property_definition.expected_value_type.space,
-                        # suffix maps to external_id
-                        external_id=property_definition.expected_value_type.external_id,
-                        # version to version
-                        version=property_definition.expected_value_type.version,
-                    ),
-                    direction="outwards",
-                    name=property_definition.property_name,
-                    description=property_definition.description,
-                )
-            else:
-                logging.warning(exceptions.ViewPropertyTypeUnsupported(property_id).message)
-                warnings.warn(
-                    exceptions.ViewPropertyTypeUnsupported(property_id).message,
-                    category=exceptions.ViewPropertyTypeUnsupported,
-                    stacklevel=2,
-                )
+        # edge 1-1 == directRelation
+        elif property_.property_type is EntityTypes.object_property and property_.max_count == 1:
+            return MappedPropertyApply(
+                container=ContainerId(space=property_.container.space, external_id=property_.container.external_id),
+                container_property_identifier=property_.container_property,
+                name=property_.property_name,
+                description=property_.description,
+                source=ViewId(
+                    space=property_.expected_value_type.space,
+                    external_id=property_.expected_value_type.external_id,
+                    version=property_.expected_value_type.version,
+                ),
+            )
 
-        return view_properties
+        # edge 1-many == EDGE, this does not have container! type is here source ViewId ?!
+        elif property_.property_type is EntityTypes.object_property and property_.max_count != 1:
+            return SingleHopConnectionDefinitionApply(
+                type=DirectRelationReference(space=space, external_id=f"{property_.class_id}.{property_.property_id}"),
+                # Here we create ViewID to the container that the edge is pointing to.
+                source=ViewId(
+                    space=property_.expected_value_type.space,
+                    external_id=property_.expected_value_type.external_id,
+                    version=property_.expected_value_type.version,
+                ),
+                direction="outwards",
+                name=property_.property_name,
+                description=property_.description,
+            )
+        else:
+            return None
 
     def to_cdf(self, client: CogniteClient):
         """Write the the data model to CDF.
@@ -411,7 +485,7 @@ class DataModel(BaseModel):
             return cdf_data_model.as_id()
         return None
 
-    def find_existing_containers(self, client: CogniteClient) -> set[ContainerId]:
+    def find_existing_containers(self, client: CogniteClient) -> set:
         """Checks if the containers exist in CDF.
 
         Args:
@@ -421,25 +495,15 @@ class DataModel(BaseModel):
             True if the containers exist, False otherwise.
         """
 
-        cdf_containers = {}
-        if containers := client.data_modeling.containers.list(space=self.space, limit=-1):
-            cdf_containers = {container.as_id(): container for container in containers}
+        existing_containers = set()
 
-        if existing_containers := {c.as_id() for c in self.containers.values()}.intersection(
-            set(cdf_containers.keys())
-        ):
-            logging.warning(exceptions.ContainersAlreadyExist(existing_containers, self.space).message)
-            warnings.warn(
-                exceptions.ContainersAlreadyExist(existing_containers, self.space).message,
-                category=exceptions.ContainersAlreadyExist,
-                stacklevel=2,
-            )
+        for id_, container in self.containers.items():
+            if client.data_modeling.containers.retrieve(container.as_id()):
+                existing_containers.add(id_)
 
-            return existing_containers
-        else:
-            return set()
+        return existing_containers
 
-    def find_existing_views(self, client: CogniteClient) -> set[ViewId]:
+    def find_existing_views(self, client: CogniteClient) -> set:
         """Checks if the views exist in CDF.
 
         Args:
@@ -448,24 +512,20 @@ class DataModel(BaseModel):
         Returns:
             True if the views exist, False otherwise.
         """
-        cdf_views = {}
-        if views := client.data_modeling.views.list(space=self.space, limit=-1):
-            cdf_views = {view.as_id(): view for view in views if view.version == self.version}
 
-        if existing_views := {v.as_id() for v in self.views.values()}.intersection(set(cdf_views.keys())):
-            logging.warning(exceptions.ViewsAlreadyExist(existing_views, self.version, self.space).message)
-            warnings.warn(
-                exceptions.ViewsAlreadyExist(existing_views, self.version, self.space).message,
-                category=exceptions.ViewsAlreadyExist,
-                stacklevel=2,
-            )
-            return existing_views
-        else:
-            return set()
+        existing_views = set()
+
+        for id_, view in self.views.items():
+            if client.data_modeling.views.retrieve(view.as_id()):
+                existing_views.add(id_)
+
+        return existing_views
 
     def create_space(self, client: CogniteClient):
         logging.info(f"Creating space {self.space}")
-        _ = client.data_modeling.spaces.apply(SpaceApply(space=self.space))
+
+        for space in self.spaces:
+            _ = client.data_modeling.spaces.apply(SpaceApply(space=space))
 
     def create_containers(self, client: CogniteClient):
         for container_id in self.containers:

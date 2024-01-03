@@ -8,6 +8,7 @@ DATA_FOLDER = TEST_FOLDER / "data"
 PYPROJECT_TOML = ROOT / "pyproject.toml"
 
 # Example rule files
+NORDIC44_INFERRED_RULES = TEST_FOLDER / "data" / "nordic44_inferred.xlsx"
 TNT_TRANSFORMATION_RULES = PACKAGE_DIRECTORY / "rules" / "examples" / "Rules-Nordic44-to-TNT.xlsx"
 TNT_TRANSFORMATION_RULES_DMS_COMPLIANT = PACKAGE_DIRECTORY / "rules" / "examples" / "Rules-Nordic44-to-graphql.xlsx"
 SIMPLE_TRANSFORMATION_RULES = PACKAGE_DIRECTORY / "rules" / "examples" / "sheet2cdf-transformation-rules.xlsx"

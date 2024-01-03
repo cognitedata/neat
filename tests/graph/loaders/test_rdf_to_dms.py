@@ -18,16 +18,18 @@ def test_rdf2nodes_and_edges_raise_exception(small_graph, simple_rules):
         (URIRef("http://purl.org/cognite/neat#Nordics"), URIRef("http://purl.org/cognite/neat#name"), None)
     )
 
+    # this will basically remove instance all together since there are no triples
+    # left to define this instance
     small_graph.graph.remove(
         (URIRef("http://purl.org/cognite/neat#Nordics.Norway.NO1"), URIRef("http://purl.org/cognite/neat#name"), None)
     )
 
     nodes, edges, exceptions = rdf2nodes_and_edges(small_graph, simple_rules)
 
-    assert len(exceptions) == 2
     assert len(nodes) == 11
     assert len(edges) == 21
-    assert [e["type"] for e in exceptions] == ["MissingInstanceTriples", "PropertyRequiredButNotProvided"]
+    assert len(exceptions) == 1
+    assert [e["type"] for e in exceptions] == ["PropertyRequiredButNotProvided"]
 
 
 # @pytest.mark.skip("Relies on a bug in the DMS exporter")
@@ -51,10 +53,18 @@ def test_add_class_prefix_to_external_ids(simple_rules, graph_with_numeric_ids):
 
 # @pytest.mark.skip("Relies on a bug in the DMS exporter")
 def test_rdf2nodes_property_date(graph_with_date, transformation_rules_date):
-    print(graph_with_date)
     nodes, edges, exceptions = rdf2nodes_and_edges(graph_with_date, transformation_rules_date)
 
     assert exceptions == []
     assert len(nodes) == 1
     assert len(edges) == 2
     assert nodes[0].sources[0].properties["endDate"] == "2020-01-01"
+
+
+def test_multi_namespace_rules(nordic44_inferred_rules, source_knowledge_graph):
+    source_knowledge_graph.graph.bind(
+        nordic44_inferred_rules.metadata.prefix, nordic44_inferred_rules.metadata.namespace
+    )
+    nodes, _, _ = rdf2nodes_and_edges(source_knowledge_graph, nordic44_inferred_rules, add_class_prefix=True)
+
+    assert len(nodes) == 493

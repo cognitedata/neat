@@ -7,7 +7,6 @@ import pytest
 from rdflib import RDF, Literal, Namespace
 
 from cognite.neat.graph import extractors, loaders
-from cognite.neat.graph.extractors.mocks import generate_triples
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.graph.transformations.transformer import domain2app_knowledge_graph
 from cognite.neat.rules import importer
@@ -30,6 +29,11 @@ os.environ["NEAT_CDF_TOKEN_URL"] = " https://login.microsoftonline.com/uuid4/oau
 os.environ["NEAT_CDF_SCOPES"] = "https://bluefield.cognitedata.com/.default"
 os.environ["NEAT_CDF_DEFAULT_DATASET_ID"] = "3931920688237191"
 os.environ["NEAT_LOAD_EXAMPLES"] = "1"
+
+
+@pytest.fixture(scope="session")
+def nordic44_inferred_rules() -> Rules:
+    return importer.ExcelImporter(config.NORDIC44_INFERRED_RULES).to_rules()
 
 
 @pytest.fixture(scope="session")
@@ -144,7 +148,7 @@ def mock_knowledge_graph(transformation_rules):
         "Terminal": 2,
     }
 
-    mock_triples = generate_triples(transformation_rules, class_count)
+    mock_triples = extractors.MockGraphGenerator(transformation_rules, class_count).extract()
     mock_graph.add_triples(mock_triples, batch_size=20000)
 
     return mock_graph
@@ -158,11 +162,6 @@ def mock_rdf_assets(mock_knowledge_graph, transformation_rules):
 @pytest.fixture(scope="function")
 def mock_cdf_assets(mock_knowledge_graph, transformation_rules):
     return loaders.rdf2assets(mock_knowledge_graph, transformation_rules, data_set_id=123456)
-
-
-@pytest.fixture(scope="function")
-def graph_capturing_sheet():
-    return extractors.read_graph_excel_file_to_table_by_name(config.GRAPH_CAPTURING_SHEET)
 
 
 @pytest.fixture(scope="function")

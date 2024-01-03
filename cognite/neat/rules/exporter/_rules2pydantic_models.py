@@ -60,6 +60,7 @@ def default_model_configuration(
 
 def default_class_methods():
     return [
+        from_dict,
         from_graph,
         to_asset,
         to_relationship,
@@ -330,6 +331,39 @@ def edges_one_to_many(cls) -> list[str]:
 
 # Define methods that work on model instance
 @classmethod  # type: ignore[misc]
+def from_dict(cls, dictionary: dict[str, list[str] | str]):
+    # wrangle results to dict
+    args: dict[str, list[Any] | Any] = {}
+    for field in cls.model_fields.values():
+        # if field is not required and not in result, skip
+        if not field.is_required() and field.alias not in dictionary:
+            continue
+
+        # if field is required and not in result, raise error
+        if field.is_required() and field.alias not in dictionary:
+            raise exceptions.PropertyRequiredButNotProvided(field.alias, cast(str, dictionary["external_id"]))
+
+        # flatten result if field is not edge or list of values
+        if field.annotation.__name__ not in [EdgeOneToMany.__name__, list.__name__]:
+            if isinstance(dictionary[field.alias], list) and len(dictionary[field.alias]) > 1:
+                warnings.warn(
+                    exceptions.FieldContainsMoreThanOneValue(
+                        field.alias,
+                        len(dictionary[field.alias]),
+                    ).message,
+                    category=exceptions.FieldContainsMoreThanOneValue,
+                    stacklevel=2,
+                )
+
+            args[field.alias] = dictionary[field.alias][0]
+        else:
+            args[field.alias] = dictionary[field.alias]
+
+    return cls(**args)
+
+
+# Define methods that work on model instance
+@classmethod  # type: ignore[misc]
 def from_graph(
     cls,
     graph: Graph,
@@ -369,39 +403,12 @@ def from_graph(
     # Not sure if the triple will be URIRef or Literal
     query_result = cast(Iterable[tuple[URIRef, URIRef, str | URIRef]], graph.query(sparql_construct_query))
 
-    result = triples2dictionary(query_result)
+    dictionary = triples2dictionary(query_result)[external_id]
 
-    if not result:
+    if not dictionary:
         raise exceptions.MissingInstanceTriples(external_id)
 
-    # wrangle results to dict
-    args: dict[str, list[str] | str] = {}
-    for field in cls.model_fields.values():
-        # if field is not required and not in result, skip
-        if not field.is_required() and field.alias not in result:
-            continue
-
-        # if field is required and not in result, raise error
-        if field.is_required() and field.alias not in result:
-            raise exceptions.PropertyRequiredButNotProvided(field.alias, external_id)
-
-        # flatten result if field is not edge or list of values
-        if field.annotation.__name__ not in [EdgeOneToMany.__name__, list.__name__]:
-            if isinstance(result[field.alias], list) and len(result[field.alias]) > 1:
-                warnings.warn(
-                    exceptions.FieldContainsMoreThanOneValue(
-                        field.alias,
-                        len(result[field.alias]),
-                    ).message,
-                    category=exceptions.FieldContainsMoreThanOneValue,
-                    stacklevel=2,
-                )
-
-            args[field.alias] = result[field.alias][0]
-        else:
-            args[field.alias] = result[field.alias]
-
-    return cls(**args)
+    return cls.from_dict(dictionary)
 
 
 # define methods that creates asset out of model id (default)
@@ -579,13 +586,13 @@ def _to_node_using_view_id(self, view_id: ViewId) -> NodeApply:
 
 
 def _to_node_using_data_model(self, data_model, add_class_prefix) -> NodeApply:
-    if not set(self.attributes + self.edges_one_to_one).issubset(
-        set(data_model.containers[type(self).__name__].properties.keys())
-    ):
-        raise exceptions.InstancePropertiesNotMatchingContainerProperties(
+    view_id: str = f"{self.model_json_schema()['space']}:{type(self).__name__}"
+
+    if not set(self.attributes + self.edges_one_to_one).issubset(set(data_model.views[view_id].properties.keys())):
+        raise exceptions.InstancePropertiesNotMatchingViewProperties(
             self.__class__.__name__,
             self.attributes + self.edges_one_to_one + self.edges_one_to_many,
-            list(data_model.containers[type(self).__name__].properties.keys()),
+            list(data_model.views[view_id].properties.keys()),
         )
 
     attributes: dict = {
@@ -596,7 +603,7 @@ def _to_node_using_data_model(self, data_model, add_class_prefix) -> NodeApply:
     }
     if add_class_prefix:
         edges_one_to_one: dict = {}
-        dm_view = data_model.views[type(self).__name__]
+        dm_view = data_model.views[view_id]
         if dm_view.properties:
             for edge in self.edges_one_to_one:
                 mapped_property = dm_view.properties[edge]
@@ -607,7 +614,7 @@ def _to_node_using_data_model(self, data_model, add_class_prefix) -> NodeApply:
 
                     if external_id := getattr(self, edge):
                         edges_one_to_one[edge] = {
-                            "space": data_model.space,
+                            "space": data_model.views[view_id].space,
                             "externalId": add_class_prefix_to_xid(
                                 class_name=object_class_name,
                                 external_id=external_id,
@@ -624,11 +631,11 @@ def _to_node_using_data_model(self, data_model, add_class_prefix) -> NodeApply:
                 }
 
     return NodeApply(
-        space=data_model.space,
+        space=data_model.views[view_id].space,
         external_id=self.external_id,
         sources=[
             NodeOrEdgeData(
-                source=data_model.views[type(self).__name__].as_id(),
+                source=data_model.views[view_id].as_id(),
                 properties=attributes | edges_one_to_one,
             )
         ],
@@ -645,7 +652,8 @@ def to_edge(self, data_model: DataModel, add_class_prefix: bool = False) -> list
             return False
         return bool(re.match(r"^[^\x00]{1,255}$", external_id))
 
-    class_name = type(self).__name__
+    class_name: str = type(self).__name__
+    view_id: str = f"{self.model_json_schema()['space']}:{class_name}"
 
     for edge_one_to_many in self.edges_one_to_many:
         edge_type_id = f"{class_name}.{edge_one_to_many}"
@@ -658,7 +666,7 @@ def to_edge(self, data_model: DataModel, add_class_prefix: bool = False) -> list
                 )
             end_node_external_id = end_node_id
             if add_class_prefix:
-                end_node_class_name = _get_end_node_class_name(data_model.views[class_name], edge_one_to_many)
+                end_node_class_name = _get_end_node_class_name(data_model.views[view_id], edge_one_to_many)
                 if end_node_class_name:
                     end_node_external_id = add_class_prefix_to_xid(end_node_class_name, end_node_id)
                 else:
@@ -669,11 +677,11 @@ def to_edge(self, data_model: DataModel, add_class_prefix: bool = False) -> list
                     )
 
             edge = EdgeApply(
-                space=data_model.space,
+                space=data_model.views[view_id].space,
                 external_id=f"{self.external_id}-{end_node_external_id}",
-                type=(data_model.space, edge_type_id),
-                start_node=(data_model.space, self.external_id),
-                end_node=(data_model.space, end_node_external_id),
+                type=(data_model.views[view_id].space, edge_type_id),
+                start_node=(data_model.views[view_id].space, self.external_id),
+                end_node=(data_model.views[view_id].space, end_node_external_id),
             )
             edges.append(edge)
     return edges

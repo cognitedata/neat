@@ -15,6 +15,27 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+
+## [0.53.0] - 03-01-24
+
+## Improved
+
+- Speed of nodes & edges generation
+- Multi namespace support for nodes & edges generation (see [feature request](https://github.com/cognitedata/neat/issues/171))
+
+## Changed
+- `cognite.neat.extractors` module. This now only has three classes: `BaseExtractor`, `MockGraphGenerator`, `GraphCapturingSheet`.
+   all the functions that were in the module is replaced with the above classes. The exception is the the function
+   `rdf_file_to_graph` which is moved to `cognite.neat.graph.stores`.
+
+## [0.52.0] - 22-12-23
+
+## Added
+
+- Advance data modeling support introduced
+- Multi space containers support introduced
+
+
 ## [0.51.0] - 05-12-23
 
 ## Improved

@@ -10,6 +10,7 @@ import pandas as pd
 from prometheus_client import Gauge
 from rdflib import RDF, Literal, Namespace, URIRef
 
+from cognite.neat.graph.models import Triple
 from cognite.neat.rules.analysis import (
     get_class_linkage,
     get_classes_with_properties,
@@ -21,6 +22,8 @@ from cognite.neat.rules.models import Rules
 from cognite.neat.rules.value_types import XSD_VALUE_TYPE_MAPPINGS
 from cognite.neat.utils.utils import remove_namespace
 
+from ._base import BaseExtractor
+
 neat_total_processed_mock_triples = Gauge(
     "neat_total_processed_mock_triples", "Number of processed mock triples", ["state"]
 )
@@ -29,40 +32,44 @@ neat_mock_triples_processing_timing = Gauge(
 )
 
 
-class MockGraphGenerator:
+class MockGraphGenerator(BaseExtractor):
     """
     Class used to generate mock graph data for purposes of testing of NEAT.
 
     Args:
         rules: Transformation rules defining the classes with their properties.
+        class_count: Target class count for each class in the ontology
+        stop_on_exception: To stop if exception is encountered or not, default is False
+        allow_isolated_classes: To allow generation of instances for classes that are not
+                                 connected to any other class, default is True
     """
 
-    def __init__(self, rules: Rules):
+    def __init__(
+        self, rules: Rules, class_count: dict, stop_on_exception: bool = False, allow_isolated_classes: bool = True
+    ):
         self.rules = rules
+        self.class_count = class_count
+        self.stop_on_exception = stop_on_exception
+        self.allow_isolated_classes = allow_isolated_classes
 
-    def generate_triples(
-        self, class_count: dict, stop_on_exception: bool = False, allow_isolated_classes: bool = True
-    ) -> list[tuple]:
+    def extract(self) -> list[Triple]:
         """Generate mock triples based on data model defined transformation rules and desired number
         of class instances
-
-        Args:
-            class_count: Target class count for each class in the ontology
-            stop_on_exception: To stop if exception is encountered or not, default is False
-            allow_isolated_classes: To allow generation of instances for classes that are not
-                                     connected to any other class, default is True
 
         Returns:
             List of RDF triples, represented as tuples `(subject, predicate, object)`, that define data model instances
         """
         return generate_triples(
-            self.rules, class_count, stop_on_exception=stop_on_exception, allow_isolated_classes=allow_isolated_classes
+            self.rules,
+            self.class_count,
+            stop_on_exception=self.stop_on_exception,
+            allow_isolated_classes=self.allow_isolated_classes,
         )
 
 
 def generate_triples(
     transformation_rules: Rules, class_count: dict, stop_on_exception: bool = False, allow_isolated_classes: bool = True
-) -> list[tuple]:
+) -> list[Triple]:
     """Generate mock triples based on data model defined transformation rules and desired number
     of class instances
 
@@ -123,7 +130,7 @@ def generate_triples(
     instance_ids = {key: [URIRef(namespace[f"{key}-{i}"]) for i in range(value)] for key, value in class_count.items()}
 
     # create triple for each class instance defining its type
-    triples: list[tuple] = []
+    triples: list[Triple] = []
     for class_ in class_count:
         triples += [
             (class_instance_id, RDF.type, URIRef(namespace[class_])) for class_instance_id in instance_ids[class_]
@@ -301,9 +308,9 @@ def _generate_triples_per_class(
     instance_ids: dict[str, list[URIRef]],
     namespace: Namespace,
     stop_on_exception: bool,
-) -> list[tuple]:
+) -> list[Triple]:
     """Generate triples for a given class."""
-    triples: list[tuple] = []
+    triples: list[Triple] = []
     for _, property_definition in class_definitions[class_].iterrows():
         if property_definition.property_type == "DatatypeProperty":
             triples += _generate_mock_data_property_triples(
