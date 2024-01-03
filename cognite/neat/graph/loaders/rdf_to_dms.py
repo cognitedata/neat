@@ -8,7 +8,7 @@ from pydantic_core import ErrorDetails
 from rdflib import URIRef
 
 from cognite.neat.exceptions import NeatException
-from cognite.neat.graph.stores._base import NeatGraphStoreBase
+from cognite.neat.graph.stores import NeatGraphStoreBase
 from cognite.neat.graph.transformations.query_generator.sparql import build_construct_query, triples2dictionary
 from cognite.neat.rules.exporter._rules2dms import DataModel
 from cognite.neat.rules.exporter._rules2pydantic_models import add_class_prefix_to_xid, rules_to_pydantic_models
