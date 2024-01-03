@@ -15,6 +15,13 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.53.0] - 03-01-24
+
+## Improved
+
+- Speed of nodes & edges generation
+
+
 ## [0.52.0] - 22-12-23
 
 ## Added
