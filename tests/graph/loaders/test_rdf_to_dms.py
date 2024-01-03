@@ -59,3 +59,12 @@ def test_rdf2nodes_property_date(graph_with_date, transformation_rules_date):
     assert len(nodes) == 1
     assert len(edges) == 2
     assert nodes[0].sources[0].properties["endDate"] == "2020-01-01"
+
+
+def test_multi_namespace_rules(nordic44_inferred_rules, source_knowledge_graph):
+    source_knowledge_graph.graph.bind(
+        nordic44_inferred_rules.metadata.prefix, nordic44_inferred_rules.metadata.namespace
+    )
+    nodes, _, _ = rdf2nodes_and_edges(source_knowledge_graph, nordic44_inferred_rules, add_class_prefix=True)
+
+    assert len(nodes) == 493

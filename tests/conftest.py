@@ -32,6 +32,11 @@ os.environ["NEAT_LOAD_EXAMPLES"] = "1"
 
 
 @pytest.fixture(scope="session")
+def nordic44_inferred_rules() -> Rules:
+    return importer.ExcelImporter(config.NORDIC44_INFERRED_RULES).to_rules()
+
+
+@pytest.fixture(scope="session")
 def transformation_rules() -> Rules:
     return importer.ExcelImporter(config.TNT_TRANSFORMATION_RULES).to_rules()
 

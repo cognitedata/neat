@@ -21,6 +21,7 @@ Changes are grouped as follows:
 ## Improved
 
 - Speed of nodes & edges generation
+- Multi namespace support for nodes & edges generation (see [feature request](https://github.com/cognitedata/neat/issues/171))
 
 ## Changed
 - `cognite.neat.extractors` module. This now only has three classes: `BaseExtractor`, `MockGraphGenerator`, `GraphCapturingSheet`.
