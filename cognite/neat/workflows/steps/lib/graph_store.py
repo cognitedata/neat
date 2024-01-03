@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import ClassVar, cast
 
 from cognite.neat.constants import PREFIXES
-from cognite.neat.graph.stores import NeatGraphStore, RdfStoreType, drop_graph_store_storage
+from cognite.neat.graph.stores import NeatGraphStoreBase, RdfStoreType, drop_graph_store_storage
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
@@ -87,7 +87,7 @@ class ConfigureDefaultGraphStores(Step):
             if source_store_type == RdfStoreType.OXIGRAPH and "SourceGraph" in self.flow_context:
                 return FlowMessage(output_text="Stores already configured")
 
-            source_graph = NeatGraphStore(prefixes=prefixes, base_prefix="neat", namespace=PREFIXES["neat"])
+            source_graph = NeatGraphStoreBase(prefixes=prefixes, base_prefix="neat", namespace=PREFIXES["neat"])
             source_graph.init_graph(
                 source_store_type,
                 self.configs["source_rdf_store.query_url"],
@@ -107,7 +107,7 @@ class ConfigureDefaultGraphStores(Step):
 
             if solution_store_type == RdfStoreType.OXIGRAPH and "SolutionGraph" in self.flow_context:
                 return FlowMessage(output_text="Stores already configured")
-            solution_graph = NeatGraphStore(prefixes=prefixes, base_prefix="neat", namespace=PREFIXES["neat"])
+            solution_graph = NeatGraphStoreBase(prefixes=prefixes, base_prefix="neat", namespace=PREFIXES["neat"])
 
             solution_graph.init_graph(
                 solution_store_type,
@@ -226,7 +226,7 @@ class ConfigureGraphStore(Step):
             # OXIGRAPH doesn't like to be initialized twice without a good reason
             return FlowMessage(output_text="Stores already configured")
 
-        new_graph_store = NeatGraphStore(
+        new_graph_store = NeatGraphStoreBase(
             prefixes=rules_data.rules.prefixes, base_prefix="neat", namespace=PREFIXES["neat"]
         )
         new_graph_store.init_graph(
@@ -244,7 +244,7 @@ class ConfigureGraphStore(Step):
 
 
 def reset_store(
-    store_type: str, graph_name: str, data_store_dir: Path | None, graph_store: NeatGraphStore | None = None
+    store_type: str, graph_name: str, data_store_dir: Path | None, graph_store: NeatGraphStoreBase | None = None
 ):
     if store_type == RdfStoreType.OXIGRAPH:
         if graph_store:

@@ -2,7 +2,7 @@ from cognite.client.data_classes import Asset, AssetList, Label
 from cognite.client.testing import monkeypatch_cognite_client
 
 from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
-from cognite.neat.graph.stores import NeatGraphStore
+from cognite.neat.graph.stores import NeatGraphStoreBase
 from cognite.neat.rules.exporter._core.rules2labels import get_labels
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph
 from cognite.neat.workflows.steps.lib.graph_loader import GenerateCDFAssetsFromGraph
@@ -23,7 +23,7 @@ def test_graph_loader_clean_orphans(solution_knowledge_graph_dirty, transformati
 
     rules = RulesData(rules=transformation_rules)
     solution_graph = SolutionGraph(
-        graph=NeatGraphStore(
+        graph=NeatGraphStoreBase(
             graph=solution_knowledge_graph_dirty,
             namespace="http://purl.org/cognite/tnt#",
             prefixes=solution_knowledge_graph_dirty.namespaces,
@@ -58,7 +58,7 @@ def test_graph_loader_no_orphans_cleanup(solution_knowledge_graph_dirty, transfo
 
     rules = RulesData(rules=transformation_rules)
     solution_graph = SolutionGraph(
-        graph=NeatGraphStore(
+        graph=NeatGraphStoreBase(
             graph=solution_knowledge_graph_dirty,
             namespace="http://purl.org/cognite/tnt#",
             prefixes=solution_knowledge_graph_dirty.namespaces,

@@ -7,7 +7,7 @@ import pytest
 from rdflib import RDF, Literal, Namespace
 
 from cognite.neat.graph import extractors, loaders
-from cognite.neat.graph.stores import NeatGraphStore
+from cognite.neat.graph.stores import NeatGraphStoreBase
 from cognite.neat.graph.transformations.transformer import domain2app_knowledge_graph
 from cognite.neat.rules import importer
 from cognite.neat.rules.exporter._rules2triples import get_instances_as_triples
@@ -52,8 +52,8 @@ def transformation_rules_date() -> Rules:
 
 
 @pytest.fixture(scope="function")
-def small_graph(simple_rules) -> NeatGraphStore:
-    graph_store = NeatGraphStore(
+def small_graph(simple_rules) -> NeatGraphStoreBase:
+    graph_store = NeatGraphStoreBase(
         base_prefix=simple_rules.metadata.prefix,
         namespace=simple_rules.metadata.namespace,
         prefixes=simple_rules.prefixes,
@@ -66,8 +66,8 @@ def small_graph(simple_rules) -> NeatGraphStore:
 
 
 @pytest.fixture(scope="function")
-def graph_with_numeric_ids(simple_rules) -> NeatGraphStore:
-    graph_store = NeatGraphStore(
+def graph_with_numeric_ids(simple_rules) -> NeatGraphStoreBase:
+    graph_store = NeatGraphStoreBase(
         base_prefix=simple_rules.metadata.prefix,
         namespace=simple_rules.metadata.namespace,
         prefixes=simple_rules.prefixes,
@@ -83,8 +83,8 @@ def graph_with_numeric_ids(simple_rules) -> NeatGraphStore:
 
 
 @pytest.fixture(scope="function")
-def graph_with_date(transformation_rules_date) -> NeatGraphStore:
-    graph_store = NeatGraphStore(
+def graph_with_date(transformation_rules_date) -> NeatGraphStoreBase:
+    graph_store = NeatGraphStoreBase(
         base_prefix=transformation_rules_date.metadata.prefix,
         namespace=transformation_rules_date.metadata.namespace,
         prefixes=transformation_rules_date.prefixes,
@@ -102,7 +102,7 @@ def graph_with_date(transformation_rules_date) -> NeatGraphStore:
 
 @pytest.fixture(scope="session")
 def source_knowledge_graph():
-    graph = NeatGraphStore(namespace=Namespace("http://purl.org/nordic44#"))
+    graph = NeatGraphStoreBase(namespace=Namespace("http://purl.org/nordic44#"))
     graph.init_graph()
     graph.import_from_file(config.NORDIC44_KNOWLEDGE_GRAPH)
     return graph
@@ -110,7 +110,7 @@ def source_knowledge_graph():
 
 @pytest.fixture(scope="session")
 def source_knowledge_graph_dirty(transformation_rules):
-    graph = NeatGraphStore(namespace=Namespace("http://purl.org/nordic44#"))
+    graph = NeatGraphStoreBase(namespace=Namespace("http://purl.org/nordic44#"))
     graph.init_graph()
     graph.import_from_file(config.NORDIC44_KNOWLEDGE_GRAPH_DIRTY)
     for triple in get_instances_as_triples(transformation_rules):
@@ -130,7 +130,7 @@ def solution_knowledge_graph(source_knowledge_graph, transformation_rules):
 
 @pytest.fixture(scope="function")
 def mock_knowledge_graph(transformation_rules):
-    mock_graph = NeatGraphStore(
+    mock_graph = NeatGraphStoreBase(
         prefixes=transformation_rules.prefixes, namespace=transformation_rules.metadata.namespace
     )
     mock_graph.init_graph(base_prefix=transformation_rules.metadata.prefix)

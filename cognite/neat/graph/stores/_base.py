@@ -28,7 +28,7 @@ prom_qsm = Summary("store_query_time_summary", "Time spent processing queries", 
 prom_sq = Gauge("store_single_query_time", "Time spent processing a single query", ["query"])
 
 
-class NeatGraphStore:
+class NeatGraphStoreBase:
     """NeatGraphStore is a class that stores the graph and provides methods to read/write data it contains
 
 

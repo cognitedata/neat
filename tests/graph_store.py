@@ -2,11 +2,11 @@ import time
 
 import pandas as pd
 
-from cognite.neat.graph.stores import NeatGraphStore, RdfStoreType
+from cognite.neat.graph.stores import NeatGraphStoreBase, RdfStoreType
 
 pd.options.display.max_colwidth = 100
 
-gs = NeatGraphStore()
+gs = NeatGraphStoreBase()
 gs.init_graph(
     RdfStoreType.GRAPHDB,
     "http://localhost:7200/repositories/tnt-solution",
