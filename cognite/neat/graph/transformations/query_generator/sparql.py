@@ -1,5 +1,5 @@
 import re
-from collections import Counter, defaultdict
+from collections import Counter
 from collections.abc import Iterable
 from typing import cast
 
@@ -519,9 +519,9 @@ def _most_occurring_element(list_of_elements: list):
     return counts.most_common(1)[0][0]
 
 
-def triples2dictionary(triples: Iterable[tuple[URIRef, URIRef, str | URIRef]]) -> dict[str, list[str]]:
+def triples2dictionary(triples: Iterable[tuple[URIRef, URIRef, str | URIRef]]) -> dict[str, dict[str, list[str]]]:
     """Converts list of triples to dictionary"""
-    dictionary = defaultdict(list)
+    dictionary: dict[str, dict[str, list[str]]] = {}
     for triple in triples:
         id_: str
         property_: str
@@ -529,7 +529,10 @@ def triples2dictionary(triples: Iterable[tuple[URIRef, URIRef, str | URIRef]]) -
         id_, property_, value = remove_namespace(*triple)  # type: ignore[misc]
 
         if id_ not in dictionary:
-            dictionary["external_id"] = [id_]
+            dictionary[id_] = {"external_id": [id_]}
 
-        dictionary[property_].append(value)
+        if property_ not in dictionary[id_]:
+            dictionary[id_][property_] = [value]
+        else:
+            dictionary[id_][property_].append(value)
     return dictionary

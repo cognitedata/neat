@@ -18,16 +18,18 @@ def test_rdf2nodes_and_edges_raise_exception(small_graph, simple_rules):
         (URIRef("http://purl.org/cognite/neat#Nordics"), URIRef("http://purl.org/cognite/neat#name"), None)
     )
 
+    # this will basically remove instance all together since there are no triples
+    # left to define this instance
     small_graph.graph.remove(
         (URIRef("http://purl.org/cognite/neat#Nordics.Norway.NO1"), URIRef("http://purl.org/cognite/neat#name"), None)
     )
 
     nodes, edges, exceptions = rdf2nodes_and_edges(small_graph, simple_rules)
 
-    assert len(exceptions) == 2
     assert len(nodes) == 11
     assert len(edges) == 21
-    assert [e["type"] for e in exceptions] == ["MissingInstanceTriples", "PropertyRequiredButNotProvided"]
+    assert len(exceptions) == 1
+    assert [e["type"] for e in exceptions] == ["PropertyRequiredButNotProvided"]
 
 
 # @pytest.mark.skip("Relies on a bug in the DMS exporter")

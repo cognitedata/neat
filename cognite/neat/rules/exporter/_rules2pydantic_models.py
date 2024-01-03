@@ -21,7 +21,7 @@ from cognite.neat.rules.exporter._rules2dms import DataModel
 from cognite.neat.rules.exporter._validation import are_entity_names_dms_compliant
 from cognite.neat.rules.models.rules import Property, Rules
 from cognite.neat.rules.value_types import ValueTypeMapping
-from cognite.neat.utils.utils import generate_exception_report
+from cognite.neat.utils.utils import generate_exception_report, remove_namespace
 
 if sys.version_info >= (3, 11):
     from datetime import UTC
@@ -60,6 +60,7 @@ def default_model_configuration(
 
 def default_class_methods():
     return [
+        from_dict,
         from_graph,
         to_asset,
         to_relationship,
@@ -330,6 +331,39 @@ def edges_one_to_many(cls) -> list[str]:
 
 # Define methods that work on model instance
 @classmethod  # type: ignore[misc]
+def from_dict(cls, dictionary: dict[str, list[str] | str]):
+    # wrangle results to dict
+    args: dict[str, list[Any] | Any] = {}
+    for field in cls.model_fields.values():
+        # if field is not required and not in result, skip
+        if not field.is_required() and field.alias not in dictionary:
+            continue
+
+        # if field is required and not in result, raise error
+        if field.is_required() and field.alias not in dictionary:
+            raise exceptions.PropertyRequiredButNotProvided(field.alias, cast(str, dictionary["external_id"]))
+
+        # flatten result if field is not edge or list of values
+        if field.annotation.__name__ not in [EdgeOneToMany.__name__, list.__name__]:
+            if isinstance(dictionary[field.alias], list) and len(dictionary[field.alias]) > 1:
+                warnings.warn(
+                    exceptions.FieldContainsMoreThanOneValue(
+                        field.alias,
+                        len(dictionary[field.alias]),
+                    ).message,
+                    category=exceptions.FieldContainsMoreThanOneValue,
+                    stacklevel=2,
+                )
+
+            args[field.alias] = dictionary[field.alias][0]
+        else:
+            args[field.alias] = dictionary[field.alias]
+
+    return cls(**args)
+
+
+# Define methods that work on model instance
+@classmethod  # type: ignore[misc]
 def from_graph(
     cls,
     graph: Graph,
@@ -369,39 +403,12 @@ def from_graph(
     # Not sure if the triple will be URIRef or Literal
     query_result = cast(Iterable[tuple[URIRef, URIRef, str | URIRef]], graph.query(sparql_construct_query))
 
-    result = triples2dictionary(query_result)
+    dictionary = triples2dictionary(query_result)[remove_namespace(external_id)]
 
-    if not result:
+    if not dictionary:
         raise exceptions.MissingInstanceTriples(external_id)
 
-    # wrangle results to dict
-    args: dict[str, list[str] | str] = {}
-    for field in cls.model_fields.values():
-        # if field is not required and not in result, skip
-        if not field.is_required() and field.alias not in result:
-            continue
-
-        # if field is required and not in result, raise error
-        if field.is_required() and field.alias not in result:
-            raise exceptions.PropertyRequiredButNotProvided(field.alias, external_id)
-
-        # flatten result if field is not edge or list of values
-        if field.annotation.__name__ not in [EdgeOneToMany.__name__, list.__name__]:
-            if isinstance(result[field.alias], list) and len(result[field.alias]) > 1:
-                warnings.warn(
-                    exceptions.FieldContainsMoreThanOneValue(
-                        field.alias,
-                        len(result[field.alias]),
-                    ).message,
-                    category=exceptions.FieldContainsMoreThanOneValue,
-                    stacklevel=2,
-                )
-
-            args[field.alias] = result[field.alias][0]
-        else:
-            args[field.alias] = result[field.alias]
-
-    return cls(**args)
+    return cls.from_dict(dictionary)
 
 
 # define methods that creates asset out of model id (default)
