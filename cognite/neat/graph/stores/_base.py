@@ -11,7 +11,6 @@ from rdflib.query import Result
 
 from cognite.neat.constants import DEFAULT_NAMESPACE, PREFIXES
 from cognite.neat.graph.models import Triple
-from cognite.neat.graph.stores._configuration import RdfStoreType
 from cognite.neat.graph.stores._rdf_to_graph import rdf_file_to_graph
 from cognite.neat.rules.models.rules import Rules
 
@@ -49,7 +48,6 @@ class NeatGraphStoreBase(ABC):
         self.namespace: Namespace = namespace
         self.prefixes: dict[str, Namespace] = prefixes
 
-        self.rdf_store_type: str = RdfStoreType.MEMORY
         self.rdf_store_query_url: str | None = None
         self.rdf_store_update_url: str | None = None
         self.returnFormat: str | None = None
@@ -225,14 +223,6 @@ class NeatGraphStoreBase(ABC):
         if save_to_cache:
             self.df_cache = df_cache
         return df_cache
-
-    def __del__(self):
-        if self.rdf_store_type == RdfStoreType.OXIGRAPH:
-            if self.graph:
-                if self.graph.store:
-                    self.graph.store._inner.flush()
-                self.graph.close()
-            # It requires more investigation os.remove(self.internal_storage_dir / "LOCK")
 
     def commit(self):
         """Commits the graph."""

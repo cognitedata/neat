@@ -4,7 +4,6 @@ from typing import ClassVar, cast
 
 from cognite.neat.constants import PREFIXES
 from cognite.neat.graph import stores
-from cognite.neat.graph.stores import NeatGraphStoreBase, OxiGraphStore, RdfStoreType
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
@@ -25,13 +24,13 @@ class ConfigureDefaultGraphStores(Step):
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
             name="source_rdf_store.type",
-            value=RdfStoreType.OXIGRAPH,
+            value=stores.OxiGraphStore.rdf_store_type,
             label="Data store type for source graph. Supported: oxigraph, memory,file, graphdb, sparql. ",
             options=["oxigraph", "memory", "file", "graphdb", "sparql"],
         ),
         Configurable(
             name="solution_rdf_store.type",
-            value=RdfStoreType.OXIGRAPH,
+            value=stores.OxiGraphStore.rdf_store_type,
             label="Data store type for solutioin graph. Supported: oxigraph, memory,file, graphdb, sparql",
             options=["oxigraph", "memory", "file", "graphdb", "sparql"],
         ),
@@ -85,7 +84,7 @@ class ConfigureDefaultGraphStores(Step):
         source_store_dir = Path(self.data_store_path) / Path(source_store_dir) if source_store_dir else None
         source_store_type = self.configs["source_rdf_store.type"]
         if stores_to_configure in ["all", "source"]:
-            if source_store_type == RdfStoreType.OXIGRAPH and "SourceGraph" in self.flow_context:
+            if source_store_type == stores.OxiGraphStore.rdf_store_type and "SourceGraph" in self.flow_context:
                 return FlowMessage(output_text="Stores already configured")
             try:
                 store_cls = stores.STORE_BY_TYPE[source_store_type]
@@ -111,7 +110,7 @@ class ConfigureDefaultGraphStores(Step):
             solution_store_dir = self.data_store_path / Path(solution_store_dir) if solution_store_dir else None
             solution_store_type = self.configs["solution_rdf_store.type"]
 
-            if solution_store_type == RdfStoreType.OXIGRAPH and "SolutionGraph" in self.flow_context:
+            if solution_store_type == stores.OxiGraphStore.rdf_store_type and "SolutionGraph" in self.flow_context:
                 return FlowMessage(output_text="Stores already configured")
 
             try:
@@ -189,7 +188,7 @@ class ConfigureGraphStore(Step):
         ),
         Configurable(
             name="store_type",
-            value=RdfStoreType.OXIGRAPH,
+            value=stores.OxiGraphStore.rdf_store_type,
             label="Data store type for source graph. Supported: oxigraph, memory,file, graphdb, sparql. ",
             options=["oxigraph", "memory", "file", "graphdb", "sparql"],
         ),
@@ -233,7 +232,7 @@ class ConfigureGraphStore(Step):
             reset_store(store_dir, graph_store.graph if graph_store else None)
             logging.info("Graph reset complete")
 
-        if store_type == RdfStoreType.OXIGRAPH and graph_store is not None:
+        if store_type == stores.OxiGraphStore.rdf_store_type and graph_store is not None:
             # OXIGRAPH doesn't like to be initialized twice without a good reason
             return FlowMessage(output_text="Stores already configured")
 
@@ -256,8 +255,8 @@ class ConfigureGraphStore(Step):
         )
 
 
-def reset_store(data_store_dir: Path | None, graph_store: NeatGraphStoreBase | None = None):
-    if isinstance(graph_store, OxiGraphStore):
+def reset_store(data_store_dir: Path | None, graph_store: stores.NeatGraphStoreBase | None = None):
+    if isinstance(graph_store, stores.OxiGraphStore):
         if graph_store:
             graph_store.drop()
             graph_store.reinit_graph()
