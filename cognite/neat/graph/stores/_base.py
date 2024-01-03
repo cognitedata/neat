@@ -14,8 +14,8 @@ from rdflib.query import Result
 
 from cognite.neat.constants import DEFAULT_NAMESPACE, PREFIXES
 from cognite.neat.graph.models import Triple
-from cognite.neat.graph.stores.configuration import RdfStoreType
-from cognite.neat.graph.stores.rdf_to_graph import rdf_file_to_graph
+from cognite.neat.graph.stores._configuration import RdfStoreType
+from cognite.neat.graph.stores._rdf_to_graph import rdf_file_to_graph
 from cognite.neat.rules.models.rules import Rules
 from cognite.neat.utils.auxiliary import local_import
 
