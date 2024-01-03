@@ -126,7 +126,7 @@ class NeatGraphStoreBase:
             local_import("pyoxigraph", "oxi")
             import pyoxigraph
 
-            from cognite.neat.graph.stores import oxrdflib
+            from cognite.neat.graph.stores import _oxrdflib
 
             # Adding support for both in-memory and file-based storage
             for i in range(4):
@@ -142,7 +142,7 @@ class NeatGraphStoreBase:
                     else:
                         raise e
 
-            self.graph = Graph(store=oxrdflib.OxigraphStore(store=oxstore))
+            self.graph = Graph(store=_oxrdflib.OxigraphStore(store=oxstore))
             self.graph.default_union = True
             self.garbage_collector()
 
