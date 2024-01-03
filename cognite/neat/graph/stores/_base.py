@@ -1,5 +1,4 @@
 import logging
-import os
 import sys
 import time
 from abc import ABC, abstractmethod
@@ -294,22 +293,3 @@ class NeatGraphStoreBase(ABC):
             check_commit()
 
         check_commit(force_commit=True)
-
-
-def drop_graph_store_storage(rdf_store_type: str, storage_path: Path | None, force: bool = False):
-    """Drop graph store storage on disk.
-
-    Args:
-        graph : Instance of NeatGraphStore
-        storage_path : Path to storage directory
-        force : Forcefully drop of graph. Defaults to False.
-    """
-    if rdf_store_type == RdfStoreType.OXIGRAPH and storage_path:
-        if storage_path.exists():
-            for f in os.listdir(storage_path):
-                (storage_path / f).unlink()
-            logging.info("Graph store dropped.")
-        else:
-            logging.info(f"Storage path {storage_path} does not exist. Skipping drop.")
-    else:
-        logging.info(f"Graph store {rdf_store_type} is not Oxigraph or storage path is not provided. Skipping drop.")

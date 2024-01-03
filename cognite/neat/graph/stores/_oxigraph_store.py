@@ -1,4 +1,5 @@
 import logging
+import os
 import shutil
 import time
 from pathlib import Path
@@ -128,3 +129,17 @@ class OxiGraphStore(NeatGraphStoreBase):
                 self.graph.store._inner.flush()
                 self.graph.store._inner.optimize()
             self.graph.commit()
+
+    @staticmethod
+    def drop_graph_store_storage(storage_path: Path | None) -> None:
+        """Drop graph store storage on disk.
+
+        Args:
+            storage_path : Path to storage directory
+        """
+        if storage_path and storage_path.exists():
+            for f in os.listdir(storage_path):
+                (storage_path / f).unlink()
+            logging.info("Graph store dropped.")
+        else:
+            logging.info(f"Storage path {storage_path} does not exist. Skipping drop.")

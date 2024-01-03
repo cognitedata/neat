@@ -4,7 +4,7 @@ from typing import ClassVar, cast
 
 from cognite.neat.constants import PREFIXES
 from cognite.neat.graph import stores
-from cognite.neat.graph.stores import NeatGraphStoreBase, RdfStoreType, drop_graph_store_storage
+from cognite.neat.graph.stores import NeatGraphStoreBase, OxiGraphStore, RdfStoreType
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
@@ -167,9 +167,7 @@ class ResetGraphStores(Step):
         graph_name = graph_name_mapping[self.configs["graph_name"]]
         graph_store = cast(SourceGraph | SolutionGraph | None, self.flow_context.get(graph_name, None))
         if graph_store is not None:
-            reset_store(
-                graph_store.graph.rdf_store_type, graph_name, graph_store.graph.internal_storage_dir, graph_store.graph
-            )
+            reset_store(graph_store.graph.internal_storage_dir, graph_store.graph)
             return FlowMessage(output_text="Reset operation completed")
         else:
             return FlowMessage(output_text="Stores already reset")
@@ -232,7 +230,7 @@ class ConfigureGraphStore(Step):
         graph_store = cast(SourceGraph | SolutionGraph | None, self.flow_context.get(graph_name, None))
         if self.configs["init_procedure"] == "reset":
             logging.info("Resetting graph")
-            reset_store(store_type, graph_name, store_dir, graph_store.graph if graph_store else None)
+            reset_store(store_dir, graph_store.graph if graph_store else None)
             logging.info("Graph reset complete")
 
         if store_type == RdfStoreType.OXIGRAPH and graph_store is not None:
@@ -258,13 +256,11 @@ class ConfigureGraphStore(Step):
         )
 
 
-def reset_store(
-    store_type: str, graph_name: str, data_store_dir: Path | None, graph_store: NeatGraphStoreBase | None = None
-):
-    if store_type == RdfStoreType.OXIGRAPH:
+def reset_store(data_store_dir: Path | None, graph_store: NeatGraphStoreBase | None = None):
+    if isinstance(graph_store, OxiGraphStore):
         if graph_store:
             graph_store.drop()
             graph_store.reinit_graph()
         elif data_store_dir:
-            drop_graph_store_storage(store_type, data_store_dir, force=True)
-    return
+            graph_store.drop_graph_store_storage(data_store_dir)
+    return None

@@ -1,4 +1,4 @@
-from ._base import NeatGraphStoreBase, drop_graph_store_storage
+from ._base import NeatGraphStoreBase
 from ._configuration import RdfStoreConfig, RdfStoreType
 from ._graphdb_store import GraphDBStore
 from ._memory_store import MemoryStore
@@ -18,7 +18,6 @@ __all__ = [
     "GraphDBStore",
     "STORE_BY_TYPE",
     "AVAILABLE_STORES",
-    "drop_graph_store_storage",
     "RdfStoreType",
     "RdfStoreConfig",
     "rdf_file_to_graph",
