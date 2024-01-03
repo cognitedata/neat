@@ -63,7 +63,7 @@ def rdf2nodes_and_edges(
                     instance = pydantic_models[class_].from_dict(instance_dict)  # type: ignore[attr-defined]
                     if add_class_prefix:
                         instance.external_id = add_class_prefix_to_xid(
-                            class_name=instance.__class__.__name__, external_id=instance.external_id
+                            class_name=type(instance).__name__, external_id=instance.external_id
                         )
                     new_node = instance.to_node(data_model, add_class_prefix)  # type: ignore[attr-defined]
                     is_valid, reason = is_node_valid(new_node)
