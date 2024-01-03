@@ -1,5 +1,5 @@
 ## NeatGraph Store
-::: cognite.neat.graph.stores.graph_store.NeatGraphStore
+::: cognite.neat.graph.stores.NeatGraphStore
 
 
 ## Graph from RDF file

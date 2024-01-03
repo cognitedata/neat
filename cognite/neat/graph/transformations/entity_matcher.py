@@ -3,7 +3,7 @@ from typing import cast
 
 from rdflib import Literal, URIRef
 
-from cognite.neat.graph.stores.graph_store import NeatGraphStore
+from cognite.neat.graph.stores._base import NeatGraphStore
 
 
 def simple_entity_matcher(

@@ -8,7 +8,7 @@ from pydantic_core import ErrorDetails
 from rdflib import URIRef
 
 from cognite.neat.exceptions import NeatException
-from cognite.neat.graph.stores.graph_store import NeatGraphStore
+from cognite.neat.graph.stores._base import NeatGraphStore
 from cognite.neat.graph.transformations.query_generator.sparql import build_construct_query, triples2dictionary
 from cognite.neat.rules.exporter._rules2dms import DataModel
 from cognite.neat.rules.exporter._rules2pydantic_models import add_class_prefix_to_xid, rules_to_pydantic_models
@@ -17,10 +17,7 @@ from cognite.neat.utils.utils import chunker, datetime_utc_now, retry_decorator
 
 
 def rdf2nodes_and_edges(
-    graph_store: NeatGraphStore,
-    rules: Rules,
-    stop_on_exception: bool = False,
-    add_class_prefix: bool = False,
+    graph_store: NeatGraphStore, rules: Rules, stop_on_exception: bool = False, add_class_prefix: bool = False
 ) -> tuple[list[NodeApply], list[EdgeApply], list[ErrorDetails]]:
     """Generates DMS nodes and edges from knowledge graph stored as RDF triples
 
@@ -45,12 +42,7 @@ def rdf2nodes_and_edges(
 
     for class_ in rules.classes:
         if f"{rules.space}:{class_}" in data_model.containers:
-            sparql_construct_query = build_construct_query(
-                graph_store.graph,
-                class_,
-                rules,
-                properties_optional=True,
-            )
+            sparql_construct_query = build_construct_query(graph_store.graph, class_, rules, properties_optional=True)
 
             counter = 0
             start_time = datetime_utc_now()
@@ -128,10 +120,7 @@ def rdf2nodes_and_edges(
 
 
 def rdf2nodes_and_edges_old(
-    graph_store: NeatGraphStore,
-    rules: Rules,
-    stop_on_exception: bool = False,
-    add_class_prefix: bool = False,
+    graph_store: NeatGraphStore, rules: Rules, stop_on_exception: bool = False, add_class_prefix: bool = False
 ) -> tuple[list[NodeApply], list[EdgeApply], list[ErrorDetails]]:
     """Generates DMS nodes and edges from knowledge graph stored as RDF triples
 
