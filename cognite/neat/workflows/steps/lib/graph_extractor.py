@@ -10,7 +10,7 @@ from rdflib import RDF, XSD, Literal, Namespace, URIRef
 
 from cognite.neat.constants import PREFIXES
 from cognite.neat.graph import extractors
-from cognite.neat.graph.extractors.mocks.graph import generate_triples as generate_mock_triples
+from cognite.neat.graph.extractors._mock_graph_generator import generate_triples as generate_mock_triples
 from cognite.neat.rules.exporter._rules2triples import get_instances_as_triples
 from cognite.neat.utils.utils import create_sha256_hash
 from cognite.neat.workflows._exceptions import StepNotInitialized
@@ -113,9 +113,7 @@ class InstancesFromGraphCaptureSpreadsheetToGraph(Step):
 
         logging.info(f"Processing graph capture sheet {data_capture_sheet_path}")
 
-        triples = extractors.extract_graph_from_sheet(
-            data_capture_sheet_path, transformation_rule=transformation_rules.rules
-        )
+        triples = extractors.GraphCapturingSheet(transformation_rules.rules, data_capture_sheet_path).extract()
 
         if self.configs["graph_name"] == "solution":
             # Todo Anders: Why is the graph fetched from context when it is passed as an argument?

@@ -4,19 +4,18 @@ import shutil
 import sys
 import time
 from pathlib import Path
-from typing import TypeAlias
 
 import pandas as pd
 import requests
 from prometheus_client import Gauge, Summary
-from rdflib import Graph, Literal, Namespace
+from rdflib import Graph, Namespace
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 from rdflib.query import Result
-from rdflib.term import URIRef
 
 from cognite.neat.constants import DEFAULT_NAMESPACE, PREFIXES
-from cognite.neat.graph.extractors.rdf_to_graph import rdf_file_to_graph
+from cognite.neat.graph.models import Triple
 from cognite.neat.graph.stores.configuration import RdfStoreType
+from cognite.neat.graph.stores.rdf_to_graph import rdf_file_to_graph
 from cognite.neat.rules.models.rules import Rules
 from cognite.neat.utils.auxiliary import local_import
 
@@ -27,7 +26,6 @@ else:
 
 prom_qsm = Summary("store_query_time_summary", "Time spent processing queries", ["query"])
 prom_sq = Gauge("store_single_query_time", "Time spent processing a single query", ["query"])
-Triple: TypeAlias = tuple[URIRef, URIRef, Literal | URIRef]
 
 
 class NeatGraphStore:
