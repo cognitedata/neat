@@ -5,7 +5,7 @@ from IPython.display import Markdown, display
 from pydantic import ValidationError
 
 from cognite.neat.constants import PREFIXES
-from cognite.neat.graph.stores import NeatGraphStoreBase
+from cognite.neat.graph.stores import MemoryStore
 from cognite.neat.graph.transformations.query_generator import build_sparql_query
 from cognite.neat.rules.models.rdfpath import (
     AllProperties,
@@ -262,7 +262,7 @@ def test_parse_traversal(raw: str, expected_traversal: AllProperties):
 
 
 def _load_nordic_knowledge_graph():
-    graph = NeatGraphStoreBase(namespace=PREFIXES["nordic44"])
+    graph = MemoryStore(namespace=PREFIXES["nordic44"])
     graph.init_graph()
     graph.import_from_file(config.NORDIC44_KNOWLEDGE_GRAPH)
     return graph

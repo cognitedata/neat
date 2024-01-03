@@ -1,7 +1,7 @@
 from rdflib import Literal
 
 from cognite.neat.graph.loaders.core.rdf_to_assets import rdf2assets
-from cognite.neat.graph.stores import NeatGraphStoreBase
+from cognite.neat.graph.stores import MemoryStore, NeatGraphStoreBase
 from cognite.neat.graph.transformations.transformer import domain2app_knowledge_graph
 
 
@@ -20,7 +20,7 @@ def test_missing_name(source_knowledge_graph, transformation_rules):
 
     tnt_knowledge_graph = domain2app_knowledge_graph(source_knowledge_graph, transformation_rules)
 
-    assets = rdf2assets(NeatGraphStoreBase(tnt_knowledge_graph), transformation_rules, data_set_id=123456)
+    assets = rdf2assets(MemoryStore(tnt_knowledge_graph), transformation_rules, data_set_id=123456)
 
     assert assets[no_name_id]["name"] == no_name_id
 
@@ -47,7 +47,7 @@ def test_alias_name(source_knowledge_graph, transformation_rules):
 
     tnt_knowledge_graph = domain2app_knowledge_graph(source_knowledge_graph, transformation_rules)
 
-    assets = rdf2assets(NeatGraphStoreBase(tnt_knowledge_graph), transformation_rules, data_set_id=123456)
+    assets = rdf2assets(MemoryStore(tnt_knowledge_graph), transformation_rules, data_set_id=123456)
 
     assert assets[only_alias_name_id]["name"] == "Terminal Alias Name"
 

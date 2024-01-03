@@ -1,13 +1,15 @@
 import logging
 import os
+import shutil
 import sys
 import time
-from abc import abstractmethod
 from pathlib import Path
 
 import pandas as pd
+import requests
 from prometheus_client import Gauge, Summary
 from rdflib import Graph, Namespace
+from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 from rdflib.query import Result
 
 from cognite.neat.constants import DEFAULT_NAMESPACE, PREFIXES
@@ -15,6 +17,7 @@ from cognite.neat.graph.models import Triple
 from cognite.neat.graph.stores._configuration import RdfStoreType
 from cognite.neat.graph.stores._rdf_to_graph import rdf_file_to_graph
 from cognite.neat.rules.models.rules import Rules
+from cognite.neat.utils.auxiliary import local_import
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -79,12 +82,9 @@ class NeatGraphStoreBase:
         store.init_graph(base_prefix=rules.metadata.prefix)
         return store
 
-    @abstractmethod
-    def _init_graph(self) -> Graph:
-        raise NotImplementedError()
-
     def init_graph(
         self,
+        rdf_store_type: str = RdfStoreType.MEMORY,
         rdf_store_query_url: str | None = None,
         rdf_store_update_url: str | None = None,
         graph_name: str | None = None,
@@ -95,6 +95,7 @@ class NeatGraphStoreBase:
         """Initializes the graph.
 
         Args:
+            rdf_store_type : Graph store type, by default RdfStoreType.MEMORY
             rdf_store_query_url : URL towards which SPARQL query is executed, by default None
             rdf_store_update_url : URL towards which SPARQL update is executed, by default None
             graph_name : Name of graph, by default None
@@ -107,6 +108,7 @@ class NeatGraphStoreBase:
             Used only for Oxigraph
         """
         logging.info("Initializing NeatGraphStore")
+        self.rdf_store_type = rdf_store_type
         self.rdf_store_query_url = rdf_store_query_url
         self.rdf_store_update_url = rdf_store_update_url
         self.graph_name = graph_name
@@ -116,7 +118,48 @@ class NeatGraphStoreBase:
             self.internal_storage_dir if self.internal_storage_dir_orig is None else self.internal_storage_dir_orig
         )
 
-        self.graph = self._init_graph()
+        if self.rdf_store_type in ["", RdfStoreType.MEMORY]:
+            logging.info("Initializing graph in memory")
+            self.graph = Graph()
+        elif self.rdf_store_type == RdfStoreType.OXIGRAPH:
+            logging.info("Initializing Oxigraph store")
+            local_import("pyoxigraph", "oxi")
+            import pyoxigraph
+
+            from cognite.neat.graph.stores import _oxrdflib
+
+            # Adding support for both in-memory and file-based storage
+            for i in range(4):
+                try:
+                    oxstore = pyoxigraph.Store(
+                        path=str(self.internal_storage_dir) if self.internal_storage_dir else None
+                    )  # Store (Rust object) accepts only str as path and not Path.
+                    break
+                except OSError as e:
+                    if "lock" in str(e) and i < 3:
+                        # lock originated from another instance of the store
+                        logging.error("Error initializing Oxigraph store: %s", e)
+                    else:
+                        raise e
+
+            self.graph = Graph(store=_oxrdflib.OxigraphStore(store=oxstore))
+            self.graph.default_union = True
+            self.garbage_collector()
+
+        elif self.rdf_store_type == RdfStoreType.GRAPHDB:
+            logging.info("Initializing graph store with GraphDB")
+            store = SPARQLUpdateStore(
+                query_endpoint=self.rdf_store_query_url,
+                update_endpoint=self.rdf_store_update_url,
+                returnFormat=self.returnFormat,
+                context_aware=False,
+                postAsEncoded=False,
+                autocommit=False,
+            )
+            self.graph = Graph(store=store)
+        else:
+            logging.error("Unknown RDF store type: %s", self.rdf_store_type)
+            raise Exception("Unknown RDF store type: %s", self.rdf_store_type)
 
         if self.prefixes:
             for prefix, namespace in self.prefixes.items():
@@ -133,6 +176,7 @@ class NeatGraphStoreBase:
     def reinit_graph(self):
         """Reinitializes the graph."""
         self.init_graph(
+            self.rdf_store_type,
             self.rdf_store_query_url,
             self.rdf_store_update_url,
             self.graph_name,
@@ -141,31 +185,44 @@ class NeatGraphStoreBase:
             self.internal_storage_dir,
         )
 
-    def close(self) -> None:
+    def close(self):
         """Closes the graph."""
-        # Can be overridden in subclasses
-        return None
+        if self.rdf_store_type == RdfStoreType.OXIGRAPH:
+            try:
+                if self.graph:
+                    self.graph.store._inner.flush()  # type: ignore[attr-defined]
+                    self.graph.close(True)
+            except Exception as e:
+                logging.debug("Error closing graph: %s", e)
 
-    def restart(self) -> None:
+    def restart(self):
         """Restarts the graph"""
-        # Can be overridden in subclasses
-        return None
+        if self.rdf_store_type == RdfStoreType.OXIGRAPH:
+            self.close()
+            self.reinit_graph()
+            logging.info("GraphStore restarted")
 
-    def import_from_file(
-        self, graph_file: Path, mime_type: str = "application/rdf+xml", add_base_iri: bool = True
-    ) -> None:
+    def import_from_file(self, graph_file: Path, mime_type: str = "application/rdf+xml", add_base_iri: bool = True):
         """Imports graph data from file.
 
         Args:
             graph_file : File path to file containing graph data, by default None
-            mime_type : MIME type of graph data, by default "application/rdf+xml"
-            add_base_iri : Add base IRI to graph, by default True
         """
-        if add_base_iri:
-            self.graph = rdf_file_to_graph(graph_file, base_namespace=self.namespace, prefixes=self.prefixes)
+
+        if self.rdf_store_type == RdfStoreType.OXIGRAPH:
+            if add_base_iri:
+                self.graph.store._inner.bulk_load(  # type: ignore[attr-defined]
+                    str(graph_file), mime_type, base_iri=self.namespace
+                )
+            else:
+                self.graph.store._inner.bulk_load(str(graph_file), mime_type)  # type: ignore[attr-defined]
+            self.graph.store._inner.optimize()  # type: ignore[attr-defined]
         else:
-            self.graph = rdf_file_to_graph(graph_file, prefixes=self.prefixes)
-        return None
+            if add_base_iri:
+                self.graph = rdf_file_to_graph(graph_file, base_namespace=self.namespace, prefixes=self.prefixes)
+            else:
+                self.graph = rdf_file_to_graph(graph_file, prefixes=self.prefixes)
+        return
 
     def get_graph(self) -> Graph:
         """Returns the graph."""
@@ -185,15 +242,36 @@ class NeatGraphStoreBase:
         prom_sq.labels("query").set(elapsed_time)
         return result
 
-    @abstractmethod
-    def drop(self) -> None:
+    def drop(self):
         """Drops the graph."""
-        raise NotImplementedError()
+        if self.rdf_store_type == RdfStoreType.MEMORY:
+            # In case of in-memory graph, we just reinitialize the graph
+            # otherwise we would lose the prefixes and bindings which fails
+            # workflow
+            self.reinit_graph()
+        if self.rdf_store_type == RdfStoreType.OXIGRAPH:
+            try:
+                self.close()
+                # Due to the specifics of Oxigraph, storage directory cannot be deleted immediately
+                # after closing the graph and creating a new one
+                if self.internal_storage_dir.exists():
+                    self.storage_dirs_to_delete.append(self.internal_storage_dir)
+                self.internal_storage_dir = Path(str(self.internal_storage_dir_orig) + "_" + str(time.time()))
 
-    def garbage_collector(self) -> None:
+            except Exception as e:
+                logging.error(f"Error dropping graph : {e}")
+
+        elif self.rdf_store_type == RdfStoreType.GRAPHDB:
+            r = requests.delete(f"{self.graph_db_rest_url}/repositories/{self.graph_name}/rdf-graphs/service?default")
+            logging.info(f"Dropped graph with state: {r.text}")
+
+    def garbage_collector(self):
         """Garbage collection of the graph store."""
-        # Can be overridden in subclasses
-        return None
+        if self.rdf_store_type == RdfStoreType.OXIGRAPH:
+            # delete all directoreis in self.storage_dirs_to_delete
+            for d in self.storage_dirs_to_delete:
+                shutil.rmtree(d)
+            self.storage_dirs_to_delete = []
 
     def query_to_dataframe(
         self,
@@ -235,6 +313,12 @@ class NeatGraphStoreBase:
 
     def commit(self):
         """Commits the graph."""
+        if self.rdf_store_type == RdfStoreType.OXIGRAPH:
+            if self.graph:
+                if self.graph.store:
+                    logging.info("Committing graph - flushing and optimizing")
+                    self.graph.store._inner.flush()
+                    self.graph.store._inner.optimize()
         self.graph.commit()
 
     def get_df(self) -> pd.DataFrame:
