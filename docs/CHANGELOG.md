@@ -16,7 +16,10 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
-## [0.TBD] - TBD-01-24
+## [0.54.0] - 04-01-24
+
+## Added
+- Reset graph option for GraphDBStore
 
 ## Changed
 - `cognite.neat.stores` module. This now only has four classes: `NeatGraphStoreBase`, `MemoryStore`, `OxiGraphStore`,

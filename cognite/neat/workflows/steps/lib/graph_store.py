@@ -264,4 +264,8 @@ def reset_store(data_store_dir: Path | None, graph_store: stores.NeatGraphStoreB
             graph_store.reinit_graph()
         elif data_store_dir:
             graph_store.drop_graph_store_storage(data_store_dir)
+    elif isinstance(graph_store, stores.GraphDBStore):
+        if graph_store:
+            graph_store.drop()
+            graph_store.reinit_graph()
     return None

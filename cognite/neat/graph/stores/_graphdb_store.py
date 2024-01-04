@@ -47,5 +47,5 @@ class GraphDBStore(NeatGraphStoreBase):
 
     def drop(self):
         """Drops the graph."""
-        r = requests.delete(f"{self.graph_db_rest_url}/repositories/{self.graph_name}/rdf-graphs/service?default")
+        r = requests.delete(f"{self.rdf_store_query_url}/rdf-graphs/service?default")
         logging.info(f"Dropped graph with state: {r.text}")
