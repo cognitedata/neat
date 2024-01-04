@@ -193,18 +193,7 @@ class NeatGraphStoreBase(ABC):
         """Drops the graph."""
         raise NotImplementedError()
 
-<<<<<<< HEAD:cognite/neat/graph/stores/graph_store.py
-            except Exception as e:
-                logging.error(f"Error dropping graph : {e}")
-
-        elif self.rdf_store_type == RdfStoreType.GRAPHDB:
-            r = requests.delete(f"{self.rdf_store_query_url}/rdf-graphs/service?default")
-            logging.info(f"Dropped graph with state: {r.text}")
-
-    def garbage_collector(self):
-=======
     def garbage_collector(self) -> None:
->>>>>>> 4eac0947e16b15a1ae9bdb01c5494192715f0f07:cognite/neat/graph/stores/_base.py
         """Garbage collection of the graph store."""
         # Can be overridden in subclasses
         return None
