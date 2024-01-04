@@ -21,8 +21,6 @@ Changes are grouped as follows:
 ## Added
 - Reset graph option for GraphDBStore
 
-## [0.TBD] - TBD-01-24
-
 ## Changed
 - `cognite.neat.stores` module. This now only has four classes: `NeatGraphStoreBase`, `MemoryStore`, `OxiGraphStore`,
   and `GraphDBStore` as well as the constants `STORE_BY_TYPE` and `AVAILABLE_STORES`. All functions, enums, and previous
