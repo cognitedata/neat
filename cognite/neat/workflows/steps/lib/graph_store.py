@@ -127,7 +127,9 @@ class ConfigureDefaultGraphStores(Step):
                 internal_storage_dir=solution_store_dir,
             )
 
-            solution_graph.graph_db_rest_url = self.configs["solution_rdf_store.api_root_url"]
+            if isinstance(solution_graph, stores.GraphDBStore):
+                solution_graph.graph_db_rest_url = self.configs["solution_rdf_store.api_root_url"]
+
             if stores_to_configure == "solution":
                 return FlowMessage(output_text="Solution graph store configured successfully"), SolutionGraph(
                     graph=solution_graph

@@ -31,6 +31,7 @@ class GraphDBStore(NeatGraphStoreBase):
         prefixes: dict = PREFIXES,
     ):
         super().__init__(graph, base_prefix, namespace, prefixes)
+        self.graph_db_rest_url: str = "http://localhost:7200"
 
     def _set_graph(self) -> None:
         logging.info("Initializing graph store with GraphDB")
