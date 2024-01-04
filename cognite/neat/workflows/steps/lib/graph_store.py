@@ -252,4 +252,8 @@ def reset_store(
             graph_store.reinit_graph()
         elif data_store_dir:
             drop_graph_store_storage(store_type, data_store_dir, force=True)
+    elif store_type == RdfStoreType.GRAPHDB:
+        if graph_store:
+            graph_store.drop()
+            graph_store.reinit_graph()
     return

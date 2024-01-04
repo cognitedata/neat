@@ -262,7 +262,7 @@ class NeatGraphStore:
                 logging.error(f"Error dropping graph : {e}")
 
         elif self.rdf_store_type == RdfStoreType.GRAPHDB:
-            r = requests.delete(f"{self.graph_db_rest_url}/repositories/{self.graph_name}/rdf-graphs/service?default")
+            r = requests.delete(f"{self.rdf_store_query_url}/rdf-graphs/service?default")
             logging.info(f"Dropped graph with state: {r.text}")
 
     def garbage_collector(self):
