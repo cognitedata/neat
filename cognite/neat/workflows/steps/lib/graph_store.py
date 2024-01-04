@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import ClassVar, cast
 
 from cognite.neat.constants import PREFIXES
-from cognite.neat.graph.stores import NeatGraphStore, RdfStoreType, drop_graph_store_storage
+from cognite.neat.graph import stores
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
@@ -24,13 +24,13 @@ class ConfigureDefaultGraphStores(Step):
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
             name="source_rdf_store.type",
-            value=RdfStoreType.OXIGRAPH,
+            value=stores.OxiGraphStore.rdf_store_type,
             label="Data store type for source graph. Supported: oxigraph, memory,file, graphdb, sparql. ",
             options=["oxigraph", "memory", "file", "graphdb", "sparql"],
         ),
         Configurable(
             name="solution_rdf_store.type",
-            value=RdfStoreType.OXIGRAPH,
+            value=stores.OxiGraphStore.rdf_store_type,
             label="Data store type for solutioin graph. Supported: oxigraph, memory,file, graphdb, sparql",
             options=["oxigraph", "memory", "file", "graphdb", "sparql"],
         ),
@@ -84,12 +84,15 @@ class ConfigureDefaultGraphStores(Step):
         source_store_dir = Path(self.data_store_path) / Path(source_store_dir) if source_store_dir else None
         source_store_type = self.configs["source_rdf_store.type"]
         if stores_to_configure in ["all", "source"]:
-            if source_store_type == RdfStoreType.OXIGRAPH and "SourceGraph" in self.flow_context:
+            if source_store_type == stores.OxiGraphStore.rdf_store_type and "SourceGraph" in self.flow_context:
                 return FlowMessage(output_text="Stores already configured")
+            try:
+                store_cls = stores.STORE_BY_TYPE[source_store_type]
+            except KeyError:
+                return FlowMessage(output_text="Invalid store type")
+            source_graph = store_cls(prefixes=prefixes, base_prefix="neat", namespace=PREFIXES["neat"])
 
-            source_graph = NeatGraphStore(prefixes=prefixes, base_prefix="neat", namespace=PREFIXES["neat"])
             source_graph.init_graph(
-                source_store_type,
                 self.configs["source_rdf_store.query_url"],
                 self.configs["source_rdf_store.update_url"],
                 "neat-tnt",
@@ -99,34 +102,45 @@ class ConfigureDefaultGraphStores(Step):
                 return FlowMessage(output_text="Source graph store configured successfully"), SourceGraph(
                     graph=source_graph
                 )
+        else:
+            source_graph = None
 
         if stores_to_configure in ["all", "solution"]:
             solution_store_dir = self.configs["solution_rdf_store.disk_store_dir"]
             solution_store_dir = self.data_store_path / Path(solution_store_dir) if solution_store_dir else None
             solution_store_type = self.configs["solution_rdf_store.type"]
 
-            if solution_store_type == RdfStoreType.OXIGRAPH and "SolutionGraph" in self.flow_context:
+            if solution_store_type == stores.OxiGraphStore.rdf_store_type and "SolutionGraph" in self.flow_context:
                 return FlowMessage(output_text="Stores already configured")
-            solution_graph = NeatGraphStore(prefixes=prefixes, base_prefix="neat", namespace=PREFIXES["neat"])
+
+            try:
+                solution_graph = stores.STORE_BY_TYPE[solution_store_type](
+                    prefixes=prefixes, base_prefix="neat", namespace=PREFIXES["neat"]
+                )
+            except KeyError:
+                return FlowMessage(output_text="Invalid store type")
 
             solution_graph.init_graph(
-                solution_store_type,
                 self.configs["solution_rdf_store.query_url"],
                 self.configs["solution_rdf_store.update_url"],
                 "tnt-solution",
                 internal_storage_dir=solution_store_dir,
             )
 
-            solution_graph.graph_db_rest_url = self.configs["solution_rdf_store.api_root_url"]
+            if isinstance(solution_graph, stores.GraphDBStore):
+                solution_graph.graph_db_rest_url = self.configs["solution_rdf_store.api_root_url"]
+
             if stores_to_configure == "solution":
                 return FlowMessage(output_text="Solution graph store configured successfully"), SolutionGraph(
                     graph=solution_graph
                 )
+        else:
+            solution_graph = None
 
         return (
             FlowMessage(output_text="All graph stores configured successfully"),
-            SourceGraph(graph=source_graph),
-            SolutionGraph(graph=solution_graph),
+            SourceGraph(graph=source_graph) if source_graph else None,
+            SolutionGraph(graph=solution_graph) if solution_graph else None,
         )
 
 
@@ -154,9 +168,7 @@ class ResetGraphStores(Step):
         graph_name = graph_name_mapping[self.configs["graph_name"]]
         graph_store = cast(SourceGraph | SolutionGraph | None, self.flow_context.get(graph_name, None))
         if graph_store is not None:
-            reset_store(
-                graph_store.graph.rdf_store_type, graph_name, graph_store.graph.internal_storage_dir, graph_store.graph
-            )
+            reset_store(graph_store.graph.internal_storage_dir, graph_store.graph)
             return FlowMessage(output_text="Reset operation completed")
         else:
             return FlowMessage(output_text="Stores already reset")
@@ -178,7 +190,7 @@ class ConfigureGraphStore(Step):
         ),
         Configurable(
             name="store_type",
-            value=RdfStoreType.OXIGRAPH,
+            value=stores.OxiGraphStore.rdf_store_type,
             label="Data store type for source graph. Supported: oxigraph, memory,file, graphdb, sparql. ",
             options=["oxigraph", "memory", "file", "graphdb", "sparql"],
         ),
@@ -219,18 +231,20 @@ class ConfigureGraphStore(Step):
         graph_store = cast(SourceGraph | SolutionGraph | None, self.flow_context.get(graph_name, None))
         if self.configs["init_procedure"] == "reset":
             logging.info("Resetting graph")
-            reset_store(store_type, graph_name, store_dir, graph_store.graph if graph_store else None)
+            reset_store(store_dir, graph_store.graph if graph_store else None)
             logging.info("Graph reset complete")
 
-        if store_type == RdfStoreType.OXIGRAPH and graph_store is not None:
+        if store_type == stores.OxiGraphStore.rdf_store_type and graph_store is not None:
             # OXIGRAPH doesn't like to be initialized twice without a good reason
             return FlowMessage(output_text="Stores already configured")
 
-        new_graph_store = NeatGraphStore(
-            prefixes=rules_data.rules.prefixes, base_prefix="neat", namespace=PREFIXES["neat"]
-        )
+        try:
+            store_cls = stores.STORE_BY_TYPE[store_type]
+        except KeyError:
+            return FlowMessage(output_text="Invalid store type")
+
+        new_graph_store = store_cls(prefixes=rules_data.rules.prefixes, base_prefix="neat", namespace=PREFIXES["neat"])
         new_graph_store.init_graph(
-            store_type,
             self.configs["sparql_query_url"],
             self.configs["sparql_update_url"],
             "neat-tnt",
@@ -243,13 +257,11 @@ class ConfigureGraphStore(Step):
         )
 
 
-def reset_store(
-    store_type: str, graph_name: str, data_store_dir: Path | None, graph_store: NeatGraphStore | None = None
-):
-    if store_type == RdfStoreType.OXIGRAPH:
+def reset_store(data_store_dir: Path | None, graph_store: stores.NeatGraphStoreBase | None = None):
+    if isinstance(graph_store, stores.OxiGraphStore):
         if graph_store:
             graph_store.drop()
             graph_store.reinit_graph()
         elif data_store_dir:
-            drop_graph_store_storage(store_type, data_store_dir, force=True)
-    return
+            graph_store.drop_graph_store_storage(data_store_dir)
+    return None

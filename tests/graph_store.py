@@ -2,15 +2,13 @@ import time
 
 import pandas as pd
 
-from cognite.neat.graph.stores import NeatGraphStore, RdfStoreType
+from cognite.neat.graph.stores import GraphDBStore
 
 pd.options.display.max_colwidth = 100
 
-gs = NeatGraphStore()
+gs = GraphDBStore()
 gs.init_graph(
-    RdfStoreType.GRAPHDB,
-    "http://localhost:7200/repositories/tnt-solution",
-    "http://localhost:7200/repositories/tnt-solution/statements",
+    "http://localhost:7200/repositories/tnt-solution", "http://localhost:7200/repositories/tnt-solution/statements"
 )
 
 query = "SELECT ?instance ?prop ?value WHERE { ?instance rdf:type <http://purl.org/cognite/tnt/Terminal> . \
