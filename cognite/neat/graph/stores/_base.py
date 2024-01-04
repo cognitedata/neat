@@ -3,6 +3,7 @@ import sys
 import time
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import Literal, TypeAlias
 
 import pandas as pd
 from prometheus_client import Gauge, Summary
@@ -22,6 +23,10 @@ else:
 prom_qsm = Summary("store_query_time_summary", "Time spent processing queries", ["query"])
 prom_sq = Gauge("store_single_query_time", "Time spent processing a single query", ["query"])
 
+MIMETypes: TypeAlias = Literal[
+    "application/rdf+xml", "text/turtle", "application/n-triple", "application/n-quads", "application/trig"
+]
+
 
 class NeatGraphStoreBase(ABC):
     """NeatGraphStore is a class that stores the graph and provides methods to read/write data it contains
@@ -31,7 +36,7 @@ class NeatGraphStoreBase(ABC):
         graph : Instance of rdflib.Graph class for graph storage
         base_prefix : Used as a base prefix for graph namespace, allowing querying graph data using a shortform of a URI
         namespace : Namespace (aka URI) used to resolve any relative URI in the graph
-        prefixes : Dictionary of additional prefixes used in the graph
+        prefixes : Dictionary of additional prefixes used and bounded to the graph
     """
 
     rdf_store_type: str
@@ -151,7 +156,7 @@ class NeatGraphStoreBase(ABC):
         return None
 
     def import_from_file(
-        self, graph_file: Path, mime_type: str = "application/rdf+xml", add_base_iri: bool = True
+        self, graph_file: Path, mime_type: MIMETypes = "application/rdf+xml", add_base_iri: bool = True
     ) -> None:
         """Imports graph data from file.
 

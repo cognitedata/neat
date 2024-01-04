@@ -8,7 +8,6 @@ for store in NeatGraphStoreBase.__subclasses__():
     STORE_BY_TYPE[store.rdf_store_type] = store  # type: ignore[type-abstract]
 
 del store  # Cleanup namespace
-STORE_BY_TYPE["sparql"] = MemoryStore
 AVAILABLE_STORES = set(STORE_BY_TYPE.keys())
 
 __all__ = ["NeatGraphStoreBase", "MemoryStore", "OxiGraphStore", "GraphDBStore", "STORE_BY_TYPE", "AVAILABLE_STORES"]

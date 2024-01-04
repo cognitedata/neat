@@ -9,7 +9,7 @@ from rdflib import Graph, Namespace
 from cognite.neat.constants import DEFAULT_NAMESPACE, PREFIXES
 from cognite.neat.utils.auxiliary import local_import
 
-from ._base import NeatGraphStoreBase
+from ._base import MIMETypes, NeatGraphStoreBase
 
 
 class OxiGraphStore(NeatGraphStoreBase):
@@ -20,7 +20,7 @@ class OxiGraphStore(NeatGraphStoreBase):
         graph : Instance of rdflib.Graph class for graph storage
         base_prefix : Used as a base prefix for graph namespace, allowing querying graph data using a shortform of a URI
         namespace : Namespace (aka URI) used to resolve any relative URI in the graph
-        prefixes : Dictionary of additional prefixes used in the graph
+        prefixes : Dictionary of additional prefixes used and bounded to the graph
     """
 
     rdf_store_type = "oxigraph"
@@ -77,7 +77,7 @@ class OxiGraphStore(NeatGraphStoreBase):
         logging.info("GraphStore restarted")
 
     def import_from_file(
-        self, graph_file: Path, mime_type: str = "application/rdf+xml", add_base_iri: bool = True
+        self, graph_file: Path, mime_type: MIMETypes = "application/rdf+xml", add_base_iri: bool = True
     ) -> None:
         """Imports graph data from file.
 

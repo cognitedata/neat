@@ -18,7 +18,7 @@ class GraphDBStore(NeatGraphStoreBase):
         graph : Instance of rdflib.Graph class for graph storage
         base_prefix : Used as a base prefix for graph namespace, allowing querying graph data using a shortform of a URI
         namespace : Namespace (aka URI) used to resolve any relative URI in the graph
-        prefixes : Dictionary of additional prefixes used in the graph
+        prefixes : Dictionary of additional prefixes used and bounded to the graph
     """
 
     rdf_store_type = "graphdb"
