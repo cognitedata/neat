@@ -16,6 +16,11 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.54.0] - 04-01-24
+
+## Added
+- Reset graph option for GraphDBStore
+
 ## [0.TBD] - TBD-01-24
 
 ## Changed
