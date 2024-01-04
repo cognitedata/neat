@@ -1,13 +1,13 @@
 from rdflib import XSD, Literal
 
 from cognite.neat.graph import extractors
-from cognite.neat.graph.stores import NeatGraphStore
+from cognite.neat.graph.stores import MemoryStore
 from cognite.neat.utils.utils import remove_namespace
 from tests import config
 
 
 def test_sheet2graph(simple_rules):
-    graph_store = NeatGraphStore(prefixes=simple_rules.prefixes, namespace=simple_rules.metadata.namespace)
+    graph_store = MemoryStore(prefixes=simple_rules.prefixes, namespace=simple_rules.metadata.namespace)
     graph_store.init_graph(base_prefix=simple_rules.metadata.prefix)
 
     triples = extractors.GraphCapturingSheet(simple_rules, config.GRAPH_CAPTURING_SHEET).extract()

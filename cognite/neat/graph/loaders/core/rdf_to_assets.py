@@ -16,7 +16,7 @@ from rdflib import Graph, Namespace
 from rdflib.term import URIRef
 
 from cognite.neat.graph.loaders.core.models import AssetTemplate
-from cognite.neat.graph.stores import NeatGraphStore
+from cognite.neat.graph.stores import NeatGraphStoreBase
 from cognite.neat.rules.models.rules import Property, Rules
 from cognite.neat.utils.utils import chunker, datetime_utc_now, remove_namespace, retry_decorator
 
@@ -342,7 +342,7 @@ def _list2dict(class_instance: list) -> dict[str, Any]:
 
 
 def rdf2assets(
-    graph_store: NeatGraphStore,
+    graph_store: NeatGraphStoreBase,
     rules: Rules,
     data_set_id: int,
     stop_on_exception: bool = False,
@@ -457,7 +457,7 @@ def rdf2assets(
 
 
 def rdf2asset_dictionary(
-    graph_store: NeatGraphStore,
+    graph_store: NeatGraphStoreBase,
     transformation_rules: Rules,
     stop_on_exception: bool = False,
     use_orphanage: bool = True,

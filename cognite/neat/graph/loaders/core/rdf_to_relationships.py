@@ -12,7 +12,7 @@ from cognite.client.exceptions import CogniteDuplicatedError
 from cognite.neat.graph.exceptions import NamespaceRequired
 from cognite.neat.graph.loaders.core.models import RelationshipDefinition, RelationshipDefinitions
 from cognite.neat.graph.loaders.core.rdf_to_assets import _categorize_cdf_assets
-from cognite.neat.graph.stores import NeatGraphStore
+from cognite.neat.graph.stores import NeatGraphStoreBase
 from cognite.neat.rules.models.rules import Rules
 from cognite.neat.utils.utils import chunker, datetime_utc_now, epoch_now_ms, remove_namespace, retry_decorator
 
@@ -83,7 +83,7 @@ def define_relationships(rules: Rules, data_set_id: int, stop_on_exception: bool
 
 
 def rdf2relationships(
-    graph_store: NeatGraphStore,
+    graph_store: NeatGraphStoreBase,
     rules: Rules,
     data_set_id: int,
     relationship_external_id_prefix: str | None = None,
@@ -206,7 +206,7 @@ def rdf2relationships(
 
 
 def rdf2relationship_data_frame(
-    graph_store: NeatGraphStore, transformation_rules: Rules, stop_on_exception: bool = False
+    graph_store: NeatGraphStoreBase, transformation_rules: Rules, stop_on_exception: bool = False
 ) -> pd.DataFrame:
     warn("'rdf2relationship_data_frame' is deprecated, please use 'rdf2relationships' instead!", stacklevel=2)
     logging.warning("'rdf2relationship_data_frame' is deprecated, please use 'rdf2relationships' instead!")

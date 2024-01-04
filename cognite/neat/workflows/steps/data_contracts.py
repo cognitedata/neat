@@ -4,7 +4,7 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes import Asset, AssetUpdate, Relationship, RelationshipUpdate
 from cognite.client.data_classes.data_modeling import EdgeApply, NodeApply
 
-from cognite.neat.graph.stores import NeatGraphStore
+from cognite.neat.graph.stores import NeatGraphStoreBase
 from cognite.neat.rules.exporter._rules2dms import DataModel
 from cognite.neat.rules.models.rules import Rules
 from cognite.neat.workflows.steps.step_model import DataContract
@@ -40,7 +40,7 @@ class SourceGraph(DataContract):
         graph: The source graph.
     """
 
-    graph: NeatGraphStore
+    graph: NeatGraphStoreBase
 
 
 class SolutionGraph(DataContract):
@@ -48,11 +48,11 @@ class SolutionGraph(DataContract):
     This represents the solution graph.
 
     Args:
-        graph (NeatGraphStore): The solution graph.
+        graph (NeatGraphStoreBase): The solution graph.
 
     """
 
-    graph: NeatGraphStore
+    graph: NeatGraphStoreBase
 
 
 class ClientData(DataContract):

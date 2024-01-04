@@ -5,7 +5,7 @@ from IPython.display import Markdown, display
 from pydantic import ValidationError
 
 from cognite.neat.constants import PREFIXES
-from cognite.neat.graph.stores import NeatGraphStore
+from cognite.neat.graph.stores import MemoryStore
 from cognite.neat.graph.transformations.query_generator import build_sparql_query
 from cognite.neat.rules.models.rdfpath import (
     AllProperties,
@@ -166,8 +166,7 @@ def generate_parse_traversal():
     yield pytest.param(
         "cim:T->cim:C->cim:V->cim:S",
         Hop.from_string(
-            class_="cim:T",
-            traversal=[Step.from_string(raw=step) for step in ["->cim:C", "->cim:V", "->cim:S"]],
+            class_="cim:T", traversal=[Step.from_string(raw=step) for step in ["->cim:C", "->cim:V", "->cim:S"]]
         ),
         id="Child traversal without property single character name",
     )
@@ -215,11 +214,7 @@ def generate_parse_traversal():
             class_="cim:Terminal",
             traversal=[
                 Step.from_string(raw=step)
-                for step in [
-                    "->cim:ConnectivityNode",
-                    "->cim:VoltageLevel",
-                    "->cim:S(cim:n)",
-                ]
+                for step in ["->cim:ConnectivityNode", "->cim:VoltageLevel", "->cim:S(cim:n)"]
             ],
         ),
         id="Child traversal with single character property",
@@ -267,7 +262,7 @@ def test_parse_traversal(raw: str, expected_traversal: AllProperties):
 
 
 def _load_nordic_knowledge_graph():
-    graph = NeatGraphStore(namespace=PREFIXES["nordic44"])
+    graph = MemoryStore(namespace=PREFIXES["nordic44"])
     graph.init_graph()
     graph.import_from_file(config.NORDIC44_KNOWLEDGE_GRAPH)
     return graph

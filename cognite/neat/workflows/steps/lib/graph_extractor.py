@@ -71,7 +71,7 @@ class InstancesFromRdfFileToSourceGraph(Step):
             if source_file := self.configs["file_path"]:
                 source_graph.graph.import_from_file(
                     self.data_store_path / Path(source_file),
-                    mime_type=self.configs["mime_type"],
+                    mime_type=self.configs["mime_type"],  # type: ignore[arg-type]
                     add_base_iri=self.configs["add_base_iri"] == "True",
                 )
                 logging.info(f"Loaded {source_file} into source graph.")
