@@ -8,12 +8,12 @@ import warnings
 from datetime import datetime
 from typing import cast
 
-import numpy as np
 import pandas as pd
 from rdflib import Graph, Literal, Namespace, URIRef
 
 from cognite.neat.constants import PREFIXES
 from cognite.neat.rules import exceptions
+from cognite.neat.rules.exporter._rules2rules import to_dms_name
 from cognite.neat.rules.importer._base import BaseImporter
 from cognite.neat.rules.models.tables import Tables
 from cognite.neat.utils.utils import get_namespace, remove_namespace, uri_to_short_form
@@ -107,11 +107,12 @@ def _parse_classes_df(data_model: dict, prefixes: dict, parsing_config: dict | N
     class_rows = []
 
     for class_ in data_model:
+        sanitized_class = to_dms_name(class_, "class")
         class_rows.append(
             [
-                class_,
-                np.nan,
-                np.nan,
+                sanitized_class,
+                None,
+                None,
                 str(prefixes[data_model[class_]["uri"].split(":")[0]]),
                 class_,
                 "exact",
@@ -129,13 +130,15 @@ def _parse_properties_df(data_model: dict, prefixes: dict, parsing_config: dict 
     property_rows = []
 
     for class_ in data_model:
+        sanitized_class = to_dms_name(class_, "class")
         for property_ in data_model[class_]["properties"]:
             for type_ in data_model[class_]["properties"][property_]["value_type"]:
+                sanitized_property = to_dms_name(property_, "property")
                 property_rows.append(
                     [
-                        class_,
-                        property_,
-                        np.nan,
+                        sanitized_class,
+                        sanitized_property,
+                        None,
                         type_,
                         0,  # setting min count to 0 to be more flexible (all properties are optional)
                         max(data_model[class_]["properties"][property_]["occurrence"]),
