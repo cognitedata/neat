@@ -221,7 +221,7 @@ def to_triples(nodes: dict, edges: dict, base_namespace: Namespace) -> set[Tripl
                     triples.add(
                         (
                             URIRef(attribute),
-                            SKOS.comment,
+                            RDFS.comment,
                             Literal("Modified property URI to be compliant with NEAT internal representation"),
                         )
                     )

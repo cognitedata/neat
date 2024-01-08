@@ -162,13 +162,14 @@ def uri_to_short_form(URI: URIRef, prefixes: dict[str, Namespace]) -> str | URIR
         prefixes: dict of prefixes
 
     Returns:
-        short form of the URI if its namespace is present in the prefixes dict,
+        shortest form of the URI if its namespace is present in the prefixes dict,
         otherwise returns the URI itself
     """
+    uris: set[str | URIRef] = {URI}
     for prefix, namespace in prefixes.items():
         if URI.startswith(namespace):
-            return f"{prefix}:{URI.replace(namespace, '')}"
-    return URI
+            uris.add(f"{prefix}:{URI.replace(namespace, '')}")
+    return min(uris, key=len)
 
 
 def _traverse(hierarchy: dict, graph: dict, names: list[str]) -> dict:
