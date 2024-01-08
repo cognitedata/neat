@@ -1,3 +1,4 @@
+import re
 import xml.etree.ElementTree as ET
 from collections.abc import Generator
 from pathlib import Path
@@ -6,6 +7,8 @@ from xml.etree.ElementTree import Element
 from rdflib import OWL, RDF, RDFS, SKOS, XSD, Literal, Namespace, URIRef
 
 from cognite.neat.graph.models import Triple
+from cognite.neat.rules.models._base import ALLOWED_PATTERN
+from cognite.neat.utils.utils import get_namespace, remove_namespace
 
 from ._base import BaseExtractor
 
@@ -200,6 +203,29 @@ def to_triples(nodes: dict, edges: dict, base_namespace: Namespace) -> set[Tripl
 
         for attribute, values in node_attributes.items():
             if attribute != "header":
+                # attribute contains illegal characters
+
+                namespace = get_namespace(attribute)
+                attribute_name = remove_namespace(attribute)
+                compliant_attribute_name = re.sub(ALLOWED_PATTERN, "", attribute_name)
+
+                if attribute_name != compliant_attribute_name:
+                    attribute = f"{namespace}{compliant_attribute_name}"
+                    triples.add(
+                        (
+                            URIRef(attribute),
+                            SKOS.exactMatch,
+                            URIRef(f"{namespace}{attribute_name}"),
+                        )
+                    )
+                    triples.add(
+                        (
+                            URIRef(attribute),
+                            SKOS.comment,
+                            Literal("Modified property URI to be compliant with NEAT internal representation"),
+                        )
+                    )
+
                 for value in values:
                     if "Value" not in value or "Format" not in value:
                         continue
