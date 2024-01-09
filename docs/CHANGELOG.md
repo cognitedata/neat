@@ -23,6 +23,14 @@ Changes are grouped as follows:
   and `GraphDBStore` as well as the constants `STORE_BY_TYPE` and `AVAILABLE_STORES`. All functions, enums, and previous
   classes are removed. Note `NeatGraphStoreBase` is a rename from `NeatGraphStore` and is now an abstract class.
 
+## [0.54.0] - 09-01-24
+
+## Added
+
+- Support for knowledge graph extraction from `DEXPI` P&ID provided as `XML`
+- Added `DexpiToGraph` to step library
+
+
 ## [0.53.0] - 03-01-24
 
 ## Improved
