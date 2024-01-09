@@ -218,7 +218,7 @@ class ConfigureGraphStore(Step):
     ]
 
     def run(  # type: ignore[override]
-        self, rules_data: RulesData
+        self, rules_data: RulesData | None = None
     ) -> (FlowMessage, SourceGraph | SolutionGraph):  # type: ignore[syntax]
         if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
@@ -243,7 +243,13 @@ class ConfigureGraphStore(Step):
         except KeyError:
             return FlowMessage(output_text="Invalid store type")
 
-        new_graph_store = store_cls(prefixes=rules_data.rules.prefixes, base_prefix="neat", namespace=PREFIXES["neat"])
+        if rules_data:
+            print("Using rules prefixes")
+            prefixes = rules_data.rules.prefixes
+        else:
+            prefixes = PREFIXES
+
+        new_graph_store = store_cls(prefixes=prefixes, base_prefix="neat", namespace=PREFIXES["neat"])
         new_graph_store.init_graph(
             self.configs["sparql_query_url"],
             self.configs["sparql_update_url"],

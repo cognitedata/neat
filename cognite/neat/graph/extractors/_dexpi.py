@@ -5,6 +5,7 @@ from xml.etree.ElementTree import Element
 
 from rdflib import OWL, RDF, RDFS, SKOS, XSD, Literal, Namespace, URIRef
 
+from cognite.neat.constants import PREFIXES
 from cognite.neat.graph.models import Triple
 from cognite.neat.rules.models._base import ALLOWED_PATTERN
 from cognite.neat.utils.utils import get_namespace, remove_namespace
@@ -34,11 +35,7 @@ class DexpiXML(BaseExtractor):
         base_namespace: str | None = None,
     ):
         self.filepath = Path(filepath)
-        self.namespace = (
-            Namespace(base_namespace)
-            if isinstance(base_namespace, str | Namespace)
-            else Namespace("http://purl.org/cognite/neat/")
-        )
+        self.namespace = Namespace(base_namespace) if isinstance(base_namespace, str | Namespace) else PREFIXES["neat"]
 
     def extract(self) -> set[Triple]:
         """

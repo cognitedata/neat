@@ -26,6 +26,7 @@ __all__ = [
     "DataModelFromRulesToSourceGraph",
     "InstancesFromJsonToGraph",
     "InstancesFromAvevaPiAF",
+    "DexpiToGraph",
 ]
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
@@ -79,6 +80,44 @@ class InstancesFromRdfFileToSourceGraph(Step):
                 raise ValueError("You need a source_rdf_store.file specified for source_rdf_store.type=memory")
         else:
             raise NotImplementedError(f"Graph type {source_graph.graph.rdf_store_type} is not supported.")
+
+        return FlowMessage(output_text="Instances loaded to source graph")
+
+
+class DexpiToGraph(Step):
+    """
+    This step converts DEXPI P&ID (XML) into Knowledge Graph
+    """
+
+    description = "This step converts DEXPI P&ID (XML) into Knowledge Graph"
+    category = CATEGORY
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="file_path",
+            value="source-graphs/dexpi-pid.xml",
+            label="File name of DEXPI P&ID in XML format",
+        ),
+        Configurable(
+            name="base_namespace",
+            value="http://purl.org/cognite/neat#",
+            label="Base namespace to be added to ids for all nodes found in P&ID",
+        ),
+    ]
+
+    def run(self, source_graph: SourceGraph) -> FlowMessage:  # type: ignore[override, syntax]
+        if self.configs is None or self.data_store_path is None:
+            raise StepNotInitialized(type(self).__name__)
+
+        file_path = self.configs.get("file_path")
+        base_namespace = self.configs.get("base_namespace", None)
+
+        if file_path:
+            triples = extractors.DexpiXML(self.data_store_path / Path(file_path), base_namespace).extract()
+            source_graph.graph.add_triples(list(triples), verbose=True)
+
+            logging.info(f"Loaded {file_path} into source graph.")
+        else:
+            raise ValueError("You need a source_rdf_store.file specified")
 
         return FlowMessage(output_text="Instances loaded to source graph")
 
@@ -209,6 +248,7 @@ class DataModelFromRulesToSourceGraph(Step):
 
     description = "This step extracts data model from rules file and loads it into source graph."
     category = CATEGORY
+    version = "0.1.0-alpha"
 
     def run(  # type: ignore[override, syntax]
         self, transformation_rules: RulesData, source_graph: SourceGraph
