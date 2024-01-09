@@ -225,7 +225,7 @@ def _add_edge_triples(
 
 
 def _add_header_triples(
-    uri: URIRef, triples: set[Triple], attributes: dict, attribute: str, attribute_uri: None | URIRef = None
+    uri: URIRef, triples: set[Triple], attributes: dict, attribute: str, attribute_uri: URIRef | None = None
 ) -> set[Triple]:
     if attribute not in attributes:
         return triples
