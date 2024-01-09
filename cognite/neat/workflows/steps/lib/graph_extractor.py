@@ -113,7 +113,7 @@ class DexpiToGraph(Step):
 
         if file_path:
             triples = extractors.DexpiXML(self.data_store_path / Path(file_path), base_namespace).extract()
-            source_graph.graph.add_triples(list(triples), verbose=True)
+            source_graph.graph.add_triples(triples, verbose=True)
 
             logging.info(f"Loaded {file_path} into source graph.")
         else:

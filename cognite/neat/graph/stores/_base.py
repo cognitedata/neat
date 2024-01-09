@@ -249,7 +249,7 @@ class NeatGraphStoreBase(ABC):
         for subj, pred, obj in self.graph:
             logging.info(f"Triple: {subj} {pred} {obj}")
 
-    def add_triples(self, triples: list[Triple], batch_size: int = 10_000, verbose: bool = False):
+    def add_triples(self, triples: list[Triple] | set[Triple], batch_size: int = 10_000, verbose: bool = False):
         """Adds triples to the graph store in batches.
 
         Args:
