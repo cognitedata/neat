@@ -30,6 +30,9 @@ class EntityTypes(StrEnum):
     undefined = "undefined"
 
 
+# ALLOWED
+ALLOWED_PATTERN = r"[^a-zA-Z0-9-_.]"
+
 # REGEX expressions
 PREFIX_REGEX = r"[a-zA-Z]+[a-zA-Z0-9]*[-_.]*[a-zA-Z0-9]+"
 SUFFIX_REGEX = r"[a-zA-Z0-9-_.]+[a-zA-Z0-9]|[-_.]*[a-zA-Z0-9]+"
