@@ -221,6 +221,7 @@ class InstancesFromRulesToSolutionGraph(Step):
 
     description = "This step extracts instances from rules file and loads them into solution graph."
     category = CATEGORY
+    version = "0.1.0-alpha"
 
     def run(  # type: ignore[override, syntax]
         self, transformation_rules: RulesData, solution_graph: SolutionGraph
