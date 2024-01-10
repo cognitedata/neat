@@ -64,7 +64,7 @@ steps:
       pos_x: 359
       pos_y: 348
   - configs:
-      api_url: https://gitlab.com/dexpi/TrainingTestCases/-/raw/master/dexpi%201.3/example%20pids/C01%20DEXPI%20Reference%20P&ID/C01V04-VER.EX01.xml?ref_type=heads
+      api_url: https://raw.githubusercontent.com/cognitedata/neat/main/tests/data/depxi_example.xml
       auth_mode: none
       http_method: GET
       output_file_path: source-graphs/depxi_example.xml
@@ -75,7 +75,7 @@ steps:
     description: null
     enabled: true
     id: step_download_dexpi_file
-    label: Download DEXPI example from Gitlab
+    label: Download DEXPI example
     max_retries: 0
     method: DownloadDataFromRestApiToFile
     params: {}

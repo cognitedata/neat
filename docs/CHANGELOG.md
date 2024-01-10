@@ -16,6 +16,13 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.56.0] - 09-01-24
+
+## Added
+
+- Added DEXPI example from DISC project (kindly provided by Jan Eivind Danielsen)
+
+
 ## [0.55.0] - 09-01-24
 
 ## Added
