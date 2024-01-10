@@ -7,4 +7,4 @@ def test_dexpi_extractor():
     extractor = extractors.DexpiXML(config.DEXPI_EXAMPLE)
     triples = extractor.extract()
 
-    assert len(triples) == 1416
+    assert len(triples) == 1752
