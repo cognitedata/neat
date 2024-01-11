@@ -75,7 +75,7 @@ steps:
     description: null
     enabled: true
     id: step_download_dexpi_file
-    label: Download DEXPI example
+    label: Download DISC DEXPI example
     max_retries: 0
     method: DownloadDataFromRestApiToFile
     params: {}
