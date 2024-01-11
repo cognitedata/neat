@@ -218,12 +218,12 @@ def sheet2triples(
                             literal_value = v.strip()
                         except AttributeError:
                             literal_value = v
-                            
+
                         triples.append(
                             (
                                 instance_namespace[row.identifier],
                                 property_uri,
-                                Literal(literal_value , datatype=XSD[property_.expected_value_type.suffix]),
+                                Literal(literal_value, datatype=XSD[property_.expected_value_type.suffix]),
                             )
                         )
 
