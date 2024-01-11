@@ -16,6 +16,13 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.57.0] - 11-01-24
+
+## Improved
+
+- Improved `GraphCapturingSheet` extractor allowing additional configuration and usage of external ids for properties and classes
+
+
 ## [0.56.1] - 10-01-24
 
 ## Fixed
