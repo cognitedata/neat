@@ -16,7 +16,7 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
-## [0.7.0] - 11-01-24
+## [0.57.0] - 11-01-24
 
 ## Improved
 
