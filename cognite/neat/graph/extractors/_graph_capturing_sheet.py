@@ -11,7 +11,7 @@ from openpyxl.cell import Cell
 from openpyxl.styles import Alignment, Border, Font, NamedStyle, PatternFill, Side
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
-from rdflib import RDF, XSD, Literal, Namespace
+from rdflib import RDF, XSD, Literal, Namespace, URIRef
 
 from cognite.neat.graph import exceptions
 from cognite.neat.graph.exceptions import NamespaceRequired
@@ -33,9 +33,11 @@ class GraphCapturingSheet(BaseExtractor):
         filepath: File path to save the sheet to. Defaults to None.
         separator: Multi value separator at cell level. Defaults to ",".
         namespace: Optional custom namespace to use for extracted triples that define data
-                    model instances. Defaults to None.
+                    model instances. Defaults to None, meaning namespace of rules will be used.
         store_graph_capturing_sheet: Whether to store the graph capturing sheet in the object. Will be stored in the
                                      `sheet` attribute. Defaults to False.
+        use_source_ids : Whether to use source ids for properties and classes stored in Source column if they exist.
+                         Defaults to False, meaning that the source ids will be ignored.
 
     """
 
@@ -46,12 +48,14 @@ class GraphCapturingSheet(BaseExtractor):
         separator: str = ",",
         namespace: str | None = None,
         store_graph_capturing_sheet: bool = False,
+        use_source_ids: bool = False,
     ):
         self.rules = rules
         self.filepath = Path(filepath) if isinstance(filepath, str | Path) else None
         self.separator = separator
         self.namespace = namespace
         self.store_graph_capturing_sheet = store_graph_capturing_sheet
+        self.use_source_ids = use_source_ids
         self.sheet: dict[str, pd.DataFrame] = {}
 
     def create_template(self, filepath: Path | None = None, overwrite: bool = False) -> None:
@@ -83,7 +87,9 @@ class GraphCapturingSheet(BaseExtractor):
         if self.store_graph_capturing_sheet:
             self.sheet = graph_capturing_sheet
 
-        return sheet2triples(graph_capturing_sheet, self.rules, self.separator, self.namespace)
+        print(self.namespace)
+
+        return sheet2triples(graph_capturing_sheet, self.rules, self.separator, self.namespace, self.use_source_ids)
 
 
 def extract_graph_from_sheet(
@@ -97,7 +103,7 @@ def extract_graph_from_sheet(
                               the graph capturing sheet and extract data model instances from it (i.e. RDF triples)
         separator : Multi value separator at cell level. Defaults to ",".
         namespace : Optional custom namespace to use for extracted triples that define data
-                    model instances. Defaults to None.
+                    model instances. Defaults to None, meaning namespace of rules will be used.
 
     Returns:
         List of RDF triples, represented as tuples `(subject, predicate, object)`, that define data model instances
@@ -110,9 +116,10 @@ def extract_graph_from_sheet(
 
 def sheet2triples(
     graph_capturing_sheet: dict[str, pd.DataFrame],
-    transformation_rule: Rules,
+    rules: Rules,
     separator: str = ",",
     namespace: str | None = None,
+    use_source_ids: bool = False,
 ) -> list[Triple]:
     """Converts a graph capturing sheet represented as dictionary of dataframes to rdf triples
 
@@ -122,7 +129,9 @@ def sheet2triples(
                              the graph capturing sheet and extract data model instances from it (i.e. RDF triples)
         separator : Multi value separator at cell level. Defaults to ",".
         namespace : Optional custom namespace to use for extracted triples that define
-                    data model instances. Defaults to None.
+                    data model instances. Defaults to None, meaning namespace of rules will be used.
+        use_source_ids : Whether to use source ids for properties and classes stored in Source column if they exist.
+                         Defaults to False, meaning that the source ids will be ignored.
 
     Returns:
         List of RDF triples, represented as tuples `(subject, predicate, object)`, that define data model instances
@@ -130,23 +139,23 @@ def sheet2triples(
 
     # Validation that everything is in order before proceeding
     validate_if_graph_capturing_sheet_empty(graph_capturing_sheet)
-    validate_rules_graph_pair(graph_capturing_sheet, transformation_rule)
+    validate_rules_graph_pair(graph_capturing_sheet, rules)
 
     # get class property pairs
-    class_property_pairs = to_class_property_pairs(transformation_rule)
+    class_property_pairs = to_class_property_pairs(rules)
 
     # namespace selection
-    if namespace is None and transformation_rule.metadata.namespace is not None:
-        instance_namespace = transformation_rule.metadata.namespace
+    if namespace is None and rules.metadata.namespace is not None:
+        instance_namespace = rules.metadata.namespace
     elif namespace:
         instance_namespace = Namespace(namespace)
     else:
-        raise NamespaceRequired("Extact instances from sheet")
+        raise NamespaceRequired("Extract instances from sheet")
 
-    if transformation_rule.metadata.namespace is not None:
-        model_namespace = Namespace(transformation_rule.metadata.namespace)
+    if rules.metadata.namespace is not None:
+        model_namespace = Namespace(rules.metadata.namespace)
     else:
-        raise NamespaceRequired("Extact instances from sheet")
+        raise NamespaceRequired("Extract instances from sheet")
 
     # Now create empty graph
     triples: list[Triple] = []
@@ -155,6 +164,13 @@ def sheet2triples(
     # iterate over sheets
     for sheet_name, df in graph_capturing_sheet.items():
         # iterate over sheet rows
+
+        class_uri = (
+            URIRef(str(rules.classes[sheet_name].source))
+            if use_source_ids and rules.classes[sheet_name].source
+            else model_namespace[sheet_name]
+        )
+
         for _, row in df.iterrows():
             if row.identifier is None:
                 msg = f"Missing identifier in sheet {sheet_name} at row {row.name}! Skipping..."
@@ -166,13 +182,23 @@ def sheet2triples(
             for property_name, value in row.to_dict().items():
                 # Setting RDF type of the instance
                 if property_name == "identifier":
-                    triples.append((instance_namespace[row.identifier], RDF.type, model_namespace[sheet_name]))
+                    triples.append((instance_namespace[row.identifier], RDF.type, class_uri))
                     continue
                 elif not value:
                     continue
 
+                property_uri = (
+                    URIRef(str(class_property_pairs[sheet_name][property_name].source))
+                    if use_source_ids and class_property_pairs[sheet_name][property_name].source
+                    else model_namespace[property_name]
+                )
+
                 property_ = class_property_pairs[sheet_name][property_name]
-                is_one_to_many = (property_.max_count or 1) > 1 and separator
+
+                is_one_to_many = separator and (
+                    (property_.max_count and property_.max_count > 1) or not property_.max_count
+                )
+
                 values = value.split(separator) if is_one_to_many else [value]
 
                 # Adding object properties
@@ -180,21 +206,31 @@ def sheet2triples(
                     triples.extend(
                         (
                             instance_namespace[row.identifier],
-                            model_namespace[property_name],
+                            property_uri,
                             instance_namespace[v.strip()],
                         )
                         for v in values
                     )
                 # Adding data properties
                 elif property_.property_type == "DatatypeProperty":
-                    triples.extend(
-                        (
-                            instance_namespace[row.identifier],
-                            model_namespace[property_name],
-                            Literal(v.strip(), datatype=XSD[property_.expected_value_type.suffix]),
-                        )
-                        for v in values
-                    )
+                    for v in values:
+                        try:
+                            triples.append(
+                                (
+                                    instance_namespace[row.identifier],
+                                    property_uri,
+                                    Literal(v.strip(), datatype=XSD[property_.expected_value_type.suffix]),
+                                )
+                            )
+                        except AttributeError:
+                            triples.append(
+                                (
+                                    instance_namespace[row.identifier],
+                                    property_uri,
+                                    Literal(v, datatype=XSD[property_.expected_value_type.suffix]),
+                                )
+                            )
+
                 else:
                     raise exceptions.UnsupportedPropertyType(property_.property_type)
     return triples
@@ -259,7 +295,7 @@ def read_graph_excel_file_to_table_by_name(filepath: Path) -> dict[str, pd.DataF
 
 
 def rules2graph_capturing_sheet(
-    transformation_rules: Rules,
+    rules: Rules,
     file_path: Path,
     no_rows: int = 1000,
     auto_identifier_type: str = "index-based",
@@ -269,10 +305,10 @@ def rules2graph_capturing_sheet(
     Converts a TransformationRules object to a graph capturing sheet
 
     Args:
-        transformation_rules: The TransformationRules object to convert to the graph capturing sheet
+        rules: The TransformationRules object to convert to the graph capturing sheet
         file_path: File path to save the sheet to
         no_rows: Number of rows for processing, by default 1000
-        auto_identifier_type: Type of automatic identifier, by default "index" based
+        auto_identifier_type: Type of automatic identifier, by default "index" based, alternative is "uuid" based
         add_drop_down_list: Add drop down selection for columns that contain linking properties, by default True
 
     !!! note "no_rows parameter"
@@ -285,7 +321,7 @@ def rules2graph_capturing_sheet(
     # Remove default sheet named "Sheet"
     workbook.remove(workbook["Sheet"])
 
-    for class_, properties in to_class_property_pairs(transformation_rules).items():
+    for class_, properties in to_class_property_pairs(rules).items():
         workbook.create_sheet(title=class_)
 
         # Add header rows
