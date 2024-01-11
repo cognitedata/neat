@@ -215,21 +215,17 @@ def sheet2triples(
                 elif property_.property_type == "DatatypeProperty":
                     for v in values:
                         try:
-                            triples.append(
-                                (
-                                    instance_namespace[row.identifier],
-                                    property_uri,
-                                    Literal(v.strip(), datatype=XSD[property_.expected_value_type.suffix]),
-                                )
-                            )
+                            literal_value = v.strip()
                         except AttributeError:
-                            triples.append(
-                                (
-                                    instance_namespace[row.identifier],
-                                    property_uri,
-                                    Literal(v, datatype=XSD[property_.expected_value_type.suffix]),
-                                )
+                            literal_value = v
+                            
+                        triples.append(
+                            (
+                                instance_namespace[row.identifier],
+                                property_uri,
+                                Literal(literal_value , datatype=XSD[property_.expected_value_type.suffix]),
                             )
+                        )
 
                 else:
                     raise exceptions.UnsupportedPropertyType(property_.property_type)
