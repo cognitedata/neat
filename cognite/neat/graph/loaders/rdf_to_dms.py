@@ -3,7 +3,7 @@ from collections.abc import Iterable
 from typing import Literal, cast, overload
 
 from cognite.client import CogniteClient
-from cognite.client.data_classes.data_modeling import EdgeApply, InstancesApply, NodeApply, NodeApplyList
+from cognite.client.data_classes.data_modeling import EdgeApply, InstanceApply, NodeApply
 from pydantic_core import ErrorDetails
 from rdflib import URIRef
 
@@ -18,7 +18,7 @@ from cognite.neat.utils.utils import chunker, datetime_utc_now, retry_decorator
 from ._base import CogniteLoader
 
 
-class DMSLoader(CogniteLoader[InstancesApply]):
+class DMSLoader(CogniteLoader[InstanceApply]):
     """Loads a Neat Graph into CDF as nodes and edges."""
 
     def __init__(self, rules: Rules, graph_store: NeatGraphStoreBase, add_class_prefix: bool = False):
@@ -26,14 +26,14 @@ class DMSLoader(CogniteLoader[InstancesApply]):
         self.add_class_prefix = add_class_prefix
 
     @overload
-    def load(self, stop_on_exception: Literal[True]) -> Iterable[InstancesApply]:
+    def load(self, stop_on_exception: Literal[True]) -> Iterable[InstanceApply]:
         ...
 
     @overload
-    def load(self, stop_on_exception: Literal[False] = False) -> Iterable[InstancesApply | ErrorDetails]:
+    def load(self, stop_on_exception: Literal[False] = False) -> Iterable[InstanceApply | ErrorDetails]:
         ...
 
-    def load(self, stop_on_exception: bool = False) -> Iterable[InstancesApply | ErrorDetails]:
+    def load(self, stop_on_exception: bool = False) -> Iterable[InstanceApply | ErrorDetails]:
         """Load the graph with data."""
         if self.rules.metadata.namespace is None:
             raise ValueError("Namespace is not defined in transformation rules metadata")
@@ -57,7 +57,9 @@ class DMSLoader(CogniteLoader[InstancesApply]):
                         )
                     new_node = instance.to_node(data_model, self.add_class_prefix)  # type: ignore[attr-defined]
                     is_valid, reason = is_node_valid(new_node)
-                    if not is_valid:
+                    if is_valid:
+                        yield new_node
+                    else:
                         yield ErrorDetails(
                             input=instance_dict["external_id"],
                             loc=tuple(["Nodes"]),
@@ -69,7 +71,9 @@ class DMSLoader(CogniteLoader[InstancesApply]):
                     new_edges = instance.to_edge(data_model, self.add_class_prefix)
                     for new_edge in new_edges:
                         is_valid, reason = is_edge_valid(new_edge)
-                        if not is_valid:
+                        if is_valid:
+                            yield new_edge
+                        else:
                             yield ErrorDetails(
                                 input=instance_dict["external_id"],
                                 loc=tuple(["Edges"]),
@@ -77,8 +81,6 @@ class DMSLoader(CogniteLoader[InstancesApply]):
                                 type="Edge validation error",
                             )
                             continue
-
-                    yield InstancesApply(nodes=NodeApplyList(new_node), edges=new_edges)
 
                     delta_time = datetime_utc_now() - start_time
                     delta_time = (delta_time.seconds * 1000000 + delta_time.microseconds) / 1000
@@ -106,6 +108,23 @@ class DMSLoader(CogniteLoader[InstancesApply]):
                             type=f"Exception of type {type(e).__name__} occurred  \
                                         when processing instance of {class_name}",
                         )
+
+    def as_nodes_and_edges(
+        self, stop_on_exception: bool = False
+    ) -> tuple[list[NodeApply], list[EdgeApply], list[ErrorDetails]]:
+        nodes = []
+        edges = []
+        exceptions: list[ErrorDetails] = []
+        for instance in self.load(stop_on_exception):  # type: ignore[call-overload]
+            if isinstance(instance, NodeApply):
+                nodes.append(instance)
+            elif isinstance(instance, EdgeApply):
+                edges.append(instance)
+            elif isinstance(instance, dict):
+                exceptions.append(cast(ErrorDetails, instance))
+            else:
+                raise ValueError(f"Unknown instance type: {type(instance)}")
+        return nodes, edges, exceptions
 
     def load_to_cdf(self, client: CogniteClient) -> None:
         raise NotImplementedError("This method is not implemented")

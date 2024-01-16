@@ -1,11 +1,12 @@
 from rdflib import URIRef
 
+from cognite.neat.graph import loaders
 from cognite.neat.graph.loaders.rdf_to_dms import rdf2nodes_and_edges
 
 
-# @pytest.mark.skip("Relies on a bug in the DMS exporter")
 def test_rdf2nodes_and_edges(small_graph, simple_rules):
-    nodes, edges, exceptions = rdf2nodes_and_edges(small_graph, simple_rules)
+    loader = loaders.DMSLoader(simple_rules, small_graph)
+    nodes, edges, exceptions = loader.as_nodes_and_edges()
 
     assert exceptions == []
     assert len(nodes) == 13
@@ -24,7 +25,8 @@ def test_rdf2nodes_and_edges_raise_exception(small_graph, simple_rules):
         (URIRef("http://purl.org/cognite/neat#Nordics.Norway.NO1"), URIRef("http://purl.org/cognite/neat#name"), None)
     )
 
-    nodes, edges, exceptions = rdf2nodes_and_edges(small_graph, simple_rules)
+    loader = loaders.DMSLoader(simple_rules, small_graph)
+    nodes, edges, exceptions = loader.as_nodes_and_edges()
 
     assert len(nodes) == 11
     assert len(edges) == 21
@@ -34,7 +36,8 @@ def test_rdf2nodes_and_edges_raise_exception(small_graph, simple_rules):
 
 # @pytest.mark.skip("Relies on a bug in the DMS exporter")
 def test_add_class_prefix_to_external_ids(simple_rules, graph_with_numeric_ids):
-    nodes, edges, exceptions = rdf2nodes_and_edges(graph_with_numeric_ids, simple_rules, add_class_prefix=True)
+    loader = loaders.DMSLoader(simple_rules, graph_with_numeric_ids, add_class_prefix=True)
+    nodes, edges, exceptions = loader.as_nodes_and_edges()
 
     # Needs this as order of end nodes is not guaranteed
     start_node_xid = set()

@@ -33,7 +33,7 @@ class BaseLoader(ABC, Generic[T_Output]):
         ...
 
     @abstractmethod
-    def load(self, stop_on_exception: bool = False) -> Iterable[T_Output]:
+    def load(self, stop_on_exception: bool = False) -> Iterable[T_Output | ErrorDetails]:
         """Load the graph with data."""
         pass
 
