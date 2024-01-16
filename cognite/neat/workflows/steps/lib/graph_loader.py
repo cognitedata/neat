@@ -7,6 +7,7 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes import Asset, AssetFilter
 from prometheus_client import Gauge
 
+from cognite.neat.graph import loaders
 from cognite.neat.graph.loaders import upload_labels
 from cognite.neat.graph.loaders.core.rdf_to_assets import (
     NeatMetadataKeys,
@@ -21,7 +22,7 @@ from cognite.neat.graph.loaders.core.rdf_to_relationships import (
     rdf2relationships,
     upload_relationships,
 )
-from cognite.neat.graph.loaders.rdf_to_dms import rdf2nodes_and_edges, upload_edges, upload_nodes
+from cognite.neat.graph.loaders.rdf_to_dms import upload_edges, upload_nodes
 from cognite.neat.graph.loaders.validator import validate_asset_hierarchy
 from cognite.neat.utils.utils import generate_exception_report
 from cognite.neat.workflows._exceptions import StepFlowContextNotInitialized, StepNotInitialized
@@ -60,11 +61,7 @@ class CreateCDFLabels(Step):
     category = CATEGORY
 
     configurables: ClassVar[list[Configurable]] = [
-        Configurable(
-            name="data_set_id",
-            value="",
-            label=("CDF dataset id to which the labels will be added."),
-        ),
+        Configurable(name="data_set_id", value="", label=("CDF dataset id to which the labels will be added."))
     ]
 
     def run(self, rules: RulesData, cdf_client: CogniteClient) -> None:  # type: ignore[override, syntax]
@@ -128,12 +125,8 @@ class GenerateCDFNodesAndEdgesFromGraph(Step):
             graph = cast(SourceGraph | SolutionGraph, self.flow_context["SourceGraph"])
 
         add_class_prefix = True if self.configs["add_class_prefix"] == "True" else False
-        nodes, edges, exceptions = rdf2nodes_and_edges(
-            graph_store=graph.graph,
-            rules=rules.rules,
-            stop_on_exception=False,
-            add_class_prefix=add_class_prefix,
-        )
+        loader = loaders.DMSLoader(rules.rules, graph.graph, add_class_prefix=add_class_prefix)
+        nodes, edges, exceptions = loader.as_nodes_and_edges(stop_on_exception=False)
 
         msg = f"Total count of: <ul><li>{ len(nodes) } nodes</li><li>{ len(edges) } edges</li></ul>"
 
@@ -198,11 +191,7 @@ class GenerateCDFAssetsFromGraph(Step):
     category = CATEGORY
 
     configurables: ClassVar[list[Configurable]] = [
-        Configurable(
-            name="data_set_id",
-            value="",
-            label=("CDF dataset id to which the labels will be added."),
-        ),
+        Configurable(name="data_set_id", value="", label=("CDF dataset id to which the labels will be added.")),
         Configurable(
             name="asset_external_id_prefix",
             value="",
@@ -466,11 +455,7 @@ class GenerateCDFRelationshipsFromGraph(Step):
     category = CATEGORY
 
     configurables: ClassVar[list[Configurable]] = [
-        Configurable(
-            name="data_set_id",
-            value="",
-            label=("CDF dataset id to which the labels will be added."),
-        ),
+        Configurable(name="data_set_id", value="", label=("CDF dataset id to which the labels will be added.")),
         Configurable(
             name="relationship_external_id_prefix",
             value="",

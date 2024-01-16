@@ -41,10 +41,12 @@ class DMSLoader(CogniteLoader[InstanceApply]):
         data_model = DataModel.from_rules(self.rules)
         pydantic_models = rules_to_pydantic_models(self.rules)
 
-        for class_name, triples in self.iterate_class_triples():
-            if f"{self.rules.space}:{class_name}" not in data_model.containers:
-                continue
-
+        exclude = {
+            class_name
+            for class_name in self.rules.classes
+            if f"{self.rules.space}:{class_name}" not in data_model.containers
+        }
+        for class_name, triples in self.iterate_class_triples(exclude_classes=exclude):
             counter = 0
             start_time = datetime_utc_now()
             for instance_dict in triples2dictionary(triples).values():
