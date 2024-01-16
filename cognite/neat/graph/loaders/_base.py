@@ -37,7 +37,7 @@ class BaseLoader(ABC, Generic[T_Output]):
         """Load the graph with data."""
         pass
 
-    def iterate_class_triples(self, exclude_classes: set[str] | None = None) -> Iterable[tuple[str, Iterable[Triple]]]:
+    def _iterate_class_triples(self, exclude_classes: set[str] | None = None) -> Iterable[tuple[str, Iterable[Triple]]]:
         """Iterate over all classes and their triples."""
         for class_name in self.rules.classes:
             if exclude_classes is not None and class_name in exclude_classes:

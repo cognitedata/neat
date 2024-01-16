@@ -1,5 +1,6 @@
 import logging
 from collections.abc import Iterable
+from itertools import islice
 from typing import Literal, cast, overload
 
 from cognite.client import CogniteClient
@@ -18,7 +19,14 @@ from ._base import CogniteLoader
 
 
 class DMSLoader(CogniteLoader[InstanceApply]):
-    """Loads a Neat Graph into CDF as nodes and edges."""
+    """Loads a Neat Graph into CDF as nodes and edges.
+
+    Args:
+        rules: Rules object
+        graph_store: Graph store
+        add_class_prefix: Add class prefix to external_id. Defaults to False.
+
+    """
 
     def __init__(self, rules: Rules, graph_store: NeatGraphStoreBase, add_class_prefix: bool = False):
         super().__init__(rules, graph_store)
@@ -45,7 +53,7 @@ class DMSLoader(CogniteLoader[InstanceApply]):
             for class_name in self.rules.classes
             if f"{self.rules.space}:{class_name}" not in data_model.containers
         }
-        for class_name, triples in self.iterate_class_triples(exclude_classes=exclude):
+        for class_name, triples in self._iterate_class_triples(exclude_classes=exclude):
             counter = 0
             start_time = datetime_utc_now()
             for instance_dict in triples2dictionary(triples).values():
@@ -110,6 +118,44 @@ class DMSLoader(CogniteLoader[InstanceApply]):
                                         when processing instance of {class_name}",
                         )
 
+    def load_to_cdf(
+        self, client: CogniteClient, batch_size: int | None = 1000, max_retries: int = 1, retry_delay: int = 3
+    ) -> None:
+        """Uploads nodes to CDF
+
+        Args:
+            client: Instance of CogniteClient
+            batch_size: Size of batch. Default to 1000.
+            max_retries: Maximum times to retry the upload. Default to 1.
+            retry_delay: Time delay before retrying the upload. Default to 3.
+
+        !!! note "batch_size"
+            If batch size is set to 1 or None, all nodes will be pushed to CDF in one go.
+        """
+        if batch_size is None:
+            logging.info("Batch size not set, pushing all nodes and edges to CDF in one go!")
+            nodes, edges, errors = self.as_nodes_and_edges(stop_on_exception=False)
+
+            @retry_decorator(max_retries=max_retries, retry_delay=retry_delay, component_name="create-instances")
+            def create_instances():
+                client.data_modeling.instances.apply(
+                    nodes=nodes, edges=edges, auto_create_start_nodes=True, auto_create_end_nodes=True
+                )
+
+            create_instances()
+            return
+        logging.info(f"Uploading nodes in batches of {batch_size}")
+        for instances in _batched(self.load(stop_on_exception=False), batch_size):
+            nodes = [instance for instance in instances if isinstance(instance, NodeApply)]
+            edges = [instance for instance in instances if isinstance(instance, EdgeApply)]
+            # Todo make _micro_batch_push handle both nodes and edges simultaneously
+            _micro_batch_push(
+                client, nodes, batch_size, message="Upload", max_retries=max_retries, retry_delay=retry_delay
+            )
+            _micro_batch_push(
+                client, edges, batch_size, message="Upload", max_retries=max_retries, retry_delay=retry_delay
+            )
+
     def as_nodes_and_edges(
         self, stop_on_exception: bool = False
     ) -> tuple[list[NodeApply], list[EdgeApply], list[ErrorDetails]]:
@@ -127,10 +173,16 @@ class DMSLoader(CogniteLoader[InstanceApply]):
                 raise ValueError(f"Unknown instance type: {type(instance)}")
         return nodes, edges, exceptions
 
-    def load_to_cdf(
-        self, client: CogniteClient, batch_size: int = 1000, max_retries: int = 1, retry_delay: int = 3
-    ) -> None:
-        raise NotImplementedError("This method is not implemented")
+
+def _batched(iterable: Iterable, size: int):
+    "Batch data into lists of length n. The last batch may be shorter."
+    # batched('ABCDEFG', 3) --> ABC DEF G
+    it = iter(iterable)
+    while True:
+        batch = list(islice(it, size))
+        if not batch:
+            return
+        yield batch
 
 
 def is_node_valid(node: NodeApply) -> tuple[bool, str]:
@@ -224,7 +276,6 @@ def _micro_batch_push(
         client: Instance of CogniteClient
         nodes_or_edges: List of nodes or edges
         batch_size: Size of batch. Defaults to 1000.
-        push_type: Type of push, either "nodes" or "edges". Defaults to "nodes".
         message: Message to logged. Defaults to "Upload".
         max_retries: Maximum times to retry the upload. Defaults to 1.
         retry_delay: Time delay before retrying the upload. Defaults to 3.
