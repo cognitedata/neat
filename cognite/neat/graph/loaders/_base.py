@@ -57,6 +57,8 @@ class CogniteLoader(BaseLoader[T_Output], ABC):
     """
 
     @abstractmethod
-    def load_to_cdf(self, client: CogniteClient) -> None:
+    def load_to_cdf(
+        self, client: CogniteClient, batch_size: int | None = 1000, max_retries: int = 1, retry_delay: int = 3
+    ) -> None:
         """Load the graph with data."""
         pass
