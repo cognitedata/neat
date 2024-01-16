@@ -1,9 +1,9 @@
 import logging
 from collections.abc import Iterable
-from typing import cast
+from typing import Literal, cast, overload
 
 from cognite.client import CogniteClient
-from cognite.client.data_classes.data_modeling import EdgeApply, NodeApply
+from cognite.client.data_classes.data_modeling import EdgeApply, InstancesApply, NodeApply, NodeApplyList
 from pydantic_core import ErrorDetails
 from rdflib import URIRef
 
@@ -14,6 +14,101 @@ from cognite.neat.rules.exporter._rules2dms import DataModel
 from cognite.neat.rules.exporter._rules2pydantic_models import add_class_prefix_to_xid, rules_to_pydantic_models
 from cognite.neat.rules.models.rules import Rules
 from cognite.neat.utils.utils import chunker, datetime_utc_now, retry_decorator
+
+from ._base import CogniteLoader
+
+
+class DMSLoader(CogniteLoader[InstancesApply]):
+    """Loads a Neat Graph into CDF as nodes and edges."""
+
+    def __init__(self, rules: Rules, graph_store: NeatGraphStoreBase, add_class_prefix: bool = False):
+        super().__init__(rules, graph_store)
+        self.add_class_prefix = add_class_prefix
+
+    @overload
+    def load(self, stop_on_exception: Literal[True]) -> Iterable[InstancesApply]:
+        ...
+
+    @overload
+    def load(self, stop_on_exception: Literal[False] = False) -> Iterable[InstancesApply | ErrorDetails]:
+        ...
+
+    def load(self, stop_on_exception: bool = False) -> Iterable[InstancesApply | ErrorDetails]:
+        """Load the graph with data."""
+        if self.rules.metadata.namespace is None:
+            raise ValueError("Namespace is not defined in transformation rules metadata")
+
+        data_model = DataModel.from_rules(self.rules)
+        pydantic_models = rules_to_pydantic_models(self.rules)
+
+        for class_name, triples in self.iterate_class_triples():
+            if f"{self.rules.space}:{class_name}" not in data_model.containers:
+                continue
+
+            counter = 0
+            start_time = datetime_utc_now()
+            for instance_dict in triples2dictionary(triples).values():
+                counter += 1
+                try:
+                    instance = pydantic_models[class_name].from_dict(instance_dict)  # type: ignore[attr-defined]
+                    if self.add_class_prefix:
+                        instance.external_id = add_class_prefix_to_xid(
+                            class_name=type(instance).__name__, external_id=instance.external_id
+                        )
+                    new_node = instance.to_node(data_model, self.add_class_prefix)  # type: ignore[attr-defined]
+                    is_valid, reason = is_node_valid(new_node)
+                    if not is_valid:
+                        yield ErrorDetails(
+                            input=instance_dict["external_id"],
+                            loc=tuple(["Nodes"]),
+                            msg=f"Not valid node {new_node.external_id}. Reason: {reason}",
+                            type="Node validation error",
+                        )
+                        continue
+
+                    new_edges = instance.to_edge(data_model, self.add_class_prefix)
+                    for new_edge in new_edges:
+                        is_valid, reason = is_edge_valid(new_edge)
+                        if not is_valid:
+                            yield ErrorDetails(
+                                input=instance_dict["external_id"],
+                                loc=tuple(["Edges"]),
+                                msg=f"Not valid edge {new_edge.external_id}. Reason: {reason}",
+                                type="Edge validation error",
+                            )
+                            continue
+
+                    yield InstancesApply(nodes=NodeApplyList(new_node), edges=new_edges)
+
+                    delta_time = datetime_utc_now() - start_time
+                    delta_time = (delta_time.seconds * 1000000 + delta_time.microseconds) / 1000
+                    msg = (
+                        f"{class_name} {counter} instances processed, "
+                        f"instance processing time: {delta_time/counter:.2f} "
+                    )
+                    logging.info(msg)
+
+                except Exception as e:
+                    logging.error(
+                        f"Instance {instance_dict['external_id']} of {class_name}"
+                        f" cannot be resolved to nodes and edges. Reason: {e}"
+                    )
+                    if stop_on_exception:
+                        raise e
+
+                    if isinstance(e, NeatException):
+                        yield e.to_error_dict()
+                    else:
+                        yield ErrorDetails(
+                            input=instance_dict["external_id"],
+                            loc=tuple(["rdf2nodes_and_edges"]),
+                            msg=str(e),
+                            type=f"Exception of type {type(e).__name__} occurred  \
+                                        when processing instance of {class_name}",
+                        )
+
+    def load_to_cdf(self, client: CogniteClient) -> None:
+        raise NotImplementedError("This method is not implemented")
 
 
 def rdf2nodes_and_edges(

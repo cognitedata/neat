@@ -2,8 +2,9 @@ import logging
 import sys
 import time
 from abc import ABC, abstractmethod
+from collections.abc import Iterable, Iterator
 from pathlib import Path
-from typing import Literal, TypeAlias
+from typing import Literal, TypeAlias, cast
 
 import pandas as pd
 from prometheus_client import Gauge, Summary
@@ -188,6 +189,20 @@ class NeatGraphStoreBase(ABC):
         prom_sq.labels("query").set(elapsed_time)
         return result
 
+    def query_delayed(self, query) -> Iterable[Triple]:
+        """Returns the result of the query, but does not execute it immediately.
+
+        The query is not executed until the result is iterated over.
+
+        Args:
+            query: SPARQL query to execute
+
+        Returns:
+            An iterable of triples
+
+        """
+        return _DelayedQuery(self.graph, query)
+
     @abstractmethod
     def drop(self) -> None:
         """Drops the graph."""
@@ -287,3 +302,18 @@ class NeatGraphStoreBase(ABC):
             check_commit()
 
         check_commit(force_commit=True)
+
+
+class _DelayedQuery(Iterable):
+    def __init__(self, graph_ref: Graph, query: str):
+        self.graph_ref = graph_ref
+        self.query = query
+
+    def __iter__(self) -> Iterator[Triple]:
+        start_time = time.perf_counter()
+        result = self.graph_ref.query(self.query)
+        stop_time = time.perf_counter()
+        elapsed_time = stop_time - start_time
+        prom_qsm.labels("query").observe(elapsed_time)
+        prom_sq.labels("query").set(elapsed_time)
+        return cast(Iterator[Triple], iter(result))
