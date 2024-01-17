@@ -1031,7 +1031,7 @@ def remove_non_existing_labels(
     raise ValueError(f"Invalid format for Assets={type(assets)}")
 
 
-def unique_asset_labels(assets: Iterable[Asset | dict[str, Any]]) -> set[str]:
+def unique_asset_labels(assets: Iterable[Asset | dict[str, Any]]) -> set[str | None]:
     labels = set()
     for asset in assets:
         if isinstance(asset, Asset):

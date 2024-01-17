@@ -35,12 +35,12 @@ from cognite.neat.rules.models._base import (
     ENTITY_ID_REGEX_COMPILED,
     VERSIONED_ENTITY_REGEX_COMPILED,
     ContainerEntity,
+    Entity,
     EntityTypes,
     ParentClass,
 )
 from cognite.neat.rules.models.rdfpath import (
     AllReferences,
-    Entity,
     Hop,
     RawLookup,
     SingleProperty,
@@ -49,7 +49,7 @@ from cognite.neat.rules.models.rdfpath import (
     Traversal,
     parse_rule,
 )
-from cognite.neat.rules.value_types import XSD_VALUE_TYPE_MAPPINGS, ValueType
+from cognite.neat.rules.models.value_types import XSD_VALUE_TYPE_MAPPINGS, ValueType
 
 if sys.version_info >= (3, 11):
     from typing import Self

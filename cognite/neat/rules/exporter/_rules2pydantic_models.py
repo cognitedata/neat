@@ -20,7 +20,7 @@ from cognite.neat.rules.analysis import define_class_asset_mapping, to_class_pro
 from cognite.neat.rules.exporter._rules2dms import DataModel
 from cognite.neat.rules.exporter._validation import are_entity_names_dms_compliant
 from cognite.neat.rules.models.rules import Property, Rules
-from cognite.neat.rules.value_types import ValueTypeMapping
+from cognite.neat.rules.models.value_types import ValueTypeMapping
 from cognite.neat.utils.utils import generate_exception_report
 
 if sys.version_info >= (3, 11):

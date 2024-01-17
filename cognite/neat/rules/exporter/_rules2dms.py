@@ -11,7 +11,7 @@ from typing import ClassVar, Literal, cast
 
 import yaml
 
-from cognite.neat.rules.value_types import ValueTypeMapping
+from cognite.neat.rules.models.value_types import ValueTypeMapping
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -32,6 +32,7 @@ from cognite.client.data_classes.data_modeling import (
     MappedPropertyApply,
     PropertyType,
     SpaceApply,
+    SpaceApplyList,
     ViewApply,
     ViewId,
 )
@@ -60,6 +61,7 @@ class EmptyPropertyType(PropertyType):
 
 @dataclass
 class DMSSchema:
+    spaces: SpaceApplyList
     data_model: DataModelApply
     containers: ContainerApplyList
 
@@ -116,8 +118,9 @@ class DMSExporter(BaseExporter[DMSSchema]):
     def export(self) -> DMSSchema:
         model = DataModel.from_rules(self.rules, self.data_model_id)
         return DMSSchema(
+            spaces=model.spaces,
             data_model=DataModelApply(
-                space=model.space,
+                space=model.space.as_id(),
                 external_id=model.external_id,
                 version=model.version,
                 description=model.description,
@@ -145,7 +148,7 @@ class DataModel(BaseModel):
 
     """
 
-    space: str
+    space: SpaceApply
     external_id: str
     version: str
     description: str | None = None
@@ -168,11 +171,16 @@ class DataModel(BaseModel):
 
     @property
     def spaces(self):
-        return set(
-            [container.space for container in self.containers.values()]
-            + [self.space]
-            + [view.space for view in self.views.values()]
-        )
+        spaces = [self.space]
+        for container in self.containers.values():
+            if container.space != self.space.space:
+                spaces.append(SpaceApply(space=container.space))
+
+        for view in self.views.values():
+            if view.space != self.space.space:
+                spaces.append(SpaceApply(space=view.space))
+
+        return spaces
 
     @classmethod
     def from_rules(
@@ -208,7 +216,7 @@ class DataModel(BaseModel):
             raise exceptions.DataModelIdMissing(prefix=rules.metadata.space)
 
         return cls(
-            space=rules.metadata.space,
+            space=SpaceApply(rules.metadata.space, description=f"@uri={rules.metadata.namespace}"),
             external_id=rules.metadata.external_id,
             version=rules.metadata.version,
             description=rules.metadata.description,
@@ -473,11 +481,11 @@ class DataModel(BaseModel):
         Returns:
              True if the data model exists, False otherwise.
         """
-        if model := client.data_modeling.data_models.retrieve((self.space, self.external_id, self.version)):
+        if model := client.data_modeling.data_models.retrieve((self.space.space, self.external_id, self.version)):
             cdf_data_model = model.latest_version()
-            logging.warning(exceptions.DataModelAlreadyExist(self.external_id, self.version, self.space).message)
+            logging.warning(exceptions.DataModelAlreadyExist(self.external_id, self.version, self.space.space).message)
             warnings.warn(
-                exceptions.DataModelAlreadyExist(self.external_id, self.version, self.space).message,
+                exceptions.DataModelAlreadyExist(self.external_id, self.version, self.space.space).message,
                 category=exceptions.DataModelAlreadyExist,
                 stacklevel=2,
             )
@@ -522,28 +530,28 @@ class DataModel(BaseModel):
         return existing_views
 
     def create_space(self, client: CogniteClient):
-        logging.info(f"Creating space {self.space}")
+        logging.info(f"Creating space {self.space.space}")
 
         for space in self.spaces:
-            _ = client.data_modeling.spaces.apply(SpaceApply(space=space))
+            _ = client.data_modeling.spaces.apply(space)
 
     def create_containers(self, client: CogniteClient):
         for container_id in self.containers:
-            logging.info(f"Creating container {container_id} in space {self.space}")
+            logging.info(f"Creating container {container_id} in space {self.space.space}")
             _ = client.data_modeling.containers.apply(self.containers[container_id])
 
     def create_views(self, client: CogniteClient):
         for view_id in self.views:
-            logging.info(f"Creating view {view_id} version {self.views[view_id].version} in space {self.space}")
+            logging.info(f"Creating view {view_id} version {self.views[view_id].version} in space {self.space.space}")
             _ = client.data_modeling.views.apply(self.views[view_id])
 
     def create_data_model(self, client: CogniteClient):
-        logging.info(f"Creating data model {self.external_id} version {self.version} in space {self.space}")
+        logging.info(f"Creating data model {self.external_id} version {self.version} in space {self.space.space}")
         _ = client.data_modeling.data_models.apply(
             DataModelApply(
                 name=self.name,
                 description=self.description,
-                space=self.space,
+                space=self.space.space,
                 external_id=self.external_id,
                 version=self.version,
                 views=list(self.views.values()),
@@ -557,20 +565,20 @@ class DataModel(BaseModel):
             client: Cognite client.
         """
 
-        if client.data_modeling.data_models.retrieve((self.space, self.external_id, self.version)):
+        if client.data_modeling.data_models.retrieve((self.space.space, self.external_id, self.version)):
             logging.info(f"Removing data model {self.external_id} version {self.version} from space {self.space}")
-            _ = client.data_modeling.data_models.delete((self.space, self.external_id, self.version))
+            _ = client.data_modeling.data_models.delete((self.space.space, self.external_id, self.version))
 
         if views := client.data_modeling.views.retrieve(
             [view.as_id() for view in self.views.values()], all_versions=False
         ):
             for view in views:
-                logging.info(f"Removing view {view.external_id} version {view.version} from space {self.space}")
+                logging.info(f"Removing view {view.external_id} version {view.version} from space {self.space.space}")
                 _ = client.data_modeling.views.delete((view.space, view.external_id, view.version))
 
         if containers := client.data_modeling.containers.retrieve(
             [container.as_id() for container in self.containers.values()]
         ):
             for container in containers:
-                logging.info(f"Removing container {container.external_id} from space {self.space}")
+                logging.info(f"Removing container {container.external_id} from space {self.space.space}")
                 _ = client.data_modeling.containers.delete((container.space, container.external_id))
