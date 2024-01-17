@@ -1,232 +1,188 @@
 import logging
 from collections.abc import Iterable
-from typing import cast
+from itertools import islice
+from typing import Literal, cast, overload
 
 from cognite.client import CogniteClient
-from cognite.client.data_classes.data_modeling import EdgeApply, NodeApply
+from cognite.client.data_classes.data_modeling import EdgeApply, InstanceApply, NodeApply
 from pydantic_core import ErrorDetails
-from rdflib import URIRef
 
 from cognite.neat.exceptions import NeatException
 from cognite.neat.graph.stores import NeatGraphStoreBase
-from cognite.neat.graph.transformations.query_generator.sparql import build_construct_query, triples2dictionary
+from cognite.neat.graph.transformations.query_generator.sparql import triples2dictionary
 from cognite.neat.rules.exporter._rules2dms import DataModel
 from cognite.neat.rules.exporter._rules2pydantic_models import add_class_prefix_to_xid, rules_to_pydantic_models
 from cognite.neat.rules.models.rules import Rules
 from cognite.neat.utils.utils import chunker, datetime_utc_now, retry_decorator
 
+from ._base import CogniteLoader
 
-def rdf2nodes_and_edges(
-    graph_store: NeatGraphStoreBase, rules: Rules, stop_on_exception: bool = False, add_class_prefix: bool = False
-) -> tuple[list[NodeApply], list[EdgeApply], list[ErrorDetails]]:
-    """Generates DMS nodes and edges from knowledge graph stored as RDF triples
+
+class DMSLoader(CogniteLoader[InstanceApply]):
+    """Loads a Neat Graph into CDF as nodes and edges.
 
     Args:
-        graph_store: Instance of NeatGraphStore holding RDF graph
-        rules: Rules holding data model definition
-        stop_on_exception: Whether to stop execution on exception. Defaults to False.
-        add_class_prefix: Whether to add class name as a prefix to instance external id. Defaults to False.
+        rules: Rules object
+        graph_store: Graph store
+        add_class_prefix: Add class prefix to external_id. Defaults to False.
 
-    Returns:
-        Tuple holding nodes, edges and exceptions
     """
-    if rules.metadata.namespace is None:
-        raise ValueError("Namespace is not defined in transformation rules metadata")
 
-    nodes: list[NodeApply] = []
-    edges: list[EdgeApply] = []
-    exceptions: list[ErrorDetails] = []
+    def __init__(self, rules: Rules, graph_store: NeatGraphStoreBase, add_class_prefix: bool = False):
+        super().__init__(rules, graph_store)
+        self.add_class_prefix = add_class_prefix
 
-    data_model = DataModel.from_rules(rules)
-    pydantic_models = rules_to_pydantic_models(rules)
+    @overload
+    def load(self, stop_on_exception: Literal[True]) -> Iterable[InstanceApply]:
+        ...
 
-    for class_ in rules.classes:
-        if f"{rules.space}:{class_}" in data_model.containers:
-            sparql_construct_query = build_construct_query(graph_store.graph, class_, rules, properties_optional=True)
+    @overload
+    def load(self, stop_on_exception: Literal[False] = False) -> Iterable[InstanceApply | ErrorDetails]:
+        ...
 
+    def load(self, stop_on_exception: bool = False) -> Iterable[InstanceApply | ErrorDetails]:
+        """Load the graph with data."""
+        if self.rules.metadata.namespace is None:
+            raise ValueError("Namespace is not defined in transformation rules metadata")
+
+        data_model = DataModel.from_rules(self.rules)
+        pydantic_models = rules_to_pydantic_models(self.rules)
+
+        exclude = {
+            class_name
+            for class_name in self.rules.classes
+            if f"{self.rules.space}:{class_name}" not in data_model.containers
+        }
+        for class_name, triples in self._iterate_class_triples(exclude_classes=exclude):
             counter = 0
             start_time = datetime_utc_now()
-
-            for instance_dict in triples2dictionary(
-                cast(Iterable[tuple[URIRef, URIRef, str | URIRef]], graph_store.query(sparql_construct_query))
-            ).values():
+            for instance_dict in triples2dictionary(triples).values():
                 counter += 1
                 try:
-                    instance = pydantic_models[class_].from_dict(instance_dict)  # type: ignore[attr-defined]
-                    if add_class_prefix:
+                    instance = pydantic_models[class_name].from_dict(instance_dict)  # type: ignore[attr-defined]
+                    if self.add_class_prefix:
                         instance.external_id = add_class_prefix_to_xid(
                             class_name=type(instance).__name__, external_id=instance.external_id
                         )
-                    new_node = instance.to_node(data_model, add_class_prefix)  # type: ignore[attr-defined]
+                    new_node = instance.to_node(data_model, self.add_class_prefix)  # type: ignore[attr-defined]
                     is_valid, reason = is_node_valid(new_node)
-                    if not is_valid:
-                        exceptions.append(
-                            ErrorDetails(
-                                input=instance_dict["external_id"],
-                                loc=tuple(["Nodes"]),
-                                msg=f"Not valid node {new_node.external_id}. Reason: {reason}",
-                                type="Node validation error",
-                            )
+                    if is_valid:
+                        yield new_node
+                    else:
+                        yield ErrorDetails(
+                            input=instance_dict["external_id"],
+                            loc=tuple(["Nodes"]),
+                            msg=f"Not valid node {new_node.external_id}. Reason: {reason}",
+                            type="Node validation error",
                         )
                         continue
-                    nodes.append(new_node)
 
-                    new_edges = instance.to_edge(data_model, add_class_prefix)
+                    new_edges = instance.to_edge(data_model, self.add_class_prefix)
                     for new_edge in new_edges:
                         is_valid, reason = is_edge_valid(new_edge)
-                        if not is_valid:
-                            exceptions.append(
-                                ErrorDetails(
-                                    input=instance_dict["external_id"],
-                                    loc=tuple(["Edges"]),
-                                    msg=f"Not valid edge {new_edge.external_id}. Reason: {reason}",
-                                    type="Edge validation error",
-                                )
+                        if is_valid:
+                            yield new_edge
+                        else:
+                            yield ErrorDetails(
+                                input=instance_dict["external_id"],
+                                loc=tuple(["Edges"]),
+                                msg=f"Not valid edge {new_edge.external_id}. Reason: {reason}",
+                                type="Edge validation error",
                             )
                             continue
-                        edges.append(new_edge)
 
                     delta_time = datetime_utc_now() - start_time
                     delta_time = (delta_time.seconds * 1000000 + delta_time.microseconds) / 1000
                     msg = (
-                        f"{class_} {counter} instances processed, "
+                        f"{class_name} {counter} instances processed, "
                         f"instance processing time: {delta_time/counter:.2f} "
                     )
                     logging.info(msg)
 
                 except Exception as e:
                     logging.error(
-                        f"Instance {instance_dict['external_id']} of {class_}"
+                        f"Instance {instance_dict['external_id']} of {class_name}"
                         f" cannot be resolved to nodes and edges. Reason: {e}"
                     )
                     if stop_on_exception:
                         raise e
 
                     if isinstance(e, NeatException):
-                        exceptions.append(e.to_error_dict())
+                        yield e.to_error_dict()
                     else:
-                        exceptions.append(
-                            ErrorDetails(
-                                input=instance_dict["external_id"],
-                                loc=tuple(["rdf2nodes_and_edges"]),
-                                msg=str(e),
-                                type=f"Exception of type {type(e).__name__} occurred  \
-                                when processing instance of {class_}",
-                            )
-                        )
-                    continue
-
-    return nodes, edges, exceptions
-
-
-def rdf2nodes_and_edges_old(
-    graph_store: NeatGraphStoreBase, rules: Rules, stop_on_exception: bool = False, add_class_prefix: bool = False
-) -> tuple[list[NodeApply], list[EdgeApply], list[ErrorDetails]]:
-    """Generates DMS nodes and edges from knowledge graph stored as RDF triples
-
-    Args:
-        graph_store: Instance of NeatGraphStore holding RDF graph
-        rules: Rules holding data model definition
-        stop_on_exception: Whether to stop execution on exception. Defaults to False.
-        add_class_prefix: Whether to add class name as a prefix to instance external id. Defaults to False.
-
-    Returns:
-        Tuple holding nodes, edges and exceptions
-    """
-    if rules.metadata.namespace is None:
-        raise ValueError("Namespace is not defined in transformation rules metadata")
-
-    nodes: list[NodeApply] = []
-    edges: list[EdgeApply] = []
-    exceptions: list[ErrorDetails] = []
-
-    data_model = DataModel.from_rules(rules)
-    pydantic_models = rules_to_pydantic_models(rules)
-
-    for class_ in rules.classes:
-        if f"{rules.space}:{class_}" not in data_model.containers:
-            continue
-
-        class_uri = rules.metadata.namespace[class_]
-        class_instance_ids = [
-            cast(tuple, res)[0]
-            for res in graph_store.query(f"SELECT ?instance WHERE {{ ?instance rdf:type <{class_uri}> . }}")
-        ]
-
-        counter = 0
-        start_time = datetime_utc_now()
-        total = len(class_instance_ids)
-
-        for class_instance_id in class_instance_ids:
-            counter += 1
-            try:
-                instance = pydantic_models[class_].from_graph(  # type: ignore[attr-defined]
-                    graph_store, rules, class_instance_id
-                )
-                if add_class_prefix:
-                    instance.external_id = add_class_prefix_to_xid(
-                        class_name=instance.__class__.__name__, external_id=instance.external_id
-                    )
-                new_node = instance.to_node(data_model, add_class_prefix)
-                is_valid, reason = is_node_valid(new_node)
-                if not is_valid:
-                    exceptions.append(
-                        ErrorDetails(
-                            input=class_instance_id,
-                            loc=tuple(["Nodes"]),
-                            msg=f"Not valid node {new_node.external_id}. Reason: {reason}",
-                            type="Node validation error",
-                        )
-                    )
-                    continue
-                nodes.append(new_node)
-
-                new_edges = instance.to_edge(data_model, add_class_prefix)
-                for new_edge in new_edges:
-                    is_valid, reason = is_edge_valid(new_edge)
-                    if not is_valid:
-                        exceptions.append(
-                            ErrorDetails(
-                                input=class_instance_id,
-                                loc=tuple(["Edges"]),
-                                msg=f"Not valid edge {new_edge.external_id}. Reason: {reason}",
-                                type="Edge validation error",
-                            )
-                        )
-                        continue
-                    edges.append(new_edge)
-
-                delta_time = datetime_utc_now() - start_time
-                delta_time = (delta_time.seconds * 1000000 + delta_time.microseconds) / 1000
-                msg = (
-                    f"{class_} {counter} of {total} instances processed, "
-                    f"instance processing time: {delta_time/counter:.2f} "
-                )
-                msg += f"ms ETC: {(delta_time/counter) * (total - counter) / 1000 :.3f} s"
-                logging.info(msg)
-
-            except Exception as e:
-                logging.error(
-                    f"Instance {class_instance_id} of {class_} cannot be resolved to nodes and edges. Reason: {e}"
-                )
-                if stop_on_exception:
-                    raise e
-
-                if isinstance(e, NeatException):
-                    exceptions.append(e.to_error_dict())
-                else:
-                    exceptions.append(
-                        ErrorDetails(
-                            input=class_instance_id,
+                        yield ErrorDetails(
+                            input=instance_dict["external_id"],
                             loc=tuple(["rdf2nodes_and_edges"]),
                             msg=str(e),
                             type=f"Exception of type {type(e).__name__} occurred  \
-                            when processing instance of {class_}",
+                                        when processing instance of {class_name}",
                         )
-                    )
-                continue
 
-    return nodes, edges, exceptions
+    def load_to_cdf(
+        self, client: CogniteClient, batch_size: int | None = 1000, max_retries: int = 1, retry_delay: int = 3
+    ) -> None:
+        """Uploads nodes to CDF
+
+        Args:
+            client: Instance of CogniteClient
+            batch_size: Size of batch. Default to 1000.
+            max_retries: Maximum times to retry the upload. Default to 1.
+            retry_delay: Time delay before retrying the upload. Default to 3.
+
+        !!! note "batch_size"
+            If batch size is set to 1 or None, all nodes will be pushed to CDF in one go.
+        """
+        if batch_size is None:
+            logging.info("Batch size not set, pushing all nodes and edges to CDF in one go!")
+            nodes, edges, errors = self.as_nodes_and_edges(stop_on_exception=False)
+
+            @retry_decorator(max_retries=max_retries, retry_delay=retry_delay, component_name="create-instances")
+            def create_instances():
+                client.data_modeling.instances.apply(
+                    nodes=nodes, edges=edges, auto_create_start_nodes=True, auto_create_end_nodes=True
+                )
+
+            create_instances()
+            return
+        logging.info(f"Uploading nodes in batches of {batch_size}")
+        for instances in _batched(self.load(stop_on_exception=False), batch_size):
+            nodes = [instance for instance in instances if isinstance(instance, NodeApply)]
+            edges = [instance for instance in instances if isinstance(instance, EdgeApply)]
+            # Todo make _micro_batch_push handle both nodes and edges simultaneously
+            _micro_batch_push(
+                client, nodes, batch_size, message="Upload", max_retries=max_retries, retry_delay=retry_delay
+            )
+            _micro_batch_push(
+                client, edges, batch_size, message="Upload", max_retries=max_retries, retry_delay=retry_delay
+            )
+
+    def as_nodes_and_edges(
+        self, stop_on_exception: bool = False
+    ) -> tuple[list[NodeApply], list[EdgeApply], list[ErrorDetails]]:
+        nodes = []
+        edges = []
+        exceptions: list[ErrorDetails] = []
+        for instance in self.load(stop_on_exception):  # type: ignore[call-overload]
+            if isinstance(instance, NodeApply):
+                nodes.append(instance)
+            elif isinstance(instance, EdgeApply):
+                edges.append(instance)
+            elif isinstance(instance, dict):
+                exceptions.append(cast(ErrorDetails, instance))
+            else:
+                raise ValueError(f"Unknown instance type: {type(instance)}")
+        return nodes, edges, exceptions
+
+
+def _batched(iterable: Iterable, size: int):
+    "Batch data into lists of length n. The last batch may be shorter."
+    # batched('ABCDEFG', 3) --> ABC DEF G
+    it = iter(iterable)
+    while True:
+        batch = list(islice(it, size))
+        if not batch:
+            return
+        yield batch
 
 
 def is_node_valid(node: NodeApply) -> tuple[bool, str]:
@@ -320,7 +276,6 @@ def _micro_batch_push(
         client: Instance of CogniteClient
         nodes_or_edges: List of nodes or edges
         batch_size: Size of batch. Defaults to 1000.
-        push_type: Type of push, either "nodes" or "edges". Defaults to "nodes".
         message: Message to logged. Defaults to "Upload".
         max_retries: Maximum times to retry the upload. Defaults to 1.
         retry_delay: Time delay before retrying the upload. Defaults to 3.
