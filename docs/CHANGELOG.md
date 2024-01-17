@@ -15,6 +15,15 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## TBD
+
+## Changed
+
+- `cognite.neat.graph.loaders.rdf_to_dms.rdf2nodes_and_edges` has been replaced by `cognite.nead.graph.loaders.DMSLoader`.
+
+## Added
+
+- Introduced an interface for `cognite.neat.graph.loaders` and implemented it for DMS.
 
 ## [0.57.0] - 11-01-24
 
