@@ -31,7 +31,7 @@ def test_rules2dms_single_space(simple_rules):
         "neat:PriceAreaConnection",
     ]
     assert data_model.version == "0.1"
-    assert data_model.space == "neat"
+    assert data_model.space.space == "neat"
     assert data_model.external_id == "playground_model"
 
 

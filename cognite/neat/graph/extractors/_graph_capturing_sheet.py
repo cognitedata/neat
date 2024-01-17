@@ -86,9 +86,6 @@ class GraphCapturingSheet(BaseExtractor):
         graph_capturing_sheet = read_graph_excel_file_to_table_by_name(self.filepath)
         if self.store_graph_capturing_sheet:
             self.sheet = graph_capturing_sheet
-
-        print(self.namespace)
-
         return sheet2triples(graph_capturing_sheet, self.rules, self.separator, self.namespace, self.use_source_ids)
 
 

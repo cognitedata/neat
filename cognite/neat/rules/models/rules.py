@@ -578,8 +578,6 @@ class Class(Resource):
                     "parent_class", ", ".join(illegal_ids)
                 ).to_pydantic_custom_error()
             if illegal_ids := [v for v in value if not re.match(class_id_compliance_regex, v.suffix)]:
-                for v in illegal_ids:
-                    print(v.id)
                 raise exceptions.ClassSheetParentClassIDRegexViolation(
                     illegal_ids, class_id_compliance_regex
                 ).to_pydantic_custom_error()

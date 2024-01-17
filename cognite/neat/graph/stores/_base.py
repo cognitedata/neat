@@ -287,3 +287,11 @@ class NeatGraphStoreBase(ABC):
             check_commit()
 
         check_commit(force_commit=True)
+
+    def serialize(self, *args, **kwargs):
+        """Serializes the graph."""
+        return self.graph.serialize(*args, **kwargs)
+
+    def parse(self, *args, **kwargs):
+        """Serializes the graph."""
+        return self.graph.parse(*args, **kwargs)

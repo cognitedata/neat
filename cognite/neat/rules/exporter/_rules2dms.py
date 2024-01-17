@@ -401,7 +401,7 @@ class DataModel(BaseModel):
             external_id=class_.class_id,
             version=version,
             name=class_.class_name,
-            description=class_.description,
+            description=DataModel.add_uri_to_description(class_.description, class_.source),
             properties={},
             implements=[parent_class.view_id for parent_class in cast(list[ParentClass], class_.parent_class)]
             if class_.parent_class
@@ -409,15 +409,27 @@ class DataModel(BaseModel):
         )
 
     @staticmethod
+    def add_uri_to_description(description: str | None = None, uri: str | None = None) -> str | None:
+        if uri and description:
+            return f"{description} @uri={uri}" if uri else description
+        elif uri:
+            return f"@uri={uri}"
+        else:
+            return description
+
+    @staticmethod
     def as_api_view_property(property_: Property, space: str) -> MappedPropertyApply | ConnectionDefinitionApply | None:
         property_.container = cast(ContainerEntity, property_.container)
         property_.container_property = cast(str, property_.container_property)
+
+        description = DataModel.add_uri_to_description(property_.description, property_.source)
+
         if property_.property_type is EntityTypes.data_property:
             return MappedPropertyApply(
                 container=ContainerId(space=property_.container.space, external_id=property_.container.external_id),
                 container_property_identifier=property_.container_property,
                 name=property_.property_name,
-                description=property_.description,
+                description=description,
             )
 
         # edge 1-1 == directRelation
@@ -426,7 +438,7 @@ class DataModel(BaseModel):
                 container=ContainerId(space=property_.container.space, external_id=property_.container.external_id),
                 container_property_identifier=property_.container_property,
                 name=property_.property_name,
-                description=property_.description,
+                description=description,
                 source=ViewId(
                     space=property_.expected_value_type.space,
                     external_id=property_.expected_value_type.external_id,
@@ -446,7 +458,7 @@ class DataModel(BaseModel):
                 ),
                 direction="outwards",
                 name=property_.property_name,
-                description=property_.description,
+                description=description,
             )
         else:
             return None
