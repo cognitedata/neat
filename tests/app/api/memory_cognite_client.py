@@ -91,7 +91,7 @@ class MemoryClient:
         exclude = exclude or set()
         iterable = (self._dump_item(item, ordered, exclude) for item in self._list_unique_in_store())
         if ordered:
-            return sorted(iterable, key=lambda x: x.get("external_id", x["externalId"]))
+            return sorted(iterable, key=lambda x: x.get("external_id", x["externalId"]).casefold())
         return list(iterable)
 
     @classmethod
@@ -105,7 +105,7 @@ class MemoryClient:
         if "labels" in dump:
             # Labels are not properly dumped to dict.
             iterable = (label.dump() if hasattr(label, "dump") else label for label in dump["labels"])
-            dump["labels"] = sorted(iterable, key=lambda x: x["externalId"]) if ordered else list(iterable)
+            dump["labels"] = sorted(iterable, key=lambda x: x["externalId"].casefold()) if ordered else list(iterable)
         if exclude:
             for to_exclude in exclude:
                 keys = to_exclude.split(".")
