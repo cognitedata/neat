@@ -100,7 +100,7 @@ class MemoryClient:
         if ordered and "metadata" in dump:
             for key, value in list(dump["metadata"].items()):
                 if isinstance(value, list):
-                    dump["metadata"][key] = sorted(value)
+                    dump["metadata"][key] = sorted(value, key=lambda x: x.casefold())
 
         if "labels" in dump:
             # Labels are not properly dumped to dict.
