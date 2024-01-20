@@ -15,11 +15,12 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.58.0] - 20-01-24
 
 ## Changed
 
 - `cognite.neat.graph.loaders.rdf_to_dms.rdf2nodes_and_edges` has been replaced by `cognite.nead.graph.loaders.DMSLoader`.
+- Upgrade `cognite-sdk` to `v7`, thus now neat requires `cognite-sdk>=7.13.8`.
 
 ## Added
 
