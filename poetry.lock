@@ -4946,4 +4946,4 @@ oxi = ["oxrdflib"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "255fd3ec468c3ed5066105224da0e6237b7140c50ad34458ba32291a002c3bbd"
+content-hash = "3618a612552cc2f4c734fff2b41d6ca16f1ced6cb265f0c647e2e2c1a03d9a1e"
