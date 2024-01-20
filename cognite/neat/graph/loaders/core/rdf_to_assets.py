@@ -1032,10 +1032,10 @@ def remove_non_existing_labels(
 
 
 def unique_asset_labels(assets: Iterable[Asset | dict[str, Any]]) -> set[str]:
-    labels = set()
+    labels: set[str] = set()
     for asset in assets:
         if isinstance(asset, Asset):
-            labels |= {label.external_id for label in (asset.labels or [])}
+            labels |= {label.external_id for label in (asset.labels or []) if label.external_id}
         elif isinstance(asset, dict) and (asset_labels := asset.get("labels")):
             labels |= set(asset_labels)
         else:
