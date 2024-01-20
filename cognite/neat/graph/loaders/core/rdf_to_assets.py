@@ -515,6 +515,8 @@ def _flatten_labels(labels: list[dict[str, str]]) -> set[str]:
     for label in labels:
         if "externalId" in label:
             result.add(label["externalId"])
+        elif "external_id" in label:
+            result.add(label["external_id"])
         else:
             logging.warning(f"Label {label} does not have externalId")
     return result
