@@ -35,7 +35,8 @@ jobs:
       matrix:
         python-version:
           - "3.10"
-          - "3.11"
+          # Python 3.11 is assumed to be covered by testing 3.10 and 3.12
+          - "3.12"
     steps:
       - uses: actions/checkout@v3
 

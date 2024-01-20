@@ -248,9 +248,9 @@ class GenerateCDFAssetsFromGraph(Step):
         )
 
         # UPDATE: 2023-04-05 - correct aggregation of assets in CDF for specific dataset
-        total_assets_before = cdf_client.assets.aggregate(filter=AssetFilter(data_set_ids=[{"id": data_set_id}]))[0][
-            "count"
-        ]
+        total_assets_before = cdf_client.assets.aggregate(filter=AssetFilter(data_set_ids=[{"id": data_set_id}]))[
+            0
+        ].count
 
         # Label Validation
         labels_before = unique_asset_labels(rdf_asset_dicts.values())
@@ -425,16 +425,16 @@ class UploadCDFAssets(Step):
             for _ in range(1000):
                 total_assets_after = cdf_client.assets.aggregate(
                     filter=AssetFilter(data_set_ids=[{"id": data_set_id}])
-                )[0]["count"]
+                )[0].count
                 if total_assets_after >= count_create_assets:
                     break
                 logging.info(f"Waiting for assets to be created, current count {total_assets_after}")
                 time.sleep(2)
 
             # UPDATE: 2023-04-05 - correct aggregation of assets in CDF for specific dataset
-            total_assets_after = cdf_client.assets.aggregate(filter=AssetFilter(data_set_ids=[{"id": data_set_id}]))[0][
-                "count"
-            ]
+            total_assets_after = cdf_client.assets.aggregate(filter=AssetFilter(data_set_ids=[{"id": data_set_id}]))[
+                0
+            ].count
 
             prom_cdf_resource_stats.labels(resource_type="asset", state="count_after_neat_update").set(
                 total_assets_after

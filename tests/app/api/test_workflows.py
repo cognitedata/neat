@@ -66,6 +66,7 @@ def test_rules(transformation_rules: Rules, fastapi_client: TestClient):
     assert len(transformation_rules.properties) == len(rules["properties"])
 
 
+@pytest.mark.freeze_time("2024-01-21")
 @pytest.mark.parametrize("workflow_name", ["graph_to_asset_hierarchy"])
 def test_workflow_start(
     workflow_name: str, cognite_client: CogniteClient, fastapi_client: TestClient, data_regression, tmp_path
