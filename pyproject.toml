@@ -70,7 +70,7 @@ tomli = { version = "^2.0.1", python = "<3.11" }
 
 uvicorn = { extras = ["standard"], version = "^0.21.0" }
 prometheus-client = "^0.17.0"
-cognite-sdk = "^6.39.5"
+cognite-sdk = "^7.13.8"
 deepdiff = "*"
 fastapi = "^0.100"
 schedule = "^1"
