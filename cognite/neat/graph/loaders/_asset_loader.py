@@ -137,8 +137,7 @@ class AssetLoader(CogniteLoader[AssetResource]):
                 yield LabelDefinitionWrite(external_id=class_name, name=class_name, data_set_id=self._label_data_set_id)
 
             class_uri = namespace[class_name]
-            instances = self.graph_store.list_instances_of_class(class_uri)
-            logging.debug(f"Processing class <{class_uri}> . Number of instances: {len(instances)}")
+            logging.debug(f"Processing class <{class_uri}>.")
 
             try:
                 query = (
@@ -153,6 +152,8 @@ class AssetLoader(CogniteLoader[AssetResource]):
                 if stop_on_exception:
                     raise e
                 continue
+
+            logging.debug(f"Class <{class_name}> has {len(result)} instances")
 
             for instance_id, properties_values in groupby(result, lambda x: x[0]):
                 values_by_property = self._prepare_instance_data(instance_id, properties_values)
