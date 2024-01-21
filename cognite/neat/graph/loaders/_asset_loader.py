@@ -4,7 +4,6 @@ from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, fields
 from datetime import datetime
-from graphlib import TopologicalSorter
 from itertools import groupby
 from typing import Any, Literal, cast, overload
 
@@ -124,15 +123,11 @@ class AssetLoader(CogniteLoader[AssetResource]):
         for prop in self.rules.properties.values():
             properties_by_class_name[prop.class_id].append(prop)
 
-        dependencies_by_class_name: dict[str, set[str]] = defaultdict(set)
-        for class_ in self.rules.classes.values():
-            dependencies_by_class_name[class_.class_id].update(
-                [parent.external_id for parent in class_.parent_class or []]
-            )
+        # Todo Extend rules to sort topological sorting to ensure that parents are loaded before children
 
         loaded_assets: set[str] = set()
         counter = 0
-        for class_name in TopologicalSorter(dependencies_by_class_name).static_order():
+        for class_name in self.rules.classes.keys():
             if self._use_labels:
                 yield LabelDefinitionWrite(external_id=class_name, name=class_name, data_set_id=self._label_data_set_id)
 
