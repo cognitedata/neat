@@ -5,7 +5,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass, fields
 from datetime import datetime
 from itertools import groupby
-from typing import Any, Literal, cast, overload
+from typing import Any, Literal, overload
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import AssetWrite, LabelDefinitionWrite, RelationshipWrite
@@ -79,6 +79,8 @@ class AssetLoader(CogniteLoader[AssetResource]):
 
     # This is guaranteed ot be in the data
     _identifier: str = "identifier"
+    # This label is added to all assets if use_labels is True
+    _non_historic_label: str = "non-historic"
 
     def __init__(
         self,
@@ -123,6 +125,11 @@ class AssetLoader(CogniteLoader[AssetResource]):
         for prop in self.rules.properties.values():
             properties_by_class_name[prop.class_id].append(prop)
 
+        if self._use_labels:
+            yield LabelDefinitionWrite(
+                external_id=self._non_historic_label, name=self._non_historic_label, data_set_id=self._label_data_set_id
+            )
+
         # Todo Extend rules to sort topological sorting to ensure that parents are loaded before children
 
         loaded_assets: set[str] = set()
@@ -137,18 +144,40 @@ class AssetLoader(CogniteLoader[AssetResource]):
             try:
                 result = self.graph_store.queries.list_instances_of_type(class_uri)
             except Exception as e:
-                logging.error(f"Error while loading instances of class <{class_uri}> into cache. Reason: {e}")
+                logging.error(f"Error while querying for instances of class <{class_uri}> into cache. Reason: {e}")
                 if stop_on_exception:
                     raise e
+                yield ErrorDetails(
+                    input={"class_uri": class_uri},
+                    loc=("AssetLoader", "load"),
+                    msg=f"Error while querying instances of class <{class_uri}> into cache. Reason: {e}",
+                    type=f"Exception of type {type(e).__name__} occurred when processing instance of {class_name}",
+                )
                 continue
 
             logging.debug(f"Class <{class_name}> has {len(result)} instances")
 
             for instance_id, properties_values in groupby(result, lambda x: x[0]):
-                values_by_property = self._prepare_instance_data(instance_id, properties_values)
+                try:
+                    asset = self._to_asset(
+                        properties_by_class_name[class_name],
+                        properties_values,
+                        remove_namespace(instance_id),
+                        class_name,
+                    )
+                except Exception as e:
+                    logging.error(f"Error while loading instance <{instance_id}>. Reason: {e}")
+                    if stop_on_exception:
+                        raise e
+                    yield ErrorDetails(
+                        input={"instance_id": instance_id},
+                        loc=("AssetLoader", "load"),
+                        msg=f"Error while loading instance <{instance_id}>. Reason: {e}",
+                        type=f"Exception of type {type(e).__name__} occurred when processing instance of {class_name}",
+                    )
+                    continue
 
-                asset = self._to_asset(properties_by_class_name[class_name], values_by_property, class_name)
-                # We now that external_id is always set
+                # We know that external_id is always set
                 loaded_assets.add(asset.external_id)  # type: ignore[arg-type]
                 yield asset
 
@@ -159,17 +188,23 @@ class AssetLoader(CogniteLoader[AssetResource]):
 
             logging.debug(f"Class <{class_name}> processed")
 
+        # Todo Move orphanage to the beginning to ensure that it is loaded first.
         if self._use_orphanage and self._orphanage_external_id not in loaded_assets:
             logging.warning(f"Orphanage with external id {self._orphanage_external_id} not found in asset hierarchy!")
             logging.warning(f"Adding default orphanage with external id {self._orphanage_external_id}")
             now = str(datetime.now(UTC))
+            if self._use_labels:
+                yield LabelDefinitionWrite(
+                    external_id="Orphanage", name="Orphanage", data_set_id=self._label_data_set_id
+                )
+
             yield AssetWrite(
                 external_id=self._orphanage_external_id,
                 name="Orphanage",
                 data_set_id=self._data_set_id,
                 parent_external_id=None,
                 description="Used to store all assets which parent does not exist",
-                labels=["Orphanage", "non-historic"] if self._use_labels else None,
+                labels=["Orphanage", self._non_historic_label] if self._use_labels else None,
                 metadata={
                     self._metadata_keys.type: "Orphanage",
                     "cdfResourceType": "Asset",
@@ -179,23 +214,6 @@ class AssetLoader(CogniteLoader[AssetResource]):
                     self._metadata_keys.active: "true",
                 },
             )
-
-    def _prepare_instance_data(
-        self, instance_id: str, properties_values: Iterable[ResultRow]
-    ) -> dict[str, str | list[str]]:
-        properties_value_tuples: list[tuple[str, str]] = [
-            remove_namespace(prop, value) for _, prop, value in properties_values  # type: ignore[misc]
-        ]
-        # We add an identifier which will be used as fallback for external_id
-        properties_value_tuples.append((self._identifier, remove_namespace(instance_id)))
-        values_by_property: dict[str, str | list[str]] = {}
-        for prop, values in groupby(sorted(properties_value_tuples), lambda x: x[0]):
-            values_list: list[str] = [value for _, value in values]  # type: ignore[misc, has-type]
-            if len(values_list) == 1:
-                values_by_property[prop] = values_list[0]
-            else:
-                values_by_property[prop] = values_list
-        return values_by_property
 
     @overload
     def load_assets(self, stop_on_exception: Literal[True]) -> Iterable[AssetWrite]:
@@ -216,9 +234,11 @@ class AssetLoader(CogniteLoader[AssetResource]):
         raise NotImplementedError
 
     def _to_asset(
-        self, properties: list[Property], values_by_property: dict[str, str | list[str]], class_name: str
+        self, properties: list[Property], properties_values: Iterable[ResultRow], instance_id: str, class_name: str
     ) -> AssetWrite:
-        asset_raw = self._load_asset_data(properties, values_by_property, class_name)
+        """Converts a set of properties and values to an AssetWrite object."""
+        values_by_property = self._prepare_instance_data(instance_id, properties_values)
+        asset_raw = self._load_asset_data(properties, values_by_property, instance_id, class_name)
 
         # Loading Asset assumes camel case.
         # Todo Change rules to use camel case?
@@ -233,29 +253,95 @@ class AssetLoader(CogniteLoader[AssetResource]):
         return AssetWrite.load(asset_raw)
 
     def _load_asset_data(
-        self, properties: list[Property], values_by_property: dict[str, str | list[str]], class_name: str
+        self,
+        properties: list[Property],
+        values_by_property: dict[str, str | list[str]],
+        instance_id: str,
+        class_name: str,
     ) -> dict[str, Any]:
+        """Creates a raw asset dict from a set of properties and values."""
         asset_raw, missing_metadata_properties = self._load_instance_data(properties, values_by_property)
 
-        identifier = cast(str, values_by_property[self._identifier])
-
-        self._append_missing_properties(asset_raw, missing_metadata_properties, identifier, class_name)
+        self._append_missing_properties(asset_raw, missing_metadata_properties, instance_id, class_name)
 
         asset_raw["dataSetId"] = self._data_set_id
 
         # Neat specific metadata keys
         if self._use_labels:
-            asset_raw["labels"] = [class_name, "non-historic"]
+            asset_raw["labels"] = [class_name, self._non_historic_label]
         now = str(datetime.now(UTC))
         asset_raw["metadata"][self._metadata_keys.start_time] = now
         asset_raw["metadata"][self._metadata_keys.update_time] = now
-        asset_raw["metadata"][self._metadata_keys.identifier] = identifier
+        asset_raw["metadata"][self._metadata_keys.identifier] = instance_id
         asset_raw["metadata"][self._metadata_keys.active] = "true"
         asset_raw["metadata"][self._metadata_keys.type] = class_name
 
-        # Rename metadata keys
+        # Rename metadata keys based on configuration
         asset_raw["metadata"] = {self._metadata_key_aliases.get(k, k): v for k, v in asset_raw["metadata"].items()}
         return asset_raw
+
+    def _prepare_instance_data(
+        self, instance_id: str, properties_values: Iterable[ResultRow]
+    ) -> dict[str, str | list[str]]:
+        """Groups the properties and values by property type.
+
+        Returns:
+            A dictionary with property type as key and a list of values as value.
+        """
+        properties_value_tuples: list[tuple[str, str]] = [
+            remove_namespace(prop, value) for _, prop, value in properties_values  # type: ignore[misc]
+        ]
+        # We add an identifier which will be used as fallback for external_id
+        properties_value_tuples.append((self._identifier, remove_namespace(instance_id)))
+        values_by_property: dict[str, str | list[str]] = {}
+        for prop, values in groupby(sorted(properties_value_tuples), lambda x: x[0]):
+            values_list: list[str] = [value for _, value in values]  # type: ignore[misc, has-type]
+            if len(values_list) == 1:
+                values_by_property[prop] = values_list[0]
+            else:
+                values_by_property[prop] = values_list
+        return values_by_property
+
+    def _load_instance_data(
+        self, properties: list[Property], values_by_property: dict[str, str | list[str]]
+    ) -> tuple[dict[str, Any], set[str]]:
+        """This function loads the instance data into a raw asset dict. It also returns a set of metadata keys that
+        were not found in the instance data.
+
+        Returns:
+            A tuple with the raw asset dict and a set of metadata keys that were not found in the instance data.
+        """
+        asset_raw: dict[str, Any] = {"metadata": {}}
+        missing_metadata_properties: set[str] = set()
+        for prop in properties:
+            if prop.property_name is None:
+                continue
+            # Todo in the original rdf2assets, this is done, however, it seems wrong.
+            #   why write the same value to multiple places?
+            #   I expected that if a property is a relationship, then it should not be written to metadata
+            is_relationship = "Asset" not in prop.cdf_resource_type
+            if prop.property_name not in values_by_property:
+                for property_type in prop.resource_type_property or []:
+                    if property_type.casefold() == "metadata":
+                        missing_metadata_properties.add(prop.property_name)
+                    else:
+                        # Todo This is done in the original rdf2assets, however, it seems wrong.
+                        missing_metadata_properties.add(prop.property_name)
+                continue
+            values = values_by_property[prop.property_name]
+            for property_type in prop.resource_type_property or []:
+                if property_type.casefold() == "metadata":
+                    asset_raw["metadata"][prop.property_name] = self._to_metadata_value(values)
+                else:
+                    if property_type not in asset_raw:
+                        asset_raw[property_type] = values
+                    # Todo This is done in the original rdf2assets, however, it seems wrong.
+                    if prop.property_name not in asset_raw["metadata"]:
+                        asset_raw["metadata"][prop.property_name] = self._to_metadata_value(values)
+            if is_relationship:
+                asset_raw["metadata"][prop.property_name] = self._to_metadata_value(values)
+
+        return asset_raw, missing_metadata_properties
 
     def _append_missing_properties(
         self, asset_raw: dict[str, Any], missing_metadata_properties: set[str], identifier: str, class_name: str
@@ -315,42 +401,8 @@ class AssetLoader(CogniteLoader[AssetResource]):
                 asset_raw["metadata"][metadata_key] = self._default_metadata_value
                 logging.debug(f"\tKey {metadata_key} added to <{external_id}> metadata!")
 
-    def _load_instance_data(
-        self, properties: list[Property], values_by_property: dict[str, str | list[str]]
-    ) -> tuple[dict[str, Any], set[str]]:
-        asset_raw: dict[str, Any] = {"metadata": {}}
-        missing_metadata_properties: set[str] = set()
-        for prop in properties:
-            if prop.property_name is None:
-                continue
-            # Todo in the original rdf2assets, this is done, however, it seems wrong.
-            #   why write the same value to multiple places?
-            #   I expected that if a property is a relationship, then it should not be written to metadata
-            is_relationship = "Asset" not in prop.cdf_resource_type
-            if prop.property_name not in values_by_property:
-                for property_type in prop.resource_type_property or []:
-                    if property_type.casefold() == "metadata":
-                        missing_metadata_properties.add(prop.property_name)
-                    else:
-                        # Todo This is done in the original rdf2assets, however, it seems wrong.
-                        missing_metadata_properties.add(prop.property_name)
-                continue
-            values = values_by_property[prop.property_name]
-            for property_type in prop.resource_type_property or []:
-                if property_type.casefold() == "metadata":
-                    asset_raw["metadata"][prop.property_name] = self._to_metadata_value(values)
-                else:
-                    if property_type not in asset_raw:
-                        asset_raw[property_type] = values
-                    # Todo This is done in the original rdf2assets, however, it seems wrong.
-                    if prop.property_name not in asset_raw["metadata"]:
-                        asset_raw["metadata"][prop.property_name] = self._to_metadata_value(values)
-            if is_relationship:
-                asset_raw["metadata"][prop.property_name] = self._to_metadata_value(values)
-
-        return asset_raw, missing_metadata_properties
-
     @staticmethod
     def _to_metadata_value(values: str | list[str]) -> str:
+        """A helper function to convert a list of values to a metadata value string respecting metadata value length."""
         # Sorting for deterministic results
         return values if isinstance(values, str) else ", ".join(sorted(values))[: METADATA_VALUE_MAX_LENGTH - 1]
