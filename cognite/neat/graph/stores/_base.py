@@ -8,7 +8,7 @@ from typing import Literal, TypeAlias, cast
 
 import pandas as pd
 from prometheus_client import Gauge, Summary
-from rdflib import Graph, Namespace
+from rdflib import Graph, Namespace, URIRef
 from rdflib.query import Result
 
 from cognite.neat.constants import DEFAULT_NAMESPACE, PREFIXES
@@ -202,6 +202,21 @@ class NeatGraphStoreBase(ABC):
 
         """
         return _DelayedQuery(self.graph, query)
+
+    def list_instances_of_class(self, class_uri: URIRef, limit: int = -1) -> list[URIRef]:
+        """Get instances ids for a given class
+
+        Args:
+            class_uri: Class for which instances are to be found
+            limit: Max number of instances to return, by default -1 meaning all instances
+
+        Returns:
+            List of class instance URIs
+        """
+        query_statement = "SELECT DISTINCT ?subject WHERE { ?subject a <class> .} LIMIT X".replace(
+            "class", class_uri
+        ).replace("LIMIT X", "" if limit == -1 else f"LIMIT {limit}")
+        return [cast(tuple, res)[0] for res in list(self.query(query_statement))]
 
     @abstractmethod
     def drop(self) -> None:

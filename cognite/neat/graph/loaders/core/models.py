@@ -67,7 +67,7 @@ class AssetTemplate(BaseModel):
                 msg += f"has multiple values {values[field]}, "
                 msg += f"these values will be joined in a single string: {', '.join(values[field])}"
                 logging.info(msg)
-                values[field] = ", ".join(values[field])[: METADATA_VALUE_MAX_LENGTH - 1]
+                values[field] = ", ".join(sorted(values[field]))[: METADATA_VALUE_MAX_LENGTH - 1]
 
             # Repair: in case if external_id or parent_external_id are lists, we take the first value
             elif field in ["external_id", "parent_external_id"] and isinstance(values[field], list):
@@ -91,7 +91,7 @@ class AssetTemplate(BaseModel):
     def to_list_if_comma(cls, value):
         for key, v in value.items():
             if isinstance(v, list):
-                value[key] = ", ".join(v)[: METADATA_VALUE_MAX_LENGTH - 1]
+                value[key] = ", ".join(sorted(v))[: METADATA_VALUE_MAX_LENGTH - 1]
         return value
 
     @validator("metadata")

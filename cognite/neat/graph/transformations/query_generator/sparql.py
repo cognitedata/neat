@@ -353,9 +353,9 @@ def _hop2property_path(graph: Graph, hop: Hop, prefixes: dict[str, Namespace]) -
             (current_step, previous_step) if current_step.direction == "source" else (previous_step, current_step)
         )
 
-        predicate = compress_uri(
-            _get_predicate_id(graph, sub_entity.class_.id, obj_entity.class_.id, prefixes), prefixes
-        )
+        predicate_raw = _get_predicate_id(graph, sub_entity.class_.id, obj_entity.class_.id, prefixes)
+
+        predicate = compress_uri(predicate_raw, prefixes)
 
         predicate = f"^{predicate}" if current_step.direction == "source" else predicate
         property_path += f"{predicate}/"
