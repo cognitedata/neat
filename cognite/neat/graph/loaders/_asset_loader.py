@@ -1,7 +1,7 @@
 import logging
 import sys
 from collections import defaultdict
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable
 from dataclasses import dataclass, fields
 from datetime import datetime
 from itertools import groupby
@@ -135,13 +135,7 @@ class AssetLoader(CogniteLoader[AssetResource]):
             logging.debug(f"Processing class <{class_uri}>.")
 
             try:
-                query = (
-                    f"SELECT ?instance ?prop ?value "
-                    f"WHERE {{ ?instance rdf:type <{class_uri}> . ?instance ?prop ?value . }} order by ?instance "
-                )
-                logging.info(query)
-                # Select queries gives an iterable of result rows
-                result = cast(Sequence[ResultRow], self.graph_store.query(query))
+                result = self.graph_store.queries.list_instances_of_type(class_uri)
             except Exception as e:
                 logging.error(f"Error while loading instances of class <{class_uri}> into cache. Reason: {e}")
                 if stop_on_exception:
@@ -225,13 +219,18 @@ class AssetLoader(CogniteLoader[AssetResource]):
         self, properties: list[Property], values_by_property: dict[str, str | list[str]], class_name: str
     ) -> AssetWrite:
         asset_raw = self._load_asset_data(properties, values_by_property, class_name)
-        try:
-            asset = AssetWrite.load(asset_raw)
-        except KeyError as e:
-            # Not possible to reach as we set a default name which is the only required property
-            logging.error(f"Error while loading asset {asset_raw['external_id']}. Reason: {e}")
-            raise e
-        return asset
+
+        # Loading Asset assumes camel case.
+        # Todo Change rules to use camel case?
+        for snake_case, came_case in [
+            ("external_id", "externalId"),
+            ("parent_external_id", "parentExternalId"),
+            ("geo_location", "geoLocation"),
+        ]:
+            if snake_case in asset_raw:
+                asset_raw[came_case] = asset_raw.pop(snake_case)
+
+        return AssetWrite.load(asset_raw)
 
     def _load_asset_data(
         self, properties: list[Property], values_by_property: dict[str, str | list[str]], class_name: str
@@ -239,7 +238,10 @@ class AssetLoader(CogniteLoader[AssetResource]):
         asset_raw, missing_metadata_properties = self._load_instance_data(properties, values_by_property)
 
         identifier = cast(str, values_by_property[self._identifier])
+
         self._append_missing_properties(asset_raw, missing_metadata_properties, identifier, class_name)
+
+        asset_raw["dataSetId"] = self._data_set_id
 
         # Neat specific metadata keys
         if self._use_labels:
@@ -253,23 +255,14 @@ class AssetLoader(CogniteLoader[AssetResource]):
 
         # Rename metadata keys
         asset_raw["metadata"] = {self._metadata_key_aliases.get(k, k): v for k, v in asset_raw["metadata"].items()}
-
-        # Loading Asset assumes camel case.
-        for snake_case, came_case in [
-            ("external_id", "externalId"),
-            ("parent_external_id", "parentExternalId"),
-            ("geo_location", "geoLocation"),
-        ]:
-            if snake_case in asset_raw:
-                asset_raw[came_case] = asset_raw.pop(snake_case)
-
-        asset_raw["dataSetId"] = self._data_set_id
-
         return asset_raw
 
     def _append_missing_properties(
         self, asset_raw: dict[str, Any], missing_metadata_properties: set[str], identifier: str, class_name: str
     ) -> None:
+        """This function ensures that the raw asset dict has all the required properties such as external_id, name,
+        and parent_external_id. It also ensures that the metadata dict has all the required keys."""
+
         if "external_id" not in asset_raw:
             msg = f"Missing external_id for {class_name} instance {identifier}. Using value <{identifier}>."
             logging.debug(msg)
