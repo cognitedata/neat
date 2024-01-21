@@ -228,6 +228,23 @@ class AssetLoader(CogniteLoader[AssetResource]):
             if isinstance(asset_resource, AssetWrite):
                 yield asset_resource
 
+    @overload
+    def load_relationships(self, stop_on_exception: Literal[True]) -> Iterable[RelationshipWrite]:
+        ...
+
+    @overload
+    def load_relationships(
+        self, stop_on_exception: Literal[False] = False
+    ) -> Iterable[RelationshipWrite | ErrorDetails]:
+        ...
+
+    def load_relationships(
+        self, stop_on_exception: Literal[True, False] = False
+    ) -> Iterable[RelationshipWrite | ErrorDetails]:
+        for asset_resource in self.load(stop_on_exception):
+            if isinstance(asset_resource, RelationshipWrite):
+                yield asset_resource
+
     def load_to_cdf(
         self, client: CogniteClient, batch_size: int | None = 1000, max_retries: int = 1, retry_delay: int = 3
     ) -> None:
