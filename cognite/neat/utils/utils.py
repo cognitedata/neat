@@ -206,7 +206,7 @@ def prettify_generation_order(generation_order: dict, depth: dict | None = None,
     return OrderedDict(sorted(depth.items(), key=lambda item: item[1]))
 
 
-def epoch_now_ms():
+def epoch_now_ms() -> int:
     return int((datetime.now(UTC) - datetime(1970, 1, 1, tzinfo=UTC)).total_seconds() * 1000)
 
 

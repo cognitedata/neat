@@ -8,7 +8,7 @@ from itertools import groupby
 from typing import Any, Literal, overload
 
 from cognite.client import CogniteClient
-from cognite.client.data_classes import AssetWrite, LabelDefinitionWrite, RelationshipWrite
+from cognite.client.data_classes import AssetWrite, LabelDefinitionWrite, RelationshipWrite, RelationshipWriteList
 from pydantic_core import ErrorDetails
 from rdflib.query import ResultRow
 
@@ -16,6 +16,7 @@ from cognite.neat.graph.stores import NeatGraphStoreBase
 from cognite.neat.rules.models import Rules
 from cognite.neat.rules.models.rules import Property
 from cognite.neat.utils import remove_namespace
+from cognite.neat.utils.utils import epoch_now_ms
 
 from ._base import CogniteLoader
 
@@ -108,6 +109,10 @@ class AssetLoader(CogniteLoader[AssetResource]):
         # This is used in a hot loop, so we cache it
         self._metadata_key_aliases = self._metadata_keys.as_aliases()
 
+        # State:
+        self._loaded_assets: set[str] = set()
+        self._loaded_labels: set[str] = set()
+
     @overload
     def load(self, stop_on_exception: Literal[True]) -> Iterable[AssetResource]:
         ...
@@ -126,16 +131,16 @@ class AssetLoader(CogniteLoader[AssetResource]):
             properties_by_class_name[prop.class_id].append(prop)
 
         if self._use_labels:
+            self._loaded_labels.add(self._non_historic_label)
             yield LabelDefinitionWrite(
                 external_id=self._non_historic_label, name=self._non_historic_label, data_set_id=self._label_data_set_id
             )
 
         # Todo Extend rules to sort topological sorting to ensure that parents are loaded before children
-
-        loaded_assets: set[str] = set()
         counter = 0
         for class_name in self.rules.classes.keys():
             if self._use_labels:
+                self._loaded_labels.add(class_name)
                 yield LabelDefinitionWrite(external_id=class_name, name=class_name, data_set_id=self._label_data_set_id)
 
             class_uri = namespace[class_name]
@@ -157,29 +162,62 @@ class AssetLoader(CogniteLoader[AssetResource]):
 
             logging.debug(f"Class <{class_name}> has {len(result)} instances")
 
-            for instance_id, properties_values in groupby(result, lambda x: x[0]):
+            for instance_uri, properties_values in groupby(result, lambda x: x[0]):
+                instance_id = remove_namespace(instance_uri)
+                values_by_property = self._prepare_instance_data(instance_id, properties_values)
                 try:
-                    asset = self._to_asset(
+                    asset = self._load_asset(
                         properties_by_class_name[class_name],
-                        properties_values,
-                        remove_namespace(instance_id),
+                        values_by_property,
+                        instance_id,
                         class_name,
                     )
                 except Exception as e:
-                    logging.error(f"Error while loading instance <{instance_id}>. Reason: {e}")
+                    logging.error(f"Error while loading asset from instance <{instance_id}>. Reason: {e}")
                     if stop_on_exception:
                         raise e
                     yield ErrorDetails(
                         input={"instance_id": instance_id},
                         loc=("AssetLoader", "load"),
-                        msg=f"Error while loading instance <{instance_id}>. Reason: {e}",
+                        msg=f"Error while loading asset from <{instance_id}>. Reason: {e}",
                         type=f"Exception of type {type(e).__name__} occurred when processing instance of {class_name}",
                     )
                     continue
+                else:
+                    # We know that external_id is always set
+                    self._loaded_assets.add(asset.external_id)  # type: ignore[arg-type]
+                    yield asset
 
-                # We know that external_id is always set
-                loaded_assets.add(asset.external_id)  # type: ignore[arg-type]
-                yield asset
+                try:
+                    relationships = self._load_relationships(
+                        properties_by_class_name[class_name],
+                        values_by_property,
+                        remove_namespace(instance_id),
+                        class_name,
+                    )
+                except Exception as e:
+                    logging.error(f"Error while loading relationships from instance <{instance_id}>. Reason: {e}")
+                    if stop_on_exception:
+                        raise e
+                    yield ErrorDetails(
+                        input={"instance_id": instance_id},
+                        loc=("AssetLoader", "load"),
+                        msg=f"Error while loading relationships from <{instance_id}>. Reason: {e}",
+                        type=f"Exception of type {type(e).__name__} occurred when processing instance of {class_name}",
+                    )
+                    continue
+                else:
+                    for relationship in relationships:
+                        for label in relationship.labels or []:
+                            if label.external_id and label.external_id not in self._loaded_labels:
+                                self._loaded_labels.add(label.external_id)
+                                yield LabelDefinitionWrite(
+                                    name=label.external_id,
+                                    external_id=label.external_id,
+                                    data_set_id=self._label_data_set_id,
+                                )
+
+                    yield from relationships
 
                 counter += 1
                 # log every 10000 assets
@@ -189,7 +227,7 @@ class AssetLoader(CogniteLoader[AssetResource]):
             logging.debug(f"Class <{class_name}> processed")
 
         # Todo Move orphanage to the beginning to ensure that it is loaded first.
-        if self._use_orphanage and self._orphanage_external_id not in loaded_assets:
+        if self._use_orphanage and self._orphanage_external_id not in self._loaded_assets:
             logging.warning(f"Orphanage with external id {self._orphanage_external_id} not found in asset hierarchy!")
             logging.warning(f"Adding default orphanage with external id {self._orphanage_external_id}")
             now = str(datetime.now(UTC))
@@ -250,11 +288,10 @@ class AssetLoader(CogniteLoader[AssetResource]):
     ) -> None:
         raise NotImplementedError
 
-    def _to_asset(
-        self, properties: list[Property], properties_values: Iterable[ResultRow], instance_id: str, class_name: str
+    def _load_asset(
+        self, properties: list[Property], values_by_property: dict[str, str | list[str]], instance_id, class_name: str
     ) -> AssetWrite:
         """Converts a set of properties and values to an AssetWrite object."""
-        values_by_property = self._prepare_instance_data(instance_id, properties_values)
         asset_raw = self._load_asset_data(properties, values_by_property, instance_id, class_name)
 
         # Loading Asset assumes camel case.
@@ -423,3 +460,54 @@ class AssetLoader(CogniteLoader[AssetResource]):
         """A helper function to convert a list of values to a metadata value string respecting metadata value length."""
         # Sorting for deterministic results
         return values if isinstance(values, str) else ", ".join(sorted(values))[: METADATA_VALUE_MAX_LENGTH - 1]
+
+    def _load_relationships(
+        self,
+        properties: list[Property],
+        values_by_property: dict[str, str | list[str]],
+        instance_id: str,
+        class_name: str,
+    ) -> RelationshipWriteList:
+        """Converts a set of properties and values to a RelationshipWriteList object."""
+        relationships = RelationshipWriteList([])
+        relationship_properties = [prop for prop in properties if "Relationship" in prop.cdf_resource_type]
+        epoch_now = epoch_now_ms()
+        for prop in relationship_properties:
+            if not prop.property_name:
+                continue
+            values = values_by_property.get(prop.property_name, [])
+            if not values:
+                continue
+            value_list = [values] if isinstance(values, str) else values
+            for value in value_list:
+                relationship = self._load_relationship(prop, value, instance_id, class_name, epoch_now)
+                relationships.append(relationship)
+
+        return relationships
+
+    def _load_relationship(
+        self,
+        prop: Property,
+        target_id: str,
+        instance_id: str,
+        class_name: str,
+        epoch_now: int,
+    ) -> RelationshipWrite:
+        """Converts a set of properties and values to a RelationshipWrite object."""
+        prefix = self._asset_external_id_prefix or ""
+        labels = (
+            [class_name, self._non_historic_label, prop.expected_value_type.suffix, prop.property_id]
+            if self._use_labels
+            else None
+        )
+        relationship_raw = {
+            "externalId": f"{prefix}{instance_id}:{prefix}{target_id}",
+            "sourceExternalId": f"{prefix}{instance_id}",
+            "targetExternalId": f"{prefix}{target_id}",
+            "sourceType": prop.source_type,
+            "targetType": prop.target_type,
+            "dataSetId": self._data_set_id,
+            "labels": labels,
+            "startTime": epoch_now,
+        }
+        return RelationshipWrite.load(relationship_raw)
