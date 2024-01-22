@@ -336,10 +336,6 @@ def _relationships_to_resurrect(external_ids: Collection[str]) -> list[Relations
     return relationships
 
 
-class Lite:
-    pass
-
-
 @overload
 def categorize_relationships(
     client: CogniteClient,
