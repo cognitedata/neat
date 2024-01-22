@@ -49,14 +49,12 @@ class TestAssetLoader:
 
         loaded = list(loader.load_relationships(stop_on_exception=False))
 
-        expected_relationships = {
-            relationship["external_id"]: relationship
-            for relationship in rdf2relationships(
-                store, transformation_rules, data_set_id=123456, stop_on_exception=False
-            ).to_dict(orient="records")
-        }
+        relationship_df = rdf2relationships(store, transformation_rules, data_set_id=123456, stop_on_exception=False)
 
         # Need some extra processing to get the same format as expected_relationships
+        expected_relationships = {
+            relationship["external_id"]: relationship for relationship in relationship_df.to_dict(orient="records")
+        }
         actual_dumped: dict[str, dict[str, Any]] = {}
         for relationship in loaded:
             dumped = relationship.dump(camel_case=False)
