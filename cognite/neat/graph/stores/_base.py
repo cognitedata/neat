@@ -8,8 +8,8 @@ from typing import Literal, TypeAlias, cast
 
 import pandas as pd
 from prometheus_client import Gauge, Summary
-from rdflib import Graph, Namespace
-from rdflib.query import Result
+from rdflib import Graph, Namespace, URIRef
+from rdflib.query import Result, ResultRow
 
 from cognite.neat.constants import DEFAULT_NAMESPACE, PREFIXES
 from cognite.neat.graph.models import Triple
@@ -62,6 +62,7 @@ class NeatGraphStoreBase(ABC):
         self.graph_name: str | None = None
         self.internal_storage_dir_orig: Path | None = None
         self.storage_dirs_to_delete: list[Path] = []
+        self.queries = _Queries(self)
 
     @classmethod
     def from_rules(cls, rules: Rules) -> Self:
@@ -317,3 +318,42 @@ class _DelayedQuery(Iterable):
         prom_qsm.labels("query").observe(elapsed_time)
         prom_sq.labels("query").set(elapsed_time)
         return cast(Iterator[Triple], iter(result))
+
+
+class _Queries:
+    """Helper class for storing standard queries for the graph store."""
+
+    def __init__(self, store: NeatGraphStoreBase):
+        self.store = store
+
+    def list_instances_ids_of_class(self, class_uri: URIRef, limit: int = -1) -> list[URIRef]:
+        """Get instances ids for a given class
+
+        Args:
+            class_uri: Class for which instances are to be found
+            limit: Max number of instances to return, by default -1 meaning all instances
+
+        Returns:
+            List of class instance URIs
+        """
+        query_statement = "SELECT DISTINCT ?subject WHERE { ?subject a <class> .} LIMIT X".replace(
+            "class", class_uri
+        ).replace("LIMIT X", "" if limit == -1 else f"LIMIT {limit}")
+        return [cast(tuple, res)[0] for res in list(self.store.query(query_statement))]
+
+    def list_instances_of_type(self, class_uri: URIRef) -> list[ResultRow]:
+        """Get all triples for instances of a given class
+
+        Args:
+            class_uri: Class for which instances are to be found
+
+        Returns:
+            List of triples for instances of the given class
+        """
+        query = (
+            f"SELECT ?instance ?prop ?value "
+            f"WHERE {{ ?instance rdf:type <{class_uri}> . ?instance ?prop ?value . }} order by ?instance "
+        )
+        logging.info(query)
+        # Select queries gives an iterable of result rows
+        return cast(list[ResultRow], list(self.store.query(query)))
