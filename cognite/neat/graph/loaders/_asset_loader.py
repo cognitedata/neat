@@ -75,7 +75,10 @@ class AssetLoader(CogniteLoader[AssetResource]):
             the metadata key will be omitted. Setting this to an empty string will set the metadata key to an empty
              string, thus ensuring that all assets have the metadata keys.
         metadata_keys: Metadata key names to use
-
+        always_store_in_metadata: Whether to store all properties in metadata. This will be the same as setting
+            resource_type_property to metadata for all properties. For example, if you have the property `Terminal.name`
+            set with resource_type_property = ["name"], then the property will be stored in metadata as
+            `Terminal.name=<Value>`. This also includes properties that are relationships.
     """
 
     # This is guaranteed ot be in the data
@@ -94,6 +97,7 @@ class AssetLoader(CogniteLoader[AssetResource]):
         asset_external_id_prefix: str | None = None,
         default_metadata_value: str | None = "",
         metadata_keys: AssetLoaderMetadataKeys | None = None,
+        always_store_in_metadata: bool = False,
     ):
         super().__init__(rules, graph_store)
         self._data_set_id = data_set_id
@@ -108,6 +112,7 @@ class AssetLoader(CogniteLoader[AssetResource]):
         self._metadata_keys = metadata_keys or AssetLoaderMetadataKeys()
         # This is used in a hot loop, so we cache it
         self._metadata_key_aliases = self._metadata_keys.as_aliases()
+        self._always_store_in_metadata = always_store_in_metadata
 
         # State:
         self._loaded_assets: set[str] = set()
@@ -370,16 +375,15 @@ class AssetLoader(CogniteLoader[AssetResource]):
         for prop in properties:
             if prop.property_name is None:
                 continue
-            # Todo in the original rdf2assets, this is done, however, it seems wrong.
-            #   why write the same value to multiple places?
-            #   I expected that if a property is a relationship, then it should not be written to metadata
             is_relationship = "Asset" not in prop.cdf_resource_type
+            if not self._always_store_in_metadata and is_relationship:
+                continue
+
             if prop.property_name not in values_by_property:
                 for property_type in prop.resource_type_property or []:
                     if property_type.casefold() == "metadata":
                         missing_metadata_properties.add(prop.property_name)
-                    else:
-                        # Todo This is done in the original rdf2assets, however, it seems wrong.
+                    elif self._always_store_in_metadata:
                         missing_metadata_properties.add(prop.property_name)
                 continue
             values = values_by_property[prop.property_name]
@@ -389,8 +393,7 @@ class AssetLoader(CogniteLoader[AssetResource]):
                 else:
                     if property_type not in asset_raw:
                         asset_raw[property_type] = values
-                    # Todo This is done in the original rdf2assets, however, it seems wrong.
-                    if prop.property_name not in asset_raw["metadata"]:
+                    if self._always_store_in_metadata and prop.property_name not in asset_raw["metadata"]:
                         asset_raw["metadata"][prop.property_name] = self._to_metadata_value(values)
             if is_relationship:
                 asset_raw["metadata"][prop.property_name] = self._to_metadata_value(values)

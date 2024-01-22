@@ -14,7 +14,7 @@ class TestAssetLoader:
     @pytest.mark.freeze_time("2024-01-01")
     def test_vs_existing_rdf2assets(self, transformation_rules: Rules, solution_knowledge_graph: Graph):
         store = MemoryStore(solution_knowledge_graph)
-        loader = AssetLoader(transformation_rules, store, data_set_id=123456)
+        loader = AssetLoader(transformation_rules, store, data_set_id=123456, always_store_in_metadata=True)
 
         loaded = list(loader.load_assets(stop_on_exception=False))
 
