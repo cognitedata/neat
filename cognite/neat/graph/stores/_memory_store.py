@@ -1,8 +1,10 @@
 import logging
+import pandas as pd
 
-from rdflib import Graph, Namespace
+from rdflib import Graph, Literal, Namespace, URIRef
 
 from cognite.neat.constants import DEFAULT_NAMESPACE, PREFIXES
+from cognite.neat.utils.utils import remove_namespace
 
 from ._base import NeatGraphStoreBase
 
@@ -41,3 +43,16 @@ class MemoryStore(NeatGraphStoreBase):
         # otherwise we would lose the prefixes and bindings, which fails
         # workflow
         self.reinit_graph()
+
+
+class OpenWorld(MemoryStore):
+    def describe(self, uri: str | URIRef, language: str = "en"):
+        data = []
+        for _, p, o in list(self.query(f"DESCRIBE <{uri}>")):
+            if isinstance(o, Literal) and o.language and o.language == language:
+                data.append({"Property": remove_namespace(p), "Value": o})
+            elif isinstance(o, Literal) and not o.language:
+                data.append({"Property": remove_namespace(p), "Value": o})
+            elif isinstance(o, URIRef):
+                data.append({"Property": remove_namespace(p), "Value": remove_namespace(o)})
+        return pd.DataFrame(data)

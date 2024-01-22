@@ -1,6 +1,6 @@
 from ._base import NeatGraphStoreBase
 from ._graphdb_store import GraphDBStore
-from ._memory_store import MemoryStore
+from ._memory_store import MemoryStore, OpenWorld
 from ._oxigraph_store import OxiGraphStore
 
 STORE_BY_TYPE: dict[str, type[NeatGraphStoreBase]] = {}
@@ -10,4 +10,12 @@ for store in NeatGraphStoreBase.__subclasses__():
 del store  # Cleanup namespace
 AVAILABLE_STORES = set(STORE_BY_TYPE.keys())
 
-__all__ = ["NeatGraphStoreBase", "MemoryStore", "OxiGraphStore", "GraphDBStore", "STORE_BY_TYPE", "AVAILABLE_STORES"]
+__all__ = [
+    "NeatGraphStoreBase",
+    "MemoryStore",
+    "OxiGraphStore",
+    "GraphDBStore",
+    "OpenWorld",
+    "STORE_BY_TYPE",
+    "AVAILABLE_STORES",
+]
