@@ -89,7 +89,7 @@ The definitions in the sheets above are converted by `NEAT` into [DMS Data Model
 ![Rules: Properties Sheet](./figs/dm2cdf-mapping.png)
 
 
-Such mapping is not needed if data model is resolved as Flexible Data Model (i.e., DMS Data Model, Containers and Views).
+This mapping is not needed when the data model is resolved for the Cognite Data Modeling service (i.e., DMS Data Model, Containers and Views).
 
 
 ## Source to Solution Data Model and Knowledge Graph Mapping

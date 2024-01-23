@@ -1,5 +1,5 @@
 description: A model for storing capacity bids
-external_id: CapacityBid
+externalId: CapacityBid
 name: CapacityBid
 space: power
 version: "1"
@@ -52,13 +52,13 @@ views:
         description: missing
       BidInterval:
         container:
-          external_id: BidDocumentHeader
+          externalId: BidDocumentHeader
           space: power
-        container_property_identifier: BidInterval
+        containerPropertyIdentifier: BidInterval
         description: missing
         name: BidInterval
         source:
-          external_id: BidInterval
+          externalId: BidInterval
           space: power
           version: "1"
       Country:
@@ -181,13 +181,13 @@ views:
         description: missing
       TimeInterval:
         container:
-          external_id: Periods
+          externalId: Periods
           space: power
-        container_property_identifier: TimeInterval
+        containerPropertyIdentifier: TimeInterval
         description: missing
         name: TimeInterval
         source:
-          external_id: TimeInterval
+          externalId: TimeInterval
           space: power
           version: "1"
       BidCurves:

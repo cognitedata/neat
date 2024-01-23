@@ -4,8 +4,6 @@ from rdflib import Graph, Namespace
 
 from cognite.neat.constants import DEFAULT_NAMESPACE, DEFAULT_URI, PREFIXES
 
-__all__ = ["rdf_file_to_graph"]
-
 
 def rdf_file_to_graph(
     filepath: Path,

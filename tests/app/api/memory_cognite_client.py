@@ -5,11 +5,11 @@ from typing import Any, Literal, TypeVar
 from cognite.client._constants import DEFAULT_LIMIT_READ
 from cognite.client.data_classes import (
     Asset,
-    AssetAggregate,
     AssetFilter,
     AssetHierarchy,
     AssetList,
     AssetUpdate,
+    CountAggregate,
     GeoLocationFilter,
     LabelDefinition,
     LabelDefinitionList,
@@ -21,7 +21,6 @@ from cognite.client.data_classes import (
     TimestampRange,
 )
 from cognite.client.data_classes._base import CogniteFilter, T_CogniteResource, T_CogniteResourceList
-from cognite.client.data_classes.shared import AggregateBucketResult
 from cognite.client.testing import monkeypatch_cognite_client
 from cognite.client.utils._identifier import Identifier, IdentifierSequence, SingletonIdentifierSequence
 
@@ -92,7 +91,7 @@ class MemoryClient:
         exclude = exclude or set()
         iterable = (self._dump_item(item, ordered, exclude) for item in self._list_unique_in_store())
         if ordered:
-            return sorted(iterable, key=lambda x: x["external_id"])
+            return sorted(iterable, key=lambda x: x.get("external_id", x["externalId"]).casefold())
         return list(iterable)
 
     @classmethod
@@ -101,12 +100,12 @@ class MemoryClient:
         if ordered and "metadata" in dump:
             for key, value in list(dump["metadata"].items()):
                 if isinstance(value, list):
-                    dump["metadata"][key] = sorted(value)
+                    dump["metadata"][key] = sorted(value, key=lambda x: x.casefold())
 
         if "labels" in dump:
             # Labels are not properly dumped to dict.
             iterable = (label.dump() if hasattr(label, "dump") else label for label in dump["labels"])
-            dump["labels"] = sorted(iterable, key=lambda x: x["externalId"]) if ordered else list(iterable)
+            dump["labels"] = sorted(iterable, key=lambda x: x["externalId"].casefold()) if ordered else list(iterable)
         if exclude:
             for to_exclude in exclude:
                 keys = to_exclude.split(".")
@@ -186,16 +185,8 @@ class AssetsMemory(MemoryClient):
         identifiers = IdentifierSequence.load(ids=ids, external_ids=external_ids)
         return self._retrieve_multiple(identifiers=identifiers, ignore_unknown_ids=ignore_unknown_ids)
 
-    def aggregate(self, filter: AssetFilter | dict = None) -> list[AssetAggregate]:
-        return [AssetAggregate(count=len(self._list_unique_in_store()))]
-
-    def aggregate_metadata_keys(self, filter: AssetFilter | dict = None) -> Sequence[AggregateBucketResult]:
-        raise NotImplementedError()
-
-    def aggregate_metadata_values(
-        self, keys: Sequence[str], filter: AssetFilter | dict = None
-    ) -> Sequence[AggregateBucketResult]:
-        raise NotImplementedError()
+    def aggregate(self, filter: AssetFilter | dict = None) -> list[CountAggregate]:
+        return [CountAggregate(count=len(self._list_unique_in_store()))]
 
     def create(self, asset: Asset | Sequence[Asset]) -> Asset | AssetList:
         return self._create_multiple(items=asset)

@@ -1,6 +1,8 @@
 ## Graph to DMS
 Set of methods that wrangles knowledge graph into CDF nodes and edges stored in Data Model Storage (DMS)
-::: cognite.neat.graph.loaders.rdf_to_dms.rdf2nodes_and_edges
+::: cognite.neat.graph.loaders.BaseLoader
+::: cognite.neat.graph.loaders.CogniteLoader
+::: cognite.neat.graph.loaders.DMSLoader
 ::: cognite.neat.graph.loaders.rdf_to_dms.upload_nodes
 ::: cognite.neat.graph.loaders.rdf_to_dms.upload_edges
 

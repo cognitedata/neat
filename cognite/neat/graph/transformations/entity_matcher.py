@@ -3,11 +3,11 @@ from typing import cast
 
 from rdflib import Literal, URIRef
 
-from cognite.neat.graph.stores.graph_store import NeatGraphStore
+from cognite.neat.graph.stores import NeatGraphStoreBase
 
 
 def simple_entity_matcher(
-    graph_store: NeatGraphStore,
+    graph_store: NeatGraphStoreBase,
     source_class: str,
     source_property: str,
     source_value_type: str = "single_value_str",
@@ -25,7 +25,7 @@ def simple_entity_matcher(
     The matching_method can be either exact_match or regexp.
     If the source_value_type is multi_value_str, the values are split on comma and added as separate triples.
     Args:
-        graph_store (NeatGraphStore): The graph store to perform the matching on and add the links to
+        graph_store (NeatGraphStoreBase): The graph store to perform the matching on and add the links to
         source_class (str): The class of the source entities
         source_property (str): The property of the source entities to match on
         source_value_type (str, optional): The value type of the source property. Defaults to "single_value_str".

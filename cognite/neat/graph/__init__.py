@@ -1,3 +1,3 @@
-from .stores import NeatGraphStore
+from .stores import NeatGraphStoreBase
 
-__all__ = ["NeatGraphStore"]
+__all__ = ["NeatGraphStoreBase"]

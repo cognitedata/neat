@@ -8,6 +8,7 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import (
     DataModel,
     DirectRelation,
+    EdgeConnection,
     MappedProperty,
     SingleHopConnectionDefinition,
     View,
@@ -117,11 +118,15 @@ class DMSImporter(BaseImporter):
                         )
 
                     default_value = prop.default_value
+                    name = prop.name or prop_id
+                    description = prop.description or float("nan")
 
                 # Edge 1-many
-                elif isinstance(prop, SingleHopConnectionDefinition):
+                elif isinstance(prop, EdgeConnection):
                     type_ = prop.source.external_id
                     default_value = None
+                    name = prop.name or prop_id
+                    description = prop.description or float("nan")
                 else:
                     raise NotImplementedError(f"Property type {type(prop)} not supported")
 
@@ -143,8 +148,8 @@ class DMSImporter(BaseImporter):
                     {
                         "Class": class_id,
                         "Property": prop_id,
-                        "Name": prop.name if prop.name else prop_id,
-                        "Description": prop.description or float("nan"),
+                        "Name": name,
+                        "Description": description,
                         "Type": type_,
                         "Default": cast(Any, default_value),  # fixes issues with mypy
                         "Min Count": min_count,

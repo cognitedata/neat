@@ -657,33 +657,34 @@ def to_edge(self, data_model: DataModel, add_class_prefix: bool = False) -> list
 
     for edge_one_to_many in self.edges_one_to_many:
         edge_type_id = f"{class_name}.{edge_one_to_many}"
-        for end_node_id in getattr(self, edge_one_to_many):
-            if not is_external_id_valid(end_node_id):
-                warnings.warn(
-                    message=exceptions.EdgeConditionUnmet(edge_one_to_many).message,
-                    category=exceptions.EdgeConditionUnmet,
-                    stacklevel=2,
-                )
-            end_node_external_id = end_node_id
-            if add_class_prefix:
-                end_node_class_name = _get_end_node_class_name(data_model.views[view_id], edge_one_to_many)
-                if end_node_class_name:
-                    end_node_external_id = add_class_prefix_to_xid(end_node_class_name, end_node_id)
-                else:
+        if end_node_ids := getattr(self, edge_one_to_many):
+            for end_node_id in end_node_ids:
+                if not is_external_id_valid(end_node_id):
                     warnings.warn(
                         message=exceptions.EdgeConditionUnmet(edge_one_to_many).message,
                         category=exceptions.EdgeConditionUnmet,
                         stacklevel=2,
                     )
+                end_node_external_id = end_node_id
+                if add_class_prefix:
+                    end_node_class_name = _get_end_node_class_name(data_model.views[view_id], edge_one_to_many)
+                    if end_node_class_name:
+                        end_node_external_id = add_class_prefix_to_xid(end_node_class_name, end_node_id)
+                    else:
+                        warnings.warn(
+                            message=exceptions.EdgeConditionUnmet(edge_one_to_many).message,
+                            category=exceptions.EdgeConditionUnmet,
+                            stacklevel=2,
+                        )
 
-            edge = EdgeApply(
-                space=data_model.views[view_id].space,
-                external_id=f"{self.external_id}-{end_node_external_id}",
-                type=(data_model.views[view_id].space, edge_type_id),
-                start_node=(data_model.views[view_id].space, self.external_id),
-                end_node=(data_model.views[view_id].space, end_node_external_id),
-            )
-            edges.append(edge)
+                edge = EdgeApply(
+                    space=data_model.views[view_id].space,
+                    external_id=f"{self.external_id}-{end_node_external_id}",
+                    type=(data_model.views[view_id].space, edge_type_id),
+                    start_node=(data_model.views[view_id].space, self.external_id),
+                    end_node=(data_model.views[view_id].space, end_node_external_id),
+                )
+                edges.append(edge)
     return edges
 
 

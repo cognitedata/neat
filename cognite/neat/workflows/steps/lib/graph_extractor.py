@@ -21,11 +21,12 @@ from cognite.neat.workflows.steps.step_model import Configurable, Step
 __all__ = [
     "InstancesFromRdfFileToSourceGraph",
     "InstancesFromRulesToSolutionGraph",
-    "InstancesFromGraphCaptureSpreadsheetToGraph",
+    "GraphCapturingSheetToGraph",
     "GenerateMockGraph",
     "DataModelFromRulesToSourceGraph",
     "InstancesFromJsonToGraph",
     "InstancesFromAvevaPiAF",
+    "DexpiToGraph",
 ]
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
@@ -71,7 +72,7 @@ class InstancesFromRdfFileToSourceGraph(Step):
             if source_file := self.configs["file_path"]:
                 source_graph.graph.import_from_file(
                     self.data_store_path / Path(source_file),
-                    mime_type=self.configs["mime_type"],
+                    mime_type=self.configs["mime_type"],  # type: ignore[arg-type]
                     add_base_iri=self.configs["add_base_iri"] == "True",
                 )
                 logging.info(f"Loaded {source_file} into source graph.")
@@ -83,43 +84,96 @@ class InstancesFromRdfFileToSourceGraph(Step):
         return FlowMessage(output_text="Instances loaded to source graph")
 
 
-class InstancesFromGraphCaptureSpreadsheetToGraph(Step):
+class DexpiToGraph(Step):
     """
-    This step extracts instances from graph capture spreadsheet and loads them into solution graph
+    This step converts DEXPI P&ID (XML) into Knowledge Graph
     """
 
-    description = "This step extracts instances from graph capture spreadsheet and loads them into solution graph"
+    description = "This step converts DEXPI P&ID (XML) into Knowledge Graph"
+    version = "0.1.0-alpha"
     category = CATEGORY
     configurables: ClassVar[list[Configurable]] = [
-        Configurable(name="file_name", value="graph_capture_sheet.xlsx", label="File name of the data capture sheet"),
-        Configurable(name="storage_dir", value="staging", label="Directory to store data capture sheets"),
         Configurable(
-            name="graph_name", value="solution", label="The name of target graph.", options=["source", "solution"]
+            name="file_path",
+            value="source-graphs/dexpi-pid.xml",
+            label="File path to DEXPI P&ID in XML format",
+        ),
+        Configurable(
+            name="base_namespace",
+            value="http://purl.org/cognite/neat#",
+            label="Base namespace to be added to ids for all nodes found in P&ID",
+        ),
+    ]
+
+    def run(self, source_graph: SourceGraph) -> FlowMessage:  # type: ignore[override, syntax]
+        if self.configs is None or self.data_store_path is None:
+            raise StepNotInitialized(type(self).__name__)
+
+        file_path = self.configs.get("file_path")
+        base_namespace = self.configs.get("base_namespace", None)
+
+        if file_path:
+            triples = extractors.DexpiXML(self.data_store_path / Path(file_path), base_namespace).extract()
+            source_graph.graph.add_triples(triples, verbose=True)
+
+            logging.info(f"Loaded {file_path} into source graph.")
+        else:
+            raise ValueError("You need a source_rdf_store.file specified")
+
+        return FlowMessage(output_text="Instances loaded to source graph")
+
+
+class GraphCapturingSheetToGraph(Step):
+    """
+    This step extracts nodes and edges from graph capture spreadsheet and load them into graph
+    """
+
+    description = "This step extracts nodes and edges from graph capturing spreadsheet and load them into graph"
+    category = CATEGORY
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="file_path",
+            value="source-graphs/graph_capture_sheet.xlsx",
+            label="File path to Graph Capturing Sheet",
+        ),
+        Configurable(
+            name="base_namespace",
+            value="http://purl.org/cognite/neat#",
+            label="Base namespace to be added to ids for all nodes extracted from graph capturing spreadsheet",
+        ),
+        Configurable(
+            name="graph_name",
+            value="solution",
+            label="The name of target graph to load nodes and edge sto.",
+            options=["source", "solution"],
         ),
     ]
 
     def run(  # type: ignore[override, syntax]
-        self, transformation_rules: RulesData, graph_store: SolutionGraph | SourceGraph
+        self, rules: RulesData, graph_store: SolutionGraph | SourceGraph
     ) -> FlowMessage:
         if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
-        triggered_flow_message = cast(FlowMessage, self.flow_context["StartFlowMessage"])
-        if "full_path" in triggered_flow_message.payload:
-            data_capture_sheet_path = Path(triggered_flow_message.payload["full_path"])
+
+        file_path = self.configs.get("file_path")
+
+        if file_path:
+            logging.info(f"Processing graph capture sheet {self.data_store_path / Path(file_path)}")
+
+            triples = extractors.GraphCapturingSheet(
+                rules=rules.rules,
+                filepath=self.data_store_path / Path(file_path),
+                namespace=self.configs.get("base_namespace", None),
+                use_source_ids=True,
+            ).extract()
+
         else:
-            data_capture_sheet_path = (
-                self.data_store_path / Path(self.configs["storage_dir"]) / self.configs["file_name"]
-            )
-
-        logging.info(f"Processing graph capture sheet {data_capture_sheet_path}")
-
-        triples = extractors.GraphCapturingSheet(transformation_rules.rules, data_capture_sheet_path).extract()
+            raise ValueError("You need a source_rdf_store.file specified")
 
         if self.configs["graph_name"] == "solution":
-            # Todo Anders: Why is the graph fetched from context when it is passed as an argument?
-            graph_store = cast(SourceGraph | SolutionGraph, self.flow_context["SolutionGraph"])
+            graph_store = cast(SolutionGraph, self.flow_context["SolutionGraph"])
         else:
-            graph_store = cast(SourceGraph | SolutionGraph, self.flow_context["SourceGraph"])
+            graph_store = cast(SourceGraph, self.flow_context["SourceGraph"])
 
         graph_store.graph.add_triples(triples, verbose=True)  # type: ignore[arg-type]
         return FlowMessage(output_text="Graph capture sheet processed")
@@ -182,6 +236,7 @@ class InstancesFromRulesToSolutionGraph(Step):
 
     description = "This step extracts instances from rules file and loads them into solution graph."
     category = CATEGORY
+    version = "0.1.0-alpha"
 
     def run(  # type: ignore[override, syntax]
         self, transformation_rules: RulesData, solution_graph: SolutionGraph
@@ -209,6 +264,7 @@ class DataModelFromRulesToSourceGraph(Step):
 
     description = "This step extracts data model from rules file and loads it into source graph."
     category = CATEGORY
+    version = "0.1.0-alpha"
 
     def run(  # type: ignore[override, syntax]
         self, transformation_rules: RulesData, source_graph: SourceGraph

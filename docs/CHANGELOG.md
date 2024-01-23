@@ -15,6 +15,56 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.58.0] - 20-01-24
+
+## Changed
+
+- `cognite.neat.graph.loaders.rdf_to_dms.rdf2nodes_and_edges` has been replaced by `cognite.nead.graph.loaders.DMSLoader`.
+- Upgrade `cognite-sdk` to `v7`, thus now neat requires `cognite-sdk>=7.13.8`.
+
+## Added
+
+- Introduced an interface for `cognite.neat.graph.loaders` and implemented it for DMS.
+
+## [0.57.0] - 11-01-24
+
+## Improved
+
+- Improved `GraphCapturingSheet` extractor allowing additional configuration and usage of external ids for properties and classes
+
+
+## [0.56.1] - 10-01-24
+
+## Fixed
+
+- Add `alpha` tag to DEXPI step
+
+
+
+## [0.56.0] - 09-01-24
+
+## Added
+
+- Added DEXPI example from DISC project (kindly provided by Jan Eivind Danielsen)
+
+
+## [0.55.0] - 09-01-24
+
+## Added
+
+- Support for knowledge graph extraction from `DEXPI` P&ID provided as `XML`
+- Added `DexpiToGraph` to step library
+
+
+## [0.54.0] - 04-01-24
+
+## Added
+- Reset graph option for GraphDBStore
+
+## Changed
+- `cognite.neat.stores` module. This now only has four classes: `NeatGraphStoreBase`, `MemoryStore`, `OxiGraphStore`,
+  and `GraphDBStore` as well as the constants `STORE_BY_TYPE` and `AVAILABLE_STORES`. All functions, enums, and previous
+  classes are removed. Note `NeatGraphStoreBase` is a rename from `NeatGraphStore` and is now an abstract class.
 
 ## [0.53.0] - 03-01-24
 

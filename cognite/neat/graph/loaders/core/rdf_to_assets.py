@@ -12,11 +12,11 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes import Asset, AssetHierarchy, AssetList, AssetUpdate
 from cognite.client.exceptions import CogniteDuplicatedError
 from deepdiff import DeepDiff  # type: ignore[import]
-from rdflib import Graph, Namespace
+from rdflib import Graph
 from rdflib.term import URIRef
 
 from cognite.neat.graph.loaders.core.models import AssetTemplate
-from cognite.neat.graph.stores import NeatGraphStore
+from cognite.neat.graph.stores import NeatGraphStoreBase
 from cognite.neat.rules.models.rules import Property, Rules
 from cognite.neat.utils.utils import chunker, datetime_utc_now, remove_namespace, retry_decorator
 
@@ -79,13 +79,12 @@ class NeatMetadataKeys:
         return {str(field.default): getattr(self, field.name) for field in fields(self)}
 
 
-def _get_class_instance_ids(graph: Graph, class_: str, namespace: Namespace, limit: int = -1) -> list[URIRef]:
+def _get_class_instance_ids(graph: Graph, class_uri: URIRef, limit: int = -1) -> list[URIRef]:
     """Get instances ids for a given class
 
     Args:
         graph: Graph containing class instances
-        class_: Class for which instances are to be found
-        namespace: Namespace of given class (to avoid writing long URIs)
+        class_uri: Class for which instances are to be found
         limit: Max number of instances to return, by default -1 meaning all instances
 
     Returns:
@@ -93,7 +92,7 @@ def _get_class_instance_ids(graph: Graph, class_: str, namespace: Namespace, lim
     """
 
     query_statement = "SELECT DISTINCT ?subject WHERE { ?subject a <class> .} LIMIT X".replace(
-        "class", namespace[class_]
+        "class", class_uri
     ).replace("LIMIT X", "" if limit == -1 else f"LIMIT {limit}")
     logging.debug(f"Query statement: {query_statement}")
     return [cast(tuple, res)[0] for res in list(graph.query(query_statement))]
@@ -174,6 +173,9 @@ def _define_asset_class_mapping(transformation_rules: Rules) -> dict[str, dict[s
                         asset_class_mapping[class_][resource_type_property] += [property_.property_name]
 
                     if property_.property_name not in asset_class_mapping[class_]["metadata"]:
+                        # Todo; Why Nikola?  This adds for example name property to metadata? Isn't that
+                        #   controlled by the resource_type_property? If you would like this behavior you
+                        #   would set resource_type_property to ["metadata", "name"]?
                         asset_class_mapping[class_]["metadata"] += [property_.property_name]
 
     return asset_class_mapping
@@ -342,7 +344,7 @@ def _list2dict(class_instance: list) -> dict[str, Any]:
 
 
 def rdf2assets(
-    graph_store: NeatGraphStore,
+    graph_store: NeatGraphStoreBase,
     rules: Rules,
     data_set_id: int,
     stop_on_exception: bool = False,
@@ -378,7 +380,7 @@ def rdf2assets(
     # Step 4: Get ids of classes
     logging.info("Get ids of instances of classes")
     assets: dict[str, dict[str, Any]] = {}
-    class_ids = {class_: _get_class_instance_ids(graph, class_, namespace) for class_ in asset_class_mapping}
+    class_ids = {class_: _get_class_instance_ids(graph, namespace[class_]) for class_ in asset_class_mapping}
     # Step 5: Create Assets based on class instances
     logging.info("Create Assets based on class instances")
     meta_keys_aliases = meta_keys.as_aliases()
@@ -457,7 +459,7 @@ def rdf2assets(
 
 
 def rdf2asset_dictionary(
-    graph_store: NeatGraphStore,
+    graph_store: NeatGraphStoreBase,
     transformation_rules: Rules,
     stop_on_exception: bool = False,
     use_orphanage: bool = True,
@@ -515,6 +517,8 @@ def _flatten_labels(labels: list[dict[str, str]]) -> set[str]:
     for label in labels:
         if "externalId" in label:
             result.add(label["externalId"])
+        elif "external_id" in label:
+            result.add(label["external_id"])
         else:
             logging.warning(f"Label {label} does not have externalId")
     return result
@@ -1032,10 +1036,10 @@ def remove_non_existing_labels(
 
 
 def unique_asset_labels(assets: Iterable[Asset | dict[str, Any]]) -> set[str]:
-    labels = set()
+    labels: set[str] = set()
     for asset in assets:
         if isinstance(asset, Asset):
-            labels |= {label.external_id for label in (asset.labels or [])}
+            labels |= {label.external_id for label in (asset.labels or []) if label.external_id}
         elif isinstance(asset, dict) and (asset_labels := asset.get("labels")):
             labels |= set(asset_labels)
         else:

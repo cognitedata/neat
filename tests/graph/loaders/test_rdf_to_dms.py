@@ -1,11 +1,11 @@
 from rdflib import URIRef
 
-from cognite.neat.graph.loaders.rdf_to_dms import rdf2nodes_and_edges
+from cognite.neat.graph import loaders
 
 
-# @pytest.mark.skip("Relies on a bug in the DMS exporter")
 def test_rdf2nodes_and_edges(small_graph, simple_rules):
-    nodes, edges, exceptions = rdf2nodes_and_edges(small_graph, simple_rules)
+    loader = loaders.DMSLoader(simple_rules, small_graph)
+    nodes, edges, exceptions = loader.as_nodes_and_edges()
 
     assert exceptions == []
     assert len(nodes) == 13
@@ -24,7 +24,8 @@ def test_rdf2nodes_and_edges_raise_exception(small_graph, simple_rules):
         (URIRef("http://purl.org/cognite/neat#Nordics.Norway.NO1"), URIRef("http://purl.org/cognite/neat#name"), None)
     )
 
-    nodes, edges, exceptions = rdf2nodes_and_edges(small_graph, simple_rules)
+    loader = loaders.DMSLoader(simple_rules, small_graph)
+    nodes, edges, exceptions = loader.as_nodes_and_edges()
 
     assert len(nodes) == 11
     assert len(edges) == 21
@@ -34,7 +35,8 @@ def test_rdf2nodes_and_edges_raise_exception(small_graph, simple_rules):
 
 # @pytest.mark.skip("Relies on a bug in the DMS exporter")
 def test_add_class_prefix_to_external_ids(simple_rules, graph_with_numeric_ids):
-    nodes, edges, exceptions = rdf2nodes_and_edges(graph_with_numeric_ids, simple_rules, add_class_prefix=True)
+    loader = loaders.DMSLoader(simple_rules, graph_with_numeric_ids, add_class_prefix=True)
+    nodes, edges, exceptions = loader.as_nodes_and_edges()
 
     # Needs this as order of end nodes is not guaranteed
     start_node_xid = set()
@@ -53,7 +55,8 @@ def test_add_class_prefix_to_external_ids(simple_rules, graph_with_numeric_ids):
 
 # @pytest.mark.skip("Relies on a bug in the DMS exporter")
 def test_rdf2nodes_property_date(graph_with_date, transformation_rules_date):
-    nodes, edges, exceptions = rdf2nodes_and_edges(graph_with_date, transformation_rules_date)
+    loader = loaders.DMSLoader(transformation_rules_date, graph_with_date)
+    nodes, edges, exceptions = loader.as_nodes_and_edges()
 
     assert exceptions == []
     assert len(nodes) == 1
@@ -65,6 +68,7 @@ def test_multi_namespace_rules(nordic44_inferred_rules, source_knowledge_graph):
     source_knowledge_graph.graph.bind(
         nordic44_inferred_rules.metadata.prefix, nordic44_inferred_rules.metadata.namespace
     )
-    nodes, _, _ = rdf2nodes_and_edges(source_knowledge_graph, nordic44_inferred_rules, add_class_prefix=True)
+    loader = loaders.DMSLoader(nordic44_inferred_rules, source_knowledge_graph, add_class_prefix=True)
+    nodes, _, _ = loader.as_nodes_and_edges()
 
     assert len(nodes) == 493
