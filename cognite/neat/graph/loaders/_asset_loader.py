@@ -212,15 +212,16 @@ class AssetLoader(CogniteLoader[AssetResource]):
                     )
                     continue
                 else:
-                    for relationship in relationships:
-                        for label in relationship.labels or []:
-                            if label.external_id and label.external_id not in self._loaded_labels:
-                                self._loaded_labels.add(label.external_id)
-                                yield LabelDefinitionWrite(
-                                    name=label.external_id,
-                                    external_id=label.external_id,
-                                    data_set_id=self._label_data_set_id,
-                                )
+                    if self._use_labels:
+                        for relationship in relationships:
+                            for label in relationship.labels or []:
+                                if label.external_id and label.external_id not in self._loaded_labels:
+                                    self._loaded_labels.add(label.external_id)
+                                    yield LabelDefinitionWrite(
+                                        name=label.external_id,
+                                        external_id=label.external_id,
+                                        data_set_id=self._label_data_set_id,
+                                    )
 
                     yield from relationships
 
