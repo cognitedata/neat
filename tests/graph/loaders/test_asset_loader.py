@@ -89,10 +89,13 @@ class TestAssetLoader:
         to_update_ids = {asset["external_id"] for asset in to_update}
         to_delete = [asset for asset in to_modify if asset["external_id"] not in to_update_ids]
         to_delete_ids = {asset["external_id"] for asset in to_delete}
+        new_store = {}
         for asset in to_modify:
             asset_object = Asset(**asset)
             # Need to be added.
-            cognite_client.assets.store[asset_object.external_id] = asset_object
+            new_store[asset_object.external_id] = asset_object
+
+        cognite_client.assets.store = new_store.copy()
 
         for asset in to_update:
             asset["description"] = "Updated description"
@@ -103,3 +106,15 @@ class TestAssetLoader:
         assert len(categorized["create"]) == total_assets - len(to_modify)
         assert len(categorized["update"]) == len(to_update)
         assert len(categorized["decommission"]) == len(to_delete)
+
+        # Reset mock store
+        cognite_client.assets.store = new_store.copy()
+
+        loader = AssetLoader(transformation_rules, store, data_set_id=123456)
+
+        result = loader.load_to_cdf(cognite_client, output="detailed", batch_size=1000, max_retries=1, retry_delay=3)
+
+        assert result.created == report["create"]
+        assert result.updated == report["update"]
+        assert result.decommissioned == report["decommission"]
+        assert result.resurrected == report["resurrect"]

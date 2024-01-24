@@ -18,7 +18,7 @@ from cognite.neat.rules.models.rules import Property
 from cognite.neat.utils import remove_namespace
 from cognite.neat.utils.utils import epoch_now_ms
 
-from ._base import CogniteLoader
+from ._base import CogniteLoader, LoadCount, LoadDetails
 
 if sys.version_info >= (3, 11):
     from datetime import UTC
@@ -290,8 +290,13 @@ class AssetLoader(CogniteLoader[AssetResource]):
                 yield asset_resource
 
     def load_to_cdf(
-        self, client: CogniteClient, batch_size: int | None = 1000, max_retries: int = 1, retry_delay: int = 3
-    ) -> None:
+        self,
+        client: CogniteClient,
+        output: Literal["count", "detailed"],
+        batch_size: int | None = 1000,
+        max_retries: int = 1,
+        retry_delay: int = 3,
+    ) -> LoadCount | LoadDetails:
         raise NotImplementedError
 
     def _load_asset(

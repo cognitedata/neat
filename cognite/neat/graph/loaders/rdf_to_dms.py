@@ -15,7 +15,7 @@ from cognite.neat.rules.exporter._rules2pydantic_models import add_class_prefix_
 from cognite.neat.rules.models.rules import Rules
 from cognite.neat.utils.utils import chunker, datetime_utc_now, retry_decorator
 
-from ._base import CogniteLoader
+from ._base import CogniteLoader, LoadCount, LoadDetails
 
 
 class DMSLoader(CogniteLoader[InstanceApply]):
@@ -119,12 +119,18 @@ class DMSLoader(CogniteLoader[InstanceApply]):
                         )
 
     def load_to_cdf(
-        self, client: CogniteClient, batch_size: int | None = 1000, max_retries: int = 1, retry_delay: int = 3
-    ) -> None:
+        self,
+        client: CogniteClient,
+        output: Literal["count", "detailed"],
+        batch_size: int | None = 1000,
+        max_retries: int = 1,
+        retry_delay: int = 3,
+    ) -> LoadCount | LoadDetails:
         """Uploads nodes to CDF
 
         Args:
             client: Instance of CogniteClient
+            output: Output type. Either "count" or "details".
             batch_size: Size of batch. Default to 1000.
             max_retries: Maximum times to retry the upload. Default to 1.
             retry_delay: Time delay before retrying the upload. Default to 3.
@@ -143,7 +149,7 @@ class DMSLoader(CogniteLoader[InstanceApply]):
                 )
 
             create_instances()
-            return
+            raise NotImplementedError()
         logging.info(f"Uploading nodes in batches of {batch_size}")
         for instances in _batched(self.load(stop_on_exception=False), batch_size):
             nodes = [instance for instance in instances if isinstance(instance, NodeApply)]
@@ -155,6 +161,7 @@ class DMSLoader(CogniteLoader[InstanceApply]):
             _micro_batch_push(
                 client, edges, batch_size, message="Upload", max_retries=max_retries, retry_delay=retry_delay
             )
+        raise NotImplementedError
 
     def as_nodes_and_edges(
         self, stop_on_exception: bool = False
@@ -269,7 +276,7 @@ def _micro_batch_push(
     message: str = "Upload",
     max_retries: int = 1,
     retry_delay: int = 3,
-):
+) -> None:
     """Uploads nodes or edges in batches
 
     Args:
