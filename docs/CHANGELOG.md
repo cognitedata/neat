@@ -15,6 +15,17 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.59.0] - 24-01-24
+
+## Added
+
+- Added `ExportDMSDataModel` to dump data model (views) and containers as YAML
+
+## Improved
+
+- `DMSDataModelFromRules` is now extended such that one can update space/external_id/version of data model
+
+
 ## [0.58.0] - 20-01-24
 
 ## Changed

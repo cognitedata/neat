@@ -4,6 +4,8 @@ import warnings
 from pathlib import Path
 from typing import ClassVar
 
+from cognite.client import data_modeling as dm
+
 import cognite.neat.graph.extractors._graph_capturing_sheet
 from cognite.neat.exceptions import wrangle_warnings
 from cognite.neat.rules import exporter
@@ -12,7 +14,7 @@ from cognite.neat.rules.exporter._rules2graphql import GraphQLSchema
 from cognite.neat.rules.exporter._rules2ontology import Ontology
 from cognite.neat.utils.utils import generate_exception_report
 from cognite.neat.workflows._exceptions import StepNotInitialized
-from cognite.neat.workflows.model import FlowMessage
+from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.data_contracts import CogniteClient, DMSDataModel, RulesData
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
@@ -25,6 +27,7 @@ __all__ = [
     "UploadDMSDataModel",
     "DeleteDMSDataModel",
     "ExcelFromRules",
+    "ExportDMSDataModel",
 ]
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
@@ -38,8 +41,33 @@ class DMSDataModelFromRules(Step):
     description = "This step generates DMS Data model from data model defined in transformation rules."
     category = CATEGORY
 
-    def run(self, transformation_rules: RulesData) -> (FlowMessage, DMSDataModel):  # type: ignore[override, syntax]
-        data_model = DataModel.from_rules(transformation_rules.rules)
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="space",
+            value="",
+            label=("Space to upload DMS Data model to, if empty defaults to the space defined in Rules"),
+        ),
+        Configurable(
+            name="version",
+            value="",
+            label=("Version of DMS Data model to upload, if empty defaults to the version defined in Rules"),
+        ),
+        Configurable(
+            name="external_id",
+            value="",
+            label=("External ID of DMS Data model to upload, if empty defaults to the external ID defined in Rules"),
+        ),
+    ]
+
+    def run(self, rules: RulesData) -> (FlowMessage, DMSDataModel):  # type: ignore[override, syntax]
+        if new_space := self.configs["space"]:
+            rules.rules.update_space(new_space)
+        if new_version := self.configs["version"]:
+            rules.rules.update_version(new_version)
+        if new_external_id := self.configs["external_id"]:
+            rules.rules.metadata.suffix = new_external_id
+
+        data_model = DataModel.from_rules(rules.rules)
 
         output_text = (
             f"DMS Data Model <b><code>{data_model.external_id}</code></b> version"
@@ -49,7 +77,83 @@ class DMSDataModelFromRules(Step):
             f"</ul> Data model is meant to be uploaded to <b><code>{data_model.space}</code></b> space"
         )
 
+        # need to store the data model in the step so that it can be used by the next step
+        # see GraphQL step
+
         return FlowMessage(output_text=output_text), DMSDataModel(data_model=data_model)
+
+
+class ExportDMSDataModel(Step):
+    """
+    This step exports DMS data model and its building components to YAML files
+    """
+
+    description = "This step generates GraphQL schema from data model defined in transformation rules."
+    category = CATEGORY
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(name="storage_dir", value="staging", label="Directory to store DMS schema files"),
+        Configurable(
+            name="format",
+            value="yaml-dump",
+            label="Format of the output files",
+            options=["yaml-dump", "cognite-toolkit", "all"],
+        ),
+    ]
+
+    def run(self, data_model_contract: DMSDataModel) -> FlowMessage:  # type: ignore[override, syntax]
+        if self.configs is None or self.data_store_path is None:
+            raise StepNotInitialized(type(self).__name__)
+
+        staging_dir_str = self.configs["storage_dir"]
+        format_ = self.configs["format"]
+
+        staging_dir = self.data_store_path / Path(staging_dir_str)
+        staging_dir.mkdir(parents=True, exist_ok=True)
+
+        if format_ in ["yaml-dump", "all"]:
+            base_file_name = (
+                f"{data_model_contract.data_model.space}-"
+                f"{data_model_contract.data_model.external_id}-"
+                f"v{data_model_contract.data_model.version.strip().replace('.', '_')}"
+            )
+
+            _container_file_name = f"{base_file_name}-containers.yaml"
+            _data_model_file_name = f"{base_file_name}-data-model.yaml"
+
+            container_full_path = staging_dir / _container_file_name
+            data_model_full_path = staging_dir / _data_model_file_name
+
+            data_model = dm.DataModelApply(
+                space=data_model_contract.data_model.space,
+                external_id=data_model_contract.data_model.external_id,
+                version=data_model_contract.data_model.version,
+                description=data_model_contract.data_model.description,
+                name=data_model_contract.data_model.name,
+                views=list(data_model_contract.data_model.views.values()),
+            )
+
+            containers = dm.ContainerApplyList(data_model_contract.data_model.containers.values())
+
+            container_full_path.write_text(containers.dump_yaml())
+            data_model_full_path.write_text(data_model.dump_yaml())
+
+            output_text = (
+                "<p></p>"
+                "DMS Schema exported and can be downloaded here : "
+                "<p></p>"
+                f'- <a href="/data/{staging_dir_str}/{_data_model_file_name}?{time.time()}" '
+                f'target="_blank">{_data_model_file_name}</a>'
+                "<p></p>"
+                f'- <a href="/data/{staging_dir_str}/{_container_file_name}?{time.time()}" '
+                f'target="_blank">{_container_file_name}</a>'
+            )
+
+            return FlowMessage(output_text=output_text)
+        else:
+            return FlowMessage(
+                error_text=f"Export format <b><code>{format_}</code></b> not implemented!",
+                step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
+            )
 
 
 class UploadDMSDataModel(Step):
