@@ -49,7 +49,7 @@ from cognite.neat.rules.models.rdfpath import (
     Traversal,
     parse_rule,
 )
-from cognite.neat.rules.value_types import XSD_VALUE_TYPE_MAPPINGS, ValueType
+from cognite.neat.rules.models.value_types import XSD_VALUE_TYPE_MAPPINGS, ValueType
 
 if sys.version_info >= (3, 11):
     from typing import Self

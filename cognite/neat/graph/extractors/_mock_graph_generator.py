@@ -19,7 +19,7 @@ from cognite.neat.rules.analysis import (
 )
 from cognite.neat.rules.exporter._rules2rules import subset_rules
 from cognite.neat.rules.models import Rules
-from cognite.neat.rules.value_types import XSD_VALUE_TYPE_MAPPINGS
+from cognite.neat.rules.models.value_types import XSD_VALUE_TYPE_MAPPINGS
 from cognite.neat.utils.utils import remove_namespace
 
 from ._base import BaseExtractor

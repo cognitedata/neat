@@ -13,7 +13,7 @@ from cognite.neat.rules.importer._base import BaseImporter
 from cognite.neat.rules.models.raw_rules import RawRules
 from cognite.neat.rules.models.rules import Rules
 from cognite.neat.rules.models.tables import Tables
-from cognite.neat.rules.value_types import XSD_VALUE_TYPE_MAPPINGS
+from cognite.neat.rules.models.value_types import XSD_VALUE_TYPE_MAPPINGS
 
 from ._owl2classes import parse_owl_classes
 from ._owl2metadata import parse_owl_metadata

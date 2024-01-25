@@ -1,5 +1,10 @@
-from .base import CoreRules
+from .base import CoreMetadata, RoleTypes, RuleModel
 
 
-class DomainRules(CoreRules):
-    ...
+class DomainMetadata(CoreMetadata):
+    role: RoleTypes = RoleTypes.domain
+    creator: str | list[str]
+
+
+class DomainRules(RuleModel):
+    metadata: DomainMetadata
