@@ -4,7 +4,7 @@ from rdflib import Namespace
 
 from cognite.neat.rules.models._base import ContainerEntity, ParentClass
 from cognite.neat.rules.models.rules import Class, Metadata, Property, Rules
-from cognite.neat.rules.value_types import XSD_VALUE_TYPE_MAPPINGS
+from cognite.neat.rules.models.value_types import XSD_VALUE_TYPE_MAPPINGS
 
 
 def test_dummy_rules():
