@@ -26,17 +26,15 @@ if sys.version_info >= (3, 11):
 else:
     from backports.strenum import StrEnum
 
-__all__ = [
-    "Class",
-    "Classes",
-    "Instance",
-    "CoreMetadata",
-    "Prefixes",
-    "Property",
-    "Properties",
-    "Resource",
-    "Rules",
-]
+#     "Class",
+#     "Classes",
+#     "Instance",
+#     "CoreMetadata",
+#     "Prefixes",
+#     "Property",
+#     "Properties",
+#     "Resource",
+#     "Rules",
 
 METADATA_VALUE_MAX_LENGTH = 5120
 
