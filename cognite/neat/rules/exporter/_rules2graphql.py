@@ -13,7 +13,7 @@ from cognite.neat.rules import exceptions
 from cognite.neat.rules.analysis import to_class_property_pairs
 from cognite.neat.rules.exporter._validation import are_entity_names_dms_compliant, are_properties_redefined
 from cognite.neat.rules.models.rules import Rules
-from cognite.neat.rules.value_types import XSD_VALUE_TYPE_MAPPINGS
+from cognite.neat.rules.models.value_types import XSD_VALUE_TYPE_MAPPINGS
 from cognite.neat.utils.utils import generate_exception_report
 
 from ._base import BaseExporter

@@ -11,7 +11,7 @@ from rdflib import Namespace
 from cognite.neat.rules import exporter, importer
 from cognite.neat.rules.models.rdfpath import TransformationRuleType
 from cognite.neat.rules.models.rules import Class, Classes, Metadata, Properties, Property, Rules
-from cognite.neat.rules.value_types import ValueType
+from cognite.neat.rules.models.value_types import ValueType
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
 from cognite.neat.workflows.steps.step_model import Configurable, Step

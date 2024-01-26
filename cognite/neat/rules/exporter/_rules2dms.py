@@ -11,7 +11,7 @@ from typing import ClassVar, Literal, cast
 
 import yaml
 
-from cognite.neat.rules.value_types import ValueTypeMapping
+from cognite.neat.rules.models.value_types import ValueTypeMapping
 
 if sys.version_info >= (3, 11):
     from typing import Self

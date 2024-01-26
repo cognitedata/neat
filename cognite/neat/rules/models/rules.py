@@ -49,7 +49,7 @@ from cognite.neat.rules.models.rdfpath import (
     Traversal,
     parse_rule,
 )
-from cognite.neat.rules.value_types import XSD_VALUE_TYPE_MAPPINGS, ValueType
+from cognite.neat.rules.models.value_types import XSD_VALUE_TYPE_MAPPINGS, ValueType
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -521,6 +521,7 @@ class Class(Resource):
     class_name: ExternalId | None = Field(alias="Name", default=None, min_length=1, max_length=255)
     # Solution model
     parent_class: list[ParentClass] | None = Field(alias="Parent Class", default=None)
+    # Todo: Remove? Does not seem to be used anywhere
     filter_: str | None = Field(alias="Filter", default=None, min_length=1)
 
     @model_validator(mode="before")
@@ -635,12 +636,25 @@ class Property(Resource):
     # OWL property
     property_type: str = EntityTypes.data_property
 
-    # Solution CDF resource
-    resource_type_property: list[str] | None = Field(alias="Resource Type Property", default=None)
+    # Core CDF resources (Asset, Relationship, and Labels)
+    resource_type_property: list[str] | None = Field(
+        alias="Resource Type Property",
+        default=None,
+        description="This is what property to resolve to in CDF resource, for "
+        "example f cdf_resource_type is 'Asset', then this could"
+        "be 'name' or 'description'. Note you can specify "
+        "multiple properties ['name', 'metadata'] which would store"
+        "this property twice in CDF, once as 'name' and once as 'metadata",
+    )
     source_type: str = Field(alias="Relationship Source Type", default="Asset")
     target_type: str = Field(alias="Relationship Target Type", default="Asset")
     label: str | None = Field(alias="Relationship Label", default=None)
     relationship_external_id_rule: str | None = Field(alias="Relationship ExternalID Rule", default=None)
+    # Specialization of cdf_resource_type to allow definition of both
+    # Asset and Relationship at the same time
+    cdf_resource_type: list[str] = Field(
+        alias="Resource Type", default_factory=list, description="This is typically 'Asset' or 'Relationship'"
+    )
 
     # Transformation rule (domain to solution)
     rule_type: TransformationRuleType | None = Field(alias="Rule Type", default=None)
@@ -649,11 +663,7 @@ class Property(Resource):
     )
     skip_rule: bool = Field(alias="Skip", default=False)
 
-    # Specialization of cdf_resource_type to allow definition of both
-    # Asset and Relationship at the same time
-    cdf_resource_type: list[str] = Field(alias="Resource Type", default_factory=list)
-
-    # container specific things, only used for advance modeling or auto-filled by neat
+    # Container specific things, only used for advance modeling or auto-filled by neat
     container: ContainerEntity | None = Field(alias="Container", default=None)
     container_property: str | None = Field(alias="Container Property", default=None)
     index: bool | None = Field(alias="Index", default=False)
