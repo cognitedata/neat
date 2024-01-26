@@ -15,6 +15,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+
 ## [0.60.0] - 26-01-24
 
 ## Added
