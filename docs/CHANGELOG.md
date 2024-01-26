@@ -16,13 +16,6 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
-## [0.60.0] - 26-01-24
-
-## Added
-
-- Introduced `Rules` profiling which follow data modeling lifecycle
-
-
 ## [0.59.0] - 24-01-24
 
 ## Added
