@@ -61,7 +61,7 @@ def are_entity_names_dms_compliant(
                 flag = False
 
             # check container external id
-            if property_.container and not re.match(dms_property_id_compliance_regex, property_.container.external_id):
+            if property_.container and not re.match(view_id_compliance_regex, property_.container.external_id):
                 warnings.warn(
                     exceptions.EntityIDNotDMSCompliant(
                         "Container", property_.container.external_id, f"[Properties/Container/{row}]"

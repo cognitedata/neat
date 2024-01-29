@@ -34,7 +34,7 @@ class EntityTypes(StrEnum):
 ALLOWED_PATTERN = r"[^a-zA-Z0-9-_.]"
 
 # REGEX expressions
-PREFIX_REGEX = r"[a-zA-Z]+[a-zA-Z0-9]*[-_.]*[a-zA-Z0-9]+"
+PREFIX_REGEX = r"[a-zA-Z]+[a-zA-Z0-9-_.]*[a-zA-Z0-9]+"
 SUFFIX_REGEX = r"[a-zA-Z0-9-_.]+[a-zA-Z0-9]|[-_.]*[a-zA-Z0-9]+"
 VERSION_REGEX = r"[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])"
 
