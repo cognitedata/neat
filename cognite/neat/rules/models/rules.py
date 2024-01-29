@@ -76,7 +76,7 @@ def replace_nan_floats_with_default(values: dict, model_fields: dict[str, FieldI
     for field_name, value in values.items():
         is_nan_float = isinstance(value, float) and math.isnan(value)
         if not is_nan_float:
-            output[field_name] = value
+            output[field_name] = value.strip() if isinstance(value, str) else value
             continue
         if field_name in model_fields:
             output[field_name] = model_fields[field_name].default
@@ -87,7 +87,7 @@ def replace_nan_floats_with_default(values: dict, model_fields: dict[str, FieldI
                 output[field_name] = model_fields[source_name].default
             else:
                 # Just pass it through if it is not an alias.
-                output[field_name] = value
+                output[field_name] = value.strip() if isinstance(value, str) else value
     return output
 
 

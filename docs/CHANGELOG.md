@@ -16,6 +16,17 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.59.1] - 29-01-24
+
+## Added
+
+- Added pre-cleaning of spaces prior validation
+
+## Fixed
+
+- Fixed restrictive which did not allow multiple occurrence of [.-_]
+
+
 ## [0.59.0] - 24-01-24
 
 ## Added
