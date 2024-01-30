@@ -183,7 +183,7 @@ class UploadDMSDataModel(Step):
 
     def run(self, data_model: DMSDataModel, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override, syntax]
         components_to_create = set(self.configs["components"].split(", "))
-        existing_component_handling = self.configs["existing_component_handling"]
+        existing_component_handling: str = self.configs["existing_component_handling"]
 
         data_model.data_model.to_cdf(
             cdf_client,
