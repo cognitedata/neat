@@ -2,7 +2,7 @@ import logging
 import time
 import warnings
 from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, Literal, cast
 
 from cognite.client import data_modeling as dm
 
@@ -158,14 +158,38 @@ class ExportDMSDataModel(Step):
 
 class UploadDMSDataModel(Step):
     """
-    This step uploaded generated DMS Data model
+    This step uploaded generated DMS Data model components to CDF
     """
 
     description = "This step uploaded generated DMS Data model."
     category = CATEGORY
 
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="components",
+            value="all",
+            label=(
+                "provide comma separated list of components to upload,"
+                " options: space, container, view, data model, all"
+            ),
+        ),
+        Configurable(
+            name="existing_component_handling",
+            value="fail",
+            label="How to handle existing components in CDF, options: fail, skip",
+            options=["fail", "skip"],
+        ),
+    ]
+
     def run(self, data_model: DMSDataModel, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override, syntax]
-        data_model.data_model.to_cdf(cdf_client)
+        components_to_create = set(self.configs["components"].split(", "))
+        existing_component_handling = self.configs["existing_component_handling"]
+
+        data_model.data_model.to_cdf(
+            cdf_client,
+            components_to_create=components_to_create,
+            existing_component_handling=cast(Literal["skip"], existing_component_handling),
+        )
 
         output_text = (
             f"DMS Data Model <b><code>{data_model.data_model.external_id}</code></b> version"
@@ -186,8 +210,21 @@ class DeleteDMSDataModel(Step):
     description = "This step deletes DMS Data model and all underlying containers and views."
     category = CATEGORY
 
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="components",
+            value="all",
+            label=(
+                "provide comma separated list of components to delete,"
+                " options: space, container, view, data model, all"
+            ),
+        ),
+    ]
+
     def run(self, data_model: DMSDataModel, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override, syntax]
-        data_model.data_model.remove_data_model(cdf_client)
+        components_to_remove = set(self.configs["components"].split(", "))
+
+        data_model.data_model.remove(cdf_client, components_to_remove=components_to_remove)
 
         output_text = (
             f"DMS Data Model {data_model.data_model.external_id} version {data_model.data_model.version} "
