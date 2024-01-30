@@ -2329,16 +2329,22 @@ class DataModelOrItsComponentsAlreadyExist(NeatException):
 
     def __init__(
         self,
+        existing_spaces: set[str] | None,
         existing_data_model: DataModelId | None,
         existing_containers: set[ContainerId],
         existing_views: set[ViewId],
         verbose: bool = False,
     ):
+        self.existing_spaces = existing_spaces
         self.existing_data_model = existing_data_model
         self.existing_containers = existing_containers
         self.existing_views = existing_views
 
         self.message = "Aborting data model creation!"
+        if self.existing_spaces:
+            self.message += (
+                f"\nSpaces {self.existing_spaces} already exists in DMS! Delete them or skip their creation! "
+            )
         if self.existing_data_model:
             self.message += (
                 f"\nData model {self.existing_data_model} already exists in DMS! Delete it first or bump its version! "
