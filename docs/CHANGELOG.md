@@ -21,6 +21,7 @@ Changes are grouped as follows:
 ## Added
 
 - Configuration for which DMS schema components are to be uploaded to CDF
+- Configuration for which DMS schema components are to be removed to CDF
 - Configuration how to handle existing CDF schema components during upload
 
 
