@@ -522,6 +522,8 @@ class DataModel(BaseModel):
 
         Args:
             client: Connected Cognite client.
+            components_to_create: Which components to create. Takes set
+            existing_component_handling: How to handle existing components. Takes Literal["fail", "skip", "update"]
 
         !!! note "Component Creation Policy"
             Here is more information about the different component creation policies:
@@ -621,7 +623,11 @@ class DataModel(BaseModel):
             logging.info(f"Data model {self.space}:{self.external_id}/{self.version} already exists! Skipping !!!")
 
     def remove(self, client: CogniteClient, components_to_remove: set | None = None):
-        """
+        """Remove DMS schema components from CDF.
+
+        Args:
+            client: Connected Cognite client.
+            components_to_remove: Which components to remove. Takes set
 
         !!! note "Component Creation Policy"
             Here is more information about the different component creation policies:
@@ -643,12 +649,6 @@ class DataModel(BaseModel):
             self.remove_spaces(client)
 
     def remove_data_model(self, client: CogniteClient):
-        """Helper function to remove a data model, and all underlying views and containers from CDF.
-
-        Args:
-            client: Cognite client.
-        """
-
         if client.data_modeling.data_models.retrieve((self.space, self.external_id, self.version)):
             logging.info(f"Removing data model {self.space}:{self.external_id}/{self.version}")
             _ = client.data_modeling.data_models.delete((self.space, self.external_id, self.version))
