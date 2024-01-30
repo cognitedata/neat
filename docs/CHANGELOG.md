@@ -16,6 +16,14 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.60.0] - 30-01-24
+
+## Added
+
+- Configuration for which DMS schema components are to be uploaded to CDF
+- Configuration how to handle existing CDF schema components during upload
+
+
 ## [0.59.1] - 29-01-24
 
 ## Added
