@@ -1,3 +1,4 @@
+import typing
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import ClassVar, TypeVar
@@ -16,7 +17,7 @@ class Configurable(BaseModel):
     name: str
     value: str | None = None
     label: str | None = None
-    type: str | None = None  # string , secret , number , boolean , json
+    type: str | None = None  # string , secret , number , boolean , json , multi_select , single_select
     required: bool = False
     options: list[str] | None = None
 
@@ -47,6 +48,9 @@ class Step(ABC):
     def __init__(self, data_store_path: Path | None = None):
         self.log: bool = False
         self.configs: dict[str, str] = {}
+        self.complex_configs: dict[
+            str, typing.Any
+        ] = {}  # complex configs are meant for more complex configurations. Value can be any type.
         self.workflow_id: str = ""
         self.workflow_run_id: str = ""
         self.data_store_path = Path(data_store_path) if data_store_path is not None else Path.cwd()
@@ -65,8 +69,11 @@ class Step(ABC):
         self.workflow_id = workflow_id
         self.workflow_run_id = workflow_run_id
 
-    def configure(self, configs: dict[str, str]):
+    def configure(self, configs: dict[str, str], complex_configs: dict[str, typing.Any] | None = None):
+        if complex_configs is None:
+            complex_configs = {}
         self.configs = configs
+        self.complex_configs = complex_configs
 
     def set_flow_context(self, context: dict[str, DataContract]):
         self.flow_context = context

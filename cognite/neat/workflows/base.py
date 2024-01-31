@@ -288,6 +288,7 @@ class BaseWorkflow:
                         step_configs=step.configs,
                         workflow_id=self.name,
                         workflow_run_id=self.run_id,
+                        step_complex_configs=step.complex_configs,
                     )
 
                 output = method_runner()

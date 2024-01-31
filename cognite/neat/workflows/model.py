@@ -91,6 +91,7 @@ class WorkflowStepDefinition(BaseModel):
     ui_config: UIConfig = UIConfig()
     params: dict[str, str] = Field(default_factory=dict)  # System parameters
     configs: dict[str, Any] = Field(default_factory=dict)  # Step configurations
+    complex_configs: dict[str, Any] = Field(default_factory=dict)  # Complex step configurations
     max_retries: int = 0
     retry_delay: int = 3
 

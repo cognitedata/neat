@@ -1,4 +1,5 @@
 import base64
+import logging
 import time
 from pathlib import Path
 from typing import ClassVar
@@ -16,6 +17,7 @@ __all__ = [
     "DownloadFileFromCDF",
     "UploadFileToCDF",
     "DownloadDataFromRestApiToFile",
+    "Search",
 ]
 
 
@@ -217,6 +219,29 @@ class DownloadFileFromCDF(Step):
             return FlowMessage(
                 error_text="Error downloading file from CDF", step_execution_status=StepExecutionStatus.ABORT_AND_FAIL
             )
+
+
+class Search(Step):
+    """
+    This step does the search
+    """
+
+    description = "Search for values in CDF"
+    category = "Input/Output"
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="search_engine",
+            type="multi_select",
+            value="",
+            label="Which search engine to use",
+            options=["cdf", "google", "bing"],
+        ),
+    ]
+
+    def run(self) -> FlowMessage:  # type: ignore[override, syntax]
+        selected_search_engine = str(self.complex_configs["search_engine"])
+        logging.info(f"Selected search engine: {selected_search_engine}")
+        return FlowMessage(output_text=f"Search engine {selected_search_engine} selected")
 
 
 class UploadFileToCDF(Step):

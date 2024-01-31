@@ -10,11 +10,11 @@ import FormControlLabel from "@mui/material/FormControlLabel"
 import MenuItem from "@mui/material/MenuItem"
 import Select from "@mui/material/Select"
 import TextField from "@mui/material/TextField"
-import React, { useEffect, useState } from "react"
+import React, { ChangeEvent, useEffect, useState } from "react"
 import { StepMetadata, StepRegistry, WorkflowDefinition, WorkflowStepDefinition, WorkflowSystemComponent } from "types/WorkflowTypes"
 import { getNeatApiRootUrl } from "./Utils"
 import LocalUploader from "./LocalUploader"
-import { Autocomplete, Box, Container, InputLabel, Link, List, ListItem, ListItemText, Stack, Typography, darken, lighten, styled } from "@mui/material"
+import { Autocomplete, Box, Container, FormGroup, InputLabel, Link, List, ListItem, ListItemText, Stack, Typography, darken, lighten, styled } from "@mui/material"
 import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined';
 import { Height } from "@mui/icons-material"
 
@@ -138,15 +138,31 @@ export default function StepEditorDialog(props: any)
         let updStep= Object.assign({},currentStep);
         if (!updStep.configs || loadDefaults) {
           updStep.configs = new Map<string,string>();
+          updStep.complex_configs = new Map<string,Map<string,any>>();
         }
         if(!currentStep?.configs)
           currentStep.configs = new Map<string,string>();
+        if(!currentStep?.complex_configs)
+          currentStep.complex_configs = new Map<string,Map<string,any>>();
         for (let i=0;i<stepTemplate?.configurables.length;i++) {
           let confFromTemplate = stepTemplate?.configurables[i];
-          if (currentStep?.configs[confFromTemplate.name])
-            updStep.configs[confFromTemplate.name] = currentStep?.configs[confFromTemplate.name];
-          else
-            updStep.configs[confFromTemplate.name] = confFromTemplate?.value;
+          if (confFromTemplate.type == "multi_select") {
+            if (currentStep?.complex_configs[confFromTemplate.name] != undefined) {
+              updStep.complex_configs[confFromTemplate.name] = currentStep?.complex_configs[confFromTemplate.name];
+            } else {
+              updStep.complex_configs[confFromTemplate.name] = new Map<string,boolean>();
+              for (let j=0;j<confFromTemplate?.options.length;j++) {
+                updStep.complex_configs[confFromTemplate.name][confFromTemplate?.options[j]] = false;
+              }
+            }
+          }
+          else{
+            if (currentStep?.configs[confFromTemplate.name])
+              updStep.configs[confFromTemplate.name] = currentStep?.configs[confFromTemplate.name];
+            else
+              updStep.configs[confFromTemplate.name] = confFromTemplate?.value;
+          }
+
         }
         return updStep;
       }
@@ -228,6 +244,24 @@ export default function StepEditorDialog(props: any)
       }
 
 
+  function checkboxHandler(configItemName:string,selectedItemName:string,checked:boolean): void {
+    console.log('checkboxHandler : '+configItemName+' '+selectedItemName+' '+checked)
+
+    if (selectedStep) {
+      let updStep= Object.assign({},selectedStep);
+      if (!selectedStep.complex_configs)
+        updStep.complex_configs = new Map<string,Map<string,boolean>>();
+
+      if (selectedStep.complex_configs[configItemName]==undefined)
+        updStep.complex_configs[configItemName] = new Map<string,boolean>( );
+
+      updStep.complex_configs[configItemName][selectedItemName] = checked;
+      console.dir(updStep)
+      setSelectedStep(updStep);
+    }
+
+  }
+
 return (
   <Dialog open={dialogOpen} onClose={handleDialogCancel} fullWidth={true}  maxWidth={"xl"} >
         <DialogTitle>Step configurator</DialogTitle>
@@ -302,7 +336,7 @@ return (
                   </Box>
                   <Box sx={{width:'50vw'}}>
                   <FormControl fullWidth>
-                    {item?.options && selectedStep?.configs[item.name] != undefined && (
+                    {item?.options && selectedStep?.configs[item.name] != undefined  && item?.type != "multi_select"  && (
                     <Select
                       value={ selectedStep?.configs[item.name]}
                       size='small'
@@ -316,6 +350,20 @@ return (
                         ))
                       }
                     </Select> )}
+                    { item?.type == "multi_select" && (
+                        <FormGroup
+                          sx={{ marginBottom: 0 }}
+                        >
+                          {
+                            item?.options && item.options.map((option, i) => (
+                              <FormControlLabel
+                                control={<Checkbox checked = {selectedStep?.complex_configs[item.name][option]} onChange={ (event: ChangeEvent<HTMLInputElement>, checkedv: boolean)=>{ checkboxHandler(item.name,option,checkedv) } } name={option} />}
+                                label={option}
+                              />
+                            ))
+                          }
+                        </FormGroup>
+                    )}
                     {!item?.options && selectedStep?.configs && selectedStep?.configs[item.name] != undefined && item?.type != "password" && (
                       <TextField sx={{ marginTop: 0 }} fullWidth size='small' variant="outlined" value={ selectedStep?.configs[item.name]} onChange={(event) => { handleStepConfigurableChange(item.name, event.target.value) }} />
                     )}
