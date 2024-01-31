@@ -1,5 +1,4 @@
 import base64
-import logging
 import time
 from pathlib import Path
 from typing import ClassVar
