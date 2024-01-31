@@ -13,7 +13,11 @@ from prometheus_client import Gauge
 
 from cognite.neat.app.api.configuration import Config
 from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
-from cognite.neat.utils.utils import retry_decorator
+from cognite.neat.utils.utils import (
+    get_cognite_client_from_token,
+    get_new_cognite_client_using_new_token,
+    retry_decorator,
+)
 from cognite.neat.workflows import cdf_store, utils
 from cognite.neat.workflows._exceptions import ConfigurationNotSet, InvalidStepOutputException
 from cognite.neat.workflows.cdf_store import CdfStore
@@ -90,7 +94,15 @@ class BaseWorkflow:
             return None
         self.data["StartFlowMessage"] = kwargs.get("flow_message", None)
         self.data["CdfStore"] = self.cdf_store
-        self.data["CogniteClient"] = self.cdf_client
+        self.data["AccessToken"] = kwargs.get(
+            "access_token", None
+        )  # Authentication token from upstream proxy. Can be used for CDF authentication in steps and for other purposes like sharepoint authentication etc.
+        if self.data["AccessToken"]:
+            self.data["CogniteClient"] = get_new_cognite_client_using_new_token(
+                self.cdf_client, self.data["AccessToken"]
+            )
+        else:
+            self.data["CogniteClient"] = self.cdf_client
         self.state = WorkflowState.RUNNING
         self.start_time = time.time()
         self.end_time = None

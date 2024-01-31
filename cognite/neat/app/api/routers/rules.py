@@ -2,11 +2,12 @@ import logging
 from pathlib import Path
 from typing import Any, cast
 
-from fastapi import APIRouter, Response
+from fastapi import APIRouter, Request, Response
 from rdflib import Namespace
 
 from cognite.neat.app.api.configuration import NEAT_APP
 from cognite.neat.app.api.data_classes.rest import TransformationRulesUpdateRequest
+from cognite.neat.app.api.utils.auth import extract_access_token_from_request
 from cognite.neat.rules import exporter, importer
 from cognite.neat.rules.models._base import EntityTypes
 from cognite.neat.rules.models.rules import Class, Classes, Metadata, Properties, Property, Rules
@@ -25,6 +26,7 @@ def get_rules(
     workflow_name: str = "default",
     file_name: str | None = None,
     version: str | None = None,
+    http_request: Request = None,
 ) -> dict[str, Any]:
     if NEAT_APP.cdf_store is None or NEAT_APP.workflow_manager is None:
         return {"error": "NeatApp is not initialized"}
@@ -56,9 +58,13 @@ def get_rules(
     elif path.exists() and version:
         hash_ = get_file_hash(path)
         if hash_ != version:
+            access_token = extract_access_token_from_request(http_request)
+            NEAT_APP.cdf_store.refresh_token(access_token)
             NEAT_APP.cdf_store.load_rules_file_from_cdf(file_name, version)
             src = "cdf"
     else:
+        access_token = extract_access_token_from_request(http_request)
+        NEAT_APP.cdf_store.refresh_token(access_token)
         NEAT_APP.cdf_store.load_rules_file_from_cdf(file_name, version)
         src = "cdf"
 

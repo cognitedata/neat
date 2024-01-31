@@ -44,6 +44,11 @@ def get_cognite_client_from_token(config: ServiceCogniteClient) -> CogniteClient
     return _get_cognite_client(config, credentials)
 
 
+def get_new_cognite_client_using_new_token(client: CogniteClient, new_token: str) -> CogniteClient:
+    credentials = Token(new_token)
+    return _get_cognite_client(client.config, credentials)
+
+
 def get_cognite_client_interactive(config: InteractiveCogniteClient) -> CogniteClient:
     credentials = OAuthInteractive(
         authority_url=config.authority_url,

@@ -4,9 +4,10 @@
 import logging
 import shutil
 
-from fastapi import APIRouter, UploadFile
+from fastapi import APIRouter, Request, UploadFile
 
 from cognite.neat.app.api.configuration import NEAT_APP
+from cognite.neat.app.api.utils.auth import extract_access_token_from_request
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.utils import get_file_hash
 
@@ -14,27 +15,31 @@ router = APIRouter()
 
 
 @router.get("/api/cdf/neat-resources")
-def get_neat_resources(resource_type: str | None = None):
+def get_neat_resources(resource_type: str | None = None, http_request: Request = None):
     if NEAT_APP.cdf_store is None:
         return {"error": "NeatApp is not initialized"}
     if resource_type is None:
         return {"error": "Resource type is not specified"}
+    access_token = extract_access_token_from_request(http_request)
+    NEAT_APP.cdf_store.refresh_token(access_token)
     result = NEAT_APP.cdf_store.get_list_of_resources_from_cdf(resource_type=resource_type)
     logging.debug(f"Got {len(result)} resources")
     return {"result": result}
 
 
 @router.post("/api/cdf/init-neat-resources")
-def init_neat_cdf_resources(resource_type: str | None = None):
+def init_neat_cdf_resources(resource_type: str | None = None, http_request: Request = None):
     if NEAT_APP.cdf_store is None:
         return {"error": "NeatApp is not initialized"}
+    access_token = extract_access_token_from_request(http_request)
+    NEAT_APP.cdf_store.refresh_token(access_token)
     NEAT_APP.cdf_store.init_cdf_resources(resource_type=resource_type)
     return {"result": "ok"}
 
 
 @router.post("/api/file/upload/{workflow_name}/{file_type}/{step_id}/{action}")
 async def file_upload_handler(
-    files: list[UploadFile], workflow_name: str, file_type: str, step_id: str, action: str
+    files: list[UploadFile], workflow_name: str, file_type: str, step_id: str, action: str, http_request: Request = None
 ) -> dict[str, str]:
     if NEAT_APP.cdf_store is None or NEAT_APP.workflow_manager is None:
         return {"error": "NeatApp is not initialized"}
@@ -90,6 +95,8 @@ async def file_upload_handler(
 
     if action == "install" and file_type == "workflow":
         logging.info("Installing workflow after file upload")
+        access_token = extract_access_token_from_request(http_request)
+        NEAT_APP.cdf_store.refresh_token(access_token)
         NEAT_APP.cdf_store.extract_workflow_package(file_name)
 
     return {"file_name": file_name, "hash": file_version}

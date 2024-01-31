@@ -10,6 +10,7 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes import Event, FileMetadataUpdate, Label, LabelDefinition, LabelFilter
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
+from cognite.neat.utils.utils import get_new_cognite_client_using_new_token
 
 from cognite.neat.workflows._exceptions import ConfigurationNotSet
 from cognite.neat.workflows.model import WorkflowFullStateReport, WorkflowState, WorkflowStepEvent
@@ -42,6 +43,10 @@ class CdfStore:
         self.workflows_storage_path = workflows_storage_path
         self.rules_storage_path = rules_storage_path
         self.workflows_storage_type = "file"
+
+    def refresh_token(self, access_token: str | None = None):
+        if access_token:
+            self.client = get_new_cognite_client_using_new_token(self.client, access_token)
 
     def init_cdf_resources(self, resource_type="all"):
         if self.client and self.data_set_id:

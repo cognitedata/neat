@@ -233,7 +233,12 @@ class WorkflowManager:
         return
 
     def start_workflow_instance(
-        self, workflow_name: str, step_id: str = "", flow_msg: FlowMessage | None = None, sync: bool | None = None
+        self,
+        workflow_name: str,
+        step_id: str = "",
+        flow_msg: FlowMessage | None = None,
+        sync: bool | None = None,
+        access_token: str | None = None,
     ) -> WorkflowStartStatus:
         retrieved = self.get_workflow(workflow_name)
         if retrieved is None:
@@ -285,7 +290,7 @@ class WorkflowManager:
                         status_text="Workflow instance already running.Wait time exceeded",
                     )
                 time.sleep(0.5)
-            workflow.start(sync=sync, flow_message=flow_msg, start_step_id=step_id)
+            workflow.start(sync=sync, flow_message=flow_msg, start_step_id=step_id, access_token=access_token)
             return WorkflowStartStatus(workflow_instance=workflow, is_success=True, status_text="")
 
         elif instance_start_method == InstanceStartMethod.PERSISTENT_INSTANCE_NON_BLOCKING:
@@ -296,13 +301,19 @@ class WorkflowManager:
                     workflow_instance=None, is_success=False, status_text="Workflow instance already running"
                 )
 
-            workflow.start(sync=sync, flow_message=flow_msg, start_step_id=step_id)
+            workflow.start(sync=sync, flow_message=flow_msg, start_step_id=step_id, access_token=access_token)
             return WorkflowStartStatus(workflow_instance=workflow, is_success=True, status_text="")
 
         elif instance_start_method == InstanceStartMethod.EPHEMERAL_INSTANCE:
             # start new workflow instance in new thread
             workflow = self.create_workflow_instance(workflow_name, add_to_registry=True)
-            workflow.start(sync=sync, delete_after_completion=True, flow_message=flow_msg, start_step_id=step_id)
+            workflow.start(
+                sync=sync,
+                delete_after_completion=True,
+                flow_message=flow_msg,
+                start_step_id=step_id,
+                access_token=access_token,
+            )
             if sync:
                 self.delete_workflow_instance(workflow.instance_id)
             return WorkflowStartStatus(workflow_instance=workflow, is_success=True, status_text="")

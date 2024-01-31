@@ -7,6 +7,7 @@ from fastapi.responses import FileResponse, JSONResponse
 
 from cognite.neat.app.api.configuration import NEAT_APP
 from cognite.neat.app.api.data_classes.rest import DownloadFromCdfRequest, RunWorkflowRequest, UploadToCdfRequest
+from cognite.neat.app.api.utils.auth import extract_access_token_from_request
 from cognite.neat.workflows import WorkflowFullStateReport
 from cognite.neat.workflows.base import WorkflowDefinition
 from cognite.neat.workflows.migration.wf_manifests import migrate_wf_manifest
@@ -18,12 +19,15 @@ router = APIRouter()
 
 
 @router.post("/api/workflow/start")
-def start_workflow(request: RunWorkflowRequest):
+def start_workflow(request: RunWorkflowRequest, http_request: Request):
     logging.info("Starting workflow endpoint")
+    access_token = extract_access_token_from_request(http_request)
     if NEAT_APP.workflow_manager is None:
         return {"error": "NeatApp is not initialized"}
+    # X-Neathub-Token-Access-Token
+
     start_status = NEAT_APP.workflow_manager.start_workflow_instance(
-        request.name, sync=request.sync, flow_msg=FlowMessage()
+        request.name, sync=request.sync, flow_msg=FlowMessage(), access_token=access_token
     )
     result = {"workflow_instance": None, "is_success": start_status.is_success, "status_text": start_status.status_text}
     return {"result": result}
@@ -58,9 +62,11 @@ def get_workflow_files(workflow_name: str):
 
 
 @router.post("/api/workflow/package/{workflow_name}")
-def package_workflow(workflow_name: str):
+def package_workflow(workflow_name: str, http_request: Request):
     if NEAT_APP.cdf_store is None:
         return {"error": "NeatApp is not initialized"}
+    access_token = extract_access_token_from_request(http_request)
+    NEAT_APP.cdf_store.refresh_token(access_token)
     package_file = NEAT_APP.cdf_store.package_workflow(workflow_name)
     hash = get_file_hash(NEAT_APP.config.data_store_path / "workflows" / package_file)
     return {"package": package_file, "hash": hash}
@@ -85,7 +91,9 @@ def delete_workflow(workflow_name: str):
 
 
 @router.get("/api/workflow/executions")
-def get_list_of_workflow_executions():
+def get_list_of_workflow_executions(http_request: Request):
+    access_token = extract_access_token_from_request(http_request)
+    NEAT_APP.cdf_store.refresh_token(access_token)
     return {"executions": NEAT_APP.cdf_store.get_list_of_workflow_executions_from_cdf()}
 
 
@@ -132,9 +140,11 @@ def update_workflow_definition(workflow_name: str, request: WorkflowDefinition):
 
 
 @router.post("/api/workflow/upload-wf-to-cdf/{workflow_name}")
-def upload_workflow_to_cdf(workflow_name: str, request: UploadToCdfRequest):
+def upload_workflow_to_cdf(workflow_name: str, request: UploadToCdfRequest, http_request: Request):
     if NEAT_APP.cdf_store is None:
         return {"error": "NeatApp is not initialized"}
+    access_token = extract_access_token_from_request(http_request)
+    NEAT_APP.cdf_store.refresh_token(access_token)
     NEAT_APP.cdf_store.save_workflow_to_cdf(
         workflow_name, changed_by=request.author, comments=request.comments, tag=request.tag
     )
@@ -142,9 +152,11 @@ def upload_workflow_to_cdf(workflow_name: str, request: UploadToCdfRequest):
 
 
 @router.post("/api/workflow/upload-rules-cdf/{workflow_name}")
-def upload_rules_to_cdf(workflow_name: str, request: UploadToCdfRequest):
+def upload_rules_to_cdf(workflow_name: str, request: UploadToCdfRequest, http_request: Request):
     if NEAT_APP.cdf_store is None:
         return {"error": "NeatApp is not initialized"}
+    access_token = extract_access_token_from_request(http_request)
+    NEAT_APP.cdf_store.refresh_token(access_token)
     file_path = Path(NEAT_APP.config.rules_store_path, request.file_name)
     NEAT_APP.cdf_store.save_resource_to_cdf(
         workflow_name, "neat-wf-rules", file_path, changed_by=request.author, comments=request.comments
@@ -153,17 +165,21 @@ def upload_rules_to_cdf(workflow_name: str, request: UploadToCdfRequest):
 
 
 @router.post("/api/workflow/download-wf-from-cdf")
-def download_wf_from_cdf(request: DownloadFromCdfRequest):
+def download_wf_from_cdf(request: DownloadFromCdfRequest, http_request: Request):
     if NEAT_APP.cdf_store is None:
         return {"error": "NeatApp is not initialized"}
+    access_token = extract_access_token_from_request(http_request)
+    NEAT_APP.cdf_store.refresh_token(access_token)
     NEAT_APP.cdf_store.load_workflows_from_cdf(request.file_name, request.version)
     return {"result": "ok"}
 
 
 @router.post("/api/workflow/download-rules-from-cdf")
-def download_rules_to_cdf(request: DownloadFromCdfRequest):
+def download_rules_to_cdf(request: DownloadFromCdfRequest, http_request: Request):
     if NEAT_APP.cdf_store is None:
         return {"error": "NeatApp is not initialized"}
+    access_token = extract_access_token_from_request(http_request)
+    NEAT_APP.cdf_store.refresh_token(access_token)
     NEAT_APP.cdf_store.load_rules_file_from_cdf(request.file_name, request.version)
     return {"file_name": request.file_name, "hash": request.version}
 
