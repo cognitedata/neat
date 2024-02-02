@@ -24,6 +24,12 @@ Changes are grouped as follows:
 - Configuration for which DMS schema components are to be removed to CDF
 - Configuration how to handle existing CDF schema components during upload
 
+## Changed
+- Renamed `UploadDMSDataModel` to `UploadDMSSchemaComponents` step
+- Renamed `DeleteDMSDataModel` to `DeleteDMSSchemaComponents` step
+- Renamed `ExportDMSDataModel` to `ExportDMSSchemaComponents` step
+- Renamed `DataModel` class to `DMSSchemaComponents` to better reflect the content of the class
+- Step that waits for human approval timeout set to 1 day
 
 ## [0.59.1] - 29-01-24
 
