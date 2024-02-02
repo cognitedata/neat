@@ -234,6 +234,9 @@ export default function StepEditorDialog(props: any)
               case "max_wait_time":
                 updStep.params["max_wait_time"] = value;
                 break;
+              case "wait_timeout":
+                updStep.params["wait_timeout"] = value;
+                break;
               default:
                 updStep[name] = value;
             }
@@ -424,6 +427,9 @@ return (
             <FormControl fullWidth sx={{ marginTop: 2 }}>
             {(selectedStep?.stype == "http_trigger" || selectedStep?.stype == "wait_for_event") && (
               <TextField sx={{ marginTop: 1 }} value={runPayload} label="Run payload"  size='small' variant="outlined"  onChange={(event)=>setRunPayload(event.target.value)} id="run_payload"> </TextField>
+            )}
+             {(selectedStep?.stype == "wait_for_event") && (
+              <TextField sx={{ marginTop: 1 }} value={selectedStep?.params["wait_timeout"]} label="Time (in seconds) the system will wait before it times out and proceeds to next step.Default is 1 month"  size='small' variant="outlined"  onChange={(event) => { handleStepConfigChange("wait_timeout", event.target.value) }}  id="wait_timeout"> </TextField>
             )}
             {(selectedStep?.stype == "http_trigger" && selectedStep?.params["workflow_start_method"]=="persistent_blocking") && (
               <TextField sx={{ marginTop: 1 }} value={selectedStep?.params["max_wait_time"]}  size='small' variant="outlined"  label="Max blocking wait time" onChange={(event) => { handleStepConfigChange("max_wait_time", event.target.value) }} id="max_wait_time"> </TextField>
