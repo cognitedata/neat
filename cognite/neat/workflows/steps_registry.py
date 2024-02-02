@@ -113,11 +113,14 @@ class StepsRegistry:
         workflow_configs: WorkflowConfigs | None = None,
         workflow_id: str = "",
         workflow_run_id: str = "",
+        step_complex_configs: dict[str, Any] | None = None,
     ) -> DataContract | tuple[FlowMessage, DataContract] | FlowMessage:
+        if step_complex_configs is None:
+            step_complex_configs = {}
         for step_cls in self._step_classes:
             if step_cls.__name__ == step_name:
                 step_obj: Step = step_cls(Path(self.data_store_path))
-                step_obj.configure(step_configs)
+                step_obj.configure(step_configs, step_complex_configs)
                 step_obj.set_flow_context(flow_context)
                 step_obj.set_metrics(metrics)
                 step_obj.set_workflow_configs(workflow_configs)

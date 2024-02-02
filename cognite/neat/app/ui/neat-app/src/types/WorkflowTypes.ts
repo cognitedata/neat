@@ -101,6 +101,7 @@ export class WorkflowStepDefinition {
     params?:any = {}
     ui_config?: UIConfig = new UIConfig();
     configs?: Map<string, any> = new Map<string, any>();
+    complex_configs?: Map<string, any> = new Map<string, any>();
 }
 
 
