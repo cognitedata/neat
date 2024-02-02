@@ -3,7 +3,8 @@ description: null
 implementation_module: null
 name: skos2cdf
 steps:
--   configs: {}
+-   complex_configs: {}
+    configs: {}
     description: null
     enabled: true
     id: step_trigger
@@ -20,7 +21,8 @@ steps:
     ui_config:
         pos_x: 492
         pos_y: 89
--   configs:
+-   complex_configs: {}
+    configs:
         file_name: skos-rules.xlsx
         validation_report_file: rules_validation_report.txt
         validation_report_storage_dir: rules_validation_report
@@ -42,7 +44,8 @@ steps:
     ui_config:
         pos_x: 492
         pos_y: 153
--   configs:
+-   complex_configs: {}
+    configs:
         base_namespace: http://purl.org/neat/
         file_path: source-graphs/skos-capturing-sheet-wind-topics.xlsx
         graph_name: source
@@ -62,7 +65,8 @@ steps:
     ui_config:
         pos_x: 491
         pos_y: 273
--   configs:
+-   complex_configs: {}
+    configs:
         db_server_api_root_url: ''
         disk_store_dir: skos-graph-store
         graph_name: source
@@ -86,13 +90,17 @@ steps:
     ui_config:
         pos_x: 491
         pos_y: 212
--   configs: {}
+-   complex_configs: {}
+    configs:
+        external_id: ''
+        space: ''
+        version: ''
     description: null
     enabled: true
     id: step_generate_dms_data_model
-    label: Generate DMS Data Model
+    label: Generate DMS Schema Components
     max_retries: 0
-    method: DMSDataModelFromRules
+    method: GenerateDMSSchemaComponentsFromRules
     params: {}
     retry_delay: 3
     stype: stdstep
@@ -103,7 +111,8 @@ steps:
     ui_config:
         pos_x: 490
         pos_y: 348
--   configs:
+-   complex_configs: {}
+    configs:
         add_class_prefix: 'False'
         data_validatation_error_handling_strategy: skip_and_report
         graph_name: source
@@ -123,13 +132,20 @@ steps:
     ui_config:
         pos_x: 490
         pos_y: 424
--   configs: {}
+-   complex_configs:
+        components:
+            container: true
+            data model: true
+            space: true
+            view: true
+    configs:
+        existing_component_handling: skip
     description: null
     enabled: true
     id: step_upload_data_model
-    label: Upload DMS Data Model
+    label: Upload DMS Schema Componenets
     max_retries: 0
-    method: UploadDMSDataModel
+    method: UploadDMSSchemaComponents
     params: {}
     retry_delay: 3
     stype: stdstep
@@ -140,7 +156,8 @@ steps:
     ui_config:
         pos_x: 489
         pos_y: 502
--   configs: {}
+-   complex_configs: {}
+    configs: {}
     description: null
     enabled: true
     id: step_upload_nodes
@@ -157,7 +174,8 @@ steps:
     ui_config:
         pos_x: 488
         pos_y: 579
--   configs: {}
+-   complex_configs: {}
+    configs: {}
     description: null
     enabled: true
     id: step_upload_edges

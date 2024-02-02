@@ -115,7 +115,7 @@ class DMSExporter(BaseExporter[DMSSchema]):
         )
 
     def export(self) -> DMSSchema:
-        model = DataModel.from_rules(self.rules, self.data_model_id)
+        model = DMSSchemaComponents.from_rules(self.rules, self.data_model_id)
         return DMSSchema(
             data_model=DataModelApply(
                 space=model.space,
@@ -129,11 +129,11 @@ class DMSExporter(BaseExporter[DMSSchema]):
         )
 
 
-class DataModel(BaseModel):
+class DMSSchemaComponents(BaseModel):
     """
-    Data model pydantic class used to create space, containers, views and data model in CDF.
+    DMS Schema Components pydantic class used to create space(s), containers, views and data model in CDF.
 
-    This can be used to create a data model in CDF from transformation rules.
+    This can be used to create a data model in CDF from rules.
 
     Args:
         space: Name of the space to place the resulting data model.
@@ -237,8 +237,8 @@ class DataModel(BaseModel):
                 container_property_id: str = cast(str, property_.container_property)
                 container_id = property_.container.id
 
-                api_container = DataModel.as_api_container(property_.container)
-                api_container_property = DataModel.as_api_container_property(property_)
+                api_container = DMSSchemaComponents.as_api_container(property_.container)
+                api_container_property = DMSSchemaComponents.as_api_container_property(property_)
 
                 # scenario: adding new container to the data model for the first time
                 if not isinstance(api_container_property.type, EmptyPropertyType) and container_id not in containers:
@@ -351,7 +351,7 @@ class DataModel(BaseModel):
             Dictionary of ViewApply instances.
         """
         views: dict[str, ViewApply] = {
-            f"{rules.metadata.space}:{class_.class_id}": DataModel.as_api_view(
+            f"{rules.metadata.space}:{class_.class_id}": DMSSchemaComponents.as_api_view(
                 class_, rules.metadata.space, rules.metadata.version
             )
             for class_ in rules.classes.values()
@@ -360,7 +360,7 @@ class DataModel(BaseModel):
 
         # Create views from property-class definitions
         for row, property_ in rules.properties.items():
-            view_property = DataModel.as_api_view_property(property_, rules.metadata.space)
+            view_property = DMSSchemaComponents.as_api_view_property(property_, rules.metadata.space)
             id_ = f"{rules.metadata.space}:{property_.class_id}"
 
             # scenario: view exist but property does not so it is added
