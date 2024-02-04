@@ -111,7 +111,88 @@ and warnings.
 <img src="images/run_workflow.png" height="300">
 
 ## Grid Analysis Expert: Emma
+Similarly to Jon, Emma will define a set of statements in a spreadsheet. For example, she might define that a
+`Substation` has a `name`, a `location`, and a `voltage`. In addition, she might define that a `Substation` has
+a `transformer` and a `circuit breaker`. The `properties` sheet for Emma might look as follows:
+
+| Class       | Property       | Description | Type           | Min Count | Max Count |
+|-------------|----------------| ----------- |----------------|-----------|-----------|
+| Substation  | name           |             | string         | 1         | 1         |
+| Substation  | location       |             | string         | 0         | 1         |
+| Substation  | voltage        |             | number         | 1         | 1         |
+| Substation  | transformer    |             | Transformer    | 1         | 1         |
+| Substation  | circuit breaker|             | CircuitBreaker | 1         | 1         |
+
+Furthermore, Emma might define the `Substation` class as follows:
+
+| Class          | Description                                       | Parent Class |
+|----------------|---------------------------------------------------|--------------|
+| Substation     | A part of an electrical grid                      |              |
+| Transformer    | A device that changes the voltage of electricity  | Substation   |
+| CircuitBreaker | A device that can stop the flow of electricity    | Substation   |
+
+You can find the complete `properties`, `classes`, and `metadata` sheets for Emma here.
+
+Finally, Emma will validate her sheet using the `neat` UI, just like Jon did.
 
 ## Data Engineer: David
 
+### Combining Knowledge
+
+Once Jon and Emma have defined their statements, David will combine the two sheets into a single sheet. This is
+done by simply copying the statements from Jon and Emma into a single sheet. For example, the `properties` sheet
+for David might look as follows:
+
+| Class       | Property       | Description | Type           | Min Count | Max Count |
+|-------------|----------------| ----------- |----------------|-----------|-----------|
+| WindTurbine | name           |             | string         | 1         | 1         |
+| WindTurbine | location       |             | string         | 0         | 1         |
+| WindTurbine | manufacturer   |             | string         | 0         | 1         |
+| WindTurbine | nacelle        |             | Nacelle        | 1         | 1         |
+| WindTurbine | rotor          |             | Rotor          | 1         | 1         |
+| Substation  | name           |             | string         | 1         | 1         |
+| Substation  | location       |             | string         | 0         | 1         |
+| Substation  | voltage        |             | number         | 1         | 1         |
+| Substation  | transformer    |             | Transformer    | 1         | 1         |
+| Substation  | circuit breaker|             | CircuitBreaker | 1         | 1         |
+
+In addition, David will also need to combine the `classes` sheets from Jon and Emma. This is done by simply
+copying the statements from Jon and Emma into a single sheet. For example, the `classes` sheet for David might
+
+| Class           | Description                                         | Parent Class |
+|-----------------|-----------------------------------------------------|--------------|
+| WindTurbine     | A device that converts wind to electrical energy    |              |
+| Nacelle         | The covering house of all the generating components | WindTurbine  |
+| Rotor           | The rotating part of the wind turbine               | WindTurbine  |
+| Substation      | A part of an electrical grid                        |              |
+| Transformer     | A device that changes the voltage of electricity    | Substation   |
+| CircuitBreaker  | A device that can stop the flow of electricity      | Substation   |
+
+Now, David needs to go over and look for shared concepts. In addition, he neets to add the following columns to
+the `properties` sheet:
+
+TODO: MISSING COLUMNS
+TODO: DESCRIBE ITERATIVE PROCESS
+
+Finally, David will validate his sheet using the `neat` UI, just like Jon and Emma did.
+
 ## CDF Expert: Alice
+
+### Implementing the Shared Data Model
+
+Once David has defined the shared data model, Alice will implement it in CDF. The focus of Alice is to make sure
+that the shared data model is implemented in CDF in a way that accounts for the expected usage of the data. For example, she
+needs to define how the data is stored and what properties are indexed for fast search. In addition, she decides
+which dependencies between data should be enforced. This is a trade-off in that being very strict on the data
+makes it easy to use as it is predictable, but it can be hard to populate it as large quantities of the
+data might not be in the expected format. On the other hand, being very flexible on the data makes it easy to
+populate, but it can be hard to use as it is unpredictable.
+
+Alice will start by taking the spreadsheet from David and use it as a starting point. She will then define the
+following new columns in the `properties` sheet:
+
+TODO: MISSING COLUMNS
+
+Once Alice has defined the new columns, she will validate her sheet using the `neat` UI, just like Jon, Emma, and David did.
+Then, she will select the workflow `Generate CDF Model` and run it. This will generate a CDF model that she can
+use to implement the shared data model in CDF.
