@@ -446,7 +446,7 @@ class DMSSchemaComponents(BaseModel):
         else:
             return None
 
-    def find_existing_spaces(self, client: CogniteClient) -> set:
+    def find_existing_spaces(self, client: CogniteClient) -> set[str]:
         """Checks if the spaces exist in CDF.
 
         Args:
@@ -458,7 +458,7 @@ class DMSSchemaComponents(BaseModel):
 
         return set(client.data_modeling.spaces.retrieve(list(self.spaces)).as_ids())
 
-    def find_existing_containers(self, client: CogniteClient) -> set:
+    def find_existing_containers(self, client: CogniteClient) -> set[str]:
         """Checks if the containers exist in CDF.
 
         Args:
@@ -475,7 +475,7 @@ class DMSSchemaComponents(BaseModel):
             ).as_ids()
         }
 
-    def find_existing_views(self, client: CogniteClient) -> set:
+    def find_existing_views(self, client: CogniteClient) -> set[str]:
         """Checks if the views exist in CDF.
 
         Args:

@@ -2331,8 +2331,8 @@ class DataModelOrItsComponentsAlreadyExist(NeatException):
         self,
         existing_spaces: set[str] | None,
         existing_data_model: DataModelId | None,
-        existing_containers: set[ContainerId],
-        existing_views: set[ViewId],
+        existing_containers: set[str],
+        existing_views: set[str],
         verbose: bool = False,
     ):
         self.existing_spaces = existing_spaces
