@@ -623,32 +623,94 @@ class DMSSchemaComponents(BaseModel):
         if client.data_modeling.data_models.retrieve((self.space, self.external_id, self.version)):
             logging.info(f"Removing data model {self.space}:{self.external_id}/{self.version}")
             _ = client.data_modeling.data_models.delete((self.space, self.external_id, self.version))
+        else:
+            warnings.warn(
+                "No Data Model to remove",
+                stacklevel=2,
+            )
+            logging.info(
+                "No Data Model to remove",
+            )
 
     def remove_views(self, client: CogniteClient):
-        if views := client.data_modeling.views.retrieve(
-            [view.as_id() for view in self.views.values()], all_versions=False
-        ):
-            for view in views:
-                logging.info(f"Removing view {view.space}:{view.external_id}/{view.version}")
-                _ = client.data_modeling.views.delete((view.space, view.external_id, view.version))
+        if existing_views := self.find_existing_views(client):
+            try:
+                _ = client.data_modeling.views.delete([self.views[id_].as_id() for id_ in existing_views])
+            except CogniteAPIError as e:
+                warnings.warn(
+                    f"Failed to remove views {existing_views}! Reason: {e.message}",
+                    stacklevel=2,
+                )
+                logging.error(f"Failed to remove views {existing_views}! Reason: {e.message}")
+
+            warnings.warn(
+                f"Removed views {existing_views}!",
+                stacklevel=2,
+            )
+            logging.info(
+                f"Removed views {existing_views}!",
+            )
+        else:
+            warnings.warn(
+                "No Views to remove",
+                stacklevel=2,
+            )
+            logging.info(
+                "No Views to remove",
+            )
 
     def remove_containers(self, client: CogniteClient):
-        if containers := client.data_modeling.containers.retrieve(
-            [container.as_id() for container in self.containers.values()]
-        ):
-            for container in containers:
-                logging.info(f"Removing container {container.space}:{container.external_id}")
-                _ = client.data_modeling.containers.delete((container.space, container.external_id))
+        if existing_container := self.find_existing_containers(client):
+            try:
+                _ = client.data_modeling.containers.delete([self.containers[id_].as_id() for id_ in existing_container])
+            except CogniteAPIError as e:
+                warnings.warn(
+                    f"Failed to remove containers {existing_container}! Reason: {e.message}",
+                    stacklevel=2,
+                )
+                logging.error(f"Failed to remove containers {existing_container}! Reason: {e.message}")
+
+            warnings.warn(
+                f"Removed containers {existing_container}!",
+                stacklevel=2,
+            )
+            logging.info(
+                f"Removed containers {existing_container}!",
+            )
+
+        else:
+            warnings.warn(
+                "No Containers to remove",
+                stacklevel=2,
+            )
+            logging.info(
+                "No Containers to remove",
+            )
 
     def remove_spaces(self, client: CogniteClient):
-        if spaces := client.data_modeling.spaces.retrieve(spaces=list(self.spaces)):
-            for space in spaces:
-                try:
-                    logging.info(f"Removing space {space.space}!")
-                    _ = client.data_modeling.spaces.delete(space.space)
-                except CogniteAPIError as e:
-                    warnings.warn(
-                        f"Failed to remove space {space.space}! Reason: {e.message}",
-                        stacklevel=2,
-                    )
-                    logging.error(f"Failed to remove space {space.space}! Reason: {e.message}")
+        if existing_spaces := self.find_existing_spaces(client):
+            try:
+                _ = client.data_modeling.spaces.delete(list(existing_spaces))
+            except CogniteAPIError as e:
+                warnings.warn(
+                    f"Failed to remove spaces {existing_spaces}! Reason: {e.message}",
+                    stacklevel=2,
+                )
+                logging.error(f"Failed to remove spaces {existing_spaces}! Reason: {e.message}")
+
+            warnings.warn(
+                f"Removed spaces {existing_spaces}!",
+                stacklevel=2,
+            )
+            logging.info(
+                f"Removed spaces {existing_spaces}!",
+            )
+
+        else:
+            warnings.warn(
+                "No Spaces to remove",
+                stacklevel=2,
+            )
+            logging.info(
+                "No Spaces to remove",
+            )
