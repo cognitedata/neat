@@ -57,7 +57,7 @@ Changes are grouped as follows:
 
 ## Changed
 
-- `cognite.neat.graph.loaders.rdf_to_dms.rdf2nodes_and_edges` has been replaced by `cognite.nead.graph.loaders.DMSLoader`.
+- `cognite.neat.graph.loaders.rdf_to_dms.rdf2nodes_and_edges` has been replaced by `cognite.neat.graph.loaders.DMSLoader`.
 - Upgrade `cognite-sdk` to `v7`, thus now neat requires `cognite-sdk>=7.13.8`.
 
 ## Added

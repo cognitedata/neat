@@ -218,8 +218,8 @@ class DMSSchemaComponents(BaseModel):
             views=cls.views_from_rules(rules),
         )
 
-    @staticmethod
-    def containers_from_rules(rules: Rules) -> dict[str, ContainerApply]:
+    @classmethod
+    def containers_from_rules(cls, rules: Rules) -> dict[str, ContainerApply]:
         """Create a dictionary of ContainerApply instances from a Rules instance.
 
         Args:
@@ -237,8 +237,8 @@ class DMSSchemaComponents(BaseModel):
                 container_property_id: str = cast(str, property_.container_property)
                 container_id = property_.container.id
 
-                api_container = DMSSchemaComponents.as_api_container(property_.container)
-                api_container_property = DMSSchemaComponents.as_api_container_property(property_)
+                api_container = cls.as_api_container(property_.container)
+                api_container_property = cls.as_api_container_property(property_)
 
                 # scenario: adding new container to the data model for the first time
                 if not isinstance(api_container_property.type, EmptyPropertyType) and container_id not in containers:
@@ -297,8 +297,8 @@ class DMSSchemaComponents(BaseModel):
 
         return containers
 
-    @staticmethod
-    def as_api_container_property(property_: Property) -> ContainerProperty:
+    @classmethod
+    def as_api_container_property(cls, property_: Property) -> ContainerProperty:
         is_one_to_many = property_.max_count != 1
 
         # Literal, i.e. Node attribute
@@ -328,8 +328,8 @@ class DMSSchemaComponents(BaseModel):
         else:
             return ContainerProperty(type=EmptyPropertyType())
 
-    @staticmethod
-    def as_api_container(container: ContainerEntity) -> ContainerApply:
+    @classmethod
+    def as_api_container(cls, container: ContainerEntity) -> ContainerApply:
         return ContainerApply(
             space=container.space,
             external_id=container.external_id,
@@ -339,8 +339,8 @@ class DMSSchemaComponents(BaseModel):
             properties={},
         )
 
-    @staticmethod
-    def views_from_rules(rules: Rules) -> dict[str, ViewApply]:
+    @classmethod
+    def views_from_rules(cls, rules: Rules) -> dict[str, ViewApply]:
         """Generates a dictionary of ViewApply instances from a Rules instance.
 
         Args:
@@ -351,7 +351,7 @@ class DMSSchemaComponents(BaseModel):
             Dictionary of ViewApply instances.
         """
         views: dict[str, ViewApply] = {
-            f"{rules.metadata.space}:{class_.class_id}": DMSSchemaComponents.as_api_view(
+            f"{rules.metadata.space}:{class_.class_id}": cls.as_api_view(
                 class_, rules.metadata.space, rules.metadata.version
             )
             for class_ in rules.classes.values()
@@ -360,7 +360,7 @@ class DMSSchemaComponents(BaseModel):
 
         # Create views from property-class definitions
         for row, property_ in rules.properties.items():
-            view_property = DMSSchemaComponents.as_api_view_property(property_, rules.metadata.space)
+            view_property = cls.as_api_view_property(property_, rules.metadata.space)
             id_ = f"{rules.metadata.space}:{property_.class_id}"
 
             # scenario: view exist but property does not so it is added
@@ -387,8 +387,8 @@ class DMSSchemaComponents(BaseModel):
 
         return views
 
-    @staticmethod
-    def as_api_view(class_: Class, space: str, version: str) -> ViewApply:
+    @classmethod
+    def as_api_view(cls, class_: Class, space: str, version: str) -> ViewApply:
         return ViewApply(
             space=space,
             external_id=class_.class_id,
@@ -401,8 +401,10 @@ class DMSSchemaComponents(BaseModel):
             else None,
         )
 
-    @staticmethod
-    def as_api_view_property(property_: Property, space: str) -> MappedPropertyApply | ConnectionDefinitionApply | None:
+    @classmethod
+    def as_api_view_property(
+        cls, property_: Property, space: str
+    ) -> MappedPropertyApply | ConnectionDefinitionApply | None:
         property_.container = cast(ContainerEntity, property_.container)
         property_.container_property = cast(str, property_.container_property)
         if property_.property_type is EntityTypes.data_property:
