@@ -16,6 +16,25 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.60.0] - 30-01-24
+
+## Added
+
+- Configuration for which DMS schema components are to be uploaded to CDF
+- Configuration for which DMS schema components are to be removed to CDF
+- Configuration how to handle existing CDF schema components during upload
+
+## Changed
+- Renamed `UploadDMSDataModel` to `ExportDMSSchemaComponentsToCDF` step. **Note** this is a breaking change, but
+  since we are on 0. version, we can do this.
+- Renamed `DeleteDMSDataModel` to `DeleteDMSSchemaComponents` step. **Note** this is a breaking change, but
+  since we are on 0. version, we can do this.
+- Renamed `ExportDMSDataModel` to `ExportDMSSchemaComponentsToYAML` step. **Note** this is a breaking change, but
+  since we are on 0. version, we can do this.
+- Renamed `DataModel` class to `DMSSchemaComponents` to better reflect the content of the class. **Note** this is a breaking change, but
+  since we are on 0. version, we can do this.
+- Step that waits for human approval timeout set to 1 day
+
 ## [0.59.1] - 29-01-24
 
 ## Added
@@ -42,7 +61,7 @@ Changes are grouped as follows:
 
 ## Changed
 
-- `cognite.neat.graph.loaders.rdf_to_dms.rdf2nodes_and_edges` has been replaced by `cognite.nead.graph.loaders.DMSLoader`.
+- `cognite.neat.graph.loaders.rdf_to_dms.rdf2nodes_and_edges` has been replaced by `cognite.neat.graph.loaders.DMSLoader`.
 - Upgrade `cognite-sdk` to `v7`, thus now neat requires `cognite-sdk>=7.13.8`.
 
 ## Added

@@ -10,7 +10,7 @@ from pydantic_core import ErrorDetails
 from cognite.neat.exceptions import NeatException
 from cognite.neat.graph.stores import NeatGraphStoreBase
 from cognite.neat.graph.transformations.query_generator.sparql import triples2dictionary
-from cognite.neat.rules.exporter._rules2dms import DataModel
+from cognite.neat.rules.exporter._rules2dms import DMSSchemaComponents
 from cognite.neat.rules.exporter._rules2pydantic_models import add_class_prefix_to_xid, rules_to_pydantic_models
 from cognite.neat.rules.models.rules import Rules
 from cognite.neat.utils.utils import chunker, datetime_utc_now, retry_decorator
@@ -45,7 +45,7 @@ class DMSLoader(CogniteLoader[InstanceApply]):
         if self.rules.metadata.namespace is None:
             raise ValueError("Namespace is not defined in transformation rules metadata")
 
-        data_model = DataModel.from_rules(self.rules)
+        data_model = DMSSchemaComponents.from_rules(self.rules)
         pydantic_models = rules_to_pydantic_models(self.rules)
 
         exclude = {

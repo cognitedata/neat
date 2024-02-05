@@ -17,7 +17,7 @@ from cognite.neat.graph.loaders.core.rdf_to_assets import NeatMetadataKeys
 from cognite.neat.graph.transformations.query_generator.sparql import build_construct_query, triples2dictionary
 from cognite.neat.rules import exceptions
 from cognite.neat.rules.analysis import define_class_asset_mapping, to_class_property_pairs
-from cognite.neat.rules.exporter._rules2dms import DataModel
+from cognite.neat.rules.exporter._rules2dms import DMSSchemaComponents
 from cognite.neat.rules.exporter._validation import are_entity_names_dms_compliant
 from cognite.neat.rules.models.rules import Property, Rules
 from cognite.neat.rules.models.value_types import ValueTypeMapping
@@ -512,7 +512,9 @@ def to_relationship(self, transformation_rules: Rules) -> Relationship:
     raise NotImplementedError()
 
 
-def to_node(self, data_model_or_view_id: DataModel | ViewId | None = None, add_class_prefix: bool = False) -> NodeApply:
+def to_node(
+    self, data_model_or_view_id: DMSSchemaComponents | ViewId | None = None, add_class_prefix: bool = False
+) -> NodeApply:
     """Creates DMS node from the instance of pydantic model.
 
     Args:
@@ -531,7 +533,7 @@ def to_node(self, data_model_or_view_id: DataModel | ViewId | None = None, add_c
         if pydantic model already contains View information (which default behavior).
     """
 
-    if isinstance(data_model_or_view_id, DataModel):
+    if isinstance(data_model_or_view_id, DMSSchemaComponents):
         return _to_node_using_data_model(self, data_model_or_view_id, add_class_prefix)
     elif isinstance(data_model_or_view_id, ViewId):
         if not data_model_or_view_id.space:
@@ -642,7 +644,7 @@ def _to_node_using_data_model(self, data_model, add_class_prefix) -> NodeApply:
     )
 
 
-def to_edge(self, data_model: DataModel, add_class_prefix: bool = False) -> list[EdgeApply]:
+def to_edge(self, data_model: DMSSchemaComponents, add_class_prefix: bool = False) -> list[EdgeApply]:
     """Creates DMS edge from pydantic model."""
     edges: list[EdgeApply] = []
 

@@ -1,0 +1,155 @@
+configs: []
+description: null
+implementation_module: null
+name: ontology2data_model
+steps:
+  - complex_configs: {}
+    configs: {}
+    description: null
+    enabled: true
+    id: step_trigger
+    label: Trigger
+    max_retries: 0
+    method: null
+    params: {}
+    retry_delay: 3
+    stype: http_trigger
+    system_component_id: null
+    transition_to:
+      - step_128344
+      - dowload_ontology
+    trigger: true
+    ui_config:
+      pos_x: 521
+      pos_y: 258
+  - complex_configs: {}
+    configs:
+      excel_file_path: rules/LIS-14-rules.xlsx
+      make_compliant: "True"
+      ontology_file_path: staging/LIS-14.ttl
+    description: null
+    enabled: true
+    id: onotology2rules
+    label: Convert Ontology to Rules
+    max_retries: 0
+    method: OntologyToRules
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+      - load_generated_rules
+    trigger: false
+    ui_config:
+      pos_x: 519
+      pos_y: 408
+  - complex_configs: {}
+    configs:
+      file_name: LIS-14-rules.xlsx
+      validation_report_file: rules_validation_report.txt
+      validation_report_storage_dir: rules_validation_report
+      version: ""
+    description: null
+    enabled: true
+    id: load_generated_rules
+    label: Load Generated Rules
+    max_retries: 0
+    method: LoadTransformationRules
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+      - step_59017
+      - step_123045
+    trigger: false
+    ui_config:
+      pos_x: 518
+      pos_y: 499
+  - complex_configs: {}
+    configs:
+      api_url: https://rds.posccaesar.org/ontology/lis14/ont/core/2.0/LIS-14.ttl
+      auth_mode: none
+      http_method: GET
+      output_file_path: staging/LIS-14.ttl
+      password: ""
+      response_destination: file
+      token: ""
+      username: ""
+    description: null
+    enabled: true
+    id: dowload_ontology
+    label: Download Ontology
+    max_retries: 0
+    method: DownloadDataFromRestApiToFile
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+      - onotology2rules
+    trigger: false
+    ui_config:
+      pos_x: 520
+      pos_y: 333
+  - complex_configs: {}
+    configs:
+      external_id: ""
+      space: ""
+      version: ""
+    description: null
+    enabled: true
+    id: step_123045
+    label: Generate DMS Schema Components
+    max_retries: 0
+    method: GenerateDMSSchemaComponentsFromRules
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+      - step_123331
+    trigger: false
+    ui_config:
+      pos_x: 517
+      pos_y: 570
+  - complex_configs: {}
+    configs:
+      format: yaml-dump
+      storage_dir: staging
+    description: null
+    enabled: true
+    id: step_123331
+    label: Export DMS Schema Components
+    max_retries: 0
+    method: ExportDMSSchemaComponents
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+      - step_829062
+    trigger: false
+    ui_config:
+      pos_x: 518
+      pos_y: 666
+  - complex_configs: {}
+    configs:
+      file_name: ""
+      storage_dir: staging
+    description: null
+    enabled: true
+    id: step_829062
+    label: Convert Rules to GraphQL Schema
+    max_retries: 0
+    method: GraphQLSchemaFromRules
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to: []
+    trigger: false
+    ui_config:
+      pos_x: 519
+      pos_y: 772
+system_components: []

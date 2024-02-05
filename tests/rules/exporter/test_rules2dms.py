@@ -5,7 +5,7 @@ import pytest
 from rdflib import Namespace
 
 from cognite.neat.rules.exceptions import EntitiesContainNonDMSCompliantCharacters
-from cognite.neat.rules.exporter._rules2dms import DataModel
+from cognite.neat.rules.exporter._rules2dms import DMSSchemaComponents
 from cognite.neat.rules.models._base import ParentClass
 from cognite.neat.rules.models.rules import Class, Metadata, Property, Rules
 
@@ -14,7 +14,7 @@ if sys.version_info < (3, 11):
 
 
 def test_rules2dms_single_space(simple_rules):
-    data_model = DataModel.from_rules(rules=simple_rules)
+    data_model = DMSSchemaComponents.from_rules(rules=simple_rules)
 
     assert len(data_model.containers) == 4
     assert len(data_model.views) == 4
@@ -62,7 +62,7 @@ def test_rules2dms_multi_space():
     # Act
     rules = Rules(metadata=metadata, classes=classes, properties=properties, prefixes={}, instances=[])
 
-    data_model = DataModel.from_rules(rules=rules)
+    data_model = DMSSchemaComponents.from_rules(rules=rules)
     assert len(data_model.containers) == 1
     assert len(data_model.views) == 2
     assert list(data_model.views.keys()) == [
@@ -80,7 +80,7 @@ def test_rules2dms_multi_space():
 
 def test_raise_error10(transformation_rules):
     with pytest.raises(EntitiesContainNonDMSCompliantCharacters):
-        _ = DataModel.from_rules(rules=transformation_rules)
+        _ = DMSSchemaComponents.from_rules(rules=transformation_rules)
 
 
 def test_raise_container_error():
@@ -118,7 +118,7 @@ def test_raise_container_error():
     rules = Rules(metadata=metadata, classes=classes, properties=properties, prefixes={}, instances=[])
 
     with pytest.raises(ExceptionGroup) as exc_info:
-        _ = DataModel.from_rules(rules=rules)
+        _ = DMSSchemaComponents.from_rules(rules=rules)
     assert exc_info.value.message == "Properties value types have been redefined! This is prohibited! Aborting!"
     assert "Container outerSpace:DummyClass property dummyProperty value type" in exc_info.value.exceptions[0].message
 
@@ -159,7 +159,7 @@ def test_raise_view_error():
     rules = Rules(metadata=metadata, classes=classes, properties=properties, prefixes={}, instances=[])
 
     with pytest.raises(ExceptionGroup) as exc_info:
-        _ = DataModel.from_rules(rules=rules)
+        _ = DMSSchemaComponents.from_rules(rules=rules)
     assert exc_info.value.message == "View properties have been redefined! This is prohibited! Aborting!"
     assert (
         "View neat:DummyClass2 property dummyProperty has been redefined in the same view"

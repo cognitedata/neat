@@ -2,64 +2,64 @@ import logging
 import time
 import warnings
 from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, Literal, cast
 
 from cognite.client import data_modeling as dm
 
 import cognite.neat.graph.extractors._graph_capturing_sheet
 from cognite.neat.exceptions import wrangle_warnings
 from cognite.neat.rules import exporter
-from cognite.neat.rules.exporter._rules2dms import DataModel
+from cognite.neat.rules.exporter._rules2dms import DMSSchemaComponents
 from cognite.neat.rules.exporter._rules2graphql import GraphQLSchema
 from cognite.neat.rules.exporter._rules2ontology import Ontology
 from cognite.neat.utils.utils import generate_exception_report
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
-from cognite.neat.workflows.steps.data_contracts import CogniteClient, DMSDataModel, RulesData
+from cognite.neat.workflows.steps.data_contracts import CogniteClient, DMSSchemaComponentsData, RulesData
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
 __all__ = [
-    "DMSDataModelFromRules",
+    "GenerateDMSSchemaComponentsFromRules",
+    "ExportDMSSchemaComponentsToYAML",
+    "ExportDMSSchemaComponentsToCDF",
+    "DeleteDMSSchemaComponents",
     "GraphQLSchemaFromRules",
     "OntologyFromRules",
     "SHACLFromRules",
     "GraphCaptureSpreadsheetFromRules",
-    "UploadDMSDataModel",
-    "DeleteDMSDataModel",
     "ExcelFromRules",
-    "ExportDMSDataModel",
 ]
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
 
 
-class DMSDataModelFromRules(Step):
+class GenerateDMSSchemaComponentsFromRules(Step):
     """
-    This step generates DMS Data model from data model defined in transformation rules
+    This step generates DMS Schema components, such as data model, views, containers, etc. from Rules.
     """
 
-    description = "This step generates DMS Data model from data model defined in transformation rules."
+    description = "This step generates DMS Schema components, such as data model, views, containers, etc. from Rules."
     category = CATEGORY
 
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
             name="space",
             value="",
-            label=("Space to upload DMS Data model to, if empty defaults to the space defined in Rules"),
+            label=("ADVANCE: Update default space of DMS Schema components"),
         ),
         Configurable(
             name="version",
             value="",
-            label=("Version of DMS Data model to upload, if empty defaults to the version defined in Rules"),
+            label=("ADVANCE: Update default version of DMS Schema components"),
         ),
         Configurable(
             name="external_id",
             value="",
-            label=("External ID of DMS Data model to upload, if empty defaults to the external ID defined in Rules"),
+            label=("ADVANCE: Update default external_id of DMS data model"),
         ),
     ]
 
-    def run(self, rules: RulesData) -> (FlowMessage, DMSDataModel):  # type: ignore[override, syntax]
+    def run(self, rules: RulesData) -> (FlowMessage, DMSSchemaComponentsData):  # type: ignore[override, syntax]
         if new_space := self.configs["space"]:
             rules.rules.update_space(new_space)
         if new_version := self.configs["version"]:
@@ -67,28 +67,29 @@ class DMSDataModelFromRules(Step):
         if new_external_id := self.configs["external_id"]:
             rules.rules.metadata.suffix = new_external_id
 
-        data_model = DataModel.from_rules(rules.rules)
+        data_model = DMSSchemaComponents.from_rules(rules.rules)
 
         output_text = (
-            f"DMS Data Model <b><code>{data_model.external_id}</code></b> version"
-            f" <b><code>{data_model.version}</code></b> generated containing:<ul>"
-            f"<li> {len(data_model.containers)} containers</li>"
-            f"<li> {len(data_model.views)} views</li>"
-            f"</ul> Data model is meant to be uploaded to <b><code>{data_model.space}</code></b> space"
+            "DMS Schema Components Generated: "
+            f"<li> - {len(data_model.spaces)} spaces</li>"
+            f"<li> - {len(data_model.containers)} containers</li>"
+            f"<li> - {len(data_model.views)} views</li>"
+            f"</ul> which are referred in data model <b><code>{data_model.space}:{data_model.external_id}</code>"
+            f"</b>/v=<b><code>{data_model.version}</code></b>"
         )
 
         # need to store the data model in the step so that it can be used by the next step
         # see GraphQL step
 
-        return FlowMessage(output_text=output_text), DMSDataModel(data_model=data_model)
+        return FlowMessage(output_text=output_text), DMSSchemaComponentsData(components=data_model)
 
 
-class ExportDMSDataModel(Step):
+class ExportDMSSchemaComponentsToYAML(Step):
     """
-    This step exports DMS data model and its building components to YAML files
+    This step exports DMS schema components as YAML files
     """
 
-    description = "This step generates GraphQL schema from data model defined in transformation rules."
+    description = "This step exports DMS schema components as YAML files"
     category = CATEGORY
     configurables: ClassVar[list[Configurable]] = [
         Configurable(name="storage_dir", value="staging", label="Directory to store DMS schema files"),
@@ -100,7 +101,7 @@ class ExportDMSDataModel(Step):
         ),
     ]
 
-    def run(self, data_model_contract: DMSDataModel) -> FlowMessage:  # type: ignore[override, syntax]
+    def run(self, data_model_contract: DMSSchemaComponentsData) -> FlowMessage:  # type: ignore[override, syntax]
         if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
 
@@ -112,9 +113,9 @@ class ExportDMSDataModel(Step):
 
         if format_ in ["yaml-dump", "all"]:
             base_file_name = (
-                f"{data_model_contract.data_model.space}-"
-                f"{data_model_contract.data_model.external_id}-"
-                f"v{data_model_contract.data_model.version.strip().replace('.', '_')}"
+                f"{data_model_contract.components.space}-"
+                f"{data_model_contract.components.external_id}-"
+                f"v{data_model_contract.components.version.strip().replace('.', '_')}"
             )
 
             _container_file_name = f"{base_file_name}-containers.yaml"
@@ -124,15 +125,15 @@ class ExportDMSDataModel(Step):
             data_model_full_path = staging_dir / _data_model_file_name
 
             data_model = dm.DataModelApply(
-                space=data_model_contract.data_model.space,
-                external_id=data_model_contract.data_model.external_id,
-                version=data_model_contract.data_model.version,
-                description=data_model_contract.data_model.description,
-                name=data_model_contract.data_model.name,
-                views=list(data_model_contract.data_model.views.values()),
+                space=data_model_contract.components.space,
+                external_id=data_model_contract.components.external_id,
+                version=data_model_contract.components.version,
+                description=data_model_contract.components.description,
+                name=data_model_contract.components.name,
+                views=list(data_model_contract.components.views.values()),
             )
 
-            containers = dm.ContainerApplyList(data_model_contract.data_model.containers.values())
+            containers = dm.ContainerApplyList(data_model_contract.components.containers.values())
 
             container_full_path.write_text(containers.dump_yaml())
             data_model_full_path.write_text(data_model.dump_yaml())
@@ -156,52 +157,99 @@ class ExportDMSDataModel(Step):
             )
 
 
-class UploadDMSDataModel(Step):
+class ExportDMSSchemaComponentsToCDF(Step):
     """
-    This step uploaded generated DMS Data model
+    This step exports generated DMS Schema components to CDF
     """
 
-    description = "This step uploaded generated DMS Data model."
+    description = "This step exports generated DMS Schema components to CDF."
     category = CATEGORY
 
-    def run(self, data_model: DMSDataModel, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override, syntax]
-        data_model.data_model.to_cdf(cdf_client)
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="components",
+            type="multi_select",
+            value="",
+            label="Select which DMS schema component(s) to upload",
+            options=["space", "container", "view", "data model"],
+        ),
+        Configurable(
+            name="existing_component_handling",
+            value="fail",
+            label="How to handle existing components in CDF, options: fail, skip",
+            options=["fail", "skip"],
+        ),
+    ]
+
+    def run(self, data_model: DMSSchemaComponentsData, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override, syntax]
+        existing_component_handling: str = self.configs["existing_component_handling"]
+        components_to_create = {key for key, value in self.complex_configs["components"].items() if value}
+
+        if not components_to_create:
+            return FlowMessage(
+                error_text="No DMS Schema components selected for upload! Please select minimum one!",
+                step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
+            )
+
+        data_model.components.to_cdf(
+            cdf_client,
+            components_to_create=components_to_create,
+            existing_component_handling=cast(Literal["skip"], existing_component_handling),
+        )
 
         output_text = (
-            f"DMS Data Model <b><code>{data_model.data_model.external_id}</code></b> version"
-            f" <b><code>{data_model.data_model.version}</code></b> uploaded to space"
-            f" <b><code>{data_model.data_model.space}</code></b> containing:<ul>"
-            f"<li> {len(data_model.data_model.containers)} containers</li>"
-            f"<li> {len(data_model.data_model.views)} views</li></ul>"
+            f"DMS Data Model <b><code>{data_model.components.external_id}</code></b> version"
+            f" <b><code>{data_model.components.version}</code></b> uploaded to space"
+            f" <b><code>{data_model.components.space}</code></b> containing:<ul>"
+            f"<li> {len(data_model.components.containers)} containers</li>"
+            f"<li> {len(data_model.components.views)} views</li></ul>"
         )
 
         return FlowMessage(output_text=output_text)
 
 
-class DeleteDMSDataModel(Step):
+class DeleteDMSSchemaComponents(Step):
     """
-    This step deletes DMS Data model and all underlying containers and views
+    This step deletes DMS Schema components
     """
 
     description = "This step deletes DMS Data model and all underlying containers and views."
     category = CATEGORY
 
-    def run(self, data_model: DMSDataModel, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override, syntax]
-        data_model.data_model.remove_data_model(cdf_client)
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="components",
+            type="multi_select",
+            value="",
+            label="Which DMS schema component to delete???",
+            options=["space", "container", "view", "data model"],
+        ),
+    ]
+
+    def run(self, data_model: DMSSchemaComponentsData, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override, syntax]
+        components_to_remove = {key for key, value in self.complex_configs["components"].items() if value}
+
+        if not components_to_remove:
+            return FlowMessage(
+                error_text="No DMS Schema components selected for deletion! Please select minimum one!",
+                step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
+            )
+
+        data_model.components.remove(cdf_client, components_to_remove=components_to_remove)
 
         output_text = (
-            f"DMS Data Model {data_model.data_model.external_id} version {data_model.data_model.version} "
-            f"under {data_model.data_model.space} removed:"
-            f"<p> - {len(data_model.data_model.containers)} containers removed</p>"
-            f"<p> - {len(data_model.data_model.views)} views removed</p>"
+            f"DMS Data Model {data_model.components.external_id} version {data_model.components.version} "
+            f"under {data_model.components.space} removed:"
+            f"<p> - {len(data_model.components.containers)} containers removed</p>"
+            f"<p> - {len(data_model.components.views)} views removed</p>"
         )
 
         output_text = (
-            f"DMS Data Model <b><code>{data_model.data_model.external_id}</code></b> version"
-            f" <b><code>{data_model.data_model.version}</code></b> removed"
-            f" from space <b><code>{data_model.data_model.space}</code></b> as well:"
-            f"<ul><li> {len(data_model.data_model.containers)} containers</li>"
-            f"<li> {len(data_model.data_model.views)} views</li></ul>"
+            f"DMS Data Model <b><code>{data_model.components.external_id}</code></b> version"
+            f" <b><code>{data_model.components.version}</code></b> removed"
+            f" from space <b><code>{data_model.components.space}</code></b> as well:"
+            f"<ul><li> {len(data_model.components.containers)} containers</li>"
+            f"<li> {len(data_model.components.views)} views</li></ul>"
         )
 
         return FlowMessage(output_text=output_text)

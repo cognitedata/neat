@@ -82,7 +82,7 @@ class LoadTransformationRules(Step):
 
         raw_rules = importer.ExcelImporter(rules_file_path).to_raw_rules()
         rules, errors, warnings_ = raw_rules.to_rules(return_report=True, skip_validation=False)
-        report = generate_exception_report(errors, "Errors") + generate_exception_report(warnings_, "Warnings")
+        report = "# RULES VALIDATION REPORT\n\n" + generate_exception_report(errors, "Errors")
 
         with report_full_path.open(mode="w") as file:
             file.write(report)

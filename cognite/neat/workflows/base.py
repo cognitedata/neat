@@ -288,6 +288,7 @@ class BaseWorkflow:
                         step_configs=step.configs,
                         workflow_id=self.name,
                         workflow_run_id=self.run_id,
+                        step_complex_configs=step.complex_configs,
                     )
 
                 output = method_runner()
@@ -327,7 +328,9 @@ class BaseWorkflow:
                     logging.error(f"Workflow {self.name} is not running , step {step_name} is skipped")
                     raise Exception(f"Workflow {self.name} is not running , step {step_name} is skipped")
                 self.state = WorkflowState.RUNNING_WAITING
-                timeout = float(step.params.get("wait_timeout", "60"))
+                timeout = 3000000.0
+                if "wait_timeout" in step.params and step.params["wait_timeout"]:
+                    timeout = float(step.params["wait_timeout"])
                 # reporting workflow execution before waiting for event
                 logging.info(f"Workflow {self.name} is waiting for event")
                 self.resume_event.wait(timeout=timeout)

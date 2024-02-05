@@ -40,6 +40,7 @@ from cognite.client.data_classes.data_modeling.views import (
     ConnectionDefinitionApply,
     SingleHopConnectionDefinitionApply,
 )
+from cognite.client.exceptions import CogniteAPIError
 from pydantic import BaseModel, ConfigDict, field_validator
 
 from cognite.neat.rules import exceptions
@@ -114,7 +115,7 @@ class DMSExporter(BaseExporter[DMSSchema]):
         )
 
     def export(self) -> DMSSchema:
-        model = DataModel.from_rules(self.rules, self.data_model_id)
+        model = DMSSchemaComponents.from_rules(self.rules, self.data_model_id)
         return DMSSchema(
             data_model=DataModelApply(
                 space=model.space,
@@ -128,11 +129,11 @@ class DMSExporter(BaseExporter[DMSSchema]):
         )
 
 
-class DataModel(BaseModel):
+class DMSSchemaComponents(BaseModel):
     """
-    Data model pydantic class used to create space, containers, views and data model in CDF.
+    DMS Schema Components pydantic class used to create space(s), containers, views and data model in CDF.
 
-    This can be used to create a data model in CDF from transformation rules.
+    This can be used to create a data model in CDF from rules.
 
     Args:
         space: Name of the space to place the resulting data model.
@@ -217,8 +218,8 @@ class DataModel(BaseModel):
             views=cls.views_from_rules(rules),
         )
 
-    @staticmethod
-    def containers_from_rules(rules: Rules) -> dict[str, ContainerApply]:
+    @classmethod
+    def containers_from_rules(cls, rules: Rules) -> dict[str, ContainerApply]:
         """Create a dictionary of ContainerApply instances from a Rules instance.
 
         Args:
@@ -236,8 +237,8 @@ class DataModel(BaseModel):
                 container_property_id: str = cast(str, property_.container_property)
                 container_id = property_.container.id
 
-                api_container = DataModel.as_api_container(property_.container)
-                api_container_property = DataModel.as_api_container_property(property_)
+                api_container = cls.as_api_container(property_.container)
+                api_container_property = cls.as_api_container_property(property_)
 
                 # scenario: adding new container to the data model for the first time
                 if not isinstance(api_container_property.type, EmptyPropertyType) and container_id not in containers:
@@ -296,8 +297,8 @@ class DataModel(BaseModel):
 
         return containers
 
-    @staticmethod
-    def as_api_container_property(property_: Property) -> ContainerProperty:
+    @classmethod
+    def as_api_container_property(cls, property_: Property) -> ContainerProperty:
         is_one_to_many = property_.max_count != 1
 
         # Literal, i.e. Node attribute
@@ -327,8 +328,8 @@ class DataModel(BaseModel):
         else:
             return ContainerProperty(type=EmptyPropertyType())
 
-    @staticmethod
-    def as_api_container(container: ContainerEntity) -> ContainerApply:
+    @classmethod
+    def as_api_container(cls, container: ContainerEntity) -> ContainerApply:
         return ContainerApply(
             space=container.space,
             external_id=container.external_id,
@@ -338,8 +339,8 @@ class DataModel(BaseModel):
             properties={},
         )
 
-    @staticmethod
-    def views_from_rules(rules: Rules) -> dict[str, ViewApply]:
+    @classmethod
+    def views_from_rules(cls, rules: Rules) -> dict[str, ViewApply]:
         """Generates a dictionary of ViewApply instances from a Rules instance.
 
         Args:
@@ -350,7 +351,7 @@ class DataModel(BaseModel):
             Dictionary of ViewApply instances.
         """
         views: dict[str, ViewApply] = {
-            f"{rules.metadata.space}:{class_.class_id}": DataModel.as_api_view(
+            f"{rules.metadata.space}:{class_.class_id}": cls.as_api_view(
                 class_, rules.metadata.space, rules.metadata.version
             )
             for class_ in rules.classes.values()
@@ -359,7 +360,7 @@ class DataModel(BaseModel):
 
         # Create views from property-class definitions
         for row, property_ in rules.properties.items():
-            view_property = DataModel.as_api_view_property(property_, rules.metadata.space)
+            view_property = cls.as_api_view_property(property_, rules.metadata.space)
             id_ = f"{rules.metadata.space}:{property_.class_id}"
 
             # scenario: view exist but property does not so it is added
@@ -386,8 +387,8 @@ class DataModel(BaseModel):
 
         return views
 
-    @staticmethod
-    def as_api_view(class_: Class, space: str, version: str) -> ViewApply:
+    @classmethod
+    def as_api_view(cls, class_: Class, space: str, version: str) -> ViewApply:
         return ViewApply(
             space=space,
             external_id=class_.class_id,
@@ -400,8 +401,10 @@ class DataModel(BaseModel):
             else None,
         )
 
-    @staticmethod
-    def as_api_view_property(property_: Property, space: str) -> MappedPropertyApply | ConnectionDefinitionApply | None:
+    @classmethod
+    def as_api_view_property(
+        cls, property_: Property, space: str
+    ) -> MappedPropertyApply | ConnectionDefinitionApply | None:
         property_.container = cast(ContainerEntity, property_.container)
         property_.container_property = cast(str, property_.container_property)
         if property_.property_type is EntityTypes.data_property:
@@ -443,26 +446,49 @@ class DataModel(BaseModel):
         else:
             return None
 
-    def to_cdf(self, client: CogniteClient):
-        """Write the the data model to CDF.
+    def find_existing_spaces(self, client: CogniteClient) -> set[str]:
+        """Checks if the spaces exist in CDF.
 
         Args:
-            client: Connected Cognite client.
+            client: Cognite client.
 
+        Returns:
+            External ids of spaces which are part of DMS Schema components that already exist in CDF.
         """
-        existing_data_model = self.find_existing_data_model(client)
-        existing_containers = self.find_existing_containers(client)
-        existing_views = self.find_existing_views(client)
 
-        if existing_data_model or existing_containers or existing_views:
-            raise exceptions.DataModelOrItsComponentsAlreadyExist(
-                existing_data_model, existing_containers, existing_views
-            )
+        return set(client.data_modeling.spaces.retrieve(list(self.spaces)).as_ids())
 
-        self.create_space(client)
-        self.create_containers(client)
-        self.create_views(client)
-        self.create_data_model(client)
+    def find_existing_containers(self, client: CogniteClient) -> set[str]:
+        """Checks if the containers exist in CDF.
+
+        Args:
+            client: Cognite client.
+
+        Returns:
+            External ids of containers which are part of DMS Schema components that already exist in CDF.
+        """
+
+        return {
+            f"{id_.space}:{id_.external_id}"
+            for id_ in client.data_modeling.containers.retrieve(
+                [container.as_id() for container in self.containers.values()]
+            ).as_ids()
+        }
+
+    def find_existing_views(self, client: CogniteClient) -> set[str]:
+        """Checks if the views exist in CDF.
+
+        Args:
+            client: Cognite client.
+
+        Returns:
+            External ids of views which are part of DMS Schema components that already exist in CDF.
+        """
+
+        return {
+            f"{id_.space}:{id_.external_id}"
+            for id_ in client.data_modeling.views.retrieve([view.as_id() for view in self.views.values()]).as_ids()
+        }
 
     def find_existing_data_model(self, client: CogniteClient) -> DataModelId | None:
         """Checks if the data model exists in CDF.
@@ -475,102 +501,216 @@ class DataModel(BaseModel):
         """
         if model := client.data_modeling.data_models.retrieve((self.space, self.external_id, self.version)):
             cdf_data_model = model.latest_version()
-            logging.warning(exceptions.DataModelAlreadyExist(self.external_id, self.version, self.space).message)
-            warnings.warn(
-                exceptions.DataModelAlreadyExist(self.external_id, self.version, self.space).message,
-                category=exceptions.DataModelAlreadyExist,
-                stacklevel=2,
-            )
-
             return cdf_data_model.as_id()
         return None
 
-    def find_existing_containers(self, client: CogniteClient) -> set:
-        """Checks if the containers exist in CDF.
+    def to_cdf(
+        self,
+        client: CogniteClient,
+        components_to_create: set | None = None,
+        existing_component_handling: Literal["fail", "skip", "update"] = "fail",
+    ) -> None:
+        """Write the the data model to CDF.
 
         Args:
-            client: Cognite client.
+            client: Connected Cognite client.
+            components_to_create: Which components to create. Takes set
+            existing_component_handling: How to handle existing components. Takes Literal["fail", "skip", "update"]
 
-        Returns:
-            True if the containers exist, False otherwise.
+        !!! note "Component Creation Policy"
+            Here is more information about the different component creation policies:
+            - `all`: all components of the data model will be created, meaning space, containers, views and data model
+            - `data model`: only the data model will be created
+            - `view`: only the views will be created
+            - `container`: only the containers will be created
+
+
+        !!! note "Existing Component Handling Policy"
+            Here is more information about the different existing component handling policies:
+            - `fail`: if any component of the data model (DMS schema) already exists
+            - `skip`: skip DMS components that exist
+            - `update`: create DMS components that do not exist and update those that do exist
+
+            `update` policy is currently not implemented !
+
         """
 
-        existing_containers = set()
+        components_to_create = components_to_create or {"all"}
 
-        for id_, container in self.containers.items():
-            if client.data_modeling.containers.retrieve(container.as_id()):
-                existing_containers.add(id_)
+        existing_spaces = self.find_existing_spaces(client)
+        existing_containers = self.find_existing_containers(client)
+        existing_views = self.find_existing_views(client)
+        existing_data_model = self.find_existing_data_model(client)
 
-        return existing_containers
-
-    def find_existing_views(self, client: CogniteClient) -> set:
-        """Checks if the views exist in CDF.
-
-        Args:
-            client: Cognite client.
-
-        Returns:
-            True if the views exist, False otherwise.
-        """
-
-        existing_views = set()
-
-        for id_, view in self.views.items():
-            if client.data_modeling.views.retrieve(view.as_id()):
-                existing_views.add(id_)
-
-        return existing_views
-
-    def create_space(self, client: CogniteClient):
-        logging.info(f"Creating space {self.space}")
-
-        for space in self.spaces:
-            _ = client.data_modeling.spaces.apply(SpaceApply(space=space))
-
-    def create_containers(self, client: CogniteClient):
-        for container_id in self.containers:
-            logging.info(f"Creating container {container_id} in space {self.space}")
-            _ = client.data_modeling.containers.apply(self.containers[container_id])
-
-    def create_views(self, client: CogniteClient):
-        for view_id in self.views:
-            logging.info(f"Creating view {view_id} version {self.views[view_id].version} in space {self.space}")
-            _ = client.data_modeling.views.apply(self.views[view_id])
-
-    def create_data_model(self, client: CogniteClient):
-        logging.info(f"Creating data model {self.external_id} version {self.version} in space {self.space}")
-        _ = client.data_modeling.data_models.apply(
-            DataModelApply(
-                name=self.name,
-                description=self.description,
-                space=self.space,
-                external_id=self.external_id,
-                version=self.version,
-                views=list(self.views.values()),
+        if (
+            existing_spaces or existing_containers or existing_data_model or existing_views
+        ) and existing_component_handling == "fail":
+            raise exceptions.DataModelOrItsComponentsAlreadyExist(
+                existing_spaces, existing_data_model, existing_containers, existing_views
             )
-        )
+
+        if "space" in components_to_create or "all" in components_to_create:
+            self.create_space(client, existing_spaces)
+        if "container" in components_to_create or "all" in components_to_create:
+            self.create_containers(client, existing_containers)
+        if "view" in components_to_create or "all" in components_to_create:
+            self.create_views(client, existing_views)
+        if "data model" in components_to_create or "all" in components_to_create:
+            self.create_data_model(client, existing_data_model)
+
+    def create_space(self, client: CogniteClient, existing_spaces: set):
+        non_existing_spaces = self.spaces - existing_spaces
+        logging.info(f"Creating space {non_existing_spaces} !!!")
+        _ = client.data_modeling.spaces.apply([SpaceApply(space=space) for space in non_existing_spaces])
+
+    def create_containers(self, client: CogniteClient, existing_containers: set):
+        non_existing_containers = set(self.containers.keys()) - existing_containers
+        logging.info(f"Creating container {non_existing_containers}")
+        _ = client.data_modeling.containers.apply([self.containers[id_] for id_ in non_existing_containers])
+
+    def create_views(self, client: CogniteClient, existing_views: set):
+        non_existing_views = set(self.views.keys()) - existing_views
+        logging.info(f"Creating views {non_existing_views}")
+        _ = client.data_modeling.views.apply([self.views[id_] for id_ in non_existing_views])
+
+    def create_data_model(
+        self,
+        client: CogniteClient,
+        existing_data_model: DataModelId | None = None,
+    ):
+        if not existing_data_model:
+            logging.info(f"Creating data model {self.external_id} version {self.version} in space {self.space}")
+            _ = client.data_modeling.data_models.apply(
+                DataModelApply(
+                    name=self.name,
+                    description=self.description,
+                    space=self.space,
+                    external_id=self.external_id,
+                    version=self.version,
+                    views=[view.as_id() for view in self.views.values()],
+                )
+            )
+        else:
+            logging.info(f"Data model {self.space}:{self.external_id}/{self.version} already exists! Skipping !!!")
+
+    def remove(self, client: CogniteClient, components_to_remove: set | None = None):
+        """Remove DMS schema components from CDF.
+
+        Args:
+            client: Connected Cognite client.
+            components_to_remove: Which components to remove. Takes set
+
+        !!! note "Component Creation Policy"
+            Here is more information about the different component creation policies:
+            - `all`: all components of the data model will be created, meaning space, containers, views and data model
+            - `data model`: only the data model will be created
+            - `view`: only the views will be created
+            - `container`: only the containers will be created
+        """
+
+        components_to_remove = components_to_remove or {"all"}
+
+        if "data model" in components_to_remove or "all" in components_to_remove:
+            self.remove_data_model(client)
+        if "view" in components_to_remove or "all" in components_to_remove:
+            self.remove_views(client)
+        if "container" in components_to_remove or "all" in components_to_remove:
+            self.remove_containers(client)
+        if "space" in components_to_remove or "all" in components_to_remove:
+            self.remove_spaces(client)
 
     def remove_data_model(self, client: CogniteClient):
-        """Helper function to remove a data model, and all underlying views and containers from CDF.
-
-        Args:
-            client: Cognite client.
-        """
-
         if client.data_modeling.data_models.retrieve((self.space, self.external_id, self.version)):
-            logging.info(f"Removing data model {self.external_id} version {self.version} from space {self.space}")
+            logging.info(f"Removing data model {self.space}:{self.external_id}/{self.version}")
             _ = client.data_modeling.data_models.delete((self.space, self.external_id, self.version))
+        else:
+            warnings.warn(
+                "No Data Model to remove",
+                stacklevel=2,
+            )
+            logging.info(
+                "No Data Model to remove",
+            )
 
-        if views := client.data_modeling.views.retrieve(
-            [view.as_id() for view in self.views.values()], all_versions=False
-        ):
-            for view in views:
-                logging.info(f"Removing view {view.external_id} version {view.version} from space {self.space}")
-                _ = client.data_modeling.views.delete((view.space, view.external_id, view.version))
+    def remove_views(self, client: CogniteClient):
+        if existing_views := self.find_existing_views(client):
+            try:
+                _ = client.data_modeling.views.delete([self.views[id_].as_id() for id_ in existing_views])
+            except CogniteAPIError as e:
+                warnings.warn(
+                    f"Failed to remove views {existing_views}! Reason: {e.message}",
+                    stacklevel=2,
+                )
+                logging.error(f"Failed to remove views {existing_views}! Reason: {e.message}")
 
-        if containers := client.data_modeling.containers.retrieve(
-            [container.as_id() for container in self.containers.values()]
-        ):
-            for container in containers:
-                logging.info(f"Removing container {container.external_id} from space {self.space}")
-                _ = client.data_modeling.containers.delete((container.space, container.external_id))
+            warnings.warn(
+                f"Removed views {existing_views}!",
+                stacklevel=2,
+            )
+            logging.info(
+                f"Removed views {existing_views}!",
+            )
+        else:
+            warnings.warn(
+                "No Views to remove",
+                stacklevel=2,
+            )
+            logging.info(
+                "No Views to remove",
+            )
+
+    def remove_containers(self, client: CogniteClient):
+        if existing_container := self.find_existing_containers(client):
+            try:
+                _ = client.data_modeling.containers.delete([self.containers[id_].as_id() for id_ in existing_container])
+            except CogniteAPIError as e:
+                warnings.warn(
+                    f"Failed to remove containers {existing_container}! Reason: {e.message}",
+                    stacklevel=2,
+                )
+                logging.error(f"Failed to remove containers {existing_container}! Reason: {e.message}")
+
+            warnings.warn(
+                f"Removed containers {existing_container}!",
+                stacklevel=2,
+            )
+            logging.info(
+                f"Removed containers {existing_container}!",
+            )
+
+        else:
+            warnings.warn(
+                "No Containers to remove",
+                stacklevel=2,
+            )
+            logging.info(
+                "No Containers to remove",
+            )
+
+    def remove_spaces(self, client: CogniteClient):
+        if existing_spaces := self.find_existing_spaces(client):
+            try:
+                _ = client.data_modeling.spaces.delete(list(existing_spaces))
+            except CogniteAPIError as e:
+                warnings.warn(
+                    f"Failed to remove spaces {existing_spaces}! Reason: {e.message}",
+                    stacklevel=2,
+                )
+                logging.error(f"Failed to remove spaces {existing_spaces}! Reason: {e.message}")
+
+            warnings.warn(
+                f"Removed spaces {existing_spaces}!",
+                stacklevel=2,
+            )
+            logging.info(
+                f"Removed spaces {existing_spaces}!",
+            )
+
+        else:
+            warnings.warn(
+                "No Spaces to remove",
+                stacklevel=2,
+            )
+            logging.info(
+                "No Spaces to remove",
+            )

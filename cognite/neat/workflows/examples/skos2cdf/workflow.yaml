@@ -3,7 +3,8 @@ description: null
 implementation_module: null
 name: skos2cdf
 steps:
--   configs: {}
+  - complex_configs: {}
+    configs: {}
     description: null
     enabled: true
     id: step_trigger
@@ -15,16 +16,17 @@ steps:
     stype: http_trigger
     system_component_id: null
     transition_to:
-    - step_load_rules
+      - step_load_rules
     trigger: true
     ui_config:
-        pos_x: 492
-        pos_y: 89
--   configs:
-        file_name: skos-rules.xlsx
-        validation_report_file: rules_validation_report.txt
-        validation_report_storage_dir: rules_validation_report
-        version: ''
+      pos_x: 492
+      pos_y: 89
+  - complex_configs: {}
+    configs:
+      file_name: skos-rules.xlsx
+      validation_report_file: rules_validation_report.txt
+      validation_report_storage_dir: rules_validation_report
+      version: ""
     description: null
     enabled: true
     id: step_load_rules
@@ -36,16 +38,17 @@ steps:
     stype: stdstep
     system_component_id: null
     transition_to:
-    - step_506363
-    - step_configure_graph_store
+      - step_506363
+      - step_configure_graph_store
     trigger: false
     ui_config:
-        pos_x: 492
-        pos_y: 153
--   configs:
-        base_namespace: http://purl.org/neat/
-        file_path: source-graphs/skos-capturing-sheet-wind-topics.xlsx
-        graph_name: source
+      pos_x: 492
+      pos_y: 153
+  - complex_configs: {}
+    configs:
+      base_namespace: http://purl.org/neat/
+      file_path: source-graphs/skos-capturing-sheet-wind-topics.xlsx
+      graph_name: source
     description: null
     enabled: true
     id: step_process_graph_capturing_sheet
@@ -57,19 +60,20 @@ steps:
     stype: stdstep
     system_component_id: null
     transition_to:
-    - step_generate_dms_data_model
+      - step_generate_dms_data_model
     trigger: false
     ui_config:
-        pos_x: 491
-        pos_y: 273
--   configs:
-        db_server_api_root_url: ''
-        disk_store_dir: skos-graph-store
-        graph_name: source
-        init_procedure: reset
-        sparql_query_url: ''
-        sparql_update_url: ''
-        store_type: oxigraph
+      pos_x: 491
+      pos_y: 273
+  - complex_configs: {}
+    configs:
+      db_server_api_root_url: ""
+      disk_store_dir: skos-graph-store
+      graph_name: source
+      init_procedure: reset
+      sparql_query_url: ""
+      sparql_update_url: ""
+      store_type: oxigraph
     description: null
     enabled: true
     id: step_configure_graph_store
@@ -81,32 +85,37 @@ steps:
     stype: stdstep
     system_component_id: null
     transition_to:
-    - step_process_graph_capturing_sheet
+      - step_process_graph_capturing_sheet
     trigger: false
     ui_config:
-        pos_x: 491
-        pos_y: 212
--   configs: {}
+      pos_x: 491
+      pos_y: 212
+  - complex_configs: {}
+    configs:
+      external_id: ""
+      space: ""
+      version: ""
     description: null
     enabled: true
     id: step_generate_dms_data_model
-    label: Generate DMS Data Model
+    label: Generate DMS Schema Components
     max_retries: 0
-    method: DMSDataModelFromRules
+    method: GenerateDMSSchemaComponentsFromRules
     params: {}
     retry_delay: 3
     stype: stdstep
     system_component_id: null
     transition_to:
-    - step_generate_nodes_and_edges
+      - step_generate_nodes_and_edges
     trigger: false
     ui_config:
-        pos_x: 490
-        pos_y: 348
--   configs:
-        add_class_prefix: 'False'
-        data_validatation_error_handling_strategy: skip_and_report
-        graph_name: source
+      pos_x: 490
+      pos_y: 348
+  - complex_configs: {}
+    configs:
+      add_class_prefix: "False"
+      data_validatation_error_handling_strategy: skip_and_report
+      graph_name: source
     description: null
     enabled: true
     id: step_generate_nodes_and_edges
@@ -118,29 +127,37 @@ steps:
     stype: stdstep
     system_component_id: null
     transition_to:
-    - step_upload_data_model
+      - step_upload_data_model
     trigger: false
     ui_config:
-        pos_x: 490
-        pos_y: 424
--   configs: {}
+      pos_x: 490
+      pos_y: 424
+  - complex_configs:
+      components:
+        container: true
+        data model: true
+        space: true
+        view: true
+    configs:
+      existing_component_handling: skip
     description: null
     enabled: true
     id: step_upload_data_model
-    label: Upload DMS Data Model
+    label: Upload DMS Schema Componenets
     max_retries: 0
-    method: UploadDMSDataModel
+    method: ExportDMSSchemaComponentsToCDF
     params: {}
     retry_delay: 3
     stype: stdstep
     system_component_id: null
     transition_to:
-    - step_upload_nodes
+      - step_upload_nodes
     trigger: false
     ui_config:
-        pos_x: 489
-        pos_y: 502
--   configs: {}
+      pos_x: 489
+      pos_y: 502
+  - complex_configs: {}
+    configs: {}
     description: null
     enabled: true
     id: step_upload_nodes
@@ -152,12 +169,13 @@ steps:
     stype: stdstep
     system_component_id: null
     transition_to:
-    - step_upload_edges
+      - step_upload_edges
     trigger: false
     ui_config:
-        pos_x: 488
-        pos_y: 579
--   configs: {}
+      pos_x: 488
+      pos_y: 579
+  - complex_configs: {}
+    configs: {}
     description: null
     enabled: true
     id: step_upload_edges
@@ -171,6 +189,6 @@ steps:
     transition_to: []
     trigger: false
     ui_config:
-        pos_x: 488
-        pos_y: 640
+      pos_x: 488
+      pos_y: 640
 system_components: []

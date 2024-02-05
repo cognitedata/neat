@@ -5,7 +5,7 @@ from cognite.client.data_classes import Asset, AssetUpdate, Relationship, Relati
 from cognite.client.data_classes.data_modeling import EdgeApply, NodeApply
 
 from cognite.neat.graph.stores import NeatGraphStoreBase
-from cognite.neat.rules.exporter._rules2dms import DataModel
+from cognite.neat.rules.exporter._rules2dms import DMSSchemaComponents
 from cognite.neat.rules.models.rules import Rules
 from cognite.neat.workflows.steps.step_model import DataContract
 
@@ -111,12 +111,12 @@ class Edges(DataContract):
     edges: list[EdgeApply]
 
 
-class DMSDataModel(DataContract):
+class DMSSchemaComponentsData(DataContract):
     """
-    This represents DMS Data Model.
+    This represents DMS Schema Model.
 
     Args:
-        data_model: DMS data model.
+        components: DMS Schema Components model.
     """
 
-    data_model: DataModel
+    components: DMSSchemaComponents
