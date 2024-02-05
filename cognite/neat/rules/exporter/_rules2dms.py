@@ -453,16 +453,10 @@ class DMSSchemaComponents(BaseModel):
             client: Cognite client.
 
         Returns:
-            True if the containers exist, False otherwise.
+            External ids of spaces which are part of DMS Schema components that already exist in CDF.
         """
 
-        existing_spaces = set()
-
-        for space in self.spaces:
-            if client.data_modeling.spaces.retrieve(space):
-                existing_spaces.add(space)
-
-        return existing_spaces
+        return set(client.data_modeling.spaces.retrieve(list(self.spaces)).as_ids())
 
     def find_existing_containers(self, client: CogniteClient) -> set:
         """Checks if the containers exist in CDF.
@@ -471,16 +465,15 @@ class DMSSchemaComponents(BaseModel):
             client: Cognite client.
 
         Returns:
-            True if the containers exist, False otherwise.
+            External ids of containers which are part of DMS Schema components that already exist in CDF.
         """
 
-        existing_containers = set()
-
-        for id_, container in self.containers.items():
-            if client.data_modeling.containers.retrieve(container.as_id()):
-                existing_containers.add(id_)
-
-        return existing_containers
+        return {
+            f"{id_.space}:{id_.external_id}"
+            for id_ in client.data_modeling.containers.retrieve(
+                [container.as_id() for container in self.containers.values()]
+            ).as_ids()
+        }
 
     def find_existing_views(self, client: CogniteClient) -> set:
         """Checks if the views exist in CDF.
@@ -489,16 +482,13 @@ class DMSSchemaComponents(BaseModel):
             client: Cognite client.
 
         Returns:
-            True if the views exist, False otherwise.
+            External ids of views which are part of DMS Schema components that already exist in CDF.
         """
 
-        existing_views = set()
-
-        for id_, view in self.views.items():
-            if client.data_modeling.views.retrieve(view.as_id()):
-                existing_views.add(id_)
-
-        return existing_views
+        return {
+            f"{id_.space}:{id_.external_id}"
+            for id_ in client.data_modeling.views.retrieve([view.as_id() for view in self.views.values()]).as_ids()
+        }
 
     def find_existing_data_model(self, client: CogniteClient) -> DataModelId | None:
         """Checks if the data model exists in CDF.
