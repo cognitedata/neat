@@ -38,6 +38,8 @@ nav:
           - Sheet to CDF Graph: tutorial/workflows/sheet2cdf.md
           - Source to Solution Graph: tutorial/workflows/source2solution-graph.md
           - Data Model Generation: tutorial/workflows/data-model-generation.md
+      - Use Cases:
+          - Knowledge Acquisition: tutorial/use-cases/knowledge-acquisition.md
   - Reference:
       - Rules:
           - Models: api/rules/models.md
