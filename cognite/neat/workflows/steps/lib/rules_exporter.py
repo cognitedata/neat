@@ -20,8 +20,8 @@ from cognite.neat.workflows.steps.step_model import Configurable, Step
 
 __all__ = [
     "GenerateDMSSchemaComponentsFromRules",
-    "ExportDMSSchemaComponents",
-    "UploadDMSSchemaComponents",
+    "ExportDMSSchemaComponentsToYAML",
+    "ExportDMSSchemaComponentsToCDF",
     "DeleteDMSSchemaComponents",
     "GraphQLSchemaFromRules",
     "OntologyFromRules",
@@ -84,7 +84,7 @@ class GenerateDMSSchemaComponentsFromRules(Step):
         return FlowMessage(output_text=output_text), DMSSchemaComponentsData(components=data_model)
 
 
-class ExportDMSSchemaComponents(Step):
+class ExportDMSSchemaComponentsToYAML(Step):
     """
     This step exports DMS schema components as YAML files
     """
@@ -157,12 +157,12 @@ class ExportDMSSchemaComponents(Step):
             )
 
 
-class UploadDMSSchemaComponents(Step):
+class ExportDMSSchemaComponentsToCDF(Step):
     """
-    This step uploads generated DMS Schema components to CDF
+    This step exports generated DMS Schema components to CDF
     """
 
-    description = "This step uploads generated DMS Schema components to CDF."
+    description = "This step exports generated DMS Schema components to CDF."
     category = CATEGORY
 
     configurables: ClassVar[list[Configurable]] = [
