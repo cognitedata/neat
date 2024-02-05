@@ -535,8 +535,8 @@ class DMSSchemaComponents(BaseModel):
 
         """
 
-        if components_to_create is None:
-            components_to_create = set(["all"])
+        components_to_create = components_to_create or {"all"}
+
         existing_spaces = self.find_existing_spaces(client)
         existing_containers = self.find_existing_containers(client)
         existing_views = self.find_existing_views(client)
@@ -558,41 +558,20 @@ class DMSSchemaComponents(BaseModel):
         if "data model" in components_to_create or "all" in components_to_create:
             self.create_data_model(client, existing_data_model)
 
-    def create_space(self, client: CogniteClient, existing_spaces: set | None = None):
-        for space in self.spaces:
-            if not existing_spaces or space not in existing_spaces:
-                logging.info(f"Creating space {space} !!!")
-                _ = client.data_modeling.spaces.apply(SpaceApply(space=space))
-            else:
-                warnings.warn(
-                    f"Space {space} already exists in CDF! Skipping !!!",
-                    stacklevel=2,
-                )
-                logging.info(f"Space {space} already exists in CDF! Skipping !!!")
+    def create_space(self, client: CogniteClient, existing_spaces: set):
+        non_existing_spaces = self.spaces - existing_spaces
+        logging.info(f"Creating space {non_existing_spaces} !!!")
+        _ = client.data_modeling.spaces.apply([SpaceApply(space=space) for space in non_existing_spaces])
 
-    def create_containers(self, client: CogniteClient, existing_containers: set | None = None):
-        for container_id in self.containers:
-            if not existing_containers or container_id not in existing_containers:
-                logging.info(f"Creating container {container_id}")
-                _ = client.data_modeling.containers.apply(self.containers[container_id])
-            else:
-                warnings.warn(
-                    f"Container {container_id} already exists! Skipping !!!",
-                    stacklevel=2,
-                )
-                logging.info(f"Container {container_id} already exists! Skipping !!!")
+    def create_containers(self, client: CogniteClient, existing_containers: set):
+        non_existing_containers = set(self.containers.keys()) - existing_containers
+        logging.info(f"Creating container {non_existing_containers}")
+        _ = client.data_modeling.containers.apply([self.containers[id_] for id_ in non_existing_containers])
 
-    def create_views(self, client: CogniteClient, existing_views: set | None = None):
-        for view_id in self.views:
-            if not existing_views or view_id not in existing_views:
-                logging.info(f"Creating view {view_id}")
-                _ = client.data_modeling.views.apply(self.views[view_id])
-            else:
-                warnings.warn(
-                    f"View {view_id}/{self.views[view_id].version} already exists! Skipping !!!",
-                    stacklevel=2,
-                )
-                logging.info(f"View {view_id}/{self.views[view_id].version} already exists! Skipping !!!")
+    def create_views(self, client: CogniteClient, existing_views: set):
+        non_existing_views = set(self.views.keys()) - existing_views
+        logging.info(f"Creating views {non_existing_views}")
+        _ = client.data_modeling.views.apply([self.views[id_] for id_ in non_existing_views])
 
     def create_data_model(
         self,
@@ -608,7 +587,7 @@ class DMSSchemaComponents(BaseModel):
                     space=self.space,
                     external_id=self.external_id,
                     version=self.version,
-                    views=list(self.views.values()),
+                    views=[view.as_id() for view in self.views.values()],
                 )
             )
         else:
@@ -629,8 +608,8 @@ class DMSSchemaComponents(BaseModel):
             - `container`: only the containers will be created
         """
 
-        if components_to_remove is None:
-            components_to_remove = set(["all"])
+        components_to_remove = components_to_remove or {"all"}
+
         if "data model" in components_to_remove or "all" in components_to_remove:
             self.remove_data_model(client)
         if "view" in components_to_remove or "all" in components_to_remove:
