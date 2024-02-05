@@ -663,7 +663,7 @@ class Property(Resource):
     )
     skip_rule: bool = Field(alias="Skip", default=False)
 
-    # Container specific things, only used for advance modeling or auto-filled by neat
+    # Container-specific things, only used for advance modeling or auto-filled by neat
     container: ContainerEntity | None = Field(alias="Container", default=None)
     container_property: str | None = Field(alias="Container Property", default=None)
     index: bool | None = Field(alias="Index", default=False)
