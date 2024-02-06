@@ -76,7 +76,7 @@ async def file_upload_handler(
 
         NEAT_APP.workflow_manager.save_workflow_to_storage(workflow_name)
 
-    if "start_workflow" in action and file_type == "rules" or file_type == "stating":
+    if "start_workflow" in action and file_type == "rules":
         logging.info("Starting workflow after file upload")
         workflow = NEAT_APP.workflow_manager.get_workflow(workflow_name)
         if workflow is None:
