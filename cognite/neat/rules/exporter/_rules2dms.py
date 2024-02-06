@@ -2,7 +2,6 @@
 """
 
 import dataclasses
-import logging
 import sys
 import warnings
 from dataclasses import dataclass
@@ -555,9 +554,6 @@ class DMSSchemaComponents(BaseModel):
         existing_containers = self.find_existing_containers(client)
         existing_views = self.find_existing_views(client)
         existing_data_model = self.find_existing_data_model(client)
-
-        logging.info(f"Existing spaces: {existing_spaces}")
-        logging.info(f"DM space: {self.space}")
 
         if (
             existing_spaces or existing_containers or existing_data_model or existing_views
