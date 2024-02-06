@@ -509,24 +509,38 @@ class DMSSchemaComponents(BaseModel):
         client: CogniteClient,
         components_to_create: set | None = None,
         existing_component_handling: Literal["fail", "skip", "update"] = "fail",
-    ) -> None:
+        multi_space_components_create: bool = False,
+    ) -> str:
         """Write the the data model to CDF.
 
         Args:
             client: Connected Cognite client.
             components_to_create: Which components to create. Takes set
             existing_component_handling: How to handle existing components. Takes Literal["fail", "skip", "update"]
+            multi_space_comp_create: Whether to create components in multiple spaces,
+                                     or only in the space of the data model. Default is False.
+
+        !!! note "Multi Space DMS Schema Components"
+            If multi_space_components_create is set to True, the components will be created
+            in all spaces used or defined in `Rules`. If set to False, the
+            components will only be created in the space defined in `Rules` metadata.
 
         !!! note "Component Creation Policy"
-            Here is more information about the different component creation policies:
+            Here is more information about the different component creation policies
+            configured through components_to_create argument:
+
             - `all`: all components of the data model will be created, meaning space, containers, views and data model
             - `data model`: only the data model will be created
-            - `view`: only the views will be created
+            - `view`: only views will be created
             - `container`: only the containers will be created
+
+            for creation of containers beyond the data model space, set `multi_space_components_create` argument
+            to True.
 
 
         !!! note "Existing Component Handling Policy"
             Here is more information about the different existing component handling policies:
+
             - `fail`: if any component of the data model (DMS schema) already exists
             - `skip`: skip DMS components that exist
             - `update`: create DMS components that do not exist and update those that do exist
@@ -534,13 +548,16 @@ class DMSSchemaComponents(BaseModel):
             `update` policy is currently not implemented !
 
         """
-
+        report = "# DMS Schema Components Creation Report\n\n"
         components_to_create = components_to_create or {"all"}
 
         existing_spaces = self.find_existing_spaces(client)
         existing_containers = self.find_existing_containers(client)
         existing_views = self.find_existing_views(client)
         existing_data_model = self.find_existing_data_model(client)
+
+        logging.info(f"Existing spaces: {existing_spaces}")
+        logging.info(f"DM space: {self.space}")
 
         if (
             existing_spaces or existing_containers or existing_data_model or existing_views
@@ -550,36 +567,105 @@ class DMSSchemaComponents(BaseModel):
             )
 
         if "space" in components_to_create or "all" in components_to_create:
-            self.create_space(client, existing_spaces)
+            report += self.create_space(
+                client, existing_spaces, existing_component_handling == "update", multi_space_components_create
+            )
         if "container" in components_to_create or "all" in components_to_create:
-            self.create_containers(client, existing_containers)
+            report += self.create_containers(
+                client, existing_containers, existing_component_handling == "update", multi_space_components_create
+            )
         if "view" in components_to_create or "all" in components_to_create:
-            self.create_views(client, existing_views)
+            report += self.create_views(client, existing_views, existing_component_handling == "update")
         if "data model" in components_to_create or "all" in components_to_create:
-            self.create_data_model(client, existing_data_model)
+            report += self.create_data_model(client, existing_data_model, existing_component_handling == "update")
 
-    def create_space(self, client: CogniteClient, existing_spaces: set):
-        non_existing_spaces = self.spaces - existing_spaces
-        logging.info(f"Creating space {non_existing_spaces} !!!")
-        _ = client.data_modeling.spaces.apply([SpaceApply(space=space) for space in non_existing_spaces])
+        return report
 
-    def create_containers(self, client: CogniteClient, existing_containers: set):
-        non_existing_containers = set(self.containers.keys()) - existing_containers
-        logging.info(f"Creating container {non_existing_containers}")
-        _ = client.data_modeling.containers.apply([self.containers[id_] for id_ in non_existing_containers])
+    def create_space(
+        self,
+        client: CogniteClient,
+        existing_spaces: set,
+        update: bool = False,
+        multi_space_components_create: bool = False,
+    ):
+        report = "# Spaces\n"
+        spaces_to_create = (
+            self.spaces - existing_spaces
+            if multi_space_components_create
+            else ((self.spaces - existing_spaces) & {self.space})
+        )
 
-    def create_views(self, client: CogniteClient, existing_views: set):
+        spaces_to_update = existing_spaces if multi_space_components_create else (existing_spaces & {self.space})
+
+        if spaces_to_create:
+            _ = client.data_modeling.spaces.apply([SpaceApply(space=space) for space in spaces_to_create])
+            report += f"Created space {spaces_to_create}\n"
+        if update and spaces_to_update:
+            try:
+                _ = client.data_modeling.spaces.apply([SpaceApply(space=space) for space in spaces_to_update])
+                report += f"Updated space {spaces_to_update}\n"
+            except CogniteAPIError as e:
+                report += f"Failed to update spaces {existing_spaces}! Reason: {e.message}\n"
+
+        return report + "\n"
+
+    def create_containers(
+        self,
+        client: CogniteClient,
+        existing_containers: set,
+        update: bool = False,
+        multi_space_components_create: bool = False,
+    ) -> str:
+        report = "# Containers\n"
+        containers_to_create = (
+            set(self.containers.keys()) - existing_containers
+            if multi_space_components_create
+            else {k for k in (set(self.containers.keys()) - existing_containers) if k.split(":")[0] == self.space}
+        )
+
+        containers_to_update = (
+            existing_containers
+            if multi_space_components_create
+            else {k for k in existing_containers if k.split(":")[0] == self.space}
+        )
+
+        if containers_to_create:
+            _ = client.data_modeling.containers.apply([self.containers[id_] for id_ in containers_to_create])
+            report += f"Created container {containers_to_create}\n"
+
+        if update and containers_to_update:
+            try:
+                _ = client.data_modeling.containers.apply([self.containers[id_] for id_ in containers_to_update])
+                report += f"Updated containers {containers_to_update}\n"
+            except CogniteAPIError as e:
+                report += f"Failed to update containers {containers_to_update}! Reason: {e.message}"
+
+        return report + "\n"
+
+    def create_views(self, client: CogniteClient, existing_views: set, update: bool = False) -> str:
+        report = "# Views\n"
         non_existing_views = set(self.views.keys()) - existing_views
-        logging.info(f"Creating views {non_existing_views}")
-        _ = client.data_modeling.views.apply([self.views[id_] for id_ in non_existing_views])
+        if non_existing_views:
+            _ = client.data_modeling.views.apply([self.views[id_] for id_ in non_existing_views])
+            report += f"Created views {non_existing_views}\n"
+
+        if update and existing_views:
+            try:
+                _ = client.data_modeling.views.apply([self.views[id_] for id_ in existing_views])
+                report += f"Updated views {existing_views}\n"
+            except CogniteAPIError as e:
+                report += f"Failed to update views {existing_views}! Reason: {e.message}"
+
+        return report + "\n"
 
     def create_data_model(
         self,
         client: CogniteClient,
         existing_data_model: DataModelId | None = None,
+        update: bool = False,
     ):
+        report = "# Data Model\n"
         if not existing_data_model:
-            logging.info(f"Creating data model {self.external_id} version {self.version} in space {self.space}")
             _ = client.data_modeling.data_models.apply(
                 DataModelApply(
                     name=self.name,
@@ -590,15 +676,44 @@ class DMSSchemaComponents(BaseModel):
                     views=[view.as_id() for view in self.views.values()],
                 )
             )
-        else:
-            logging.info(f"Data model {self.space}:{self.external_id}/{self.version} already exists! Skipping !!!")
+            report += f"Created data model {{{self.space}:{self.external_id}/{self.version}}}\n"
+        elif update:
+            try:
+                _ = client.data_modeling.data_models.apply(
+                    DataModelApply(
+                        name=self.name,
+                        description=self.description,
+                        space=self.space,
+                        external_id=self.external_id,
+                        version=self.version,
+                        views=[view.as_id() for view in self.views.values()],
+                    )
+                )
+                report += "Updated data model " f"{{{self.space}:{self.external_id}/{self.version}}}\n"
+            except CogniteAPIError as e:
+                report += (
+                    "Failed to update data model"
+                    f" {{{self.space}:{self.external_id}/{self.version}}}! Reason: {e.message}\n"
+                )
 
-    def remove(self, client: CogniteClient, components_to_remove: set | None = None):
+        else:
+            report += f"Skipped update of data model {{{self.space}:{self.external_id}/{self.version}}}!\n"
+
+        return report + "\n"
+
+    def remove(
+        self,
+        client: CogniteClient,
+        components_to_remove: set | None = None,
+        multi_space_components_removal: bool = False,
+    ) -> str:
         """Remove DMS schema components from CDF.
 
         Args:
             client: Connected Cognite client.
             components_to_remove: Which components to remove. Takes set
+            multi_space_components_removal: Whether to remove components in multiple spaces,
+                                            or only in the space of the data model. Default is False.
 
         !!! note "Component Creation Policy"
             Here is more information about the different component creation policies:
@@ -606,111 +721,97 @@ class DMSSchemaComponents(BaseModel):
             - `data model`: only the data model will be created
             - `view`: only the views will be created
             - `container`: only the containers will be created
+
+
+        !!! note "Multi Space DMS Schema Components"
+            If multi_space_components_removal is set to True, the components will be removed
+            in all spaces used or defined in `Rules`. If set to False, the
+            components will only be removed in the space defined in `Rules` metadata.
         """
 
         components_to_remove = components_to_remove or {"all"}
+        report = "# DMS Schema Components Removal Report\n\n"
 
         if "data model" in components_to_remove or "all" in components_to_remove:
-            self.remove_data_model(client)
+            report += self.remove_data_model(client)
         if "view" in components_to_remove or "all" in components_to_remove:
-            self.remove_views(client)
+            report += self.remove_views(client)
         if "container" in components_to_remove or "all" in components_to_remove:
-            self.remove_containers(client)
+            report += self.remove_containers(client, multi_space_components_removal)
         if "space" in components_to_remove or "all" in components_to_remove:
-            self.remove_spaces(client)
+            report += self.remove_spaces(client, multi_space_components_removal)
+
+        return report
 
     def remove_data_model(self, client: CogniteClient):
+        report = "# Data Model\n"
         if client.data_modeling.data_models.retrieve((self.space, self.external_id, self.version)):
-            logging.info(f"Removing data model {self.space}:{self.external_id}/{self.version}")
             _ = client.data_modeling.data_models.delete((self.space, self.external_id, self.version))
+            report += f"Removed data model {{{self.space}:{self.external_id}/{self.version}}}\n"
         else:
-            warnings.warn(
-                "No Data Model to remove",
-                stacklevel=2,
-            )
-            logging.info(
-                "No Data Model to remove",
-            )
+            report += "No Data Model to remove\n"
+        return report + "\n"
 
     def remove_views(self, client: CogniteClient):
+        report = "# Views\n"
         if existing_views := self.find_existing_views(client):
             try:
                 _ = client.data_modeling.views.delete([self.views[id_].as_id() for id_ in existing_views])
+                report += f"Removed views {existing_views}!\n"
             except CogniteAPIError as e:
-                warnings.warn(
-                    f"Failed to remove views {existing_views}! Reason: {e.message}",
-                    stacklevel=2,
-                )
-                logging.error(f"Failed to remove views {existing_views}! Reason: {e.message}")
+                report += f"Failed to remove views {existing_views}! Reason: {e.message}\n"
 
-            warnings.warn(
-                f"Removed views {existing_views}!",
-                stacklevel=2,
-            )
-            logging.info(
-                f"Removed views {existing_views}!",
-            )
         else:
-            warnings.warn(
-                "No Views to remove",
-                stacklevel=2,
-            )
-            logging.info(
-                "No Views to remove",
-            )
+            report += "No Views to remove\n"
 
-    def remove_containers(self, client: CogniteClient):
-        if existing_container := self.find_existing_containers(client):
+        return report + "\n"
+
+    def remove_containers(self, client: CogniteClient, multi_space_components_removal: bool = False) -> str:
+        report = "# Containers\n"
+        existing_containers = self.find_existing_containers(client)
+        existing_container_in_rules_space = {k for k in existing_containers if k.split(":")[0] == self.space}
+
+        if existing_containers and multi_space_components_removal:
             try:
-                _ = client.data_modeling.containers.delete([self.containers[id_].as_id() for id_ in existing_container])
-            except CogniteAPIError as e:
-                warnings.warn(
-                    f"Failed to remove containers {existing_container}! Reason: {e.message}",
-                    stacklevel=2,
+                _ = client.data_modeling.containers.delete(
+                    [self.containers[id_].as_id() for id_ in existing_containers]
                 )
-                logging.error(f"Failed to remove containers {existing_container}! Reason: {e.message}")
+                report += f"Removed containers {existing_containers}!\n"
+            except CogniteAPIError as e:
+                report += f"Failed to remove containers {existing_containers}! Reason: {e.message}\n"
 
-            warnings.warn(
-                f"Removed containers {existing_container}!",
-                stacklevel=2,
-            )
-            logging.info(
-                f"Removed containers {existing_container}!",
-            )
+        elif existing_container_in_rules_space and not multi_space_components_removal:
+            try:
+                _ = client.data_modeling.containers.delete(
+                    [self.containers[id_].as_id() for id_ in existing_container_in_rules_space]
+                )
+                report += f"Removed containers {existing_container_in_rules_space}!\n"
+            except CogniteAPIError as e:
+                report += f"Failed to remove containers {existing_container_in_rules_space}! Reason: {e.message}\n"
 
         else:
-            warnings.warn(
-                "No Containers to remove",
-                stacklevel=2,
-            )
-            logging.info(
-                "No Containers to remove",
-            )
+            report += "No Containers to remove\n"
+        return report + "\n"
 
-    def remove_spaces(self, client: CogniteClient):
-        if existing_spaces := self.find_existing_spaces(client):
+    def remove_spaces(self, client: CogniteClient, multi_space_components_removal: bool = False):
+        report = "# Spaces\n"
+        existing_spaces = self.find_existing_spaces(client)
+
+        if existing_spaces and multi_space_components_removal:
             try:
                 _ = client.data_modeling.spaces.delete(list(existing_spaces))
+                report += f"Removed spaces {existing_spaces}!\n"
             except CogniteAPIError as e:
-                warnings.warn(
-                    f"Failed to remove spaces {existing_spaces}! Reason: {e.message}",
-                    stacklevel=2,
-                )
-                logging.error(f"Failed to remove spaces {existing_spaces}! Reason: {e.message}")
+                report += f"Failed to remove spaces {existing_spaces}! Reason: {e.message}\n"
 
-            warnings.warn(
-                f"Removed spaces {existing_spaces}!",
-                stacklevel=2,
-            )
-            logging.info(
-                f"Removed spaces {existing_spaces}!",
-            )
+        elif self.space in existing_spaces and not multi_space_components_removal:
+            try:
+                _ = client.data_modeling.spaces.delete(self.space)
+                report += f"Removed space {self.space}!\n"
+            except CogniteAPIError as e:
+                report += f"Failed to remove space {self.space}! Reason: {e.message}\n"
 
         else:
-            warnings.warn(
-                "No Spaces to remove",
-                stacklevel=2,
-            )
-            logging.info(
-                "No Spaces to remove",
-            )
+            report += "No Spaces to remove\n"
+
+        return report + "\n"

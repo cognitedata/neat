@@ -32,7 +32,7 @@ steps:
     id: step_rules_loader
     label: Rules loader
     max_retries: 0
-    method: LoadTransformationRules
+    method: ExcelToRules
     params: {}
     retry_delay: 3
     stype: stdstep

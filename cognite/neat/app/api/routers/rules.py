@@ -35,7 +35,7 @@ def get_rules(
 
     if not file_name:
         for step in workflow_defintion.steps:
-            if step.method == "LoadTransformationRules":
+            if step.method == "ExcelToRules":
                 file_name = step.configs["file_name"]
                 version = step.configs["version"]
                 break

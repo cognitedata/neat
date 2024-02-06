@@ -177,12 +177,19 @@ class ExportDMSSchemaComponentsToCDF(Step):
             name="existing_component_handling",
             value="fail",
             label="How to handle existing components in CDF, options: fail, skip",
-            options=["fail", "skip"],
+            options=["fail", "skip", "update"],
+        ),
+        Configurable(
+            name="multi_space_components_create",
+            value="False",
+            label="Create components in multiple spaces or only components in the same space as data model",
+            options=["True", "False"],
         ),
     ]
 
     def run(self, data_model: DMSSchemaComponentsData, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override, syntax]
         existing_component_handling: str = self.configs["existing_component_handling"]
+        multi_space_components_create: bool = self.configs["multi_space_components_create"] == "True"
         components_to_create = {key for key, value in self.complex_configs["components"].items() if value}
 
         if not components_to_create:
@@ -191,18 +198,27 @@ class ExportDMSSchemaComponentsToCDF(Step):
                 step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
             )
 
-        data_model.components.to_cdf(
+        # report
+        report_file = "dms_component_creation_report.txt"
+        report_dir = self.data_store_path / Path("staging")
+        report_dir.mkdir(parents=True, exist_ok=True)
+        report_full_path = report_dir / report_file
+
+        report = data_model.components.to_cdf(
             cdf_client,
             components_to_create=components_to_create,
             existing_component_handling=cast(Literal["skip"], existing_component_handling),
+            multi_space_components_create=multi_space_components_create,
         )
 
+        with report_full_path.open(mode="w") as file:
+            file.write(report)
+
         output_text = (
-            f"DMS Data Model <b><code>{data_model.components.external_id}</code></b> version"
-            f" <b><code>{data_model.components.version}</code></b> uploaded to space"
-            f" <b><code>{data_model.components.space}</code></b> containing:<ul>"
-            f"<li> {len(data_model.components.containers)} containers</li>"
-            f"<li> {len(data_model.components.views)} views</li></ul>"
+            "<p></p>"
+            "Download DMS Schema Components export"
+            f'<a href="/data/staging/{report_file}?{time.time()}" '
+            f'target="_blank"> report</a>'
         )
 
         return FlowMessage(output_text=output_text)
@@ -224,34 +240,44 @@ class DeleteDMSSchemaComponents(Step):
             label="Which DMS schema component to delete???",
             options=["space", "container", "view", "data model"],
         ),
+        Configurable(
+            name="multi_space_components_removal",
+            value="False",
+            label="Remove components in multiple spaces or only components in the same space as data model",
+            options=["True", "False"],
+        ),
     ]
 
     def run(self, data_model: DMSSchemaComponentsData, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override, syntax]
         components_to_remove = {key for key, value in self.complex_configs["components"].items() if value}
-
+        multi_space_components_removal: bool = self.configs["multi_space_components_removal"] == "True"
         if not components_to_remove:
             return FlowMessage(
                 error_text="No DMS Schema components selected for deletion! Please select minimum one!",
                 step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
             )
 
-        data_model.components.remove(cdf_client, components_to_remove=components_to_remove)
-
-        output_text = (
-            f"DMS Data Model {data_model.components.external_id} version {data_model.components.version} "
-            f"under {data_model.components.space} removed:"
-            f"<p> - {len(data_model.components.containers)} containers removed</p>"
-            f"<p> - {len(data_model.components.views)} views removed</p>"
+        report = data_model.components.remove(
+            cdf_client,
+            components_to_remove=components_to_remove,
+            multi_space_components_removal=multi_space_components_removal,
         )
 
-        output_text = (
-            f"DMS Data Model <b><code>{data_model.components.external_id}</code></b> version"
-            f" <b><code>{data_model.components.version}</code></b> removed"
-            f" from space <b><code>{data_model.components.space}</code></b> as well:"
-            f"<ul><li> {len(data_model.components.containers)} containers</li>"
-            f"<li> {len(data_model.components.views)} views</li></ul>"
-        )
+        # report
+        report_file = "dms_component_removal_report.txt"
+        report_dir = self.data_store_path / Path("staging")
+        report_dir.mkdir(parents=True, exist_ok=True)
+        report_full_path = report_dir / report_file
 
+        with report_full_path.open(mode="w") as file:
+            file.write(report)
+
+        output_text = (
+            "<p></p>"
+            "Download DMS Schema Components removal"
+            f'<a href="/data/staging/{report_file}?{time.time()}" '
+            f'target="_blank"> report</a>'
+        )
         return FlowMessage(output_text=output_text)
 
 

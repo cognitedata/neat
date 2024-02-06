@@ -54,7 +54,7 @@ steps:
     id: load_generated_rules
     label: Load Generated Rules
     max_retries: 0
-    method: LoadTransformationRules
+    method: ExcelToRules
     params: {}
     retry_delay: 3
     stype: stdstep

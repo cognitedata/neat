@@ -32,7 +32,7 @@ steps:
     id: step_load_rules
     label: Load SKOS Rules
     max_retries: 0
-    method: LoadTransformationRules
+    method: ExcelToRules
     params: {}
     retry_delay: 3
     stype: stdstep

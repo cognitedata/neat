@@ -685,7 +685,7 @@
 
 ## Rules Parser
 
-### LoadTransformationRules
+### ExcelToRules
 
 * **Category**: Rules Parser
 * **Version**: 1.0.0

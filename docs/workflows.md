@@ -156,7 +156,7 @@ Supported system configuration parameters :
         id: step_load_rules
         label: Load rules from file
         max_retries: 0
-        method: LoadTransformationRules
+        method: ExcelToRules
         params: {}
         retry_delay: 3
         stype: stdstep
