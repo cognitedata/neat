@@ -23,8 +23,8 @@ Changes are grouped as follows:
 - Ability to remove of all spaces components or only ones that are in space defined by `Rules.metadata.space`
 
 ## Improved
-- DMS Schema components upload report
-- DMS Schema components removal report
+- DMS Schema components upload report add to step `ExportDMSSchemaComponentsToCDF`
+- DMS Schema components removal report add to step `DeleteDMSSchemaComponents`
 
 ## Changed
 - Renamed step `LoadTransformationRules` to `ExcelToRules`. **Note** this is a breaking change, but
