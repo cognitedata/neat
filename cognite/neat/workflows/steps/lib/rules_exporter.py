@@ -41,32 +41,7 @@ class GenerateDMSSchemaComponentsFromRules(Step):
     description = "This step generates DMS Schema components, such as data model, views, containers, etc. from Rules."
     category = CATEGORY
 
-    configurables: ClassVar[list[Configurable]] = [
-        Configurable(
-            name="space",
-            value="",
-            label=("ADVANCE: Update default space of DMS Schema components"),
-        ),
-        Configurable(
-            name="version",
-            value="",
-            label=("ADVANCE: Update default version of DMS Schema components"),
-        ),
-        Configurable(
-            name="external_id",
-            value="",
-            label=("ADVANCE: Update default external_id of DMS data model"),
-        ),
-    ]
-
     def run(self, rules: RulesData) -> (FlowMessage, DMSSchemaComponentsData):  # type: ignore[override, syntax]
-        if new_space := self.configs["space"]:
-            rules.rules.update_space(new_space)
-        if new_version := self.configs["version"]:
-            rules.rules.update_version(new_version)
-        if new_external_id := self.configs["external_id"]:
-            rules.rules.metadata.suffix = new_external_id
-
         data_model = DMSSchemaComponents.from_rules(rules.rules)
 
         output_text = (
