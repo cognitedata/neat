@@ -170,19 +170,28 @@ class ExportDMSSchemaComponentsToCDF(Step):
             name="components",
             type="multi_select",
             value="",
-            label="Select which DMS schema component(s) to upload",
+            label="Select which DMS schema component(s) to export to CDF",
             options=["space", "container", "view", "data model"],
         ),
         Configurable(
             name="existing_component_handling",
             value="fail",
-            label="How to handle existing components in CDF, options: fail, skip",
+            label=(
+                "How to handle situation when components being exported in CDF already exist."
+                "Fail the step if any component already exists, "
+                "Skip the component if it already exists, "
+                " or Update the component try to update the component."
+            ),
             options=["fail", "skip", "update"],
         ),
         Configurable(
             name="multi_space_components_create",
             value="False",
-            label="Create components in multiple spaces or only components in the same space as data model",
+            label=(
+                "Whether to create only components belonging to the data model space"
+                " (i.e. space define under Metadata sheet of Rules), "
+                "or also additionally components outside of the data model space."
+            ),
             options=["True", "False"],
         ),
     ]
@@ -204,24 +213,44 @@ class ExportDMSSchemaComponentsToCDF(Step):
         report_dir.mkdir(parents=True, exist_ok=True)
         report_full_path = report_dir / report_file
 
-        report = data_model.components.to_cdf(
+        logs, errors = data_model.components.to_cdf(
             cdf_client,
             components_to_create=components_to_create,
             existing_component_handling=cast(Literal["skip"], existing_component_handling),
             multi_space_components_create=multi_space_components_create,
+            return_report=True,
         )
+
+        report = "# DMS Schema Components Export to CDF\n\n"
+        for component, log in logs.items():
+            if log:
+                report += f"## {component.upper()}\n" + "\n".join(log) + "\n\n"
+
+        report += "\n\n# ERRORS\n\n"
+        for component, log in errors.items():
+            if log:
+                report += f"## {component.upper()}\n" + "\n".join(log) + "\n\n"
+
+        # report
+        report_file = "dms_component_removal_report.txt"
+        report_dir = self.data_store_path / Path("staging")
+        report_dir.mkdir(parents=True, exist_ok=True)
+        report_full_path = report_dir / report_file
 
         with report_full_path.open(mode="w") as file:
             file.write(report)
 
         output_text = (
             "<p></p>"
-            "Download DMS Schema Components export"
+            "Download DMS Schema Components export "
             f'<a href="/data/staging/{report_file}?{time.time()}" '
-            f'target="_blank"> report</a>'
+            f'target="_blank">report</a>'
         )
 
-        return FlowMessage(output_text=output_text)
+        if any(value for value in errors.values()):
+            return FlowMessage(error_text=output_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
+        else:
+            return FlowMessage(output_text=output_text)
 
 
 class DeleteDMSSchemaComponents(Step):
@@ -237,13 +266,17 @@ class DeleteDMSSchemaComponents(Step):
             name="components",
             type="multi_select",
             value="",
-            label="Which DMS schema component to delete???",
+            label="Select which DMS schema component(s) to delete",
             options=["space", "container", "view", "data model"],
         ),
         Configurable(
             name="multi_space_components_removal",
             value="False",
-            label="Remove components in multiple spaces or only components in the same space as data model",
+            label=(
+                "Whether to remove only components belonging to the data model space"
+                " (i.e. space define under Metadata sheet of Rules), "
+                "or also additionally components outside of the data model space."
+            ),
             options=["True", "False"],
         ),
     ]
@@ -257,11 +290,22 @@ class DeleteDMSSchemaComponents(Step):
                 step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
             )
 
-        report = data_model.components.remove(
+        logs, errors = data_model.components.remove(
             cdf_client,
             components_to_remove=components_to_remove,
             multi_space_components_removal=multi_space_components_removal,
+            return_report=True,
         )
+
+        report = "# DMS Schema Components Removal from CDF\n\n"
+        for component, log in logs.items():
+            if log:
+                report += f"## {component.upper()}\n" + "\n".join(log) + "\n\n"
+
+        report += "\n\n# ERRORS\n\n"
+        for component, log in errors.items():
+            if log:
+                report += f"## {component.upper()}\n" + "\n".join(log) + "\n\n"
 
         # report
         report_file = "dms_component_removal_report.txt"
@@ -274,11 +318,15 @@ class DeleteDMSSchemaComponents(Step):
 
         output_text = (
             "<p></p>"
-            "Download DMS Schema Components removal"
+            "Download DMS Schema Components removal "
             f'<a href="/data/staging/{report_file}?{time.time()}" '
-            f'target="_blank"> report</a>'
+            f'target="_blank">report</a>'
         )
-        return FlowMessage(output_text=output_text)
+
+        if any(value for value in errors.values()):
+            return FlowMessage(error_text=output_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
+        else:
+            return FlowMessage(output_text=output_text)
 
 
 class GraphQLSchemaFromRules(Step):
