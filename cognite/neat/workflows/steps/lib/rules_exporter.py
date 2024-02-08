@@ -19,15 +19,15 @@ from cognite.neat.workflows.steps.data_contracts import CogniteClient, DMSSchema
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
 __all__ = [
-    "GenerateDMSSchemaComponentsFromRules",
     "ExportDMSSchemaComponentsToYAML",
     "ExportDMSSchemaComponentsToCDF",
+    "ExportRulesToGraphQLSchema",
+    "ExportRulesToOntology",
+    "ExportRulesToSHACL",
+    "ExportRulesToGraphCapturingSheet",
+    "ExportRulesToExcel",
+    "GenerateDMSSchemaComponentsFromRules",
     "DeleteDMSSchemaComponents",
-    "GraphQLSchemaFromRules",
-    "OntologyFromRules",
-    "SHACLFromRules",
-    "GraphCaptureSpreadsheetFromRules",
-    "ExcelFromRules",
 ]
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
@@ -41,32 +41,7 @@ class GenerateDMSSchemaComponentsFromRules(Step):
     description = "This step generates DMS Schema components, such as data model, views, containers, etc. from Rules."
     category = CATEGORY
 
-    configurables: ClassVar[list[Configurable]] = [
-        Configurable(
-            name="space",
-            value="",
-            label=("ADVANCE: Update default space of DMS Schema components"),
-        ),
-        Configurable(
-            name="version",
-            value="",
-            label=("ADVANCE: Update default version of DMS Schema components"),
-        ),
-        Configurable(
-            name="external_id",
-            value="",
-            label=("ADVANCE: Update default external_id of DMS data model"),
-        ),
-    ]
-
     def run(self, rules: RulesData) -> (FlowMessage, DMSSchemaComponentsData):  # type: ignore[override, syntax]
-        if new_space := self.configs["space"]:
-            rules.rules.update_space(new_space)
-        if new_version := self.configs["version"]:
-            rules.rules.update_version(new_version)
-        if new_external_id := self.configs["external_id"]:
-            rules.rules.metadata.suffix = new_external_id
-
         data_model = DMSSchemaComponents.from_rules(rules.rules)
 
         output_text = (
@@ -170,19 +145,35 @@ class ExportDMSSchemaComponentsToCDF(Step):
             name="components",
             type="multi_select",
             value="",
-            label="Select which DMS schema component(s) to upload",
+            label="Select which DMS schema component(s) to export to CDF",
             options=["space", "container", "view", "data model"],
         ),
         Configurable(
             name="existing_component_handling",
             value="fail",
-            label="How to handle existing components in CDF, options: fail, skip",
-            options=["fail", "skip"],
+            label=(
+                "How to handle situation when components being exported in CDF already exist."
+                "Fail the step if any component already exists, "
+                "Skip the component if it already exists, "
+                " or Update the component try to update the component."
+            ),
+            options=["fail", "skip", "update"],
+        ),
+        Configurable(
+            name="multi_space_components_create",
+            value="False",
+            label=(
+                "Whether to create only components belonging to the data model space"
+                " (i.e. space define under Metadata sheet of Rules), "
+                "or also additionally components outside of the data model space."
+            ),
+            options=["True", "False"],
         ),
     ]
 
     def run(self, data_model: DMSSchemaComponentsData, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override, syntax]
         existing_component_handling: str = self.configs["existing_component_handling"]
+        multi_space_components_create: bool = self.configs["multi_space_components_create"] == "True"
         components_to_create = {key for key, value in self.complex_configs["components"].items() if value}
 
         if not components_to_create:
@@ -191,21 +182,42 @@ class ExportDMSSchemaComponentsToCDF(Step):
                 step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
             )
 
-        data_model.components.to_cdf(
+        logs, errors = data_model.components.to_cdf(
             cdf_client,
             components_to_create=components_to_create,
             existing_component_handling=cast(Literal["skip"], existing_component_handling),
+            multi_space_components_create=multi_space_components_create,
+            return_report=True,
         )
+
+        report = "# DMS Schema Components Export to CDF\n\n"
+        for component, log in logs.items():
+            if log:
+                report += f"## {component.upper()}\n" + "\n".join(log) + "\n\n"
+
+        report += "\n\n# ERRORS\n\n"
+        for component, log in errors.items():
+            if log:
+                report += f"## {component.upper()}\n" + "\n".join(log) + "\n\n"
+
+        # report
+        report_file = "dms_component_creation_report.txt"
+        report_dir = self.data_store_path / Path("staging")
+        report_dir.mkdir(parents=True, exist_ok=True)
+        report_full_path = report_dir / report_file
+        report_full_path.write_text(report)
 
         output_text = (
-            f"DMS Data Model <b><code>{data_model.components.external_id}</code></b> version"
-            f" <b><code>{data_model.components.version}</code></b> uploaded to space"
-            f" <b><code>{data_model.components.space}</code></b> containing:<ul>"
-            f"<li> {len(data_model.components.containers)} containers</li>"
-            f"<li> {len(data_model.components.views)} views</li></ul>"
+            "<p></p>"
+            "Download DMS Schema Components export "
+            f'<a href="/data/staging/{report_file}?{time.time()}" '
+            f'target="_blank">report</a>'
         )
 
-        return FlowMessage(output_text=output_text)
+        if any(value for value in errors.values()):
+            return FlowMessage(error_text=output_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
+        else:
+            return FlowMessage(output_text=output_text)
 
 
 class DeleteDMSSchemaComponents(Step):
@@ -221,41 +233,68 @@ class DeleteDMSSchemaComponents(Step):
             name="components",
             type="multi_select",
             value="",
-            label="Which DMS schema component to delete???",
+            label="Select which DMS schema component(s) to delete",
             options=["space", "container", "view", "data model"],
+        ),
+        Configurable(
+            name="multi_space_components_removal",
+            value="False",
+            label=(
+                "Whether to remove only components belonging to the data model space"
+                " (i.e. space define under Metadata sheet of Rules), "
+                "or also additionally components outside of the data model space."
+            ),
+            options=["True", "False"],
         ),
     ]
 
     def run(self, data_model: DMSSchemaComponentsData, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override, syntax]
         components_to_remove = {key for key, value in self.complex_configs["components"].items() if value}
-
+        multi_space_components_removal: bool = self.configs["multi_space_components_removal"] == "True"
         if not components_to_remove:
             return FlowMessage(
                 error_text="No DMS Schema components selected for deletion! Please select minimum one!",
                 step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
             )
 
-        data_model.components.remove(cdf_client, components_to_remove=components_to_remove)
-
-        output_text = (
-            f"DMS Data Model {data_model.components.external_id} version {data_model.components.version} "
-            f"under {data_model.components.space} removed:"
-            f"<p> - {len(data_model.components.containers)} containers removed</p>"
-            f"<p> - {len(data_model.components.views)} views removed</p>"
+        logs, errors = data_model.components.remove(
+            cdf_client,
+            components_to_remove=components_to_remove,
+            multi_space_components_removal=multi_space_components_removal,
+            return_report=True,
         )
 
+        report = "# DMS Schema Components Removal from CDF\n\n"
+        for component, log in logs.items():
+            if log:
+                report += f"## {component.upper()}\n" + "\n".join(log) + "\n\n"
+
+        report += "\n\n# ERRORS\n\n"
+        for component, log in errors.items():
+            if log:
+                report += f"## {component.upper()}\n" + "\n".join(log) + "\n\n"
+
+        # report
+        report_file = "dms_component_removal_report.txt"
+        report_dir = self.data_store_path / Path("staging")
+        report_dir.mkdir(parents=True, exist_ok=True)
+        report_full_path = report_dir / report_file
+        report_full_path.write_text(report)
+
         output_text = (
-            f"DMS Data Model <b><code>{data_model.components.external_id}</code></b> version"
-            f" <b><code>{data_model.components.version}</code></b> removed"
-            f" from space <b><code>{data_model.components.space}</code></b> as well:"
-            f"<ul><li> {len(data_model.components.containers)} containers</li>"
-            f"<li> {len(data_model.components.views)} views</li></ul>"
+            "<p></p>"
+            "Download DMS Schema Components removal "
+            f'<a href="/data/staging/{report_file}?{time.time()}" '
+            f'target="_blank">report</a>'
         )
 
-        return FlowMessage(output_text=output_text)
+        if any(value for value in errors.values()):
+            return FlowMessage(error_text=output_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
+        else:
+            return FlowMessage(output_text=output_text)
 
 
-class GraphQLSchemaFromRules(Step):
+class ExportRulesToGraphQLSchema(Step):
     """
     This step generates GraphQL schema from data model defined in transformation rules
     """
@@ -304,86 +343,70 @@ class GraphQLSchemaFromRules(Step):
         return FlowMessage(output_text=output_text)
 
 
-class OntologyFromRules(Step):
+class ExportRulesToOntology(Step):
     """
-    This step generates OWL ontology from data model defined in transformation rules
+    This step exports Rules to OWL ontology
     """
 
-    description = "This step generates OWL ontology from data model defined in transformation rules."
+    description = "This step exports Rules to OWL ontology"
     category = CATEGORY
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
-            name="file_name",
-            value="",
+            name="ontology_file_path",
+            value="staging/ontology.ttl",
             label=(
-                "Name of the OWL ontology file it must have .ttl extension,"
-                " if empty defaults to form `prefix-version-ontology.ttl`"
+                "Relative path for the ontology file storage, "
+                "must end with .ttl ! Will be auto-created if not provided !"
             ),
-        ),
-        Configurable(name="storage_dir", value="staging", label="Directory to store the OWL ontology file"),
-        Configurable(
-            name="store_warnings",
-            value="True",
-            label="To store warnings while generating ontology",
-            options=["True", "False"],
-        ),
+        )
     ]
 
-    def run(self, transformation_rules: RulesData) -> FlowMessage:  # type: ignore[override, syntax]
+    def run(self, rules: RulesData) -> FlowMessage:  # type: ignore[override, syntax]
         if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
+
         # ontology file
-        default_name = (
-            f"{transformation_rules.rules.metadata.prefix}-"
-            f"v{transformation_rules.rules.metadata.version.strip().replace('.', '_')}"
+        default_path = self.data_store_path / Path(
+            f"{rules.rules.metadata.prefix}-"
+            f"v{rules.rules.metadata.version.strip().replace('.', '_')}"
             "-ontology.ttl"
         )
 
-        ontology_file = self.configs["file_name"] or default_name
-
-        storage_dir_str = self.configs["storage_dir"]
-        storage_dir = self.data_store_path / storage_dir_str
-        storage_dir.mkdir(parents=True, exist_ok=True)
-
-        store_warnings = self.configs["store_warnings"].lower() == "true"
+        if not self.configs["ontology_file_path"]:
+            storage_path = default_path
+        else:
+            storage_path = self.data_store_path / Path(self.configs["ontology_file_path"])
+        report_file_path = storage_path.parent / f"report_{storage_path.stem}.txt"
 
         with warnings.catch_warnings(record=True) as validation_warnings:
-            ontology = Ontology.from_rules(transformation_rules=transformation_rules.rules)
+            ontology = Ontology.from_rules(rules=rules.rules)
 
-        with (storage_dir / ontology_file).open(mode="w") as onto_file:
-            onto_file.write(ontology.ontology)
+        storage_path.write_text(ontology.ontology)
+        report_file_path.write_text(generate_exception_report(wrangle_warnings(validation_warnings), "Warnings"))
 
-        if store_warnings and validation_warnings:
-            with (storage_dir / "report.txt").open(mode="w") as report_file:
-                report_file.write(generate_exception_report(wrangle_warnings(validation_warnings), "Warnings"))
+        relative_ontology_file_path = str(storage_path).split("/data/")[1]
+        relative_report_file_path = str(report_file_path).split("/data/")[1]
 
         output_text = (
             "<p></p>"
-            "Ontology generated and can be downloaded here : "
-            f'<a href="/data/{storage_dir_str}/{ontology_file}?{time.time()}" '
-            f'target="_blank">{ontology_file}</a>'
-        )
-
-        output_text += (
-            (
-                "<p></p>"
-                " Download conversion report "
-                f'<a href="/data/{storage_dir_str}/report.txt?{time.time()}" '
-                f'target="_blank">here</a>'
-            )
-            if validation_warnings
-            else ""
+            "Rules exported to ontology can be downloaded here : "
+            f'<a href="/data/{relative_ontology_file_path}?{time.time()}" '
+            f'target="_blank">{storage_path.stem}.xlsx</a>'
+            "<p></p>"
+            "Report can be downloaded here : "
+            f'<a href="/data/{relative_report_file_path}?{time.time()}" '
+            f'target="_blank">{report_file_path.stem}.txt</a>'
         )
 
         return FlowMessage(output_text=output_text)
 
 
-class SHACLFromRules(Step):
+class ExportRulesToSHACL(Step):
     """
-    This step generates SHACL from data model defined in transformation rules
+    This step exports Rules to SHACL
     """
 
-    description = "This step generates SHACL from data model defined in transformation rules"
+    description = "This step exports Rules to SHACL"
     category = CATEGORY
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
@@ -413,7 +436,7 @@ class SHACLFromRules(Step):
         storage_dir = self.data_store_path / storage_dir_str
         storage_dir.mkdir(parents=True, exist_ok=True)
 
-        constraints = Ontology.from_rules(transformation_rules=transformation_rules.rules).constraints
+        constraints = Ontology.from_rules(rules=transformation_rules.rules).constraints
 
         with (storage_dir / shacl_file).open(mode="w") as onto_file:
             onto_file.write(constraints)
@@ -427,12 +450,12 @@ class SHACLFromRules(Step):
         return FlowMessage(output_text=output_text)
 
 
-class GraphCaptureSpreadsheetFromRules(Step):
+class ExportRulesToGraphCapturingSheet(Step):
     """
-    This step generates data capture spreadsheet from data model defined in rules
+    This step generates graph capturing sheet
     """
 
-    description = "This step generates data capture spreadsheet from data model defined in rules"
+    description = "This step generates graph capturing sheet"
     category = CATEGORY
     configurables: ClassVar[list[Configurable]] = [
         Configurable(name="file_name", value="graph_capture_sheet.xlsx", label="File name of the data capture sheet"),
@@ -464,8 +487,8 @@ class GraphCaptureSpreadsheetFromRules(Step):
         return FlowMessage(output_text=output_text)
 
 
-class ExcelFromRules(Step):
-    description = "This step generates Excel file from rules"
+class ExportRulesToExcel(Step):
+    description = "This step export Rules to Excel representation"
     category = CATEGORY
     version = "0.1.0-alpha"
     configurables: ClassVar[list[Configurable]] = [

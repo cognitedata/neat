@@ -16,6 +16,59 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.61.0] - 06-02-24
+
+## Added
+- Ability to upload of all spaces components or only ones that are in space defined by `Rules.metadata.space`
+- Ability to remove of all spaces components or only ones that are in space defined by `Rules.metadata.space`
+
+## Improved
+- DMS Schema components upload report add to step `ExportDMSSchemaComponentsToCDF`
+- DMS Schema components removal report add to step `DeleteDMSSchemaComponents`
+- Handling of multiple steps
+
+## Removed
+- `DataModelFromRulesToSourceGraph` it is confusing step and needs more work to be useful
+- Workflows:
+  - `json_to_data_model_rules`
+  - `sheet2cdf`
+  - `skos2cdf`
+
+## Changed
+- Renamed steps:
+  - `LoadTransformationRules` to `ImportExcelToRules`
+  - `InstancesFromRdfFileToSourceGraph` to `ExtractGraphFromRdfFile`
+  - `InstancesFromRulesToSolutionGraph` to `ExtractGraphFromRulesInstanceSheet`
+  - `GraphCapturingSheetToGraph` to `ExtractGraphFromGraphCapturingSheet`
+  - `GenerateMockGraph` to `ExtractGraphFromMockGraph`
+  - `InstancesFromJsonToGraph` to `ExtractGraphFromJsonFile`
+  - `InstancesFromAvevaPiAF` to `ExtractGraphFromAvevaPiAssetFramework`
+  - `DexpiToGraph` to `ExtractGraphFromDexpiFile`
+  - `GenerateCDFAssetsFromGraph` to `GenerateAssetsFromGraph`
+  - `GenerateCDFRelationshipsFromGraph` to `GenerateRelationshipsFromGraph`
+  - `GenerateCDFNodesAndEdgesFromGraph` to `GenerateNodesAndEdgesFromGraph`
+  - `UploadCDFAssets` to `LoadAssetsToCDF`
+  - `UploadCDFRelationships` to `LoadRelationshipsToCDF`
+  - `UploadCDFNodes` to `LoadNodesToCDF`
+  - `UploadCDFEdges` to `LoadEdgesToCDF`
+  - `CreateCDFLabels` to `LoadLabelsToCDF`
+  - `OpenApiToRules` to `ImportOpenApiToRules
+  - `ArbitraryJsonYamlToRules` to `ImportArbitraryJsonYamlToRules`
+  - `GraphToRules` to `ImportGraphToRules`
+  - `OntologyToRules` to `ImportOntologyToRules`
+  - `GraphQLSchemaFromRules` to `ExportGraphQLSchemaFromRules`
+  - `OntologyFromRules` to `ExportOntologyFromRules`
+  - `SHACLFromRules` to `ExportSHACLFromRules`
+  - `GraphCaptureSpreadsheetFromRules` to `ExportRulesToGraphCapturingSheet`
+  - `ExcelFromRules` to `ExportRulesToExcel`
+- Renamed workflows:
+  - `graph_to_asset_hierarchy` to `extract_rdf_graph_generate_assets`
+  - `dexpi2graph` to `extract_dexpi_graph_and_export_rules`
+  - `ontology2data_model` to `import_ontology`
+
+- **Note** this is a breaking change, but since we are on 0. version, we can do this.
+
+
 ## [0.60.0] - 30-01-24
 
 ## Added

@@ -31,11 +31,11 @@ def get_rules(
     workflow = NEAT_APP.workflow_manager.get_workflow(workflow_name)
     if workflow is None:
         return {"error": f"Workflow {workflow_name} is not found"}
-    workflow_defintion = workflow.get_workflow_definition()
+    workflow_definition = workflow.get_workflow_definition()
 
     if not file_name:
-        for step in workflow_defintion.steps:
-            if step.method == "LoadTransformationRules":
+        for step in workflow_definition.steps:
+            if step.method == "ImportExcelToRules":
                 file_name = step.configs["file_name"]
                 version = step.configs["version"]
                 break
@@ -73,9 +73,11 @@ def get_rules(
                 "class": value.class_id,
                 "property": value.property_id,
                 "property_description": value.description,
-                "property_type": value.expected_value_type.versioned_id
-                if value.property_type == EntityTypes.object_property
-                else value.expected_value_type.suffix,
+                "property_type": (
+                    value.expected_value_type.versioned_id
+                    if value.property_type == EntityTypes.object_property
+                    else value.expected_value_type.suffix
+                ),
                 "cdf_resource_type": value.cdf_resource_type,
                 "cdf_metadata_type": value.resource_type_property,
                 "rule_type": value.rule_type,

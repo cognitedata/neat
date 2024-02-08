@@ -1,7 +1,7 @@
 configs: []
 description: null
 implementation_module: null
-name: ontology2data_model
+name: import_ontology
 steps:
   - complex_configs: {}
     configs: {}
@@ -20,8 +20,8 @@ steps:
       - dowload_ontology
     trigger: true
     ui_config:
-      pos_x: 521
-      pos_y: 258
+      pos_x: 524
+      pos_y: 259
   - complex_configs: {}
     configs:
       excel_file_path: rules/LIS-14-rules.xlsx
@@ -30,19 +30,20 @@ steps:
     description: null
     enabled: true
     id: onotology2rules
-    label: Convert Ontology to Rules
+    label: Import Ontology to Rules
     max_retries: 0
-    method: OntologyToRules
+    method: ImportOntologyToRules
     params: {}
     retry_delay: 3
     stype: stdstep
     system_component_id: null
     transition_to:
       - load_generated_rules
+      - import_generated_rules
     trigger: false
     ui_config:
-      pos_x: 519
-      pos_y: 408
+      pos_x: 524
+      pos_y: 403
   - complex_configs: {}
     configs:
       file_name: LIS-14-rules.xlsx
@@ -51,21 +52,22 @@ steps:
       version: ""
     description: null
     enabled: true
-    id: load_generated_rules
-    label: Load Generated Rules
+    id: import_generated_rules
+    label: Import Generated Rules
     max_retries: 0
-    method: LoadTransformationRules
+    method: ImportExcelToRules
     params: {}
     retry_delay: 3
     stype: stdstep
     system_component_id: null
     transition_to:
       - step_59017
-      - step_123045
+      - step_829062
+      - export_rules_to_graphql_schema
     trigger: false
     ui_config:
-      pos_x: 518
-      pos_y: 499
+      pos_x: 524
+      pos_y: 490
   - complex_configs: {}
     configs:
       api_url: https://rds.posccaesar.org/ontology/lis14/ont/core/2.0/LIS-14.ttl
@@ -90,59 +92,18 @@ steps:
       - onotology2rules
     trigger: false
     ui_config:
-      pos_x: 520
+      pos_x: 524
       pos_y: 333
-  - complex_configs: {}
-    configs:
-      external_id: ""
-      space: ""
-      version: ""
-    description: null
-    enabled: true
-    id: step_123045
-    label: Generate DMS Schema Components
-    max_retries: 0
-    method: GenerateDMSSchemaComponentsFromRules
-    params: {}
-    retry_delay: 3
-    stype: stdstep
-    system_component_id: null
-    transition_to:
-      - step_123331
-    trigger: false
-    ui_config:
-      pos_x: 517
-      pos_y: 570
-  - complex_configs: {}
-    configs:
-      format: yaml-dump
-      storage_dir: staging
-    description: null
-    enabled: true
-    id: step_123331
-    label: Export DMS Schema Components
-    max_retries: 0
-    method: ExportDMSSchemaComponents
-    params: {}
-    retry_delay: 3
-    stype: stdstep
-    system_component_id: null
-    transition_to:
-      - step_829062
-    trigger: false
-    ui_config:
-      pos_x: 518
-      pos_y: 666
   - complex_configs: {}
     configs:
       file_name: ""
       storage_dir: staging
     description: null
     enabled: true
-    id: step_829062
-    label: Convert Rules to GraphQL Schema
+    id: export_rules_to_graphql_schema
+    label: Export Rules to GraphQL Schema
     max_retries: 0
-    method: GraphQLSchemaFromRules
+    method: ExportRulesToGraphQLSchema
     params: {}
     retry_delay: 3
     stype: stdstep
@@ -150,6 +111,6 @@ steps:
     transition_to: []
     trigger: false
     ui_config:
-      pos_x: 519
-      pos_y: 772
+      pos_x: 525
+      pos_y: 577
 system_components: []

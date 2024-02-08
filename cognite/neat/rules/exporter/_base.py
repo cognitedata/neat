@@ -25,7 +25,7 @@ class BaseExporter(ABC, Generic[T_Export]):
             return cls(rules)
         elif isinstance(rules, RawRules):
             validated_rules = rules.to_rules(skip_validation=True)
-            report = validated_rules.validate_rules()
+            report = rules.validate_rules()
             return cls(validated_rules, report)
 
         raise ValueError(f"Expected RawRules or Rules, got {type(rules)}")

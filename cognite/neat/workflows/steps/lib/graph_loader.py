@@ -39,22 +39,22 @@ from cognite.neat.workflows.steps.data_contracts import (
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
 __all__ = [
-    "CreateCDFLabels",
-    "GenerateCDFAssetsFromGraph",
-    "GenerateCDFRelationshipsFromGraph",
-    "GenerateCDFNodesAndEdgesFromGraph",
-    "UploadCDFAssets",
-    "UploadCDFRelationships",
-    "UploadCDFNodes",
-    "UploadCDFEdges",
+    "GenerateAssetsFromGraph",
+    "GenerateRelationshipsFromGraph",
+    "GenerateNodesAndEdgesFromGraph",
+    "LoadLabelsToCDF",
+    "LoadAssetsToCDF",
+    "LoadRelationshipsToCDF",
+    "LoadNodesToCDF",
+    "LoadEdgesToCDF",
 ]
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
 
 
-class CreateCDFLabels(Step):
+class LoadLabelsToCDF(Step):
     """
-    This step creates default NEAT labels in CDF
+    This step creates and loads default NEAT labels in CDF
     """
 
     description = "This step creates default NEAT labels in CDF"
@@ -73,7 +73,7 @@ class CreateCDFLabels(Step):
         )
 
 
-class GenerateCDFNodesAndEdgesFromGraph(Step):
+class GenerateNodesAndEdgesFromGraph(Step):
     """
     The step generates nodes and edges from the graph
     """
@@ -95,7 +95,7 @@ class GenerateCDFNodesAndEdgesFromGraph(Step):
             label=("Whether to add class name as a prefix to external ids of instances or not"),
         ),
         Configurable(
-            name="data_validatation_error_handling_strategy",
+            name="data_validation_error_handling_strategy",
             value="skip_and_report",
             options=["skip_and_report", "fail_and_report"],
             label=(
@@ -115,8 +115,8 @@ class GenerateCDFNodesAndEdgesFromGraph(Step):
             raise StepFlowContextNotInitialized(type(self).__name__)
 
         graph_name = self.configs["graph_name"] or "source"
-        data_validatation_error_handling_strategy = self.configs.get(
-            "data_validatation_error_handling_strategy", "skip_and_report"
+        data_validation_error_handling_strategy = self.configs.get(
+            "data_validation_error_handling_strategy", "skip_and_report"
         )
         if graph_name == "solution":
             # Todo Anders: Why is the graph fetched from context when it is passed as an argument?
@@ -142,13 +142,13 @@ class GenerateCDFNodesAndEdgesFromGraph(Step):
                 f'<a href="/data/reports/{file_name}?{time.time()}" '
                 f'target="_blank">Full error report </a>'
             )
-            if data_validatation_error_handling_strategy == "fail_and_report":
+            if data_validation_error_handling_strategy == "fail_and_report":
                 return FlowMessage(error_text=msg, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
 
         return FlowMessage(output_text=msg), Nodes(nodes=nodes), Edges(edges=edges)
 
 
-class UploadCDFNodes(Step):
+class LoadNodesToCDF(Step):
     """
     This step uploads nodes to CDF
     """
@@ -164,7 +164,7 @@ class UploadCDFNodes(Step):
             return FlowMessage(output_text="No nodes to upload!")
 
 
-class UploadCDFEdges(Step):
+class LoadEdgesToCDF(Step):
     """
     This step uploads edges to CDF
     """
@@ -180,7 +180,7 @@ class UploadCDFEdges(Step):
             return FlowMessage(output_text="No edges to upload!")
 
 
-class GenerateCDFAssetsFromGraph(Step):
+class GenerateAssetsFromGraph(Step):
     """
     The step generates assets from the graph ,categorizes them and stores them in CategorizedAssets object
     """
@@ -203,7 +203,7 @@ class GenerateCDFAssetsFromGraph(Step):
             options=["nothing", "orphans", "circular", "full"],
             label=(
                 "Configures asset cleanup process. Supported options: nothing - no cleanup, \
-                    orphans - all oraphan assets will be removed, circular - all circular assets will be removed , \
+                    orphans - all orphan assets will be removed, circular - all circular assets will be removed , \
                     full - full cleanup , both orphans and circular assets will be removed. "
             ),
         ),
@@ -388,7 +388,7 @@ class GenerateCDFAssetsFromGraph(Step):
         return FlowMessage(output_text=msg), CategorizedAssets(assets=categorized_assets)
 
 
-class UploadCDFAssets(Step):
+class LoadAssetsToCDF(Step):
     """
     This step uploads categorized assets to CDF
     """
@@ -446,7 +446,7 @@ class UploadCDFAssets(Step):
             return FlowMessage(output_text="No assets to upload!")
 
 
-class GenerateCDFRelationshipsFromGraph(Step):
+class GenerateRelationshipsFromGraph(Step):
     """
     This step generates relationships from the graph and saves them to CategorizedRelationships object
     """
@@ -515,7 +515,7 @@ class GenerateCDFRelationshipsFromGraph(Step):
         return FlowMessage(output_text=msg), CategorizedRelationships(relationships=categorized_relationships)
 
 
-class UploadCDFRelationships(Step):
+class LoadRelationshipsToCDF(Step):
     """
     This step uploads relationships to CDF
     """

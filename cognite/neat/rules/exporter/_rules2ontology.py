@@ -65,7 +65,7 @@ class Ontology(OntologyModel):
     prefixes: dict[str, Namespace]
 
     @classmethod
-    def from_rules(cls, transformation_rules: Rules) -> Self:
+    def from_rules(cls, rules: Rules) -> Self:
         """
         Generates an ontology from a set of transformation rules.
 
@@ -75,35 +75,35 @@ class Ontology(OntologyModel):
         Returns:
             An instance of Ontology.
         """
-        properties_redefined, redefinition_warnings = are_properties_redefined(transformation_rules, return_report=True)
+        properties_redefined, redefinition_warnings = are_properties_redefined(rules, return_report=True)
         if properties_redefined:
             raise exceptions.PropertiesDefinedMultipleTimes(report=generate_exception_report(redefinition_warnings))
 
-        if transformation_rules.prefixes is None:
+        if rules.prefixes is None:
             raise exceptions.PrefixMissing()
 
-        if transformation_rules.metadata.namespace is None:
+        if rules.metadata.namespace is None:
             raise exceptions.MissingDataModelPrefixOrNamespace()
 
         return cls(
             properties=[
-                OWLProperty.from_list_of_properties(definition, transformation_rules.metadata.namespace)
-                for definition in to_property_dict(transformation_rules).values()
+                OWLProperty.from_list_of_properties(definition, rules.metadata.namespace)
+                for definition in to_property_dict(rules).values()
             ],
             classes=[
-                OWLClass.from_class(definition, transformation_rules.metadata.namespace, transformation_rules.prefixes)
-                for definition in transformation_rules.classes.values()
+                OWLClass.from_class(definition, rules.metadata.namespace, rules.prefixes)
+                for definition in rules.classes.values()
             ],
             shapes=[
                 SHACLNodeShape.from_rules(
-                    transformation_rules.classes[class_],
+                    rules.classes[class_],
                     list(properties.values()),
-                    transformation_rules.metadata.namespace,
+                    rules.metadata.namespace,
                 )
-                for class_, properties in to_class_property_pairs(transformation_rules).items()
+                for class_, properties in to_class_property_pairs(rules).items()
             ],
-            metadata=OWLMetadata(**transformation_rules.metadata.model_dump()),
-            prefixes=transformation_rules.prefixes,
+            metadata=OWLMetadata(**rules.metadata.model_dump()),
+            prefixes=rules.prefixes,
         )
 
     def as_shacl(self) -> Graph:

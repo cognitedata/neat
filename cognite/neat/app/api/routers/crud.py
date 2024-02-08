@@ -70,7 +70,7 @@ async def file_upload_handler(
         workflow_definition = workflow.get_workflow_definition()
 
         for step in workflow_definition.steps:
-            if step.method == "LoadTransformationRules":
+            if step.method == "ImportExcelToRules":
                 step.configs["file_name"] = file_name
                 step.configs["version"] = ""
 

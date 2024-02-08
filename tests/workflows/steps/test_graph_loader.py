@@ -5,7 +5,7 @@ from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
 from cognite.neat.graph.stores import MemoryStore
 from cognite.neat.rules.exporter._core.rules2labels import get_labels
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph
-from cognite.neat.workflows.steps.lib.graph_loader import GenerateCDFAssetsFromGraph
+from cognite.neat.workflows.steps.lib.graph_loader import GenerateAssetsFromGraph
 
 
 def test_graph_loader_clean_orphans(solution_knowledge_graph_dirty, transformation_rules, mock_cdf_assets):
@@ -29,7 +29,7 @@ def test_graph_loader_clean_orphans(solution_knowledge_graph_dirty, transformati
             prefixes=solution_knowledge_graph_dirty.namespaces,
         )
     )
-    test_assets_from_graph = GenerateCDFAssetsFromGraph()
+    test_assets_from_graph = GenerateAssetsFromGraph()
     test_assets_from_graph.configs = {"assets_cleanup_type": "orphans", "data_set_id": 123456}
     test_assets_from_graph.metrics = NeatMetricsCollector("TestMetrics")
 
@@ -64,7 +64,7 @@ def test_graph_loader_no_orphans_cleanup(solution_knowledge_graph_dirty, transfo
             prefixes=solution_knowledge_graph_dirty.namespaces,
         )
     )
-    test_assets_from_graph = GenerateCDFAssetsFromGraph()
+    test_assets_from_graph = GenerateAssetsFromGraph()
     test_assets_from_graph.configs = {"assets_cleanup_type": "nothing", "data_set_id": 123456}
     test_assets_from_graph.metrics = NeatMetricsCollector("TestMetrics")
 

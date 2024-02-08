@@ -341,7 +341,7 @@
 
 ---
 
-## LoadTransformationRules
+## ExcelToRules
 
 * **Description**: This step loads transformation rules from the file or remote location
 * **Category**: Rules Parser

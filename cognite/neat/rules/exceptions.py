@@ -1193,7 +1193,16 @@ class EntityIDNotDMSCompliant(NeatWarning):
 
     Notes:
         DMS ready means that entity id must only use following characters [a-zA-Z0-9_],
-        where it can only start with letter!
+        where it can only start with letter! Also there are reserved words that cannot be used.
+
+        Reserved words for views: `Query`, `Mutation`, `Subscription`, `String`, `Int32`, `Int64`, `Int`,
+        `Float32`, `Float64`, `Float`, `Timestamp`, `JSONObject`, `Date`, `Numeric`, `Boolean`, `PageInfo`,
+        `File`, `Sequence`, `TimeSeries`
+
+        Reserved words for properties: `space`, `externalId`, `createdTime`, `lastUpdatedTime`,
+        `deletedTime`, `edge_id`, `node_id`, `project_id`, `property_group`, `seq`, `tg_table_name`, `extensions`
+
+        Reserved words for spaces: `space`, `cdf`, `dms`, `pg3`, `shared`, `system`, `node`, `edge`
     """
 
     type_: str = "EntityIDNotDMSCompliant"

@@ -1,9 +1,10 @@
 configs: []
 description: null
 implementation_module: null
-name: dexpi2graph
+name: extract_dexpi_graph_and_export_rules
 steps:
-  - configs: {}
+  - complex_configs: {}
+    configs: {}
     description: null
     enabled: true
     id: step_trigger
@@ -19,9 +20,10 @@ steps:
       - step_configure_graph_store
     trigger: true
     ui_config:
-      pos_x: 358
-      pos_y: 103
-  - configs:
+      pos_x: 352
+      pos_y: 106
+  - complex_configs: {}
+    configs:
       db_server_api_root_url: ""
       disk_store_dir: dexpi-graph
       graph_name: source
@@ -43,27 +45,30 @@ steps:
       - step_download_dexpi_file
     trigger: false
     ui_config:
-      pos_x: 357
-      pos_y: 180
-  - configs:
+      pos_x: 353
+      pos_y: 176
+  - complex_configs: {}
+    configs:
       base_namespace: http://purl.org/cognite/neat#
       file_path: source-graphs/depxi_example.xml
     description: null
     enabled: true
     id: step_load_ttl
-    label: DEXPI to Knowledge Graph
+    label: Extract Graph from DEXPI file
     max_retries: 0
-    method: DexpiToGraph
+    method: ExtractGraphFromDexpiFile
     params: {}
     retry_delay: 3
     stype: stdstep
     system_component_id: null
-    transition_to: []
+    transition_to:
+      - infer_rules
     trigger: false
     ui_config:
-      pos_x: 359
-      pos_y: 348
-  - configs:
+      pos_x: 354
+      pos_y: 344
+  - complex_configs: {}
+    configs:
       api_url: https://raw.githubusercontent.com/cognitedata/neat/main/tests/data/depxi_example.xml
       auth_mode: none
       http_method: GET
@@ -86,6 +91,49 @@ steps:
       - step_load_ttl
     trigger: false
     ui_config:
-      pos_x: 358
-      pos_y: 252
+      pos_x: 354
+      pos_y: 250
+  - complex_configs: {}
+    configs:
+      excel_file_path: rules/inferred-rules.xlsx
+      file_name: inferred_transformations.xlsx
+      max_number_of_instances: "-1"
+      storage_dir: staging
+    description: null
+    enabled: true
+    id: infer_rules
+    label: Import/infer Rules from Graph
+    max_retries: 0
+    method: ImportGraphToRules
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+      - import_inferred_rules
+    trigger: false
+    ui_config:
+      pos_x: 356
+      pos_y: 442
+  - complex_configs: {}
+    configs:
+      file_name: inferred-rules.xlsx
+      validation_report_file: rules_validation_report.txt
+      validation_report_storage_dir: rules_validation_report
+      version: ""
+    description: null
+    enabled: true
+    id: import_inferred_rules
+    label: Import Inferred Rules
+    max_retries: 0
+    method: ImportExcelToRules
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to: []
+    trigger: false
+    ui_config:
+      pos_x: 356
+      pos_y: 537
 system_components: []

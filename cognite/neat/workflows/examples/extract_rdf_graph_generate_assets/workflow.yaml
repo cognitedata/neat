@@ -1,9 +1,10 @@
 configs: []
 description: null
 implementation_module: null
-name: graph_to_asset_hierarchy
+name: extract_rdf_graph_generate_assets
 steps:
-  - configs: {}
+  - complex_configs: {}
+    configs: {}
     description: null
     enabled: true
     id: step_http_trigger
@@ -21,9 +22,9 @@ steps:
     ui_config:
       pos_x: 454
       pos_y: 77
-  - configs:
+  - complex_configs: {}
+    configs:
       file_name: Rules-Nordic44-to-TNT.xlsx
-      validate_rules: "True"
       validation_report_file: rules_validation_report.txt
       validation_report_storage_dir: rules_validation_report
       version: ""
@@ -32,7 +33,7 @@ steps:
     id: step_rules_loader
     label: Rules loader
     max_retries: 0
-    method: LoadTransformationRules
+    method: ImportExcelToRules
     params: {}
     retry_delay: 3
     stype: stdstep
@@ -44,16 +45,17 @@ steps:
     ui_config:
       pos_x: 452
       pos_y: 167
-  - configs:
+  - complex_configs: {}
+    configs:
       add_base_iri: "True"
       file_path: source-graphs/Knowledge-Graph-Nordic44-dirty.xml
       mime_type: application/rdf+xml
     description: null
     enabled: true
     id: step_graph_loader
-    label: Load graph from rdf file
+    label: Extract Graph from RDF File
     max_retries: 0
-    method: InstancesFromRdfFileToSourceGraph
+    method: ExtractGraphFromRdfFile
     params: {}
     retry_delay: 3
     stype: stdstep
@@ -63,8 +65,10 @@ steps:
     trigger: false
     ui_config:
       pos_x: 453
-      pos_y: 421
-  - configs: {}
+      pos_y: 418
+  - complex_configs: {}
+    configs:
+      cdf_lookup_database: ""
     description: null
     enabled: true
     id: step_transform
@@ -76,12 +80,13 @@ steps:
     stype: stdstep
     system_component_id: null
     transition_to:
-      - step_create_labels
+      - step_generate_assets
     trigger: false
     ui_config:
       pos_x: 453
-      pos_y: 491
-  - configs:
+      pos_y: 500
+  - complex_configs: {}
+    configs:
       asset_external_id_prefix: ""
       assets_cleanup_type: full
       data_set_id: "2626756768281823"
@@ -90,24 +95,7 @@ steps:
     id: step_generate_assets
     label: Generate cdf assets
     max_retries: 0
-    method: GenerateCDFAssetsFromGraph
-    params: {}
-    retry_delay: 3
-    stype: stdstep
-    system_component_id: null
-    transition_to:
-      - step_assets_uploader
-    trigger: false
-    ui_config:
-      pos_x: 451
-      pos_y: 652
-  - configs: {}
-    description: null
-    enabled: true
-    id: step_assets_uploader
-    label: Upload assets
-    max_retries: 0
-    method: UploadCDFAssets
+    method: GenerateAssetsFromGraph
     params: {}
     retry_delay: 3
     stype: stdstep
@@ -116,9 +104,10 @@ steps:
       - step_generate_relationships
     trigger: false
     ui_config:
-      pos_x: 452
-      pos_y: 727
-  - configs:
+      pos_x: 456
+      pos_y: 571
+  - complex_configs: {}
+    configs:
       data_set_id: "2626756768281823"
       relationship_external_id_prefix: ""
     description: null
@@ -126,55 +115,20 @@ steps:
     id: step_generate_relationships
     label: Generate relationships
     max_retries: 0
-    method: GenerateCDFRelationshipsFromGraph
+    method: GenerateRelationshipsFromGraph
     params: {}
     retry_delay: 3
     stype: stdstep
     system_component_id: null
-    transition_to:
-      - step_upload_relationships
+    transition_to: []
     trigger: false
     ui_config:
-      pos_x: 444
-      pos_y: 842
-  - configs: {}
-    description: null
-    enabled: true
-    id: step_upload_relationships
-    label: Upload relationships
-    max_retries: 0
-    method: UploadCDFRelationships
-    params: {}
-    retry_delay: 3
-    stype: stdstep
-    system_component_id: null
-    transition_to:
-      - step_347026
-    trigger: false
-    ui_config:
-      pos_x: 443
-      pos_y: 927
-  - configs:
-      data_set_id: "2626756768281823"
-    description: null
-    enabled: true
-    id: step_create_labels
-    label: Create CDF labels
-    max_retries: 0
-    method: CreateCDFLabels
-    params: {}
-    retry_delay: 3
-    stype: stdstep
-    system_component_id: null
-    transition_to:
-      - step_generate_assets
-    trigger: false
-    ui_config:
-      pos_x: 449
-      pos_y: 568
-  - configs:
+      pos_x: 461
+      pos_y: 633
+  - complex_configs: {}
+    configs:
       db_server_api_root_url: ""
-      disk_store_dir: source-graph-store-4
+      disk_store_dir: nordic44-graph-store
       graph_name: source
       init_procedure: reset
       sparql_query_url: ""
@@ -196,7 +150,8 @@ steps:
     ui_config:
       pos_x: 451
       pos_y: 245
-  - configs:
+  - complex_configs: {}
+    configs:
       db_server_api_root_url: ""
       disk_store_dir: solution-graph-store-4
       graph_name: solution
@@ -218,8 +173,8 @@ steps:
       - step_graph_loader
     trigger: false
     ui_config:
-      pos_x: 450
-      pos_y: 337
+      pos_x: 454
+      pos_y: 334
 system_components:
   - description: null
     id: grid_management_system
