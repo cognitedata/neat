@@ -5,7 +5,7 @@ from ._graph2rules import GraphImporter
 from ._json2rules import ArbitraryJSONImporter
 from ._owl2rules import OWLImporter
 from ._spreadsheet2rules import ExcelImporter, GoogleSheetImporter
-from ._xml2rules import XMLImporter
+from ._xsd2rules import XSDImporter
 from ._yaml2rules import ArbitraryYAMLImporter
 
 __all__ = [
@@ -15,7 +15,7 @@ __all__ = [
     "ArbitraryYAMLImporter",
     "DMSImporter",
     "OWLImporter",
-    "XMLImporter",
+    "XSDImporter",
     "GraphImporter",
     "ExcelImporter",
     "GoogleSheetImporter",

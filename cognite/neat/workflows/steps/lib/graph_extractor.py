@@ -19,20 +19,20 @@ from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
 __all__ = [
-    "InstancesFromRdfFileToSourceGraph",
-    "InstancesFromRulesToSolutionGraph",
-    "GraphCapturingSheetToGraph",
-    "GenerateMockGraph",
-    "DataModelFromRulesToSourceGraph",
-    "InstancesFromJsonToGraph",
-    "InstancesFromAvevaPiAF",
-    "DexpiToGraph",
+    "ExtractGraphFromRdfFile",
+    "ExtractGraphFromRulesInstanceSheet",
+    "ExtractGraphFromGraphCapturingSheet",
+    "ExtractGraphFromMockGraph",
+    "ExtractGraphFromRulesDataModel",
+    "ExtractGraphFromJsonFile",
+    "ExtractGraphFromAvevaPiAssetFramework",
+    "ExtractGraphFromDexpiFile",
 ]
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
 
 
-class InstancesFromRdfFileToSourceGraph(Step):
+class ExtractGraphFromRdfFile(Step):
     """
     This step extract instances from a file into the source graph. The file must be in RDF format.
     """
@@ -84,7 +84,7 @@ class InstancesFromRdfFileToSourceGraph(Step):
         return FlowMessage(output_text="Instances loaded to source graph")
 
 
-class DexpiToGraph(Step):
+class ExtractGraphFromDexpiFile(Step):
     """
     This step converts DEXPI P&ID (XML) into Knowledge Graph
     """
@@ -123,7 +123,7 @@ class DexpiToGraph(Step):
         return FlowMessage(output_text="Instances loaded to source graph")
 
 
-class GraphCapturingSheetToGraph(Step):
+class ExtractGraphFromGraphCapturingSheet(Step):
     """
     This step extracts nodes and edges from graph capture spreadsheet and load them into graph
     """
@@ -179,7 +179,7 @@ class GraphCapturingSheetToGraph(Step):
         return FlowMessage(output_text="Graph capture sheet processed")
 
 
-class GenerateMockGraph(Step):
+class ExtractGraphFromMockGraph(Step):
     """
     This step generate mock graph based on the defined classes and target number of instances
     """
@@ -229,35 +229,44 @@ class GenerateMockGraph(Step):
         return FlowMessage(output_text=f"Mock graph generated containing total of {len(triples)} triples")
 
 
-class InstancesFromRulesToSolutionGraph(Step):
+class ExtractGraphFromRulesInstanceSheet(Step):
     """
-    This step extracts instances from rules file and loads them into solution graph
+    This step extracts instances from Rules object and loads them into the graph
     """
 
-    description = "This step extracts instances from rules file and loads them into solution graph."
+    description = "This step extracts instances from Rules object and loads them into the graph."
     category = CATEGORY
     version = "0.1.0-alpha"
 
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="graph_name", value="solution", label="The name of target graph.", options=["source", "solution"]
+        ),
+    ]
+
     def run(  # type: ignore[override, syntax]
-        self, transformation_rules: RulesData, solution_graph: SolutionGraph
+        self, transformation_rules: RulesData, graph_store: SolutionGraph | SourceGraph
     ) -> FlowMessage:
         triples = get_instances_as_triples(transformation_rules.rules)
         instance_ids = {triple[0] for triple in triples}
         output_text = f"Extracted {len(instance_ids)} instances out of"
-
-        try:
-            for triple in triples:
-                solution_graph.graph.graph.add(triple)  # type: ignore[arg-type]
-        except Exception as e:
-            logging.error("Not able to load instances to source graph")
-            raise e
-
         output_text += f"Loaded {len(triples)} statements defining"
         output_text += f" {len(instance_ids)} instances"
+
+        if self.configs["graph_name"] == "solution":
+            graph_store = cast(SolutionGraph, self.flow_context["SolutionGraph"])
+        else:
+            graph_store = cast(SourceGraph, self.flow_context["SourceGraph"])
+
+        try:
+            graph_store.graph.add_triples(triples, verbose=True)  # type: ignore[arg-type]
+        except Exception as e:
+            return FlowMessage(error_text=f"Error: {e}", step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
+
         return FlowMessage(output_text=output_text)
 
 
-class DataModelFromRulesToSourceGraph(Step):
+class ExtractGraphFromRulesDataModel(Step):
     """
     This step extracts data model from rules file and loads it into source graph
     """
@@ -302,7 +311,7 @@ class DataModelFromRulesToSourceGraph(Step):
         return FlowMessage(output_text=output_text)
 
 
-class InstancesFromJsonToGraph(Step):
+class ExtractGraphFromJsonFile(Step):
     """
     This step extracts instances from json file and loads them into a graph store. Warning : the step is experimental
     """
@@ -486,7 +495,7 @@ class InstancesFromJsonToGraph(Step):
         )
 
 
-class InstancesFromAvevaPiAF(Step):
+class ExtractGraphFromAvevaPiAssetFramework(Step):
     """
     This step extracts instances from Aveva PI AF and loads them into a graph store. Warning : the step is experimental
     """
@@ -629,5 +638,5 @@ class InstancesFromAvevaPiAF(Step):
     def convert_attribute(self, attribute):
         if "{" not in attribute:
             return attribute
-        attr_splited = attribute.split("{")[-1].split("}")
-        return attr_splited[0] + "/" + attr_splited[1]
+        attr_splitted = attribute.split("{")[-1].split("}")
+        return attr_splitted[0] + "/" + attr_splitted[1]

@@ -3,7 +3,6 @@ In more details, it traverses the graph and abstracts class and properties, basi
 generating a list of rules based on which nodes that form the graph are made.
 """
 
-
 import warnings
 from datetime import datetime
 from typing import cast
@@ -113,7 +112,7 @@ def _parse_classes_df(data_model: dict, prefixes: dict, parsing_config: dict | N
                 sanitized_class,
                 None,
                 None,
-                str(prefixes[data_model[class_]["uri"].split(":")[0]]),
+                str(prefixes[data_model[class_]["uri"].split(":")[0]]) + class_,
                 class_,
                 "exact",
                 "Parsed from RDF graph",
@@ -144,7 +143,7 @@ def _parse_properties_df(data_model: dict, prefixes: dict, parsing_config: dict 
                         max(data_model[class_]["properties"][property_]["occurrence"]),
                         "rdfpath",
                         f'{data_model[class_]["uri"]}({data_model[class_]["properties"][property_]["uri"]})',
-                        str(prefixes[data_model[class_]["properties"][property_]["uri"].split(":")[0]]),
+                        str(prefixes[data_model[class_]["properties"][property_]["uri"].split(":")[0]]) + property_,
                         property_,
                         "exact",
                         "Parsed from RDF graph",

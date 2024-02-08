@@ -19,15 +19,15 @@ from cognite.neat.workflows.steps.data_contracts import CogniteClient, DMSSchema
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
 __all__ = [
-    "GenerateDMSSchemaComponentsFromRules",
     "ExportDMSSchemaComponentsToYAML",
     "ExportDMSSchemaComponentsToCDF",
+    "ExportRulesToGraphQLSchema",
+    "ExportRulesToOntology",
+    "ExportRulesToSHACL",
+    "ExportRulesToGraphCapturingSheet",
+    "ExportRulesToExcel",
+    "GenerateDMSSchemaComponentsFromRules",
     "DeleteDMSSchemaComponents",
-    "GraphQLSchemaFromRules",
-    "OntologyFromRules",
-    "SHACLFromRules",
-    "GraphCaptureSpreadsheetFromRules",
-    "ExcelFromRules",
 ]
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
@@ -182,12 +182,6 @@ class ExportDMSSchemaComponentsToCDF(Step):
                 step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
             )
 
-        # report
-        report_file = "dms_component_creation_report.txt"
-        report_dir = self.data_store_path / Path("staging")
-        report_dir.mkdir(parents=True, exist_ok=True)
-        report_full_path = report_dir / report_file
-
         logs, errors = data_model.components.to_cdf(
             cdf_client,
             components_to_create=components_to_create,
@@ -207,13 +201,11 @@ class ExportDMSSchemaComponentsToCDF(Step):
                 report += f"## {component.upper()}\n" + "\n".join(log) + "\n\n"
 
         # report
-        report_file = "dms_component_removal_report.txt"
+        report_file = "dms_component_creation_report.txt"
         report_dir = self.data_store_path / Path("staging")
         report_dir.mkdir(parents=True, exist_ok=True)
         report_full_path = report_dir / report_file
-
-        with report_full_path.open(mode="w") as file:
-            file.write(report)
+        report_full_path.write_text(report)
 
         output_text = (
             "<p></p>"
@@ -287,9 +279,7 @@ class DeleteDMSSchemaComponents(Step):
         report_dir = self.data_store_path / Path("staging")
         report_dir.mkdir(parents=True, exist_ok=True)
         report_full_path = report_dir / report_file
-
-        with report_full_path.open(mode="w") as file:
-            file.write(report)
+        report_full_path.write_text(report)
 
         output_text = (
             "<p></p>"
@@ -304,7 +294,7 @@ class DeleteDMSSchemaComponents(Step):
             return FlowMessage(output_text=output_text)
 
 
-class GraphQLSchemaFromRules(Step):
+class ExportRulesToGraphQLSchema(Step):
     """
     This step generates GraphQL schema from data model defined in transformation rules
     """
@@ -353,86 +343,70 @@ class GraphQLSchemaFromRules(Step):
         return FlowMessage(output_text=output_text)
 
 
-class OntologyFromRules(Step):
+class ExportRulesToOntology(Step):
     """
-    This step generates OWL ontology from data model defined in transformation rules
+    This step exports Rules to OWL ontology
     """
 
-    description = "This step generates OWL ontology from data model defined in transformation rules."
+    description = "This step exports Rules to OWL ontology"
     category = CATEGORY
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
-            name="file_name",
-            value="",
+            name="ontology_file_path",
+            value="staging/ontology.ttl",
             label=(
-                "Name of the OWL ontology file it must have .ttl extension,"
-                " if empty defaults to form `prefix-version-ontology.ttl`"
+                "Relative path for the ontology file storage, "
+                "must end with .ttl ! Will be auto-created if not provided !"
             ),
-        ),
-        Configurable(name="storage_dir", value="staging", label="Directory to store the OWL ontology file"),
-        Configurable(
-            name="store_warnings",
-            value="True",
-            label="To store warnings while generating ontology",
-            options=["True", "False"],
-        ),
+        )
     ]
 
-    def run(self, transformation_rules: RulesData) -> FlowMessage:  # type: ignore[override, syntax]
+    def run(self, rules: RulesData) -> FlowMessage:  # type: ignore[override, syntax]
         if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
+
         # ontology file
-        default_name = (
-            f"{transformation_rules.rules.metadata.prefix}-"
-            f"v{transformation_rules.rules.metadata.version.strip().replace('.', '_')}"
+        default_path = self.data_store_path / Path(
+            f"{rules.rules.metadata.prefix}-"
+            f"v{rules.rules.metadata.version.strip().replace('.', '_')}"
             "-ontology.ttl"
         )
 
-        ontology_file = self.configs["file_name"] or default_name
-
-        storage_dir_str = self.configs["storage_dir"]
-        storage_dir = self.data_store_path / storage_dir_str
-        storage_dir.mkdir(parents=True, exist_ok=True)
-
-        store_warnings = self.configs["store_warnings"].lower() == "true"
+        if not self.configs["ontology_file_path"]:
+            storage_path = default_path
+        else:
+            storage_path = self.data_store_path / Path(self.configs["ontology_file_path"])
+        report_file_path = storage_path.parent / f"report_{storage_path.stem}.txt"
 
         with warnings.catch_warnings(record=True) as validation_warnings:
-            ontology = Ontology.from_rules(transformation_rules=transformation_rules.rules)
+            ontology = Ontology.from_rules(rules=rules.rules)
 
-        with (storage_dir / ontology_file).open(mode="w") as onto_file:
-            onto_file.write(ontology.ontology)
+        storage_path.write_text(ontology.ontology)
+        report_file_path.write_text(generate_exception_report(wrangle_warnings(validation_warnings), "Warnings"))
 
-        if store_warnings and validation_warnings:
-            with (storage_dir / "report.txt").open(mode="w") as report_file:
-                report_file.write(generate_exception_report(wrangle_warnings(validation_warnings), "Warnings"))
+        relative_ontology_file_path = str(storage_path).split("/data/")[1]
+        relative_report_file_path = str(report_file_path).split("/data/")[1]
 
         output_text = (
             "<p></p>"
-            "Ontology generated and can be downloaded here : "
-            f'<a href="/data/{storage_dir_str}/{ontology_file}?{time.time()}" '
-            f'target="_blank">{ontology_file}</a>'
-        )
-
-        output_text += (
-            (
-                "<p></p>"
-                " Download conversion report "
-                f'<a href="/data/{storage_dir_str}/report.txt?{time.time()}" '
-                f'target="_blank">here</a>'
-            )
-            if validation_warnings
-            else ""
+            "Rules exported to ontology can be downloaded here : "
+            f'<a href="/data/{relative_ontology_file_path}?{time.time()}" '
+            f'target="_blank">{storage_path.stem}.xlsx</a>'
+            "<p></p>"
+            "Report can be downloaded here : "
+            f'<a href="/data/{relative_report_file_path}?{time.time()}" '
+            f'target="_blank">{report_file_path.stem}.txt</a>'
         )
 
         return FlowMessage(output_text=output_text)
 
 
-class SHACLFromRules(Step):
+class ExportRulesToSHACL(Step):
     """
-    This step generates SHACL from data model defined in transformation rules
+    This step exports Rules to SHACL
     """
 
-    description = "This step generates SHACL from data model defined in transformation rules"
+    description = "This step exports Rules to SHACL"
     category = CATEGORY
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
@@ -462,7 +436,7 @@ class SHACLFromRules(Step):
         storage_dir = self.data_store_path / storage_dir_str
         storage_dir.mkdir(parents=True, exist_ok=True)
 
-        constraints = Ontology.from_rules(transformation_rules=transformation_rules.rules).constraints
+        constraints = Ontology.from_rules(rules=transformation_rules.rules).constraints
 
         with (storage_dir / shacl_file).open(mode="w") as onto_file:
             onto_file.write(constraints)
@@ -476,12 +450,12 @@ class SHACLFromRules(Step):
         return FlowMessage(output_text=output_text)
 
 
-class GraphCaptureSpreadsheetFromRules(Step):
+class ExportRulesToGraphCapturingSheet(Step):
     """
-    This step generates data capture spreadsheet from data model defined in rules
+    This step generates graph capturing sheet
     """
 
-    description = "This step generates data capture spreadsheet from data model defined in rules"
+    description = "This step generates graph capturing sheet"
     category = CATEGORY
     configurables: ClassVar[list[Configurable]] = [
         Configurable(name="file_name", value="graph_capture_sheet.xlsx", label="File name of the data capture sheet"),
@@ -513,8 +487,8 @@ class GraphCaptureSpreadsheetFromRules(Step):
         return FlowMessage(output_text=output_text)
 
 
-class ExcelFromRules(Step):
-    description = "This step generates Excel file from rules"
+class ExportRulesToExcel(Step):
+    description = "This step export Rules to Excel representation"
     category = CATEGORY
     version = "0.1.0-alpha"
     configurables: ClassVar[list[Configurable]] = [

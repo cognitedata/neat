@@ -23,10 +23,16 @@ from cognite.neat.workflows.steps.step_model import Configurable, Step
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
 
-__all__ = ["ExcelToRules", "OpenApiToRules", "ArbitraryJsonYamlToRules", "GraphToRules", "OntologyToRules"]
+__all__ = [
+    "ImportExcelToRules",
+    "ImportOpenApiToRules",
+    "ImportArbitraryJsonYamlToRules",
+    "ImportGraphToRules",
+    "ImportOntologyToRules",
+]
 
 
-class ExcelToRules(Step):
+class ImportExcelToRules(Step):
     """
     This step import rules from the Excel file
     """
@@ -88,11 +94,10 @@ class ExcelToRules(Step):
             store.load_rules_file_from_cdf(str(rules_file), version)
 
         raw_rules = importer.ExcelImporter(rules_file_path).to_raw_rules()
-        rules, errors, warnings_ = raw_rules.to_rules(return_report=True, skip_validation=False)
+        rules, errors, _ = raw_rules.to_rules(return_report=True, skip_validation=False)
         report = "# RULES VALIDATION REPORT\n\n" + generate_exception_report(errors, "Errors")
 
-        with report_full_path.open(mode="w") as file:
-            file.write(report)
+        report_full_path.write_text(report)
 
         text_for_report = (
             "<p></p>"
@@ -123,7 +128,7 @@ class ExcelToRules(Step):
         return FlowMessage(output_text=output_text), RulesData(rules=rules)
 
 
-class OntologyToRules(Step):
+class ImportOntologyToRules(Step):
     """The step extracts schema from OpenApi/Swagger specification and generates NEAT transformation rules object."""
 
     description = "The step extracts NEAT rules object from OWL Ontology and \
@@ -168,7 +173,7 @@ class OntologyToRules(Step):
 
         output_text = (
             "<p></p>"
-            "Rules generated from OWL Ontology can be downloaded here : "
+            "Rules imported from OWL Ontology can be downloaded here : "
             f'<a href="/data/{relative_excel_file_path}?{time.time()}" '
             f'target="_blank">{excel_file_path.stem}.xlsx</a>'
             "<p></p>"
@@ -180,7 +185,7 @@ class OntologyToRules(Step):
         return FlowMessage(output_text=output_text)
 
 
-class OpenApiToRules(Step):
+class ImportOpenApiToRules(Step):
     """The step extracts schema from OpenApi/Swagger specification and generates NEAT transformation rules object."""
 
     description = "The step extracts schema from OpenAPI specification and generates NEAT transformation rules object. \
@@ -204,7 +209,7 @@ class OpenApiToRules(Step):
     def run(self) -> (FlowMessage, RulesData):  # type: ignore[override, syntax]
         openapi_file_path = self.data_store_path / Path(self.configs["openapi_spec_file_path"])
         self.processed_classes_counter = 0
-        self.processed_properies_counter = 0
+        self.processed_properties_counter = 0
         self.failed_classes_counter = 0
         self.failed_properties_counter = 0
         self.failed_classes: dict[str, str] = {}
@@ -212,12 +217,13 @@ class OpenApiToRules(Step):
         self.is_fdm_compatibility_mode = self.configs["fdm_compatibility_mode"] == "True"
         rules = self.open_api_to_rules(openapi_file_path)
         report = f" Generated Rules and source data model from OpenApi specs   \
-        <p> Processed {self.processed_classes_counter} classes and {self.processed_properies_counter} properties. </p> \
+        <p> Processed {self.processed_classes_counter} classes \
+        and {self.processed_properties_counter} properties. </p> \
         <p> Failed to process {self.failed_classes_counter} classes and \
         {self.failed_properties_counter} properties. </p>"
         report_obj = {
             "processed_classes_counter": self.processed_classes_counter,
-            "processed_properies_counter": self.processed_properies_counter,
+            "processed_properies_counter": self.processed_properties_counter,
             "failed_classes": self.failed_classes,
             "failed_properties": self.failed_properties,
         }
@@ -311,9 +317,9 @@ class OpenApiToRules(Step):
                         prop = Property(
                             class_id=class_id,
                             property_id=get_dms_compatible_name(prop_id) if self.is_fdm_compatibility_mode else prop_id,
-                            property_name=get_dms_compatible_name(prop_name)
-                            if self.is_fdm_compatibility_mode
-                            else prop_name,
+                            property_name=(
+                                get_dms_compatible_name(prop_name) if self.is_fdm_compatibility_mode else prop_name
+                            ),
                             property_type="ObjectProperty",
                             description=prop_info.get("description", prop_info.get("title", "empty")),
                             expected_value_type=ValueType(prefix="neat", suffix=expected_value_type),
@@ -323,7 +329,7 @@ class OpenApiToRules(Step):
                             rule=f"neat:{class_name}(neat:{prop_name})",
                             label="linked to",
                         )
-                        self.processed_properies_counter += 1
+                        self.processed_properties_counter += 1
                         rules_properties[class_id + prop_id] = prop
                     except Exception as e:
                         logging.error(f" OpenAPi parser : Error creating property {prop_id}: {e}")
@@ -366,7 +372,7 @@ class OpenApiToRules(Step):
         return datatype
 
 
-class ArbitraryJsonYamlToRules(Step):
+class ImportArbitraryJsonYamlToRules(Step):
     """The step extracts schema from arbitrary json or yaml file and generates NEAT transformation rules object."""
 
     description = "The step extracts schema from arbitrary json file and generates NEAT transformation rules object."
@@ -552,7 +558,7 @@ def create_fdm_compatibility_class_name(input_string: str):
         return input_string
 
 
-class GraphToRules(Step):
+class ImportGraphToRules(Step):
     """The step extracts data model from RDF graph and generates NEAT transformation rules object."""
 
     description = "The step extracts data model from RDF graph and generates NEAT transformation rules object. \
@@ -561,9 +567,8 @@ class GraphToRules(Step):
     version = "0.1.0-alpha"
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
-            name="file_name", value="inferred_transformations.xlsx", label="File name to store transformation rules."
+            name="excel_file_path", value="staging/rules.xlsx", label="Relative path for the Excel rules storage."
         ),
-        Configurable(name="storage_dir", value="staging", label="Directory to store Transformation Rules spreadsheet"),
         Configurable(
             name="max_number_of_instances",
             value="-1",
@@ -572,28 +577,36 @@ class GraphToRules(Step):
     ]
 
     def run(self, graph_store: SourceGraph | SolutionGraph) -> FlowMessage:  # type: ignore[override, syntax]
-        file_name = self.configs["file_name"]
-        staging_dir_str = self.configs["storage_dir"]
-        staging_dir = self.data_store_path / Path(staging_dir_str)
-        staging_dir.mkdir(parents=True, exist_ok=True)
+        excel_file_path = self.data_store_path / Path(self.configs["excel_file_path"])
+        report_file_path = excel_file_path.parent / f"report_{excel_file_path.stem}.txt"
 
-        spreadsheet_path = staging_dir / file_name
+        try:
+            rules = importer.GraphImporter(
+                graph_store.graph.graph, int(self.configs["max_number_of_instances"])
+            ).to_rules()
+        except Exception:
+            rules = importer.GraphImporter(
+                graph_store.graph.graph, int(self.configs["max_number_of_instances"])
+            ).to_rules(skip_validation=True)
 
-        raw_rules = importer.GraphImporter(
-            graph_store.graph.graph, int(self.configs["max_number_of_instances"])
-        ).to_raw_rules()
-        exporter.ExcelExporter.from_rules(raw_rules).export_to_file(spreadsheet_path)
+        assert isinstance(rules, Rules)
+        exporter.ExcelExporter.from_rules(rules).export_to_file(excel_file_path)
+
+        if report := importer.ExcelImporter(filepath=excel_file_path).to_raw_rules().validate_rules():
+            report_file_path.write_text(report)
+
+        relative_excel_file_path = str(excel_file_path).split("/data/")[1]
+        relative_report_file_path = str(report_file_path).split("/data/")[1]
 
         output_text = (
             "<p></p>"
-            "Rules imported using GraphImporter and can be downloaded as the Excel file:"
-            f'<a href="/data/{staging_dir_str}/{file_name}?{time.time()}" '
-            f'target="_blank">{file_name}</a>'
+            "Rules imported from Graph can be downloaded here : "
+            f'<a href="/data/{relative_excel_file_path}?{time.time()}" '
+            f'target="_blank">{excel_file_path.stem}.xlsx</a>'
             "<p></p>"
-            "Rules validation report can be downloaded as TXT file: "
-            f'<a href="/data/{staging_dir_str}/{spreadsheet_path.stem}'
-            f'_validation_report.txt?{time.time()}" '
-            f'target="_blank">{spreadsheet_path.stem}_validation_report.txt</a>'
+            "Report can be downloaded here : "
+            f'<a href="/data/{relative_report_file_path}?{time.time()}" '
+            f'target="_blank">{report_file_path.stem}.txt</a>'
         )
 
         return FlowMessage(output_text=output_text)
