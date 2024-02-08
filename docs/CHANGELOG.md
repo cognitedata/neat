@@ -16,6 +16,17 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.62.0] - 08-02-24
+
+## Added
+- Added `export_rules_to_ontology` workflow
+- `LoadGraphToRdfFile` step to load graph to rdf file
+
+## Fixed
+- Issue of resetting graph for `MemoryStore` when loading graph from file
+- Issue of not respecting add_base_prefix == False
+
+
 ## [0.61.0] - 06-02-24
 
 ## Added

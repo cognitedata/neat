@@ -167,9 +167,11 @@ class NeatGraphStoreBase(ABC):
             add_base_iri : Add base IRI to graph, by default True
         """
         if add_base_iri:
-            self.graph = rdf_file_to_graph(graph_file, base_namespace=self.namespace, prefixes=self.prefixes)
+            self.graph = rdf_file_to_graph(
+                self.graph, graph_file, base_namespace=self.namespace, prefixes=self.prefixes
+            )
         else:
-            self.graph = rdf_file_to_graph(graph_file, prefixes=self.prefixes)
+            self.graph = rdf_file_to_graph(self.graph, graph_file, prefixes=self.prefixes)
         return None
 
     def get_graph(self) -> Graph:
@@ -189,6 +191,10 @@ class NeatGraphStoreBase(ABC):
         prom_qsm.labels("query").observe(elapsed_time)
         prom_sq.labels("query").set(elapsed_time)
         return result
+
+    def serialize(self, *args, **kwargs):
+        """Serializes the graph."""
+        return self.graph.serialize(*args, **kwargs)
 
     def query_delayed(self, query) -> Iterable[Triple]:
         """Returns the result of the query, but does not execute it immediately.
