@@ -2,7 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from cognite.neat.app.api.explorer import app
-from tests.app.api.memory_cognite_client import memory_cognite_client
+from tests.memory_cognite_client import memory_cognite_client
 
 
 @pytest.fixture(scope="session")

@@ -1,13 +1,23 @@
+import random
 from typing import Any
 
 import pytest
+from cognite.client import CogniteClient
+from cognite.client.data_classes import Asset
 from rdflib import Graph
 
 from cognite.neat.graph.loaders import AssetLoader
-from cognite.neat.graph.loaders.core.rdf_to_assets import rdf2assets
+from cognite.neat.graph.loaders.core.rdf_to_assets import categorize_assets, rdf2assets
 from cognite.neat.graph.loaders.core.rdf_to_relationships import rdf2relationships
 from cognite.neat.graph.stores import MemoryStore
 from cognite.neat.rules.models import Rules
+from tests.memory_cognite_client import memory_cognite_client
+
+
+@pytest.fixture(scope="session")
+def cognite_client():
+    with memory_cognite_client() as client:
+        yield client
 
 
 class TestAssetLoader:
@@ -66,3 +76,30 @@ class TestAssetLoader:
         assert not missing, f"Missing {missing}"
         extra = set(actual_dumped.keys()) - set(expected_relationships.keys())
         assert not extra, f"Extra {extra}"
+
+    def test_categorize_assets(
+        self, cognite_client: CogniteClient, transformation_rules: Rules, solution_knowledge_graph: Graph
+    ) -> None:
+        random.seed(42)
+        store = MemoryStore(solution_knowledge_graph)
+        assets = rdf2assets(store, transformation_rules, data_set_id=123456, stop_on_exception=False)
+        total_assets = len(assets)
+        to_modify = random.sample(list(assets.values()), int(total_assets * 0.1))
+        to_update = random.sample(to_modify, int(total_assets * 0.05))
+        to_update_ids = {asset["external_id"] for asset in to_update}
+        to_delete = [asset for asset in to_modify if asset["external_id"] not in to_update_ids]
+        to_delete_ids = {asset["external_id"] for asset in to_delete}
+        for asset in to_modify:
+            asset_object = Asset(**asset)
+            # Need to be added.
+            cognite_client.assets.store[asset_object.external_id] = asset_object
+
+        for asset in to_update:
+            asset["description"] = "Updated description"
+        assets = {external_id: asset for external_id, asset in assets.items() if external_id not in to_delete_ids}
+
+        categorized, report = categorize_assets(cognite_client, assets, data_set_id=123456, return_report=True)
+
+        assert len(categorized["create"]) == total_assets - len(to_modify)
+        assert len(categorized["update"]) == len(to_update)
+        assert len(categorized["decommission"]) == len(to_delete)
