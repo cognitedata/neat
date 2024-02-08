@@ -1,6 +1,7 @@
 import logging
 import time
 from datetime import datetime
+from pathlib import Path
 from typing import Any, ClassVar, cast
 
 from cognite.client import CogniteClient
@@ -47,6 +48,7 @@ __all__ = [
     "LoadRelationshipsToCDF",
     "LoadNodesToCDF",
     "LoadEdgesToCDF",
+    "LoadGraphToRdfFile",
 ]
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
@@ -146,6 +148,57 @@ class GenerateNodesAndEdgesFromGraph(Step):
                 return FlowMessage(error_text=msg, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
 
         return FlowMessage(output_text=msg), Nodes(nodes=nodes), Edges(edges=edges)
+
+
+class LoadGraphToRdfFile(Step):
+    """
+    The step generates loads graph to RDF file
+    """
+
+    description = "The step generates nodes and edges from the graph"
+    category = CATEGORY
+
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="graph_name",
+            value="source",
+            options=["source", "solution"],
+            label=("The name of the graph to be used for loading RDF File." " Supported options : source, solution"),
+        ),
+        Configurable(
+            name="rdf_file_path",
+            value="staging/graph_export.ttl",
+            label=("Relative path for the RDF file storage, " "must end with .ttl !"),
+        ),
+    ]
+
+    def run(  # type: ignore[override, syntax]
+        self, graph: SourceGraph | SolutionGraph
+    ) -> FlowMessage:  # type: ignore[syntax]
+        if self.configs is None or self.data_store_path is None:
+            raise StepNotInitialized(type(self).__name__)
+
+        storage_path = self.data_store_path / Path(self.configs["rdf_file_path"])
+        relative_graph_file_path = str(storage_path).split("/data/")[1]
+
+        graph_name = self.configs["graph_name"] or "source"
+
+        if graph_name == "solution":
+            # Todo Anders: Why is the graph fetched from context when it is passed as an argument?
+            graph = cast(SourceGraph | SolutionGraph, self.flow_context["SolutionGraph"])
+        else:
+            graph = cast(SourceGraph | SolutionGraph, self.flow_context["SourceGraph"])
+
+        graph.graph.serialize(str(storage_path), format="turtle")
+
+        output_text = (
+            "<p></p>"
+            "Graph loaded to RDF file can be downloaded here : "
+            f'<a href="/data/{relative_graph_file_path}?{time.time()}" '
+            f'target="_blank">{storage_path.stem}.ttl</a>'
+        )
+
+        return FlowMessage(output_text=output_text)
 
 
 class LoadNodesToCDF(Step):

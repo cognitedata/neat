@@ -385,17 +385,12 @@ class ExportRulesToOntology(Step):
         report_file_path.write_text(generate_exception_report(wrangle_warnings(validation_warnings), "Warnings"))
 
         relative_ontology_file_path = str(storage_path).split("/data/")[1]
-        relative_report_file_path = str(report_file_path).split("/data/")[1]
 
         output_text = (
             "<p></p>"
             "Rules exported to ontology can be downloaded here : "
             f'<a href="/data/{relative_ontology_file_path}?{time.time()}" '
-            f'target="_blank">{storage_path.stem}.xlsx</a>'
-            "<p></p>"
-            "Report can be downloaded here : "
-            f'<a href="/data/{relative_report_file_path}?{time.time()}" '
-            f'target="_blank">{report_file_path.stem}.txt</a>'
+            f'target="_blank">{storage_path.stem}.ttl</a>'
         )
 
         return FlowMessage(output_text=output_text)
@@ -410,43 +405,45 @@ class ExportRulesToSHACL(Step):
     category = CATEGORY
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
-            name="file_name",
-            value="",
+            name="shacl_file_path",
+            value="staging/shacl.ttl",
             label=(
-                "Name of the SHACL file it must have .ttl extension, if "
-                "empty defaults to form `prefix-version-shacl.ttl`"
+                "Relative path for the SHACL file storage, "
+                "must end with .ttl ! Will be auto-created if not provided !"
             ),
-        ),
-        Configurable(name="storage_dir", value="staging", label="Directory to store the SHACL file"),
+        )
     ]
 
-    def run(self, transformation_rules: RulesData) -> FlowMessage:  # type: ignore[override, syntax]
+    def run(self, rules: RulesData) -> FlowMessage:  # type: ignore[override, syntax]
         if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
+
         # ontology file
-        default_name = (
-            f"{transformation_rules.rules.metadata.prefix}-"
-            f"v{transformation_rules.rules.metadata.version.strip().replace('.', '_')}"
-            "-shacl.ttl"
+        default_path = self.data_store_path / Path(
+            f"{rules.rules.metadata.prefix}-" f"v{rules.rules.metadata.version.strip().replace('.', '_')}" "-shacl.ttl"
         )
 
-        shacl_file = self.configs["file_name"] or default_name
+        if not self.configs["shacl_file_path"]:
+            storage_path = default_path
+        else:
+            storage_path = self.data_store_path / Path(self.configs["shacl_file_path"])
+        report_file_path = storage_path.parent / f"report_{storage_path.stem}.txt"
 
-        storage_dir_str = self.configs["storage_dir"]
-        storage_dir = self.data_store_path / storage_dir_str
-        storage_dir.mkdir(parents=True, exist_ok=True)
+        with warnings.catch_warnings(record=True) as validation_warnings:
+            ontology = Ontology.from_rules(rules=rules.rules)
 
-        constraints = Ontology.from_rules(rules=transformation_rules.rules).constraints
+        storage_path.write_text(ontology.constraints)
+        report_file_path.write_text(generate_exception_report(wrangle_warnings(validation_warnings), "Warnings"))
 
-        with (storage_dir / shacl_file).open(mode="w") as onto_file:
-            onto_file.write(constraints)
+        relative_shacl_file_path = str(storage_path).split("/data/")[1]
 
         output_text = (
             "<p></p>"
-            "SHACL generated and can be downloaded here : "
-            f'<a href="/data/{storage_dir_str}/{shacl_file}?{time.time()}" '
-            f'target="_blank">{shacl_file}</a>'
+            "Rules exported to ontology can be downloaded here : "
+            f'<a href="/data/{relative_shacl_file_path}?{time.time()}" '
+            f'target="_blank">{storage_path.stem}.ttl</a>'
         )
+
         return FlowMessage(output_text=output_text)
 
 
