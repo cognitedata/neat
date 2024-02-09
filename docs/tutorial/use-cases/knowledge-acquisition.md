@@ -41,23 +41,30 @@ For example, Jon might say that a wind turbine has a `name`, a `location`, `manu
 statements. In `neat`, we capture these statements in a spreadsheet format. We refer to a set of
 statements as `Properties`. The `Properties` sheet looks as follows for a domain expert like Jon:
 
-| Class       | Property             | Description | Value Type    | Min Count | Max Count |
-|-------------|--------------------- | ----------- |-------------- |-----------|-----------|
-| WindTurbine | name                 |             | string        | 1         | 1         |
-| WindTurbine | location             |             | string        | 1         | 1         |
-| WindTurbine | manufacturer         |             | string        | 1         | 1         |
-| WindTurbine | lifeExpectancy       |             | float         | 0         | 1         |
-| WindTurbine | ratedPower           |             | float         | 1         | 1         |
-| WindTurbine | hubHeight            |             | integer       | 1         | 1         |
-| WindTurbine | actualPower          |             | float         | 0         | 1         |
-| WindTurbine | arrayCableConnection |             | integer       | 1         | 1         |
+| Class       | Property           | Description     | Value Type  | Min Count  | Max Count  |
+|-------------|--------------------|-----------------|-------------|------------|------------|
+| WindTurbine | name               |                 | string      | 1          | 1          |
+| WindTurbine | location           |                 | string      | 0          | 1          |
+| WindTurbine | manufacturer       |                 | string      | 0          | 1          |
+| WindTurbine | lifeExpectancy     |                 | integer     | 1          | 1          |
+| WindTurbine | ratedPower         |                 | float       | 1          | 1          |
+| WindTurbine | hubHeight          |                 | float       | 1          | 1          |
+| WindTurbine | actualPower        |                 | timeseries  | 1          | 1          |
+| WindTurbine | arrayCableConnection |               | integer     | 1          | 1          |
+| WindFarm    | name               |                 | string      | 1          | 1          |
+| WindFarm    | location           |                 | string      | 0          | 1          |
+| WindFarm    | windTurbine        |                 | WindTurbine | 1          | Inf        |
+| Substation  | inputVoltage       |                 | timeseries  | 1          | 1          |
+| Substation  | outputVoltage      |                 | timeseries  | 1          | 1          |
+| ExportCable | voltageLevel       |                 | float       | 1          | 1          |
+| ExportCable | currentVoltage     |                 | timeseries  | 1          | 1          |
 
 In each row of the `Properties` sheet, Jon will define a statement. For example, the first row says that a
 `WindTurbine` has a `name`. In addition, Jon can add a `description`, i.e., a human-readable explanation of what a particular property means. The three next columns help the information architect, David, to understand how to model the data. First, we have the
 `Value Type` column, which specify what type of data this statement is about. Is this a number, an on/off value, text,
 or something else? In this case, the `name`, `location`, and `manufacturer` are all strings, meaning they are
 expected to be text. The `Min Count` and `Max Count` columns specify how many data points are expected for each of these properties. In the
-first row, we see that a `WindTurbine` is expected to have exactly one `name`. Sames goes for the `location` and `manufacturer`. However, for `lifeExpectancy`, we see that it is optional, as the `Min Count` is 0. Also, `lifeExpectancy` is a float, as it is expected to be a number.
+first row, we see that a `WindTurbine` is expected to have exactly one `name`. Sames goes for the `location` and `manufacturer`. However, for `lifeExpectancy`, we see that it is optional, as the `Min Count` is 0. Also, `lifeExpectancy` is an integer, as it is expected to be a whole number.
 
 
 In the similar fashion, Jon defines the properties for `WindFarm`, `Substation` and `ExportCable` in the `Properties` sheet.
@@ -115,65 +122,64 @@ Similarly to Jon, Emma will define a set of statements in a spreadsheet. As bein
 
 For example, she defines
 `Substation` has a `name`, a `location`, and a `voltage`. In addition, she might define that a `Substation` has
-a `transformer` and a `circuit breaker`, and she has also added a `WindGenerator` that has a name.
+a `transformer` and a `circuit breaker`, and she has also adds a `GeneratingUnit` that has a `name` and `activePower`.
 The `Properties` sheet for Emma might look as follows:
 
-| Class         | Property        | Description | Type           | Min Count | Max Count |
-|---------------|-----------------| ----------- |----------------|-----------|-----------|
-| Substation    | name            |             | string         | 1         | 1         |
-| Substation    | location        |             | string         | 0         | 1         |
-| Substation    | voltage         |             | timeseries     | 1         | 1         |
-| Substation    | transformer     |             | Transformer    | 1         | 1         |
-| Substation    | circuit breaker |             | CircuitBreaker | 1         | 1         |
-| WindGenerator | name            |             | name           | 1         | 1         |
+| Class         | Property                 | Description | Value Type           | Min Count | Max Count |
+|---------------|--------------------------| ----------- |----------------------|-----------|-----------|
+| GeneratingUnit| name                     |             | string               | 1         | 1         |
+| GeneratingUnit| type                     |             | string               | 1         | 1         |
+| GeneratingUnit| activePower              |             | float                | 1         | 1         |
+| Substation    | name                     |             | string               | 1         | 1         |
+| Substation    | location                 |             | string               | 0         | 1         |
+| Substation    | disconnectSwitch         |             | DisconnectSwitch     | 2         | 2         |
+| Substation    | circuitBreaker           |             | CircuitBreaker       | 2         | 2         |
+| Substation    | currentTransformer       |             | CurrentTransformer   | 2         | 2         |
+| Substation    | mainTransformer          |             | VoltageTransformer   | 1         | 1         |
+| Transmission  | name                     |             | string               | 1         | 1         |
+| Transmission  | location                 |             | string               | 0         | 1         |
+| Transmission  | voltage                  |             | number               | 1         | 1         |
+| Transmission  | substation               |             | Substation           | 1         | 1         |
+| Distribution  | name                     |             | string               | 1         | 1         |
+| Distribution  | location                 |             | string               | 0         | 1         |
+| Distribution  | voltage                  |             | number               | 1         | 1         |
+| Distribution  | substation               |             | Substation           | 1         | 1         |
+| Consumer      | name                     |             | string               | 1         | 1         |
+| Consumer      | location                 |             | string               | 0         | 1         |
+| Consumer      | load                     |             | number               | 1         | 1         |
+| Consumer      | type                     |             | string               | 1         | 1         |
 
 
-Furthermore, Emma might define the `Substation` class as follows:
 
-| Class          | Description                                       | Parent Class |
-|----------------|---------------------------------------------------|--------------|
-| Substation     | A part of an electrical grid                      |              |
-| Transformer    | A device that changes the voltage of electricity  | Substation   |
-| CircuitBreaker | A device that can stop the flow of electricity    | Substation   |
+
+
+As mentioned earlier, Emma also abstracts classes from `Properties` sheet and puts them in `Classes` sheet to have a better overview of her domain, de-cluttered from properties. To differentiate between `CurrentTransformer` and `VoltageTransformer` she also adds a `Parent Class` column to the `Classes` sheet, indicating that these two classes are indeed a specialization of `Transformer`. The `Classes` sheet for Emma might look as follows:
+
+
+| Class              | Description                                         | Parent Class       |
+|--------------------|-----------------------------------------------------|--------------------|
+| Substation         | A part of an electrical grid                        |                    |
+| Transformer        | A device that changes electrical voltage or current |                    |
+| CurrentTransformer | A device that changes electrical voltage or current | Transformer        |
+| VoltageTransformer | A device that changes electrical voltage or current | Transformer        |
+| CircuitBreaker     | A device that can stop the flow of electricity      |                    |
+| DisconnectSwitch   | A device that can stop the flow of electricity      |                    |
+| GeneratingUnit     | A device that generates electrical energy           |                    |
+| Transmission       | A part of an electrical grid                        |                    |
+| Distribution       | A part of an electrical grid                        |                    |
+| Consumer           | A part of an electrical grid                        |                    |
+
+
+Like in the case of Jon, Emma also fills in the `Metadata` sheet. For Emma the `Metadata` sheet looks as follows:
+|         |               |
+|---------|---------------|
+| role    | domain expert |
+| creator | Emma          |
+
 
 You can find the complete `Properties`, `classes`, and `metadata` sheets for Emma here.
 
 Finally, Emma will validate her sheet using the `neat` UI, just like Jon did.
-
-|         |               |
-|---------|---------------|
-| role    | domain expert |
-| creator | Jon           |
-
-
-
-In the `Properties` sheet, we introduce the concept of a `Class`. Classes are used to group properties that define a thing. For example, a `WindTurbine` is a class, and the set of properties for a class defines what it means to be a member of that class.
-
-For example, Jon might define the `WindTurbine` class as follows:
-
-| Class       | Description                                         | Parent Class |
-|-------------|-----------------------------------------------------|--------------|
-| WindTurbine | A device that converts wind to electrical energy    |              |
-| Nacelle     | The covering house of all the generating components | WindTurbine  |
-| Rotor       | The rotating part of the wind turbine               | WindTurbine  |
-
-In addition, to `Class` and `Description` columns, we have a `Parent Class` column. This column is used to define
-that a hierarchy of classes. For example, Jon has defined that a `Nacelle` and a `Rotor` are both types of a `WindTurbine`.
-This column is optional, and if a class does not have a parent class, we leave the cell empty.
-
-In the `Types` column in the `Properties` sheet, we can use basic types like `string`, `number`, `boolean`, `date`,
-`timeseries`, but in addition we cal also use classes. For example, after Jon has defined the `Nacelle` and `Rotor`
-classes, he can now go back to the `Properties` sheet and define that a `WindTurbine` has a `nacelle` and a `rotor`.
-
-| Class       | Property     | Description | Type       | Min Count | Max Count |
-|-------------|--------------| ----------- |------------|-----------|-----------|
-| WindTurbine | name         |             | string     | 1         | 1         |
-| WindTurbine | location     |             | string     | 0         | 1         |
-| WindTurbine | manufacturer |             | string     | 0         | 1         |
-| WindTurbine | nacelle      |             | Nacelle    | 1         | 1         |
-| WindTurbine | rotor        |             | Rotor      | 1         | 1         |
-
-Note that the above two statements defines the relationship between the `WindTurbine` class and the `Nacelle` and `Rotor`.
 
 
 ### Summary
@@ -193,49 +199,112 @@ Note that the above two statements defines the relationship between the `WindTur
 ### Creating the Shared Data Model
 
 Once Jon and Emma have defined their statements, David will combine the two sheets into a single sheet. This is
-done by simply copying the statements from Jon and Emma into a single sheet. For example, the `Properties` sheet
-for David might look as follows:
+done by copying the statements from Jon and Emma into a single sheet and making a tough decision on how to combine them to produce the enterprise data model. For example, if Jon and Emma have defined the same property in different ways, David will have to decide which definition to use. In certain situations additional classes and properties will have to be added to connect two domains. This is a trade-off, as he might have to prompt Jon and Emma for clarification, or he might have to make a decision based on his own knowledge.
 
-| Class         | Property         | Description | Type           | Min Count | Max Count |
-|---------------|------------------| ----------- |----------------|-----------|-----------|
-| WindTurbine   | name             |             | string         | 1         | 1         |
-| WindTurbine   | location         |             | string         | 0         | 1         |
-| WindTurbine   | manufacturer     |             | string         | 0         | 1         |
-| WindTurbine   | nacelle          |             | Nacelle        | 1         | 1         |
-| WindTurbine   | rotor            |             | Rotor          | 1         | 1         |
-| Substation    | name             |             | string         | 1         | 1         |
-| Substation    | location         |             | string         | 0         | 1         |
-| Substation    | voltage          |             | number         | 1         | 1         |
-| Substation    | transformer      |             | Transformer    | 1         | 1         |
-| Substation    | circuit breaker  |             | CircuitBreaker | 1         | 1         |
-| WindGenerator | name             |             | name           | 1         | 1         |
 
-In addition, David will also need to combine the `classes` sheets from Jon and Emma. This is done by simply
-copying the statements from Jon and Emma into a single sheet. For example, the `classes` sheet for David might
+Let start with `Classes` sheet and investigate outcome of merging Jon's and Emma's classes:
 
-| Class           | Description                                         | Parent Class |
-|-----------------|-----------------------------------------------------|--------------|
-| WindTurbine     | A device that converts wind to electrical energy    |              |
-| Nacelle         | The covering house of all the generating components | WindTurbine  |
-| Rotor           | The rotating part of the wind turbine               | WindTurbine  |
-| Substation      | A part of an electrical grid                        |              |
-| Transformer     | A device that changes the voltage of electricity    | Substation   |
-| CircuitBreaker  | A device that can stop the flow of electricity      | Substation   |
+| Class                  | Description | Parent Class   | Source                                               | Match   |
+|------------------------|-------------|----------------|------------------------------------------------------|---------|
+| GeneratingUnit         |             |                | http://www.iec.ch/TC57/CIM#GeneratingUnit            | exact   |
+| WindTurbine            |             | GeneratingUnit | http://purl.org/neat/WindTurbine                     | exact   |
+| EnergyArea             |             |                | http://www.iec.ch/TC57/CIM#EnergyArea                |         |
+| WindFarm               |             | EnergyArea     | http://purl.org/neat/WindFarm                        | partial |
+| Substation             |             |                |                                                      |         |
+| OffshoreSubstation     |             | Substation     |                                                      |         |
+| TransmissionSubstation |             | Substation     |                                                      |         |
+| DistributionSubstation |             | Substation     |                                                      |         |
+| PowerLine              |             |                |                                                      |         |
+| ArrayCable             |             | PowerLine      |                                                      |         |
+| ExportCable            |             | PowerLine      |                                                      |         |
+| Transmission           |             | PowerLine      |                                                      |         |
+| EnergyConsumer         |             |                | http://www.iec.ch/TC57/CIM#EnergyConsumer            |         |
+| Factory                |             | EnergyConsumer |                                                      |         |
+| GeoLocation            |             |                | http://www.w3.org/2003/01/geo/wgs84_pos#SpatialThing |         |
+| Point                  |             | GeoLocation    | https://purl.org/geojson/vocab#Point                 |         |
+| MultiLineString        |             | GeoLocation    | https://purl.org/geojson/vocab#MultiLineString       |         |
+| Polygon                |             | GeoLocation    | https://purl.org/geojson/vocab#Polygon               |         |
 
-In addition, David will need to create a `metadata` sheet for himself, where he sets the
-knowledge into context. He would have to add the following rows to the `metadata` sheet:
 
-|             |                       |
-|-------------|-----------------------|
-| role        | information architect |
-| prefix      | power                 |
-| namespace   | pwr                   |
-| version     | 1                     |
-| contributor | Jon, Emma, David      |
-| created     | 2021-01-01            |
-| updated     | 2021-01-01            |
+There are couple of things that David done. First of all, he use principle of subclassing to create a class specialization in order to satisfy both Jon's and Emma's definitions. For example, he created a `WindTurbine` class that is a subclass of `GeneratingUnit`. This is done by adding a `Parent Class` column to the `Classes` sheet. By doing this, he enable adding additional types of generating units in the future. In the same fashion, he also created a `WindFarm` class that is a subclass of `EnergyArea`, basically connecting the two domains and allowing for other types of energy areas to be defined in the future. We see the similar approach with `Substation`, `Transmission`, `EnergyConsumer`, and `Point`. on`. By sub-classing we enable the possibility to inherit properties from the parent class, avoiding the need to define the same properties for each subclass, which we will see in the `Properties` sheet.
 
-In the `metadata` sheet, David has added a `prefix` and a `namespace`.
+In addition, David also added a `Source` and `Match` columns to the `Classes` sheet. The `Source` column is used to specify where the statement comes from, or what standard that matches the statement. The `Match` column tells whether the source is partially or fully matching the statement. We see that David did a great work linking the enterprise data model to existing standards, such as the CIM standard for energy areas and energy consumers. This is a good practice, as it sets the knowledge into a broader context, allowing for easier integration with other systems and standards. In other words, David did not fall into a trap of reinventing the wheel, but rather leveraged existing standards to define the enterprise data model (what a smart guy!).
+
+
+Let's now move to the `Properties` sheet. David will also combined and uplifted the `Properties` sheets from Jon and Emma:
+| Class              | Property             | Description | Value Type         | Min Count | Max Count | Default | Source                                           |
+|--------------------|----------------------|-------------|--------------------|-----------|-----------|---------|--------------------------------------------------|
+| GeneratingUnit     | name                 |             | string             |         1 |         1 |         |                                                  |
+| GeneratingUnit     | type                 |             | string             |         1 |         1 |         |                                                  |
+| GeneratingUnit     | activePower          |             | timeseries         |         1 |         1 |         |                                                  |
+| GeneratingUnit     | geoLocation          |             | Point              |         1 |         1 |         | http://www.w3.org/2003/01/geo/wgs84_pos#location |
+| WindTurbine        | manufacturer         |             | string             |         0 |         1 |         |                                                  |
+| WindTurbine        | ratedPower           |             | float              |         1 |         1 |         |                                                  |
+| WindTurbine        | hubHeight            |             | float              |         1 |         1 |         |                                                  |
+| WindTurbine        | arrayCableConnection |             | ArrayCable         |         1 |         1 |         |                                                  |
+| WindTurbine        | lifeExpectancy       |             | integer            |         0 |         1 |         |                                                  |
+| PowerLine          | voltageLevel         |             | VoltageLevel       |         1 |         1 |         |                                                  |
+| PowerLine          | geoLocation          |             | MultiLineString    |         1 |         1 |         |                                                  |
+| PowerLine          | currentVoltage       |             | timeseries         |         1 |         1 |         |                                                  |
+| Substation         | name                 |             | string             |         1 |         1 |         |                                                  |
+| Substation         | location             |             | string             |         0 |         1 |         |                                                  |
+| Substation         | disconnectSwitch     |             | DisconnectSwitch   |         2 |         2 |         |                                                  |
+| Substation         | circuitBreaker       |             | CircuitBreaker     |         2 |         2 |         |                                                  |
+| Substation         | currentTransformer   |             | CurrentTransformer |         2 |         2 |         |                                                  |
+| Substation         | mainTransformer      |             | VoltageTransformer |         1 |         1 |         |                                                  |
+| Substation         | primaryPowerLine     |             | PowerLine          |         1 |         1 |         |                                                  |
+| Substation         | secondaryPowerLine   |             | PowerLine          |         1 |         1 |         |                                                  |
+| Substation         | primaryVoltage       |             | timeseries         |         1 |         1 |         |                                                  |
+| Substation         | secondaryVoltage     |             | timeseries         |         1 |         1 |         |                                                  |
+| OffshoreSubstation | primaryPowerLine     |             | ArrayCable         |         1 | inf       |         |                                                  |
+| OffshoreSubstation | secondaryPowerLine   |             | ExportCable        |         1 |         1 |         |                                                  |
+| EnergyArea         | name                 |             | string             |         1 |         1 |         |                                                  |
+| EnergyArea         | geoLocation          |             | Polygon            |         0 |         1 |         |                                                  |
+| EnergyArea         | ratedPower           |             | float              |         1 |         1 |         |                                                  |
+| EnergyArea         | activePower          |             | timeseries         |         1 |         1 |         |                                                  |
+| WindFarm           | windTurbine          |             | WindTurbine        |         1 | Inf       |         |                                                  |
+| WindFarm           | substation           |             | OffshoreSubstation |         1 |         1 |         |                                                  |
+| WindFarm           | arrayCable           |             | ArrayCable         |         1 | inf       |         |                                                  |
+| WindFarm           | exportCable          |             | ExportCable        |         1 |         1 |         |                                                  |
+| Factory            | name                 |             | string             |         1 |         1 |         |                                                  |
+| Factory            | location             |             | Point              |         1 |         1 |         |                                                  |
+| Factory            | load                 |             | timeseries         |         1 |         1 |         |                                                  |
+| Point              | latitude             |             | float              |         1 |         1 |         |                                                  |
+| Point              | longitude            |             | float              |         1 |         1 |         |                                                  |
+| MultiLineString    | point                |             | Point              |         2 |       inf |         |                                                  |
+| Polygon            | point                |             | Point              |         3 |       inf |         |                                                  |
+
+Here we see how inheritance and proper modeling of classes pays off. Instead of repeating properties from `GeneratingUnit` for `WindTurbine`, David only needs to define the properties specific only `WindTurbine`. This is because `WindTurbine` is a subclass of `GeneratingUnit`, and thus inherits all the properties from `GeneratingUnit`. This is a good practice, as it reduces the amount of work needed to define the enterprise data model. In addition, it also makes the enterprise data model more consistent, as the same properties are used for similar things. Let's now have a look at statements for `OffshoreSubstation`, in `Classes` sheet David stated that `OffshoreSubstation` is a subclass of `Substation`, and in `Properties` sheet he only needs specialized type of values two properties take in order to make this class a specific subclass of `Substation`. This is a good example of how inheritance can be used to reduce the amount of work needed to define the enterprise data model. Similar like in the case of `Classes` sheet David also added a `Source` and `Match` columns to link the enterprise data model to existing standards, in this case to definition of properties coming from different standards.
+
+
+In addition, David will needs to update a `metadata` sheet, he is adding :
+- `namespace` : to define a unique identifier for the enterprise data model globally
+- `prefix` : to define a short name that can be used to reference the namespace in various downstream systems
+- `create` : to define the date when the enterprise data model was created
+- `updated` : to define the date when the enterprise data model was last updated
+- `version` : to define the version of the enterprise data model
+- `title` : to define the title of the enterprise data model
+- `description` : to define the description, giving it a human-readable explanation of what the enterprise data model is about
+- `license` : to define the license of the enterprise data model, basically in what way it can be used
+- `rights` : to define the rights of the enterprise data model, basically who has the right to use it
+
+He is adding him self as a contributor, while presenting Jon and Emma as creators. The `metadata` sheet for David might look as follows:
+
+|             |                                        |
+|-------------|----------------------------------------|
+| role        | information architect                  |
+| creator     | David, Emma                            |
+| contributor | David                                  |
+| namespace   | http://purl.org/cognite/power2consumer |
+| prefix      | power                                  |
+| created     | 2024-01-22                             |
+| updated     | 2024-02-09                             |
+| version     | 0.1.0                                  |
+| title       | Power to Consumer Data Model           |
+| description | end2end power to consumer data model...|
+| license     | CC-BY 4.0                              |
+| rights      | Free for use                           |
+
 
 ### Iterating over the Sheet
 
