@@ -276,7 +276,6 @@ Let's now move to the `Properties` sheet. David will also combined and uplifted 
 
 Here we see how inheritance and proper modeling of classes pays off. Instead of repeating properties from `GeneratingUnit` for `WindTurbine`, David only needs to define the properties specific only `WindTurbine`. This is because `WindTurbine` is a subclass of `GeneratingUnit`, and thus inherits all the properties from `GeneratingUnit`. This is a good practice, as it reduces the amount of work needed to define the enterprise data model. In addition, it also makes the enterprise data model more consistent, as the same properties are used for similar things. Let's now have a look at statements for `OffshoreSubstation`, in `Classes` sheet David stated that `OffshoreSubstation` is a subclass of `Substation`, and in `Properties` sheet he only needs specialized type of values two properties take in order to make this class a specific subclass of `Substation`. This is a good example of how inheritance can be used to reduce the amount of work needed to define the enterprise data model. Similar like in the case of `Classes` sheet David also added a `Source` and `Match` columns to link the enterprise data model to existing standards, in this case to definition of properties coming from different standards.
 
-
 In addition, David will needs to update a `metadata` sheet, he is adding :
 - `namespace` : to define a unique identifier for the enterprise data model globally
 - `prefix` : to define a short name that can be used to reference the namespace in various downstream systems
@@ -304,6 +303,11 @@ He is adding him self as a contributor, while presenting Jon and Emma as creator
 | description | end2end power to consumer data model...|
 | license     | CC-BY 4.0                              |
 | rights      | Free for use                           |
+
+
+The enterprise data model is now ready to be validated in `neat`. David will validate his sheet using the `neat` UI, just like Jon and Emma did. However, since David has set his role as `information architect` in the `metadata` sheet, the validation from `neat` will be more strict. For example, while Jon and Emma can skip defining anything in the `class` sheet, David will have to ensure all classes are defined. Also, there is more demand when comes to `metadata`.
+
+Nevertheless, this hard work pays off since the enterprise data model can be now used to digitally represent the entire power to consumer domain in the form of rich knowledge graph empowering services from various domains.
 
 
 ### Iterating over the Sheet
