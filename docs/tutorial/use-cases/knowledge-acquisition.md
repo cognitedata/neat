@@ -1,22 +1,21 @@
-# Knowledge Acquisition / Building an Enterprise Data Model
+# Data Modeling Lifecycle through Expert Elicitation: Building an Enterprise Data Model
 
 !!! note annotate "Warning"
     This tutorial is a work in progress and is not yet complete.
 
-This tutorial covers how to use `neat` for knowledge acquisition and produce a shared data model in
-Cognite Data Fusion (CDF). The process of knowledge acquisition follows the so-called
-[Expert Elicitation](https://en.wikipedia.org/wiki/Expert_elicitation), and represents the recommended way of
-building enterprise data models.
+This tutorial demonstrates the usage of `neat` through out the entire data modeling lifecycle producing an Enterprise Data Model in Cognite Data Fusion (CDF).
+The data modeling lifecycle is based on the so-called [Expert Elicitation](https://en.wikipedia.org/wiki/Expert_elicitation), and represents the recommended way of building enterprise data models.
+
 
 ## Introduction
 
-Companies typically have multiple domain experts that cover different areas of the business. Typically, these
-areas are partially overlapping, both in concepts and data. Lots of the value in a product like CDF comes from
-taking data from different sources and making it easily accessible and understandable for all domain experts (i.e., making data to talk domain expert language), as
+Companies typically have multiple domain experts that working in different business units. Typically, these
+units are partially overlapping, both in concepts and data. Lots of the value in a product like CDF comes from
+taking data from different sources and making them easily accessible and understandable for all domain experts and all business units, as
 this unlocks the potential for cross-domain insights.
 
-Knowledge acquisition is the process of taking the knowledge from domain experts and turning it into a shared knowledge artifact such as a shared data model known as Enterprise Data Model (covering the entire suite of use-cases and domains and business units).
-`neat` has been designed to facilitate this process by providing a way to iterate on and developed an enterprise data model.
+The expert elicitation is the process of taking the knowledge from domain experts and turning it into a shared knowledge artifact such as an Enterprise Data Model (covering the entire suite of use-cases and domains and business units).
+`neat` has been designed to facilitate this process by providing a way to iterate on and developed this model.
 
 ## Use Case
 
@@ -73,6 +72,8 @@ For Jon the `Metadata` sheet looks as follows:
 | creator | Jon           |
 
 
+Optionally, domain experts can also define classes in the `classes` sheet. Classes are used to group properties that define a thing. For example, a `WindTurbine` is a class, and the set of properties for a class defines what it means to be a member of that class. However, as it is optional, Jon skips this sheet, and leaves it to the information architect, David, to define that for him.
+
 Download Jon's spreadsheet from [here](insert link).
 
 
@@ -110,7 +111,9 @@ and warnings.
 ## Grid Analysis Expert: Emma
 
 ### Gathering Knowledge
-Similarly to Jon, Emma will define a set of statements in a spreadsheet. For example, she might define that a
+Similarly to Jon, Emma will define a set of statements in a spreadsheet. As being more meticulous and keen to go one step further she will also fill in `Classes` sheet. Like in case of Jon, she starts with `Properties` sheet. She defines some similar statements as Jon, but also adds completely new ones. This is expected as there are overlaps between in our case the power production and power transmission domains.
+
+For example, she defines
 `Substation` has a `name`, a `location`, and a `voltage`. In addition, she might define that a `Substation` has
 a `transformer` and a `circuit breaker`, and she has also added a `WindGenerator` that has a name.
 The `Properties` sheet for Emma might look as follows:
