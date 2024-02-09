@@ -309,6 +309,11 @@ The enterprise data model is now ready to be validated in `neat`. David will val
 
 Nevertheless, this hard work pays off since the enterprise data model can be now used to digitally represent the entire power to consumer domain in the form of rich knowledge graph empowering services from various domains.
 
+<!-- TODO:
+- Explain a bit more about disconnect in classes from wind expert
+- Why we switch from string to actual object to represent location
+- Why we used CIM, GeoJSON, and WGS84 standards to define the enterprise data model
+- ... -->
 
 ### Iterating over the Sheet
 
