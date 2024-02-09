@@ -1,4 +1,4 @@
-# Knowledge Acquisition
+# Knowledge Acquisition / Building an Enterprise Data Model
 
 !!! note annotate "Warning"
     This tutorial is a work in progress and is not yet complete.
@@ -305,22 +305,37 @@ TODO Step by step guide on how to visualize the shared data model.
 
 ## DMS Architect: Alice
 
-### Implementing the Shared Data Model
+### Implementing the Enterprise Data Model in CDF
 Neat supports exporting a data model to CDF either using an `AssetLoader` or `DMSLoader`. The `AssetLoader` is
 used to load the data model into the classical `AssetHierarchy` in CDF, while the `DMSLoader` is used to load the
 data model into the new Data Modeling Service (DMS) in CDF. The `DMSLoader` is the recommended way to load the
 data model into CDF, as it supports more advanced features such as defining dependencies between data. In this
 tutorial, we will focus on the `DMSLoader`.
 
-Once David has defined the shared data model, Alice will implement it in CDF. The focus of Alice is to make sure
-that the shared data model is implemented in CDF in a way that accounts for the expected usage of the data. For example, she
-needs to define how the data is stored and what properties are indexed for fast search. In addition, she decides
+Once David has defined the enterprise data model, Alice will implement it in CDF. The focus of Alice is to make sure
+that the enterprise data model is implemented in CDF in a way that accounts for the expected usage of the data. For example, she
+needs to define how the data is stored and what properties are indexed for fast queries. In addition, she decides
 which dependencies between data should be enforced. This is a trade-off in that being very strict on the data
 makes it easy to use as it is predictable. However, it can be hard to populate it as large quantities of the
-data might not be in the expected format. On the other hand, being very flexible on the data puts a higher burdon
+data might not be in the expected format. On the other hand, being very flexible on the data puts a higher burden
 on the developers/users that use the data.
 
-First, Alice has to modify the `metadata` sheet to include the CDF specific information.
+Her tasks can be divided into **performance** and **quality** and summarized as follows:
+
+1. **Performance**:
+   - Which indexes to create?
+   - The size of the containers.
+   - Implement relationships as edges or direct relations.
+2. **Quality**:
+   - Define constraints between containers
+   - Define constraints between properties
+   - Define uniqueness constraints on properties
+   - Decide which properties should be mandatory.
+   - Decide value types for properties (for example int32 vs int64).
+
+### Extending the <code>metadata</code> Sheet
+
+Alice has to modify the `metadata` sheet to include the CDF specific information.
 
 |             |                         |
 |-------------|-------------------------|
@@ -328,27 +343,104 @@ First, Alice has to modify the `metadata` sheet to include the CDF specific info
 | prefix      | power                   |
 | namespace   | pwr                     |
 | space       | sp_power                |
-| externalIdc | power_enterprise_model  |
+| externalId  | power_enterprise_model  |
 | version     | 1                       |
 | contributor | Jon, Emma, David, Alice |
 | created     | 2021-01-01              |
 | updated     | 2021-01-01              |
 
-First, she adds herself as a contributor, and then she adds the `space` and `externalIdc` columns. The `space`
-column is used to define the space in CDF where the data model should be loaded. The `externalIdc` column is used
-to define the external id of the data model. This is used to reference the data model from other parts of CDF.
+First, she adds herself as a contributor, and then she adds the `space` and `externalId` columns. The `space`
+column is used to define the space in CDF where the data model should be loaded. The `externalId` column is used
+to define the external id of the enterprise data model. This is used to reference the data model from other parts of CDF.
 
-### Extending the <code>properties</code> Sheet
+### The <code>properties</code> Sheet
 
-In addition, Alice will add four new columns to the `Properties` sheet. The `container` and `containerProperty`
-are used to specify which container and property the data should be stored in. The `index` column is used to specify
-whether it should be part of an index, and finally the `constraints` column is used to specify any constraints.
+Using the workflow `To DMS Rules`, Alice will convert the `properties` sheet to a DMS format. This will add
+nine new columns as well as modify the `Value Type` column. The first row of the `properties` sheet for Alice
+might look as follows:
 
-| Class         | Property         | ... | container | Container Property | Index | Constraints |
-|---------------|------------------|-----|-----------|--------------------|-------| ----------- |
-| WindTurbine   | name             |     | asset     | name               | name  |             |
+| Class         | Property         | ValueType | Relation | Nullable | IsList | Container  | Container Property | Index | Constraints | View        | View Property |
+|---------------|------------------|-----------|----------|----------|--------|------------|--------------------|-------|-------------|-------------|---------------|
+| WindTurbine   | name             | Text      |          | False    | False  | PowerAsset | name               | name  |             | WindTurbine | name          |
 
-TODO How views are handled.
+`neat` will fill out all the new columns with suggested values, but Alice can modify them as she sees fit and thus
+she has granular control over how the data should be stored in CDF.
+
+The columns are as follows:
+
+#### How to store the properties in CDF
+
+* **Value Type**: The values in the Value Type columns are converted to the types supported by DMS. For example, the
+  `string` type is converted to `Text`. Alice must still check and potentially modify the value types to ensure
+  that they are correct. For example, `float` are converted to `float64`, and Alice might decide to change it to
+  `float32` if she knows that the values will never be larger than 32 bits.
+* **Relation**: This columns only applies to relationships between entities. It is used to specify how the relationship
+  should be implemented in CDF. For example, if the relationship should be implemented as an edge or as a direct
+    relation.
+* **Nullable**: This only applies to primitive types. This column is used to specify whether the property is
+  required or not. For example, Alice might decide that the `name` property of a `WindTurbine` is required,
+  and she will set the `Nullable` column to `False`.
+* **IsList**: This only applies to primitive types. This column is used to specify whether the property is a list or not.
+
+#### Where to store the properties in CDF
+
+* **Container**: This column is used to specify which container the data should be stored in. For example, Alice might
+  decide that the `WindTurbine` data should be stored in a container called `PowerAsset`.
+* **Container Property**: This column is used to specify which property in the container that the data should be
+  stored in. For example, Alice might decide that the `WindTurbine` data should be stored in a property called `name`
+  in the `PowerAsset` container.
+* **Index**: This column is used to specify whether the property should be part of an index. For example, Alice might
+  decide that the `name` property of a `WindTurbine` should be part of an index, and she will set the `Index` column
+  to `name`.
+* **Constraints**: This column is used to specify constraints. For exmaple, Alice might decide that the `name`
+  property of a `WindTurbine` should be unique, so she will set the `Constraints` column to `unique`. If the property
+  is a relation implemented as a direct relation, Alice can also specify that the source (other end of the relation)
+  should be in a specific container.
+
+#### How to consume the properties in CDF
+* **View**: This column is used to specify which view the property should be part of. For example, Alice might decide
+  that the `name` property of a `WindTurbine` should be part of a view called `WindTurbine`.
+* **View Property**: This column is used to specify what the property should be called in the view.
+
+### The <code>Container</code> Sheet
+
+The output of the `To DMS Rules` will produce two new sheets `Container` and `View`. The `Container` sheet is used
+to define constraints between the containers. The first three rows of the `Container` sheet for Alice look
+as follows:
+
+| Container      | Description | Constraint     |
+|----------------|-------------|----------------|
+| PowerAsset     |             |                |
+| GeneratingUnit |             | PowerAsset     |
+| WindTurbine    |             | GeneratingUnit |
+
+
+Interpreting the first three rows, we see that all entries in the `GeneratingUnit` container must have a corresponding
+entry in the `PowerAsset` container. In addition, all entries in the `WindTurbine` container must have a corresponding
+entry in the `GeneratingUnit` container (and thus also the `PowerAsset` container.
+
+### The <code>View</code> Sheet
+
+The `View` sheet is used to define which views implements other views. Implements means that a view is reusing the
+properties from another view. The first three rows of the `View` sheet for Alice look as follows:
+
+
+| View           | Description | Implements     |
+|----------------|-------------|----------------|
+| PowerAsset     |             |                |
+| GeneratingUnit |             | PowerAsset     |
+| WindTurbine    |             | GeneratingUnit |
+
+
+Interpreting the first three rows, we see that the `GeneratingUnit` view is reusing the properties from the `PowerAsset`
+view, and the `WindTurbine` view is reusing the properties from the `GeneratingUnit` view. It is the hierarchy of views
+will overlap the constraints between the containers, as Alice have chosen for this case. However, it is important
+to note that the `View` and `Container` sheets are describing different things. The `Container` sheet is used to
+define constraints between the containers, Alice could have chosen to have no constraints between the `GeneratingUnit`
+and `WindTurbine` containers, but she still kept reusing the properties from the `PowerAsset` view. Similarly, Alice
+could have kept the constraints, and rewritten all properties for the `WindTurbine` view, without reusing the properties
+from the `GeneratingUnit` and `PowerAsset` views.
+
 
 ### Validating in Neat
 
