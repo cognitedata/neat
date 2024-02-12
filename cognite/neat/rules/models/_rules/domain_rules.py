@@ -1,12 +1,16 @@
-from .base import CoreMetadata, RoleTypes, RuleModel
+from typing import ClassVar
+
+from pydantic import Field
+
+from .base import BaseMetadata, RoleTypes, RuleModel
 
 
-class DomainMetadata(CoreMetadata):
-    role: RoleTypes = RoleTypes.domain_expert
+class DomainMetadata(BaseMetadata):
+    role: ClassVar[RoleTypes] = RoleTypes.domain_expert
     creator: str | list[str]
 
 
 class DomainRules(RuleModel):
-    metadata: DomainMetadata
-    properties: dict
-    classes: dict
+    metadata: DomainMetadata = Field(alias="Metadata")
+    properties: dict = Field(alias="Properties")
+    classes: dict | None = Field(None, alias="Classes")

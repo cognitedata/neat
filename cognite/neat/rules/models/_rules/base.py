@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import math
 import sys
-from datetime import datetime
 from functools import wraps
 from typing import ClassVar, TypeAlias
 
@@ -19,7 +18,6 @@ from pydantic import (
     constr,
 )
 from pydantic.fields import FieldInfo
-from rdflib import Namespace
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -186,86 +184,12 @@ class URL(BaseModel):
     url: HttpUrl
 
 
-class CoreMetadata(RuleModel):
+class BaseMetadata(RuleModel):
     """
     Metadata model for data model
-
     """
 
-    role: RoleTypes | None = Field(description=("Role of the person who creates the data model"), default=None)
-
-    prefix: Prefix | None = Field(
-        description=("This is used as a short form for namespace"),
-        default=None,
-    )
-
-    namespace: Namespace | None = Field(
-        description="This is used as RDF namespace for generation of semantic data model representation",
-        min_length=1,
-        max_length=2048,
-        default=None,
-    )
-
-    space: Space | None = Field(
-        description=("CDF space to which data model is suppose to be stored under"),
-        default=None,
-    )
-
-    externalId: ExternalId | None = Field(
-        description=("Data model external id when resolving rules as CDF data model"),
-        default=None,
-        min_length=1,
-        max_length=255,
-    )
-
-    version: str | None = Field(
-        description=("Data model version"),
-        min_length=1,
-        max_length=43,
-        default=None,
-    )
-
-    name: str | None = Field(
-        description=("Human readable name of the data model"),
-        min_length=1,
-        max_length=255,
-        default=None,
-    )
-
-    description: Description | None = Field(
-        description=("Description/definition of the data model"),
-        default=None,
-    )
-
-    created: datetime | None = Field(
-        description=("Date of the data model creation"),
-        default=None,
-    )
-
-    updated: datetime | None = Field(
-        description=("Date of the data model update"),
-        default=None,
-    )
-
-    creator: str | list[str] | None = Field(
-        description=("Creator(s) of the data model"),
-        default=None,
-    )
-
-    contributor: str | list[str] | None = Field(
-        description=("Contributor(s) of the data model"),
-        default=None,
-    )
-
-    rights: str | None = Field(
-        description=("Usage rights of the data model"),
-        default=None,
-    )
-
-    license: str | None = Field(
-        description=("License of the data model"),
-        default=None,
-    )
+    role: ClassVar[RoleTypes]
 
     def to_pandas(self) -> pd.Series:
         """Converts Metadata to pandas Series."""
@@ -295,7 +219,7 @@ class CoreRules(RuleModel):
         validators_to_skip: List of validators to skip. Defaults to []
     """
 
-    metadata: CoreMetadata
+    metadata: BaseMetadata
 
 
 #     @property
