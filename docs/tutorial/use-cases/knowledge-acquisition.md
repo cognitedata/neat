@@ -81,7 +81,7 @@ For Jon the `Metadata` sheet looks as follows:
 
 Optionally, domain experts can also define classes in the `classes` sheet. Classes are used to group properties that define a thing. For example, a `WindTurbine` is a class, and the set of properties for a class defines what it means to be a member of that class. However, as it is optional, Jon skips this sheet, and leaves it to the information architect, David, to define that for him.
 
-Download Jon's spreadsheet from [here](insert link).
+Download Jon's spreadsheet from [here](spreadsheets/expert-wind-energy-jon.xlsx).
 
 
 ### Validating Statements in Neat
@@ -171,6 +171,7 @@ As mentioned earlier, Emma also abstracts classes from `Properties` sheet and pu
 
 
 Like in the case of Jon, Emma also fills in the `Metadata` sheet. For Emma the `Metadata` sheet looks as follows:
+
 |         |               |
 |---------|---------------|
 | role    | domain expert |
@@ -181,6 +182,7 @@ You can find the complete `Properties`, `classes`, and `metadata` sheets for Emm
 
 Finally, Emma will validate her sheet using the `neat` UI, just like Jon did.
 
+Download Emma's spreadsheet from [here](spreadsheets/expert-grid-emma.xlsx).
 
 ### Summary
 
