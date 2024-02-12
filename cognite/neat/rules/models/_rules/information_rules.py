@@ -1,19 +1,25 @@
-from datetime import datetime
 import re
 import warnings
-from pydantic import Field, TypeAdapter, field_validator, HttpUrl
+from datetime import datetime
+from typing import ClassVar
 
+from pydantic import Field, HttpUrl, TypeAdapter, field_validator
 from rdflib import Namespace
 
 from cognite.neat.rules import exceptions
-from .base import Prefix, RoleTypes, RuleModel, skip_field_validator
-from .base import version_compliance_regex, prefix_compliance_regex, more_than_one_none_alphanumerics_regex
+
+from .base import (
+    Prefix,
+    RoleTypes,
+    RuleModel,
+    prefix_compliance_regex,
+    version_compliance_regex,
+)
 from .domain_rules import DomainMetadata
 
 
 class InformationArchitectMetadata(DomainMetadata):
-
-    role: RoleTypes = RoleTypes.information_architect
+    role: ClassVar[RoleTypes] = RoleTypes.information_architect
     prefix: Prefix = Field(
         description="This is used as prefix for generation of RDF OWL/SHACL data model representation",
     )
@@ -61,7 +67,6 @@ class InformationArchitectMetadata(DomainMetadata):
 
     @field_validator("prefix")
     def is_prefix_compliant(cls, value):
-
         if not re.match(prefix_compliance_regex, value):
             raise exceptions.PrefixesRegexViolation([value], prefix_compliance_regex).to_pydantic_custom_error()
         else:
@@ -98,13 +103,12 @@ class InformationArchitectMetadata(DomainMetadata):
         name: str | None = None,
     ):
         metadata_as_dict = metadata.model_dump()
-        metadata_as_dict["prefix"] = prefix or metadata.prefix or "neat"
-        metadata_as_dict["namespace"] = namespace or metadata.namespace or Namespace("http://purl.org/cognite/neat#")
-        metadata_as_dict["version"] = version or metadata.version or "0.1.0"
-        metadata_as_dict["contributor"] = contributor or metadata.contributor or "Cognite"
-        metadata_as_dict["created"] = created or metadata.created or datetime.utcnow()
-        metadata_as_dict["updated"] = updated or metadata.updated or datetime.utcnow()
-        metadata_as_dict["name"] = name or metadata.name or "NEAT Data Model"
+        metadata_as_dict["prefix"] = prefix or "neat"
+        metadata_as_dict["namespace"] = namespace or Namespace("http://purl.org/cognite/neat#")
+        metadata_as_dict["version"] = version or "0.1.0"
+        metadata_as_dict["contributor"] = contributor or "Cognite"
+        metadata_as_dict["created"] = created or datetime.utcnow()
+        metadata_as_dict["updated"] = updated or datetime.utcnow()
         return cls(**metadata_as_dict)
 
 
