@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import math
 import sys
-from collections.abc import ItemsView, Iterator, KeysView, ValuesView
+from collections.abc import Iterator
 from functools import wraps
 from typing import Any, ClassVar, Generic, TypeAlias, TypeVar
 
@@ -770,14 +770,14 @@ class Entity(BaseModel):
 T_Entity = TypeVar("T_Entity", bound=Entity)
 
 
-class SheetDict(BaseModel, Generic[T_Entity]):
-    data: dict[str, T_Entity] = Field(default_factory=dict)
+class SheetList(BaseModel, Generic[T_Entity]):
+    data: list[T_Entity] = Field(default_factory=list)
 
-    def __getitem__(self, item: str) -> T_Entity:
-        return self.data[item]
-
-    def __setitem__(self, key: str, value: T_Entity):
-        self.data[key] = value
+    @model_validator(mode="before")
+    def from_list_format(cls, values: Any) -> Any:
+        if isinstance(values, list):
+            return {"data": values}
+        return values
 
     def __contains__(self, item: str) -> bool:
         return item in self.data
@@ -785,36 +785,23 @@ class SheetDict(BaseModel, Generic[T_Entity]):
     def __len__(self) -> int:
         return len(self.data)
 
-    def __iter__(self) -> Iterator[str]:  # type: ignore[override]
+    def __iter__(self) -> Iterator[T_Entity]:  # type: ignore[override]
         return iter(self.data)
 
-    def values(self) -> ValuesView[T_Entity]:
-        return self.data.values()
+    def append(self, value: T_Entity) -> None:
+        self.data.append(value)
 
-    def keys(self) -> KeysView[str]:
-        return self.data.keys()
-
-    def items(self) -> ItemsView[str, T_Entity]:
-        return self.data.items()
+    def extend(self, values: list[T_Entity]) -> None:
+        self.data.extend(values)
 
     def to_pandas(self, drop_na_columns: bool = True, include: list[str] | None = None) -> pd.DataFrame:
         """Converts ResourceDict to pandas DataFrame."""
-        df = pd.DataFrame([class_.model_dump() for class_ in self.data.values()])
+        df = pd.DataFrame([entity.model_dump() for entity in self.data])
         if drop_na_columns:
             df = df.dropna(axis=1, how="all")
         if include is not None:
             df = df[include]
         return df
-
-    def groupby(self, by: str) -> dict[str, SheetDict[T_Entity]]:
-        """Groups ResourceDict by given column(s)."""
-        groups: dict[str, SheetDict[T_Entity]] = {}
-        for key, resource in self.data.items():
-            value = getattr(resource, by)
-            if value not in groups:
-                groups[value] = SheetDict()
-            groups[value][key] = resource
-        return groups
 
     def _repr_html_(self) -> str:
         """Returns HTML representation of ResourceDict."""

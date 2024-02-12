@@ -13,7 +13,7 @@ def jon_spreadsheet() -> dict[str, dict[str, Any]]:
     excel_file = pd.ExcelFile(filepath)
     return {
         "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),
-        "Properties": pd.read_excel(excel_file, "Properties").to_dict(orient="dict"),
+        "Properties": _read_spreadsheet(excel_file, "Properties"),
     }
 
 
@@ -23,9 +23,18 @@ def emma_spreadsheet() -> dict[str, dict[str, Any]]:
     excel_file = pd.ExcelFile(filepath)
     return {
         "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),
-        "Properties": pd.read_excel(excel_file, "Properties").to_dict(orient="dict"),
-        "Classes": pd.read_excel(excel_file, "Classes").to_dict(orient="dict"),
+        "Properties": _read_spreadsheet(excel_file, "Properties", skiprows=1),
+        "Classes": _read_spreadsheet(excel_file, "Classes", skiprows=1),
     }
+
+
+def _read_spreadsheet(excel_file: pd.ExcelFile, sheet_name: str, skiprows: int = 0) -> list[Any]:
+    return (
+        pd.read_excel(excel_file, sheet_name, skiprows=skiprows)
+        .dropna(axis=0, how="all")
+        .replace(float("nan"), None)
+        .to_dict(orient="records")
+    )
 
 
 def invalid_domain_rules_cases():
@@ -55,7 +64,7 @@ class TestDomainRules:
         assert isinstance(valid_rules, DomainRules)
 
         sample_expected_properties = {"WindTurbine.name", "WindFarm.windTurbine", "ExportCable.voltageLevel"}
-        missing = sample_expected_properties - set(valid_rules.properties.keys())
+        missing = sample_expected_properties - {f"{prop.class_}.{prop.property}" for prop in valid_rules.properties}
         assert not missing, f"Missing properties: {missing}"
 
     def test_load_valid_emma_rules(self, emma_spreadsheet: dict[str, dict[str, Any]]) -> None:
@@ -64,7 +73,7 @@ class TestDomainRules:
         assert isinstance(valid_rules, DomainRules)
 
         sample_expected_properties = {"Substation.name", "Consumer.location", "Transmission.voltage"}
-        missing = sample_expected_properties - set(valid_rules.properties.keys())
+        missing = sample_expected_properties - {f"{prop.class_}.{prop.property}" for prop in valid_rules.properties}
 
         assert not missing, f"Missing properties: {missing}"
 

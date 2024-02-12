@@ -2,7 +2,7 @@ from typing import ClassVar
 
 from pydantic import Field
 
-from .base import BaseMetadata, Entity, RoleTypes, RuleModel, SheetDict
+from .base import BaseMetadata, Entity, RoleTypes, RuleModel, SheetList
 
 
 class DomainMetadata(BaseMetadata):
@@ -27,5 +27,5 @@ class DomainClass(Entity):
 
 class DomainRules(RuleModel):
     metadata: DomainMetadata = Field(alias="Metadata")
-    properties: SheetDict[DomainProperty] = Field(alias="Properties")
-    classes: SheetDict[DomainClass] | None = Field(None, alias="Classes")
+    properties: SheetList[DomainProperty] = Field(alias="Properties")
+    classes: SheetList[DomainClass] | None = Field(None, alias="Classes")
