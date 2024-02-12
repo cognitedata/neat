@@ -26,15 +26,6 @@ if sys.version_info >= (3, 11):
 else:
     from backports.strenum import StrEnum
 
-#     "Class",
-#     "Classes",
-#     "Instance",
-#     "CoreMetadata",
-#     "Prefixes",
-#     "Property",
-#     "Properties",
-#     "Resource",
-#     "Rules",
 
 METADATA_VALUE_MAX_LENGTH = 5120
 
@@ -232,12 +223,12 @@ class BaseRules(RuleModel):
     metadata: BaseMetadata
 
 
-# An entity is either a class or a property.
-class Entity(BaseModel):
+# An sheet entity is either a class or a property.
+class SheetEntity(RuleModel):
     ...
 
 
-T_Entity = TypeVar("T_Entity", bound=Entity)
+T_Entity = TypeVar("T_Entity", bound=SheetEntity)
 
 
 class SheetList(BaseModel, Generic[T_Entity]):
