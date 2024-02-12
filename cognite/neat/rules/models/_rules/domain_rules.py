@@ -8,3 +8,5 @@ class DomainMetadata(CoreMetadata):
 
 class DomainRules(RuleModel):
     metadata: DomainMetadata
+    properties: dict
+    classes: dict
