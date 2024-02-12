@@ -54,10 +54,19 @@ class TestDomainRules:
 
         assert isinstance(valid_rules, DomainRules)
 
+        sample_expected_properties = {"WindTurbine.name", "WindFarm.windTurbine", "ExportCable.voltageLevel"}
+        missing = sample_expected_properties - set(valid_rules.properties.keys())
+        assert not missing, f"Missing properties: {missing}"
+
     def test_load_valid_emma_rules(self, emma_spreadsheet: dict[str, dict[str, Any]]) -> None:
         valid_rules = DomainRules.model_validate(emma_spreadsheet)
 
         assert isinstance(valid_rules, DomainRules)
+
+        sample_expected_properties = {"Substation.name", "Consumer.location", "Transmission.voltage"}
+        missing = sample_expected_properties - set(valid_rules.properties.keys())
+
+        assert not missing, f"Missing properties: {missing}"
 
     @pytest.mark.parametrize("invalid_rules, expected_exception", list(invalid_domain_rules_cases()))
     def test_invalid_rules(self, invalid_rules: dict[str, dict[str, Any]], expected_exception: str) -> None:
