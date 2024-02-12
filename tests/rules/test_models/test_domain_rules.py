@@ -28,6 +28,26 @@ def emma_spreadsheet() -> dict[str, dict[str, Any]]:
     }
 
 
+def invalid_domain_rules_cases():
+    yield pytest.param(
+        {"metadata": {"role": "information_architect", "creator": "Cognite"}, "properties": {}},
+        "Value error, Metadata.role should be equal to 'domain expert'",
+        id="invalid_role",
+    )
+
+    yield pytest.param(
+        {"metadata": {"creator": "Cognite"}, "properties": {}},
+        "Value error, Metadata.role is missing.",
+        id="Missing role",
+    )
+
+    yield pytest.param(
+        {"metadata": {"role": "domain expert"}, "properties": {}},
+        "Field required",
+        id="Missing creator",
+    )
+
+
 class TestDomainRules:
     def test_load_valid_jon_rules(self, jon_spreadsheet: dict[str, dict[str, Any]]) -> None:
         valid_rules = DomainRules.model_validate(jon_spreadsheet)
@@ -38,3 +58,10 @@ class TestDomainRules:
         valid_rules = DomainRules.model_validate(emma_spreadsheet)
 
         assert isinstance(valid_rules, DomainRules)
+
+    @pytest.mark.parametrize("invalid_rules, expected_exception", list(invalid_domain_rules_cases()))
+    def test_invalid_rules(self, invalid_rules: dict[str, dict[str, Any]], expected_exception: str) -> None:
+        with pytest.raises(ValueError) as e:
+            DomainRules.model_validate(invalid_rules)
+        errors = e.value.errors()
+        assert errors[0]["msg"] == expected_exception
