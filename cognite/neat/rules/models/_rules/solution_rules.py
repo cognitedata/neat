@@ -3,7 +3,7 @@ from typing import ClassVar
 
 from cognite.neat.rules.models._rules.information_rules import InformationArchitectMetadata
 
-from .base import CoreRules, ExternalId, RoleTypes, Space
+from .base import BaseRules, ExternalId, RoleTypes, Space
 from .domain_rules import DomainMetadata
 
 
@@ -51,9 +51,9 @@ class DmsSolutionArchitectMetadata(DomainMetadata):
         return cls(**metadata_as_dict)
 
 
-class AssetRules(CoreRules):
+class AssetRules(BaseRules):
     metadata: AssetSolutionArchitectMetadata
 
 
-class DMSRules(CoreRules):
+class DMSRules(BaseRules):
     metadata: DmsSolutionArchitectMetadata

@@ -210,7 +210,7 @@ class BaseMetadata(RuleModel):
         return self.to_pandas().to_frame("value")._repr_html_()  # type: ignore[operator]
 
 
-class CoreRules(RuleModel):
+class BaseRules(RuleModel):
     """
     Rules is a core concept in `neat`. This represents fusion of data model
     definitions and (optionally) the transformation rules used to transform the data/graph
