@@ -6,9 +6,9 @@ from __future__ import annotations
 
 import math
 import sys
-from datetime import datetime
+from collections.abc import Iterator
 from functools import wraps
-from typing import ClassVar, TypeAlias
+from typing import Any, ClassVar, Generic, TypeAlias, TypeVar
 
 import pandas as pd
 from pydantic import (
@@ -17,9 +17,9 @@ from pydantic import (
     Field,
     HttpUrl,
     constr,
+    model_validator,
 )
 from pydantic.fields import FieldInfo
-from rdflib import Namespace
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -186,86 +186,20 @@ class URL(BaseModel):
     url: HttpUrl
 
 
-class CoreMetadata(RuleModel):
+class BaseMetadata(RuleModel):
     """
     Metadata model for data model
-
     """
 
-    role: RoleTypes | None = Field(description=("Role of the person who creates the data model"), default=None)
+    role: ClassVar[RoleTypes]
 
-    prefix: Prefix | None = Field(
-        description=("This is used as a short form for namespace"),
-        default=None,
-    )
-
-    namespace: Namespace | None = Field(
-        description="This is used as RDF namespace for generation of semantic data model representation",
-        min_length=1,
-        max_length=2048,
-        default=None,
-    )
-
-    space: Space | None = Field(
-        description=("CDF space to which data model is suppose to be stored under"),
-        default=None,
-    )
-
-    externalId: ExternalId | None = Field(
-        description=("Data model external id when resolving rules as CDF data model"),
-        default=None,
-        min_length=1,
-        max_length=255,
-    )
-
-    version: str | None = Field(
-        description=("Data model version"),
-        min_length=1,
-        max_length=43,
-        default=None,
-    )
-
-    name: str | None = Field(
-        description=("Human readable name of the data model"),
-        min_length=1,
-        max_length=255,
-        default=None,
-    )
-
-    description: Description | None = Field(
-        description=("Description/definition of the data model"),
-        default=None,
-    )
-
-    created: datetime | None = Field(
-        description=("Date of the data model creation"),
-        default=None,
-    )
-
-    updated: datetime | None = Field(
-        description=("Date of the data model update"),
-        default=None,
-    )
-
-    creator: str | list[str] | None = Field(
-        description=("Creator(s) of the data model"),
-        default=None,
-    )
-
-    contributor: str | list[str] | None = Field(
-        description=("Contributor(s) of the data model"),
-        default=None,
-    )
-
-    rights: str | None = Field(
-        description=("Usage rights of the data model"),
-        default=None,
-    )
-
-    license: str | None = Field(
-        description=("License of the data model"),
-        default=None,
-    )
+    @model_validator(mode="before")
+    def role_is_correct(cls, values: Any) -> Any:
+        if "role" not in values:
+            raise ValueError("Metadata.role is missing.")
+        if values["role"] != cls.role:
+            raise ValueError(f"Metadata.role should be equal to '{cls.role}'")
+        return values
 
     def to_pandas(self) -> pd.Series:
         """Converts Metadata to pandas Series."""
@@ -295,7 +229,7 @@ class CoreRules(RuleModel):
         validators_to_skip: List of validators to skip. Defaults to []
     """
 
-    metadata: CoreMetadata
+    metadata: BaseMetadata
 
 
 #     @property
@@ -826,3 +760,49 @@ class CoreRules(RuleModel):
 
 #     @staticmethod
 #     def isint(x):
+
+
+# An entity is either a class or a property.
+class Entity(BaseModel):
+    ...
+
+
+T_Entity = TypeVar("T_Entity", bound=Entity)
+
+
+class SheetList(BaseModel, Generic[T_Entity]):
+    data: list[T_Entity] = Field(default_factory=list)
+
+    @model_validator(mode="before")
+    def from_list_format(cls, values: Any) -> Any:
+        if isinstance(values, list):
+            return {"data": values}
+        return values
+
+    def __contains__(self, item: str) -> bool:
+        return item in self.data
+
+    def __len__(self) -> int:
+        return len(self.data)
+
+    def __iter__(self) -> Iterator[T_Entity]:  # type: ignore[override]
+        return iter(self.data)
+
+    def append(self, value: T_Entity) -> None:
+        self.data.append(value)
+
+    def extend(self, values: list[T_Entity]) -> None:
+        self.data.extend(values)
+
+    def to_pandas(self, drop_na_columns: bool = True, include: list[str] | None = None) -> pd.DataFrame:
+        """Converts ResourceDict to pandas DataFrame."""
+        df = pd.DataFrame([entity.model_dump() for entity in self.data])
+        if drop_na_columns:
+            df = df.dropna(axis=1, how="all")
+        if include is not None:
+            df = df[include]
+        return df
+
+    def _repr_html_(self) -> str:
+        """Returns HTML representation of ResourceDict."""
+        return self.to_pandas(drop_na_columns=True)._repr_html_()  # type: ignore[operator]
