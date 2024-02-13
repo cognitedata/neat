@@ -135,7 +135,7 @@ class InformationClass(DomainClass):
 
     Args:
         class_: The class ID of the class.
-        name: The name of the class.
+        description: A description of the class.
         parent: The parent class of the class.
         source: Source of information for given resource
         match_type: The match type of the resource being described and the source entity.
