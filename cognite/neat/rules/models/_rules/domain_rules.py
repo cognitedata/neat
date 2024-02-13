@@ -31,9 +31,8 @@ class DomainMetadata(BaseMetadata):
 
     @field_validator("creator", mode="before")
     def creator_to_list_if_comma(cls, value):
-        if isinstance(value, str):
-            if value:
-                return value.replace(", ", ",").split(",")
+        if isinstance(value, str) and value:
+            return value.replace(", ", ",").split(",")
         return value
 
 
