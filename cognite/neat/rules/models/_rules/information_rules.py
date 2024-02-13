@@ -189,5 +189,5 @@ class InformationProperty(DomainProperty):
 
 class InformationRules(RuleModel):
     metadata: InformationMetadata = Field(alias="Metadata")
-    properties: SheetList[DomainProperty] = Field(alias="Properties")
-    classes: SheetList[DomainClass] = Field(alias="Classes")
+    properties: SheetList[InformationProperty] = Field(alias="Properties")
+    classes: SheetList[InformationClass] = Field(alias="Classes")
