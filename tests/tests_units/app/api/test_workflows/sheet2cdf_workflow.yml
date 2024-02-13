@@ -1,0 +1,468 @@
+assets:
+- data_set_id: 2626756768281823
+  external_id: playground_NO1.NO2
+  labels:
+  - externalId: PriceAreaConnection
+  - externalId: non-historic
+  metadata:
+    active: 'true'
+    identifier: NO1.NO2
+    priceArea: Nordics.Norway.NO1, Nordics.Norway.NO2
+    type: PriceAreaConnection
+  name: NO1 to NO2
+- data_set_id: 2626756768281823
+  external_id: playground_NO1.NO3
+  labels:
+  - externalId: PriceAreaConnection
+  - externalId: non-historic
+  metadata:
+    active: 'true'
+    identifier: NO1.NO3
+    priceArea: Nordics.Norway.NO1, Nordics.Norway.NO3
+    type: PriceAreaConnection
+  name: NO1 to NO3
+- data_set_id: 2626756768281823
+  external_id: playground_NO1.NO5
+  labels:
+  - externalId: PriceAreaConnection
+  - externalId: non-historic
+  metadata:
+    active: 'true'
+    identifier: NO1.NO5
+    priceArea: Nordics.Norway.NO1, Nordics.Norway.NO5
+    type: PriceAreaConnection
+  name: NO1 to NO5
+- data_set_id: 2626756768281823
+  external_id: playground_NO2.NO5
+  labels:
+  - externalId: PriceAreaConnection
+  - externalId: non-historic
+  metadata:
+    active: 'true'
+    identifier: NO2.NO5
+    priceArea: Nordics.Norway.NO2, Nordics.Norway.NO5
+    type: PriceAreaConnection
+  name: NO2 to NO5
+- data_set_id: 2626756768281823
+  external_id: playground_NO3.NO4
+  labels:
+  - externalId: PriceAreaConnection
+  - externalId: non-historic
+  metadata:
+    active: 'true'
+    identifier: NO3.NO4
+    priceArea: Nordics.Norway.NO3, Nordics.Norway.NO4
+    type: PriceAreaConnection
+  name: NO3 to NO4
+- data_set_id: 2626756768281823
+  external_id: playground_NO3.NO5
+  labels:
+  - externalId: PriceAreaConnection
+  - externalId: non-historic
+  metadata:
+    active: 'true'
+    identifier: NO3.NO5
+    priceArea: Nordics.Norway.NO3, Nordics.Norway.NO5
+    type: PriceAreaConnection
+  name: NO3 to NO5
+- data_set_id: 2626756768281823
+  external_id: playground_Nordics
+  labels:
+  - externalId: CountryGroup
+  - externalId: non-historic
+  metadata:
+    active: 'true'
+    identifier: Nordics
+    type: CountryGroup
+  name: Nordics
+- data_set_id: 2626756768281823
+  external_id: playground_Nordics.Norway
+  labels:
+  - externalId: Country
+  - externalId: non-historic
+  metadata:
+    TSO: Statnett
+    active: 'true'
+    countryGroup: Nordics
+    identifier: Nordics.Norway
+    type: Country
+  name: Norway
+  parent_external_id: playground_Nordics
+- data_set_id: 2626756768281823
+  external_id: playground_Nordics.Norway.NO1
+  labels:
+  - externalId: PriceArea
+  - externalId: non-historic
+  metadata:
+    active: 'true'
+    country: Nordics.Norway
+    identifier: Nordics.Norway.NO1
+    priceAreaConnection: NO1.NO2, NO1.NO5, NO1.NO3
+    type: PriceArea
+  name: NO1
+  parent_external_id: playground_Nordics.Norway
+- data_set_id: 2626756768281823
+  external_id: playground_Nordics.Norway.NO2
+  labels:
+  - externalId: PriceArea
+  - externalId: non-historic
+  metadata:
+    active: 'true'
+    country: Nordics.Norway
+    identifier: Nordics.Norway.NO2
+    priceAreaConnection: NO1.NO2, NO2.NO5
+    type: PriceArea
+  name: NO2
+  parent_external_id: playground_Nordics.Norway
+- data_set_id: 2626756768281823
+  external_id: playground_Nordics.Norway.NO3
+  labels:
+  - externalId: PriceArea
+  - externalId: non-historic
+  metadata:
+    active: 'true'
+    country: Nordics.Norway
+    identifier: Nordics.Norway.NO3
+    priceAreaConnection: NO1.NO3, NO3.NO4, NO3.NO5
+    type: PriceArea
+  name: NO3
+  parent_external_id: playground_Nordics.Norway
+- data_set_id: 2626756768281823
+  external_id: playground_Nordics.Norway.NO4
+  labels:
+  - externalId: PriceArea
+  - externalId: non-historic
+  metadata:
+    active: 'true'
+    country: Nordics.Norway
+    identifier: Nordics.Norway.NO4
+    priceAreaConnection: NO3.NO4
+    type: PriceArea
+  name: NO4
+  parent_external_id: playground_Nordics.Norway
+- data_set_id: 2626756768281823
+  external_id: playground_Nordics.Norway.NO5
+  labels:
+  - externalId: PriceArea
+  - externalId: non-historic
+  metadata:
+    active: 'true'
+    country: Nordics.Norway
+    identifier: Nordics.Norway.NO5
+    priceAreaConnection: NO1.NO5, NO2.NO5, NO3.NO5
+    type: PriceArea
+  name: NO5
+  parent_external_id: playground_Nordics.Norway
+- data_set_id: 2626756768281823
+  description: Used to store all assets which parent does not exist
+  external_id: playground_orphanage-2626756768281823
+  labels:
+  - externalId: non-historic
+  metadata:
+    active: 'true'
+    cdfResourceType: Asset
+    identifier: orphanage
+    type: Orphanage
+  name: Orphanage
+labels:
+- data_set_id: 2626756768281823
+  external_id: Country
+  name: Country
+- data_set_id: 2626756768281823
+  external_id: CountryGroup
+  name: CountryGroup
+- data_set_id: 2626756768281823
+  external_id: PriceArea
+  name: PriceArea
+- data_set_id: 2626756768281823
+  external_id: PriceAreaConnection
+  name: PriceAreaConnection
+- data_set_id: 2626756768281823
+  external_id: TSO
+  name: TSO
+- data_set_id: 2626756768281823
+  external_id: country
+  name: country
+- data_set_id: 2626756768281823
+  external_id: countryGroup
+  name: countryGroup
+- data_set_id: 2626756768281823
+  external_id: historic
+  name: historic
+- data_set_id: 2626756768281823
+  external_id: name
+  name: name
+- data_set_id: 2626756768281823
+  external_id: non-historic
+  name: non-historic
+- data_set_id: 2626756768281823
+  external_id: priceArea
+  name: priceArea
+- data_set_id: 2626756768281823
+  external_id: priceAreaConnection
+  name: priceAreaConnection
+relationships:
+- data_set_id: 2626756768281823
+  external_id: playground_NO1.NO2:playground_Nordics.Norway.NO1
+  labels:
+  - externalId: PriceArea
+  - externalId: PriceAreaConnection
+  - externalId: non-historic
+  - externalId: priceArea
+  source_external_id: playground_NO1.NO2
+  source_type: Asset
+  target_external_id: playground_Nordics.Norway.NO1
+  target_type: Asset
+- data_set_id: 2626756768281823
+  external_id: playground_NO1.NO2:playground_Nordics.Norway.NO2
+  labels:
+  - externalId: PriceArea
+  - externalId: PriceAreaConnection
+  - externalId: non-historic
+  - externalId: priceArea
+  source_external_id: playground_NO1.NO2
+  source_type: Asset
+  target_external_id: playground_Nordics.Norway.NO2
+  target_type: Asset
+- data_set_id: 2626756768281823
+  external_id: playground_NO1.NO3:playground_Nordics.Norway.NO1
+  labels:
+  - externalId: PriceArea
+  - externalId: PriceAreaConnection
+  - externalId: non-historic
+  - externalId: priceArea
+  source_external_id: playground_NO1.NO3
+  source_type: Asset
+  target_external_id: playground_Nordics.Norway.NO1
+  target_type: Asset
+- data_set_id: 2626756768281823
+  external_id: playground_NO1.NO3:playground_Nordics.Norway.NO3
+  labels:
+  - externalId: PriceArea
+  - externalId: PriceAreaConnection
+  - externalId: non-historic
+  - externalId: priceArea
+  source_external_id: playground_NO1.NO3
+  source_type: Asset
+  target_external_id: playground_Nordics.Norway.NO3
+  target_type: Asset
+- data_set_id: 2626756768281823
+  external_id: playground_NO1.NO5:playground_Nordics.Norway.NO1
+  labels:
+  - externalId: PriceArea
+  - externalId: PriceAreaConnection
+  - externalId: non-historic
+  - externalId: priceArea
+  source_external_id: playground_NO1.NO5
+  source_type: Asset
+  target_external_id: playground_Nordics.Norway.NO1
+  target_type: Asset
+- data_set_id: 2626756768281823
+  external_id: playground_NO1.NO5:playground_Nordics.Norway.NO5
+  labels:
+  - externalId: PriceArea
+  - externalId: PriceAreaConnection
+  - externalId: non-historic
+  - externalId: priceArea
+  source_external_id: playground_NO1.NO5
+  source_type: Asset
+  target_external_id: playground_Nordics.Norway.NO5
+  target_type: Asset
+- data_set_id: 2626756768281823
+  external_id: playground_NO2.NO5:playground_Nordics.Norway.NO2
+  labels:
+  - externalId: PriceArea
+  - externalId: PriceAreaConnection
+  - externalId: non-historic
+  - externalId: priceArea
+  source_external_id: playground_NO2.NO5
+  source_type: Asset
+  target_external_id: playground_Nordics.Norway.NO2
+  target_type: Asset
+- data_set_id: 2626756768281823
+  external_id: playground_NO2.NO5:playground_Nordics.Norway.NO5
+  labels:
+  - externalId: PriceArea
+  - externalId: PriceAreaConnection
+  - externalId: non-historic
+  - externalId: priceArea
+  source_external_id: playground_NO2.NO5
+  source_type: Asset
+  target_external_id: playground_Nordics.Norway.NO5
+  target_type: Asset
+- data_set_id: 2626756768281823
+  external_id: playground_NO3.NO4:playground_Nordics.Norway.NO3
+  labels:
+  - externalId: PriceArea
+  - externalId: PriceAreaConnection
+  - externalId: non-historic
+  - externalId: priceArea
+  source_external_id: playground_NO3.NO4
+  source_type: Asset
+  target_external_id: playground_Nordics.Norway.NO3
+  target_type: Asset
+- data_set_id: 2626756768281823
+  external_id: playground_NO3.NO4:playground_Nordics.Norway.NO4
+  labels:
+  - externalId: PriceArea
+  - externalId: PriceAreaConnection
+  - externalId: non-historic
+  - externalId: priceArea
+  source_external_id: playground_NO3.NO4
+  source_type: Asset
+  target_external_id: playground_Nordics.Norway.NO4
+  target_type: Asset
+- data_set_id: 2626756768281823
+  external_id: playground_NO3.NO5:playground_Nordics.Norway.NO3
+  labels:
+  - externalId: PriceArea
+  - externalId: PriceAreaConnection
+  - externalId: non-historic
+  - externalId: priceArea
+  source_external_id: playground_NO3.NO5
+  source_type: Asset
+  target_external_id: playground_Nordics.Norway.NO3
+  target_type: Asset
+- data_set_id: 2626756768281823
+  external_id: playground_NO3.NO5:playground_Nordics.Norway.NO5
+  labels:
+  - externalId: PriceArea
+  - externalId: PriceAreaConnection
+  - externalId: non-historic
+  - externalId: priceArea
+  source_external_id: playground_NO3.NO5
+  source_type: Asset
+  target_external_id: playground_Nordics.Norway.NO5
+  target_type: Asset
+- data_set_id: 2626756768281823
+  external_id: playground_Nordics.Norway.NO1:playground_NO1.NO2
+  labels:
+  - externalId: PriceArea
+  - externalId: PriceAreaConnection
+  - externalId: non-historic
+  - externalId: priceAreaConnection
+  source_external_id: playground_Nordics.Norway.NO1
+  source_type: Asset
+  target_external_id: playground_NO1.NO2
+  target_type: Asset
+- data_set_id: 2626756768281823
+  external_id: playground_Nordics.Norway.NO1:playground_NO1.NO3
+  labels:
+  - externalId: PriceArea
+  - externalId: PriceAreaConnection
+  - externalId: non-historic
+  - externalId: priceAreaConnection
+  source_external_id: playground_Nordics.Norway.NO1
+  source_type: Asset
+  target_external_id: playground_NO1.NO3
+  target_type: Asset
+- data_set_id: 2626756768281823
+  external_id: playground_Nordics.Norway.NO1:playground_NO1.NO5
+  labels:
+  - externalId: PriceArea
+  - externalId: PriceAreaConnection
+  - externalId: non-historic
+  - externalId: priceAreaConnection
+  source_external_id: playground_Nordics.Norway.NO1
+  source_type: Asset
+  target_external_id: playground_NO1.NO5
+  target_type: Asset
+- data_set_id: 2626756768281823
+  external_id: playground_Nordics.Norway.NO2:playground_NO1.NO2
+  labels:
+  - externalId: PriceArea
+  - externalId: PriceAreaConnection
+  - externalId: non-historic
+  - externalId: priceAreaConnection
+  source_external_id: playground_Nordics.Norway.NO2
+  source_type: Asset
+  target_external_id: playground_NO1.NO2
+  target_type: Asset
+- data_set_id: 2626756768281823
+  external_id: playground_Nordics.Norway.NO2:playground_NO2.NO5
+  labels:
+  - externalId: PriceArea
+  - externalId: PriceAreaConnection
+  - externalId: non-historic
+  - externalId: priceAreaConnection
+  source_external_id: playground_Nordics.Norway.NO2
+  source_type: Asset
+  target_external_id: playground_NO2.NO5
+  target_type: Asset
+- data_set_id: 2626756768281823
+  external_id: playground_Nordics.Norway.NO3:playground_NO1.NO3
+  labels:
+  - externalId: PriceArea
+  - externalId: PriceAreaConnection
+  - externalId: non-historic
+  - externalId: priceAreaConnection
+  source_external_id: playground_Nordics.Norway.NO3
+  source_type: Asset
+  target_external_id: playground_NO1.NO3
+  target_type: Asset
+- data_set_id: 2626756768281823
+  external_id: playground_Nordics.Norway.NO3:playground_NO3.NO4
+  labels:
+  - externalId: PriceArea
+  - externalId: PriceAreaConnection
+  - externalId: non-historic
+  - externalId: priceAreaConnection
+  source_external_id: playground_Nordics.Norway.NO3
+  source_type: Asset
+  target_external_id: playground_NO3.NO4
+  target_type: Asset
+- data_set_id: 2626756768281823
+  external_id: playground_Nordics.Norway.NO3:playground_NO3.NO5
+  labels:
+  - externalId: PriceArea
+  - externalId: PriceAreaConnection
+  - externalId: non-historic
+  - externalId: priceAreaConnection
+  source_external_id: playground_Nordics.Norway.NO3
+  source_type: Asset
+  target_external_id: playground_NO3.NO5
+  target_type: Asset
+- data_set_id: 2626756768281823
+  external_id: playground_Nordics.Norway.NO4:playground_NO3.NO4
+  labels:
+  - externalId: PriceArea
+  - externalId: PriceAreaConnection
+  - externalId: non-historic
+  - externalId: priceAreaConnection
+  source_external_id: playground_Nordics.Norway.NO4
+  source_type: Asset
+  target_external_id: playground_NO3.NO4
+  target_type: Asset
+- data_set_id: 2626756768281823
+  external_id: playground_Nordics.Norway.NO5:playground_NO1.NO5
+  labels:
+  - externalId: PriceArea
+  - externalId: PriceAreaConnection
+  - externalId: non-historic
+  - externalId: priceAreaConnection
+  source_external_id: playground_Nordics.Norway.NO5
+  source_type: Asset
+  target_external_id: playground_NO1.NO5
+  target_type: Asset
+- data_set_id: 2626756768281823
+  external_id: playground_Nordics.Norway.NO5:playground_NO2.NO5
+  labels:
+  - externalId: PriceArea
+  - externalId: PriceAreaConnection
+  - externalId: non-historic
+  - externalId: priceAreaConnection
+  source_external_id: playground_Nordics.Norway.NO5
+  source_type: Asset
+  target_external_id: playground_NO2.NO5
+  target_type: Asset
+- data_set_id: 2626756768281823
+  external_id: playground_Nordics.Norway.NO5:playground_NO3.NO5
+  labels:
+  - externalId: PriceArea
+  - externalId: PriceAreaConnection
+  - externalId: non-historic
+  - externalId: priceAreaConnection
+  source_external_id: playground_Nordics.Norway.NO5
+  source_type: Asset
+  target_external_id: playground_NO3.NO5
+  target_type: Asset
