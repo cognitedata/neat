@@ -69,7 +69,7 @@ class DomainProperty(SheetEntity):
             return value
 
     @field_validator("property", mode="after")
-    def is_property_id_compliant(cls, value, values):
+    def is_property_id_compliant(cls, value):
         if re.search(more_than_one_none_alphanumerics_regex, value):
             raise exceptions.MoreThanOneNonAlphanumericCharacter("property_id", value).to_pydantic_custom_error()
         if not re.match(property_id_compliance_regex, value):
