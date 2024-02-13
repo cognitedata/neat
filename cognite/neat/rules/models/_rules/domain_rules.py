@@ -46,7 +46,7 @@ class DomainProperty(SheetEntity):
     @field_validator("value_type", mode="before")
     def expected_value_type_string_to_entity(cls, value):
         # handle simple types
-        if value in XSD_VALUE_TYPE_MAPPINGS.keys():
+        if value in XSD_VALUE_TYPE_MAPPINGS:
             return XSD_VALUE_TYPE_MAPPINGS[value]
 
         # complex types correspond to relations to other classes
