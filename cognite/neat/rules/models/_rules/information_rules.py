@@ -1,7 +1,7 @@
 import re
 import warnings
 from datetime import datetime
-from enum import StrEnum
+import sys
 from typing import Any, ClassVar
 
 from pydantic import Field, HttpUrl, TypeAdapter, field_validator
