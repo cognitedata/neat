@@ -90,8 +90,7 @@ class InformationMetadata(DomainMetadata):
     def is_prefix_compliant(cls, value):
         if not re.match(prefix_compliance_regex, value):
             raise exceptions.PrefixesRegexViolation([value], prefix_compliance_regex).to_pydantic_custom_error()
-        else:
-            return value
+        return value
 
     @field_validator("contributor", mode="before")
     def contributor_to_list_if_comma(cls, value):
