@@ -118,7 +118,6 @@ class InformationMetadata(DomainMetadata):
         contributor: str | list[str] | None = None,
         created: datetime | None = None,
         updated: datetime | None = None,
-        name: str | None = None,
     ):
         metadata_as_dict = metadata.model_dump()
         metadata_as_dict["prefix"] = prefix or "neat"
