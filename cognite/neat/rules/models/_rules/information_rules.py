@@ -1,7 +1,7 @@
 import re
+import sys
 import warnings
 from datetime import datetime
-import sys
 from typing import Any, ClassVar
 
 from pydantic import Field, HttpUrl, TypeAdapter, field_validator
