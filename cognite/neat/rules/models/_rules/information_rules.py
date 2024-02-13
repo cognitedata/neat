@@ -28,6 +28,11 @@ from .base import (
 )
 from .domain_rules import DomainClass, DomainMetadata, DomainProperty
 
+if sys.version_info >= (3, 11):
+    from enum import StrEnum
+else:
+    from backports.strenum import StrEnum
+
 
 class MatchType(StrEnum):
     exact = "exact"
