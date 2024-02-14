@@ -6,15 +6,7 @@ import pytest
 
 from cognite.neat.rules.models._rules.information_rules import InformationRules
 from tests.config import DOC_KNOWLEDGE_ACQUISITION_TUTORIAL
-
-
-def _read_spreadsheet(excel_file: pd.ExcelFile, sheet_name: str, skiprows: int = 0) -> list[Any]:
-    return (
-        pd.read_excel(excel_file, sheet_name, skiprows=skiprows)
-        .dropna(axis=0, how="all")
-        .replace(float("nan"), None)
-        .to_dict(orient="records")
-    )
+from tests.tests_units.rules.test_models.utils import _read_spreadsheet
 
 
 @pytest.fixture(scope="session")
