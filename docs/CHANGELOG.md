@@ -16,6 +16,12 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.62.1] - 14-02-24
+
+## Fixed
+- Issue of `DeleteDMSSchemaComponents` deleting components in all spaces
+- Issue of `ExportRulesToOntology` and `ExportRulesToSHACL` not creating missing folder
+
 ## [0.62.0] - 08-02-24
 
 ## Added
