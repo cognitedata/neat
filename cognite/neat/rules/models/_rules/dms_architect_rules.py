@@ -11,8 +11,8 @@ class AssetSolutionArchitectMetadata(InformationMetadata):
     ...
 
 
-class DmsSolutionArchitectMetadata(DomainMetadata):
-    role: ClassVar[RoleTypes] = RoleTypes.cdf_solution_architect
+class DMSArchitectMetadata(DomainMetadata):
+    role: ClassVar[RoleTypes] = RoleTypes.dms_architect
     space: Space
     externalId: ExternalId
     version: str
@@ -56,4 +56,4 @@ class AssetRules(BaseRules):
 
 
 class DMSRules(BaseRules):
-    metadata: DmsSolutionArchitectMetadata
+    metadata: DMSArchitectMetadata
