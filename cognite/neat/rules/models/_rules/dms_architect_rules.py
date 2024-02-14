@@ -1,24 +1,19 @@
 from datetime import datetime
 from typing import ClassVar
 
-from cognite.neat.rules.models._rules.information_rules import InformationMetadata
+from pydantic import Field
 
-from .base import BaseRules, ExternalId, RoleTypes, Space
+from cognite.neat.rules.models._rules.information_rules import InformationMetadata
+from cognite.neat.rules.models.value_types import ValueType
+
+from .base import BaseRules, RoleTypes, SheetEntity, SheetList
 from .domain_rules import DomainMetadata
 
 
-class AssetSolutionArchitectMetadata(InformationMetadata):
-    ...
-
-
-class DMSArchitectMetadata(DomainMetadata):
+class DMSArchitectMetadata(InformationMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.dms_architect
-    space: Space
-    externalId: ExternalId
-    version: str
-    contributor: str | list[str]
-    created: datetime
-    updated: datetime
+    space: str
+    external_id: str = Field(alias="externalId")
 
     @classmethod
     def from_information_architect_metadata(
@@ -40,20 +35,44 @@ class DMSArchitectMetadata(DomainMetadata):
         created: datetime | None = None,
         updated: datetime | None = None,
     ):
-        metadata_as_dict = metadata.model_dump()
-        metadata_as_dict["space"] = space or "neat-playground"
-        metadata_as_dict["externalId"] = externalId or "neat_model"
-        metadata_as_dict["version"] = version or "0.1.0"
-        metadata_as_dict["contributor"] = contributor or "Cognite"
-        metadata_as_dict["created"] = created or datetime.utcnow()
-        metadata_as_dict["updated"] = updated or datetime.utcnow()
+        information = InformationMetadata.from_domain_expert_metadata(
+            metadata, None, None, version, contributor, created, updated
+        ).model_dump()
 
-        return cls(**metadata_as_dict)
+        return cls.from_information_architect_metadata(information)
 
 
-class AssetRules(BaseRules):
-    metadata: AssetSolutionArchitectMetadata
+class DMSProperty(SheetEntity):
+    class_: str = Field(alias="Class")
+    property: str = Field(alias="Property")
+    description: str | None = None
+    value_type: ValueType = Field(alias="Value Type")
+    nullable: bool = Field(default=True)
+    is_list: bool = Field(default=False)
+    default: str | None = None
+    source: str | None = None
+    container: str | None = None
+    container_property: str | None = None
+    view: str | None = None
+    view_property: str | None = None
+    index: str | None = None
+    constraint: str | None = None
+
+
+class DMSContainer(SheetEntity):
+    container: str
+    description: str | None = None
+    constraint: str | None = None
+
+
+class DMSView(SheetEntity):
+    view: str
+    description: str | None = None
+    implements: list[str] | None = None
 
 
 class DMSRules(BaseRules):
     metadata: DMSArchitectMetadata
+    properties: SheetList
+    containers: SheetList[DMSContainer] | None = None
+    views: SheetList[DMSView] | None = None
