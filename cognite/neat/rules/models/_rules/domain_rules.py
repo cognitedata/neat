@@ -81,6 +81,7 @@ class DomainProperty(SheetEntity):
 class DomainClass(SheetEntity):
     class_: str = Field(alias="Class")
     description: str | None = Field(None, alias="Description")
+    comment: str | None = Field(None, alias="Comment")
     parent: list[ParentClass] | None = Field(alias="Parent Class", default=None)
 
     @field_validator("parent", mode="before")

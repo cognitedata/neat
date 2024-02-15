@@ -156,6 +156,11 @@ class RoleTypes(StrEnum):
     cdf_solution_architect = "cdf solution architect"
 
 
+class MatchType(StrEnum):
+    exact = "exact"
+    partial = "partial"
+
+
 class RuleModel(BaseModel):
     model_config: ClassVar[ConfigDict] = ConfigDict(
         populate_by_name=True,

@@ -20,25 +20,13 @@ from cognite.neat.rules.models.rdfpath import (
     parse_rule,
 )
 
-from .base import (
-    Prefix,
-    RoleTypes,
-    RuleModel,
-    SheetList,
-    prefix_compliance_regex,
-    version_compliance_regex,
-)
+from .base import MatchType, Prefix, RoleTypes, RuleModel, SheetList, prefix_compliance_regex, version_compliance_regex
 from .domain_rules import DomainClass, DomainMetadata, DomainProperty
 
 if sys.version_info >= (3, 11):
-    from enum import StrEnum
+    pass
 else:
-    from backports.strenum import StrEnum
-
-
-class MatchType(StrEnum):
-    exact = "exact"
-    partial = "partial"
+    pass
 
 
 class InformationMetadata(DomainMetadata):
@@ -143,13 +131,13 @@ class InformationClass(DomainClass):
         match_type: The match type of the resource being described and the source entity.
     """
 
-    source: Namespace | None = None
-    match_type: MatchType | None = None
+    source: URIRef | None = Field(alias="Source", default=None)
+    match: MatchType | None = Field(alias="Match", default=None)
 
     @field_validator("source", mode="before")
-    def fix_namespace_ending(cls, value):
-        if value:
-            return Namespace(TypeAdapter(HttpUrl).validate_python(value))
+    def convert_source_to_uri(cls, value):
+        if value and not isinstance(value, URIRef):
+            return URIRef(TypeAdapter(HttpUrl).validate_python(value))
         return value
 
 
@@ -177,16 +165,16 @@ class InformationProperty(DomainProperty):
     # TODO: Can we skip rule_type and simply try to parse the rule and if it fails, raise an error?
 
     default: Any | None = Field(alias="Default", default=None)
-    source: URIRef | None = None
-    match_type: MatchType | None = None
+    source: URIRef | None = Field(alias="Source", default=None)
+    match: MatchType | None = Field(alias="Match", default=None)
     rule_type: str | TransformationRuleType | None = Field(alias="Rule Type", default=None)
     rule: str | AllReferences | SingleProperty | Hop | RawLookup | SPARQLQuery | Traversal | None = Field(
         alias="Rule", default=None
     )
 
     @field_validator("source", mode="before")
-    def fix_namespace_ending(cls, value):
-        if value:
+    def convert_source_to_uri(cls, value):
+        if value and not isinstance(value, URIRef):
             return URIRef(TypeAdapter(HttpUrl).validate_python(value))
         return value
 
