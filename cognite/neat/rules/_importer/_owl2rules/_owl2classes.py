@@ -8,7 +8,7 @@ from cognite.neat.rules.models._rules.base import MatchType
 from cognite.neat.utils.utils import remove_namespace
 
 
-def parse_owl_classes(graph: Graph, make_compliant: bool = False, language: str = "en") -> pd.DataFrame:
+def parse_owl_classes(graph: Graph, make_compliant: bool = False, language: str = "en") -> list[dict]:
     """Parse owl classes from graph to pandas dataframe.
 
     Args:
@@ -42,7 +42,7 @@ def parse_owl_classes(graph: Graph, make_compliant: bool = False, language: str 
 
     raw_df = _parse_raw_dataframe(cast(list[tuple], list(graph.query(query.replace("en", language)))))
     if raw_df.empty:
-        return pd.concat([raw_df, pd.DataFrame([len(raw_df) * [""]])], ignore_index=True)
+        return []
 
     # group values and clean up
     processed_df = _clean_up_classes(raw_df)
@@ -56,7 +56,7 @@ def parse_owl_classes(graph: Graph, make_compliant: bool = False, language: str 
         lambda x: ", ".join(x) if isinstance(x, list) and x else None
     )
 
-    return processed_df
+    return processed_df.dropna(axis=0, how="all").replace(float("nan"), None).to_dict(orient="records")
 
 
 def _parse_raw_dataframe(query_results: list[tuple]) -> pd.DataFrame:
