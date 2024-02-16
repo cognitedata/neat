@@ -23,10 +23,3 @@ def cognite_client() -> CogniteClient:
     return CogniteClient.default_oauth_client_credentials(
         cdf_cluster=cluster, project=project, tenant_id=tenant_id, client_id=client_id, client_secret=client_secret
     )
-
-
-def test_cognite_client_available(cognite_client: CogniteClient) -> None:
-    assert cognite_client is not None
-    token = cognite_client.iam.token.inspect()
-
-    assert token is not None
