@@ -168,3 +168,4 @@ tests/data/report.txt
 tests/data/transformation_rules.xlsx
 docs/tutorial/notebooks/power-grid-graph-capture.xls
 tests/data/970_0ca0c919-046a-4940-b191-f5cc4d0e6513.json
+build/*

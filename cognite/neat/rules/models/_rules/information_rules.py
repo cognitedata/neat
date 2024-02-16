@@ -108,7 +108,7 @@ class InformationProperty(SheetEntity):
 
     Args:
         class_: Class ID to which property belongs
-        property: Property ID of the property
+        property_: Property ID of the property
         name: Property name.
         value_type: Type of value property will hold (data or link to another class)
         min_count: Minimum count of the property values. Defaults to 0
