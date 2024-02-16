@@ -65,7 +65,7 @@ class DMSArchitectMetadata(BaseMetadata):
 
 class DMSProperty(SheetEntity):
     class_: str = Field(alias="Class")
-    property: str = Field(alias="Property")
+    property_: str = Field(alias="Property")
     description: str | None = Field(None, alias="Description")
     value_type: type[PropertyType] | str = Field(alias="Value Type")
     nullable: bool | None = Field(default=None, alias="Nullable")

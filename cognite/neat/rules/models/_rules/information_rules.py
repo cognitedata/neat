@@ -1,6 +1,4 @@
-import re
 import sys
-import warnings
 from datetime import datetime
 from typing import Any, ClassVar
 
@@ -20,16 +18,9 @@ from cognite.neat.rules.models.rdfpath import (
     parse_rule,
 )
 
-from ._types import StrOrList, Version
-from .base import (
-    Prefix,
-    RoleTypes,
-    RuleModel,
-    SheetList,
-    prefix_compliance_regex,
-    version_compliance_regex,
-)
-from .domain_rules import DomainClass, DomainMetadata, DomainProperty
+from ._types import Class_, Namespace_, ParentClass_, Prefix, Property_, ValueType_, Version
+from .base import BaseMetadata, RoleTypes, RuleModel, SheetEntity, SheetList
+from .domain_rules import DomainMetadata
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -42,17 +33,10 @@ class MatchType(StrEnum):
     partial = "partial"
 
 
-class InformationMetadata(DomainMetadata):
+class InformationMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.information_architect
-    prefix: Prefix = Field(
-        description="This is used as prefix for generation of RDF OWL/SHACL data model representation",
-    )
-    namespace: Namespace = Field(
-        description="This is used as RDF namespace for generation of RDF OWL/SHACL data model representation "
-        "and/or for generation of RDF graphs.",
-        min_length=1,
-        max_length=2048,
-    )
+    prefix: Prefix
+    namespace: Namespace_
 
     name: str = Field(
         alias="title",
@@ -61,14 +45,7 @@ class InformationMetadata(DomainMetadata):
         max_length=255,
     )
 
-    version: Version | None
-
-    contributor: StrOrList = Field(
-        description=(
-            "List of contributors to the data model creation, "
-            "typically information architects are considered as contributors."
-        ),
-    )
+    version: Version
 
     created: datetime = Field(
         description=("Date of the data model creation"),
@@ -77,28 +54,6 @@ class InformationMetadata(DomainMetadata):
     updated: datetime = Field(
         description=("Date of the data model update"),
     )
-
-    @field_validator("version")
-    def is_version_compliant(cls, value):
-        if not re.match(version_compliance_regex, value):
-            raise exceptions.VersionRegexViolation(value, version_compliance_regex).to_pydantic_custom_error()
-        else:
-            return value
-
-    @field_validator("prefix")
-    def is_prefix_compliant(cls, value):
-        if not re.match(prefix_compliance_regex, value):
-            raise exceptions.PrefixesRegexViolation([value], prefix_compliance_regex).to_pydantic_custom_error()
-        return value
-
-    @field_validator("namespace", mode="before")
-    def fix_namespace_ending(cls, value):
-        if value.endswith("#") or value.endswith("/"):
-            return Namespace(TypeAdapter(HttpUrl).validate_python(value))
-        warnings.warn(
-            exceptions.NamespaceEndingFixed(value).message, category=exceptions.NamespaceEndingFixed, stacklevel=2
-        )
-        return Namespace(TypeAdapter(HttpUrl).validate_python(f"{value}#"))
 
     @classmethod
     def from_domain_expert_metadata(
@@ -121,7 +76,7 @@ class InformationMetadata(DomainMetadata):
         return cls(**metadata_as_dict)
 
 
-class InformationClass(DomainClass):
+class InformationClass(SheetEntity):
     """
     Class is a category of things that share a common set of attributes and relationships.
 
@@ -133,6 +88,9 @@ class InformationClass(DomainClass):
         match_type: The match type of the resource being described and the source entity.
     """
 
+    class_: Class_ = Field(alias="Class")
+    description: str | None = Field(None, alias="Description")
+    parent: ParentClass_ = Field(alias="Parent Class")
     source: Namespace | None = None
     match_type: MatchType | None = None
 
@@ -143,7 +101,7 @@ class InformationClass(DomainClass):
         return value
 
 
-class InformationProperty(DomainProperty):
+class InformationProperty(SheetEntity):
     """
     A property is a characteristic of a class. It is a named attribute of a class that describes a range of values
     or a relationship to another class.
@@ -165,6 +123,11 @@ class InformationProperty(DomainProperty):
     """
 
     # TODO: Can we skip rule_type and simply try to parse the rule and if it fails, raise an error?
+    class_: Class_ = Field(alias="Class")
+    property_: Property_ = Field(alias="Property")
+    value_type: ValueType_ = Field(alias="Value Type")
+    min_count: int | None = Field(alias="Min Count", default=None)
+    max_count: int | float | None = Field(alias="Max Count", default=None)
 
     default: Any | None = Field(alias="Default", default=None)
     source: URIRef | None = None
@@ -186,7 +149,7 @@ class InformationProperty(DomainProperty):
             self.rule_type = self.rule_type.lower()
             if not self.rule:
                 raise exceptions.RuleTypeProvidedButRuleMissing(
-                    self.property, self.class_, self.rule_type
+                    self.property_, self.class_, self.rule_type
                 ).to_pydantic_custom_error()
             self.rule = parse_rule(self.rule, self.rule_type)
         return self
@@ -196,7 +159,7 @@ class InformationProperty(DomainProperty):
         if (
             self.type_ == EntityTypes.data_property
             and self.default
-            and self.isList
+            and self.is_list
             and not isinstance(self.default, list)
         ):
             if isinstance(self.default, str):
@@ -223,7 +186,7 @@ class InformationProperty(DomainProperty):
 
                 except Exception:
                     exceptions.DefaultValueTypeNotProper(
-                        self.property_id,
+                        self.property_,
                         type(self.default),
                         self.value_type.python,
                     )

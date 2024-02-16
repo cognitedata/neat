@@ -56,7 +56,7 @@ class TestDomainRules:
         assert isinstance(valid_rules, DomainRules)
 
         sample_expected_properties = {"WindTurbine.name", "WindFarm.windTurbine", "ExportCable.voltageLevel"}
-        missing = sample_expected_properties - {f"{prop.class_}.{prop.property}" for prop in valid_rules.properties}
+        missing = sample_expected_properties - {f"{prop.class_}.{prop.property_}" for prop in valid_rules.properties}
         assert not missing, f"Missing properties: {missing}"
 
     def test_load_valid_emma_rules(self, emma_spreadsheet: dict[str, dict[str, Any]]) -> None:
@@ -65,7 +65,7 @@ class TestDomainRules:
         assert isinstance(valid_rules, DomainRules)
 
         sample_expected_properties = {"Substation.name", "Consumer.location", "Transmission.voltage"}
-        missing = sample_expected_properties - {f"{prop.class_}.{prop.property}" for prop in valid_rules.properties}
+        missing = sample_expected_properties - {f"{prop.class_}.{prop.property_}" for prop in valid_rules.properties}
 
         assert not missing, f"Missing properties: {missing}"
 

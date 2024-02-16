@@ -144,8 +144,6 @@ version_compliance_regex = r"^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$"
 ########################################################################################
 ########################################################################################
 
-Prefix: TypeAlias = str
-ExternalId: TypeAlias = str
 Space: TypeAlias = str
 Description: TypeAlias = constr(min_length=1, max_length=1024)  # type: ignore[valid-type]
 
