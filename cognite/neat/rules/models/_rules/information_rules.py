@@ -18,6 +18,7 @@ from cognite.neat.rules.models.rdfpath import (
     Traversal,
 )
 
+from ._types import StrOrList
 from .base import (
     Prefix,
     RoleTypes,
@@ -64,7 +65,7 @@ class InformationMetadata(DomainMetadata):
         max_length=43,
     )
 
-    contributor: str | list[str] = Field(
+    contributor: StrOrList = Field(
         description=(
             "List of contributors to the data model creation, "
             "typically information architects are considered as contributors."
@@ -90,13 +91,6 @@ class InformationMetadata(DomainMetadata):
     def is_prefix_compliant(cls, value):
         if not re.match(prefix_compliance_regex, value):
             raise exceptions.PrefixesRegexViolation([value], prefix_compliance_regex).to_pydantic_custom_error()
-        return value
-
-    @field_validator("contributor", mode="before")
-    def contributor_to_list_if_comma(cls, value):
-        if isinstance(value, str):
-            if value:
-                return value.replace(", ", ",").split(",")
         return value
 
     @field_validator("namespace", mode="before")

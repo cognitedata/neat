@@ -7,6 +7,7 @@ from pydantic import Field, field_validator
 
 from cognite.neat.rules.models._rules.information_rules import InformationMetadata
 
+from ._types import ExternalID, StrList, StrOrList
 from .base import BaseMetadata, BaseRules, RoleTypes, SheetEntity, SheetList
 from .domain_rules import DomainMetadata
 
@@ -25,15 +26,15 @@ del subclasses  # cleanup namespace
 
 class DMSArchitectMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.dms_architect
-    space: str
-    external_id: str = Field(alias="externalId")
+    space: ExternalID
+    external_id: ExternalID = Field(alias="externalId")
     version: str | None = Field(
         description="Data model version",
         min_length=1,
         max_length=43,
     )
 
-    contributor: str | list[str] = Field(
+    contributor: StrOrList = Field(
         description=(
             "List of contributors to the data model creation, "
             "typically information architects are considered as contributors."
@@ -91,21 +92,17 @@ class DMSProperty(SheetEntity):
 
 
 class DMSContainer(SheetEntity):
+    class_: str = Field(alias="Class")
     container: str = Field(alias="Container")
     description: str | None = Field(None, alias="Description")
     constraint: str | None = Field(None, alias="Constraint")
 
 
 class DMSView(SheetEntity):
+    class_: str = Field(alias="Class")
     view: str = Field(alias="View")
     description: str | None = Field(None, alias="Description")
-    implements: list[str] | None = Field(None, alias="Implements")
-
-    @field_validator("implements", mode="before")
-    def implements_to_list_of_entities(cls, value):
-        if isinstance(value, str) and value:
-            return [entry.strip() for entry in value.split(",")]
-        return value
+    implements: StrList | None = Field(None, alias="Implements")
 
 
 class DMSRules(BaseRules):
