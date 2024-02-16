@@ -84,7 +84,7 @@ gen-steps-md:
 	@echo "Generating step docs"
 	poetry run python scripts/generate_steps_md.py
 
-access-test-runner:
+run-toolkit:
 	@echo "Setup access for test runner"
 	poetry run cdf-tk build scripts/integraton_runner/ --env dev --clean
 	poetry run cdf-tk deploy --env dev
