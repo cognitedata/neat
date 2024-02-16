@@ -6,7 +6,7 @@ import pytest
 
 from cognite.neat.rules.models._rules.information_rules import InformationRules
 from tests.config import DOC_KNOWLEDGE_ACQUISITION_TUTORIAL
-from tests.tests_units.rules.test_models.utils import _read_spreadsheet
+from tests.tests_unit.rules.test_models.utils import _read_spreadsheet
 
 
 @pytest.fixture(scope="session")
