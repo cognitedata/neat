@@ -12,6 +12,7 @@ from cognite.neat.rules.models._base import (
 )
 from cognite.neat.rules.models.value_types import XSD_VALUE_TYPE_MAPPINGS, ValueType
 
+from ._types import StrOrList
 from .base import (
     BaseMetadata,
     ExternalId,
@@ -27,18 +28,12 @@ from .base import (
 
 class DomainMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.domain_expert
-    creator: str | list[str]
-
-    @field_validator("creator", mode="before")
-    def creator_to_list_if_comma(cls, value):
-        if isinstance(value, str) and value:
-            return value.replace(", ", ",").split(",")
-        return value
+    creator: StrOrList
 
 
 class DomainProperty(SheetEntity):
     class_: ExternalId = Field(alias="Class", min_length=1, max_length=255)
-    property: ExternalId = Field(alias="Property", min_length=1, max_length=255)
+    property_: ExternalId = Field(alias="Property", min_length=1, max_length=255)
     value_type: ValueType = Field(alias="Value Type")
     min_count: int | None = Field(alias="Min Count", default=None)
     max_count: int | float | None = Field(alias="Max Count", default=None)
@@ -68,7 +63,7 @@ class DomainProperty(SheetEntity):
         else:
             return value
 
-    @field_validator("property", mode="after")
+    @field_validator("property_", mode="after")
     def is_property_id_compliant(cls, value):
         if re.search(more_than_one_none_alphanumerics_regex, value):
             raise exceptions.MoreThanOneNonAlphanumericCharacter("property_id", value).to_pydantic_custom_error()

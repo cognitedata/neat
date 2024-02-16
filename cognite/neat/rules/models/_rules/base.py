@@ -153,7 +153,7 @@ Description: TypeAlias = constr(min_length=1, max_length=1024)  # type: ignore[v
 class RoleTypes(StrEnum):
     domain_expert = "domain expert"
     information_architect = "information architect"
-    cdf_solution_architect = "cdf solution architect"
+    dms_architect = "DMS Architect"
 
 
 class RuleModel(BaseModel):

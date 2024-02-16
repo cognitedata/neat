@@ -6,15 +6,7 @@ import pytest
 
 from cognite.neat.rules.models._rules.information_rules import InformationRules
 from tests.config import DOC_KNOWLEDGE_ACQUISITION_TUTORIAL
-
-
-def _read_spreadsheet(excel_file: pd.ExcelFile, sheet_name: str, skiprows: int = 0) -> list[Any]:
-    return (
-        pd.read_excel(excel_file, sheet_name, skiprows=skiprows)
-        .dropna(axis=0, how="all")
-        .replace(float("nan"), None)
-        .to_dict(orient="records")
-    )
+from tests.tests_units.rules.test_models.utils import _read_spreadsheet
 
 
 @pytest.fixture(scope="session")
@@ -46,6 +38,53 @@ def invalid_domain_rules_cases():
         "Value error, Metadata.role should be equal to 'information architect'",
         id="invalid_role",
     )
+    yield pytest.param(
+        {
+            "Metadata": {
+                "role": "information architect",
+                "creator": "Jon, Emma",
+                "contributor": "David",
+                "namespace": "http://purl.org/cognite/power2consumer",
+                "prefix": "power",
+                "created": datetime(2024, 2, 9, 0, 0),
+                "updated": datetime(2024, 2, 9, 0, 0),
+                "version": "0.1.0",
+                "title": "Power to Consumer Data Model",
+                "license": "CC-BY 4.0",
+                "rights": "Free for use",
+            },
+            "Classes": [
+                {
+                    "Class": "GeneratingUnit",
+                    "Description": None,
+                    "Parent Class": None,
+                    "Source": "http://www.iec.ch/TC57/CIM#GeneratingUnit",
+                    "Match": "exact",
+                }
+            ],
+            "Properties": [
+                {
+                    "Class": "GeneratingUnit",
+                    "Property": "name",
+                    "Description": None,
+                    "Value Type": "string",
+                    "Min Count": 1,
+                    "Max Count": 1.0,
+                    "Default": None,
+                    "Source": None,
+                    "MatchType": None,
+                    "Rule Type": "rdfpath",
+                    "Rule": None,
+                }
+            ],
+        },
+        (
+            "Rule type 'rdfpath' provided for property 'name' in class 'GeneratingUnit' but rule is not provided!"
+            "\nFor more information visit: "
+            "https://cognite-neat.readthedocs-hosted.com/en/latest/api/exceptions.html#cognite.neat.rules.exceptions.RuleTypeProvidedButRuleMissing"
+        ),
+        id="missing_rule",
+    )
 
 
 class TestInformationRules:
@@ -59,7 +98,7 @@ class TestInformationRules:
             "Substation.secondaryPowerLine",
             "WindFarm.exportCable",
         }
-        missing = sample_expected_properties - {f"{prop.class_}.{prop.property}" for prop in valid_rules.properties}
+        missing = sample_expected_properties - {f"{prop.class_}.{prop.property_}" for prop in valid_rules.properties}
         assert not missing, f"Missing properties: {missing}"
 
     @pytest.mark.parametrize("invalid_rules, expected_exception", list(invalid_domain_rules_cases()))
