@@ -128,7 +128,6 @@ class InformationProperty(SheetEntity):
     value_type: ValueType_ = Field(alias="Value Type")
     min_count: int | None = Field(alias="Min Count", default=None)
     max_count: int | float | None = Field(alias="Max Count", default=None)
-
     default: Any | None = Field(alias="Default", default=None)
     source: URIRef | None = None
     match_type: MatchType | None = None
