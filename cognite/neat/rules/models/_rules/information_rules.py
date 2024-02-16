@@ -255,7 +255,7 @@ class InformationProperty(DomainProperty):
         return self.min_count != 0
 
     @property
-    def isList(self) -> bool:
+    def is_list(self) -> bool:
         """Returns True if property contains a list of values."""
         return self.max_count != 1
 
