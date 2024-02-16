@@ -23,7 +23,7 @@ def alice_spreadsheet() -> dict[str, dict[str, Any]]:
 def invalid_dms_rules_cases():
     yield pytest.param(
         {"metadata": {"role": "information_architect"}, "properties": {}},
-        "Value error, Metadata.role should be equal to 'DMS architect'",
+        "Value error, Metadata.role should be equal to 'DMS Architect'",
         id="invalid_role",
     )
 
