@@ -65,8 +65,12 @@ jobs:
 
       - run: poetry install -E all
 
-      - name: Run tests
-        run: export PYTHONPATH=$PYTHONPATH:$(pwd); poetry run pytest
+      - name: Run unit tests
+        run: export PYTHONPATH=$PYTHONPATH:$(pwd); poetry run pytest/tests_unit
+
+
+      - name: Run integration tests
+        run: export PYTHONPATH=$PYTHONPATH:$(pwd); poetry run pytest/tests_integration
 
       # needs update of some dep due to new version of ipynb test
       # - name: Run notebook tests
