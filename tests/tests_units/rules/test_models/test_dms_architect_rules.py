@@ -34,7 +34,7 @@ class TestDMSRules:
 
         assert isinstance(valid_rules, DMSRules)
 
-        sample_expected_properties = {"WindTurbine.name", "WindFarm.windTurbine", "ExportCable.voltageLevel"}
+        sample_expected_properties = {"WindTurbine.name", "WindFarm.WindTurbines", "Circuit Breaker.voltage"}
         missing = sample_expected_properties - {f"{prop.class_}.{prop.property}" for prop in valid_rules.properties}
         assert not missing, f"Missing properties: {missing}"
 

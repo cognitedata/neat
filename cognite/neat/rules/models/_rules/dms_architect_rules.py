@@ -1,19 +1,44 @@
+import abc
 from datetime import datetime
-from typing import ClassVar
+from typing import Any, ClassVar
 
+from cognite.client.data_classes.data_modeling import PropertyType
 from pydantic import Field, field_validator
 
 from cognite.neat.rules.models._rules.information_rules import InformationMetadata
-from cognite.neat.rules.models.value_types import ValueType
 
-from .base import BaseRules, RoleTypes, SheetEntity, SheetList
+from .base import BaseMetadata, BaseRules, RoleTypes, SheetEntity, SheetList
 from .domain_rules import DomainMetadata
 
+subclasses = list(PropertyType.__subclasses__())
+_PropertyType_by_name: dict[str, type[PropertyType]] = {}
+for subclass in subclasses:
+    subclasses.extend(subclass.__subclasses__())
+    if abc.ABC in subclass.__bases__:
+        continue
+    try:
+        _PropertyType_by_name[subclass._type.casefold()] = subclass
+    except AttributeError:
+        ...
+del subclasses  # cleanup namespace
 
-class DMSArchitectMetadata(InformationMetadata):
+
+class DMSArchitectMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.dms_architect
     space: str
     external_id: str = Field(alias="externalId")
+    version: str | None = Field(
+        description="Data model version",
+        min_length=1,
+        max_length=43,
+    )
+
+    contributor: str | list[str] = Field(
+        description=(
+            "List of contributors to the data model creation, "
+            "typically information architects are considered as contributors."
+        ),
+    )
 
     @classmethod
     def from_information_architect_metadata(
@@ -29,7 +54,7 @@ class DMSArchitectMetadata(InformationMetadata):
         cls,
         metadata: DomainMetadata,
         space: str | None = None,
-        externalId: str | None = None,
+        external_id: str | None = None,
         version: str | None = None,
         contributor: str | list[str] | None = None,
         created: datetime | None = None,
@@ -39,24 +64,30 @@ class DMSArchitectMetadata(InformationMetadata):
             metadata, None, None, version, contributor, created, updated
         ).model_dump()
 
-        return cls.from_information_architect_metadata(information)
+        return cls.from_information_architect_metadata(information, space, external_id)
 
 
 class DMSProperty(SheetEntity):
     class_: str = Field(alias="Class")
     property: str = Field(alias="Property")
-    description: str | None = None
-    value_type: ValueType = Field(alias="Value Type")
-    nullable: bool = Field(default=True)
-    is_list: bool = Field(default=False)
-    default: str | None = None
-    source: str | None = None
-    container: str | None = None
-    container_property: str | None = None
-    view: str | None = None
-    view_property: str | None = None
-    index: str | None = None
-    constraint: str | None = None
+    description: str | None = Field(None, alias="Description")
+    value_type: type[PropertyType] | str = Field(alias="Value Type")
+    nullable: bool | None = Field(default=None, alias="Nullable")
+    is_list: bool | None = Field(default=None, alias="IsList")
+    default: str | None = Field(None, alias="Default")
+    source: str | None = Field(None, alias="Source")
+    container: str | None = Field(None, alias="Container")
+    container_property: str | None = Field(None, alias="ContainerProperty")
+    view: str | None = Field(None, alias="View")
+    view_property: str | None = Field(None, alias="ViewProperty")
+    index: str | None = Field(None, alias="Index")
+    constraint: str | None = Field(None, alias="Constraint")
+
+    @field_validator("value_type", mode="before")
+    def to_type(cls, value: Any) -> Any:
+        if isinstance(value, str) and value.casefold() in _PropertyType_by_name:
+            return _PropertyType_by_name[value.casefold()]
+        return value
 
 
 class DMSContainer(SheetEntity):
@@ -79,6 +110,6 @@ class DMSView(SheetEntity):
 
 class DMSRules(BaseRules):
     metadata: DMSArchitectMetadata = Field(alias="Metadata")
-    properties: SheetList = Field(alias="Properties")
+    properties: SheetList[DMSProperty] = Field(alias="Properties")
     containers: SheetList[DMSContainer] | None = Field(None, alias="Containers")
     views: SheetList[DMSView] | None = Field(None, alias="Views")
