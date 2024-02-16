@@ -18,7 +18,7 @@ from cognite.neat.constants import EXAMPLE_WORKFLOWS
 from cognite.neat.rules.models.rules import Rules
 from cognite.neat.workflows.base import BaseWorkflow
 from cognite.neat.workflows.model import WorkflowDefinition
-from tests.tests_units.app.api.memory_cognite_client import MemoryClient
+from tests.tests_unit.app.api.memory_cognite_client import MemoryClient
 
 
 @pytest.fixture(scope="session")

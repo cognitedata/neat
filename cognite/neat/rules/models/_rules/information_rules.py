@@ -150,7 +150,7 @@ class InformationProperty(DomainProperty):
 
     Args:
         class_: Class ID to which property belongs
-        property: Property ID of the property
+        property_: Property ID of the property
         name: Property name.
         value_type: Type of value property will hold (data or link to another class)
         min_count: Minimum count of the property values. Defaults to 0
@@ -186,7 +186,7 @@ class InformationProperty(DomainProperty):
             self.rule_type = self.rule_type.lower()
             if not self.rule:
                 raise exceptions.RuleTypeProvidedButRuleMissing(
-                    self.property, self.class_, self.rule_type
+                    self.property_, self.class_, self.rule_type
                 ).to_pydantic_custom_error()
             self.rule = parse_rule(self.rule, self.rule_type)
         return self
