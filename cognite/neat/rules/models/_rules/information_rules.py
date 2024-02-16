@@ -250,7 +250,7 @@ class InformationProperty(DomainProperty):
             return EntityTypes.undefined
 
     @property
-    def isMandatory(self) -> bool:
+    def is_mandatory(self) -> bool:
         """Returns True if property is mandatory."""
         return self.min_count != 0
 
