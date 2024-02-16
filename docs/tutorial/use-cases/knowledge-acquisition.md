@@ -528,6 +528,7 @@ and `WindTurbine` containers, but she still kept reusing the properties from the
 could have kept the constraints, and rewritten all properties for the `WindTurbine` view, without reusing the properties
 from the `GeneratingUnit` and `PowerAsset` views.
 
+Download Alice's spreadsheet from [here](spreadsheets/cdf-dms-architect-alice.xlsx).
 
 ### Validating in Neat
 

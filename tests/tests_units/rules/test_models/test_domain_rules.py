@@ -5,6 +5,7 @@ import pytest
 
 from cognite.neat.rules.models._rules.domain_rules import DomainRules
 from tests.config import DOC_KNOWLEDGE_ACQUISITION_TUTORIAL
+from tests.tests_units.rules.test_models.utils import _read_spreadsheet
 
 
 @pytest.fixture(scope="session")
@@ -26,15 +27,6 @@ def emma_spreadsheet() -> dict[str, dict[str, Any]]:
         "Properties": _read_spreadsheet(excel_file, "Properties", skiprows=1),
         "Classes": _read_spreadsheet(excel_file, "Classes", skiprows=1),
     }
-
-
-def _read_spreadsheet(excel_file: pd.ExcelFile, sheet_name: str, skiprows: int = 0) -> list[Any]:
-    return (
-        pd.read_excel(excel_file, sheet_name, skiprows=skiprows)
-        .dropna(axis=0, how="all")
-        .replace(float("nan"), None)
-        .to_dict(orient="records")
-    )
 
 
 def invalid_domain_rules_cases():

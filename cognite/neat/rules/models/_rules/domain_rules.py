@@ -12,6 +12,7 @@ from cognite.neat.rules.models._base import (
 )
 from cognite.neat.rules.models.value_types import XSD_VALUE_TYPE_MAPPINGS, ValueType
 
+from ._types import StrOrList
 from .base import (
     BaseMetadata,
     ExternalId,
@@ -27,13 +28,7 @@ from .base import (
 
 class DomainMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.domain_expert
-    creator: str | list[str]
-
-    @field_validator("creator", mode="before")
-    def creator_to_list_if_comma(cls, value):
-        if isinstance(value, str) and value:
-            return value.replace(", ", ",").split(",")
-        return value
+    creator: StrOrList
 
 
 class DomainProperty(SheetEntity):

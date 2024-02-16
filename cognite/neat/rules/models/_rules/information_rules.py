@@ -20,6 +20,7 @@ from cognite.neat.rules.models.rdfpath import (
     parse_rule,
 )
 
+from ._types import StrOrList, Version
 from .base import (
     Prefix,
     RoleTypes,
@@ -60,10 +61,13 @@ class InformationMetadata(DomainMetadata):
         max_length=255,
     )
 
-    version: str | None = Field(
-        description="Data model version",
-        min_length=1,
-        max_length=43,
+    version: Version | None
+
+    contributor: StrOrList = Field(
+        description=(
+            "List of contributors to the data model creation, "
+            "typically information architects are considered as contributors."
+        ),
     )
 
     created: datetime = Field(
