@@ -18,7 +18,7 @@ from cognite.neat.rules.models.rdfpath import (
     Traversal,
 )
 
-from ._types import StrOrList
+from ._types import StrOrList, Version
 from .base import (
     Prefix,
     RoleTypes,
@@ -59,11 +59,7 @@ class InformationMetadata(DomainMetadata):
         max_length=255,
     )
 
-    version: str | None = Field(
-        description="Data model version",
-        min_length=1,
-        max_length=43,
-    )
+    version: Version | None
 
     contributor: StrOrList = Field(
         description=(

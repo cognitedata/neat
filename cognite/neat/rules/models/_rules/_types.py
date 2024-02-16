@@ -17,3 +17,12 @@ ExternalID = Annotated[
     str,
     Field(min_items=1, max_items=255),
 ]
+
+Version = Annotated[
+    str,
+    Field(
+        description="Data model version",
+        min_length=1,
+        max_length=43,
+    ),
+]

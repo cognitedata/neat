@@ -7,7 +7,7 @@ from pydantic import Field, field_validator
 
 from cognite.neat.rules.models._rules.information_rules import InformationMetadata
 
-from ._types import ExternalID, StrList, StrOrList
+from ._types import ExternalID, StrList, StrOrList, Version
 from .base import BaseMetadata, BaseRules, RoleTypes, SheetEntity, SheetList
 from .domain_rules import DomainMetadata
 
@@ -28,12 +28,7 @@ class DMSArchitectMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.dms_architect
     space: ExternalID
     external_id: ExternalID = Field(alias="externalId")
-    version: str | None = Field(
-        description="Data model version",
-        min_length=1,
-        max_length=43,
-    )
-
+    version: Version | None
     contributor: StrOrList = Field(
         description=(
             "List of contributors to the data model creation, "
