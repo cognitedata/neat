@@ -3,12 +3,13 @@ from datetime import datetime
 from typing import Any, ClassVar
 
 from cognite.client.data_classes.data_modeling import PropertyType
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 
 from cognite.neat.rules.models._rules.information_rules import InformationMetadata
 
 from ._types import ExternalID, StrList, StrOrList, Version
 from .base import BaseMetadata, BaseRules, RoleTypes, SheetEntity, SheetList
+from .dms_schema import DMSSchema
 from .domain_rules import DomainMetadata
 
 subclasses = list(PropertyType.__subclasses__())
@@ -105,3 +106,14 @@ class DMSRules(BaseRules):
     properties: SheetList[DMSProperty] = Field(alias="Properties")
     containers: SheetList[DMSContainer] | None = Field(None, alias="Containers")
     views: SheetList[DMSView] | None = Field(None, alias="Views")
+
+    def as_schema(self) -> DMSSchema:
+        raise NotImplementedError
+
+    @model_validator(mode="after")
+    def validate_dms_schema(self, v: Any) -> Any:
+        schema = self.as_schema()
+        errors = schema.validate()
+        if errors:
+            raise ValueError(errors)
+        return v
