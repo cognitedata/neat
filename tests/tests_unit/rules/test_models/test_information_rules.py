@@ -6,15 +6,7 @@ import pytest
 
 from cognite.neat.rules.models._rules.information_rules import InformationRules
 from tests.config import DOC_KNOWLEDGE_ACQUISITION_TUTORIAL
-
-
-def _read_spreadsheet(excel_file: pd.ExcelFile, sheet_name: str, skiprows: int = 0) -> list[Any]:
-    return (
-        pd.read_excel(excel_file, sheet_name, skiprows=skiprows)
-        .dropna(axis=0, how="all")
-        .replace(float("nan"), None)
-        .to_dict(orient="records")
-    )
+from tests.tests_unit.rules.test_models.utils import _read_spreadsheet
 
 
 @pytest.fixture(scope="session")
@@ -106,7 +98,7 @@ class TestInformationRules:
             "Substation.secondaryPowerLine",
             "WindFarm.exportCable",
         }
-        missing = sample_expected_properties - {f"{prop.class_}.{prop.property}" for prop in valid_rules.properties}
+        missing = sample_expected_properties - {f"{prop.class_}.{prop.property_}" for prop in valid_rules.properties}
         assert not missing, f"Missing properties: {missing}"
 
     @pytest.mark.parametrize("invalid_rules, expected_exception", list(invalid_domain_rules_cases()))

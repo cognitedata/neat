@@ -1,6 +1,4 @@
-import re
 import sys
-import warnings
 from datetime import datetime
 from typing import Any, ClassVar
 
@@ -20,26 +18,25 @@ from cognite.neat.rules.models.rdfpath import (
     parse_rule,
 )
 
-from .base import MatchType, Prefix, RoleTypes, RuleModel, SheetList, prefix_compliance_regex, version_compliance_regex
-from .domain_rules import DomainClass, DomainMetadata, DomainProperty
+from ._types import ClassType, NamespaceType, ParentClassType, PrefixType, PropertyType, ValueTypeType, VersionType
+from .base import BaseMetadata, RoleTypes, RuleModel, SheetEntity, SheetList
+from .domain_rules import DomainMetadata
 
 if sys.version_info >= (3, 11):
-    pass
+    from enum import StrEnum
 else:
-    pass
+    from backports.strenum import StrEnum
 
 
-class InformationMetadata(DomainMetadata):
+class MatchType(StrEnum):
+    exact = "exact"
+    partial = "partial"
+
+
+class InformationMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.information_architect
-    prefix: Prefix = Field(
-        description="This is used as prefix for generation of RDF OWL/SHACL data model representation",
-    )
-    namespace: Namespace = Field(
-        description="This is used as RDF namespace for generation of RDF OWL/SHACL data model representation "
-        "and/or for generation of RDF graphs.",
-        min_length=1,
-        max_length=2048,
-    )
+    prefix: PrefixType
+    namespace: NamespaceType
 
     name: str = Field(
         alias="title",
@@ -48,18 +45,7 @@ class InformationMetadata(DomainMetadata):
         max_length=255,
     )
 
-    version: str | None = Field(
-        description="Data model version",
-        min_length=1,
-        max_length=43,
-    )
-
-    contributor: str | list[str] = Field(
-        description=(
-            "List of contributors to the data model creation, "
-            "typically information architects are considered as contributors."
-        ),
-    )
+    version: VersionType
 
     created: datetime = Field(
         description=("Date of the data model creation"),
@@ -68,35 +54,6 @@ class InformationMetadata(DomainMetadata):
     updated: datetime = Field(
         description=("Date of the data model update"),
     )
-
-    @field_validator("version")
-    def is_version_compliant(cls, value):
-        if not re.match(version_compliance_regex, value):
-            raise exceptions.VersionRegexViolation(value, version_compliance_regex).to_pydantic_custom_error()
-        else:
-            return value
-
-    @field_validator("prefix")
-    def is_prefix_compliant(cls, value):
-        if not re.match(prefix_compliance_regex, value):
-            raise exceptions.PrefixesRegexViolation([value], prefix_compliance_regex).to_pydantic_custom_error()
-        return value
-
-    @field_validator("contributor", mode="before")
-    def contributor_to_list_if_comma(cls, value):
-        if isinstance(value, str):
-            if value:
-                return value.replace(", ", ",").split(",")
-        return value
-
-    @field_validator("namespace", mode="before")
-    def fix_namespace_ending(cls, value):
-        if value.endswith("#") or value.endswith("/"):
-            return Namespace(TypeAdapter(HttpUrl).validate_python(value))
-        warnings.warn(
-            exceptions.NamespaceEndingFixed(value).message, category=exceptions.NamespaceEndingFixed, stacklevel=2
-        )
-        return Namespace(TypeAdapter(HttpUrl).validate_python(f"{value}#"))
 
     @classmethod
     def from_domain_expert_metadata(
@@ -119,7 +76,7 @@ class InformationMetadata(DomainMetadata):
         return cls(**metadata_as_dict)
 
 
-class InformationClass(DomainClass):
+class InformationClass(SheetEntity):
     """
     Class is a category of things that share a common set of attributes and relationships.
 
@@ -131,24 +88,27 @@ class InformationClass(DomainClass):
         match_type: The match type of the resource being described and the source entity.
     """
 
-    source: URIRef | None = Field(alias="Source", default=None)
-    match: MatchType | None = Field(alias="Match", default=None)
+    class_: ClassType = Field(alias="Class")
+    description: str | None = Field(None, alias="Description")
+    parent: ParentClassType = Field(alias="Parent Class")
+    source: Namespace | None = None
+    match_type: MatchType | None = None
 
     @field_validator("source", mode="before")
-    def convert_source_to_uri(cls, value):
-        if value and not isinstance(value, URIRef):
-            return URIRef(TypeAdapter(HttpUrl).validate_python(value))
+    def fix_namespace_ending(cls, value):
+        if value:
+            return Namespace(TypeAdapter(HttpUrl).validate_python(value))
         return value
 
 
-class InformationProperty(DomainProperty):
+class InformationProperty(SheetEntity):
     """
     A property is a characteristic of a class. It is a named attribute of a class that describes a range of values
     or a relationship to another class.
 
     Args:
         class_: Class ID to which property belongs
-        property: Property ID of the property
+        property_: Property ID of the property
         name: Property name.
         value_type: Type of value property will hold (data or link to another class)
         min_count: Minimum count of the property values. Defaults to 0
@@ -163,18 +123,22 @@ class InformationProperty(DomainProperty):
     """
 
     # TODO: Can we skip rule_type and simply try to parse the rule and if it fails, raise an error?
-
+    class_: ClassType = Field(alias="Class")
+    property_: PropertyType = Field(alias="Property")
+    value_type: ValueTypeType = Field(alias="Value Type")
+    min_count: int | None = Field(alias="Min Count", default=None)
+    max_count: int | float | None = Field(alias="Max Count", default=None)
     default: Any | None = Field(alias="Default", default=None)
-    source: URIRef | None = Field(alias="Source", default=None)
-    match: MatchType | None = Field(alias="Match", default=None)
+    source: URIRef | None = None
+    match_type: MatchType | None = None
     rule_type: str | TransformationRuleType | None = Field(alias="Rule Type", default=None)
     rule: str | AllReferences | SingleProperty | Hop | RawLookup | SPARQLQuery | Traversal | None = Field(
         alias="Rule", default=None
     )
 
     @field_validator("source", mode="before")
-    def convert_source_to_uri(cls, value):
-        if value and not isinstance(value, URIRef):
+    def fix_namespace_ending(cls, value):
+        if value:
             return URIRef(TypeAdapter(HttpUrl).validate_python(value))
         return value
 
@@ -184,7 +148,7 @@ class InformationProperty(DomainProperty):
             self.rule_type = self.rule_type.lower()
             if not self.rule:
                 raise exceptions.RuleTypeProvidedButRuleMissing(
-                    self.property, self.class_, self.rule_type
+                    self.property_, self.class_, self.rule_type
                 ).to_pydantic_custom_error()
             self.rule = parse_rule(self.rule, self.rule_type)
         return self
@@ -194,7 +158,7 @@ class InformationProperty(DomainProperty):
         if (
             self.type_ == EntityTypes.data_property
             and self.default
-            and self.isList
+            and self.is_list
             and not isinstance(self.default, list)
         ):
             if isinstance(self.default, str):
@@ -221,7 +185,7 @@ class InformationProperty(DomainProperty):
 
                 except Exception:
                     exceptions.DefaultValueTypeNotProper(
-                        self.property_id,
+                        self.property_,
                         type(self.default),
                         self.value_type.python,
                     )
@@ -238,12 +202,12 @@ class InformationProperty(DomainProperty):
             return EntityTypes.undefined
 
     @property
-    def isMandatory(self) -> bool:
+    def is_mandatory(self) -> bool:
         """Returns True if property is mandatory."""
         return self.min_count != 0
 
     @property
-    def isList(self) -> bool:
+    def is_list(self) -> bool:
         """Returns True if property contains a list of values."""
         return self.max_count != 1
 
