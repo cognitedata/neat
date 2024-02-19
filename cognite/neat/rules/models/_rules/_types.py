@@ -95,19 +95,19 @@ VersionType = Annotated[
 
 
 def split_parent(value: str) -> list[ParentClass] | None:
-    if isinstance(value, str) and value:
-        parents = []
-        for v in value.replace(", ", ",").split(","):
-            if ENTITY_ID_REGEX_COMPILED.match(v) or VERSIONED_ENTITY_REGEX_COMPILED.match(v):
-                parents.append(ParentClass.from_string(entity_string=v))
-            else:
-                # if all fails defaults "neat" object which ends up being updated to proper
-                # prefix and version upon completion of Rules validation
-                parents.append(ParentClass(prefix="undefined", suffix=v, name=v))
-
-        return parents
-    else:
+    if not (isinstance(value, str) and value):
         return None
+
+    parents = []
+    for v in value.replace(", ", ",").split(","):
+        if ENTITY_ID_REGEX_COMPILED.match(v) or VERSIONED_ENTITY_REGEX_COMPILED.match(v):
+            parents.append(ParentClass.from_string(entity_string=v))
+        else:
+            # if all fails defaults "neat" object which ends up being updated to proper
+            # prefix and version upon completion of Rules validation
+            parents.append(ParentClass(prefix="undefined", suffix=v, name=v))
+
+    return parents
 
 
 def check_parent(value: list[ParentClass]) -> list[ParentClass]:
