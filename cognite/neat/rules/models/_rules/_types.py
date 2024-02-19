@@ -32,7 +32,7 @@ from .base import (
 )
 
 
-def custom_error(exc_factory: Callable[[str | None, Exception], Exception, Any]) -> Any:
+def custom_error(exc_factory: Callable[[str | None, Exception], Exception]) -> Any:
     def _validator(v: Any, next_: Any, ctx: ValidationInfo) -> Any:
         try:
             return next_(v, ctx)
