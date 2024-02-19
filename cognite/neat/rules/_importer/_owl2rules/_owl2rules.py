@@ -39,7 +39,7 @@ class OWLImporter(BaseImporter):
 
     def __init__(self, owl_filepath: Path, role: RoleTypes | None = None):
         self.owl_filepath = owl_filepath
-        self.role = RoleTypes.information_architect
+        self.role = role or RoleTypes.information_architect
 
     def to_rules(self, make_compliant: bool = True) -> DomainRules | InformationRules:
         graph = Graph()
@@ -67,8 +67,10 @@ class OWLImporter(BaseImporter):
 
         if self.role == RoleTypes.information_architect:
             return InformationRules.model_validate(components)
-        else:
+        elif self.role == RoleTypes.domain_expert:
             return InformationRules.model_validate(components).to_domain_rules()
+        else:
+            raise ValueError(f"Role {self.role} not supported")
 
 
 def make_components_compliant(components: dict) -> dict:
