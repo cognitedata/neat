@@ -44,7 +44,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 data=[
                     DMSProperty(
                         class_="WindTurbine",
-                        property="name",
+                        property_="name",
                         value_type="text",
                         container="Asset",
                         container_property="name",
@@ -53,7 +53,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     ),
                     DMSProperty(
                         class_="WindTurbine",
-                        property="ratedPower",
+                        property_="ratedPower",
                         value_type="float64",
                         container="GeneratingUnit",
                         container_property="ratedPower",
@@ -62,7 +62,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     ),
                     DMSProperty(
                         class_="WindFarm",
-                        property="WindTurbines",
+                        property_="WindTurbines",
                         value_type="WindTurbine",
                         relation="multiedge",
                         view="WindFarm",
@@ -165,7 +165,7 @@ class TestDMSRules:
         assert isinstance(valid_rules, DMSRules)
 
         sample_expected_properties = {"WindTurbine.name", "WindFarm.WindTurbines", "Circuit Breaker.voltage"}
-        missing = sample_expected_properties - {f"{prop.class_}.{prop.property}" for prop in valid_rules.properties}
+        missing = sample_expected_properties - {f"{prop.class_}.{prop.property_}" for prop in valid_rules.properties}
         assert not missing, f"Missing properties: {missing}"
 
     @pytest.mark.parametrize("rules, expected_schema", rules_schema_tests_cases())
