@@ -113,16 +113,16 @@ def split_parent(value: str) -> list[ParentClass] | None:
 def check_parent(value: list[ParentClass]) -> list[ParentClass]:
     if not value:
         return value
-        if illegal_ids := [v for v in value if re.search(more_than_one_none_alphanumerics_regex, v.suffix)]:
-            raise exceptions.MoreThanOneNonAlphanumericCharacter(
-                "parent", ", ".join(cast(list[str], illegal_ids))
-            ).to_pydantic_custom_error()
-        if illegal_ids := [v for v in value if not re.match(class_id_compliance_regex, v.suffix)]:
-            for v in illegal_ids:
-                print(v.id)
-            raise exceptions.ClassSheetParentClassIDRegexViolation(
-                cast(list[str], illegal_ids), class_id_compliance_regex
-            ).to_pydantic_custom_error()
+    if illegal_ids := [v for v in value if re.search(more_than_one_none_alphanumerics_regex, v.suffix)]:
+        raise exceptions.MoreThanOneNonAlphanumericCharacter(
+            "parent", ", ".join(cast(list[str], illegal_ids))
+        ).to_pydantic_custom_error()
+    if illegal_ids := [v for v in value if not re.match(class_id_compliance_regex, v.suffix)]:
+        for v in illegal_ids:
+            print(v.id)
+        raise exceptions.ClassSheetParentClassIDRegexViolation(
+            cast(list[str], illegal_ids), class_id_compliance_regex
+        ).to_pydantic_custom_error()
     return value
 
 
