@@ -8,13 +8,12 @@ from cognite.client import data_modeling as dm
 @dataclass
 class SchemaError(ABC):
     error_name: ClassVar[str]
-    referred_by: set
 
 
 @dataclass
 class DMSSchema:
     space: dm.SpaceApply
-    model: dm.DataModel
+    model: dm.DataModelApply
     views: dm.ViewApplyList = field(default_factory=lambda: dm.ViewApplyList([]))
     containers: dm.ContainerApplyList = field(default_factory=lambda: dm.ContainerApplyList([]))
     node_types: dm.NodeApplyList = field(default_factory=lambda: dm.NodeApplyList([]))
@@ -24,21 +23,21 @@ class DMSSchema:
 
 
 @dataclass
-class NonExistentSpace(SchemaError):
+class MissingSpace(SchemaError):
     error_name: ClassVar[str] = "NonExistentSpace"
     space: str
     referred_by: set[dm.ContainerId | dm.ViewId | dm.NodeId | dm.EdgeId]
 
 
 @dataclass
-class NonExistentContainer(SchemaError):
+class MissingContainer(SchemaError):
     error_name: ClassVar[str] = "NonExistentContainer"
     container: dm.ContainerId
     referred_by: set[dm.ViewId]
 
 
 @dataclass
-class NonExistentContainerProperty(SchemaError):
+class MissingContainerProperty(SchemaError):
     error_name: ClassVar[str] = "NonExistentContainerProperty"
     container: dm.ContainerId
     property: str
@@ -46,7 +45,7 @@ class NonExistentContainerProperty(SchemaError):
 
 
 @dataclass
-class NonExistentView(SchemaError):
+class MissingView(SchemaError):
     error_name: ClassVar[str] = "NonExistentView"
     view: dm.ViewId
     referred_by: set[dm.DataModelId]
@@ -67,8 +66,8 @@ class DirectRelationMissingSource(SchemaError):
 
 
 @dataclass
-class DoubleUseContainerProperty(SchemaError):
-    error_name: ClassVar[str] = "DoubleUseContainerProperty"
+class ContainerPropertyUsedMultipleTimes(SchemaError):
+    error_name: ClassVar[str] = "ContainerPropertyUsedMultipleTimes"
     container: dm.ContainerId
     property: str
     referred_by: set[tuple[dm.ViewId, str]]

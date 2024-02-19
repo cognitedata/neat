@@ -107,9 +107,6 @@ class DMSRules(BaseRules):
     containers: SheetList[DMSContainer] | None = Field(None, alias="Containers")
     views: SheetList[DMSView] | None = Field(None, alias="Views")
 
-    def as_schema(self) -> DMSSchema:
-        raise NotImplementedError
-
     @model_validator(mode="after")
     def validate_dms_schema(self, v: Any) -> Any:
         schema = self.as_schema()
@@ -117,3 +114,6 @@ class DMSRules(BaseRules):
         if errors:
             raise ValueError(errors)
         return v
+
+    def as_schema(self) -> DMSSchema:
+        raise NotImplementedError
