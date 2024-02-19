@@ -12,6 +12,7 @@ from pydantic import (
     ValidationInfo,
     WrapValidator,
 )
+from pydantic_core import PydanticCustomError
 from rdflib import Namespace
 
 from cognite.neat.rules import exceptions
@@ -32,123 +33,18 @@ from .base import (
 )
 
 
-def custom_error(exc_factory: Callable[[str | None, Exception], Exception]) -> Any:
-    def _validator(v: Any, next_: Any, ctx: ValidationInfo) -> Any:
+def _custom_error(exc_factory: Callable[[str | None, Exception], Any]) -> Any:
+    def _validator(value: Any, next_: Any, ctx: ValidationInfo) -> Any:
         try:
-            return next_(v, ctx)
-        except Exception as e:
-            raise exc_factory(ctx.field_name, e, v) from None
+            return next_(value, ctx)
+        except Exception:
+            raise exc_factory(ctx.field_name, value) from None
 
     return WrapValidator(_validator)
 
 
-def raise_(ex):
-    raise ex
-
-
-StrOrListType = Annotated[
-    str | list[str],
-    BeforeValidator(lambda v: v.replace(", ", ",").split(",") if isinstance(v, str) and v else v),
-]
-
-
-StrListType = Annotated[
-    list[str],
-    BeforeValidator(lambda v: [entry.strip() for entry in v.split(",")] if isinstance(v, str) else v),
-]
-
-NamespaceType = Annotated[
-    Namespace,
-    BeforeValidator(
-        lambda v: (
-            Namespace(TypeAdapter(HttpUrl).validate_python(v))
-            if v.endswith("#") or v.endswith("/")
-            else Namespace(TypeAdapter(HttpUrl).validate_python(f"{v}/"))
-        )
-    ),
-]
-
-PrefixType = Annotated[
-    str,
-    StringConstraints(pattern=prefix_compliance_regex),
-    custom_error(
-        lambda field_name, error, value: exceptions.PrefixesRegexViolation(
-            [value], prefix_compliance_regex
-        ).to_pydantic_custom_error()
-    ),
-]
-
-ExternalIdType = Annotated[
-    str,
-    Field(min_length=1, max_length=255),
-]
-
-VersionType = Annotated[
-    str,
-    StringConstraints(pattern=version_compliance_regex),
-    custom_error(
-        lambda field_name, error, value: exceptions.VersionRegexViolation(
-            value, version_compliance_regex
-        ).to_pydantic_custom_error()
-    ),
-]
-
-
-ParentClassType = Annotated[
-    list[ParentClass] | None,
-    BeforeValidator(_split_parent),
-    AfterValidator(_check_parent),
-]
-
-ClassType = Annotated[
-    str,
-    AfterValidator(
-        lambda v: (
-            raise_(exceptions.MoreThanOneNonAlphanumericCharacter("class_", v).to_pydantic_custom_error())
-            if re.search(more_than_one_none_alphanumerics_regex, v)
-            else (
-                v
-                if re.match(class_id_compliance_regex, v)
-                else raise_(
-                    exceptions.ClassSheetClassIDRegexViolation(v, class_id_compliance_regex).to_pydantic_custom_error()
-                )
-            )
-        )
-    ),
-]
-
-
-PropertyType = Annotated[
-    str,
-    AfterValidator(
-        lambda v: (
-            raise_(exceptions.MoreThanOneNonAlphanumericCharacter("property", v).to_pydantic_custom_error())
-            if re.search(more_than_one_none_alphanumerics_regex, v)
-            else (
-                v
-                if re.match(property_id_compliance_regex, v)
-                else raise_(
-                    exceptions.PropertyIDRegexViolation(v, property_id_compliance_regex).to_pydantic_custom_error()
-                )
-            )
-        )
-    ),
-]
-
-ValueTypeType = Annotated[
-    ValueType,
-    BeforeValidator(
-        lambda v: (
-            XSD_VALUE_TYPE_MAPPINGS[v]
-            if v in XSD_VALUE_TYPE_MAPPINGS
-            else (
-                ValueType.from_string(entity_string=v, type_=EntityTypes.object_value_type, mapping=None)
-                if ENTITY_ID_REGEX_COMPILED.match(v) or VERSIONED_ENTITY_REGEX_COMPILED.match(v)
-                else ValueType(prefix="undefined", suffix=v, name=v, type_=EntityTypes.object_value_type, mapping=None)
-            )
-        )
-    ),
-]
+def _raise(exception: PydanticCustomError):
+    raise exception
 
 
 def _split_parent(value: str) -> list[ParentClass] | None:
@@ -181,3 +77,112 @@ def _check_parent(value: list[ParentClass]) -> list[ParentClass]:
             cast(list[str], illegal_ids), class_id_compliance_regex
         ).to_pydantic_custom_error()
     return value
+
+
+StrOrListType = Annotated[
+    str | list[str],
+    BeforeValidator(lambda value: value.replace(", ", ",").split(",") if isinstance(value, str) and value else value),
+]
+
+
+StrListType = Annotated[
+    list[str],
+    BeforeValidator(lambda value: [entry.strip() for entry in value.split(",")] if isinstance(value, str) else value),
+]
+
+NamespaceType = Annotated[
+    Namespace,
+    BeforeValidator(
+        lambda value: (
+            Namespace(TypeAdapter(HttpUrl).validate_python(value))
+            if value.endswith("#") or value.endswith("/")
+            else Namespace(TypeAdapter(HttpUrl).validate_python(f"{value}/"))
+        )
+    ),
+]
+
+PrefixType = Annotated[
+    str,
+    StringConstraints(pattern=prefix_compliance_regex),
+    _custom_error(
+        lambda _, value: exceptions.PrefixesRegexViolation(
+            cast(list[str], [value]), prefix_compliance_regex
+        ).to_pydantic_custom_error()
+    ),
+]
+
+ExternalIdType = Annotated[
+    str,
+    Field(min_length=1, max_length=255),
+]
+
+VersionType = Annotated[
+    str,
+    StringConstraints(pattern=version_compliance_regex),
+    _custom_error(
+        lambda _, value: exceptions.VersionRegexViolation(
+            version=cast(str, value), regex_expression=version_compliance_regex
+        ).to_pydantic_custom_error()
+    ),
+]
+
+
+ParentClassType = Annotated[
+    list[ParentClass] | None,
+    BeforeValidator(_split_parent),
+    AfterValidator(_check_parent),
+]
+
+ClassType = Annotated[
+    str,
+    AfterValidator(
+        lambda value: (
+            _raise(exceptions.MoreThanOneNonAlphanumericCharacter("class_", value).to_pydantic_custom_error())
+            if re.search(more_than_one_none_alphanumerics_regex, value)
+            else (
+                value
+                if re.match(class_id_compliance_regex, value)
+                else _raise(
+                    exceptions.ClassSheetClassIDRegexViolation(
+                        value, class_id_compliance_regex
+                    ).to_pydantic_custom_error()
+                )
+            )
+        )
+    ),
+]
+
+
+PropertyType = Annotated[
+    str,
+    AfterValidator(
+        lambda value: (
+            _raise(exceptions.MoreThanOneNonAlphanumericCharacter("property", value).to_pydantic_custom_error())
+            if re.search(more_than_one_none_alphanumerics_regex, value)
+            else (
+                value
+                if re.match(property_id_compliance_regex, value)
+                else _raise(
+                    exceptions.PropertyIDRegexViolation(value, property_id_compliance_regex).to_pydantic_custom_error()
+                )
+            )
+        )
+    ),
+]
+
+ValueTypeType = Annotated[
+    ValueType,
+    BeforeValidator(
+        lambda value: (
+            XSD_VALUE_TYPE_MAPPINGS[value]
+            if value in XSD_VALUE_TYPE_MAPPINGS
+            else (
+                ValueType.from_string(entity_string=value, type_=EntityTypes.object_value_type, mapping=None)
+                if ENTITY_ID_REGEX_COMPILED.match(value) or VERSIONED_ENTITY_REGEX_COMPILED.match(value)
+                else ValueType(
+                    prefix="undefined", suffix=value, name=value, type_=EntityTypes.object_value_type, mapping=None
+                )
+            )
+        )
+    ),
+]
