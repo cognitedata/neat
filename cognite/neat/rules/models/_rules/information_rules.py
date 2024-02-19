@@ -1,5 +1,6 @@
+import sys
 from datetime import datetime
-from typing import Any, ClassVar, Self, cast
+from typing import Any, ClassVar, cast
 
 from pydantic import Field, model_validator
 from rdflib import Namespace
@@ -29,6 +30,11 @@ from ._types import (
 )
 from .base import BaseMetadata, MatchType, RoleTypes, RuleModel, SheetEntity, SheetList
 from .domain_rules import DomainMetadata, DomainRules
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 
 class InformationMetadata(BaseMetadata):
