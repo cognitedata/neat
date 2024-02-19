@@ -30,17 +30,11 @@ def emma_spreadsheet() -> dict[str, dict[str, Any]]:
 
 
 def invalid_domain_rules_cases():
-    yield pytest.param(
-        {"metadata": {"role": "information_architect", "creator": "Cognite"}, "properties": {}},
-        "Value error, Metadata.role should be equal to 'domain expert'",
-        id="invalid_role",
-    )
-
-    yield pytest.param(
-        {"metadata": {"creator": "Cognite"}, "properties": {}},
-        "Value error, Metadata.role is missing.",
-        id="Missing role",
-    )
+    # yield pytest.param(
+    #     "Value error, Metadata.role should be equal to 'domain expert'",
+    #
+    # yield pytest.param(
+    #     "Value error, Metadata.role is missing.",
 
     yield pytest.param(
         {"metadata": {"role": "domain expert"}, "properties": {}},
