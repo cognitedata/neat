@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import math
 import sys
-from collections.abc import Iterator
+from collections.abc import Collection, Iterator
 from functools import wraps
 from typing import Any, ClassVar, Generic, TypeAlias, TypeVar
 
@@ -233,6 +233,9 @@ T_Entity = TypeVar("T_Entity", bound=SheetEntity)
 
 class SheetList(BaseModel, Generic[T_Entity]):
     data: list[T_Entity] = Field(default_factory=list)
+
+    def __init__(self, collection: Collection[T_Entity] | None = None):
+        super().__init__(data=collection or [])
 
     @model_validator(mode="before")
     def from_list_format(cls, values: Any) -> Any:

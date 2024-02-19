@@ -25,7 +25,7 @@ for subclass in subclasses:
 del subclasses  # cleanup namespace
 
 
-class DMSArchitectMetadata(BaseMetadata):
+class DMSMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.dms_architect
     space: ExternalID
     external_id: ExternalID = Field(alias="externalId")
@@ -69,6 +69,7 @@ class DMSProperty(SheetEntity):
     property: str = Field(alias="Property")
     description: str | None = Field(None, alias="Description")
     value_type: type[PropertyType] | str = Field(alias="Value Type")
+    relation: str | None = Field(None, alias="Relation")
     nullable: bool | None = Field(default=None, alias="Nullable")
     is_list: bool | None = Field(default=None, alias="IsList")
     default: str | None = Field(None, alias="Default")
@@ -88,21 +89,21 @@ class DMSProperty(SheetEntity):
 
 
 class DMSContainer(SheetEntity):
-    class_: str = Field(alias="Class")
+    class_: str | None = Field(None, alias="Class")
     container: str = Field(alias="Container")
     description: str | None = Field(None, alias="Description")
     constraint: str | None = Field(None, alias="Constraint")
 
 
 class DMSView(SheetEntity):
-    class_: str = Field(alias="Class")
+    class_: str | None = Field(None, alias="Class")
     view: str = Field(alias="View")
     description: str | None = Field(None, alias="Description")
     implements: StrList | None = Field(None, alias="Implements")
 
 
 class DMSRules(BaseRules):
-    metadata: DMSArchitectMetadata = Field(alias="Metadata")
+    metadata: DMSMetadata = Field(alias="Metadata")
     properties: SheetList[DMSProperty] = Field(alias="Properties")
     containers: SheetList[DMSContainer] | None = Field(None, alias="Containers")
     views: SheetList[DMSView] | None = Field(None, alias="Views")
