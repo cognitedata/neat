@@ -3,6 +3,7 @@ import re
 
 import pandas as pd
 from rdflib import Graph, Namespace
+from cognite.neat.rules.models._rules.base import RoleTypes
 
 from cognite.neat.rules.models.rules import (
     cdf_space_compliance_regex,
@@ -13,15 +14,15 @@ from cognite.neat.rules.models.rules import (
 from cognite.neat.utils.utils import convert_rdflib_content, remove_none_elements_from_set
 
 
-def parse_owl_metadata(graph: Graph, make_compliant: bool = False) -> pd.DataFrame:
-    """Parse owl metadata from graph to pandas dataframe.
+def parse_owl_metadata(graph: Graph, make_compliant: bool = False) -> dict:
+    """Parse owl metadata from graph to dict.
 
     Args:
         graph: Graph containing owl metadata
         make_compliant: Flag for generating compliant metadata, by default False
 
     Returns:
-        Dataframe containing owl metadata
+        Dictionary containing owl metadata
 
     !!! note "make_compliant"
         If `make_compliant` is set to True, in presence of errors, default values will be used instead.
@@ -31,14 +32,12 @@ def parse_owl_metadata(graph: Graph, make_compliant: bool = False) -> pd.DataFra
     """
     # TODO: Move dataframe to dict representation
 
-    query = """SELECT ?namespace ?prefix ?dataModelName ?cdfSpaceName ?version ?isCurrentVersion
-    ?created ?updated ?title ?description ?creator ?contributor ?rights ?license
+    query = """SELECT ?namespace ?prefix ?version ?created ?updated ?title ?description ?creator ?rights ?license
     WHERE {
         ?namespace a owl:Ontology .
         OPTIONAL {?namespace owl:versionInfo ?version }.
         OPTIONAL {?namespace dcterms:creator ?creator }.
         OPTIONAL {?namespace dcterms:title|rdfs:label|skos:prefLabel ?title }.
-        OPTIONAL {?namespace dcterms:contributor ?contributor }.
         OPTIONAL {?namespace dcterms:modified ?updated }.
         OPTIONAL {?namespace dcterms:created ?created }.
         OPTIONAL {?namespace dcterms:description ?description }.
@@ -54,34 +53,31 @@ def parse_owl_metadata(graph: Graph, make_compliant: bool = False) -> pd.DataFra
 
     results = [{item for item in sublist} for sublist in list(zip(*graph.query(query), strict=True))]
 
-    clean_list = convert_rdflib_content(
+    raw_metadata = convert_rdflib_content(
         {
-            "namespace": Namespace(results[0].pop()),
+            "role": RoleTypes.information_architect,
             "prefix": results[1].pop(),
-            "dataModelName": results[2].pop(),
-            "cdfSpaceName": results[3].pop(),
-            "version": results[4].pop(),
-            "isCurrentVersion": results[5].pop(),
-            "created": results[6].pop(),
-            "updated": results[7].pop(),
-            "title": results[8].pop(),
-            "description": results[9].pop(),
-            "creator": ", ".join(remove_none_elements_from_set(results[10]))
-            if remove_none_elements_from_set(results[10])
-            else None,
-            "contributor": ", ".join(remove_none_elements_from_set(results[11]))
-            if remove_none_elements_from_set(results[11])
-            else None,
-            "rights": results[12].pop(),
-            "license": results[13].pop(),
+            "namespace": Namespace(results[0].pop()),
+            "version": results[2].pop(),
+            "created": results[3].pop(),
+            "updated": results[4].pop(),
+            "title": results[5].pop(),
+            "description": results[6].pop(),
+            "creator": (
+                ", ".join(remove_none_elements_from_set(results[7]))
+                if remove_none_elements_from_set(results[7])
+                else None
+            ),
+            "rights": results[8].pop(),
+            "license": results[9].pop(),
         }
     )
 
     if make_compliant:
-        clean_list.pop("created")
-        return pd.DataFrame(list(make_metadata_compliant(clean_list).items()), columns=["Key", "Value"])
+        raw_metadata.pop("created")
+        return make_metadata_compliant(raw_metadata)
 
-    return pd.DataFrame(list(clean_list.items()), columns=["Key", "Value"])
+    return raw_metadata
 
 
 def make_metadata_compliant(metadata: dict) -> dict:
@@ -96,16 +92,12 @@ def make_metadata_compliant(metadata: dict) -> dict:
 
     metadata = fix_namespace(metadata, default=Namespace("http://purl.org/cognite/neat#"))
     metadata = fix_prefix(metadata)
-    metadata = fix_dataModelName(metadata)
-    metadata = fix_cdfSpaceName(metadata)
     metadata = fix_version(metadata)
-    metadata = fix_isCurrentVersion(metadata)
     metadata = fix_date(metadata, date_type="created", default=datetime.datetime.now().replace(microsecond=0))
     metadata = fix_date(metadata, date_type="updated", default=datetime.datetime.now().replace(microsecond=0))
     metadata = fix_title(metadata)
     metadata = fix_description(metadata)
     metadata = fix_author(metadata, "creator")
-    metadata = fix_author(metadata, "contributor", "Cognite")
     metadata = fix_rights(metadata)
     metadata = fix_license(metadata)
 
@@ -153,24 +145,6 @@ def fix_description(metadata: dict, default: str = "This model has been inferred
             metadata["description"] = metadata["description"][:1024]
     else:
         metadata["description"] = default
-    return metadata
-
-
-def fix_cdfSpaceName(metadata: dict, default: str = "playground") -> dict:
-    if space := metadata.get("cdfSpaceName", None):
-        if not isinstance(space, str) or not re.match(cdf_space_compliance_regex, space):
-            metadata["cdfSpaceName"] = default
-    else:
-        metadata["cdfSpaceName"] = default
-    return metadata
-
-
-def fix_dataModelName(metadata: dict, default: str = "neat") -> dict:
-    if data_model_name := metadata.get("dataModelName", None):
-        if not isinstance(data_model_name, str) or not re.match(data_model_id_compliance_regex, data_model_name):
-            metadata["dataModelName"] = default
-    else:
-        metadata["dataModelName"] = default
     return metadata
 
 
@@ -225,16 +199,6 @@ def fix_version(metadata: dict, default: str = "1.0.0") -> dict:
             metadata["version"] = default
     else:
         metadata["version"] = default
-
-    return metadata
-
-
-def fix_isCurrentVersion(metadata: dict, default: bool = True) -> dict:
-    if isCurrentVersion := metadata.get("isCurrentVersion", None):
-        if not isinstance(isCurrentVersion, bool):
-            metadata["isCurrentVersion"] = default
-    else:
-        metadata["isCurrentVersion"] = default
 
     return metadata
 
