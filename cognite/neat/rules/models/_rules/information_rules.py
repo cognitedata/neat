@@ -18,7 +18,7 @@ from cognite.neat.rules.models.rdfpath import (
     parse_rule,
 )
 
-from ._types import Class_, Namespace_, ParentClass_, Prefix, Property_, ValueType_, Version
+from ._types import ClassType, NamespaceType, ParentClassType, PrefixType, PropertyType, ValueTypeType, VersionType
 from .base import BaseMetadata, RoleTypes, RuleModel, SheetEntity, SheetList
 from .domain_rules import DomainMetadata
 
@@ -35,8 +35,8 @@ class MatchType(StrEnum):
 
 class InformationMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.information_architect
-    prefix: Prefix
-    namespace: Namespace_
+    prefix: PrefixType
+    namespace: NamespaceType
 
     name: str = Field(
         alias="title",
@@ -45,7 +45,7 @@ class InformationMetadata(BaseMetadata):
         max_length=255,
     )
 
-    version: Version
+    version: VersionType
 
     created: datetime = Field(
         description=("Date of the data model creation"),
@@ -88,9 +88,9 @@ class InformationClass(SheetEntity):
         match_type: The match type of the resource being described and the source entity.
     """
 
-    class_: Class_ = Field(alias="Class")
+    class_: ClassType = Field(alias="Class")
     description: str | None = Field(None, alias="Description")
-    parent: ParentClass_ = Field(alias="Parent Class")
+    parent: ParentClassType = Field(alias="Parent Class")
     source: Namespace | None = None
     match_type: MatchType | None = None
 
@@ -123,9 +123,9 @@ class InformationProperty(SheetEntity):
     """
 
     # TODO: Can we skip rule_type and simply try to parse the rule and if it fails, raise an error?
-    class_: Class_ = Field(alias="Class")
-    property_: Property_ = Field(alias="Property")
-    value_type: ValueType_ = Field(alias="Value Type")
+    class_: ClassType = Field(alias="Class")
+    property_: PropertyType = Field(alias="Property")
+    value_type: ValueTypeType = Field(alias="Value Type")
     min_count: int | None = Field(alias="Min Count", default=None)
     max_count: int | float | None = Field(alias="Max Count", default=None)
     default: Any | None = Field(alias="Default", default=None)

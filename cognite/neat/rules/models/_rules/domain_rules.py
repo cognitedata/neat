@@ -2,7 +2,7 @@ from typing import ClassVar
 
 from pydantic import Field
 
-from ._types import Class_, ParentClass_, Property_, StrOrList, ValueType_
+from ._types import ClassType, ParentClassType, PropertyType, StrOrListType, ValueTypeType
 from .base import (
     BaseMetadata,
     RoleTypes,
@@ -14,21 +14,21 @@ from .base import (
 
 class DomainMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.domain_expert
-    creator: StrOrList
+    creator: StrOrListType
 
 
 class DomainProperty(SheetEntity):
-    class_: Class_ = Field(alias="Class")
-    property_: Property_ = Field(alias="Property")
-    value_type: ValueType_ = Field(alias="Value Type")
+    class_: ClassType = Field(alias="Class")
+    property_: PropertyType = Field(alias="Property")
+    value_type: ValueTypeType = Field(alias="Value Type")
     min_count: int | None = Field(alias="Min Count", default=None)
     max_count: int | float | None = Field(alias="Max Count", default=None)
 
 
 class DomainClass(SheetEntity):
-    class_: Class_ = Field(alias="Class")
+    class_: ClassType = Field(alias="Class")
     description: str | None = Field(None, alias="Description")
-    parent: ParentClass_ = Field(alias="Parent Class")
+    parent: ParentClassType = Field(alias="Parent Class")
 
 
 class DomainRules(RuleModel):

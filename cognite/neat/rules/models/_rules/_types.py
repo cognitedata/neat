@@ -1,6 +1,6 @@
 import re
 from collections.abc import Callable
-from typing import Annotated, Any
+from typing import Annotated, Any, cast
 
 from pydantic import (
     AfterValidator,
@@ -46,18 +46,18 @@ def raise_(ex):
     raise ex
 
 
-StrOrList = Annotated[
+StrOrListType = Annotated[
     str | list[str],
     BeforeValidator(lambda v: v.replace(", ", ",").split(",") if isinstance(v, str) and v else v),
 ]
 
 
-StrList = Annotated[
+StrListType = Annotated[
     list[str],
     BeforeValidator(lambda v: [entry.strip() for entry in v.split(",")] if isinstance(v, str) else v),
 ]
 
-Namespace_ = Annotated[
+NamespaceType = Annotated[
     Namespace,
     BeforeValidator(
         lambda v: (
@@ -68,7 +68,7 @@ Namespace_ = Annotated[
     ),
 ]
 
-Prefix = Annotated[
+PrefixType = Annotated[
     str,
     StringConstraints(pattern=prefix_compliance_regex),
     custom_error(
@@ -78,12 +78,12 @@ Prefix = Annotated[
     ),
 ]
 
-ExternalID = Annotated[
+ExternalIdType = Annotated[
     str,
     Field(min_items=1, max_items=255),
 ]
 
-Version = Annotated[
+VersionType = Annotated[
     str,
     StringConstraints(pattern=version_compliance_regex),
     custom_error(
@@ -94,7 +94,7 @@ Version = Annotated[
 ]
 
 
-def split_parent(value: str) -> list[ParentClass]:
+def split_parent(value: str) -> list[ParentClass] | None:
     if isinstance(value, str) and value:
         parents = []
         for v in value.replace(", ", ",").split(","):
@@ -114,24 +114,24 @@ def check_parent(value: list[ParentClass]) -> list[ParentClass]:
     if value:
         if illegal_ids := [v for v in value if re.search(more_than_one_none_alphanumerics_regex, v.suffix)]:
             raise exceptions.MoreThanOneNonAlphanumericCharacter(
-                "parent", ", ".join(illegal_ids)
+                "parent", ", ".join(cast(list[str], illegal_ids))
             ).to_pydantic_custom_error()
         if illegal_ids := [v for v in value if not re.match(class_id_compliance_regex, v.suffix)]:
             for v in illegal_ids:
                 print(v.id)
             raise exceptions.ClassSheetParentClassIDRegexViolation(
-                illegal_ids, class_id_compliance_regex
+                cast(list[str], illegal_ids), class_id_compliance_regex
             ).to_pydantic_custom_error()
     return value
 
 
-ParentClass_ = Annotated[
+ParentClassType = Annotated[
     list[ParentClass] | None,
     BeforeValidator(split_parent),
     AfterValidator(check_parent),
 ]
 
-Class_ = Annotated[
+ClassType = Annotated[
     str,
     AfterValidator(
         lambda v: (
@@ -149,7 +149,7 @@ Class_ = Annotated[
 ]
 
 
-Property_ = Annotated[
+PropertyType = Annotated[
     str,
     AfterValidator(
         lambda v: (
@@ -166,7 +166,7 @@ Property_ = Annotated[
     ),
 ]
 
-ValueType_ = Annotated[
+ValueTypeType = Annotated[
     ValueType,
     BeforeValidator(
         lambda v: (

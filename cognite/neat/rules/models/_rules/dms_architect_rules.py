@@ -7,7 +7,7 @@ from pydantic import Field, field_validator
 
 from cognite.neat.rules.models._rules.information_rules import InformationMetadata
 
-from ._types import ExternalID, StrList, StrOrList, Version
+from ._types import ExternalIdType, StrListType, StrOrListType, VersionType
 from .base import BaseMetadata, BaseRules, RoleTypes, SheetEntity, SheetList
 from .domain_rules import DomainMetadata
 
@@ -26,10 +26,10 @@ del subclasses  # cleanup namespace
 
 class DMSArchitectMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.dms_architect
-    space: ExternalID
-    external_id: ExternalID = Field(alias="externalId")
-    version: Version | None
-    contributor: StrOrList = Field(
+    space: ExternalIdType
+    external_id: ExternalIdType = Field(alias="externalId")
+    version: VersionType | None
+    contributor: StrOrListType = Field(
         description=(
             "List of contributors to the data model creation, "
             "typically information architects are considered as contributors."
@@ -97,7 +97,7 @@ class DMSView(SheetEntity):
     class_: str = Field(alias="Class")
     view: str = Field(alias="View")
     description: str | None = Field(None, alias="Description")
-    implements: StrList | None = Field(None, alias="Implements")
+    implements: StrListType | None = Field(None, alias="Implements")
 
 
 class DMSRules(BaseRules):
