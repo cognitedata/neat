@@ -7,8 +7,8 @@ from pathlib import Path
 
 from rdflib import DC, DCTERMS, OWL, RDF, RDFS, SKOS, Graph
 
-from cognite.neat.rules._importer._base import BaseImporter
-from cognite.neat.rules.models._rules import DomainRules, InformationRules
+from cognite.neat.rules.importer._importer._base import BaseImporter
+from cognite.neat.rules.models._rules import InformationRules
 from cognite.neat.rules.models._rules.base import RoleTypes
 from cognite.neat.rules.models.value_types import XSD_VALUE_TYPE_MAPPINGS
 
@@ -37,11 +37,11 @@ class OWLImporter(BaseImporter):
 
     """
 
-    def __init__(self, owl_filepath: Path, role: RoleTypes | None = None):
+    def __init__(self, owl_filepath: Path):
         self.owl_filepath = owl_filepath
-        self.role = role or RoleTypes.information_architect
 
-    def to_rules(self, make_compliant: bool = True) -> DomainRules | InformationRules:
+    def to_rules(self, make_compliant: bool = True, role: RoleTypes | None = None) -> InformationRules:
+        self.role = role or RoleTypes.information_architect
         graph = Graph()
         try:
             graph.parse(self.owl_filepath)
@@ -67,10 +67,8 @@ class OWLImporter(BaseImporter):
 
         if self.role == RoleTypes.information_architect:
             return InformationRules.model_validate(components)
-        elif self.role == RoleTypes.domain_expert:
-            return InformationRules.model_validate(components).to_domain_rules()
         else:
-            raise ValueError(f"Role {self.role} not supported")
+            raise NotImplementedError("Only information architect role is supported")
 
 
 def make_components_compliant(components: dict) -> dict:

@@ -3,7 +3,6 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 
 from cognite.neat.rules.models._rules import DomainRules, InformationRules
-from cognite.neat.rules.models._rules.base import RoleTypes
 
 
 class BaseImporter(ABC):
@@ -11,8 +10,9 @@ class BaseImporter(ABC):
     BaseImporter class which all importers inherit from.
     """
 
-    def __init__(self, role: RoleTypes | None = None):
-        self.role = role or RoleTypes.domain_expert
+    @abstractmethod
+    def __init__(self):
+        ...
 
     @abstractmethod
     def to_rules(self, *args, **kwargs) -> DomainRules | InformationRules:
