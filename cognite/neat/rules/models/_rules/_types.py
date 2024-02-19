@@ -80,7 +80,7 @@ PrefixType = Annotated[
 
 ExternalIdType = Annotated[
     str,
-    Field(min_items=1, max_items=255),
+    Field(min_length=1, max_length=255),
 ]
 
 VersionType = Annotated[
@@ -94,42 +94,10 @@ VersionType = Annotated[
 ]
 
 
-def split_parent(value: str) -> list[ParentClass] | None:
-    if not (isinstance(value, str) and value):
-        return None
-
-    parents = []
-    for v in value.replace(", ", ",").split(","):
-        if ENTITY_ID_REGEX_COMPILED.match(v) or VERSIONED_ENTITY_REGEX_COMPILED.match(v):
-            parents.append(ParentClass.from_string(entity_string=v))
-        else:
-            # if all fails defaults "neat" object which ends up being updated to proper
-            # prefix and version upon completion of Rules validation
-            parents.append(ParentClass(prefix="undefined", suffix=v, name=v))
-
-    return parents
-
-
-def check_parent(value: list[ParentClass]) -> list[ParentClass]:
-    if not value:
-        return value
-    if illegal_ids := [v for v in value if re.search(more_than_one_none_alphanumerics_regex, v.suffix)]:
-        raise exceptions.MoreThanOneNonAlphanumericCharacter(
-            "parent", ", ".join(cast(list[str], illegal_ids))
-        ).to_pydantic_custom_error()
-    if illegal_ids := [v for v in value if not re.match(class_id_compliance_regex, v.suffix)]:
-        for v in illegal_ids:
-            print(v.id)
-        raise exceptions.ClassSheetParentClassIDRegexViolation(
-            cast(list[str], illegal_ids), class_id_compliance_regex
-        ).to_pydantic_custom_error()
-    return value
-
-
 ParentClassType = Annotated[
     list[ParentClass] | None,
-    BeforeValidator(split_parent),
-    AfterValidator(check_parent),
+    BeforeValidator(_split_parent),
+    AfterValidator(_check_parent),
 ]
 
 ClassType = Annotated[
@@ -181,3 +149,35 @@ ValueTypeType = Annotated[
         )
     ),
 ]
+
+
+def _split_parent(value: str) -> list[ParentClass] | None:
+    if not (isinstance(value, str) and value):
+        return None
+
+    parents = []
+    for v in value.replace(", ", ",").split(","):
+        if ENTITY_ID_REGEX_COMPILED.match(v) or VERSIONED_ENTITY_REGEX_COMPILED.match(v):
+            parents.append(ParentClass.from_string(entity_string=v))
+        else:
+            # if all fails defaults "neat" object which ends up being updated to proper
+            # prefix and version upon completion of Rules validation
+            parents.append(ParentClass(prefix="undefined", suffix=v, name=v))
+
+    return parents
+
+
+def _check_parent(value: list[ParentClass]) -> list[ParentClass]:
+    if not value:
+        return value
+    if illegal_ids := [v for v in value if re.search(more_than_one_none_alphanumerics_regex, v.suffix)]:
+        raise exceptions.MoreThanOneNonAlphanumericCharacter(
+            "parent", ", ".join(cast(list[str], illegal_ids))
+        ).to_pydantic_custom_error()
+    if illegal_ids := [v for v in value if not re.match(class_id_compliance_regex, v.suffix)]:
+        for v in illegal_ids:
+            print(v.id)
+        raise exceptions.ClassSheetParentClassIDRegexViolation(
+            cast(list[str], illegal_ids), class_id_compliance_regex
+        ).to_pydantic_custom_error()
+    return value
