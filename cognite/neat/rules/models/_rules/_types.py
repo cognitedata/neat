@@ -111,7 +111,8 @@ def split_parent(value: str) -> list[ParentClass] | None:
 
 
 def check_parent(value: list[ParentClass]) -> list[ParentClass]:
-    if value:
+    if not value:
+        return value
         if illegal_ids := [v for v in value if re.search(more_than_one_none_alphanumerics_regex, v.suffix)]:
             raise exceptions.MoreThanOneNonAlphanumericCharacter(
                 "parent", ", ".join(cast(list[str], illegal_ids))
