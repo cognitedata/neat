@@ -186,6 +186,8 @@ class BaseMetadata(RuleModel):
 
     @model_validator(mode="before")
     def role_is_correct(cls, values: Any) -> Any:
+        if cls is not BaseMetadata and "role" not in values:
+            return values
         if "role" not in values:
             raise ValueError("Metadata.role is missing.")
         if values["role"] != cls.role:

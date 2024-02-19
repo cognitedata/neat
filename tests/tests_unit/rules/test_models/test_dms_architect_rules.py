@@ -54,7 +54,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                         class_="WindTurbine",
                         property="name",
                         value_type="text",
-                        constraint="asset",
+                        container="Asset",
                         container_property="name",
                         view="Asset",
                         view_property="name",
@@ -137,7 +137,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                         version="1",
                         properties={
                             "windTurbines": dm.MultiEdgeConnectionApply(
-                                type=dm.DirectRelationReference(space="my_space", external_id="WindFarm.windTurbine"),
+                                type=dm.DirectRelationReference(space="my_space", external_id="WindFarm.windTurbines"),
                                 source=dm.ViewId(space="my_space", external_id="WindTurbine", version="1"),
                                 direction="outwards",
                             )
@@ -150,13 +150,13 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     dm.ContainerApply(
                         space="my_space",
                         external_id="Asset",
-                        properties={"name": dm.ContainerProperty(type=dm.Text())},
+                        properties={"name": dm.ContainerProperty(type=dm.Text(), nullable=True)},
                     ),
                     dm.ContainerApply(
                         space="my_space",
-                        external_id="WindTurbine",
+                        external_id="GeneratingUnit",
                         properties={
-                            "ratedPower": dm.ContainerProperty(type=dm.Float64()),
+                            "ratedPower": dm.ContainerProperty(type=dm.Float64(), nullable=True),
                         },
                     ),
                 ]
@@ -187,4 +187,12 @@ class TestDMSRules:
     def test_as_schema(self, rules: DMSRules, expected_schema: DMSSchema) -> None:
         actual_schema = rules.as_schema()
 
-        assert actual_schema == expected_schema
+        assert actual_schema.space.dump() == expected_schema.space.dump()
+        actual_schema.model.views = sorted(actual_schema.model.views, key=lambda v: v.external_id)
+        expected_schema.model.views = sorted(expected_schema.model.views, key=lambda v: v.external_id)
+        assert actual_schema.model.dump() == expected_schema.model.dump()
+        assert actual_schema.containers.dump() == expected_schema.containers.dump()
+
+        actual_schema.views = dm.ViewApplyList(sorted(actual_schema.views, key=lambda v: v.external_id))
+        expected_schema.views = dm.ViewApplyList(sorted(expected_schema.views, key=lambda v: v.external_id))
+        assert actual_schema.views.dump() == expected_schema.views.dump()
