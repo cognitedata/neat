@@ -173,10 +173,6 @@ class TestDMSRules:
         missing = sample_expected_properties - {f"{prop.class_}.{prop.property}" for prop in valid_rules.properties}
         assert not missing, f"Missing properties: {missing}"
 
-    # @pytest.mark.parametrize("invalid_rules, expected_exception", list(invalid_dms_rules_cases()))
-    # def test_invalid_rules(self, invalid_rules: dict[str, dict[str, Any]], expected_exception: str) -> None:
-    #     with pytest.raises(ValueError) as e:
-
     @pytest.mark.parametrize("rules, expected_schema", list(rules_schema_tests_cases()))
     def test_as_schema(self, rules: DMSRules, expected_schema: DMSSchema) -> None:
         actual_schema = rules.as_schema()
