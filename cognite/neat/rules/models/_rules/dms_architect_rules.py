@@ -191,7 +191,9 @@ class DMSRules(BaseRules):
                 },
             )
             view_by_ids[view.as_id()] = view
-            if data_model.views:
+            if data_model.views is None:
+                data_model.views = [view.as_id()]
+            else:
                 data_model.views.append(view.as_id())
 
         for dms_view in self.views or []:
