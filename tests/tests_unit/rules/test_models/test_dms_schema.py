@@ -36,11 +36,11 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
         [
             DuplicatedViewInDataModel(
                 view=dm.ViewId("my_space", "my_view1", "1"),
-                referred_by={dm.DataModelId("my_space", "my_data_model", "1")},
+                referred_by=dm.DataModelId("my_space", "my_data_model", "1"),
             ),
             MissingView(
                 view=dm.ViewId("my_space", "my_view1", "1"),
-                referred_by={dm.DataModelId("my_space", "my_data_model", "1")},
+                referred_by=dm.DataModelId("my_space", "my_data_model", "1"),
             ),
         ],
         id="Duplicated and missing view in data model",
@@ -98,12 +98,12 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
         [
             MissingContainer(
                 container=dm.ContainerId("my_space", "does_not_exist"),
-                referred_by={dm.ViewId("my_space", "my_view1", "1")},
+                referred_by=dm.ViewId("my_space", "my_view1", "1"),
             ),
             MissingContainerProperty(
                 container=dm.ContainerId("my_space", "my_container"),
                 property="non_existing",
-                referred_by={dm.ViewId("my_space", "my_view1", "1")},
+                referred_by=dm.ViewId("my_space", "my_view1", "1"),
             ),
             ContainerPropertyUsedMultipleTimes(
                 referred_by={
@@ -154,7 +154,7 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
         [
             MissingSpace(
                 space="non_existing_space",
-                referred_by={dm.ContainerId("non_existing_space", "my_container")},
+                referred_by=dm.ContainerId("non_existing_space", "my_container"),
             ),
             DirectRelationMissingSource(
                 view_id=dm.ViewId("my_space", "my_view1", "1"),
