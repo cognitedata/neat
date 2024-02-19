@@ -2,6 +2,7 @@ import re
 from collections.abc import Callable
 from typing import Annotated, Any, cast
 
+import rdflib
 from pydantic import (
     AfterValidator,
     BeforeValidator,
@@ -13,7 +14,6 @@ from pydantic import (
     WrapValidator,
 )
 from pydantic_core import PydanticCustomError
-from rdflib import Namespace
 
 from cognite.neat.rules import exceptions
 from cognite.neat.rules.models._base import (
@@ -31,6 +31,19 @@ from .base import (
     property_id_compliance_regex,
     version_compliance_regex,
 )
+
+__all__ = [
+    "StrOrListType",
+    "StrListType",
+    "NamespaceType",
+    "PrefixType",
+    "ExternalIdType",
+    "VersionType",
+    "ParentClassType",
+    "ClassType",
+    "PropertyType",
+    "ValueTypeType",
+]
 
 
 def _custom_error(exc_factory: Callable[[str | None, Exception], Any]) -> Any:
@@ -91,12 +104,12 @@ StrListType = Annotated[
 ]
 
 NamespaceType = Annotated[
-    Namespace,
+    rdflib.Namespace,
     BeforeValidator(
         lambda value: (
-            Namespace(TypeAdapter(HttpUrl).validate_python(value))
+            rdflib.Namespace(TypeAdapter(HttpUrl).validate_python(value))
             if value.endswith("#") or value.endswith("/")
-            else Namespace(TypeAdapter(HttpUrl).validate_python(f"{value}/"))
+            else rdflib.Namespace(TypeAdapter(HttpUrl).validate_python(f"{value}/"))
         )
     ),
 ]
