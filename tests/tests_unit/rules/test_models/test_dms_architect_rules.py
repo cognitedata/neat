@@ -12,7 +12,6 @@ from cognite.neat.rules.models._rules.dms_architect_rules import (
     DMSProperty,
     DMSRules,
     DMSView,
-    SheetList,
 )
 from cognite.neat.rules.models._rules.dms_schema import DMSSchema
 from tests.config import DOC_KNOWLEDGE_ACQUISITION_TUTORIAL
@@ -31,11 +30,6 @@ def alice_spreadsheet() -> dict[str, dict[str, Any]]:
     }
 
 
-# def invalid_dms_rules_cases():
-#     yield pytest.param(
-#         "Value error, Metadata.role should be equal to 'DMS Architect'",
-
-
 def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         DMSRules(
@@ -45,49 +39,43 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 version="1",
                 contributor="Alice",
             ),
-            properties=SheetList[DMSProperty](
-                [
-                    DMSProperty(
-                        class_="WindTurbine",
-                        property="name",
-                        value_type="text",
-                        container="Asset",
-                        container_property="name",
-                        view="Asset",
-                        view_property="name",
-                    ),
-                    DMSProperty(
-                        class_="WindTurbine",
-                        property="ratedPower",
-                        value_type="float64",
-                        container="GeneratingUnit",
-                        container_property="ratedPower",
-                        view="WindTurbine",
-                        view_property="ratedPower",
-                    ),
-                    DMSProperty(
-                        class_="WindFarm",
-                        property="WindTurbines",
-                        value_type="WindTurbine",
-                        relation="multiedge",
-                        view="WindFarm",
-                        view_property="windTurbines",
-                    ),
-                ]
-            ),
-            containers=SheetList[DMSContainer](
-                [
-                    DMSContainer(container="Asset"),
-                    DMSContainer(class_="WindTurbine", container="WindTurbine", constraint="Asset"),
-                ]
-            ),
-            views=SheetList[DMSView](
-                [
-                    DMSView(class_="Asset", view="Asset"),
-                    DMSView(class_="WindTurbine", view="WindTurbine", implements=["Asset"]),
-                    DMSView(class_="WindFarm", view="WindFarm"),
-                ]
-            ),
+            properties=[
+                DMSProperty(
+                    class_="WindTurbine",
+                    property="name",
+                    value_type="text",
+                    container="Asset",
+                    container_property="name",
+                    view="Asset",
+                    view_property="name",
+                ),
+                DMSProperty(
+                    class_="WindTurbine",
+                    property="ratedPower",
+                    value_type="float64",
+                    container="GeneratingUnit",
+                    container_property="ratedPower",
+                    view="WindTurbine",
+                    view_property="ratedPower",
+                ),
+                DMSProperty(
+                    class_="WindFarm",
+                    property="WindTurbines",
+                    value_type="WindTurbine",
+                    relation="multiedge",
+                    view="WindFarm",
+                    view_property="windTurbines",
+                ),
+            ],
+            containers=[
+                DMSContainer(container="Asset"),
+                DMSContainer(class_="WindTurbine", container="WindTurbine", constraint="Asset"),
+            ],
+            views=[
+                DMSView(class_="Asset", view="Asset"),
+                DMSView(class_="WindTurbine", view="WindTurbine", implements=["Asset"]),
+                DMSView(class_="WindFarm", view="WindFarm"),
+            ],
         ),
         DMSSchema(
             space=dm.SpaceApply(
@@ -173,7 +161,6 @@ class TestDMSRules:
         missing = sample_expected_properties - {f"{prop.class_}.{prop.property}" for prop in valid_rules.properties}
         assert not missing, f"Missing properties: {missing}"
 
-    @pytest.mark.skip(reason="Fails in CI/CD but not locally. Investigate later.")
     @pytest.mark.parametrize("rules, expected_schema", rules_schema_tests_cases())
     def test_as_schema(self, rules: DMSRules, expected_schema: DMSSchema) -> None:
         actual_schema = rules.as_schema()
