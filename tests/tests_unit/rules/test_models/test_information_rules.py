@@ -21,23 +21,10 @@ def david_spreadsheet() -> dict[str, dict[str, Any]]:
 
 
 def invalid_domain_rules_cases():
-    yield pytest.param(
-        {
-            "metadata": {
-                "role": "information_architect",
-                "creator": "Cognite",
-                "contributor": "David",
-                "prefix": "neat",
-                "namespace": "http://www.neat.com",
-                "version": "0.1.0",
-                "created": datetime.utcnow(),
-                "updated": datetime.utcnow(),
-            },
-            "properties": {},
-        },
-        "Value error, Metadata.role should be equal to 'information architect'",
-        id="invalid_role",
-    )
+    # yield pytest.param(
+    #         },
+    #     },
+    #     "Value error, Metadata.role should be equal to 'information architect'",
     yield pytest.param(
         {
             "Metadata": {

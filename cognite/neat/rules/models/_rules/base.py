@@ -182,14 +182,6 @@ class BaseMetadata(RuleModel):
 
     role: ClassVar[RoleTypes]
 
-    @model_validator(mode="before")
-    def role_is_correct(cls, values: Any) -> Any:
-        if "role" not in values:
-            raise ValueError("Metadata.role is missing.")
-        if values["role"] != cls.role:
-            raise ValueError(f"Metadata.role should be equal to '{cls.role}'")
-        return values
-
     def to_pandas(self) -> pd.Series:
         """Converts Metadata to pandas Series."""
         return pd.Series(self.model_dump())
