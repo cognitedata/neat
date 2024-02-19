@@ -6,6 +6,7 @@ import pytest
 from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
 
+from cognite.neat.rules.models._rules.base import SheetList
 from cognite.neat.rules.models._rules.dms_architect_rules import (
     DMSContainer,
     DMSMetadata,
@@ -39,43 +40,49 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 version="1",
                 contributor="Alice",
             ),
-            properties=[
-                DMSProperty(
-                    class_="WindTurbine",
-                    property="name",
-                    value_type="text",
-                    container="Asset",
-                    container_property="name",
-                    view="Asset",
-                    view_property="name",
-                ),
-                DMSProperty(
-                    class_="WindTurbine",
-                    property="ratedPower",
-                    value_type="float64",
-                    container="GeneratingUnit",
-                    container_property="ratedPower",
-                    view="WindTurbine",
-                    view_property="ratedPower",
-                ),
-                DMSProperty(
-                    class_="WindFarm",
-                    property="WindTurbines",
-                    value_type="WindTurbine",
-                    relation="multiedge",
-                    view="WindFarm",
-                    view_property="windTurbines",
-                ),
-            ],
-            containers=[
-                DMSContainer(container="Asset"),
-                DMSContainer(class_="WindTurbine", container="WindTurbine", constraint="Asset"),
-            ],
-            views=[
-                DMSView(class_="Asset", view="Asset"),
-                DMSView(class_="WindTurbine", view="WindTurbine", implements=["Asset"]),
-                DMSView(class_="WindFarm", view="WindFarm"),
-            ],
+            properties=SheetList[DMSProperty](
+                data=[
+                    DMSProperty(
+                        class_="WindTurbine",
+                        property="name",
+                        value_type="text",
+                        container="Asset",
+                        container_property="name",
+                        view="Asset",
+                        view_property="name",
+                    ),
+                    DMSProperty(
+                        class_="WindTurbine",
+                        property="ratedPower",
+                        value_type="float64",
+                        container="GeneratingUnit",
+                        container_property="ratedPower",
+                        view="WindTurbine",
+                        view_property="ratedPower",
+                    ),
+                    DMSProperty(
+                        class_="WindFarm",
+                        property="WindTurbines",
+                        value_type="WindTurbine",
+                        relation="multiedge",
+                        view="WindFarm",
+                        view_property="windTurbines",
+                    ),
+                ]
+            ),
+            containers=SheetList[DMSContainer](
+                data=[
+                    DMSContainer(container="Asset"),
+                    DMSContainer(class_="WindTurbine", container="WindTurbine", constraint="Asset"),
+                ]
+            ),
+            views=SheetList[DMSView](
+                data=[
+                    DMSView(class_="Asset", view="Asset"),
+                    DMSView(class_="WindTurbine", view="WindTurbine", implements=["Asset"]),
+                    DMSView(class_="WindFarm", view="WindFarm"),
+                ]
+            ),
         ),
         DMSSchema(
             space=dm.SpaceApply(
