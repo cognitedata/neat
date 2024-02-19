@@ -2,7 +2,7 @@ import getpass
 from abc import ABC, abstractmethod
 from datetime import datetime
 
-from cognite.neat.rules.models._rules import DomainRules, InformationRules
+from cognite.neat.rules.models._rules import InformationRules
 from cognite.neat.rules.models._rules.base import RoleTypes
 
 
@@ -15,9 +15,7 @@ class BaseImporter(ABC):
         self.role = role or RoleTypes.domain_expert
 
     @abstractmethod
-    def to_rules(
-        self,
-    ) -> DomainRules | InformationRules:
+    def to_rules(self, *args, **kwargs) -> InformationRules:
         """
         Creates `Rules` object from the data for target role.
         """

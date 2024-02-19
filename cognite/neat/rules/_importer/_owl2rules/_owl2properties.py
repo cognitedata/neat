@@ -4,32 +4,28 @@ import numpy as np
 import pandas as pd
 from rdflib import Graph
 
+from cognite.neat.rules.models._rules.base import MatchType
 from cognite.neat.utils.utils import remove_namespace
 
 from ._owl2classes import _data_type_property_class, _object_property_class, _thing_class
 
 
-def parse_owl_properties(graph: Graph, make_compliant: bool = False, language: str = "en") -> pd.DataFrame:
-    """Get all properties from the OWL ontology
+def parse_owl_properties(graph: Graph, make_compliant: bool = False, language: str = "en") -> list[dict]:
+    """Parse owl properties from graph to pandas dataframe.
 
-    Parameters
-    ----------
-    graph : Graph
-        Graph to query
-    parsing_config : dict, optional
-        Configuration for parsing the dataframe, by default None
+    Args:
+        graph: Graph containing owl properties
+        make_compliant: Flag for generating compliant properties, by default False
+        language: Language to use for parsing, by default "en"
 
-    Returns
-    -------
-    pd.DataFrame
-        Dataframe with columns: class, property, name, ...
+    Returns:
+        List of dictionaries containing owl properties
     """
 
     query = """
 
-    SELECT ?class ?property ?name ?description ?type ?minCount ?maxCount
-     ?deprecated ?deprecationDate ?replacedBy ?source ?sourceEntity
-     ?match ?comment ?propertyType
+    SELECT ?class ?property ?name ?description ?type ?minCount ?maxCount ?source
+     ?match ?propertyType
     WHERE {
         ?property a ?propertyType.
         FILTER (?propertyType IN (owl:ObjectProperty, owl:DatatypeProperty ) )
@@ -44,13 +40,12 @@ def parse_owl_properties(graph: Graph, make_compliant: bool = False, language: s
         FILTER (!bound(?class) || !isBlank(?class))
         FILTER (!bound(?name) || LANG(?name) = "" || LANGMATCHES(LANG(?name), "en"))
         FILTER (!bound(?description) || LANG(?description) = "" || LANGMATCHES(LANG(?description), "en"))
-        OPTIONAL {?property owl:deprecated ?deprecated} .
     }
     """
 
     raw_df = _parse_raw_dataframe(cast(list[tuple], list(graph.query(query.replace("en", language)))))
     if raw_df.empty:
-        return pd.concat([raw_df, pd.DataFrame([len(raw_df) * [""]])], ignore_index=True)
+        return []
 
     # group values and clean up
     processed_df = _clean_up_properties(raw_df)
@@ -62,7 +57,7 @@ def parse_owl_properties(graph: Graph, make_compliant: bool = False, language: s
     # drop column _property_type, which was a helper column:
     processed_df.drop(columns=["_property_type"], inplace=True)
 
-    return processed_df
+    return processed_df.to_dict(orient="records")
 
 
 def _parse_raw_dataframe(query_results: list[tuple]) -> pd.DataFrame:
@@ -73,16 +68,11 @@ def _parse_raw_dataframe(query_results: list[tuple]) -> pd.DataFrame:
             "Property",
             "Name",
             "Description",
-            "Type",
+            "Value Type",
             "Min Count",
             "Max Count",
-            "Deprecated",
-            "Deprecation Date",
-            "Replaced By",
             "Source",
-            "Source Entity Name",
             "Match Type",
-            "Comment",
             "_property_type",
         ],
     )
@@ -94,9 +84,9 @@ def _parse_raw_dataframe(query_results: list[tuple]) -> pd.DataFrame:
     df.Source = df.Property
     df.Class = df.Class.apply(lambda x: remove_namespace(x))
     df.Property = df.Property.apply(lambda x: remove_namespace(x))
-    df.Type = df.Type.apply(lambda x: remove_namespace(x))
-    df["Source Entity Name"] = df.Property
-    df["Match Type"] = len(df) * ["exact"]
+    df["Value Type"] = df["Value Type"].apply(lambda x: remove_namespace(x))
+    df["Match Type"] = len(df) * [MatchType.exact]
+    df["Comment"] = len(df) * [None]
     df["_property_type"] = df["_property_type"].apply(lambda x: remove_namespace(x))
 
     return df
@@ -116,14 +106,10 @@ def _clean_up_properties(df: pd.DataFrame) -> pd.DataFrame:
                     "Property": property_,
                     "Name": property_grouped_df["Name"].unique()[0],
                     "Description": "\n".join(list(property_grouped_df.Description.unique()))[:1024],
-                    "Type": property_grouped_df.Type.unique()[0],
+                    "Value Type": property_grouped_df["Value Type"].unique()[0],
                     "Min Count": property_grouped_df["Min Count"].unique()[0],
                     "Max Count": property_grouped_df["Max Count"].unique()[0],
-                    "Deprecated": property_grouped_df.Deprecated.unique()[0],
-                    "Deprecation Date": property_grouped_df["Deprecation Date"].unique()[0],
-                    "Replaced By": property_grouped_df["Replaced By"].unique()[0],
                     "Source": property_grouped_df["Source"].unique()[0],
-                    "Source Entity Name": property_grouped_df["Source Entity Name"].unique()[0],
                     "Match Type": property_grouped_df["Match Type"].unique()[0],
                     "Comment": property_grouped_df["Comment"].unique()[0],
                     "_property_type": property_grouped_df["_property_type"].unique()[0],
@@ -138,7 +124,7 @@ def _clean_up_properties(df: pd.DataFrame) -> pd.DataFrame:
 
 def make_properties_compliant(properties: pd.DataFrame) -> pd.DataFrame:
     # default to None if "Min Count" is not specified
-    properties["Min Count"] = properties["Min Count"].apply(lambda x: None if not isinstance(x, int) or x == "" else x)
+    properties["Min Count"] = properties["Min Count"].apply(lambda x: 0 if not isinstance(x, int) or x == "" else x)
 
     # default to None if "Max Count" is not specified
     properties["Max Count"] = properties["Max Count"].apply(lambda x: 1 if not isinstance(x, int) or x == "" else x)
@@ -154,10 +140,6 @@ def make_properties_compliant(properties: pd.DataFrame) -> pd.DataFrame:
     properties["Comment"] = properties["Comment"].apply(
         lambda x: "Imported from Ontology by NEAT" if not isinstance(x, str) or len(x) == 0 else x
     )
-
-    # Replace empty or non-boolean values in "Deprecated" column with False
-    properties["Deprecated"] = properties["Deprecated"].fillna(False)
-    properties["Deprecated"] = properties["Deprecated"].apply(lambda x: False if not isinstance(x, bool) else x)
 
     # Reduce length of elements in the "Description" column to 1024 characters
     properties["Description"] = properties["Description"].apply(lambda x: x[:1024] if isinstance(x, str) else None)
@@ -185,11 +167,13 @@ def fix_dangling_properties(properties: pd.DataFrame) -> pd.DataFrame:
 
     # apply missing range
     properties["Class"] = properties.apply(
-        lambda row: domain[row._property_type]
-        if row._property_type == "ObjectProperty" and pd.isna(row["Class"])
-        else domain["DatatypeProperty"]
-        if pd.isna(row["Class"])
-        else row["Class"],
+        lambda row: (
+            domain[row._property_type]
+            if row._property_type == "ObjectProperty" and pd.isna(row["Class"])
+            else domain["DatatypeProperty"]
+            if pd.isna(row["Class"])
+            else row["Class"]
+        ),
         axis=1,
     )
     return properties
@@ -205,12 +189,14 @@ def fix_missing_property_value_type(properties: pd.DataFrame) -> pd.DataFrame:
         Dataframe containing properties with fixed range
     """
     # apply missing range
-    properties["Type"] = properties.apply(
-        lambda row: _thing_class()["Class"]
-        if row._property_type == "ObjectProperty" and pd.isna(row["Type"])
-        else "string"
-        if pd.isna(row["Type"])
-        else row["Type"],
+    properties["Value Type"] = properties.apply(
+        lambda row: (
+            _thing_class()["Class"]
+            if row._property_type == "ObjectProperty" and pd.isna(row["Value Type"])
+            else "string"
+            if pd.isna(row["Value Type"])
+            else row["Value Type"]
+        ),
         axis=1,
     )
 

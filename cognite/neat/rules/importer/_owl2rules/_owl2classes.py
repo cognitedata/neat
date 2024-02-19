@@ -170,15 +170,11 @@ def make_classes_compliant(classes: pd.DataFrame) -> pd.DataFrame:
 
 def _object_property_class() -> dict:
     return {
-        "Class": "ObjectPropertyContainer",
+        "Class": "ObjectProperty",
         "Name": None,
         "Description": "The class of object properties.",
         "Parent Class": None,
-        "Deprecated": False,
-        "Deprecation Date": None,
-        "Replaced By": None,
         "Source": OWL.ObjectProperty,
-        "Source Entity Name": "ObjectProperty",
         "Match Type": "exact",
         "Comment": "Added by NEAT based on owl:ObjectProperty but adapted to NEAT and use in CDF.",
     }
@@ -186,15 +182,11 @@ def _object_property_class() -> dict:
 
 def _data_type_property_class() -> dict:
     return {
-        "Class": "DatatypePropertyContainer",
+        "Class": "DatatypeProperty",
         "Name": None,
         "Description": "The class of data properties.",
         "Parent Class": None,
-        "Deprecated": False,
-        "Deprecation Date": None,
-        "Replaced By": None,
         "Source": OWL.DatatypeProperty,
-        "Source Entity Name": "DatatypeProperty",
         "Match Type": "exact",
         "Comment": "Added by NEAT based on owl:DatatypeProperty but adapted to NEAT and use in CDF.",
     }
@@ -206,11 +198,7 @@ def _thing_class() -> dict:
         "Name": None,
         "Description": "The class of holding class individuals.",
         "Parent Class": None,
-        "Deprecated": False,
-        "Deprecation Date": None,
-        "Replaced By": None,
         "Source": OWL.Thing,
-        "Source Entity Name": "Thing",
         "Match Type": "exact",
         "Comment": (
             "Added by NEAT. "
@@ -238,11 +226,7 @@ def _add_parent_class(df: pd.DataFrame) -> list[dict]:
                 "Name": None,
                 "Description": None,
                 "Parent Class": None,
-                "Deprecated": False,
-                "Deprecation Date": None,
-                "Replaced By": None,
                 "Source": None,
-                "Source Entity Name": None,
                 "Match Type": None,
                 "Comment": (
                     "Added by NEAT. "

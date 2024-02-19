@@ -5,14 +5,11 @@ there are loaders to TransformationRules pydantic class."""
 
 from pathlib import Path
 
-import pandas as pd
-from pydantic_core import ErrorDetails
 from rdflib import DC, DCTERMS, OWL, RDF, RDFS, SKOS, Graph
 
-from cognite.neat.rules.importer._base import BaseImporter
-from cognite.neat.rules.models.raw_rules import RawRules
-from cognite.neat.rules.models.rules import Rules
-from cognite.neat.rules.models.tables import Tables
+from cognite.neat.rules._importer._base import BaseImporter
+from cognite.neat.rules.models._rules import InformationRules
+from cognite.neat.rules.models._rules.base import RoleTypes
 from cognite.neat.rules.models.value_types import XSD_VALUE_TYPE_MAPPINGS
 
 from ._owl2classes import parse_owl_classes
@@ -40,10 +37,10 @@ class OWLImporter(BaseImporter):
 
     """
 
-    def __init__(self, owl_filepath: Path):
+    def __init__(self, owl_filepath: Path, role: RoleTypes = RoleTypes.information_architect):
         self.owl_filepath = owl_filepath
 
-    def to_tables(self, make_compliant: bool = False) -> dict[str, pd.DataFrame]:
+    def to_rules(self, make_compliant: bool = True) -> InformationRules:
         graph = Graph()
         try:
             graph.parse(self.owl_filepath)
@@ -58,71 +55,27 @@ class OWLImporter(BaseImporter):
         graph.bind("dc", DC)
         graph.bind("skos", SKOS)
 
-        tables: dict[str, pd.DataFrame] = {
-            Tables.metadata: parse_owl_metadata(graph, make_compliant=make_compliant),
-            Tables.classes: parse_owl_classes(graph, make_compliant=make_compliant),
-            Tables.properties: parse_owl_properties(graph, make_compliant=make_compliant),
+        components = {
+            "Metadata": parse_owl_metadata(graph, make_compliant=make_compliant),
+            "Classes": parse_owl_classes(graph, make_compliant=make_compliant),
+            "Properties": parse_owl_properties(graph, make_compliant=make_compliant),
         }
 
         if make_compliant:
-            tables = make_tables_compliant(tables)
-        # add sorting of classes and properties prior exporting
+            components = make_components_compliant(components)
 
-        tables[Tables.classes] = tables[Tables.classes].sort_values(by=["Class"])
-        tables[Tables.properties] = tables[Tables.properties].sort_values(by=["Class", "Property"])
-
-        return tables
-
-    def to_raw_rules(self, make_compliant: bool = False) -> RawRules:
-        """Creates `RawRules` object from the data."""
-
-        tables = self.to_tables(make_compliant=make_compliant)
-
-        return RawRules.from_tables(tables=tables, importer_type=self.__class__.__name__)
-
-    def to_rules(
-        self,
-        return_report: bool = False,
-        skip_validation: bool = False,
-        validators_to_skip: set[str] | None = None,
-        make_compliant: bool = False,
-    ) -> tuple[Rules | None, list[ErrorDetails] | None, list | None] | Rules:
-        """
-        Creates `Rules` object from the data.
-
-        Args:
-            return_report: To return validation report. Defaults to False.
-            skip_validation: Bypasses Rules validation. Defaults to False.
-            validators_to_skip: List of validators to skip. Defaults to None.
-            make_compliant: Flag for generating compliant rules, by default False
-
-        Returns:
-            Instance of `Rules`, which can be validated, not validated based on
-            `skip_validation` flag, or partially validated if `validators_to_skip` is set,
-            and optional list of errors and warnings if
-            `return_report` is set to True.
-
-        !!! Note "Skip Validation
-            `skip_validation` flag should be only used for purpose when `Rules` object
-            is exported to an Excel file. Do not use this flag for any other purpose!
-        """
-
-        raw_rules = self.to_raw_rules(make_compliant=make_compliant)
-
-        return raw_rules.to_rules(return_report, skip_validation, validators_to_skip)
+        return InformationRules.model_validate(components)
 
 
-def make_tables_compliant(tables: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
-    tables = _add_missing_classes(tables)
-    tables = _add_missing_value_types(tables)
-    tables = _add_properties_to_dangling_classes(tables)
-    tables = _add_entity_type_property(tables)
+def make_components_compliant(components: dict) -> dict:
+    components = _add_missing_classes(components)
+    components = _add_missing_value_types(components)
 
-    return tables
+    return components
 
 
-def _add_missing_classes(tables: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
-    """Add missing classes to containers.
+def _add_missing_classes(components: dict[str, list[dict]]) -> dict:
+    """Add missing classes to Classes.
 
     Args:
         tables: imported tables from owl ontology
@@ -131,40 +84,23 @@ def _add_missing_classes(tables: dict[str, pd.DataFrame]) -> dict[str, pd.DataFr
         Updated tables with missing classes added to containers
     """
 
-    missing_classes = set(tables[Tables.properties].Class.to_list()) - set(tables[Tables.classes].Class.to_list())
+    missing_classes = {definition["Class"] for definition in components["Properties"]} - {
+        definition["Class"] for definition in components["Classes"]
+    }
 
-    rows = []
+    comment = (
+        "Added by NEAT. "
+        "This is a class that a domain of a property but was not defined in the ontology. "
+        "It is added by NEAT to make the ontology compliant with CDF."
+    )
+
     for class_ in missing_classes:
-        rows += [
-            {
-                "Class": class_,
-                "Name": None,
-                "Description": None,
-                "Parent Class": None,
-                "Deprecated": False,
-                "Deprecation Date": None,
-                "Replaced By": None,
-                "Source": None,
-                "Source Entity Name": None,
-                "Match Type": None,
-                "Comment": (
-                    "Added by NEAT. "
-                    "This is a class that a domain of a property but was not defined in the ontology. "
-                    "It is added by NEAT to make the ontology compliant with CDF."
-                ),
-            }
-        ]
+        components["Classes"].append({"Class": class_, "Comment": comment})
 
-    if rows:
-        tables[Tables.classes] = pd.concat(
-            [tables[Tables.classes], pd.DataFrame(rows)],
-            ignore_index=True,
-        )
-
-    return tables
+    return components
 
 
-def _add_missing_value_types(tables: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
+def _add_missing_value_types(components: dict) -> dict:
     """Add properties to classes that do not have any properties defined to them
 
     Args:
@@ -175,116 +111,20 @@ def _add_missing_value_types(tables: dict[str, pd.DataFrame]) -> dict[str, pd.Da
     """
 
     xsd_types = set(XSD_VALUE_TYPE_MAPPINGS.keys())
-    referred_types = set(tables[Tables.properties]["Type"].to_list())
-    defined_classes = set(tables[Tables.classes]["Class"].to_list())
+    value_types = {definition["Value Type"] for definition in components["Properties"]}
 
-    rows = []
-    for class_ in referred_types.difference(defined_classes).difference(xsd_types):
-        rows += [
+    classes = {definition["Class"] for definition in components["Classes"]}
+
+    for class_ in value_types.difference(classes).difference(xsd_types):
+        components["Classes"].append(
             {
                 "Class": class_,
-                "Name": None,
-                "Description": None,
-                "Parent Class": None,
-                "Deprecated": False,
-                "Deprecation Date": None,
-                "Replaced By": None,
-                "Source": None,
-                "Source Entity Name": None,
-                "Match Type": None,
                 "Comment": (
                     "Added by NEAT. "
                     "This is a class that a domain of a property but was not defined in the ontology. "
                     "It is added by NEAT to make the ontology compliant with CDF."
                 ),
             }
-        ]
-
-    if rows:
-        tables[Tables.classes] = pd.concat(
-            [tables[Tables.classes], pd.DataFrame(rows)],
-            ignore_index=True,
         )
 
-    return tables
-
-
-def _add_properties_to_dangling_classes(
-    tables: dict[str, pd.DataFrame], properties_to_add: list[str] | None = None
-) -> dict[str, pd.DataFrame]:
-    """Add properties to classes that do not have any properties defined to them
-
-    Args:
-        tables: imported tables from owl ontology
-
-    Returns:
-        Updated tables with missing properties added to containers
-    """
-
-    if properties_to_add is None:
-        properties_to_add = ["label"]
-    undefined_classes = set(tables[Tables.classes].Class.to_list()) - set(tables[Tables.properties].Class.to_list())
-
-    rows = []
-    for class_ in undefined_classes:
-        for property_ in properties_to_add:
-            rows += [
-                {
-                    "Class": class_,
-                    "Property": property_,
-                    "Name": property_,
-                    "Description": None,
-                    "Type": "string",
-                    "Min Count": None,
-                    "Max Count": 1,
-                    "Deprecated": False,
-                    "Deprecation Date": None,
-                    "Replaced By": None,
-                    "Source": None,
-                    "Source Entity Name": None,
-                    "Match Type": None,
-                    "Comment": "Added by NEAT. Default property to make the ontology compliant with CDF.",
-                }
-            ]
-
-    if rows:
-        tables[Tables.properties] = pd.concat(
-            [tables[Tables.properties], pd.DataFrame(rows)],
-            ignore_index=True,
-        )
-
-    return tables
-
-
-def _add_entity_type_property(tables: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
-    missing_entity_type = set(
-        tables[Tables.properties].groupby("Class").filter(lambda x: "entityType" not in x.Property.to_list()).Class
-    )
-
-    rows = []
-    for class_ in missing_entity_type:
-        rows += [
-            {
-                "Class": class_,
-                "Property": "entityType",
-                "Name": "entityType",
-                "Description": None,
-                "Type": "string",
-                "Min Count": None,
-                "Max Count": 1,
-                "Deprecated": False,
-                "Deprecation Date": None,
-                "Replaced By": None,
-                "Source": None,
-                "Source Entity Name": None,
-                "Match Type": None,
-                "Comment": "Added by NEAT. Default property added to make the ontology compliant with CDF.",
-            }
-        ]
-
-    if rows:
-        tables[Tables.properties] = pd.concat(
-            [tables[Tables.properties], pd.DataFrame(rows)],
-            ignore_index=True,
-        )
-    return tables
+    return components

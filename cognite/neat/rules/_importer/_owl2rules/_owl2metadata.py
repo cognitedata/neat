@@ -1,13 +1,10 @@
 import datetime
 import re
 
-import pandas as pd
 from rdflib import Graph, Namespace
-from cognite.neat.rules.models._rules.base import RoleTypes
 
+from cognite.neat.rules.models._rules.base import RoleTypes
 from cognite.neat.rules.models.rules import (
-    cdf_space_compliance_regex,
-    data_model_id_compliance_regex,
     prefix_compliance_regex,
     version_compliance_regex,
 )

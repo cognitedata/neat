@@ -73,7 +73,7 @@ def _parse_raw_dataframe(query_results: list[tuple]) -> pd.DataFrame:
     df.Source = df.Class
     df.Class = df.Class.apply(lambda x: remove_namespace(x))
     df["Source Entity Name"] = df.Class
-    df["Match"] = len(df) * [MatchType.exact]
+    df["Match Type"] = len(df) * [MatchType.exact]
     df["Comment"] = len(df) * [None]
     df["Parent Class"] = df["Parent Class"].apply(lambda x: remove_namespace(x))
 
@@ -88,7 +88,7 @@ def _clean_up_classes(df: pd.DataFrame) -> pd.DataFrame:
             "Description": "\n".join(list(group_df.Description.unique())),
             "Parent Class": ", ".join(list(group_df["Parent Class"].unique())),
             "Source": group_df["Source"].unique()[0],
-            "Match": group_df["Match"].unique()[0],
+            "Match Type": group_df["Match Type"].unique()[0],
             "Comment": group_df["Comment"].unique()[0],
         }
         for class_, group_df in df.groupby("Class")
@@ -119,8 +119,10 @@ def make_classes_compliant(classes: pd.DataFrame) -> pd.DataFrame:
     """
 
     # Replace empty or non-string values in "Match" column with "exact"
-    classes["Match"] = classes["Match"].fillna("exact")
-    classes["Match"] = classes["Match"].apply(lambda x: "exact" if not isinstance(x, str) or len(x) == 0 else x)
+    classes["Match Type"] = classes["Match Type"].fillna(MatchType.exact)
+    classes["Match Type"] = classes["Match Type"].apply(
+        lambda x: MatchType.exact if not isinstance(x, str) or len(x) == 0 else x
+    )
 
     # Replace empty or non-string values in "Comment" column with a default value
     classes["Comment"] = classes["Comment"].fillna("Imported from Ontology by NEAT")
@@ -148,36 +150,36 @@ def make_classes_compliant(classes: pd.DataFrame) -> pd.DataFrame:
 
 def _object_property_class() -> dict:
     return {
-        "Class": "ObjectPropertyContainer",
+        "Class": "ObjectProperty",
         "Name": None,
         "Description": "The class of object properties.",
         "Parent Class": None,
         "Source": OWL.ObjectProperty,
-        "Match": "exact",
+        "Match Type": MatchType.exact,
         "Comment": "Added by NEAT based on owl:ObjectProperty but adapted to NEAT and use in CDF.",
     }
 
 
 def _data_type_property_class() -> dict:
     return {
-        "Class": "DatatypePropertyContainer",
+        "Class": "DatatypeProperty",
         "Name": None,
         "Description": "The class of data properties.",
         "Parent Class": None,
         "Source": OWL.DatatypeProperty,
-        "Match": "exact",
+        "Match Type": MatchType.exact,
         "Comment": "Added by NEAT based on owl:DatatypeProperty but adapted to NEAT and use in CDF.",
     }
 
 
 def _thing_class() -> dict:
     return {
-        "Class": "ThingContainer",
+        "Class": "Thing",
         "Name": None,
         "Description": "The class of holding class individuals.",
         "Parent Class": None,
         "Source": OWL.Thing,
-        "Match": "exact",
+        "Match Type": MatchType.exact,
         "Comment": (
             "Added by NEAT. "
             "Imported from OWL base ontology, it is meant for use as a default"
@@ -205,7 +207,7 @@ def _add_parent_class(df: pd.DataFrame) -> list[dict]:
                 "Description": None,
                 "Parent Class": None,
                 "Source": None,
-                "Match": None,
+                "Match Type": None,
                 "Comment": (
                     "Added by NEAT. "
                     "This is a parent class that is missing in the ontology. "
