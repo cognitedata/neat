@@ -779,18 +779,18 @@ class DMSSchemaComponents(BaseModel):
         components_to_remove = components_to_remove or {"all"}
 
         if "data model" in components_to_remove or "all" in components_to_remove:
-            logs["data model"], errors["data model"] = self.remove_data_model(client, return_report)
+            logs["data model"], errors["data model"] = self.remove_data_model(client)
         if "view" in components_to_remove or "all" in components_to_remove:
-            logs["view"], errors["view"] = self.remove_views(client, return_report)
+            logs["view"], errors["view"] = self.remove_views(client)
         if "container" in components_to_remove or "all" in components_to_remove:
-            logs["container"], errors["container"] = self.remove_containers(client, return_report)
+            logs["container"], errors["container"] = self.remove_containers(client, multi_space_components_removal)
         if "space" in components_to_remove or "all" in components_to_remove:
             logs["space"], errors["space"] = self.remove_spaces(client, multi_space_components_removal)
 
         if return_report:
             return logs, errors
 
-    def remove_data_model(self, client: CogniteClient, return_report: bool = False) -> tuple[list, list]:
+    def remove_data_model(self, client: CogniteClient) -> tuple[list, list]:
         logs, errors = [], []
 
         if client.data_modeling.data_models.retrieve((self.space, self.external_id, self.version)):
@@ -807,7 +807,7 @@ class DMSSchemaComponents(BaseModel):
 
         return logs, errors
 
-    def remove_views(self, client: CogniteClient, return_report: bool = False) -> tuple[list, list]:
+    def remove_views(self, client: CogniteClient) -> tuple[list, list]:
         logs, errors = [], []
 
         if existing_views := self.find_existing_views(client):
@@ -858,11 +858,12 @@ class DMSSchemaComponents(BaseModel):
         existing_spaces = self.find_existing_spaces(client)
 
         if existing_spaces and multi_space_components_removal:
-            try:
-                _ = client.data_modeling.spaces.delete(list(existing_spaces))
-                logs.append(f"Removed spaces {existing_spaces}!")
-            except CogniteAPIError as e:
-                errors.append(f"Failed to remove spaces {existing_spaces}! Reason: {e.message}")
+            for space in existing_spaces:
+                try:
+                    _ = client.data_modeling.spaces.delete(space)
+                    logs.append(f"Removed spaces {space}!")
+                except CogniteAPIError as e:
+                    errors.append(f"Failed to remove {space}! Reason: {e.message}")
 
         elif self.space in existing_spaces and not multi_space_components_removal:
             try:

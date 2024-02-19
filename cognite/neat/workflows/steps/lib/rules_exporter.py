@@ -240,9 +240,9 @@ class DeleteDMSSchemaComponents(Step):
             name="multi_space_components_removal",
             value="False",
             label=(
-                "Whether to remove only components belonging to the data model space"
-                " (i.e. space define under Metadata sheet of Rules), "
-                "or also additionally components outside of the data model space. (WARNING)"
+                "False (default) = Only delete components inside the space referred"
+                " in Metadata Sheet of Rules"
+                r", True = Delete all components referred to in Rules<\p>"
             ),
             options=["True", "False"],
         ),
@@ -376,6 +376,8 @@ class ExportRulesToOntology(Step):
             storage_path = default_path
         else:
             storage_path = self.data_store_path / Path(self.configs["ontology_file_path"])
+
+        storage_path.parent.mkdir(parents=True, exist_ok=True)
         report_file_path = storage_path.parent / f"report_{storage_path.stem}.txt"
 
         with warnings.catch_warnings(record=True) as validation_warnings:
@@ -432,6 +434,7 @@ class ExportRulesToSHACL(Step):
         with warnings.catch_warnings(record=True) as validation_warnings:
             ontology = Ontology.from_rules(rules=rules.rules)
 
+        storage_path.parent.mkdir(parents=True, exist_ok=True)
         storage_path.write_text(ontology.constraints)
         report_file_path.write_text(generate_exception_report(wrangle_warnings(validation_warnings), "Warnings"))
 
@@ -469,7 +472,9 @@ class ExportRulesToGraphCapturingSheet(Step):
         staging_dir_str = self.configs["storage_dir"]
         logging.info(f"Auto identifier type {auto_identifier_type}")
         staging_dir = self.data_store_path / Path(staging_dir_str)
+
         staging_dir.mkdir(parents=True, exist_ok=True)
+
         data_capture_sheet_path = staging_dir / sheet_name
 
         cognite.neat.graph.extractors._graph_capturing_sheet.rules2graph_capturing_sheet(
