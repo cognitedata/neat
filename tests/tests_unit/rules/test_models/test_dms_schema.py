@@ -11,6 +11,9 @@ from cognite.neat.rules.models._rules.dms_schema import (
     DuplicatedViewInDataModel,
     MissingContainer,
     MissingContainerProperty,
+    MissingEdgeView,
+    MissingParentView,
+    MissingSourceView,
     MissingSpace,
     MissingView,
     SchemaError,
@@ -106,10 +109,12 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
                 referred_by=dm.ViewId("my_space", "my_view1", "1"),
             ),
             ContainerPropertyUsedMultipleTimes(
-                referred_by={
-                    (dm.ViewId("my_space", "my_view2", "1"), "value"),
-                    (dm.ViewId("my_space", "my_view2", "1"), "value2"),
-                },
+                referred_by=frozenset(
+                    {
+                        (dm.ViewId("my_space", "my_view2", "1"), "value"),
+                        (dm.ViewId("my_space", "my_view2", "1"), "value2"),
+                    }
+                ),
                 container=dm.ContainerId("my_space", "my_container"),
                 property="value",
             ),
@@ -162,6 +167,67 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
             ),
         ],
         id="Missing space, and direct relation missing source",
+    )
+
+    my_data_model = dm.DataModelApply(
+        space="my_space",
+        external_id="my_data_model",
+        version="1",
+        views=[
+            dm.ViewId("my_space", "my_view1", "1"),
+            dm.ViewId("my_space", "my_view2", "1"),
+        ],
+    )
+
+    view1 = dm.ViewApply(
+        space="my_space",
+        external_id="my_view1",
+        version="1",
+        implements=[dm.ViewId("my_space", "non_existing", "1")],
+        properties={
+            "non_existing": dm.MultiEdgeConnectionApply(
+                type=dm.DirectRelationReference("my_space", "external_id"),
+                source=dm.ViewId("my_space", "non_existing", "1"),
+                edge_source=dm.ViewId("my_space", "non_existing_edge_view", "1"),
+            ),
+        },
+    )
+
+    view2 = dm.ViewApply(
+        space="my_space",
+        external_id="my_view2",
+        version="1",
+        properties={
+            "view1": dm.MultiEdgeConnectionApply(
+                type=dm.DirectRelationReference("my_space", "external_id"),
+                source=dm.ViewId("my_space", "my_view1", "1"),
+            ),
+        },
+    )
+
+    yield pytest.param(
+        DMSSchema(
+            my_space,
+            my_data_model,
+            views=dm.ViewApplyList([view1, view2]),
+        ),
+        [
+            MissingParentView(
+                view=dm.ViewId("my_space", "non_existing", "1"),
+                referred_by=dm.ViewId("my_space", "my_view1", "1"),
+            ),
+            MissingEdgeView(
+                view=dm.ViewId("my_space", "non_existing_edge_view", "1"),
+                property="non_existing",
+                referred_by=dm.ViewId("my_space", "my_view1", "1"),
+            ),
+            MissingSourceView(
+                view=dm.ViewId("my_space", "non_existing", "1"),
+                property="non_existing",
+                referred_by=dm.ViewId("my_space", "my_view1", "1"),
+            ),
+        ],
+        id="Missing parent view, edge view, and source view",
     )
 
 

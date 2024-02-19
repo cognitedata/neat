@@ -68,9 +68,11 @@ class DMSSchema:
 
                         if isinstance(container_property.type, dm.DirectRelation) and prop.source is None:
                             errors.add(DirectRelationMissingSource(view_id=view_id, property=prop_name))
-                elif isinstance(prop, dm.EdgeConnectionApply) and prop.source not in defined_views:
+
+                if isinstance(prop, dm.EdgeConnectionApply) and prop.source not in defined_views:
                     errors.add(MissingSourceView(view=prop.source, property=prop_name, referred_by=view_id))
-                elif (
+
+                if (
                     isinstance(prop, dm.EdgeConnectionApply)
                     and prop.edge_source is not None
                     and prop.edge_source not in defined_views
