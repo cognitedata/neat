@@ -127,8 +127,8 @@ def check_parent(value: list[ParentClass]) -> list[ParentClass]:
 
 ParentClass_ = Annotated[
     list[ParentClass] | None,
-    BeforeValidator(lambda v: split_parent(v)),
-    AfterValidator(lambda v: check_parent(v)),
+    BeforeValidator(split_parent),
+    AfterValidator(check_parent),
 ]
 
 Class_ = Annotated[
