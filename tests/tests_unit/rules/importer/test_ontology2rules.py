@@ -1,5 +1,5 @@
+from cognite.neat.rules._importer._owl2rules import OWLImporter
 from cognite.neat.rules.examples import wind_energy_ontology
-from cognite.neat.rules.importer._importer._owl2rules import OWLImporter
 
 
 def test_owl2transformation_rules() -> None:
