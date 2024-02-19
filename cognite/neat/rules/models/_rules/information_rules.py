@@ -1,4 +1,3 @@
-import sys
 from datetime import datetime
 from typing import Any, ClassVar, Self, cast
 
@@ -30,11 +29,6 @@ from ._types import (
 )
 from .base import BaseMetadata, MatchType, RoleTypes, RuleModel, SheetEntity, SheetList
 from .domain_rules import DomainMetadata, DomainRules
-
-if sys.version_info >= (3, 11):
-    pass
-else:
-    pass
 
 
 class InformationMetadata(BaseMetadata):
