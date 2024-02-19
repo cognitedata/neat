@@ -13,6 +13,7 @@ import FileUpload from 'react-mui-fileuploader';
 import { getNeatApiRootUrl, getSelectedWorkflowName } from './Utils';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
+import FileUploadIcon from '@mui/icons-material/FileUpload';
 
 export default function LocalUploader(props: any) {
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -95,7 +96,7 @@ export default function LocalUploader(props: any) {
             <DialogTitle>Upload {props.type} to local storage</DialogTitle>
             <DialogContent>
             <FileUpload
-                title="Rules file uploader"
+                title="File uploader"
                 multiFile={true}
                 showPlaceholderImage={false}
                 header="[Drag to drop new rules file here or click to select a file]"
@@ -103,8 +104,8 @@ export default function LocalUploader(props: any) {
                 onContextReady={(context) => {}}
                 filesContainerHeight={100}
             />
-            <FormControlLabel control={<Checkbox checked={postUploadConfigUpdate} onChange={(event) => { handlePostUploadActionConfig("auto_config_update", event.target.checked) }} />} label="Automatically update file name and version in the workflow config" />
-            <FormControlLabel control={<Checkbox checked={postUploadWorkflowStart} onChange={(event) => { handlePostUploadActionConfig("auto_workflow_start", event.target.checked) }} />} label="Start the workflow after the upload is completed" />
+            <FormControlLabel control={<Checkbox checked={postUploadConfigUpdate} onChange={(event) => { handlePostUploadActionConfig("auto_config_update", event.target.checked) }} />} label="Automatically update the references to file names and versions in all steps." />
+            <FormControlLabel control={<Checkbox checked={postUploadWorkflowStart} onChange={(event) => { handlePostUploadActionConfig("auto_workflow_start", event.target.checked) }} />} label="Start the workflow once the upload has finished." />
             {error && <Container sx={{ color: 'red' }}>{error}</Container>}
 
             </DialogContent>
@@ -113,7 +114,7 @@ export default function LocalUploader(props: any) {
                 <Button onClick={handleDialogPublish}>Upload</Button>
             </DialogActions>
           </Dialog>
-          <Button variant="outlined" sx={{ marginTop: 2, marginRight: 1 }} onClick={handleDialogClickOpen} >Upload to NEAT </Button>
+          <Button variant="outlined" sx={{ marginTop: 2, marginRight: 1 }} onClick={handleDialogClickOpen} > Upload File to NEAT local storage <FileUploadIcon/> </Button>
         </React.Fragment>
     )
 }

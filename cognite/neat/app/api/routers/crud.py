@@ -49,6 +49,10 @@ async def file_upload_handler(
         upload_dir = NEAT_APP.workflow_manager.data_store_path / "workflows" / workflow_name
     elif file_type == "workflow":
         upload_dir = NEAT_APP.workflow_manager.data_store_path / "workflows"
+    elif file_type == "staging":
+        upload_dir = NEAT_APP.workflow_manager.data_store_path / "staging"
+    elif file_type == "source_graph":
+        upload_dir = NEAT_APP.workflow_manager.data_store_path / "source-graphs"
     for file in files:
         logging.info(
             f"Uploading file : {file.filename} , workflow : {workflow_name} , step_id {step_id} , action : {action}"
@@ -76,7 +80,7 @@ async def file_upload_handler(
 
         NEAT_APP.workflow_manager.save_workflow_to_storage(workflow_name)
 
-    if "start_workflow" in action and file_type == "rules":
+    if "start_workflow" in action and file_type == "rules" or file_type == "staging":
         logging.info("Starting workflow after file upload")
         workflow = NEAT_APP.workflow_manager.get_workflow(workflow_name)
         if workflow is None:

@@ -14,8 +14,10 @@ import React, { ChangeEvent, useEffect, useState } from "react"
 import { StepMetadata, StepRegistry, WorkflowDefinition, WorkflowStepDefinition, WorkflowSystemComponent } from "types/WorkflowTypes"
 import { getNeatApiRootUrl } from "./Utils"
 import LocalUploader from "./LocalUploader"
-import { Autocomplete, Box, Container, FormGroup, InputLabel, Link, List, ListItem, ListItemText, Stack, Typography, darken, lighten, styled } from "@mui/material"
+import WarningIcon from '@mui/icons-material/Warning';
+import { Autocomplete, Box, Container, FormGroup, InputLabel, Link, List, ListItem, ListItemText, Stack, Tooltip, Typography, darken, lighten, styled } from "@mui/material"
 import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined';
+import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 import { Height } from "@mui/icons-material"
 
 const GroupHeader = styled('div')(({ theme }) => ({
@@ -184,6 +186,11 @@ export default function StepEditorDialog(props: any)
               case "http_trigger":
                 updStep.trigger = true;
                 break;
+              case "file_uploader":
+                updStep.trigger = true;
+                if( updStep.params["file_type"] == undefined)
+                  updStep.params["file_type"] = "rules"
+                break;
 
               case "start_workflow_task_step":
                 updStep.params = { "workflow_name": "", "sync": "false" }
@@ -237,6 +244,9 @@ export default function StepEditorDialog(props: any)
               case "wait_timeout":
                 updStep.params["wait_timeout"] = value;
                 break;
+              case "file_upload_type": 
+                updStep.params["file_type"] = value;
+                break;  
               default:
                 updStep[name] = value;
             }
@@ -324,7 +334,14 @@ return (
               {selectedStepTemplate && (
               <Box>
               <Stack direction="row" spacing={2}>
-                <Typography sx={{marginRight:7}}> Version : {selectedStepTemplate?.version} </Typography>
+                <Typography sx={{marginRight:7}}> 
+                Version : {selectedStepTemplate?.version}
+                {selectedStepTemplate?.version.toLowerCase().includes("alpha") && (
+                          <Tooltip title="Caution: This step is in the alpha stage and may be subject to changes or deprecation.">
+                            <WarningIcon sx={{ marginLeft: 1, marginBottom: -0.5, color: "orange" }} />
+                          </Tooltip>
+                )}
+                 </Typography>
                 <Link href={selectedStepTemplate?.docs_url} target="_blank"> Extended documentation </Link>
               </Stack>
               <Typography> Description : {selectedStepTemplate?.description} </Typography>
@@ -333,9 +350,22 @@ return (
               <Typography> Configurations : </Typography>
               <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
               {selectedStepTemplate?.configurables.map((item,i)=> (
-                <ListItem>
+                <ListItem  sx={{
+                  backgroundColor: item.label.toLowerCase().includes("warning") ? "yellow" : "inherit"
+                }}>
                   <Box sx={{width:'50vw'}}>
-                  <ListItemText  primary={item.name} secondary={item.label}></ListItemText>
+                    
+                  <ListItemText
+                    primary={item.name}
+                    secondary={
+                      <Box sx={{ display: "flex", alignItems: "center" }}>
+                        {item.label.toLowerCase().includes("warning") && (
+                          <WarningIcon sx={{ marginRight: 1, color: "orange" }} />
+                        )}
+                        {item.label}
+                      </Box>
+                    }
+                  />
                   </Box>
                   <Box sx={{width:'50vw'}}>
                   <FormControl fullWidth>
@@ -393,11 +423,37 @@ return (
             {(selectedStep?.stype == "start_workflow_task_step" || selectedStep?.stype == "http_trigger") && (
               <FormControlLabel control={<Checkbox checked={selectedStep?.params["sync"] == "true"} onChange={(event) => { handleStepConfigChange("workflow_sync_run_flag", event.target.checked) }} />} label="Synchronous execution" />
             )}
+             <FormControlLabel control={<Checkbox checked={selectedStep?.enabled} onChange={(event) => { handleStepConfigChange("enabled", event.target.checked) }} />} label="Is step enabled" />
             {(selectedStep?.stype == "file_uploader") && (
-               <LocalUploader fileType="staging" action="start_workflow" onUpload={onUpload} stepId={selectedStep.id} workflowName={props.workflowName} />
+              <Box>
+                <FormControl fullWidth sx={{ marginTop: 2 }}>
+                          <InputLabel id="file_uploader_file_type_label">Select File Type</InputLabel>
+                          <Select sx={{ marginTop: 1 }}
+                          labelId="file_uploader_file_type_label"
+                          id="file_uploader_file_type"
+                          value={selectedStep?.params["file_type"]}
+                            label="Select File Type"
+                          size='small'
+                          variant="outlined"
+                          onChange={(event) => { handleStepConfigChange("file_upload_type", event.target.value) }}
+                        >
+                          <MenuItem value="rules">Rules (Data Model) File</MenuItem>
+                          <MenuItem value="staging">Staging File: Data dump in json/xml/csv format or any other file</MenuItem>
+                          <MenuItem value="source_graph"> Source graph file in RDF format</MenuItem>
+                        </Select>
+                </FormControl>
+                <LocalUploader
+                  fileType="staging"
+                  action="start_workflow"
+                  onUpload={onUpload}
+                  stepId={selectedStep.id}
+                  workflowName={props.workflowName}
+                  sx={{ width: '100%' }}
+                />
+              </Box> 
             )}
 
-            <FormControlLabel control={<Checkbox checked={selectedStep?.enabled} onChange={(event) => { handleStepConfigChange("enabled", event.target.checked) }} />} label="Is step enabled" />
+           
             {(selectedStep?.trigger == false) && (
             <TextField sx={{ marginTop: 1 }} id="step-config-max-retries" fullWidth label="Max retries on failure" size='small' type="number" variant="outlined" value={selectedStep?.max_retries} onChange={(event) => { handleStepConfigChange("max_retries", event.target.value) }} />
             )}
@@ -436,6 +492,13 @@ return (
             )}
             </FormControl>
 
+            {(selectedStep?.stype == "http_trigger") && (
+              <Button sx={{ marginTop: 5 }}  variant="outlined" size="small" color="success" onClick={handleRunCommand}> <PlayCircleOutlineIcon sx={{marginRight:2}}/> Start workflow </Button>
+            )}
+            {(selectedStep?.stype == "wait_for_event") && (
+                <Button sx={{ marginTop: 5 }}  variant="outlined" size="small" color="success" onClick={handleResumeCommand}> <PlayCircleOutlineIcon sx={{marginRight:2}}/> Resume workflow execution </Button>
+            )}
+
           <Typography> {statusText} </Typography>
 
 
@@ -444,13 +507,6 @@ return (
           <Button variant="outlined" size="small" disabled={!isConfigurationValid} onClick={handleDialogSave}>Save</Button>
           <Button variant="outlined" size="small" onClick={handleDialogCancel}>Cancel</Button>
           <Button variant="outlined" size="small" color="error" onClick={handleDelete} >Delete</Button>
-          {(selectedStep?.stype == "http_trigger") && (
-              <Button variant="outlined" size="small" color="success" onClick={handleRunCommand}>Run</Button>
-          )}
-          {(selectedStep?.stype == "wait_for_event") && (
-              <Button variant="outlined" size="small" color="success" onClick={handleResumeCommand}>Resume execution</Button>
-          )}
-
         </DialogActions>
       </Dialog>
 )

@@ -242,7 +242,7 @@ class DeleteDMSSchemaComponents(Step):
             label=(
                 "Whether to remove only components belonging to the data model space"
                 " (i.e. space define under Metadata sheet of Rules), "
-                "or also additionally components outside of the data model space."
+                "or also additionally components outside of the data model space. (WARNING)"
             ),
             options=["True", "False"],
         ),

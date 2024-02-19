@@ -97,7 +97,7 @@ class DMSLoader(CogniteLoader[InstanceApply]):
                         f"{class_name} {counter} instances processed, "
                         f"instance processing time: {delta_time/counter:.2f} "
                     )
-                    logging.info(msg)
+                    # logging.info(msg)
 
                 except Exception as e:
                     logging.error(
