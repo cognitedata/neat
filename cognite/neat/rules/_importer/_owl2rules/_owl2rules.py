@@ -8,7 +8,7 @@ from pathlib import Path
 from rdflib import DC, DCTERMS, OWL, RDF, RDFS, SKOS, Graph
 
 from cognite.neat.rules._importer._base import BaseImporter
-from cognite.neat.rules.models._rules import InformationRules
+from cognite.neat.rules.models._rules import DomainRules, InformationRules
 from cognite.neat.rules.models._rules.base import RoleTypes
 from cognite.neat.rules.models.value_types import XSD_VALUE_TYPE_MAPPINGS
 
@@ -37,10 +37,11 @@ class OWLImporter(BaseImporter):
 
     """
 
-    def __init__(self, owl_filepath: Path, role: RoleTypes = RoleTypes.information_architect):
+    def __init__(self, owl_filepath: Path, role: RoleTypes | None = None):
         self.owl_filepath = owl_filepath
+        self.role = RoleTypes.information_architect
 
-    def to_rules(self, make_compliant: bool = True) -> InformationRules:
+    def to_rules(self, make_compliant: bool = True) -> DomainRules | InformationRules:
         graph = Graph()
         try:
             graph.parse(self.owl_filepath)
@@ -64,7 +65,10 @@ class OWLImporter(BaseImporter):
         if make_compliant:
             components = make_components_compliant(components)
 
-        return InformationRules.model_validate(components)
+        if self.role == RoleTypes.information_architect:
+            return InformationRules.model_validate(components)
+        else:
+            return InformationRules.model_validate(components).to_domain_rules()
 
 
 def make_components_compliant(components: dict) -> dict:

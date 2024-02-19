@@ -29,7 +29,7 @@ from ._types import (
     VersionType,
 )
 from .base import BaseMetadata, MatchType, RoleTypes, RuleModel, SheetEntity, SheetList
-from .domain_rules import DomainMetadata
+from .domain_rules import DomainMetadata, DomainRules
 
 if sys.version_info >= (3, 11):
     pass
@@ -228,3 +228,6 @@ class InformationRules(RuleModel):
                         parent.prefix = prefix
 
         return self
+
+    def to_domain_rules(self) -> DomainRules:
+        raise NotImplementedError("DomainRules not implemented yet")
