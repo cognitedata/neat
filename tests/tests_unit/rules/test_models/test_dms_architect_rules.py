@@ -174,7 +174,7 @@ class TestDMSRules:
         assert not missing, f"Missing properties: {missing}"
 
     @pytest.mark.skip(reason="Fails in CI/CD but not locally. Investigate later.")
-    @pytest.mark.parametrize("rules, expected_schema", list(rules_schema_tests_cases()))
+    @pytest.mark.parametrize("rules, expected_schema", rules_schema_tests_cases())
     def test_as_schema(self, rules: DMSRules, expected_schema: DMSSchema) -> None:
         actual_schema = rules.as_schema()
 
