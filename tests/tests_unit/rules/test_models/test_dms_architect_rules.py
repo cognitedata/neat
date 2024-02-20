@@ -168,6 +168,13 @@ class TestDMSRules:
         missing = sample_expected_properties - {f"{prop.class_}.{prop.property_}" for prop in valid_rules.properties}
         assert not missing, f"Missing properties: {missing}"
 
+    def test_alice_spreadsheet_as_schema(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
+        rules = DMSRules.model_validate(alice_spreadsheet)
+
+        schema = rules.as_schema()
+
+        assert isinstance(schema, DMSSchema)
+
     @pytest.mark.parametrize("rules, expected_schema", rules_schema_tests_cases())
     def test_as_schema(self, rules: DMSRules, expected_schema: DMSSchema) -> None:
         actual_schema = rules.as_schema()
