@@ -160,7 +160,6 @@ class DMSLoader(CogniteLoader[InstanceApply]):
     def as_nodes_and_edges(
         self, stop_on_exception: bool = False
     ) -> tuple[list[NodeApply], list[EdgeApply], list[ErrorDetails]]:
-        print("here")
         nodes = []
         edges = []
         exceptions: list[ErrorDetails] = []
