@@ -53,6 +53,7 @@ class DMSLoader(CogniteLoader[InstanceApply]):
             for class_name in self.rules.classes
             if f"{self.rules.space}:{class_name}" not in data_model.containers
         }
+
         for class_name, triples in self._iterate_class_triples(exclude_classes=exclude):
             counter = 0
             start_time = datetime_utc_now()
