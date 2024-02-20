@@ -221,9 +221,9 @@ class InformationRules(RuleModel):
                 property_.value_type.prefix = prefix
 
         # update parent classes
-        for i in range(0, len(self.classes.data)):
-            if self.classes.data[i].parent:
-                for parent in cast(list[ParentClass], self.classes.data[i].parent):
+        for class_ in self.classes:
+            if class_.parent:
+                for parent in cast(list[ParentClass], class_.parent):
                     if parent.prefix == "undefined":
                         parent.prefix = prefix
 
