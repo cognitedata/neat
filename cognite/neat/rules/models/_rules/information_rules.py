@@ -216,9 +216,9 @@ class InformationRules(RuleModel):
         default_prefix = self.metadata.prefix
 
         # update expected_value_types
-        for i in range(0, len(self.properties.data)):
-            if self.properties.data[i].value_type.prefix == "undefined":
-                self.properties.data[i].value_type.prefix = prefix
+        for property_ in self.properties:
+            if property_.value_type.prefix == "undefined":
+                property_.value_type.prefix = prefix
 
         # update parent classes
         for i in range(0, len(self.classes.data)):
