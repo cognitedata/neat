@@ -26,21 +26,26 @@ class ExcelImporter(BaseImporter):
         excel_file = pd.ExcelFile(self.filepath)
         sheet_names = {str(name).lower() for name in excel_file.sheet_names}
 
-        if rules_model.mandatory_fields().difference(sheet_names):
-            raise ValueError(f"Missing mandatory sheets: {rules_model.mandatory_fields().difference(sheet_names)}")
+        if missing_sheets := rules_model.mandatory_fields().difference(sheet_names):
+            raise ValueError(f"Missing mandatory sheets: {missing_sheets}")
 
         sheets = {
             "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),
-            "Properties": read_spreadsheet(excel_file, "Properties", skiprows=1),
+            "Properties": read_spreadsheet(excel_file, "Properties", skiprows=skiprows),
             "Classes": (
-                read_spreadsheet(excel_file, "Classes", skiprows=1) if "Classes" in excel_file.sheet_names else []
+                read_spreadsheet(excel_file, "Classes", skiprows=skiprows)
+                if "Classes" in excel_file.sheet_names
+                else None
             ),
             "Containers": (
-                read_spreadsheet(excel_file, "Containers", skiprows=1) if "Containers" in excel_file.sheet_names else []
+                read_spreadsheet(excel_file, "Containers", skiprows=skiprows)
+                if "Containers" in excel_file.sheet_names
+                else None
             ),
-            "Views": read_spreadsheet(excel_file, "Views", skiprows=1) if "Views" in excel_file.sheet_names else [],
+            "Views": (
+                read_spreadsheet(excel_file, "Views", skiprows=skiprows) if "Views" in excel_file.sheet_names else None
+            ),
         }
-
         if role == RoleTypes.domain_expert:
             return rules_model.model_validate(sheets)
         elif role == RoleTypes.information_architect:
@@ -67,8 +72,8 @@ class GoogleSheetImporter(BaseImporter):
         sheets = {worksheet.title: pd.DataFrame(worksheet.get_all_records()) for worksheet in google_sheet.worksheets()}
         sheet_names = {str(name).lower() for name in sheets.keys()}
 
-        if rules_model.mandatory_fields().difference(sheet_names):
-            raise ValueError(f"Missing mandatory sheets: {rules_model.mandatory_fields().difference(sheet_names)}")
+        if missing_sheets := rules_model.mandatory_fields().difference(sheet_names):
+            raise ValueError(f"Missing mandatory sheets: {missing_sheets}")
 
         if role == RoleTypes.domain_expert:
             return rules_model.model_validate(sheets)
