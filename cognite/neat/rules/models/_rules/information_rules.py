@@ -213,19 +213,17 @@ class InformationRules(RuleModel):
 
     @model_validator(mode="after")
     def update_entities_prefix(self) -> Self:
-        default_prefix = self.metadata.prefix
-
         # update expected_value_types
         for property_ in self.properties:
             if property_.value_type.prefix == "undefined":
-                property_.value_type.prefix = prefix
+                property_.value_type.prefix = self.metadata.prefix
 
         # update parent classes
         for class_ in self.classes:
             if class_.parent:
                 for parent in cast(list[ParentClass], class_.parent):
                     if parent.prefix == "undefined":
-                        parent.prefix = prefix
+                        parent.prefix = self.metadata.prefix
 
         return self
 
