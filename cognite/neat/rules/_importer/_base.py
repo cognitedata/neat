@@ -4,7 +4,7 @@ from datetime import datetime
 
 from rdflib import Namespace
 
-from cognite.neat.rules.models._rules import InformationRules
+from cognite.neat.rules.models._rules import DMSRules, DomainRules, InformationRules
 
 
 class BaseImporter(ABC):
@@ -13,7 +13,7 @@ class BaseImporter(ABC):
     """
 
     @abstractmethod
-    def to_rules(self) -> InformationRules:
+    def to_rules(self) -> DomainRules | InformationRules | DMSRules:
         """
         Creates `Rules` object from the data for target role.
         """
