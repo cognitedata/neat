@@ -139,7 +139,11 @@ class DMSRules(BaseRules):
                 external_id=container_external_id,
                 properties={
                     prop.container_property: dm.ContainerProperty(
-                        type=_PropertyType_by_name[prop.value_type.casefold()]()
+                        type=(
+                            type_()
+                            if (type_ := _PropertyType_by_name.get(prop.value_type.casefold()))
+                            else dm.DirectRelation()
+                        )
                         if isinstance(prop.value_type, str)
                         else prop.value_type(),
                         nullable=prop.nullable or True,

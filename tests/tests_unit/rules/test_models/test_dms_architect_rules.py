@@ -1,7 +1,6 @@
 from collections.abc import Iterable
 from typing import Any
 
-import pandas as pd
 import pytest
 from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
@@ -15,20 +14,6 @@ from cognite.neat.rules.models._rules.dms_architect_rules import (
     DMSView,
 )
 from cognite.neat.rules.models._rules.dms_schema import DMSSchema
-from tests.config import DOC_KNOWLEDGE_ACQUISITION_TUTORIAL
-from tests.tests_unit.rules.test_models.utils import _read_spreadsheet
-
-
-@pytest.fixture(scope="session")
-def alice_spreadsheet() -> dict[str, dict[str, Any]]:
-    filepath = DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "cdf-dms-architect-alice.xlsx"
-    excel_file = pd.ExcelFile(filepath)
-    return {
-        "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),
-        "Properties": _read_spreadsheet(excel_file, "Properties", skiprows=1),
-        "Views": _read_spreadsheet(excel_file, "Views", skiprows=1),
-        "Containers": _read_spreadsheet(excel_file, "Containers", skiprows=1),
-    }
 
 
 def rules_schema_tests_cases() -> Iterable[ParameterSet]:
@@ -167,6 +152,11 @@ class TestDMSRules:
         sample_expected_properties = {"WindTurbine.name", "WindFarm.WindTurbines", "Circuit Breaker.voltage"}
         missing = sample_expected_properties - {f"{prop.class_}.{prop.property_}" for prop in valid_rules.properties}
         assert not missing, f"Missing properties: {missing}"
+
+    def test_alice_spreadsheet_as_schema(self, alice_rules: DMSRules) -> None:
+        schema = alice_rules.as_schema()
+
+        assert isinstance(schema, DMSSchema)
 
     @pytest.mark.parametrize("rules, expected_schema", rules_schema_tests_cases())
     def test_as_schema(self, rules: DMSRules, expected_schema: DMSSchema) -> None:
