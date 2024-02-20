@@ -213,7 +213,7 @@ class InformationRules(RuleModel):
 
     @model_validator(mode="after")
     def update_entities_prefix(self) -> Self:
-        prefix = self.metadata.prefix
+        default_prefix = self.metadata.prefix
 
         # update expected_value_types
         for i in range(0, len(self.properties.data)):
