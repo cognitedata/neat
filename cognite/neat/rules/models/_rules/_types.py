@@ -199,3 +199,15 @@ ValueTypeType = Annotated[
         )
     ),
 ]
+
+
+SourceType = Annotated[
+    rdflib.URIRef | None,
+    BeforeValidator(
+        lambda value: (
+            value
+            if not value or (value and isinstance(value, rdflib.URIRef))
+            else rdflib.URIRef(str(TypeAdapter(HttpUrl).validate_python(value)))
+        ),
+    ),
+]
