@@ -9,4 +9,5 @@ def test_owl2transformation_rules() -> None:
 
     # Assert
     assert str(rules.metadata.namespace) == "https://kg.cognite.ai/wind/"
-    assert len(rules.classes.data) == 71
+    assert len(rules.classes) == 71
+
