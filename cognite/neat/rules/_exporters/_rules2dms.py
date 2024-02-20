@@ -1,4 +1,5 @@
 import warnings
+import zipfile
 from pathlib import Path
 
 from cognite.neat.rules.models._rules.dms_architect_rules import DMSRules
@@ -24,7 +25,15 @@ class DMSExporter(BaseExporter[DMSSchema]):
         if filepath.suffix not in {".zip"}:
             warnings.warn("File extension is not .zip, adding it to the file name", stacklevel=2)
             filepath = filepath.with_suffix(".zip")
-        raise NotImplementedError("Export to file is not implemented yet")
+
+        schema = self.export()
+        with zipfile.ZipFile(filepath, "w") as zip_ref:
+            zip_ref.writestr(f"data_models/{schema.space.space}.space.yaml", schema.space.dump_yaml())
+            zip_ref.writestr(f"data_models/{schema.model.external_id}.datamodel.yaml", schema.model.dump_yaml())
+            for view in schema.views:
+                zip_ref.writestr(f"data_models/{view.external_id}.view.yaml", view.dump_yaml())
+            for container in schema.containers:
+                zip_ref.writestr(f"data_models/{container.external_id}.container.yaml", container.dump_yaml())
 
     def export(self) -> DMSSchema:
         return self.rules.as_schema()
