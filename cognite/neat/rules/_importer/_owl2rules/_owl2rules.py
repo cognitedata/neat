@@ -9,7 +9,6 @@ from rdflib import DC, DCTERMS, OWL, RDF, RDFS, SKOS, Graph
 
 from cognite.neat.rules._importer._base import BaseImporter
 from cognite.neat.rules.models._rules import InformationRules
-from cognite.neat.rules.models._rules.base import RoleTypes
 from cognite.neat.rules.models.value_types import XSD_VALUE_TYPE_MAPPINGS
 
 from ._owl2classes import parse_owl_classes
@@ -40,8 +39,7 @@ class OWLImporter(BaseImporter):
     def __init__(self, owl_filepath: Path):
         self.owl_filepath = owl_filepath
 
-    def to_rules(self, make_compliant: bool = True, role: RoleTypes | None = None) -> InformationRules:
-        self.role = role or RoleTypes.information_architect
+    def to_rules(self, make_compliant: bool = True) -> InformationRules:
         graph = Graph()
         try:
             graph.parse(self.owl_filepath)
@@ -65,10 +63,7 @@ class OWLImporter(BaseImporter):
         if make_compliant:
             components = make_components_compliant(components)
 
-        if self.role == RoleTypes.information_architect:
-            return InformationRules.model_validate(components)
-        else:
-            raise NotImplementedError("Only information architect role is supported")
+        return InformationRules.model_validate(components)
 
 
 def make_components_compliant(components: dict) -> dict:
