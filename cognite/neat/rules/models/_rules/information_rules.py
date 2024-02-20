@@ -1,12 +1,12 @@
 import sys
 from datetime import datetime
-from typing import Any, ClassVar
+from typing import Any, ClassVar, cast
 
-from pydantic import Field, HttpUrl, TypeAdapter, field_validator, model_validator
-from rdflib import Namespace, URIRef
+from pydantic import Field, model_validator
+from rdflib import Namespace
 
 from cognite.neat.rules import exceptions
-from cognite.neat.rules.models._base import EntityTypes
+from cognite.neat.rules.models._base import EntityTypes, ParentClass
 from cognite.neat.rules.models.rdfpath import (
     AllReferences,
     Hop,
@@ -18,19 +18,23 @@ from cognite.neat.rules.models.rdfpath import (
     parse_rule,
 )
 
-from ._types import ClassType, NamespaceType, ParentClassType, PrefixType, PropertyType, ValueTypeType, VersionType
-from .base import BaseMetadata, RoleTypes, RuleModel, SheetEntity, SheetList
-from .domain_rules import DomainMetadata
+from ._types import (
+    ClassType,
+    NamespaceType,
+    ParentClassType,
+    PrefixType,
+    PropertyType,
+    SourceType,
+    ValueTypeType,
+    VersionType,
+)
+from .base import BaseMetadata, MatchType, RoleTypes, RuleModel, SheetEntity, SheetList
+from .domain_rules import DomainMetadata, DomainRules
 
 if sys.version_info >= (3, 11):
-    from enum import StrEnum
+    from typing import Self
 else:
-    from backports.strenum import StrEnum
-
-
-class MatchType(StrEnum):
-    exact = "exact"
-    partial = "partial"
+    from typing_extensions import Self
 
 
 class InformationMetadata(BaseMetadata):
@@ -89,16 +93,11 @@ class InformationClass(SheetEntity):
     """
 
     class_: ClassType = Field(alias="Class")
-    description: str | None = Field(None, alias="Description")
-    parent: ParentClassType = Field(alias="Parent Class")
-    source: Namespace | None = None
-    match_type: MatchType | None = None
-
-    @field_validator("source", mode="before")
-    def fix_namespace_ending(cls, value):
-        if value:
-            return Namespace(TypeAdapter(HttpUrl).validate_python(value))
-        return value
+    description: str | None = Field(alias="Description", default=None)
+    parent: ParentClassType = Field(alias="Parent Class", default=None)
+    source: SourceType = Field(alias="Source", default=None)
+    match_type: MatchType | None = Field(alias="Match Type", default=None)
+    comment: str | None = Field(alias="Comment", default=None)
 
 
 class InformationProperty(SheetEntity):
@@ -129,18 +128,13 @@ class InformationProperty(SheetEntity):
     min_count: int | None = Field(alias="Min Count", default=None)
     max_count: int | float | None = Field(alias="Max Count", default=None)
     default: Any | None = Field(alias="Default", default=None)
-    source: URIRef | None = None
-    match_type: MatchType | None = None
+    source: SourceType = Field(alias="Source", default=None)
+    match_type: MatchType | None = Field(alias="Match Type", default=None)
     rule_type: str | TransformationRuleType | None = Field(alias="Rule Type", default=None)
     rule: str | AllReferences | SingleProperty | Hop | RawLookup | SPARQLQuery | Traversal | None = Field(
         alias="Rule", default=None
     )
-
-    @field_validator("source", mode="before")
-    def fix_namespace_ending(cls, value):
-        if value:
-            return URIRef(TypeAdapter(HttpUrl).validate_python(value))
-        return value
+    comment: str | None = Field(alias="Comment", default=None)
 
     @model_validator(mode="after")
     def is_valid_rule(self):
@@ -216,3 +210,22 @@ class InformationRules(RuleModel):
     metadata: InformationMetadata = Field(alias="Metadata")
     properties: SheetList[InformationProperty] = Field(alias="Properties")
     classes: SheetList[InformationClass] = Field(alias="Classes")
+
+    @model_validator(mode="after")
+    def update_entities_prefix(self) -> Self:
+        # update expected_value_types
+        for property_ in self.properties:
+            if property_.value_type.prefix == "undefined":
+                property_.value_type.prefix = self.metadata.prefix
+
+        # update parent classes
+        for class_ in self.classes:
+            if class_.parent:
+                for parent in cast(list[ParentClass], class_.parent):
+                    if parent.prefix == "undefined":
+                        parent.prefix = self.metadata.prefix
+
+        return self
+
+    def to_domain_rules(self) -> DomainRules:
+        raise NotImplementedError("DomainRules not implemented yet")

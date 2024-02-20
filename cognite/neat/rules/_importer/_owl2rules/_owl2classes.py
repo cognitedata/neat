@@ -4,10 +4,11 @@ import numpy as np
 import pandas as pd
 from rdflib import OWL, Graph
 
+from cognite.neat.rules.models._rules.base import MatchType
 from cognite.neat.utils.utils import remove_namespace
 
 
-def parse_owl_classes(graph: Graph, make_compliant: bool = False, language: str = "en") -> pd.DataFrame:
+def parse_owl_classes(graph: Graph, make_compliant: bool = False, language: str = "en") -> list[dict]:
     """Parse owl classes from graph to pandas dataframe.
 
     Args:
@@ -24,14 +25,12 @@ def parse_owl_classes(graph: Graph, make_compliant: bool = False, language: str 
     """
 
     query = """
-        SELECT ?class ?name ?description ?parentClass ?deprecated ?deprecationDate
-        ?replacedBy ?source ?sourceEntity ?match ?comment
+        SELECT ?class ?name ?description ?parentClass ?source ?match ?comment
         WHERE {
         ?class a owl:Class .
         OPTIONAL {?class rdfs:subClassOf ?parentClass }.
         OPTIONAL {?class rdfs:label ?name }.
         OPTIONAL {?class rdfs:comment ?description} .
-        OPTIONAL {?class owl:deprecated ?deprecated} .
         FILTER (!isBlank(?class))
         FILTER (!bound(?parentClass) || !isBlank(?parentClass))
         FILTER (!bound(?name) || LANG(?name) = "" || LANGMATCHES(LANG(?name), "en"))
@@ -43,7 +42,7 @@ def parse_owl_classes(graph: Graph, make_compliant: bool = False, language: str 
 
     raw_df = _parse_raw_dataframe(cast(list[tuple], list(graph.query(query.replace("en", language)))))
     if raw_df.empty:
-        return pd.concat([raw_df, pd.DataFrame([len(raw_df) * [""]])], ignore_index=True)
+        return []
 
     # group values and clean up
     processed_df = _clean_up_classes(raw_df)
@@ -57,25 +56,13 @@ def parse_owl_classes(graph: Graph, make_compliant: bool = False, language: str 
         lambda x: ", ".join(x) if isinstance(x, list) and x else None
     )
 
-    return processed_df
+    return processed_df.dropna(axis=0, how="all").replace(float("nan"), None).to_dict(orient="records")
 
 
 def _parse_raw_dataframe(query_results: list[tuple]) -> pd.DataFrame:
     df = pd.DataFrame(
         query_results,
-        columns=[
-            "Class",
-            "Name",
-            "Description",
-            "Parent Class",
-            "Deprecated",
-            "Deprecation Date",
-            "Replaced By",
-            "Source",
-            "Source Entity Name",
-            "Match",
-            "Comment",
-        ],
+        columns=["Class", "Name", "Description", "Parent Class", "Source", "Match", "Comment"],
     )
     if df.empty:
         return df
@@ -86,7 +73,8 @@ def _parse_raw_dataframe(query_results: list[tuple]) -> pd.DataFrame:
     df.Source = df.Class
     df.Class = df.Class.apply(lambda x: remove_namespace(x))
     df["Source Entity Name"] = df.Class
-    df["Match"] = len(df) * ["exact"]
+    df["Match Type"] = len(df) * [MatchType.exact]
+    df["Comment"] = len(df) * [None]
     df["Parent Class"] = df["Parent Class"].apply(lambda x: remove_namespace(x))
 
     return df
@@ -99,12 +87,8 @@ def _clean_up_classes(df: pd.DataFrame) -> pd.DataFrame:
             "Name": group_df["Name"].unique()[0],
             "Description": "\n".join(list(group_df.Description.unique())),
             "Parent Class": ", ".join(list(group_df["Parent Class"].unique())),
-            "Deprecated": group_df.Deprecated.unique()[0],
-            "Deprecation Date": group_df["Deprecation Date"].unique()[0],
-            "Replaced By": group_df["Replaced By"].unique()[0],
             "Source": group_df["Source"].unique()[0],
-            "Source Entity Name": group_df["Name"].unique()[0],
-            "Match Type": group_df["Match"].unique()[0],
+            "Match Type": group_df["Match Type"].unique()[0],
             "Comment": group_df["Comment"].unique()[0],
         }
         for class_, group_df in df.groupby("Class")
@@ -134,10 +118,10 @@ def make_classes_compliant(classes: pd.DataFrame) -> pd.DataFrame:
         starts with a number, etc. This will cause issues when trying to create the class in CDF.
     """
 
-    # Replace empty or non-string values in "Match Type" column with "exact"
-    classes["Match Type"] = classes["Match Type"].fillna("exact")
+    # Replace empty or non-string values in "Match" column with "exact"
+    classes["Match Type"] = classes["Match Type"].fillna(MatchType.exact)
     classes["Match Type"] = classes["Match Type"].apply(
-        lambda x: "exact" if not isinstance(x, str) or len(x) == 0 else x
+        lambda x: MatchType.exact if not isinstance(x, str) or len(x) == 0 else x
     )
 
     # Replace empty or non-string values in "Comment" column with a default value
@@ -145,10 +129,6 @@ def make_classes_compliant(classes: pd.DataFrame) -> pd.DataFrame:
     classes["Comment"] = classes["Comment"].apply(
         lambda x: "Imported from Ontology by NEAT" if not isinstance(x, str) or len(x) == 0 else x
     )
-
-    # Replace empty or non-boolean values in "Deprecated" column with False
-    classes["Deprecated"] = classes["Deprecated"].fillna(False)
-    classes["Deprecated"] = classes["Deprecated"].apply(lambda x: False if not isinstance(x, bool) else x)
 
     # Add _object_property_class, _data_type_property_class, _thing_class to the dataframe
     classes = pd.concat(
@@ -175,7 +155,7 @@ def _object_property_class() -> dict:
         "Description": "The class of object properties.",
         "Parent Class": None,
         "Source": OWL.ObjectProperty,
-        "Match Type": "exact",
+        "Match Type": MatchType.exact,
         "Comment": "Added by NEAT based on owl:ObjectProperty but adapted to NEAT and use in CDF.",
     }
 
@@ -187,19 +167,19 @@ def _data_type_property_class() -> dict:
         "Description": "The class of data properties.",
         "Parent Class": None,
         "Source": OWL.DatatypeProperty,
-        "Match Type": "exact",
+        "Match Type": MatchType.exact,
         "Comment": "Added by NEAT based on owl:DatatypeProperty but adapted to NEAT and use in CDF.",
     }
 
 
 def _thing_class() -> dict:
     return {
-        "Class": "ThingContainer",
+        "Class": "Thing",
         "Name": None,
         "Description": "The class of holding class individuals.",
         "Parent Class": None,
         "Source": OWL.Thing,
-        "Match Type": "exact",
+        "Match Type": MatchType.exact,
         "Comment": (
             "Added by NEAT. "
             "Imported from OWL base ontology, it is meant for use as a default"

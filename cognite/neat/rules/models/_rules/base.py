@@ -154,6 +154,11 @@ class RoleTypes(StrEnum):
     dms_architect = "DMS Architect"
 
 
+class MatchType(StrEnum):
+    exact = "exact"
+    partial = "partial"
+
+
 class RuleModel(BaseModel):
     model_config: ClassVar[ConfigDict] = ConfigDict(
         populate_by_name=True,
