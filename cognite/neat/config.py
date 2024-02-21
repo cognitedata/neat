@@ -18,6 +18,7 @@ def copy_examples_to_directory(target_data_dir: Path):
     _copy_examples(EXAMPLE_RULES, target_data_dir / "rules")
     _copy_examples(EXAMPLE_GRAPHS, target_data_dir / "source-graphs")
     _copy_examples(EXAMPLE_WORKFLOWS, target_data_dir / "workflows")
+    (target_data_dir / "staging").mkdir(exist_ok=True, parents=True)
 
 
 def create_data_dir_structure(target_data_dir: Path):
@@ -31,6 +32,7 @@ def create_data_dir_structure(target_data_dir: Path):
 
     (target_data_dir / "rules").mkdir(exist_ok=True, parents=True)
     (target_data_dir / "source-graphs").mkdir(exist_ok=True, parents=True)
+    (target_data_dir / "staging").mkdir(exist_ok=True, parents=True)
     (target_data_dir / "workflows").mkdir(exist_ok=True, parents=True)
 
 

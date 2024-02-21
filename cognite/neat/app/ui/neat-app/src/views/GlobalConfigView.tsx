@@ -10,6 +10,9 @@ import { useState, useEffect } from 'react';
 import { getNeatApiRootUrl } from 'components/Utils';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
+import LocalUploader from 'components/LocalUploader';
+import Typography from '@mui/material/Typography';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 const Item = styled(Paper)(({ theme }) => ({
   backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -113,6 +116,16 @@ export default function GlobalConfigView() {
       }).finally(() => { setLoading(false); });
   }
 
+  const onConfigUploaded = (fileName,fileHahs) => {
+    loadConfigs();
+  }
+
+  const downloadConfigurationFile = () => {
+    // open file in new tab
+    window.open("/data/config.yaml", '_blank');
+  }
+
+
   return (
     <Box sx={{ width: "70%" }}>
       <Stack spacing={2}>
@@ -141,15 +154,21 @@ export default function GlobalConfigView() {
               {loading && (<LinearProgress />)}
             </Stack>
           </Box>
-          <h3>NEAT UI configuration</h3>
-          <Box sx={{ minWidth: 120 }}>
-            <Stack spacing={2} direction="column">
-              <TextField id="neat_api_root_url" label="API root url" size='small' variant="outlined" value={neatApiRootUrl} onChange={(event) => { handleConfigChange("neatApiRootUrl", event.target.value) }} />
-              <Button variant="contained" onClick={saveNeatApiConfigButtonHandler}>Save</Button>
-            </Stack>
-          </Box>
-          <h3>Neat internal CDF resources (used for storing files and execution history)</h3>
+        </Item>
+        <Item>  
+          <h3>Import/Export NEAT global configurations</h3>
+          <Box sx={{ width: 500 }}>
 
+          
+          <Button variant="outlined" onClick={downloadConfigurationFile} sx={{ marginTop: 2, marginRight: 1 , width: 500 }} >Download configuration file <FileDownloadIcon sx={{marginLeft:1}} /> </Button>
+
+          <LocalUploader fileType="global_config" action="none" stepId="none" label="Upload and apply configuration file" onUpload={onConfigUploaded}  />
+
+
+          </Box>
+       </Item>
+       <Item>   
+          <h3>Neat internal CDF resources (used for storing files and execution history)</h3>
           <Button variant="contained" onClick={initCdfResources}>Initialize CDF resources</Button>
 
         </Item>

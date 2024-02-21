@@ -71,7 +71,8 @@ class NeatApp:
 
     def stop(self):
         logging.info("Stopping NeatApp")
-        self.triggers_manager.stop_scheduler_main_loop()
+        if self.triggers_manager:
+            self.triggers_manager.stop_scheduler_main_loop()
         self.cdf_client = None
         self.cdf_store = None
         self.workflow_manager = None

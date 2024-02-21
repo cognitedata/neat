@@ -7,6 +7,7 @@ import shutil
 from fastapi import APIRouter, UploadFile
 
 from cognite.neat.app.api.configuration import NEAT_APP
+from cognite.neat.app.api.data_classes.configuration import Config
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.utils import get_file_hash
 
@@ -53,13 +54,17 @@ async def file_upload_handler(
         upload_dir = NEAT_APP.workflow_manager.data_store_path / "staging"
     elif file_type == "source_graph":
         upload_dir = NEAT_APP.workflow_manager.data_store_path / "source-graphs"
+
     for file in files:
         logging.info(
             f"Uploading file : {file.filename} , workflow : {workflow_name} , step_id {step_id} , action : {action}"
         )
         # save file to disk
         if file.filename:
-            full_path = upload_dir / file.filename
+            if file_type == "global_config":
+                full_path = NEAT_APP.config.data_store_path / "config.yaml"
+            else:
+                full_path = upload_dir / file.filename
             with full_path.open("wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
             file_name = file.filename
@@ -95,5 +100,13 @@ async def file_upload_handler(
     if action == "install" and file_type == "workflow":
         logging.info("Installing workflow after file upload")
         NEAT_APP.cdf_store.extract_workflow_package(file_name)
+
+    if file_type == "global_config":
+        logging.info("Updating global config and restarting NeatApp")
+        config = Config.from_yaml(full_path)
+        config.data_store_path = NEAT_APP.config.data_store_path
+        NEAT_APP.stop()
+        NEAT_APP.start(config=config)
+        logging.info("NeatApp restarted")
 
     return {"file_name": file_name, "hash": file_version}

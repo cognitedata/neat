@@ -22,12 +22,16 @@ export default function LocalUploader(props: any) {
     const handleDialogClickOpen = () => {
         setDialogOpen(true);
     };
+    const [label,setLabel] = useState<string>("Upload File to NEAT local storage")
     const [postUploadConfigUpdate, setPostUploadConfigUpdate] = useState<boolean>(true);
     const [postUploadWorkflowStart , setPostUploadWorkflowStart] = useState<boolean>(false);
 
     // props.action
     useEffect(() => {
         setPostUploadWorkflowStart(props.action == "start_workflow");
+        if (props.label){
+            setLabel(props.label);
+        }
     }, []);
 
     const handleDialogClose = () => {
@@ -99,7 +103,7 @@ export default function LocalUploader(props: any) {
                 title="File uploader"
                 multiFile={true}
                 showPlaceholderImage={false}
-                header="[Drag to drop new rules file here or click to select a file]"
+                header="[Drag to drop the file here or click to select a file]"
                 onFilesChange={handleFilesChange}
                 onContextReady={(context) => {}}
                 filesContainerHeight={100}
@@ -114,7 +118,7 @@ export default function LocalUploader(props: any) {
                 <Button onClick={handleDialogPublish}>Upload</Button>
             </DialogActions>
           </Dialog>
-          <Button variant="outlined" sx={{ marginTop: 2, marginRight: 1 }} onClick={handleDialogClickOpen} > Upload File to NEAT local storage <FileUploadIcon/> </Button>
+          <Button variant="outlined" sx={{ marginTop: 2, marginRight: 1 , width: "100%" , alignItems: 'center',justifyContent: 'center'  }} onClick={handleDialogClickOpen} > {label} <FileUploadIcon sx={{marginLeft:1}} /> </Button>
         </React.Fragment>
     )
 }

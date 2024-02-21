@@ -448,7 +448,6 @@ return (
                   onUpload={onUpload}
                   stepId={selectedStep.id}
                   workflowName={props.workflowName}
-                  sx={{ width: '100%' }}
                 />
               </Box> 
             )}
@@ -493,10 +492,10 @@ return (
             </FormControl>
 
             {(selectedStep?.stype == "http_trigger") && (
-              <Button sx={{ marginTop: 5 }}  variant="outlined" size="small" color="success" onClick={handleRunCommand}> <PlayCircleOutlineIcon sx={{marginRight:2}}/> Start workflow </Button>
+              <Button sx={{ marginTop: 5 , width: "100%" , alignItems: 'center',justifyContent: 'center' }}  variant="outlined" size="small" color="success" onClick={handleRunCommand}> <PlayCircleOutlineIcon sx={{marginRight:2}}/> Start workflow </Button>
             )}
             {(selectedStep?.stype == "wait_for_event") && (
-                <Button sx={{ marginTop: 5 }}  variant="outlined" size="small" color="success" onClick={handleResumeCommand}> <PlayCircleOutlineIcon sx={{marginRight:2}}/> Resume workflow execution </Button>
+                <Button sx={{ marginTop: 5,  width: "100%" , alignItems: 'center',justifyContent: 'center' }}  variant="outlined" size="small" color="success" onClick={handleResumeCommand}> <PlayCircleOutlineIcon sx={{marginRight:2}}/> Resume workflow execution </Button>
             )}
 
           <Typography> {statusText} </Typography>

@@ -257,7 +257,7 @@ class CdfStore:
             output.append(neat_cdf_resource)
         return output
 
-    def get_list_of_workflow_executions_from_cdf(self, limit=200) -> list[WorkflowFullStateReport]:
+    def get_list_of_workflow_executions_from_cdf(self, limit=70) -> list[WorkflowFullStateReport]:
         """Returns list of workflow executions from CDF."""
         logging.debug("Getting list of workflow executions from CDF")
         if not self.data_set_id:
