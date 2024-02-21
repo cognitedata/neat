@@ -15,8 +15,8 @@ def david_spreadsheet() -> dict[str, dict[str, Any]]:
     excel_file = pd.ExcelFile(filepath)
     return {
         "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),
-        "Properties": read_spreadsheet(excel_file, "Properties", skiprows=1),
-        "Classes": read_spreadsheet(excel_file, "Classes", skiprows=1),
+        "Properties": read_spreadsheet(excel_file, "Properties", ["Property"]),
+        "Classes": read_spreadsheet(excel_file, "Classes", ["Class"]),
     }
 
 

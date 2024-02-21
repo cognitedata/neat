@@ -20,7 +20,7 @@ class ExcelImporter(BaseImporter):
     def __init__(self, filepath: Path):
         self.filepath = filepath
 
-    def to_rules(self, role: RoleTypes | None = None, skiprows: int = 1) -> DomainRules | InformationRules | DMSRules:
+    def to_rules(self, role: RoleTypes | None = None) -> DomainRules | InformationRules | DMSRules:
         role = role or RoleTypes.domain_expert
         rules_model = cast(DomainRules | InformationRules | DMSRules, RULES_PER_ROLE[role])
         excel_file = pd.ExcelFile(self.filepath)
@@ -31,20 +31,16 @@ class ExcelImporter(BaseImporter):
 
         sheets = {
             "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),
-            "Properties": read_spreadsheet(excel_file, "Properties", skiprows=skiprows),
+            "Properties": read_spreadsheet(excel_file, "Properties", ["Class"]),
             "Classes": (
-                read_spreadsheet(excel_file, "Classes", skiprows=skiprows)
-                if "Classes" in excel_file.sheet_names
-                else None
+                read_spreadsheet(excel_file, "Classes", ["Class"]) if "Classes" in excel_file.sheet_names else None
             ),
             "Containers": (
-                read_spreadsheet(excel_file, "Containers", skiprows=skiprows)
+                read_spreadsheet(excel_file, "Containers", ["Container"])
                 if "Containers" in excel_file.sheet_names
                 else None
             ),
-            "Views": (
-                read_spreadsheet(excel_file, "Views", skiprows=skiprows) if "Views" in excel_file.sheet_names else None
-            ),
+            "Views": (read_spreadsheet(excel_file, "Views", ["View"]) if "Views" in excel_file.sheet_names else None),
         }
         if role == RoleTypes.domain_expert:
             return rules_model.model_validate(sheets)

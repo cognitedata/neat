@@ -44,14 +44,14 @@ def test_parse_transformation_invalid_rules(raw_tables: dict[str, pd.DataFrame])
 def test_excel_importer_domain_expert():
     assert isinstance(
         ExcelImporter(DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "expert-wind-energy-jon.xlsx").to_rules(
-            RoleTypes.domain_expert, skiprows=0
+            RoleTypes.domain_expert,
         ),
         RULES_PER_ROLE[RoleTypes.domain_expert],
     )
 
     assert isinstance(
         ExcelImporter(DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "expert-grid-emma.xlsx").to_rules(
-            RoleTypes.domain_expert, skiprows=1
+            RoleTypes.domain_expert,
         ),
         RULES_PER_ROLE[RoleTypes.domain_expert],
     )
@@ -60,7 +60,7 @@ def test_excel_importer_domain_expert():
 def test_excel_importer_information_architect():
     assert isinstance(
         ExcelImporter(DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "information-architect-david.xlsx").to_rules(
-            RoleTypes.information_architect, skiprows=1
+            RoleTypes.information_architect,
         ),
         RULES_PER_ROLE[RoleTypes.information_architect],
     )
@@ -69,7 +69,7 @@ def test_excel_importer_information_architect():
 def test_excel_importer_information_architect_invalid():
     with pytest.raises(ValueError) as e:
         ExcelImporter(DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "expert-wind-energy-jon.xlsx").to_rules(
-            RoleTypes.information_architect, skiprows=0
+            RoleTypes.information_architect,
         )
 
     assert str(e.value) == "Missing mandatory sheets: {'classes'}"
