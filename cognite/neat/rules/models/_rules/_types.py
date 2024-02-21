@@ -211,3 +211,9 @@ SourceType = Annotated[
         ),
     ),
 ]
+
+ContainerType = Annotated[str, BeforeValidator(lambda value: value)]
+
+ViewType = Annotated[str, BeforeValidator(lambda value: value)]
+
+ViewListType = Annotated[list[str], BeforeValidator(lambda value: [v for v in value])]

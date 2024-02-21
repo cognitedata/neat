@@ -1,21 +1,29 @@
 import abc
 from datetime import datetime
 from itertools import groupby
-from typing import Any, ClassVar, Literal
+from typing import ClassVar, Literal
 
 from cognite.client import data_modeling as dm
-from cognite.client.data_classes.data_modeling import PropertyType
-from pydantic import Field, field_validator
+from cognite.client.data_classes.data_modeling import PropertyType as CognitePropertyType
+from pydantic import Field
 
 from cognite.neat.rules.models._rules.information_rules import InformationMetadata
 
-from ._types import ExternalIdType, StrListType, StrOrListType, VersionType
+from ._types import (
+    ContainerType,
+    ExternalIdType,
+    PropertyType,
+    StrListType,
+    VersionType,
+    ViewListType,
+    ViewType,
+)
 from .base import BaseMetadata, BaseRules, RoleTypes, SheetEntity, SheetList
 from .dms_schema import DMSSchema
 from .domain_rules import DomainMetadata
 
-subclasses = list(PropertyType.__subclasses__())
-_PropertyType_by_name: dict[str, type[PropertyType]] = {}
+subclasses = list(CognitePropertyType.__subclasses__())
+_PropertyType_by_name: dict[str, type[CognitePropertyType]] = {}
 for subclass in subclasses:
     subclasses.extend(subclass.__subclasses__())
     if abc.ABC in subclass.__bases__:
@@ -33,7 +41,7 @@ class DMSMetadata(BaseMetadata):
     space: ExternalIdType
     external_id: ExternalIdType = Field(alias="externalId")
     version: VersionType | None
-    contributor: StrOrListType = Field(
+    contributor: StrListType = Field(
         description=(
             "List of contributors to the data model creation, "
             "typically information architects are considered as contributors."
@@ -83,40 +91,34 @@ class DMSMetadata(BaseMetadata):
 
 class DMSProperty(SheetEntity):
     class_: str = Field(alias="Class")
-    property_: str = Field(alias="Property")
+    property_: PropertyType = Field(alias="Property")
     description: str | None = Field(None, alias="Description")
-    value_type: type[PropertyType] | str = Field(alias="Value Type")
+    value_type: str = Field(alias="Value Type")
     relation: str | None = Field(None, alias="Relation")
     nullable: bool | None = Field(default=None, alias="Nullable")
     is_list: bool | None = Field(default=None, alias="IsList")
     default: str | None = Field(None, alias="Default")
     source: str | None = Field(None, alias="Source")
-    container: str | None = Field(None, alias="Container")
+    container: ContainerType | None = Field(None, alias="Container")
     container_property: str | None = Field(None, alias="ContainerProperty")
-    view: str | None = Field(None, alias="View")
+    view: ViewType | None = Field(None, alias="View")
     view_property: str | None = Field(None, alias="ViewProperty")
     index: str | None = Field(None, alias="Index")
     constraint: str | None = Field(None, alias="Constraint")
 
-    @field_validator("value_type", mode="before")
-    def to_type(cls, value: Any) -> Any:
-        if isinstance(value, str) and value.casefold() in _PropertyType_by_name:
-            return _PropertyType_by_name[value.casefold()]
-        return value
-
 
 class DMSContainer(SheetEntity):
     class_: str | None = Field(None, alias="Class")
-    container: str = Field(alias="Container")
+    container: ContainerType = Field(alias="Container")
     description: str | None = Field(None, alias="Description")
     constraint: str | None = Field(None, alias="Constraint")
 
 
 class DMSView(SheetEntity):
     class_: str | None = Field(None, alias="Class")
-    view: str = Field(alias="View")
+    view: ViewType = Field(alias="View")
     description: str | None = Field(None, alias="Description")
-    implements: StrListType | None = Field(None, alias="Implements")
+    implements: ViewListType | None = Field(None, alias="Implements")
 
 
 class DMSRules(BaseRules):
@@ -144,9 +146,7 @@ class DMSRules(BaseRules):
                             type_()
                             if (type_ := _PropertyType_by_name.get(prop.value_type.casefold()))
                             else dm.DirectRelation()
-                        )
-                        if isinstance(prop.value_type, str)
-                        else prop.value_type(),
+                        ),
                         nullable=prop.nullable or True,
                         default_value=prop.default,
                     )
@@ -208,7 +208,6 @@ class DMSRules(BaseRules):
                     view_by_ids[view_id].implements = [
                         dm.ViewId(space, parent, version=version) for parent in dms_view.implements
                     ]
-
         return DMSSchema(
             spaces=dm.SpaceApplyList([self.metadata.as_space()]),
             data_models=dm.DataModelApplyList([data_model]),

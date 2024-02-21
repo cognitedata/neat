@@ -152,6 +152,105 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     )
 
 
+def valid_rules_tests_cases() -> Iterable[ParameterSet]:
+    yield pytest.param(
+        {
+            "metadata": {
+                "schema_": "complete",
+                "space": "my_space",
+                "external_id": "my_data_model",
+                "version": "1",
+                "contributor": "Anders",
+            },
+            "properties": {
+                "data": [
+                    {
+                        "class_": "WindTurbine",
+                        "property_": "name",
+                        "value_type": "text",
+                        "container": "sp_core:asset",
+                        "container_property": "name",
+                        "view": "sp_core:asset",
+                        "view_property": "name",
+                    },
+                    {
+                        "class_": "WindTurbine",
+                        "property_": "ratedPower",
+                        "value_type": "float64",
+                        "container": "generatingunit",
+                        "container_property": "ratedPower",
+                        "view": "windturbine",
+                        "view_property": "ratedPower",
+                    },
+                ]
+            },
+            "containers": {
+                "data": [
+                    {"class_": "Asset", "container": "sp_core:asset"},
+                    {
+                        "class_": "WindTurbine",
+                        "container": "windturbine",
+                        "constraint": "sp_core:Asset",
+                    },
+                ]
+            },
+            "views": {
+                "data": [
+                    {"class_": "Asset", "view": "sp_core:asset"},
+                    {
+                        "class_": "WindTurbine",
+                        "view": "WindTurbine",
+                        "implements": ["sp_core:asset"],
+                    },
+                ]
+            },
+        },
+        DMSRules(
+            metadata=DMSMetadata(
+                schema_="complete",
+                space="my_space",
+                external_id="my_data_model",
+                version="1",
+                contributor=["Anders"],
+            ),
+            properties=SheetList[DMSProperty](
+                data=[
+                    DMSProperty(
+                        class_="WindTurbine",
+                        property_="name",
+                        value_type="text",
+                        container="sp_core:Asset",
+                        container_property="name",
+                        view="sp_core:Asset",
+                        view_property="name",
+                    ),
+                    DMSProperty(
+                        class_="WindTurbine",
+                        property_="ratedPower",
+                        value_type="float64",
+                        container="GeneratingUnit",
+                        container_property="ratedPower",
+                        view="WindTurbine",
+                        view_property="ratedPower",
+                    ),
+                ]
+            ),
+            containers=SheetList[DMSContainer](
+                data=[
+                    DMSContainer(container="sp_core:Asset", class_="Asset"),
+                    DMSContainer(class_="WindTurbine", container="WindTurbine", constraint="sp_core:Asset"),
+                ]
+            ),
+            views=SheetList[DMSView](
+                data=[
+                    DMSView(view="sp_core:Asset", class_="Asset"),
+                    DMSView(class_="WindTurbine", view="WindTurbine", implements=["sp_core:Asset"]),
+                ]
+            ),
+        ),
+    )
+
+
 class TestDMSRules:
     def test_load_valid_alice_rules(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
         valid_rules = DMSRules.model_validate(alice_spreadsheet)
@@ -161,6 +260,12 @@ class TestDMSRules:
         sample_expected_properties = {"WindTurbine.name", "WindFarm.WindTurbines", "Circuit Breaker.voltage"}
         missing = sample_expected_properties - {f"{prop.class_}.{prop.property_}" for prop in valid_rules.properties}
         assert not missing, f"Missing properties: {missing}"
+
+    @pytest.mark.parametrize("raw, expected_rules", list(valid_rules_tests_cases()))
+    def test_load_valid_rules(self, raw: dict[str, dict[str, Any]], expected_rules: DMSRules) -> None:
+        valid_rules = DMSRules.model_validate(raw)
+
+        assert valid_rules.model_dump() == expected_rules.model_dump()
 
     def test_alice_spreadsheet_as_schema(self, alice_rules: DMSRules) -> None:
         schema = alice_rules.as_schema()
