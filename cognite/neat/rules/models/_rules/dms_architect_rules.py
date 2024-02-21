@@ -1,21 +1,29 @@
 import abc
 from datetime import datetime
 from itertools import groupby
-from typing import Any, ClassVar
+from typing import ClassVar, Literal
 
 from cognite.client import data_modeling as dm
-from cognite.client.data_classes.data_modeling import PropertyType
-from pydantic import Field, field_validator
+from cognite.client.data_classes.data_modeling import PropertyType as CognitePropertyType
+from pydantic import Field
 
 from cognite.neat.rules.models._rules.information_rules import InformationMetadata
 
-from ._types import ExternalIdType, StrListType, StrOrListType, VersionType
+from ._types import (
+    ContainerType,
+    ExternalIdType,
+    PropertyType,
+    StrListType,
+    VersionType,
+    ViewListType,
+    ViewType,
+)
 from .base import BaseMetadata, BaseRules, RoleTypes, SheetEntity, SheetList
 from .dms_schema import DMSSchema
 from .domain_rules import DomainMetadata
 
-subclasses = list(PropertyType.__subclasses__())
-_PropertyType_by_name: dict[str, type[PropertyType]] = {}
+subclasses = list(CognitePropertyType.__subclasses__())
+_PropertyType_by_name: dict[str, type[CognitePropertyType]] = {}
 for subclass in subclasses:
     subclasses.extend(subclass.__subclasses__())
     if abc.ABC in subclass.__bases__:
@@ -29,10 +37,11 @@ del subclasses  # cleanup namespace
 
 class DMSMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.dms_architect
+    schema_: Literal["complete", "partial", "extended"] = Field(alias="schema")
     space: ExternalIdType
     external_id: ExternalIdType = Field(alias="externalId")
     version: VersionType | None
-    contributor: StrOrListType = Field(
+    contributor: StrListType = Field(
         description=(
             "List of contributors to the data model creation, "
             "typically information architects are considered as contributors."
@@ -82,40 +91,34 @@ class DMSMetadata(BaseMetadata):
 
 class DMSProperty(SheetEntity):
     class_: str = Field(alias="Class")
-    property_: str = Field(alias="Property")
+    property_: PropertyType = Field(alias="Property")
     description: str | None = Field(None, alias="Description")
-    value_type: type[PropertyType] | str = Field(alias="Value Type")
+    value_type: str = Field(alias="Value Type")
     relation: str | None = Field(None, alias="Relation")
     nullable: bool | None = Field(default=None, alias="Nullable")
     is_list: bool | None = Field(default=None, alias="IsList")
     default: str | None = Field(None, alias="Default")
     source: str | None = Field(None, alias="Source")
-    container: str | None = Field(None, alias="Container")
+    container: ContainerType | None = Field(None, alias="Container")
     container_property: str | None = Field(None, alias="ContainerProperty")
-    view: str | None = Field(None, alias="View")
+    view: ViewType | None = Field(None, alias="View")
     view_property: str | None = Field(None, alias="ViewProperty")
     index: str | None = Field(None, alias="Index")
     constraint: str | None = Field(None, alias="Constraint")
 
-    @field_validator("value_type", mode="before")
-    def to_type(cls, value: Any) -> Any:
-        if isinstance(value, str) and value.casefold() in _PropertyType_by_name:
-            return _PropertyType_by_name[value.casefold()]
-        return value
-
 
 class DMSContainer(SheetEntity):
     class_: str | None = Field(None, alias="Class")
-    container: str = Field(alias="Container")
+    container: ContainerType = Field(alias="Container")
     description: str | None = Field(None, alias="Description")
     constraint: str | None = Field(None, alias="Constraint")
 
 
 class DMSView(SheetEntity):
     class_: str | None = Field(None, alias="Class")
-    view: str = Field(alias="View")
+    view: ViewType = Field(alias="View")
     description: str | None = Field(None, alias="Description")
-    implements: StrListType | None = Field(None, alias="Implements")
+    implements: ViewListType | None = Field(None, alias="Implements")
 
 
 class DMSRules(BaseRules):
@@ -133,19 +136,19 @@ class DMSRules(BaseRules):
             [prop for prop in self.properties if prop.container and prop.container_property],
             key=lambda p: p.container or "",
         )
-        for container_external_id, properties in groupby(container_properties, key=lambda p: p.container):
+        for container_entity, properties in groupby(container_properties, key=lambda p: p.container):
+            container_id = container_entity.as_id(space)
+
             container = dm.ContainerApply(
-                space=space,
-                external_id=container_external_id,
+                space=container_id.space,
+                external_id=container_id.external_id,
                 properties={
                     prop.container_property: dm.ContainerProperty(
                         type=(
                             type_()
                             if (type_ := _PropertyType_by_name.get(prop.value_type.casefold()))
                             else dm.DirectRelation()
-                        )
-                        if isinstance(prop.value_type, str)
-                        else prop.value_type(),
+                        ),
                         nullable=prop.nullable or True,
                         default_value=prop.default,
                     )
@@ -164,7 +167,7 @@ class DMSRules(BaseRules):
             if not (property_.container and property_.container_property):
                 raise ValueError("Mapped property must have container and container_property")
             return dm.MappedPropertyApply(
-                container=dm.ContainerId(space, property_.container),
+                container=property_.container.as_id(space),
                 container_property_identifier=property_.container_property,
             )
 
@@ -181,11 +184,12 @@ class DMSRules(BaseRules):
                 source=dm.ViewId(space, property_.value_type, version),
             )
 
-        for view_external_id, properties in groupby(view_properties, key=lambda p: p.view):
+        for view_type, properties in groupby(view_properties, key=lambda p: p.view):
+            view_id = view_type.as_id(space, default_version=version)
             view = dm.ViewApply(
-                space=space,
-                external_id=view_external_id,
-                version=version,
+                space=view_id.space,
+                external_id=view_id.external_id,
+                version=view_id.version,
                 properties={
                     prop.view_property: (
                         _create_mapped_property(prop) if prop.container else _create_connection_property(prop)
@@ -194,23 +198,22 @@ class DMSRules(BaseRules):
                     if prop.view_property
                 },
             )
-            view_by_ids[view.as_id()] = view
+            view_by_ids[view_id] = view
             if data_model.views is None:
-                data_model.views = [view.as_id()]
+                data_model.views = [view_id]
             else:
-                data_model.views.append(view.as_id())
+                data_model.views.append(view_id)
 
         for dms_view in self.views or []:
             if dms_view.implements:
-                view_id = dm.ViewId(space, dms_view.view, version=version)
+                view_id = dms_view.view.as_id(space, default_version=version)
                 if view_id in view_by_ids:
                     view_by_ids[view_id].implements = [
-                        dm.ViewId(space, parent, version=version) for parent in dms_view.implements
+                        parent.as_id(space, default_version=version) for parent in dms_view.implements
                     ]
-
         return DMSSchema(
-            space=self.metadata.as_space(),
-            model=data_model,
+            spaces=dm.SpaceApplyList([self.metadata.as_space()]),
+            data_models=dm.DataModelApplyList([data_model]),
             views=dm.ViewApplyList(view_by_ids.values()),
             containers=containers,
         )

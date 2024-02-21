@@ -20,6 +20,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         DMSRules(
             metadata=DMSMetadata(
+                schema_="complete",
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -70,19 +71,27 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             ),
         ),
         DMSSchema(
-            space=dm.SpaceApply(
-                space="my_space",
+            spaces=dm.SpaceApplyList(
+                [
+                    dm.SpaceApply(
+                        space="my_space",
+                    )
+                ]
             ),
-            model=dm.DataModelApply(
-                space="my_space",
-                external_id="my_data_model",
-                version="1",
-                description="Contributor: Alice",
-                views=[
-                    dm.ViewId(space="my_space", external_id="Asset", version="1"),
-                    dm.ViewId(space="my_space", external_id="WindTurbine", version="1"),
-                    dm.ViewId(space="my_space", external_id="WindFarm", version="1"),
-                ],
+            data_models=dm.DataModelApplyList(
+                [
+                    dm.DataModelApply(
+                        space="my_space",
+                        external_id="my_data_model",
+                        version="1",
+                        description="Contributor: Alice",
+                        views=[
+                            dm.ViewId(space="my_space", external_id="Asset", version="1"),
+                            dm.ViewId(space="my_space", external_id="WindTurbine", version="1"),
+                            dm.ViewId(space="my_space", external_id="WindFarm", version="1"),
+                        ],
+                    )
+                ]
             ),
             views=dm.ViewApplyList(
                 [
@@ -143,6 +152,105 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     )
 
 
+def valid_rules_tests_cases() -> Iterable[ParameterSet]:
+    yield pytest.param(
+        {
+            "metadata": {
+                "schema_": "complete",
+                "space": "my_space",
+                "external_id": "my_data_model",
+                "version": "1",
+                "contributor": "Anders",
+            },
+            "properties": {
+                "data": [
+                    {
+                        "class_": "WindTurbine",
+                        "property_": "name",
+                        "value_type": "text",
+                        "container": "sp_core:Asset",
+                        "container_property": "name",
+                        "view": "sp_core:Asset",
+                        "view_property": "name",
+                    },
+                    {
+                        "class_": "WindTurbine",
+                        "property_": "ratedPower",
+                        "value_type": "float64",
+                        "container": "GeneratingUnit",
+                        "container_property": "ratedPower",
+                        "view": "WindTurbine",
+                        "view_property": "ratedPower",
+                    },
+                ]
+            },
+            "containers": {
+                "data": [
+                    {"class_": "Asset", "container": "sp_core:Asset"},
+                    {
+                        "class_": "WindTurbine",
+                        "container": "WindTurbine",
+                        "constraint": "sp_core:Asset",
+                    },
+                ]
+            },
+            "views": {
+                "data": [
+                    {"class_": "Asset", "view": "sp_core:Asset"},
+                    {
+                        "class_": "WindTurbine",
+                        "view": "WindTurbine",
+                        "implements": "sp_core:Asset",
+                    },
+                ]
+            },
+        },
+        DMSRules(
+            metadata=DMSMetadata(
+                schema_="complete",
+                space="my_space",
+                external_id="my_data_model",
+                version="1",
+                contributor=["Anders"],
+            ),
+            properties=SheetList[DMSProperty](
+                data=[
+                    DMSProperty(
+                        class_="WindTurbine",
+                        property_="name",
+                        value_type="text",
+                        container="sp_core:Asset",
+                        container_property="name",
+                        view="sp_core:Asset",
+                        view_property="name",
+                    ),
+                    DMSProperty(
+                        class_="WindTurbine",
+                        property_="ratedPower",
+                        value_type="float64",
+                        container="GeneratingUnit",
+                        container_property="ratedPower",
+                        view="WindTurbine",
+                        view_property="ratedPower",
+                    ),
+                ]
+            ),
+            containers=SheetList[DMSContainer](
+                data=[
+                    DMSContainer(container="sp_core:Asset", class_="Asset"),
+                    DMSContainer(class_="WindTurbine", container="WindTurbine", constraint="sp_core:Asset"),
+                ]
+            ),
+            views=SheetList[DMSView](
+                data=[
+                    DMSView(view="sp_core:Asset", class_="Asset"),
+                    DMSView(class_="WindTurbine", view="WindTurbine", implements=["sp_core:Asset"]),
+                ]
+            ),
+        ),
+    )
+
+
 class TestDMSRules:
     def test_load_valid_alice_rules(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
         valid_rules = DMSRules.model_validate(alice_spreadsheet)
@@ -153,6 +261,12 @@ class TestDMSRules:
         missing = sample_expected_properties - {f"{prop.class_}.{prop.property_}" for prop in valid_rules.properties}
         assert not missing, f"Missing properties: {missing}"
 
+    @pytest.mark.parametrize("raw, expected_rules", list(valid_rules_tests_cases()))
+    def test_load_valid_rules(self, raw: dict[str, dict[str, Any]], expected_rules: DMSRules) -> None:
+        valid_rules = DMSRules.model_validate(raw)
+
+        assert valid_rules.model_dump() == expected_rules.model_dump()
+
     def test_alice_spreadsheet_as_schema(self, alice_rules: DMSRules) -> None:
         schema = alice_rules.as_schema()
 
@@ -162,10 +276,10 @@ class TestDMSRules:
     def test_as_schema(self, rules: DMSRules, expected_schema: DMSSchema) -> None:
         actual_schema = rules.as_schema()
 
-        assert actual_schema.space.dump() == expected_schema.space.dump()
-        actual_schema.model.views = sorted(actual_schema.model.views, key=lambda v: v.external_id)
-        expected_schema.model.views = sorted(expected_schema.model.views, key=lambda v: v.external_id)
-        assert actual_schema.model.dump() == expected_schema.model.dump()
+        assert actual_schema.spaces.dump() == expected_schema.spaces.dump()
+        actual_schema.data_models[0].views = sorted(actual_schema.data_models[0].views, key=lambda v: v.external_id)
+        expected_schema.data_models[0].views = sorted(expected_schema.data_models[0].views, key=lambda v: v.external_id)
+        assert actual_schema.data_models[0].dump() == expected_schema.data_models[0].dump()
         assert actual_schema.containers.dump() == expected_schema.containers.dump()
 
         actual_schema.views = dm.ViewApplyList(sorted(actual_schema.views, key=lambda v: v.external_id))

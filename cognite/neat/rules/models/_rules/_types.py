@@ -1,10 +1,14 @@
 import re
+import sys
 from collections.abc import Callable
-from typing import Annotated, Any, cast
+from functools import total_ordering
+from typing import Annotated, Any, ClassVar, cast
 
 import rdflib
+from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from pydantic import (
     AfterValidator,
+    BaseModel,
     BeforeValidator,
     Field,
     HttpUrl,
@@ -13,11 +17,14 @@ from pydantic import (
     ValidationInfo,
     WrapValidator,
 )
+from pydantic.functional_serializers import PlainSerializer
 from pydantic_core import PydanticCustomError
 
 from cognite.neat.rules import exceptions
 from cognite.neat.rules.models._base import (
     ENTITY_ID_REGEX_COMPILED,
+    PREFIX_REGEX,
+    SUFFIX_REGEX,
     VERSIONED_ENTITY_REGEX_COMPILED,
     EntityTypes,
     ParentClass,
@@ -32,6 +39,11 @@ from .base import (
     version_compliance_regex,
 )
 
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
+
 __all__ = [
     "StrOrListType",
     "StrListType",
@@ -43,6 +55,9 @@ __all__ = [
     "ClassType",
     "PropertyType",
     "ValueTypeType",
+    "ViewType",
+    "ViewListType",
+    "ContainerType",
 ]
 
 
@@ -209,5 +224,169 @@ SourceType = Annotated[
             if not value or (value and isinstance(value, rdflib.URIRef))
             else rdflib.URIRef(str(TypeAdapter(HttpUrl).validate_python(value)))
         ),
+    ),
+]
+
+# Sentinel value. This is used to indicate that no prefix is set for an entity.
+Undefined = type(object())
+
+
+# mypy does not like the sentinel value, and it is not possible to ignore only the line with it below.
+# so we ignore all errors beyond this point.
+# mypy: ignore-errors
+@total_ordering
+class Entity(BaseModel, arbitrary_types_allowed=True):
+    """Entity is a class or property in OWL/RDF sense."""
+
+    type_: ClassVar[EntityTypes] = EntityTypes.undefined
+    prefix: str | Undefined = Undefined
+    suffix: str
+    version: str | None = None
+
+    def __lt__(self, other: object) -> bool:
+        if type(self) is not type(other) or not isinstance(other, Entity):
+            return NotImplemented
+        return self.versioned_id < other.versioned_id
+
+    def __eq__(self, other: object) -> bool:
+        if type(self) is not type(other) or not isinstance(other, Entity):
+            return NotImplemented
+        return self.versioned_id == other.versioned_id
+
+    def __hash__(self) -> int:
+        return hash(self.versioned_id)
+
+    @property
+    def id(self) -> str:
+        if self.prefix is Undefined:
+            return self.suffix
+        else:
+            return f"{self.prefix}:{self.suffix}"
+
+    @property
+    def versioned_id(self) -> str:
+        if self.version is None:
+            return self.id
+        else:
+            return f"{self.id}(version={self.version})"
+
+    @property
+    def space(self) -> str:
+        """Returns entity space in CDF."""
+        return self.prefix
+
+    @property
+    def external_id(self) -> str:
+        """Returns entity external id in CDF."""
+        return self.suffix
+
+    def __repr__(self):
+        return self.versioned_id
+
+    def __str__(self):
+        return self.versioned_id
+
+    @classmethod
+    def from_string(cls, entity_string: str, base_prefix: str | None = None) -> Self:
+        if result := VERSIONED_ENTITY_REGEX_COMPILED.match(entity_string):
+            return cls(
+                prefix=result.group("prefix"),
+                suffix=result.group("suffix"),
+                version=result.group("version"),
+            )
+        elif result := ENTITY_ID_REGEX_COMPILED.match(entity_string):
+            return cls(prefix=result.group("prefix"), suffix=result.group("suffix"))
+        elif base_prefix and re.match(SUFFIX_REGEX, entity_string) and re.match(PREFIX_REGEX, base_prefix):
+            return cls(prefix=base_prefix, suffix=entity_string)
+        else:
+            raise ValueError(f"{cls.__name__} is expected to be prefix:suffix, got {entity_string}")
+
+    @classmethod
+    def from_list(cls, entity_strings: list[str], base_prefix: str | None = None) -> list[Self]:
+        return [
+            cls.from_string(entity_string=entity_string, base_prefix=base_prefix) for entity_string in entity_strings
+        ]
+
+
+class ContainerEntity(Entity):
+    type_: ClassVar[EntityTypes] = EntityTypes.container
+
+    @classmethod
+    def from_raw(cls, value: str) -> "ContainerEntity":
+        if not value:
+            return ContainerEntity(prefix=Undefined, suffix=value)
+
+        if ENTITY_ID_REGEX_COMPILED.match(value) or VERSIONED_ENTITY_REGEX_COMPILED.match(value):
+            return ContainerEntity.from_string(entity_string=value)
+        else:
+            return ContainerEntity(prefix=Undefined, suffix=value)
+
+    def as_id(self, default_space: str) -> ContainerId:
+        if self.space is Undefined:
+            return ContainerId(space=default_space, external_id=self.external_id)
+        else:
+            return ContainerId(space=self.space, external_id=self.external_id)
+
+
+class ViewEntity(Entity):
+    type_: ClassVar[EntityTypes] = EntityTypes.view
+
+    @classmethod
+    def from_raw(cls, value: str) -> "ViewEntity":
+        if not value:
+            return ViewEntity(prefix=Undefined, suffix=value)
+
+        if ENTITY_ID_REGEX_COMPILED.match(value) or VERSIONED_ENTITY_REGEX_COMPILED.match(value):
+            return ViewEntity.from_string(entity_string=value)
+        else:
+            return ViewEntity(prefix=Undefined, suffix=value)
+
+    def as_id(self, default_space: str, default_version: str) -> ViewId:
+        if self.space is Undefined:
+            space = default_space
+        else:
+            space = self.space
+        version = self.version or default_version
+        return ViewId(space=space, external_id=self.external_id, version=version)
+
+
+ContainerType = Annotated[
+    ContainerEntity,
+    BeforeValidator(ContainerEntity.from_raw),
+    PlainSerializer(
+        lambda v: v.versioned_id,
+        return_type=str,
+        when_used="unless-none",
+    ),
+]
+ViewType = Annotated[
+    ViewEntity,
+    BeforeValidator(ViewEntity.from_raw),
+    PlainSerializer(
+        lambda v: v.versioned_id,
+        return_type=str,
+        when_used="unless-none",
+    ),
+]
+
+
+def _from_str_or_list(value: Any) -> list[ViewEntity] | Any:
+    if not value:
+        return value
+    if isinstance(value, str):
+        return [ViewEntity.from_raw(entry.strip()) for entry in value.split(",")]
+    elif isinstance(value, list):
+        return [ViewEntity.from_raw(entry.strip()) for entry in value]
+    else:
+        return value
+
+
+ViewListType = Annotated[
+    list[ViewEntity],
+    BeforeValidator(_from_str_or_list),
+    PlainSerializer(
+        lambda v: ",".join([entry.versioned_id for entry in v]),
+        return_type=str,
+        when_used="unless-none",
     ),
 ]

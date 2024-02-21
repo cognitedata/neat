@@ -23,7 +23,7 @@ class TestDMSExporter:
                 matches = re.search(r"[a-zA-Z0-9_].(space|datamodel|view|container).yaml$", name)
                 counts.update([matches.group(1)])
 
-        assert counts["space"] == 1
-        assert counts["datamodel"] == 1
+        assert counts["space"] == len(schema.spaces)
+        assert counts["datamodel"] == len(schema.data_models)
         assert counts["view"] == len(schema.views)
         assert counts["container"] == len(schema.containers)

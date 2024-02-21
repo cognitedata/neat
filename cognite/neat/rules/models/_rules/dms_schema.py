@@ -25,15 +25,15 @@ class SchemaError(ABC):
 
 @dataclass
 class DMSSchema:
-    space: dm.SpaceApply
-    model: dm.DataModelApply
+    spaces: dm.SpaceApplyList = field(default_factory=lambda: dm.SpaceApplyList([]))
+    data_models: dm.DataModelApplyList = field(default_factory=lambda: dm.DataModelApplyList([]))
     views: dm.ViewApplyList = field(default_factory=lambda: dm.ViewApplyList([]))
     containers: dm.ContainerApplyList = field(default_factory=lambda: dm.ContainerApplyList([]))
     node_types: dm.NodeApplyList = field(default_factory=lambda: dm.NodeApplyList([]))
 
     def validate(self) -> list[SchemaError]:
         errors: set[SchemaError] = set()
-        defined_spaces = {self.space.space}
+        defined_spaces = {space.space for space in self.spaces}
         defined_containers = {container.as_id(): container for container in self.containers}
         defined_views = {view.as_id() for view in self.views}
 
@@ -101,19 +101,20 @@ class DMSSchema:
                         )
                     )
 
-        if self.model.space not in defined_spaces:
-            errors.add(MissingSpace(space=self.model.space, referred_by=self.model.as_id()))
+        for model in self.data_models:
+            if model.space not in defined_spaces:
+                errors.add(MissingSpace(space=model.space, referred_by=model.as_id()))
 
-        view_counts: dict[dm.ViewId, int] = defaultdict(int)
-        for view in self.model.views or []:
-            view_id = view if isinstance(view, dm.ViewId) else view.as_id()
-            if view_id not in defined_views:
-                errors.add(MissingView(referred_by=self.model.as_id(), view=view_id))
-            view_counts[view_id] += 1
+            view_counts: dict[dm.ViewId, int] = defaultdict(int)
+            for view_id_or_class in model.views or []:
+                view_id = view_id_or_class if isinstance(view_id_or_class, dm.ViewId) else view_id_or_class.as_id()
+                if view_id not in defined_views:
+                    errors.add(MissingView(referred_by=model.as_id(), view=view_id))
+                view_counts[view_id] += 1
 
-        for view_id, count in view_counts.items():
-            if count > 1:
-                errors.add(DuplicatedViewInDataModel(referred_by=self.model.as_id(), view=view_id))
+            for view_id, count in view_counts.items():
+                if count > 1:
+                    errors.add(DuplicatedViewInDataModel(referred_by=model.as_id(), view=view_id))
 
         return list(errors)
 
