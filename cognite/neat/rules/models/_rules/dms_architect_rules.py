@@ -1,7 +1,7 @@
 import abc
 from datetime import datetime
 from itertools import groupby
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Literal
 
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import PropertyType
@@ -29,6 +29,7 @@ del subclasses  # cleanup namespace
 
 class DMSMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.dms_architect
+    schema_: Literal["Complete", "Partial"] = Field(alias="schema")
     space: ExternalIdType
     external_id: ExternalIdType = Field(alias="externalId")
     version: VersionType | None
