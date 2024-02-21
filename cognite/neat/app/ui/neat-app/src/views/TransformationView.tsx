@@ -99,7 +99,7 @@ function Row(props: { row: any,properties: any }) {
   );
 }
 
-/* 
+/*
 "metadata": {
         "prefix": "HqDemo",
         "suffix": "HqDemo",
@@ -219,7 +219,7 @@ export default function TransformationTable() {
                 Source: {data.metadata.source}
               </Typography>
             </Box>
-          )}  
+          )}
      {selectedTab === 1 && (
         <TableContainer component={Paper}>
           <Table aria-label="collapsible table">
@@ -240,8 +240,8 @@ export default function TransformationTable() {
             </TableBody>
           </Table>
         </TableContainer>
-     )}  
-   </Box>  
+     )}
+   </Box>
     <Box sx={{margin:5}}>
       <Box sx={{width : 500}}>
       <LocalUploader fileType="rules" action="none" stepId="none" label="Upload new data model" workflowName={selectedWorkflow} onUpload={onUpload} />
@@ -249,7 +249,7 @@ export default function TransformationTable() {
       <CdfPublisher type="transformation rules" fileName={data.file_name} />
       <CdfDownloader type="neat-wf-rules" onDownloadSuccess={onDownloadSuccess} />
     </Box>
-    
+
 
     </Box>
   );

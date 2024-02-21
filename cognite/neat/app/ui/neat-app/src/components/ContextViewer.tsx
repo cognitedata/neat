@@ -41,7 +41,7 @@ export default function ContextViewer(props: any) {
     const [context, setContext] = useState<any>([]);
     const [workflowName, setWorkflowName] = useState<string>("");
     const [contextItem, setContextItem] = useState<any>(null);
-    
+
 
     const handleDialogClickOpen = () => {
         setWorkflowName(getSelectedWorkflowName());
@@ -73,7 +73,7 @@ export default function ContextViewer(props: any) {
           }else {
             return response.json()
           }
-          
+
         }).then((data) => {
           setContextItem(data);
         }
@@ -85,7 +85,7 @@ export default function ContextViewer(props: any) {
     }
 
     return (
-       
+
                     <React.Fragment>
                       <Dialog open={dialogOpen} onClose={handleDialogClose} fullWidth={true} maxWidth="xl">
                         <DialogTitle>Workflow context viewer</DialogTitle>
@@ -111,13 +111,13 @@ export default function ContextViewer(props: any) {
                                     <TableCell>{item.name}</TableCell>
                                     <TableCell>{item.type}</TableCell>
                                     <TableCell> <NJsonViewer data={contextItem} label ="Quick viewer" onOpen = {()=>{ openQuickView(item.name) }} />
-                                    <Button variant="outlined" size='small' sx={{ marginTop: 2, marginRight: 1 }} 
+                                    <Button variant="outlined" size='small' sx={{ marginTop: 2, marginRight: 1 }}
                                       onClick={() => window.open("/api/workflow/context/"+workflowName+"/object_name/"+item.name, "_blank")}>Open Object in a new tab</Button>
                                     </TableCell>
                                   </TableRow>
                                 ))}
                               </TableBody>
-                            </Table>  
+                            </Table>
                           </TableContainer>
                         </DialogContent>
                         <DialogActions>
@@ -128,6 +128,6 @@ export default function ContextViewer(props: any) {
                         Context viewer
                       </Button>
                     </React.Fragment>
-              
+
     )
 }

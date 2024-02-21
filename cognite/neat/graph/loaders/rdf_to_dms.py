@@ -94,11 +94,10 @@ class DMSLoader(CogniteLoader[InstanceApply]):
 
                     delta_time = datetime_utc_now() - start_time
                     delta_time = (delta_time.seconds * 1000000 + delta_time.microseconds) / 1000
-                    msg = (
+                    (
                         f"{class_name} {counter} instances processed, "
                         f"instance processing time: {delta_time/counter:.2f} "
                     )
-                    # logging.info(msg)
 
                 except Exception as e:
                     logging.error(

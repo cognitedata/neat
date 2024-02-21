@@ -244,9 +244,9 @@ export default function StepEditorDialog(props: any)
               case "wait_timeout":
                 updStep.params["wait_timeout"] = value;
                 break;
-              case "file_upload_type": 
+              case "file_upload_type":
                 updStep.params["file_type"] = value;
-                break;  
+                break;
               default:
                 updStep[name] = value;
             }
@@ -334,7 +334,7 @@ return (
               {selectedStepTemplate && (
               <Box>
               <Stack direction="row" spacing={2}>
-                <Typography sx={{marginRight:7}}> 
+                <Typography sx={{marginRight:7}}>
                 Version : {selectedStepTemplate?.version}
                 {selectedStepTemplate?.version.toLowerCase().includes("alpha") && (
                           <Tooltip title="Caution: This step is in the alpha stage and may be subject to changes or deprecation.">
@@ -354,7 +354,7 @@ return (
                   backgroundColor: item.label.toLowerCase().includes("warning") ? "yellow" : "inherit"
                 }}>
                   <Box sx={{width:'50vw'}}>
-                    
+
                   <ListItemText
                     primary={item.name}
                     secondary={
@@ -449,10 +449,10 @@ return (
                   stepId={selectedStep.id}
                   workflowName={props.workflowName}
                 />
-              </Box> 
+              </Box>
             )}
 
-           
+
             {(selectedStep?.trigger == false) && (
             <TextField sx={{ marginTop: 1 }} id="step-config-max-retries" fullWidth label="Max retries on failure" size='small' type="number" variant="outlined" value={selectedStep?.max_retries} onChange={(event) => { handleStepConfigChange("max_retries", event.target.value) }} />
             )}

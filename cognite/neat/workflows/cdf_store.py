@@ -7,7 +7,7 @@ import zipfile
 from pathlib import Path
 
 from cognite.client import CogniteClient
-from cognite.client.data_classes import Event, FileMetadataUpdate, Label, LabelDefinition, LabelFilter
+from cognite.client.data_classes import Event, FileMetadataUpdate
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 
@@ -46,7 +46,7 @@ class CdfStore:
     def init_cdf_resources(self, resource_type="all"):
         if self.client and self.data_set_id:
             try:
-                logging.info(f"Nothing to initialize")
+                logging.info("Nothing to initialize")
             except Exception as e:
                 logging.debug(f"Failed to create labels.{e}")
 

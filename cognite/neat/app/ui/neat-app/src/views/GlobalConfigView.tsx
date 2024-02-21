@@ -155,11 +155,11 @@ export default function GlobalConfigView() {
             </Stack>
           </Box>
         </Item>
-        <Item>  
+        <Item>
           <h3>Import/Export NEAT global configurations</h3>
           <Box sx={{ width: 500 }}>
 
-          
+
           <Button variant="outlined" onClick={downloadConfigurationFile} sx={{ marginTop: 2, marginRight: 1 , width: 500 }} >Download configuration file <FileDownloadIcon sx={{marginLeft:1}} /> </Button>
 
           <LocalUploader fileType="global_config" action="none" stepId="none" label="Upload and apply configuration file" onUpload={onConfigUploaded}  />
@@ -167,7 +167,7 @@ export default function GlobalConfigView() {
 
           </Box>
        </Item>
-       <Item>   
+       <Item>
           <h3>Neat internal CDF resources (used for storing files and execution history)</h3>
           <Button variant="contained" onClick={initCdfResources}>Initialize CDF resources</Button>
 
