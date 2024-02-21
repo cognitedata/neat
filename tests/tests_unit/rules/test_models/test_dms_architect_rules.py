@@ -5,6 +5,7 @@ import pytest
 from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
 
+from cognite.neat.rules._importer import DMSImporter
 from cognite.neat.rules.models._rules.base import SheetList
 from cognite.neat.rules.models._rules.dms_architect_rules import (
     DMSContainer,
@@ -267,10 +268,11 @@ class TestDMSRules:
 
         assert valid_rules.model_dump() == expected_rules.model_dump()
 
-    def test_alice_spreadsheet_as_schema(self, alice_rules: DMSRules) -> None:
+    def test_alice_to_and_from_DMS(self, alice_rules: DMSRules) -> None:
         schema = alice_rules.as_schema()
+        recreated_rules = DMSImporter(schema).to_rules()
 
-        assert isinstance(schema, DMSSchema)
+        assert alice_rules.model_dump() == recreated_rules.model_dump()
 
     @pytest.mark.parametrize("rules, expected_schema", rules_schema_tests_cases())
     def test_as_schema(self, rules: DMSRules, expected_schema: DMSSchema) -> None:
