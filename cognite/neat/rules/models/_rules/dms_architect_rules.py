@@ -29,7 +29,7 @@ del subclasses  # cleanup namespace
 
 class DMSMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.dms_architect
-    schema_: Literal["complete", "partial"] = Field(alias="schema")
+    schema_: Literal["complete", "partial", "extended"] = Field(alias="schema")
     space: ExternalIdType
     external_id: ExternalIdType = Field(alias="externalId")
     version: VersionType | None
