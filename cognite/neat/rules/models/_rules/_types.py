@@ -231,6 +231,8 @@ SourceType = Annotated[
 Undefined = type(object())
 
 
+# mypy does not like the sentinel value, and it is not possible to ignore only the line with it below.
+# so we ignore all errors beyond this point.
 # mypy: ignore-errors
 @total_ordering
 class Entity(BaseModel, arbitrary_types_allowed=True):
