@@ -33,8 +33,8 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
     )
     yield pytest.param(
         DMSSchema(
-            space=my_space,
-            model=data_model,
+            spaces=dm.SpaceApplyList([my_space]),
+            data_models=dm.DataModelApplyList([data_model]),
         ),
         [
             DuplicatedViewInDataModel(
@@ -93,8 +93,8 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
 
     yield pytest.param(
         DMSSchema(
-            space=my_space,
-            model=data_model,
+            spaces=dm.SpaceApplyList([my_space]),
+            data_models=dm.DataModelApplyList([data_model]),
             views=dm.ViewApplyList([view1, view2]),
             containers=dm.ContainerApplyList([container]),
         ),
@@ -151,8 +151,8 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
 
     yield pytest.param(
         DMSSchema(
-            space=my_space,
-            model=my_data_model,
+            spaces=dm.SpaceApplyList([my_space]),
+            data_models=dm.DataModelApplyList([my_data_model]),
             views=dm.ViewApplyList([view]),
             containers=dm.ContainerApplyList([container]),
         ),
@@ -207,8 +207,8 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
 
     yield pytest.param(
         DMSSchema(
-            my_space,
-            my_data_model,
+            spaces=dm.SpaceApplyList([my_space]),
+            data_models=dm.DataModelApplyList([my_data_model]),
             views=dm.ViewApplyList([view1, view2]),
         ),
         [

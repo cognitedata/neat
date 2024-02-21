@@ -29,7 +29,7 @@ del subclasses  # cleanup namespace
 
 class DMSMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.dms_architect
-    schema_: Literal["Complete", "Partial"] = Field(alias="schema")
+    schema_: Literal["complete", "partial"] = Field(alias="schema")
     space: ExternalIdType
     external_id: ExternalIdType = Field(alias="externalId")
     version: VersionType | None
@@ -210,8 +210,8 @@ class DMSRules(BaseRules):
                     ]
 
         return DMSSchema(
-            space=self.metadata.as_space(),
-            model=data_model,
+            spaces=dm.SpaceApplyList([self.metadata.as_space()]),
+            data_models=dm.DataModelApplyList([data_model]),
             views=dm.ViewApplyList(view_by_ids.values()),
             containers=containers,
         )

@@ -20,6 +20,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         DMSRules(
             metadata=DMSMetadata(
+                schema_="complete",
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -70,19 +71,27 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             ),
         ),
         DMSSchema(
-            space=dm.SpaceApply(
-                space="my_space",
+            spaces=dm.SpaceApplyList(
+                [
+                    dm.SpaceApply(
+                        space="my_space",
+                    )
+                ]
             ),
-            model=dm.DataModelApply(
-                space="my_space",
-                external_id="my_data_model",
-                version="1",
-                description="Contributor: Alice",
-                views=[
-                    dm.ViewId(space="my_space", external_id="Asset", version="1"),
-                    dm.ViewId(space="my_space", external_id="WindTurbine", version="1"),
-                    dm.ViewId(space="my_space", external_id="WindFarm", version="1"),
-                ],
+            data_models=dm.DataModelApplyList(
+                [
+                    dm.DataModelApply(
+                        space="my_space",
+                        external_id="my_data_model",
+                        version="1",
+                        description="Contributor: Alice",
+                        views=[
+                            dm.ViewId(space="my_space", external_id="Asset", version="1"),
+                            dm.ViewId(space="my_space", external_id="WindTurbine", version="1"),
+                            dm.ViewId(space="my_space", external_id="WindFarm", version="1"),
+                        ],
+                    )
+                ]
             ),
             views=dm.ViewApplyList(
                 [
@@ -162,10 +171,10 @@ class TestDMSRules:
     def test_as_schema(self, rules: DMSRules, expected_schema: DMSSchema) -> None:
         actual_schema = rules.as_schema()
 
-        assert actual_schema.space.dump() == expected_schema.space.dump()
-        actual_schema.model.views = sorted(actual_schema.model.views, key=lambda v: v.external_id)
-        expected_schema.model.views = sorted(expected_schema.model.views, key=lambda v: v.external_id)
-        assert actual_schema.model.dump() == expected_schema.model.dump()
+        assert actual_schema.spaces.dump() == expected_schema.spaces.dump()
+        actual_schema.data_models[0].views = sorted(actual_schema.data_models[0].views, key=lambda v: v.external_id)
+        expected_schema.data_models[0].views = sorted(expected_schema.data_models[0].views, key=lambda v: v.external_id)
+        assert actual_schema.data_models[0].dump() == expected_schema.data_models[0].dump()
         assert actual_schema.containers.dump() == expected_schema.containers.dump()
 
         actual_schema.views = dm.ViewApplyList(sorted(actual_schema.views, key=lambda v: v.external_id))
