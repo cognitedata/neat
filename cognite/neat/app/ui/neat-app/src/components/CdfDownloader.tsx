@@ -16,6 +16,7 @@ import { getNeatApiRootUrl, getSelectedWorkflowName } from './Utils';
 export  class NeatCdfResource {
     id: number;
     name: string;
+    ui_name : string;
     rtype: string;
     last_updated_time: number | null = null;
     last_updated_time_str: string | null = null;
@@ -58,6 +59,11 @@ export default function CdfDownloader(props: any) {
             // modify each row
             for (let i = 0; i < data.result.length; i++) {
                 data.result[i].last_updated_time_str = new Date(data.result[i].last_updated_time).toLocaleString();
+                if (data.result[i].is_latest){
+                    data.result[i].ui_name = data.result[i].name + " (latest)";
+                }else{
+                    data.result[i].ui_name = data.result[i].name;
+                }
             }
             setData(data.result);
         }).catch((error) => {
@@ -97,11 +103,11 @@ export default function CdfDownloader(props: any) {
       }
 
     const columns: GridColDef[] = [
-        { field: 'name', headerName: 'Name', width: 300 },
+        { field: 'ui_name', headerName: 'Name', width: 300 },
         { field: 'last_updated_time_str', headerName: 'Updated at', width: 170 },
         { field: 'last_updated_by', headerName: 'Updated by', width: 150 },
-        { field: 'version', headerName: 'Version', width: 290 },
         { field: 'tag', headerName: 'Tag', width: 150 },
+        { field: 'version', headerName: 'Version', width: 290 },
         { field: 'comments', headerName: 'Comments', width: 400 },
 
     ];

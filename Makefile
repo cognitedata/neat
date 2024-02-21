@@ -1,6 +1,6 @@
 .PHONY: run-explorer run-tests run-linters build-ui build-python build-docker run-docker compose-up
 
-version="0.63.0"
+version="0.64.0"
 run-explorer:
 	@echo "Running explorer API server..."
 	# open "http://localhost:8000/static/index.html" || true
@@ -50,11 +50,11 @@ build-docker: poetry-export
 
 run-docker:
 	@echo "Running docker image with mounted data folder"
-	docker run --rm -p 8000:8000 --name neat -v $(shell pwd)/docker/vol_data:/app/data  cognite/neat:latest
+	docker run --rm -p 8001:8000 --name neat -v $(shell pwd)/docker/vol_data:/app/data  cognite/neat:latest
 
 run-clean-docker:
 	@echo "Running docker image with temp data folder"
-	docker run --rm -p 8000:8000 --name neat cognite/neat:latest
+	docker run --rm -p 8001:8000 --name neat cognite/neat:latest
 
 test-docker: build-docker run-clean-docker
 	@echo "Building new docker image and running neat from latest image"

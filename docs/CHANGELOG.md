@@ -15,6 +15,17 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.64.0] - 21-03-24
+## Added
+- Added functionality to import and export global configuration file to and from CDF
+- Added "latest" flag for workflows in CDF and spreadsheets.
+- Added well formatted context viewer
+
+## Changed
+- Changed the way how workflows and rules loaded to CDF. Labels has been removed and replaced with additional metadata.
+
+## Improved
+- Improved UI around files upload and download. Improved File Uploader step.
 
 ## [0.63.0] - 20-02-24
 

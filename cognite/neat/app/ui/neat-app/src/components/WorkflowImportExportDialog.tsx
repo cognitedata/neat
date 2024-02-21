@@ -10,6 +10,8 @@ import CdfPublisher from "./CdfPublisher"
 import CdfDownloader from "./CdfDownloader"
 import LocalUploader from "./LocalUploader"
 import { getNeatApiRootUrl, getSelectedWorkflowName } from "./Utils"
+import { Box } from "@mui/material"
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 
 export default function WorkflowImportExportDialog(props: any)
@@ -55,8 +57,10 @@ return (
 <DialogContent>
     <CdfPublisher type="workflow" />
     <CdfDownloader type="workflow-package" onDownloadSuccess={onDownloadSuccess} />
-    <LocalUploader fileType="workflow" action="install" stepId="none" workflowName={getSelectedWorkflowName()} onUpload={onDownloadSuccess} />
-    <Button variant="outlined" onClick={packageWorkflow} sx={{ marginTop: 2, marginRight: 1 }} >Download from NEAT</Button>
+    <Box sx={{width: 500}}>
+    <LocalUploader fileType="workflow" action="install" stepId="none" label="Upload to NEAT" workflowName={getSelectedWorkflowName()} onUpload={onDownloadSuccess} />
+    </Box>
+    <Button variant="outlined" onClick={packageWorkflow} sx={{ marginTop: 2, marginRight: 1 , width: 500 }} >Download from NEAT <FileDownloadIcon sx={{marginLeft:1}} /> </Button>
 </DialogContent>
 <DialogActions>
   <Button variant="outlined" size="small" onClick={handleDialogCancel}>Cancel</Button>

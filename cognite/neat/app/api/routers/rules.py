@@ -100,6 +100,7 @@ def get_rules(
 
     return {
         "properties": properties,
+        "metadata": rules.metadata.model_dump(),
         "classes": classes,
         "file_name": path.name,
         "hash": get_file_hash(path),

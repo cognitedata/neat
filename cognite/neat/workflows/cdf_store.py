@@ -7,7 +7,7 @@ import zipfile
 from pathlib import Path
 
 from cognite.client import CogniteClient
-from cognite.client.data_classes import Event, FileMetadataUpdate, Label, LabelDefinition, LabelFilter
+from cognite.client.data_classes import Event, FileMetadataUpdate
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 
@@ -46,20 +46,7 @@ class CdfStore:
     def init_cdf_resources(self, resource_type="all"):
         if self.client and self.data_set_id:
             try:
-                if resource_type == "all" or resource_type == "labels":
-                    list = self.client.labels.list(external_id_prefix="neat-")
-                    if len(list) == 0:
-                        labels = [
-                            LabelDefinition(
-                                external_id="neat-workflow", name="neat-workflow", data_set_id=self.data_set_id
-                            ),
-                            LabelDefinition(
-                                external_id="neat-latest", name="neat-latest", data_set_id=self.data_set_id
-                            ),
-                        ]
-                        self.client.labels.create(labels)
-                    else:
-                        logging.debug("Labels already exists.")
+                logging.info("Nothing to initialize")
             except Exception as e:
                 logging.debug(f"Failed to create labels.{e}")
 
@@ -143,17 +130,15 @@ class CdfStore:
         if self.data_set_id and self.client:
             if workflow_name:
                 workflow_name = workflow_name if ".zip" in workflow_name else f"{workflow_name}.zip"
-            labels = ["neat-workflow"]
             meta = metadata_filter or {}
             if version:
                 meta["hash"] = version
             else:
-                labels.append("neat-latest")
-            label_filter = LabelFilter(contains_all=labels)
+                meta["is_latest"] = "true"
             if workflow_name:
-                files_metada = self.client.files.list(name=workflow_name, labels=label_filter, metadata=meta)
+                files_metada = self.client.files.list(source="neat", name=workflow_name, metadata=meta)
             elif metadata_filter:
-                files_metada = self.client.files.list(labels=label_filter, metadata=meta)
+                files_metada = self.client.files.list(source="neat", metadata=meta)
             else:
                 raise Exception("Workflow name or metadata_filter is required")
 
@@ -204,10 +189,14 @@ class CdfStore:
                 return
             # removing the latest tag from all files related to this workflow
             files_metada = self.client.files.list(
-                name=file_path.name, metadata={"workflow_name": workflow_name, "resource_type": resource_type}
+                name=file_path.name,
+                source="neat",
+                metadata={"workflow_name": workflow_name, "resource_type": resource_type, "is_latest": "true"},
             )
             for file_meta in files_metada:
-                meta_update = FileMetadataUpdate(id=file_meta.id).labels.remove("neat-latest")
+                files_meta_metadata = file_meta.metadata
+                files_meta_metadata["is_latest"] = "false"
+                meta_update = FileMetadataUpdate(id=file_meta.id).metadata.set(files_meta_metadata)
                 self.client.files.update(meta_update)
 
             hash_ = get_file_hash(file_path)
@@ -215,7 +204,6 @@ class CdfStore:
                 str(file_path),
                 name=file_path.name,
                 external_id=f"neat-wf-{hash_}",
-                labels=[Label(external_id="neat-workflow"), Label(external_id="neat-latest")],
                 metadata={
                     "tag": tag,
                     "hash": hash_,
@@ -223,6 +211,7 @@ class CdfStore:
                     "resource_type": resource_type,
                     "changed_by": changed_by,
                     "comments": comments,
+                    "is_latest": "true",
                 },
                 source="neat",
                 overwrite=True,
@@ -233,8 +222,11 @@ class CdfStore:
 
     def load_rules_file_from_cdf(self, name: str, version: str | None = None):
         logging.info(f"Loading rules file {name} (version = {version} ) from CDF ")
-        # TODO: Download latest if version is not specified
-        files_metadata = self.client.files.list(name=name, metadata={"hash": str(version)})
+        if version:
+            metadata = {"hash": str(version)}
+        else:
+            metadata = {"is_latest": "true"}
+        files_metadata = self.client.files.list(name=name, source="neat", metadata=metadata)
         if len(files_metadata) > 0 and self.rules_storage_path:
             self.client.files.download(self.rules_storage_path, external_id=files_metadata[0].external_id)
         else:
@@ -245,8 +237,7 @@ class CdfStore:
         if not self.data_set_id:
             return []
 
-        label_filter = LabelFilter(contains_any=["neat-workflow"])
-        files_metadata = self.client.files.list(labels=label_filter, metadata={"resource_type": resource_type})
+        files_metadata = self.client.files.list(source="neat", metadata={"resource_type": resource_type})
 
         output: list[NeatCdfResource] = []
         for file_meta in files_metadata:
@@ -261,11 +252,12 @@ class CdfStore:
                 last_updated_by=metadata["changed_by"],
                 tag=metadata["tag"],
                 last_updated_time=file_meta.last_updated_time,
+                is_latest=metadata["is_latest"] == "true",
             )
             output.append(neat_cdf_resource)
         return output
 
-    def get_list_of_workflow_executions_from_cdf(self, limit=200) -> list[WorkflowFullStateReport]:
+    def get_list_of_workflow_executions_from_cdf(self, limit=70) -> list[WorkflowFullStateReport]:
         """Returns list of workflow executions from CDF."""
         logging.debug("Getting list of workflow executions from CDF")
         if not self.data_set_id:
