@@ -59,7 +59,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             containers=SheetList[DMSContainer](
                 data=[
                     DMSContainer(container="Asset"),
-                    DMSContainer(class_="WindTurbine", container="WindTurbine", constraint="Asset"),
+                    DMSContainer(class_="GeneratingUnit", container="GeneratingUnit", constraint="Asset"),
                 ]
             ),
             views=SheetList[DMSView](
