@@ -321,6 +321,10 @@ class ContainerEntity(Entity):
         else:
             return ContainerEntity(prefix=Undefined, suffix=value)
 
+    @classmethod
+    def from_id(cls, container_id: ContainerId) -> "ContainerEntity":
+        return ContainerEntity(prefix=container_id.space, suffix=container_id.external_id)
+
     def as_id(self, default_space: str) -> ContainerId:
         if self.space is Undefined:
             return ContainerId(space=default_space, external_id=self.external_id)
@@ -340,6 +344,10 @@ class ViewEntity(Entity):
             return ViewEntity.from_string(entity_string=value)
         else:
             return ViewEntity(prefix=Undefined, suffix=value)
+
+    @classmethod
+    def from_id(cls, view_id: ViewId) -> "ViewEntity":
+        return ViewEntity(prefix=view_id.space, suffix=view_id.external_id, version=view_id.version)
 
     def as_id(self, default_space: str, default_version: str) -> ViewId:
         if self.space is Undefined:

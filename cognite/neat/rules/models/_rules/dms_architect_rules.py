@@ -1,4 +1,5 @@
 import abc
+import re
 from collections import defaultdict
 from datetime import datetime
 from typing import ClassVar, Literal
@@ -90,6 +91,21 @@ class DMSMetadata(BaseMetadata):
             views=[],
         )
 
+    @classmethod
+    def from_data_model(cls, data_model: dm.DataModelApply) -> "DMSMetadata":
+        if data_model.description and (description_match := re.search(r"Contributor: (.+)", data_model.description)):
+            contributor = description_match.group(1).split(", ")
+        else:
+            contributor = []
+
+        return cls(
+            schema_="complete",
+            space=data_model.space,
+            external_id=data_model.external_id,
+            version=data_model.version,
+            contributor=contributor,
+        )
+
 
 class DMSProperty(SheetEntity):
     class_: str = Field(alias="Class")
@@ -99,7 +115,7 @@ class DMSProperty(SheetEntity):
     relation: str | None = Field(None, alias="Relation")
     nullable: bool | None = Field(default=None, alias="Nullable")
     is_list: bool | None = Field(default=None, alias="IsList")
-    default: str | None = Field(None, alias="Default")
+    default: str | int | dict | None | None = Field(None, alias="Default")
     source: str | None = Field(None, alias="Source")
     container: ContainerType | None = Field(None, alias="Container")
     container_property: str | None = Field(None, alias="ContainerProperty")
@@ -113,7 +129,7 @@ class DMSContainer(SheetEntity):
     class_: str | None = Field(None, alias="Class")
     container: ContainerType = Field(alias="Container")
     description: str | None = Field(None, alias="Description")
-    constraint: str | None = Field(None, alias="Constraint")
+    constraint: ContainerType | None = Field(None, alias="Constraint")
 
     def as_container(self, default_space: str) -> dm.ContainerApply:
         container_id = self.container.as_id(default_space)
@@ -122,6 +138,19 @@ class DMSContainer(SheetEntity):
             external_id=container_id.external_id,
             description=self.description,
             properties={},
+        )
+
+    @classmethod
+    def from_container(cls, container: dm.ContainerApply) -> "DMSContainer":
+        # Todo - add constraint
+        if container.constraints:
+            raise NotImplementedError("Constraints are not yet supported")
+
+        return cls(
+            class_=container.external_id,
+            container=ContainerType(prefix=container.space, suffix=container.external_id),
+            description=container.description,
+            constraint=None,
         )
 
 
@@ -140,6 +169,15 @@ class DMSView(SheetEntity):
             description=self.description,
             implements=[parent.as_id(default_space, default_version) for parent in self.implements or []] or None,
             properties={},
+        )
+
+    @classmethod
+    def from_view(cls, view: dm.ViewApply) -> "DMSView":
+        return cls(
+            class_=view.external_id,
+            view=ViewType(prefix=view.space, suffix=view.external_id),
+            description=view.description,
+            implements=[ViewType(prefix=parent.space, suffix=parent.external_id) for parent in view.implements] or None,
         )
 
 
