@@ -195,6 +195,11 @@ class BaseMetadata(RuleModel):
         """Returns HTML representation of Metadata."""
         return self.to_pandas().to_frame("value")._repr_html_()  # type: ignore[operator]
 
+    @classmethod
+    def mandatory_fields(cls, use_alias=False) -> set[str]:
+        """Returns a set of mandatory fields for the model."""
+        return _get_required_fields(cls, use_alias)
+
 
 class BaseRules(RuleModel):
     """
@@ -262,3 +267,8 @@ class SheetList(BaseModel, Generic[T_Entity]):
     def _repr_html_(self) -> str:
         """Returns HTML representation of ResourceDict."""
         return self.to_pandas(drop_na_columns=True)._repr_html_()  # type: ignore[operator]
+
+    @classmethod
+    def mandatory_fields(cls, use_alias=False) -> set[str]:
+        """Returns a set of mandatory fields for the model."""
+        return _get_required_fields(cls, use_alias)

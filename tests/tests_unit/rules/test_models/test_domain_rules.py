@@ -5,7 +5,7 @@ import pytest
 
 from cognite.neat.rules.models._rules.domain_rules import DomainRules
 from tests.config import DOC_KNOWLEDGE_ACQUISITION_TUTORIAL
-from tests.tests_unit.rules.test_models.utils import _read_spreadsheet
+from tests.tests_unit.rules.test_models.utils import read_spreadsheet
 
 
 @pytest.fixture(scope="session")
@@ -14,7 +14,7 @@ def jon_spreadsheet() -> dict[str, dict[str, Any]]:
     excel_file = pd.ExcelFile(filepath)
     return {
         "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),
-        "Properties": _read_spreadsheet(excel_file, "Properties"),
+        "Properties": read_spreadsheet(excel_file, "Properties"),
     }
 
 
@@ -24,8 +24,8 @@ def emma_spreadsheet() -> dict[str, dict[str, Any]]:
     excel_file = pd.ExcelFile(filepath)
     return {
         "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),
-        "Properties": _read_spreadsheet(excel_file, "Properties", skiprows=1),
-        "Classes": _read_spreadsheet(excel_file, "Classes", skiprows=1),
+        "Properties": read_spreadsheet(excel_file, "Properties", skiprows=1),
+        "Classes": read_spreadsheet(excel_file, "Classes", skiprows=1),
     }
 
 
