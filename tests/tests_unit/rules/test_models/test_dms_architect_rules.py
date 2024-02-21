@@ -168,39 +168,39 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                         "class_": "WindTurbine",
                         "property_": "name",
                         "value_type": "text",
-                        "container": "sp_core:asset",
+                        "container": "sp_core:Asset",
                         "container_property": "name",
-                        "view": "sp_core:asset",
+                        "view": "sp_core:Asset",
                         "view_property": "name",
                     },
                     {
                         "class_": "WindTurbine",
                         "property_": "ratedPower",
                         "value_type": "float64",
-                        "container": "generatingunit",
+                        "container": "GeneratingUnit",
                         "container_property": "ratedPower",
-                        "view": "windturbine",
+                        "view": "WindTurbine",
                         "view_property": "ratedPower",
                     },
                 ]
             },
             "containers": {
                 "data": [
-                    {"class_": "Asset", "container": "sp_core:asset"},
+                    {"class_": "Asset", "container": "sp_core:Asset"},
                     {
                         "class_": "WindTurbine",
-                        "container": "windturbine",
+                        "container": "WindTurbine",
                         "constraint": "sp_core:Asset",
                     },
                 ]
             },
             "views": {
                 "data": [
-                    {"class_": "Asset", "view": "sp_core:asset"},
+                    {"class_": "Asset", "view": "sp_core:Asset"},
                     {
                         "class_": "WindTurbine",
                         "view": "WindTurbine",
-                        "implements": ["sp_core:asset"],
+                        "implements": "sp_core:Asset",
                     },
                 ]
             },

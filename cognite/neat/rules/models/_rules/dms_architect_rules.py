@@ -136,10 +136,12 @@ class DMSRules(BaseRules):
             [prop for prop in self.properties if prop.container and prop.container_property],
             key=lambda p: p.container or "",
         )
-        for container_external_id, properties in groupby(container_properties, key=lambda p: p.container):
+        for container_entity, properties in groupby(container_properties, key=lambda p: p.container):
+            container_id = container_entity.as_id(space)
+
             container = dm.ContainerApply(
-                space=space,
-                external_id=container_external_id,
+                space=container_id.space,
+                external_id=container_id.external_id,
                 properties={
                     prop.container_property: dm.ContainerProperty(
                         type=(
@@ -165,7 +167,7 @@ class DMSRules(BaseRules):
             if not (property_.container and property_.container_property):
                 raise ValueError("Mapped property must have container and container_property")
             return dm.MappedPropertyApply(
-                container=dm.ContainerId(space, property_.container),
+                container=property_.container.as_id(space),
                 container_property_identifier=property_.container_property,
             )
 
@@ -182,11 +184,12 @@ class DMSRules(BaseRules):
                 source=dm.ViewId(space, property_.value_type, version),
             )
 
-        for view_external_id, properties in groupby(view_properties, key=lambda p: p.view):
+        for view_type, properties in groupby(view_properties, key=lambda p: p.view):
+            view_id = view_type.as_id(space, default_version=version)
             view = dm.ViewApply(
-                space=space,
-                external_id=view_external_id,
-                version=version,
+                space=view_id.space,
+                external_id=view_id.external_id,
+                version=view_id.version,
                 properties={
                     prop.view_property: (
                         _create_mapped_property(prop) if prop.container else _create_connection_property(prop)
@@ -195,18 +198,18 @@ class DMSRules(BaseRules):
                     if prop.view_property
                 },
             )
-            view_by_ids[view.as_id()] = view
+            view_by_ids[view_id] = view
             if data_model.views is None:
-                data_model.views = [view.as_id()]
+                data_model.views = [view_id]
             else:
-                data_model.views.append(view.as_id())
+                data_model.views.append(view_id)
 
         for dms_view in self.views or []:
             if dms_view.implements:
-                view_id = dm.ViewId(space, dms_view.view, version=version)
+                view_id = dms_view.view.as_id(space, default_version=version)
                 if view_id in view_by_ids:
                     view_by_ids[view_id].implements = [
-                        dm.ViewId(space, parent, version=version) for parent in dms_view.implements
+                        parent.as_id(space, default_version=version) for parent in dms_view.implements
                     ]
         return DMSSchema(
             spaces=dm.SpaceApplyList([self.metadata.as_space()]),
