@@ -432,8 +432,18 @@ class DMSSchemaComponents(BaseModel):
 
         # edge 1-many == EDGE, this does not have container! type is here source ViewId ?!
         elif property_.property_type is EntityTypes.object_property and property_.max_count != 1:
+            if property_.container and property_.expected_value_type.space != property_.container.space:
+                type_ = DirectRelationReference(
+                    space=property_.container.space,
+                    external_id=f"{property_.container.suffix}.{property_.container_property}",
+                )
+            else:
+                type_ = DirectRelationReference(
+                    space=space, external_id=f"{property_.class_id}.{property_.property_id}"
+                )
+
             return SingleHopConnectionDefinitionApply(
-                type=DirectRelationReference(space=space, external_id=f"{property_.class_id}.{property_.property_id}"),
+                type=type_,
                 # Here we create ViewID to the container that the edge is pointing to.
                 source=ViewId(
                     space=property_.expected_value_type.space,

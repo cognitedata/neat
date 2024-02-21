@@ -16,6 +16,12 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.63.0] - 20-02-24
+
+## Added
+- Added option to map edges as temporal solution prior shifting to Rules profiling
+
+
 ## [0.62.1] - 14-02-24
 
 ## Fixed
