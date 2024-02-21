@@ -29,7 +29,7 @@ class DMSExporter(BaseExporter[DMSSchema]):
         schema = self.export()
         with zipfile.ZipFile(filepath, "w") as zip_ref:
             for space in schema.spaces:
-                zip_ref.writestr(f"data_models/{space}.space.yaml", space.dump_yaml())
+                zip_ref.writestr(f"data_models/{space.space}.space.yaml", space.dump_yaml())
             for model in schema.data_models:
                 zip_ref.writestr(f"data_models/{model.external_id}.datamodel.yaml", model.dump_yaml())
             for view in schema.views:
