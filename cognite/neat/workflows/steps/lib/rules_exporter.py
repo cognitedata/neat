@@ -1,6 +1,7 @@
 import logging
 import time
 import warnings
+from collections.abc import Iterable
 from pathlib import Path
 from typing import ClassVar, Literal, cast
 
@@ -28,6 +29,7 @@ __all__ = [
     "ExportRulesToExcel",
     "GenerateDMSSchemaComponentsFromRules",
     "DeleteDMSSchemaComponents",
+    "ValidateRulesForDMS",
 ]
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
@@ -503,3 +505,67 @@ class ExportRulesToExcel(Step):
         full_path = Path(self.data_store_path) / Path(self.configs["output_file_path"])
         exporter.ExcelExporter.from_rules(rules=rules_data.rules).export_to_file(filepath=full_path)
         return FlowMessage(output_text="Generated Excel file from rules")
+
+
+class ValidateRulesForDMS(Step):
+    description = "This step validates Rules classes and properties"
+    category = CATEGORY
+    version = "0.1.0-alpha"
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="validation_report_storage_dir",
+            value="rules_validation_report",
+            label="Directory to store validation report",
+        ),
+        Configurable(
+            name="validation_report_file",
+            value="rules_validation_report.txt",
+            label="File name to store validation report",
+        ),
+    ]
+
+    def run(self, rules_data: RulesData, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override, syntax]
+        def generate_report_section(missing_elements: Iterable[str], type_cdf_element: str) -> str:
+            report = "\n- ".join(missing_elements)
+            return f"# The following {type_cdf_element} don't exist in CDF:\n- {report}\n\n"
+
+        def views_in_cdf(client: CogniteClient, view_ids: list[dm.ViewId]) -> set[dm.ViewId]:
+            return set(client.data_modeling.views.retrieve(view_ids).as_ids())
+
+        validation_warnings = []
+
+        report_file = self.configs["validation_report_file"]
+        report_dir_str = self.configs["validation_report_storage_dir"]
+        report_dir = self.data_store_path / Path(report_dir_str)
+        report_dir.mkdir(parents=True, exist_ok=True)
+        report_full_path = report_dir / report_file
+
+        dms_components = DMSSchemaComponents.from_rules(rules=rules_data.rules)
+
+        cdf_spaces = dms_components.find_existing_spaces(cdf_client)
+        if diff_spaces := set(dms_components.spaces).difference(cdf_spaces):
+            validation_warnings.append(generate_report_section(diff_spaces, "SPACES"))
+
+        implemented_views = set().union(*[view_apply.implements for view_apply in dms_components.views.values()])
+        cdf_views = views_in_cdf(cdf_client, list(implemented_views))
+        if diff_views := implemented_views.difference(cdf_views):
+            validation_warnings.append(
+                generate_report_section([view.as_source_identifier() for view in diff_views], "PARENT CLASSES (VIEWS)")
+            )
+
+        cdf_containers = dms_components.find_existing_containers(cdf_client)
+        if diff_containers := set(dms_components.containers).difference(cdf_containers):
+            validation_warnings.append(generate_report_section(diff_containers, "CONTAINERS"))
+
+        report = "### RULES DMS VALIDATION REPORT\n\n" + "".join(validation_warnings)
+        report_full_path.write_text(report)
+
+        text_for_report = (
+            "<p></p>"
+            "Download rules DMS validation report "
+            f'<a href="/data/{report_dir_str}/{report_file}?{time.time()}" '
+            f'target="_blank">here</a>'
+        )
+        output_text = f"<p></p>Validation of Rules for DMS done! {text_for_report}"
+
+        return FlowMessage(output_text=output_text)
