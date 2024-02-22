@@ -145,6 +145,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                         properties={
                             "ratedPower": dm.ContainerProperty(type=dm.Float64(), nullable=True),
                         },
+                        constraints={"Asset": dm.RequiresConstraint(dm.ContainerId("my_space", "Asset"))},
                     ),
                 ]
             ),
@@ -258,7 +259,7 @@ class TestDMSRules:
 
         assert isinstance(valid_rules, DMSRules)
 
-        sample_expected_properties = {"WindTurbine.name", "WindFarm.WindTurbines", "Circuit Breaker.voltage"}
+        sample_expected_properties = {"WindTurbine.name", "WindFarm.windTurbines", "CircuitBreaker.voltage"}
         missing = sample_expected_properties - {f"{prop.class_}.{prop.property_}" for prop in valid_rules.properties}
         assert not missing, f"Missing properties: {missing}"
 

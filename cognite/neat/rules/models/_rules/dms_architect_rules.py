@@ -140,7 +140,7 @@ class DMSContainer(SheetEntity):
         constraints: dict[str, dm.Constraint] | None
         if self.constraint:
             requires = dm.RequiresConstraint(self.constraint.as_id(default_space))
-            constraints = {f"requires_{self.constraint.space}_{self.constraint.external_id}": requires}
+            constraints = {self.constraint.versioned_id: requires}
         else:
             constraints = None
 
