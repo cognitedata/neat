@@ -40,7 +40,7 @@ class DMSImporter(BaseImporter):
 
                     index: str | None = None
                     for index_name, index_obj in (container.indexes or {}).items():
-                        if isinstance(index_obj, BTreeIndex | InvertedIndex) and container_prop in index_obj.properties:
+                        if isinstance(index_obj, BTreeIndex | InvertedIndex) and prop_id in index_obj.properties:
                             index = index_name
                             break
                     unique_constraint: str | None = None

@@ -6,6 +6,7 @@ from typing import ClassVar, Literal
 
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import PropertyType as CognitePropertyType
+from cognite.client.data_classes.data_modeling.containers import BTreeIndex
 from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 from cognite.client.data_classes.data_modeling.views import ViewPropertyApply
 from pydantic import Field
@@ -301,13 +302,21 @@ class _DMSExporter:
                         default_value=prop.default,
                     )
 
-            uniqueness_properties: dict[str, list[str]] = defaultdict(list)
+            uniqueness_properties: dict[str, set[str]] = defaultdict(set)
             for prop in container_properties:
                 if prop.constraint is not None and prop.container_property is not None:
-                    uniqueness_properties[prop.constraint].append(prop.container_property)
+                    uniqueness_properties[prop.constraint].add(prop.container_property)
             for constraint_name, properties in uniqueness_properties.items():
                 container.constraints = container.constraints or {}
-                container.constraints[constraint_name] = dm.UniquenessConstraint(properties=properties)
+                container.constraints[constraint_name] = dm.UniquenessConstraint(properties=list(properties))
+
+            index_properties: dict[str, set[str]] = defaultdict(set)
+            for prop in container_properties:
+                if prop.index is not None and prop.container_property is not None:
+                    index_properties[prop.index].add(prop.container_property)
+            for index_name, properties in index_properties.items():
+                container.indexes = container.indexes or {}
+                container.indexes[index_name] = BTreeIndex(properties=list(properties))
 
         for view in views:
             view_id = view.as_id()
