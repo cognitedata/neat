@@ -301,6 +301,14 @@ class _DMSExporter:
                         default_value=prop.default,
                     )
 
+            uniqueness_properties: dict[str, list[str]] = defaultdict(list)
+            for prop in container_properties:
+                if prop.constraint is not None and prop.container_property is not None:
+                    uniqueness_properties[prop.constraint].append(prop.container_property)
+            for constraint_name, properties in uniqueness_properties.items():
+                container.constraints = container.constraints or {}
+                container.constraints[f"unique_{constraint_name}"] = dm.UniquenessConstraint(properties=properties)
+
         for view in views:
             view_id = view.as_id()
             view.properties = {}
