@@ -283,17 +283,23 @@ class _DMSExporter:
                 if prop.container_property is None:
                     continue
                 type_cls = _PropertyType_by_name.get(prop.value_type.casefold(), dm.DirectRelation)
-                type_: CognitePropertyType
-                if issubclass(type_cls, ListablePropertyType):
-                    type_ = type_cls(is_list=prop.is_list or False)
+                if type_cls is dm.DirectRelation:
+                    container.properties[prop.container_property] = dm.ContainerProperty(
+                        type=dm.DirectRelation(),
+                        nullable=prop.nullable if prop.nullable is not None else True,
+                        default_value=prop.default,
+                    )
                 else:
-                    type_ = type_cls()
-
-                container.properties[prop.container_property] = dm.ContainerProperty(
-                    type=type_,
-                    nullable=prop.nullable or True,
-                    default_value=prop.default,
-                )
+                    type_: CognitePropertyType
+                    if issubclass(type_cls, ListablePropertyType):
+                        type_ = type_cls(is_list=prop.is_list or False)
+                    else:
+                        type_ = type_cls()
+                    container.properties[prop.container_property] = dm.ContainerProperty(
+                        type=type_,
+                        nullable=prop.nullable if prop.nullable is not None else True,
+                        default_value=prop.default,
+                    )
 
         for view in views:
             view_id = view.as_id()
@@ -303,10 +309,21 @@ class _DMSExporter:
             for prop in view_properties:
                 view_property: ViewPropertyApply
                 if prop.container and prop.container_property and prop.view_property:
-                    view_property = dm.MappedPropertyApply(
-                        container=prop.container.as_id(default_space),
-                        container_property_identifier=prop.container_property,
-                    )
+                    if prop.relation == "direct":
+                        view_property = dm.MappedPropertyApply(
+                            container=prop.container.as_id(default_space),
+                            container_property_identifier=prop.container_property,
+                            source=dm.ViewId(
+                                space=default_space,
+                                external_id=prop.value_type,
+                                version=default_version,
+                            ),
+                        )
+                    else:
+                        view_property = dm.MappedPropertyApply(
+                            container=prop.container.as_id(default_space),
+                            container_property_identifier=prop.container_property,
+                        )
                 elif prop.view and prop.view_property:
                     if not prop.relation:
                         continue
