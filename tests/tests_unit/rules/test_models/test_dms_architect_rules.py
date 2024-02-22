@@ -275,6 +275,18 @@ class TestDMSRules:
         rules.set_default_version()
         recreated_rules = DMSImporter(schema).to_rules()
 
+        # Sorting to avoid order differences
+        recreated_rules.properties = SheetList[DMSProperty](
+            data=sorted(recreated_rules.properties, key=lambda p: (p.class_, p.property_))
+        )
+        rules.properties = SheetList[DMSProperty](data=sorted(rules.properties, key=lambda p: (p.class_, p.property_)))
+        recreated_rules.containers = SheetList[DMSContainer](
+            data=sorted(recreated_rules.containers, key=lambda c: c.container)
+        )
+        rules.containers = SheetList[DMSContainer](data=sorted(rules.containers, key=lambda c: c.container))
+        recreated_rules.views = SheetList[DMSView](data=sorted(recreated_rules.views, key=lambda v: v.view))
+        rules.views = SheetList[DMSView](data=sorted(rules.views, key=lambda v: v.view))
+
         assert recreated_rules.model_dump() == rules.model_dump()
 
     @pytest.mark.parametrize("rules, expected_schema", rules_schema_tests_cases())
