@@ -206,6 +206,12 @@ class DMSRules(BaseRules):
         for view in self.views or []:
             if view.view.space is Undefined:
                 view.view = ViewEntity(prefix=default_space, suffix=view.view.external_id, version=view.view.version)
+            view.implements = [
+                ViewEntity(prefix=default_space, suffix=parent.external_id, version=parent.version)
+                if parent.space is Undefined
+                else parent
+                for parent in view.implements or []
+            ] or None
 
     def set_default_version(self, default_version: str = "1") -> None:
         """This replaces all undefined versions with"""
@@ -215,6 +221,12 @@ class DMSRules(BaseRules):
         for view in self.views or []:
             if view.view.version is None:
                 view.view = ViewEntity(prefix=view.view.space, suffix=view.view.external_id, version=default_version)
+            view.implements = [
+                ViewEntity(prefix=parent.space, suffix=parent.external_id, version=default_version)
+                if parent.version is None
+                else parent
+                for parent in view.implements or []
+            ] or None
 
     def as_schema(self) -> DMSSchema:
         return _DMSExporter(self).to_schema()
