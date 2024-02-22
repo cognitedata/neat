@@ -307,7 +307,7 @@ class _DMSExporter:
                     uniqueness_properties[prop.constraint].append(prop.container_property)
             for constraint_name, properties in uniqueness_properties.items():
                 container.constraints = container.constraints or {}
-                container.constraints[f"unique_{constraint_name}"] = dm.UniquenessConstraint(properties=properties)
+                container.constraints[constraint_name] = dm.UniquenessConstraint(properties=properties)
 
         for view in views:
             view_id = view.as_id()

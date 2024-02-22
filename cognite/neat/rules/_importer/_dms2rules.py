@@ -43,10 +43,17 @@ class DMSImporter(BaseImporter):
                         if isinstance(index_obj, BTreeIndex | InvertedIndex) and container_prop in index_obj.properties:
                             index = index_name
                             break
-                    constraint: str | None = None
-                    for _constraint_name, constraint_obj in (container.constraints or {}).items():
+                    unique_constraint: str | None = None
+                    for constraint_name, constraint_obj in (container.constraints or {}).items():
                         if isinstance(constraint_obj, dm.RequiresConstraint):
                             # This is handled in the .from_container method of DMSContainer
+                            continue
+                        elif (
+                            isinstance(constraint_obj, dm.UniquenessConstraint) and prop_id in constraint_obj.properties
+                        ):
+                            unique_constraint = constraint_name
+                        elif isinstance(constraint_obj, dm.UniquenessConstraint):
+                            # This does not apply to this property
                             continue
                         else:
                             raise NotImplementedError(f"Constraint type {type(constraint_obj)} not implemented")
@@ -70,7 +77,7 @@ class DMSImporter(BaseImporter):
                             view=ViewEntity.from_id(view.as_id()),
                             view_property=prop_id,
                             index=index,
-                            constraint=constraint,
+                            constraint=unique_constraint,
                         )
                     else:
                         dms_property = DMSProperty(
@@ -88,7 +95,7 @@ class DMSImporter(BaseImporter):
                             view=ViewEntity.from_id(view.as_id()),
                             view_property=prop_id,
                             index=index,
-                            constraint=constraint,
+                            constraint=unique_constraint,
                         )
                 elif isinstance(prop, dm.MultiEdgeConnectionApply):
                     dms_property = DMSProperty(
