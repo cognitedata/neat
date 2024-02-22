@@ -270,9 +270,12 @@ class TestDMSRules:
 
     def test_alice_to_and_from_DMS(self, alice_rules: DMSRules) -> None:
         schema = alice_rules.as_schema()
+        rules = alice_rules.copy()
+        rules.set_default_space()
+        rules.set_default_version()
         recreated_rules = DMSImporter(schema).to_rules()
 
-        assert alice_rules.model_dump() == recreated_rules.model_dump()
+        assert recreated_rules.model_dump() == rules.model_dump()
 
     @pytest.mark.parametrize("rules, expected_schema", rules_schema_tests_cases())
     def test_as_schema(self, rules: DMSRules, expected_schema: DMSSchema) -> None:

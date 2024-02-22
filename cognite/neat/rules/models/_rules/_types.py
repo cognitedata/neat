@@ -58,6 +58,9 @@ __all__ = [
     "ViewType",
     "ViewListType",
     "ContainerType",
+    "Undefined",
+    "ContainerEntity",
+    "ViewEntity",
 ]
 
 
@@ -312,9 +315,11 @@ class ContainerEntity(Entity):
     type_: ClassVar[EntityTypes] = EntityTypes.container
 
     @classmethod
-    def from_raw(cls, value: str) -> "ContainerEntity":
+    def from_raw(cls, value: Any) -> "ContainerEntity":
         if not value:
             return ContainerEntity(prefix=Undefined, suffix=value)
+        elif isinstance(value, ContainerEntity):
+            return value
 
         if ENTITY_ID_REGEX_COMPILED.match(value) or VERSIONED_ENTITY_REGEX_COMPILED.match(value):
             return ContainerEntity.from_string(entity_string=value)
@@ -336,9 +341,11 @@ class ViewEntity(Entity):
     type_: ClassVar[EntityTypes] = EntityTypes.view
 
     @classmethod
-    def from_raw(cls, value: str) -> "ViewEntity":
+    def from_raw(cls, value: Any) -> "ViewEntity":
         if not value:
             return ViewEntity(prefix=Undefined, suffix=value)
+        elif isinstance(value, ViewEntity):
+            return value
 
         if ENTITY_ID_REGEX_COMPILED.match(value) or VERSIONED_ENTITY_REGEX_COMPILED.match(value):
             return ViewEntity.from_string(entity_string=value)
@@ -384,7 +391,7 @@ def _from_str_or_list(value: Any) -> list[ViewEntity] | Any:
     if isinstance(value, str):
         return [ViewEntity.from_raw(entry.strip()) for entry in value.split(",")]
     elif isinstance(value, list):
-        return [ViewEntity.from_raw(entry.strip()) for entry in value]
+        return [ViewEntity.from_raw(entry.strip()) if isinstance(entry, str) else entry for entry in value]
     else:
         return value
 

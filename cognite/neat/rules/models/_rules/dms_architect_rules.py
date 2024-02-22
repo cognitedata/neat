@@ -13,11 +13,14 @@ from pydantic import Field
 from cognite.neat.rules.models._rules.information_rules import InformationMetadata
 
 from ._types import (
+    ContainerEntity,
     ContainerType,
     ExternalIdType,
     PropertyType,
     StrListType,
+    Undefined,
     VersionType,
+    ViewEntity,
     ViewListType,
     ViewType,
 )
@@ -186,6 +189,32 @@ class DMSRules(BaseRules):
     properties: SheetList[DMSProperty] = Field(alias="Properties")
     containers: SheetList[DMSContainer] | None = Field(None, alias="Containers")
     views: SheetList[DMSView] | None = Field(None, alias="Views")
+
+    def set_default_space(self) -> None:
+        """This replaces all undefined spaces with the default space from the metadata."""
+        default_space = self.metadata.space
+        for entity in self.properties:
+            if entity.container and entity.container.space is Undefined:
+                entity.container = ContainerEntity(prefix=default_space, suffix=entity.container.external_id)
+            if entity.view and entity.view.space is Undefined:
+                entity.view = ViewEntity(
+                    prefix=default_space, suffix=entity.view.external_id, version=entity.view.version
+                )
+        for container in self.containers or []:
+            if container.container.space is Undefined:
+                container.container = ContainerEntity(prefix=default_space, suffix=container.container.external_id)
+        for view in self.views or []:
+            if view.view.space is Undefined:
+                view.view = ViewEntity(prefix=default_space, suffix=view.view.external_id, version=view.view.version)
+
+    def set_default_version(self, default_version: str = "1") -> None:
+        """This replaces all undefined versions with"""
+        for prop in self.properties:
+            if prop.view and prop.view.version is None:
+                prop.view = ViewEntity(prefix=prop.view.space, suffix=prop.view.external_id, version=default_version)
+        for view in self.views or []:
+            if view.view.version is None:
+                view.view = ViewEntity(prefix=view.view.space, suffix=view.view.external_id, version=default_version)
 
     def as_schema(self) -> DMSSchema:
         return _DMSExporter(self).to_schema()
