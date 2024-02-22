@@ -136,24 +136,34 @@ class DMSContainer(SheetEntity):
 
     def as_container(self, default_space: str) -> dm.ContainerApply:
         container_id = self.container.as_id(default_space)
+        constraints: dict[str, dm.Constraint] | None
+        if self.constraint:
+            requires = dm.RequiresConstraint(self.constraint.as_id(default_space))
+            constraints = {f"requires_{self.constraint.space}_{self.constraint.external_id}": requires}
+        else:
+            constraints = None
+
         return dm.ContainerApply(
             space=container_id.space,
             external_id=container_id.external_id,
             description=self.description,
+            constraints=constraints,
             properties={},
         )
 
     @classmethod
     def from_container(cls, container: dm.ContainerApply) -> "DMSContainer":
-        # Todo - add constraint
-        if container.constraints:
-            raise NotImplementedError("Constraints are not yet supported")
-
+        constraint: ContainerEntity | None = None
+        for _, constraint_obj in (container.constraints or {}).items():
+            if isinstance(constraint_obj, dm.RequiresConstraint) and constraint is None:
+                constraint = ContainerEntity.from_id(constraint_obj.require)
+            elif isinstance(constraint_obj, dm.RequiresConstraint):
+                raise NotImplementedError("Multiple RequiresConstraint not implemented")
         return cls(
             class_=container.external_id,
             container=ContainerType(prefix=container.space, suffix=container.external_id),
             description=container.description,
-            constraint=None,
+            constraint=constraint,
         )
 
 
@@ -207,6 +217,8 @@ class DMSRules(BaseRules):
         for container in self.containers or []:
             if container.container.space is Undefined:
                 container.container = ContainerEntity(prefix=default_space, suffix=container.container.external_id)
+            if container.constraint and container.constraint.space is Undefined:
+                container.constraint = ContainerEntity(prefix=default_space, suffix=container.constraint.external_id)
         for view in self.views or []:
             if view.view.space is Undefined:
                 view.view = ViewEntity(prefix=default_space, suffix=view.view.external_id, version=view.view.version)

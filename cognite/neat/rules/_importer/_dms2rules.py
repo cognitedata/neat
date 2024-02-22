@@ -23,6 +23,7 @@ class DMSImporter(BaseImporter):
         data_model = self.schema.data_models[0]
 
         container_by_id = {container.as_id(): container for container in self.schema.containers}
+
         properties = SheetList[DMSProperty]()
         for view in self.schema.views:
             for prop_id, prop in (view.properties or {}).items():
@@ -43,8 +44,12 @@ class DMSImporter(BaseImporter):
                             index = index_name
                             break
                     constraint: str | None = None
-                    if container.constraints:
-                        raise NotImplementedError("Constraints not implemented")
+                    for _constraint_name, constraint_obj in (container.constraints or {}).items():
+                        if isinstance(constraint_obj, dm.RequiresConstraint):
+                            # This is handled in the .from_container method of DMSContainer
+                            continue
+                        else:
+                            raise NotImplementedError(f"Constraint type {type(constraint_obj)} not implemented")
 
                     dms_property = DMSProperty(
                         class_=view.external_id,
