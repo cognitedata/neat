@@ -101,6 +101,7 @@ class DMSImporter(BaseImporter):
                     dms_property = DMSProperty(
                         class_=view.external_id,
                         property_=prop_id,
+                        relation="multiedge",
                         description=prop.description,
                         value_type=prop.source.external_id,
                         view=ViewEntity.from_id(view.as_id()),
