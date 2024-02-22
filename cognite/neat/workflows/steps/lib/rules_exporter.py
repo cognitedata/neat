@@ -532,6 +532,10 @@ class ValidateRulesForDMS(Step):
         def views_in_cdf(client: CogniteClient, view_ids: list[dm.ViewId]) -> set[dm.ViewId]:
             return set(client.data_modeling.views.retrieve(view_ids).as_ids())
 
+        def properties_in_cdf(client: CogniteClient, container_id: dm.ContainerId, property_ids: list[str]) -> set[str]:
+            container = client.data_modeling.containers.retrieve([container_id])[0]
+            return set(property_ids) & set([prop.dump()["name"] for prop in container.properties.values()])
+
         validation_warnings = []
 
         report_file = self.configs["validation_report_file"]
@@ -556,6 +560,18 @@ class ValidateRulesForDMS(Step):
         cdf_containers = dms_components.find_existing_containers(cdf_client)
         if diff_containers := set(dms_components.containers).difference(cdf_containers):
             validation_warnings.append(generate_report_section(diff_containers, "CONTAINERS"))
+
+        for cdf_container_id in cdf_containers:
+            container_apply = dms_components.containers[cdf_container_id]
+            if diff_properties := set(container_apply.properties).difference(
+                properties_in_cdf(cdf_client, container_apply.as_id(), [*container_apply.properties])
+            ):
+                validation_warnings.append(
+                    generate_report_section(
+                        [f"{cdf_container_id} property `{property_id}`" for property_id in diff_properties],
+                        "CONTAINER PROPERTIES",
+                    )
+                )
 
         report = "### RULES DMS VALIDATION REPORT\n\n" + "".join(validation_warnings)
         report_full_path.write_text(report)
