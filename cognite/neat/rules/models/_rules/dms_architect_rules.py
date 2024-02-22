@@ -178,9 +178,13 @@ class DMSView(SheetEntity):
     def from_view(cls, view: dm.ViewApply) -> "DMSView":
         return cls(
             class_=view.external_id,
-            view=ViewType(prefix=view.space, suffix=view.external_id),
+            view=ViewType(prefix=view.space, suffix=view.external_id, version=view.version),
             description=view.description,
-            implements=[ViewType(prefix=parent.space, suffix=parent.external_id) for parent in view.implements] or None,
+            implements=[
+                ViewType(prefix=parent.space, suffix=parent.external_id, version=parent.version)
+                for parent in view.implements
+            ]
+            or None,
         )
 
 
