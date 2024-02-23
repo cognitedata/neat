@@ -1,20 +1,27 @@
 import abc
+import re
+from collections import defaultdict
 from datetime import datetime
-from itertools import groupby
 from typing import ClassVar, Literal
 
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import PropertyType as CognitePropertyType
+from cognite.client.data_classes.data_modeling.containers import BTreeIndex
+from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
+from cognite.client.data_classes.data_modeling.views import ViewPropertyApply
 from pydantic import Field
 
 from cognite.neat.rules.models._rules.information_rules import InformationMetadata
 
 from ._types import (
+    ContainerEntity,
     ContainerType,
     ExternalIdType,
     PropertyType,
     StrListType,
+    Undefined,
     VersionType,
+    ViewEntity,
     ViewListType,
     ViewType,
 )
@@ -88,6 +95,21 @@ class DMSMetadata(BaseMetadata):
             views=[],
         )
 
+    @classmethod
+    def from_data_model(cls, data_model: dm.DataModelApply) -> "DMSMetadata":
+        if data_model.description and (description_match := re.search(r"Contributor: (.+)", data_model.description)):
+            contributor = description_match.group(1).split(", ")
+        else:
+            contributor = []
+
+        return cls(
+            schema_="complete",
+            space=data_model.space,
+            external_id=data_model.external_id,
+            version=data_model.version,
+            contributor=contributor,
+        )
+
 
 class DMSProperty(SheetEntity):
     class_: str = Field(alias="Class")
@@ -97,7 +119,7 @@ class DMSProperty(SheetEntity):
     relation: str | None = Field(None, alias="Relation")
     nullable: bool | None = Field(default=None, alias="Nullable")
     is_list: bool | None = Field(default=None, alias="IsList")
-    default: str | None = Field(None, alias="Default")
+    default: str | int | dict | None | None = Field(None, alias="Default")
     source: str | None = Field(None, alias="Source")
     container: ContainerType | None = Field(None, alias="Container")
     container_property: str | None = Field(None, alias="ContainerProperty")
@@ -111,7 +133,39 @@ class DMSContainer(SheetEntity):
     class_: str | None = Field(None, alias="Class")
     container: ContainerType = Field(alias="Container")
     description: str | None = Field(None, alias="Description")
-    constraint: str | None = Field(None, alias="Constraint")
+    constraint: ContainerType | None = Field(None, alias="Constraint")
+
+    def as_container(self, default_space: str) -> dm.ContainerApply:
+        container_id = self.container.as_id(default_space)
+        constraints: dict[str, dm.Constraint] | None
+        if self.constraint:
+            requires = dm.RequiresConstraint(self.constraint.as_id(default_space))
+            constraints = {self.constraint.versioned_id: requires}
+        else:
+            constraints = None
+
+        return dm.ContainerApply(
+            space=container_id.space,
+            external_id=container_id.external_id,
+            description=self.description,
+            constraints=constraints,
+            properties={},
+        )
+
+    @classmethod
+    def from_container(cls, container: dm.ContainerApply) -> "DMSContainer":
+        constraint: ContainerEntity | None = None
+        for _, constraint_obj in (container.constraints or {}).items():
+            if isinstance(constraint_obj, dm.RequiresConstraint) and constraint is None:
+                constraint = ContainerEntity.from_id(constraint_obj.require)
+            elif isinstance(constraint_obj, dm.RequiresConstraint):
+                raise NotImplementedError("Multiple RequiresConstraint not implemented")
+        return cls(
+            class_=container.external_id,
+            container=ContainerType(prefix=container.space, suffix=container.external_id),
+            description=container.description,
+            constraint=constraint,
+        )
 
 
 class DMSView(SheetEntity):
@@ -120,6 +174,30 @@ class DMSView(SheetEntity):
     description: str | None = Field(None, alias="Description")
     implements: ViewListType | None = Field(None, alias="Implements")
 
+    def as_view(self, default_space: str, default_version: str) -> dm.ViewApply:
+        view_id = self.view.as_id(default_space, default_version)
+        return dm.ViewApply(
+            space=view_id.space,
+            external_id=view_id.external_id,
+            version=view_id.version or default_version,
+            description=self.description,
+            implements=[parent.as_id(default_space, default_version) for parent in self.implements or []] or None,
+            properties={},
+        )
+
+    @classmethod
+    def from_view(cls, view: dm.ViewApply) -> "DMSView":
+        return cls(
+            class_=view.external_id,
+            view=ViewType(prefix=view.space, suffix=view.external_id, version=view.version),
+            description=view.description,
+            implements=[
+                ViewType(prefix=parent.space, suffix=parent.external_id, version=parent.version)
+                for parent in view.implements
+            ]
+            or None,
+        )
+
 
 class DMSRules(BaseRules):
     metadata: DMSMetadata = Field(alias="Metadata")
@@ -127,93 +205,176 @@ class DMSRules(BaseRules):
     containers: SheetList[DMSContainer] | None = Field(None, alias="Containers")
     views: SheetList[DMSView] | None = Field(None, alias="Views")
 
-    def as_schema(self) -> DMSSchema:
-        version = self.metadata.version or "missing"
-        space = self.metadata.space
-        data_model = self.metadata.as_data_model()
-        containers = dm.ContainerApplyList([])
-        container_properties = sorted(
-            [prop for prop in self.properties if prop.container and prop.container_property],
-            key=lambda p: p.container or "",
-        )
-        for container_entity, properties in groupby(container_properties, key=lambda p: p.container):
-            container_id = container_entity.as_id(space)
+    def set_default_space(self) -> None:
+        """This replaces all undefined spaces with the default space from the metadata."""
+        default_space = self.metadata.space
+        for entity in self.properties:
+            if entity.container and entity.container.space is Undefined:
+                entity.container = ContainerEntity(prefix=default_space, suffix=entity.container.external_id)
+            if entity.view and entity.view.space is Undefined:
+                entity.view = ViewEntity(
+                    prefix=default_space, suffix=entity.view.external_id, version=entity.view.version
+                )
+        for container in self.containers or []:
+            if container.container.space is Undefined:
+                container.container = ContainerEntity(prefix=default_space, suffix=container.container.external_id)
+            if container.constraint and container.constraint.space is Undefined:
+                container.constraint = ContainerEntity(prefix=default_space, suffix=container.constraint.external_id)
+        for view in self.views or []:
+            if view.view.space is Undefined:
+                view.view = ViewEntity(prefix=default_space, suffix=view.view.external_id, version=view.view.version)
+            view.implements = [
+                ViewEntity(prefix=default_space, suffix=parent.external_id, version=parent.version)
+                if parent.space is Undefined
+                else parent
+                for parent in view.implements or []
+            ] or None
 
-            container = dm.ContainerApply(
-                space=container_id.space,
-                external_id=container_id.external_id,
-                properties={
-                    prop.container_property: dm.ContainerProperty(
-                        type=(
-                            type_()
-                            if (type_ := _PropertyType_by_name.get(prop.value_type.casefold()))
-                            else dm.DirectRelation()
-                        ),
-                        nullable=prop.nullable or True,
+    def set_default_version(self, default_version: str = "1") -> None:
+        """This replaces all undefined versions with"""
+        for prop in self.properties:
+            if prop.view and prop.view.version is None:
+                prop.view = ViewEntity(prefix=prop.view.space, suffix=prop.view.external_id, version=default_version)
+        for view in self.views or []:
+            if view.view.version is None:
+                view.view = ViewEntity(prefix=view.view.space, suffix=view.view.external_id, version=default_version)
+            view.implements = [
+                ViewEntity(prefix=parent.space, suffix=parent.external_id, version=default_version)
+                if parent.version is None
+                else parent
+                for parent in view.implements or []
+            ] or None
+
+    def as_schema(self) -> DMSSchema:
+        return _DMSExporter(self).to_schema()
+
+
+class _DMSExporter:
+    """The DMS Exporter is responsible for exporting the DMSRules to a DMSSchema.
+
+    This kept in this location such that it can be used by the DMSRules to validate the schema.
+    (This module cannot have a dependency on the exporter module, as it would create a circular dependency.)
+
+    """
+
+    def __init__(self, rules: DMSRules):
+        self.rules = rules
+
+    def to_schema(self) -> DMSSchema:
+        default_version = "1"
+        default_space = self.rules.metadata.space
+        data_model = self.rules.metadata.as_data_model()
+
+        containers = dm.ContainerApplyList(
+            [dms_container.as_container(default_space) for dms_container in self.rules.containers or []]
+        )
+        views = dm.ViewApplyList(
+            [dms_view.as_view(default_space, default_version) for dms_view in self.rules.views or []]
+        )
+
+        data_model.views = list(views.as_ids())
+
+        container_properties_by_id, view_properties_by_id = self._gather_properties(default_space, default_version)
+
+        for container in containers:
+            container_id = container.as_id()
+            if not (container_properties := container_properties_by_id.get(container_id)):
+                continue
+            for prop in container_properties:
+                if prop.container_property is None:
+                    continue
+                type_cls = _PropertyType_by_name.get(prop.value_type.casefold(), dm.DirectRelation)
+                if type_cls is dm.DirectRelation:
+                    container.properties[prop.container_property] = dm.ContainerProperty(
+                        type=dm.DirectRelation(),
+                        nullable=prop.nullable if prop.nullable is not None else True,
                         default_value=prop.default,
                     )
-                    for prop in properties
-                    if prop.container_property
-                },
-            )
-            containers.append(container)
-
-        view_by_ids: dict[dm.ViewId, dm.ViewApply] = {}
-        view_properties = sorted(
-            [prop for prop in self.properties if prop.view and prop.view_property], key=lambda p: p.view or ""
-        )
-
-        def _create_mapped_property(property_: DMSProperty) -> dm.MappedPropertyApply:
-            if not (property_.container and property_.container_property):
-                raise ValueError("Mapped property must have container and container_property")
-            return dm.MappedPropertyApply(
-                container=property_.container.as_id(space),
-                container_property_identifier=property_.container_property,
-            )
-
-        def _create_connection_property(property_: DMSProperty) -> dm.MultiEdgeConnectionApply:
-            if property_.relation != "multiedge":
-                raise NotImplementedError(f"Currently only multiedge is supported, not {property_.relation}")
-            if not isinstance(property_.value_type, str):
-                raise ValueError("Only string value type is supported for connection properties")
-            return dm.MultiEdgeConnectionApply(
-                type=dm.DirectRelationReference(
-                    space=space,
-                    external_id=f"{property_.view}.{property_.view_property}",
-                ),
-                source=dm.ViewId(space, property_.value_type, version),
-            )
-
-        for view_type, properties in groupby(view_properties, key=lambda p: p.view):
-            view_id = view_type.as_id(space, default_version=version)
-            view = dm.ViewApply(
-                space=view_id.space,
-                external_id=view_id.external_id,
-                version=view_id.version,
-                properties={
-                    prop.view_property: (
-                        _create_mapped_property(prop) if prop.container else _create_connection_property(prop)
+                else:
+                    type_: CognitePropertyType
+                    if issubclass(type_cls, ListablePropertyType):
+                        type_ = type_cls(is_list=prop.is_list or False)
+                    else:
+                        type_ = type_cls()
+                    container.properties[prop.container_property] = dm.ContainerProperty(
+                        type=type_,
+                        nullable=prop.nullable if prop.nullable is not None else True,
+                        default_value=prop.default,
                     )
-                    for prop in properties
-                    if prop.view_property
-                },
-            )
-            view_by_ids[view_id] = view
-            if data_model.views is None:
-                data_model.views = [view_id]
-            else:
-                data_model.views.append(view_id)
 
-        for dms_view in self.views or []:
-            if dms_view.implements:
-                view_id = dms_view.view.as_id(space, default_version=version)
-                if view_id in view_by_ids:
-                    view_by_ids[view_id].implements = [
-                        parent.as_id(space, default_version=version) for parent in dms_view.implements
-                    ]
+            uniqueness_properties: dict[str, set[str]] = defaultdict(set)
+            for prop in container_properties:
+                if prop.constraint is not None and prop.container_property is not None:
+                    uniqueness_properties[prop.constraint].add(prop.container_property)
+            for constraint_name, properties in uniqueness_properties.items():
+                container.constraints = container.constraints or {}
+                container.constraints[constraint_name] = dm.UniquenessConstraint(properties=list(properties))
+
+            index_properties: dict[str, set[str]] = defaultdict(set)
+            for prop in container_properties:
+                if prop.index is not None and prop.container_property is not None:
+                    index_properties[prop.index].add(prop.container_property)
+            for index_name, properties in index_properties.items():
+                container.indexes = container.indexes or {}
+                container.indexes[index_name] = BTreeIndex(properties=list(properties))
+
+        for view in views:
+            view_id = view.as_id()
+            view.properties = {}
+            if not (view_properties := view_properties_by_id.get(view_id)):
+                continue
+            for prop in view_properties:
+                view_property: ViewPropertyApply
+                if prop.container and prop.container_property and prop.view_property:
+                    if prop.relation == "direct":
+                        view_property = dm.MappedPropertyApply(
+                            container=prop.container.as_id(default_space),
+                            container_property_identifier=prop.container_property,
+                            source=dm.ViewId(
+                                space=default_space,
+                                external_id=prop.value_type,
+                                version=default_version,
+                            ),
+                        )
+                    else:
+                        view_property = dm.MappedPropertyApply(
+                            container=prop.container.as_id(default_space),
+                            container_property_identifier=prop.container_property,
+                        )
+                elif prop.view and prop.view_property:
+                    if not prop.relation:
+                        continue
+                    if prop.relation != "multiedge":
+                        raise NotImplementedError(f"Currently only multiedge is supported, not {prop.relation}")
+                    view_property = dm.MultiEdgeConnectionApply(
+                        type=dm.DirectRelationReference(
+                            space=default_space,
+                            external_id=f"{prop.view.external_id}.{prop.view_property}",
+                        ),
+                        source=dm.ViewId(default_space, prop.value_type, default_version),
+                        direction="outwards",
+                    )
+                else:
+                    continue
+                view.properties[prop.view_property] = view_property
+
         return DMSSchema(
-            spaces=dm.SpaceApplyList([self.metadata.as_space()]),
+            spaces=dm.SpaceApplyList([self.rules.metadata.as_space()]),
             data_models=dm.DataModelApplyList([data_model]),
-            views=dm.ViewApplyList(view_by_ids.values()),
+            views=views,
             containers=containers,
         )
+
+    def _gather_properties(
+        self, default_space: str, default_version: str
+    ) -> tuple[dict[dm.ContainerId, list[DMSProperty]], dict[dm.ViewId, list[DMSProperty]]]:
+        container_properties_by_id: dict[dm.ContainerId, list[DMSProperty]] = defaultdict(list)
+        view_properties_by_id: dict[dm.ViewId, list[DMSProperty]] = defaultdict(list)
+        for prop in self.rules.properties:
+            if prop.container and prop.container_property:
+                container_id = prop.container.as_id(default_space)
+                container_properties_by_id[container_id].append(prop)
+            if prop.view and prop.view_property:
+                view_id = prop.view.as_id(default_space, default_version)
+                view_properties_by_id[view_id].append(prop)
+        return container_properties_by_id, view_properties_by_id

@@ -5,6 +5,7 @@ import pytest
 from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
 
+from cognite.neat.rules._importer import DMSImporter
 from cognite.neat.rules.models._rules.base import SheetList
 from cognite.neat.rules.models._rules.dms_architect_rules import (
     DMSContainer,
@@ -59,7 +60,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             containers=SheetList[DMSContainer](
                 data=[
                     DMSContainer(container="Asset"),
-                    DMSContainer(class_="WindTurbine", container="WindTurbine", constraint="Asset"),
+                    DMSContainer(class_="GeneratingUnit", container="GeneratingUnit", constraint="Asset"),
                 ]
             ),
             views=SheetList[DMSView](
@@ -144,6 +145,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                         properties={
                             "ratedPower": dm.ContainerProperty(type=dm.Float64(), nullable=True),
                         },
+                        constraints={"Asset": dm.RequiresConstraint(dm.ContainerId("my_space", "Asset"))},
                     ),
                 ]
             ),
@@ -257,7 +259,7 @@ class TestDMSRules:
 
         assert isinstance(valid_rules, DMSRules)
 
-        sample_expected_properties = {"WindTurbine.name", "WindFarm.WindTurbines", "Circuit Breaker.voltage"}
+        sample_expected_properties = {"WindTurbine.name", "WindFarm.windTurbines", "CircuitBreaker.voltage"}
         missing = sample_expected_properties - {f"{prop.class_}.{prop.property_}" for prop in valid_rules.properties}
         assert not missing, f"Missing properties: {missing}"
 
@@ -267,10 +269,26 @@ class TestDMSRules:
 
         assert valid_rules.model_dump() == expected_rules.model_dump()
 
-    def test_alice_spreadsheet_as_schema(self, alice_rules: DMSRules) -> None:
+    def test_alice_to_and_from_DMS(self, alice_rules: DMSRules) -> None:
         schema = alice_rules.as_schema()
+        rules = alice_rules.copy()
+        rules.set_default_space()
+        rules.set_default_version()
+        recreated_rules = DMSImporter(schema).to_rules()
 
-        assert isinstance(schema, DMSSchema)
+        # Sorting to avoid order differences
+        recreated_rules.properties = SheetList[DMSProperty](
+            data=sorted(recreated_rules.properties, key=lambda p: (p.class_, p.property_))
+        )
+        rules.properties = SheetList[DMSProperty](data=sorted(rules.properties, key=lambda p: (p.class_, p.property_)))
+        recreated_rules.containers = SheetList[DMSContainer](
+            data=sorted(recreated_rules.containers, key=lambda c: c.container)
+        )
+        rules.containers = SheetList[DMSContainer](data=sorted(rules.containers, key=lambda c: c.container))
+        recreated_rules.views = SheetList[DMSView](data=sorted(recreated_rules.views, key=lambda v: v.view))
+        rules.views = SheetList[DMSView](data=sorted(rules.views, key=lambda v: v.view))
+
+        assert recreated_rules.model_dump() == rules.model_dump()
 
     @pytest.mark.parametrize("rules, expected_schema", rules_schema_tests_cases())
     def test_as_schema(self, rules: DMSRules, expected_schema: DMSSchema) -> None:

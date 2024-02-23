@@ -58,6 +58,9 @@ __all__ = [
     "ViewType",
     "ViewListType",
     "ContainerType",
+    "Undefined",
+    "ContainerEntity",
+    "ViewEntity",
 ]
 
 
@@ -312,14 +315,20 @@ class ContainerEntity(Entity):
     type_: ClassVar[EntityTypes] = EntityTypes.container
 
     @classmethod
-    def from_raw(cls, value: str) -> "ContainerEntity":
+    def from_raw(cls, value: Any) -> "ContainerEntity":
         if not value:
             return ContainerEntity(prefix=Undefined, suffix=value)
+        elif isinstance(value, ContainerEntity):
+            return value
 
         if ENTITY_ID_REGEX_COMPILED.match(value) or VERSIONED_ENTITY_REGEX_COMPILED.match(value):
             return ContainerEntity.from_string(entity_string=value)
         else:
             return ContainerEntity(prefix=Undefined, suffix=value)
+
+    @classmethod
+    def from_id(cls, container_id: ContainerId) -> "ContainerEntity":
+        return ContainerEntity(prefix=container_id.space, suffix=container_id.external_id)
 
     def as_id(self, default_space: str) -> ContainerId:
         if self.space is Undefined:
@@ -332,14 +341,20 @@ class ViewEntity(Entity):
     type_: ClassVar[EntityTypes] = EntityTypes.view
 
     @classmethod
-    def from_raw(cls, value: str) -> "ViewEntity":
+    def from_raw(cls, value: Any) -> "ViewEntity":
         if not value:
             return ViewEntity(prefix=Undefined, suffix=value)
+        elif isinstance(value, ViewEntity):
+            return value
 
         if ENTITY_ID_REGEX_COMPILED.match(value) or VERSIONED_ENTITY_REGEX_COMPILED.match(value):
             return ViewEntity.from_string(entity_string=value)
         else:
             return ViewEntity(prefix=Undefined, suffix=value)
+
+    @classmethod
+    def from_id(cls, view_id: ViewId) -> "ViewEntity":
+        return ViewEntity(prefix=view_id.space, suffix=view_id.external_id, version=view_id.version)
 
     def as_id(self, default_space: str, default_version: str) -> ViewId:
         if self.space is Undefined:
@@ -376,7 +391,7 @@ def _from_str_or_list(value: Any) -> list[ViewEntity] | Any:
     if isinstance(value, str):
         return [ViewEntity.from_raw(entry.strip()) for entry in value.split(",")]
     elif isinstance(value, list):
-        return [ViewEntity.from_raw(entry.strip()) for entry in value]
+        return [ViewEntity.from_raw(entry.strip()) if isinstance(entry, str) else entry for entry in value]
     else:
         return value
 

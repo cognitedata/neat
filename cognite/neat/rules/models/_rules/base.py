@@ -165,7 +165,7 @@ class RuleModel(BaseModel):
         str_strip_whitespace=True,
         arbitrary_types_allowed=True,
         strict=False,
-        extra="allow",
+        extra="ignore",
         use_enum_values=True,
     )
     validators_to_skip: set[str] = Field(default_factory=set, exclude=True)
