@@ -61,6 +61,7 @@ __all__ = [
     "Undefined",
     "ContainerEntity",
     "ViewEntity",
+    "ContainerListType",
 ]
 
 
@@ -395,6 +396,16 @@ def _from_str_or_list(value: Any) -> list[ViewEntity] | Any:
     else:
         return value
 
+
+ContainerListType = Annotated[
+    list[ContainerEntity],
+    BeforeValidator(_from_str_or_list),
+    PlainSerializer(
+        lambda v: ",".join([entry.versioned_id for entry in v]),
+        return_type=str,
+        when_used="unless-none",
+    ),
+]
 
 ViewListType = Annotated[
     list[ViewEntity],

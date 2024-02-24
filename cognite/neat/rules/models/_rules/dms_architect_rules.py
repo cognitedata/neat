@@ -15,6 +15,7 @@ from cognite.neat.rules.models._rules.information_rules import InformationMetada
 
 from ._types import (
     ContainerEntity,
+    ContainerListType,
     ContainerType,
     ExternalIdType,
     PropertyType,
@@ -115,8 +116,8 @@ class DMSProperty(SheetEntity):
     class_: str = Field(alias="Class")
     property_: PropertyType = Field(alias="Property")
     description: str | None = Field(None, alias="Description")
-    value_type: str = Field(alias="Value Type")
-    relation: str | None = Field(None, alias="Relation")
+    value_type: ViewType | str = Field(alias="Value Type")
+    relation: Literal["direct", "multiedge"] | None = Field(None, alias="Relation")
     nullable: bool | None = Field(default=None, alias="Nullable")
     is_list: bool | None = Field(default=None, alias="IsList")
     default: str | int | dict | None | None = Field(None, alias="Default")
@@ -125,15 +126,15 @@ class DMSProperty(SheetEntity):
     container_property: str | None = Field(None, alias="ContainerProperty")
     view: ViewType | None = Field(None, alias="View")
     view_property: str | None = Field(None, alias="ViewProperty")
-    index: str | None = Field(None, alias="Index")
-    constraint: str | None = Field(None, alias="Constraint")
+    index: list[str] | None = Field(None, alias="Index")
+    constraint: list[str] | None = Field(None, alias="Constraint")
 
 
 class DMSContainer(SheetEntity):
     class_: str | None = Field(None, alias="Class")
     container: ContainerType = Field(alias="Container")
     description: str | None = Field(None, alias="Description")
-    constraint: ContainerType | None = Field(None, alias="Constraint")
+    constraint: ContainerListType | None = Field(None, alias="Constraint")
 
     def as_container(self, default_space: str) -> dm.ContainerApply:
         container_id = self.container.as_id(default_space)
