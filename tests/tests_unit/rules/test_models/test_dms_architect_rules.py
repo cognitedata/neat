@@ -410,6 +410,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
 def invalid_rules_test_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         {},
+        "missing",
         id="Empty rules",
     )
     yield pytest.param(
@@ -435,6 +436,7 @@ def invalid_rules_test_cases() -> Iterable[ParameterSet]:
                 ]
             },
         },
+        "not a valid value type for a property",
         id="Invalid value type",
     )
     yield pytest.param(
@@ -470,6 +472,7 @@ def invalid_rules_test_cases() -> Iterable[ParameterSet]:
                 ]
             },
         },
+        "with different value types",
         id="Inconsistent container definition value type",
     )
     yield pytest.param(
@@ -506,6 +509,7 @@ def invalid_rules_test_cases() -> Iterable[ParameterSet]:
                 ]
             },
         },
+        "different list definitions",
         id="Inconsistent container definition isList",
     )
     yield pytest.param(
@@ -542,6 +546,7 @@ def invalid_rules_test_cases() -> Iterable[ParameterSet]:
                 ]
             },
         },
+        "different nullable definitions",
         id="Inconsistent container definition nullable",
     )
     yield pytest.param(
@@ -578,6 +583,7 @@ def invalid_rules_test_cases() -> Iterable[ParameterSet]:
                 ]
             },
         },
+        "defined with different index definitions",
         id="Inconsistent container definition index",
     )
     yield pytest.param(
@@ -614,6 +620,7 @@ def invalid_rules_test_cases() -> Iterable[ParameterSet]:
                 ]
             },
         },
+        "different unique constraint definitions",
         id="Inconsistent container definition constraint",
     )
 
@@ -634,10 +641,12 @@ class TestDMSRules:
 
         assert valid_rules.model_dump() == expected_rules.model_dump()
 
-    @pytest.mark.parametrize("raw", list(invalid_rules_test_cases()))
-    def test_load_invalid_rules(self, raw: dict[str, dict[str, Any]]) -> None:
-        with pytest.raises(ValueError):
+    @pytest.mark.parametrize("raw, expected_msg", list(invalid_rules_test_cases()))
+    def test_load_invalid_rules(self, raw: dict[str, dict[str, Any]], expected_msg: str) -> None:
+        with pytest.raises(ValueError) as e:
             DMSRules.model_validate(raw)
+
+        assert expected_msg in str(e.value)
 
     def test_alice_to_and_from_DMS(self, alice_rules: DMSRules) -> None:
         schema = alice_rules.as_schema()

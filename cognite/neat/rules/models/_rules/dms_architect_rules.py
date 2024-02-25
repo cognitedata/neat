@@ -9,7 +9,7 @@ from cognite.client.data_classes.data_modeling import PropertyType as CognitePro
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex
 from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 from cognite.client.data_classes.data_modeling.views import ViewPropertyApply
-from pydantic import Field, field_serializer, field_validator
+from pydantic import Field, field_serializer, field_validator, model_validator
 from pydantic_core.core_schema import ValidationInfo
 
 from cognite.neat.rules.models._rules.information_rules import InformationMetadata
@@ -131,7 +131,7 @@ class DMSProperty(SheetEntity):
     constraint: StrListType | None = Field(None, alias="Constraint")
 
     @field_validator("value_type", mode="before")
-    def parse_value_type(cls, value: Any, info: ValidationInfo):
+    def parse_value_type(cls, value: Any, info: ValidationInfo) -> Any:
         if not isinstance(value, str):
             return value
 
@@ -146,6 +146,18 @@ class DMSProperty(SheetEntity):
         if isinstance(value, ViewEntity):
             return value.versioned_id
         return value
+
+    @field_validator("value_type", mode="after")
+    def validate_value_type(cls, value: Any, info: ValidationInfo) -> Any:
+        if not isinstance(value, str) or info.data.get("relation") is not None:
+            return value
+        value = value.casefold()
+        if value in _PropertyType_by_name:
+            return value
+        raise ValueError(
+            f"Value type {value} is not a valid value type for a property. "
+            f"Valid types are: {_PropertyType_by_name.keys()}"
+        )
 
 
 class DMSContainer(SheetEntity):
@@ -220,6 +232,75 @@ class DMSRules(BaseRules):
     properties: SheetList[DMSProperty] = Field(alias="Properties")
     containers: SheetList[DMSContainer] | None = Field(None, alias="Containers")
     views: SheetList[DMSView] | None = Field(None, alias="Views")
+
+    @model_validator(mode="after")
+    def consistent_container_properties(self) -> "DMSRules":
+        container_properties_by_id: dict[tuple[ContainerEntity, str], list[DMSProperty]] = defaultdict(list)
+        for prop in self.properties:
+            if prop.container and prop.container_property:
+                container_properties_by_id[(prop.container, prop.container_property)].append(prop)
+
+        exceptions: list[str] = []
+        for (container, prop_name), properties in container_properties_by_id.items():
+            if len(properties) == 1:
+                continue
+
+            value_types = {prop.value_type for prop in properties if prop.value_type}
+            if len(value_types) > 1:
+                exceptions.append(
+                    f"Container {container}.{prop_name} is defined with different value types: {value_types}"
+                )
+            list_definitions = {prop.is_list for prop in properties if prop.is_list is not None}
+            if len(list_definitions) > 1:
+                exceptions.append(
+                    f"Container {container}.{prop_name} is defined with different "
+                    f"list definitions: {list_definitions}"
+                )
+            nullable_definitions = {prop.nullable for prop in properties if prop.nullable is not None}
+            if len(nullable_definitions) > 1:
+                exceptions.append(
+                    f"Container {container}.{prop_name} is defined with different "
+                    f"nullable definitions: {nullable_definitions}"
+                )
+            default_definitions = {prop.default for prop in properties if prop.default is not None}
+            if len(default_definitions) > 1:
+                exceptions.append(
+                    f"Container {container}.{prop_name} is defined with different "
+                    f"default definitions: {default_definitions}"
+                )
+            index_definitions = {",".join(prop.index) for prop in properties if prop.index is not None}
+            if len(index_definitions) > 1:
+                exceptions.append(
+                    f"Container {container}.{prop_name} is defined with different "
+                    f"index definitions: {index_definitions}"
+                )
+            constraint_definitions = {",".join(prop.constraint) for prop in properties if prop.constraint is not None}
+            if len(constraint_definitions) > 1:
+                exceptions.append(
+                    f"Container {container}.{prop_name} is defined with different "
+                    f"unique constraint definitions: {constraint_definitions}"
+                )
+
+            # This sets the container definition for all the properties where it is not defined.
+            # This allows the user to define the container only once.
+            value_type = value_types.pop()
+            list_definition = list_definitions.pop() if list_definitions else None
+            nullable_definition = nullable_definitions.pop() if nullable_definitions else None
+            default_definition = default_definitions.pop() if default_definitions else None
+            index_definition = index_definitions.pop().split(",") if index_definitions else None
+            constraint_definition = constraint_definitions.pop().split(",") if constraint_definitions else None
+            for prop in properties:
+                prop.value_type = value_type
+                prop.is_list = prop.is_list or list_definition
+                prop.nullable = prop.nullable or nullable_definition
+                prop.default = prop.default or default_definition
+                prop.index = prop.index or index_definition
+                prop.constraint = prop.constraint or constraint_definition
+
+        if exceptions:
+            exception_str = "\n".join(exceptions)
+            raise ValueError(f"Inconsistent container(s): {exception_str}")
+        return self
 
     def set_default_space(self) -> None:
         """This replaces all undefined spaces with the default space from the metadata."""
