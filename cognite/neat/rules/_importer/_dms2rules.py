@@ -75,8 +75,8 @@ class DMSImporter(BaseImporter):
                             container_property=prop.container_property_identifier,
                             view=ViewEntity.from_id(view.as_id()),
                             view_property=prop_id,
-                            index=index or [],
-                            constraint=unique_constraints or [],
+                            index=index or None,
+                            constraint=unique_constraints or None,
                         )
                     else:
                         dms_property = DMSProperty(
@@ -93,8 +93,8 @@ class DMSImporter(BaseImporter):
                             container_property=prop.container_property_identifier,
                             view=ViewEntity.from_id(view.as_id()),
                             view_property=prop_id,
-                            index=index or [],
-                            constraint=unique_constraints or [],
+                            index=index or None,
+                            constraint=unique_constraints or None,
                         )
                 elif isinstance(prop, dm.MultiEdgeConnectionApply):
                     dms_property = DMSProperty(
