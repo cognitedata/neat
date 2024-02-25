@@ -2,14 +2,15 @@ import abc
 import re
 from collections import defaultdict
 from datetime import datetime
-from typing import ClassVar, Literal
+from typing import Any, ClassVar, Literal
 
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import PropertyType as CognitePropertyType
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex
 from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 from cognite.client.data_classes.data_modeling.views import ViewPropertyApply
-from pydantic import Field
+from pydantic import Field, field_validator
+from pydantic_core.core_schema import ValidationInfo
 
 from cognite.neat.rules.models._rules.information_rules import InformationMetadata
 
@@ -128,6 +129,17 @@ class DMSProperty(SheetEntity):
     view_property: str | None = Field(None, alias="ViewProperty")
     index: StrListType | None = Field(None, alias="Index")
     constraint: StrListType | None = Field(None, alias="Constraint")
+
+    @field_validator("value_type", mode="before")
+    def parse_value_type(cls, value: Any, info: ValidationInfo):
+        if not isinstance(value, str):
+            return value
+
+        if info.data.get("relation"):
+            # If the property is a relation (direct or edge), the value type should be a ViewEntity
+            # for the target view (aka the object in a triple)
+            return ViewEntity.from_raw(value)
+        return value
 
 
 class DMSContainer(SheetEntity):

@@ -51,7 +51,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     DMSProperty(
                         class_="WindFarm",
                         property_="WindTurbines",
-                        value_type="WindTurbine",
+                        value_type=ViewEntity(suffix="WindTurbine"),
                         relation="multiedge",
                         view="WindFarm",
                         view_property="windTurbines",
