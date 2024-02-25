@@ -9,7 +9,7 @@ from cognite.client.data_classes.data_modeling import PropertyType as CognitePro
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex
 from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 from cognite.client.data_classes.data_modeling.views import ViewPropertyApply
-from pydantic import Field, field_validator
+from pydantic import Field, field_serializer, field_validator
 from pydantic_core.core_schema import ValidationInfo
 
 from cognite.neat.rules.models._rules.information_rules import InformationMetadata
@@ -139,6 +139,12 @@ class DMSProperty(SheetEntity):
             # If the property is a relation (direct or edge), the value type should be a ViewEntity
             # for the target view (aka the object in a triple)
             return ViewEntity.from_raw(value)
+        return value
+
+    @field_serializer("value_type", when_used="unless-none")
+    def serialize_value_type(self, value: Any) -> Any:
+        if isinstance(value, ViewEntity):
+            return value.versioned_id
         return value
 
 
