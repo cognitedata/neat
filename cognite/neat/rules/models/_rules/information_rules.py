@@ -1,6 +1,6 @@
 import sys
 from datetime import datetime
-from typing import Any, ClassVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from pydantic import Field, model_validator
 from rdflib import Namespace
@@ -30,6 +30,10 @@ from ._types import (
 )
 from .base import BaseMetadata, MatchType, RoleTypes, RuleModel, SheetEntity, SheetList
 from .domain_rules import DomainMetadata, DomainRules
+
+if TYPE_CHECKING:
+    from .dms_architect_rules import DMSRules
+
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -227,5 +231,8 @@ class InformationRules(RuleModel):
 
         return self
 
-    def to_domain_rules(self) -> DomainRules:
+    def as_domain_rules(self) -> DomainRules:
         raise NotImplementedError("DomainRules not implemented yet")
+
+    def as_dms_architect_rules(self) -> DMSRules:
+        raise NotImplementedError("DMSRules not implemented yet")
