@@ -3,7 +3,7 @@ import zipfile
 from collections import Counter
 from pathlib import Path
 
-from cognite.neat.rules._exporters._rules2dms import DMSExporter
+from cognite.neat.rules.exporters._rules2dms import DMSExporter
 from cognite.neat.rules.models._rules.dms_architect_rules import (
     DMSRules,
 )

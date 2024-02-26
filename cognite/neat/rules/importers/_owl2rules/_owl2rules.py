@@ -7,7 +7,7 @@ from pathlib import Path
 
 from rdflib import DC, DCTERMS, OWL, RDF, RDFS, SKOS, Graph
 
-from cognite.neat.rules._importer._base import BaseImporter
+from cognite.neat.rules.importers._base import BaseImporter
 from cognite.neat.rules.models._rules import InformationRules
 from cognite.neat.rules.models.value_types import XSD_VALUE_TYPE_MAPPINGS
 
