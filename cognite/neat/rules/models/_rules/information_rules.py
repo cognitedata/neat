@@ -244,7 +244,7 @@ class InformationRules(RuleModel):
     def as_domain_rules(self) -> DomainRules:
         return _InformationRulesConverter(self).as_domain_rules()
 
-    def as_dms_architect_rules(self) -> DMSRules:
+    def as_dms_architect_rules(self) -> "DMSRules":
         return _InformationRulesConverter(self).as_dms_architect_rules()
 
 
@@ -255,7 +255,7 @@ class _InformationRulesConverter:
     def as_domain_rules(self) -> DomainRules:
         raise NotImplementedError("DomainRules not implemented yet")
 
-    def as_dms_architect_rules(self) -> DMSRules:
+    def as_dms_architect_rules(self) -> "DMSRules":
         from .dms_architect_rules import DMSContainer, DMSMetadata, DMSProperty, DMSRules, DMSView
 
         info_metadata = self.information.metadata
@@ -301,7 +301,10 @@ class _InformationRulesConverter:
                     container=ContainerEntity(prefix=info_metadata.prefix, suffix=class_.class_),
                     description=class_.description,
                     constraint=[
-                        ContainerEntity(prefix=info_metadata.prefix, suffix=class_.class_)
+                        ContainerEntity(
+                            prefix=parent.prefix,
+                            suffix=parent.suffix,
+                        )
                         for parent in class_.parent or []
                         if parent.id not in classes_without_properties
                     ]
@@ -319,7 +322,7 @@ class _InformationRulesConverter:
         )
 
     @staticmethod
-    def _as_dms_property(prop: InformationProperty) -> DMSProperty:
+    def _as_dms_property(prop: InformationProperty) -> "DMSProperty":
         """This creates the first"""
 
         from .dms_architect_rules import DMSProperty

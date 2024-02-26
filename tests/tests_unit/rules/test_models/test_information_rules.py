@@ -4,6 +4,7 @@ from typing import Any
 import pandas as pd
 import pytest
 
+from cognite.neat.rules.models._rules import DMSRules
 from cognite.neat.rules.models._rules.information_rules import InformationRules
 from cognite.neat.utils.spreadsheet import read_spreadsheet
 from tests.config import DOC_KNOWLEDGE_ACQUISITION_TUTORIAL
@@ -94,3 +95,9 @@ class TestInformationRules:
             InformationRules.model_validate(invalid_rules)
         errors = e.value.errors()
         assert errors[0]["msg"] == expected_exception
+
+    def test_david_as_dms(self, david_spreadsheet: dict[str, dict[str, Any]]) -> None:
+        david_rules = InformationRules.model_validate(david_spreadsheet)
+        dms_rules = david_rules.as_dms_architect_rules()
+
+        assert isinstance(dms_rules, DMSRules)
