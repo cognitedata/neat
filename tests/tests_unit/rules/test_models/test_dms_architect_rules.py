@@ -407,6 +407,224 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
     )
 
 
+def invalid_rules_test_cases() -> Iterable[ParameterSet]:
+    yield pytest.param(
+        {},
+        "missing",
+        id="Empty rules",
+    )
+    yield pytest.param(
+        {
+            "metadata": {
+                "schema_": "partial",
+                "space": "my_space",
+                "external_id": "my_data_model",
+                "version": "1",
+                "contributor": "Anders",
+            },
+            "properties": {
+                "data": [
+                    {
+                        "class_": "WindTurbine",
+                        "property_": "name",
+                        "value_type": "string",
+                        "container": "sp_core:Asset",
+                        "container_property": "name",
+                        "view": "sp_core:Asset",
+                        "view_property": "name",
+                    },
+                ]
+            },
+        },
+        "not a valid value type for a property",
+        id="Invalid value type",
+    )
+    yield pytest.param(
+        {
+            "metadata": {
+                "schema_": "partial",
+                "space": "my_space",
+                "external_id": "my_data_model",
+                "version": "1",
+                "contributor": "Anders",
+            },
+            "properties": {
+                "data": [
+                    {
+                        "class_": "WindTurbine",
+                        "property_": "maxPower",
+                        "value_type": "float64",
+                        "is_list": "false",
+                        "container": "GeneratingUnit",
+                        "container_property": "maxPower",
+                        "view": "sp_core:Asset",
+                        "view_property": "maxPower",
+                    },
+                    {
+                        "class_": "HydroGenerator",
+                        "property_": "maxPower",
+                        "value_type": "float32",
+                        "container": "GeneratingUnit",
+                        "container_property": "maxPower",
+                        "view": "sp_core:Asset",
+                        "view_property": "maxPower",
+                    },
+                ]
+            },
+        },
+        "with different value types",
+        id="Inconsistent container definition value type",
+    )
+    yield pytest.param(
+        {
+            "metadata": {
+                "schema_": "partial",
+                "space": "my_space",
+                "external_id": "my_data_model",
+                "version": "1",
+                "contributor": "Anders",
+            },
+            "properties": {
+                "data": [
+                    {
+                        "class_": "WindTurbine",
+                        "property_": "maxPower",
+                        "value_type": "float64",
+                        "is_list": "true",
+                        "container": "GeneratingUnit",
+                        "container_property": "maxPower",
+                        "view": "sp_core:Asset",
+                        "view_property": "maxPower",
+                    },
+                    {
+                        "class_": "HydroGenerator",
+                        "property_": "maxPower",
+                        "value_type": "float64",
+                        "is_list": "false",
+                        "container": "GeneratingUnit",
+                        "container_property": "maxPower",
+                        "view": "sp_core:Asset",
+                        "view_property": "maxPower",
+                    },
+                ]
+            },
+        },
+        "different list definitions",
+        id="Inconsistent container definition isList",
+    )
+    yield pytest.param(
+        {
+            "metadata": {
+                "schema_": "partial",
+                "space": "my_space",
+                "external_id": "my_data_model",
+                "version": "1",
+                "contributor": "Anders",
+            },
+            "properties": {
+                "data": [
+                    {
+                        "class_": "WindTurbine",
+                        "property_": "maxPower",
+                        "value_type": "float64",
+                        "nullable": "true",
+                        "container": "GeneratingUnit",
+                        "container_property": "maxPower",
+                        "view": "sp_core:Asset",
+                        "view_property": "maxPower",
+                    },
+                    {
+                        "class_": "HydroGenerator",
+                        "property_": "maxPower",
+                        "value_type": "float64",
+                        "nullable": "false",
+                        "container": "GeneratingUnit",
+                        "container_property": "maxPower",
+                        "view": "sp_core:Asset",
+                        "view_property": "maxPower",
+                    },
+                ]
+            },
+        },
+        "different nullable definitions",
+        id="Inconsistent container definition nullable",
+    )
+    yield pytest.param(
+        {
+            "metadata": {
+                "schema_": "partial",
+                "space": "my_space",
+                "external_id": "my_data_model",
+                "version": "1",
+                "contributor": "Anders",
+            },
+            "properties": {
+                "data": [
+                    {
+                        "class_": "WindTurbine",
+                        "property_": "name",
+                        "value_type": "text",
+                        "container": "GeneratingUnit",
+                        "container_property": "name",
+                        "view": "sp_core:Asset",
+                        "view_property": "maxPower",
+                        "index": "name",
+                    },
+                    {
+                        "class_": "HydroGenerator",
+                        "property_": "name",
+                        "value_type": "text",
+                        "container": "GeneratingUnit",
+                        "container_property": "name",
+                        "view": "sp_core:Asset",
+                        "view_property": "maxPower",
+                        "index": "name_index",
+                    },
+                ]
+            },
+        },
+        "defined with different index definitions",
+        id="Inconsistent container definition index",
+    )
+    yield pytest.param(
+        {
+            "metadata": {
+                "schema_": "partial",
+                "space": "my_space",
+                "external_id": "my_data_model",
+                "version": "1",
+                "contributor": "Anders",
+            },
+            "properties": {
+                "data": [
+                    {
+                        "class_": "WindTurbine",
+                        "property_": "name",
+                        "value_type": "text",
+                        "container": "GeneratingUnit",
+                        "container_property": "name",
+                        "view": "sp_core:Asset",
+                        "view_property": "maxPower",
+                        "constraint": "unique_name",
+                    },
+                    {
+                        "class_": "HydroGenerator",
+                        "property_": "name",
+                        "value_type": "text",
+                        "container": "GeneratingUnit",
+                        "container_property": "name",
+                        "view": "sp_core:Asset",
+                        "view_property": "maxPower",
+                        "constraint": "name",
+                    },
+                ]
+            },
+        },
+        "different unique constraint definitions",
+        id="Inconsistent container definition constraint",
+    )
+
+
 class TestDMSRules:
     def test_load_valid_alice_rules(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
         valid_rules = DMSRules.model_validate(alice_spreadsheet)
@@ -422,6 +640,13 @@ class TestDMSRules:
         valid_rules = DMSRules.model_validate(raw)
 
         assert valid_rules.model_dump() == expected_rules.model_dump()
+
+    @pytest.mark.parametrize("raw, expected_msg", list(invalid_rules_test_cases()))
+    def test_load_invalid_rules(self, raw: dict[str, dict[str, Any]], expected_msg: str) -> None:
+        with pytest.raises(ValueError) as e:
+            DMSRules.model_validate(raw)
+
+        assert expected_msg in str(e.value)
 
     def test_alice_to_and_from_DMS(self, alice_rules: DMSRules) -> None:
         schema = alice_rules.as_schema()

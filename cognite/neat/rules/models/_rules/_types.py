@@ -114,12 +114,20 @@ def _check_parent(value: list[ParentClass]) -> list[ParentClass]:
 StrOrListType = Annotated[
     str | list[str],
     BeforeValidator(lambda value: value.replace(", ", ",").split(",") if isinstance(value, str) and value else value),
+    PlainSerializer(
+        lambda value: ",".join([entry for entry in value if entry]) if isinstance(value, list) else value,
+        return_type=str,
+        when_used="unless-none",
+    ),
 ]
 
 
 StrListType = Annotated[
     list[str],
     BeforeValidator(lambda value: [entry.strip() for entry in value.split(",")] if isinstance(value, str) else value),
+    PlainSerializer(
+        lambda value: ",".join([entry for entry in value if entry]), return_type=str, when_used="unless-none"
+    ),
 ]
 
 NamespaceType = Annotated[
