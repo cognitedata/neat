@@ -25,6 +25,7 @@ from ._types import (
     PrefixType,
     PropertyType,
     SourceType,
+    StrListType,
     ValueTypeType,
     VersionType,
 )
@@ -61,6 +62,12 @@ class InformationMetadata(BaseMetadata):
 
     updated: datetime = Field(
         description=("Date of the data model update"),
+    )
+    contributor: StrListType = Field(
+        description=(
+            "List of contributors to the data model creation, "
+            "typically information architects are considered as contributors."
+        ),
     )
 
     @classmethod
@@ -232,7 +239,39 @@ class InformationRules(RuleModel):
         return self
 
     def as_domain_rules(self) -> DomainRules:
+        return _InformationRulesConverter(self).as_domain_rules()
+
+    def as_dms_architect_rules(self) -> DMSRules:
+        return _InformationRulesConverter(self).as_dms_architect_rules()
+
+
+class _InformationRulesConverter:
+    def __init__(self, information: InformationRules):
+        self.information = information
+
+    def as_domain_rules(self) -> DomainRules:
         raise NotImplementedError("DomainRules not implemented yet")
 
     def as_dms_architect_rules(self) -> DMSRules:
-        raise NotImplementedError("DMSRules not implemented yet")
+        from .dms_architect_rules import DMSContainer, DMSMetadata, DMSProperty, DMSRules, DMSView
+
+        info_metadata = self.information.metadata
+
+        metadata = DMSMetadata(
+            schema_="partial",
+            space=info_metadata.prefix,
+            version=info_metadata.version,
+            external_id=info_metadata.name.replace(" ", "_").lower(),
+            contributor=info_metadata.contributor,
+        )
+
+        views: list[DMSView] = []
+        containers: list[DMSContainer] = []
+        properties: list[DMSProperty] = []
+
+        return DMSRules(
+            metadata=metadata,
+            properties=SheetList[DMSProperty](data=properties),
+            views=SheetList[DMSView](data=views),
+            containers=SheetList[DMSContainer](data=containers),
+        )
