@@ -28,7 +28,7 @@ from ._types import (
     ValueTypeType,
     VersionType,
 )
-from .base import BaseMetadata, MatchType, RoleTypes, RuleModel, SheetEntity, SheetList
+from .base import BaseMetadata, MatchType, RoleTypes, RuleModel, SchemaCompleteness, SheetEntity, SheetList
 from .domain_rules import DomainMetadata, DomainRules
 
 if sys.version_info >= (3, 11):
@@ -39,6 +39,7 @@ else:
 
 class InformationMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.information_architect
+    schema_: SchemaCompleteness = Field(alias="schema")
     prefix: PrefixType
     namespace: NamespaceType
 
@@ -229,3 +230,23 @@ class InformationRules(RuleModel):
 
     def to_domain_rules(self) -> DomainRules:
         raise NotImplementedError("DomainRules not implemented yet")
+
+    @model_validator(mode="after")
+    def validate_schema_completeness(self) -> Self:
+        # update expected_value_types
+
+        if self.metadata.schema_ == SchemaCompleteness.complete:
+            defined_classes = {class_.class_ for class_ in self.classes}
+            referred_classes = {property_.class_ for property_ in self.properties}
+            referred_types = {
+                property_.value_type.suffix
+                for property_ in self.properties
+                if property_.type_ == EntityTypes.object_property
+            }
+            if not referred_classes.issubset(defined_classes) or not referred_types.issubset(defined_classes):
+                missing_classes = referred_classes.difference(defined_classes).union(
+                    referred_types.difference(defined_classes)
+                )
+                raise exceptions.IncompleteSchema(missing_classes).to_pydantic_custom_error()
+
+        return self

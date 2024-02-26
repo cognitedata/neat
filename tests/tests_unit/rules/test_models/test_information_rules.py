@@ -29,8 +29,8 @@ def invalid_domain_rules_cases():
         {
             "Metadata": {
                 "role": "information architect",
-                "creator": "Jon, Emma",
-                "contributor": "David",
+                "schema": "complete",
+                "creator": "Jon, Emma, David",
                 "namespace": "http://purl.org/cognite/power2consumer",
                 "prefix": "power",
                 "created": datetime(2024, 2, 9, 0, 0),
@@ -74,6 +74,60 @@ def invalid_domain_rules_cases():
     )
 
 
+def incomplete_rules_case():
+    # yield pytest.param(
+    #         },
+    #     },
+    #     "Value error, Metadata.role should be equal to 'information architect'",
+    yield pytest.param(
+        {
+            "Metadata": {
+                "role": "information architect",
+                "schema": "complete",
+                "creator": "Jon, Emma, David",
+                "namespace": "http://purl.org/cognite/power2consumer",
+                "prefix": "power",
+                "created": datetime(2024, 2, 9, 0, 0),
+                "updated": datetime(2024, 2, 9, 0, 0),
+                "version": "0.1.0",
+                "title": "Power to Consumer Data Model",
+                "license": "CC-BY 4.0",
+                "rights": "Free for use",
+            },
+            "Classes": [
+                {
+                    "Class": "GeneratingUnit",
+                    "Description": None,
+                    "Parent Class": None,
+                    "Source": "http://www.iec.ch/TC57/CIM#GeneratingUnit",
+                    "Match": "exact",
+                }
+            ],
+            "Properties": [
+                {
+                    "Class": "GeneratingUnit2",
+                    "Property": "name",
+                    "Description": None,
+                    "Value Type": "string",
+                    "Min Count": 1,
+                    "Max Count": 1.0,
+                    "Default": None,
+                    "Source": None,
+                    "MatchType": None,
+                    "Rule Type": "rdfpath",
+                    "Rule": "cim:GeneratingUnit",
+                }
+            ],
+        },
+        (
+            "Classes {'GeneratingUnit2'} are not defined in the Class sheet!"
+            "\nFor more information visit: "
+            "https://cognite-neat.readthedocs-hosted.com/en/latest/api/exceptions.html#cognite.neat.rules.exceptions.IncompleteSchema"
+        ),
+        id="missing_rule",
+    )
+
+
 class TestInformationRules:
     def test_load_valid_jon_rules(self, david_spreadsheet: dict[str, dict[str, Any]]) -> None:
         valid_rules = InformationRules.model_validate(david_spreadsheet)
@@ -92,5 +146,12 @@ class TestInformationRules:
     def test_invalid_rules(self, invalid_rules: dict[str, dict[str, Any]], expected_exception: str) -> None:
         with pytest.raises(ValueError) as e:
             InformationRules.model_validate(invalid_rules)
+        errors = e.value.errors()
+        assert errors[0]["msg"] == expected_exception
+
+    @pytest.mark.parametrize("incomplete_rules, expected_exception", list(incomplete_rules_case()))
+    def test_incomplete_rules(self, incomplete_rules: dict[str, dict[str, Any]], expected_exception: str) -> None:
+        with pytest.raises(ValueError) as e:
+            InformationRules.model_validate(incomplete_rules)
         errors = e.value.errors()
         assert errors[0]["msg"] == expected_exception
