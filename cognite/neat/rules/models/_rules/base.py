@@ -148,6 +148,12 @@ Space: TypeAlias = str
 Description: TypeAlias = constr(min_length=1, max_length=1024)  # type: ignore[valid-type]
 
 
+class SchemaCompleteness(StrEnum):
+    complete = "complete"
+    partial = "partial"
+    extended = "extended"
+
+
 class RoleTypes(StrEnum):
     domain_expert = "domain expert"
     information_architect = "information architect"

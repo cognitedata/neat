@@ -3,7 +3,7 @@ import re
 
 from rdflib import Graph, Namespace
 
-from cognite.neat.rules.models._rules.base import RoleTypes
+from cognite.neat.rules.models._rules.base import RoleTypes, SchemaCompleteness
 from cognite.neat.rules.models.rules import (
     prefix_compliance_regex,
     version_compliance_regex,
@@ -53,6 +53,7 @@ def parse_owl_metadata(graph: Graph, make_compliant: bool = False) -> dict:
     raw_metadata = convert_rdflib_content(
         {
             "role": RoleTypes.information_architect,
+            "schema": SchemaCompleteness.partial,
             "prefix": results[1].pop(),
             "namespace": Namespace(results[0].pop()),
             "version": results[2].pop(),
