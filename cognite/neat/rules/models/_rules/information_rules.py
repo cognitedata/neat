@@ -1,4 +1,5 @@
 import sys
+from collections import defaultdict
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
@@ -20,6 +21,7 @@ from cognite.neat.rules.models.rdfpath import (
 
 from ._types import (
     ClassType,
+    ContainerEntity,
     NamespaceType,
     ParentClassType,
     PrefixType,
@@ -28,12 +30,13 @@ from ._types import (
     StrListType,
     ValueTypeType,
     VersionType,
+    ViewEntity,
 )
 from .base import BaseMetadata, MatchType, RoleTypes, RuleModel, SheetEntity, SheetList
 from .domain_rules import DomainMetadata, DomainRules
 
 if TYPE_CHECKING:
-    from .dms_architect_rules import DMSRules
+    from .dms_architect_rules import DMSProperty, DMSRules
 
 
 if sys.version_info >= (3, 11):
@@ -265,13 +268,79 @@ class _InformationRulesConverter:
             contributor=info_metadata.contributor,
         )
 
-        views: list[DMSView] = []
+        properties_by_class: dict[str, list[DMSProperty]] = defaultdict(list)
+        for prop in self.information.properties:
+            properties_by_class[prop.class_].append(self._as_dms_property(prop))
+
+        views: list[DMSView] = [
+            DMSView(
+                class_=cls_.class_,
+                view=ViewEntity(prefix=info_metadata.prefix, suffix=cls_.class_),
+                description=cls_.description,
+                implements=[
+                    ViewEntity(prefix=parent.prefix, suffix=parent.suffix, version=parent.version)
+                    for parent in cls_.parent or []
+                ],
+            )
+            for cls_ in self.information.classes
+        ]
+
         containers: list[DMSContainer] = []
-        properties: list[DMSProperty] = []
+        classes_without_properties: set[str] = set()
+        for class_ in self.information.classes:
+            properties: list[DMSProperty] = properties_by_class.get(class_.class_, [])
+            if not properties or all(
+                isinstance(prop.value_type, ViewEntity) and not prop.value_type != "direct" for prop in properties
+            ):
+                classes_without_properties.add(class_.class_)
+                continue
+
+            containers.append(
+                DMSContainer(
+                    class_=class_.class_,
+                    container=ContainerEntity(prefix=info_metadata.prefix, suffix=class_.class_),
+                    description=class_.description,
+                    constraint=[
+                        ContainerEntity(prefix=info_metadata.prefix, suffix=class_.class_)
+                        for parent in class_.parent or []
+                        if parent.id not in classes_without_properties
+                    ]
+                    or None,
+                )
+            )
 
         return DMSRules(
             metadata=metadata,
-            properties=SheetList[DMSProperty](data=properties),
+            properties=SheetList[DMSProperty](
+                data=[prop for prop_set in properties_by_class.values() for prop in prop_set]
+            ),
             views=SheetList[DMSView](data=views),
             containers=SheetList[DMSContainer](data=containers),
+        )
+
+    @staticmethod
+    def _as_dms_property(prop: InformationProperty) -> DMSProperty:
+        """This creates the first"""
+
+        from .dms_architect_rules import DMSProperty
+
+        if dms_type := prop.value_type.dms:
+            value_type = dms_type._type.casefold()  # type: ignore[attr-defined]
+        else:
+            value_type = ViewEntity(
+                prefix=prop.value_type.prefix, suffix=prop.value_type.suffix, version=prop.value_type.version
+            )
+
+        return DMSProperty(
+            class_=prop.class_,
+            property_=prop.property_,
+            value_type=value_type,
+            nullable=not prop.is_mandatory,
+            is_list=prop.is_list,
+            default=prop.default,
+            source=prop.source,
+            container=ContainerEntity.from_raw(prop.class_),
+            container_property=prop.property_,
+            view=ViewEntity.from_raw(prop.class_),
+            view_property=prop.property_,
         )
