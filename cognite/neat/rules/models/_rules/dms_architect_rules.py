@@ -27,7 +27,7 @@ from ._types import (
     ViewListType,
     ViewType,
 )
-from .base import BaseMetadata, BaseRules, RoleTypes, SheetEntity, SheetList
+from .base import BaseMetadata, BaseRules, RoleTypes, SchemaCompleteness, SheetEntity, SheetList
 from .dms_schema import DMSSchema
 from .domain_rules import DomainMetadata
 
@@ -46,7 +46,7 @@ del subclasses  # cleanup namespace
 
 class DMSMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.dms_architect
-    schema_: Literal["complete", "partial", "extended"] = Field(alias="schema")
+    schema_: SchemaCompleteness = Field(alias="schema")
     space: ExternalIdType
     external_id: ExternalIdType = Field(alias="externalId")
     version: VersionType | None
@@ -105,7 +105,7 @@ class DMSMetadata(BaseMetadata):
             contributor = []
 
         return cls(
-            schema_="complete",
+            schema_=SchemaCompleteness.complete,
             space=data_model.space,
             external_id=data_model.external_id,
             version=data_model.version,
@@ -316,18 +316,22 @@ class DMSRules(BaseRules):
             if container.container.space is Undefined:
                 container.container = ContainerEntity(prefix=default_space, suffix=container.container.external_id)
             container.constraint = [
-                ContainerEntity(prefix=default_space, suffix=constraint.external_id)
-                if constraint.space is Undefined
-                else constraint
+                (
+                    ContainerEntity(prefix=default_space, suffix=constraint.external_id)
+                    if constraint.space is Undefined
+                    else constraint
+                )
                 for constraint in container.constraint or []
             ] or None
         for view in self.views or []:
             if view.view.space is Undefined:
                 view.view = ViewEntity(prefix=default_space, suffix=view.view.external_id, version=view.view.version)
             view.implements = [
-                ViewEntity(prefix=default_space, suffix=parent.external_id, version=parent.version)
-                if parent.space is Undefined
-                else parent
+                (
+                    ViewEntity(prefix=default_space, suffix=parent.external_id, version=parent.version)
+                    if parent.space is Undefined
+                    else parent
+                )
                 for parent in view.implements or []
             ] or None
 
@@ -340,9 +344,11 @@ class DMSRules(BaseRules):
             if view.view.version is None:
                 view.view = ViewEntity(prefix=view.view.space, suffix=view.view.external_id, version=default_version)
             view.implements = [
-                ViewEntity(prefix=parent.space, suffix=parent.external_id, version=default_version)
-                if parent.version is None
-                else parent
+                (
+                    ViewEntity(prefix=parent.space, suffix=parent.external_id, version=default_version)
+                    if parent.version is None
+                    else parent
+                )
                 for parent in view.implements or []
             ] or None
 
