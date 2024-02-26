@@ -11,7 +11,6 @@ handling (such `rdfpath`), and rules loaders, parsers and exporters.
 
 """
 
-
 from typing import Any
 
 from cognite.client.data_classes.data_modeling import ContainerId, DataModelId, ViewId
@@ -1132,6 +1131,38 @@ class PrefixAlreadyInUse(NeatException):
 
         self.message = (
             f"Prefix {prefix} exist in self.prefixes, please use another prefix!"
+            f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
+        )
+        if verbose:
+            self.message += f"\nDescription: {self.description}"
+            self.message += f"\nExample: {self.example}"
+            self.message += f"\nFix: {self.fix}"
+        super().__init__(self.message)
+
+
+class IncompleteSchema(NeatException):
+    """This exceptions is raised when schema is not complete, meaning defined properties
+    are pointing to non-existing classes or value types
+
+
+    Args:
+        missing_classes: list of classes ids that are not defined in the sheet
+        verbose: flag that indicates whether to provide enhanced exception message, by default False
+
+    """
+
+    type_: str = "IncompleteSchema"
+    code: int = 28
+    description: str = (
+        "This exceptions is raised when schema is not complete, meaning "
+        "defined properties are pointing to non-existing classes or value types"
+    )
+    example: str = ""
+    fix: str = ""
+
+    def __init__(self, missing_classes: set, verbose: bool = False):
+        self.message = (
+            f"Classes {missing_classes} are not defined in the Class sheet!"
             f"\nFor more information visit: {DOCS_BASE_URL}.{self.__class__.__name__}"
         )
         if verbose:
