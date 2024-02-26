@@ -6,6 +6,7 @@ from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
 
 from cognite.neat.rules._importer import DMSImporter
+from cognite.neat.rules.models._rules._types import ViewEntity
 from cognite.neat.rules.models._rules.base import SheetList
 from cognite.neat.rules.models._rules.dms_architect_rules import (
     DMSContainer,
@@ -50,7 +51,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     DMSProperty(
                         class_="WindFarm",
                         property_="WindTurbines",
-                        value_type="WindTurbine",
+                        value_type=ViewEntity(suffix="WindTurbine"),
                         relation="multiedge",
                         view="WindFarm",
                         view_property="windTurbines",
@@ -150,7 +151,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ]
             ),
         ),
-        id="Vanilla example",
+        id="Two properties, one container, one view",
     )
 
 
@@ -250,6 +251,159 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 ]
             ),
         ),
+        id="Two properties, two containers, two views. Primary data types, no relations.",
+    )
+
+    yield pytest.param(
+        {
+            "metadata": {
+                "schema_": "complete",
+                "space": "my_space",
+                "external_id": "my_data_model",
+                "version": "1",
+                "contributor": "Anders",
+            },
+            "properties": {
+                "data": [
+                    {
+                        "class_": "Plant",
+                        "property_": "name",
+                        "value_type": "text",
+                        "container": "Asset",
+                        "container_property": "name",
+                        "view": "Asset",
+                        "view_property": "name",
+                    },
+                    {
+                        "class_": "Plant",
+                        "property_": "generators",
+                        "relation": "multiedge",
+                        "value_type": "Generator",
+                        "view": "Plant",
+                        "view_property": "generators",
+                    },
+                    {
+                        "class_": "Plant",
+                        "property_": "reservoir",
+                        "relation": "direct",
+                        "value_type": "Reservoir",
+                        "container": "Asset",
+                        "container_property": "child",
+                        "view": "Plant",
+                        "view_property": "reservoir",
+                    },
+                    {
+                        "class_": "Generator",
+                        "property_": "name",
+                        "value_type": "text",
+                        "container": "Asset",
+                        "container_property": "name",
+                        "view": "Asset",
+                        "view_property": "name",
+                    },
+                    {
+                        "class_": "Reservoir",
+                        "property_": "name",
+                        "value_type": "text",
+                        "container": "Asset",
+                        "container_property": "name",
+                        "view": "Asset",
+                        "view_property": "name",
+                    },
+                ]
+            },
+            "containers": {
+                "data": [
+                    {"class_": "Asset", "container": "Asset"},
+                    {
+                        "class_": "Plant",
+                        "container": "Plant",
+                        "constraint": "Asset",
+                    },
+                ]
+            },
+            "views": {
+                "data": [
+                    {"class_": "Asset", "view": "Asset"},
+                    {"class_": "Plant", "view": "Plant", "implements": "Asset"},
+                    {"class_": "Generator", "view": "Generator", "implements": "Asset"},
+                    {"class_": "Reservoir", "view": "Reservoir", "implements": "Asset"},
+                ]
+            },
+        },
+        DMSRules(
+            metadata=DMSMetadata(
+                schema_="complete",
+                space="my_space",
+                external_id="my_data_model",
+                version="1",
+                contributor=["Anders"],
+            ),
+            properties=SheetList[DMSProperty](
+                data=[
+                    DMSProperty(
+                        class_="Plant",
+                        property_="name",
+                        value_type="text",
+                        container="Asset",
+                        container_property="name",
+                        view="Asset",
+                        view_property="name",
+                    ),
+                    DMSProperty(
+                        class_="Plant",
+                        property_="generators",
+                        value_type=ViewEntity(suffix="Generator"),
+                        relation="multiedge",
+                        view="Plant",
+                        view_property="generators",
+                    ),
+                    DMSProperty(
+                        class_="Plant",
+                        property_="reservoir",
+                        value_type=ViewEntity(suffix="Reservoir"),
+                        relation="direct",
+                        container="Asset",
+                        container_property="child",
+                        view="Plant",
+                        view_property="reservoir",
+                    ),
+                    DMSProperty(
+                        class_="Generator",
+                        property_="name",
+                        value_type="text",
+                        container="Asset",
+                        container_property="name",
+                        view="Asset",
+                        view_property="name",
+                    ),
+                    DMSProperty(
+                        class_="Reservoir",
+                        property_="name",
+                        value_type="text",
+                        container="Asset",
+                        container_property="name",
+                        view="Asset",
+                        view_property="name",
+                    ),
+                ]
+            ),
+            containers=SheetList[DMSContainer](
+                data=[
+                    DMSContainer(container="Asset", class_="Asset"),
+                    DMSContainer(class_="Plant", container="Plant", constraint="Asset"),
+                ]
+            ),
+            views=SheetList[DMSView](
+                data=[
+                    DMSView(view="Asset", class_="Asset"),
+                    DMSView(class_="Plant", view="Plant", implements=["Asset"]),
+                    DMSView(class_="Generator", view="Generator", implements=["Asset"]),
+                    DMSView(class_="Reservoir", view="Reservoir", implements=["Asset"]),
+                ]
+            ),
+        ),
+        id="Five properties, two containers, four views. Direct relations and Multiedge.",
     )
 
 

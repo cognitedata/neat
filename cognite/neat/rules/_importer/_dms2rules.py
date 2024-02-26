@@ -38,12 +38,11 @@ class DMSImporter(BaseImporter):
                         )
                     container_prop = container.properties[prop.container_property_identifier]
 
-                    index: str | None = None
+                    index: list[str] = []
                     for index_name, index_obj in (container.indexes or {}).items():
                         if isinstance(index_obj, BTreeIndex | InvertedIndex) and prop_id in index_obj.properties:
-                            index = index_name
-                            break
-                    unique_constraint: str | None = None
+                            index.append(index_name)
+                    unique_constraints: list[str] = []
                     for constraint_name, constraint_obj in (container.constraints or {}).items():
                         if isinstance(constraint_obj, dm.RequiresConstraint):
                             # This is handled in the .from_container method of DMSContainer
@@ -51,7 +50,7 @@ class DMSImporter(BaseImporter):
                         elif (
                             isinstance(constraint_obj, dm.UniquenessConstraint) and prop_id in constraint_obj.properties
                         ):
-                            unique_constraint = constraint_name
+                            unique_constraints.append(constraint_name)
                         elif isinstance(constraint_obj, dm.UniquenessConstraint):
                             # This does not apply to this property
                             continue
@@ -76,8 +75,8 @@ class DMSImporter(BaseImporter):
                             container_property=prop.container_property_identifier,
                             view=ViewEntity.from_id(view.as_id()),
                             view_property=prop_id,
-                            index=index,
-                            constraint=unique_constraint,
+                            index=index or None,
+                            constraint=unique_constraints or None,
                         )
                     else:
                         dms_property = DMSProperty(
@@ -94,8 +93,8 @@ class DMSImporter(BaseImporter):
                             container_property=prop.container_property_identifier,
                             view=ViewEntity.from_id(view.as_id()),
                             view_property=prop_id,
-                            index=index,
-                            constraint=unique_constraint,
+                            index=index or None,
+                            constraint=unique_constraints or None,
                         )
                 elif isinstance(prop, dm.MultiEdgeConnectionApply):
                     dms_property = DMSProperty(

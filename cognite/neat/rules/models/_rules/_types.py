@@ -61,6 +61,7 @@ __all__ = [
     "Undefined",
     "ContainerEntity",
     "ViewEntity",
+    "ContainerListType",
 ]
 
 
@@ -385,7 +386,18 @@ ViewType = Annotated[
 ]
 
 
-def _from_str_or_list(value: Any) -> list[ViewEntity] | Any:
+def _from_str_or_list_container(value: Any) -> list[ContainerEntity] | Any:
+    if not value:
+        return value
+    if isinstance(value, str):
+        return [ContainerEntity.from_raw(entry.strip()) for entry in value.split(",")]
+    elif isinstance(value, list):
+        return [ContainerEntity.from_raw(entry.strip()) if isinstance(entry, str) else entry for entry in value]
+    else:
+        return value
+
+
+def _from_str_or_list_view(value: Any) -> list[ViewEntity] | Any:
     if not value:
         return value
     if isinstance(value, str):
@@ -396,9 +408,19 @@ def _from_str_or_list(value: Any) -> list[ViewEntity] | Any:
         return value
 
 
+ContainerListType = Annotated[
+    list[ContainerEntity],
+    BeforeValidator(_from_str_or_list_container),
+    PlainSerializer(
+        lambda v: ",".join([entry.versioned_id for entry in v]),
+        return_type=str,
+        when_used="unless-none",
+    ),
+]
+
 ViewListType = Annotated[
     list[ViewEntity],
-    BeforeValidator(_from_str_or_list),
+    BeforeValidator(_from_str_or_list_view),
     PlainSerializer(
         lambda v: ",".join([entry.versioned_id for entry in v]),
         return_type=str,
