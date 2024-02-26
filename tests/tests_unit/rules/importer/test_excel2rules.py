@@ -5,7 +5,7 @@ import pytest
 from pydantic import ValidationError
 
 from cognite.neat.rules import importer
-from cognite.neat.rules._importer._spreadsheet2rules import ExcelImporter
+from cognite.neat.rules.importers._spreadsheet2rules import ExcelImporter
 from cognite.neat.rules.models import Tables
 from cognite.neat.rules.models._rules import RULES_PER_ROLE
 from cognite.neat.rules.models._rules.base import RoleTypes

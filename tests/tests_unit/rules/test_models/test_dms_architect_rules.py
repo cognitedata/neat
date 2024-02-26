@@ -5,7 +5,7 @@ import pytest
 from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
 
-from cognite.neat.rules._importer import DMSImporter
+from cognite.neat.rules.importers import DMSImporter
 from cognite.neat.rules.models._rules._types import ViewEntity
 from cognite.neat.rules.models._rules.base import SheetList
 from cognite.neat.rules.models._rules.dms_architect_rules import (
