@@ -29,8 +29,8 @@ def invalid_domain_rules_cases():
         {
             "Metadata": {
                 "role": "information architect",
-                "creator": "Jon, Emma",
-                "contributor": "David",
+                "schema": "complete",
+                "creator": "Jon, Emma, David",
                 "namespace": "http://purl.org/cognite/power2consumer",
                 "prefix": "power",
                 "created": datetime(2024, 2, 9, 0, 0),

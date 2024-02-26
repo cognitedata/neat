@@ -28,7 +28,7 @@ from ._types import (
     ValueTypeType,
     VersionType,
 )
-from .base import BaseMetadata, MatchType, RoleTypes, RuleModel, SheetEntity, SheetList
+from .base import BaseMetadata, MatchType, RoleTypes, RuleModel, SchemaCompleteness, SheetEntity, SheetList
 from .domain_rules import DomainMetadata, DomainRules
 
 if sys.version_info >= (3, 11):
@@ -39,6 +39,7 @@ else:
 
 class InformationMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.information_architect
+    schema_: SchemaCompleteness = Field(alias="schema")
     prefix: PrefixType
     namespace: NamespaceType
 
