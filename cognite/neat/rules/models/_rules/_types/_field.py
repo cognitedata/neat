@@ -185,7 +185,7 @@ PropertyType = Annotated[
 ]
 
 SemanticValueType = Annotated[
-    str | XSDValueType | ClassEntity,
+    XSDValueType | ClassEntity,
     BeforeValidator(
         lambda value: (
             XSD_VALUE_TYPE_MAPPINGS[value]
@@ -235,7 +235,7 @@ ViewType = Annotated[
 
 
 CdfValueType = Annotated[
-    str | DMSValueType | ViewEntity,
+    DMSValueType | ViewEntity,
     BeforeValidator(
         lambda value: DMS_VALUE_TYPE_MAPPINGS[value] if value in DMS_VALUE_TYPE_MAPPINGS else ViewEntity.from_raw(value)
     ),
