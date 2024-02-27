@@ -8,7 +8,6 @@ from pydantic import Field, model_validator
 from rdflib import Namespace
 
 from cognite.neat.rules import exceptions
-from cognite.neat.rules.models._base import EntityTypes, ParentClass
 from cognite.neat.rules.models.rdfpath import (
     AllReferences,
     Hop,
@@ -23,12 +22,15 @@ from cognite.neat.rules.models.rdfpath import (
 from ._types import (
     ClassType,
     ContainerEntity,
+    EntityTypes,
     NamespaceType,
+    ParentClass,
     ParentClassType,
     PrefixType,
     PropertyType,
     SourceType,
     StrListType,
+    Undefined,
     ValueTypeType,
     VersionType,
     ViewEntity,
@@ -136,7 +138,6 @@ class InformationProperty(SheetEntity):
               knowledge graph. Defaults to None (no transformation)
     """
 
-    # TODO: Can we skip rule_type and simply try to parse the rule and if it fails, raise an error?
     class_: ClassType = Field(alias="Class")
     property_: PropertyType = Field(alias="Property")
     value_type: ValueTypeType = Field(alias="Value Type")
@@ -153,6 +154,7 @@ class InformationProperty(SheetEntity):
 
     @model_validator(mode="after")
     def is_valid_rule(self):
+        # TODO: Can we skip rule_type and simply try to parse the rule and if it fails, raise an error?
         if self.rule_type:
             self.rule_type = self.rule_type.lower()
             if not self.rule:
@@ -230,14 +232,14 @@ class InformationRules(RuleModel):
     def update_entities_prefix(self) -> Self:
         # update expected_value_types
         for property_ in self.properties:
-            if property_.value_type.prefix == "undefined":
+            if property_.value_type.prefix is Undefined:
                 property_.value_type.prefix = self.metadata.prefix
 
         # update parent classes
         for class_ in self.classes:
             if class_.parent:
                 for parent in cast(list[ParentClass], class_.parent):
-                    if parent.prefix == "undefined":
+                    if parent.prefix is Undefined:
                         parent.prefix = self.metadata.prefix
 
         return self
