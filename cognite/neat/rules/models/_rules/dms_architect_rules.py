@@ -109,7 +109,6 @@ class DMSMetadata(BaseMetadata):
 class DMSProperty(SheetEntity):
     class_: str = Field(alias="Class")
     property_: PropertyType = Field(alias="Property")
-    description: str | None = Field(None, alias="Description", min_length=1, max_length=1024)
     relation: Literal["direct", "multiedge"] | None = Field(None, alias="Relation")
     value_type: ViewEntity | str = Field(alias="Value Type")
     nullable: bool | None = Field(default=None, alias="Nullable")
@@ -156,7 +155,6 @@ class DMSProperty(SheetEntity):
 class DMSContainer(SheetEntity):
     class_: str | None = Field(None, alias="Class")
     container: ContainerType = Field(alias="Container")
-    description: str | None = Field(None, min_length=1, max_length=1024)
     constraint: ContainerListType | None = Field(None, alias="Constraint")
 
     def as_container(self, default_space: str) -> dm.ContainerApply:
@@ -192,7 +190,6 @@ class DMSContainer(SheetEntity):
 class DMSView(SheetEntity):
     class_: str | None = Field(None, alias="Class")
     view: ViewType = Field(alias="View")
-    description: str | None = Field(None, min_length=1, max_length=1024)
     implements: ViewListType | None = Field(None, alias="Implements")
 
     def as_view(self, default_space: str, default_version: str) -> dm.ViewApply:
