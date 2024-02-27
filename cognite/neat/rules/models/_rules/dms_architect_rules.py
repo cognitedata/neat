@@ -50,7 +50,7 @@ class DMSMetadata(BaseMetadata):
     space: ExternalIdType
     external_id: ExternalIdType = Field(alias="externalId")
     version: VersionType | None
-    contributor: StrListType | None = Field(
+    creator: StrListType | None = Field(
         default=None,
         description=(
             "List of contributors to the data model creation, "
@@ -74,12 +74,12 @@ class DMSMetadata(BaseMetadata):
         space: str | None = None,
         external_id: str | None = None,
         version: str | None = None,
-        contributor: str | list[str] | None = None,
+        creator: str | list[str] | None = None,
         created: datetime | None = None,
         updated: datetime | None = None,
     ):
         information = InformationMetadata.from_domain_expert_metadata(
-            metadata, None, None, version, contributor, created, updated
+            metadata, None, None, version, creator, created, updated
         ).model_dump()
 
         return cls.from_information_architect_metadata(information, space, external_id)
@@ -94,23 +94,23 @@ class DMSMetadata(BaseMetadata):
             space=self.space,
             external_id=self.external_id,
             version=self.version or "missing",
-            description=f"Contributor: {', '.join(self.contributor or [])}",
+            description=f"Contributor: {', '.join(self.creator or [])}",
             views=[],
         )
 
     @classmethod
     def from_data_model(cls, data_model: dm.DataModelApply) -> "DMSMetadata":
         if data_model.description and (description_match := re.search(r"Contributor: (.+)", data_model.description)):
-            contributor = description_match.group(1).split(", ")
+            creator = description_match.group(1).split(", ")
         else:
-            contributor = []
+            creator = []
 
         return cls(
             schema_=SchemaCompleteness.complete,
             space=data_model.space,
             external_id=data_model.external_id,
             version=data_model.version,
-            contributor=contributor,
+            creator=creator,
         )
 
 

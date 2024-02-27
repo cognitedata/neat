@@ -26,7 +26,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
-                contributor="Alice",
+                creator="Alice",
             ),
             properties=SheetList[DMSProperty](
                 data=[
@@ -163,7 +163,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 "space": "my_space",
                 "external_id": "my_data_model",
                 "version": "1",
-                "contributor": "Anders",
+                "creator": "Anders",
             },
             "properties": {
                 "data": [
@@ -214,7 +214,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
-                contributor=["Anders"],
+                creator=["Anders"],
             ),
             properties=SheetList[DMSProperty](
                 data=[
@@ -261,7 +261,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 "space": "my_space",
                 "external_id": "my_data_model",
                 "version": "1",
-                "contributor": "Anders",
+                "creator": "Anders",
             },
             "properties": {
                 "data": [
@@ -337,7 +337,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
-                contributor=["Anders"],
+                creator=["Anders"],
             ),
             properties=SheetList[DMSProperty](
                 data=[

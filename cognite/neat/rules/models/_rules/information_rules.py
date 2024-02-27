@@ -67,7 +67,7 @@ class InformationMetadata(BaseMetadata):
     updated: datetime = Field(
         description=("Date of the data model update"),
     )
-    contributor: StrListType | None = Field(
+    creator: StrListType | None = Field(
         default=None,
         description=(
             "List of contributors to the data model creation, "
@@ -287,7 +287,7 @@ class _InformationRulesConverter:
             space=info_metadata.prefix,
             version=info_metadata.version,
             external_id=info_metadata.name.replace(" ", "_").lower(),
-            contributor=info_metadata.contributor,
+            creator=info_metadata.creator,
         )
 
         properties_by_class: dict[str, list[DMSProperty]] = defaultdict(list)
@@ -343,8 +343,8 @@ class _InformationRulesConverter:
             containers=SheetList[DMSContainer](data=containers),
         )
 
-    @staticmethod
-    def _as_dms_property(prop: InformationProperty) -> "DMSProperty":
+    @classmethod
+    def _as_dms_property(cls, prop: InformationProperty) -> "DMSProperty":
         """This creates the first"""
 
         from .dms_architect_rules import DMSProperty
