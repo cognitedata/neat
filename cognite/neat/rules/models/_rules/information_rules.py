@@ -67,7 +67,8 @@ class InformationMetadata(BaseMetadata):
     updated: datetime = Field(
         description=("Date of the data model update"),
     )
-    contributor: StrListType = Field(
+    contributor: StrListType | None = Field(
+        default=None,
         description=(
             "List of contributors to the data model creation, "
             "typically information architects are considered as contributors."

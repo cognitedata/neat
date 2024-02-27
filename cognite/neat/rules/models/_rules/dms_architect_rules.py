@@ -50,7 +50,8 @@ class DMSMetadata(BaseMetadata):
     space: ExternalIdType
     external_id: ExternalIdType = Field(alias="externalId")
     version: VersionType | None
-    contributor: StrListType = Field(
+    contributor: StrListType | None = Field(
+        default=None,
         description=(
             "List of contributors to the data model creation, "
             "typically information architects are considered as contributors."
@@ -93,7 +94,7 @@ class DMSMetadata(BaseMetadata):
             space=self.space,
             external_id=self.external_id,
             version=self.version or "missing",
-            description=f"Contributor: {', '.join(self.contributor)}",
+            description=f"Contributor: {', '.join(self.contributor or [])}",
             views=[],
         )
 
