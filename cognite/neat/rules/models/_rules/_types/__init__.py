@@ -1,5 +1,6 @@
 from ._base import ClassEntity, ContainerEntity, Entity, EntityTypes, ParentClassEntity, Undefined, ViewEntity
 from ._field import (
+    CdfValueType,
     ClassType,
     ContainerListType,
     ContainerType,
@@ -16,7 +17,7 @@ from ._field import (
     ViewListType,
     ViewType,
 )
-from ._value import DMS_VALUE_TYPE_MAPPINGS, XSD_VALUE_TYPE_MAPPINGS, XSDValueType
+from ._value import DMS_VALUE_TYPE_MAPPINGS, XSD_VALUE_TYPE_MAPPINGS, DMSValueType, XSDValueType
 
 __all__ = [
     "Undefined",
@@ -27,6 +28,7 @@ __all__ = [
     "ContainerEntity",
     "ViewEntity",
     "XSDValueType",
+    "DMSValueType",
     "XSD_VALUE_TYPE_MAPPINGS",
     "DMS_VALUE_TYPE_MAPPINGS",
     "StrOrListType",
@@ -39,6 +41,7 @@ __all__ = [
     "ClassType",
     "PropertyType",
     "SemanticValueType",
+    "CdfValueType",
     "SourceType",
     "ContainerType",
     "ViewType",

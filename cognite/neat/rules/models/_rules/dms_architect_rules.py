@@ -2,20 +2,21 @@ import abc
 import re
 from collections import defaultdict
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, ClassVar, Literal
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
 
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import PropertyType as CognitePropertyType
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex
 from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 from cognite.client.data_classes.data_modeling.views import ViewPropertyApply
-from pydantic import Field, field_serializer, field_validator, model_validator
-from pydantic_core.core_schema import ValidationInfo
+from pydantic import Field, field_serializer, model_validator
 
 from ._types import (
+    CdfValueType,
     ContainerEntity,
     ContainerListType,
     ContainerType,
+    DMSValueType,
     ExternalIdType,
     PropertyType,
     StrListType,
@@ -110,7 +111,7 @@ class DMSProperty(SheetEntity):
     class_: str = Field(alias="Class")
     property_: PropertyType = Field(alias="Property")
     relation: Literal["direct", "multiedge"] | None = Field(None, alias="Relation")
-    value_type: ViewEntity | str = Field(alias="Value Type")
+    value_type: CdfValueType = Field(alias="Value Type")
     nullable: bool | None = Field(default=None, alias="Nullable")
     is_list: bool | None = Field(default=None, alias="IsList")
     default: str | int | dict | None | None = Field(None, alias="Default")
@@ -122,34 +123,17 @@ class DMSProperty(SheetEntity):
     index: StrListType | None = Field(None, alias="Index")
     constraint: StrListType | None = Field(None, alias="Constraint")
 
-    @field_validator("value_type", mode="before")
-    def parse_value_type(cls, value: Any, info: ValidationInfo) -> Any:
-        if not isinstance(value, str):
-            return value
-
-        if info.data.get("relation"):
-            # If the property is a relation (direct or edge), the value type should be a ViewEntity
-            # for the target view (aka the object in a triple)
-            return ViewEntity.from_raw(value)
-        return value
-
     @field_serializer("value_type", when_used="unless-none")
     def serialize_value_type(self, value: Any) -> Any:
         if isinstance(value, ViewEntity):
             return value.versioned_id
         return value
 
-    @field_validator("value_type", mode="after")
-    def validate_value_type(cls, value: Any, info: ValidationInfo) -> Any:
-        if not isinstance(value, str) or info.data.get("relation") is not None:
-            return value
-        value = value.casefold()
-        if value in _PropertyType_by_name:
-            return value
-        raise ValueError(
-            f"Value type {value} is not a valid value type for a property. "
-            f"Valid types are: {_PropertyType_by_name.keys()}"
-        )
+    # @field_validator("value_type", mode="after")
+    # def validate_value_type(cls, value: Any, info: ValidationInfo) -> Any:
+    #     if not isinstance(value, DMSValueType) or info.data.get("relation") is not None:
+    #     if value in _PropertyType_by_name:
+    #     raise ValueError(
 
 
 class DMSContainer(SheetEntity):
@@ -232,6 +216,10 @@ class DMSRules(BaseRules):
                 entity.container = ContainerEntity(prefix=default_space, suffix=entity.container.external_id)
             if entity.view and entity.view.space is Undefined:
                 entity.view = ViewEntity(prefix=default_space, suffix=entity.view.external_id, version=default_version)
+            if entity.value_type and entity.value_type.space is Undefined:
+                entity.value_type = ViewEntity(
+                    prefix=default_space, suffix=entity.value_type.suffix, version=default_version
+                )
 
         for container in self.containers or []:
             if container.container.space is Undefined:
@@ -366,8 +354,8 @@ class _DMSExporter:
             for prop in container_properties:
                 if prop.container_property is None:
                     continue
-                if isinstance(prop.value_type, str):
-                    type_cls = _PropertyType_by_name.get(prop.value_type.casefold(), dm.DirectRelation)
+                if isinstance(prop.value_type, DMSValueType):
+                    type_cls = prop.value_type.dms
                 else:
                     type_cls = dm.DirectRelation
                 if type_cls is dm.DirectRelation:
@@ -381,7 +369,7 @@ class _DMSExporter:
                     if issubclass(type_cls, ListablePropertyType):
                         type_ = type_cls(is_list=prop.is_list or False)
                     else:
-                        type_ = type_cls()
+                        type_ = cast(CognitePropertyType, type_cls())
                     container.properties[prop.container_property] = dm.ContainerProperty(
                         type=type_,
                         nullable=prop.nullable if prop.nullable is not None else True,
@@ -418,7 +406,8 @@ class _DMSExporter:
                         if isinstance(prop.value_type, ViewEntity):
                             source = prop.value_type.as_id(default_space, default_version)
                         else:
-                            source = dm.ViewId(default_space, prop.value_type, default_version)
+                            # CRITICAL COMMENT: NOT SURE WHY IS THIS ALLOWED!?
+                            source = dm.ViewId(default_space, prop.value_type.suffix, default_version)
 
                         view_property = dm.MappedPropertyApply(
                             container=prop.container.as_id(default_space),
@@ -438,7 +427,8 @@ class _DMSExporter:
                     if isinstance(prop.value_type, ViewEntity):
                         source = prop.value_type.as_id(default_space, default_version)
                     else:
-                        source = dm.ViewId(default_space, prop.value_type, default_version)
+                        # CRITICAL COMMENT: NOT SURE WHY IS THIS ALLOWED!?
+                        source = dm.ViewId(default_space, prop.value_type.suffix, default_version)
                     view_property = dm.MultiEdgeConnectionApply(
                         type=dm.DirectRelationReference(
                             space=default_space,

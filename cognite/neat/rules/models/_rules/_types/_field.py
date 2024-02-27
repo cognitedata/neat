@@ -33,7 +33,7 @@ from ._base import (
     Undefined,
     ViewEntity,
 )
-from ._value import XSD_VALUE_TYPE_MAPPINGS, XSDValueType
+from ._value import DMS_VALUE_TYPE_MAPPINGS, XSD_VALUE_TYPE_MAPPINGS, DMSValueType, XSDValueType
 
 if sys.version_info >= (3, 11):
     pass
@@ -221,6 +221,8 @@ ContainerType = Annotated[
         when_used="unless-none",
     ),
 ]
+
+
 ViewType = Annotated[
     ViewEntity,
     BeforeValidator(ViewEntity.from_raw),
@@ -228,6 +230,14 @@ ViewType = Annotated[
         lambda v: v.versioned_id,
         return_type=str,
         when_used="unless-none",
+    ),
+]
+
+
+CdfValueType = Annotated[
+    str | DMSValueType | ViewEntity,
+    BeforeValidator(
+        lambda value: DMS_VALUE_TYPE_MAPPINGS[value] if value in DMS_VALUE_TYPE_MAPPINGS else ViewEntity.from_raw(value)
     ),
 ]
 
