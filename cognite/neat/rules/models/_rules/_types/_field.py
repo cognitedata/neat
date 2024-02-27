@@ -185,7 +185,7 @@ PropertyType = Annotated[
 ]
 
 SemanticValueType = Annotated[
-    XSDValueType | ClassEntity,
+    str | XSDValueType | ClassEntity,
     BeforeValidator(
         lambda value: (
             XSD_VALUE_TYPE_MAPPINGS[value]
