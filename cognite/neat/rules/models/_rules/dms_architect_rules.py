@@ -95,7 +95,7 @@ class DMSMetadata(BaseMetadata):
             space=self.space,
             external_id=self.external_id,
             version=self.version or "missing",
-            name=self.name,
+            name=self.name or None,
             description=f"Contributor: {', '.join(self.creator or [])}",
             views=[],
         )
@@ -110,10 +110,10 @@ class DMSMetadata(BaseMetadata):
         return cls(
             schema_=SchemaCompleteness.complete,
             space=data_model.space,
-            name=data_model.name,
+            name=data_model.name or None,
             external_id=data_model.external_id,
             version=data_model.version,
-            creator=creator,
+            creator=creator or None,
         )
 
 
