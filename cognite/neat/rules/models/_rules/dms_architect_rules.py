@@ -29,7 +29,6 @@ from ._types import (
 )
 from .base import BaseMetadata, BaseRules, RoleTypes, SchemaCompleteness, SheetEntity, SheetList
 from .dms_schema import DMSSchema
-from .domain_rules import DomainMetadata
 
 subclasses = list(CognitePropertyType.__subclasses__())
 _PropertyType_by_name: dict[str, type[CognitePropertyType]] = {}
@@ -48,13 +47,20 @@ class DMSMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.dms_architect
     schema_: SchemaCompleteness = Field(alias="schema")
     space: ExternalIdType
+    name: str = Field(
+        description="Human readable name of the data model",
+        min_length=1,
+        max_length=255,
+    )
     external_id: ExternalIdType = Field(alias="externalId")
     version: VersionType | None
-    contributor: StrListType = Field(
-        description=(
-            "List of contributors to the data model creation, "
-            "typically information architects are considered as contributors."
-        ),
+    creator: StrListType
+    created: datetime = Field(
+        description=("Date of the data model creation"),
+    )
+
+    updated: datetime = Field(
+        description=("Date of the data model update"),
     )
 
     @classmethod
@@ -66,23 +72,6 @@ class DMSMetadata(BaseMetadata):
         metadata_as_dict["externalId"] = externalId or "neat_model"
         return cls(**metadata_as_dict)
 
-    @classmethod
-    def from_domain_expert_metadata(
-        cls,
-        metadata: DomainMetadata,
-        space: str | None = None,
-        external_id: str | None = None,
-        version: str | None = None,
-        contributor: str | list[str] | None = None,
-        created: datetime | None = None,
-        updated: datetime | None = None,
-    ):
-        information = InformationMetadata.from_domain_expert_metadata(
-            metadata, None, None, version, contributor, created, updated
-        ).model_dump()
-
-        return cls.from_information_architect_metadata(information, space, external_id)
-
     def as_space(self) -> dm.SpaceApply:
         return dm.SpaceApply(
             space=self.space,
@@ -93,23 +82,26 @@ class DMSMetadata(BaseMetadata):
             space=self.space,
             external_id=self.external_id,
             version=self.version or "missing",
-            description=f"Contributor: {', '.join(self.contributor)}",
+            description=f"Creator: {', '.join(self.creator)}",
             views=[],
         )
 
     @classmethod
     def from_data_model(cls, data_model: dm.DataModelApply) -> "DMSMetadata":
-        if data_model.description and (description_match := re.search(r"Contributor: (.+)", data_model.description)):
-            contributor = description_match.group(1).split(", ")
+        if data_model.description and (description_match := re.search(r"Creator: (.+)", data_model.description)):
+            creator = description_match.group(1).split(", ")
         else:
-            contributor = []
+            creator = []
 
         return cls(
             schema_=SchemaCompleteness.complete,
             space=data_model.space,
             external_id=data_model.external_id,
+            name=data_model.name or "Unknown",
             version=data_model.version,
-            contributor=contributor,
+            creator=creator,
+            created=datetime.now(),
+            updated=datetime.now(),
         )
 
 
@@ -230,8 +222,8 @@ class DMSView(SheetEntity):
 class DMSRules(BaseRules):
     metadata: DMSMetadata = Field(alias="Metadata")
     properties: SheetList[DMSProperty] = Field(alias="Properties")
+    views: SheetList[DMSView] = Field(alias="Views")
     containers: SheetList[DMSContainer] | None = Field(None, alias="Containers")
-    views: SheetList[DMSView] | None = Field(None, alias="Views")
 
     @model_validator(mode="after")
     def consistent_container_properties(self) -> "DMSRules":

@@ -25,6 +25,7 @@ from ._types import (
     PrefixType,
     PropertyType,
     SourceType,
+    StrListType,
     ValueTypeType,
     VersionType,
 )
@@ -59,6 +60,7 @@ class InformationMetadata(BaseMetadata):
     updated: datetime = Field(
         description=("Date of the data model update"),
     )
+    creator: StrListType
 
     @classmethod
     def from_domain_expert_metadata(
@@ -67,7 +69,7 @@ class InformationMetadata(BaseMetadata):
         prefix: str | None = None,
         namespace: Namespace | None = None,
         version: str | None = None,
-        contributor: str | list[str] | None = None,
+        creator: str | list[str] | None = None,
         created: datetime | None = None,
         updated: datetime | None = None,
     ):
@@ -75,7 +77,7 @@ class InformationMetadata(BaseMetadata):
         metadata_as_dict["prefix"] = prefix or "neat"
         metadata_as_dict["namespace"] = namespace or Namespace("http://purl.org/cognite/neat#")
         metadata_as_dict["version"] = version or "0.1.0"
-        metadata_as_dict["contributor"] = contributor or "Cognite"
+        metadata_as_dict["creator"] = creator or "Cognite"
         metadata_as_dict["created"] = created or datetime.utcnow()
         metadata_as_dict["updated"] = updated or datetime.utcnow()
         return cls(**metadata_as_dict)
