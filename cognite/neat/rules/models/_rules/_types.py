@@ -339,9 +339,12 @@ class ContainerEntity(Entity):
     def from_id(cls, container_id: ContainerId) -> "ContainerEntity":
         return ContainerEntity(prefix=container_id.space, suffix=container_id.external_id)
 
-    def as_id(self, default_space: str) -> ContainerId:
+    def as_id(self, default_space: str | None) -> ContainerId:
+        if self.space is Undefined and default_space is None:
+            raise ValueError("Space is Undefined! Set default_space!")
+
         if self.space is Undefined:
-            return ContainerId(space=default_space, external_id=self.external_id)
+            return ContainerId(space=cast(str, default_space), external_id=self.external_id)
         else:
             return ContainerId(space=self.space, external_id=self.external_id)
 
@@ -365,12 +368,15 @@ class ViewEntity(Entity):
     def from_id(cls, view_id: ViewId) -> "ViewEntity":
         return ViewEntity(prefix=view_id.space, suffix=view_id.external_id, version=view_id.version)
 
-    def as_id(self, default_space: str, default_version: str) -> ViewId:
-        if self.space is Undefined:
-            space = default_space
-        else:
-            space = self.space
+    def as_id(self, default_space: str | None = None, default_version: str | None = None) -> ViewId:
+        space = default_space if self.space is Undefined else self.space
         version = self.version or default_version
+
+        if space is None or space is Undefined:
+            raise ValueError("space is required")
+        if version is None:
+            raise ValueError("version is required")
+
         return ViewId(space=space, external_id=self.external_id, version=version)
 
 

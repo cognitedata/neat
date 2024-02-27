@@ -58,7 +58,7 @@ class InformationMetadata(BaseMetadata):
         min_length=1,
         max_length=255,
     )
-
+    description: str | None = Field(None, min_length=1, max_length=1024)
     version: VersionType
 
     created: datetime = Field(
@@ -109,7 +109,6 @@ class InformationClass(SheetEntity):
     """
 
     class_: ClassType = Field(alias="Class")
-    description: str | None = Field(alias="Description", default=None)
     parent: ParentClassType = Field(alias="Parent Class", default=None)
     source: SourceType = Field(alias="Source", default=None)
     match_type: MatchType | None = Field(alias="Match Type", default=None)

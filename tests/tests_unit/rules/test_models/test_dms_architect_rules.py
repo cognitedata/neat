@@ -149,7 +149,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                         properties={
                             "ratedPower": dm.ContainerProperty(type=dm.Float64(), nullable=True),
                         },
-                        constraints={"Asset": dm.RequiresConstraint(dm.ContainerId("my_space", "Asset"))},
+                        constraints={"my_space:Asset": dm.RequiresConstraint(dm.ContainerId("my_space", "Asset"))},
                     ),
                 ]
             ),
@@ -678,8 +678,6 @@ class TestDMSRules:
     def test_alice_to_and_from_DMS(self, alice_rules: DMSRules) -> None:
         schema = alice_rules.as_schema()
         rules = alice_rules.copy()
-        rules.set_default_space()
-        rules.set_default_version()
         recreated_rules = DMSImporter(schema).to_rules()
 
         # Sorting to avoid order differences
