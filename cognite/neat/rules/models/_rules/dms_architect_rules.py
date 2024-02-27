@@ -82,6 +82,7 @@ class DMSMetadata(BaseMetadata):
         return dm.DataModelApply(
             space=self.space,
             external_id=self.external_id,
+            name=self.name or None,
             version=self.version or "missing",
             description=f"{self.description} Creator: {', '.join(self.creator)}",
             views=[],
@@ -89,6 +90,7 @@ class DMSMetadata(BaseMetadata):
 
     @classmethod
     def from_data_model(cls, data_model: dm.DataModelApply) -> "DMSMetadata":
+        description = None
         if data_model.description and (description_match := re.search(r"Creator: (.+)", data_model.description)):
             creator = description_match.group(1).split(", ")
             data_model.description.replace(f" Creator: {', '.join(creator)}", "")

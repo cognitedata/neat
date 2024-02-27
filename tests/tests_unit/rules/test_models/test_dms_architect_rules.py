@@ -25,8 +25,11 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 schema_="complete",
                 space="my_space",
                 external_id="my_data_model",
+                description="DMS data model",
                 version="1",
                 creator="Alice",
+                created="2021-01-01T00:00:00",
+                updated="2021-01-01T00:00:00",
             ),
             properties=SheetList[DMSProperty](
                 data=[
@@ -86,7 +89,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                         space="my_space",
                         external_id="my_data_model",
                         version="1",
-                        description="Contributor: Alice",
+                        description="DMS data model Creator: Alice",
                         views=[
                             dm.ViewId(space="my_space", external_id="Asset", version="1"),
                             dm.ViewId(space="my_space", external_id="WindTurbine", version="1"),
@@ -164,6 +167,8 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 "external_id": "my_data_model",
                 "version": "1",
                 "creator": "Anders",
+                "created": "2021-01-01T00:00:00",
+                "updated": "2021-01-01T00:00:00",
             },
             "properties": {
                 "data": [
@@ -215,6 +220,8 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 external_id="my_data_model",
                 version="1",
                 creator=["Anders"],
+                created="2021-01-01T00:00:00",
+                updated="2021-01-01T00:00:00",
             ),
             properties=SheetList[DMSProperty](
                 data=[
@@ -262,6 +269,8 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 "external_id": "my_data_model",
                 "version": "1",
                 "creator": "Anders",
+                "created": "2021-01-01T00:00:00",
+                "updated": "2021-01-01T00:00:00",
             },
             "properties": {
                 "data": [
@@ -338,6 +347,8 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 external_id="my_data_model",
                 version="1",
                 creator=["Anders"],
+                created="2021-01-01T00:00:00",
+                updated="2021-01-01T00:00:00",
             ),
             properties=SheetList[DMSProperty](
                 data=[
@@ -420,7 +431,9 @@ def invalid_rules_test_cases() -> Iterable[ParameterSet]:
                 "space": "my_space",
                 "external_id": "my_data_model",
                 "version": "1",
-                "contributor": "Anders",
+                "creator": "Anders",
+                "created": "2021-01-01T00:00:00",
+                "updated": "2021-01-01T00:00:00",
             },
             "properties": {
                 "data": [
@@ -446,7 +459,9 @@ def invalid_rules_test_cases() -> Iterable[ParameterSet]:
                 "space": "my_space",
                 "external_id": "my_data_model",
                 "version": "1",
-                "contributor": "Anders",
+                "creator": "Anders",
+                "created": "2021-01-01T00:00:00",
+                "updated": "2021-01-01T00:00:00",
             },
             "properties": {
                 "data": [
@@ -471,6 +486,7 @@ def invalid_rules_test_cases() -> Iterable[ParameterSet]:
                     },
                 ]
             },
+            "views": {"data": [{"view": "WindTurbine", "class_": "WindTurbine"}]},
         },
         "with different value types",
         id="Inconsistent container definition value type",
@@ -482,7 +498,9 @@ def invalid_rules_test_cases() -> Iterable[ParameterSet]:
                 "space": "my_space",
                 "external_id": "my_data_model",
                 "version": "1",
-                "contributor": "Anders",
+                "creator": "Anders",
+                "created": "2021-01-01T00:00:00",
+                "updated": "2021-01-01T00:00:00",
             },
             "properties": {
                 "data": [
@@ -508,6 +526,7 @@ def invalid_rules_test_cases() -> Iterable[ParameterSet]:
                     },
                 ]
             },
+            "views": {"data": [{"view": "WindTurbine", "class_": "WindTurbine"}]},
         },
         "different list definitions",
         id="Inconsistent container definition isList",
@@ -519,7 +538,9 @@ def invalid_rules_test_cases() -> Iterable[ParameterSet]:
                 "space": "my_space",
                 "external_id": "my_data_model",
                 "version": "1",
-                "contributor": "Anders",
+                "creator": "Anders",
+                "created": "2021-01-01T00:00:00",
+                "updated": "2021-01-01T00:00:00",
             },
             "properties": {
                 "data": [
@@ -545,6 +566,7 @@ def invalid_rules_test_cases() -> Iterable[ParameterSet]:
                     },
                 ]
             },
+            "views": {"data": [{"view": "WindTurbine", "class_": "WindTurbine"}]},
         },
         "different nullable definitions",
         id="Inconsistent container definition nullable",
@@ -556,7 +578,9 @@ def invalid_rules_test_cases() -> Iterable[ParameterSet]:
                 "space": "my_space",
                 "external_id": "my_data_model",
                 "version": "1",
-                "contributor": "Anders",
+                "creator": "Anders",
+                "created": "2021-01-01T00:00:00",
+                "updated": "2021-01-01T00:00:00",
             },
             "properties": {
                 "data": [
@@ -582,6 +606,7 @@ def invalid_rules_test_cases() -> Iterable[ParameterSet]:
                     },
                 ]
             },
+            "views": {"data": [{"view": "WindTurbine", "class_": "WindTurbine"}]},
         },
         "defined with different index definitions",
         id="Inconsistent container definition index",
@@ -593,7 +618,9 @@ def invalid_rules_test_cases() -> Iterable[ParameterSet]:
                 "space": "my_space",
                 "external_id": "my_data_model",
                 "version": "1",
-                "contributor": "Anders",
+                "creator": "Anders",
+                "created": "2021-01-01T00:00:00",
+                "updated": "2021-01-01T00:00:00",
             },
             "properties": {
                 "data": [
@@ -619,6 +646,7 @@ def invalid_rules_test_cases() -> Iterable[ParameterSet]:
                     },
                 ]
             },
+            "views": {"data": [{"view": "WindTurbine", "class_": "WindTurbine"}]},
         },
         "different unique constraint definitions",
         id="Inconsistent container definition constraint",
@@ -638,7 +666,6 @@ class TestDMSRules:
     @pytest.mark.parametrize("raw, expected_rules", list(valid_rules_tests_cases()))
     def test_load_valid_rules(self, raw: dict[str, dict[str, Any]], expected_rules: DMSRules) -> None:
         valid_rules = DMSRules.model_validate(raw)
-
         assert valid_rules.model_dump() == expected_rules.model_dump()
 
     @pytest.mark.parametrize("raw, expected_msg", list(invalid_rules_test_cases()))
@@ -666,6 +693,10 @@ class TestDMSRules:
         rules.containers = SheetList[DMSContainer](data=sorted(rules.containers, key=lambda c: c.container))
         recreated_rules.views = SheetList[DMSView](data=sorted(recreated_rules.views, key=lambda v: v.view))
         rules.views = SheetList[DMSView](data=sorted(rules.views, key=lambda v: v.view))
+
+        # Sorting out dates
+        recreated_rules.metadata.created = rules.metadata.created
+        recreated_rules.metadata.updated = rules.metadata.updated
 
         assert recreated_rules.model_dump() == rules.model_dump()
 
