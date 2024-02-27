@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 
 from cognite.neat.rules.models._rules import DMSRules
-from cognite.neat.rules.models._rules.information_rules import InformationRules
+from cognite.neat.rules.models._rules.information_rules import InformationRules, _InformationRulesConverter
 from cognite.neat.utils.spreadsheet import read_spreadsheet
 from tests.config import DOC_KNOWLEDGE_ACQUISITION_TUTORIAL
 
@@ -162,3 +162,20 @@ class TestInformationRules:
         dms_rules = david_rules.as_dms_architect_rules()
 
         assert isinstance(dms_rules, DMSRules)
+
+
+class TestInformationRulesConverter:
+    @pytest.mark.parametrize(
+        "prefix, expected_space",
+        [
+            pytest.param("neat", "neat", id="No substitutions"),
+            pytest.param("my space", "my_space", id="Space with space character"),
+            pytest.param("1my-space", "a1my-space", id="Space starting with number"),
+            pytest.param("m" * 69, "m" * 43, id="Space with more than 43 characters"),
+            pytest.param("my_space_", "my_space1", id="Space ending with underscore"),
+        ],
+    )
+    def test_to_space(self, prefix: str, expected_space: str) -> None:
+        actual_space = _InformationRulesConverter._to_space(prefix)
+
+        assert actual_space == expected_space

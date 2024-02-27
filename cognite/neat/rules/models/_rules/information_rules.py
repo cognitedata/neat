@@ -1,3 +1,4 @@
+import re
 import sys
 from collections import defaultdict
 from datetime import datetime
@@ -282,12 +283,15 @@ class _InformationRulesConverter:
 
         info_metadata = self.information.metadata
 
+        space = self._to_space(info_metadata.prefix)
+
         metadata = DMSMetadata(
             schema_=info_metadata.schema_,
-            space=info_metadata.prefix,
+            space=space,
             version=info_metadata.version,
             external_id=info_metadata.name.replace(" ", "_").lower(),
             creator=info_metadata.creator,
+            name=info_metadata.name,
         )
 
         properties_by_class: dict[str, list[DMSProperty]] = defaultdict(list)
@@ -369,3 +373,14 @@ class _InformationRulesConverter:
             view=ViewEntity.from_raw(prop.class_),
             view_property=prop.property_,
         )
+
+    @classmethod
+    def _to_space(cls, prefix: str) -> str:
+        """Ensures that the prefix comply with the CDF space regex"""
+        prefix = re.sub(r"[^a-zA-Z0-9_-]", "_", prefix)
+        if prefix[0].isdigit() or prefix[0] == "_":
+            prefix = f"a{prefix}"
+        prefix = prefix[:43]
+        if prefix[-1] == "_":
+            prefix = f"{prefix[:-1]}1"
+        return prefix

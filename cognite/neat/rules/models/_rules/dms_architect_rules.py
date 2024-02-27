@@ -50,6 +50,7 @@ class DMSMetadata(BaseMetadata):
     space: ExternalIdType
     external_id: ExternalIdType = Field(alias="externalId")
     version: VersionType | None
+    name: str | None = Field(None)
     creator: StrListType | None = Field(
         default=None,
         description=(
@@ -94,6 +95,7 @@ class DMSMetadata(BaseMetadata):
             space=self.space,
             external_id=self.external_id,
             version=self.version or "missing",
+            name=self.name,
             description=f"Contributor: {', '.join(self.creator or [])}",
             views=[],
         )
@@ -108,6 +110,7 @@ class DMSMetadata(BaseMetadata):
         return cls(
             schema_=SchemaCompleteness.complete,
             space=data_model.space,
+            name=data_model.name,
             external_id=data_model.external_id,
             version=data_model.version,
             creator=creator,
