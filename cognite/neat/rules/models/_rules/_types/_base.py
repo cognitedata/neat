@@ -19,12 +19,15 @@ class EntityTypes(StrEnum):
     predicate = "predicate"
     object = "object"
     class_ = "class"
+    parent_class = "parent_class"
     property_ = "property"
     object_property = "ObjectProperty"
     data_property = "DatatypeProperty"
     annotation_property = "AnnotationProperty"
     object_value_type = "object_value_type"
     data_value_type = "data_value_type"  # these are strings, floats, ...
+    xsd_value_type = "xsd_value_type"
+    dms_value_type = "dms_value_type"
     view = "view"
     container = "container"
     undefined = "undefined"
@@ -209,8 +212,8 @@ class ViewEntity(Entity):
         return ViewId(space=space, external_id=self.external_id, version=version)
 
 
-class ParentClass(Entity):
-    type_: ClassVar[EntityTypes] = EntityTypes.undefined
+class ClassEntity(Entity):
+    type_: ClassVar[EntityTypes] = EntityTypes.class_
 
     @property
     def view_id(self) -> ViewId:
@@ -219,3 +222,7 @@ class ParentClass(Entity):
     @classmethod
     def from_view_id(cls, view_id: ViewId) -> Self:
         return cls(prefix=view_id.space, suffix=view_id.external_id, version=view_id.version)
+
+
+class ParentClassEntity(ClassEntity):
+    type_: ClassVar[EntityTypes] = EntityTypes.parent_class

@@ -24,16 +24,17 @@ from ._types import (
     ContainerEntity,
     EntityTypes,
     NamespaceType,
-    ParentClass,
+    ParentClassEntity,
     ParentClassType,
     PrefixType,
     PropertyType,
+    SemanticValueType,
     SourceType,
     StrListType,
     Undefined,
-    ValueTypeType,
     VersionType,
     ViewEntity,
+    XSDValueType,
 )
 from .base import BaseMetadata, MatchType, RoleTypes, RuleModel, SchemaCompleteness, SheetEntity, SheetList
 from .domain_rules import DomainMetadata, DomainRules
@@ -140,7 +141,7 @@ class InformationProperty(SheetEntity):
 
     class_: ClassType = Field(alias="Class")
     property_: PropertyType = Field(alias="Property")
-    value_type: ValueTypeType = Field(alias="Value Type")
+    value_type: SemanticValueType = Field(alias="Value Type")
     min_count: int | None = Field(alias="Min Count", default=None)
     max_count: int | float | None = Field(alias="Max Count", default=None)
     default: Any | None = Field(alias="Default", default=None)
@@ -205,9 +206,9 @@ class InformationProperty(SheetEntity):
     @property
     def type_(self) -> EntityTypes:
         """Type of property based on value type. Either data (attribute) or object (edge) property."""
-        if self.value_type.type_ == EntityTypes.data_value_type:
+        if self.value_type.type_ == EntityTypes.xsd_value_type:
             return EntityTypes.data_property
-        elif self.value_type.type_ == EntityTypes.object_value_type:
+        elif self.value_type.type_ == EntityTypes.class_:
             return EntityTypes.object_property
         else:
             return EntityTypes.undefined
@@ -238,7 +239,7 @@ class InformationRules(RuleModel):
         # update parent classes
         for class_ in self.classes:
             if class_.parent:
-                for parent in cast(list[ParentClass], class_.parent):
+                for parent in cast(list[ParentClassEntity], class_.parent):
                     if parent.prefix is Undefined:
                         parent.prefix = self.metadata.prefix
 
@@ -355,8 +356,9 @@ class _InformationRulesConverter:
 
         from .dms_architect_rules import DMSProperty
 
-        if dms_type := prop.value_type.dms:
-            value_type = dms_type._type.casefold()  # type: ignore[attr-defined]
+        # returns property type, which can be ObjectProperty or DatatypeProperty
+        if prop.type_ == EntityTypes.data_property:
+            value_type = cast(XSDValueType, prop.value_type).dms._type.casefold()  # type: ignore[attr-defined]
         else:
             value_type = ViewEntity(
                 prefix=prop.value_type.prefix, suffix=prop.value_type.suffix, version=prop.value_type.version

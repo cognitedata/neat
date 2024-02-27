@@ -1,4 +1,5 @@
 import re
+import sys
 from collections.abc import Callable
 from typing import Annotated, Any, cast
 
@@ -26,13 +27,18 @@ from ._base import (
     PROPERTY_ID_COMPLIANCE_REGEX,
     VERSION_COMPLIANCE_REGEX,
     VERSIONED_ENTITY_REGEX_COMPILED,
+    ClassEntity,
     ContainerEntity,
-    EntityTypes,
-    ParentClass,
+    ParentClassEntity,
     Undefined,
     ViewEntity,
 )
-from ._value import XSD_VALUE_TYPE_MAPPINGS, ValueType
+from ._value import XSD_VALUE_TYPE_MAPPINGS, XSDValueType
+
+if sys.version_info >= (3, 11):
+    pass
+else:
+    pass
 
 
 def _custom_error(exc_factory: Callable[[str | None, Exception], Any]) -> Any:
@@ -49,21 +55,21 @@ def _raise(exception: PydanticCustomError):
     raise exception
 
 
-def _split_parent(value: str) -> list[ParentClass] | None:
+def _split_parent(value: str) -> list[ParentClassEntity] | None:
     if not (isinstance(value, str) and value):
         return None
 
     parents = []
     for v in value.replace(", ", ",").split(","):
         if ENTITY_ID_REGEX_COMPILED.match(v) or VERSIONED_ENTITY_REGEX_COMPILED.match(v):
-            parents.append(ParentClass.from_string(entity_string=v))
+            parents.append(ParentClassEntity.from_string(entity_string=v))
         else:
-            parents.append(ParentClass(prefix=Undefined, suffix=v, name=v))
+            parents.append(ParentClassEntity(prefix=Undefined, suffix=v, name=v))
 
     return parents
 
 
-def _check_parent(value: list[ParentClass]) -> list[ParentClass]:
+def _check_parent(value: list[ParentClassEntity]) -> list[ParentClassEntity]:
     if not value:
         return value
     if illegal_ids := [v for v in value if re.search(MORE_THAN_ONE_NONE_ALPHANUMERIC_REGEX, v.suffix)]:
@@ -136,7 +142,7 @@ VersionType = Annotated[
 
 
 ParentClassType = Annotated[
-    list[ParentClass] | None,
+    list[ParentClassEntity] | None,
     BeforeValidator(_split_parent),
     AfterValidator(_check_parent),
 ]
@@ -178,18 +184,16 @@ PropertyType = Annotated[
     ),
 ]
 
-ValueTypeType = Annotated[
-    ValueType,
+SemanticValueType = Annotated[
+    XSDValueType | ClassEntity,
     BeforeValidator(
         lambda value: (
             XSD_VALUE_TYPE_MAPPINGS[value]
             if value in XSD_VALUE_TYPE_MAPPINGS
             else (
-                ValueType.from_string(entity_string=value, type_=EntityTypes.object_value_type, mapping=None)
+                ClassEntity.from_string(entity_string=value)
                 if ENTITY_ID_REGEX_COMPILED.match(value) or VERSIONED_ENTITY_REGEX_COMPILED.match(value)
-                else ValueType(
-                    prefix=Undefined, suffix=value, name=value, type_=EntityTypes.object_value_type, mapping=None
-                )
+                else ClassEntity(prefix=Undefined, suffix=value, name=value)
             )
         )
     ),

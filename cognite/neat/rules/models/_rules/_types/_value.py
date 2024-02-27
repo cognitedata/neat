@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import cast
+from typing import ClassVar, cast
 
 from cognite.client.data_classes.data_modeling import (
     Boolean,
@@ -11,7 +11,6 @@ from cognite.client.data_classes.data_modeling import (
     Int32,
     Int64,
     Json,
-    PropertyType,
     SequenceReference,
     Text,
     TimeSeriesReference,
@@ -31,45 +30,35 @@ class ValueTypeMapping(BaseModel):
     graphql: str
 
 
-# mypy does not like the sentinel value, and it is not possible to ignore only the line with it below.
-# so we ignore all errors beyond this point.
-# mypy: ignore-errors
-class ValueType(Entity):
+class XSDValueType(Entity):
     """Value type is a data/object type defined as a child of Entity model."""
 
-    mapping: ValueTypeMapping | None = None
+    type_: ClassVar[EntityTypes] = EntityTypes.xsd_value_type
+    mapping: ValueTypeMapping
 
     @property
-    def python(self) -> type | None:
+    def python(self) -> type:
         """Returns the Python type for a given value type."""
-        if self.type_ == EntityTypes.data_value_type:
-            return cast(ValueTypeMapping, self.mapping).python
-        else:
-            return None
+        return cast(ValueTypeMapping, self.mapping).python
 
     @property
-    def xsd(self) -> str | None:
+    def xsd(self) -> str:
         """Returns the XSD type for a given value type."""
-        if self.type_ == EntityTypes.data_value_type:
-            return cast(ValueTypeMapping, self.mapping).xsd
-        else:
-            return None
+        return cast(ValueTypeMapping, self.mapping).xsd
 
     @property
-    def dms(self) -> type | None:
+    def dms(self) -> type:
         """Returns the DMS type for a given value type."""
-        if self.type_ == EntityTypes.data_value_type:
-            return cast(ValueTypeMapping, self.mapping).dms
-        else:
-            return None
+        return cast(ValueTypeMapping, self.mapping).dms
 
     @property
-    def graphql(self) -> str | None:
+    def graphql(self) -> str:
         """Returns the Graphql type for a given value type."""
-        if self.type_ == EntityTypes.data_value_type:
-            return cast(ValueTypeMapping, self.mapping).graphql
-        else:
-            return None
+        return cast(ValueTypeMapping, self.mapping).graphql
+
+
+class DMSValueType(XSDValueType):
+    type_: ClassVar[EntityTypes] = EntityTypes.dms_value_type
 
 
 _DATA_TYPES: list[dict] = [
@@ -97,12 +86,11 @@ _DATA_TYPES: list[dict] = [
     {"name": "json", "python": Json, "GraphQL": "Json", "dms": Json},
 ]
 
-XSD_VALUE_TYPE_MAPPINGS: dict[str, ValueType] = {
-    data_type["name"]: ValueType(
+XSD_VALUE_TYPE_MAPPINGS: dict[str, XSDValueType] = {
+    data_type["name"]: XSDValueType(
         prefix="xsd",
         suffix=cast(str, data_type["name"]),
         name=cast(str, data_type["name"]),
-        type_=EntityTypes.data_value_type,
         mapping=ValueTypeMapping(
             xsd=data_type["name"],
             python=data_type["python"],
@@ -113,8 +101,17 @@ XSD_VALUE_TYPE_MAPPINGS: dict[str, ValueType] = {
     for data_type in _DATA_TYPES
 }
 
-
-DMS_VALUE_TYPE_MAPPINGS: dict[type[PropertyType], ValueType] = {}
-for value_type in XSD_VALUE_TYPE_MAPPINGS.values():
-    if value_type.dms not in DMS_VALUE_TYPE_MAPPINGS:
-        DMS_VALUE_TYPE_MAPPINGS[cast(type[PropertyType], value_type.dms)] = cast(ValueType, value_type)
+DMS_VALUE_TYPE_MAPPINGS: dict[str, DMSValueType] = {
+    data_type["dms"]._type.casefold(): DMSValueType(
+        prefix="dms",
+        suffix=data_type["dms"]._type.casefold(),
+        name=data_type["dms"]._type.casefold(),
+        mapping=ValueTypeMapping(
+            xsd=data_type["name"],
+            python=data_type["python"],
+            dms=data_type["dms"],
+            graphql=data_type["GraphQL"],
+        ),
+    )
+    for data_type in _DATA_TYPES
+}

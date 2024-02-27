@@ -1,4 +1,4 @@
-from ._base import ContainerEntity, Entity, EntityTypes, ParentClass, Undefined, ViewEntity
+from ._base import ContainerEntity, Entity, EntityTypes, ParentClassEntity, Undefined, ViewEntity
 from ._field import (
     ClassType,
     ContainerListType,
@@ -8,24 +8,24 @@ from ._field import (
     ParentClassType,
     PrefixType,
     PropertyType,
+    SemanticValueType,
     SourceType,
     StrListType,
     StrOrListType,
-    ValueTypeType,
     VersionType,
     ViewListType,
     ViewType,
 )
-from ._value import DMS_VALUE_TYPE_MAPPINGS, XSD_VALUE_TYPE_MAPPINGS, ValueType
+from ._value import DMS_VALUE_TYPE_MAPPINGS, XSD_VALUE_TYPE_MAPPINGS, XSDValueType
 
 __all__ = [
     "Undefined",
     "Entity",
     "EntityTypes",
-    "ParentClass",
+    "ParentClassEntity",
     "ContainerEntity",
     "ViewEntity",
-    "ValueType",
+    "XSDValueType",
     "XSD_VALUE_TYPE_MAPPINGS",
     "DMS_VALUE_TYPE_MAPPINGS",
     "StrOrListType",
@@ -37,7 +37,7 @@ __all__ = [
     "ParentClassType",
     "ClassType",
     "PropertyType",
-    "ValueTypeType",
+    "SemanticValueType",
     "SourceType",
     "ContainerType",
     "ViewType",
