@@ -331,43 +331,6 @@ class DMSRules(BaseRules):
             raise ValueError(f"Inconsistent container(s): {exception_str}")
         return self
 
-    # not sure if we need this at all:
-    # def set_default_space(self) -> None:
-    #     """This replaces all undefined spaces with the default space from the metadata."""
-
-    #     for entity in self.properties:
-    #         if entity.container and entity.container.space is Undefined:
-    #         if entity.view and entity.view.space is Undefined:
-    #             entity.view = ViewEntity(
-
-    #     for container in self.containers or []:
-    #         if container.container.space is Undefined:
-    #         container.constraint = [
-    #                 if constraint.space is Undefined
-    #                 else constraint
-    #             for constraint in container.constraint or []
-    #         ] or None
-
-    #     for view in self.views or []:
-    #         if view.view.space is Undefined:
-    #         view.implements = [
-    #                 if parent.space is Undefined
-    #                 else parent
-    #             for parent in view.implements or []
-    #         ] or None
-
-    # def set_default_version(self, default_version: str = "1") -> None:
-    #     """This replaces all undefined versions with"""
-    #     for prop in self.properties:
-    #         if prop.view and prop.view.version is None:
-    #     for view in self.views or []:
-    #         if view.view.version is None:
-    #         view.implements = [
-    #                 if parent.version is None
-    #                 else parent
-    #             for parent in view.implements or []
-    #         ] or None
-
     def as_schema(self) -> DMSSchema:
         return _DMSExporter(self).to_schema()
 
