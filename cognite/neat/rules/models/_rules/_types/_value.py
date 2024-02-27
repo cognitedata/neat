@@ -31,6 +31,8 @@ class ValueTypeMapping(BaseModel):
     graphql: str
 
 
+# mypy does not like the sentinel value, and it is not possible to ignore only the line with it below.
+# so we ignore all errors beyond this point.
 # mypy: ignore-errors
 class ValueType(Entity):
     """Value type is a data/object type defined as a child of Entity model."""
