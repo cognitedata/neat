@@ -30,6 +30,7 @@ class ValueTypeMapping(BaseModel):
     graphql: str
 
 
+# mypy: ignore-errors
 class XSDValueType(Entity):
     """Value type is a data/object type defined as a child of Entity model."""
 
