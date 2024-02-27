@@ -1,4 +1,4 @@
-from ._base import ContainerEntity, Entity, EntityTypes, ParentClassEntity, Undefined, ViewEntity
+from ._base import ClassEntity, ContainerEntity, Entity, EntityTypes, ParentClassEntity, Undefined, ViewEntity
 from ._field import (
     ClassType,
     ContainerListType,
@@ -22,6 +22,7 @@ __all__ = [
     "Undefined",
     "Entity",
     "EntityTypes",
+    "ClassEntity",
     "ParentClassEntity",
     "ContainerEntity",
     "ViewEntity",

@@ -20,6 +20,7 @@ from cognite.neat.rules.models.rdfpath import (
 )
 
 from ._types import (
+    ClassEntity,
     ClassType,
     ContainerEntity,
     EntityTypes,
@@ -357,12 +358,14 @@ class _InformationRulesConverter:
         from .dms_architect_rules import DMSProperty
 
         # returns property type, which can be ObjectProperty or DatatypeProperty
-        if prop.type_ == EntityTypes.data_property:
+        if isinstance(prop.value_type, XSDValueType):
             value_type = cast(XSDValueType, prop.value_type).dms._type.casefold()  # type: ignore[attr-defined]
-        else:
+        elif isinstance(prop.value_type, ClassEntity):
             value_type = ViewEntity(
                 prefix=prop.value_type.prefix, suffix=prop.value_type.suffix, version=prop.value_type.version
             )
+        else:
+            raise ValueError(f"Unsupported value type: {prop.value_type.type_}")
 
         return DMSProperty(
             class_=prop.class_,
