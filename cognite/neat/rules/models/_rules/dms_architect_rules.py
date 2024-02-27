@@ -47,18 +47,19 @@ class DMSMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.dms_architect
     schema_: SchemaCompleteness = Field(alias="schema")
     space: ExternalIdType
-    name: str = Field(
+    name: str | None = Field(
+        None,
         description="Human readable name of the data model",
         min_length=1,
         max_length=255,
     )
+    description: str | None = Field(None, min_length=1, max_length=1024)
     external_id: ExternalIdType = Field(alias="externalId")
     version: VersionType | None
     creator: StrListType
     created: datetime = Field(
         description=("Date of the data model creation"),
     )
-
     updated: datetime = Field(
         description=("Date of the data model update"),
     )
@@ -82,7 +83,7 @@ class DMSMetadata(BaseMetadata):
             space=self.space,
             external_id=self.external_id,
             version=self.version or "missing",
-            description=f"Creator: {', '.join(self.creator)}",
+            description=f"{self.description} Creator: {', '.join(self.creator)}",
             views=[],
         )
 
@@ -90,14 +91,19 @@ class DMSMetadata(BaseMetadata):
     def from_data_model(cls, data_model: dm.DataModelApply) -> "DMSMetadata":
         if data_model.description and (description_match := re.search(r"Creator: (.+)", data_model.description)):
             creator = description_match.group(1).split(", ")
+            data_model.description.replace(f" Creator: {', '.join(creator)}", "")
+        elif data_model.description:
+            creator = ["NEAT"]
+            description = data_model.description
         else:
-            creator = []
+            description = "Missing description"
 
         return cls(
             schema_=SchemaCompleteness.complete,
             space=data_model.space,
+            name=data_model.name or None,
+            description=description,
             external_id=data_model.external_id,
-            name=data_model.name or "Unknown",
             version=data_model.version,
             creator=creator,
             created=datetime.now(),
@@ -108,7 +114,7 @@ class DMSMetadata(BaseMetadata):
 class DMSProperty(SheetEntity):
     class_: str = Field(alias="Class")
     property_: PropertyType = Field(alias="Property")
-    description: str | None = Field(None, alias="Description")
+    description: str | None = Field(None, alias="Description", min_length=1, max_length=1024)
     relation: Literal["direct", "multiedge"] | None = Field(None, alias="Relation")
     value_type: ViewEntity | str = Field(alias="Value Type")
     nullable: bool | None = Field(default=None, alias="Nullable")
@@ -155,7 +161,7 @@ class DMSProperty(SheetEntity):
 class DMSContainer(SheetEntity):
     class_: str | None = Field(None, alias="Class")
     container: ContainerType = Field(alias="Container")
-    description: str | None = Field(None, alias="Description")
+    description: str | None = Field(None, min_length=1, max_length=1024)
     constraint: ContainerListType | None = Field(None, alias="Constraint")
 
     def as_container(self, default_space: str) -> dm.ContainerApply:
@@ -191,7 +197,7 @@ class DMSContainer(SheetEntity):
 class DMSView(SheetEntity):
     class_: str | None = Field(None, alias="Class")
     view: ViewType = Field(alias="View")
-    description: str | None = Field(None, alias="Description")
+    description: str | None = Field(None, min_length=1, max_length=1024)
     implements: ViewListType | None = Field(None, alias="Implements")
 
     def as_view(self, default_space: str, default_version: str) -> dm.ViewApply:

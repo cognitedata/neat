@@ -1,6 +1,8 @@
+import re
 import sys
+from collections import defaultdict
 from datetime import datetime
-from typing import Any, ClassVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from pydantic import Field, model_validator
 from rdflib import Namespace
@@ -20,6 +22,7 @@ from cognite.neat.rules.models.rdfpath import (
 
 from ._types import (
     ClassType,
+    ContainerEntity,
     NamespaceType,
     ParentClassType,
     PrefixType,
@@ -28,9 +31,14 @@ from ._types import (
     StrListType,
     ValueTypeType,
     VersionType,
+    ViewEntity,
 )
 from .base import BaseMetadata, MatchType, RoleTypes, RuleModel, SchemaCompleteness, SheetEntity, SheetList
 from .domain_rules import DomainMetadata, DomainRules
+
+if TYPE_CHECKING:
+    from .dms_architect_rules import DMSProperty, DMSRules
+
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -60,7 +68,12 @@ class InformationMetadata(BaseMetadata):
     updated: datetime = Field(
         description=("Date of the data model update"),
     )
-    creator: StrListType
+    creator: StrListType = Field(
+        description=(
+            "List of contributors to the data model creation, "
+            "typically information architects are considered as contributors."
+        ),
+    )
 
     @classmethod
     def from_domain_expert_metadata(
@@ -230,9 +243,6 @@ class InformationRules(RuleModel):
 
         return self
 
-    def to_domain_rules(self) -> DomainRules:
-        raise NotImplementedError("DomainRules not implemented yet")
-
     @model_validator(mode="after")
     def validate_schema_completeness(self) -> Self:
         # update expected_value_types
@@ -252,3 +262,126 @@ class InformationRules(RuleModel):
                 raise exceptions.IncompleteSchema(missing_classes).to_pydantic_custom_error()
 
         return self
+
+    def as_domain_rules(self) -> DomainRules:
+        return _InformationRulesConverter(self).as_domain_rules()
+
+    def as_dms_architect_rules(self) -> "DMSRules":
+        return _InformationRulesConverter(self).as_dms_architect_rules()
+
+
+class _InformationRulesConverter:
+    def __init__(self, information: InformationRules):
+        self.information = information
+
+    def as_domain_rules(self) -> DomainRules:
+        raise NotImplementedError("DomainRules not implemented yet")
+
+    def as_dms_architect_rules(self) -> "DMSRules":
+        from .dms_architect_rules import DMSContainer, DMSMetadata, DMSProperty, DMSRules, DMSView
+
+        info_metadata = self.information.metadata
+
+        space = self._to_space(info_metadata.prefix)
+
+        metadata = DMSMetadata(
+            schema_=info_metadata.schema_,
+            space=space,
+            version=info_metadata.version,
+            external_id=info_metadata.name.replace(" ", "_").lower(),
+            creator=info_metadata.creator,
+            name=info_metadata.name,
+            created=datetime.now(),
+            updated=datetime.now(),
+        )
+
+        properties_by_class: dict[str, list[DMSProperty]] = defaultdict(list)
+        for prop in self.information.properties:
+            properties_by_class[prop.class_].append(self._as_dms_property(prop))
+
+        views: list[DMSView] = [
+            DMSView(
+                class_=cls_.class_,
+                view=ViewEntity(prefix=info_metadata.prefix, suffix=cls_.class_),
+                description=cls_.description,
+                implements=[
+                    ViewEntity(prefix=parent.prefix, suffix=parent.suffix, version=parent.version)
+                    for parent in cls_.parent or []
+                ],
+            )
+            for cls_ in self.information.classes
+        ]
+
+        containers: list[DMSContainer] = []
+        classes_without_properties: set[str] = set()
+        for class_ in self.information.classes:
+            properties: list[DMSProperty] = properties_by_class.get(class_.class_, [])
+            if not properties or all(
+                isinstance(prop.value_type, ViewEntity) and not prop.value_type != "direct" for prop in properties
+            ):
+                classes_without_properties.add(class_.class_)
+                continue
+
+            containers.append(
+                DMSContainer(
+                    class_=class_.class_,
+                    container=ContainerEntity(prefix=info_metadata.prefix, suffix=class_.class_),
+                    description=class_.description,
+                    constraint=[
+                        ContainerEntity(
+                            prefix=parent.prefix,
+                            suffix=parent.suffix,
+                        )
+                        for parent in class_.parent or []
+                        if parent.id not in classes_without_properties
+                    ]
+                    or None,
+                )
+            )
+
+        return DMSRules(
+            metadata=metadata,
+            properties=SheetList[DMSProperty](
+                data=[prop for prop_set in properties_by_class.values() for prop in prop_set]
+            ),
+            views=SheetList[DMSView](data=views),
+            containers=SheetList[DMSContainer](data=containers),
+        )
+
+    @classmethod
+    def _as_dms_property(cls, prop: InformationProperty) -> "DMSProperty":
+        """This creates the first"""
+
+        from .dms_architect_rules import DMSProperty
+
+        if dms_type := prop.value_type.dms:
+            value_type = dms_type._type.casefold()  # type: ignore[attr-defined]
+        else:
+            value_type = ViewEntity(
+                prefix=prop.value_type.prefix, suffix=prop.value_type.suffix, version=prop.value_type.version
+            )
+
+        return DMSProperty(
+            class_=prop.class_,
+            property_=prop.property_,
+            value_type=value_type,
+            nullable=not prop.is_mandatory,
+            is_list=prop.is_list,
+            default=prop.default,
+            source=prop.source,
+            container=ContainerEntity.from_raw(prop.class_),
+            container_property=prop.property_,
+            view=ViewEntity.from_raw(prop.class_),
+            view_property=prop.property_,
+        )
+
+    @classmethod
+    def _to_space(cls, prefix: str) -> str:
+        """Ensures that the prefix comply with the CDF space regex"""
+        prefix = re.sub(r"[^a-zA-Z0-9_-]", "_", prefix)
+        if prefix[0].isdigit() or prefix[0] == "_":
+            prefix = f"a{prefix}"
+        prefix = prefix[:43]
+        if prefix[-1] == "_":
+            prefix = f"{prefix[:-1]}1"
+        return prefix
