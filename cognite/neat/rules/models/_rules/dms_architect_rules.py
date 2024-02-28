@@ -129,12 +129,6 @@ class DMSProperty(SheetEntity):
             return value.versioned_id
         return value
 
-    # @field_validator("value_type", mode="after")
-    # def validate_value_type(cls, value: Any, info: ValidationInfo) -> Any:
-    #     if not isinstance(value, DMSValueType) or info.data.get("relation") is not None:
-    #     if value in _PropertyType_by_name:
-    #     raise ValueError(
-
 
 class DMSContainer(SheetEntity):
     class_: str | None = Field(None, alias="Class")
