@@ -1,5 +1,4 @@
 import re
-import sys
 from collections.abc import Callable
 from typing import Annotated, Any, cast
 
@@ -34,11 +33,6 @@ from ._base import (
     ViewEntity,
 )
 from ._value import DMS_VALUE_TYPE_MAPPINGS, XSD_VALUE_TYPE_MAPPINGS, DMSValueType, XSDValueType
-
-if sys.version_info >= (3, 11):
-    pass
-else:
-    pass
 
 
 def _custom_error(exc_factory: Callable[[str | None, Exception], Any]) -> Any:
