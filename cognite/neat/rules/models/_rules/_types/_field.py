@@ -233,6 +233,11 @@ CdfValueType = Annotated[
     BeforeValidator(
         lambda value: DMS_VALUE_TYPE_MAPPINGS[value] if value in DMS_VALUE_TYPE_MAPPINGS else ViewEntity.from_raw(value)
     ),
+    PlainSerializer(
+        lambda v: v.versioned_id,
+        return_type=str,
+        when_used="unless-none",
+    ),
 ]
 
 
