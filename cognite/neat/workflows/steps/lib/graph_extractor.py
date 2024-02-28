@@ -38,6 +38,7 @@ class ExtractGraphFromRdfFile(Step):
     """
 
     description = "This step extract instances from a file into the source graph. The file must be in RDF format."
+    version = "private-beta"
     category = CATEGORY
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
@@ -90,7 +91,7 @@ class ExtractGraphFromDexpiFile(Step):
     """
 
     description = "This step converts DEXPI P&ID (XML) into Knowledge Graph"
-    version = "0.1.0-alpha"
+    version = "private-alpha"
     category = CATEGORY
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
@@ -129,6 +130,7 @@ class ExtractGraphFromGraphCapturingSheet(Step):
     """
 
     description = "This step extracts nodes and edges from graph capturing spreadsheet and load them into graph"
+    version = "private-alpha"
     category = CATEGORY
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
@@ -185,6 +187,7 @@ class ExtractGraphFromMockGraph(Step):
     """
 
     description = "This step extracts instances from graph capture spreadsheet and loads them into solution graph"
+    version = "private-alpha"
     category = CATEGORY
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
@@ -236,7 +239,7 @@ class ExtractGraphFromRulesInstanceSheet(Step):
 
     description = "This step extracts instances from Rules object and loads them into the graph."
     category = CATEGORY
-    version = "0.1.0-alpha"
+    version = "private-alpha"
 
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
@@ -273,7 +276,7 @@ class ExtractGraphFromRulesDataModel(Step):
 
     description = "This step extracts data model from rules file and loads it into source graph."
     category = CATEGORY
-    version = "0.1.0-alpha"
+    version = "private-alpha"
 
     def run(  # type: ignore[override, syntax]
         self, transformation_rules: RulesData, source_graph: SourceGraph
@@ -318,7 +321,7 @@ class ExtractGraphFromJsonFile(Step):
 
     description = "This step extracts instances from json file and loads them into a graph store"
     category = CATEGORY
-    version = "0.1.0-alpha"
+    version = "private-alpha"
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
             name="file_name", value="data_dump.json", label="Full path to the file containing data dump in JSON format"
@@ -502,7 +505,7 @@ class ExtractGraphFromAvevaPiAssetFramework(Step):
 
     description = "This step extracts instances from Aveva PI AF and loads them into a graph store"
     category = CATEGORY
-    version = "0.1.0-alpha"
+    version = "private-alpha"
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
             name="file_name",

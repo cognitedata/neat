@@ -21,6 +21,7 @@ class ConfigureDefaultGraphStores(Step):
 
     description = "This step initializes the source and solution graph stores."
     category = CATEGORY
+    version = "private-alpha"
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
             name="source_rdf_store.type",
@@ -151,6 +152,7 @@ class ResetGraphStores(Step):
 
     description = "This step resets graph stores to their initial state (clears all data)."
     category = CATEGORY
+    version = "private-alpha"
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
             name="graph_name",
@@ -180,6 +182,7 @@ class ConfigureGraphStore(Step):
     """
 
     description = "This step initializes the source and solution graph stores."
+    version = "private-beta"
     category = CATEGORY
     configurables: ClassVar[list[Configurable]] = [
         Configurable(

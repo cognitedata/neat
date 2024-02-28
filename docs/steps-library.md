@@ -15,7 +15,7 @@
 ### ArbitraryJsonYamlToRules
 
 * **Category**: Rules Importer
-* **Version**: 0.1.0-alpha
+* **Version**: private-alpha
 * **Description**: The step extracts schema from arbitrary json file and generates NEAT transformation rules object.
 * **Output**: FlowMessage, RulesData
 
@@ -34,7 +34,7 @@
 ### GraphToRules
 
 * **Category**: Rules Importer
-* **Version**: 0.1.0-alpha
+* **Version**: private-alpha
 * **Description**: The step extracts data model from RDF graph and generates NEAT transformation rules object.     The rules object can be serialized to excel file or used directly in other steps.
 * **Input**: SourceGraph, SolutionGraph
 * **Output**: FlowMessage
@@ -55,7 +55,7 @@
 ### OntologyToRules
 
 * **Category**: Rules Importer
-* **Version**: 0.1.0-alpha
+* **Version**: private-alpha
 * **Description**: The step extracts NEAT rules object from OWL Ontology and         exports them as an Excel rules files for further editing.
 * **Output**: FlowMessage
 
@@ -74,7 +74,7 @@
 ### OpenApiToRules
 
 * **Category**: Rules Importer
-* **Version**: 0.1.0-alpha
+* **Version**: private-alpha
 * **Description**: The step extracts schema from OpenAPI specification and generates NEAT transformation rules object.     The rules object can be serialized to excel file or used directly in other steps.
 * **Output**: FlowMessage, RulesData
 
@@ -313,7 +313,7 @@
 ### ExcelFromRules
 
 * **Category**: Rules Exporter
-* **Version**: 0.1.0-alpha
+* **Version**: private-alpha
 * **Description**: This step generates Excel file from rules
 * **Input**: RulesData
 * **Output**: FlowMessage
@@ -462,7 +462,7 @@
 ### InstancesFromAvevaPiAF
 
 * **Category**: Graph Extractor
-* **Version**: 0.1.0-alpha
+* **Version**: private-alpha
 * **Description**: This step extracts instances from Aveva PI AF and loads them into a graph store
 * **Input**: FlowMessage, SolutionGraph, SourceGraph
 * **Output**: FlowMessage
@@ -508,7 +508,7 @@
 ### InstancesFromJsonToGraph
 
 * **Category**: Graph Extractor
-* **Version**: 0.1.0-alpha
+* **Version**: private-alpha
 * **Description**: This step extracts instances from json file and loads them into a graph store
 * **Input**: SolutionGraph, SourceGraph
 * **Output**: FlowMessage

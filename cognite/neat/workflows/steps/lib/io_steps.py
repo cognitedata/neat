@@ -26,6 +26,7 @@ class DownloadFileFromGitHub(Step):
 
     description = "This step fetches and stores the file from private Github repository"
     category = "Input/Output"
+    version = "private-beta"
     configurables: ClassVar[list[Configurable]] = [
         Configurable(name="github.filepath", value="", label="File path to the file stored on Github"),
         Configurable(
@@ -107,6 +108,7 @@ class UploadFileToGitHub(Step):
 
     description = "This step uploads file to private Github repository"
     category = "Input/Output"
+    version = "private-beta"
     configurables: ClassVar[list[Configurable]] = [
         Configurable(name="github.filepath", value="", label="File path to the file stored on Github"),
         Configurable(
@@ -192,6 +194,7 @@ class DownloadFileFromCDF(Step):
 
     description = "This step fetches and stores file from CDF"
     category = "Input/Output"
+    version = "private-beta"
     configurables: ClassVar[list[Configurable]] = [
         Configurable(name="cdf.external_id", value="", label="External ID of the file stored in CDF"),
         Configurable(
@@ -226,6 +229,7 @@ class UploadFileToCDF(Step):
 
     description = "This step uploads file to CDF"
     category = "Input/Output"
+    version = "private-beta"
     configurables: ClassVar[list[Configurable]] = [
         Configurable(name="cdf.external_id", value="", label="Exernal Id for the file to be stored in CDF"),
         Configurable(
@@ -258,6 +262,7 @@ class DownloadDataFromRestApiToFile(Step):
 
     description = "This step downloads the response from a REST API and saves it to a file."
     category = "Input/Output"
+    version = "private-beta"
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
             name="api_url",
