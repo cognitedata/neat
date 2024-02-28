@@ -513,19 +513,23 @@ class _DMSRulesConverter:
         ]
 
         properties: list[InformationProperty] = []
+        value_type: XSDValueType | ClassEntity | str
         for property_ in self.dms.properties:
+            if isinstance(property_.value_type, DMSValueType):
+                value_type = cast(DMSValueType, property_.value_type).xsd
+            elif isinstance(property_.value_type, ViewEntity):
+                value_type = ClassEntity(
+                    prefix=property_.value_type.prefix,
+                    suffix=property_.value_type.suffix,
+                )
+            else:
+                raise ValueError(f"Unsupported value type: {property_.value_type.type_}")
+
             properties.append(
                 InformationProperty(
                     class_=cast(ViewEntity, property_.view).suffix,
                     property_=property_.view_property,
-                    value_type=cast(
-                        XSDValueType | ClassEntity,
-                        (
-                            property_.value_type.xsd
-                            if isinstance(property_.value_type, DMSValueType)
-                            else property_.value_type.suffix
-                        ),
-                    ),
+                    value_type=cast(XSDValueType | ClassEntity, value_type),
                     description=property_.description,
                     min_count=0 if property_.nullable or property_.nullable is None else 1,
                     max_count=float("inf") if property_.is_list or property_.nullable is None else 1,

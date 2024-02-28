@@ -215,6 +215,18 @@ class ViewEntity(Entity):
 class ClassEntity(Entity):
     type_: ClassVar[EntityTypes] = EntityTypes.class_
 
+    @classmethod
+    def from_raw(cls, value: Any) -> "ClassEntity":
+        if not value:
+            return ClassEntity(prefix=Undefined, suffix=value)
+        elif isinstance(value, ClassEntity):
+            return value
+
+        if ENTITY_ID_REGEX_COMPILED.match(value) or VERSIONED_ENTITY_REGEX_COMPILED.match(value):
+            return ClassEntity.from_string(entity_string=value)
+        else:
+            return ClassEntity(prefix=Undefined, suffix=value)
+
     @property
     def view_id(self) -> ViewId:
         return ViewId(space=self.space, external_id=self.external_id, version=self.version)

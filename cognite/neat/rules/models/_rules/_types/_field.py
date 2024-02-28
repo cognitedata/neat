@@ -181,21 +181,6 @@ PropertyType = Annotated[
     ),
 ]
 
-SemanticValueType = Annotated[
-    XSDValueType | ClassEntity,
-    BeforeValidator(
-        lambda value: (
-            XSD_VALUE_TYPE_MAPPINGS[value]
-            if value in XSD_VALUE_TYPE_MAPPINGS
-            else (
-                ClassEntity.from_string(entity_string=value)
-                if ENTITY_ID_REGEX_COMPILED.match(value) or VERSIONED_ENTITY_REGEX_COMPILED.match(value)
-                else ClassEntity(prefix=Undefined, suffix=value, name=value)
-            )
-        )
-    ),
-]
-
 
 SourceType = Annotated[
     rdflib.URIRef | None,
@@ -223,6 +208,21 @@ ContainerType = Annotated[
 ViewType = Annotated[
     ViewEntity,
     BeforeValidator(ViewEntity.from_raw),
+    PlainSerializer(
+        lambda v: v.versioned_id,
+        return_type=str,
+        when_used="unless-none",
+    ),
+]
+
+
+SemanticValueType = Annotated[
+    XSDValueType | ClassEntity,
+    BeforeValidator(
+        lambda value: (
+            XSD_VALUE_TYPE_MAPPINGS[value] if value in XSD_VALUE_TYPE_MAPPINGS else ClassEntity.from_raw(value)
+        )
+    ),
     PlainSerializer(
         lambda v: v.versioned_id,
         return_type=str,
