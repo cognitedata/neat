@@ -424,14 +424,6 @@ def invalid_rules_test_cases() -> Iterable[ParameterSet]:
         "missing",
         id="Empty rules",
     )
-    # this does not raise the error
-    # yield pytest.param(
-    #         },
-    #             "data": [
-    #                 },
-    #         },
-    #     },
-    #     "not a valid value type for a property",
     yield pytest.param(
         {
             "metadata": {
