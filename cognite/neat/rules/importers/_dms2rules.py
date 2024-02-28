@@ -1,9 +1,11 @@
+from typing import cast
+
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex, InvertedIndex
 from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 
 from cognite.neat.rules.models._rules import DMSRules, DMSSchema
-from cognite.neat.rules.models._rules._types import ContainerEntity, ViewEntity
+from cognite.neat.rules.models._rules._types import ContainerEntity, DMSValueType, ViewEntity
 from cognite.neat.rules.models._rules.dms_architect_rules import (
     DMSContainer,
     DMSMetadata,
@@ -66,7 +68,7 @@ class DMSImporter(BaseImporter):
                             class_=view.external_id,
                             property_=prop_id,
                             description=prop.description,
-                            value_type=direct_value_type,
+                            value_type=cast(ViewEntity | DMSValueType, direct_value_type),
                             relation="direct",
                             nullable=container_prop.nullable,
                             default=container_prop.default_value,
@@ -83,11 +85,13 @@ class DMSImporter(BaseImporter):
                             class_=view.external_id,
                             property_=prop_id,
                             description=prop.description,
-                            value_type=container_prop.type._type,
+                            value_type=cast(ViewEntity | DMSValueType, container_prop.type._type),
                             nullable=container_prop.nullable,
-                            is_list=container_prop.type.is_list
-                            if isinstance(container_prop.type, ListablePropertyType)
-                            else None,
+                            is_list=(
+                                container_prop.type.is_list
+                                if isinstance(container_prop.type, ListablePropertyType)
+                                else None
+                            ),
                             default=container_prop.default_value,
                             container=ContainerEntity.from_id(container.as_id()),
                             container_property=prop.container_property_identifier,
@@ -102,7 +106,7 @@ class DMSImporter(BaseImporter):
                         property_=prop_id,
                         relation="multiedge",
                         description=prop.description,
-                        value_type=prop.source.external_id,
+                        value_type=cast(ViewEntity | DMSValueType, prop.source.external_id),
                         view=ViewEntity.from_id(view.as_id()),
                         view_property=prop_id,
                     )

@@ -2,7 +2,7 @@ from typing import ClassVar
 
 from pydantic import Field
 
-from ._types import ClassType, ParentClassType, PropertyType, StrOrListType, ValueTypeType
+from ._types import ClassType, ParentClassType, PropertyType, SemanticValueType, StrOrListType
 from .base import (
     BaseMetadata,
     RoleTypes,
@@ -20,7 +20,7 @@ class DomainMetadata(BaseMetadata):
 class DomainProperty(SheetEntity):
     class_: ClassType = Field(alias="Class")
     property_: PropertyType = Field(alias="Property")
-    value_type: ValueTypeType = Field(alias="Value Type")
+    value_type: SemanticValueType = Field(alias="Value Type")
     min_count: int | None = Field(alias="Min Count", default=None)
     max_count: int | float | None = Field(alias="Max Count", default=None)
 

@@ -114,36 +114,6 @@ def _get_required_fields(model: type[BaseModel], use_alias: bool = False) -> set
     return required_fields
 
 
-########################################################################################
-### These highly depend on CDF API endpoint limitations we need to keep them updated ###
-########################################################################################
-more_than_one_none_alphanumerics_regex = r"([_-]{2,})"
-
-prefix_compliance_regex = r"^([a-zA-Z]+)([a-zA-Z0-9]*[_-]{0,1}[a-zA-Z0-9_-]*)([a-zA-Z0-9]*)$"
-data_model_id_compliance_regex = r"^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$"
-cdf_space_compliance_regex = (
-    r"(?!^(space|cdf|dms|pg3|shared|system|node|edge)$)(^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$)"
-)
-
-view_id_compliance_regex = (
-    r"(?!^(Query|Mutation|Subscription|String|Int32|Int64|Int|Float32|Float64|Float|"
-    r"Timestamp|JSONObject|Date|Numeric|Boolean|PageInfo|File|Sequence|TimeSeries)$)"
-    r"(^[a-zA-Z][a-zA-Z0-9_]{0,253}[a-zA-Z0-9]?$)"
-)
-dms_property_id_compliance_regex = (
-    r"(?!^(space|externalId|createdTime|lastUpdatedTime|deletedTime|edge_id|"
-    r"node_id|project_id|property_group|seq|tg_table_name|extensions)$)"
-    r"(^[a-zA-Z][a-zA-Z0-9_]{0,253}[a-zA-Z0-9]?$)"
-)
-
-
-class_id_compliance_regex = r"(?!^(Class|class)$)(^[a-zA-Z][a-zA-Z0-9._-]{0,253}[a-zA-Z0-9]?$)"
-property_id_compliance_regex = r"^(\*)|(?!^(Property|property)$)(^[a-zA-Z][a-zA-Z0-9._-]{0,253}[a-zA-Z0-9]?$)"
-
-version_compliance_regex = r"^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$"
-########################################################################################
-########################################################################################
-
 Space: TypeAlias = str
 Description: TypeAlias = constr(min_length=1, max_length=1024)  # type: ignore[valid-type]
 
@@ -231,7 +201,7 @@ class BaseRules(RuleModel):
 
 # An sheet entity is either a class or a property.
 class SheetEntity(RuleModel):
-    ...
+    description: str | None = Field(alias="Description", default=None)
 
 
 T_Entity = TypeVar("T_Entity", bound=SheetEntity)

@@ -2,22 +2,21 @@ import abc
 import re
 from collections import defaultdict
 from datetime import datetime
-from typing import Any, ClassVar, Literal
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
 
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import PropertyType as CognitePropertyType
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex
 from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 from cognite.client.data_classes.data_modeling.views import ViewPropertyApply
-from pydantic import Field, field_serializer, field_validator, model_validator
-from pydantic_core.core_schema import ValidationInfo
-
-from cognite.neat.rules.models._rules.information_rules import InformationMetadata
+from pydantic import Field, field_serializer, model_validator
 
 from ._types import (
+    CdfValueType,
     ContainerEntity,
     ContainerListType,
     ContainerType,
+    DMSValueType,
     ExternalIdType,
     PropertyType,
     StrListType,
@@ -29,7 +28,10 @@ from ._types import (
 )
 from .base import BaseMetadata, BaseRules, RoleTypes, SchemaCompleteness, SheetEntity, SheetList
 from .dms_schema import DMSSchema
-from .domain_rules import DomainMetadata
+
+if TYPE_CHECKING:
+    pass
+
 
 subclasses = list(CognitePropertyType.__subclasses__())
 _PropertyType_by_name: dict[str, type[CognitePropertyType]] = {}
@@ -48,42 +50,22 @@ class DMSMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.dms_architect
     schema_: SchemaCompleteness = Field(alias="schema")
     space: ExternalIdType
-    external_id: ExternalIdType = Field(alias="externalId")
-    version: VersionType | None
-    name: str | None = Field(None)
-    creator: StrListType | None = Field(
-        default=None,
-        description=(
-            "List of contributors to the data model creation, "
-            "typically information architects are considered as contributors."
-        ),
+    name: str | None = Field(
+        None,
+        description="Human readable name of the data model",
+        min_length=1,
+        max_length=255,
     )
-
-    @classmethod
-    def from_information_architect_metadata(
-        cls, metadata: InformationMetadata, space: str | None = None, externalId: str | None = None
-    ):
-        metadata_as_dict = metadata.model_dump()
-        metadata_as_dict["space"] = space or "neat-playground"
-        metadata_as_dict["externalId"] = externalId or "neat_model"
-        return cls(**metadata_as_dict)
-
-    @classmethod
-    def from_domain_expert_metadata(
-        cls,
-        metadata: DomainMetadata,
-        space: str | None = None,
-        external_id: str | None = None,
-        version: str | None = None,
-        creator: str | list[str] | None = None,
-        created: datetime | None = None,
-        updated: datetime | None = None,
-    ):
-        information = InformationMetadata.from_domain_expert_metadata(
-            metadata, None, None, version, creator, created, updated
-        ).model_dump()
-
-        return cls.from_information_architect_metadata(information, space, external_id)
+    description: str | None = Field(None, min_length=1, max_length=1024)
+    external_id: ExternalIdType = Field(alias="externalId")
+    version: VersionType
+    creator: StrListType
+    created: datetime = Field(
+        description=("Date of the data model creation"),
+    )
+    updated: datetime = Field(
+        description=("Date of the data model update"),
+    )
 
     def as_space(self) -> dm.SpaceApply:
         return dm.SpaceApply(
@@ -94,35 +76,42 @@ class DMSMetadata(BaseMetadata):
         return dm.DataModelApply(
             space=self.space,
             external_id=self.external_id,
-            version=self.version or "missing",
             name=self.name or None,
-            description=f"Contributor: {', '.join(self.creator or [])}",
+            version=self.version or "missing",
+            description=f"{self.description} Creator: {', '.join(self.creator)}",
             views=[],
         )
 
     @classmethod
     def from_data_model(cls, data_model: dm.DataModelApply) -> "DMSMetadata":
-        if data_model.description and (description_match := re.search(r"Contributor: (.+)", data_model.description)):
+        description = None
+        if data_model.description and (description_match := re.search(r"Creator: (.+)", data_model.description)):
             creator = description_match.group(1).split(", ")
+            data_model.description.replace(f" Creator: {', '.join(creator)}", "")
+        elif data_model.description:
+            creator = ["NEAT"]
+            description = data_model.description
         else:
-            creator = []
+            description = "Missing description"
 
         return cls(
             schema_=SchemaCompleteness.complete,
             space=data_model.space,
             name=data_model.name or None,
+            description=description,
             external_id=data_model.external_id,
             version=data_model.version,
-            creator=creator or None,
+            creator=creator,
+            created=datetime.now(),
+            updated=datetime.now(),
         )
 
 
 class DMSProperty(SheetEntity):
     class_: str = Field(alias="Class")
     property_: PropertyType = Field(alias="Property")
-    description: str | None = Field(None, alias="Description")
     relation: Literal["direct", "multiedge"] | None = Field(None, alias="Relation")
-    value_type: ViewEntity | str = Field(alias="Value Type")
+    value_type: CdfValueType = Field(alias="Value Type")
     nullable: bool | None = Field(default=None, alias="Nullable")
     is_list: bool | None = Field(default=None, alias="IsList")
     default: str | int | dict | None | None = Field(None, alias="Default")
@@ -134,40 +123,16 @@ class DMSProperty(SheetEntity):
     index: StrListType | None = Field(None, alias="Index")
     constraint: StrListType | None = Field(None, alias="Constraint")
 
-    @field_validator("value_type", mode="before")
-    def parse_value_type(cls, value: Any, info: ValidationInfo) -> Any:
-        if not isinstance(value, str):
-            return value
-
-        if info.data.get("relation"):
-            # If the property is a relation (direct or edge), the value type should be a ViewEntity
-            # for the target view (aka the object in a triple)
-            return ViewEntity.from_raw(value)
-        return value
-
     @field_serializer("value_type", when_used="unless-none")
     def serialize_value_type(self, value: Any) -> Any:
         if isinstance(value, ViewEntity):
             return value.versioned_id
         return value
 
-    @field_validator("value_type", mode="after")
-    def validate_value_type(cls, value: Any, info: ValidationInfo) -> Any:
-        if not isinstance(value, str) or info.data.get("relation") is not None:
-            return value
-        value = value.casefold()
-        if value in _PropertyType_by_name:
-            return value
-        raise ValueError(
-            f"Value type {value} is not a valid value type for a property. "
-            f"Valid types are: {_PropertyType_by_name.keys()}"
-        )
-
 
 class DMSContainer(SheetEntity):
     class_: str | None = Field(None, alias="Class")
     container: ContainerType = Field(alias="Container")
-    description: str | None = Field(None, alias="Description")
     constraint: ContainerListType | None = Field(None, alias="Constraint")
 
     def as_container(self, default_space: str) -> dm.ContainerApply:
@@ -203,7 +168,6 @@ class DMSContainer(SheetEntity):
 class DMSView(SheetEntity):
     class_: str | None = Field(None, alias="Class")
     view: ViewType = Field(alias="View")
-    description: str | None = Field(None, alias="Description")
     implements: ViewListType | None = Field(None, alias="Implements")
 
     def as_view(self, default_space: str, default_version: str) -> dm.ViewApply:
@@ -234,8 +198,48 @@ class DMSView(SheetEntity):
 class DMSRules(BaseRules):
     metadata: DMSMetadata = Field(alias="Metadata")
     properties: SheetList[DMSProperty] = Field(alias="Properties")
+    views: SheetList[DMSView] = Field(alias="Views")
     containers: SheetList[DMSContainer] | None = Field(None, alias="Containers")
-    views: SheetList[DMSView] | None = Field(None, alias="Views")
+
+    @model_validator(mode="after")
+    def set_default_space_and_version(self) -> "DMSRules":
+        default_space = self.metadata.space
+        default_version = self.metadata.version
+        for entity in self.properties:
+            if entity.container and entity.container.space is Undefined:
+                entity.container = ContainerEntity(prefix=default_space, suffix=entity.container.external_id)
+            if entity.view and entity.view.space is Undefined:
+                entity.view = ViewEntity(prefix=default_space, suffix=entity.view.external_id, version=default_version)
+            if entity.value_type and entity.value_type.space is Undefined:
+                entity.value_type = ViewEntity(
+                    prefix=default_space, suffix=entity.value_type.suffix, version=default_version
+                )
+
+        for container in self.containers or []:
+            if container.container.space is Undefined:
+                container.container = ContainerEntity(prefix=default_space, suffix=container.container.external_id)
+            container.constraint = [
+                (
+                    ContainerEntity(prefix=default_space, suffix=constraint.external_id)
+                    if constraint.space is Undefined
+                    else constraint
+                )
+                for constraint in container.constraint or []
+            ] or None
+
+        for view in self.views or []:
+            if view.view.space is Undefined:
+                view.view = ViewEntity(prefix=default_space, suffix=view.view.external_id, version=default_version)
+            view.implements = [
+                (
+                    ViewEntity(prefix=default_space, suffix=parent.external_id, version=default_version)
+                    if parent.space is Undefined
+                    else parent
+                )
+                for parent in view.implements or []
+            ] or None
+
+        return self
 
     @model_validator(mode="after")
     def consistent_container_properties(self) -> "DMSRules":
@@ -306,56 +310,6 @@ class DMSRules(BaseRules):
             raise ValueError(f"Inconsistent container(s): {exception_str}")
         return self
 
-    def set_default_space(self) -> None:
-        """This replaces all undefined spaces with the default space from the metadata."""
-        default_space = self.metadata.space
-        for entity in self.properties:
-            if entity.container and entity.container.space is Undefined:
-                entity.container = ContainerEntity(prefix=default_space, suffix=entity.container.external_id)
-            if entity.view and entity.view.space is Undefined:
-                entity.view = ViewEntity(
-                    prefix=default_space, suffix=entity.view.external_id, version=entity.view.version
-                )
-        for container in self.containers or []:
-            if container.container.space is Undefined:
-                container.container = ContainerEntity(prefix=default_space, suffix=container.container.external_id)
-            container.constraint = [
-                (
-                    ContainerEntity(prefix=default_space, suffix=constraint.external_id)
-                    if constraint.space is Undefined
-                    else constraint
-                )
-                for constraint in container.constraint or []
-            ] or None
-        for view in self.views or []:
-            if view.view.space is Undefined:
-                view.view = ViewEntity(prefix=default_space, suffix=view.view.external_id, version=view.view.version)
-            view.implements = [
-                (
-                    ViewEntity(prefix=default_space, suffix=parent.external_id, version=parent.version)
-                    if parent.space is Undefined
-                    else parent
-                )
-                for parent in view.implements or []
-            ] or None
-
-    def set_default_version(self, default_version: str = "1") -> None:
-        """This replaces all undefined versions with"""
-        for prop in self.properties:
-            if prop.view and prop.view.version is None:
-                prop.view = ViewEntity(prefix=prop.view.space, suffix=prop.view.external_id, version=default_version)
-        for view in self.views or []:
-            if view.view.version is None:
-                view.view = ViewEntity(prefix=view.view.space, suffix=view.view.external_id, version=default_version)
-            view.implements = [
-                (
-                    ViewEntity(prefix=parent.space, suffix=parent.external_id, version=default_version)
-                    if parent.version is None
-                    else parent
-                )
-                for parent in view.implements or []
-            ] or None
-
     def as_schema(self) -> DMSSchema:
         return _DMSExporter(self).to_schema()
 
@@ -394,8 +348,8 @@ class _DMSExporter:
             for prop in container_properties:
                 if prop.container_property is None:
                     continue
-                if isinstance(prop.value_type, str):
-                    type_cls = _PropertyType_by_name.get(prop.value_type.casefold(), dm.DirectRelation)
+                if isinstance(prop.value_type, DMSValueType):
+                    type_cls = prop.value_type.dms
                 else:
                     type_cls = dm.DirectRelation
                 if type_cls is dm.DirectRelation:
@@ -409,7 +363,7 @@ class _DMSExporter:
                     if issubclass(type_cls, ListablePropertyType):
                         type_ = type_cls(is_list=prop.is_list or False)
                     else:
-                        type_ = type_cls()
+                        type_ = cast(CognitePropertyType, type_cls())
                     container.properties[prop.container_property] = dm.ContainerProperty(
                         type=type_,
                         nullable=prop.nullable if prop.nullable is not None else True,
@@ -446,7 +400,8 @@ class _DMSExporter:
                         if isinstance(prop.value_type, ViewEntity):
                             source = prop.value_type.as_id(default_space, default_version)
                         else:
-                            source = dm.ViewId(default_space, prop.value_type, default_version)
+                            # Probably we will not have this case, but just in case
+                            source = dm.ViewId(default_space, prop.value_type.suffix, default_version)
 
                         view_property = dm.MappedPropertyApply(
                             container=prop.container.as_id(default_space),
@@ -466,7 +421,8 @@ class _DMSExporter:
                     if isinstance(prop.value_type, ViewEntity):
                         source = prop.value_type.as_id(default_space, default_version)
                     else:
-                        source = dm.ViewId(default_space, prop.value_type, default_version)
+                        # CRITICAL COMMENT: NOT SURE WHY IS THIS ALLOWED!?
+                        source = dm.ViewId(default_space, prop.value_type.suffix, default_version)
                     view_property = dm.MultiEdgeConnectionApply(
                         type=dm.DirectRelationReference(
                             space=default_space,

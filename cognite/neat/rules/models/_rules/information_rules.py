@@ -5,10 +5,8 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from pydantic import Field, model_validator
-from rdflib import Namespace
 
 from cognite.neat.rules import exceptions
-from cognite.neat.rules.models._base import EntityTypes, ParentClass
 from cognite.neat.rules.models.rdfpath import (
     AllReferences,
     Hop,
@@ -21,20 +19,25 @@ from cognite.neat.rules.models.rdfpath import (
 )
 
 from ._types import (
+    ClassEntity,
     ClassType,
     ContainerEntity,
+    EntityTypes,
     NamespaceType,
+    ParentClassEntity,
     ParentClassType,
     PrefixType,
     PropertyType,
+    SemanticValueType,
     SourceType,
     StrListType,
-    ValueTypeType,
+    Undefined,
     VersionType,
     ViewEntity,
+    XSDValueType,
 )
 from .base import BaseMetadata, MatchType, RoleTypes, RuleModel, SchemaCompleteness, SheetEntity, SheetList
-from .domain_rules import DomainMetadata, DomainRules
+from .domain_rules import DomainRules
 
 if TYPE_CHECKING:
     from .dms_architect_rules import DMSProperty, DMSRules
@@ -58,7 +61,7 @@ class InformationMetadata(BaseMetadata):
         min_length=1,
         max_length=255,
     )
-
+    description: str | None = Field(None, min_length=1, max_length=1024)
     version: VersionType
 
     created: datetime = Field(
@@ -68,33 +71,12 @@ class InformationMetadata(BaseMetadata):
     updated: datetime = Field(
         description=("Date of the data model update"),
     )
-    creator: StrListType | None = Field(
-        default=None,
+    creator: StrListType = Field(
         description=(
             "List of contributors to the data model creation, "
             "typically information architects are considered as contributors."
         ),
     )
-
-    @classmethod
-    def from_domain_expert_metadata(
-        cls,
-        metadata: DomainMetadata,
-        prefix: str | None = None,
-        namespace: Namespace | None = None,
-        version: str | None = None,
-        contributor: str | list[str] | None = None,
-        created: datetime | None = None,
-        updated: datetime | None = None,
-    ):
-        metadata_as_dict = metadata.model_dump()
-        metadata_as_dict["prefix"] = prefix or "neat"
-        metadata_as_dict["namespace"] = namespace or Namespace("http://purl.org/cognite/neat#")
-        metadata_as_dict["version"] = version or "0.1.0"
-        metadata_as_dict["contributor"] = contributor or "Cognite"
-        metadata_as_dict["created"] = created or datetime.utcnow()
-        metadata_as_dict["updated"] = updated or datetime.utcnow()
-        return cls(**metadata_as_dict)
 
 
 class InformationClass(SheetEntity):
@@ -110,7 +92,6 @@ class InformationClass(SheetEntity):
     """
 
     class_: ClassType = Field(alias="Class")
-    description: str | None = Field(alias="Description", default=None)
     parent: ParentClassType = Field(alias="Parent Class", default=None)
     source: SourceType = Field(alias="Source", default=None)
     match_type: MatchType | None = Field(alias="Match Type", default=None)
@@ -138,10 +119,9 @@ class InformationProperty(SheetEntity):
               knowledge graph. Defaults to None (no transformation)
     """
 
-    # TODO: Can we skip rule_type and simply try to parse the rule and if it fails, raise an error?
     class_: ClassType = Field(alias="Class")
     property_: PropertyType = Field(alias="Property")
-    value_type: ValueTypeType = Field(alias="Value Type")
+    value_type: SemanticValueType = Field(alias="Value Type")
     min_count: int | None = Field(alias="Min Count", default=None)
     max_count: int | float | None = Field(alias="Max Count", default=None)
     default: Any | None = Field(alias="Default", default=None)
@@ -155,6 +135,7 @@ class InformationProperty(SheetEntity):
 
     @model_validator(mode="after")
     def is_valid_rule(self):
+        # TODO: Can we skip rule_type and simply try to parse the rule and if it fails, raise an error?
         if self.rule_type:
             self.rule_type = self.rule_type.lower()
             if not self.rule:
@@ -205,9 +186,9 @@ class InformationProperty(SheetEntity):
     @property
     def type_(self) -> EntityTypes:
         """Type of property based on value type. Either data (attribute) or object (edge) property."""
-        if self.value_type.type_ == EntityTypes.data_value_type:
+        if self.value_type.type_ == EntityTypes.xsd_value_type:
             return EntityTypes.data_property
-        elif self.value_type.type_ == EntityTypes.object_value_type:
+        elif self.value_type.type_ == EntityTypes.class_:
             return EntityTypes.object_property
         else:
             return EntityTypes.undefined
@@ -232,14 +213,14 @@ class InformationRules(RuleModel):
     def update_entities_prefix(self) -> Self:
         # update expected_value_types
         for property_ in self.properties:
-            if property_.value_type.prefix == "undefined":
+            if property_.value_type.prefix is Undefined:
                 property_.value_type.prefix = self.metadata.prefix
 
         # update parent classes
         for class_ in self.classes:
             if class_.parent:
-                for parent in cast(list[ParentClass], class_.parent):
-                    if parent.prefix == "undefined":
+                for parent in cast(list[ParentClassEntity], class_.parent):
+                    if parent.prefix is Undefined:
                         parent.prefix = self.metadata.prefix
 
         return self
@@ -278,7 +259,7 @@ class _InformationRulesConverter:
     def as_domain_rules(self) -> DomainRules:
         raise NotImplementedError("DomainRules not implemented yet")
 
-    def as_dms_architect_rules(self) -> "DMSRules":
+    def as_dms_architect_rules(self, created: datetime | None = None, updated: datetime | None = None) -> "DMSRules":
         from .dms_architect_rules import DMSContainer, DMSMetadata, DMSProperty, DMSRules, DMSView
 
         info_metadata = self.information.metadata
@@ -292,6 +273,8 @@ class _InformationRulesConverter:
             external_id=info_metadata.name.replace(" ", "_").lower(),
             creator=info_metadata.creator,
             name=info_metadata.name,
+            created=created or datetime.now(),
+            updated=updated or datetime.now(),
         )
 
         properties_by_class: dict[str, list[DMSProperty]] = defaultdict(list)
@@ -353,12 +336,15 @@ class _InformationRulesConverter:
 
         from .dms_architect_rules import DMSProperty
 
-        if dms_type := prop.value_type.dms:
-            value_type = dms_type._type.casefold()  # type: ignore[attr-defined]
-        else:
+        # returns property type, which can be ObjectProperty or DatatypeProperty
+        if isinstance(prop.value_type, XSDValueType):
+            value_type = cast(XSDValueType, prop.value_type).dms._type.casefold()  # type: ignore[attr-defined]
+        elif isinstance(prop.value_type, ClassEntity):
             value_type = ViewEntity(
                 prefix=prop.value_type.prefix, suffix=prop.value_type.suffix, version=prop.value_type.version
             )
+        else:
+            raise ValueError(f"Unsupported value type: {prop.value_type.type_}")
 
         return DMSProperty(
             class_=prop.class_,

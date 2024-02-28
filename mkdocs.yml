@@ -17,6 +17,9 @@ nav:
   - Quickstart:
       - Overview: quickstart/overview.md
       - Data Model Import: quickstart/data-model-import.ipynb
+  - Data Modeling Lifecycle:
+      - Overview: data-modeling-lifecycle/overview.md
+      - Knowledge Acquisition: data-modeling-lifecycle/tutorial-1-knowledge-acquisition.md
   - Fundamental Concepts:
       - NEAT Flows:
           - Data Modeling: data-modeling-flow.md
@@ -27,19 +30,6 @@ nav:
           - Overview: workflows.md
           - Steps: workflow-steps.md
           - Steps Library: steps-library.md
-  - Tutorial:
-      - Notebooks:
-          - Part 1 Neat Data Model - Transformation Rules: tutorial/notebooks/part-1-data-model-generation.ipynb
-          - Part 2 Input Data - Graph Extraction: tutorial/notebooks/part-2-knowledge-graph-generation.ipynb
-          - Part 3 Load Graph to Asset Hierarchy: tutorial/notebooks/part-3-knowledge-graph-to-asset-hierarchy.ipynb
-          - Part 4 Graph Transformation: tutorial/notebooks/part-4-knowledge-graph-transformation.ipynb
-          - Part 5 Load Graph to FDM Containers: tutorial/notebooks/part-5-knowledge-graph-to-fdm-instances.ipynb
-      - Workflows:
-          - Sheet to CDF Graph: tutorial/workflows/sheet2cdf.md
-          - Source to Solution Graph: tutorial/workflows/source2solution-graph.md
-          - Data Model Generation: tutorial/workflows/data-model-generation.md
-      - Use Cases:
-          - Knowledge Acquisition: tutorial/use-cases/knowledge-acquisition.md
   - Reference:
       - Rules:
           - Models: api/rules/models.md

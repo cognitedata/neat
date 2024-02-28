@@ -120,6 +120,10 @@ class ParentClass(Entity):
     def view_id(self) -> ViewId:
         return ViewId(space=self.space, external_id=self.external_id, version=self.version)
 
+    @classmethod
+    def from_view_id(cls, view_id: ViewId) -> Self:
+        return cls(prefix=view_id.space, suffix=view_id.external_id, version=view_id.version)
+
 
 class ContainerEntity(Entity):
     type_: EntityTypes = EntityTypes.container
