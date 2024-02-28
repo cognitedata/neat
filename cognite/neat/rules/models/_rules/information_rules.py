@@ -5,7 +5,6 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from pydantic import Field, model_validator
-from rdflib import Namespace
 
 from cognite.neat.rules import exceptions
 from cognite.neat.rules.models.rdfpath import (
@@ -38,7 +37,7 @@ from ._types import (
     XSDValueType,
 )
 from .base import BaseMetadata, MatchType, RoleTypes, RuleModel, SchemaCompleteness, SheetEntity, SheetList
-from .domain_rules import DomainMetadata, DomainRules
+from .domain_rules import DomainRules
 
 if TYPE_CHECKING:
     from .dms_architect_rules import DMSProperty, DMSRules
@@ -78,26 +77,6 @@ class InformationMetadata(BaseMetadata):
             "typically information architects are considered as contributors."
         ),
     )
-
-    @classmethod
-    def from_domain_expert_metadata(
-        cls,
-        metadata: DomainMetadata,
-        prefix: str | None = None,
-        namespace: Namespace | None = None,
-        version: str | None = None,
-        creator: str | list[str] | None = None,
-        created: datetime | None = None,
-        updated: datetime | None = None,
-    ):
-        metadata_as_dict = metadata.model_dump()
-        metadata_as_dict["prefix"] = prefix or "neat"
-        metadata_as_dict["namespace"] = namespace or Namespace("http://purl.org/cognite/neat#")
-        metadata_as_dict["version"] = version or "0.1.0"
-        metadata_as_dict["creator"] = creator or "Cognite"
-        metadata_as_dict["created"] = created or datetime.utcnow()
-        metadata_as_dict["updated"] = updated or datetime.utcnow()
-        return cls(**metadata_as_dict)
 
 
 class InformationClass(SheetEntity):
