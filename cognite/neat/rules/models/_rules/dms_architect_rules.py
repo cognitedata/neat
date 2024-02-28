@@ -10,14 +10,20 @@ from cognite.client.data_classes.data_modeling.containers import BTreeIndex
 from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 from cognite.client.data_classes.data_modeling.views import ViewPropertyApply
 from pydantic import Field, field_serializer, model_validator
+from rdflib import Namespace
+
+from cognite.neat.rules.models._rules.domain_rules import DomainRules
 
 from ._types import (
     CdfValueType,
+    ClassEntity,
+    ClassType,
     ContainerEntity,
     ContainerListType,
     ContainerType,
     DMSValueType,
     ExternalIdType,
+    ParentClassEntity,
     PropertyType,
     StrListType,
     Undefined,
@@ -25,12 +31,13 @@ from ._types import (
     ViewEntity,
     ViewListType,
     ViewType,
+    XSDValueType,
 )
 from .base import BaseMetadata, BaseRules, RoleTypes, SchemaCompleteness, SheetEntity, SheetList
 from .dms_schema import DMSSchema
 
 if TYPE_CHECKING:
-    pass
+    from .information_rules import InformationRules
 
 
 subclasses = list(CognitePropertyType.__subclasses__())
@@ -108,7 +115,7 @@ class DMSMetadata(BaseMetadata):
 
 
 class DMSProperty(SheetEntity):
-    class_: str = Field(alias="Class")
+    class_: ClassType = Field(alias="Class")
     property_: PropertyType = Field(alias="Property")
     relation: Literal["direct", "multiedge"] | None = Field(None, alias="Relation")
     value_type: CdfValueType = Field(alias="Value Type")
@@ -118,8 +125,8 @@ class DMSProperty(SheetEntity):
     source: str | None = Field(None, alias="Source")
     container: ContainerType | None = Field(None, alias="Container")
     container_property: str | None = Field(None, alias="ContainerProperty")
-    view: ViewType | None = Field(None, alias="View")
-    view_property: str | None = Field(None, alias="ViewProperty")
+    view: ViewType = Field(alias="View")
+    view_property: str = Field(alias="ViewProperty")
     index: StrListType | None = Field(None, alias="Index")
     constraint: StrListType | None = Field(None, alias="Constraint")
 
@@ -131,7 +138,7 @@ class DMSProperty(SheetEntity):
 
 
 class DMSContainer(SheetEntity):
-    class_: str | None = Field(None, alias="Class")
+    class_: ClassType | None = Field(None, alias="Class")
     container: ContainerType = Field(alias="Container")
     constraint: ContainerListType | None = Field(None, alias="Constraint")
 
@@ -166,7 +173,7 @@ class DMSContainer(SheetEntity):
 
 
 class DMSView(SheetEntity):
-    class_: str | None = Field(None, alias="Class")
+    class_: ClassType | None = Field(None, alias="Class")
     view: ViewType = Field(alias="View")
     implements: ViewListType | None = Field(None, alias="Implements")
 
@@ -313,6 +320,12 @@ class DMSRules(BaseRules):
     def as_schema(self) -> DMSSchema:
         return _DMSExporter(self).to_schema()
 
+    def as_information_architect_rules(self) -> "InformationRules":
+        return _DMSRulesConverter(self).as_information_architect_rules()
+
+    def as_dms_architect_rules(self) -> DomainRules:
+        return _DMSRulesConverter(self).as_domain_rules()
+
 
 class _DMSExporter:
     """The DMS Exporter is responsible for exporting the DMSRules to a DMSSchema.
@@ -455,3 +468,72 @@ class _DMSExporter:
                 view_id = prop.view.as_id(default_space, default_version)
                 view_properties_by_id[view_id].append(prop)
         return container_properties_by_id, view_properties_by_id
+
+
+class _DMSRulesConverter:
+    def __init__(self, dms: DMSRules):
+        self.dms = dms
+
+    def as_domain_rules(self) -> "DomainRules":
+        raise NotImplementedError("DomainRules not implemented yet")
+
+    def as_information_architect_rules(
+        self,
+        created: datetime | None = None,
+        updated: datetime | None = None,
+        name: str | None = None,
+        namespace: Namespace | None = None,
+    ) -> "InformationRules":
+        from .information_rules import InformationClass, InformationMetadata, InformationProperty, InformationRules
+
+        dms = self.dms.metadata
+        prefix = dms.space
+
+        metadata = InformationMetadata(
+            schema_=dms.schema_,
+            prefix=prefix,
+            namespace=namespace or Namespace(f"https://purl.orgl/neat/{prefix}/"),
+            version=dms.version,
+            name=name or dms.name or "Missing name",
+            creator=dms.creator,
+            created=dms.created or created or datetime.now(),
+            updated=dms.updated or updated or datetime.now(),
+        )
+
+        classes: list[InformationClass] = [
+            InformationClass(
+                class_=view.view.suffix,
+                description=view.description,
+                parent=[
+                    ParentClassEntity(prefix=implented_view.prefix, suffix=implented_view.suffix)
+                    for implented_view in view.implements or []
+                ],
+            )
+            for view in self.dms.views
+        ]
+
+        properties: list[InformationProperty] = []
+        for property_ in self.dms.properties:
+            properties.append(
+                InformationProperty(
+                    class_=cast(ViewEntity, property_.view).suffix,
+                    property_=property_.view_property,
+                    value_type=cast(
+                        XSDValueType | ClassEntity,
+                        (
+                            property_.value_type.xsd
+                            if isinstance(property_.value_type, DMSValueType)
+                            else property_.value_type.suffix
+                        ),
+                    ),
+                    description=property_.description,
+                    min_count=0 if property_.nullable or property_.nullable is None else 1,
+                    max_count=float("inf") if property_.is_list or property_.nullable is None else 1,
+                )
+            )
+
+        return InformationRules(
+            metadata=metadata,
+            properties=SheetList[InformationProperty](data=properties),
+            classes=SheetList[InformationClass](data=classes),
+        )

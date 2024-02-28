@@ -49,7 +49,10 @@ def _raise(exception: PydanticCustomError):
     raise exception
 
 
-def _split_parent(value: str) -> list[ParentClassEntity] | None:
+def _split_parent(value: str | list[ParentClassEntity]) -> list[ParentClassEntity] | None:
+    if isinstance(value, list) and all(isinstance(x, ParentClassEntity) for x in value):
+        return value
+
     if not (isinstance(value, str) and value):
         return None
 
