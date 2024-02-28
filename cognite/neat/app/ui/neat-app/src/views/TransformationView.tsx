@@ -154,7 +154,7 @@ export default function TransformationTable() {
       setData(data);
     }).catch((err) => {
       console.log(err);
-      setAlertMsg("Transformation rules file "+fileName+" is either invalid or missing. Please ensure that you have a valid data model and the necessary transformation rules file in place.");
+      setAlertMsg("Rules file "+fileName+" is either invalid or missing. Please ensure that you have a valid Rules file.");
     }
   )}
 
@@ -188,36 +188,48 @@ export default function TransformationTable() {
 
           {selectedTab === 0 && (
             <Box sx={{marginTop:5}}>
-               <Typography variant="body1" gutterBottom>
-                Title: {data.metadata.title}
-              </Typography>
-              <Typography variant="body2" gutterBottom>
-                Description: {data.metadata.description}
-              </Typography>
-              <Typography variant="body1" gutterBottom>
-                Prefix/DM Space: {data.metadata.prefix}
-              </Typography>
-              <Typography variant="body1" gutterBottom>
-                Data Model ID: {data.metadata.dataModelId}
-              </Typography>
-              <Typography variant="body2" gutterBottom>
-                Namespace: {data.metadata.namespace}
-              </Typography>
-              <Typography variant="body2" gutterBottom>
-                Version: {data.metadata.version}
-              </Typography>
-              <Typography variant="body2" gutterBottom>
-                Created: {data.metadata.created}
-              </Typography>
-              <Typography variant="body2" gutterBottom>
-                Updated: {data.metadata.updated}
-              </Typography>
-              <Typography variant="body2" gutterBottom>
-                Creator: {data.metadata.creator.join(", ")}
-              </Typography>
-              <Typography variant="body2" gutterBottom>
-                Source: {data.metadata.source}
-              </Typography>
+              <TableContainer component={Paper}>
+                <Table aria-label="metadata table">
+                  <TableBody>
+                    <TableRow>
+                      <TableCell><b>Title</b></TableCell>
+                      <TableCell>{data.metadata.title}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell><b>Description</b></TableCell>
+                      <TableCell>{data.metadata.description}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell><b>Prefix and DMS Space</b></TableCell>
+                      <TableCell>{data.metadata.prefix}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell><b>Data Model ID</b></TableCell>
+                      <TableCell>{data.metadata.suffix}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell><b>Namespace</b></TableCell>
+                      <TableCell>{data.metadata.namespace}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell><b>Version</b></TableCell>
+                      <TableCell>{data.metadata.version}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell><b>Created</b></TableCell>
+                      <TableCell>{data.metadata.created}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell><b>Updated</b></TableCell>
+                      <TableCell>{data.metadata.updated}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell><b>Creator</b></TableCell>
+                      <TableCell>{data.metadata.creator.join(", ")}</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </TableContainer>
             </Box>
           )}
      {selectedTab === 1 && (
@@ -226,11 +238,11 @@ export default function TransformationTable() {
             <TableHead>
               <TableRow>
                 <TableCell />
-                <TableCell> <b>Solution class</b></TableCell>
+                {/* <TableCell> <b>Solution class</b></TableCell> */}
                 <TableCell align="right"><b>Description</b></TableCell>
-                <TableCell align="right"><b>CDF resource</b></TableCell>
+                {/* <TableCell align="right"><b>CDF resource</b></TableCell> */}
                 <TableCell align="right"><b>Parent resource</b></TableCell>
-                <TableCell align="right"><b>Action</b></TableCell>
+                {/* <TableCell align="right"><b>Action</b></TableCell> */}
               </TableRow>
             </TableHead>
             <TableBody>
