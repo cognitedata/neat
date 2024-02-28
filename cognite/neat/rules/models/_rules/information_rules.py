@@ -259,7 +259,7 @@ class _InformationRulesConverter:
     def as_domain_rules(self) -> DomainRules:
         raise NotImplementedError("DomainRules not implemented yet")
 
-    def as_dms_architect_rules(self) -> "DMSRules":
+    def as_dms_architect_rules(self, created: datetime | None = None, updated: datetime | None = None) -> "DMSRules":
         from .dms_architect_rules import DMSContainer, DMSMetadata, DMSProperty, DMSRules, DMSView
 
         info_metadata = self.information.metadata
@@ -273,8 +273,8 @@ class _InformationRulesConverter:
             external_id=info_metadata.name.replace(" ", "_").lower(),
             creator=info_metadata.creator,
             name=info_metadata.name,
-            created=datetime.now(),
-            updated=datetime.now(),
+            created=created or datetime.now(),
+            updated=updated or datetime.now(),
         )
 
         properties_by_class: dict[str, list[DMSProperty]] = defaultdict(list)
