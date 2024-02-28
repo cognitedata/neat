@@ -162,7 +162,7 @@ class ContainerEntity(Entity):
         elif isinstance(value, ContainerEntity):
             return value
 
-        if ENTITY_ID_REGEX_COMPILED.match(value) or VERSIONED_ENTITY_REGEX_COMPILED.match(value):
+        if ENTITY_ID_REGEX_COMPILED.match(value):
             return ContainerEntity.from_string(entity_string=value)
         else:
             return ContainerEntity(prefix=Undefined, suffix=value)

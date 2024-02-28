@@ -400,7 +400,7 @@ class _DMSExporter:
                         if isinstance(prop.value_type, ViewEntity):
                             source = prop.value_type.as_id(default_space, default_version)
                         else:
-                            # CRITICAL COMMENT: NOT SURE WHY IS THIS ALLOWED!?
+                            # Probably we will not have this case, but just in case
                             source = dm.ViewId(default_space, prop.value_type.suffix, default_version)
 
                         view_property = dm.MappedPropertyApply(
