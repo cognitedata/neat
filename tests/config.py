@@ -5,8 +5,7 @@ ROOT = TEST_FOLDER.parent
 PACKAGE_DIRECTORY = ROOT / "cognite" / "neat"
 
 DOC_FOLDER = ROOT / "docs"
-DOC_TUTORIAL = DOC_FOLDER / "tutorial"
-DOC_KNOWLEDGE_ACQUISITION_TUTORIAL = DOC_TUTORIAL / "use-cases" / "spreadsheets"
+DOC_KNOWLEDGE_ACQUISITION_TUTORIAL = DOC_FOLDER / "data-modeling-lifecycle" / "spreadsheets"
 DATA_FOLDER = TEST_FOLDER / "data"
 PYPROJECT_TOML = ROOT / "pyproject.toml"
 
