@@ -1,14 +1,17 @@
 import warnings
 import zipfile
+from collections.abc import Iterable
 from pathlib import Path
 
 from cognite.client import CogniteClient
+from cognite.client.data_classes._base import CogniteResourceList
 
 from cognite.neat.rules.models._rules.dms_architect_rules import DMSRules
 from cognite.neat.rules.models._rules.dms_schema import DMSSchema
 
 from ._base import BaseExporter
 from ._data_classes import UploadResult
+from ._loaders import ContainerLoader, DataModelLoader, ResourceLoader, SpaceLoader, ViewLoader
 
 
 class DMSExporter(BaseExporter[DMSSchema]):
@@ -23,6 +26,7 @@ class DMSExporter(BaseExporter[DMSSchema]):
         rules: DMSRules,
     ):
         self.rules = rules
+        self._schema: DMSSchema | None = None
 
     def export_to_file(self, filepath: Path) -> None:
         if filepath.suffix not in {".zip"}:
@@ -41,7 +45,38 @@ class DMSExporter(BaseExporter[DMSSchema]):
                 zip_ref.writestr(f"data_models/{container.external_id}.container.yaml", container.dump_yaml())
 
     def export(self) -> DMSSchema:
-        return self.rules.as_schema()
+        if self._schema is None:
+            self._schema = self.rules.as_schema()
+        return self._schema
 
-    def export_to_cdf(self, client: CogniteClient, dry_run: bool = False) -> list[UploadResult]:
-        raise NotImplementedError()
+    def export_to_cdf(self, client: CogniteClient, dry_run: bool = False) -> Iterable[UploadResult]:
+        schema = self.export()
+        loader: ResourceLoader
+        items: CogniteResourceList
+        for items, loader in [  # type: ignore[assignment]
+            (schema.spaces, SpaceLoader(client)),
+            (schema.data_models, DataModelLoader(client)),
+            (schema.views, ViewLoader(client)),
+            (schema.containers, ContainerLoader(client)),
+        ]:
+            item_ids = loader.get_ids(items)
+            cdf_items = loader.retrieve(item_ids)
+            cdf_item_by_id = {loader.get_id(item): item for item in cdf_items}
+            to_create, to_update, unchanged = [], [], []
+            for item in items:
+                cdf_item = cdf_item_by_id.get(loader.get_id(item))
+                if cdf_item is None:
+                    to_create.append(item)
+                elif loader.are_equal(item, cdf_item):
+                    unchanged.append(item)
+                else:
+                    to_update.append(item)
+            if not dry_run:
+                loader.create(to_create)
+                loader.update(to_update)
+            yield UploadResult(
+                name=loader.resource_name,
+                created=len(to_create),
+                changed=len(to_update),
+                unchanged=len(unchanged),
+            )
