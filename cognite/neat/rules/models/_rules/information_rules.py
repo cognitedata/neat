@@ -245,6 +245,15 @@ class InformationRules(RuleModel):
 
         return self
 
+    @model_validator(mode="after")
+    def validate_class_has_properties(self) -> Self:
+        defined_classes = {class_.class_ for class_ in self.classes}
+        referred_classes = {property_.class_ for property_ in self.properties}
+        missing_classes = referred_classes.difference(defined_classes)
+        if missing_classes:
+            exceptions.ClassNoProperties(list(missing_classes)).to_pydantic_custom_error()
+        return self
+
     def as_domain_rules(self) -> DomainRules:
         return _InformationRulesConverter(self).as_domain_rules()
 
@@ -357,6 +366,8 @@ class _InformationRulesConverter:
         if relation == "multiedge":
             is_list = None
             nullable = None
+        elif relation == "direct":
+            nullable = True
         else:
             container = ContainerEntity.from_raw(prop.class_)
             container_property = prop.property_

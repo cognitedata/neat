@@ -163,7 +163,7 @@ class DMSContainer(SheetEntity):
         constraints: dict[str, dm.Constraint] = {}
         for constraint in self.constraint or []:
             requires = dm.RequiresConstraint(constraint.as_id(default_space))
-            constraints[f"requires_{constraint.space}_{constraint.external_id}"] = requires
+            constraints[f"{constraint.space}_{constraint.external_id}"] = requires
 
         return dm.ContainerApply(
             space=container_id.space,
