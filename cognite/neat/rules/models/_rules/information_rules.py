@@ -2,7 +2,7 @@ import re
 import sys
 from collections import defaultdict
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, ClassVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
 
 from pydantic import Field, model_validator
 
@@ -346,12 +346,17 @@ class _InformationRulesConverter:
         else:
             raise ValueError(f"Unsupported value type: {prop.value_type.type_}")
 
+        relation: Literal["direct", "multiedge"] | None = None
+        if isinstance(value_type, ViewEntity):
+            relation = "multiedge" if prop.is_list else "direct"
+
         return DMSProperty(
             class_=prop.class_,
             property_=prop.property_,
             value_type=value_type,
             nullable=not prop.is_mandatory,
             is_list=prop.is_list,
+            relation=relation,
             default=prop.default,
             source=prop.source,
             container=ContainerEntity.from_raw(prop.class_),
