@@ -1,5 +1,5 @@
 from abc import ABC
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import total_ordering
 
 
@@ -28,6 +28,9 @@ class UploadResult(UploadResultCore):
     changed: int = 0
     unchanged: int = 0
     skipped: int = 0
+    failed_created: int = 0
+    failed_changed: int = 0
+    error_messages: list[str] = field(default_factory=list)
 
     @property
     def total(self) -> int:
