@@ -230,14 +230,13 @@ SemanticValueType = Annotated[
     ),
 ]
 
-
 CdfValueType = Annotated[
     DMSValueType | ViewEntity,
     BeforeValidator(
         lambda value: DMS_VALUE_TYPE_MAPPINGS[value] if value in DMS_VALUE_TYPE_MAPPINGS else ViewEntity.from_raw(value)
     ),
     PlainSerializer(
-        lambda v: v.versioned_id,
+        lambda v: v.versioned_id if isinstance(v, ViewEntity) else v.dms()._type,
         return_type=str,
         when_used="unless-none",
     ),

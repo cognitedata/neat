@@ -2,14 +2,14 @@ import abc
 import re
 from collections import defaultdict
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
+from typing import TYPE_CHECKING, ClassVar, Literal, cast
 
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import PropertyType as CognitePropertyType
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex
 from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 from cognite.client.data_classes.data_modeling.views import ViewPropertyApply
-from pydantic import Field, field_serializer, model_validator
+from pydantic import Field, model_validator
 from rdflib import Namespace
 
 from cognite.neat.rules.models._rules.domain_rules import DomainRules
@@ -129,12 +129,6 @@ class DMSProperty(SheetEntity):
     view_property: str = Field(alias="ViewProperty")
     index: StrListType | None = Field(None, alias="Index")
     constraint: StrListType | None = Field(None, alias="Constraint")
-
-    @field_serializer("value_type", when_used="unless-none")
-    def serialize_value_type(self, value: Any) -> Any:
-        if isinstance(value, ViewEntity):
-            return value.versioned_id
-        return value
 
 
 class DMSContainer(SheetEntity):
