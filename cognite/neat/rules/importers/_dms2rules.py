@@ -70,7 +70,7 @@ class DMSImporter(BaseImporter):
                             description=prop.description,
                             value_type=cast(ViewEntity | DMSValueType, direct_value_type),
                             relation="direct",
-                            nullable=container_prop.nullable if container_prop.nullable is not None else True,
+                            nullable=container_prop.nullable,
                             default=container_prop.default_value,
                             is_list=False,
                             container=ContainerEntity.from_id(container.as_id()),
@@ -86,7 +86,7 @@ class DMSImporter(BaseImporter):
                             property_=prop_id,
                             description=prop.description,
                             value_type=cast(ViewEntity | DMSValueType, container_prop.type._type),
-                            nullable=container_prop.nullable if container_prop.nullable is not None else True,
+                            nullable=container_prop.nullable,
                             is_list=(
                                 container_prop.type.is_list
                                 if isinstance(container_prop.type, ListablePropertyType)
@@ -107,8 +107,6 @@ class DMSImporter(BaseImporter):
                         relation="multiedge",
                         description=prop.description,
                         value_type=cast(ViewEntity | DMSValueType, prop.source.external_id),
-                        is_list=True,
-                        nullable=False,
                         view=ViewEntity.from_id(view.as_id()),
                         view_property=prop_id,
                     )

@@ -352,7 +352,12 @@ class _InformationRulesConverter:
 
         container: ContainerEntity | None = None
         container_property: str | None = None
-        if relation != "multiedge":
+        is_list: bool | None = prop.is_list
+        nullable: bool | None = not prop.is_mandatory
+        if relation == "multiedge":
+            is_list = None
+            nullable = None
+        else:
             container = ContainerEntity.from_raw(prop.class_)
             container_property = prop.property_
 
@@ -360,8 +365,8 @@ class _InformationRulesConverter:
             class_=prop.class_,
             property_=prop.property_,
             value_type=value_type,
-            nullable=not prop.is_mandatory,
-            is_list=prop.is_list,
+            nullable=nullable,
+            is_list=is_list,
             relation=relation,
             default=prop.default,
             source=prop.source,
