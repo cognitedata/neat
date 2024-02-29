@@ -222,7 +222,9 @@ class DMSRules(BaseRules):
                     suffix=entity.view.external_id,
                     version=default_view_version if entity.view.version is None else entity.view.version,
                 )
-            if entity.value_type and (entity.value_type.space is Undefined and entity.value_type.version is None):
+            if isinstance(entity.value_type, ViewEntity) and (
+                entity.value_type.space is Undefined or entity.value_type.version is None
+            ):
                 entity.value_type = ViewEntity(
                     prefix=default_space if entity.value_type.space is Undefined else entity.value_type.space,
                     suffix=entity.value_type.suffix,

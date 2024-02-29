@@ -669,6 +669,10 @@ class TestDMSRules:
         recreated_rules.metadata.created = rules.metadata.created
         recreated_rules.metadata.updated = rules.metadata.updated
 
+        # Removing source which is lost in the conversion
+        for prop in rules.properties:
+            prop.source = None
+
         assert recreated_rules.model_dump() == rules.model_dump()
 
     @pytest.mark.parametrize("rules, expected_schema", rules_schema_tests_cases())
