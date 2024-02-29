@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
+from graphlib import TopologicalSorter
 from typing import Generic, TypeVar, cast
 
 from cognite.client import CogniteClient
@@ -19,6 +20,7 @@ from cognite.client.data_classes.data_modeling import (
     DataModelApplyList,
     DataModelingId,
     DataModelList,
+    RequiresConstraint,
     Space,
     SpaceApply,
     SpaceApplyList,
@@ -60,7 +62,7 @@ class ResourceLoader(
         return [cls.get_id(item) for item in items]
 
     @abstractmethod
-    def create(self, items: T_CogniteResourceList) -> T_WritableCogniteResourceList:
+    def create(self, items: Sequence[T_WriteClass]) -> T_WritableCogniteResourceList:
         raise NotImplementedError
 
     @abstractmethod
@@ -68,7 +70,7 @@ class ResourceLoader(
         raise NotImplementedError
 
     @abstractmethod
-    def update(self, items: T_CogniteResourceList) -> T_WritableCogniteResourceList:
+    def update(self, items: Sequence[T_WriteClass]) -> T_WritableCogniteResourceList:
         raise NotImplementedError
 
     @abstractmethod
@@ -87,6 +89,9 @@ class DataModelingLoader(
             return item.space in space
         raise ValueError(f"Item {item} does not have a space attribute")
 
+    def sort_by_dependencies(self, items: list[T_WriteClass]) -> list[T_WriteClass]:
+        return items
+
 
 class SpaceLoader(DataModelingLoader[str, SpaceApply, Space, SpaceApplyList, SpaceList]):
     resource_name = "spaces"
@@ -95,13 +100,13 @@ class SpaceLoader(DataModelingLoader[str, SpaceApply, Space, SpaceApplyList, Spa
     def get_id(cls, item: Space | SpaceApply) -> str:
         return item.space
 
-    def create(self, items: SpaceApplyList) -> SpaceList:
+    def create(self, items: Sequence[SpaceApply]) -> SpaceList:
         return self.client.data_modeling.spaces.apply(items)
 
     def retrieve(self, ids: SequenceNotStr[str]) -> SpaceList:
         return self.client.data_modeling.spaces.retrieve(ids)
 
-    def update(self, items: SpaceApplyList) -> SpaceList:
+    def update(self, items: Sequence[SpaceApply]) -> SpaceList:
         return self.create(items)
 
     def delete(self, ids: SequenceNotStr[str]) -> list[str]:
@@ -119,13 +124,13 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
     def get_id(cls, item: View | ViewApply) -> ViewId:
         return item.as_id()
 
-    def create(self, items: ViewApplyList) -> ViewList:
+    def create(self, items: Sequence[ViewApply]) -> ViewList:
         return self.client.data_modeling.views.apply(items)
 
     def retrieve(self, ids: SequenceNotStr[ViewId]) -> ViewList:
         return self.client.data_modeling.views.retrieve(cast(Sequence, ids))
 
-    def update(self, items: ViewApplyList) -> ViewList:
+    def update(self, items: Sequence[ViewApply]) -> ViewList:
         return self.create(items)
 
     def delete(self, ids: SequenceNotStr[ViewId]) -> list[ViewId]:
@@ -194,13 +199,27 @@ class ContainerLoader(DataModelingLoader[ContainerId, ContainerApply, Container,
     def get_id(cls, item: Container | ContainerApply) -> ContainerId:
         return item.as_id()
 
-    def create(self, items: ContainerApplyList) -> ContainerList:
+    def sort_by_dependencies(self, items: Sequence[ContainerApply]) -> list[ContainerApply]:
+        container_by_id = {container.as_id(): container for container in items}
+        container_dependencies = {
+            container.as_id(): {
+                const.require
+                for const in container.constraints.values()
+                if isinstance(const, RequiresConstraint) and const.require in container_by_id
+            }
+            for container in items
+        }
+        return [
+            container_by_id[container_id] for container_id in TopologicalSorter(container_dependencies).static_order()
+        ]
+
+    def create(self, items: Sequence[ContainerApply]) -> ContainerList:
         return self.client.data_modeling.containers.apply(items)
 
     def retrieve(self, ids: SequenceNotStr[ContainerId]) -> ContainerList:
         return self.client.data_modeling.containers.retrieve(cast(Sequence, ids))
 
-    def update(self, items: ContainerApplyList) -> ContainerList:
+    def update(self, items: Sequence[ContainerApply]) -> ContainerList:
         return self.create(items)
 
     def delete(self, ids: SequenceNotStr[ContainerId]) -> list[ContainerId]:
@@ -214,13 +233,13 @@ class DataModelLoader(DataModelingLoader[DataModelId, DataModelApply, DataModel,
     def get_id(cls, item: DataModel | DataModelApply) -> DataModelId:
         return item.as_id()
 
-    def create(self, items: DataModelApplyList) -> DataModelList:
+    def create(self, items: Sequence[DataModelApply]) -> DataModelList:
         return self.client.data_modeling.data_models.apply(items)
 
     def retrieve(self, ids: SequenceNotStr[DataModelId]) -> DataModelList:
         return self.client.data_modeling.data_models.retrieve(cast(Sequence, ids))
 
-    def update(self, items: DataModelApplyList) -> DataModelList:
+    def update(self, items: Sequence[DataModelApply]) -> DataModelList:
         return self.create(items)
 
     def delete(self, ids: SequenceNotStr[DataModelId]) -> list[DataModelId]:

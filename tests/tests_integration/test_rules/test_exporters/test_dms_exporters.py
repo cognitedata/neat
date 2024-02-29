@@ -39,6 +39,13 @@ class TestDMSExporters:
         uploaded_by_name = {entity.name: entity for entity in uploaded}
 
         assert uploaded_by_name["containers"].total == len(rules.containers)
+        assert uploaded_by_name["containers"].failed == 0
+
         assert uploaded_by_name["views"].total == len(rules.views)
+        assert uploaded_by_name["views"].failed == 0
+
         assert uploaded_by_name["data_models"].total == 1
+        assert uploaded_by_name["data_models"].failed == 0
+
         assert uploaded_by_name["spaces"].total == 1
+        assert uploaded_by_name["spaces"].failed == 0

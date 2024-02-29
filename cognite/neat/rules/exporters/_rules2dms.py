@@ -88,19 +88,20 @@ class DMSExporter(BaseExporter[DMSSchema]):
             failed_changed = 0
             error_messages: list[str] = []
             if not dry_run:
+                to_create = loader.sort_by_dependencies(to_create)
                 try:
                     loader.create(to_create)
                 except CogniteAPIError as e:
                     failed_created = len(e.failed) + len(e.unknown)
                     created -= failed_created
-                    error_messages.extend(e.message)
+                    error_messages.append(e.message)
 
                 try:
                     loader.update(to_update)
                 except CogniteAPIError as e:
                     failed_changed = len(e.failed) + len(e.unknown)
                     changed -= failed_changed
-                    error_messages.extend(e.message)
+                    error_messages.append(e.message)
 
             yield UploadResult(
                 name=loader.resource_name,

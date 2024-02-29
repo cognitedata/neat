@@ -35,3 +35,7 @@ class UploadResult(UploadResultCore):
     @property
     def total(self) -> int:
         return self.created + self.deleted + self.changed + self.unchanged
+
+    @property
+    def failed(self) -> int:
+        return self.failed_created + self.failed_changed
