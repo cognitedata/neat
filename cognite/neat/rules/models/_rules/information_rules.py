@@ -299,7 +299,7 @@ class _InformationRulesConverter:
         for class_ in self.information.classes:
             properties: list[DMSProperty] = properties_by_class.get(class_.class_, [])
             if not properties or all(
-                isinstance(prop.value_type, ViewEntity) and not prop.value_type != "direct" for prop in properties
+                isinstance(prop.value_type, ViewEntity) and prop.value_type != "direct" for prop in properties
             ):
                 classes_without_properties.add(class_.class_)
                 continue
@@ -350,6 +350,12 @@ class _InformationRulesConverter:
         if isinstance(value_type, ViewEntity):
             relation = "multiedge" if prop.is_list else "direct"
 
+        container: ContainerEntity | None = None
+        container_property: str | None = None
+        if relation != "multiedge":
+            container = ContainerEntity.from_raw(prop.class_)
+            container_property = prop.property_
+
         return DMSProperty(
             class_=prop.class_,
             property_=prop.property_,
@@ -359,8 +365,8 @@ class _InformationRulesConverter:
             relation=relation,
             default=prop.default,
             source=prop.source,
-            container=ContainerEntity.from_raw(prop.class_),
-            container_property=prop.property_,
+            container=container,
+            container_property=container_property,
             view=ViewEntity.from_raw(prop.class_),
             view_property=prop.property_,
         )
