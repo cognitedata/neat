@@ -87,6 +87,19 @@ _DATA_TYPES: list[dict] = [
     {"name": "json", "python": Json, "GraphQL": "Json", "dms": Json},
 ]
 
+_DMS_TYPES: list[dict] = [
+    {"name": "boolean", "python": bool, "GraphQL": "Boolean", "dms": Boolean},
+    {"name": "float", "python": float, "GraphQL": "Float", "dms": Float64},
+    {"name": "integer", "python": int, "GraphQL": "Int", "dms": Int32},
+    {"name": "long", "python": int, "GraphQL": "Int", "dms": Int64},
+    {"name": "string", "python": str, "GraphQL": "String", "dms": Text},
+    {"name": "dateTimeStamp", "python": datetime, "GraphQL": "Timestamp", "dms": Timestamp},
+    {"name": "timeseries", "python": TimeSeriesReference, "GraphQL": "TimeSeries", "dms": TimeSeriesReference},
+    {"name": "file", "python": FileReference, "GraphQL": "File", "dms": FileReference},
+    {"name": "sequence", "python": SequenceReference, "GraphQL": "Sequence", "dms": SequenceReference},
+    {"name": "json", "python": Json, "GraphQL": "Json", "dms": Json},
+]
+
 XSD_VALUE_TYPE_MAPPINGS: dict[str, XSDValueType] = {
     data_type["name"]: XSDValueType(
         prefix="xsd",
@@ -114,5 +127,5 @@ DMS_VALUE_TYPE_MAPPINGS: dict[str, DMSValueType] = {
             graphql=data_type["GraphQL"],
         ),
     )
-    for data_type in _DATA_TYPES
+    for data_type in _DMS_TYPES
 }

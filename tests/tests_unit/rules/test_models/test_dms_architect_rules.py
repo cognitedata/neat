@@ -16,6 +16,7 @@ from cognite.neat.rules.models._rules.dms_architect_rules import (
     DMSView,
 )
 from cognite.neat.rules.models._rules.dms_schema import DMSSchema
+from cognite.neat.rules.models._rules.information_rules import InformationRules
 
 
 def rules_schema_tests_cases() -> Iterable[ParameterSet]:
@@ -683,3 +684,9 @@ class TestDMSRules:
         actual_schema.views = dm.ViewApplyList(sorted(actual_schema.views, key=lambda v: v.external_id))
         expected_schema.views = dm.ViewApplyList(sorted(expected_schema.views, key=lambda v: v.external_id))
         assert actual_schema.views.dump() == expected_schema.views.dump()
+
+    def test_alice_as_information(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
+        alice_rules = DMSRules.model_validate(alice_spreadsheet)
+        info_rules = alice_rules.as_information_architect_rules()
+
+        assert isinstance(info_rules, InformationRules)
