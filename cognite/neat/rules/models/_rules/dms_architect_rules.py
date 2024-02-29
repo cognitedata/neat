@@ -74,6 +74,14 @@ class DMSMetadata(BaseMetadata):
     updated: datetime = Field(
         description=("Date of the data model update"),
     )
+    # MyPy does not account for the field validator below that sets the default value
+    default_view_version: VersionType = Field(None)  # type: ignore[assignment]
+
+    @field_validator("default_view_version", mode="before")
+    def set_default_view_version_if_missing(cls, value, info):
+        if value is None:
+            return info.data["version"]
+        return value
 
     @field_validator("description", mode="before")
     def nan_as_none(cls, value):
@@ -212,7 +220,7 @@ class DMSRules(BaseRules):
     @model_validator(mode="after")
     def set_default_space_and_version(self) -> "DMSRules":
         default_space = self.metadata.space
-        default_view_version = "1"
+        default_view_version = self.metadata.default_view_version
         for entity in self.properties:
             if entity.container and entity.container.space is Undefined:
                 entity.container = ContainerEntity(prefix=default_space, suffix=entity.container.external_id)
