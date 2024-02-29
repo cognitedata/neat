@@ -1,4 +1,5 @@
 import abc
+import math
 import re
 from collections import defaultdict
 from datetime import datetime
@@ -9,7 +10,7 @@ from cognite.client.data_classes.data_modeling import PropertyType as CognitePro
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex
 from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 from cognite.client.data_classes.data_modeling.views import ViewPropertyApply
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 from rdflib import Namespace
 
 from cognite.neat.rules.models._rules.domain_rules import DomainRules
@@ -73,6 +74,12 @@ class DMSMetadata(BaseMetadata):
     updated: datetime = Field(
         description=("Date of the data model update"),
     )
+
+    @field_validator("description", mode="before")
+    def nan_as_none(cls, value):
+        if isinstance(value, float) and math.isnan(value):
+            return None
+        return value
 
     def as_space(self) -> dm.SpaceApply:
         return dm.SpaceApply(
