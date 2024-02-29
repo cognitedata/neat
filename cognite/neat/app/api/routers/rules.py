@@ -98,6 +98,18 @@ def get_rules(
     except Exception as e:
         error_text = str(e)
 
+    logging.info(
+        {
+            "properties": properties,
+            "metadata": rules.metadata.model_dump(),
+            "classes": classes,
+            "file_name": path.name,
+            "hash": get_file_hash(path),
+            "error_text": error_text,
+            "src": src,
+        }
+    )
+
     return {
         "properties": properties,
         "metadata": rules.metadata.model_dump(),

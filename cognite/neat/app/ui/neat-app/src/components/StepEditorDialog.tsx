@@ -335,9 +335,9 @@ return (
               <Box>
               <Stack direction="row" spacing={2}>
                 <Typography sx={{marginRight:7}}>
-                Version : {selectedStepTemplate?.version}
-                {selectedStepTemplate?.version.toLowerCase().includes("alpha") && (
-                          <Tooltip title="Caution: This step is in the alpha stage and may be subject to changes or deprecation.">
+                Version : <span style={{ color: selectedStepTemplate?.version.toLowerCase().includes("private-alpha") ? "red" : "green", fontWeight: selectedStepTemplate?.version.toLowerCase().includes("private-beta") ? "bold" : "bold" }}>{selectedStepTemplate?.version}</span>
+                {selectedStepTemplate?.version.toLowerCase().includes("private-alpha") && (
+                          <Tooltip title="Caution: This step is in the private alpha stage and may be subject to changes or deprecation.">
                             <WarningIcon sx={{ marginLeft: 1, marginBottom: -0.5, color: "orange" }} />
                           </Tooltip>
                 )}

@@ -38,6 +38,7 @@ class ImportExcelToRules(Step):
     """
 
     description = "This step import rules from the Excel file"
+    version = "private-alpha"
     category = CATEGORY
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
@@ -134,7 +135,7 @@ class ImportOntologyToRules(Step):
     description = "The step extracts NEAT rules object from OWL Ontology and \
         exports them as an Excel rules files for further editing."
     category = CATEGORY
-    version = "0.1.0-alpha"
+    version = "private-alpha"
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
             name="ontology_file_path", value="staging/ontology.ttl", label="Relative path to the OWL ontology file."
@@ -191,7 +192,7 @@ class ImportOpenApiToRules(Step):
     description = "The step extracts schema from OpenAPI specification and generates NEAT transformation rules object. \
     The rules object can be serialized to excel file or used directly in other steps."
     category = CATEGORY
-    version = "0.1.0-alpha"
+    version = "private-alpha"
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
             name="openapi_spec_file_path",
@@ -377,7 +378,7 @@ class ImportArbitraryJsonYamlToRules(Step):
 
     description = "The step extracts schema from arbitrary json file and generates NEAT transformation rules object."
     category = CATEGORY
-    version = "0.1.0-alpha"
+    version = "private-alpha"
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
             name="file_path",
@@ -564,7 +565,7 @@ class ImportGraphToRules(Step):
     description = "The step extracts data model from RDF graph and generates NEAT transformation rules object. \
     The rules object can be serialized to excel file or used directly in other steps."
     category = CATEGORY
-    version = "0.1.0-alpha"
+    version = "private-alpha"
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
             name="excel_file_path", value="staging/rules.xlsx", label="Relative path for the Excel rules storage."
