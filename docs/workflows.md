@@ -36,6 +36,14 @@ Supported trigger types :
 - `http_trigger` - HTTP trigger that can be used to trigger workflow execution via HTTP request.Also use by UI to trigger workflow execution.
 - `time_trigger` - time trigger that can be used to trigger workflow execution on schedule.
 
+`time_trigger` uses the schedule[https://pypi.org/project/schedule/] for workflow scheduling. To set up job schedules using `time_trigger`, enter natural language expressions within the `Time Interval` field of the corresponding step. Below are examples of supported natural language intervals:
+- every day at 10:00
+- every monday at 12:30:10
+- every 60 minutes
+- every 2 hours
+- every 3 days
+- every 30 seconds
+
 ### Tasks
 
 Task is a special type of step that has provided implementation (no need to implement it in _workflow.py_) and can be used to perform some common tasks. Task are configured via `params` section in manifest file.
