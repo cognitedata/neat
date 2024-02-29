@@ -2,6 +2,7 @@ import warnings
 import zipfile
 from collections.abc import Iterable
 from pathlib import Path
+from typing import Literal
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes._base import CogniteResourceList
@@ -11,7 +12,7 @@ from cognite.neat.rules.models._rules.dms_schema import DMSSchema
 
 from ._base import BaseExporter
 from ._data_classes import UploadResult
-from ._loaders import ContainerLoader, DataModelLoader, ResourceLoader, SpaceLoader, ViewLoader
+from ._loaders import ContainerLoader, DataModelingLoader, DataModelLoader, SpaceLoader, ViewLoader
 
 
 class DMSExporter(BaseExporter[DMSSchema]):
@@ -24,8 +25,12 @@ class DMSExporter(BaseExporter[DMSSchema]):
     def __init__(
         self,
         rules: DMSRules,
+        export_components: Literal["all", "spaces", "data_models", "views", "containers"] = "all",
+        include_space: set[str] | None = None,
     ):
         self.rules = rules
+        self.export_components = export_components
+        self.include_space = include_space
         self._schema: DMSSchema | None = None
 
     def export_to_file(self, filepath: Path) -> None:
@@ -51,19 +56,24 @@ class DMSExporter(BaseExporter[DMSSchema]):
 
     def export_to_cdf(self, client: CogniteClient, dry_run: bool = False) -> Iterable[UploadResult]:
         schema = self.export()
-        loader: ResourceLoader
-        items: CogniteResourceList
-        for items, loader in [  # type: ignore[assignment]
-            (schema.spaces, SpaceLoader(client)),
-            (schema.data_models, DataModelLoader(client)),
-            (schema.views, ViewLoader(client)),
-            (schema.containers, ContainerLoader(client)),
-        ]:
+        to_export: list[tuple[CogniteResourceList, DataModelingLoader]] = []
+        if self.export_components in {"all", "spaces"}:
+            to_export.append((schema.spaces, SpaceLoader(client)))
+        if self.export_components in {"all", "data_models"}:
+            to_export.append((schema.data_models, DataModelLoader(client)))
+        if self.export_components in {"all", "views"}:
+            to_export.append((schema.views, ViewLoader(client)))
+        if self.export_components in {"all", "containers"}:
+            to_export.append((schema.containers, ContainerLoader(client)))
+
+        for items, loader in to_export:
             item_ids = loader.get_ids(items)
             cdf_items = loader.retrieve(item_ids)
             cdf_item_by_id = {loader.get_id(item): item for item in cdf_items}
             to_create, to_update, unchanged = [], [], []
             for item in items:
+                if self.include_space is not None and not loader.in_space(item, self.include_space):
+                    continue
                 cdf_item = cdf_item_by_id.get(loader.get_id(item))
                 if cdf_item is None:
                     to_create.append(item)

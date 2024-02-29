@@ -27,6 +27,7 @@ class UploadResult(UploadResultCore):
     deleted: int = 0
     changed: int = 0
     unchanged: int = 0
+    skipped: int = 0
 
     @property
     def total(self) -> int:

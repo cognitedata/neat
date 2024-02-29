@@ -79,7 +79,16 @@ class ResourceLoader(
         return local == remote.as_write()
 
 
-class SpaceLoader(ResourceLoader[str, SpaceApply, Space, SpaceApplyList, SpaceList]):
+class DataModelingLoader(
+    ResourceLoader[T_ID, T_WriteClass, T_WritableCogniteResource, T_CogniteResourceList, T_WritableCogniteResourceList]
+):
+    def in_space(self, item: T_WriteClass | T_WritableCogniteResource, space: set[str]) -> bool:
+        if hasattr(item, "space"):
+            return item.space in space
+        raise ValueError(f"Item {item} does not have a space attribute")
+
+
+class SpaceLoader(DataModelingLoader[str, SpaceApply, Space, SpaceApplyList, SpaceList]):
     resource_name = "spaces"
 
     @classmethod
@@ -99,7 +108,7 @@ class SpaceLoader(ResourceLoader[str, SpaceApply, Space, SpaceApplyList, SpaceLi
         return self.client.data_modeling.spaces.delete(ids)
 
 
-class ViewLoader(ResourceLoader[ViewId, ViewApply, View, ViewApplyList, ViewList]):
+class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, ViewList]):
     resource_name = "views"
 
     def __init__(self, client: CogniteClient):
@@ -178,7 +187,7 @@ class ViewLoader(ResourceLoader[ViewId, ViewApply, View, ViewApplyList, ViewList
         return found
 
 
-class ContainerLoader(ResourceLoader[ContainerId, ContainerApply, Container, ContainerApplyList, ContainerList]):
+class ContainerLoader(DataModelingLoader[ContainerId, ContainerApply, Container, ContainerApplyList, ContainerList]):
     resource_name = "containers"
 
     @classmethod
@@ -198,7 +207,7 @@ class ContainerLoader(ResourceLoader[ContainerId, ContainerApply, Container, Con
         return self.client.data_modeling.containers.delete(cast(Sequence, ids))
 
 
-class DataModelLoader(ResourceLoader[DataModelId, DataModelApply, DataModel, DataModelApplyList, DataModelList]):
+class DataModelLoader(DataModelingLoader[DataModelId, DataModelApply, DataModel, DataModelApplyList, DataModelList]):
     resource_name = "data_models"
 
     @classmethod
