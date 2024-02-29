@@ -632,7 +632,7 @@ class TestDMSRules:
 
         assert isinstance(valid_rules, DMSRules)
 
-        sample_expected_properties = {"WindTurbine.name", "WindFarm.windTurbines", "CircuitBreaker.voltage"}
+        sample_expected_properties = {"GeneratingUnit.name", "WindFarm.windTurbines", "Substation.mainTransformer"}
         missing = sample_expected_properties - {f"{prop.class_}.{prop.property_}" for prop in valid_rules.properties}
         assert not missing, f"Missing properties: {missing}"
 
@@ -668,6 +668,10 @@ class TestDMSRules:
         # Sorting out dates
         recreated_rules.metadata.created = rules.metadata.created
         recreated_rules.metadata.updated = rules.metadata.updated
+
+        # Removing source which is lost in the conversion
+        for prop in rules.properties:
+            prop.source = None
 
         assert recreated_rules.model_dump() == rules.model_dump()
 

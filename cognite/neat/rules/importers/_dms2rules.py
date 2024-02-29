@@ -90,7 +90,7 @@ class DMSImporter(BaseImporter):
                             is_list=(
                                 container_prop.type.is_list
                                 if isinstance(container_prop.type, ListablePropertyType)
-                                else None
+                                else False
                             ),
                             default=container_prop.default_value,
                             container=ContainerEntity.from_id(container.as_id()),

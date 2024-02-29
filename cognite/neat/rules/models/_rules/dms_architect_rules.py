@@ -1,15 +1,16 @@
 import abc
+import math
 import re
 from collections import defaultdict
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
+from typing import TYPE_CHECKING, ClassVar, Literal, cast
 
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import PropertyType as CognitePropertyType
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex
 from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 from cognite.client.data_classes.data_modeling.views import ViewPropertyApply
-from pydantic import Field, field_serializer, model_validator
+from pydantic import Field, field_validator, model_validator
 from rdflib import Namespace
 
 from cognite.neat.rules.models._rules.domain_rules import DomainRules
@@ -73,6 +74,20 @@ class DMSMetadata(BaseMetadata):
     updated: datetime = Field(
         description=("Date of the data model update"),
     )
+    # MyPy does not account for the field validator below that sets the default value
+    default_view_version: VersionType = Field(None)  # type: ignore[assignment]
+
+    @field_validator("default_view_version", mode="before")
+    def set_default_view_version_if_missing(cls, value, info):
+        if value is None:
+            return info.data["version"]
+        return value
+
+    @field_validator("description", mode="before")
+    def nan_as_none(cls, value):
+        if isinstance(value, float) and math.isnan(value):
+            return None
+        return value
 
     def as_space(self) -> dm.SpaceApply:
         return dm.SpaceApply(
@@ -129,12 +144,6 @@ class DMSProperty(SheetEntity):
     view_property: str = Field(alias="ViewProperty")
     index: StrListType | None = Field(None, alias="Index")
     constraint: StrListType | None = Field(None, alias="Constraint")
-
-    @field_serializer("value_type", when_used="unless-none")
-    def serialize_value_type(self, value: Any) -> Any:
-        if isinstance(value, ViewEntity):
-            return value.versioned_id
-        return value
 
 
 class DMSContainer(SheetEntity):
@@ -211,15 +220,23 @@ class DMSRules(BaseRules):
     @model_validator(mode="after")
     def set_default_space_and_version(self) -> "DMSRules":
         default_space = self.metadata.space
-        default_version = self.metadata.version
+        default_view_version = self.metadata.default_view_version
         for entity in self.properties:
             if entity.container and entity.container.space is Undefined:
                 entity.container = ContainerEntity(prefix=default_space, suffix=entity.container.external_id)
-            if entity.view and entity.view.space is Undefined:
-                entity.view = ViewEntity(prefix=default_space, suffix=entity.view.external_id, version=default_version)
-            if entity.value_type and entity.value_type.space is Undefined:
+            if entity.view and (entity.view.space is Undefined or entity.view.version is None):
+                entity.view = ViewEntity(
+                    prefix=default_space if entity.view.space is Undefined else entity.view.space,
+                    suffix=entity.view.external_id,
+                    version=default_view_version if entity.view.version is None else entity.view.version,
+                )
+            if isinstance(entity.value_type, ViewEntity) and (
+                entity.value_type.space is Undefined or entity.value_type.version is None
+            ):
                 entity.value_type = ViewEntity(
-                    prefix=default_space, suffix=entity.value_type.suffix, version=default_version
+                    prefix=default_space if entity.value_type.space is Undefined else entity.value_type.space,
+                    suffix=entity.value_type.suffix,
+                    version=default_view_version if entity.value_type.version is None else entity.value_type.version,
                 )
 
         for container in self.containers or []:
@@ -235,12 +252,20 @@ class DMSRules(BaseRules):
             ] or None
 
         for view in self.views or []:
-            if view.view.space is Undefined:
-                view.view = ViewEntity(prefix=default_space, suffix=view.view.external_id, version=default_version)
+            if view.view.space is Undefined or view.view.version is None:
+                view.view = ViewEntity(
+                    prefix=default_space if view.view.space is Undefined else view.view.space,
+                    suffix=view.view.external_id,
+                    version=default_view_version if view.view.version is None else view.view.version,
+                )
             view.implements = [
                 (
-                    ViewEntity(prefix=default_space, suffix=parent.external_id, version=default_version)
-                    if parent.space is Undefined
+                    ViewEntity(
+                        prefix=default_space if parent.space is Undefined else parent.space,
+                        suffix=parent.external_id,
+                        version=default_view_version if parent.version is None else parent.version,
+                    )
+                    if parent.space is Undefined or parent.version is None
                     else parent
                 )
                 for parent in view.implements or []
