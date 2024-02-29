@@ -40,6 +40,7 @@ class GenerateDMSSchemaComponentsFromRules(Step):
     """
 
     description = "This step generates DMS Schema components, such as data model, views, containers, etc. from Rules."
+    version = "private-alpha"
     category = CATEGORY
 
     def run(self, rules: RulesData) -> (FlowMessage, DMSSchemaComponentsData):  # type: ignore[override, syntax]
@@ -66,6 +67,7 @@ class ExportDMSSchemaComponentsToYAML(Step):
     """
 
     description = "This step exports DMS schema components as YAML files"
+    version = "private-alpha"
     category = CATEGORY
     configurables: ClassVar[list[Configurable]] = [
         Configurable(name="storage_dir", value="staging", label="Directory to store DMS schema files"),
@@ -139,6 +141,7 @@ class ExportDMSSchemaComponentsToCDF(Step):
     """
 
     description = "This step exports generated DMS Schema components to CDF."
+    version = "private-alpha"
     category = CATEGORY
 
     configurables: ClassVar[list[Configurable]] = [
@@ -227,6 +230,7 @@ class DeleteDMSSchemaComponents(Step):
     """
 
     description = "This step deletes DMS Data model and all underlying containers and views."
+    version = "private-alpha"
     category = CATEGORY
 
     configurables: ClassVar[list[Configurable]] = [
@@ -301,6 +305,7 @@ class ExportRulesToGraphQLSchema(Step):
     """
 
     description = "This step generates GraphQL schema from data model defined in transformation rules."
+    version = "private-alpha"
     category = CATEGORY
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
@@ -350,6 +355,7 @@ class ExportRulesToOntology(Step):
     """
 
     description = "This step exports Rules to OWL ontology"
+    version = "private-alpha"
     category = CATEGORY
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
@@ -405,6 +411,7 @@ class ExportRulesToSHACL(Step):
     """
 
     description = "This step exports Rules to SHACL"
+    version = "private-alpha"
     category = CATEGORY
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
@@ -457,6 +464,7 @@ class ExportRulesToGraphCapturingSheet(Step):
     """
 
     description = "This step generates graph capturing sheet"
+    version = "private-alpha"
     category = CATEGORY
     configurables: ClassVar[list[Configurable]] = [
         Configurable(name="file_name", value="graph_capture_sheet.xlsx", label="File name of the data capture sheet"),
@@ -492,8 +500,8 @@ class ExportRulesToGraphCapturingSheet(Step):
 
 class ExportRulesToExcel(Step):
     description = "This step export Rules to Excel representation"
+    version = "private-alpha"
     category = CATEGORY
-    version = "0.1.0-alpha"
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
             name="output_file_path", value="rules/custom-rules.xlsx", label="File path to the generated Excel file"

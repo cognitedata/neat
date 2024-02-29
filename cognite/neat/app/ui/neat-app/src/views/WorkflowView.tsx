@@ -498,7 +498,7 @@ return (
   <div style={{ height: '85vh', width: '97vw' }}>
     <Box>
       <FormControl sx={{ width: 300, marginBottom: 2 }}>
-        <InputLabel id="workflowSelectorLabel">Workflow selector</InputLabel>
+        <InputLabel id="workflowSelectorLabel">Selector</InputLabel>
         <Select
           labelId="workflowSelectorLabel"
           id="workflowSelector"
@@ -525,12 +525,12 @@ return (
         onChange={handleViewTypeChange}
         aria-label="View type"
       >
-        <ToggleButton value="system">Solution overview</ToggleButton>
+        {/* <ToggleButton value="system">Solution overview</ToggleButton> */}
         <ToggleButton value="steps">Workflow</ToggleButton>
-        <ToggleButton value="src">Files</ToggleButton>
-        <ToggleButton value="configurations">Configurations</ToggleButton>
+        {/* <ToggleButton value="src">Files</ToggleButton> */}
+        {/* <ToggleButton value="configurations">Configurations</ToggleButton> */}
         <ToggleButton value="transformations">Data model and transformations</ToggleButton>
-        <ToggleButton value="data_explorer">Data explorer</ToggleButton>
+        <ToggleButton value="data_explorer">Graph explorer</ToggleButton>
       </ToggleButtonGroup>
     </Box>
     { editState && (<Typography color={"red"} variant="overline"> {editState} </Typography> ) }

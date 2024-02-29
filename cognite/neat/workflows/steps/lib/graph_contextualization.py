@@ -10,6 +10,7 @@ __all__ = ["SimpleGraphEntityMatcher"]
 
 
 class SimpleGraphEntityMatcher(Step):
+    version = "private-alpha"
     description = "The step matches entities in the graph and creates links based on provided configurations"
     category = "Contextualization"
     configurables: ClassVar[list[Configurable]] = [

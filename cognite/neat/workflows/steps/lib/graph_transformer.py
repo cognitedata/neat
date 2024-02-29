@@ -20,6 +20,7 @@ class TransformSourceToSolutionGraph(Step):
 
     description = "The step transforms source graph to solution graph"
     category = CATEGORY
+    version = "private-alpha"
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
             name="cdf_lookup_database",

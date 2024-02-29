@@ -61,7 +61,7 @@ class LoadLabelsToCDF(Step):
 
     description = "This step creates default NEAT labels in CDF"
     category = CATEGORY
-
+    version = "private-alpha"
     configurables: ClassVar[list[Configurable]] = [
         Configurable(name="data_set_id", value="", label=("CDF dataset id to which the labels will be added."))
     ]
@@ -157,7 +157,7 @@ class LoadGraphToRdfFile(Step):
 
     description = "The step generates nodes and edges from the graph"
     category = CATEGORY
-
+    version = "private-beta"
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
             name="graph_name",
@@ -208,6 +208,7 @@ class LoadNodesToCDF(Step):
 
     description = "This step uploads nodes to CDF"
     category = CATEGORY
+    version = "private-alpha"
 
     def run(self, cdf_client: CogniteClient, nodes: Nodes) -> FlowMessage:  # type: ignore[override, syntax]
         if nodes.nodes:
@@ -224,6 +225,7 @@ class LoadEdgesToCDF(Step):
 
     description = "This step uploads edges to CDF"
     category = CATEGORY
+    version = "private-alpha"
 
     def run(self, cdf_client: CogniteClient, edges: Edges) -> FlowMessage:  # type: ignore[override, syntax]
         if edges.edges:
@@ -242,7 +244,7 @@ class GenerateAssetsFromGraph(Step):
         "The step generates assets from the graph ,categorizes them and stores them in CategorizedAssets object"
     )
     category = CATEGORY
-
+    version = "private-alpha"
     configurables: ClassVar[list[Configurable]] = [
         Configurable(name="data_set_id", value="", label=("CDF dataset id to which the labels will be added.")),
         Configurable(
@@ -448,6 +450,7 @@ class LoadAssetsToCDF(Step):
 
     description = "This step uploads categorized assets to CDF"
     category = CATEGORY
+    version = "private-alpha"
 
     def run(  # type: ignore[override]
         self, cdf_client: CogniteClient, categorized_assets: CategorizedAssets, flow_msg: FlowMessage
@@ -506,7 +509,7 @@ class GenerateRelationshipsFromGraph(Step):
 
     description = "This step generates relationships from the graph and saves them to CategorizedRelationships object"
     category = CATEGORY
-
+    version = "private-alpha"
     configurables: ClassVar[list[Configurable]] = [
         Configurable(name="data_set_id", value="", label=("CDF dataset id to which the labels will be added.")),
         Configurable(
@@ -575,6 +578,7 @@ class LoadRelationshipsToCDF(Step):
 
     description = "This step uploads relationships to CDF"
     category = CATEGORY
+    version = "private-alpha"
 
     def run(  # type: ignore[override, syntax]
         self, client: CogniteClient, categorized_relationships: CategorizedRelationships
