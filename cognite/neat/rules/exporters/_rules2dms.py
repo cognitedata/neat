@@ -2,10 +2,13 @@ import warnings
 import zipfile
 from pathlib import Path
 
+from cognite.client import CogniteClient
+
 from cognite.neat.rules.models._rules.dms_architect_rules import DMSRules
 from cognite.neat.rules.models._rules.dms_schema import DMSSchema
 
 from ._base import BaseExporter
+from ._data_classes import UploadResult
 
 
 class DMSExporter(BaseExporter[DMSSchema]):
@@ -39,3 +42,6 @@ class DMSExporter(BaseExporter[DMSSchema]):
 
     def export(self) -> DMSSchema:
         return self.rules.as_schema()
+
+    def export_to_cdf(self, client: CogniteClient, dry_run: bool = False) -> list[UploadResult]:
+        raise NotImplementedError()
