@@ -12,6 +12,7 @@ from cognite.neat.rules import exporter
 from cognite.neat.rules.exporter._rules2dms import DMSSchemaComponents
 from cognite.neat.rules.exporter._rules2graphql import GraphQLSchema
 from cognite.neat.rules.exporter._rules2ontology import Ontology
+from cognite.neat.rules.models._rules import DMSRules
 from cognite.neat.utils.utils import generate_exception_report
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
@@ -503,3 +504,46 @@ class ExportRulesToExcel(Step):
         full_path = Path(self.data_store_path) / Path(self.configs["output_file_path"])
         exporter.ExcelExporter.from_rules(rules=rules_data.rules).export_to_file(filepath=full_path)
         return FlowMessage(output_text="Generated Excel file from rules")
+
+
+class ExportDMS(Step):
+    """
+    This step exports generated DMS Schema components to CDF
+    """
+
+    description = "This step exports generated DMS Schema components to CDF."
+    category = CATEGORY
+
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="components",
+            type="multi_select",
+            value="",
+            label="Select which DMS schema component(s) to export to CDF",
+            options=["space", "container", "view", "data model"],
+        ),
+        Configurable(
+            name="existing_component_handling",
+            value="fail",
+            label=(
+                "How to handle situation when components being exported in CDF already exist."
+                "Fail the step if any component already exists, "
+                "Skip the component if it already exists, "
+                " or Update the component try to update the component."
+            ),
+            options=["fail", "skip", "update"],
+        ),
+        Configurable(
+            name="multi_space_components_create",
+            value="False",
+            label=(
+                "Whether to create only components belonging to the data model space"
+                " (i.e. space define under Metadata sheet of Rules), "
+                "or also additionally components outside of the data model space."
+            ),
+            options=["True", "False"],
+        ),
+    ]
+
+    def run(self, rules: DMSRules, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override, syntax]
+        raise NotImplementedError
