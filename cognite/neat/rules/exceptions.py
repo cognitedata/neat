@@ -2022,10 +2022,10 @@ class ClassesSheetMissingMandatoryColumns(NeatException):
         super().__init__(self.message)
 
 
-class ClassNoPropertiesNoParent(NeatException):
+class ClassNoPropertiesNoParents(NeatException):
     """ """
 
-    type_: str = "ClassNoProperties"
+    type_: str = "ClassNoPropertiesNoParents"
     code: int = 305
     description: str = (
         "Class sheet, has defined classes, " "but no properties are defined for them and they do not have parent class"
