@@ -21,7 +21,7 @@ class ExcelImporter(BaseImporter):
     def __init__(self, filepath: Path):
         self.filepath = filepath
 
-    def to_rules(self, role: RoleTypes | str | None = None) -> DomainRules | InformationRules | DMSRules:
+    def to_rules(self, role: RoleTypes | None = None) -> DomainRules | InformationRules | DMSRules:
         excel_file = pd.ExcelFile(self.filepath)
 
         try:
