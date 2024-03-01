@@ -622,14 +622,10 @@ class ImportExcelValidator(Step):
     category = CATEGORY
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
-            name="validation_report_storage_dir",
-            value="rules_validation_report",
-            label="Directory to store validation report",
-        ),
-        Configurable(
-            name="validation_report_file",
-            value="rules_validation_report.txt",
-            label="File name to store validation report",
+            name="Report Formatter",
+            value="html",
+            label="The format of the report for the validation of the rules",
+            options=["html"],
         ),
     ]
 
