@@ -9,7 +9,8 @@ import yaml
 from prometheus_client import Gauge
 from rdflib import Namespace
 
-from cognite.neat.rules import exporter, importer
+from cognite.neat.rules import exporter, importer, importers
+from cognite.neat.rules.models._rules import RoleTypes
 from cognite.neat.rules.models.rdfpath import TransformationRuleType
 from cognite.neat.rules.models.rules import Class, Classes, Metadata, Properties, Property, Rules
 from cognite.neat.rules.models.value_types import ValueType
@@ -18,7 +19,7 @@ from cognite.neat.workflows import utils
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.cdf_store import CdfStore
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
-from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
+from cognite.neat.workflows.steps.data_contracts import MultiRuleData, RulesData, SolutionGraph, SourceGraph
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
@@ -29,6 +30,7 @@ __all__ = [
     "ImportArbitraryJsonYamlToRules",
     "ImportGraphToRules",
     "ImportOntologyToRules",
+    "ImportExcelValidator",
 ]
 
 
@@ -611,3 +613,45 @@ class ImportGraphToRules(Step):
         )
 
         return FlowMessage(output_text=output_text)
+
+
+class ImportExcelValidator(Step):
+    """This step import rules from the Excel file and validates it."""
+
+    description = "This step imports rules from an excel file "
+    version = "private-beta"
+    category = CATEGORY
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="Report Formatter",
+            value="html",
+            label="The format of the report for the validation of the rules",
+            options=["html"],
+        ),
+        Configurable(
+            name="role",
+            value="infer",
+            label="For what role Rules are intended?",
+            options=["infer", *list(RoleTypes.__members__.keys())],
+        ),
+    ]
+
+    def run(self, flow_message: FlowMessage) -> (FlowMessage, MultiRuleData):  # type: ignore[syntax, override]
+        if self.configs is None or self.data_store_path is None:
+            raise StepNotInitialized(type(self).__name__)
+        try:
+            rules_file_path = flow_message.payload["full_path"]
+        except (KeyError, TypeError):
+            error_text = "Expected input payload to contain 'full_path' key."
+            return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
+        role = self.configs.get("role", "infer")
+        excel_importer = importers.ExcelImporter(rules_file_path)
+        try:
+            rules = excel_importer.to_rules(role)
+        except ValueError:
+            error_text = "Failed to validate rules. Please check the rules file."
+            return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
+
+        output_text = "Rules validation passed successfully!"
+
+        return FlowMessage(output_text=output_text), MultiRuleData.from_rules(rules)
