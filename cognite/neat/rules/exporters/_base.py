@@ -5,7 +5,7 @@ from typing import Generic, TypeVar
 
 from cognite.client import CogniteClient
 
-from ._data_classes import UploadResult
+from ._models import UploadResult
 
 T_Export = TypeVar("T_Export")
 
