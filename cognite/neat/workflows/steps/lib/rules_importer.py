@@ -642,7 +642,7 @@ class ImportExcelValidator(Step):
         except (KeyError, TypeError):
             error_text = "Expected input payload to contain 'full_path' key."
             return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
-
+        role = self.configs["role"]  if self.configs["role"] not "infer" else None
         excel_importer = importers.ExcelImporter(rules_file_path)
         try:
             rules = excel_importer.to_rules()
