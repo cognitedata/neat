@@ -5,7 +5,7 @@ from typing import Literal, TypeAlias, overload
 
 from rdflib import Namespace
 
-from cognite.neat.rules.models._rules import DMSRules, DomainRules, InformationRules
+from cognite.neat.rules.models._rules import DMSRules, DomainRules, InformationRules, RoleTypes
 
 from ._models import IssueList
 
@@ -18,15 +18,17 @@ class BaseImporter(ABC):
     """
 
     @overload
-    def to_rules(self, errors: Literal["raise"]) -> Rule:
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rule:
         ...
 
     @overload
-    def to_rules(self, errors: Literal["continue"]) -> tuple[Rule | None, IssueList]:
+    def to_rules(self, errors: Literal["continue"], role: RoleTypes | None = None) -> tuple[Rule | None, IssueList]:
         ...
 
     @abstractmethod
-    def to_rules(self, errors: Literal["raise", "continue"]) -> tuple[Rule | None, IssueList] | Rule:
+    def to_rules(
+        self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
+    ) -> tuple[Rule | None, IssueList] | Rule:
         """
         Creates `Rules` object from the data for target role.
         """

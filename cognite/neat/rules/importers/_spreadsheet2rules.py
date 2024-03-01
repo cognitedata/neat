@@ -4,7 +4,7 @@ generating a list of rules based on which nodes that form the graph are made.
 """
 
 from pathlib import Path
-from typing import cast
+from typing import Literal, cast, overload
 
 import pandas as pd
 
@@ -14,14 +14,25 @@ from cognite.neat.rules.models._rules.base import RoleTypes
 from cognite.neat.utils.auxiliary import local_import
 from cognite.neat.utils.spreadsheet import read_spreadsheet
 
-from ._base import BaseImporter
+from ._base import BaseImporter, Rule
+from ._models import IssueList
 
 
 class ExcelImporter(BaseImporter):
     def __init__(self, filepath: Path):
         self.filepath = filepath
 
-    def to_rules(self, role: RoleTypes | None = None) -> DomainRules | InformationRules | DMSRules:
+    @overload
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rule:
+        ...
+
+    @overload
+    def to_rules(self, errors: Literal["continue"], role: RoleTypes | None = None) -> tuple[Rule | None, IssueList]:
+        ...
+
+    def to_rules(
+        self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
+    ) -> tuple[Rule | None, IssueList] | Rule:
         excel_file = pd.ExcelFile(self.filepath)
 
         try:
@@ -64,10 +75,21 @@ class ExcelImporter(BaseImporter):
 
 
 class GoogleSheetImporter(BaseImporter):
-    def __init__(self, sheet_id: str):
+    def __init__(self, sheet_id: str, skiprows: int = 1):
         self.sheet_id = sheet_id
+        self.skiprows = skiprows
 
-    def to_rules(self, role: RoleTypes | None = None, skiprows: int = 1) -> DomainRules | InformationRules | DMSRules:
+    @overload
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rule:
+        ...
+
+    @overload
+    def to_rules(self, errors: Literal["continue"], role: RoleTypes | None = None) -> tuple[Rule | None, IssueList]:
+        ...
+
+    def to_rules(
+        self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
+    ) -> tuple[Rule | None, IssueList] | Rule:
         local_import("gspread", "google")
         import gspread  # type: ignore[import]
 

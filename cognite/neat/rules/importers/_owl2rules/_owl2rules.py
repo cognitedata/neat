@@ -4,11 +4,13 @@ there are loaders to TransformationRules pydantic class."""
 # TODO: if this module grows too big, split it into several files and place under ./converter directory
 
 from pathlib import Path
+from typing import Literal, overload
 
 from rdflib import DC, DCTERMS, OWL, RDF, RDFS, SKOS, Graph
 
 from cognite.neat.rules.importers._base import BaseImporter
-from cognite.neat.rules.models._rules import InformationRules
+from cognite.neat.rules.importers._models import IssueList
+from cognite.neat.rules.models._rules import InformationRules, RoleTypes
 from cognite.neat.rules.models.value_types import XSD_VALUE_TYPE_MAPPINGS
 
 from ._owl2classes import parse_owl_classes
@@ -36,10 +38,26 @@ class OWLImporter(BaseImporter):
 
     """
 
-    def __init__(self, owl_filepath: Path):
+    def __init__(self, owl_filepath: Path, make_compliant: bool = True):
         self.owl_filepath = owl_filepath
+        self.make_compliant = make_compliant
 
-    def to_rules(self, make_compliant: bool = True) -> InformationRules:
+    @overload
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> InformationRules:
+        ...
+
+    @overload
+    def to_rules(
+        self, errors: Literal["continue"], role: RoleTypes | None = None
+    ) -> tuple[InformationRules | None, IssueList]:
+        ...
+
+    def to_rules(
+        self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
+    ) -> tuple[InformationRules | None, IssueList] | InformationRules:
+        if role is not None and role != RoleTypes.information_architect:
+            raise ValueError(f"Role {role} is not supported for OWLImporter")
+
         graph = Graph()
         try:
             graph.parse(self.owl_filepath)
@@ -55,12 +73,12 @@ class OWLImporter(BaseImporter):
         graph.bind("skos", SKOS)
 
         components = {
-            "Metadata": parse_owl_metadata(graph, make_compliant=make_compliant),
-            "Classes": parse_owl_classes(graph, make_compliant=make_compliant),
-            "Properties": parse_owl_properties(graph, make_compliant=make_compliant),
+            "Metadata": parse_owl_metadata(graph, make_compliant=self.make_compliant),
+            "Classes": parse_owl_classes(graph, make_compliant=self.make_compliant),
+            "Properties": parse_owl_properties(graph, make_compliant=self.make_compliant),
         }
 
-        if make_compliant:
+        if self.make_compliant:
             components = make_components_compliant(components)
 
         return InformationRules.model_validate(components)
