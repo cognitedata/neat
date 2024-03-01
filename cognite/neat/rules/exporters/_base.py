@@ -12,13 +12,16 @@ T_Export = TypeVar("T_Export")
 
 class BaseExporter(ABC, Generic[T_Export]):
     @abstractmethod
-    def export_to_file(self, filepath: Path) -> None:
-        raise NotImplementedError
-
-    @abstractmethod
     def export(self) -> T_Export:
         raise NotImplementedError
 
     @abstractmethod
     def export_to_cdf(self, client: CogniteClient, dry_run: bool = False) -> Iterable[UploadResult]:
         raise NotImplementedError
+
+    @abstractmethod
+    def _export_to_file(self, filepath: Path) -> None:
+        raise NotImplementedError
+
+    def export_to_file(self, filepath: Path) -> None:
+        self._export_to_file(filepath)
