@@ -150,7 +150,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                         properties={
                             "ratedPower": dm.ContainerProperty(type=dm.Float64(), nullable=True),
                         },
-                        constraints={"my_space:Asset": dm.RequiresConstraint(dm.ContainerId("my_space", "Asset"))},
+                        constraints={"my_space_Asset": dm.RequiresConstraint(dm.ContainerId("my_space", "Asset"))},
                     ),
                 ]
             ),

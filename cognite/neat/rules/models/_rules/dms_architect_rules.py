@@ -3,7 +3,7 @@ import math
 import re
 from collections import defaultdict
 from datetime import datetime
-from typing import TYPE_CHECKING, ClassVar, Literal, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
 
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import PropertyType as CognitePropertyType
@@ -11,6 +11,7 @@ from cognite.client.data_classes.data_modeling.containers import BTreeIndex
 from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 from cognite.client.data_classes.data_modeling.views import ViewPropertyApply
 from pydantic import Field, field_validator, model_validator
+from pydantic_core.core_schema import ValidationInfo
 from rdflib import Namespace
 
 from cognite.neat.rules.models._rules.domain_rules import DomainRules
@@ -145,6 +146,12 @@ class DMSProperty(SheetEntity):
     index: StrListType | None = Field(None, alias="Index")
     constraint: StrListType | None = Field(None, alias="Constraint")
 
+    @field_validator("nullable")
+    def direct_relation_must_be_nullable(cls, value: Any, info: ValidationInfo) -> None:
+        if info.data.get("relation") == "direct" and value is False:
+            raise ValueError("Direct relation must be nullable")
+        return value
+
 
 class DMSContainer(SheetEntity):
     class_: ClassType | None = Field(None, alias="Class")
@@ -156,7 +163,7 @@ class DMSContainer(SheetEntity):
         constraints: dict[str, dm.Constraint] = {}
         for constraint in self.constraint or []:
             requires = dm.RequiresConstraint(constraint.as_id(default_space))
-            constraints = {constraint.versioned_id: requires}
+            constraints[f"{constraint.space}_{constraint.external_id}"] = requires
 
         return dm.ContainerApply(
             space=container_id.space,
