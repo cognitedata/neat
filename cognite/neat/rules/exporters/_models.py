@@ -39,3 +39,20 @@ class UploadResult(UploadResultCore):
     @property
     def failed(self) -> int:
         return self.failed_created + self.failed_changed
+
+    def as_report_str(self) -> str:
+        line = []
+        if self.created:
+            line.append(f"created {self.created}")
+        if self.changed:
+            line.append(f"updated {self.changed}")
+        if self.skipped:
+            line.append(f"skipped {self.skipped}")
+        if self.unchanged:
+            line.append(f"unchanged {self.unchanged}")
+        if self.failed_created:
+            line.append(f"failed to create {self.failed_created}")
+        if self.failed_changed:
+            line.append(f"failed to update {self.failed_changed}")
+
+        return f"{self.name.title()}: {', '.join(line)}"

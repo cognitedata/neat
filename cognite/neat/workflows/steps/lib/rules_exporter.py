@@ -8,14 +8,14 @@ from cognite.client import data_modeling as dm
 
 import cognite.neat.graph.extractors._graph_capturing_sheet
 from cognite.neat.exceptions import wrangle_warnings
-from cognite.neat.rules import exporter
+from cognite.neat.rules import exporter, exporters
 from cognite.neat.rules.exporter._rules2dms import DMSSchemaComponents
 from cognite.neat.rules.exporter._rules2graphql import GraphQLSchema
 from cognite.neat.rules.exporter._rules2ontology import Ontology
 from cognite.neat.utils.utils import generate_exception_report
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
-from cognite.neat.workflows.steps.data_contracts import CogniteClient, DMSSchemaComponentsData, RulesData
+from cognite.neat.workflows.steps.data_contracts import CogniteClient, DMSSchemaComponentsData, MultiRuleData, RulesData
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
 __all__ = [
@@ -28,6 +28,7 @@ __all__ = [
     "ExportRulesToExcel",
     "GenerateDMSSchemaComponentsFromRules",
     "DeleteDMSSchemaComponents",
+    "ExportDataModelStorage",
 ]
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
@@ -511,3 +512,120 @@ class ExportRulesToExcel(Step):
         full_path = Path(self.data_store_path) / Path(self.configs["output_file_path"])
         exporter.ExcelExporter.from_rules(rules=rules_data.rules).export_to_file(filepath=full_path)
         return FlowMessage(output_text="Generated Excel file from rules")
+
+
+class ExportDataModelStorage(Step):
+    """
+    This step exports generated DMS Schema components to CDF
+    """
+
+    description = "This step exports generated DMS Schema to CDF."
+    version = "private-beta"
+    category = CATEGORY
+
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="dry_run",
+            value="False",
+            label=("Whether to perform a dry run of the export. "),
+            options=["True", "False"],
+        ),
+        Configurable(
+            name="components",
+            type="multi_select",
+            value="",
+            label="Select which DMS schema component(s) to export to CDF",
+            options=["spaces", "containers", "views", "data_models"],
+        ),
+        Configurable(
+            name="existing_component_handling",
+            value="fail",
+            label=(
+                "How to handle situation when components being exported in CDF already exist."
+                "Fail the step if any component already exists, "
+                "Skip the component if it already exists, "
+                " or Update the component try to update the component."
+            ),
+            options=["fail", "skip", "update"],
+        ),
+        Configurable(
+            name="multi_space_components_create",
+            value="False",
+            label=(
+                "Whether to create only components belonging to the data model space"
+                " (i.e. space define under Metadata sheet of Rules), "
+                "or also additionally components outside of the data model space."
+            ),
+            options=["True", "False"],
+        ),
+    ]
+
+    def run(self, rules: MultiRuleData, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override, syntax]
+        if self.configs is None or self.data_store_path is None:
+            raise StepNotInitialized(type(self).__name__)
+        existing_components_handling = cast(
+            Literal["fail", "update", "skip"], self.configs["existing_component_handling"]
+        )
+        multi_space_components_create: bool = self.configs["multi_space_components_create"] == "True"
+        components_to_create = {
+            cast(Literal["all", "spaces", "data_models", "views", "containers"], key)
+            for key, value in self.complex_configs["components"].items()
+            if value
+        }
+        dry_run = self.configs["dry_run"] == "True"
+
+        if not components_to_create:
+            return FlowMessage(
+                error_text="No DMS Schema components selected for upload! Please select minimum one!",
+                step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
+            )
+        dms_rules = rules.dms
+        if dms_rules is None:
+            return FlowMessage(
+                error_text="Missing DMS rules in the input data! Please ensure that a DMS rule is provided!",
+                step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
+            )
+
+        dms_exporter = exporters.DMSExporter(
+            dms_rules,
+            export_components=frozenset(components_to_create),
+            include_space=None if multi_space_components_create else {dms_rules.metadata.space},
+            existing_handling=existing_components_handling,
+        )
+
+        output_dir = self.data_store_path / Path("staging")
+        output_dir.mkdir(parents=True, exist_ok=True)
+        schema_zip = f"{dms_rules.metadata.external_id}.zip"
+        schema_full_path = output_dir / schema_zip
+        dms_exporter.export_to_file(schema_full_path)
+
+        report_lines = ["# DMS Schema Export to CDF\n\n"]
+        errors = []
+        for result in dms_exporter.export_to_cdf(client=cdf_client, dry_run=dry_run):
+            report_lines.append(result.as_report_str())
+            errors.extend(result.error_messages)
+
+        report_lines.append("\n\n# ERRORS\n\n")
+        report_lines.extend(errors)
+
+        output_dir = self.data_store_path / Path("staging")
+        output_dir.mkdir(parents=True, exist_ok=True)
+        report_file = "dms_component_creation_report.txt"
+        report_full_path = output_dir / report_file
+        report_full_path.write_text("\n".join(report_lines))
+
+        output_text = (
+            "<p></p>"
+            "Download DMS Export Report"
+            f'<a href="/data/staging/{report_file}?{time.time()}" '
+            f'target="_blank">report</a>'
+            "<p></p>"
+            "Download DMS exported schema"
+            f'- <a href="/data/staging/{schema_zip}?{time.time()}" '
+            f'target="_blank">{schema_zip}</a>'
+        )
+
+        if errors:
+            return FlowMessage(error_text=output_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
+        else:
+            return FlowMessage(output_text=output_text)

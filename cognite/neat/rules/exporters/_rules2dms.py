@@ -26,12 +26,16 @@ class DMSExporter(BaseExporter[DMSSchema]):
     def __init__(
         self,
         rules: DMSRules,
-        export_components: Literal["all", "spaces", "data_models", "views", "containers"] = "all",
+        export_components: frozenset[Literal["all", "spaces", "data_models", "views", "containers"]] = frozenset(
+            {"all"}
+        ),
         include_space: set[str] | None = None,
+        existing_handling: Literal["fail", "skip", "update"] = "update",
     ):
         self.rules = rules
         self.export_components = export_components
         self.include_space = include_space
+        self.existing_handling = existing_handling
         self._schema: DMSSchema | None = None
 
     def export_to_file(self, filepath: Path) -> None:
@@ -58,13 +62,13 @@ class DMSExporter(BaseExporter[DMSSchema]):
     def export_to_cdf(self, client: CogniteClient, dry_run: bool = False) -> Iterable[UploadResult]:
         schema = self.export()
         to_export: list[tuple[CogniteResourceList, DataModelingLoader]] = []
-        if self.export_components in {"all", "spaces"}:
+        if self.export_components.intersection({"all", "spaces"}):
             to_export.append((schema.spaces, SpaceLoader(client)))
-        if self.export_components in {"all", "containers"}:
+        if self.export_components.intersection({"all", "containers"}):
             to_export.append((schema.containers, ContainerLoader(client)))
-        if self.export_components in {"all", "views"}:
+        if self.export_components.intersection({"all", "views"}):
             to_export.append((schema.views, ViewLoader(client)))
-        if self.export_components in {"all", "data_models"}:
+        if self.export_components.intersection({"all", "data_models"}):
             to_export.append((schema.data_models, DataModelLoader(client)))
 
         for items, loader in to_export:
@@ -83,9 +87,22 @@ class DMSExporter(BaseExporter[DMSSchema]):
                 else:
                     to_update.append(item)
             created = len(to_create)
-            changed = len(to_update)
             failed_created = 0
-            failed_changed = 0
+
+            skipped = 0
+            if self.existing_handling == "update":
+                changed = len(to_update)
+                failed_changed = 0
+            elif self.existing_handling == "skip":
+                changed = 0
+                failed_changed = 0
+                skipped += len(to_update)
+            elif self.existing_handling == "fail":
+                failed_changed = len(to_update)
+                changed = 0
+            else:
+                raise ValueError(f"Unsupported existing_handling {self.existing_handling}")
+
             error_messages: list[str] = []
             if not dry_run:
                 to_create = loader.sort_by_dependencies(to_create)
@@ -96,18 +113,20 @@ class DMSExporter(BaseExporter[DMSSchema]):
                     created -= failed_created
                     error_messages.append(e.message)
 
-                try:
-                    loader.update(to_update)
-                except CogniteAPIError as e:
-                    failed_changed = len(e.failed) + len(e.unknown)
-                    changed -= failed_changed
-                    error_messages.append(e.message)
+                if self.existing_handling == "update":
+                    try:
+                        loader.update(to_update)
+                    except CogniteAPIError as e:
+                        failed_changed = len(e.failed) + len(e.unknown)
+                        changed -= failed_changed
+                        error_messages.append(e.message)
 
             yield UploadResult(
                 name=loader.resource_name,
                 created=len(to_create),
                 changed=len(to_update),
                 unchanged=len(unchanged),
+                skipped=skipped,
                 failed_created=failed_created,
                 failed_changed=failed_changed,
                 error_messages=error_messages,

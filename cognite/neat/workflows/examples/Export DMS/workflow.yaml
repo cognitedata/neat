@@ -1,0 +1,70 @@
+configs: []
+description: null
+implementation_module: null
+name: Export DMS
+steps:
+-   complex_configs: {}
+    configs: {}
+    description: null
+    enabled: true
+    id: step_861205
+    label: Upload Rules Spreadsheet
+    max_retries: 0
+    method: null
+    params:
+        file_type: rules
+    retry_delay: 3
+    stype: file_uploader
+    system_component_id: null
+    transition_to:
+    - step_295479
+    trigger: true
+    ui_config:
+        pos_x: 630
+        pos_y: 69
+-   complex_configs: {}
+    configs:
+        Report Formatter: html
+        role: infer
+    description: null
+    enabled: true
+    id: step_295479
+    label: Validate
+    max_retries: 0
+    method: ImportExcelValidator
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+    - step_50885
+    trigger: false
+    ui_config:
+        pos_x: 630
+        pos_y: 180
+-   complex_configs:
+        components:
+            containers: true
+            data_models: true
+            spaces: true
+            views: true
+    configs:
+        dry_run: 'False'
+        existing_component_handling: update
+        multi_space_components_create: 'True'
+    description: null
+    enabled: true
+    id: step_50885
+    label: Export Data Model to CDF
+    max_retries: 0
+    method: ExportDataModelStorage
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to: []
+    trigger: false
+    ui_config:
+        pos_x: 630
+        pos_y: 274
+system_components: []
