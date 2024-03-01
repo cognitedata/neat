@@ -1,10 +1,15 @@
 import getpass
 from abc import ABC, abstractmethod
 from datetime import datetime
+from typing import Literal, TypeAlias, overload
 
 from rdflib import Namespace
 
 from cognite.neat.rules.models._rules import DMSRules, DomainRules, InformationRules
+
+from ._models import IssueList
+
+Rule: TypeAlias = DomainRules | InformationRules | DMSRules | None
 
 
 class BaseImporter(ABC):
@@ -12,8 +17,16 @@ class BaseImporter(ABC):
     BaseImporter class which all importers inherit from.
     """
 
+    @overload
+    def to_rules(self, errors: Literal["raise"]) -> Rule:
+        ...
+
+    @overload
+    def to_rules(self, errors: Literal["continue"]) -> tuple[Rule | None, IssueList]:
+        ...
+
     @abstractmethod
-    def to_rules(self) -> DomainRules | InformationRules | DMSRules:
+    def to_rules(self, errors: Literal["raise", "continue"]) -> tuple[Rule | None, IssueList] | Rule:
         """
         Creates `Rules` object from the data for target role.
         """
