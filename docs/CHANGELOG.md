@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.65.0] - 01-03-24
+## Added
+- Added support for scheduling on given weekdays for time trigger
+
 ## [0.64.0] - 21-03-24
 ## Added
 - Added functionality to import and export global configuration file to and from CDF
