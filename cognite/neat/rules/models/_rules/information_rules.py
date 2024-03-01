@@ -249,9 +249,10 @@ class InformationRules(RuleModel):
     def validate_class_has_properties_has_parent(self) -> Self:
         defined_classes = {class_.class_ for class_ in self.classes}
         referred_classes = {property_.class_ for property_ in self.properties}
-        missing_classes = referred_classes.difference(defined_classes)
+        has_parent_classes = {class_.class_ for class_ in self.classes if class_.parent}
+        missing_classes = referred_classes.difference(defined_classes) - has_parent_classes
         if missing_classes:
-            exceptions.ClassNoProperties(list(missing_classes)).to_pydantic_custom_error()
+            exceptions.ClassNoPropertiesNoParent(list(missing_classes)).to_pydantic_custom_error()
         return self
 
     def as_domain_rules(self) -> DomainRules:
