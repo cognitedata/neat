@@ -8,7 +8,8 @@ from typing import Literal, cast, overload
 
 import pandas as pd
 
-from cognite.neat.rules.exceptions import MetadataSheetMissingOrFailedValidation
+from cognite.neat.rules.exceptions import MetadataSheetMissingOrFailedValidation, \
+    MetadataSheetMissingOrFailedValidationError, SpreadsheetMissing
 from cognite.neat.rules.models._rules import RULES_PER_ROLE, DMSRules, DomainRules, InformationRules
 from cognite.neat.rules.models._rules.base import RoleTypes
 from cognite.neat.utils.auxiliary import local_import
@@ -23,25 +24,26 @@ class ExcelImporter(BaseImporter):
         self.filepath = filepath
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rule:
+    def to_rules(self, errors: Literal["raise"] = "raise", role: RoleTypes | None = None) -> Rule:
         ...
 
     @overload
-    def to_rules(self, errors: Literal["continue"], role: RoleTypes | None = None) -> tuple[Rule | None, IssueList]:
+    def to_rules(self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None) -> tuple[Rule | None, IssueList]:
         ...
 
     def to_rules(
         self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
     ) -> tuple[Rule | None, IssueList] | Rule:
         excel_file = pd.ExcelFile(self.filepath)
+        issues = IssueList()
 
         try:
             metadata = dict(pd.read_excel(excel_file, "Metadata", header=None).values)
         except ValueError as e:
-            if ...:
-                raise MetadataSheetMissingOrFailedValidation() from None
-            else:
-                raise UserWarning("Metadata sheet is missing or failed validation") from e
+            issues.append(MetadataSheetMissingOrFailedValidationError())
+            if errors == "raise":
+                raise issues.raise_errors()
+            return None, issues
 
         role = role or RoleTypes(metadata.get("role", RoleTypes.domain_expert))
         role_enum = RoleTypes(role)
@@ -49,7 +51,10 @@ class ExcelImporter(BaseImporter):
         sheet_names = {str(name).lower() for name in excel_file.sheet_names}
 
         if missing_sheets := rules_model.mandatory_fields().difference(sheet_names):
-            raise ValueError(f"Missing mandatory sheets: {missing_sheets}")
+            issues.append(SpreadsheetMissing(list(missing_sheets)))
+            if errors == "raise":
+                raise issues.raise_errors()
+            return None, issues
 
         sheets = {
             "Metadata": metadata,
