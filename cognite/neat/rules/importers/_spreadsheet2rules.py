@@ -8,6 +8,7 @@ from typing import cast
 
 import pandas as pd
 
+from cognite.neat.rules.exceptions import MetadataSheetMissingOrFailedValidation
 from cognite.neat.rules.models._rules import RULES_PER_ROLE, DMSRules, DomainRules, InformationRules
 from cognite.neat.rules.models._rules.base import RoleTypes
 from cognite.neat.utils.auxiliary import local_import
@@ -21,16 +22,25 @@ class ExcelImporter(BaseImporter):
         self.filepath = filepath
 
     def to_rules(self, role: RoleTypes | None = None) -> DomainRules | InformationRules | DMSRules:
-        role = role or RoleTypes.domain_expert
-        rules_model = cast(DomainRules | InformationRules | DMSRules, RULES_PER_ROLE[role])
         excel_file = pd.ExcelFile(self.filepath)
+
+        try:
+            metadata = dict(pd.read_excel(excel_file, "Metadata", header=None).values)
+        except ValueError as e:
+            if ...:
+                raise MetadataSheetMissingOrFailedValidation() from None
+            else:
+                raise UserWarning("Metadata sheet is missing or failed validation") from e
+
+        role = role or RoleTypes(metadata.get("role", RoleTypes.domain_expert))
+        rules_model = cast(DomainRules | InformationRules | DMSRules, RULES_PER_ROLE[role])
         sheet_names = {str(name).lower() for name in excel_file.sheet_names}
 
         if missing_sheets := rules_model.mandatory_fields().difference(sheet_names):
             raise ValueError(f"Missing mandatory sheets: {missing_sheets}")
 
         sheets = {
-            "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),
+            "Metadata": metadata,
             "Properties": read_spreadsheet(excel_file, "Properties", ["Class"]),
             "Classes": (
                 read_spreadsheet(excel_file, "Classes", ["Class"]) if "Classes" in excel_file.sheet_names else None
