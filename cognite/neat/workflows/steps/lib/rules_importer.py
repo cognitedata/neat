@@ -645,7 +645,7 @@ class ImportExcelValidator(Step):
         role = self.configs["role"]  if self.configs["role"] not "infer" else None
         excel_importer = importers.ExcelImporter(rules_file_path)
         try:
-            rules = excel_importer.to_rules()
+            rules = excel_importer.to_rules(role)
         except ValueError:
             error_text = "Failed to validate rules. Please check the rules file."
             return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
