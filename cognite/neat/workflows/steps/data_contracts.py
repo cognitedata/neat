@@ -6,6 +6,7 @@ from cognite.client.data_classes.data_modeling import EdgeApply, NodeApply
 
 from cognite.neat.graph.stores import NeatGraphStoreBase
 from cognite.neat.rules.exporter._rules2dms import DMSSchemaComponents
+from cognite.neat.rules.models._rules import DMSRules, DomainRules, InformationRules
 from cognite.neat.rules.models.rules import Rules
 from cognite.neat.workflows.steps.step_model import DataContract
 
@@ -19,6 +20,12 @@ class RulesData(DataContract):
     """
 
     rules: Rules
+
+
+class MultiRuleData(DataContract):
+    domain: DomainRules | None = None
+    information: InformationRules | None = None
+    dms: DMSRules | None = None
 
 
 class PathData(DataContract):
