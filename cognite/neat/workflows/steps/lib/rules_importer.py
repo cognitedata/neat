@@ -10,6 +10,7 @@ from prometheus_client import Gauge
 from rdflib import Namespace
 
 from cognite.neat.rules import exporter, importer, importers
+from cognite.neat.rules.models._rules import RoleTypes
 from cognite.neat.rules.models.rdfpath import TransformationRuleType
 from cognite.neat.rules.models.rules import Class, Classes, Metadata, Properties, Property, Rules
 from cognite.neat.rules.models.value_types import ValueType
@@ -631,8 +632,9 @@ class ImportExcelValidator(Step):
             name="role",
             value="infer",
             label="For what role Rules are intended?",
-            options=["infer"] + [role.value for role in RoleTypes],
-        ),]
+            options=["infer", *list(RoleTypes.__members__.keys())],
+        ),
+    ]
 
     def run(self, flow_message: FlowMessage) -> (FlowMessage, MultiRuleData):  # type: ignore[syntax, override]
         if self.configs is None or self.data_store_path is None:
@@ -642,7 +644,7 @@ class ImportExcelValidator(Step):
         except (KeyError, TypeError):
             error_text = "Expected input payload to contain 'full_path' key."
             return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
-        role = self.configs["role"]  if self.configs["role"] not "infer" else None
+        role = self.configs.get("role", "infer")
         excel_importer = importers.ExcelImporter(rules_file_path)
         try:
             rules = excel_importer.to_rules(role)
