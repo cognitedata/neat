@@ -1,0 +1,45 @@
+configs: []
+description: null
+implementation_module: null
+name: Validate Rules
+steps:
+-   complex_configs: {}
+    configs:
+        validation_report_file: rules_validation_report.txt
+        validation_report_storage_dir: rules_validation_report
+    description: null
+    enabled: true
+    id: step_31642
+    label: Validate
+    max_retries: 0
+    method: ImportExcelValidator
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+    - step_942973
+    trigger: false
+    ui_config:
+        pos_x: 557
+        pos_y: 105
+-   complex_configs: {}
+    configs: {}
+    description: null
+    enabled: true
+    id: step_482871
+    label: Upload Rules Spreadsheet
+    max_retries: 0
+    method: null
+    params:
+        file_type: rules
+    retry_delay: 3
+    stype: file_uploader
+    system_component_id: null
+    transition_to:
+    - step_31642
+    trigger: true
+    ui_config:
+        pos_x: 558
+        pos_y: -14
+system_components: []
