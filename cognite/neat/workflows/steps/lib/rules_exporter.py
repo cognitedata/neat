@@ -561,6 +561,8 @@ class ExportDataModelStorage(Step):
     ]
 
     def run(self, rules: MultiRuleData, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override, syntax]
+        if self.configs is None or self.data_store_path is None:
+            raise StepNotInitialized(type(self).__name__)
         existing_components_handling = cast(
             Literal["fail", "update", "skip"], self.configs["existing_component_handling"]
         )

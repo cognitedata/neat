@@ -648,8 +648,8 @@ class ImportExcelValidator(Step):
         excel_importer = importers.ExcelImporter(rules_file_path)
         try:
             rules = excel_importer.to_rules(role)
-        except ValueError:
-            error_text = "Failed to validate rules. Please check the rules file."
+        except ValueError as e:
+            error_text = f"Failed to validate rules. Please check the rules file. {e}"
             return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
 
         output_text = "Rules validation passed successfully!"
