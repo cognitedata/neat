@@ -10,10 +10,10 @@ from cognite.client.exceptions import CogniteAPIError
 
 from cognite.neat.rules.models._rules.dms_architect_rules import DMSRules
 from cognite.neat.rules.models._rules.dms_schema import DMSSchema
+from cognite.neat.utils.cdf_loaders import ContainerLoader, DataModelingLoader, DataModelLoader, SpaceLoader, ViewLoader
 
 from ._base import BaseExporter
-from ._data_classes import UploadResult
-from ._loaders import ContainerLoader, DataModelingLoader, DataModelLoader, SpaceLoader, ViewLoader
+from ._models import UploadResult
 
 
 class DMSExporter(BaseExporter[DMSSchema]):
