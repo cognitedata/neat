@@ -104,12 +104,9 @@ class WorkflowManager:
             full_path = self.workflows_storage_path / name / "workflow.yaml"
             full_path.parent.mkdir(parents=True, exist_ok=True)
             wf = self.workflow_registry[name]
-            with full_path.open("w") as f:
-                f.write(
-                    wf.serialize_workflow(
-                        output_format="yaml", custom_implementation_module=custom_implementation_module
-                    )
-                )
+            full_path.write_text(
+                wf.serialize_workflow(output_format="yaml", custom_implementation_module=custom_implementation_module)
+            )
 
     def create_new_workflow(self, name: str, description=None, mode: str = "manifest") -> WorkflowDefinition:
         """Create new workflow in memory"""

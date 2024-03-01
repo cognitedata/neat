@@ -28,6 +28,7 @@ __all__ = [
     "ExportRulesToExcel",
     "GenerateDMSSchemaComponentsFromRules",
     "DeleteDMSSchemaComponents",
+    "ExportDataModelStorage",
 ]
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
