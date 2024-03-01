@@ -9,7 +9,7 @@ import yaml
 from prometheus_client import Gauge
 from rdflib import Namespace
 
-from cognite.neat.rules import exporter, importer
+from cognite.neat.rules import exporter, importer, importers
 from cognite.neat.rules.models.rdfpath import TransformationRuleType
 from cognite.neat.rules.models.rules import Class, Classes, Metadata, Properties, Property, Rules
 from cognite.neat.rules.models.value_types import ValueType
@@ -636,7 +636,19 @@ class ImportExcelValidator(Step):
     def run(self, flow_message: FlowMessage) -> (FlowMessage, MultiRuleData):  # type: ignore[syntax, override]
         if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
-        output_text = str(f"Payload: {flow_message.payload!s}")
-        output_text += str(f"Headers: {flow_message.headers!s}")
-        print(output_text)
-        return FlowMessage(output_text=output_text), MultiRuleData()
+        try:
+            rules_file_path = flow_message.payload["full_path"]
+        except (KeyError, TypeError):
+            error_text = "Expected input payload to contain 'full_path' key."
+            return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
+
+        excel_importer = importers.ExcelImporter(rules_file_path)
+        try:
+            rules = excel_importer.to_rules()
+        except ValueError:
+            error_text = "Failed to validate rules. Please check the rules file."
+            return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
+
+        output_text = "Rules validation passed successfully!"
+
+        return FlowMessage(output_text=output_text), MultiRuleData.from_rules(rules)

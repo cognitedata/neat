@@ -27,6 +27,17 @@ class MultiRuleData(DataContract):
     information: InformationRules | None = None
     dms: DMSRules | None = None
 
+    @classmethod
+    def from_rules(cls, rules: DomainRules | InformationRules | DMSRules):
+        if isinstance(rules, DomainRules):
+            return cls(domain=rules)
+        elif isinstance(rules, InformationRules):
+            return cls(information=rules)
+        elif isinstance(rules, DMSRules):
+            return cls(dms=rules)
+        else:
+            raise ValueError(f"Unsupported rules type {type(rules)}")
+
 
 class PathData(DataContract):
     """
