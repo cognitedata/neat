@@ -627,7 +627,12 @@ class ImportExcelValidator(Step):
             label="The format of the report for the validation of the rules",
             options=["html"],
         ),
-    ]
+        Configurable(
+            name="role",
+            value="infer",
+            label="For what role Rules are intended?",
+            options=["infer"] + [role.value for role in RoleTypes],
+        ),]
 
     def run(self, flow_message: FlowMessage) -> (FlowMessage, MultiRuleData):  # type: ignore[syntax, override]
         if self.configs is None or self.data_store_path is None:
