@@ -62,13 +62,13 @@ class DMSExporter(BaseExporter[DMSSchema]):
     def export_to_cdf(self, client: CogniteClient, dry_run: bool = False) -> Iterable[UploadResult]:
         schema = self.export()
         to_export: list[tuple[CogniteResourceList, DataModelingLoader]] = []
-        if self.export_components in {"all", "spaces"}:
+        if self.export_components.intersection({"all", "spaces"}):
             to_export.append((schema.spaces, SpaceLoader(client)))
-        if self.export_components in {"all", "containers"}:
+        if self.export_components.intersection({"all", "containers"}):
             to_export.append((schema.containers, ContainerLoader(client)))
-        if self.export_components in {"all", "views"}:
+        if self.export_components.intersection({"all", "views"}):
             to_export.append((schema.views, ViewLoader(client)))
-        if self.export_components in {"all", "data_models"}:
+        if self.export_components.intersection({"all", "data_models"}):
             to_export.append((schema.data_models, DataModelLoader(client)))
 
         for items, loader in to_export:
