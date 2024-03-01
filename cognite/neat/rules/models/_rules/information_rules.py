@@ -246,7 +246,7 @@ class InformationRules(RuleModel):
         return self
 
     @model_validator(mode="after")
-    def validate_class_has_properties(self) -> Self:
+    def validate_class_has_properties_has_parent(self) -> Self:
         defined_classes = {class_.class_ for class_ in self.classes}
         referred_classes = {property_.class_ for property_ in self.properties}
         missing_classes = referred_classes.difference(defined_classes)
