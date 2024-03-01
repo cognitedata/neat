@@ -32,7 +32,7 @@ class GraphExporter(BaseExporter[Graph], ABC):
     def __init__(self, rules: InformationRules):
         self.rules = rules
 
-    def _export_to_file(self, filepath: Path) -> None:
+    def export_to_file(self, filepath: Path) -> None:
         self.export().serialize(destination=filepath)
 
 
