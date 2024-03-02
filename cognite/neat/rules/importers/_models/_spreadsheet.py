@@ -1,6 +1,6 @@
 from abc import ABC
 from dataclasses import dataclass
-from typing import ClassVar, TypeVar
+from typing import Any, ClassVar, Self
 
 from pydantic_core import ErrorDetails
 
@@ -61,21 +61,53 @@ class InvalidRole(Error):
 
 
 @dataclass
-class InvalidSpreadsheetSpecification(Error, ABC):
+class InvalidSheetSpecification(Error, ABC):
     description: ClassVar[str] = "This is a generic class for all invalid specifications."
     fix: ClassVar[str] = "Follow the instruction in the error message."
+    sheet_name: ClassVar[str]
+
+    column: str
+    row: int
+    type: str
+    msg: str
+    input: Any
+    url: str | None
 
     @classmethod
-    def from_pydantic_error(
-        cls: type["T_InvalidSpreadsheetSpecification"], error: ErrorDetails
-    ) -> "T_InvalidSpreadsheetSpecification":
-        raise NotImplementedError()
-
-
-T_InvalidSpreadsheetSpecification = TypeVar("T_InvalidSpreadsheetSpecification", bound=InvalidSpreadsheetSpecification)
+    def from_pydantic_error(cls, error: ErrorDetails) -> Self:
+        *_, row, column = error["loc"]
+        return cls(
+            column=str(column),
+            row=int(row),
+            type=error["type"],
+            msg=error["msg"],
+            input=error.get("input"),
+            url=str(url) if (url := error.get("url")) else None,
+        )
 
 
 @dataclass
-class InvalidPropertySpecification(Error):
-    description: ClassVar[str] = "This is a generic class for all invalid property specifications."
-    fix: ClassVar[str] = "Follow the instruction in the error message."
+class InvalidPropertySpecification(InvalidSheetSpecification):
+    sheet_name = "Properties"
+
+
+@dataclass
+class InvalidClassSpecification(InvalidSheetSpecification):
+    sheet_name = "Classes"
+
+
+@dataclass
+class InvalidContainerSpecification(InvalidSheetSpecification):
+    sheet_name = "Containers"
+
+
+@dataclass
+class InvalidViewSpecification(InvalidSheetSpecification):
+    sheet_name = "Views"
+
+
+INVALID_SPECIFICATION_BY_SHEET_NAME = {
+    cls_.sheet_name: cls_
+    for cls_ in InvalidSheetSpecification.__subclasses__()
+    if cls_ is not InvalidSheetSpecification
+}

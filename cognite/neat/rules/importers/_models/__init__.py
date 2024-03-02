@@ -2,7 +2,7 @@ from ._base import Error, IssueList, ValidationIssue, ValidationWarning
 from ._spreadsheet import (
     InvalidPropertySpecification,
     InvalidRole,
-    InvalidSpreadsheetSpecification,
+    InvalidSheetSpecification,
     MetadataSheetMissingOrFailed,
     ReadSpreadsheets,
     SpreadsheetMissing,
@@ -19,6 +19,6 @@ __all__ = [
     "SpreadsheetMissing",
     "ReadSpreadsheets",
     "InvalidRole",
-    "InvalidSpreadsheetSpecification",
+    "InvalidSheetSpecification",
     "InvalidPropertySpecification",
 ]

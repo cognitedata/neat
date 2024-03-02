@@ -57,8 +57,9 @@ class ExcelImporter(BaseImporter):
         role_enum = RoleTypes(role)
         rules_model = RULES_PER_ROLE[role_enum]
         sheet_names = {str(name).lower() for name in excel_file.sheet_names}
+        expected_sheet_names = rules_model.mandatory_fields()
 
-        if missing_sheets := rules_model.mandatory_fields().difference(sheet_names):
+        if missing_sheets := expected_sheet_names.difference(sheet_names):
             issues.append(issue_cls.SpreadsheetMissing(list(missing_sheets)))
             if errors == "raise":
                 raise issues.as_errors()
@@ -96,7 +97,7 @@ class ExcelImporter(BaseImporter):
         except ValidationError as e:
             issues.extend(
                 [
-                    issue_cls.InvalidSpreadsheetSpecification.from_pydantic_error(pydantic_error)
+                    issue_cls.InvalidSheetSpecification.from_pydantic_error(pydantic_error)
                     for pydantic_error in e.errors()
                 ]
             )
