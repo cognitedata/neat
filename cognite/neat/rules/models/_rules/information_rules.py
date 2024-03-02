@@ -210,7 +210,7 @@ class InformationRules(RuleModel):
     metadata: InformationMetadata = Field(alias="Metadata")
     properties: SheetList[InformationProperty] = Field(alias="Properties")
     classes: SheetList[InformationClass] = Field(alias="Classes")
-    prefixes: dict[str, Namespace] = PREFIXES.copy()
+    prefixes: dict[str, Namespace] = Field(default_factory=lambda: PREFIXES.copy())
 
     @model_validator(mode="after")
     def update_entities_prefix(self) -> Self:
