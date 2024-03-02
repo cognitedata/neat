@@ -9,7 +9,7 @@ SHACL = Namespace("http://www.w3.org/ns/shacl#")
 
 
 class TestOntologyExporter:
-    def test_export_dms_schema_to_zip(self, david_rules: InformationRules, tmp_path: Path) -> None:
+    def test_export_semantic_data_model(self, david_rules: InformationRules, tmp_path: Path) -> None:
         exporter = SemanticDataModelExporter(rules=david_rules)
         ttl_path = tmp_path / "test.ttl"
 
