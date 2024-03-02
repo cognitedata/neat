@@ -35,8 +35,14 @@ class ExcelImporter(BaseImporter):
     def to_rules(
         self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
     ) -> tuple[Rule | None, IssueList] | Rule:
-        excel_file = pd.ExcelFile(self.filepath)
         issues = IssueList()
+        try:
+            excel_file = pd.ExcelFile(self.filepath)
+        except FileNotFoundError:
+            issues.append(issue_cls.SpreadsheetNotFound(self.filepath.name))
+            if errors == "raise":
+                raise issues.as_errors() from None
+            return None, issues
 
         try:
             metadata = dict(pd.read_excel(excel_file, "Metadata", header=None).values)

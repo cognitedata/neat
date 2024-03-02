@@ -11,6 +11,17 @@ class SheetContent(ValidationError, ABC):
 
 
 @dataclass
+class SpreadsheetNotFound(ValidationError):
+    description: ClassVar[str] = "Spreadsheet not found"
+    fix: ClassVar[str] = "Make sure to provide a valid spreadsheet"
+
+    spreadsheet_name: str
+
+    def message(self) -> str:
+        return f"Spreadsheet {self.spreadsheet_name} not found"
+
+
+@dataclass
 class MetadataSheetMissingOrFailed(ValidationError):
     description: ClassVar[str] = "Metadata sheet is missing or it failed validation for one or more fields"
     fix: ClassVar[str] = "Make sure to define compliant Metadata sheet before proceeding"
