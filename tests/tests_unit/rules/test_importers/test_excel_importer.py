@@ -5,6 +5,7 @@ import pytest
 from cognite.neat.rules.importers import ExcelImporter
 from cognite.neat.rules.importers import _models as issue_cls
 from tests.config import DOC_KNOWLEDGE_ACQUISITION_TUTORIAL
+from tests.tests_unit.rules.test_importers.constants import DATA_DIR
 
 
 def valid_rules_filepaths():
@@ -16,6 +17,12 @@ def invalid_rules_filepaths():
         DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "not-existing.xlsx",
         issue_cls.SpreadsheetNotFound("not-existing.xlsx"),
         id="Not existing file",
+    )
+
+    yield pytest.param(
+        DATA_DIR / "invalid_dms_rules.xlsx",
+        issue_cls.MetadataSheetMissingOrFailed(),
+        id="Invalid propery in Metadata sheet",
     )
 
 
