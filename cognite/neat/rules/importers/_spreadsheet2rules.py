@@ -8,8 +8,10 @@ from typing import Literal, cast, overload
 
 import pandas as pd
 
-from cognite.neat.rules.exceptions import MetadataSheetMissingOrFailedValidation, \
-    MetadataSheetMissingOrFailedValidationError, SpreadsheetMissing
+from cognite.neat.rules.exceptions import (
+    MetadataSheetMissingOrFailedValidationError,
+    SpreadsheetMissing,
+)
 from cognite.neat.rules.models._rules import RULES_PER_ROLE, DMSRules, DomainRules, InformationRules
 from cognite.neat.rules.models._rules.base import RoleTypes
 from cognite.neat.utils.auxiliary import local_import
@@ -24,11 +26,13 @@ class ExcelImporter(BaseImporter):
         self.filepath = filepath
 
     @overload
-    def to_rules(self, errors: Literal["raise"] = "raise", role: RoleTypes | None = None) -> Rule:
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rule:
         ...
 
     @overload
-    def to_rules(self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None) -> tuple[Rule | None, IssueList]:
+    def to_rules(
+        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
+    ) -> tuple[Rule | None, IssueList]:
         ...
 
     def to_rules(
@@ -39,10 +43,10 @@ class ExcelImporter(BaseImporter):
 
         try:
             metadata = dict(pd.read_excel(excel_file, "Metadata", header=None).values)
-        except ValueError as e:
+        except ValueError:
             issues.append(MetadataSheetMissingOrFailedValidationError())
             if errors == "raise":
-                raise issues.raise_errors()
+                raise issues.as_errors() from None
             return None, issues
 
         role = role or RoleTypes(metadata.get("role", RoleTypes.domain_expert))
@@ -53,7 +57,7 @@ class ExcelImporter(BaseImporter):
         if missing_sheets := rules_model.mandatory_fields().difference(sheet_names):
             issues.append(SpreadsheetMissing(list(missing_sheets)))
             if errors == "raise":
-                raise issues.raise_errors()
+                raise issues.as_errors()
             return None, issues
 
         sheets = {
@@ -89,7 +93,9 @@ class GoogleSheetImporter(BaseImporter):
         ...
 
     @overload
-    def to_rules(self, errors: Literal["continue"], role: RoleTypes | None = None) -> tuple[Rule | None, IssueList]:
+    def to_rules(
+        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
+    ) -> tuple[Rule | None, IssueList]:
         ...
 
     def to_rules(

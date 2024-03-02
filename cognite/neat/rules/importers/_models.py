@@ -16,4 +16,5 @@ class Warning(Issue):
 
 
 class IssueList(UserList[Issue]):
-    ...
+    def as_errors(self) -> ExceptionGroup:
+        raise NotImplementedError()

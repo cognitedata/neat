@@ -632,7 +632,7 @@ class ImportExcelValidator(Step):
             name="role",
             value="infer",
             label="For what role Rules are intended?",
-            options=["infer", *list(RoleTypes.__members__.keys())],
+            options=["infer", *RoleTypes.__members__.keys()],
         ),
     ]
 
@@ -646,11 +646,13 @@ class ImportExcelValidator(Step):
             return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
         # is role is None, it will be inferred from the rules file
         role = self.configs.get("role")
-        if role == "infer":
-            role = None
+        role_enum = None
+        if role != "infer" and role is not None:
+            role_enum = RoleTypes(role)
+
         excel_importer = importers.ExcelImporter(rules_file_path)
         try:
-            rules = excel_importer.to_rules(role)  # type: ignore[arg-type]
+            rules = excel_importer.to_rules(role=role_enum, errors="raise")
         except ValueError as e:
             error_text = f"Failed to validate rules. Please check the rules file. {e}"
             return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)

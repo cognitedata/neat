@@ -10,7 +10,7 @@ handling (such `rdfpath`), and rules loaders, parsers and exporters.
 - 400 - 499: errors and warnings raised when dealing TransformationRules exporters
 
 """
-
+from dataclasses import dataclass
 from typing import Any, ClassVar
 
 from cognite.client.data_classes.data_modeling import ContainerId, DataModelId, ViewId
@@ -681,17 +681,18 @@ class MetadataSheetMissingOrFailedValidation(NeatException):
         super().__init__(self.message)
 
 
+@dataclass
 class MetadataSheetMissingOrFailedValidationError(Error):
     description: ClassVar[str] = "Metadata sheet is missing or it failed validation for one or more fields"
     fix: ClassVar[str] = "Make sure to define compliant Metadata sheet before proceeding"
 
 
+@dataclass
 class SpreadsheetMissing(Error):
     description: ClassVar[str] = "Spreadsheet(s) is missing"
     fix: ClassVar[str] = "Make sure to provide compliant spreadsheet(s) before proceeding"
 
     missing_spreadsheets: list[str]
-
 
 
 class FiledInMetadataSheetMissingOrFailedValidation(NeatException):

@@ -9,7 +9,7 @@ from cognite.neat.rules.models._rules import DMSRules, DomainRules, InformationR
 
 from ._models import IssueList
 
-Rule: TypeAlias = DomainRules | InformationRules | DMSRules | None
+Rule: TypeAlias = DomainRules | InformationRules | DMSRules
 
 
 class BaseImporter(ABC):
@@ -22,7 +22,9 @@ class BaseImporter(ABC):
         ...
 
     @overload
-    def to_rules(self, errors: Literal["continue"], role: RoleTypes | None = None) -> tuple[Rule | None, IssueList]:
+    def to_rules(
+        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
+    ) -> tuple[Rule | None, IssueList]:
         ...
 
     @abstractmethod

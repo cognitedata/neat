@@ -48,7 +48,7 @@ class OWLImporter(BaseImporter):
 
     @overload
     def to_rules(
-        self, errors: Literal["continue"], role: RoleTypes | None = None
+        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
     ) -> tuple[InformationRules | None, IssueList]:
         ...
 

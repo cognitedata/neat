@@ -27,7 +27,9 @@ class DMSImporter(BaseImporter):
         ...
 
     @overload
-    def to_rules(self, errors: Literal["continue"], role: RoleTypes | None = None) -> tuple[DMSRules | None, IssueList]:
+    def to_rules(
+        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
+    ) -> tuple[DMSRules | None, IssueList]:
         ...
 
     def to_rules(
