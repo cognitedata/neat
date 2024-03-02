@@ -12,11 +12,11 @@ from cognite.neat.rules.models._rules.dms_architect_rules import DMSRules
 from cognite.neat.rules.models._rules.dms_schema import DMSSchema
 from cognite.neat.utils.cdf_loaders import ContainerLoader, DataModelingLoader, DataModelLoader, SpaceLoader, ViewLoader
 
-from ._base import BaseExporter
+from ._base import CDFExporter
 from ._models import UploadResult
 
 
-class DMSExporter(BaseExporter[DMSSchema]):
+class DMSExporter(CDFExporter[DMSSchema]):
     """Class for exporting rules object to CDF Data Model Storage (DMS).
 
     Args:

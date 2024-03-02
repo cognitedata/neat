@@ -19,6 +19,8 @@ class BaseExporter(ABC, Generic[T_Export]):
     def export(self) -> T_Export:
         raise NotImplementedError
 
+
+class CDFExporter(ABC, Generic[T_Export]):
     @abstractmethod
     def export_to_cdf(self, client: CogniteClient, dry_run: bool = False) -> Iterable[UploadResult]:
         raise NotImplementedError

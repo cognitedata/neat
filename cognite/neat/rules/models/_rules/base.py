@@ -202,6 +202,7 @@ class BaseRules(RuleModel):
 # An sheet entity is either a class or a property.
 class SheetEntity(RuleModel):
     description: str | None = Field(alias="Description", default=None)
+    name: str | None = Field(alias="Name", default=None)
 
 
 T_Entity = TypeVar("T_Entity", bound=SheetEntity)

@@ -5,7 +5,9 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
 
 from pydantic import Field, model_validator
+from rdflib import Namespace
 
+from cognite.neat.constants import PREFIXES
 from cognite.neat.rules import exceptions
 from cognite.neat.rules.models.rdfpath import (
     AllReferences,
@@ -208,6 +210,7 @@ class InformationRules(RuleModel):
     metadata: InformationMetadata = Field(alias="Metadata")
     properties: SheetList[InformationProperty] = Field(alias="Properties")
     classes: SheetList[InformationClass] = Field(alias="Classes")
+    prefixes: dict[str, Namespace] = Field(default_factory=lambda: PREFIXES.copy())
 
     @model_validator(mode="after")
     def update_entities_prefix(self) -> Self:
