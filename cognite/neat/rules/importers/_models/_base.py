@@ -9,6 +9,15 @@ class ValidationIssue(ABC):
     description: ClassVar[str]
     fix: ClassVar[str]
 
+    def message(self) -> str:
+        """Return a human-readable message for the issue.
+
+        This is the default implementation, which returns the description.
+        It is recommended to override this method in subclasses with a more
+        specific message.
+        """
+        return self.description
+
 
 @dataclass
 class ValidationError(ValidationIssue, ABC):

@@ -8,15 +8,12 @@ from typing import Literal, cast, overload
 
 import pandas as pd
 
-from cognite.neat.rules.exceptions import (
-    MetadataSheetMissingOrFailedValidationError,
-    SpreadsheetMissing,
-)
 from cognite.neat.rules.models._rules import RULES_PER_ROLE, DMSRules, DomainRules, InformationRules
 from cognite.neat.rules.models._rules.base import RoleTypes
 from cognite.neat.utils.auxiliary import local_import
 from cognite.neat.utils.spreadsheet import read_spreadsheet
 
+from . import _models as issue_cls
 from ._base import BaseImporter, Rule
 from ._models import IssueList
 
@@ -44,43 +41,55 @@ class ExcelImporter(BaseImporter):
         try:
             metadata = dict(pd.read_excel(excel_file, "Metadata", header=None).values)
         except ValueError:
-            issues.append(MetadataSheetMissingOrFailedValidationError())
+            issues.append(issue_cls.MetadataSheetMissingOrFailed())
             if errors == "raise":
                 raise issues.as_errors() from None
             return None, issues
 
         role = role or RoleTypes(metadata.get("role", RoleTypes.domain_expert))
         role_enum = RoleTypes(role)
-        rules_model = cast(DomainRules | InformationRules | DMSRules, RULES_PER_ROLE[role_enum])
+        rules_model = RULES_PER_ROLE[role_enum]
         sheet_names = {str(name).lower() for name in excel_file.sheet_names}
 
         if missing_sheets := rules_model.mandatory_fields().difference(sheet_names):
-            issues.append(SpreadsheetMissing(list(missing_sheets)))
+            issues.append(issue_cls.SpreadsheetMissing(list(missing_sheets)))
             if errors == "raise":
                 raise issues.as_errors()
             return None, issues
 
-        sheets = {
-            "Metadata": metadata,
-            "Properties": read_spreadsheet(excel_file, "Properties", ["Class"]),
-            "Classes": (
-                read_spreadsheet(excel_file, "Classes", ["Class"]) if "Classes" in excel_file.sheet_names else None
-            ),
-            "Containers": (
-                read_spreadsheet(excel_file, "Containers", ["Container"])
-                if "Containers" in excel_file.sheet_names
-                else None
-            ),
-            "Views": (read_spreadsheet(excel_file, "Views", ["View"]) if "Views" in excel_file.sheet_names else None),
-        }
+        try:
+            sheets = {
+                "Metadata": metadata,
+                "Properties": read_spreadsheet(excel_file, "Properties", ["Class"]),
+                "Classes": (
+                    read_spreadsheet(excel_file, "Classes", ["Class"]) if "Classes" in excel_file.sheet_names else None
+                ),
+                "Containers": (
+                    read_spreadsheet(excel_file, "Containers", ["Container"])
+                    if "Containers" in excel_file.sheet_names
+                    else None
+                ),
+                "Views": (
+                    read_spreadsheet(excel_file, "Views", ["View"]) if "Views" in excel_file.sheet_names else None
+                ),
+            }
+        except Exception as e:
+            issues.append(issue_cls.ReadSpreadsheets(str(e)))
+            if errors == "raise":
+                raise issues.as_errors() from e
+            return None, issues
+
         if role_enum is RoleTypes.domain_expert:
-            return rules_model.model_validate(sheets)
+            return rules_model.model_validate(sheets), issues
         elif role_enum is RoleTypes.information_architect:
-            return rules_model.model_validate(sheets)
+            return rules_model.model_validate(sheets), issues
         elif role_enum is RoleTypes.dms_architect:
-            return rules_model.model_validate(sheets)
-        else:
-            raise ValueError(f"Role {role} is not valid.")
+            return rules_model.model_validate(sheets), issues
+
+        issues.append(issue_cls.InvalidRole(str(role)))
+        if errors == "raise":
+            raise issues.as_errors()
+        return None, issues
 
 
 class GoogleSheetImporter(BaseImporter):
