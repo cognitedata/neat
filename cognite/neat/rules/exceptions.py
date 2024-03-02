@@ -18,7 +18,7 @@ from rdflib import Namespace, URIRef
 
 from cognite.neat.constants import DEFAULT_DOCS_URL
 from cognite.neat.exceptions import NeatException, NeatWarning
-from cognite.neat.rules.importers._models import Error
+from cognite.neat.rules.importers._models import ValidationError
 
 DOCS_BASE_URL = f"{DEFAULT_DOCS_URL}api/exceptions.html#{__name__}"
 
@@ -682,13 +682,13 @@ class MetadataSheetMissingOrFailedValidation(NeatException):
 
 
 @dataclass
-class MetadataSheetMissingOrFailedValidationError(Error):
+class MetadataSheetMissingOrFailedValidationError(ValidationError):
     description: ClassVar[str] = "Metadata sheet is missing or it failed validation for one or more fields"
     fix: ClassVar[str] = "Make sure to define compliant Metadata sheet before proceeding"
 
 
 @dataclass
-class SpreadsheetMissing(Error):
+class SpreadsheetMissing(ValidationError):
     description: ClassVar[str] = "Spreadsheet(s) is missing"
     fix: ClassVar[str] = "Make sure to provide compliant spreadsheet(s) before proceeding"
 

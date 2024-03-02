@@ -1,20 +1,25 @@
+from abc import ABC
 from collections import UserList
 from dataclasses import dataclass
+from typing import ClassVar
 
 
 @dataclass
-class Issue:
+class ValidationIssue(ABC):
+    description: ClassVar[str]
+    fix: ClassVar[str]
+
+
+@dataclass
+class ValidationError(ValidationIssue, ABC):
     ...
 
 
-class Error(Issue):
+@dataclass
+class ValidationWarning(ValidationIssue, ABC):
     ...
 
 
-class Warning(Issue):
-    ...
-
-
-class IssueList(UserList[Issue]):
+class IssueList(UserList[ValidationIssue]):
     def as_errors(self) -> ExceptionGroup:
         raise NotImplementedError()
