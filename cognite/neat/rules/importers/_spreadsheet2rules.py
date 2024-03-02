@@ -2,7 +2,7 @@
 In more details, it traverses the graph and abstracts class and properties, basically
 generating a list of rules based on which nodes that form the graph are made.
 """
-
+from collections import defaultdict
 from pathlib import Path
 from typing import Literal, cast, overload
 
@@ -65,26 +65,25 @@ class ExcelImporter(BaseImporter):
                 raise issues.as_errors()
             return None, issues
 
-        try:
-            sheets = {
-                "Metadata": metadata,
-                "Properties": read_spreadsheet(excel_file, "Properties", ["Class"]),
-                "Classes": (
-                    read_spreadsheet(excel_file, "Classes", ["Class"]) if "Classes" in excel_file.sheet_names else None
-                ),
-                "Containers": (
-                    read_spreadsheet(excel_file, "Containers", ["Container"])
-                    if "Containers" in excel_file.sheet_names
-                    else None
-                ),
-                "Views": (
-                    read_spreadsheet(excel_file, "Views", ["View"]) if "Views" in excel_file.sheet_names else None
-                ),
-            }
-        except Exception as e:
-            issues.append(issue_cls.ReadSpreadsheets(str(e)))
+        sheets: dict[str, dict | list] = {"Metadata": metadata}
+        header_row_no_by_sheet: dict[str, int] = defaultdict(int)
+        for sheet_name, headers in [
+            ("Properties", "Class"),
+            ("Classes", "Class"),
+            ("Containers", "Container"),
+            ("Views", "View"),
+        ]:
+            if sheet_name in excel_file.sheet_names:
+                try:
+                    sheets[sheet_name], header_row_no_by_sheet[sheet_name] = read_spreadsheet(
+                        excel_file, sheet_name, return_header_row=True, expected_headers=[headers]
+                    )
+                except Exception as e:
+                    issues.append(issue_cls.ReadSpreadsheets(str(e)))
+                    continue
+        if issues:
             if errors == "raise":
-                raise issues.as_errors() from e
+                raise issues.as_errors()
             return None, issues
 
         rules_cls = {
@@ -101,7 +100,7 @@ class ExcelImporter(BaseImporter):
         try:
             return rules_cls.model_validate(sheets), issues  # type: ignore[attr-defined]
         except ValidationError as e:
-            issues.extend(issue_cls.InvalidSheetSpecification.from_pydantic_errors(e.errors()))
+            issues.extend(issue_cls.InvalidSheetSpecification.from_pydantic_errors(e.errors(), header_row_no_by_sheet))
             if errors == "raise":
                 raise issues.as_errors() from e
             return None, issues

@@ -74,11 +74,12 @@ class InvalidSheetSpecification(Error, ABC):
     url: str | None
 
     @classmethod
-    def from_pydantic_error(cls, error: ErrorDetails) -> Self:
-        *_, row, column = error["loc"]
+    def from_pydantic_error(cls, error: ErrorDetails, header_row_by_sheet_name: dict[str, int] | None = None) -> Self:
+        sheet_name, *_, row, column = error["loc"]
         return cls(
             column=str(column),
-            row=int(row),
+            # +1 because excel is 1-indexed
+            row=int(row) + (header_row_by_sheet_name or {}).get(str(sheet_name), 0) + 1,
             type=error["type"],
             msg=error["msg"],
             input=error.get("input"),
@@ -86,12 +87,14 @@ class InvalidSheetSpecification(Error, ABC):
         )
 
     @classmethod
-    def from_pydantic_errors(cls, errors: list[ErrorDetails]) -> "list[InvalidSheetSpecification]":
+    def from_pydantic_errors(
+        cls, errors: list[ErrorDetails], header_row_by_sheet_name: dict[str, int] | None = None
+    ) -> "list[InvalidSheetSpecification]":
         output: list[InvalidSheetSpecification] = []
         for error in errors:
             sheet_name, *_ = error["loc"]
             error_cls = INVALID_SPECIFICATION_BY_SHEET_NAME.get(str(sheet_name), UnknownSheetSpecification)
-            output.append(error_cls.from_pydantic_error(error))
+            output.append(error_cls.from_pydantic_error(error, header_row_by_sheet_name))
         return output
 
 
@@ -122,11 +125,12 @@ class UnknownSheetSpecification(InvalidSheetSpecification):
     actual_sheet_name: str
 
     @classmethod
-    def from_pydantic_error(cls, error: ErrorDetails) -> Self:
+    def from_pydantic_error(cls, error: ErrorDetails, header_row_by_sheet_name: dict[str, int] | None = None) -> Self:
         sheet_name, *_, row, column = error["loc"]
         return cls(
             column=str(column),
-            row=int(row),
+            # +1 because excel is 1-indexed
+            row=int(row) + (header_row_by_sheet_name or {}).get(str(sheet_name), 0) + 1,
             actual_sheet_name=str(sheet_name),
             type=error["type"],
             msg=error["msg"],
