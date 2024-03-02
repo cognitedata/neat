@@ -76,7 +76,7 @@ def are_properties_redefined(rules: InformationRules, return_report: Literal[Fal
 def are_properties_redefined(rules: InformationRules, return_report: bool = False) -> bool | tuple[bool, list[dict]]:
     flag: bool = False
     with warnings.catch_warnings(record=True) as validation_warnings:
-        analyzed_properties = {}
+        analyzed_properties: dict[str, list[str]] = {}
         for property_ in rules.properties:
             if property_.property_ not in analyzed_properties:
                 analyzed_properties[property_.property_] = [property_.class_]
