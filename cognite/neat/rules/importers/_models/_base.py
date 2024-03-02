@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import ClassVar
 
 
-@dataclass
+@dataclass(order=True, frozen=True)
 class ValidationIssue(ABC):
     description: ClassVar[str]
     fix: ClassVar[str]
@@ -19,12 +19,12 @@ class ValidationIssue(ABC):
         return self.description
 
 
-@dataclass
+@dataclass(frozen=True, order=True)
 class Error(ValidationIssue, ABC):
     ...
 
 
-@dataclass
+@dataclass(frozen=True, order=True)
 class ValidationWarning(ValidationIssue, ABC):
     ...
 

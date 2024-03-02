@@ -87,28 +87,24 @@ class ExcelImporter(BaseImporter):
                 raise issues.as_errors() from e
             return None, issues
 
+        rules_cls = {
+            RoleTypes.domain_expert: DomainRules,
+            RoleTypes.information_architect: InformationRules,
+            RoleTypes.dms_architect: DMSRules,
+        }.get(role_enum)
+        if not rules_cls:
+            issues.append(issue_cls.InvalidRole(str(role)))
+            if errors == "raise":
+                raise issues.as_errors()
+            return None, issues
+
         try:
-            if role_enum is RoleTypes.domain_expert:
-                return rules_model.model_validate(sheets), issues
-            elif role_enum is RoleTypes.information_architect:
-                return rules_model.model_validate(sheets), issues
-            elif role_enum is RoleTypes.dms_architect:
-                return rules_model.model_validate(sheets), issues
+            return rules_cls.model_validate(sheets), issues  # type: ignore[attr-defined]
         except ValidationError as e:
-            issues.extend(
-                [
-                    issue_cls.InvalidSheetSpecification.from_pydantic_error(pydantic_error)
-                    for pydantic_error in e.errors()
-                ]
-            )
+            issues.extend(issue_cls.InvalidSheetSpecification.from_pydantic_errors(e.errors()))
             if errors == "raise":
                 raise issues.as_errors() from e
             return None, issues
-
-        issues.append(issue_cls.InvalidRole(str(role)))
-        if errors == "raise":
-            raise issues.as_errors()
-        return None, issues
 
 
 class GoogleSheetImporter(BaseImporter):

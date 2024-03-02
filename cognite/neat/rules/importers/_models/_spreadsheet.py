@@ -7,7 +7,7 @@ from pydantic_core import ErrorDetails
 from ._base import Error
 
 
-@dataclass
+@dataclass(frozen=True, order=True)
 class SpreadsheetNotFound(Error):
     description: ClassVar[str] = "Spreadsheet not found"
     fix: ClassVar[str] = "Make sure to provide a valid spreadsheet"
@@ -18,13 +18,13 @@ class SpreadsheetNotFound(Error):
         return f"Spreadsheet {self.spreadsheet_name} not found"
 
 
-@dataclass
+@dataclass(frozen=True, order=True)
 class MetadataSheetMissingOrFailed(Error):
     description: ClassVar[str] = "Metadata sheet is missing or it failed validation for one or more fields"
     fix: ClassVar[str] = "Make sure to define compliant Metadata sheet before proceeding"
 
 
-@dataclass
+@dataclass(frozen=True, order=True)
 class SpreadsheetMissing(Error):
     description: ClassVar[str] = "Spreadsheet(s) is missing"
     fix: ClassVar[str] = "Make sure to provide compliant spreadsheet(s) before proceeding"
@@ -38,7 +38,7 @@ class SpreadsheetMissing(Error):
             return f"Spreadsheets {', '.join(self.missing_spreadsheets)} are missing"
 
 
-@dataclass
+@dataclass(frozen=True, order=True)
 class ReadSpreadsheets(Error):
     description: ClassVar[str] = "Error reading spreadsheet(s)"
     fix: ClassVar[str] = "Is the excel document open in another program? Is the file corrupted?"
@@ -49,7 +49,7 @@ class ReadSpreadsheets(Error):
         return f"Error reading spreadsheet(s): {self.error_message}"
 
 
-@dataclass
+@dataclass(frozen=True, order=True)
 class InvalidRole(Error):
     description: ClassVar[str] = "Invalid role"
     fix: ClassVar[str] = "Make sure to provide a valid role"
@@ -60,7 +60,7 @@ class InvalidRole(Error):
         return f"Invalid role: {self.provided_role}"
 
 
-@dataclass
+@dataclass(frozen=True, order=True)
 class InvalidSheetSpecification(Error, ABC):
     description: ClassVar[str] = "This is a generic class for all invalid specifications."
     fix: ClassVar[str] = "Follow the instruction in the error message."
@@ -85,25 +85,54 @@ class InvalidSheetSpecification(Error, ABC):
             url=str(url) if (url := error.get("url")) else None,
         )
 
+    @classmethod
+    def from_pydantic_errors(cls, errors: list[ErrorDetails]) -> "list[InvalidSheetSpecification]":
+        output: list[InvalidSheetSpecification] = []
+        for error in errors:
+            sheet_name, *_ = error["loc"]
+            error_cls = INVALID_SPECIFICATION_BY_SHEET_NAME.get(str(sheet_name), UnknownSheetSpecification)
+            output.append(error_cls.from_pydantic_error(error))
+        return output
 
-@dataclass
+
+@dataclass(frozen=True, order=True)
 class InvalidPropertySpecification(InvalidSheetSpecification):
     sheet_name = "Properties"
 
 
-@dataclass
+@dataclass(frozen=True, order=True)
 class InvalidClassSpecification(InvalidSheetSpecification):
     sheet_name = "Classes"
 
 
-@dataclass
+@dataclass(frozen=True, order=True)
 class InvalidContainerSpecification(InvalidSheetSpecification):
     sheet_name = "Containers"
 
 
-@dataclass
+@dataclass(frozen=True, order=True)
 class InvalidViewSpecification(InvalidSheetSpecification):
     sheet_name = "Views"
+
+
+@dataclass(frozen=True, order=True)
+class UnknownSheetSpecification(InvalidSheetSpecification):
+    sheet_name = "Unknown"
+
+    actual_sheet_name: str
+
+    @classmethod
+    def from_pydantic_error(cls, error: ErrorDetails) -> Self:
+        sheet_name, *_, row, column = error["loc"]
+        return cls(
+            column=str(column),
+            row=int(row),
+            actual_sheet_name=str(sheet_name),
+            type=error["type"],
+            msg=error["msg"],
+            input=error.get("input"),
+            url=str(url) if (url := error.get("url")) else None,
+        )
 
 
 INVALID_SPECIFICATION_BY_SHEET_NAME = {
