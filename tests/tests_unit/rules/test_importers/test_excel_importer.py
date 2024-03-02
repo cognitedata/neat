@@ -22,7 +22,7 @@ def invalid_rules_filepaths():
     yield pytest.param(
         DATA_DIR / "invalid_dms_rules.xlsx",
         issue_cls.MetadataSheetMissingOrFailed(),
-        id="Invalid propery in Metadata sheet",
+        id="Invalid property in Metadata sheet",
     )
 
 
@@ -36,7 +36,7 @@ class TestExcelImporter:
         assert rules
 
     @pytest.mark.parametrize("filepath, expected_issue", invalid_rules_filepaths())
-    def test_import_invalid_rules_single_issue(self, filepath: Path, expected_issue: issue_cls.ValidationError):
+    def test_import_invalid_rules_single_issue(self, filepath: Path, expected_issue: issue_cls.Error):
         importer = ExcelImporter(filepath)
 
         _, issues = importer.to_rules(errors="continue")

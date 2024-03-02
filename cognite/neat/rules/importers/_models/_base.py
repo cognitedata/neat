@@ -20,7 +20,7 @@ class ValidationIssue(ABC):
 
 
 @dataclass
-class ValidationError(ValidationIssue, ABC):
+class Error(ValidationIssue, ABC):
     ...
 
 

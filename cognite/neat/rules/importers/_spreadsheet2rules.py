@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Literal, cast, overload
 
 import pandas as pd
+from pydantic import ValidationError
 
 from cognite.neat.rules.models._rules import RULES_PER_ROLE, DMSRules, DomainRules, InformationRules
 from cognite.neat.rules.models._rules.base import RoleTypes
@@ -85,12 +86,23 @@ class ExcelImporter(BaseImporter):
                 raise issues.as_errors() from e
             return None, issues
 
-        if role_enum is RoleTypes.domain_expert:
-            return rules_model.model_validate(sheets), issues
-        elif role_enum is RoleTypes.information_architect:
-            return rules_model.model_validate(sheets), issues
-        elif role_enum is RoleTypes.dms_architect:
-            return rules_model.model_validate(sheets), issues
+        try:
+            if role_enum is RoleTypes.domain_expert:
+                return rules_model.model_validate(sheets), issues
+            elif role_enum is RoleTypes.information_architect:
+                return rules_model.model_validate(sheets), issues
+            elif role_enum is RoleTypes.dms_architect:
+                return rules_model.model_validate(sheets), issues
+        except ValidationError as e:
+            issues.extend(
+                [
+                    issue_cls.InvalidSpreadsheetSpecification.from_pydantic_error(pydantic_error)
+                    for pydantic_error in e.errors()
+                ]
+            )
+            if errors == "raise":
+                raise issues.as_errors() from e
+            return None, issues
 
         issues.append(issue_cls.InvalidRole(str(role)))
         if errors == "raise":
