@@ -36,7 +36,10 @@ class ValidationWarning(ValidationIssue, ABC):
 
 class IssueList(UserList[ValidationIssue]):
     def as_errors(self) -> ExceptionGroup:
-        raise NotImplementedError()
+        return ExceptionGroup(
+            "Validation failed",
+            [ValueError(issue.message()) for issue in self if isinstance(issue, Error)],
+        )
 
 
 class MultiValueError(ValueError):
