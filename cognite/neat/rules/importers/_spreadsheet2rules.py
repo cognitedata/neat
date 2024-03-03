@@ -9,14 +9,14 @@ from typing import Literal, cast, overload
 import pandas as pd
 from pydantic import ValidationError
 
+from cognite.neat.rules import validation
 from cognite.neat.rules.models._rules import RULES_PER_ROLE, DMSRules, DomainRules, InformationRules
 from cognite.neat.rules.models._rules.base import RoleTypes
+from cognite.neat.rules.validation import IssueList
 from cognite.neat.utils.auxiliary import local_import
 from cognite.neat.utils.spreadsheet import read_spreadsheet
 
-from . import _models as issue_cls
 from ._base import BaseImporter, Rule
-from ._models import IssueList
 
 
 class ExcelImporter(BaseImporter):
@@ -40,7 +40,7 @@ class ExcelImporter(BaseImporter):
         try:
             excel_file = pd.ExcelFile(self.filepath)
         except FileNotFoundError:
-            issues.append(issue_cls.SpreadsheetNotFound(self.filepath.name))
+            issues.append(validation.SpreadsheetNotFound(self.filepath.name))
             if errors == "raise":
                 raise issues.as_errors() from None
             return None, issues
@@ -48,7 +48,7 @@ class ExcelImporter(BaseImporter):
         try:
             metadata = dict(pd.read_excel(excel_file, "Metadata", header=None).values)
         except ValueError:
-            issues.append(issue_cls.MetadataSheetMissingOrFailed())
+            issues.append(validation.MetadataSheetMissingOrFailed())
             if errors == "raise":
                 raise issues.as_errors() from None
             return None, issues
@@ -60,7 +60,7 @@ class ExcelImporter(BaseImporter):
         expected_sheet_names = rules_model.mandatory_fields(use_alias=True)
 
         if missing_sheets := expected_sheet_names.difference(sheet_names):
-            issues.append(issue_cls.SpreadsheetMissing(list(missing_sheets)))
+            issues.append(validation.SpreadsheetMissing(list(missing_sheets)))
             if errors == "raise":
                 raise issues.as_errors()
             return None, issues
@@ -79,7 +79,7 @@ class ExcelImporter(BaseImporter):
                         excel_file, sheet_name, return_header_row=True, expected_headers=[headers]
                     )
                 except Exception as e:
-                    issues.append(issue_cls.ReadSpreadsheets(str(e)))
+                    issues.append(validation.ReadSpreadsheets(str(e)))
                     continue
         if issues:
             if errors == "raise":
@@ -92,7 +92,7 @@ class ExcelImporter(BaseImporter):
             RoleTypes.dms_architect: DMSRules,
         }.get(role_enum)
         if not rules_cls:
-            issues.append(issue_cls.InvalidRole(str(role)))
+            issues.append(validation.InvalidRole(str(role)))
             if errors == "raise":
                 raise issues.as_errors()
             return None, issues
@@ -100,7 +100,7 @@ class ExcelImporter(BaseImporter):
         try:
             rules = rules_cls.model_validate(sheets)  # type: ignore[attr-defined]
         except ValidationError as e:
-            issues.extend(issue_cls.InvalidSheetContent.from_pydantic_errors(e.errors(), header_row_no_by_sheet))
+            issues.extend(validation.InvalidSheetContent.from_pydantic_errors(e.errors(), header_row_no_by_sheet))
             if errors == "raise":
                 raise issues.as_errors() from e
             return None, issues

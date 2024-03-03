@@ -6,8 +6,7 @@ from typing import Literal, TypeAlias, overload
 from rdflib import Namespace
 
 from cognite.neat.rules.models._rules import DMSRules, DomainRules, InformationRules, RoleTypes
-
-from ._models import IssueList
+from cognite.neat.rules.validation import IssueList
 
 Rule: TypeAlias = DomainRules | InformationRules | DMSRules
 

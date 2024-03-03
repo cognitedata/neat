@@ -6,12 +6,12 @@ import pytest
 from pydantic import ValidationError
 
 from cognite.neat.rules import importer
-from cognite.neat.rules.importers._models import IssueList, SpreadsheetMissing
 from cognite.neat.rules.importers._spreadsheet2rules import ExcelImporter
 from cognite.neat.rules.models import Tables
 from cognite.neat.rules.models._rules import DomainRules, InformationRules
 from cognite.neat.rules.models._rules.base import RoleTypes
 from cognite.neat.rules.models.raw_rules import RawRules
+from cognite.neat.rules.validation import IssueList, SpreadsheetMissing
 from tests import config
 from tests.config import DOC_KNOWLEDGE_ACQUISITION_TUTORIAL
 

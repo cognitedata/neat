@@ -3,10 +3,10 @@ from pathlib import Path
 import pytest
 from pydantic.version import VERSION
 
+from cognite.neat.rules import validation
 from cognite.neat.rules.importers import ExcelImporter
-from cognite.neat.rules.importers import _models as issue_cls
-from cognite.neat.rules.importers._models import IssueList
 from cognite.neat.rules.models._rules import DMSRules
+from cognite.neat.rules.validation import IssueList
 from tests.config import DOC_KNOWLEDGE_ACQUISITION_TUTORIAL
 from tests.tests_unit.rules.test_importers.constants import DATA_DIR
 
@@ -18,7 +18,7 @@ def valid_rules_filepaths():
 def invalid_rules_filepaths():
     yield pytest.param(
         DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "not-existing.xlsx",
-        IssueList([issue_cls.SpreadsheetNotFound("not-existing.xlsx")]),
+        IssueList([validation.SpreadsheetNotFound("not-existing.xlsx")]),
         id="Not existing file",
     )
     major, minor, *_ = VERSION.split(".")
@@ -27,7 +27,7 @@ def invalid_rules_filepaths():
         DATA_DIR / "invalid_property_dms_rules.xlsx",
         IssueList(
             [
-                issue_cls.InvalidPropertySpecification(
+                validation.InvalidPropertySpecification(
                     column="IsList",
                     row=4,
                     type="bool_parsing",

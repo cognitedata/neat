@@ -13,9 +13,9 @@ from cognite.neat.rules.models._rules.dms_architect_rules import (
     DMSView,
     SheetList,
 )
+from cognite.neat.rules.validation import IssueList
 
 from ._base import BaseImporter
-from ._models import IssueList
 
 
 class DMSImporter(BaseImporter):
