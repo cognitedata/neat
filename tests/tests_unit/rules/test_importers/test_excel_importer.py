@@ -6,6 +6,7 @@ from pydantic.version import VERSION
 from cognite.neat.rules.importers import ExcelImporter
 from cognite.neat.rules.importers import _models as issue_cls
 from cognite.neat.rules.importers._models import IssueList
+from cognite.neat.rules.models._rules import DMSRules
 from tests.config import DOC_KNOWLEDGE_ACQUISITION_TUTORIAL
 from tests.tests_unit.rules.test_importers.constants import DATA_DIR
 
@@ -23,7 +24,7 @@ def invalid_rules_filepaths():
     major, minor, *_ = VERSION.split(".")
 
     yield pytest.param(
-        DATA_DIR / "invalid_dms_rules.xlsx",
+        DATA_DIR / "invalid_property_dms_rules.xlsx",
         IssueList(
             [
                 issue_cls.InvalidPropertySpecification(
@@ -36,7 +37,13 @@ def invalid_rules_filepaths():
                 )
             ]
         ),
-        id="Invalid property in Metadata sheet",
+        id="Invalid property specification",
+    )
+
+    yield pytest.param(
+        DATA_DIR / "inconsistent_container_dms_rules.xlsx",
+        IssueList([]),
+        id="Inconsistent container",
     )
 
 
@@ -45,9 +52,9 @@ class TestExcelImporter:
     def test_import_valid_rules(self, filepath: Path):
         importer = ExcelImporter(filepath)
 
-        rules = importer.to_rules()
+        rules = importer.to_rules(errors="raise")
 
-        assert rules
+        assert isinstance(rules, DMSRules)
 
     @pytest.mark.parametrize("filepath, expected_issues", invalid_rules_filepaths())
     def test_import_invalid_rules_single_issue(self, filepath: Path, expected_issues: IssueList):

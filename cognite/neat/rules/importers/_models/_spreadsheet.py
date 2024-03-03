@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, ClassVar, Self
 
@@ -61,7 +61,31 @@ class InvalidRole(Error):
 
 
 @dataclass(frozen=True, order=True)
-class InvalidSheetSpecification(Error, ABC):
+class InvalidSheetContent(Error, ABC):
+    @classmethod
+    @abstractmethod
+    def from_pydantic_error(cls, error: ErrorDetails, header_row_by_sheet_name: dict[str, int] | None = None) -> Self:
+        raise NotImplementedError
+
+    @classmethod
+    def from_pydantic_errors(
+        cls, errors: list[ErrorDetails], header_row_by_sheet_name: dict[str, int] | None = None
+    ) -> "list[InvalidSheetContent]":
+        output: list[InvalidSheetContent] = []
+        for error in errors:
+            if len(error["loc"]) == 4:
+                sheet_name, *_ = error["loc"]
+                error_cls = INVALID_SPECIFICATION_BY_SHEET_NAME.get(
+                    str(sheet_name), InvalidRowSpecificationUnknownSheet
+                )
+                output.append(error_cls.from_pydantic_error(error, header_row_by_sheet_name))
+            else:
+                raise ValueError(f"Invalid error location: {error['loc']}")
+        return output
+
+
+@dataclass(frozen=True, order=True)
+class InvalidRowSpecification(InvalidSheetContent, ABC):
     description: ClassVar[str] = "This is a generic class for all invalid specifications."
     fix: ClassVar[str] = "Follow the instruction in the error message."
     sheet_name: ClassVar[str]
@@ -86,40 +110,29 @@ class InvalidSheetSpecification(Error, ABC):
             url=str(url) if (url := error.get("url")) else None,
         )
 
-    @classmethod
-    def from_pydantic_errors(
-        cls, errors: list[ErrorDetails], header_row_by_sheet_name: dict[str, int] | None = None
-    ) -> "list[InvalidSheetSpecification]":
-        output: list[InvalidSheetSpecification] = []
-        for error in errors:
-            sheet_name, *_ = error["loc"]
-            error_cls = INVALID_SPECIFICATION_BY_SHEET_NAME.get(str(sheet_name), UnknownSheetSpecification)
-            output.append(error_cls.from_pydantic_error(error, header_row_by_sheet_name))
-        return output
-
 
 @dataclass(frozen=True, order=True)
-class InvalidPropertySpecification(InvalidSheetSpecification):
+class InvalidPropertySpecification(InvalidRowSpecification):
     sheet_name = "Properties"
 
 
 @dataclass(frozen=True, order=True)
-class InvalidClassSpecification(InvalidSheetSpecification):
+class InvalidClassSpecification(InvalidRowSpecification):
     sheet_name = "Classes"
 
 
 @dataclass(frozen=True, order=True)
-class InvalidContainerSpecification(InvalidSheetSpecification):
+class InvalidContainerSpecification(InvalidRowSpecification):
     sheet_name = "Containers"
 
 
 @dataclass(frozen=True, order=True)
-class InvalidViewSpecification(InvalidSheetSpecification):
+class InvalidViewSpecification(InvalidRowSpecification):
     sheet_name = "Views"
 
 
 @dataclass(frozen=True, order=True)
-class UnknownSheetSpecification(InvalidSheetSpecification):
+class InvalidRowSpecificationUnknownSheet(InvalidRowSpecification):
     sheet_name = "Unknown"
 
     actual_sheet_name: str
@@ -140,7 +153,5 @@ class UnknownSheetSpecification(InvalidSheetSpecification):
 
 
 INVALID_SPECIFICATION_BY_SHEET_NAME = {
-    cls_.sheet_name: cls_
-    for cls_ in InvalidSheetSpecification.__subclasses__()
-    if cls_ is not InvalidSheetSpecification
+    cls_.sheet_name: cls_ for cls_ in InvalidRowSpecification.__subclasses__() if cls_ is not InvalidRowSpecification
 }

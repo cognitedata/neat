@@ -100,7 +100,7 @@ class ExcelImporter(BaseImporter):
         try:
             rules = rules_cls.model_validate(sheets)  # type: ignore[attr-defined]
         except ValidationError as e:
-            issues.extend(issue_cls.InvalidSheetSpecification.from_pydantic_errors(e.errors(), header_row_no_by_sheet))
+            issues.extend(issue_cls.InvalidSheetContent.from_pydantic_errors(e.errors(), header_row_no_by_sheet))
             if errors == "raise":
                 raise issues.as_errors() from e
             return None, issues
