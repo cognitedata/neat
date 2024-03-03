@@ -50,4 +50,12 @@ class BasicHTMLFormatter(Formatter):
         return ET.tostring(self._doc, encoding="unicode")
 
     def _write_errors_or_warnings(self, issues: list[Error] | list[ValidationWarning]) -> None:
-        ...
+        issue_name = "errors" if isinstance(issues[0], Error) else "warnings"
+        main_categories = {base_ for issue in issues for base_ in type(issue).__bases__}
+
+        for category in main_categories:
+            issues_in_category = [issue for issue in issues if isinstance(issue, category)]
+            h3 = ET.SubElement(self._body, "h3")
+            h3.text = category.__name__
+            p = ET.SubElement(self._body, "p")
+            p.text = f"Total: {len(issues_in_category)} {issue_name}"

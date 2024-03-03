@@ -1,7 +1,7 @@
 from abc import ABC
 from dataclasses import dataclass
 from functools import total_ordering
-from typing import ClassVar
+from typing import Any, ClassVar
 
 from cognite.client.data_classes import data_modeling as dm
 
@@ -32,6 +32,12 @@ class MissingSpace(DMSSchemaError):
     def message(self) -> str:
         return f"The space {self.space} referred to by {self.referred_by} does not exist"
 
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["space"] = self.space
+        output["referred_by"] = self.referred_by
+        return output
+
 
 @dataclass(frozen=True)
 class MissingContainer(DMSSchemaError):
@@ -43,6 +49,12 @@ class MissingContainer(DMSSchemaError):
 
     def message(self) -> str:
         return f"The container {self.container} referred to by {self.referred_by} does not exist"
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["container"] = self.container
+        output["referred_by"] = self.referred_by
+        return output
 
 
 @dataclass(frozen=True)
@@ -60,6 +72,13 @@ class MissingContainerProperty(DMSSchemaError):
             f"does not exist in {self.referred_by}"
         )
 
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["container"] = self.container
+        output["property"] = self.property
+        output["referred_by"] = self.referred_by
+        return output
+
 
 @dataclass(frozen=True)
 class MissingView(DMSSchemaError):
@@ -72,6 +91,12 @@ class MissingView(DMSSchemaError):
     def message(self) -> str:
         return f"The view {self.view} referred to by {self.referred_by} does not exist"
 
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["view"] = self.view
+        output["referred_by"] = self.referred_by
+        return output
+
 
 @dataclass(frozen=True)
 class MissingParentView(MissingView):
@@ -82,6 +107,11 @@ class MissingParentView(MissingView):
 
     def message(self) -> str:
         return f"The parent view referred to by {self.referred_by} does not exist"
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["referred_by"] = self.referred_by
+        return output
 
 
 @dataclass(frozen=True)
@@ -95,6 +125,11 @@ class MissingSourceView(MissingView):
     def message(self) -> str:
         return f"The source view referred to by {self.referred_by}.{self.property} does not exist"
 
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["property"] = self.property
+        return output
+
 
 @dataclass(frozen=True)
 class MissingEdgeView(MissingView):
@@ -106,6 +141,12 @@ class MissingEdgeView(MissingView):
 
     def message(self) -> str:
         return f"The edge view referred to by {self.referred_by}.{self.property} does not exist"
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["property"] = self.property
+        output["referred_by"] = self.referred_by
+        return output
 
 
 @dataclass(frozen=True)
@@ -119,6 +160,12 @@ class DuplicatedViewInDataModel(DMSSchemaError):
     def message(self) -> str:
         return f"The view {self.view} is duplicated in the DataModel {self.referred_by}"
 
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["referred_by"] = self.referred_by
+        output["view"] = self.view
+        return output
+
 
 @dataclass(frozen=True)
 class DirectRelationMissingSource(DMSSchemaError):
@@ -130,6 +177,12 @@ class DirectRelationMissingSource(DMSSchemaError):
 
     def message(self) -> str:
         return f"The source view referred to by {self.view_id}.{self.property} does not exist"
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["view_id"] = self.view_id
+        output["property"] = self.property
+        return output
 
 
 @dataclass(frozen=True)
@@ -146,3 +199,10 @@ class ContainerPropertyUsedMultipleTimes(DMSSchemaError):
             f"The container property {self.property} of {self.container} is used multiple times "
             f"by the same view {self.referred_by}"
         )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["container"] = self.container
+        output["property"] = self.property
+        output["referred_by"] = sorted(self.referred_by)
+        return output

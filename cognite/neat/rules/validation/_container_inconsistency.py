@@ -1,5 +1,6 @@
 from abc import ABC
 from dataclasses import dataclass
+from typing import Any
 
 from cognite.client import data_modeling as dm
 
@@ -14,6 +15,17 @@ class InconsistentContainerDefinition(Error, ABC):
     property_name: str
     row_numbers: set[int]
 
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output.update(
+            {
+                "container": self.container.dump(),
+                "property_name": self.property_name,
+                "row_numbers": sorted(self.row_numbers),
+            }
+        )
+        return output
+
 
 @dataclass(frozen=True, order=True)
 class MultiValueTypeDefinitions(InconsistentContainerDefinition):
@@ -26,6 +38,11 @@ class MultiValueTypeDefinitions(InconsistentContainerDefinition):
             f"{self.container}.{self.property_name} defined in rows: {sorted(self.row_numbers)} "
             f"has different value types: {self.value_types}"
         )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["value_types"] = sorted(self.value_types)
+        return output
 
 
 @dataclass(frozen=True, order=True)
@@ -40,6 +57,11 @@ class MultiValueIsListDefinitions(InconsistentContainerDefinition):
             f"has different list definitions: {self.list_definitions}"
         )
 
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["list_definitions"] = sorted(self.list_definitions)
+        return output
+
 
 @dataclass(frozen=True, order=True)
 class MultiNullableDefinitions(InconsistentContainerDefinition):
@@ -52,6 +74,11 @@ class MultiNullableDefinitions(InconsistentContainerDefinition):
             f"{self.container}.{self.property_name} defined in rows: {sorted(self.row_numbers)} "
             f"has different nullable definitions: {self.nullable_definitions}"
         )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["nullable_definitions"] = sorted(self.nullable_definitions)
+        return output
 
 
 @dataclass(frozen=True, order=True)
@@ -66,6 +93,11 @@ class MultiDefaultDefinitions(InconsistentContainerDefinition):
             f"has different default definitions: {self.default_definitions}"
         )
 
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["default_definitions"] = self.default_definitions
+        return output
+
 
 @dataclass(frozen=True, order=True)
 class MultiIndexDefinitions(InconsistentContainerDefinition):
@@ -79,6 +111,11 @@ class MultiIndexDefinitions(InconsistentContainerDefinition):
             f"has different index definitions: {self.index_definitions}"
         )
 
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["index_definitions"] = sorted(self.index_definitions)
+        return output
+
 
 @dataclass(frozen=True, order=True)
 class MultiUniqueConstraintDefinitions(InconsistentContainerDefinition):
@@ -91,3 +128,8 @@ class MultiUniqueConstraintDefinitions(InconsistentContainerDefinition):
             f"{self.container}.{self.property_name} defined in rows: {sorted(self.row_numbers)} "
             f"has different unique constraint definitions: {self.unique_constraint_definitions}"
         )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["unique_constraint_definitions"] = sorted(self.unique_constraint_definitions)
+        return output

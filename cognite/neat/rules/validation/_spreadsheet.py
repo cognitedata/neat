@@ -24,6 +24,11 @@ class SpreadsheetNotFound(Error):
     def message(self) -> str:
         return f"Spreadsheet {self.spreadsheet_name} not found"
 
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["spreadsheet_name"] = self.spreadsheet_name
+        return output
+
 
 @dataclass(frozen=True, order=True)
 class MetadataSheetMissingOrFailed(Error):
@@ -44,6 +49,11 @@ class SpreadsheetMissing(Error):
         else:
             return f"Spreadsheets {', '.join(self.missing_spreadsheets)} are missing"
 
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["missing_spreadsheets"] = self.missing_spreadsheets
+        return output
+
 
 @dataclass(frozen=True, order=True)
 class ReadSpreadsheets(Error):
@@ -55,6 +65,11 @@ class ReadSpreadsheets(Error):
     def message(self) -> str:
         return f"Error reading spreadsheet(s): {self.error_message}"
 
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["error_message"] = self.error_message
+        return output
+
 
 @dataclass(frozen=True, order=True)
 class InvalidRole(Error):
@@ -65,6 +80,11 @@ class InvalidRole(Error):
 
     def message(self) -> str:
         return f"Invalid role: {self.provided_role}"
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["provided_role"] = self.provided_role
+        return output
 
 
 @dataclass(frozen=True, order=True)
@@ -132,6 +152,18 @@ class InvalidRowSpecification(InvalidSheetContent, ABC):
             url=str(url) if (url := error.get("url")) else None,
         )
 
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["sheet_name"] = self.sheet_name
+        output["column"] = self.column
+        output["row"] = self.row
+        output["type"] = self.type
+        output["msg"] = self.msg
+        output["input"] = self.input
+        if self.url:
+            output["url"] = self.url
+        return output
+
 
 @dataclass(frozen=True, order=True)
 class InvalidPropertySpecification(InvalidRowSpecification):
@@ -172,6 +204,11 @@ class InvalidRowSpecificationUnknownSheet(InvalidRowSpecification):
             input=error.get("input"),
             url=str(url) if (url := error.get("url")) else None,
         )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["actual_sheet_name"] = self.actual_sheet_name
+        return output
 
 
 _INVALID_SPECIFICATION_BY_SHEET_NAME = {
