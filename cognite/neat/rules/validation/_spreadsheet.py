@@ -4,7 +4,7 @@ from typing import Any, ClassVar, Self
 
 from pydantic_core import ErrorDetails
 
-from ._base import Error
+from ._base import Error, MultiValueError
 
 
 @dataclass(frozen=True, order=True)
@@ -70,17 +70,23 @@ class InvalidSheetContent(Error, ABC):
     @classmethod
     def from_pydantic_errors(
         cls, errors: list[ErrorDetails], header_row_by_sheet_name: dict[str, int] | None = None
-    ) -> "list[InvalidSheetContent]":
-        output: list[InvalidSheetContent] = []
+    ) -> "list[Error]":
+        output: list[Error] = []
         for error in errors:
+            if raised_error := error.get("ctx", {}).get("error"):
+                if isinstance(raised_error, MultiValueError):
+                    output.extend(raised_error.errors)
+                    continue
+
             if len(error["loc"]) == 4:
                 sheet_name, *_ = error["loc"]
                 error_cls = INVALID_SPECIFICATION_BY_SHEET_NAME.get(
                     str(sheet_name), InvalidRowSpecificationUnknownSheet
                 )
                 output.append(error_cls.from_pydantic_error(error, header_row_by_sheet_name))
-            else:
-                raise ValueError(f"Invalid error location: {error['loc']}")
+                continue
+
+            raise NotImplementedError("Pydantic raised error not supported by this function.")
         return output
 
 

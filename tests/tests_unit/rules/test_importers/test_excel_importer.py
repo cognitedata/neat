@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+from cognite.client.data_classes.data_modeling import ContainerId
 from pydantic.version import VERSION
 
 from cognite.neat.rules import validation
@@ -42,7 +43,16 @@ def invalid_rules_filepaths():
 
     yield pytest.param(
         DATA_DIR / "inconsistent_container_dms_rules.xlsx",
-        IssueList([]),
+        IssueList(
+            [
+                validation.MultiValueTypeDefinitions(
+                    container=ContainerId("neat", "Flowable"),
+                    property_name="maxFlow",
+                    row_numbers={4, 5},
+                    value_types={"float32", "float64"},
+                )
+            ]
+        ),
         id="Inconsistent container",
     )
 
