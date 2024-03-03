@@ -1,26 +1,21 @@
-from abc import ABC
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
-from functools import total_ordering
-from typing import ClassVar
 
 from cognite.client import data_modeling as dm
 
-
-@dataclass(frozen=True)
-@total_ordering
-class SchemaError(ABC):
-    error_name: ClassVar[str]
-
-    def __lt__(self, other: object) -> bool:
-        if isinstance(other, SchemaError):
-            return self.error_name < other.error_name
-        return NotImplemented
-
-    def __eq__(self, other: object) -> bool:
-        if isinstance(other, SchemaError):
-            return self.error_name == other.error_name
-        return NotImplemented
+from cognite.neat.rules.validation._dms_schema_errors import (
+    ContainerPropertyUsedMultipleTimes,
+    DirectRelationMissingSource,
+    DMSSchemaError,
+    DuplicatedViewInDataModel,
+    MissingContainer,
+    MissingContainerProperty,
+    MissingEdgeView,
+    MissingParentView,
+    MissingSourceView,
+    MissingSpace,
+    MissingView,
+)
 
 
 @dataclass
@@ -31,8 +26,8 @@ class DMSSchema:
     containers: dm.ContainerApplyList = field(default_factory=lambda: dm.ContainerApplyList([]))
     node_types: dm.NodeApplyList = field(default_factory=lambda: dm.NodeApplyList([]))
 
-    def validate(self) -> list[SchemaError]:
-        errors: set[SchemaError] = set()
+    def validate(self) -> list[DMSSchemaError]:
+        errors: set[DMSSchemaError] = set()
         defined_spaces = {space.space for space in self.spaces}
         defined_containers = {container.as_id(): container for container in self.containers}
         defined_views = {view.as_id() for view in self.views}
@@ -117,74 +112,3 @@ class DMSSchema:
                     errors.add(DuplicatedViewInDataModel(referred_by=model.as_id(), view=view_id))
 
         return list(errors)
-
-
-@dataclass(frozen=True)
-class MissingSpace(SchemaError):
-    error_name: ClassVar[str] = "MissingSpace"
-    space: str
-    referred_by: dm.ContainerId | dm.ViewId | dm.NodeId | dm.EdgeId | dm.DataModelId
-
-
-@dataclass(frozen=True)
-class MissingContainer(SchemaError):
-    error_name: ClassVar[str] = "MissingContainer"
-    container: dm.ContainerId
-    referred_by: dm.ViewId
-
-
-@dataclass(frozen=True)
-class MissingContainerProperty(SchemaError):
-    error_name: ClassVar[str] = "MissingContainerProperty"
-    container: dm.ContainerId
-    property: str
-    referred_by: dm.ViewId
-
-
-@dataclass(frozen=True)
-class MissingView(SchemaError):
-    error_name: ClassVar[str] = "MissingView"
-    view: dm.ViewId
-    referred_by: dm.DataModelId | dm.ViewId
-
-
-@dataclass(frozen=True)
-class MissingParentView(MissingView):
-    error_name: ClassVar[str] = "MissingParentView"
-    referred_by: dm.ViewId
-
-
-@dataclass(frozen=True)
-class MissingSourceView(MissingView):
-    error_name: ClassVar[str] = "MissingSourceView"
-    property: str
-    referred_by: dm.ViewId
-
-
-@dataclass(frozen=True)
-class MissingEdgeView(MissingView):
-    error_name: ClassVar[str] = "MissingEdgeView"
-    property: str
-    referred_by: dm.ViewId
-
-
-@dataclass(frozen=True)
-class DuplicatedViewInDataModel(SchemaError):
-    error_name: ClassVar[str] = "DuplicatedViewInDataModel"
-    referred_by: dm.DataModelId
-    view: dm.ViewId
-
-
-@dataclass(frozen=True)
-class DirectRelationMissingSource(SchemaError):
-    error_name: ClassVar[str] = "DirectRelationMissingSource"
-    view_id: dm.ViewId
-    property: str
-
-
-@dataclass(frozen=True)
-class ContainerPropertyUsedMultipleTimes(SchemaError):
-    error_name: ClassVar[str] = "ContainerPropertyUsedMultipleTimes"
-    container: dm.ContainerId
-    property: str
-    referred_by: frozenset[tuple[dm.ViewId, str]]

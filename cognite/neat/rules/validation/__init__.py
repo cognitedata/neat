@@ -1,4 +1,26 @@
-from ._base import Error, IssueList, ValidationIssue, ValidationWarning
+from ._base import Error, IssueList, MultiValueError, ValidationIssue, ValidationWarning
+from ._container_inconsistency import (
+    InconsistentContainerDefinition,
+    MultiDefaultDefinition,
+    MultiIndexDefinition,
+    MultiNullableDefinition,
+    MultiUniqueConstraintDefinition,
+    MultiValueIsListDefinition,
+    MultiValueTypeDefinition,
+)
+from ._dms_schema_errors import (
+    ContainerPropertyUsedMultipleTimes,
+    DirectRelationMissingSource,
+    DMSSchemaError,
+    DuplicatedViewInDataModel,
+    MissingContainer,
+    MissingContainerProperty,
+    MissingEdgeView,
+    MissingParentView,
+    MissingSourceView,
+    MissingSpace,
+    MissingView,
+)
 from ._spreadsheet import (
     InvalidClassSpecification,
     InvalidContainerSpecification,
@@ -14,6 +36,7 @@ from ._spreadsheet import (
 )
 
 __all__ = [
+    "MultiValueError",
     "IssueList",
     "Error",
     "ValidationIssue",
@@ -29,4 +52,22 @@ __all__ = [
     "InvalidClassSpecification",
     "InvalidViewSpecification",
     "InvalidContainerSpecification",
+    "MissingContainer",
+    "MissingContainerProperty",
+    "MissingView",
+    "MissingParentView",
+    "MissingSourceView",
+    "MissingEdgeView",
+    "MissingSpace",
+    "DuplicatedViewInDataModel",
+    "DirectRelationMissingSource",
+    "ContainerPropertyUsedMultipleTimes",
+    "InconsistentContainerDefinition",
+    "MultiValueTypeDefinition",
+    "MultiValueIsListDefinition",
+    "MultiNullableDefinition",
+    "MultiDefaultDefinition",
+    "MultiIndexDefinition",
+    "MultiUniqueConstraintDefinition",
+    "DMSSchemaError",
 ]

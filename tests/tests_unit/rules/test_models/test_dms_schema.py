@@ -5,9 +5,12 @@ from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
 
 from cognite.neat.rules.models._rules.dms_schema import (
+    DMSSchema,
+)
+from cognite.neat.rules.validation._dms_schema_errors import (
     ContainerPropertyUsedMultipleTimes,
     DirectRelationMissingSource,
-    DMSSchema,
+    DMSSchemaError,
     DuplicatedViewInDataModel,
     MissingContainer,
     MissingContainerProperty,
@@ -16,7 +19,6 @@ from cognite.neat.rules.models._rules.dms_schema import (
     MissingSourceView,
     MissingSpace,
     MissingView,
-    SchemaError,
 )
 
 
@@ -236,6 +238,6 @@ class TestDMSSchema:
         "schema, expected_errors",
         list(invalid_schema_test_cases()),
     )
-    def test_invalid_schema(self, schema: DMSSchema, expected_errors: list[SchemaError]) -> None:
+    def test_invalid_schema(self, schema: DMSSchema, expected_errors: list[DMSSchemaError]) -> None:
         errors = schema.validate()
         assert sorted(errors) == sorted(expected_errors)

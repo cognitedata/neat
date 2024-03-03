@@ -1,5 +1,6 @@
 from abc import ABC
 from collections import UserList
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import ClassVar
 
@@ -32,3 +33,15 @@ class ValidationWarning(ValidationIssue, ABC):
 class IssueList(UserList[ValidationIssue]):
     def as_errors(self) -> ExceptionGroup:
         raise NotImplementedError()
+
+
+class MultiValueError(ValueError):
+    """This is a container for multiple errors.
+
+    It is used in the pydantic field_validator/model_validator to collect multiple errors, which
+    can then be caught in a try-except block and returned as an IssueList.
+
+    """
+
+    def __init__(self, errors: Sequence[Error]):
+        self.errors = list(errors)
