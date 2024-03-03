@@ -1,8 +1,12 @@
+import sys
 from abc import ABC
 from collections import UserList
 from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import ClassVar
+
+if sys.version_info < (3, 11):
+    from exceptiongroup import ExceptionGroup
 
 
 @dataclass(order=True, frozen=True)
