@@ -350,9 +350,9 @@ class DMSRules(BaseRules):
         return self
 
     @model_validator(mode="after")
-    def validate_schema(self):
+    def validate_schema(self) -> "DMSRules":
         if self.metadata.schema_ is not SchemaCompleteness.complete:
-            return
+            return self
 
         schema = self.as_schema()
         errors = schema.validate()
