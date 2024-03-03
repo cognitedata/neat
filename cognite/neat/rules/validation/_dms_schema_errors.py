@@ -35,63 +35,114 @@ class MissingSpace(DMSSchemaError):
 
 @dataclass(frozen=True)
 class MissingContainer(DMSSchemaError):
+    description = "The container referred to by the View does not exist"
+    fix = "Create the container"
     error_name: ClassVar[str] = "MissingContainer"
     container: dm.ContainerId
     referred_by: dm.ViewId
 
+    def message(self) -> str:
+        return f"The container {self.container} referred to by {self.referred_by} does not exist"
+
 
 @dataclass(frozen=True)
 class MissingContainerProperty(DMSSchemaError):
+    description = "The property referred to by the View does not exist in the container"
+    fix = "Create the property"
     error_name: ClassVar[str] = "MissingContainerProperty"
     container: dm.ContainerId
     property: str
     referred_by: dm.ViewId
 
+    def message(self) -> str:
+        return (
+            f"The property {self.property} referred to by the container {self.container} "
+            f"does not exist in {self.referred_by}"
+        )
+
 
 @dataclass(frozen=True)
 class MissingView(DMSSchemaError):
+    description = "The view referred to by the View/DataModel does not exist"
+    fix = "Create the view"
     error_name: ClassVar[str] = "MissingView"
     view: dm.ViewId
     referred_by: dm.DataModelId | dm.ViewId
 
+    def message(self) -> str:
+        return f"The view {self.view} referred to by {self.referred_by} does not exist"
+
 
 @dataclass(frozen=True)
 class MissingParentView(MissingView):
+    description = "The parent view referred to by the View does not exist"
+    fix = "Create the parent view"
     error_name: ClassVar[str] = "MissingParentView"
     referred_by: dm.ViewId
+
+    def message(self) -> str:
+        return f"The parent view referred to by {self.referred_by} does not exist"
 
 
 @dataclass(frozen=True)
 class MissingSourceView(MissingView):
+    description = "The source view referred to by the View does not exist"
+    fix = "Create the source view"
     error_name: ClassVar[str] = "MissingSourceView"
     property: str
     referred_by: dm.ViewId
 
+    def message(self) -> str:
+        return f"The source view referred to by {self.referred_by}.{self.property} does not exist"
+
 
 @dataclass(frozen=True)
 class MissingEdgeView(MissingView):
+    description = "The edge view referred to by the View does not exist"
+    fix = "Create the edge view"
     error_name: ClassVar[str] = "MissingEdgeView"
     property: str
     referred_by: dm.ViewId
 
+    def message(self) -> str:
+        return f"The edge view referred to by {self.referred_by}.{self.property} does not exist"
+
 
 @dataclass(frozen=True)
 class DuplicatedViewInDataModel(DMSSchemaError):
+    description = "The view is duplicated in the DataModel"
+    fix = "Remove the duplicated view"
     error_name: ClassVar[str] = "DuplicatedViewInDataModel"
     referred_by: dm.DataModelId
     view: dm.ViewId
 
+    def message(self) -> str:
+        return f"The view {self.view} is duplicated in the DataModel {self.referred_by}"
+
 
 @dataclass(frozen=True)
 class DirectRelationMissingSource(DMSSchemaError):
+    description = "The source view referred to by the DirectRelation does not exist"
+    fix = "Create the source view"
     error_name: ClassVar[str] = "DirectRelationMissingSource"
     view_id: dm.ViewId
     property: str
 
+    def message(self) -> str:
+        return f"The source view referred to by {self.view_id}.{self.property} does not exist"
+
 
 @dataclass(frozen=True)
 class ContainerPropertyUsedMultipleTimes(DMSSchemaError):
+    description = "The container property is used multiple times by the same view"
+    fix = "Use unique container properties for when mapping to the same container"
     error_name: ClassVar[str] = "ContainerPropertyUsedMultipleTimes"
     container: dm.ContainerId
     property: str
     referred_by: frozenset[tuple[dm.ViewId, str]]
+
+    def message(self) -> str:
+        return (
+            f"The container property {self.property} of {self.container} is used multiple times "
+            f"by the same view {self.referred_by}"
+        )

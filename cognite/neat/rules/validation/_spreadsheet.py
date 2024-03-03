@@ -1,11 +1,17 @@
+import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, ClassVar, Self
+from typing import Any, ClassVar
 
 from pydantic_core import ErrorDetails
 
 from ._base import Error, MultiValueError
 from ._container_inconsistency import InconsistentContainerDefinition
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 
 @dataclass(frozen=True, order=True)
