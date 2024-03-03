@@ -14,9 +14,9 @@ def alice_spreadsheet() -> dict[str, dict[str, Any]]:
     excel_file = pd.ExcelFile(filepath)
     return {
         "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),
-        "Properties": read_spreadsheet(excel_file, "Properties", ["Property"]),
-        "Views": read_spreadsheet(excel_file, "Views", ["View"]),
-        "Containers": read_spreadsheet(excel_file, "Containers", ["Container"]),
+        "Properties": read_spreadsheet(excel_file, "Properties", False, ["Property"]),
+        "Views": read_spreadsheet(excel_file, "Views", False, ["View"]),
+        "Containers": read_spreadsheet(excel_file, "Containers", False, ["Container"]),
     }
 
 
@@ -31,8 +31,8 @@ def david_spreadsheet() -> dict[str, dict[str, Any]]:
     excel_file = pd.ExcelFile(filepath)
     return {
         "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),
-        "Properties": read_spreadsheet(excel_file, "Properties", ["Property"]),
-        "Classes": read_spreadsheet(excel_file, "Classes", ["Class"]),
+        "Properties": read_spreadsheet(excel_file, "Properties", expected_headers=["Property"]),
+        "Classes": read_spreadsheet(excel_file, "Classes", expected_headers=["Class"]),
     }
 
 

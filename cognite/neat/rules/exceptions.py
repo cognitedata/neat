@@ -10,7 +10,6 @@ handling (such `rdfpath`), and rules loaders, parsers and exporters.
 - 400 - 499: errors and warnings raised when dealing TransformationRules exporters
 
 """
-
 from typing import Any
 
 from cognite.client.data_classes.data_modeling import ContainerId, DataModelId, ViewId

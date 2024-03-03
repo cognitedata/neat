@@ -14,6 +14,7 @@ from pydantic import Field, field_validator, model_validator
 from pydantic_core.core_schema import ValidationInfo
 from rdflib import Namespace
 
+from cognite.neat.rules import validation
 from cognite.neat.rules.models._rules.domain_rules import DomainRules
 
 from ._types import (
@@ -137,7 +138,7 @@ class DMSProperty(SheetEntity):
     value_type: CdfValueType = Field(alias="Value Type")
     nullable: bool | None = Field(default=None, alias="Nullable")
     is_list: bool | None = Field(default=None, alias="IsList")
-    default: str | int | dict | None | None = Field(None, alias="Default")
+    default: str | int | dict | None = Field(None, alias="Default")
     source: str | None = Field(None, alias="Source")
     container: ContainerType | None = Field(None, alias="Container")
     container_property: str | None = Field(None, alias="ContainerProperty")
@@ -282,61 +283,61 @@ class DMSRules(BaseRules):
 
     @model_validator(mode="after")
     def consistent_container_properties(self) -> "DMSRules":
-        container_properties_by_id: dict[tuple[ContainerEntity, str], list[DMSProperty]] = defaultdict(list)
-        for prop in self.properties:
+        container_properties_by_id: dict[tuple[ContainerEntity, str], list[tuple[int, DMSProperty]]] = defaultdict(list)
+        for prop_no, prop in enumerate(self.properties):
             if prop.container and prop.container_property:
-                container_properties_by_id[(prop.container, prop.container_property)].append(prop)
+                container_properties_by_id[(prop.container, prop.container_property)].append((prop_no, prop))
 
-        exceptions: list[str] = []
+        errors: list[validation.InconsistentContainerDefinition] = []
         for (container, prop_name), properties in container_properties_by_id.items():
             if len(properties) == 1:
                 continue
-
-            value_types = {prop.value_type for prop in properties if prop.value_type}
+            container_id = container.as_id(self.metadata.space)
+            row_numbers = {prop_no for prop_no, _ in properties}
+            value_types = {prop.value_type for _, prop in properties if prop.value_type}
             if len(value_types) > 1:
-                exceptions.append(
-                    f"Container {container}.{prop_name} is defined with different value types: {value_types}"
+                errors.append(
+                    validation.MultiValueTypeDefinitions(
+                        container_id, prop_name, row_numbers, {str(v) for v in value_types}
+                    )
                 )
-            list_definitions = {prop.is_list for prop in properties if prop.is_list is not None}
+            list_definitions = {prop.is_list for _, prop in properties if prop.is_list is not None}
             if len(list_definitions) > 1:
-                exceptions.append(
-                    f"Container {container}.{prop_name} is defined with different "
-                    f"list definitions: {list_definitions}"
+                errors.append(
+                    validation.MultiValueIsListDefinitions(container_id, prop_name, row_numbers, list_definitions)
                 )
-            nullable_definitions = {prop.nullable for prop in properties if prop.nullable is not None}
+            nullable_definitions = {prop.nullable for _, prop in properties if prop.nullable is not None}
             if len(nullable_definitions) > 1:
-                exceptions.append(
-                    f"Container {container}.{prop_name} is defined with different "
-                    f"nullable definitions: {nullable_definitions}"
+                errors.append(
+                    validation.MultiNullableDefinitions(container_id, prop_name, row_numbers, nullable_definitions)
                 )
-            default_definitions = {prop.default for prop in properties if prop.default is not None}
+            default_definitions = {prop.default for _, prop in properties if prop.default is not None}
             if len(default_definitions) > 1:
-                exceptions.append(
-                    f"Container {container}.{prop_name} is defined with different "
-                    f"default definitions: {default_definitions}"
+                errors.append(
+                    validation.MultiDefaultDefinitions(container_id, prop_name, row_numbers, list(default_definitions))
                 )
-            index_definitions = {",".join(prop.index) for prop in properties if prop.index is not None}
+            index_definitions = {",".join(prop.index) for _, prop in properties if prop.index is not None}
             if len(index_definitions) > 1:
-                exceptions.append(
-                    f"Container {container}.{prop_name} is defined with different "
-                    f"index definitions: {index_definitions}"
-                )
-            constraint_definitions = {",".join(prop.constraint) for prop in properties if prop.constraint is not None}
+                errors.append(validation.MultiIndexDefinitions(container_id, prop_name, row_numbers, index_definitions))
+            constraint_definitions = {
+                ",".join(prop.constraint) for _, prop in properties if prop.constraint is not None
+            }
             if len(constraint_definitions) > 1:
-                exceptions.append(
-                    f"Container {container}.{prop_name} is defined with different "
-                    f"unique constraint definitions: {constraint_definitions}"
+                errors.append(
+                    validation.MultiUniqueConstraintDefinitions(
+                        container_id, prop_name, row_numbers, constraint_definitions
+                    )
                 )
 
             # This sets the container definition for all the properties where it is not defined.
             # This allows the user to define the container only once.
-            value_type = value_types.pop()
-            list_definition = list_definitions.pop() if list_definitions else None
-            nullable_definition = nullable_definitions.pop() if nullable_definitions else None
-            default_definition = default_definitions.pop() if default_definitions else None
-            index_definition = index_definitions.pop().split(",") if index_definitions else None
-            constraint_definition = constraint_definitions.pop().split(",") if constraint_definitions else None
-            for prop in properties:
+            value_type = next(iter(value_types))
+            list_definition = next(iter(list_definitions)) if list_definitions else None
+            nullable_definition = next(iter(nullable_definitions)) if nullable_definitions else None
+            default_definition = next(iter(default_definitions)) if default_definitions else None
+            index_definition = next(iter(index_definitions)).split(",") if index_definitions else None
+            constraint_definition = next(iter(constraint_definitions)).split(",") if constraint_definitions else None
+            for _, prop in properties:
                 prop.value_type = value_type
                 prop.is_list = prop.is_list or list_definition
                 prop.nullable = prop.nullable or nullable_definition
@@ -344,9 +345,8 @@ class DMSRules(BaseRules):
                 prop.index = prop.index or index_definition
                 prop.constraint = prop.constraint or constraint_definition
 
-        if exceptions:
-            exception_str = "\n".join(exceptions)
-            raise ValueError(f"Inconsistent container(s): {exception_str}")
+        if errors:
+            raise validation.MultiValueError(errors)
         return self
 
     def as_schema(self) -> DMSSchema:

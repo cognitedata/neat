@@ -1,4 +1,5 @@
 import sys
+from pathlib import Path
 
 import pandas as pd
 import pytest
@@ -7,9 +8,10 @@ from pydantic import ValidationError
 from cognite.neat.rules import importer
 from cognite.neat.rules.importers._spreadsheet2rules import ExcelImporter
 from cognite.neat.rules.models import Tables
-from cognite.neat.rules.models._rules import RULES_PER_ROLE
+from cognite.neat.rules.models._rules import DomainRules, InformationRules
 from cognite.neat.rules.models._rules.base import RoleTypes
 from cognite.neat.rules.models.raw_rules import RawRules
+from cognite.neat.rules.validation import IssueList, SpreadsheetMissing
 from tests import config
 from tests.config import DOC_KNOWLEDGE_ACQUISITION_TUTORIAL
 
@@ -41,35 +43,41 @@ def test_parse_transformation_invalid_rules(raw_tables: dict[str, pd.DataFrame])
         RawRules.from_tables(raw_tables).to_rules()
 
 
-def test_excel_importer_domain_expert():
-    assert isinstance(
-        ExcelImporter(DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "expert-wind-energy-jon.xlsx").to_rules(
-            RoleTypes.domain_expert,
-        ),
-        RULES_PER_ROLE[RoleTypes.domain_expert],
+class TestExcelImporter:
+    @pytest.mark.parametrize(
+        "filepath",
+        [
+            pytest.param(
+                DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "expert-wind-energy-jon.xlsx", id="expert-wind-energy-jon"
+            ),
+            pytest.param(DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "expert-grid-emma.xlsx", id="expert-grid-emma"),
+        ],
     )
+    def test_excel_importer_valid_domain_expert(self, filepath: Path):
+        domain_rules = ExcelImporter(filepath).to_rules(errors="raise", role=RoleTypes.domain_expert)
 
-    assert isinstance(
-        ExcelImporter(DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "expert-grid-emma.xlsx").to_rules(
-            RoleTypes.domain_expert,
-        ),
-        RULES_PER_ROLE[RoleTypes.domain_expert],
-    )
+        assert isinstance(domain_rules, DomainRules)
 
-
-def test_excel_importer_information_architect():
-    assert isinstance(
-        ExcelImporter(DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "information-architect-david.xlsx").to_rules(
-            RoleTypes.information_architect,
-        ),
-        RULES_PER_ROLE[RoleTypes.information_architect],
-    )
-
-
-def test_excel_importer_information_architect_invalid():
-    with pytest.raises(ValueError) as e:
-        ExcelImporter(DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "expert-wind-energy-jon.xlsx").to_rules(
-            RoleTypes.information_architect,
+    def test_excel_importer_valid_information_architect(self):
+        information_rules = ExcelImporter(
+            DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "information-architect-david.xlsx"
+        ).to_rules(
+            errors="raise",
+            role=RoleTypes.information_architect,
         )
 
-    assert str(e.value) == "Missing mandatory sheets: {'classes'}"
+        assert isinstance(information_rules, InformationRules)
+
+    def test_excel_importer_invalid_information_architect(self):
+        expected_issues = IssueList(
+            [
+                SpreadsheetMissing(["Classes"]),
+            ]
+        )
+
+        _, issues = ExcelImporter(DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "expert-wind-energy-jon.xlsx").to_rules(
+            errors="continue",
+            role=RoleTypes.information_architect,
+        )
+
+        assert issues == expected_issues

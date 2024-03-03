@@ -7,6 +7,7 @@ from cognite.client.data_classes.data_modeling import (
     Boolean,
     Date,
     FileReference,
+    Float32,
     Float64,
     Int32,
     Int64,
@@ -61,6 +62,9 @@ class XSDValueType(Entity):
 class DMSValueType(XSDValueType):
     type_: ClassVar[EntityTypes] = EntityTypes.dms_value_type
 
+    def __str__(self) -> str:
+        return self.dms._type
+
 
 _DATA_TYPES: list[dict] = [
     {"name": "boolean", "python": bool, "GraphQL": "Boolean", "dms": Boolean},
@@ -89,7 +93,8 @@ _DATA_TYPES: list[dict] = [
 
 _DMS_TYPES: list[dict] = [
     {"name": "boolean", "python": bool, "GraphQL": "Boolean", "dms": Boolean},
-    {"name": "float", "python": float, "GraphQL": "Float", "dms": Float64},
+    {"name": "float", "python": float, "GraphQL": "Float", "dms": Float32},
+    {"name": "double", "python": float, "GraphQL": "Float", "dms": Float64},
     {"name": "integer", "python": int, "GraphQL": "Int", "dms": Int32},
     {"name": "long", "python": int, "GraphQL": "Int", "dms": Int64},
     {"name": "string", "python": str, "GraphQL": "String", "dms": Text},

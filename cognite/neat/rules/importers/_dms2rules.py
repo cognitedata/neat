@@ -1,10 +1,10 @@
-from typing import cast
+from typing import Literal, cast, overload
 
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex, InvertedIndex
 from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 
-from cognite.neat.rules.models._rules import DMSRules, DMSSchema
+from cognite.neat.rules.models._rules import DMSRules, DMSSchema, RoleTypes
 from cognite.neat.rules.models._rules._types import ContainerEntity, DMSValueType, ViewEntity
 from cognite.neat.rules.models._rules.dms_architect_rules import (
     DMSContainer,
@@ -13,6 +13,7 @@ from cognite.neat.rules.models._rules.dms_architect_rules import (
     DMSView,
     SheetList,
 )
+from cognite.neat.rules.validation import IssueList
 
 from ._base import BaseImporter
 
@@ -21,7 +22,21 @@ class DMSImporter(BaseImporter):
     def __init__(self, schema: DMSSchema):
         self.schema = schema
 
-    def to_rules(self) -> DMSRules:
+    @overload
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> DMSRules:
+        ...
+
+    @overload
+    def to_rules(
+        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
+    ) -> tuple[DMSRules | None, IssueList]:
+        ...
+
+    def to_rules(
+        self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
+    ) -> tuple[DMSRules | None, IssueList] | DMSRules:
+        if role is not None and role != RoleTypes.dms_architect:
+            raise ValueError(f"Role {role} is not supported for DMSImporter")
         data_model = self.schema.data_models[0]
 
         container_by_id = {container.as_id(): container for container in self.schema.containers}
