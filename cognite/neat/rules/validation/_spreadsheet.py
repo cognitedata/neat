@@ -5,6 +5,7 @@ from typing import Any, ClassVar, Self
 from pydantic_core import ErrorDetails
 
 from ._base import Error, MultiValueError
+from ._container_inconsistency import InconsistentContainerDefinition
 
 
 @dataclass(frozen=True, order=True)
@@ -75,7 +76,16 @@ class InvalidSheetContent(Error, ABC):
         for error in errors:
             if raised_error := error.get("ctx", {}).get("error"):
                 if isinstance(raised_error, MultiValueError):
-                    output.extend(raised_error.errors)
+                    for caught_error in raised_error.errors:
+                        if isinstance(caught_error, InconsistentContainerDefinition):
+                            property_header = (header_row_by_sheet_name or {}).get("Properties", 0) + 1
+                            row_numbers = list(caught_error.row_numbers)
+                            # The Error classes are immutable, so we have to reuse the set.
+                            caught_error.row_numbers.clear()
+                            for row_no in row_numbers:
+                                # Adjusting the row number to the actual row number in the spreadsheet
+                                caught_error.row_numbers.add(row_no + property_header)
+                        output.append(caught_error)
                     continue
 
             if len(error["loc"]) == 4:
