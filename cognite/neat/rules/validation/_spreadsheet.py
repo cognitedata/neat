@@ -90,7 +90,7 @@ class InvalidSheetContent(Error, ABC):
 
             if len(error["loc"]) == 4:
                 sheet_name, *_ = error["loc"]
-                error_cls = INVALID_SPECIFICATION_BY_SHEET_NAME.get(
+                error_cls = _INVALID_SPECIFICATION_BY_SHEET_NAME.get(
                     str(sheet_name), InvalidRowSpecificationUnknownSheet
                 )
                 output.append(error_cls.from_pydantic_error(error, header_row_by_sheet_name))
@@ -168,6 +168,6 @@ class InvalidRowSpecificationUnknownSheet(InvalidRowSpecification):
         )
 
 
-INVALID_SPECIFICATION_BY_SHEET_NAME = {
+_INVALID_SPECIFICATION_BY_SHEET_NAME = {
     cls_.sheet_name: cls_ for cls_ in InvalidRowSpecification.__subclasses__() if cls_ is not InvalidRowSpecification
 }
