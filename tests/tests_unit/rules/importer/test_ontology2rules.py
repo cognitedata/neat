@@ -4,8 +4,8 @@ from cognite.neat.rules.importers._owl2rules import OWLImporter
 
 def test_owl2transformation_rules() -> None:
     # Arrange
-    owl_importer = OWLImporter(wind_energy_ontology)
-    rules = owl_importer.to_rules(make_compliant=True)
+    owl_importer = OWLImporter(wind_energy_ontology, make_compliant=True)
+    rules = owl_importer.to_rules(errors="raise")
 
     # Assert
     assert str(rules.metadata.namespace) == "https://kg.cognite.ai/wind/"

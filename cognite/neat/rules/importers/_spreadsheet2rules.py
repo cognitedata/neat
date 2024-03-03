@@ -56,8 +56,8 @@ class ExcelImporter(BaseImporter):
         role = role or RoleTypes(metadata.get("role", RoleTypes.domain_expert))
         role_enum = RoleTypes(role)
         rules_model = RULES_PER_ROLE[role_enum]
-        sheet_names = {str(name).lower() for name in excel_file.sheet_names}
-        expected_sheet_names = rules_model.mandatory_fields()
+        sheet_names = {str(name) for name in excel_file.sheet_names}
+        expected_sheet_names = rules_model.mandatory_fields(use_alias=True)
 
         if missing_sheets := expected_sheet_names.difference(sheet_names):
             issues.append(issue_cls.SpreadsheetMissing(list(missing_sheets)))
@@ -98,12 +98,16 @@ class ExcelImporter(BaseImporter):
             return None, issues
 
         try:
-            return rules_cls.model_validate(sheets), issues  # type: ignore[attr-defined]
+            rules = rules_cls.model_validate(sheets)  # type: ignore[attr-defined]
         except ValidationError as e:
             issues.extend(issue_cls.InvalidSheetSpecification.from_pydantic_errors(e.errors(), header_row_no_by_sheet))
             if errors == "raise":
                 raise issues.as_errors() from e
             return None, issues
+
+        if errors == "raise":
+            return rules
+        return rules, issues
 
 
 class GoogleSheetImporter(BaseImporter):
