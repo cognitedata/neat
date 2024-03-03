@@ -5,24 +5,36 @@ from pathlib import Path
 
 from ._base import Error, IssueList, ValidationWarning
 
+__all__ = ["Formatter", "BasicHTML", "FORMATTER_BY_NAME"]
+
 
 class Formatter(ABC):
     file_suffix: str
+    default_file_prefix: str = "validation_report"
 
     @abstractmethod
     def create_report(self, issues: IssueList) -> str:
         raise NotImplementedError()
 
-    def write_to_file(self, issues: IssueList, file_path: Path) -> None:
-        if file_path.suffix != self.file_suffix:
+    @property
+    def default_file_name(self) -> str:
+        return f"{self.default_file_prefix}_{type(self).__name__.lower()}{self.file_suffix}"
+
+    def write_to_file(self, issues: IssueList, file_or_dir_path: Path | None = None) -> None:
+        if file_or_dir_path is None:
+            file_or_dir_path = Path(self.default_file_name)
+        elif file_or_dir_path.is_dir():
+            file_or_dir_path = file_or_dir_path / self.default_file_name
+
+        if file_or_dir_path.suffix != self.file_suffix:
             warnings.warn(
                 f"File suffix is not {self.file_suffix}. Appending suffix to file path.", UserWarning, stacklevel=2
             )
-            file_path = file_path.with_suffix(self.file_suffix)
-        file_path.write_text(self.create_report(issues))
+            file_or_dir_path = file_or_dir_path.with_suffix(self.file_suffix)
+        file_or_dir_path.write_text(self.create_report(issues))
 
 
-class BasicHTMLFormatter(Formatter):
+class BasicHTML(Formatter):
     file_suffix = ".html"
 
     def __init__(self):
@@ -62,3 +74,8 @@ class BasicHTMLFormatter(Formatter):
             df = IssueList(issues_in_category).to_pandas()
             table = ET.fromstring(df.to_html(index=False))
             self._body.append(table)
+
+
+FORMATTER_BY_NAME: dict[str, type[Formatter]] = {
+    subclass.__name__: subclass for subclass in Formatter.__subclasses__() if ABC not in subclass.__bases__  # type: ignore[type-abstract]
+}

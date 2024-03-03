@@ -3,7 +3,7 @@ from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 
 from cognite.neat.rules import validation
 from cognite.neat.rules.validation import IssueList
-from cognite.neat.rules.validation.formatters import BasicHTMLFormatter
+from cognite.neat.rules.validation.formatters import BasicHTML
 
 
 @pytest.fixture(scope="session")
@@ -34,7 +34,7 @@ def issues() -> IssueList:
 
 class TestBasicHTMLFormatter:
     def test_create_report(self, issues: IssueList):
-        formatter = BasicHTMLFormatter()
+        formatter = BasicHTML()
         report = formatter.create_report(issues)
 
         assert "Test title" in report
