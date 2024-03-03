@@ -36,7 +36,7 @@ class ExcelImporter(BaseImporter):
     def to_rules(
         self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
     ) -> tuple[Rule | None, IssueList] | Rule:
-        issues = IssueList()
+        issues = IssueList(title=f"'{self.filepath.name}'")
         try:
             excel_file = pd.ExcelFile(self.filepath)
         except FileNotFoundError:
