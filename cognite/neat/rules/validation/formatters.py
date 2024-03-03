@@ -66,14 +66,17 @@ class BasicHTML(Formatter):
         main_categories = {base_ for issue in issues for base_ in type(issue).__bases__}
 
         for category in main_categories:
-            issues_in_category = [issue for issue in issues if isinstance(issue, category)]
+            issues_in_category: list[Error] | list[ValidationWarning] = [  # type: ignore[assignment]
+                issue for issue in issues if isinstance(issue, category)
+            ]
             h3 = ET.SubElement(self._body, "h3")
             h3.text = category.__name__
             p = ET.SubElement(self._body, "p")
             p.text = f"Total: {len(issues_in_category)} {issue_name}"
-            df = IssueList(issues_in_category).to_pandas()
-            table = ET.fromstring(df.to_html(index=False))
-            self._body.append(table)
+            ul = ET.SubElement(self._body, "ul")
+            for issue in issues_in_category:
+                li = ET.SubElement(ul, "li")
+                li.text = issue.message()
 
 
 FORMATTER_BY_NAME: dict[str, type[Formatter]] = {

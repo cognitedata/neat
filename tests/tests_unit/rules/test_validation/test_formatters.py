@@ -25,7 +25,7 @@ def issues() -> IssueList:
                 nullable_definitions={True, False},
             ),
             validation.MissingContainerProperty(
-                container=ContainerId("neat", "Flowable"), property="minFlow", referred_by=ViewId("neat", "Pumd", "1")
+                container=ContainerId("neat", "Flowable"), property="minFlow", referred_by=ViewId("neat", "Pump", "1")
             ),
         ],
         title="Test title",

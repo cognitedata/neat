@@ -144,7 +144,7 @@ class InvalidRowSpecification(InvalidSheetContent, ABC):
         sheet_name, *_, row, column = error["loc"]
         return cls(
             column=str(column),
-            # +1 because excel is 1-indexed
+            # +1 because Excel is 1-indexed
             row=int(row) + (header_row_by_sheet_name or {}).get(str(sheet_name), 0) + 1,
             type=error["type"],
             msg=error["msg"],
@@ -162,6 +162,17 @@ class InvalidRowSpecification(InvalidSheetContent, ABC):
         output["input"] = self.input
         if self.url:
             output["url"] = self.url
+        return output
+
+    def message(self) -> str:
+        input_str = str(self.input) if self.input is not None else ""
+        input_str = input_str[:50] + "..." if len(input_str) > 50 else input_str
+        output = (
+            f"In {self.sheet_name}, row={self.row}, column={self.column}: {self.msg}. "
+            f"[type={self.type}, input_value={input_str}]"
+        )
+        if self.url:
+            output += f" For further information visit {self.url}"
         return output
 
 
