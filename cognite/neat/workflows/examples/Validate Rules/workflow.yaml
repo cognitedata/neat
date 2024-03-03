@@ -5,6 +5,8 @@ name: Validate Rules
 steps:
 -   complex_configs: {}
     configs:
+        Report Formatter: BasicHTML
+        role: infer
         validation_report_file: rules_validation_report.txt
         validation_report_storage_dir: rules_validation_report
     description: null
