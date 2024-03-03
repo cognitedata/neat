@@ -297,36 +297,38 @@ class DMSRules(BaseRules):
             value_types = {prop.value_type for _, prop in properties if prop.value_type}
             if len(value_types) > 1:
                 errors.append(
-                    validation.MultiValueTypeDefinition(
+                    validation.MultiValueTypeDefinitions(
                         container_id, prop_name, row_numbers, [str(v) for v in value_types]
                     )
                 )
             list_definitions = {prop.is_list for _, prop in properties if prop.is_list is not None}
             if len(list_definitions) > 1:
                 errors.append(
-                    validation.MultiValueIsListDefinition(container_id, prop_name, row_numbers, list(list_definitions))
+                    validation.MultiValueIsListDefinitions(container_id, prop_name, row_numbers, list(list_definitions))
                 )
             nullable_definitions = {prop.nullable for _, prop in properties if prop.nullable is not None}
             if len(nullable_definitions) > 1:
                 errors.append(
-                    validation.MultiNullableDefinition(container_id, prop_name, row_numbers, list(nullable_definitions))
+                    validation.MultiNullableDefinitions(
+                        container_id, prop_name, row_numbers, list(nullable_definitions)
+                    )
                 )
             default_definitions = {prop.default for _, prop in properties if prop.default is not None}
             if len(default_definitions) > 1:
                 errors.append(
-                    validation.MultiDefaultDefinition(container_id, prop_name, row_numbers, list(default_definitions))
+                    validation.MultiDefaultDefinitions(container_id, prop_name, row_numbers, list(default_definitions))
                 )
             index_definitions = {",".join(prop.index) for _, prop in properties if prop.index is not None}
             if len(index_definitions) > 1:
                 errors.append(
-                    validation.MultiIndexDefinition(container_id, prop_name, row_numbers, list(index_definitions))
+                    validation.MultiIndexDefinitions(container_id, prop_name, row_numbers, list(index_definitions))
                 )
             constraint_definitions = {
                 ",".join(prop.constraint) for _, prop in properties if prop.constraint is not None
             }
             if len(constraint_definitions) > 1:
                 errors.append(
-                    validation.MultiUniqueConstraintDefinition(
+                    validation.MultiUniqueConstraintDefinitions(
                         container_id, prop_name, row_numbers, list(constraint_definitions)
                     )
                 )

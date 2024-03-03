@@ -16,7 +16,7 @@ class InconsistentContainerDefinition(Error, ABC):
 
 
 @dataclass(frozen=True, order=True)
-class MultiValueTypeDefinition(InconsistentContainerDefinition):
+class MultiValueTypeDefinitions(InconsistentContainerDefinition):
     description = "The property has multiple value types"
     fix = "Use the same value type for all properties using the same container."
     value_types: list[str]
@@ -29,7 +29,7 @@ class MultiValueTypeDefinition(InconsistentContainerDefinition):
 
 
 @dataclass(frozen=True, order=True)
-class MultiValueIsListDefinition(InconsistentContainerDefinition):
+class MultiValueIsListDefinitions(InconsistentContainerDefinition):
     description = "The property has multiple list definitions"
     fix = "Use the same list definition for all properties using the same container."
     list_definitions: list[bool]
@@ -42,7 +42,7 @@ class MultiValueIsListDefinition(InconsistentContainerDefinition):
 
 
 @dataclass(frozen=True, order=True)
-class MultiNullableDefinition(InconsistentContainerDefinition):
+class MultiNullableDefinitions(InconsistentContainerDefinition):
     description = "The property has multiple nullable definitions"
     fix = "Use the same nullable definition for all properties using the same container."
     nullable_definitions: list[bool]
@@ -55,7 +55,7 @@ class MultiNullableDefinition(InconsistentContainerDefinition):
 
 
 @dataclass(frozen=True, order=True)
-class MultiDefaultDefinition(InconsistentContainerDefinition):
+class MultiDefaultDefinitions(InconsistentContainerDefinition):
     description = "The property has multiple default definitions"
     fix = "Use the same default definition for all properties using the same container."
     default_definitions: list[str | int | dict | None]
@@ -68,7 +68,7 @@ class MultiDefaultDefinition(InconsistentContainerDefinition):
 
 
 @dataclass(frozen=True, order=True)
-class MultiIndexDefinition(InconsistentContainerDefinition):
+class MultiIndexDefinitions(InconsistentContainerDefinition):
     description = "The property has multiple index definitions"
     fix = "Use the same index definition for all properties using the same container."
     index_definitions: list[str]
@@ -81,7 +81,7 @@ class MultiIndexDefinition(InconsistentContainerDefinition):
 
 
 @dataclass(frozen=True, order=True)
-class MultiUniqueConstraintDefinition(InconsistentContainerDefinition):
+class MultiUniqueConstraintDefinitions(InconsistentContainerDefinition):
     description = "The property has multiple unique constraint definitions"
     fix = "Use the same unique constraint definition for all properties using the same container."
     unique_constraint_definitions: list[str]

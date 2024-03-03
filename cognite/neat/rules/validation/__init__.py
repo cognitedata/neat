@@ -1,12 +1,12 @@
 from ._base import Error, IssueList, MultiValueError, ValidationIssue, ValidationWarning
 from ._container_inconsistency import (
     InconsistentContainerDefinition,
-    MultiDefaultDefinition,
-    MultiIndexDefinition,
-    MultiNullableDefinition,
-    MultiUniqueConstraintDefinition,
-    MultiValueIsListDefinition,
-    MultiValueTypeDefinition,
+    MultiDefaultDefinitions,
+    MultiIndexDefinitions,
+    MultiNullableDefinitions,
+    MultiUniqueConstraintDefinitions,
+    MultiValueIsListDefinitions,
+    MultiValueTypeDefinitions,
 )
 from ._dms_schema_errors import (
     ContainerPropertyUsedMultipleTimes,
@@ -63,11 +63,11 @@ __all__ = [
     "DirectRelationMissingSource",
     "ContainerPropertyUsedMultipleTimes",
     "InconsistentContainerDefinition",
-    "MultiValueTypeDefinition",
-    "MultiValueIsListDefinition",
-    "MultiNullableDefinition",
-    "MultiDefaultDefinition",
-    "MultiIndexDefinition",
-    "MultiUniqueConstraintDefinition",
+    "MultiValueTypeDefinitions",
+    "MultiValueIsListDefinitions",
+    "MultiNullableDefinitions",
+    "MultiDefaultDefinitions",
+    "MultiIndexDefinitions",
+    "MultiUniqueConstraintDefinitions",
     "DMSSchemaError",
 ]
