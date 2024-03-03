@@ -59,3 +59,6 @@ class BasicHTMLFormatter(Formatter):
             h3.text = category.__name__
             p = ET.SubElement(self._body, "p")
             p.text = f"Total: {len(issues_in_category)} {issue_name}"
+            df = IssueList(issues_in_category).to_pandas()
+            table = ET.fromstring(df.to_html(index=False))
+            self._body.append(table)
