@@ -349,6 +349,17 @@ class DMSRules(BaseRules):
             raise validation.MultiValueError(errors)
         return self
 
+    @model_validator(mode="after")
+    def validate_schema(self):
+        if self.metadata.schema_ is not SchemaCompleteness.complete:
+            return
+
+        schema = self.as_schema()
+        errors = schema.validate()
+        if errors:
+            raise validation.MultiValueError(errors)
+        return self
+
     def as_schema(self) -> DMSSchema:
         return _DMSExporter(self).to_schema()
 
