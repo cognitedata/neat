@@ -35,6 +35,10 @@ class ValidationWarning(ValidationIssue, ABC):
 
 
 class IssueList(UserList[ValidationIssue]):
+    def __init__(self, issues: Sequence[ValidationIssue] | None = None, title: str | None = None):
+        super().__init__(issues or [])
+        self.title = title
+
     def as_errors(self) -> ExceptionGroup:
         return ExceptionGroup(
             "Validation failed",
