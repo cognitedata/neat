@@ -4,7 +4,9 @@ from typing import Any
 import pytest
 from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
+from pydantic import ValidationError
 
+from cognite.neat.rules import validation
 from cognite.neat.rules.importers import DMSImporter
 from cognite.neat.rules.models._rules._types import ViewEntity
 from cognite.neat.rules.models._rules.base import SheetList
@@ -419,12 +421,8 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
     )
 
 
-def invalid_rules_test_cases() -> Iterable[ParameterSet]:
-    yield pytest.param(
-        {},
-        "missing",
-        id="Empty rules",
-    )
+def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
+    container_id = dm.ContainerId("my_space", "GeneratingUnit")
     yield pytest.param(
         {
             "metadata": {
@@ -461,7 +459,14 @@ def invalid_rules_test_cases() -> Iterable[ParameterSet]:
             },
             "views": {"data": [{"view": "WindTurbine", "class_": "WindTurbine"}]},
         },
-        "with different value types",
+        [
+            validation.MultiValueTypeDefinitions(
+                container_id,
+                "maxPower",
+                {0, 1},
+                {"float64", "float32"},
+            )
+        ],
         id="Inconsistent container definition value type",
     )
     yield pytest.param(
@@ -501,7 +506,14 @@ def invalid_rules_test_cases() -> Iterable[ParameterSet]:
             },
             "views": {"data": [{"view": "WindTurbine", "class_": "WindTurbine"}]},
         },
-        "different list definitions",
+        [
+            validation.MultiValueIsListDefinitions(
+                container_id,
+                "maxPower",
+                {0, 1},
+                {True, False},
+            )
+        ],
         id="Inconsistent container definition isList",
     )
     yield pytest.param(
@@ -541,7 +553,14 @@ def invalid_rules_test_cases() -> Iterable[ParameterSet]:
             },
             "views": {"data": [{"view": "WindTurbine", "class_": "WindTurbine"}]},
         },
-        "different nullable definitions",
+        [
+            validation.MultiNullableDefinitions(
+                container_id,
+                "maxPower",
+                {0, 1},
+                {True, False},
+            )
+        ],
         id="Inconsistent container definition nullable",
     )
     yield pytest.param(
@@ -581,7 +600,14 @@ def invalid_rules_test_cases() -> Iterable[ParameterSet]:
             },
             "views": {"data": [{"view": "WindTurbine", "class_": "WindTurbine"}]},
         },
-        "defined with different index definitions",
+        [
+            validation.MultiIndexDefinitions(
+                container_id,
+                "name",
+                {0, 1},
+                {"name", "name_index"},
+            )
+        ],
         id="Inconsistent container definition index",
     )
     yield pytest.param(
@@ -621,7 +647,14 @@ def invalid_rules_test_cases() -> Iterable[ParameterSet]:
             },
             "views": {"data": [{"view": "WindTurbine", "class_": "WindTurbine"}]},
         },
-        "different unique constraint definitions",
+        [
+            validation.MultiUniqueConstraintDefinitions(
+                container_id,
+                "name",
+                {0, 1},
+                {"unique_name", "name"},
+            )
+        ],
         id="Inconsistent container definition constraint",
     )
 
@@ -641,12 +674,22 @@ class TestDMSRules:
         valid_rules = DMSRules.model_validate(raw)
         assert valid_rules.model_dump() == expected_rules.model_dump()
 
-    @pytest.mark.parametrize("raw, expected_msg", list(invalid_rules_test_cases()))
-    def test_load_invalid_rules(self, raw: dict[str, dict[str, Any]], expected_msg: str) -> None:
+    @pytest.mark.parametrize("raw, expected_errors", list(invalid_container_definitions_test_cases()))
+    def test_load_inconsistent_container_definitions(
+        self, raw: dict[str, dict[str, Any]], expected_errors: list[validation.Error]
+    ) -> None:
         with pytest.raises(ValueError) as e:
             DMSRules.model_validate(raw)
 
-        assert expected_msg in str(e.value)
+        assert isinstance(e.value, ValidationError)
+        validation_errors = e.value.errors()
+        assert len(validation_errors) == 1, "Expected there to be exactly one validation error"
+        validation_error = validation_errors[0]
+        multi_value_error = validation_error.get("ctx", {}).get("error")
+        assert isinstance(multi_value_error, validation.MultiValueError)
+        actual_errors = multi_value_error.errors
+
+        assert sorted(actual_errors) == sorted(expected_errors)
 
     def test_alice_to_and_from_DMS(self, alice_rules: DMSRules) -> None:
         schema = alice_rules.as_schema()

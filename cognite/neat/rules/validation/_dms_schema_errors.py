@@ -1,5 +1,6 @@
 from abc import ABC
 from dataclasses import dataclass
+from functools import total_ordering
 from typing import ClassVar
 
 from cognite.client.data_classes import data_modeling as dm
@@ -7,12 +8,21 @@ from cognite.client.data_classes import data_modeling as dm
 from ._base import Error
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
+@total_ordering
 class DMSSchemaError(Error, ABC):
-    ...
+    def __lt__(self, other: object) -> bool:
+        if not isinstance(other, DMSSchemaError):
+            return NotImplemented
+        return type(self).__name__ < type(other).__name__
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, DMSSchemaError):
+            return NotImplemented
+        return type(self).__name__ == type(other).__name__
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class MissingSpace(DMSSchemaError):
     description = "The spaced referred to by the Container/View/Node/Edge/DataModel does not exist"
     fix = "Create the space"
@@ -23,14 +33,14 @@ class MissingSpace(DMSSchemaError):
         return f"The space {self.space} referred to by {self.referred_by} does not exist"
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class MissingContainer(DMSSchemaError):
     error_name: ClassVar[str] = "MissingContainer"
     container: dm.ContainerId
     referred_by: dm.ViewId
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class MissingContainerProperty(DMSSchemaError):
     error_name: ClassVar[str] = "MissingContainerProperty"
     container: dm.ContainerId
@@ -38,48 +48,48 @@ class MissingContainerProperty(DMSSchemaError):
     referred_by: dm.ViewId
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class MissingView(DMSSchemaError):
     error_name: ClassVar[str] = "MissingView"
     view: dm.ViewId
     referred_by: dm.DataModelId | dm.ViewId
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class MissingParentView(MissingView):
     error_name: ClassVar[str] = "MissingParentView"
     referred_by: dm.ViewId
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class MissingSourceView(MissingView):
     error_name: ClassVar[str] = "MissingSourceView"
     property: str
     referred_by: dm.ViewId
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class MissingEdgeView(MissingView):
     error_name: ClassVar[str] = "MissingEdgeView"
     property: str
     referred_by: dm.ViewId
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class DuplicatedViewInDataModel(DMSSchemaError):
     error_name: ClassVar[str] = "DuplicatedViewInDataModel"
     referred_by: dm.DataModelId
     view: dm.ViewId
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class DirectRelationMissingSource(DMSSchemaError):
     error_name: ClassVar[str] = "DirectRelationMissingSource"
     view_id: dm.ViewId
     property: str
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class ContainerPropertyUsedMultipleTimes(DMSSchemaError):
     error_name: ClassVar[str] = "ContainerPropertyUsedMultipleTimes"
     container: dm.ContainerId

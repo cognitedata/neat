@@ -293,25 +293,23 @@ class DMSRules(BaseRules):
             if len(properties) == 1:
                 continue
             container_id = container.as_id(self.metadata.space)
-            row_numbers = [prop_no for prop_no, _ in properties]
+            row_numbers = {prop_no for prop_no, _ in properties}
             value_types = {prop.value_type for _, prop in properties if prop.value_type}
             if len(value_types) > 1:
                 errors.append(
                     validation.MultiValueTypeDefinitions(
-                        container_id, prop_name, row_numbers, [str(v) for v in value_types]
+                        container_id, prop_name, row_numbers, {str(v) for v in value_types}
                     )
                 )
             list_definitions = {prop.is_list for _, prop in properties if prop.is_list is not None}
             if len(list_definitions) > 1:
                 errors.append(
-                    validation.MultiValueIsListDefinitions(container_id, prop_name, row_numbers, list(list_definitions))
+                    validation.MultiValueIsListDefinitions(container_id, prop_name, row_numbers, list_definitions)
                 )
             nullable_definitions = {prop.nullable for _, prop in properties if prop.nullable is not None}
             if len(nullable_definitions) > 1:
                 errors.append(
-                    validation.MultiNullableDefinitions(
-                        container_id, prop_name, row_numbers, list(nullable_definitions)
-                    )
+                    validation.MultiNullableDefinitions(container_id, prop_name, row_numbers, nullable_definitions)
                 )
             default_definitions = {prop.default for _, prop in properties if prop.default is not None}
             if len(default_definitions) > 1:
@@ -320,27 +318,25 @@ class DMSRules(BaseRules):
                 )
             index_definitions = {",".join(prop.index) for _, prop in properties if prop.index is not None}
             if len(index_definitions) > 1:
-                errors.append(
-                    validation.MultiIndexDefinitions(container_id, prop_name, row_numbers, list(index_definitions))
-                )
+                errors.append(validation.MultiIndexDefinitions(container_id, prop_name, row_numbers, index_definitions))
             constraint_definitions = {
                 ",".join(prop.constraint) for _, prop in properties if prop.constraint is not None
             }
             if len(constraint_definitions) > 1:
                 errors.append(
                     validation.MultiUniqueConstraintDefinitions(
-                        container_id, prop_name, row_numbers, list(constraint_definitions)
+                        container_id, prop_name, row_numbers, constraint_definitions
                     )
                 )
 
             # This sets the container definition for all the properties where it is not defined.
             # This allows the user to define the container only once.
-            value_type = value_types.pop()
-            list_definition = list_definitions.pop() if list_definitions else None
-            nullable_definition = nullable_definitions.pop() if nullable_definitions else None
-            default_definition = default_definitions.pop() if default_definitions else None
-            index_definition = index_definitions.pop().split(",") if index_definitions else None
-            constraint_definition = constraint_definitions.pop().split(",") if constraint_definitions else None
+            value_type = next(iter(value_types))
+            list_definition = next(iter(list_definitions)) if list_definitions else None
+            nullable_definition = next(iter(nullable_definitions)) if nullable_definitions else None
+            default_definition = next(iter(default_definitions)) if default_definitions else None
+            index_definition = next(iter(index_definitions)).split(",") if index_definitions else None
+            constraint_definition = next(iter(constraint_definitions)).split(",") if constraint_definitions else None
             for _, prop in properties:
                 prop.value_type = value_type
                 prop.is_list = prop.is_list or list_definition
