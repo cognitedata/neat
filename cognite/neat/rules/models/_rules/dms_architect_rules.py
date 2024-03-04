@@ -79,6 +79,10 @@ class DMSMetadata(BaseMetadata):
     # MyPy does not account for the field validator below that sets the default value
     default_view_version: VersionType = Field(None)  # type: ignore[assignment]
 
+    @field_validator("schema_", mode="plain")
+    def as_enum(cls, value: str) -> SchemaCompleteness:
+        return SchemaCompleteness(value)
+
     @field_validator("default_view_version", mode="before")
     def set_default_view_version_if_missing(cls, value, info):
         if value is None:

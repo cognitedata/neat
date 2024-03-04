@@ -55,6 +55,11 @@ def invalid_rules_filepaths():
         ),
         id="Inconsistent container",
     )
+    yield pytest.param(
+        DATA_DIR / "missing_view_container_dms_rules.xlsx",
+        IssueList([]),
+        id="Missing container and view definition",
+    )
 
 
 class TestExcelImporter:
@@ -67,7 +72,7 @@ class TestExcelImporter:
         assert isinstance(rules, DMSRules)
 
     @pytest.mark.parametrize("filepath, expected_issues", invalid_rules_filepaths())
-    def test_import_invalid_rules_single_issue(self, filepath: Path, expected_issues: IssueList):
+    def test_import_invalid_rules(self, filepath: Path, expected_issues: IssueList):
         importer = ExcelImporter(filepath)
 
         _, issues = importer.to_rules(errors="continue")

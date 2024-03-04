@@ -114,7 +114,7 @@ class InvalidSheetContent(Error, ABC):
                         output.append(caught_error)
                     continue
 
-            if len(error["loc"]) == 4:
+            if len(error["loc"]) >= 4:
                 sheet_name, *_ = error["loc"]
                 error_cls = _INVALID_SPECIFICATION_BY_SHEET_NAME.get(
                     str(sheet_name), InvalidRowSpecificationUnknownSheet
@@ -141,7 +141,7 @@ class InvalidRowSpecification(InvalidSheetContent, ABC):
 
     @classmethod
     def from_pydantic_error(cls, error: ErrorDetails, header_row_by_sheet_name: dict[str, int] | None = None) -> Self:
-        sheet_name, *_, row, column = error["loc"]
+        sheet_name, _, row, column, *__ = error["loc"]
         return cls(
             column=str(column),
             # +1 because Excel is 1-indexed
@@ -204,7 +204,7 @@ class InvalidRowSpecificationUnknownSheet(InvalidRowSpecification):
 
     @classmethod
     def from_pydantic_error(cls, error: ErrorDetails, header_row_by_sheet_name: dict[str, int] | None = None) -> Self:
-        sheet_name, *_, row, column = error["loc"]
+        sheet_name, _, row, column, *__ = error["loc"]
         return cls(
             column=str(column),
             # +1 because excel is 1-indexed
