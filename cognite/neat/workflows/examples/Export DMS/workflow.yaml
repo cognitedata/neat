@@ -24,7 +24,7 @@ steps:
         pos_y: 69
 -   complex_configs: {}
     configs:
-        Report Formatter: html
+        Report Formatter: BasicHTML
         role: infer
     description: null
     enabled: true
