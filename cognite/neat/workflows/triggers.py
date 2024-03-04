@@ -91,6 +91,9 @@ class TriggerManager:
             self.thread.join()
         logging.info("Scheduler main loop stopped")
 
+    def every_weekday_schedule(self, weekday_str: str):
+        return getattr(schedule.every(), weekday_str)
+
     def start_time_schedulers(self):
         """Starts a time scheduler for the workflows
 
@@ -99,6 +102,7 @@ class TriggerManager:
 
         """
         logging.info("Starting time trigger scheduler")
+        weekdays = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
 
         trigger_steps_count = 0
         for workflow in self.workflow_manager.workflow_registry.values():
@@ -115,8 +119,14 @@ class TriggerManager:
                             interval_unit = every[0]
                             interval_value = every[1]
                             if "day" in interval_unit:
-                                trigger_steps_count += 1
-                                schedule.every().day.at(interval_value).do(workflow.start, start_step_id=step.id)
+                                if interval_unit.lower() in weekdays:
+                                    trigger_steps_count += 1
+                                    self.every_weekday_schedule(interval_unit.lower()).at(interval_value).do(
+                                        workflow.start, start_step_id=step.id
+                                    )
+                                else:
+                                    trigger_steps_count += 1
+                                    schedule.every().day.at(interval_value).do(workflow.start, start_step_id=step.id)
                         else:
                             logging.error(f"Invalid time trigger interval {every_str}")
 
