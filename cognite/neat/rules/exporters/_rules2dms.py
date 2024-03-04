@@ -30,7 +30,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
             {"all"}
         ),
         include_space: set[str] | None = None,
-        existing_handling: Literal["fail", "skip", "update"] = "update",
+        existing_handling: Literal["fail", "skip", "update", "force"] = "update",
     ):
         self.rules = rules
         self.export_components = export_components
@@ -67,7 +67,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
         if self.export_components.intersection({"all", "containers"}):
             to_export.append((schema.containers, ContainerLoader(client)))
         if self.export_components.intersection({"all", "views"}):
-            to_export.append((schema.views, ViewLoader(client)))
+            to_export.append((schema.views, ViewLoader(client, self.existing_handling)))
         if self.export_components.intersection({"all", "data_models"}):
             to_export.append((schema.data_models, DataModelLoader(client)))
 
@@ -90,7 +90,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
             failed_created = 0
 
             skipped = 0
-            if self.existing_handling == "update":
+            if self.existing_handling in ["update", "force"]:
                 changed = len(to_update)
                 failed_changed = 0
             elif self.existing_handling == "skip":
@@ -113,7 +113,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
                     created -= failed_created
                     error_messages.append(e.message)
 
-                if self.existing_handling == "update":
+                if self.existing_handling in ["update", "force"]:
                     try:
                         loader.update(to_update)
                     except CogniteAPIError as e:
