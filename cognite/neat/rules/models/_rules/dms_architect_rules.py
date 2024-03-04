@@ -354,6 +354,50 @@ class DMSRules(BaseRules):
         return self
 
     @model_validator(mode="after")
+    def referenced_views_and_containers_are_existing(self) -> "DMSRules":
+        # There two checks are done in the same method to raise all the errors at once.
+        defined_views = {view.view.as_id(self.metadata.space, self.metadata.version) for view in self.views}
+
+        errors: list[validation.Error] = []
+        for prop_no, prop in enumerate(self.properties):
+            if (
+                prop.view
+                and (view_id := prop.view.as_id(self.metadata.space, self.metadata.version)) not in defined_views
+            ):
+                errors.append(
+                    validation.ReferencedNonExistingView(
+                        column="View",
+                        row=prop_no,
+                        type="value_error.missing",
+                        view_id=view_id,
+                        msg="",
+                        input=None,
+                        url=None,
+                    )
+                )
+        if self.metadata.schema_ is SchemaCompleteness.complete:
+            defined_containers = {container.container.as_id(self.metadata.space) for container in self.containers or []}
+            for prop_no, prop in enumerate(self.properties):
+                if (
+                    prop.container
+                    and (container_id := prop.container.as_id(self.metadata.space)) not in defined_containers
+                ):
+                    errors.append(
+                        validation.ReferenceNonExistingContainer(
+                            column="Container",
+                            row=prop_no,
+                            type="value_error.missing",
+                            container_id=container_id,
+                            msg="",
+                            input=None,
+                            url=None,
+                        )
+                    )
+        if errors:
+            raise validation.MultiValueError(errors)
+        return self
+
+    @model_validator(mode="after")
     def validate_schema(self) -> "DMSRules":
         if self.metadata.schema_ is not SchemaCompleteness.complete:
             return self

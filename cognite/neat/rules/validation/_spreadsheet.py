@@ -1,6 +1,7 @@
 import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from functools import total_ordering
 from typing import Any, ClassVar
 
 from pydantic_core import ErrorDetails
@@ -111,6 +112,17 @@ class InvalidSheetContent(Error, ABC):
                             for row_no in row_numbers:
                                 # Adjusting the row number to the actual row number in the spreadsheet
                                 caught_error.row_numbers.add(row_no + property_header)
+                        if isinstance(caught_error, InvalidRowSpecification):
+                            # Adjusting the row number to the actual row number in the spreadsheet
+                            new_row = (
+                                caught_error.row + (header_row_by_sheet_name or {}).get(caught_error.sheet_name, 0) + 1
+                            )
+                            # The error is frozen, so we have to create a new one
+                            dumped = caught_error.dump()
+                            dumped["row"] = new_row
+                            dumped.pop("error", None)
+                            dumped.pop("sheet_name", None)
+                            caught_error = caught_error.__class__(**dumped)
                         output.append(caught_error)
                     continue
 
@@ -126,7 +138,8 @@ class InvalidSheetContent(Error, ABC):
         return output
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
+@total_ordering
 class InvalidRowSpecification(InvalidSheetContent, ABC):
     description: ClassVar[str] = "This is a generic class for all invalid specifications."
     fix: ClassVar[str] = "Follow the instruction in the error message."
@@ -138,6 +151,16 @@ class InvalidRowSpecification(InvalidSheetContent, ABC):
     msg: str
     input: Any
     url: str | None
+
+    def __lt__(self, other: object) -> bool:
+        if not isinstance(other, InvalidRowSpecification):
+            return NotImplemented
+        return (self.sheet_name, self.row, self.column) < (other.sheet_name, other.row, other.column)
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, InvalidRowSpecification):
+            return NotImplemented
+        return (self.sheet_name, self.row, self.column) == (other.sheet_name, other.row, other.column)
 
     @classmethod
     def from_pydantic_error(cls, error: ErrorDetails, header_row_by_sheet_name: dict[str, int] | None = None) -> Self:
@@ -160,8 +183,7 @@ class InvalidRowSpecification(InvalidSheetContent, ABC):
         output["type"] = self.type
         output["msg"] = self.msg
         output["input"] = self.input
-        if self.url:
-            output["url"] = self.url
+        output["url"] = self.url
         return output
 
     def message(self) -> str:
@@ -176,27 +198,27 @@ class InvalidRowSpecification(InvalidSheetContent, ABC):
         return output
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class InvalidPropertySpecification(InvalidRowSpecification):
     sheet_name = "Properties"
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class InvalidClassSpecification(InvalidRowSpecification):
     sheet_name = "Classes"
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class InvalidContainerSpecification(InvalidRowSpecification):
     sheet_name = "Containers"
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class InvalidViewSpecification(InvalidRowSpecification):
     sheet_name = "Views"
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class InvalidRowSpecificationUnknownSheet(InvalidRowSpecification):
     sheet_name = "Unknown"
 
