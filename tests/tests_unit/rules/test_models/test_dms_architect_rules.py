@@ -165,7 +165,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         {
             "metadata": {
-                "schema_": "complete",
+                "schema_": "partial",
                 "space": "my_space",
                 "external_id": "my_data_model",
                 "version": "1",

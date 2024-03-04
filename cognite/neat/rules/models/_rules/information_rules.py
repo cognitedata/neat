@@ -312,7 +312,7 @@ class _InformationRulesConverter:
         for class_ in self.information.classes:
             properties: list[DMSProperty] = properties_by_class.get(class_.class_, [])
             if not properties or all(
-                isinstance(prop.value_type, ViewEntity) and prop.value_type != "direct" for prop in properties
+                isinstance(prop.value_type, ViewEntity) and prop.relation != "direct" for prop in properties
             ):
                 classes_without_properties.add(class_.class_)
                 continue
@@ -372,6 +372,8 @@ class _InformationRulesConverter:
             nullable = None
         elif relation == "direct":
             nullable = True
+            container = ContainerEntity.from_raw(prop.class_)
+            container_property = prop.property_
         else:
             container = ContainerEntity.from_raw(prop.class_)
             container_property = prop.property_
