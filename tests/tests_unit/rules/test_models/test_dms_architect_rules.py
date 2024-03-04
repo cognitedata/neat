@@ -199,8 +199,8 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 "data": [
                     {"class_": "Asset", "container": "sp_core:Asset"},
                     {
-                        "class_": "WindTurbine",
-                        "container": "WindTurbine",
+                        "class_": "GeneratingUnit",
+                        "container": "GeneratingUnit",
                         "constraint": "sp_core:Asset",
                     },
                 ]
