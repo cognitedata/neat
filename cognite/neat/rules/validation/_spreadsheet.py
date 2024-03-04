@@ -24,6 +24,11 @@ class SpreadsheetNotFound(Error):
     def message(self) -> str:
         return f"Spreadsheet {self.spreadsheet_name} not found"
 
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["spreadsheet_name"] = self.spreadsheet_name
+        return output
+
 
 @dataclass(frozen=True, order=True)
 class MetadataSheetMissingOrFailed(Error):
@@ -44,6 +49,11 @@ class SpreadsheetMissing(Error):
         else:
             return f"Spreadsheets {', '.join(self.missing_spreadsheets)} are missing"
 
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["missing_spreadsheets"] = self.missing_spreadsheets
+        return output
+
 
 @dataclass(frozen=True, order=True)
 class ReadSpreadsheets(Error):
@@ -55,6 +65,11 @@ class ReadSpreadsheets(Error):
     def message(self) -> str:
         return f"Error reading spreadsheet(s): {self.error_message}"
 
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["error_message"] = self.error_message
+        return output
+
 
 @dataclass(frozen=True, order=True)
 class InvalidRole(Error):
@@ -65,6 +80,11 @@ class InvalidRole(Error):
 
     def message(self) -> str:
         return f"Invalid role: {self.provided_role}"
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["provided_role"] = self.provided_role
+        return output
 
 
 @dataclass(frozen=True, order=True)
@@ -124,13 +144,36 @@ class InvalidRowSpecification(InvalidSheetContent, ABC):
         sheet_name, *_, row, column = error["loc"]
         return cls(
             column=str(column),
-            # +1 because excel is 1-indexed
+            # +1 because Excel is 1-indexed
             row=int(row) + (header_row_by_sheet_name or {}).get(str(sheet_name), 0) + 1,
             type=error["type"],
             msg=error["msg"],
             input=error.get("input"),
             url=str(url) if (url := error.get("url")) else None,
         )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["sheet_name"] = self.sheet_name
+        output["column"] = self.column
+        output["row"] = self.row
+        output["type"] = self.type
+        output["msg"] = self.msg
+        output["input"] = self.input
+        if self.url:
+            output["url"] = self.url
+        return output
+
+    def message(self) -> str:
+        input_str = str(self.input) if self.input is not None else ""
+        input_str = input_str[:50] + "..." if len(input_str) > 50 else input_str
+        output = (
+            f"In {self.sheet_name}, row={self.row}, column={self.column}: {self.msg}. "
+            f"[type={self.type}, input_value={input_str}]"
+        )
+        if self.url:
+            output += f" For further information visit {self.url}"
+        return output
 
 
 @dataclass(frozen=True, order=True)
@@ -172,6 +215,11 @@ class InvalidRowSpecificationUnknownSheet(InvalidRowSpecification):
             input=error.get("input"),
             url=str(url) if (url := error.get("url")) else None,
         )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["actual_sheet_name"] = self.actual_sheet_name
+        return output
 
 
 _INVALID_SPECIFICATION_BY_SHEET_NAME = {

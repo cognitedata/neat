@@ -1,9 +1,11 @@
 import sys
-from abc import ABC
+from abc import ABC, abstractmethod
 from collections import UserList
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import ClassVar
+from typing import Any, ClassVar
+
+import pandas as pd
 
 if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup
@@ -23,23 +25,40 @@ class ValidationIssue(ABC):
         """
         return self.description
 
+    @abstractmethod
+    def dump(self) -> dict[str, Any]:
+        """Return a dictionary representation of the issue."""
+        raise NotImplementedError()
+
 
 @dataclass(frozen=True, order=True)
 class Error(ValidationIssue, ABC):
-    ...
+    def dump(self) -> dict[str, Any]:
+        return {"error": type(self).__name__}
 
 
 @dataclass(frozen=True, order=True)
 class ValidationWarning(ValidationIssue, ABC):
-    ...
+    def dump(self) -> dict[str, Any]:
+        return {"warning": type(self).__name__}
 
 
 class IssueList(UserList[ValidationIssue]):
+    def __init__(self, issues: Sequence[ValidationIssue] | None = None, title: str | None = None):
+        super().__init__(issues or [])
+        self.title = title
+
     def as_errors(self) -> ExceptionGroup:
         return ExceptionGroup(
             "Validation failed",
             [ValueError(issue.message()) for issue in self if isinstance(issue, Error)],
         )
+
+    def to_pandas(self) -> pd.DataFrame:
+        return pd.DataFrame([issue.dump() for issue in self])
+
+    def _repr_html_(self) -> str | None:
+        return self.to_pandas()._repr_html_()  # type: ignore[operator]
 
 
 class MultiValueError(ValueError):

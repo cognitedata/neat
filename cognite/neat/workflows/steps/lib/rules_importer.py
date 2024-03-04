@@ -14,6 +14,7 @@ from cognite.neat.rules.models._rules import RoleTypes
 from cognite.neat.rules.models.rdfpath import TransformationRuleType
 from cognite.neat.rules.models.rules import Class, Classes, Metadata, Properties, Property, Rules
 from cognite.neat.rules.models.value_types import ValueType
+from cognite.neat.rules.validation.formatters import FORMATTER_BY_NAME
 from cognite.neat.utils.utils import generate_exception_report
 from cognite.neat.workflows import utils
 from cognite.neat.workflows._exceptions import StepNotInitialized
@@ -626,7 +627,7 @@ class ImportExcelValidator(Step):
             name="Report Formatter",
             value="html",
             label="The format of the report for the validation of the rules",
-            options=["html"],
+            options=list(FORMATTER_BY_NAME),
         ),
         Configurable(
             name="role",
@@ -651,10 +652,18 @@ class ImportExcelValidator(Step):
             role_enum = RoleTypes(role)
 
         excel_importer = importers.ExcelImporter(rules_file_path)
-        try:
-            rules = excel_importer.to_rules(role=role_enum, errors="raise")
-        except ValueError as e:
-            error_text = f"Failed to validate rules. Please check the rules file. {e}"
+        rules, issues = excel_importer.to_rules(role=role_enum, errors="continue")
+
+        if rules is None:
+            output_dir = self.data_store_path / Path("staging")
+            report_writer = FORMATTER_BY_NAME[self.configs["Report Formatter"]]()
+            report_writer.write_to_file(issues, file_or_dir_path=output_dir)
+            report_file = report_writer.default_file_name
+            error_text = (
+                "<p></p>"
+                f'<a href="/data/staging/{report_file}?{time.time()}" '
+                f'target="_blank">Failed to validate rules, click here for report</a>'
+            )
             return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
 
         output_text = "Rules validation passed successfully!"
