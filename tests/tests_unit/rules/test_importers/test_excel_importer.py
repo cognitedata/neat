@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pytest
-from cognite.client.data_classes.data_modeling import ContainerId
+from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from pydantic.version import VERSION
 
 from cognite.neat.rules import validation
@@ -57,7 +57,28 @@ def invalid_rules_filepaths():
     )
     yield pytest.param(
         DATA_DIR / "missing_view_container_dms_rules.xlsx",
-        IssueList([]),
+        IssueList(
+            [
+                validation.ReferencedNonExistingView(
+                    column="View",
+                    row=4,
+                    type="value_error.missing",
+                    view_id=ViewId("neat", "Pump", "1"),
+                    msg="",
+                    input=None,
+                    url=None,
+                ),
+                validation.ReferenceNonExistingContainer(
+                    column="Container",
+                    row=4,
+                    type="value_error.missing",
+                    container_id=ContainerId("neat", "Pump"),
+                    msg="",
+                    input=None,
+                    url=None,
+                ),
+            ]
+        ),
         id="Missing container and view definition",
     )
 
