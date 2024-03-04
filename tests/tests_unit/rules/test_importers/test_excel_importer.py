@@ -30,7 +30,7 @@ def invalid_rules_filepaths():
             [
                 validation.InvalidPropertySpecification(
                     column="IsList",
-                    row=4,
+                    row=5,
                     type="bool_parsing",
                     msg="Input should be a valid boolean, unable to interpret input",
                     input="Apple",
