@@ -15,7 +15,7 @@ from cognite.neat.rules.models._rules.dms_architect_rules import (
 )
 from cognite.neat.rules.validation import IssueList
 
-from ._base import BaseImporter
+from ._base import BaseImporter, Rule
 
 
 class DMSImporter(BaseImporter):
@@ -23,19 +23,19 @@ class DMSImporter(BaseImporter):
         self.schema = schema
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> DMSRules:
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rule:
         ...
 
     @overload
     def to_rules(
         self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[DMSRules | None, IssueList]:
+    ) -> tuple[Rule | None, IssueList]:
         ...
 
     def to_rules(
         self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[DMSRules | None, IssueList] | DMSRules:
-        if role is not None and role != RoleTypes.dms_architect:
+    ) -> tuple[Rule | None, IssueList] | Rule:
+        if role is RoleTypes.domain_expert:
             raise ValueError(f"Role {role} is not supported for DMSImporter")
         data_model = self.schema.data_models[0]
 
@@ -132,7 +132,7 @@ class DMSImporter(BaseImporter):
 
                 properties.append(dms_property)
 
-        return DMSRules(
+        dms_rules = DMSRules(
             metadata=DMSMetadata.from_data_model(data_model),
             properties=properties,
             containers=SheetList[DMSContainer](
@@ -140,3 +140,6 @@ class DMSImporter(BaseImporter):
             ),
             views=SheetList[DMSView](data=[DMSView.from_view(view) for view in self.schema.views]),
         )
+        if role is RoleTypes.information_architect:
+            return dms_rules.as_information_architect_rules()
+        return dms_rules
