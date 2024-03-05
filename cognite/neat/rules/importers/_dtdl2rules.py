@@ -57,10 +57,7 @@ class DTDLImporter(BaseImporter):
                 if cls_ is None:
                     warnings.warn(f"Invalid json file {filepath}. Unknown '@type' {type_}", stacklevel=2)
                     continue
-                try:
-                    items.append(cls_.model_validate(item))
-                except ValueError:
-                    raise
+                items.append(cls_.model_validate(item))
         return cls(items)
 
     @overload
