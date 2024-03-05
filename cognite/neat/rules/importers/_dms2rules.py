@@ -1,6 +1,8 @@
 from typing import Literal, cast, overload
 
+from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
+from cognite.client.data_classes.data_modeling import DataModelIdentifier
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex, InvertedIndex
 from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 
@@ -21,6 +23,10 @@ from ._base import BaseImporter, Rule
 class DMSImporter(BaseImporter):
     def __init__(self, schema: DMSSchema):
         self.schema = schema
+
+    @classmethod
+    def from_data_model_id(cls, client: CogniteClient, data_model_id: DataModelIdentifier) -> "DMSImporter":
+        return cls(DMSSchema.from_model_id(client, data_model_id))
 
     @overload
     def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rule:
