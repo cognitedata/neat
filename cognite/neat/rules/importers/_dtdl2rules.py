@@ -89,7 +89,7 @@ class DTDLBaseWithName(DTDLBase, ABC):
 
 
 class DTDLBaseWithSchema(DTDLBaseWithName, ABC):
-    schema_: "Schema" = Field(None, alias="schema")  # type: ignore[assignment]
+    schema_: "Schema | IRI | None" = Field(None, alias="schema")  # type: ignore[assignment]
 
     @field_validator("schema_", mode="before")
     def select_schema_type(cls, value: Any) -> Any:
@@ -98,7 +98,7 @@ class DTDLBaseWithSchema(DTDLBaseWithName, ABC):
         return value
 
 
-class DTDLField(DTDLBaseWithName):
+class DTDLField(DTDLBaseWithSchema):
     type = "Field"
 
 
@@ -116,7 +116,7 @@ class MapValue(DTDLBaseWithSchema):
     type = "MapValue"
 
 
-class Map(DTDLBaseWithName):
+class Map(DTDLBase):
     type = "Map"
     map_key: MapKey = Field(alias="mapKey")
     map_value: MapValue = Field(alias="mapValue")
@@ -124,13 +124,13 @@ class Map(DTDLBaseWithName):
 
 class EnumValue(DTDLBaseWithName):
     type = "EnumValue"
-    enum_values: str = Field(alias="enumValues")
+    enum_value: str = Field(alias="enumValue")
 
 
-class Enum(DTDLBaseWithName):
+class Enum(DTDLBase):
     type = "Enum"
     enum_values: list[EnumValue] = Field(alias="enumValues")
-    values_schema: PrimitiveSchema = Field(alias="valuesSchema")
+    value_schema: PrimitiveSchema = Field(alias="valueSchema")
 
 
 class Array(DTDLBaseWithName):
@@ -183,9 +183,10 @@ class Telemetry(DTDLBaseWithSchema):
 
 class Interface(DTDLBase):
     type = "Interface"
+    id_: IRI = Field(alias="@id")  # type: ignore[assignment]
     context: IRI | None = Field(alias="@context")
     extends: list[DTMI] | None = None
-    contents: list[Command | Component | Property | Relationship | Telemetry] | None = None
+    contents: list[Command | Component | Property | Relationship | Telemetry | IRI] | None = None
     schemas: list[Array | Enum | Map | Object] | None = None
 
     @field_validator("contents", "schemas", mode="before")
