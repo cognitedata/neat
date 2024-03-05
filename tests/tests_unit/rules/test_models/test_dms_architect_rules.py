@@ -165,7 +165,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         {
             "metadata": {
-                "schema_": "complete",
+                "schema_": "partial",
                 "space": "my_space",
                 "external_id": "my_data_model",
                 "version": "1",
@@ -199,8 +199,8 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 "data": [
                     {"class_": "Asset", "container": "sp_core:Asset"},
                     {
-                        "class_": "WindTurbine",
-                        "container": "WindTurbine",
+                        "class_": "GeneratingUnit",
+                        "container": "GeneratingUnit",
                         "constraint": "sp_core:Asset",
                     },
                 ]
@@ -218,7 +218,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
         },
         DMSRules(
             metadata=DMSMetadata(
-                schema_="complete",
+                schema_="partial",
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -251,7 +251,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
             containers=SheetList[DMSContainer](
                 data=[
                     DMSContainer(container="sp_core:Asset", class_="Asset"),
-                    DMSContainer(class_="WindTurbine", container="WindTurbine", constraint="sp_core:Asset"),
+                    DMSContainer(class_="GeneratingUnit", container="GeneratingUnit", constraint="sp_core:Asset"),
                 ]
             ),
             views=SheetList[DMSView](

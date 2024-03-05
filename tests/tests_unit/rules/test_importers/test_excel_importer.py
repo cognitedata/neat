@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pytest
-from cognite.client.data_classes.data_modeling import ContainerId
+from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from pydantic.version import VERSION
 
 from cognite.neat.rules import validation
@@ -30,7 +30,7 @@ def invalid_rules_filepaths():
             [
                 validation.InvalidPropertySpecification(
                     column="IsList",
-                    row=4,
+                    row=5,
                     type="bool_parsing",
                     msg="Input should be a valid boolean, unable to interpret input",
                     input="Apple",
@@ -55,6 +55,32 @@ def invalid_rules_filepaths():
         ),
         id="Inconsistent container",
     )
+    yield pytest.param(
+        DATA_DIR / "missing_view_container_dms_rules.xlsx",
+        IssueList(
+            [
+                validation.ReferencedNonExistingView(
+                    column="View",
+                    row=4,
+                    type="value_error.missing",
+                    view_id=ViewId("neat", "Pump", "1"),
+                    msg="",
+                    input=None,
+                    url=None,
+                ),
+                validation.ReferenceNonExistingContainer(
+                    column="Container",
+                    row=4,
+                    type="value_error.missing",
+                    container_id=ContainerId("neat", "Pump"),
+                    msg="",
+                    input=None,
+                    url=None,
+                ),
+            ]
+        ),
+        id="Missing container and view definition",
+    )
 
 
 class TestExcelImporter:
@@ -67,7 +93,7 @@ class TestExcelImporter:
         assert isinstance(rules, DMSRules)
 
     @pytest.mark.parametrize("filepath, expected_issues", invalid_rules_filepaths())
-    def test_import_invalid_rules_single_issue(self, filepath: Path, expected_issues: IssueList):
+    def test_import_invalid_rules(self, filepath: Path, expected_issues: IssueList):
         importer = ExcelImporter(filepath)
 
         _, issues = importer.to_rules(errors="continue")

@@ -14,7 +14,7 @@ from cognite.neat.rules.models._rules import RULES_PER_ROLE, DMSRules, DomainRul
 from cognite.neat.rules.models._rules.base import RoleTypes
 from cognite.neat.rules.validation import IssueList
 from cognite.neat.utils.auxiliary import local_import
-from cognite.neat.utils.spreadsheet import read_spreadsheet
+from cognite.neat.utils.spreadsheet import SpreadsheetRead, read_spreadsheet
 
 from ._base import BaseImporter, Rule
 
@@ -66,7 +66,7 @@ class ExcelImporter(BaseImporter):
             return None, issues
 
         sheets: dict[str, dict | list] = {"Metadata": metadata}
-        header_row_no_by_sheet: dict[str, int] = defaultdict(int)
+        read_info_by_sheet: dict[str, SpreadsheetRead] = defaultdict(SpreadsheetRead)
         for sheet_name, headers in [
             ("Properties", "Class"),
             ("Classes", "Class"),
@@ -75,8 +75,8 @@ class ExcelImporter(BaseImporter):
         ]:
             if sheet_name in excel_file.sheet_names:
                 try:
-                    sheets[sheet_name], header_row_no_by_sheet[sheet_name] = read_spreadsheet(
-                        excel_file, sheet_name, return_header_row=True, expected_headers=[headers]
+                    sheets[sheet_name], read_info_by_sheet[sheet_name] = read_spreadsheet(
+                        excel_file, sheet_name, return_read_info=True, expected_headers=[headers]
                     )
                 except Exception as e:
                     issues.append(validation.ReadSpreadsheets(str(e)))
@@ -100,7 +100,7 @@ class ExcelImporter(BaseImporter):
         try:
             rules = rules_cls.model_validate(sheets)  # type: ignore[attr-defined]
         except ValidationError as e:
-            issues.extend(validation.InvalidSheetContent.from_pydantic_errors(e.errors(), header_row_no_by_sheet))
+            issues.extend(validation.InvalidSheetContent.from_pydantic_errors(e.errors(), read_info_by_sheet))
             if errors == "raise":
                 raise issues.as_errors() from e
             return None, issues

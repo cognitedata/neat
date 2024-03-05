@@ -75,10 +75,11 @@ class DMSImporter(BaseImporter):
                             raise NotImplementedError(f"Constraint type {type(constraint_obj)} not implemented")
 
                     if isinstance(container_prop.type, dm.DirectRelation):
+                        direct_value_type: str | ViewEntity | DMSValueType
                         if prop.source is None:
                             direct_value_type = "UNKNOWN"
                         else:
-                            direct_value_type = prop.source.external_id
+                            direct_value_type = ViewEntity.from_id(prop.source)
                         dms_property = DMSProperty(
                             class_=view.external_id,
                             property_=prop_id,
@@ -116,12 +117,13 @@ class DMSImporter(BaseImporter):
                             constraint=unique_constraints or None,
                         )
                 elif isinstance(prop, dm.MultiEdgeConnectionApply):
+                    view_entity = ViewEntity.from_id(prop.source)
                     dms_property = DMSProperty(
                         class_=view.external_id,
                         property_=prop_id,
                         relation="multiedge",
                         description=prop.description,
-                        value_type=cast(ViewEntity | DMSValueType, prop.source.external_id),
+                        value_type=view_entity,
                         view=ViewEntity.from_id(view.as_id()),
                         view_property=prop_id,
                     )

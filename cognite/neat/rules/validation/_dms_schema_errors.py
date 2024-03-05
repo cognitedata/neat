@@ -106,7 +106,7 @@ class MissingParentView(MissingView):
     referred_by: dm.ViewId
 
     def message(self) -> str:
-        return f"The parent view referred to by {self.referred_by} does not exist"
+        return f"The parent view {self.view} referred to by {self.referred_by} does not exist"
 
     def dump(self) -> dict[str, Any]:
         output = super().dump()
@@ -123,7 +123,7 @@ class MissingSourceView(MissingView):
     referred_by: dm.ViewId
 
     def message(self) -> str:
-        return f"The source view referred to by {self.referred_by}.{self.property} does not exist"
+        return f"The source view {self.view} referred to by {self.referred_by}.{self.property} does not exist"
 
     def dump(self) -> dict[str, Any]:
         output = super().dump()
@@ -140,7 +140,7 @@ class MissingEdgeView(MissingView):
     referred_by: dm.ViewId
 
     def message(self) -> str:
-        return f"The edge view referred to by {self.referred_by}.{self.property} does not exist"
+        return f"The edge view {self.view} referred to by {self.referred_by}.{self.property} does not exist"
 
     def dump(self) -> dict[str, Any]:
         output = super().dump()

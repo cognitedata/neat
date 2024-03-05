@@ -1,7 +1,8 @@
+import re
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from graphlib import TopologicalSorter
-from typing import Generic, TypeVar, cast
+from typing import Generic, Literal, TypeVar, cast
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes._base import (
@@ -37,6 +38,7 @@ from cognite.client.data_classes.data_modeling.ids import (
     VersionedDataModelingId,
     ViewId,
 )
+from cognite.client.exceptions import CogniteAPIError
 from cognite.client.utils.useful_types import SequenceNotStr
 
 T_ID = TypeVar("T_ID", bound=str | (int | (DataModelingId | (InstanceId | VersionedDataModelingId))))
@@ -116,8 +118,9 @@ class SpaceLoader(DataModelingLoader[str, SpaceApply, Space, SpaceApplyList, Spa
 class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, ViewList]):
     resource_name = "views"
 
-    def __init__(self, client: CogniteClient):
+    def __init__(self, client: CogniteClient, existing_handling: Literal["fail", "skip", "update", "force"]):
         self.client = client
+        self.existing_handling = existing_handling
         self._interfaces_by_id: dict[ViewId, View] = {}
 
     @classmethod
@@ -125,7 +128,19 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
         return item.as_id()
 
     def create(self, items: Sequence[ViewApply]) -> ViewList:
-        return self.client.data_modeling.views.apply(items)
+        try:
+            return self.client.data_modeling.views.apply(items)
+        except CogniteAPIError as e:
+            if self.existing_handling == "force" and e.message.startswith("Cannot update view"):
+                res = re.search(r"(?<=\')(.*?)(?=\')", e.message)
+                if res is None or ":" not in res.group(1) or "/" not in res.group(1):
+                    raise e
+                view_id_str = res.group(1)
+                space, external_id_version = view_id_str.split(":")
+                external_id, version = external_id_version.split("/")
+                self.delete([ViewId(space, external_id, version)])
+                return self.create(items)
+            raise e
 
     def retrieve(self, ids: SequenceNotStr[ViewId]) -> ViewList:
         return self.client.data_modeling.views.retrieve(cast(Sequence, ids))

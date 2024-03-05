@@ -1,9 +1,12 @@
 import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from functools import total_ordering
 from typing import Any, ClassVar
 
 from pydantic_core import ErrorDetails
+
+from cognite.neat.utils.spreadsheet import SpreadsheetRead
 
 from ._base import Error, MultiValueError
 from ._container_inconsistency import InconsistentContainerDefinition
@@ -91,42 +94,55 @@ class InvalidRole(Error):
 class InvalidSheetContent(Error, ABC):
     @classmethod
     @abstractmethod
-    def from_pydantic_error(cls, error: ErrorDetails, header_row_by_sheet_name: dict[str, int] | None = None) -> Self:
+    def from_pydantic_error(
+        cls, error: ErrorDetails, read_info_by_sheet: dict[str, SpreadsheetRead] | None = None
+    ) -> Self:
         raise NotImplementedError
 
     @classmethod
     def from_pydantic_errors(
-        cls, errors: list[ErrorDetails], header_row_by_sheet_name: dict[str, int] | None = None
+        cls, errors: list[ErrorDetails], read_info_by_sheet: dict[str, SpreadsheetRead] | None = None
     ) -> "list[Error]":
         output: list[Error] = []
         for error in errors:
             if raised_error := error.get("ctx", {}).get("error"):
                 if isinstance(raised_error, MultiValueError):
                     for caught_error in raised_error.errors:
+                        reader = (read_info_by_sheet or {}).get("Properties", SpreadsheetRead())
                         if isinstance(caught_error, InconsistentContainerDefinition):
-                            property_header = (header_row_by_sheet_name or {}).get("Properties", 0) + 1
                             row_numbers = list(caught_error.row_numbers)
                             # The Error classes are immutable, so we have to reuse the set.
                             caught_error.row_numbers.clear()
                             for row_no in row_numbers:
                                 # Adjusting the row number to the actual row number in the spreadsheet
-                                caught_error.row_numbers.add(row_no + property_header)
+                                caught_error.row_numbers.add(reader.adjusted_row_number(row_no))
+                        if isinstance(caught_error, InvalidRowSpecification):
+                            # Adjusting the row number to the actual row number in the spreadsheet
+                            new_row = reader.adjusted_row_number(caught_error.row)
+                            # The error is frozen, so we have to create a new one
+                            dumped = caught_error.dump()
+                            dumped["row"] = new_row
+                            # todo Introduce load method to the error classes
+                            dumped.pop("error", None)
+                            dumped.pop("sheet_name", None)
+                            caught_error = caught_error.__class__(**dumped)
                         output.append(caught_error)
                     continue
 
-            if len(error["loc"]) == 4:
+            if len(error["loc"]) >= 4:
                 sheet_name, *_ = error["loc"]
                 error_cls = _INVALID_SPECIFICATION_BY_SHEET_NAME.get(
                     str(sheet_name), InvalidRowSpecificationUnknownSheet
                 )
-                output.append(error_cls.from_pydantic_error(error, header_row_by_sheet_name))
+                output.append(error_cls.from_pydantic_error(error, read_info_by_sheet))
                 continue
 
             raise NotImplementedError("Pydantic raised error not supported by this function.")
         return output
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
+@total_ordering
 class InvalidRowSpecification(InvalidSheetContent, ABC):
     description: ClassVar[str] = "This is a generic class for all invalid specifications."
     fix: ClassVar[str] = "Follow the instruction in the error message."
@@ -139,13 +155,25 @@ class InvalidRowSpecification(InvalidSheetContent, ABC):
     input: Any
     url: str | None
 
+    def __lt__(self, other: object) -> bool:
+        if not isinstance(other, InvalidRowSpecification):
+            return NotImplemented
+        return (self.sheet_name, self.row, self.column) < (other.sheet_name, other.row, other.column)
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, InvalidRowSpecification):
+            return NotImplemented
+        return (self.sheet_name, self.row, self.column) == (other.sheet_name, other.row, other.column)
+
     @classmethod
-    def from_pydantic_error(cls, error: ErrorDetails, header_row_by_sheet_name: dict[str, int] | None = None) -> Self:
-        sheet_name, *_, row, column = error["loc"]
+    def from_pydantic_error(
+        cls, error: ErrorDetails, read_info_by_sheet: dict[str, SpreadsheetRead] | None = None
+    ) -> Self:
+        sheet_name, _, row, column, *__ = error["loc"]
+        reader = (read_info_by_sheet or {}).get(str(sheet_name), SpreadsheetRead())
         return cls(
             column=str(column),
-            # +1 because Excel is 1-indexed
-            row=int(row) + (header_row_by_sheet_name or {}).get(str(sheet_name), 0) + 1,
+            row=reader.adjusted_row_number(int(row)),
             type=error["type"],
             msg=error["msg"],
             input=error.get("input"),
@@ -160,8 +188,7 @@ class InvalidRowSpecification(InvalidSheetContent, ABC):
         output["type"] = self.type
         output["msg"] = self.msg
         output["input"] = self.input
-        if self.url:
-            output["url"] = self.url
+        output["url"] = self.url
         return output
 
     def message(self) -> str:
@@ -176,39 +203,41 @@ class InvalidRowSpecification(InvalidSheetContent, ABC):
         return output
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class InvalidPropertySpecification(InvalidRowSpecification):
     sheet_name = "Properties"
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class InvalidClassSpecification(InvalidRowSpecification):
     sheet_name = "Classes"
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class InvalidContainerSpecification(InvalidRowSpecification):
     sheet_name = "Containers"
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class InvalidViewSpecification(InvalidRowSpecification):
     sheet_name = "Views"
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class InvalidRowSpecificationUnknownSheet(InvalidRowSpecification):
     sheet_name = "Unknown"
 
     actual_sheet_name: str
 
     @classmethod
-    def from_pydantic_error(cls, error: ErrorDetails, header_row_by_sheet_name: dict[str, int] | None = None) -> Self:
-        sheet_name, *_, row, column = error["loc"]
+    def from_pydantic_error(
+        cls, error: ErrorDetails, read_info_by_sheet: dict[str, SpreadsheetRead] | None = None
+    ) -> Self:
+        sheet_name, _, row, column, *__ = error["loc"]
+        reader = (read_info_by_sheet or {}).get(str(sheet_name), SpreadsheetRead())
         return cls(
             column=str(column),
-            # +1 because excel is 1-indexed
-            row=int(row) + (header_row_by_sheet_name or {}).get(str(sheet_name), 0) + 1,
+            row=reader.adjusted_row_number(int(row)),
             actual_sheet_name=str(sheet_name),
             type=error["type"],
             msg=error["msg"],
