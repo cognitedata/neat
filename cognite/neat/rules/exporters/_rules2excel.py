@@ -86,10 +86,13 @@ class ExcelExporter(BaseExporter[Workbook]):
                 for field_name, field in item_cls.model_fields.items()
                 if field_name not in skip
             ]
-            # Reorder such that the SheetEntity fields are after the first two columns
-            # For the properties sheet the first two columns as class and property.
-            move = len(SheetEntity.model_fields) - 1
-            headers = headers[move : move + 2] + headers[:move] + headers[move + 2 :]
+            # Reorder such that the first column is class + the first field of the subclass
+            # of sheet entity. This is to make the properties/classes/views/containers sheet more readable.
+            # For example, for the properties these that means class, property, name, description
+            # instead of class, name, description, property
+            move = len(SheetEntity.model_fields) - len(skip)  # -1 is for the class field
+            headers = headers[:1] + headers[move : move + 1] + headers[1:move] + headers[move + 1 :]
+
             main_header = self._main_header_by_sheet_name[sheet_name]
             sheet.append([main_header] + [""] * (len(headers) - 1))
             sheet.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(headers))
@@ -99,7 +102,7 @@ class ExcelExporter(BaseExporter[Workbook]):
             for item in data.model_dump()["data"]:
                 row = list(item.values())
                 # Need to do the same reordering as for the headers
-                row = row[move : move + 2] + row[:move] + row[move + 2 :]
+                row = row[:1] + row[move : move + 1] + row[1:move] + row[move + 1 :]
                 sheet.append(row)
 
             if self._styling_level > 0:
