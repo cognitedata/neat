@@ -9,6 +9,7 @@ from cognite.client import data_modeling as dm
 import cognite.neat.graph.extractors._graph_capturing_sheet
 from cognite.neat.exceptions import wrangle_warnings
 from cognite.neat.rules import exporter, exporters
+from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.exporter._rules2dms import DMSSchemaComponents
 from cognite.neat.rules.exporter._rules2graphql import GraphQLSchema
 from cognite.neat.rules.exporter._rules2ontology import Ontology
@@ -628,3 +629,54 @@ class ExportDataModelStorage(Step):
             return FlowMessage(error_text=output_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
         else:
             return FlowMessage(output_text=output_text)
+
+
+class ExportToExcel(Step):
+    """This step exports rules to Excel"""
+
+    description = "This step exports generated Excel rules."
+    version = "private-beta"
+    category = CATEGORY
+
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="styling",
+            value="default",
+            label="Styling of the Excel file",
+            options=list(exporters.ExcelExporter.style_options),
+        ),
+    ]
+
+    def run(self, rules: MultiRuleData) -> FlowMessage:  # type: ignore[override, syntax]
+        if self.configs is None or self.data_store_path is None:
+            raise StepNotInitialized(type(self).__name__)
+
+        styling = cast(exporters.ExcelExporter.Style, self.configs.get("styling", "default"))
+
+        excel_exporter = exporters.ExcelExporter(styling=styling)
+
+        rule_instance: Rules
+        if rules.domain:
+            rule_instance = rules.domain
+        elif rules.information:
+            rule_instance = rules.information
+        elif rules.dms:
+            rule_instance = rules.dms
+        else:
+            output_errors = "No rules provided for export!"
+            return FlowMessage(error_text=output_errors, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
+
+        output_dir = self.data_store_path / Path("staging")
+        output_dir.mkdir(parents=True, exist_ok=True)
+        file_name = f"exported_rules_{rule_instance.metadata.role.value}.xlsx"
+        filepath = output_dir / file_name
+        excel_exporter.export_to_file(filepath, rule_instance)
+
+        output_text = (
+            "<p></p>"
+            f"Download Excel Exported {rule_instance.metadata.role.value} rules: "
+            f'- <a href="/data/staging/{file_name}?{time.time()}" '
+            f'target="_blank">{file_name}</a>'
+        )
+
+        return FlowMessage(output_text=output_text)

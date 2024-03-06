@@ -19,6 +19,7 @@ class ExcelExporter(BaseExporter[Workbook]):
         "Views": "Definition of views",
         "Containers": "Definition of containers",
     }
+    style_options = get_args(Style)
 
     def __init__(self, styling: Style = "default"):
         self.styling = styling
