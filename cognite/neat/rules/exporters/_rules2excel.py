@@ -4,6 +4,7 @@ from typing import Any, ClassVar, Literal, cast, get_args
 
 from openpyxl import Workbook
 from openpyxl.cell import MergedCell
+from openpyxl.styles import Alignment, Font, PatternFill
 
 from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.models._rules.base import SheetEntity, SheetList
@@ -60,6 +61,10 @@ class ExcelExporter(BaseExporter[Workbook]):
         for key, value in rules.metadata.model_dump(by_alias=True).items():
             metadata_sheet.append([key, value])
 
+        if self._styling_level > 1:
+            for cell in metadata_sheet["A"]:
+                cell.font = Font(bold=True, size=12)
+
         field_names_by_sheet_name = {
             field.alias or field_name: field_name for field_name, field in rules.model_fields.items()
         }
@@ -99,6 +104,15 @@ class ExcelExporter(BaseExporter[Workbook]):
             if self._styling_level > 0:
                 # This freezes all rows above the given row
                 sheet.freeze_panes = sheet["A3"]
+
+                sheet["A1"].alignment = Alignment(horizontal="center")
+
+            if self._styling_level > 1:
+                # Make the header row bold, larger, and colored
+                sheet["A1"].font = Font(bold=True, size=20)
+                sheet["A1"].fill = PatternFill(fgColor="FFC000", patternType="solid")
+                for cell in sheet["2"]:
+                    cell.font = Font(bold=True, size=14)
 
         if self._styling_level > 0:
             self._adjust_column_widths(workbook)
