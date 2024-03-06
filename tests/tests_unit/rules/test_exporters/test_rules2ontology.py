@@ -10,10 +10,10 @@ SHACL = Namespace("http://www.w3.org/ns/shacl#")
 
 class TestOntologyExporter:
     def test_export_semantic_data_model(self, david_rules: InformationRules, tmp_path: Path) -> None:
-        exporter = SemanticDataModelExporter(rules=david_rules)
+        exporter = SemanticDataModelExporter()
         ttl_path = tmp_path / "test.ttl"
 
-        exporter.export_to_file(ttl_path)
+        exporter.export_to_file(ttl_path, david_rules)
 
         semantic_dm = Graph().parse(ttl_path, format="ttl")
         assert 26 == len(list(semantic_dm.subjects(RDF.type, SHACL.NodeShape)))

@@ -22,7 +22,6 @@ from cognite.neat.rules.models.rdfpath import (
 
 from ._types import (
     ClassEntity,
-    ClassType,
     ContainerEntity,
     EntityTypes,
     NamespaceType,
@@ -93,7 +92,6 @@ class InformationClass(SheetEntity):
         match_type: The match type of the resource being described and the source entity.
     """
 
-    class_: ClassType = Field(alias="Class")
     parent: ParentClassType = Field(alias="Parent Class", default=None)
     source: SourceType = Field(alias="Source", default=None)
     match_type: MatchType | None = Field(alias="Match Type", default=None)
@@ -121,7 +119,6 @@ class InformationProperty(SheetEntity):
               knowledge graph. Defaults to None (no transformation)
     """
 
-    class_: ClassType = Field(alias="Class")
     property_: PropertyType = Field(alias="Property")
     value_type: SemanticValueType = Field(alias="Value Type")
     min_count: int | None = Field(alias="Min Count", default=None)
@@ -312,7 +309,7 @@ class _InformationRulesConverter:
         for class_ in self.information.classes:
             properties: list[DMSProperty] = properties_by_class.get(class_.class_, [])
             if not properties or all(
-                isinstance(prop.value_type, ViewEntity) and prop.value_type != "direct" for prop in properties
+                isinstance(prop.value_type, ViewEntity) and prop.relation != "direct" for prop in properties
             ):
                 classes_without_properties.add(class_.class_)
                 continue
@@ -372,6 +369,8 @@ class _InformationRulesConverter:
             nullable = None
         elif relation == "direct":
             nullable = True
+            container = ContainerEntity.from_raw(prop.class_)
+            container_property = prop.property_
         else:
             container = ContainerEntity.from_raw(prop.class_)
             container_property = prop.property_

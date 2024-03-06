@@ -194,7 +194,7 @@ class CdfStore:
                 metadata={"workflow_name": workflow_name, "resource_type": resource_type, "is_latest": "true"},
             )
             for file_meta in files_metada:
-                files_meta_metadata = file_meta.metadata
+                files_meta_metadata = file_meta.metadata or {}
                 files_meta_metadata["is_latest"] = "false"
                 meta_update = FileMetadataUpdate(id=file_meta.id).metadata.set(files_meta_metadata)
                 self.client.files.update(meta_update)

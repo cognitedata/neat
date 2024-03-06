@@ -21,6 +21,7 @@ from ._dms_schema_errors import (
     MissingSpace,
     MissingView,
 )
+from ._dms_sheets import ReferencedNonExistingView, ReferenceNonExistingContainer
 from ._spreadsheet import (
     InvalidClassSpecification,
     InvalidContainerSpecification,
@@ -70,4 +71,6 @@ __all__ = [
     "MultiIndexDefinitions",
     "MultiUniqueConstraintDefinitions",
     "DMSSchemaError",
+    "ReferenceNonExistingContainer",
+    "ReferencedNonExistingView",
 ]

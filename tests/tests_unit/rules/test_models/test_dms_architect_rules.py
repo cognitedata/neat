@@ -66,7 +66,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             ),
             containers=SheetList[DMSContainer](
                 data=[
-                    DMSContainer(container="Asset"),
+                    DMSContainer(container="Asset", class_="Asset"),
                     DMSContainer(class_="GeneratingUnit", container="GeneratingUnit", constraint="Asset"),
                 ]
             ),
@@ -165,7 +165,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         {
             "metadata": {
-                "schema_": "complete",
+                "schema_": "partial",
                 "space": "my_space",
                 "external_id": "my_data_model",
                 "version": "1",
@@ -199,8 +199,8 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 "data": [
                     {"class_": "Asset", "container": "sp_core:Asset"},
                     {
-                        "class_": "WindTurbine",
-                        "container": "WindTurbine",
+                        "class_": "GeneratingUnit",
+                        "container": "GeneratingUnit",
                         "constraint": "sp_core:Asset",
                     },
                 ]
@@ -218,7 +218,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
         },
         DMSRules(
             metadata=DMSMetadata(
-                schema_="complete",
+                schema_="partial",
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -251,7 +251,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
             containers=SheetList[DMSContainer](
                 data=[
                     DMSContainer(container="sp_core:Asset", class_="Asset"),
-                    DMSContainer(class_="WindTurbine", container="WindTurbine", constraint="sp_core:Asset"),
+                    DMSContainer(class_="GeneratingUnit", container="GeneratingUnit", constraint="sp_core:Asset"),
                 ]
             ),
             views=SheetList[DMSView](
@@ -694,7 +694,7 @@ class TestDMSRules:
     def test_alice_to_and_from_DMS(self, alice_rules: DMSRules) -> None:
         schema = alice_rules.as_schema()
         rules = alice_rules.copy()
-        recreated_rules = DMSImporter(schema).to_rules()
+        recreated_rules = DMSImporter(schema).to_rules(errors="raise")
 
         # Sorting to avoid order differences
         recreated_rules.properties = SheetList[DMSProperty](

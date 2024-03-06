@@ -8,6 +8,8 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes._base import CogniteResourceList
 from cognite.client.exceptions import CogniteAPIError
 
+from cognite.neat.rules._shared import Rules
+from cognite.neat.rules.models._rules import InformationRules
 from cognite.neat.rules.models._rules.dms_architect_rules import DMSRules
 from cognite.neat.rules.models._rules.dms_schema import DMSSchema
 from cognite.neat.utils.cdf_loaders import ContainerLoader, DataModelingLoader, DataModelLoader, SpaceLoader, ViewLoader
@@ -25,25 +27,23 @@ class DMSExporter(CDFExporter[DMSSchema]):
 
     def __init__(
         self,
-        rules: DMSRules,
         export_components: frozenset[Literal["all", "spaces", "data_models", "views", "containers"]] = frozenset(
             {"all"}
         ),
         include_space: set[str] | None = None,
-        existing_handling: Literal["fail", "skip", "update"] = "update",
+        existing_handling: Literal["fail", "skip", "update", "force"] = "update",
     ):
-        self.rules = rules
         self.export_components = export_components
         self.include_space = include_space
         self.existing_handling = existing_handling
         self._schema: DMSSchema | None = None
 
-    def export_to_file(self, filepath: Path) -> None:
+    def export_to_file(self, filepath: Path, rules: Rules) -> None:
         if filepath.suffix not in {".zip"}:
             warnings.warn("File extension is not .zip, adding it to the file name", stacklevel=2)
             filepath = filepath.with_suffix(".zip")
 
-        schema = self.export()
+        schema = self.export(rules)
         with zipfile.ZipFile(filepath, "w") as zip_ref:
             for space in schema.spaces:
                 zip_ref.writestr(f"data_models/{space.space}.space.yaml", space.dump_yaml())
@@ -54,20 +54,23 @@ class DMSExporter(CDFExporter[DMSSchema]):
             for container in schema.containers:
                 zip_ref.writestr(f"data_models/{container.external_id}.container.yaml", container.dump_yaml())
 
-    def export(self) -> DMSSchema:
-        if self._schema is None:
-            self._schema = self.rules.as_schema()
-        return self._schema
+    def export(self, rules: Rules) -> DMSSchema:
+        if isinstance(rules, DMSRules):
+            return rules.as_schema()
+        elif isinstance(rules, InformationRules):
+            return rules.as_dms_architect_rules().as_schema()
+        else:
+            raise ValueError(f"{type(rules).__name__} cannot be exported to DMS")
 
-    def export_to_cdf(self, client: CogniteClient, dry_run: bool = False) -> Iterable[UploadResult]:
-        schema = self.export()
+    def export_to_cdf(self, client: CogniteClient, rules: Rules, dry_run: bool = False) -> Iterable[UploadResult]:
+        schema = self.export(rules)
         to_export: list[tuple[CogniteResourceList, DataModelingLoader]] = []
         if self.export_components.intersection({"all", "spaces"}):
             to_export.append((schema.spaces, SpaceLoader(client)))
         if self.export_components.intersection({"all", "containers"}):
             to_export.append((schema.containers, ContainerLoader(client)))
         if self.export_components.intersection({"all", "views"}):
-            to_export.append((schema.views, ViewLoader(client)))
+            to_export.append((schema.views, ViewLoader(client, self.existing_handling)))
         if self.export_components.intersection({"all", "data_models"}):
             to_export.append((schema.data_models, DataModelLoader(client)))
 
@@ -90,7 +93,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
             failed_created = 0
 
             skipped = 0
-            if self.existing_handling == "update":
+            if self.existing_handling in ["update", "force"]:
                 changed = len(to_update)
                 failed_changed = 0
             elif self.existing_handling == "skip":
@@ -113,7 +116,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
                     created -= failed_created
                     error_messages.append(e.message)
 
-                if self.existing_handling == "update":
+                if self.existing_handling in ["update", "force"]:
                     try:
                         loader.update(to_update)
                     except CogniteAPIError as e:

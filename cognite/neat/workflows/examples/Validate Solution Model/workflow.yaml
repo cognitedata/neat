@@ -1,0 +1,63 @@
+configs: []
+description: null
+implementation_module: null
+name: Validate Solution Model
+steps:
+-   complex_configs: {}
+    configs: {}
+    description: null
+    enabled: true
+    id: step_769298
+    label: Upload File
+    max_retries: 0
+    method: null
+    params:
+        file_type: rules
+    retry_delay: 3
+    stype: file_uploader
+    system_component_id: null
+    transition_to:
+    - step_399494
+    trigger: true
+    ui_config:
+        pos_x: 627
+        pos_y: -19
+-   complex_configs: {}
+    configs:
+        Report Formatter: BasicHTML
+        role: dms_architect
+    description: null
+    enabled: true
+    id: step_399494
+    label: Import Excel
+    max_retries: 0
+    method: ImportExcelValidator
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+    - step_273233
+    trigger: false
+    ui_config:
+        pos_x: 627
+        pos_y: 66
+-   complex_configs: {}
+    configs:
+        Report Formatter: BasicHTML
+    description: null
+    enabled: true
+    id: step_273233
+    label: Validate Against CDF
+    max_retries: 0
+    method: ValidateAgainstCDF
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to: []
+    trigger: false
+    ui_config:
+        pos_x: 627
+        pos_y: 154
+system_components: []

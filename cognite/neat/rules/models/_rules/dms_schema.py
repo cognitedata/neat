@@ -1,6 +1,7 @@
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 
+from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 
 from cognite.neat.rules.validation._dms_schema_errors import (
@@ -16,6 +17,7 @@ from cognite.neat.rules.validation._dms_schema_errors import (
     MissingSpace,
     MissingView,
 )
+from cognite.neat.utils.cdf_loaders import ViewLoader
 
 
 @dataclass
@@ -25,6 +27,36 @@ class DMSSchema:
     views: dm.ViewApplyList = field(default_factory=lambda: dm.ViewApplyList([]))
     containers: dm.ContainerApplyList = field(default_factory=lambda: dm.ContainerApplyList([]))
     node_types: dm.NodeApplyList = field(default_factory=lambda: dm.NodeApplyList([]))
+
+    @classmethod
+    def from_model_id(cls, client: CogniteClient, data_model_id: dm.DataModelIdentifier) -> "DMSSchema":
+        data_models = client.data_modeling.data_models.retrieve(data_model_id, inline_views=True)
+        if len(data_models) == 0:
+            raise ValueError(f"Data model {data_model_id} not found")
+        data_model = data_models.latest_version()
+        views = dm.ViewList(data_model.views)
+        container_ids = views.referenced_containers()
+        containers = client.data_modeling.containers.retrieve(list(container_ids))
+        space_read = client.data_modeling.spaces.retrieve(data_model.space)
+        if space_read is None:
+            raise ValueError(f"Space {data_model.space} not found")
+        space = space_read.as_write()
+        data_model_write = data_model.as_write()
+        data_model_write.views = list(views.as_write())
+
+        # Converting views from read to write format requires to account for parents (implements)
+        # as the read format contains all properties from all parents, while the write formate should not contain
+        # properties from any parents.
+        # The ViewLoader as_write method looks up parents and remove properties from them.
+        view_loader = ViewLoader(client)
+        view_write = dm.ViewApplyList([view_loader.as_write(view) for view in views])
+
+        return cls(
+            spaces=dm.SpaceApplyList([space]),
+            data_models=dm.DataModelApplyList([data_model_write]),
+            views=view_write,
+            containers=containers.as_write(),
+        )
 
     def validate(self) -> list[DMSSchemaError]:
         errors: set[DMSSchemaError] = set()
