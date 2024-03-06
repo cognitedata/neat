@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.66.1] - 06-03-24
+## Fixed
+- `Import DMS` fails for data models without description. This is now fixed.
+
 ## [0.66.0] - 06-03-24
 ## Added
 - Multiple experimental workflows `Export DMS`, `Import DMS`, `Validate Solution Model`, and `Validate Rules`

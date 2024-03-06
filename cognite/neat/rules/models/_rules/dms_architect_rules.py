@@ -116,9 +116,10 @@ class DMSMetadata(BaseMetadata):
             creator = description_match.group(1).split(", ")
             data_model.description.replace(f" Creator: {', '.join(creator)}", "")
         elif data_model.description:
-            creator = ["NEAT"]
+            creator = ["MISSING"]
             description = data_model.description
         else:
+            creator = ["MISSING"]
             description = "Missing description"
 
         return cls(
