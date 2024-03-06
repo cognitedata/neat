@@ -25,3 +25,11 @@ class TestExcelExporter:
 
         assert "Metadata" in workbook.sheetnames
         assert "Properties" in workbook.sheetnames
+
+    def test_export_domain_rules_emma(self, emma_rules: DomainRules):
+        exporter = ExcelExporter()
+        workbook = exporter.export(emma_rules)
+
+        assert "Metadata" in workbook.sheetnames
+        assert "Properties" in workbook.sheetnames
+        assert "Classes" in workbook.sheetnames

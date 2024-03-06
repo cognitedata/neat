@@ -54,3 +54,19 @@ def jon_spreadsheet() -> dict[str, dict[str, Any]]:
 @pytest.fixture(scope="session")
 def jon_rules(jon_spreadsheet: dict[str, dict[str, Any]]) -> DomainRules:
     return DomainRules.model_validate(jon_spreadsheet)
+
+
+@pytest.fixture(scope="session")
+def emma_spreadsheet() -> dict[str, dict[str, Any]]:
+    filepath = DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "expert-grid-emma.xlsx"
+    excel_file = pd.ExcelFile(filepath)
+    return {
+        "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),
+        "Properties": read_spreadsheet(excel_file, "Properties", expected_headers=["Property"]),
+        "Classes": read_spreadsheet(excel_file, "Classes", expected_headers=["Class"]),
+    }
+
+
+@pytest.fixture(scope="session")
+def emma_rules(emma_spreadsheet: dict[str, dict[str, Any]]) -> DomainRules:
+    return DomainRules.model_validate(emma_spreadsheet)
