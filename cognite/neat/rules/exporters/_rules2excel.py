@@ -3,6 +3,7 @@ from types import GenericAlias
 from typing import Any, ClassVar, Literal, cast, get_args
 
 from openpyxl import Workbook
+from openpyxl.cell import MergedCell
 
 from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.models._rules.base import SheetEntity, SheetList
@@ -38,6 +39,7 @@ class ExcelExporter(BaseExporter[Workbook]):
 
     def __init__(self, styling: Style = "default"):
         self.styling = styling
+        self._styling_level = self.style_options.index(styling)
 
     def export_to_file(self, filepath: Path, rules: Rules) -> None:
         """Exports transformation rules to excel file."""
@@ -94,6 +96,8 @@ class ExcelExporter(BaseExporter[Workbook]):
                 row = row[move : move + 2] + row[:move] + row[move + 2 :]
                 sheet.append(row)
 
+        if self._styling_level > 0:
+            self._adjust_column_widths(workbook)
         return workbook
 
     @classmethod
@@ -107,3 +111,17 @@ class ExcelExporter(BaseExporter[Workbook]):
         if not issubclass(arg, SheetEntity):
             raise ValueError(f"Expected annotation to have a BaseModel argument, but got {type(arg)}")
         return arg
+
+    @classmethod
+    def _adjust_column_widths(cls, workbook: Workbook) -> None:
+        for sheet in workbook:
+            for column_cells in sheet.columns:
+                max_length = max(len(str(cell.value)) for cell in column_cells if cell.value is not None)
+
+                selected_column = column_cells[0]
+                if isinstance(selected_column, MergedCell):
+                    selected_column = column_cells[1]
+
+                current = sheet.column_dimensions[selected_column.column_letter].width or (max_length + 0.5)
+                sheet.column_dimensions[selected_column.column_letter].width = max(current, max_length + 0.5)
+        return None
