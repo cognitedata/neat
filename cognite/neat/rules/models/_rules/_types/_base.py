@@ -3,7 +3,7 @@ import sys
 from functools import total_ordering
 from typing import Any, ClassVar, cast
 
-from cognite.client.data_classes.data_modeling import ContainerId, ViewId
+from cognite.client.data_classes.data_modeling import ContainerId, DataModelId, ViewId
 from pydantic import BaseModel
 
 if sys.version_info >= (3, 11):
@@ -30,6 +30,7 @@ class EntityTypes(StrEnum):
     dms_value_type = "dms_value_type"
     view = "view"
     container = "container"
+    datamodel = "datamodel"
     undefined = "undefined"
 
 
@@ -210,6 +211,37 @@ class ViewEntity(Entity):
             raise ValueError("version is required")
 
         return ViewId(space=space, external_id=self.external_id, version=version)
+
+
+class DataModelEntity(Entity):
+    type_: ClassVar[EntityTypes] = EntityTypes.datamodel
+
+    @classmethod
+    def from_raw(cls, value: Any) -> "DataModelEntity":
+        if not value:
+            return DataModelEntity(prefix=Undefined, suffix=value)
+        elif isinstance(value, DataModelEntity):
+            return value
+
+        if ENTITY_ID_REGEX_COMPILED.match(value) or VERSIONED_ENTITY_REGEX_COMPILED.match(value):
+            return DataModelEntity.from_string(entity_string=value)
+        else:
+            return DataModelEntity(prefix=Undefined, suffix=value)
+
+    @classmethod
+    def from_id(cls, data_model_id: DataModelId) -> "DataModelEntity":
+        return DataModelEntity(
+            prefix=data_model_id.space, suffix=data_model_id.external_id, version=data_model_id.version
+        )
+
+    def as_id(self, default_space: str | None = None, default_version: str | None = None) -> DataModelId:
+        space = default_space if self.space is Undefined else self.space
+        version = self.version or default_version
+
+        if space is None or space is Undefined:
+            raise ValueError("space is required")
+
+        return DataModelId(space=space, external_id=self.external_id, version=version)
 
 
 class ClassEntity(Entity):
