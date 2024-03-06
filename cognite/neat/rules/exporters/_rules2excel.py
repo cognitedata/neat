@@ -94,6 +94,7 @@ class ExcelExporter(BaseExporter[Workbook]):
             sheet.append([main_header] + [""] * (len(headers) - 1))
             sheet.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(headers))
             sheet.append(headers)
+
             item: dict[str, Any]
             for item in data.model_dump()["data"]:
                 row = list(item.values())

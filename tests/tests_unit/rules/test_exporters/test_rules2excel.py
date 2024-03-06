@@ -6,7 +6,7 @@ from cognite.neat.rules.models._rules import DMSRules, DomainRules, InformationR
 
 class TestExcelExporter:
     def test_export_dms_rules(self, alice_rules: DMSRules):
-        exporter = ExcelExporter()
+        exporter = ExcelExporter(styling="maximal")
         workbook = exporter.export(alice_rules)
         assert "Metadata" in workbook.sheetnames
         assert "Containers" in workbook.sheetnames
