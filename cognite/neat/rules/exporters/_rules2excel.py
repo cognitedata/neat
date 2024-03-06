@@ -11,6 +11,21 @@ from ._base import BaseExporter
 
 
 class ExcelExporter(BaseExporter[Workbook]):
+    """Export rules to Excel.
+
+    Args:
+        styling: The styling to use for the Excel file. Defaults to "default". See below for details
+            on the different styles.
+
+    The following styles are available:
+
+    - "none":    No styling is applied.
+    - "minimal": Column widths are adjusted to fit the content, and the header row(s) is frozen.
+    - "default": Minimal + headers are bold, increased size, and colored.
+    - "maximal": Default + alternating row colors in the properties sheet for each class in addition to extra
+                 blank rows between classes.
+    """
+
     Style = Literal["none", "minimal", "default", "maximal"]
 
     _main_header_by_sheet_name: ClassVar[dict[str, str]] = {
