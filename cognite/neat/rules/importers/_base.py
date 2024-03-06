@@ -8,7 +8,7 @@ from rdflib import Namespace
 from cognite.neat.rules.models._rules import DMSRules, DomainRules, InformationRules, RoleTypes
 from cognite.neat.rules.validation import IssueList
 
-Rule: TypeAlias = DomainRules | InformationRules | DMSRules
+Rules: TypeAlias = DomainRules | InformationRules | DMSRules
 
 
 class BaseImporter(ABC):
@@ -17,19 +17,19 @@ class BaseImporter(ABC):
     """
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rule:
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules:
         ...
 
     @overload
     def to_rules(
         self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[Rule | None, IssueList]:
+    ) -> tuple[Rules | None, IssueList]:
         ...
 
     @abstractmethod
     def to_rules(
         self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[Rule | None, IssueList] | Rule:
+    ) -> tuple[Rules | None, IssueList] | Rules:
         """
         Creates `Rules` object from the data for target role.
         """
