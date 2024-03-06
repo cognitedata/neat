@@ -66,7 +66,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             ),
             containers=SheetList[DMSContainer](
                 data=[
-                    DMSContainer(container="Asset"),
+                    DMSContainer(container="Asset", class_="Asset"),
                     DMSContainer(class_="GeneratingUnit", container="GeneratingUnit", constraint="Asset"),
                 ]
             ),
@@ -694,7 +694,7 @@ class TestDMSRules:
     def test_alice_to_and_from_DMS(self, alice_rules: DMSRules) -> None:
         schema = alice_rules.as_schema()
         rules = alice_rules.copy()
-        recreated_rules = DMSImporter(schema).to_rules()
+        recreated_rules = DMSImporter(schema).to_rules(errors="raise")
 
         # Sorting to avoid order differences
         recreated_rules.properties = SheetList[DMSProperty](

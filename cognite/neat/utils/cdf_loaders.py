@@ -2,7 +2,7 @@ import re
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from graphlib import TopologicalSorter
-from typing import Generic, Literal, TypeVar, cast
+from typing import Any, Generic, Literal, TypeVar, cast
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes._base import (
@@ -118,7 +118,7 @@ class SpaceLoader(DataModelingLoader[str, SpaceApply, Space, SpaceApplyList, Spa
 class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, ViewList]):
     resource_name = "views"
 
-    def __init__(self, client: CogniteClient, existing_handling: Literal["fail", "skip", "update", "force"]):
+    def __init__(self, client: CogniteClient, existing_handling: Literal["fail", "skip", "update", "force"] = "fail"):
         self.client = client
         self.existing_handling = existing_handling
         self._interfaces_by_id: dict[ViewId, View] = {}
@@ -151,28 +151,36 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
     def delete(self, ids: SequenceNotStr[ViewId]) -> list[ViewId]:
         return self.client.data_modeling.views.delete(cast(Sequence, ids))
 
-    def are_equal(self, local: ViewApply, remote: View) -> bool:
-        local_dumped = local.dump()
-        cdf_resource_dumped = remote.as_write().dump()
-        if not remote.implements:
-            return local_dumped == cdf_resource_dumped
-
-        if remote.properties:
+    def _as_write_raw(self, view: View) -> dict[str, Any]:
+        dumped = view.as_write().dump()
+        if view.properties:
             # All read version of views have all the properties of their parent views.
             # We need to remove these properties to compare with the local view.
-            parents = self._retrieve_view_ancestors(remote.implements or [], self._interfaces_by_id)
+            parents = self._retrieve_view_ancestors(view.implements or [], self._interfaces_by_id)
             for parent in parents:
                 for prop_name in parent.properties.keys():
-                    cdf_resource_dumped["properties"].pop(prop_name, None)
+                    dumped["properties"].pop(prop_name, None)
 
-        if not cdf_resource_dumped["properties"]:
+        if not dumped["properties"]:
             # All properties were removed, so we remove the properties key.
-            cdf_resource_dumped.pop("properties", None)
+            dumped.pop("properties", None)
+        return dumped
+
+    def are_equal(self, local: ViewApply, remote: View) -> bool:
+        local_dumped = local.dump()
+        if not remote.implements:
+            return local_dumped == remote.as_write().dump()
+
+        cdf_resource_dumped = self._as_write_raw(remote)
+
         if "properties" in local_dumped and not local_dumped["properties"]:
             # In case the local properties are set to an empty dict.
             local_dumped.pop("properties", None)
 
         return local_dumped == cdf_resource_dumped
+
+    def as_write(self, view: View) -> ViewApply:
+        return ViewApply.load(self._as_write_raw(view))
 
     def _retrieve_view_ancestors(self, parents: list[ViewId], cache: dict[ViewId, View]) -> list[View]:
         """Retrieves all ancestors of a view.

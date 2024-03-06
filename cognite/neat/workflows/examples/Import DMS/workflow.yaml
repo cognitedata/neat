@@ -1,0 +1,65 @@
+configs: []
+description: null
+implementation_module: null
+name: Import DMS
+steps:
+-   complex_configs: {}
+    configs:
+        Data Model ID: playground_nordic44:nordic44
+        Report Formatter: BasicHTML
+        role: information_architect
+    description: null
+    enabled: true
+    id: step_725987
+    label: Import DMS
+    max_retries: 0
+    method: ImportFromDataModelStorage
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+    - step_419138
+    trigger: false
+    ui_config:
+        pos_x: 541
+        pos_y: 84
+-   complex_configs: {}
+    configs:
+        styling: default
+    description: null
+    enabled: true
+    id: step_419138
+    label: Create Excel Spreadsheet
+    max_retries: 0
+    method: ExportToExcel
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to: []
+    trigger: false
+    ui_config:
+        pos_x: 540
+        pos_y: 193
+-   complex_configs: {}
+    configs: {}
+    description: null
+    enabled: true
+    id: step_431484
+    label: Trigger Workflow
+    max_retries: 0
+    method: null
+    params:
+        sync: 'false'
+        workflow_name: ''
+    retry_delay: 3
+    stype: http_trigger
+    system_component_id: null
+    transition_to:
+    - step_725987
+    trigger: true
+    ui_config:
+        pos_x: 541
+        pos_y: -13
+system_components: []
