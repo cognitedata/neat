@@ -57,7 +57,7 @@ class ExcelExporter(BaseExporter[Workbook]):
 
         metadata_sheet = workbook.create_sheet("Metadata")
         metadata_sheet.append(["role", rules.metadata.role.value])
-        for key, value in rules.metadata.model_dump().items():
+        for key, value in rules.metadata.model_dump(by_alias=True).items():
             metadata_sheet.append([key, value])
 
         field_names_by_sheet_name = {
