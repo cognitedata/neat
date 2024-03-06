@@ -69,6 +69,7 @@ class ExcelExporter(BaseExporter[Workbook]):
             headers = headers[move : move + 2] + headers[:move] + headers[move + 2 :]
             main_header = self._main_header_by_sheet_name[sheet_name]
             sheet.append([main_header] + [""] * (len(headers) - 1))
+            sheet.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(headers))
             sheet.append(headers)
             item: dict[str, Any]
             for item in data.model_dump()["data"]:
