@@ -34,6 +34,7 @@ __all__ = [
     "ImportGraphToRules",
     "ImportOntologyToRules",
     "ImportExcelValidator",
+    "ImportDataModelStorage",
 ]
 
 
