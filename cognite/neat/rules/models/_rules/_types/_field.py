@@ -142,6 +142,11 @@ ParentClassType = Annotated[
     list[ParentClassEntity] | None,
     BeforeValidator(_split_parent),
     AfterValidator(_check_parent),
+    PlainSerializer(
+        lambda v: ",".join([entry.versioned_id for entry in v]) if v else None,
+        return_type=str,
+        when_used="unless-none",
+    ),
 ]
 
 ClassType = Annotated[
