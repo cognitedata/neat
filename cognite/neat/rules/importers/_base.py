@@ -1,14 +1,13 @@
 import getpass
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Literal, TypeAlias, overload
+from typing import Literal, overload
 
 from rdflib import Namespace
 
-from cognite.neat.rules.models._rules import DMSRules, DomainRules, InformationRules, RoleTypes
+from cognite.neat.rules._shared import Rules
+from cognite.neat.rules.models._rules import RoleTypes
 from cognite.neat.rules.validation import IssueList
-
-Rules: TypeAlias = DomainRules | InformationRules | DMSRules
 
 
 class BaseImporter(ABC):

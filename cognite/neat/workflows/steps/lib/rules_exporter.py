@@ -587,7 +587,6 @@ class ExportDataModelStorage(Step):
             )
 
         dms_exporter = exporters.DMSExporter(
-            dms_rules,
             export_components=frozenset(components_to_create),
             include_space=None if multi_space_components_create else {dms_rules.metadata.space},
             existing_handling=existing_components_handling,
@@ -597,11 +596,11 @@ class ExportDataModelStorage(Step):
         output_dir.mkdir(parents=True, exist_ok=True)
         schema_zip = f"{dms_rules.metadata.external_id}.zip"
         schema_full_path = output_dir / schema_zip
-        dms_exporter.export_to_file(schema_full_path)
+        dms_exporter.export_to_file(schema_full_path, dms_rules)
 
         report_lines = ["# DMS Schema Export to CDF\n\n"]
         errors = []
-        for result in dms_exporter.export_to_cdf(client=cdf_client, dry_run=dry_run):
+        for result in dms_exporter.export_to_cdf(client=cdf_client, rules=dms_rules, dry_run=dry_run):
             report_lines.append(result.as_report_str())
             errors.extend(result.error_messages)
 

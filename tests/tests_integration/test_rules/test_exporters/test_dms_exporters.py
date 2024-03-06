@@ -20,9 +20,9 @@ class TestDMSExporters:
     def test_export_to_cdf_dry_run(self, cognite_client: CogniteClient, alice_rules: DMSRules):
         rules: DMSRules = alice_rules
 
-        exporter = DMSExporter(rules)
+        exporter = DMSExporter()
 
-        uploaded = exporter.export_to_cdf(cognite_client, dry_run=True)
+        uploaded = exporter.export_to_cdf(cognite_client, rules, dry_run=True)
         uploaded_by_name = {entity.name: entity for entity in uploaded}
 
         assert uploaded_by_name["containers"].total == len(rules.containers)
@@ -33,9 +33,9 @@ class TestDMSExporters:
     def test_export_to_cdf(self, cognite_client: CogniteClient, alice_rules: DMSRules):
         rules: DMSRules = alice_rules
 
-        exporter = DMSExporter(rules, existing_handling="force")
+        exporter = DMSExporter(existing_handling="force")
 
-        uploaded = exporter.export_to_cdf(cognite_client, dry_run=False)
+        uploaded = exporter.export_to_cdf(cognite_client, rules, dry_run=False)
         uploaded_by_name = {entity.name: entity for entity in uploaded}
 
         assert uploaded_by_name["containers"].total == len(rules.containers)

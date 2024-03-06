@@ -11,8 +11,8 @@ from cognite.neat.rules.models._rules.dms_architect_rules import (
 
 class TestDMSExporter:
     def test_export_dms_schema_to_zip(self, alice_rules: DMSRules, tmp_path: Path) -> None:
-        exporter = DMSExporter(rules=alice_rules)
-        schema = exporter.export()
+        exporter = DMSExporter()
+        schema = exporter.export(alice_rules)
         zipfile_path = tmp_path / "test.zip"
 
         exporter.export_to_file(zipfile_path)

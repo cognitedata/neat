@@ -10,6 +10,7 @@ from rdflib import DCTERMS, OWL, RDF, RDFS, XSD, BNode, Graph, Literal, Namespac
 from rdflib.collection import Collection as GraphCollection
 
 from cognite.neat.rules import exceptions
+from cognite.neat.rules.models._rules import DMSRules
 from cognite.neat.rules.models._rules._types import XSD_VALUE_TYPE_MAPPINGS, EntityTypes
 from cognite.neat.rules.models._rules.information_rules import (
     InformationClass,
@@ -27,28 +28,27 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
+from cognite.neat.rules._shared import Rules
+
 
 class GraphExporter(BaseExporter[Graph], ABC):
-    def __init__(self, rules: InformationRules):
-        self.rules = rules
-
-    def export_to_file(self, filepath: Path) -> None:
-        self.export().serialize(destination=filepath)
+    def export_to_file(self, filepath: Path, rules: Rules) -> None:
+        self.export(rules).serialize(destination=filepath)
 
 
 class OWLExporter(GraphExporter):
-    def export(self) -> Graph:
-        return Ontology.from_rules(self.rules).as_owl()
+    def export(self, rules: Rules) -> Graph:
+        return Ontology.from_rules(rules).as_owl()
 
 
 class SHACLExporter(GraphExporter):
-    def export(self) -> Graph:
-        return Ontology.from_rules(self.rules).as_shacl()
+    def export(self, rules: Rules) -> Graph:
+        return Ontology.from_rules(rules).as_shacl()
 
 
 class SemanticDataModelExporter(GraphExporter):
-    def export(self) -> Graph:
-        return Ontology.from_rules(self.rules).as_semantic_data_model()
+    def export(self, rules: Rules) -> Graph:
+        return Ontology.from_rules(rules).as_semantic_data_model()
 
 
 class OntologyModel(BaseModel):
@@ -74,16 +74,23 @@ class Ontology(OntologyModel):
     prefixes: dict[str, Namespace]
 
     @classmethod
-    def from_rules(cls, rules: InformationRules) -> Self:
+    def from_rules(cls, input_rules: Rules) -> Self:
         """
         Generates an ontology from a set of transformation rules.
 
         Args:
-            transformation_rules: Instance of TransformationRules.
+            input_rules: The rules to generate the ontology from.
 
         Returns:
             An instance of Ontology.
         """
+        if isinstance(input_rules, InformationRules):
+            rules = input_rules
+        elif isinstance(input_rules, DMSRules):
+            rules = input_rules.as_information_architect_rules()
+        else:
+            raise ValueError(f"{type(input_rules).__name__} cannot be exported to Ontology")
+
         properties_redefined, redefinition_warnings = are_properties_redefined(rules, return_report=True)
         if properties_redefined:
             raise exceptions.PropertiesDefinedMultipleTimes(report=generate_exception_report(redefinition_warnings))
