@@ -98,12 +98,20 @@ class ExcelExporter(BaseExporter[Workbook]):
             sheet.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(headers))
             sheet.append(headers)
 
+            last_class: str | None = None
             item: dict[str, Any]
             for item in data.model_dump()["data"]:
                 row = list(item.values())
-                # Need to do the same reordering as for the headers
+                class_ = row[0]
+
+                is_new_class = sheet_name == "Properties" and class_ != last_class and last_class is not None
+                if self._styling_level > 2 and is_new_class:
+                    sheet.append([""] * len(headers))
+
+                # Need to do the same reordering as for the headers above
                 row = row[:1] + row[move : move + 1] + row[1:move] + row[move + 1 :]
                 sheet.append(row)
+                last_class = class_
 
             if self._styling_level > 0:
                 # This freezes all rows above the given row
