@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from cognite.neat.rules.exporters import ExcelExporter
 from cognite.neat.rules.models._rules import DMSRules, DomainRules, InformationRules
 
@@ -12,8 +10,6 @@ class TestExcelExporter:
         assert "Containers" in workbook.sheetnames
         assert "Views" in workbook.sheetnames
         assert "Properties" in workbook.sheetnames
-
-        exporter.export_to_file(Path(__file__).parent / "test.xlsx", alice_rules)
 
     def test_export_information_rules(self, david_rules: InformationRules):
         exporter = ExcelExporter()
