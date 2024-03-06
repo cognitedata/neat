@@ -146,6 +146,12 @@ class DMSImporter(BaseImporter):
             ),
             views=SheetList[DMSView](data=[DMSView.from_view(view) for view in self.schema.views]),
         )
+        output_rules: Rules
         if role is RoleTypes.information_architect:
-            return dms_rules.as_information_architect_rules()
-        return dms_rules
+            output_rules = dms_rules.as_information_architect_rules()
+        else:
+            output_rules = dms_rules
+        if errors == "raise":
+            return output_rules
+        else:
+            return output_rules, IssueList()

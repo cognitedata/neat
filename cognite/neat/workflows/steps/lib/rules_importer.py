@@ -652,7 +652,7 @@ class ImportExcelValidator(Step):
         role = self.configs.get("role")
         role_enum = None
         if role != "infer" and role is not None:
-            role_enum = RoleTypes(role)
+            role_enum = RoleTypes[role]
 
         excel_importer = importers.ExcelImporter(rules_file_path)
         rules, issues = excel_importer.to_rules(role=role_enum, errors="continue")
@@ -725,7 +725,7 @@ class ImportDataModelStorage(Step):
         role = self.configs.get("role")
         role_enum = None
         if role != "infer" and role is not None:
-            role_enum = RoleTypes(role)
+            role_enum = RoleTypes[role]
 
         rules, issues = dms_importer.to_rules(role=role_enum, errors="continue")
 
