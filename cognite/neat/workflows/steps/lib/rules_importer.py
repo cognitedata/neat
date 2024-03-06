@@ -34,7 +34,7 @@ __all__ = [
     "ImportGraphToRules",
     "ImportOntologyToRules",
     "ImportExcelValidator",
-    "ImportDataModelStorage",
+    "ImportFromDataModelStorage",
 ]
 
 
@@ -674,7 +674,7 @@ class ImportExcelValidator(Step):
         return FlowMessage(output_text=output_text), MultiRuleData.from_rules(rules)
 
 
-class ImportDataModelStorage(Step):
+class ImportFromDataModelStorage(Step):
     """This step import rules from the Excel file and validates it."""
 
     description = "This step imports rules from CDF Data Model"

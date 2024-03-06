@@ -13,7 +13,7 @@ steps:
     id: step_725987
     label: Import DMS
     max_retries: 0
-    method: ImportDataModelStorage
+    method: ImportFromDataModelStorage
     params: {}
     retry_delay: 3
     stype: stdstep
