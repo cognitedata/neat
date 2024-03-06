@@ -452,7 +452,10 @@ class ValidateAgainstCDF(Step):
         if errors:
             output_dir = self.data_store_path / Path("staging")
             report_writer = FORMATTER_BY_NAME[self.configs["Report Formatter"]]()
-            report_writer.write_to_file(IssueList(errors), file_or_dir_path=output_dir)
+            report_writer.write_to_file(
+                IssueList(errors, title=dms_rules.metadata.name or dms_rules.metadata.external_id),
+                file_or_dir_path=output_dir,
+            )
             report_file = report_writer.default_file_name
             error_text = (
                 "<p></p>"
