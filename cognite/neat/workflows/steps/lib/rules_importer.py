@@ -627,7 +627,7 @@ class ImportExcelValidator(Step):
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
             name="Report Formatter",
-            value="html",
+            value=next(iter(FORMATTER_BY_NAME.keys())),
             label="The format of the report for the validation of the rules",
             options=list(FORMATTER_BY_NAME),
         ),
@@ -689,7 +689,7 @@ class ImportDataModelStorage(Step):
         ),
         Configurable(
             name="Report Formatter",
-            value="html",
+            value=next(iter(FORMATTER_BY_NAME.keys())),
             label="The format of the report for the validation of the rules",
             options=list(FORMATTER_BY_NAME),
         ),
