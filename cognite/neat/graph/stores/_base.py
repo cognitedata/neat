@@ -146,6 +146,13 @@ class NeatGraphStoreBase(ABC):
             self.internal_storage_dir,
         )
 
+    def upsert_prefixes(self, prefixes: dict[str, Namespace]) -> None:
+        """Adds prefixes to the graph store."""
+        self.prefixes.update(prefixes)
+        for prefix, namespace in prefixes.items():
+            logging.info("Adding prefix %s with namespace %s", prefix, namespace)
+            self.graph.bind(prefix, namespace)
+
     def close(self) -> None:
         """Closes the graph."""
         # Can be overridden in subclasses
@@ -270,6 +277,18 @@ class NeatGraphStoreBase(ABC):
         """Prints the triples of the graph."""
         for subj, pred, obj in self.graph:
             logging.info(f"Triple: {subj} {pred} {obj}")
+
+    def diagnostic_report(self):
+        """Returns the dictionary representation graph diagnostic data ."""
+        return {
+            "rdf_store_type": self.rdf_store_type,
+            "base_prefix": self.base_prefix,
+            "namespace": self.namespace,
+            "prefixes": self.prefixes,
+            "internal_storage_dir": self.internal_storage_dir,
+            "rdf_store_query_url": self.rdf_store_query_url,
+            "rdf_store_update_url": self.rdf_store_update_url,
+        }
 
     def add_triples(self, triples: list[Triple] | set[Triple], batch_size: int = 10_000, verbose: bool = False):
         """Adds triples to the graph store in batches.

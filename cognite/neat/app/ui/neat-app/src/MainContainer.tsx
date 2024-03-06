@@ -61,7 +61,7 @@ export default function BasicTabs() {
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
           <Tab label="Workflows" {...a11yProps(0)} />
-          {/* <Tab label="Execution history" {...a11yProps(1)} /> */}
+          <Tab label="Execution history" {...a11yProps(1)} />
           <Tab label="Statistics" {...a11yProps(2)} />
           <Tab icon={<BuildRoundedIcon />} aria-label="Global config" {...a11yProps(3)} />
           <Tab icon={<HelpIcon />} aria-label="Global config" {...a11yProps(4)} />

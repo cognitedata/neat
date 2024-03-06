@@ -527,7 +527,7 @@ return (
       >
         {/* <ToggleButton value="system">Solution overview</ToggleButton> */}
         <ToggleButton value="steps">Workflow</ToggleButton>
-        {/* <ToggleButton value="src">Files</ToggleButton> */}
+        <ToggleButton value="src">Files</ToggleButton>
         {/* <ToggleButton value="configurations">Configurations</ToggleButton> */}
         <ToggleButton value="transformations">Data model and transformations</ToggleButton>
         <ToggleButton value="data_explorer">Graph explorer</ToggleButton>
