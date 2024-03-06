@@ -96,6 +96,10 @@ class ExcelExporter(BaseExporter[Workbook]):
                 row = row[move : move + 2] + row[:move] + row[move + 2 :]
                 sheet.append(row)
 
+            if self._styling_level > 0:
+                # This freezes all rows above the given row
+                sheet.freeze_panes = sheet["A3"]
+
         if self._styling_level > 0:
             self._adjust_column_widths(workbook)
         return workbook
