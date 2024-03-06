@@ -715,7 +715,7 @@ class ImportFromDataModelStorage(Step):
         if datamodel_entity.space is Undefined:
             error_text = (
                 f"Data Model ID should be in the format 'my_space:my_data_model(version=1)' "
-                f"or 'my_space:my_data_model', got {datamodel_id_str}"
+                f"or 'my_space:my_data_model', failed to parse space from {datamodel_id_str}"
             )
             return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
 
