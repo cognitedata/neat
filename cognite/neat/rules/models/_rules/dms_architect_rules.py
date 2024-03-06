@@ -20,7 +20,6 @@ from cognite.neat.rules.models._rules.domain_rules import DomainRules
 from ._types import (
     CdfValueType,
     ClassEntity,
-    ClassType,
     ContainerEntity,
     ContainerListType,
     ContainerType,
@@ -136,7 +135,6 @@ class DMSMetadata(BaseMetadata):
 
 
 class DMSProperty(SheetEntity):
-    class_: ClassType = Field(alias="Class")
     property_: PropertyType = Field(alias="Property")
     relation: Literal["direct", "multiedge"] | None = Field(None, alias="Relation")
     value_type: CdfValueType = Field(alias="Value Type")
@@ -159,7 +157,6 @@ class DMSProperty(SheetEntity):
 
 
 class DMSContainer(SheetEntity):
-    class_: ClassType | None = Field(None, alias="Class")
     container: ContainerType = Field(alias="Container")
     constraint: ContainerListType | None = Field(None, alias="Constraint")
 
@@ -194,7 +191,6 @@ class DMSContainer(SheetEntity):
 
 
 class DMSView(SheetEntity):
-    class_: ClassType | None = Field(None, alias="Class")
     view: ViewType = Field(alias="View")
     implements: ViewListType | None = Field(None, alias="Implements")
 
