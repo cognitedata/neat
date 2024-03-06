@@ -1,4 +1,13 @@
-from ._base import ClassEntity, ContainerEntity, Entity, EntityTypes, ParentClassEntity, Undefined, ViewEntity
+from ._base import (
+    ClassEntity,
+    ContainerEntity,
+    DataModelEntity,
+    Entity,
+    EntityTypes,
+    ParentClassEntity,
+    Undefined,
+    ViewEntity,
+)
 from ._field import (
     CdfValueType,
     ClassType,
@@ -27,6 +36,7 @@ __all__ = [
     "ParentClassEntity",
     "ContainerEntity",
     "ViewEntity",
+    "DataModelEntity",
     "XSDValueType",
     "DMSValueType",
     "XSD_VALUE_TYPE_MAPPINGS",

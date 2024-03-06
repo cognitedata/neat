@@ -414,7 +414,7 @@ class DMSRules(BaseRules):
     def as_information_architect_rules(self) -> "InformationRules":
         return _DMSRulesConverter(self).as_information_architect_rules()
 
-    def as_dms_architect_rules(self) -> DomainRules:
+    def as_domain_expert_rules(self) -> DomainRules:
         return _DMSRulesConverter(self).as_domain_rules()
 
 

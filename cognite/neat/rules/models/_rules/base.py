@@ -11,14 +11,7 @@ from functools import wraps
 from typing import Any, ClassVar, Generic, TypeAlias, TypeVar
 
 import pandas as pd
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
-    HttpUrl,
-    constr,
-    model_validator,
-)
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, constr, model_validator
 from pydantic.fields import FieldInfo
 
 if sys.version_info >= (3, 11):
@@ -201,8 +194,8 @@ class BaseRules(RuleModel):
 
 # An sheet entity is either a class or a property.
 class SheetEntity(RuleModel):
-    description: str | None = Field(alias="Description", default=None)
     name: str | None = Field(alias="Name", default=None)
+    description: str | None = Field(alias="Description", default=None)
 
 
 T_Entity = TypeVar("T_Entity", bound=SheetEntity)

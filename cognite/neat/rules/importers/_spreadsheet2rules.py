@@ -16,7 +16,7 @@ from cognite.neat.rules.validation import IssueList
 from cognite.neat.utils.auxiliary import local_import
 from cognite.neat.utils.spreadsheet import SpreadsheetRead, read_spreadsheet
 
-from ._base import BaseImporter, Rule
+from ._base import BaseImporter, Rules
 
 
 class ExcelImporter(BaseImporter):
@@ -24,18 +24,18 @@ class ExcelImporter(BaseImporter):
         self.filepath = filepath
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rule:
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules:
         ...
 
     @overload
     def to_rules(
         self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[Rule | None, IssueList]:
+    ) -> tuple[Rules | None, IssueList]:
         ...
 
     def to_rules(
         self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[Rule | None, IssueList] | Rule:
+    ) -> tuple[Rules | None, IssueList] | Rules:
         issues = IssueList(title=f"'{self.filepath.name}'")
         try:
             excel_file = pd.ExcelFile(self.filepath)
@@ -116,18 +116,18 @@ class GoogleSheetImporter(BaseImporter):
         self.skiprows = skiprows
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rule:
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules:
         ...
 
     @overload
     def to_rules(
         self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[Rule | None, IssueList]:
+    ) -> tuple[Rules | None, IssueList]:
         ...
 
     def to_rules(
         self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[Rule | None, IssueList] | Rule:
+    ) -> tuple[Rules | None, IssueList] | Rules:
         local_import("gspread", "google")
         import gspread  # type: ignore[import]
 
