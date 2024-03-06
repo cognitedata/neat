@@ -32,10 +32,10 @@ class ExcelExporter(BaseExporter[Workbook]):
     Style = Literal["none", "minimal", "default", "maximal"]
 
     _main_header_by_sheet_name: ClassVar[dict[str, str]] = {
-        "Properties": "Definition of properties per class",
-        "Classes": "Definition of classes",
-        "Views": "Definition of views",
-        "Containers": "Definition of containers",
+        "Properties": "Definition of Properties per Class",
+        "Classes": "Definition of Classes",
+        "Views": "Definition of Views",
+        "Containers": "Definition of Containers",
     }
     style_options = get_args(Style)
 
