@@ -23,6 +23,7 @@ __all__ = [
     "DownloadFileFromCDF",
     "UploadFileToCDF",
     "DownloadDataFromRestApiToFile",
+    "ValidateAgainstCDF",
 ]
 
 
