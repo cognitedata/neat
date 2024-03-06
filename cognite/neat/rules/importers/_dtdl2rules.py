@@ -8,6 +8,7 @@ from typing import Any, ClassVar, Literal, TypeAlias, overload
 from pydantic import BaseModel, Field, field_validator
 
 from cognite.neat.rules.models._rules import InformationRules, RoleTypes
+from cognite.neat.rules.models._rules.base import SheetList
 from cognite.neat.rules.validation import IssueList
 
 from ._base import BaseImporter
@@ -16,6 +17,8 @@ from ._base import BaseImporter
 DTMI: TypeAlias = str
 
 IRI: TypeAlias = str
+
+from cognite.neat.rules._shared import Rules
 
 
 class DTDLBase(BaseModel, ABC):
@@ -35,8 +38,9 @@ class DTDLImporter(BaseImporter):
 
     """
 
-    def __init__(self, items: Sequence[DTDLBase]):
+    def __init__(self, items: Sequence[DTDLBase], title: str | None = None):
         self._items = items
+        self.title = title
 
     @classmethod
     def from_directory(cls, directory: Path) -> "DTDLImporter":
@@ -58,22 +62,35 @@ class DTDLImporter(BaseImporter):
                     warnings.warn(f"Invalid json file {filepath}. Unknown '@type' {type_}", stacklevel=2)
                     continue
                 items.append(cls_.model_validate(item))
-        return cls(items)
+        return cls(items, directory.name)
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> InformationRules:
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules:
         ...
 
     @overload
     def to_rules(
         self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[InformationRules | None, IssueList]:
+    ) -> tuple[Rules | None, IssueList]:
         ...
 
     def to_rules(
         self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[InformationRules | None, IssueList] | InformationRules:
-        raise NotImplementedError()
+    ) -> tuple[Rules | None, IssueList] | Rules:
+        IssueList([])
+        properties = SheetList(data=[])
+        classes = SheetList(data=[])
+
+        {item.id_: item for item in self._items if item.id_}
+        for item in self._items:
+            if isinstance(item, Interface):
+                ...
+
+        InformationRules(
+            metadata=self._default_metadata(),
+            properties=properties,
+            classes=classes,
+        )
 
 
 PrimitiveSchema: TypeAlias = Literal[

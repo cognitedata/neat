@@ -22,6 +22,7 @@ from ._dms_schema_errors import (
     MissingView,
 )
 from ._dms_sheets import ReferencedNonExistingView, ReferenceNonExistingContainer
+from ._importer_warnings import UnknownComponent
 from ._spreadsheet import (
     InvalidClassSpecification,
     InvalidContainerSpecification,
@@ -38,6 +39,7 @@ from ._spreadsheet import (
 
 __all__ = [
     "MultiValueError",
+    "UnknownComponent",
     "IssueList",
     "Error",
     "ValidationIssue",
