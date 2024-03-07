@@ -1,24 +1,22 @@
-import json
-import warnings
+import re
 from abc import ABC
-from collections.abc import Sequence
-from pathlib import Path
-from typing import Any, ClassVar, Literal, TypeAlias, overload
+from typing import Any, ClassVar, Literal, TypeAlias
 
 from pydantic import BaseModel, Field, field_validator
 
-from cognite.neat.rules.models._rules import InformationRules, RoleTypes
-from cognite.neat.rules.models._rules.base import SheetList
-from cognite.neat.rules.validation import IssueList
+_DTMI_REGEX = r"^dtmi:[A-Za-z](?:[A-Za-z0-9_]*[A-Za-z0-9])?(?::[A-Za-z](?:[A-Za-z0-9_]*[A-Za-z0-9])?)*(?:;[1-9][0-9]{0,8}(?:\.[1-9][0-9]{0,5})?)?$"
 
-from ._base import BaseImporter
+_DTMI_COMPILED = re.compile(_DTMI_REGEX)
 
-# Todo Annotated
-DTMI: TypeAlias = str
+
+class DTMI(BaseModel):
+    scheme: ClassVar[str] = "dtmi"
+    path: list[str]
+    version: str
+
 
 IRI: TypeAlias = str
 
-from cognite.neat.rules._shared import Rules
 
 
 class DTDLBase(BaseModel, ABC):
@@ -27,70 +25,6 @@ class DTDLBase(BaseModel, ABC):
     comment: str | None = None
     display_name: str | None = Field(None, alias="displayName")
     description: str | None = None
-
-
-class DTDLImporter(BaseImporter):
-    """Importer for DTDL (Digital Twin Definition Language) files. It can import a directory containing DTDL files and
-    convert them to InformationRules.
-
-    The DTDL v3 stanard is supported and defined at
-    https://github.com/Azure/opendigitaltwins-dtdl/blob/master/DTDL/v3/DTDL.v3.md
-
-    """
-
-    def __init__(self, items: Sequence[DTDLBase], title: str | None = None):
-        self._items = items
-        self.title = title
-
-    @classmethod
-    def from_directory(cls, directory: Path) -> "DTDLImporter":
-        items: list[DTDLBase] = []
-        for filepath in directory.glob("**/*.json"):
-            raw = json.loads(filepath.read_text())
-            if isinstance(raw, dict):
-                raw_list = [raw]
-            elif isinstance(raw, list):
-                raw_list = raw
-            else:
-                raise ValueError(f"Invalid json file {filepath}")
-            for item in raw_list:
-                if not (type_ := item.get("@type")):
-                    warnings.warn(f"Invalid json file {filepath}. Missing '@type' key.", stacklevel=2)
-                    continue
-                cls_ = DTDL_CLS_BY_TYPE.get(type_)
-                if cls_ is None:
-                    warnings.warn(f"Invalid json file {filepath}. Unknown '@type' {type_}", stacklevel=2)
-                    continue
-                items.append(cls_.model_validate(item))
-        return cls(items, directory.name)
-
-    @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules:
-        ...
-
-    @overload
-    def to_rules(
-        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[Rules | None, IssueList]:
-        ...
-
-    def to_rules(
-        self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[Rules | None, IssueList] | Rules:
-        IssueList([])
-        properties = SheetList(data=[])
-        classes = SheetList(data=[])
-
-        {item.id_: item for item in self._items if item.id_}
-        for item in self._items:
-            if isinstance(item, Interface):
-                ...
-
-        InformationRules(
-            metadata=self._default_metadata(),
-            properties=properties,
-            classes=classes,
-        )
 
 
 PrimitiveSchema: TypeAlias = Literal[
