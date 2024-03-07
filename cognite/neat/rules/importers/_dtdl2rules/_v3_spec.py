@@ -1,10 +1,17 @@
 import re
 from abc import ABC
-from typing import Any, ClassVar, Literal, TypeAlias
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeAlias
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_serializer, model_validator
 
-_DTMI_REGEX = r"^dtmi:[A-Za-z](?:[A-Za-z0-9_]*[A-Za-z0-9])?(?::[A-Za-z](?:[A-Za-z0-9_]*[A-Za-z0-9])?)*(?:;[1-9][0-9]{0,8}(?:\.[1-9][0-9]{0,5})?)?$"
+if TYPE_CHECKING:
+    from pydantic.type_adapter import IncEx
+
+# Regex is from the spec: https://github.com/Azure/opendigitaltwins-dtdl/blob/master/DTMI/README.md#validation-regular-expressions
+_DTMI_REGEX = (
+    r"^dtmi:(?:_+[A-Za-z0-9]|[A-Za-z])(?:[A-Za-z0-9_]*[A-Za-z0-9])?(?::(?:_+[A-Za-z0-9]|[A-Za-z])"
+    r"(?:[A-Za-z0-9_]*[A-Za-z0-9])?)*(?:;[1-9][0-9]{0,8}(?:\.[1-9][0-9]{0,5})?)?$"
+)
 
 _DTMI_COMPILED = re.compile(_DTMI_REGEX)
 
@@ -14,9 +21,40 @@ class DTMI(BaseModel):
     path: list[str]
     version: str
 
+    @model_validator(mode="before")
+    def from_string(cls, value: Any) -> Any:
+        if not isinstance(value, str):
+            return value
+        if not _DTMI_COMPILED.match(value):
+            raise ValueError(f"Invalid DTMI {value}")
+        value = value.removeprefix(cls.scheme + ":")
+        path_str, version = value.split(";", 1)
+        return dict(path=path_str.split(":"), version=version)
+
+    @model_serializer
+    def to_string(self) -> str:
+        return f"{self.scheme}:{':'.join(self.path)};{self.version}"
+
+    if TYPE_CHECKING:
+        # Ensure type checkers works correctly, ref
+        # https://docs.pydantic.dev/latest/concepts/serialization/#overriding-the-return-type-when-dumping-a-model
+        def model_dump(  # type: ignore[override]
+            self,
+            *,
+            mode: Literal["json", "python"] | str = "python",
+            include: IncEx | None = None,
+            exclude: IncEx | None = None,
+            by_alias: bool = False,
+            exclude_unset: bool = False,
+            exclude_defaults: bool = False,
+            exclude_none: bool = False,
+            round_trip: bool = False,
+            warnings: bool = True,
+        ) -> str:
+            ...
+
 
 IRI: TypeAlias = str
-
 
 
 class DTDLBase(BaseModel, ABC):

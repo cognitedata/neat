@@ -1,32 +1,25 @@
 import json
-import re
 import warnings
-from abc import ABC
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, ClassVar, Literal, TypeAlias, overload
+from typing import Literal, overload
 
-from pydantic import BaseModel, Field, field_validator, model_validator
-
-from cognite.neat.rules.models._rules import InformationRules, RoleTypes
-from cognite.neat.rules.models._rules.information_rules import InformationClass, InformationProperty
-
-from cognite.neat.rules.models._rules.base import SheetList
-from cognite.neat.rules.validation import IssueList, ValidationIssue
 from cognite.neat.rules import validation
-from cognite.neat.rules.importers._base import BaseImporter
 from cognite.neat.rules._shared import Rules
+from cognite.neat.rules.importers._base import BaseImporter
+from cognite.neat.rules.models._rules import InformationRules, RoleTypes
+from cognite.neat.rules.models._rules.base import SheetList
+from cognite.neat.rules.models._rules.information_rules import InformationClass, InformationProperty
+from cognite.neat.rules.validation import IssueList, ValidationIssue
 
-from ._v3_spec import DTDLBase, DTMI
-
-
+from ._v3_spec import DTDL_CLS_BY_TYPE, DTMI, DTDLBase, Interface
 
 
 class DTDLImporter(BaseImporter):
     """Importer for DTDL (Digital Twin Definition Language) files. It can import a directory containing DTDL files and
     convert them to InformationRules.
 
-    The DTDL v3 stanard is supported and defined at
+    The DTDL v3 standard is supported and defined at
     https://github.com/Azure/opendigitaltwins-dtdl/blob/master/DTDL/v3/DTDL.v3.md
 
     """
@@ -90,19 +83,21 @@ class DTDLImporter(BaseImporter):
         return self._to_output(rules, errors, role)
 
     @classmethod
-    def _to_triples(cls, item: DTDLBase, parent: str | None = None) -> tuple[list[InformationClass], list[InformationProperty], list[ValidationIssue]]:
+    def _to_triples(
+        cls, item: DTDLBase, parent: str | None = None
+    ) -> tuple[list[InformationClass], list[InformationProperty], list[ValidationIssue]]:
         classes: list[InformationClass] = []
         properties: list[InformationProperty] = []
         issues: list[ValidationIssue] = []
         if isinstance(item, Interface):
-            class_ = InformationClass(
-                class_=item.display_name or item.id_,
+            ...
 
         else:
-            issues.append(validation.UnknownComponent(
-                component_name=item.type,
-                instance_name=item.display_name,
-                instance_id=item.id_
-            ))
+            issues.append(
+                validation.UnknownComponent(
+                    component_name=item.type,
+                    instance_name=item.display_name,
+                    instance_id=item.id_.model_dump() if item.id_ else None,
+                )
+            )
         return classes, properties, issues
-
