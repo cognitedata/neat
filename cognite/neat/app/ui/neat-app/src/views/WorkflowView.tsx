@@ -42,6 +42,7 @@ import ContextViewer from 'components/ContextViewer';
 import WorkflowDeleteDialog from 'components/WorkflowDeleteDialog';
 import { ImportExport } from '@mui/icons-material';
 import WorkflowImportExportDialog from 'components/WorkflowImportExportDialog';
+import FilePresentIcon from '@mui/icons-material/FilePresent';
 
 
 export interface ExecutionLog {
@@ -527,10 +528,10 @@ return (
       >
         {/* <ToggleButton value="system">Solution overview</ToggleButton> */}
         <ToggleButton value="steps">Workflow</ToggleButton>
-        <ToggleButton value="src">Files</ToggleButton>
         {/* <ToggleButton value="configurations">Configurations</ToggleButton> */}
         <ToggleButton value="transformations">Data model and transformations</ToggleButton>
         <ToggleButton value="data_explorer">Graph explorer</ToggleButton>
+        <ToggleButton value="src"><FilePresentIcon></FilePresentIcon></ToggleButton>
       </ToggleButtonGroup>
     </Box>
     { editState && (<Typography color={"red"} variant="overline"> {editState} </Typography> ) }

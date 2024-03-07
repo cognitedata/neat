@@ -64,7 +64,7 @@ return (
     <List>
         {rules.map((rule, index) => {
             return <ListItem key={index}>
-                 <ListItemButton onClick={(event) => {props.onSelectRule(rule)}}>
+                 <ListItemButton onClick={(event) => {onSelectRule(rule)}}>
                     <ListItemText primary={rule}  />
                 </ListItemButton>
                </ListItem>

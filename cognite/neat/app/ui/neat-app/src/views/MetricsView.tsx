@@ -104,6 +104,7 @@ export default function MetricsTable() {
   )}
   return (
     <div>
+      <Typography> Metrics : </Typography>
     <TableContainer component={Paper}>
       <Table aria-label="collapsible table">
         <TableHead>

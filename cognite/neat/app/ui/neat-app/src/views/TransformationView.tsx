@@ -78,7 +78,7 @@ function Row(props: { row: any,properties: any }) {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {fProps.map((pr) => (
+                  {fProps?.map((pr) => (
                     <TableRow key={pr.property}>
                       <TableCell component="th" scope="row"> {pr.property} </TableCell>
                       <TableCell>{pr.property_description}</TableCell>
@@ -151,7 +151,10 @@ export default function TransformationTable() {
     }).then((data) => {
       // console.log(text);
       setAlertMsg("");
-      setData(data);
+      if (data.classes)
+        setData(data)
+      else
+        setAlertMsg("Rules file "+fileName+" is either invalid or missing. Please ensure that you have a valid Rules file.");
     }).catch((err) => {
       console.log(err);
       setAlertMsg("Rules file "+fileName+" is either invalid or missing. Please ensure that you have a valid Rules file.");
@@ -202,7 +205,7 @@ export default function TransformationTable() {
             <Tab label="Data model" />
           </Tabs>
 
-          {selectedTab === 0 && (
+          {selectedTab === 0 && data.metadata && (
             <Box sx={{marginTop:5}}>
               <TableContainer component={Paper}>
                 <Table aria-label="metadata table">
@@ -262,7 +265,7 @@ export default function TransformationTable() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {data.classes.map((row:any) => (
+              {data.classes?.map((row:any) => (
                 <Row key={row.class} row={row} properties={data.properties} />
               ))}
             </TableBody>
