@@ -239,7 +239,7 @@ class ConfigureGraphStore(Step):
             reset_store(store_dir, graph_store.graph if graph_store else None)
             logging.info("Graph reset complete")
 
-        prefixes = rules_data.rules.prefixes if rules_data else PREFIXES
+        prefixes = rules_data.rules.prefixes if rules_data else PREFIXES.copy()
 
         if store_type == stores.OxiGraphStore.rdf_store_type and graph_store is not None:
             # OXIGRAPH doesn't like to be initialized twice without a good reason

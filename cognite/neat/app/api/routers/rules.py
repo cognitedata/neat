@@ -41,7 +41,7 @@ def get_rules(
         workflow_definition = workflow.get_workflow_definition()
         if not file_name:
             for step in workflow_definition.steps:
-                if step.method == "ImportExcelToRules":
+                if step.method == ImportExcelToRules.__name__:
                     file_name = step.configs["file_name"]
                     version = step.configs["version"]
                     break
