@@ -15,6 +15,16 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.67.0] - 07-03-24
+## Fixed
+- Fixed issue with prefixes not being updated during GraphStore (oxi) reinitialization
+- Fixed graph store reset issue for JSON loader
+- Small UI adjustments
+
+## Added
+- Added rules browser to the UI. Now user can browse all rules in UI from local store .
+- Added configurable HTTP headers for `DownloadDataFromRestApiToFile` step. The feature is useful when the API requires specific headers to be set (has been requested by Cognite customer).
+
 ## [0.66.1] - 06-03-24
 ## Fixed
 - `Import DMS` fails for data models without description. This is now fixed.
