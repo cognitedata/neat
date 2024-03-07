@@ -150,8 +150,8 @@ class Property(DTDLBaseWithSchema):
 
 class Relationship(DTDLBaseWithName):
     type = "Relationship"
-    minMultiplicity: int | None = None
-    maxMultiplicity: int | None = None
+    min_multiplicity: int | None = Field(None, alias="minMultiplicity")
+    max_multiplicity: int | None = Field(None, alias="maxMultiplicity")
     properties: list[Property] | None = None
     target: DTMI | None = None
     writable: bool | None = None
