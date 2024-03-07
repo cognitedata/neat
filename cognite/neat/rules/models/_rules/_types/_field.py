@@ -221,13 +221,18 @@ ViewType = Annotated[
 ]
 
 
+def _semantic_value_type_before_validator(value: Any) -> Any:
+    if isinstance(value, XSDValueType | ClassEntity) or not isinstance(value, str):
+        return value
+    elif value in XSD_VALUE_TYPE_MAPPINGS:
+        return XSD_VALUE_TYPE_MAPPINGS[value]
+    else:
+        return ClassEntity.from_raw(value)
+
+
 SemanticValueType = Annotated[
     XSDValueType | ClassEntity,
-    BeforeValidator(
-        lambda value: (
-            XSD_VALUE_TYPE_MAPPINGS[value] if value in XSD_VALUE_TYPE_MAPPINGS else ClassEntity.from_raw(value)
-        )
-    ),
+    BeforeValidator(_semantic_value_type_before_validator),
     PlainSerializer(
         lambda v: v.versioned_id,
         return_type=str,

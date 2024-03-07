@@ -8,12 +8,15 @@ from cognite.neat.rules import validation
 from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.importers._base import BaseImporter
 from cognite.neat.rules.models._rules import InformationRules, RoleTypes
-from cognite.neat.rules.models._rules._types import ClassEntity, ParentClassEntity, XSDValueType
+from cognite.neat.rules.models._rules._types import (
+    XSD_VALUE_TYPE_MAPPINGS,
+    ParentClassEntity,
+)
 from cognite.neat.rules.models._rules.base import SheetList
 from cognite.neat.rules.models._rules.information_rules import InformationClass, InformationProperty
 from cognite.neat.rules.validation import IssueList, ValidationIssue
 
-from ._v3_spec import DTDL_CLS_BY_TYPE, DTMI, DTDLBase, Enum, Interface, Property, Relationship
+from ._v3_spec import DTDL_CLS_BY_TYPE, DTMI, DTDLBase, Enum, Interface, Property, Relationship, Object
 
 
 class DTDLImporter(BaseImporter):
@@ -136,6 +139,9 @@ class DTDLImporter(BaseImporter):
                 value_type = "string"
             elif isinstance(input_type, str):
                 value_type = input_type
+            elif isinstance(input_type, Object):
+                for field_ in input_type.fields or []:
+                    ...
             else:
                 value_type = None
             if value_type is not None:
@@ -144,7 +150,7 @@ class DTDLImporter(BaseImporter):
                     name=item.display_name,
                     description=item.description,
                     property_=item.name,
-                    value_type=XSDValueType.from_string(value_type),
+                    value_type=XSD_VALUE_TYPE_MAPPINGS[value_type],
                 )
                 properties.append(prop)
             else:
@@ -173,7 +179,7 @@ class DTDLImporter(BaseImporter):
                 min_count=item.minMultiplicity,
                 max_count=item.maxMultiplicity,
                 property_=item.name,
-                value_type=ClassEntity.from_string(item.target.model_dump()),
+                value_type=item.target.as_class_id(),
             )
             properties.append(prop)
         elif isinstance(item, Relationship) and item.properties is not None:
