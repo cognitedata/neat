@@ -317,6 +317,12 @@ class DownloadDataFromRestApiToFile(Step):
             label="Destination for the response (file/flow_message/both)",
             options=["file", "flow_message", "both"],
         ),
+        Configurable(
+            name="http_headers",
+            value="",
+            label="Custom HTTP headers separated by ';' . Example: \
+              'Content-Type: application/json; Accept: application/json'",
+        ),
     ]
 
     def run(self) -> FlowMessage:  # type: ignore[override, syntax]
@@ -330,9 +336,13 @@ class DownloadDataFromRestApiToFile(Step):
         username = self.configs["username"]
         password = self.configs["password"]
         token = self.configs["token"]
-
+        http_headers_str = self.configs.get("http_headers", "")
+        headers = {}
+        for header in http_headers_str.split(";"):
+            if header:
+                key, value = header.split(":")
+                headers[key.strip()] = value.strip()
         try:
-            headers = {}
             if auth_mode == "basic":
                 if username and password:
                     headers["Authorization"] = f'Basic {base64.b64encode(f"{username}:{password}".encode()).decode()}'

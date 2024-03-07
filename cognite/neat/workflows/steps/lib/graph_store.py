@@ -86,6 +86,7 @@ class ConfigureDefaultGraphStores(Step):
         source_store_type = self.configs["source_rdf_store.type"]
         if stores_to_configure in ["all", "source"]:
             if source_store_type == stores.OxiGraphStore.rdf_store_type and "SourceGraph" in self.flow_context:
+                cast(SourceGraph, self.flow_context["SourceGraph"]).graph.upsert_prefixes(prefixes)
                 return FlowMessage(output_text="Stores already configured")
             try:
                 store_cls = stores.STORE_BY_TYPE[source_store_type]
@@ -112,6 +113,7 @@ class ConfigureDefaultGraphStores(Step):
             solution_store_type = self.configs["solution_rdf_store.type"]
 
             if solution_store_type == stores.OxiGraphStore.rdf_store_type and "SolutionGraph" in self.flow_context:
+                cast(SolutionGraph, self.flow_context["SolutionGraph"]).graph.upsert_prefixes(prefixes)
                 return FlowMessage(output_text="Stores already configured")
 
             try:
@@ -237,20 +239,16 @@ class ConfigureGraphStore(Step):
             reset_store(store_dir, graph_store.graph if graph_store else None)
             logging.info("Graph reset complete")
 
+        prefixes = rules_data.rules.prefixes if rules_data else PREFIXES.copy()
+
         if store_type == stores.OxiGraphStore.rdf_store_type and graph_store is not None:
             # OXIGRAPH doesn't like to be initialized twice without a good reason
+            graph_store.graph.upsert_prefixes(prefixes)
             return FlowMessage(output_text="Stores already configured")
-
         try:
             store_cls = stores.STORE_BY_TYPE[store_type]
         except KeyError:
             return FlowMessage(output_text="Invalid store type")
-
-        if rules_data:
-            print("Using rules prefixes")
-            prefixes = rules_data.rules.prefixes
-        else:
-            prefixes = PREFIXES
 
         new_graph_store = store_cls(prefixes=prefixes, base_prefix="neat", namespace=PREFIXES["neat"])
         new_graph_store.init_graph(

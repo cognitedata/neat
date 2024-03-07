@@ -26,6 +26,7 @@ import CdfDownloader from 'components/CdfDownloader';
 import Alert from '@mui/material/Alert';
 import AlertTitle from '@mui/material/AlertTitle';
 import { Tab, Tabs } from '@mui/material';
+import RulesBrowserDialog from 'components/RulesBrowserDialog';
 
 function Row(props: { row: any,properties: any }) {
   const { row,properties } = props;
@@ -56,7 +57,7 @@ function Row(props: { row: any,properties: any }) {
         <TableCell align="right">{row.class_description}</TableCell>
         <TableCell align="right">{row.cdf_resource_type}</TableCell>
         <TableCell align="right">{row.cdf_parent_resource}</TableCell>
-        <TableCell align="center"><Button >test</Button></TableCell>
+        <TableCell align="center"></TableCell>
       </TableRow>
       <TableRow>
         <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
@@ -74,11 +75,10 @@ function Row(props: { row: any,properties: any }) {
                     <TableCell><b>CDF metadata</b></TableCell>
                     <TableCell><b>Rule type</b></TableCell>
                     <TableCell><b>Rule (transform from source to solution object)</b></TableCell>
-                    <TableCell><b>Action</b></TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {fProps.map((pr) => (
+                  {fProps?.map((pr) => (
                     <TableRow key={pr.property}>
                       <TableCell component="th" scope="row"> {pr.property} </TableCell>
                       <TableCell>{pr.property_description}</TableCell>
@@ -86,7 +86,7 @@ function Row(props: { row: any,properties: any }) {
                       <TableCell>{pr.cdf_resource_type}.{pr.cdf_metadata_type}</TableCell>
                       <TableCell>{pr.rule_type}</TableCell>
                       <TableCell>{pr.rule}</TableCell>
-                      <TableCell><Button >test</Button></TableCell>
+                      <TableCell></TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -151,12 +151,31 @@ export default function TransformationTable() {
     }).then((data) => {
       // console.log(text);
       setAlertMsg("");
+      if (data.classes)
+        setData(data)
+      else
+        setAlertMsg("Rules file "+fileName+" is either invalid or missing. Please ensure that you have a valid Rules file.");
+    }).catch((err) => {
+      console.log(err);
+      setAlertMsg("Rules file "+fileName+" is either invalid or missing. Please ensure that you have a valid Rules file.");
+    }
+  )}
+
+  const loadArbitraryRulesFile = (fileName:string) => {
+    let url = neatApiRootUrl+"/api/rules?"+new URLSearchParams({"workflow_name":"undefined","file_name":fileName,"version":""}).toString()
+    fetch(url)
+    .then((response) => {
+      return response.json();
+    }).then((data) => {
+      setAlertMsg("");
       setData(data);
     }).catch((err) => {
       console.log(err);
       setAlertMsg("Rules file "+fileName+" is either invalid or missing. Please ensure that you have a valid Rules file.");
     }
   )}
+
+
 
   const [filesToUpload, setFilesToUpload] = useState([])
 
@@ -173,7 +192,7 @@ export default function TransformationTable() {
   return (
     <Box>
     <Typography variant="subtitle1" gutterBottom>
-        Rules file : <a href={downloadUrl} >{data.file_name}</a>  version : {data.hash} source: {data.src}
+        Data model (rules) : <a href={downloadUrl} >{data.file_name}</a>  version : {data.hash} source: {data.src} <RulesBrowserDialog onSelectRule={loadArbitraryRulesFile} />
         {data.error_text && <Container sx={{ color: 'red' }}>{data.error_text}</Container>}
     </Typography>
     {alertMsg != "" && (<Alert severity="warning">
@@ -186,7 +205,7 @@ export default function TransformationTable() {
             <Tab label="Data model" />
           </Tabs>
 
-          {selectedTab === 0 && (
+          {selectedTab === 0 && data.metadata && (
             <Box sx={{marginTop:5}}>
               <TableContainer component={Paper}>
                 <Table aria-label="metadata table">
@@ -238,15 +257,15 @@ export default function TransformationTable() {
             <TableHead>
               <TableRow>
                 <TableCell />
-                {/* <TableCell> <b>Solution class</b></TableCell> */}
+                <TableCell> <b>Class</b></TableCell>
                 <TableCell align="right"><b>Description</b></TableCell>
                 {/* <TableCell align="right"><b>CDF resource</b></TableCell> */}
-                <TableCell align="right"><b>Parent resource</b></TableCell>
-                {/* <TableCell align="right"><b>Action</b></TableCell> */}
+                <TableCell align="right"></TableCell>
+                <TableCell align="right"></TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {data.classes.map((row:any) => (
+              {data.classes?.map((row:any) => (
                 <Row key={row.class} row={row} properties={data.properties} />
               ))}
             </TableBody>

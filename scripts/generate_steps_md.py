@@ -48,7 +48,7 @@ def step_to_markdown(step):
 
 
 steps_registry_url = "http://localhost:8000/api/workflow/registered-steps"
-file_name = "docs/steps-repository.md"
+file_name = "docs/steps-library.md"
 json_data = download_json_from_url(steps_registry_url)
 # Convert all steps to Markdown
 markdown_document = ""

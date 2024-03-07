@@ -11,9 +11,16 @@ from cognite.neat.rules import exporter, importer
 from cognite.neat.rules.models._base import EntityTypes
 from cognite.neat.rules.models.rules import Class, Classes, Metadata, Properties, Property, Rules
 from cognite.neat.workflows.steps.data_contracts import RulesData
+from cognite.neat.workflows.steps.lib.rules_importer import ImportExcelToRules
 from cognite.neat.workflows.utils import get_file_hash
 
 router = APIRouter()
+
+
+@router.get("/api/rules/list")
+def get_rules_list():
+    rules_dir = Path(NEAT_APP.config.rules_store_path)
+    return {"result": [str(file.name) for file in rules_dir.glob("*.*")]}
 
 
 @router.get("/api/rules")
@@ -28,17 +35,17 @@ def get_rules(
 ) -> dict[str, Any]:
     if NEAT_APP.cdf_store is None or NEAT_APP.workflow_manager is None:
         return {"error": "NeatApp is not initialized"}
-    workflow = NEAT_APP.workflow_manager.get_workflow(workflow_name)
-    if workflow is None:
-        return {"error": f"Workflow {workflow_name} is not found"}
-    workflow_definition = workflow.get_workflow_definition()
-
-    if not file_name:
-        for step in workflow_definition.steps:
-            if step.method == "ImportExcelToRules":
-                file_name = step.configs["file_name"]
-                version = step.configs["version"]
-                break
+    if workflow_name != "undefined":
+        workflow = NEAT_APP.workflow_manager.get_workflow(workflow_name)
+        if workflow is None:
+            return {"error": f"Workflow {workflow_name} is not found"}
+        workflow_definition = workflow.get_workflow_definition()
+        if not file_name:
+            for step in workflow_definition.steps:
+                if step.method == ImportExcelToRules.__name__:
+                    file_name = step.configs["file_name"]
+                    version = step.configs["version"]
+                    break
     if not file_name:
         return {"error": "File name is not provided"}
     rules_file = Path(file_name)
@@ -97,18 +104,6 @@ def get_rules(
 
     except Exception as e:
         error_text = str(e)
-
-    logging.info(
-        {
-            "properties": properties,
-            "metadata": rules.metadata.model_dump(),
-            "classes": classes,
-            "file_name": path.name,
-            "hash": get_file_hash(path),
-            "error_text": error_text,
-            "src": src,
-        }
-    )
 
     return {
         "properties": properties,

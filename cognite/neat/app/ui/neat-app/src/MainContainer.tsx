@@ -15,6 +15,7 @@ import BuildRoundedIcon from '@mui/icons-material/BuildRounded';
 import HelpIcon from '@mui/icons-material/Help';
 import GlobalConfigView from 'views/GlobalConfigView';
 import AboutView from 'views/AboutView';
+import SpeedIcon from '@mui/icons-material/Speed';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -61,8 +62,8 @@ export default function BasicTabs() {
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
           <Tab label="Workflows" {...a11yProps(0)} />
-          {/* <Tab label="Execution history" {...a11yProps(1)} /> */}
-          <Tab label="Statistics" {...a11yProps(2)} />
+          <Tab label="Execution history" {...a11yProps(1)} />
+          <Tab icon={<SpeedIcon/>} {...a11yProps(2)} />
           <Tab icon={<BuildRoundedIcon />} aria-label="Global config" {...a11yProps(3)} />
           <Tab icon={<HelpIcon />} aria-label="Global config" {...a11yProps(4)} />
         </Tabs>
