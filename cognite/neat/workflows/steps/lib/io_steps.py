@@ -320,7 +320,8 @@ class DownloadDataFromRestApiToFile(Step):
         Configurable(
             name="http_headers",
             value="",
-            label="Custom HTTP headers separated by ';' . Example: 'Content-Type: application/json; Accept: application/json'",
+            label="Custom HTTP headers separated by ';' . Example: \
+              'Content-Type: application/json; Accept: application/json'",
         ),
     ]
 

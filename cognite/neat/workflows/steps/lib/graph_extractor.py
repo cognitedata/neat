@@ -491,7 +491,6 @@ class ExtractGraphFromJsonFile(Step):
         graph.graph.add((root_node, URIRef(ns + "label"), Literal("root node")))
         graph.graph.add((root_node, RDF.type, URIRef(ns + "root_node_id")))
         convert_json_to_triples(json_data, root_node, "root", "root", None)
-        # graph_store.graph.restart()  # restarting the graph to release the memory
         return FlowMessage(
             output_text=f"Data from source file imported successfully. Imported {nodes_counter} objects \
                             and {property_counter} properties ."

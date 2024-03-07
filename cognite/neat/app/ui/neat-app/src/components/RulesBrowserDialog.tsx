@@ -25,7 +25,7 @@ export default function RulesBrowserDialog(props: any)
         setDialogOpen(false);
     };
 
-  
+
 
     const loadListOfRules = () => {
         const url = neatApiRootUrl + "/api/rules/list";
@@ -36,7 +36,7 @@ export default function RulesBrowserDialog(props: any)
         }).then((response) => response.json()).then((data) => {
             console.log("Rules loaded");
             setRules(data.result);
-      
+
         }).catch((error) => {
           console.error('Error:', error);
         })
@@ -59,7 +59,7 @@ return (
 </IconButton>
 <Dialog open={dialogOpen}  onClose={handleDialogCancel} >
 <DialogTitle>Data modele (rules) browser </DialogTitle>
-<DialogContent sx={{height:"60vh"}} > 
+<DialogContent sx={{height:"60vh"}} >
     {/* render list of rules */}
     <List>
         {rules.map((rule, index) => {

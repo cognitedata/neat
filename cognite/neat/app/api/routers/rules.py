@@ -18,7 +18,6 @@ router = APIRouter()
 
 @router.get("/api/rules/list")
 def get_rules_list():
-    # """Endpoint for retrieving list of all rules files in local storage (rules folder)"""
     rules_dir = Path(NEAT_APP.config.rules_store_path)
     return {"result": [str(file.name) for file in rules_dir.glob("*.*")]}
 

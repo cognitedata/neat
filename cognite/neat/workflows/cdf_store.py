@@ -241,7 +241,11 @@ class CdfStore:
 
         output: list[NeatCdfResource] = []
         for file_meta in files_metadata:
-            is_latest = file_meta.metadata.get("is_latest", "false") == "true"
+            if file_meta.metadata:
+                is_latest = file_meta.metadata.get("is_latest", "false") == "true"
+            else:
+                is_latest = False
+
             metadata = file_meta.metadata or {}
             neat_cdf_resource = NeatCdfResource(
                 id=file_meta.id,

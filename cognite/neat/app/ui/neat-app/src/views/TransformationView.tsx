@@ -172,7 +172,7 @@ export default function TransformationTable() {
     }
   )}
 
-  
+
 
   const [filesToUpload, setFilesToUpload] = useState([])
 
