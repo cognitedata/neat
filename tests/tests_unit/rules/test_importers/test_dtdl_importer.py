@@ -10,9 +10,10 @@ class TestDTDLImporter:
     def test_import_energy_grid_example(self) -> None:
         dtdl_importer = DTDLImporter.from_directory(DTDL_IMPORTER_DATA / "energy-grid")
 
-        rules = dtdl_importer.to_rules(errors="raise")
+        rules, issues = dtdl_importer.to_rules(errors="continue")
 
         assert isinstance(rules, InformationRules)
+        assert not issues, f"No issues should be found {issues}"
 
 
 class TestV3Spec:

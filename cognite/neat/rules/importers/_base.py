@@ -6,7 +6,7 @@ from typing import Literal, overload
 from rdflib import Namespace
 
 from cognite.neat.rules._shared import Rules
-from cognite.neat.rules.models._rules import RoleTypes, DMSRules, InformationRules
+from cognite.neat.rules.models._rules import DMSRules, InformationRules, RoleTypes
 from cognite.neat.rules.validation import IssueList
 
 
@@ -35,11 +35,17 @@ class BaseImporter(ABC):
         ...
 
     @classmethod
-    def _to_output(cls, rules: Rules, errors: Literal["raise", "continue"] = "continue", role : RoleTypes | None = None) -> tuple[Rules | None, IssueList] | Rules:
+    def _to_output(
+        cls,
+        rules: Rules,
+        issues: IssueList,
+        errors: Literal["raise", "continue"] = "continue",
+        role: RoleTypes | None = None,
+    ) -> tuple[Rules | None, IssueList] | Rules:
         """Converts the rules to the output format."""
         if rules.metadata.role is role or role is None:
             output = rules
-        if isinstance(rules, DMSRules) and role is RoleTypes.information_architect:
+        elif isinstance(rules, DMSRules) and role is RoleTypes.information_architect:
             output = rules.as_information_architect_rules()
         elif isinstance(rules, InformationRules) and role is RoleTypes.dms_architect:
             output = rules.as_dms_architect_rules()
@@ -49,8 +55,7 @@ class BaseImporter(ABC):
         if errors == "raise":
             return output
         else:
-            return output, IssueList()
-
+            return output, issues
 
     def _default_metadata(self):
         return {

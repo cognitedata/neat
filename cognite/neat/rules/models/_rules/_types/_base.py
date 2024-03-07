@@ -248,7 +248,7 @@ class ClassEntity(Entity):
     type_: ClassVar[EntityTypes] = EntityTypes.class_
 
     @classmethod
-    def from_raw(cls, value: Any) -> "ClassEntity":
+    def from_raw(cls, value: Any) -> Self:
         if not value:
             return ClassEntity(prefix=Undefined, suffix=value)
         elif isinstance(value, ClassEntity):

@@ -21,6 +21,15 @@ class DTMI(BaseModel):
     path: list[str]
     version: str
 
+    def as_class_id(self) -> str:
+        return "_".join(self.path) + "_" + self.version
+
+    def __hash__(self) -> int:
+        return hash(self.to_string())
+
+    def __repr__(self) -> str:
+        return self.to_string()
+
     @model_validator(mode="before")
     def from_string(cls, value: Any) -> Any:
         if not isinstance(value, str):
@@ -75,7 +84,7 @@ class DTDLBaseWithName(DTDLBase, ABC):
 
 
 class DTDLBaseWithSchema(DTDLBaseWithName, ABC):
-    schema_: "Schema | IRI | None" = Field(None, alias="schema")  # type: ignore[assignment]
+    schema_: "Schema | DTMI | None" = Field(None, alias="schema")  # type: ignore[assignment]
 
     @field_validator("schema_", mode="before")
     def select_schema_type(cls, value: Any) -> Any:
@@ -169,10 +178,10 @@ class Telemetry(DTDLBaseWithSchema):
 
 class Interface(DTDLBase):
     type = "Interface"
-    id_: IRI = Field(alias="@id")  # type: ignore[assignment]
+    id_: DTMI = Field(alias="@id")  # type: ignore[assignment]
     context: IRI | None = Field(alias="@context")
     extends: list[DTMI] | None = None
-    contents: list[Command | Component | Property | Relationship | Telemetry | IRI] | None = None
+    contents: list[Command | Component | Property | Relationship | Telemetry | DTMI] | None = None
     schemas: list[Array | Enum | Map | Object] | None = None
 
     @field_validator("contents", "schemas", mode="before")
