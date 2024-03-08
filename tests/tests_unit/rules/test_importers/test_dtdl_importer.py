@@ -15,6 +15,15 @@ class TestDTDLImporter:
         assert isinstance(rules, InformationRules)
         assert not issues, f"No issues should be found {issues}"
 
+    def tests_import_invalid_data_model_and_return_errors(self) -> None:
+        expected_issues = []
+        dtdl_importer = DTDLImporter([])
+
+        rules, issues = dtdl_importer.to_rules(errors="continue")
+
+        assert rules is None
+        assert sorted(issues) == sorted(expected_issues)
+
 
 class TestV3Spec:
     @pytest.mark.parametrize(

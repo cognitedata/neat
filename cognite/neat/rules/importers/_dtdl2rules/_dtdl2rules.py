@@ -4,6 +4,8 @@ from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import Literal, overload
 
+from pydantic import ValidationError
+
 from cognite.neat.rules import validation
 from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.importers._base import BaseImporter
@@ -29,7 +31,7 @@ class DTDLImporter(BaseImporter):
 
     """
 
-    def __init__(self, items: Sequence[DTDLBase], title: str | None = None):
+    def __init__(self, items: Sequence[DTDLBase], title: str | None = None) -> None:
         self._items = items
         self.title = title
 
@@ -72,11 +74,18 @@ class DTDLImporter(BaseImporter):
 
         container.convert(self._items)
 
-        rules = InformationRules(
-            metadata=self._default_metadata(),
-            properties=SheetList[InformationProperty](data=container.properties),
-            classes=SheetList[InformationClass](data=container.classes),
-        )
+        try:
+            rules = InformationRules(
+                metadata=self._default_metadata(),
+                properties=SheetList[InformationProperty](data=container.properties),
+                classes=SheetList[InformationClass](data=container.classes),
+            )
+        except ValidationError as e:
+            raise NotImplementedError()
+            if errors == "continue":
+                return None, container.issues
+            else:
+                raise container.issues.as_errors() from e
 
         return self._to_output(rules, container.issues, errors, role)
 
