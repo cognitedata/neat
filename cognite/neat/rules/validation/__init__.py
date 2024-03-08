@@ -1,4 +1,4 @@
-from ._base import Error, IssueList, MultiValueError, ValidationIssue, ValidationWarning
+from ._base import DefaultPydanticError, Error, IssueList, MultiValueError, ValidationIssue, ValidationWarning
 from ._container_inconsistency import (
     InconsistentContainerDefinition,
     MultiDefaultDefinitions,
@@ -39,6 +39,7 @@ from ._spreadsheet import (
 )
 
 __all__ = [
+    "DefaultPydanticError",
     "MultiValueError",
     "UnknownComponent",
     "UnknownProperty",

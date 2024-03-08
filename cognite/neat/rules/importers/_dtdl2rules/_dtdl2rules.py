@@ -82,7 +82,7 @@ class DTDLImporter(BaseImporter):
                 classes=SheetList[InformationClass](data=container.classes),
             )
         except ValidationError as e:
-            raise NotImplementedError() from e
+            container.issues.extend(validation.Error.from_pydantic_errors(e.errors()))
             if errors == "continue":
                 return None, container.issues
             else:

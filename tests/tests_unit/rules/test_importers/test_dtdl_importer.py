@@ -2,7 +2,7 @@ import pytest
 
 from cognite.neat.rules import validation
 from cognite.neat.rules.importers import DTDLImporter
-from cognite.neat.rules.importers._dtdl2rules._v3_spec import DTMI
+from cognite.neat.rules.importers._dtdl2rules._v3_spec import DTMI, Interface
 from cognite.neat.rules.models._rules import InformationRules
 from cognite.neat.rules.validation import IssueList
 from tests.tests_unit.rules.test_importers.constants import DTDL_IMPORTER_DATA
@@ -20,13 +20,45 @@ class TestDTDLImporter:
         assert issues == expected_issues
 
     def tests_import_invalid_data_model_and_return_errors(self) -> None:
-        expected_issues = []
-        dtdl_importer = DTDLImporter([])
+        expected_issue = validation.DefaultPydanticError(
+            type="ClassNoPropertiesNoParents",
+            loc=(),
+            msg="Classes ['com_example_Thermostat_1'] does not have any properties "
+            "defined and does not have parent class",
+            input=None,
+            ctx={
+                "code": 305,
+                "description": "Class sheet, has defined classes, but no properties "
+                "are defined for them and they do not have parent class",
+                "example": "",
+                "fix": "",
+                "type_": "ClassNoPropertiesNoParents",
+            },
+        )
+        # This becomes a class without any properties, which will raise an error.
+        dtdl_importer = DTDLImporter(
+            [
+                Interface.model_validate(
+                    {
+                        "@context": "dtmi:dtdl:context;3",
+                        "@id": "dtmi:com:example:Thermostat;1",
+                        "displayName": "Thermostat",
+                        "contents": [],
+                    }
+                )
+            ]
+        )
 
         rules, issues = dtdl_importer.to_rules(errors="continue")
 
         assert rules is None
-        assert sorted(issues) == sorted(expected_issues)
+        assert len(issues) == 1
+        actual_issue = issues[0]
+        assert isinstance(actual_issue, validation.DefaultPydanticError)
+        # Setting the input to None, to avoid bloating the test with the large input
+        # Using object.__setattr__ as errors are immutable
+        object.__setattr__(actual_issue, "input", None)
+        assert actual_issue == expected_issue
 
 
 class TestV3Spec:

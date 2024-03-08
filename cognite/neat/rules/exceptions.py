@@ -2027,7 +2027,7 @@ class ClassNoPropertiesNoParents(NeatException):
     type_: str = "ClassNoPropertiesNoParents"
     code: int = 305
     description: str = (
-        "Class sheet, has defined classes, " "but no properties are defined for them and they do not have parent class"
+        "Class sheet, has defined classes, but no properties are defined for them and they do not have parent class"
     )
     example: str = ""
     fix: str = ""

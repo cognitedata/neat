@@ -101,7 +101,7 @@ class InvalidSheetContent(Error, ABC):
 
     @classmethod
     def from_pydantic_errors(
-        cls, errors: list[ErrorDetails], read_info_by_sheet: dict[str, SpreadsheetRead] | None = None
+        cls, errors: list[ErrorDetails], read_info_by_sheet: dict[str, SpreadsheetRead] | None = None, **kwargs: Any
     ) -> "list[Error]":
         output: list[Error] = []
         for error in errors:
@@ -119,13 +119,8 @@ class InvalidSheetContent(Error, ABC):
                         if isinstance(caught_error, InvalidRowSpecification):
                             # Adjusting the row number to the actual row number in the spreadsheet
                             new_row = reader.adjusted_row_number(caught_error.row)
-                            # The error is frozen, so we have to create a new one
-                            dumped = caught_error.dump()
-                            dumped["row"] = new_row
-                            # todo Introduce load method to the error classes
-                            dumped.pop("error", None)
-                            dumped.pop("sheet_name", None)
-                            caught_error = caught_error.__class__(**dumped)
+                            # The error is frozen, so we have to use __setattr__ to change the row number
+                            object.__setattr__(caught_error, "row", new_row)
                         output.append(caught_error)
                     continue
 
