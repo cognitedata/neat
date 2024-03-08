@@ -665,8 +665,14 @@ class TestDMSRules:
 
         assert isinstance(valid_rules, DMSRules)
 
-        sample_expected_properties = {"GeneratingUnit.name", "WindFarm.windTurbines", "Substation.mainTransformer"}
-        missing = sample_expected_properties - {f"{prop.class_}.{prop.property_}" for prop in valid_rules.properties}
+        sample_expected_properties = {
+            "power:GeneratingUnit(version=0.1.0).name",
+            "power:WindFarm(version=0.1.0).windTurbines",
+            "power:Substation(version=0.1.0).mainTransformer",
+        }
+        missing = sample_expected_properties - {
+            f"{prop.class_.versioned_id}.{prop.property_}" for prop in valid_rules.properties
+        }
         assert not missing, f"Missing properties: {missing}"
 
     @pytest.mark.parametrize("raw, expected_rules", list(valid_rules_tests_cases()))

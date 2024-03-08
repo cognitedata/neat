@@ -609,7 +609,9 @@ class _DMSRulesConverter:
                 class_=view.class_,
                 description=view.description,
                 parent=[
-                    ParentClassEntity(prefix=implented_view.prefix, suffix=implented_view.suffix)
+                    ParentClassEntity(
+                        prefix=implented_view.prefix, suffix=implented_view.suffix, version=implented_view.version
+                    )
                     for implented_view in view.implements or []
                 ],
             )
@@ -625,13 +627,14 @@ class _DMSRulesConverter:
                 value_type = ClassEntity(
                     prefix=property_.value_type.prefix,
                     suffix=property_.value_type.suffix,
+                    version=property_.value_type.version,
                 )
             else:
                 raise ValueError(f"Unsupported value type: {property_.value_type.type_}")
 
             properties.append(
                 InformationProperty(
-                    class_=ClassEntity(prefix=property_.view.prefix, suffix=property_.view.suffix),
+                    class_=property_.class_,
                     property_=property_.view_property,
                     value_type=cast(XSDValueType | ClassEntity, value_type),
                     description=property_.description,
