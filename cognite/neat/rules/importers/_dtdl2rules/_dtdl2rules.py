@@ -140,7 +140,7 @@ class _DTDLConverter:
             name=item.display_name,
             description=item.description,
             comment=item.comment,
-            parent=[ParentClassEntity.from_raw(parent.as_class_id()) for parent in item.extends or []],
+            parent=[ParentClassEntity.from_raw(parent.as_class_id()) for parent in item.extends or []] or None,
         )
         self.classes.append(class_)
         for sub_item_or_id in item.contents or []:

@@ -16,8 +16,8 @@ class TestDTDLImporter:
 
         rules, issues = dtdl_importer.to_rules(errors="continue")
 
-        assert isinstance(rules, InformationRules)
         assert issues == expected_issues
+        assert isinstance(rules, InformationRules)
 
     def tests_import_invalid_data_model_and_return_errors(self) -> None:
         expected_issue = validation.DefaultPydanticError(
