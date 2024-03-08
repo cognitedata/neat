@@ -90,7 +90,7 @@ def _handle_issues(
     error_cls: type[Error] = Error,
     warning_cls: type[ValidationWarning] = ValidationWarning,
 ) -> Iterator[_FutureResult]:
-    """This is an internal help method to handle issues and warnings.
+    """This is an internal help function to handle issues and warnings.
 
     Args:
         issues: The issues list to append to.

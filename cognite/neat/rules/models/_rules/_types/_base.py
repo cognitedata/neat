@@ -270,3 +270,9 @@ class ClassEntity(Entity):
 
 class ParentClassEntity(ClassEntity):
     type_: ClassVar[EntityTypes] = EntityTypes.parent_class
+
+    @classmethod
+    def from_raw(cls, value: Any) -> Self:
+        if isinstance(value, ClassEntity):
+            return cls(prefix=value.prefix, suffix=value.suffix, version=value.version)
+        return super().from_raw(value)

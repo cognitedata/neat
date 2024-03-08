@@ -150,21 +150,27 @@ ParentClassType = Annotated[
 ]
 
 ClassType = Annotated[
-    str,
+    ClassEntity,
+    BeforeValidator(lambda value: (ClassType.from_raw(value) if isinstance(value, str) else value)),
     AfterValidator(
         lambda value: (
-            _raise(exceptions.MoreThanOneNonAlphanumericCharacter("class_", value).to_pydantic_custom_error())
-            if re.search(MORE_THAN_ONE_NONE_ALPHANUMERIC_REGEX, value)
+            _raise(exceptions.MoreThanOneNonAlphanumericCharacter("class_", value.suffix).to_pydantic_custom_error())
+            if re.search(MORE_THAN_ONE_NONE_ALPHANUMERIC_REGEX, value.suffix)
             else (
                 value
-                if re.match(CLASS_ID_COMPLIANCE_REGEX, value)
+                if re.match(CLASS_ID_COMPLIANCE_REGEX, value.suffix)
                 else _raise(
                     exceptions.ClassSheetClassIDRegexViolation(
-                        value, CLASS_ID_COMPLIANCE_REGEX
+                        value.suffix, CLASS_ID_COMPLIANCE_REGEX
                     ).to_pydantic_custom_error()
                 )
             )
         )
+    ),
+    PlainSerializer(
+        lambda v: v.versioned_id,
+        return_type=str,
+        when_used="unless-none",
     ),
 ]
 

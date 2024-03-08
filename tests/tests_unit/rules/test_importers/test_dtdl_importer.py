@@ -16,7 +16,7 @@ class TestDTDLImporter:
         expected_issues = IssueList(
             [
                 validation.MissingIdentifier(component_type="Object"),
-                validation.ClassNoPropertiesNoParents(["example_grid_transmission_baseReceiver_1"]),
+                validation.ClassNoPropertiesNoParents(["example_grid_transmission:baseReceiver(version=1)"]),
             ]
         )
         dtdl_importer = DTDLImporter.from_directory(DTDL_IMPORTER_DATA / "energy-grid")
@@ -30,14 +30,17 @@ class TestDTDLImporter:
         expected_issue = validation.DefaultPydanticError(
             type="IncompleteSchema",
             loc=(),
-            msg="",
+            msg="Classes {'com_example:TemperatureController(version=1)'} are not defined in the Class sheet!\n"
+            "For more information visit: https://cognite-neat.readthedocs-hosted.com/en/latest/api/"
+            "exceptions.html#cognite.neat.rules.exceptions.IncompleteSchema",
             input=None,
             ctx={
-                "type_": "DefaultPydanticError",
-                "code": 1,
-                "description": "A warning was raised during validation.",
+                "code": 28,
+                "description": "This exceptions is raised when schema is not complete, meaning defined "
+                "properties are pointing to non-existing classes or value types",
                 "example": "",
-                "fix": "No fix is available.",
+                "fix": "",
+                "type_": "IncompleteSchema",
             },
         )
         dtdl_importer = DTDLImporter(

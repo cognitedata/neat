@@ -254,7 +254,7 @@ class OWLClass(OntologyModel):
             sub_class_of = None
 
         return cls(
-            id_=namespace[definition.class_],
+            id_=namespace[definition.class_.versioned_id],
             label=definition.name,
             comment=definition.description,
             sub_class_of=sub_class_of,
@@ -327,7 +327,7 @@ class OWLProperty(OntologyModel):
                 if definition.value_type.suffix in XSD_VALUE_TYPE_MAPPINGS
                 else namespace[definition.value_type.suffix]
             )
-            owl_property.domain.add(namespace[definition.class_])
+            owl_property.domain.add(namespace[definition.class_.versioned_id])
 
             if definition.name:
                 owl_property.label.add(definition.name)
@@ -498,7 +498,7 @@ class SHACLNodeShape(OntologyModel):
             parent = None
         return cls(
             id_=namespace[f"{class_definition.class_}Shape"],
-            target_class=namespace[class_definition.class_],
+            target_class=namespace[class_definition.class_.versioned_id],
             parent=parent,
             property_shapes=[SHACLPropertyShape.from_property(prop, namespace) for prop in property_definitions],
             namespace=namespace,
@@ -573,7 +573,7 @@ def _to_property_dict(rules: InformationRules) -> dict[str, list[InformationProp
 def _to_class_dict(rules: InformationRules) -> dict[str, InformationClass]:
     class_: dict[str, InformationClass] = {}
     for cls in rules.classes:
-        class_[cls.class_] = cls
+        class_[cls.class_.versioned_id] = cls
     return class_
 
 
@@ -608,7 +608,7 @@ def _get_classes_with_properties(rules: InformationRules) -> dict[str, list[Info
     class_property_pairs: dict[str, list[InformationProperty]] = {}
 
     for property_ in rules.properties:
-        class_ = property_.class_
+        class_ = property_.class_.versioned_id
         if class_ in class_property_pairs:
             class_property_pairs[class_] += [property_]
         else:

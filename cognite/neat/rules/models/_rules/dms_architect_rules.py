@@ -184,7 +184,7 @@ class DMSContainer(SheetEntity):
                 constraints.append(ContainerEntity.from_id(constraint_obj.require))
             # UniquenessConstraint it handled in the properties
         return cls(
-            class_=container.external_id,
+            class_=ClassEntity(prefix=container.space, suffix=container.external_id),
             container=ContainerType(prefix=container.space, suffix=container.external_id),
             description=container.description,
             constraint=constraints or None,
@@ -209,7 +209,7 @@ class DMSView(SheetEntity):
     @classmethod
     def from_view(cls, view: dm.ViewApply) -> "DMSView":
         return cls(
-            class_=view.external_id,
+            class_=ClassEntity(prefix=view.space, suffix=view.external_id),
             view=ViewType(prefix=view.space, suffix=view.external_id, version=view.version),
             description=view.description,
             implements=[
@@ -590,7 +590,7 @@ class _DMSRulesConverter:
 
         classes: list[InformationClass] = [
             InformationClass(
-                class_=view.view.suffix,
+                class_=view.class_,
                 description=view.description,
                 parent=[
                     ParentClassEntity(prefix=implented_view.prefix, suffix=implented_view.suffix)
@@ -615,7 +615,7 @@ class _DMSRulesConverter:
 
             properties.append(
                 InformationProperty(
-                    class_=cast(ViewEntity, property_.view).suffix,
+                    class_=ClassEntity(prefix=property_.view.prefix, suffix=property_.view.suffix),
                     property_=property_.view_property,
                     value_type=cast(XSDValueType | ClassEntity, value_type),
                     description=property_.description,

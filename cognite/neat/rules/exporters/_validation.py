@@ -26,10 +26,10 @@ def are_entity_names_dms_compliant(
     flag: bool = True
     with warnings.catch_warnings(record=True) as validation_warnings:
         for class_ in rules.classes:
-            if not re.match(VIEW_ID_COMPLIANCE_REGEX, class_.class_):
+            if not re.match(VIEW_ID_COMPLIANCE_REGEX, class_.class_.suffix):
                 warnings.warn(
                     exceptions.EntityIDNotDMSCompliant(
-                        "Class", class_.class_, f"[Classes/Class/{class_.class_}]"
+                        "Class", class_.class_.versioned_id, f"[Classes/Class/{class_.class_.versioned_id}]"
                     ).message,
                     category=exceptions.EntityIDNotDMSCompliant,
                     stacklevel=2,
@@ -38,9 +38,11 @@ def are_entity_names_dms_compliant(
 
         for row, property_ in enumerate(rules.properties):
             # check class id which would resolve as view/container id
-            if not re.match(VIEW_ID_COMPLIANCE_REGEX, property_.class_):
+            if not re.match(VIEW_ID_COMPLIANCE_REGEX, property_.class_.suffix):
                 warnings.warn(
-                    exceptions.EntityIDNotDMSCompliant("Class", property_.class_, f"[Properties/Class/{row}]").message,
+                    exceptions.EntityIDNotDMSCompliant(
+                        "Class", property_.class_.versioned_id, f"[Properties/Class/{row}]"
+                    ).message,
                     category=exceptions.EntityIDNotDMSCompliant,
                     stacklevel=2,
                 )
@@ -79,17 +81,17 @@ def are_properties_redefined(rules: InformationRules, return_report: bool = Fals
         analyzed_properties: dict[str, list[str]] = {}
         for property_ in rules.properties:
             if property_.property_ not in analyzed_properties:
-                analyzed_properties[property_.property_] = [property_.class_]
+                analyzed_properties[property_.property_] = [property_.class_.versioned_id]
             elif property_.class_ in analyzed_properties[property_.property_]:
                 flag = True
                 warnings.warn(
-                    exceptions.PropertyRedefined(property_.property_, property_.class_).message,
+                    exceptions.PropertyRedefined(property_.property_, property_.class_.versioned_id).message,
                     category=exceptions.EntityIDNotDMSCompliant,
                     stacklevel=2,
                 )
 
             else:
-                analyzed_properties[property_.property_].append(property_.class_)
+                analyzed_properties[property_.property_].append(property_.class_.versioned_id)
 
     if return_report:
         return flag, wrangle_warnings(validation_warnings)

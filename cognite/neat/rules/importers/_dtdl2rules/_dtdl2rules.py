@@ -158,16 +158,16 @@ class _DTDLConverter:
                 self.issues.append(
                     validation.UnknownProperty(
                         component_type=item.type,
-                        property_name=sub_item_or_id.as_class_id(),
+                        property_name=sub_item_or_id.path[-1],
                         instance_name=item.display_name,
                         instance_id=item.id_.model_dump(),
                     )
                 )
             elif isinstance(sub_item_or_id, DTMI):
                 sub_item = self._item_by_id[sub_item_or_id]
-                self.convert_item(sub_item, class_.class_)
+                self.convert_item(sub_item, class_.class_.versioned_id)
             else:
-                self.convert_item(sub_item_or_id, class_.class_)
+                self.convert_item(sub_item_or_id, class_.class_.versioned_id)
         # interface.schema objects are handled in the convert method
 
     def convert_property(
@@ -187,7 +187,7 @@ class _DTDLConverter:
             return None
 
         prop = InformationProperty(
-            class_=parent,
+            class_=ClassEntity.from_raw(parent),
             property_=item.name,
             name=item.display_name,
             description=item.description,
@@ -210,7 +210,7 @@ class _DTDLConverter:
             return None
         if item.target is not None:
             prop = InformationProperty(
-                class_=parent,
+                class_=ClassEntity.from_raw(parent),
                 property_=item.name,
                 name=item.display_name,
                 description=item.description,

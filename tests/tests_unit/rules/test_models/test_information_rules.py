@@ -117,7 +117,7 @@ def incomplete_rules_case():
             ],
         },
         (
-            "Classes {'GeneratingUnit2'} are not defined in the Class sheet!"
+            "Classes {'power:GeneratingUnit2'} are not defined in the Class sheet!"
             "\nFor more information visit: "
             "https://cognite-neat.readthedocs-hosted.com/en/latest/api/exceptions.html#cognite.neat.rules.exceptions.IncompleteSchema"
         ),
@@ -132,9 +132,9 @@ class TestInformationRules:
         assert isinstance(valid_rules, InformationRules)
 
         sample_expected_properties = {
-            "WindTurbine.manufacturer",
-            "Substation.secondaryPowerLine",
-            "WindFarm.exportCable",
+            "power:WindTurbine.manufacturer",
+            "power:Substation.secondaryPowerLine",
+            "power:WindFarm.exportCable",
         }
         missing = sample_expected_properties - {f"{prop.class_}.{prop.property_}" for prop in valid_rules.properties}
         assert not missing, f"Missing properties: {missing}"

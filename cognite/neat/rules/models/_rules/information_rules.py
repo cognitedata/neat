@@ -216,6 +216,8 @@ class InformationRules(RuleModel):
         for property_ in self.properties:
             if property_.value_type.prefix is Undefined:
                 property_.value_type.prefix = self.metadata.prefix
+            if property_.class_.prefix is Undefined:
+                property_.class_.prefix = self.metadata.prefix
 
         # update parent classes
         for class_ in self.classes:
@@ -223,6 +225,8 @@ class InformationRules(RuleModel):
                 for parent in cast(list[ParentClassEntity], class_.parent):
                     if parent.prefix is Undefined:
                         parent.prefix = self.metadata.prefix
+            if class_.class_.prefix is Undefined:
+                class_.class_.prefix = self.metadata.prefix
 
         return self
 
@@ -231,10 +235,12 @@ class InformationRules(RuleModel):
         # update expected_value_types
 
         if self.metadata.schema_ == SchemaCompleteness.complete:
-            defined_classes = {class_.class_ for class_ in self.classes}
-            referred_classes = {property_.class_ for property_ in self.properties}
+            defined_classes = {class_.class_.versioned_id for class_ in self.classes}
+            referred_classes = {property_.class_.versioned_id for property_ in self.properties} | {
+                parent.versioned_id for class_ in self.classes for parent in class_.parent or []
+            }
             referred_types = {
-                property_.value_type.suffix
+                property_.value_type.versioned_id
                 for property_ in self.properties
                 if property_.type_ == EntityTypes.object_property
             }
@@ -253,7 +259,10 @@ class InformationRules(RuleModel):
         has_parent_classes = {class_.class_ for class_ in self.classes if class_.parent}
         missing_classes = defined_classes.difference(referred_classes) - has_parent_classes
         if missing_classes:
-            warnings.warn(validation.ClassNoPropertiesNoParents(list(missing_classes)), stacklevel=2)
+            warnings.warn(
+                validation.ClassNoPropertiesNoParents([missing.versioned_id for missing in missing_classes]),
+                stacklevel=2,
+            )
         return self
 
     def as_domain_rules(self) -> DomainRules:
@@ -290,12 +299,12 @@ class _InformationRulesConverter:
 
         properties_by_class: dict[str, list[DMSProperty]] = defaultdict(list)
         for prop in self.information.properties:
-            properties_by_class[prop.class_].append(self._as_dms_property(prop))
+            properties_by_class[prop.class_.versioned_id].append(self._as_dms_property(prop))
 
         views: list[DMSView] = [
             DMSView(
                 class_=cls_.class_,
-                view=ViewEntity(prefix=info_metadata.prefix, suffix=cls_.class_),
+                view=ViewEntity(prefix=cls_.class_.prefix, suffix=cls_.class_.suffix, version=cls_.class_.version),
                 description=cls_.description,
                 implements=[
                     ViewEntity(prefix=parent.prefix, suffix=parent.suffix, version=parent.version)
@@ -308,17 +317,17 @@ class _InformationRulesConverter:
         containers: list[DMSContainer] = []
         classes_without_properties: set[str] = set()
         for class_ in self.information.classes:
-            properties: list[DMSProperty] = properties_by_class.get(class_.class_, [])
+            properties: list[DMSProperty] = properties_by_class.get(class_.class_.versioned_id, [])
             if not properties or all(
                 isinstance(prop.value_type, ViewEntity) and prop.relation != "direct" for prop in properties
             ):
-                classes_without_properties.add(class_.class_)
+                classes_without_properties.add(class_.class_.versioned_id)
                 continue
 
             containers.append(
                 DMSContainer(
                     class_=class_.class_,
-                    container=ContainerEntity(prefix=info_metadata.prefix, suffix=class_.class_),
+                    container=ContainerEntity(prefix=class_.class_.prefix, suffix=class_.class_.suffix),
                     description=class_.description,
                     constraint=[
                         ContainerEntity(
@@ -370,26 +379,29 @@ class _InformationRulesConverter:
             nullable = None
         elif relation == "direct":
             nullable = True
-            container = ContainerEntity.from_raw(prop.class_)
+            container = ContainerEntity(prefix=prop.class_.prefix, suffix=prop.class_.suffix)
             container_property = prop.property_
         else:
-            container = ContainerEntity.from_raw(prop.class_)
+            container = ContainerEntity(prefix=prop.class_.prefix, suffix=prop.class_.suffix)
             container_property = prop.property_
 
-        return DMSProperty(
-            class_=prop.class_,
-            property_=prop.property_,
-            value_type=value_type,
-            nullable=nullable,
-            is_list=is_list,
-            relation=relation,
-            default=prop.default,
-            source=prop.source,
-            container=container,
-            container_property=container_property,
-            view=ViewEntity.from_raw(prop.class_),
-            view_property=prop.property_,
-        )
+        try:
+            return DMSProperty(
+                class_=prop.class_,
+                property_=prop.property_,
+                value_type=value_type,
+                nullable=nullable,
+                is_list=is_list,
+                relation=relation,
+                default=prop.default,
+                source=prop.source,
+                container=container,
+                container_property=container_property,
+                view=ViewEntity(prefix=prop.class_.prefix, suffix=prop.class_.suffix, version=prop.class_.version),
+                view_property=prop.property_,
+            )
+        except ValueError:
+            raise
 
     @classmethod
     def _to_space(cls, prefix: str) -> str:
