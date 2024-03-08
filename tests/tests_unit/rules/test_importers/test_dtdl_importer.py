@@ -4,6 +4,7 @@ from cognite.neat.rules import validation
 from cognite.neat.rules.importers import DTDLImporter
 from cognite.neat.rules.importers._dtdl2rules._v3_spec import DTMI, Interface
 from cognite.neat.rules.models._rules import InformationRules
+from cognite.neat.rules.models._rules.base import SchemaCompleteness
 from cognite.neat.rules.validation import IssueList
 from tests.tests_unit.rules.test_importers.constants import DTDL_IMPORTER_DATA
 
@@ -11,7 +12,13 @@ from tests.tests_unit.rules.test_importers.constants import DTDL_IMPORTER_DATA
 class TestDTDLImporter:
     def test_import_energy_grid_example(self) -> None:
         # In the example data, there is a property with an Object that does not have an identifier.
-        expected_issues = IssueList([validation.MissingIdentifier(component_type="Object")])
+        # In addition, there is a class without properties
+        expected_issues = IssueList(
+            [
+                validation.MissingIdentifier(component_type="Object"),
+                validation.ClassNoPropertiesNoParents(["example_grid_transmission_baseReceiver_1"]),
+            ]
+        )
         dtdl_importer = DTDLImporter.from_directory(DTDL_IMPORTER_DATA / "energy-grid")
 
         rules, issues = dtdl_importer.to_rules(errors="continue")
@@ -21,21 +28,18 @@ class TestDTDLImporter:
 
     def tests_import_invalid_data_model_and_return_errors(self) -> None:
         expected_issue = validation.DefaultPydanticError(
-            type="ClassNoPropertiesNoParents",
+            type="IncompleteSchema",
             loc=(),
-            msg="Classes ['com_example_Thermostat_1'] does not have any properties "
-            "defined and does not have parent class",
+            msg="",
             input=None,
             ctx={
-                "code": 305,
-                "description": "Class sheet, has defined classes, but no properties "
-                "are defined for them and they do not have parent class",
+                "type_": "DefaultPydanticError",
+                "code": 1,
+                "description": "A warning was raised during validation.",
                 "example": "",
-                "fix": "",
-                "type_": "ClassNoPropertiesNoParents",
+                "fix": "No fix is available.",
             },
         )
-        # This becomes a class without any properties, which will raise an error.
         dtdl_importer = DTDLImporter(
             [
                 Interface.model_validate(
@@ -43,10 +47,12 @@ class TestDTDLImporter:
                         "@context": "dtmi:dtdl:context;3",
                         "@id": "dtmi:com:example:Thermostat;1",
                         "displayName": "Thermostat",
+                        "extends": ["dtmi:com:example:TemperatureController;1"],
                         "contents": [],
                     }
                 )
-            ]
+            ],
+            schema=SchemaCompleteness.complete,
         )
 
         rules, issues = dtdl_importer.to_rules(errors="continue")

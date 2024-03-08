@@ -4,11 +4,9 @@ from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import Literal, overload
 
-from pydantic import ValidationError
-
 from cognite.neat.rules import validation
 from cognite.neat.rules._shared import Rules
-from cognite.neat.rules.importers._base import BaseImporter
+from cognite.neat.rules.importers._base import BaseImporter, _handle_issues
 from cognite.neat.rules.models._rules import InformationRules, RoleTypes
 from cognite.neat.rules.models._rules._types import (
     XSD_VALUE_TYPE_MAPPINGS,
@@ -16,7 +14,7 @@ from cognite.neat.rules.models._rules._types import (
     ParentClassEntity,
     XSDValueType,
 )
-from cognite.neat.rules.models._rules.base import SheetList
+from cognite.neat.rules.models._rules.base import SchemaCompleteness, SheetList
 from cognite.neat.rules.models._rules.information_rules import InformationClass, InformationProperty
 from cognite.neat.rules.validation import IssueList
 
@@ -30,11 +28,22 @@ class DTDLImporter(BaseImporter):
     The DTDL v3 standard is supported and defined at
     https://github.com/Azure/opendigitaltwins-dtdl/blob/master/DTDL/v3/DTDL.v3.md
 
+    Args:
+        items (Sequence[DTDLBase]): A sequence of DTDLBase objects.
+        title (str, optional): Title of the data model. Defaults to None.
+        schema (SchemaCompleteness, optional): Schema completeness. Defaults to SchemaCompleteness.partial.
+
     """
 
-    def __init__(self, items: Sequence[DTDLBase], title: str | None = None) -> None:
+    def __init__(
+        self,
+        items: Sequence[DTDLBase],
+        title: str | None = None,
+        schema: SchemaCompleteness = SchemaCompleteness.partial,
+    ) -> None:
         self._items = items
         self.title = title
+        self._schema_completness = schema
 
     @classmethod
     def from_directory(cls, directory: Path) -> "DTDLImporter":
@@ -75,18 +84,19 @@ class DTDLImporter(BaseImporter):
 
         container.convert(self._items)
 
-        try:
+        metadata = self._default_metadata()
+        metadata["schema"] = self._schema_completness.value
+        with _handle_issues(container.issues) as future:
             rules = InformationRules(
-                metadata=self._default_metadata(),
+                metadata=metadata,
                 properties=SheetList[InformationProperty](data=container.properties),
                 classes=SheetList[InformationClass](data=container.classes),
             )
-        except ValidationError as e:
-            container.issues.extend(validation.Error.from_pydantic_errors(e.errors()))
+        if future.result == "failure":
             if errors == "continue":
                 return None, container.issues
             else:
-                raise container.issues.as_errors() from e
+                raise container.issues.as_errors()
 
         return self._to_output(rules, container.issues, errors, role)
 

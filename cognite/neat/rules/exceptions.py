@@ -2021,26 +2021,6 @@ class ClassesSheetMissingMandatoryColumns(NeatException):
         super().__init__(self.message)
 
 
-class ClassNoPropertiesNoParents(NeatException):
-    """ """
-
-    type_: str = "ClassNoPropertiesNoParents"
-    code: int = 305
-    description: str = (
-        "Class sheet, has defined classes, but no properties are defined for them and they do not have parent class"
-    )
-    example: str = ""
-    fix: str = ""
-
-    def __init__(self, classes: list, verbose: bool = False):
-        self.message = f"Classes {classes} does not have any properties defined and does not have parent class"
-        if verbose:
-            self.message += f"\nDescription: {self.description}"
-            self.message += f"\nExample: {self.example}"
-            self.message += f"\nFix: {self.fix}"
-        super().__init__(self.message)
-
-
 class PropertiesSheetMissingMandatoryColumns(NeatException):
     """Properties sheet, which is a mandatory part of Transformation Rules Excel file, is
     missing mandatory columns at row 2

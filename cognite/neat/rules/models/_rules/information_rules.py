@@ -1,5 +1,6 @@
 import re
 import sys
+import warnings
 from collections import defaultdict
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
@@ -8,7 +9,7 @@ from pydantic import Field, model_validator
 from rdflib import Namespace
 
 from cognite.neat.constants import PREFIXES
-from cognite.neat.rules import exceptions
+from cognite.neat.rules import exceptions, validation
 from cognite.neat.rules.models.rdfpath import (
     AllReferences,
     Hop,
@@ -252,7 +253,7 @@ class InformationRules(RuleModel):
         has_parent_classes = {class_.class_ for class_ in self.classes if class_.parent}
         missing_classes = defined_classes.difference(referred_classes) - has_parent_classes
         if missing_classes:
-            raise exceptions.ClassNoPropertiesNoParents(list(missing_classes)).to_pydantic_custom_error()
+            warnings.warn(validation.ClassNoPropertiesNoParents(list(missing_classes)), stacklevel=2)
         return self
 
     def as_domain_rules(self) -> DomainRules:
