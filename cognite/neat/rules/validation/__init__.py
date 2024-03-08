@@ -22,7 +22,7 @@ from ._dms_schema_errors import (
     MissingView,
 )
 from ._dms_sheets import ReferencedNonExistingView, ReferenceNonExistingContainer
-from ._import_errors import InvalidComponent, MissingParentDefinition
+from ._import_errors import InvalidComponent, MissingIdentifier, MissingParentDefinition, UnsupportedPropertyType
 from ._importer_warnings import UnknownComponent, UnknownProperty
 from ._spreadsheet import (
     InvalidClassSpecification,
@@ -44,9 +44,11 @@ __all__ = [
     "UnknownProperty",
     "InvalidComponent",
     "MissingParentDefinition",
+    "MissingIdentifier",
     "IssueList",
     "Error",
     "ValidationIssue",
+    "UnsupportedPropertyType",
     "ValidationWarning",
     "SpreadsheetNotFound",
     "MetadataSheetMissingOrFailed",

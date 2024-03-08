@@ -14,12 +14,13 @@ from cognite.neat.rules.models._rules._types import (
     XSD_VALUE_TYPE_MAPPINGS,
     ClassEntity,
     ParentClassEntity,
+    XSDValueType,
 )
 from cognite.neat.rules.models._rules.base import SheetList
 from cognite.neat.rules.models._rules.information_rules import InformationClass, InformationProperty
 from cognite.neat.rules.validation import IssueList
 
-from ._v3_spec import DTDL_CLS_BY_TYPE, DTMI, DTDLBase, Enum, Interface, Property, Relationship
+from ._v3_spec import DTDL_CLS_BY_TYPE, DTMI, DTDLBase, Enum, Interface, Object, Property, Relationship, Schema
 
 
 class DTDLImporter(BaseImporter):
@@ -81,7 +82,7 @@ class DTDLImporter(BaseImporter):
                 classes=SheetList[InformationClass](data=container.classes),
             )
         except ValidationError as e:
-            raise NotImplementedError()
+            raise NotImplementedError() from e
             if errors == "continue":
                 return None, container.issues
             else:
@@ -101,10 +102,21 @@ class _DTDLConverter:
             Interface: self.convert_interface,  # type: ignore[dict-item]
             Property: self.convert_property,  # type: ignore[dict-item]
             Relationship: self.convert_relationship,  # type: ignore[dict-item]
+            Object: self.convert_object,  # type: ignore[dict-item]
         }
 
     def convert(self, items: Sequence[DTDLBase]) -> None:
         self._item_by_id.update({item.id_: item for item in items if item.id_ is not None})
+        # Update schema objects which are reusable
+        self._item_by_id.update(
+            {
+                schema.id_: schema
+                for item in items
+                if isinstance(item, Interface)
+                for schema in item.schemas or []
+                if isinstance(schema.id_, DTMI) and isinstance(schema, DTDLBase)
+            }
+        )
 
         for item in items:
             self.convert_item(item)
@@ -126,33 +138,31 @@ class _DTDLConverter:
         class_ = InformationClass(
             class_=item.id_.as_class_id(),
             name=item.display_name,
+            description=item.description,
+            comment=item.comment,
             parent=[ParentClassEntity.from_raw(parent.as_class_id()) for parent in item.extends or []],
         )
         self.classes.append(class_)
-        for subitem in item.contents or []:
-            subitem_ = self._item_by_id.get(subitem) if isinstance(subitem, DTMI) else subitem
-            if subitem_ is None:
+        for sub_item_or_id in item.contents or []:
+            if isinstance(sub_item_or_id, DTMI) and sub_item_or_id not in self._item_by_id:
                 self.issues.append(
                     validation.UnknownProperty(
-                        component_type=item.type if isinstance(item, DTDLBase) else item,
-                        property_name=subitem.type if isinstance(subitem, DTDLBase) else str(subitem),
+                        component_type=item.type,
+                        property_name=sub_item_or_id.as_class_id(),
                         instance_name=item.display_name,
-                        instance_id=item.id_.model_dump() if item.id_ else None,
+                        instance_id=item.id_.model_dump(),
                     )
                 )
-                continue
-            self.convert_item(subitem_, class_.class_)
-        for subitem in item.schemas or []:
-            self.issues.append(
-                validation.UnknownProperty(
-                    component_type=item.type,
-                    property_name=subitem.type,
-                    instance_name=item.display_name,
-                    instance_id=item.id_.model_dump() if item.id_ else None,
-                )
-            )
+            elif isinstance(sub_item_or_id, DTMI):
+                sub_item = self._item_by_id[sub_item_or_id]
+                self.convert_item(sub_item, class_.class_)
+            else:
+                self.convert_item(sub_item_or_id, class_.class_)
+        # interface.schema objects are handled in the convert method
 
-    def convert_property(self, item: Property, parent: str | None) -> None:
+    def convert_property(
+        self, item: Property, parent: str | None, min_count: int | None = 0, max_count: int | None = 1
+    ) -> None:
         if parent is None:
             self.issues.append(
                 validation.MissingParentDefinition(
@@ -162,33 +172,21 @@ class _DTDLConverter:
                 )
             )
             return None
-        input_type = self._item_by_id.get(item.schema_) if isinstance(item.schema_, DTMI) else item.schema_
-        if isinstance(input_type, Enum):
-            value_type = "string"
-        elif isinstance(input_type, str):
-            value_type = input_type
-        #     for field_ in input_type.fields or []:
-        #         ...
-        else:
-            value_type = None
-        if value_type is not None:
-            prop = InformationProperty(
-                class_=parent,
-                name=item.display_name,
-                description=item.description,
-                property_=item.name,
-                value_type=XSD_VALUE_TYPE_MAPPINGS[value_type],
-            )
-            self.properties.append(prop)
-        else:
-            self.issues.append(
-                validation.UnknownProperty(
-                    component_type=item.schema_.type if isinstance(item.schema_, DTDLBase) else str(item.schema_),
-                    property_name="schema",
-                    instance_name=item.display_name,
-                    instance_id=item.id_.model_dump() if item.id_ else None,
-                )
-            )
+        value_type = self.schema_to_value_type(item.schema_, item)
+        if value_type is None:
+            return None
+
+        prop = InformationProperty(
+            class_=parent,
+            property_=item.name,
+            name=item.display_name,
+            description=item.description,
+            comment=item.comment,
+            value_type=value_type,
+            min_count=min_count,
+            max_count=max_count,
+        )
+        self.properties.append(prop)
 
     def convert_relationship(self, item: Relationship, parent: str | None) -> None:
         if parent is None:
@@ -203,14 +201,89 @@ class _DTDLConverter:
         if item.target is not None:
             prop = InformationProperty(
                 class_=parent,
+                property_=item.name,
                 name=item.display_name,
                 description=item.description,
                 min_count=item.min_multiplicity,
                 max_count=item.max_multiplicity,
-                property_=item.name,
+                comment=item.comment,
                 value_type=ClassEntity.from_raw(item.target.as_class_id()),
             )
             self.properties.append(prop)
         elif item.properties is not None:
             for prop_ in item.properties or []:
-                self.convert_property(prop_, parent)
+                self.convert_property(prop_, parent, item.min_multiplicity, item.max_multiplicity)
+
+    def convert_object(self, item: Object, _: str | None) -> None:
+        if item.id_ is None:
+            self.issues.append(
+                validation.MissingIdentifier(
+                    component_type=item.type,
+                    instance_name=item.display_name,
+                )
+            )
+            return None
+
+        class_ = InformationClass(
+            class_=item.id_.as_class_id(),
+            name=item.display_name,
+            description=item.description,
+            comment=item.comment,
+        )
+        self.classes.append(class_)
+
+        for field_ in item.fields or []:
+            value_type = self.schema_to_value_type(field_.schema_, item)
+            if value_type is None:
+                continue
+            prop = InformationProperty(
+                class_=class_.class_,
+                name=field_.name,
+                description=field_.description,
+                property_=field_.name,
+                value_type=value_type,
+                min_count=0,
+                max_count=1,
+            )
+            self.properties.append(prop)
+
+    def schema_to_value_type(self, schema: Schema | DTMI | None, item: DTDLBase) -> XSDValueType | ClassEntity | None:
+        input_type = self._item_by_id.get(schema) if isinstance(schema, DTMI) else schema
+
+        if isinstance(input_type, Enum):
+            return XSD_VALUE_TYPE_MAPPINGS["string"]
+        elif isinstance(input_type, str) and input_type in XSD_VALUE_TYPE_MAPPINGS:
+            return XSD_VALUE_TYPE_MAPPINGS[input_type]
+        elif isinstance(input_type, str):
+            self.issues.append(
+                validation.UnsupportedPropertyType(
+                    component_type=item.type,
+                    property_type=input_type,
+                    property_name="schema",
+                    instance_name=item.display_name,
+                    instance_id=item.id_.model_dump() if item.id_ else None,
+                )
+            )
+            return None
+        elif isinstance(input_type, Object):
+            if input_type.id_ is None:
+                self.issues.append(
+                    validation.MissingIdentifier(
+                        component_type=input_type.type,
+                        instance_name=input_type.display_name,
+                    )
+                )
+                return XSD_VALUE_TYPE_MAPPINGS["json"]
+            else:
+                self.convert_object(input_type, None)
+                return ClassEntity.from_raw(input_type.id_.as_class_id())
+        else:
+            self.issues.append(
+                validation.UnknownProperty(
+                    component_type=item.type,
+                    property_name="schema",
+                    instance_name=item.display_name,
+                    instance_id=item.id_.model_dump() if item.id_ else None,
+                )
+            )
+            return None
