@@ -82,11 +82,11 @@ class DMSMetadata(BaseMetadata):
     def as_enum(cls, value: str) -> SchemaCompleteness:
         return SchemaCompleteness(value)
 
-    @field_validator("default_view_version", mode="before")
-    def set_default_view_version_if_missing(cls, value, info):
-        if value is None:
-            return info.data["version"]
-        return value
+    @model_validator(mode="before")
+    def set_default_view_version_if_missing(cls, values):
+        if "default_view_version" not in values:
+            values["default_view_version"] = values["version"]
+        return values
 
     @field_validator("description", mode="before")
     def nan_as_none(cls, value):
@@ -184,7 +184,7 @@ class DMSContainer(SheetEntity):
                 constraints.append(ContainerEntity.from_id(constraint_obj.require))
             # UniquenessConstraint it handled in the properties
         return cls(
-            class_=container.external_id,
+            class_=ClassEntity(prefix=container.space, suffix=container.external_id),
             container=ContainerType(prefix=container.space, suffix=container.external_id),
             description=container.description,
             constraint=constraints or None,
@@ -209,7 +209,7 @@ class DMSView(SheetEntity):
     @classmethod
     def from_view(cls, view: dm.ViewApply) -> "DMSView":
         return cls(
-            class_=view.external_id,
+            class_=ClassEntity(prefix=view.space, suffix=view.external_id),
             view=ViewType(prefix=view.space, suffix=view.external_id, version=view.version),
             description=view.description,
             implements=[
@@ -231,8 +231,15 @@ class DMSRules(BaseRules):
         default_space = self.metadata.space
         default_view_version = self.metadata.default_view_version
         for entity in self.properties:
+            if entity.class_.prefix is Undefined or entity.class_.version is None:
+                entity.class_ = ClassEntity(
+                    prefix=default_space if entity.class_.prefix is Undefined else entity.class_.prefix,
+                    suffix=entity.class_.suffix,
+                    version=default_view_version if entity.class_.version is None else entity.class_.version,
+                )
             if entity.container and entity.container.space is Undefined:
                 entity.container = ContainerEntity(prefix=default_space, suffix=entity.container.external_id)
+
             if entity.view and (entity.view.space is Undefined or entity.view.version is None):
                 entity.view = ViewEntity(
                     prefix=default_space if entity.view.space is Undefined else entity.view.space,
@@ -249,6 +256,8 @@ class DMSRules(BaseRules):
                 )
 
         for container in self.containers or []:
+            if container.class_.prefix is Undefined:
+                container.class_ = ClassEntity(prefix=default_space, suffix=container.class_.suffix)
             if container.container.space is Undefined:
                 container.container = ContainerEntity(prefix=default_space, suffix=container.container.external_id)
             container.constraint = [
@@ -261,6 +270,13 @@ class DMSRules(BaseRules):
             ] or None
 
         for view in self.views or []:
+            if view.class_.prefix is Undefined or view.class_.version is None:
+                view.class_ = ClassEntity(
+                    prefix=default_space if view.class_.prefix is Undefined else view.class_.prefix,
+                    suffix=view.class_.suffix,
+                    version=default_view_version if view.class_.version is None else view.class_.version,
+                )
+
             if view.view.space is Undefined or view.view.version is None:
                 view.view = ViewEntity(
                     prefix=default_space if view.view.space is Undefined else view.view.space,
@@ -590,10 +606,12 @@ class _DMSRulesConverter:
 
         classes: list[InformationClass] = [
             InformationClass(
-                class_=view.view.suffix,
+                class_=view.class_,
                 description=view.description,
                 parent=[
-                    ParentClassEntity(prefix=implented_view.prefix, suffix=implented_view.suffix)
+                    ParentClassEntity(
+                        prefix=implented_view.prefix, suffix=implented_view.suffix, version=implented_view.version
+                    )
                     for implented_view in view.implements or []
                 ],
             )
@@ -609,13 +627,14 @@ class _DMSRulesConverter:
                 value_type = ClassEntity(
                     prefix=property_.value_type.prefix,
                     suffix=property_.value_type.suffix,
+                    version=property_.value_type.version,
                 )
             else:
                 raise ValueError(f"Unsupported value type: {property_.value_type.type_}")
 
             properties.append(
                 InformationProperty(
-                    class_=cast(ViewEntity, property_.view).suffix,
+                    class_=property_.class_,
                     property_=property_.view_property,
                     value_type=cast(XSDValueType | ClassEntity, value_type),
                     description=property_.description,

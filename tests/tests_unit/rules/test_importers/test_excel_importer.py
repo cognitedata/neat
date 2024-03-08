@@ -9,7 +9,7 @@ from cognite.neat.rules.importers import ExcelImporter
 from cognite.neat.rules.models._rules import DMSRules
 from cognite.neat.rules.validation import IssueList
 from tests.config import DOC_KNOWLEDGE_ACQUISITION_TUTORIAL
-from tests.tests_unit.rules.test_importers.constants import DATA_DIR
+from tests.tests_unit.rules.test_importers.constants import EXCEL_IMPORTER_DATA
 
 
 def valid_rules_filepaths():
@@ -25,7 +25,7 @@ def invalid_rules_filepaths():
     major, minor, *_ = VERSION.split(".")
 
     yield pytest.param(
-        DATA_DIR / "invalid_property_dms_rules.xlsx",
+        EXCEL_IMPORTER_DATA / "invalid_property_dms_rules.xlsx",
         IssueList(
             [
                 validation.InvalidPropertySpecification(
@@ -42,7 +42,7 @@ def invalid_rules_filepaths():
     )
 
     yield pytest.param(
-        DATA_DIR / "inconsistent_container_dms_rules.xlsx",
+        EXCEL_IMPORTER_DATA / "inconsistent_container_dms_rules.xlsx",
         IssueList(
             [
                 validation.MultiValueTypeDefinitions(
@@ -56,7 +56,7 @@ def invalid_rules_filepaths():
         id="Inconsistent container",
     )
     yield pytest.param(
-        DATA_DIR / "missing_view_container_dms_rules.xlsx",
+        EXCEL_IMPORTER_DATA / "missing_view_container_dms_rules.xlsx",
         IssueList(
             [
                 validation.ReferencedNonExistingView(

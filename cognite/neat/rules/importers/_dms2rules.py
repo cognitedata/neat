@@ -7,7 +7,7 @@ from cognite.client.data_classes.data_modeling.containers import BTreeIndex, Inv
 from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 
 from cognite.neat.rules.models._rules import DMSRules, DMSSchema, RoleTypes
-from cognite.neat.rules.models._rules._types import ContainerEntity, DMSValueType, ViewEntity
+from cognite.neat.rules.models._rules._types import ClassEntity, ContainerEntity, DMSValueType, ViewEntity
 from cognite.neat.rules.models._rules.dms_architect_rules import (
     DMSContainer,
     DMSMetadata,
@@ -87,7 +87,7 @@ class DMSImporter(BaseImporter):
                         else:
                             direct_value_type = ViewEntity.from_id(prop.source)
                         dms_property = DMSProperty(
-                            class_=view.external_id,
+                            class_=ClassEntity(prefix=view.space, suffix=view.external_id, version=view.version),
                             property_=prop_id,
                             description=prop.description,
                             value_type=cast(ViewEntity | DMSValueType, direct_value_type),
@@ -104,7 +104,7 @@ class DMSImporter(BaseImporter):
                         )
                     else:
                         dms_property = DMSProperty(
-                            class_=view.external_id,
+                            class_=ClassEntity(prefix=view.space, suffix=view.external_id, version=view.version),
                             property_=prop_id,
                             description=prop.description,
                             value_type=cast(ViewEntity | DMSValueType, container_prop.type._type),
@@ -125,7 +125,7 @@ class DMSImporter(BaseImporter):
                 elif isinstance(prop, dm.MultiEdgeConnectionApply):
                     view_entity = ViewEntity.from_id(prop.source)
                     dms_property = DMSProperty(
-                        class_=view.external_id,
+                        class_=ClassEntity(prefix=view.space, suffix=view.external_id, version=view.version),
                         property_=prop_id,
                         relation="multiedge",
                         description=prop.description,

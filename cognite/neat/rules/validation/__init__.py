@@ -1,4 +1,12 @@
-from ._base import Error, IssueList, MultiValueError, ValidationIssue, ValidationWarning
+from ._base import (
+    DefaultPydanticError,
+    DefaultWarning,
+    Error,
+    IssueList,
+    MultiValueError,
+    ValidationIssue,
+    ValidationWarning,
+)
 from ._container_inconsistency import (
     InconsistentContainerDefinition,
     MultiDefaultDefinitions,
@@ -22,6 +30,9 @@ from ._dms_schema_errors import (
     MissingView,
 )
 from ._dms_sheets import ReferencedNonExistingView, ReferenceNonExistingContainer
+from ._import_errors import InvalidComponent, MissingIdentifier, MissingParentDefinition, UnsupportedPropertyType
+from ._importer_warnings import UnknownComponent, UnknownProperty
+from ._schema_inconsistency_warning import ClassNoPropertiesNoParents
 from ._spreadsheet import (
     InvalidClassSpecification,
     InvalidContainerSpecification,
@@ -37,10 +48,20 @@ from ._spreadsheet import (
 )
 
 __all__ = [
+    "DefaultPydanticError",
+    "DefaultWarning",
+    "ClassNoPropertiesNoParents",
     "MultiValueError",
+    "UnknownComponent",
+    "UnknownProperty",
+    "InvalidComponent",
+    "MissingParentDefinition",
+    "MissingIdentifier",
     "IssueList",
     "Error",
     "ValidationIssue",
+    "ValidationIssue",
+    "UnsupportedPropertyType",
     "ValidationWarning",
     "SpreadsheetNotFound",
     "MetadataSheetMissingOrFailed",

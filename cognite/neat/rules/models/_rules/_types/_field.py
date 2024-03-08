@@ -150,21 +150,27 @@ ParentClassType = Annotated[
 ]
 
 ClassType = Annotated[
-    str,
+    ClassEntity,
+    BeforeValidator(lambda value: (ClassType.from_raw(value) if isinstance(value, str) else value)),
     AfterValidator(
         lambda value: (
-            _raise(exceptions.MoreThanOneNonAlphanumericCharacter("class_", value).to_pydantic_custom_error())
-            if re.search(MORE_THAN_ONE_NONE_ALPHANUMERIC_REGEX, value)
+            _raise(exceptions.MoreThanOneNonAlphanumericCharacter("class_", value.suffix).to_pydantic_custom_error())
+            if re.search(MORE_THAN_ONE_NONE_ALPHANUMERIC_REGEX, value.suffix)
             else (
                 value
-                if re.match(CLASS_ID_COMPLIANCE_REGEX, value)
+                if re.match(CLASS_ID_COMPLIANCE_REGEX, value.suffix)
                 else _raise(
                     exceptions.ClassSheetClassIDRegexViolation(
-                        value, CLASS_ID_COMPLIANCE_REGEX
+                        value.suffix, CLASS_ID_COMPLIANCE_REGEX
                     ).to_pydantic_custom_error()
                 )
             )
         )
+    ),
+    PlainSerializer(
+        lambda v: v.versioned_id,
+        return_type=str,
+        when_used="unless-none",
     ),
 ]
 
@@ -221,13 +227,18 @@ ViewType = Annotated[
 ]
 
 
+def _semantic_value_type_before_validator(value: Any) -> Any:
+    if isinstance(value, XSDValueType | ClassEntity) or not isinstance(value, str):
+        return value
+    elif value in XSD_VALUE_TYPE_MAPPINGS:
+        return XSD_VALUE_TYPE_MAPPINGS[value]
+    else:
+        return ClassEntity.from_raw(value)
+
+
 SemanticValueType = Annotated[
     XSDValueType | ClassEntity,
-    BeforeValidator(
-        lambda value: (
-            XSD_VALUE_TYPE_MAPPINGS[value] if value in XSD_VALUE_TYPE_MAPPINGS else ClassEntity.from_raw(value)
-        )
-    ),
+    BeforeValidator(_semantic_value_type_before_validator),
     PlainSerializer(
         lambda v: v.versioned_id,
         return_type=str,

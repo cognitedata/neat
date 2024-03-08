@@ -1,3 +1,4 @@
 from pathlib import Path
 
-DATA_DIR = Path(__file__).parent / "data"
+EXCEL_IMPORTER_DATA = Path(__file__).parent / "excel_importer_data"
+DTDL_IMPORTER_DATA = Path(__file__).parent / "dtdl_importer_data"

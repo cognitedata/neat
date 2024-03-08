@@ -248,16 +248,16 @@ class ClassEntity(Entity):
     type_: ClassVar[EntityTypes] = EntityTypes.class_
 
     @classmethod
-    def from_raw(cls, value: Any) -> "ClassEntity":
+    def from_raw(cls, value: Any) -> Self:
         if not value:
-            return ClassEntity(prefix=Undefined, suffix=value)
-        elif isinstance(value, ClassEntity):
+            return cls(prefix=Undefined, suffix=value)
+        elif isinstance(value, cls):
             return value
 
         if ENTITY_ID_REGEX_COMPILED.match(value) or VERSIONED_ENTITY_REGEX_COMPILED.match(value):
-            return ClassEntity.from_string(entity_string=value)
+            return cls.from_string(entity_string=value)
         else:
-            return ClassEntity(prefix=Undefined, suffix=value)
+            return cls(prefix=Undefined, suffix=value)
 
     @property
     def view_id(self) -> ViewId:
@@ -270,3 +270,9 @@ class ClassEntity(Entity):
 
 class ParentClassEntity(ClassEntity):
     type_: ClassVar[EntityTypes] = EntityTypes.parent_class
+
+    @classmethod
+    def from_raw(cls, value: Any) -> Self:
+        if isinstance(value, ClassEntity):
+            return cls(prefix=value.prefix, suffix=value.suffix, version=value.version)
+        return super().from_raw(value)
