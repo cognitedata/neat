@@ -18,12 +18,12 @@ from cognite.neat.rules.models._rules._types import (
     XSDValueType,
 )
 from cognite.neat.rules.models._rules.information_rules import InformationClass, InformationProperty
-from cognite.neat.rules.validation import IssueList
+from cognite.neat.rules.validation import IssueList, ValidationIssue
 
 
 class _DTDLConverter:
-    def __init__(self) -> None:
-        self.issues: IssueList = IssueList([])
+    def __init__(self, issues: list[ValidationIssue] | None = None) -> None:
+        self.issues: IssueList = IssueList(issues or [])
         self.properties: list[InformationProperty] = []
         self.classes: list[InformationClass] = []
         self._item_by_id: dict[DTMI, DTDLBase] = {}
