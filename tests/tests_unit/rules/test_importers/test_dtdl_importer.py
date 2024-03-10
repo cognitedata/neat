@@ -26,6 +26,15 @@ class TestDTDLImporter:
         assert issues == expected_issues
         assert isinstance(rules, InformationRules)
 
+    def test_import_temperature_controller_example_dtdl_v2(self) -> None:
+        dtdl_importer = DTDLImporter.from_zip(DTDL_IMPORTER_DATA / "TemperatureController.zip")
+
+        rules, issues = dtdl_importer.to_rules(errors="continue")
+
+        assert len(issues) == 0
+        assert isinstance(rules, InformationRules)
+        assert len(rules.classes) == 2
+
     def tests_import_invalid_data_model_and_return_errors(self) -> None:
         expected_issue = validation.DefaultPydanticError(
             type="IncompleteSchema",
