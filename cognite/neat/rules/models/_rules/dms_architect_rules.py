@@ -531,8 +531,10 @@ class _DMSExporter:
                         if isinstance(prop.value_type, ViewEntity):
                             source = prop.value_type.as_id(default_space, default_version)
                         else:
-                            # Probably we will not have this case, but just in case
-                            source = dm.ViewId(default_space, prop.value_type.suffix, default_version)
+                            raise ValueError(
+                                "Direct relation must have a view as value type. "
+                                "This should have been validated in the rules"
+                            )
 
                         view_property = dm.MappedPropertyApply(
                             container=prop.container.as_id(default_space),
@@ -552,11 +554,13 @@ class _DMSExporter:
                     if isinstance(prop.value_type, ViewEntity):
                         source = prop.value_type.as_id(default_space, default_version)
                     else:
-                        # CRITICAL COMMENT: NOT SURE WHY IS THIS ALLOWED!?
-                        source = dm.ViewId(default_space, prop.value_type.suffix, default_version)
+                        raise ValueError(
+                            "Multiedge relation must have a view as value type. "
+                            "This should have been validated in the rules"
+                        )
                     view_property = dm.MultiEdgeConnectionApply(
                         type=dm.DirectRelationReference(
-                            space=default_space,
+                            space=source.space,
                             external_id=f"{prop.view.external_id}.{prop.view_property}",
                         ),
                         source=source,
