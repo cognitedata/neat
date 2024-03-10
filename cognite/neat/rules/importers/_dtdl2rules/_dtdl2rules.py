@@ -1,8 +1,11 @@
 import json
 import warnings
-from collections.abc import Callable, Sequence
+import zipfile
+from collections.abc import Callable, Iterable, Sequence
 from pathlib import Path
 from typing import Literal, overload
+
+from pydantic import ValidationError
 
 from cognite.neat.rules import validation
 from cognite.neat.rules._shared import Rules
@@ -46,26 +49,45 @@ class DTDLImporter(BaseImporter):
         self._schema_completness = schema
 
     @classmethod
+    def _from_file_content(cls, file_content: str, filepath: Path) -> Iterable[DTDLBase]:
+        raw = json.loads(file_content)
+        if isinstance(raw, dict):
+            raw_list = [raw]
+        elif isinstance(raw, list):
+            raw_list = raw
+        else:
+            warnings.warn(f"Invalid json file {filepath}: Content is not an object or array.", stacklevel=2)
+            return
+        for item in raw_list:
+            if not (type_ := item.get("@type")):
+                warnings.warn(f"Invalid json file {filepath}: Missing '@type' key.", stacklevel=2)
+                continue
+            cls_ = DTDL_CLS_BY_TYPE.get(type_)
+            if cls_ is None:
+                warnings.warn(f"Invalid json file {filepath}: Unknown '@type' {type_}.", stacklevel=2)
+                continue
+            try:
+                yield cls_.model_validate(item)
+            except ValidationError as e:
+                warnings.warn(f"Invalid json file {filepath}: {e!s}.", stacklevel=2)
+
+    @classmethod
     def from_directory(cls, directory: Path) -> "DTDLImporter":
         items: list[DTDLBase] = []
         for filepath in directory.glob("**/*.json"):
-            raw = json.loads(filepath.read_text())
-            if isinstance(raw, dict):
-                raw_list = [raw]
-            elif isinstance(raw, list):
-                raw_list = raw
-            else:
-                raise ValueError(f"Invalid json file {filepath}")
-            for item in raw_list:
-                if not (type_ := item.get("@type")):
-                    warnings.warn(f"Invalid json file {filepath}. Missing '@type' key.", stacklevel=2)
-                    continue
-                cls_ = DTDL_CLS_BY_TYPE.get(type_)
-                if cls_ is None:
-                    warnings.warn(f"Invalid json file {filepath}. Unknown '@type' {type_}", stacklevel=2)
-                    continue
-                items.append(cls_.model_validate(item))
+            for item in cls._from_file_content(filepath.read_text(), filepath):
+                items.append(item)
         return cls(items, directory.name)
+
+    @classmethod
+    def from_zip(cls, zip_file: Path) -> "DTDLImporter":
+        items: list[DTDLBase] = []
+        with zipfile.ZipFile(zip_file) as z:
+            for filepath in z.namelist():
+                if filepath.endswith(".json"):
+                    for item in cls._from_file_content(z.read(filepath).decode(), Path(filepath)):
+                        items.append(item)
+        return cls(items, zip_file.name)
 
     @overload
     def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules:
