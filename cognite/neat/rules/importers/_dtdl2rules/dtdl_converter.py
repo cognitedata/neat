@@ -1,7 +1,7 @@
 from collections.abc import Callable, Sequence
 
 from cognite.neat.rules import validation
-from cognite.neat.rules.importers._dtdl2rules.spec._v3_spec import (
+from cognite.neat.rules.importers._dtdl2rules.spec import (
     DTMI,
     DTDLBase,
     Enum,

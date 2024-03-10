@@ -10,7 +10,7 @@ from pydantic import ValidationError
 from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.importers._base import BaseImporter, _handle_issues
 from cognite.neat.rules.importers._dtdl2rules.dtdl_converter import _DTDLConverter
-from cognite.neat.rules.importers._dtdl2rules.spec._v3_spec import DTDL_CLS_BY_TYPE, DTDLBase
+from cognite.neat.rules.importers._dtdl2rules.spec import DTDL_CLS_BY_TYPE_BY_SPEC, DTDLBase, Interface
 from cognite.neat.rules.models._rules import InformationRules, RoleTypes
 from cognite.neat.rules.models._rules.base import SchemaCompleteness, SheetList
 from cognite.neat.rules.models._rules.information_rules import InformationClass, InformationProperty
@@ -39,23 +39,40 @@ class DTDLImporter(BaseImporter):
     ) -> None:
         self._items = items
         self.title = title
-        self._schema_completness = schema
+        self._schema_completeness = schema
 
     @classmethod
     def _from_file_content(cls, file_content: str, filepath: Path) -> Iterable[DTDLBase]:
         raw = json.loads(file_content)
         if isinstance(raw, dict):
+            if (context := raw.get("@context")) is None:
+                warnings.warn(f"Invalid json file {filepath}: Missing '@context' key.", stacklevel=2)
+                return
             raw_list = [raw]
         elif isinstance(raw, list):
+            context = next(
+                (entry["@context"] for entry in raw if isinstance(entry, dict) and "@context" in entry), None
+            )
+            if context is None:
+                warnings.warn(f"Invalid json file {filepath}: Missing '@context' key.", stacklevel=2)
+                return
             raw_list = raw
         else:
             warnings.warn(f"Invalid json file {filepath}: Content is not an object or array.", stacklevel=2)
             return
+        Interface.default_context = context
+        spec_version = context.split(";")[1]
+        try:
+            cls_by_type = DTDL_CLS_BY_TYPE_BY_SPEC[spec_version]
+        except KeyError:
+            warnings.warn(f"Unsupported DTDL version {spec_version} in  file {filepath}.", stacklevel=2)
+            return
+
         for item in raw_list:
             if not (type_ := item.get("@type")):
                 warnings.warn(f"Invalid json file {filepath}: Missing '@type' key.", stacklevel=2)
                 continue
-            cls_ = DTDL_CLS_BY_TYPE.get(type_)
+            cls_ = cls_by_type.get(type_)
             if cls_ is None:
                 warnings.warn(f"Invalid json file {filepath}: Unknown '@type' {type_}.", stacklevel=2)
                 continue
@@ -64,7 +81,9 @@ class DTDLImporter(BaseImporter):
             except ValidationError as e:
                 warnings.warn(f"Invalid json file {filepath}: {e!s}.", stacklevel=2)
             except Exception as e:
-                warnings.warn(f"Bug in validation of json file {filepath}: {e!s}.", stacklevel=2)
+                warnings.warn(
+                    f"Bug in {cls.__name__} triggered in " f"validation of json file {filepath}: {e!s}.", stacklevel=2
+                )
 
     @classmethod
     def from_directory(cls, directory: Path) -> "DTDLImporter":
@@ -102,7 +121,7 @@ class DTDLImporter(BaseImporter):
         container.convert(self._items)
 
         metadata = self._default_metadata()
-        metadata["schema"] = self._schema_completness.value
+        metadata["schema"] = self._schema_completeness.value
         with _handle_issues(container.issues) as future:
             rules = InformationRules(
                 metadata=metadata,
