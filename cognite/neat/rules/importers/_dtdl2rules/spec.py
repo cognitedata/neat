@@ -333,9 +333,9 @@ class Interface(DTDLBase):
                     # [[Telemetry|Property, "Semantic Type"].
                     from ._unit_lookup import UNIT_TYPE_BY_SEMANTIC_TYPE
 
-                    if unit_type := UNIT_TYPE_BY_SEMANTIC_TYPE.get(type_[1]) and "unit" in item:
+                    if (unit_type := UNIT_TYPE_BY_SEMANTIC_TYPE.get(type_[1])) and (unit := item.get("unit")):
                         item["unit"] = {
-                            "value": item["unit"],
+                            "value": unit,
                             "semanticType": type_[1],
                             "unitType": unit_type,
                         }
