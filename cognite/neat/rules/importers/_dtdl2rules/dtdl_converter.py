@@ -3,13 +3,19 @@ from collections.abc import Callable, Sequence
 from cognite.neat.rules import validation
 from cognite.neat.rules.importers._dtdl2rules.spec import (
     DTMI,
+    Command,
+    CommandV2,
+    Component,
     DTDLBase,
     Enum,
     Interface,
     Object,
     Property,
+    PropertyV2,
     Relationship,
     Schema,
+    Telemetry,
+    TelemetryV2,
 )
 from cognite.neat.rules.models._rules._types import (
     XSD_VALUE_TYPE_MAPPINGS,
@@ -31,8 +37,14 @@ class _DTDLConverter:
         self._method_by_type: dict[type[DTDLBase], Callable[[DTDLBase, str | None], None]] = {
             Interface: self.convert_interface,  # type: ignore[dict-item]
             Property: self.convert_property,  # type: ignore[dict-item]
+            PropertyV2: self.convert_property,  # type: ignore[dict-item]
             Relationship: self.convert_relationship,  # type: ignore[dict-item]
             Object: self.convert_object,  # type: ignore[dict-item]
+            Telemetry: self.convert_telemetry,  # type: ignore[dict-item]
+            TelemetryV2: self.convert_telemetry,  # type: ignore[dict-item]
+            Command: self.convert_command,  # type: ignore[dict-item]
+            CommandV2: self.convert_command,  # type: ignore[dict-item]
+            Component: self.convert_component,  # type: ignore[dict-item]
         }
 
     def convert(self, items: Sequence[DTDLBase]) -> None:
@@ -91,16 +103,10 @@ class _DTDLConverter:
         # interface.schema objects are handled in the convert method
 
     def convert_property(
-        self, item: Property, parent: str | None, min_count: int | None = 0, max_count: int | None = 1
+        self, item: Property | Telemetry, parent: str | None, min_count: int | None = 0, max_count: int | None = 1
     ) -> None:
         if parent is None:
-            self.issues.append(
-                validation.MissingParentDefinition(
-                    component_type=item.type,
-                    instance_name=item.display_name,
-                    instance_id=item.id_.model_dump() if item.id_ else None,
-                )
-            )
+            self._missing_parent_warning(item)
             return None
         value_type = self.schema_to_value_type(item.schema_, item)
         if value_type is None:
@@ -118,15 +124,81 @@ class _DTDLConverter:
         )
         self.properties.append(prop)
 
-    def convert_relationship(self, item: Relationship, parent: str | None) -> None:
+    def _missing_parent_warning(self, item):
+        self.issues.append(
+            validation.MissingParentDefinition(
+                component_type=item.type,
+                instance_name=item.display_name,
+                instance_id=item.id_.model_dump() if item.id_ else None,
+            )
+        )
+
+    def convert_telemetry(self, item: Telemetry, parent: str | None) -> None:
+        return self.convert_property(
+            item,
+            parent,
+        )
+
+    def convert_command(self, item: Command | CommandV2, parent: str | None) -> None:
         if parent is None:
+            self._missing_parent_warning(item)
+            return None
+        if item.request is None:
             self.issues.append(
-                validation.MissingParentDefinition(
+                validation.UnknownSubComponent(
                     component_type=item.type,
+                    sub_component="request",
                     instance_name=item.display_name,
                     instance_id=item.id_.model_dump() if item.id_ else None,
                 )
             )
+            return None
+        if item.response is not None:
+            # Currently, we do not know how to handle response
+            self.issues.append(
+                validation.ImportIgnored(
+                    identifier=f"{parent}.response",
+                    reason="Neat does not have a concept of response for commands. This will be ignored.",
+                )
+            )
+        value_type = self.schema_to_value_type(item.request.schema_, item)
+        if value_type is None:
+            return
+        prop = InformationProperty(
+            class_=ClassEntity.from_raw(parent),
+            property_=item.name,
+            name=item.display_name,
+            description=item.description,
+            comment=item.comment,
+            value_type=value_type,
+            min_count=0,
+            max_count=1,
+        )
+        self.properties.append(prop)
+
+    def convert_component(self, item: Component, parent: str | None) -> None:
+        if parent is None:
+            self._missing_parent_warning(item)
+            return None
+
+        value_type = self.schema_to_value_type(item.schema_, item)
+        if value_type is None:
+            return
+        prop = InformationProperty(
+            class_=ClassEntity.from_raw(parent),
+            property_=item.name,
+            name=item.display_name,
+            description=item.description,
+            comment=item.comment,
+            value_type=value_type,
+            min_count=0,
+            max_count=1,
+        )
+        self.properties.append(prop)
+
+    def convert_relationship(self, item: Relationship, parent: str | None) -> None:
+        if parent is None:
+            self._missing_parent_warning(item)
             return None
         if item.target is not None:
             prop = InformationProperty(
@@ -177,7 +249,9 @@ class _DTDLConverter:
             )
             self.properties.append(prop)
 
-    def schema_to_value_type(self, schema: Schema | DTMI | None, item: DTDLBase) -> XSDValueType | ClassEntity | None:
+    def schema_to_value_type(
+        self, schema: Schema | Interface | DTMI | None, item: DTDLBase
+    ) -> XSDValueType | ClassEntity | None:
         input_type = self._item_by_id.get(schema) if isinstance(schema, DTMI) else schema
 
         if isinstance(input_type, Enum):
@@ -195,7 +269,7 @@ class _DTDLConverter:
                 )
             )
             return None
-        elif isinstance(input_type, Object):
+        elif isinstance(input_type, Object | Interface):
             if input_type.id_ is None:
                 self.issues.append(
                     validation.MissingIdentifier(
@@ -205,7 +279,8 @@ class _DTDLConverter:
                 )
                 return XSD_VALUE_TYPE_MAPPINGS["json"]
             else:
-                self.convert_object(input_type, None)
+                if isinstance(input_type, Object):
+                    self.convert_object(input_type, None)
                 return ClassEntity.from_raw(input_type.id_.as_class_id())
         else:
             self.issues.append(

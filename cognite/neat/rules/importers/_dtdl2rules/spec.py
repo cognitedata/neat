@@ -150,13 +150,13 @@ class DTDLBaseWithSchema(DTDLBaseWithName, ABC):
 
     @field_validator("schema_", mode="before")
     def select_schema_type(cls, value: Any) -> Any:
-        context = Interface.default_context
-        spec_version = context.rsplit(";", maxsplit=1)[1]
-        try:
-            cls_by_type = DTDL_CLS_BY_TYPE_BY_SPEC[spec_version]
-        except KeyError:
-            raise ValueError(f"DTDL Spec v{spec_version} is not supported: {context}") from None
         if isinstance(value, dict) and (type_ := value.get("@type")):
+            context = Interface.default_context
+            spec_version = context.rsplit(";", maxsplit=1)[1]
+            try:
+                cls_by_type = DTDL_CLS_BY_TYPE_BY_SPEC[spec_version]
+            except KeyError:
+                raise ValueError(f"DTDL Spec v{spec_version} is not supported: {context}") from None
             if isinstance(type_, str) and (cls_ := cls_by_type.get(type_)) is not None:
                 return cls_.model_validate(value)
             elif isinstance(type_, list) and len(type_) == 2 and (cls_ := cls_by_type.get(type_[0])) is not None:
@@ -230,7 +230,7 @@ Schema: TypeAlias = PrimitiveSchema | ComplexSchema
 class Component(DTDLBaseWithSchema):
     type = "Component"
     spec_version = frozenset(["2", "3"])
-    schema_: "Interface" = Field(alias="schema")  # type: ignore[assignment]
+    schema_: "Interface | DTMI" = Field(alias="schema")  # type: ignore[assignment]
 
 
 class Property(DTDLBaseWithSchema):
@@ -304,7 +304,7 @@ class Interface(DTDLBase):
     id_: DTMI = Field(alias="@id")  # type: ignore[assignment]
     context: IRI | None = Field(alias="@context")
     extends: list[DTMI] | None = None
-    contents: list[Command | Component | Property | Relationship | Telemetry | DTMI] | None = None
+    contents: list[Command | Component | Property | Relationship | Telemetry | DTMI | CommandV2] | None = None
     schemas: list[Array | Enum | Map | Object] | None = None
 
     @field_validator("context", mode="before")

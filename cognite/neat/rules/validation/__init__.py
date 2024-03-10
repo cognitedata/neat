@@ -32,7 +32,7 @@ from ._dms_schema_errors import (
 from ._dms_sheets import ReferencedNonExistingView, ReferenceNonExistingContainer
 from ._fileread_warnings import BugInImporter, FileReadWarning, InvalidFileFormat, UnknownItem, UnsupportedSpec
 from ._import_errors import InvalidComponent, MissingIdentifier, MissingParentDefinition, UnsupportedPropertyType
-from ._importer_warnings import UnknownComponent, UnknownProperty
+from ._importer_warnings import ImportIgnored, UnknownComponent, UnknownProperty, UnknownSubComponent
 from ._schema_inconsistency_warning import ClassNoPropertiesNoParents
 from ._spreadsheet import (
     InvalidClassSpecification,
@@ -58,7 +58,9 @@ __all__ = [
     "DefaultWarning",
     "ClassNoPropertiesNoParents",
     "MultiValueError",
+    "UnknownSubComponent",
     "UnknownComponent",
+    "ImportIgnored",
     "UnknownProperty",
     "InvalidComponent",
     "MissingParentDefinition",

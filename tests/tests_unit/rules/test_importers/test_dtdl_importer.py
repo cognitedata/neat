@@ -27,11 +27,25 @@ class TestDTDLImporter:
         assert isinstance(rules, InformationRules)
 
     def test_import_temperature_controller_example_dtdl_v2(self) -> None:
+        expected_issues = IssueList(
+            [
+                validation.UnknownProperty(
+                    component_type="Component",
+                    property_name="schema",
+                    instance_name="Device Information interface",
+                    instance_id=None,
+                ),
+                validation.ImportIgnored(
+                    reason="Neat does not have a concept of response for commands. This will be ignored.",
+                    identifier="com_example:Thermostat(version=1).response",
+                ),
+            ]
+        )
         dtdl_importer = DTDLImporter.from_zip(DTDL_IMPORTER_DATA / "TemperatureController.zip")
 
         rules, issues = dtdl_importer.to_rules(errors="continue")
 
-        assert len(issues) == 0
+        assert issues == expected_issues
         assert isinstance(rules, InformationRules)
         assert len(rules.classes) == 2
 
