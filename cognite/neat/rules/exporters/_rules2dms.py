@@ -126,8 +126,8 @@ class DMSExporter(CDFExporter[DMSSchema]):
 
             yield UploadResult(
                 name=loader.resource_name,
-                created=len(to_create),
-                changed=len(to_update),
+                created=created,
+                changed=changed,
                 unchanged=len(unchanged),
                 skipped=skipped,
                 failed_created=failed_created,

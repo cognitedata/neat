@@ -63,6 +63,9 @@ class DTDLImporter(BaseImporter):
         else:
             yield validation.InvalidFileFormat(filepath=filepath, reason="Content is not an object or array.")
             return
+
+        if isinstance(context, list):
+            context = context[0]
         Interface.default_context = context
         spec_version = context.split(";")[1]
         try:

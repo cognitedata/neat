@@ -552,8 +552,18 @@ class _DMSExporter:
                     continue
                 view.properties[prop.view_property] = view_property
 
+        used_spaces = {container.space for container in containers} | {view.space for view in views}
+        if len(used_spaces) == 1:
+            # We skip the default space and only use this space for the data model
+            data_model.space = used_spaces.pop()
+            spaces = dm.SpaceApplyList([dm.SpaceApply(space=data_model.space)])
+        else:
+            spaces = dm.SpaceApplyList(
+                [self.rules.metadata.as_space()] + [dm.SpaceApply(space=space) for space in used_spaces]
+            )
+
         return DMSSchema(
-            spaces=dm.SpaceApplyList([self.rules.metadata.as_space()]),
+            spaces=spaces,
             data_models=dm.DataModelApplyList([data_model]),
             views=views,
             containers=containers,
