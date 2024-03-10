@@ -201,15 +201,29 @@ class _DTDLConverter:
             self._missing_parent_warning(item)
             return None
         if item.target is not None:
+            value_type: XSDValueType | ClassEntity
+            if item.target in self._item_by_id:
+                value_type = item.target.as_class_id()
+            else:
+                # Falling back to json
+                self.issues.append(
+                    validation.MissingIdentifier(
+                        component_type="Unknown",
+                        instance_name=item.target.model_dump(),
+                        instance_id=item.target.model_dump(),
+                    )
+                )
+                value_type = XSD_VALUE_TYPE_MAPPINGS["json"]
+
             prop = InformationProperty(
                 class_=ClassEntity.from_raw(parent),
                 property_=item.name,
                 name=item.display_name,
                 description=item.description,
-                min_count=item.min_multiplicity,
-                max_count=item.max_multiplicity,
+                min_count=item.min_multiplicity or 0,
+                max_count=item.max_multiplicity or 1,
                 comment=item.comment,
-                value_type=ClassEntity.from_raw(item.target.as_class_id()),
+                value_type=value_type,
             )
             self.properties.append(prop)
         elif item.properties is not None:

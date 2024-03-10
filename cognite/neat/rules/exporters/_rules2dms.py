@@ -89,6 +89,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
                     unchanged.append(item)
                 else:
                     to_update.append(item)
+
             created = len(to_create)
             failed_created = 0
 
