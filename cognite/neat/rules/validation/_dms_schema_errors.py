@@ -45,7 +45,7 @@ class MissingContainer(DMSSchemaError):
     fix = "Create the container"
     error_name: ClassVar[str] = "MissingContainer"
     container: dm.ContainerId
-    referred_by: dm.ViewId
+    referred_by: dm.ViewId | dm.ContainerId
 
     def message(self) -> str:
         return f"The container {self.container} referred to by {self.referred_by} does not exist"

@@ -406,6 +406,20 @@ class DMSRules(BaseRules):
                             url=None,
                         )
                     )
+            for _container_no, container in enumerate(self.containers or []):
+                for constraint_no, constraint in enumerate(container.constraint or []):
+                    if constraint.as_id(self.metadata.space) not in defined_containers:
+                        errors.append(
+                            validation.ReferenceNonExistingContainer(
+                                column="Constraint",
+                                row=constraint_no,
+                                type="value_error.missing",
+                                container_id=constraint.as_id(self.metadata.space),
+                                msg="",
+                                input=None,
+                                url=None,
+                            )
+                        )
         if errors:
             raise validation.MultiValueError(errors)
         return self
