@@ -1,3 +1,8 @@
+"""
+This is a pydantic validation implementation of the DTDL v3 spec.
+
+It is taken from https://github.com/Azure/opendigitaltwins-dtdl/blob/master/DTDL/v3/DTDL.v3.md
+"""
 import re
 from abc import ABC
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeAlias
@@ -185,6 +190,12 @@ class Interface(DTDLBase):
     extends: list[DTMI] | None = None
     contents: list[Command | Component | Property | Relationship | Telemetry | DTMI] | None = None
     schemas: list[Array | Enum | Map | Object] | None = None
+
+    @field_validator("context", mode="before")
+    def list_to_string(cls, value: Any) -> Any:
+        if isinstance(value, list) and len(value) == 1:
+            return value[0]
+        return value
 
     @field_validator("contents", "schemas", mode="before")
     def select_content_type(cls, value: Any) -> Any:
