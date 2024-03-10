@@ -74,17 +74,26 @@ class DMSExporter(CDFExporter[DMSSchema]):
         if self.export_components.intersection({"all", "data_models"}):
             to_export.append((schema.data_models, DataModelLoader(client)))
 
+        # The conversion from DMS to GraphQL does not seem to be triggered even if the views
+        # are changed. This is a workaround to force the conversion.
+        redeploy_data_model = False
+
         for items, loader in to_export:
             item_ids = loader.get_ids(items)
             cdf_items = loader.retrieve(item_ids)
             cdf_item_by_id = {loader.get_id(item): item for item in cdf_items}
-            to_create, to_update, unchanged = [], [], []
+            to_create, to_update, unchanged, to_delete = [], [], [], []
+            is_redeploying = loader.resource_name == "data_models" and redeploy_data_model
             for item in items:
                 if self.include_space is not None and not loader.in_space(item, self.include_space):
                     continue
+
                 cdf_item = cdf_item_by_id.get(loader.get_id(item))
                 if cdf_item is None:
                     to_create.append(item)
+                elif is_redeploying:
+                    to_update.append(item)
+                    to_delete.append(cdf_item)
                 elif loader.are_equal(item, cdf_item):
                     unchanged.append(item)
                 else:
@@ -109,6 +118,12 @@ class DMSExporter(CDFExporter[DMSSchema]):
 
             error_messages: list[str] = []
             if not dry_run:
+                if to_delete:
+                    try:
+                        loader.delete(to_delete)
+                    except CogniteAPIError as e:
+                        error_messages.append(f"Failed delete: {e.message}")
+
                 to_create = loader.sort_by_dependencies(to_create)
                 try:
                     loader.create(to_create)
@@ -135,3 +150,6 @@ class DMSExporter(CDFExporter[DMSSchema]):
                 failed_changed=failed_changed,
                 error_messages=error_messages,
             )
+
+            if loader.resource_name == "views" and (created or changed) and not redeploy_data_model:
+                redeploy_data_model = True
