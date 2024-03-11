@@ -1,109 +1,35 @@
-import json
-import warnings
 from collections.abc import Callable, Sequence
-from pathlib import Path
-from typing import Literal, overload
 
 from cognite.neat.rules import validation
-from cognite.neat.rules._shared import Rules
-from cognite.neat.rules.importers._base import BaseImporter, _handle_issues
-from cognite.neat.rules.models._rules import InformationRules, RoleTypes
+from cognite.neat.rules.importers._dtdl2rules.spec import (
+    DTMI,
+    Command,
+    CommandV2,
+    Component,
+    DTDLBase,
+    Enum,
+    Interface,
+    Object,
+    Property,
+    PropertyV2,
+    Relationship,
+    Schema,
+    Telemetry,
+    TelemetryV2,
+)
 from cognite.neat.rules.models._rules._types import (
     XSD_VALUE_TYPE_MAPPINGS,
     ClassEntity,
     ParentClassEntity,
     XSDValueType,
 )
-from cognite.neat.rules.models._rules.base import SchemaCompleteness, SheetList
 from cognite.neat.rules.models._rules.information_rules import InformationClass, InformationProperty
-from cognite.neat.rules.validation import IssueList
-
-from ._v3_spec import DTDL_CLS_BY_TYPE, DTMI, DTDLBase, Enum, Interface, Object, Property, Relationship, Schema
-
-
-class DTDLImporter(BaseImporter):
-    """Importer for DTDL (Digital Twin Definition Language) files. It can import a directory containing DTDL files and
-    convert them to InformationRules.
-
-    The DTDL v3 standard is supported and defined at
-    https://github.com/Azure/opendigitaltwins-dtdl/blob/master/DTDL/v3/DTDL.v3.md
-
-    Args:
-        items (Sequence[DTDLBase]): A sequence of DTDLBase objects.
-        title (str, optional): Title of the data model. Defaults to None.
-        schema (SchemaCompleteness, optional): Schema completeness. Defaults to SchemaCompleteness.partial.
-
-    """
-
-    def __init__(
-        self,
-        items: Sequence[DTDLBase],
-        title: str | None = None,
-        schema: SchemaCompleteness = SchemaCompleteness.partial,
-    ) -> None:
-        self._items = items
-        self.title = title
-        self._schema_completness = schema
-
-    @classmethod
-    def from_directory(cls, directory: Path) -> "DTDLImporter":
-        items: list[DTDLBase] = []
-        for filepath in directory.glob("**/*.json"):
-            raw = json.loads(filepath.read_text())
-            if isinstance(raw, dict):
-                raw_list = [raw]
-            elif isinstance(raw, list):
-                raw_list = raw
-            else:
-                raise ValueError(f"Invalid json file {filepath}")
-            for item in raw_list:
-                if not (type_ := item.get("@type")):
-                    warnings.warn(f"Invalid json file {filepath}. Missing '@type' key.", stacklevel=2)
-                    continue
-                cls_ = DTDL_CLS_BY_TYPE.get(type_)
-                if cls_ is None:
-                    warnings.warn(f"Invalid json file {filepath}. Unknown '@type' {type_}", stacklevel=2)
-                    continue
-                items.append(cls_.model_validate(item))
-        return cls(items, directory.name)
-
-    @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules:
-        ...
-
-    @overload
-    def to_rules(
-        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[Rules | None, IssueList]:
-        ...
-
-    def to_rules(
-        self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[Rules | None, IssueList] | Rules:
-        container = _DTDLConverter()
-
-        container.convert(self._items)
-
-        metadata = self._default_metadata()
-        metadata["schema"] = self._schema_completness.value
-        with _handle_issues(container.issues) as future:
-            rules = InformationRules(
-                metadata=metadata,
-                properties=SheetList[InformationProperty](data=container.properties),
-                classes=SheetList[InformationClass](data=container.classes),
-            )
-        if future.result == "failure":
-            if errors == "continue":
-                return None, container.issues
-            else:
-                raise container.issues.as_errors()
-
-        return self._to_output(rules, container.issues, errors, role)
+from cognite.neat.rules.validation import IssueList, ValidationIssue
 
 
 class _DTDLConverter:
-    def __init__(self) -> None:
-        self.issues: IssueList = IssueList([])
+    def __init__(self, issues: list[ValidationIssue] | None = None) -> None:
+        self.issues: IssueList = IssueList(issues or [])
         self.properties: list[InformationProperty] = []
         self.classes: list[InformationClass] = []
         self._item_by_id: dict[DTMI, DTDLBase] = {}
@@ -111,8 +37,14 @@ class _DTDLConverter:
         self._method_by_type: dict[type[DTDLBase], Callable[[DTDLBase, str | None], None]] = {
             Interface: self.convert_interface,  # type: ignore[dict-item]
             Property: self.convert_property,  # type: ignore[dict-item]
+            PropertyV2: self.convert_property,  # type: ignore[dict-item]
             Relationship: self.convert_relationship,  # type: ignore[dict-item]
             Object: self.convert_object,  # type: ignore[dict-item]
+            Telemetry: self.convert_telemetry,  # type: ignore[dict-item]
+            TelemetryV2: self.convert_telemetry,  # type: ignore[dict-item]
+            Command: self.convert_command,  # type: ignore[dict-item]
+            CommandV2: self.convert_command,  # type: ignore[dict-item]
+            Component: self.convert_component,  # type: ignore[dict-item]
         }
 
     def convert(self, items: Sequence[DTDLBase]) -> None:
@@ -171,16 +103,10 @@ class _DTDLConverter:
         # interface.schema objects are handled in the convert method
 
     def convert_property(
-        self, item: Property, parent: str | None, min_count: int | None = 0, max_count: int | None = 1
+        self, item: Property | Telemetry, parent: str | None, min_count: int | None = 0, max_count: int | None = 1
     ) -> None:
         if parent is None:
-            self.issues.append(
-                validation.MissingParentDefinition(
-                    component_type=item.type,
-                    instance_name=item.display_name,
-                    instance_id=item.id_.model_dump() if item.id_ else None,
-                )
-            )
+            self._missing_parent_warning(item)
             return None
         value_type = self.schema_to_value_type(item.schema_, item)
         if value_type is None:
@@ -198,26 +124,106 @@ class _DTDLConverter:
         )
         self.properties.append(prop)
 
-    def convert_relationship(self, item: Relationship, parent: str | None) -> None:
+    def _missing_parent_warning(self, item):
+        self.issues.append(
+            validation.MissingParentDefinition(
+                component_type=item.type,
+                instance_name=item.display_name,
+                instance_id=item.id_.model_dump() if item.id_ else None,
+            )
+        )
+
+    def convert_telemetry(self, item: Telemetry, parent: str | None) -> None:
+        return self.convert_property(
+            item,
+            parent,
+        )
+
+    def convert_command(self, item: Command | CommandV2, parent: str | None) -> None:
         if parent is None:
+            self._missing_parent_warning(item)
+            return None
+        if item.request is None:
             self.issues.append(
-                validation.MissingParentDefinition(
+                validation.UnknownSubComponent(
                     component_type=item.type,
+                    sub_component="request",
                     instance_name=item.display_name,
                     instance_id=item.id_.model_dump() if item.id_ else None,
                 )
             )
             return None
+        if item.response is not None:
+            # Currently, we do not know how to handle response
+            self.issues.append(
+                validation.ImportIgnored(
+                    identifier=f"{parent}.response",
+                    reason="Neat does not have a concept of response for commands. This will be ignored.",
+                )
+            )
+        value_type = self.schema_to_value_type(item.request.schema_, item)
+        if value_type is None:
+            return
+        prop = InformationProperty(
+            class_=ClassEntity.from_raw(parent),
+            property_=item.name,
+            name=item.display_name,
+            description=item.description,
+            comment=item.comment,
+            value_type=value_type,
+            min_count=0,
+            max_count=1,
+        )
+        self.properties.append(prop)
+
+    def convert_component(self, item: Component, parent: str | None) -> None:
+        if parent is None:
+            self._missing_parent_warning(item)
+            return None
+
+        value_type = self.schema_to_value_type(item.schema_, item)
+        if value_type is None:
+            return
+        prop = InformationProperty(
+            class_=ClassEntity.from_raw(parent),
+            property_=item.name,
+            name=item.display_name,
+            description=item.description,
+            comment=item.comment,
+            value_type=value_type,
+            min_count=0,
+            max_count=1,
+        )
+        self.properties.append(prop)
+
+    def convert_relationship(self, item: Relationship, parent: str | None) -> None:
+        if parent is None:
+            self._missing_parent_warning(item)
+            return None
         if item.target is not None:
+            value_type: XSDValueType | ClassEntity
+            if item.target in self._item_by_id:
+                value_type = item.target.as_class_id()
+            else:
+                # Falling back to json
+                self.issues.append(
+                    validation.MissingIdentifier(
+                        component_type="Unknown",
+                        instance_name=item.target.model_dump(),
+                        instance_id=item.target.model_dump(),
+                    )
+                )
+                value_type = XSD_VALUE_TYPE_MAPPINGS["json"]
+
             prop = InformationProperty(
                 class_=ClassEntity.from_raw(parent),
                 property_=item.name,
                 name=item.display_name,
                 description=item.description,
-                min_count=item.min_multiplicity,
-                max_count=item.max_multiplicity,
+                min_count=item.min_multiplicity or 0,
+                max_count=item.max_multiplicity or 1,
                 comment=item.comment,
-                value_type=ClassEntity.from_raw(item.target.as_class_id()),
+                value_type=value_type,
             )
             self.properties.append(prop)
         elif item.properties is not None:
@@ -257,7 +263,9 @@ class _DTDLConverter:
             )
             self.properties.append(prop)
 
-    def schema_to_value_type(self, schema: Schema | DTMI | None, item: DTDLBase) -> XSDValueType | ClassEntity | None:
+    def schema_to_value_type(
+        self, schema: Schema | Interface | DTMI | None, item: DTDLBase
+    ) -> XSDValueType | ClassEntity | None:
         input_type = self._item_by_id.get(schema) if isinstance(schema, DTMI) else schema
 
         if isinstance(input_type, Enum):
@@ -275,7 +283,7 @@ class _DTDLConverter:
                 )
             )
             return None
-        elif isinstance(input_type, Object):
+        elif isinstance(input_type, Object | Interface):
             if input_type.id_ is None:
                 self.issues.append(
                     validation.MissingIdentifier(
@@ -285,7 +293,8 @@ class _DTDLConverter:
                 )
                 return XSD_VALUE_TYPE_MAPPINGS["json"]
             else:
-                self.convert_object(input_type, None)
+                if isinstance(input_type, Object):
+                    self.convert_object(input_type, None)
                 return ClassEntity.from_raw(input_type.id_.as_class_id())
         else:
             self.issues.append(

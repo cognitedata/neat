@@ -248,6 +248,14 @@ class ContainerLoader(DataModelingLoader[ContainerId, ContainerApply, Container,
     def delete(self, ids: SequenceNotStr[ContainerId]) -> list[ContainerId]:
         return self.client.data_modeling.containers.delete(cast(Sequence, ids))
 
+    def are_equal(self, local: ContainerApply, remote: Container) -> bool:
+        local_dumped = local.dump(camel_case=True)
+        if "usedFor" not in local_dumped:
+            # Setting used_for to "node" as it is the default value in the CDF.
+            local_dumped["usedFor"] = "node"
+
+        return local_dumped == remote.as_write().dump(camel_case=True)
+
 
 class DataModelLoader(DataModelingLoader[DataModelId, DataModelApply, DataModel, DataModelApplyList, DataModelList]):
     resource_name = "data_models"

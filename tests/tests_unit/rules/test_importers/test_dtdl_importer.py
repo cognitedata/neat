@@ -2,7 +2,7 @@ import pytest
 
 from cognite.neat.rules import validation
 from cognite.neat.rules.importers import DTDLImporter
-from cognite.neat.rules.importers._dtdl2rules._v3_spec import DTMI, Interface
+from cognite.neat.rules.importers._dtdl2rules.spec import DTMI, Interface
 from cognite.neat.rules.models._rules import InformationRules
 from cognite.neat.rules.models._rules.base import SchemaCompleteness
 from cognite.neat.rules.validation import IssueList
@@ -25,6 +25,29 @@ class TestDTDLImporter:
 
         assert issues == expected_issues
         assert isinstance(rules, InformationRules)
+
+    def test_import_temperature_controller_example_dtdl_v2(self) -> None:
+        expected_issues = IssueList(
+            [
+                validation.UnknownProperty(
+                    component_type="Component",
+                    property_name="schema",
+                    instance_name="Device Information interface",
+                    instance_id=None,
+                ),
+                validation.ImportIgnored(
+                    reason="Neat does not have a concept of response for commands. This will be ignored.",
+                    identifier="com_example:Thermostat(version=1).response",
+                ),
+            ]
+        )
+        dtdl_importer = DTDLImporter.from_zip(DTDL_IMPORTER_DATA / "TemperatureController.zip")
+
+        rules, issues = dtdl_importer.to_rules(errors="continue")
+
+        assert issues == expected_issues
+        assert isinstance(rules, InformationRules)
+        assert len(rules.classes) == 2
 
     def tests_import_invalid_data_model_and_return_errors(self) -> None:
         expected_issue = validation.DefaultPydanticError(
