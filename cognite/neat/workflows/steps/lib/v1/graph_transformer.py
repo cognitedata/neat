@@ -8,12 +8,12 @@ from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
-__all__ = ["TransformSourceToSolutionGraph"]
+__all__ = ["TransformSourceToSolutionGraphV1"]
 
-CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
+CATEGORY = __name__.split(".")[-1].replace("_", " ").title() + " [VERSION 1]"
 
 
-class TransformSourceToSolutionGraph(Step):
+class TransformSourceToSolutionGraphV1(Step):
     """
     The step transforms source graph to solution graph
     """

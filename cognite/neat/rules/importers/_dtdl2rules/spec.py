@@ -6,6 +6,7 @@ The specs are taken from:
  * Spec v2:  https://github.com/Azure/opendigitaltwins-dtdl/blob/master/DTDL/v2/DTDL.v2.md
  * Spec v3: https://github.com/Azure/opendigitaltwins-dtdl/blob/master/DTDL/v3/DTDL.v3.md
 """
+
 import re
 import warnings
 from abc import ABC
@@ -71,8 +72,7 @@ class DTMI(BaseModel):
             exclude_none: bool = False,
             round_trip: bool = False,
             warnings: bool = True,
-        ) -> str:
-            ...
+        ) -> str: ...
 
 
 IRI: TypeAlias = str
@@ -123,8 +123,7 @@ class Unit(BaseModel, ABC):
             exclude_none: bool = False,
             round_trip: bool = False,
             warnings: bool = True,
-        ) -> str:
-            ...
+        ) -> str: ...
 
 
 class DTDLBase(BaseModel, ABC):
@@ -175,7 +174,7 @@ class DTDLBaseWithSchema(DTDLBaseWithName, ABC):
 
 
 class DTDLField(DTDLBaseWithSchema):
-    type = "Field"
+    type: str = "Field"
     spec_version = frozenset(["2", "3"])
 
 

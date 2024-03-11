@@ -6,13 +6,14 @@ from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import SolutionGraph, SourceGraph
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
-__all__ = ["SimpleGraphEntityMatcher"]
+__all__ = ["SimpleGraphEntityMatcherV1"]
+CATEGORY = __name__.split(".")[-1].replace("_", " ").title() + " [VERSION 1]"
 
 
-class SimpleGraphEntityMatcher(Step):
+class SimpleGraphEntityMatcherV1(Step):
     version = "private-alpha"
     description = "The step matches entities in the graph and creates links based on provided configurations"
-    category = "Contextualization"
+    category = CATEGORY
     configurables: ClassVar[list[Configurable]] = [
         Configurable(name="source_class", value="", label="Name of the source class"),
         Configurable(name="source_property", value="", label="Name of the source property"),

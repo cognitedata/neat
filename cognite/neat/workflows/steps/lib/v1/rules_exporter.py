@@ -20,23 +20,23 @@ from cognite.neat.workflows.steps.data_contracts import CogniteClient, DMSSchema
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
 __all__ = [
-    "ExportDMSSchemaComponentsToYAML",
-    "ExportDMSSchemaComponentsToCDF",
-    "ExportRulesToGraphQLSchema",
-    "ExportRulesToOntology",
-    "ExportRulesToSHACL",
-    "ExportRulesToGraphCapturingSheet",
-    "ExportRulesToExcel",
-    "GenerateDMSSchemaComponentsFromRules",
-    "DeleteDMSSchemaComponents",
-    "ExportDataModelStorage",
-    "ExportToExcel",
+    "ExportDMSSchemaComponentsToYAMLV1",
+    "ExportDMSSchemaComponentsToCDFV1",
+    "ExportRulesToGraphQLSchemaV1",
+    "ExportRulesToOntologyV1",
+    "ExportRulesToSHACLV1",
+    "ExportRulesToGraphCapturingSheetV1",
+    "ExportRulesToExcelV1",
+    "GenerateDMSSchemaComponentsFromRulesV1",
+    "DeleteDMSSchemaComponentsV1",
+    "ExportDataModelStorageV1",
+    "ExportToExcelV1",
 ]
 
-CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
+CATEGORY = __name__.split(".")[-1].replace("_", " ").title() + " [VERSION 1]"
 
 
-class GenerateDMSSchemaComponentsFromRules(Step):
+class GenerateDMSSchemaComponentsFromRulesV1(Step):
     """
     This step generates DMS Schema components, such as data model, views, containers, etc. from Rules.
     """
@@ -63,7 +63,7 @@ class GenerateDMSSchemaComponentsFromRules(Step):
         return FlowMessage(output_text=output_text), DMSSchemaComponentsData(components=data_model)
 
 
-class ExportDMSSchemaComponentsToYAML(Step):
+class ExportDMSSchemaComponentsToYAMLV1(Step):
     """
     This step exports DMS schema components as YAML files
     """
@@ -137,7 +137,7 @@ class ExportDMSSchemaComponentsToYAML(Step):
             )
 
 
-class ExportDMSSchemaComponentsToCDF(Step):
+class ExportDMSSchemaComponentsToCDFV1(Step):
     """
     This step exports generated DMS Schema components to CDF
     """
@@ -226,7 +226,7 @@ class ExportDMSSchemaComponentsToCDF(Step):
             return FlowMessage(output_text=output_text)
 
 
-class DeleteDMSSchemaComponents(Step):
+class DeleteDMSSchemaComponentsV1(Step):
     """
     This step deletes DMS Schema components
     """
@@ -301,7 +301,7 @@ class DeleteDMSSchemaComponents(Step):
             return FlowMessage(output_text=output_text)
 
 
-class ExportRulesToGraphQLSchema(Step):
+class ExportRulesToGraphQLSchemaV1(Step):
     """
     This step generates GraphQL schema from data model defined in transformation rules
     """
@@ -351,7 +351,7 @@ class ExportRulesToGraphQLSchema(Step):
         return FlowMessage(output_text=output_text)
 
 
-class ExportRulesToOntology(Step):
+class ExportRulesToOntologyV1(Step):
     """
     This step exports Rules to OWL ontology
     """
@@ -407,7 +407,7 @@ class ExportRulesToOntology(Step):
         return FlowMessage(output_text=output_text)
 
 
-class ExportRulesToSHACL(Step):
+class ExportRulesToSHACLV1(Step):
     """
     This step exports Rules to SHACL
     """
@@ -460,7 +460,7 @@ class ExportRulesToSHACL(Step):
         return FlowMessage(output_text=output_text)
 
 
-class ExportRulesToGraphCapturingSheet(Step):
+class ExportRulesToGraphCapturingSheetV1(Step):
     """
     This step generates graph capturing sheet
     """
@@ -500,7 +500,7 @@ class ExportRulesToGraphCapturingSheet(Step):
         return FlowMessage(output_text=output_text)
 
 
-class ExportRulesToExcel(Step):
+class ExportRulesToExcelV1(Step):
     description = "This step export Rules to Excel representation"
     version = "private-alpha"
     category = CATEGORY
@@ -516,7 +516,7 @@ class ExportRulesToExcel(Step):
         return FlowMessage(output_text="Generated Excel file from rules")
 
 
-class ExportDataModelStorage(Step):
+class ExportDataModelStorageV1(Step):
     """
     This step exports generated DMS Schema components to CDF
     """
@@ -632,7 +632,7 @@ class ExportDataModelStorage(Step):
             return FlowMessage(output_text=output_text)
 
 
-class ExportToExcel(Step):
+class ExportToExcelV1(Step):
     """This step exports rules to Excel"""
 
     description = "This step exports generated Excel rules."

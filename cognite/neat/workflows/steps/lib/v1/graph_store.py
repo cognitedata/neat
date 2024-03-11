@@ -9,12 +9,12 @@ from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
-__all__ = ["ConfigureDefaultGraphStores", "ResetGraphStores", "ConfigureGraphStore"]
+__all__ = ["ConfigureDefaultGraphStoresV1", "ResetGraphStoresV1", "ConfigureGraphStoreV1"]
 
-CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
+CATEGORY = __name__.split(".")[-1].replace("_", " ").title() + " [VERSION 1]"
 
 
-class ConfigureDefaultGraphStores(Step):
+class ConfigureDefaultGraphStoresV1(Step):
     """
     This step initializes the source and solution graph stores
     """
@@ -147,7 +147,7 @@ class ConfigureDefaultGraphStores(Step):
         )
 
 
-class ResetGraphStores(Step):
+class ResetGraphStoresV1(Step):
     """
     This step resets graph stores to their initial state (clears all data)
     """
@@ -178,7 +178,7 @@ class ResetGraphStores(Step):
             return FlowMessage(output_text="Stores already reset")
 
 
-class ConfigureGraphStore(Step):
+class ConfigureGraphStoreV1(Step):
     """
     This step initializes source OR solution graph store
     """

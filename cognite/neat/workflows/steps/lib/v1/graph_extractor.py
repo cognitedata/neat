@@ -19,20 +19,20 @@ from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
 __all__ = [
-    "ExtractGraphFromRdfFile",
-    "ExtractGraphFromRulesInstanceSheet",
-    "ExtractGraphFromGraphCapturingSheet",
-    "ExtractGraphFromMockGraph",
-    "ExtractGraphFromRulesDataModel",
-    "ExtractGraphFromJsonFile",
-    "ExtractGraphFromAvevaPiAssetFramework",
-    "ExtractGraphFromDexpiFile",
+    "ExtractGraphFromRdfFileV1",
+    "ExtractGraphFromRulesInstanceSheetV1",
+    "ExtractGraphFromGraphCapturingSheetV1",
+    "ExtractGraphFromMockGraphV1",
+    "ExtractGraphFromRulesDataModelV1",
+    "ExtractGraphFromJsonFileV1",
+    "ExtractGraphFromAvevaPiAssetFrameworkV1",
+    "ExtractGraphFromDexpiFileV1",
 ]
 
-CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
+CATEGORY = __name__.split(".")[-1].replace("_", " ").title() + " [VERSION 1]"
 
 
-class ExtractGraphFromRdfFile(Step):
+class ExtractGraphFromRdfFileV1(Step):
     """
     This step extract instances from a file into the source graph. The file must be in RDF format.
     """
@@ -85,7 +85,7 @@ class ExtractGraphFromRdfFile(Step):
         return FlowMessage(output_text="Instances loaded to source graph")
 
 
-class ExtractGraphFromDexpiFile(Step):
+class ExtractGraphFromDexpiFileV1(Step):
     """
     This step converts DEXPI P&ID (XML) into Knowledge Graph
     """
@@ -124,7 +124,7 @@ class ExtractGraphFromDexpiFile(Step):
         return FlowMessage(output_text="Instances loaded to source graph")
 
 
-class ExtractGraphFromGraphCapturingSheet(Step):
+class ExtractGraphFromGraphCapturingSheetV1(Step):
     """
     This step extracts nodes and edges from graph capture spreadsheet and load them into graph
     """
@@ -181,7 +181,7 @@ class ExtractGraphFromGraphCapturingSheet(Step):
         return FlowMessage(output_text="Graph capture sheet processed")
 
 
-class ExtractGraphFromMockGraph(Step):
+class ExtractGraphFromMockGraphV1(Step):
     """
     This step generate mock graph based on the defined classes and target number of instances
     """
@@ -232,7 +232,7 @@ class ExtractGraphFromMockGraph(Step):
         return FlowMessage(output_text=f"Mock graph generated containing total of {len(triples)} triples")
 
 
-class ExtractGraphFromRulesInstanceSheet(Step):
+class ExtractGraphFromRulesInstanceSheetV1(Step):
     """
     This step extracts instances from Rules object and loads them into the graph
     """
@@ -269,7 +269,7 @@ class ExtractGraphFromRulesInstanceSheet(Step):
         return FlowMessage(output_text=output_text)
 
 
-class ExtractGraphFromRulesDataModel(Step):
+class ExtractGraphFromRulesDataModelV1(Step):
     """
     This step extracts data model from rules file and loads it into source graph
     """
@@ -314,7 +314,7 @@ class ExtractGraphFromRulesDataModel(Step):
         return FlowMessage(output_text=output_text)
 
 
-class ExtractGraphFromJsonFile(Step):
+class ExtractGraphFromJsonFileV1(Step):
     """
     This step extracts instances from json file and loads them into a graph store. Warning : the step is experimental
     """
@@ -497,7 +497,7 @@ class ExtractGraphFromJsonFile(Step):
         )
 
 
-class ExtractGraphFromAvevaPiAssetFramework(Step):
+class ExtractGraphFromAvevaPiAssetFrameworkV1(Step):
     """
     This step extracts instances from Aveva PI AF and loads them into a graph store. Warning : the step is experimental
     """
