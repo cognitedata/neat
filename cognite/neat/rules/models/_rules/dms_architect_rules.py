@@ -435,8 +435,8 @@ class DMSRules(BaseRules):
             raise validation.MultiValueError(errors)
         return self
 
-    def as_schema(self) -> DMSSchema:
-        return _DMSExporter(self).to_schema()
+    def as_schema(self, standardize_casing: bool = True) -> DMSSchema:
+        return _DMSExporter(standardize_casing).to_schema(self)
 
     def as_information_architect_rules(self) -> "InformationRules":
         return _DMSRulesConverter(self).as_information_architect_rules()
@@ -453,24 +453,24 @@ class _DMSExporter:
 
     """
 
-    def __init__(self, rules: DMSRules):
-        self.rules = rules
+    def __init__(self, standardize_casing: bool = True):
+        self.standardize_casing = standardize_casing
 
-    def to_schema(self) -> DMSSchema:
+    def to_schema(self, rules: DMSRules) -> DMSSchema:
         default_version = "1"
-        default_space = self.rules.metadata.space
-        data_model = self.rules.metadata.as_data_model()
+        default_space = rules.metadata.space
+        data_model = rules.metadata.as_data_model()
 
         containers = dm.ContainerApplyList(
-            [dms_container.as_container(default_space) for dms_container in self.rules.containers or []]
+            [dms_container.as_container(default_space) for dms_container in rules.containers or []]
         )
-        views = dm.ViewApplyList(
-            [dms_view.as_view(default_space, default_version) for dms_view in self.rules.views or []]
-        )
+        views = dm.ViewApplyList([dms_view.as_view(default_space, default_version) for dms_view in rules.views or []])
 
         data_model.views = list(views.as_ids())
 
-        container_properties_by_id, view_properties_by_id = self._gather_properties(default_space, default_version)
+        container_properties_by_id, view_properties_by_id = self._gather_properties(
+            rules, default_space, default_version
+        )
 
         for container in containers:
             container_id = container.as_id()
@@ -577,7 +577,7 @@ class _DMSExporter:
             spaces = dm.SpaceApplyList([dm.SpaceApply(space=data_model.space)])
         else:
             spaces = dm.SpaceApplyList(
-                [self.rules.metadata.as_space()] + [dm.SpaceApply(space=space) for space in used_spaces]
+                [rules.metadata.as_space()] + [dm.SpaceApply(space=space) for space in used_spaces]
             )
 
         return DMSSchema(
@@ -588,11 +588,11 @@ class _DMSExporter:
         )
 
     def _gather_properties(
-        self, default_space: str, default_version: str
+        self, rules: DMSRules, default_space: str, default_version: str
     ) -> tuple[dict[dm.ContainerId, list[DMSProperty]], dict[dm.ViewId, list[DMSProperty]]]:
         container_properties_by_id: dict[dm.ContainerId, list[DMSProperty]] = defaultdict(list)
         view_properties_by_id: dict[dm.ViewId, list[DMSProperty]] = defaultdict(list)
-        for prop in self.rules.properties:
+        for prop in rules.properties:
             if prop.container and prop.container_property:
                 container_id = prop.container.as_id(default_space)
                 container_properties_by_id[container_id].append(prop)
