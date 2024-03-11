@@ -33,12 +33,10 @@ class DMSLoader(CogniteLoader[InstanceApply]):
         self.add_class_prefix = add_class_prefix
 
     @overload
-    def load(self, stop_on_exception: Literal[True]) -> Iterable[InstanceApply]:
-        ...
+    def load(self, stop_on_exception: Literal[True]) -> Iterable[InstanceApply]: ...
 
     @overload
-    def load(self, stop_on_exception: Literal[False] = False) -> Iterable[InstanceApply | ErrorDetails]:
-        ...
+    def load(self, stop_on_exception: Literal[False] = False) -> Iterable[InstanceApply | ErrorDetails]: ...
 
     def load(self, stop_on_exception: bool = False) -> Iterable[InstanceApply | ErrorDetails]:
         """Load the graph with data."""
@@ -55,6 +53,7 @@ class DMSLoader(CogniteLoader[InstanceApply]):
         }
 
         for class_name, triples in self._iterate_class_triples(exclude_classes=exclude):
+            logging.info(f"<DMSLoader> Processing class : {class_name}")
             counter = 0
             start_time = datetime_utc_now()
             for instance_dict in triples2dictionary(triples).values():
