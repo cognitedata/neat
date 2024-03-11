@@ -314,7 +314,6 @@ class _InformationRulesConverter:
             for cls_ in self.information.classes
         ]
 
-        containers: list[DMSContainer] = []
         classes_without_properties: set[str] = set()
         for class_ in self.information.classes:
             properties: list[DMSProperty] = properties_by_class.get(class_.class_.versioned_id, [])
@@ -322,8 +321,11 @@ class _InformationRulesConverter:
                 isinstance(prop.value_type, ViewEntity) and prop.relation != "direct" for prop in properties
             ):
                 classes_without_properties.add(class_.class_.versioned_id)
-                continue
 
+        containers: list[DMSContainer] = []
+        for class_ in self.information.classes:
+            if class_.class_.versioned_id in classes_without_properties:
+                continue
             containers.append(
                 DMSContainer(
                     class_=class_.class_,
@@ -335,7 +337,7 @@ class _InformationRulesConverter:
                             suffix=parent.suffix,
                         )
                         for parent in class_.parent or []
-                        if parent.id not in classes_without_properties
+                        if parent.versioned_id not in classes_without_properties
                     ]
                     or None,
                 )

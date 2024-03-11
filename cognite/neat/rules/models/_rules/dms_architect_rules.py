@@ -406,6 +406,20 @@ class DMSRules(BaseRules):
                             url=None,
                         )
                     )
+            for _container_no, container in enumerate(self.containers or []):
+                for constraint_no, constraint in enumerate(container.constraint or []):
+                    if constraint.as_id(self.metadata.space) not in defined_containers:
+                        errors.append(
+                            validation.ReferenceNonExistingContainer(
+                                column="Constraint",
+                                row=constraint_no,
+                                type="value_error.missing",
+                                container_id=constraint.as_id(self.metadata.space),
+                                msg="",
+                                input=None,
+                                url=None,
+                            )
+                        )
         if errors:
             raise validation.MultiValueError(errors)
         return self
@@ -517,8 +531,10 @@ class _DMSExporter:
                         if isinstance(prop.value_type, ViewEntity):
                             source = prop.value_type.as_id(default_space, default_version)
                         else:
-                            # Probably we will not have this case, but just in case
-                            source = dm.ViewId(default_space, prop.value_type.suffix, default_version)
+                            raise ValueError(
+                                "Direct relation must have a view as value type. "
+                                "This should have been validated in the rules"
+                            )
 
                         view_property = dm.MappedPropertyApply(
                             container=prop.container.as_id(default_space),
@@ -538,11 +554,13 @@ class _DMSExporter:
                     if isinstance(prop.value_type, ViewEntity):
                         source = prop.value_type.as_id(default_space, default_version)
                     else:
-                        # CRITICAL COMMENT: NOT SURE WHY IS THIS ALLOWED!?
-                        source = dm.ViewId(default_space, prop.value_type.suffix, default_version)
+                        raise ValueError(
+                            "Multiedge relation must have a view as value type. "
+                            "This should have been validated in the rules"
+                        )
                     view_property = dm.MultiEdgeConnectionApply(
                         type=dm.DirectRelationReference(
-                            space=default_space,
+                            space=source.space,
                             external_id=f"{prop.view.external_id}.{prop.view_property}",
                         ),
                         source=source,
@@ -552,8 +570,18 @@ class _DMSExporter:
                     continue
                 view.properties[prop.view_property] = view_property
 
+        used_spaces = {container.space for container in containers} | {view.space for view in views}
+        if len(used_spaces) == 1:
+            # We skip the default space and only use this space for the data model
+            data_model.space = used_spaces.pop()
+            spaces = dm.SpaceApplyList([dm.SpaceApply(space=data_model.space)])
+        else:
+            spaces = dm.SpaceApplyList(
+                [self.rules.metadata.as_space()] + [dm.SpaceApply(space=space) for space in used_spaces]
+            )
+
         return DMSSchema(
-            spaces=dm.SpaceApplyList([self.rules.metadata.as_space()]),
+            spaces=spaces,
             data_models=dm.DataModelApplyList([data_model]),
             views=views,
             containers=containers,

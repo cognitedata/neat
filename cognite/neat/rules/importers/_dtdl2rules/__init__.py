@@ -1,3 +1,3 @@
-from ._dtdl2rules import DTDLImporter
+from .dtdl_importer import DTDLImporter
 
 __all__ = ["DTDLImporter"]
