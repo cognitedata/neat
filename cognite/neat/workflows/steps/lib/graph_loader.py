@@ -25,6 +25,7 @@ from cognite.neat.graph.loaders.core.rdf_to_relationships import (
 )
 from cognite.neat.graph.loaders.rdf_to_dms import upload_edges, upload_nodes
 from cognite.neat.graph.loaders.validator import validate_asset_hierarchy
+from cognite.neat.rules.models.rdfpath import TransformationRuleType
 from cognite.neat.utils.utils import generate_exception_report
 from cognite.neat.workflows._exceptions import StepFlowContextNotInitialized, StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
@@ -106,6 +107,12 @@ class GenerateNodesAndEdgesFromGraph(Step):
                    fail_and_report - failed instance  (node or edge) will fail the workflow and report the error"
             ),
         ),
+        Configurable(
+            name="apply_basic_transformation",
+            value="True",
+            options=["True", "False"],
+            label=("Whether to apply basic transformations rules (rdfpath) or not. Default is True."),
+        ),
     ]
 
     def run(  # type: ignore[override, syntax]
@@ -127,7 +134,19 @@ class GenerateNodesAndEdgesFromGraph(Step):
             graph = cast(SourceGraph | SolutionGraph, self.flow_context["SourceGraph"])
 
         add_class_prefix = True if self.configs["add_class_prefix"] == "True" else False
-        loader = loaders.DMSLoader(rules.rules, graph.graph, add_class_prefix=add_class_prefix)
+        apply_basic_transformation = True if self.configs.get("apply_basic_transformation", "True") == "True" else False
+
+        if apply_basic_transformation:
+            final_rules = rules.rules
+        else:
+            logging.debug("Basic transformation rules are not applied to the graph")
+            final_rules = rules.rules.model_copy(deep=True)
+            prefix = final_rules.metadata.prefix
+            for rule in final_rules.properties.values():
+                rule.rule_type = TransformationRuleType.rdfpath
+                rule.rule = f"{prefix}:{rule.class_id}({prefix}:{rule.property_id})"
+
+        loader = loaders.DMSLoader(final_rules, graph.graph, add_class_prefix=add_class_prefix)
         nodes, edges, exceptions = loader.as_nodes_and_edges(stop_on_exception=False)
 
         msg = f"Total count of: <ul><li>{ len(nodes) } nodes</li><li>{ len(edges) } edges</li></ul>"
