@@ -25,6 +25,7 @@ from cognite.neat.graph.loaders.core.rdf_to_relationships import (
 )
 from cognite.neat.graph.loaders.rdf_to_dms import upload_edges, upload_nodes
 from cognite.neat.graph.loaders.validator import validate_asset_hierarchy
+from cognite.neat.rules.models.rdfpath import TransformationRuleType
 from cognite.neat.utils.utils import generate_exception_report
 from cognite.neat.workflows._exceptions import StepFlowContextNotInitialized, StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
@@ -142,7 +143,7 @@ class GenerateNodesAndEdgesFromGraph(Step):
             final_rules = rules.rules.model_copy(deep=True)
             prefix = final_rules.metadata.prefix
             for rule in final_rules.properties.values():
-                rule.rule_type = "rdfpath"
+                rule.rule_type = TransformationRuleType.rdfpath
                 rule.rule = f"{prefix}:{rule.class_id}({prefix}:{rule.property_id})"
 
         loader = loaders.DMSLoader(final_rules, graph.graph, add_class_prefix=add_class_prefix)
