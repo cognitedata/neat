@@ -161,7 +161,7 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
                 for prop_name in parent.properties.keys():
                     dumped["properties"].pop(prop_name, None)
 
-        if not dumped["properties"]:
+        if "properties" in dumped and not dumped["properties"]:
             # All properties were removed, so we remove the properties key.
             dumped.pop("properties", None)
         return dumped
