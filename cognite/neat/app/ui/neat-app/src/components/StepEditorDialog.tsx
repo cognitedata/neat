@@ -295,13 +295,12 @@ return (
               variant="outlined"
               onChange={(event) => { handleStepConfigChange("stype", event.target.value) }}
             >
-              <MenuItem value="stdstep">Step from standard library</MenuItem>
-              <MenuItem value="pystep">Python function</MenuItem>
-              <MenuItem value="http_trigger">HTTP trigger</MenuItem>
+              <MenuItem value="stdstep">Step library</MenuItem>
+              <MenuItem value="file_uploader">File uploader</MenuItem>
+              <MenuItem value="http_trigger">Workflow trigger</MenuItem>
+              <MenuItem value="start_workflow_task_step">Multi-workflow trigger</MenuItem>
               <MenuItem value="time_trigger">Time trigger</MenuItem>
               <MenuItem value="wait_for_event">Wait for event</MenuItem>
-              <MenuItem value="start_workflow_task_step">Start workflow</MenuItem>
-              <MenuItem value="file_uploader">File uploader</MenuItem>
             </Select>
           </FormControl>
           <FormControl sx={{ marginTop: 1 }} fullWidth >

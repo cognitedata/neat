@@ -5,7 +5,7 @@ from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
 from cognite.neat.graph.stores import MemoryStore
 from cognite.neat.rules.exporter._core.rules2labels import get_labels
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph
-from cognite.neat.workflows.steps.lib.graph_loader import GenerateAssetsFromGraph
+from cognite.neat.workflows.steps.lib.v1.graph_loader import GenerateAssetsFromGraph
 
 
 def test_graph_loader_clean_orphans(solution_knowledge_graph_dirty, transformation_rules, mock_cdf_assets):

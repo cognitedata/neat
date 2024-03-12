@@ -1,0 +1,270 @@
+configs: []
+description: null
+implementation_module: null
+name: Extract RDF Graph and Generate Assets
+steps:
+  - complex_configs: {}
+    configs: {}
+    description: null
+    enabled: true
+    id: step_http_trigger
+    label: Process trigger
+    max_retries: 0
+    method: null
+    params:
+      workflow_start_method: persistent_blocking
+    retry_delay: 3
+    stype: http_trigger
+    system_component_id: null
+    transition_to:
+      - step_rules_loader
+    trigger: true
+    ui_config:
+      pos_x: 454
+      pos_y: 77
+  - complex_configs: {}
+    configs:
+      file_name: Rules-Nordic44-to-TNT.xlsx
+      validation_report_file: rules_validation_report.txt
+      validation_report_storage_dir: rules_validation_report
+      version: ""
+    description: null
+    enabled: true
+    id: step_rules_loader
+    label: Rules loader
+    max_retries: 0
+    method: ImportExcelToRules
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+      - step_234135
+      - step_configure_source_graph_store
+    trigger: false
+    ui_config:
+      pos_x: 452
+      pos_y: 167
+  - complex_configs: {}
+    configs:
+      add_base_iri: "True"
+      file_path: source-graphs/Knowledge-Graph-Nordic44-dirty.xml
+      mime_type: application/rdf+xml
+    description: null
+    enabled: true
+    id: step_graph_loader
+    label: Extract Graph from RDF File
+    max_retries: 0
+    method: ExtractGraphFromRdfFile
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+      - step_transform
+    trigger: false
+    ui_config:
+      pos_x: 453
+      pos_y: 418
+  - complex_configs: {}
+    configs:
+      cdf_lookup_database: ""
+    description: null
+    enabled: true
+    id: step_transform
+    label: Transform graph
+    max_retries: 0
+    method: TransformSourceToSolutionGraph
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to: []
+    trigger: false
+    ui_config:
+      pos_x: 453
+      pos_y: 500
+  - complex_configs: {}
+    configs:
+      asset_external_id_prefix: ""
+      assets_cleanup_type: full
+      data_set_id: "2626756768281823"
+    description: null
+    enabled: true
+    id: step_generate_assets
+    label: Generate cdf assets
+    max_retries: 0
+    method: GenerateAssetsFromGraph
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+      - step_generate_relationships
+    trigger: false
+    ui_config:
+      pos_x: 455
+      pos_y: 571
+  - complex_configs: {}
+    configs:
+      data_set_id: "2626756768281823"
+      relationship_external_id_prefix: ""
+    description: null
+    enabled: true
+    id: step_generate_relationships
+    label: Generate relationships
+    max_retries: 0
+    method: GenerateRelationshipsFromGraph
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to: []
+    trigger: false
+    ui_config:
+      pos_x: 456
+      pos_y: 633
+  - complex_configs: {}
+    configs:
+      db_server_api_root_url: ""
+      disk_store_dir: nordic44-graph-store
+      graph_name: source
+      init_procedure: reset
+      sparql_query_url: ""
+      sparql_update_url: ""
+      store_type: oxigraph
+    description: null
+    enabled: true
+    id: step_configure_source_graph_store
+    label: Configure source graph store
+    max_retries: 0
+    method: ConfigureGraphStore
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+      - step_configure_solution_graph_store
+    trigger: false
+    ui_config:
+      pos_x: 451
+      pos_y: 245
+  - complex_configs: {}
+    configs:
+      db_server_api_root_url: ""
+      disk_store_dir: solution-graph-store-4
+      graph_name: solution
+      init_procedure: reset
+      sparql_query_url: ""
+      sparql_update_url: ""
+      store_type: oxigraph
+    description: null
+    enabled: true
+    id: step_configure_solution_graph_store
+    label: Configure solution graph store
+    max_retries: 0
+    method: ConfigureGraphStore
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+      - step_graph_loader
+    trigger: false
+    ui_config:
+      pos_x: 454
+      pos_y: 334
+system_components:
+  - description: null
+    id: grid_management_system
+    label: Grid management system
+    transition_to:
+      - rdf_xml_file
+    ui_config:
+      pos_x: 171
+      pos_y: 6
+  - description: null
+    id: rdf_xml_file
+    label: RDF XML File
+    transition_to:
+      - graph_db_store
+    ui_config:
+      pos_x: 170
+      pos_y: 103
+  - description: null
+    id: graph_db_store
+    label: OxiGraph source graph_store
+    transition_to:
+      - transformer
+    ui_config:
+      pos_x: 240
+      pos_y: 177
+  - description: null
+    id: in_memmory_store
+    label: In-memory source graph_store
+    transition_to: []
+    ui_config:
+      pos_x: 73
+      pos_y: 175
+  - description: null
+    id: transformation_rules
+    label: Transformation rules
+    transition_to:
+      - transformer
+    ui_config:
+      pos_x: 413
+      pos_y: 195
+  - description: null
+    id: cdf_raw_table
+    label: Cdf raw lookup table
+    transition_to:
+      - transformer
+    ui_config:
+      pos_x: 586
+      pos_y: 195
+  - description: null
+    id: transformer
+    label: Transformer
+    transition_to:
+      - solution_graph
+    ui_config:
+      pos_x: 237
+      pos_y: 329
+  - description: null
+    id: solution_graph
+    label: Solution graph
+    transition_to:
+      - cdf_classic_exporter
+    ui_config:
+      pos_x: 237
+      pos_y: 405
+  - description: null
+    id: cdf_classic_exporter
+    label: CDF Classic exporter
+    transition_to:
+      - cdf_classic
+    ui_config:
+      pos_x: 181
+      pos_y: 498
+  - description: null
+    id: cdf_fdm_exporter
+    label: CDF FDM exporter
+    transition_to:
+      - cdf_fdm
+    ui_config:
+      pos_x: 345
+      pos_y: 498
+  - description: null
+    id: cdf_classic
+    label: CDF Classic (Asset,Relationships)
+    transition_to: []
+    ui_config:
+      pos_x: 182
+      pos_y: 586
+  - description: null
+    id: cdf_fdm
+    label: CDF FDM
+    transition_to: []
+    ui_config:
+      pos_x: 347
+      pos_y: 586

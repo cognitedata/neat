@@ -9,12 +9,12 @@ from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
-__all__ = ["ConfigureDefaultGraphStoresV1", "ResetGraphStoresV1", "ConfigureGraphStoreV1"]
+__all__ = ["ResetGraphStores", "ConfigureGraphStore"]
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title() + " [VERSION 1]"
 
 
-class ConfigureDefaultGraphStoresV1(Step):
+class ConfigureDefaultGraphStores(Step):
     """
     This step initializes the source and solution graph stores
     """
@@ -147,7 +147,7 @@ class ConfigureDefaultGraphStoresV1(Step):
         )
 
 
-class ResetGraphStoresV1(Step):
+class ResetGraphStores(Step):
     """
     This step resets graph stores to their initial state (clears all data)
     """
@@ -178,13 +178,13 @@ class ResetGraphStoresV1(Step):
             return FlowMessage(output_text="Stores already reset")
 
 
-class ConfigureGraphStoreV1(Step):
+class ConfigureGraphStore(Step):
     """
     This step initializes source OR solution graph store
     """
 
     description = "This step initializes the source and solution graph stores."
-    version = "private-beta"
+    version = "private-alpha"
     category = CATEGORY
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
@@ -268,11 +268,11 @@ def reset_store(data_store_dir: Path | None, graph_store: stores.NeatGraphStoreB
     if isinstance(graph_store, stores.OxiGraphStore):
         if graph_store:
             graph_store.drop()
-            graph_store.reinit_graph()
+            graph_store.reinitialize_graph()
         elif data_store_dir:
             graph_store.drop_graph_store_storage(data_store_dir)
     elif isinstance(graph_store, stores.GraphDBStore):
         if graph_store:
             graph_store.drop()
-            graph_store.reinit_graph()
+            graph_store.reinitialize_graph()
     return None

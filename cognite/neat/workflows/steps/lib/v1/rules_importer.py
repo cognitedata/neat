@@ -24,15 +24,14 @@ from cognite.neat.workflows.steps.step_model import Configurable, Step
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title() + " [VERSION 1]"
 
 __all__ = [
-    "ImportExcelToRulesV1",
-    "ImportOpenApiToRulesV1",
-    "ImportArbitraryJsonYamlToRulesV1",
-    "ImportGraphToRulesV1",
-    "ImportOntologyToRulesV1",
+    "ImportExcelToRules",
+    "ImportOpenApiToRules",
+    "ImportGraphToRules",
+    "ImportOntologyToRules",
 ]
 
 
-class ImportExcelToRulesV1(Step):
+class ImportExcelToRules(Step):
     """
     This step import rules from the Excel file
     """
@@ -129,7 +128,7 @@ class ImportExcelToRulesV1(Step):
         return FlowMessage(output_text=output_text), RulesData(rules=rules)
 
 
-class ImportOntologyToRulesV1(Step):
+class ImportOntologyToRules(Step):
     """The step extracts schema from OpenApi/Swagger specification and generates NEAT transformation rules object."""
 
     description = "The step extracts NEAT rules object from OWL Ontology and \
@@ -186,7 +185,7 @@ class ImportOntologyToRulesV1(Step):
         return FlowMessage(output_text=output_text)
 
 
-class ImportOpenApiToRulesV1(Step):
+class ImportOpenApiToRules(Step):
     """The step extracts schema from OpenApi/Swagger specification and generates NEAT transformation rules object."""
 
     description = "The step extracts schema from OpenAPI specification and generates NEAT transformation rules object. \
@@ -373,7 +372,7 @@ class ImportOpenApiToRulesV1(Step):
         return datatype
 
 
-class ImportArbitraryJsonYamlToRulesV1(Step):
+class ImportArbitraryJsonYamlToRules(Step):
     """The step extracts schema from arbitrary json or yaml file and generates NEAT transformation rules object."""
 
     description = "The step extracts schema from arbitrary json file and generates NEAT transformation rules object."
@@ -559,7 +558,7 @@ def create_fdm_compatibility_class_name(input_string: str):
         return input_string
 
 
-class ImportGraphToRulesV1(Step):
+class ImportGraphToRules(Step):
     """The step extracts data model from RDF graph and generates NEAT transformation rules object."""
 
     description = "The step extracts data model from RDF graph and generates NEAT transformation rules object. \

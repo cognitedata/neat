@@ -8,35 +8,32 @@ from cognite.client import data_modeling as dm
 
 import cognite.neat.graph.extractors._graph_capturing_sheet
 from cognite.neat.exceptions import wrangle_warnings
-from cognite.neat.rules import exporter, exporters
-from cognite.neat.rules._shared import Rules
+from cognite.neat.rules import exporter
 from cognite.neat.rules.exporter._rules2dms import DMSSchemaComponents
 from cognite.neat.rules.exporter._rules2graphql import GraphQLSchema
 from cognite.neat.rules.exporter._rules2ontology import Ontology
 from cognite.neat.utils.utils import generate_exception_report
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
-from cognite.neat.workflows.steps.data_contracts import CogniteClient, DMSSchemaComponentsData, MultiRuleData, RulesData
+from cognite.neat.workflows.steps.data_contracts import CogniteClient, DMSSchemaComponentsData, RulesData
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
 __all__ = [
-    "ExportDMSSchemaComponentsToYAMLV1",
-    "ExportDMSSchemaComponentsToCDFV1",
-    "ExportRulesToGraphQLSchemaV1",
-    "ExportRulesToOntologyV1",
-    "ExportRulesToSHACLV1",
-    "ExportRulesToGraphCapturingSheetV1",
-    "ExportRulesToExcelV1",
-    "GenerateDMSSchemaComponentsFromRulesV1",
-    "DeleteDMSSchemaComponentsV1",
-    "ExportDataModelStorageV1",
-    "ExportToExcelV1",
+    "ExportDMSSchemaComponentsToYAML",
+    "ExportDMSSchemaComponentsToCDF",
+    "ExportRulesToGraphQLSchema",
+    "ExportRulesToOntology",
+    "ExportRulesToSHACL",
+    "ExportRulesToGraphCapturingSheet",
+    "ExportRulesToExcel",
+    "GenerateDMSSchemaComponentsFromRules",
+    "DeleteDMSSchemaComponents",
 ]
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title() + " [VERSION 1]"
 
 
-class GenerateDMSSchemaComponentsFromRulesV1(Step):
+class GenerateDMSSchemaComponentsFromRules(Step):
     """
     This step generates DMS Schema components, such as data model, views, containers, etc. from Rules.
     """
@@ -63,7 +60,7 @@ class GenerateDMSSchemaComponentsFromRulesV1(Step):
         return FlowMessage(output_text=output_text), DMSSchemaComponentsData(components=data_model)
 
 
-class ExportDMSSchemaComponentsToYAMLV1(Step):
+class ExportDMSSchemaComponentsToYAML(Step):
     """
     This step exports DMS schema components as YAML files
     """
@@ -137,7 +134,7 @@ class ExportDMSSchemaComponentsToYAMLV1(Step):
             )
 
 
-class ExportDMSSchemaComponentsToCDFV1(Step):
+class ExportDMSSchemaComponentsToCDF(Step):
     """
     This step exports generated DMS Schema components to CDF
     """
@@ -226,7 +223,7 @@ class ExportDMSSchemaComponentsToCDFV1(Step):
             return FlowMessage(output_text=output_text)
 
 
-class DeleteDMSSchemaComponentsV1(Step):
+class DeleteDMSSchemaComponents(Step):
     """
     This step deletes DMS Schema components
     """
@@ -301,7 +298,7 @@ class DeleteDMSSchemaComponentsV1(Step):
             return FlowMessage(output_text=output_text)
 
 
-class ExportRulesToGraphQLSchemaV1(Step):
+class ExportRulesToGraphQLSchema(Step):
     """
     This step generates GraphQL schema from data model defined in transformation rules
     """
@@ -351,7 +348,7 @@ class ExportRulesToGraphQLSchemaV1(Step):
         return FlowMessage(output_text=output_text)
 
 
-class ExportRulesToOntologyV1(Step):
+class ExportRulesToOntology(Step):
     """
     This step exports Rules to OWL ontology
     """
@@ -407,7 +404,7 @@ class ExportRulesToOntologyV1(Step):
         return FlowMessage(output_text=output_text)
 
 
-class ExportRulesToSHACLV1(Step):
+class ExportRulesToSHACL(Step):
     """
     This step exports Rules to SHACL
     """
@@ -460,7 +457,7 @@ class ExportRulesToSHACLV1(Step):
         return FlowMessage(output_text=output_text)
 
 
-class ExportRulesToGraphCapturingSheetV1(Step):
+class ExportRulesToGraphCapturingSheet(Step):
     """
     This step generates graph capturing sheet
     """
@@ -500,7 +497,7 @@ class ExportRulesToGraphCapturingSheetV1(Step):
         return FlowMessage(output_text=output_text)
 
 
-class ExportRulesToExcelV1(Step):
+class ExportRulesToExcel(Step):
     description = "This step export Rules to Excel representation"
     version = "private-alpha"
     category = CATEGORY
@@ -514,170 +511,3 @@ class ExportRulesToExcelV1(Step):
         full_path = Path(self.data_store_path) / Path(self.configs["output_file_path"])
         exporter.ExcelExporter.from_rules(rules=rules_data.rules).export_to_file(filepath=full_path)
         return FlowMessage(output_text="Generated Excel file from rules")
-
-
-class ExportDataModelStorageV1(Step):
-    """
-    This step exports generated DMS Schema components to CDF
-    """
-
-    description = "This step exports generated DMS Schema to CDF."
-    version = "private-beta"
-    category = CATEGORY
-
-    configurables: ClassVar[list[Configurable]] = [
-        Configurable(
-            name="dry_run",
-            value="False",
-            label=("Whether to perform a dry run of the export. "),
-            options=["True", "False"],
-        ),
-        Configurable(
-            name="components",
-            type="multi_select",
-            value="",
-            label="Select which DMS schema component(s) to export to CDF",
-            options=["spaces", "containers", "views", "data_models"],
-        ),
-        Configurable(
-            name="existing_component_handling",
-            value="fail",
-            label=(
-                "How to handle situation when components being exported in CDF already exist."
-                "Fail the step if any component already exists, "
-                "Skip the component if it already exists, "
-                " or Update the component try to update the component."
-            ),
-            options=["fail", "skip", "update"],
-        ),
-        Configurable(
-            name="multi_space_components_create",
-            value="False",
-            label=(
-                "Whether to create only components belonging to the data model space"
-                " (i.e. space define under Metadata sheet of Rules), "
-                "or also additionally components outside of the data model space."
-            ),
-            options=["True", "False"],
-        ),
-    ]
-
-    def run(self, rules: MultiRuleData, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override, syntax]
-        if self.configs is None or self.data_store_path is None:
-            raise StepNotInitialized(type(self).__name__)
-        existing_components_handling = cast(
-            Literal["fail", "update", "skip"], self.configs["existing_component_handling"]
-        )
-        multi_space_components_create: bool = self.configs["multi_space_components_create"] == "True"
-        components_to_create = {
-            cast(Literal["all", "spaces", "data_models", "views", "containers"], key)
-            for key, value in self.complex_configs["components"].items()
-            if value
-        }
-        dry_run = self.configs["dry_run"] == "True"
-
-        if not components_to_create:
-            return FlowMessage(
-                error_text="No DMS Schema components selected for upload! Please select minimum one!",
-                step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
-            )
-        dms_rules = rules.dms
-        if dms_rules is None:
-            return FlowMessage(
-                error_text="Missing DMS rules in the input data! Please ensure that a DMS rule is provided!",
-                step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
-            )
-
-        dms_exporter = exporters.DMSExporter(
-            export_components=frozenset(components_to_create),
-            include_space=None if multi_space_components_create else {dms_rules.metadata.space},
-            existing_handling=existing_components_handling,
-        )
-
-        output_dir = self.data_store_path / Path("staging")
-        output_dir.mkdir(parents=True, exist_ok=True)
-        schema_zip = f"{dms_rules.metadata.external_id}.zip"
-        schema_full_path = output_dir / schema_zip
-        dms_exporter.export_to_file(schema_full_path, dms_rules)
-
-        report_lines = ["# DMS Schema Export to CDF\n\n"]
-        errors = []
-        for result in dms_exporter.export_to_cdf(client=cdf_client, rules=dms_rules, dry_run=dry_run):
-            report_lines.append(result.as_report_str())
-            errors.extend(result.error_messages)
-
-        report_lines.append("\n\n# ERRORS\n\n")
-        report_lines.extend(errors)
-
-        output_dir = self.data_store_path / Path("staging")
-        output_dir.mkdir(parents=True, exist_ok=True)
-        report_file = "dms_component_creation_report.txt"
-        report_full_path = output_dir / report_file
-        report_full_path.write_text("\n".join(report_lines))
-
-        output_text = (
-            "<p></p>"
-            "Download DMS Export Report"
-            f'<a href="/data/staging/{report_file}?{time.time()}" '
-            f'target="_blank">report</a>'
-            "<p></p>"
-            "Download DMS exported schema"
-            f'- <a href="/data/staging/{schema_zip}?{time.time()}" '
-            f'target="_blank">{schema_zip}</a>'
-        )
-
-        if errors:
-            return FlowMessage(error_text=output_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
-        else:
-            return FlowMessage(output_text=output_text)
-
-
-class ExportToExcelV1(Step):
-    """This step exports rules to Excel"""
-
-    description = "This step exports generated Excel rules."
-    version = "private-beta"
-    category = CATEGORY
-
-    configurables: ClassVar[list[Configurable]] = [
-        Configurable(
-            name="styling",
-            value="default",
-            label="Styling of the Excel file",
-            options=list(exporters.ExcelExporter.style_options),
-        ),
-    ]
-
-    def run(self, rules: MultiRuleData) -> FlowMessage:  # type: ignore[override, syntax]
-        if self.configs is None or self.data_store_path is None:
-            raise StepNotInitialized(type(self).__name__)
-
-        styling = cast(exporters.ExcelExporter.Style, self.configs.get("styling", "default"))
-
-        excel_exporter = exporters.ExcelExporter(styling=styling)
-
-        rule_instance: Rules
-        if rules.domain:
-            rule_instance = rules.domain
-        elif rules.information:
-            rule_instance = rules.information
-        elif rules.dms:
-            rule_instance = rules.dms
-        else:
-            output_errors = "No rules provided for export!"
-            return FlowMessage(error_text=output_errors, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
-
-        output_dir = self.data_store_path / Path("staging")
-        output_dir.mkdir(parents=True, exist_ok=True)
-        file_name = f"exported_rules_{rule_instance.metadata.role.value}.xlsx"
-        filepath = output_dir / file_name
-        excel_exporter.export_to_file(filepath, rule_instance)
-
-        output_text = (
-            "<p></p>"
-            f"Download Excel Exported {rule_instance.metadata.role.value} rules: "
-            f'- <a href="/data/staging/{file_name}?{time.time()}" '
-            f'target="_blank">{file_name}</a>'
-        )
-
-        return FlowMessage(output_text=output_text)

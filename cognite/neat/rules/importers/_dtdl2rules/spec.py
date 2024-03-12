@@ -72,7 +72,8 @@ class DTMI(BaseModel):
             exclude_none: bool = False,
             round_trip: bool = False,
             warnings: bool = True,
-        ) -> str: ...
+        ) -> str:
+            ...
 
 
 IRI: TypeAlias = str
@@ -123,7 +124,8 @@ class Unit(BaseModel, ABC):
             exclude_none: bool = False,
             round_trip: bool = False,
             warnings: bool = True,
-        ) -> str: ...
+        ) -> str:
+            ...
 
 
 class DTDLBase(BaseModel, ABC):
@@ -346,12 +348,7 @@ class Interface(DTDLBase):
 
 
 DTDL_CLS_BY_TYPE_BY_SPEC: dict[str, dict[str, type[DTDLBase]]] = {}
-to_check = list(DTDLBase.__subclasses__())
-while to_check:
-    cls = to_check.pop()
-    to_check.extend(cls.__subclasses__())
-    if ABC in cls.__bases__:
-        continue
-    for spec in cls.spec_version:
-        DTDL_CLS_BY_TYPE_BY_SPEC.setdefault(spec, {})[cls.type] = cls
-del cls, to_check, spec
+# while to_check:
+#     if ABC in cls.__bases__:
+#     for spec in cls.spec_version:
+# del cls, to_check, spec

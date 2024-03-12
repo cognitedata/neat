@@ -16,12 +16,12 @@ from cognite.neat.workflows.steps.step_model import Configurable, Step
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
 
 __all__ = [
-    "ImportExcelToRules",
-    "ImportDMSToRules",
+    "ExcelToRules",
+    "DMSToRules",
 ]
 
 
-class ImportExcelToRules(Step):
+class ExcelToRules(Step):
     """This step import rules from the Excel file and validates it."""
 
     description = "This step imports rules from an excel file "
@@ -29,13 +29,20 @@ class ImportExcelToRules(Step):
     category = CATEGORY
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
-            name="Report Formatter",
+            name="File name",
+            value="",
+            label="Full file name of the rules file in the rules folder. \
+                If not provided, step will attempt to get file name from payload \
+                    of 'File Uploader' step (if exist)",
+        ),
+        Configurable(
+            name="Report formatter",
             value=next(iter(FORMATTER_BY_NAME.keys())),
             label="The format of the report for the validation of the rules",
             options=list(FORMATTER_BY_NAME),
         ),
         Configurable(
-            name="role",
+            name="Role",
             value="infer",
             label="For what role Rules are intended?",
             options=["infer", *RoleTypes.__members__.keys()],
@@ -45,13 +52,20 @@ class ImportExcelToRules(Step):
     def run(self, flow_message: FlowMessage) -> (FlowMessage, MultiRuleData):  # type: ignore[syntax, override]
         if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
-        try:
-            rules_file_path = flow_message.payload["full_path"]
-        except (KeyError, TypeError):
-            error_text = "Expected input payload to contain 'full_path' key."
+
+        file_name = self.configs.get("File name", None)
+        full_path = flow_message.payload.get("full_path", None) if flow_message.payload else None
+
+        if file_name:
+            rules_file_path = Path(self.data_store_path) / "rules" / file_name
+        elif full_path:
+            rules_file_path = full_path
+        else:
+            error_text = "Expected either 'File name' in the step config or 'File uploader' step uploading Excel Rules."
             return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
+
         # if role is None, it will be inferred from the rules file
-        role = self.configs.get("role")
+        role = self.configs.get("Role")
         role_enum = None
         if role != "infer" and role is not None:
             role_enum = RoleTypes[role]
@@ -61,7 +75,7 @@ class ImportExcelToRules(Step):
 
         if rules is None:
             output_dir = self.data_store_path / Path("staging")
-            report_writer = FORMATTER_BY_NAME[self.configs["Report Formatter"]]()
+            report_writer = FORMATTER_BY_NAME[self.configs["Report formatter"]]()
             report_writer.write_to_file(issues, file_or_dir_path=output_dir)
             report_file = report_writer.default_file_name
             error_text = (
@@ -76,7 +90,7 @@ class ImportExcelToRules(Step):
         return FlowMessage(output_text=output_text), MultiRuleData.from_rules(rules)
 
 
-class ImportDMSToRules(Step):
+class DMSToRules(Step):
     """This step imports rules from CDF Data Model"""
 
     description = "This step imports rules from CDF Data Model"
@@ -84,20 +98,20 @@ class ImportDMSToRules(Step):
     category = CATEGORY
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
-            name="Data Model ID",
+            name="Data model id",
             value="",
             label="The ID of the Data Model to import. Written at 'my_space:my_data_model(version=1)'",
             type="string",
             required=True,
         ),
         Configurable(
-            name="Report Formatter",
+            name="Report formatter",
             value=next(iter(FORMATTER_BY_NAME.keys())),
             label="The format of the report for the validation of the rules",
             options=list(FORMATTER_BY_NAME),
         ),
         Configurable(
-            name="role",
+            name="Role",
             value="infer",
             label="For what role Rules are intended?",
             options=["infer", *RoleTypes.__members__.keys()],
@@ -108,15 +122,15 @@ class ImportDMSToRules(Step):
         if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
 
-        datamodel_id_str = self.configs.get("Data Model ID")
+        datamodel_id_str = self.configs.get("Data model id")
         if datamodel_id_str is None:
-            error_text = "Expected input payload to contain 'Data Model ID' key."
+            error_text = "Expected input payload to contain 'Data model id' key."
             return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
 
         datamodel_entity = DataModelEntity.from_raw(datamodel_id_str)
         if datamodel_entity.space is Undefined:
             error_text = (
-                f"Data Model ID should be in the format 'my_space:my_data_model(version=1)' "
+                f"Data model id should be in the format 'my_space:my_data_model(version=1)' "
                 f"or 'my_space:my_data_model', failed to parse space from {datamodel_id_str}"
             )
             return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
@@ -124,7 +138,7 @@ class ImportDMSToRules(Step):
         dms_importer = importers.DMSImporter.from_data_model_id(cdf_client, datamodel_entity.as_id())
 
         # if role is None, it will be inferred from the rules file
-        role = self.configs.get("role")
+        role = self.configs.get("Role")
         role_enum = None
         if role != "infer" and role is not None:
             role_enum = RoleTypes[role]
@@ -133,7 +147,7 @@ class ImportDMSToRules(Step):
 
         if rules is None:
             output_dir = self.data_store_path / Path("staging")
-            report_writer = FORMATTER_BY_NAME[self.configs["Report Formatter"]]()
+            report_writer = FORMATTER_BY_NAME[self.configs["Report formatter"]]()
             report_writer.write_to_file(issues, file_or_dir_path=output_dir)
             report_file = report_writer.default_file_name
             error_text = (

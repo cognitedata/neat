@@ -40,21 +40,21 @@ from cognite.neat.workflows.steps.data_contracts import (
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
 __all__ = [
-    "GenerateAssetsFromGraphV1",
-    "GenerateRelationshipsFromGraphV1",
-    "GenerateNodesAndEdgesFromGraphV1",
-    "LoadLabelsToCDFV1",
-    "LoadAssetsToCDFV1",
-    "LoadRelationshipsToCDFV1",
-    "LoadNodesToCDFV1",
-    "LoadEdgesToCDFV1",
-    "LoadGraphToRdfFileV1",
+    "GenerateAssetsFromGraph",
+    "GenerateRelationshipsFromGraph",
+    "GenerateNodesAndEdgesFromGraph",
+    "LoadLabelsToCDF",
+    "LoadAssetsToCDF",
+    "LoadRelationshipsToCDF",
+    "LoadNodesToCDF",
+    "LoadEdgesToCDF",
+    "LoadGraphToRdfFile",
 ]
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title() + " [VERSION 1]"
 
 
-class LoadLabelsToCDFV1(Step):
+class LoadLabelsToCDF(Step):
     """
     This step creates and loads default NEAT labels in CDF
     """
@@ -75,7 +75,7 @@ class LoadLabelsToCDFV1(Step):
         )
 
 
-class GenerateNodesAndEdgesFromGraphV1(Step):
+class GenerateNodesAndEdgesFromGraph(Step):
     """
     The step generates nodes and edges from the graph
     """
@@ -150,14 +150,14 @@ class GenerateNodesAndEdgesFromGraphV1(Step):
         return FlowMessage(output_text=msg), Nodes(nodes=nodes), Edges(edges=edges)
 
 
-class LoadGraphToRdfFileV1(Step):
+class LoadGraphToRdfFile(Step):
     """
     The step generates loads graph to RDF file
     """
 
     description = "The step generates nodes and edges from the graph"
     category = CATEGORY
-    version = "private-beta"
+    version = "private-alpha"
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
             name="graph_name",
@@ -201,7 +201,7 @@ class LoadGraphToRdfFileV1(Step):
         return FlowMessage(output_text=output_text)
 
 
-class LoadNodesToCDFV1(Step):
+class LoadNodesToCDF(Step):
     """
     This step uploads nodes to CDF
     """
@@ -218,7 +218,7 @@ class LoadNodesToCDFV1(Step):
             return FlowMessage(output_text="No nodes to upload!")
 
 
-class LoadEdgesToCDFV1(Step):
+class LoadEdgesToCDF(Step):
     """
     This step uploads edges to CDF
     """
@@ -235,7 +235,7 @@ class LoadEdgesToCDFV1(Step):
             return FlowMessage(output_text="No edges to upload!")
 
 
-class GenerateAssetsFromGraphV1(Step):
+class GenerateAssetsFromGraph(Step):
     """
     The step generates assets from the graph ,categorizes them and stores them in CategorizedAssets object
     """
@@ -443,7 +443,7 @@ class GenerateAssetsFromGraphV1(Step):
         return FlowMessage(output_text=msg), CategorizedAssets(assets=categorized_assets)
 
 
-class LoadAssetsToCDFV1(Step):
+class LoadAssetsToCDF(Step):
     """
     This step uploads categorized assets to CDF
     """
@@ -502,7 +502,7 @@ class LoadAssetsToCDFV1(Step):
             return FlowMessage(output_text="No assets to upload!")
 
 
-class GenerateRelationshipsFromGraphV1(Step):
+class GenerateRelationshipsFromGraph(Step):
     """
     This step generates relationships from the graph and saves them to CategorizedRelationships object
     """
@@ -571,7 +571,7 @@ class GenerateRelationshipsFromGraphV1(Step):
         return FlowMessage(output_text=msg), CategorizedRelationships(relationships=categorized_relationships)
 
 
-class LoadRelationshipsToCDFV1(Step):
+class LoadRelationshipsToCDF(Step):
     """
     This step uploads relationships to CDF
     """

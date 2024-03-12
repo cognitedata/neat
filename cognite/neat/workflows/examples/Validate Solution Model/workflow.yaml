@@ -24,14 +24,15 @@ steps:
         pos_y: -19
 -   complex_configs: {}
     configs:
-        Report Formatter: BasicHTML
-        role: dms_architect
+        File name: ''
+        Report formatter: BasicHTML
+        Role: infer
     description: null
     enabled: true
     id: step_399494
     label: Import Excel
     max_retries: 0
-    method: ImportExcelValidator
+    method: ExcelToRules
     params: {}
     retry_delay: 3
     stype: stdstep
@@ -50,7 +51,7 @@ steps:
     id: step_273233
     label: Validate Against CDF
     max_retries: 0
-    method: ValidateAgainstCDF
+    method: ValidateRulesAgainstCDF
     params: {}
     retry_delay: 3
     stype: stdstep
