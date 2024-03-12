@@ -30,8 +30,8 @@ from ._types import (
     ParentClassType,
     PrefixType,
     PropertyType,
+    ReferenceType,
     SemanticValueType,
-    SourceType,
     StrListType,
     Undefined,
     VersionType,
@@ -89,12 +89,12 @@ class InformationClass(SheetEntity):
         class_: The class ID of the class.
         description: A description of the class.
         parent: The parent class of the class.
-        source: Source of information for given resource
+        reference: Reference of the source of the information for given resource
         match_type: The match type of the resource being described and the source entity.
     """
 
     parent: ParentClassType = Field(alias="Parent Class", default=None)
-    source: SourceType = Field(alias="Source", default=None)
+    reference: ReferenceType = Field(alias="Source", default=None)
     match_type: MatchType | None = Field(alias="Match Type", default=None)
     comment: str | None = Field(alias="Comment", default=None)
 
@@ -112,7 +112,7 @@ class InformationProperty(SheetEntity):
         min_count: Minimum count of the property values. Defaults to 0
         max_count: Maximum count of the property values. Defaults to None
         default: Default value of the property
-        source: Source of information for given resource, HTTP URI
+        reference: Reference to the source of the information, HTTP URI
         match_type: The match type of the resource being described and the source entity.
         rule_type: Rule type for the transformation from source to target representation
                    of knowledge graph. Defaults to None (no transformation)
@@ -125,7 +125,7 @@ class InformationProperty(SheetEntity):
     min_count: int | None = Field(alias="Min Count", default=None)
     max_count: int | float | None = Field(alias="Max Count", default=None)
     default: Any | None = Field(alias="Default", default=None)
-    source: SourceType = Field(alias="Source", default=None)
+    reference: ReferenceType = Field(alias="Reference", default=None)
     match_type: MatchType | None = Field(alias="Match Type", default=None)
     rule_type: str | TransformationRuleType | None = Field(alias="Rule Type", default=None)
     rule: str | AllReferences | SingleProperty | Hop | RawLookup | SPARQLQuery | Traversal | None = Field(
@@ -396,7 +396,7 @@ class _InformationRulesConverter:
                 is_list=is_list,
                 relation=relation,
                 default=prop.default,
-                source=prop.source,
+                reference=prop.reference,
                 container=container,
                 container_property=container_property,
                 view=ViewEntity(prefix=prop.class_.prefix, suffix=prop.class_.suffix, version=prop.class_.version),
