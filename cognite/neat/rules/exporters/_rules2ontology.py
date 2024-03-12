@@ -254,8 +254,8 @@ class OWLClass(OntologyModel):
             sub_class_of = None
 
         return cls(
-            id_=namespace[definition.class_.versioned_id],
-            label=definition.name,
+            id_=namespace[definition.class_.suffix],
+            label=definition.name or definition.class_.suffix,
             comment=definition.description,
             sub_class_of=sub_class_of,
             namespace=namespace,
@@ -327,10 +327,8 @@ class OWLProperty(OntologyModel):
                 if definition.value_type.suffix in XSD_VALUE_TYPE_MAPPINGS
                 else namespace[definition.value_type.suffix]
             )
-            owl_property.domain.add(namespace[definition.class_.versioned_id])
-
-            if definition.name:
-                owl_property.label.add(definition.name)
+            owl_property.domain.add(namespace[definition.class_.suffix])
+            owl_property.label.add(definition.name or definition.property_)
             if definition.description:
                 owl_property.comment.add(definition.description)
 
@@ -497,8 +495,8 @@ class SHACLNodeShape(OntologyModel):
         else:
             parent = None
         return cls(
-            id_=namespace[f"{class_definition.class_}Shape"],
-            target_class=namespace[class_definition.class_.versioned_id],
+            id_=namespace[f"{class_definition.class_.suffix}Shape"],
+            target_class=namespace[class_definition.class_.suffix],
             parent=parent,
             property_shapes=[SHACLPropertyShape.from_property(prop, namespace) for prop in property_definitions],
             namespace=namespace,
@@ -573,7 +571,7 @@ def _to_property_dict(rules: InformationRules) -> dict[str, list[InformationProp
 def _to_class_dict(rules: InformationRules) -> dict[str, InformationClass]:
     class_: dict[str, InformationClass] = {}
     for cls in rules.classes:
-        class_[cls.class_.versioned_id] = cls
+        class_[cls.class_.suffix] = cls
     return class_
 
 
@@ -608,7 +606,7 @@ def _get_classes_with_properties(rules: InformationRules) -> dict[str, list[Info
     class_property_pairs: dict[str, list[InformationProperty]] = {}
 
     for property_ in rules.properties:
-        class_ = property_.class_.versioned_id
+        class_ = property_.class_.suffix
         if class_ in class_property_pairs:
             class_property_pairs[class_] += [property_]
         else:
