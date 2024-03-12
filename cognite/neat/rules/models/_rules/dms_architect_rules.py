@@ -142,7 +142,7 @@ class DMSProperty(SheetEntity):
     nullable: bool | None = Field(default=None, alias="Nullable")
     is_list: bool | None = Field(default=None, alias="IsList")
     default: str | int | dict | None = Field(None, alias="Default")
-    source: str | None = Field(None, alias="Source")
+    reference: str | None = Field(None, alias="Reference")
     container: ContainerType | None = Field(None, alias="Container")
     container_property: str | None = Field(None, alias="ContainerProperty")
     view: ViewType = Field(alias="View")

@@ -193,7 +193,7 @@ PropertyType = Annotated[
 ]
 
 
-SourceType = Annotated[
+ReferenceType = Annotated[
     rdflib.URIRef | None,
     BeforeValidator(
         lambda value: (

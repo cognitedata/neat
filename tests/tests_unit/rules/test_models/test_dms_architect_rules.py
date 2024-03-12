@@ -720,7 +720,7 @@ class TestDMSRules:
 
         # Removing source which is lost in the conversion
         for prop in rules.properties:
-            prop.source = None
+            prop.reference = None
 
         assert recreated_rules.model_dump() == rules.model_dump()
 
