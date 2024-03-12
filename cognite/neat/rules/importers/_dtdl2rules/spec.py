@@ -72,7 +72,8 @@ class DTMI(BaseModel):
             exclude_none: bool = False,
             round_trip: bool = False,
             warnings: bool = True,
-        ) -> str: ...
+        ) -> str:
+            ...
 
 
 IRI: TypeAlias = str
@@ -123,7 +124,8 @@ class Unit(BaseModel, ABC):
             exclude_none: bool = False,
             round_trip: bool = False,
             warnings: bool = True,
-        ) -> str: ...
+        ) -> str:
+            ...
 
 
 class DTDLBase(BaseModel, ABC):
