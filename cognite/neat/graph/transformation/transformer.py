@@ -14,7 +14,7 @@ from rdflib import RDF, Graph
 from rdflib.term import Literal, Node
 
 from cognite.neat.graph.exceptions import NamespaceRequired
-from cognite.neat.graph.transformations.query_generator.sparql import build_sparql_query
+from cognite.neat.graph.transformation.query_generator.sparql import build_sparql_query
 from cognite.neat.rules.models._base import EntityTypes
 from cognite.neat.rules.models.rdfpath import AllProperties, AllReferences, Query, RawLookup, Traversal, parse_rule
 from cognite.neat.rules.models.rules import Rules

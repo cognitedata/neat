@@ -3,8 +3,8 @@ from copy import deepcopy
 from cognite.client.data_classes import Asset, AssetList, Label, LabelFilter, Relationship, RelationshipList
 from cognite.client.testing import monkeypatch_cognite_client
 
-from cognite.neat.graph.loaders.core.rdf_to_assets import rdf2assets
-from cognite.neat.graph.loaders.core.rdf_to_relationships import categorize_relationships, rdf2relationships
+from cognite.neat.graph.loader.core.rdf_to_assets import rdf2assets
+from cognite.neat.graph.loader.core.rdf_to_relationships import categorize_relationships, rdf2relationships
 from cognite.neat.rules.exporter._core.rules2labels import get_labels
 
 

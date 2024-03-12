@@ -1,11 +1,11 @@
-from cognite.neat.graph import extractors
-from cognite.neat.graph.extractors._graph_capturing_sheet import rules2graph_capturing_sheet
+from cognite.neat.graph import extractor as graph_extractor
+from cognite.neat.graph.extractor._graph_capturing_sheet import rules2graph_capturing_sheet
 from cognite.neat.rules.importer import ExcelImporter
 from tests import config
 
 
 def test_graph_capturing_sheet(tmp_path, simple_rules):
-    extractor = extractors.GraphCapturingSheet(
+    extractor = graph_extractor.GraphCapturingSheet(
         simple_rules, config.GRAPH_CAPTURING_SHEET, store_graph_capturing_sheet=True
     )
     _ = extractor.extract()

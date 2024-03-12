@@ -16,7 +16,7 @@ from cognite.neat.app.api.data_classes.rest import (
 )
 from cognite.neat.app.api.utils.data_mapping import rdf_result_to_api_response
 from cognite.neat.app.api.utils.query_templates import query_templates
-from cognite.neat.graph.transformations import query_generator
+from cognite.neat.graph.transformation import query_generator
 from cognite.neat.utils.utils import remove_namespace
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
 

@@ -9,7 +9,7 @@ from pydantic_core import ErrorDetails
 
 from cognite.neat.exceptions import NeatException
 from cognite.neat.graph.stores import NeatGraphStoreBase
-from cognite.neat.graph.transformations.query_generator.sparql import triples2dictionary
+from cognite.neat.graph.transformation.query_generator.sparql import triples2dictionary
 from cognite.neat.rules.exporter._rules2dms import DMSSchemaComponents
 from cognite.neat.rules.exporter._rules2pydantic_models import add_class_prefix_to_xid, rules_to_pydantic_models
 from cognite.neat.rules.models.rules import Rules

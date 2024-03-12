@@ -15,7 +15,7 @@ from deepdiff import DeepDiff  # type: ignore[import]
 from rdflib import Graph
 from rdflib.term import URIRef
 
-from cognite.neat.graph.loaders.core.models import AssetTemplate
+from cognite.neat.graph.loader.core.models import AssetTemplate
 from cognite.neat.graph.stores import NeatGraphStoreBase
 from cognite.neat.rules.models.rules import Property, Rules
 from cognite.neat.utils.utils import chunker, datetime_utc_now, remove_namespace, retry_decorator

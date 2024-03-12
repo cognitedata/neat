@@ -1,10 +1,9 @@
-from cognite.neat.graph import extractors
+from cognite.neat.graph import extractor as graph_loader
 from tests import config
 
 
 def test_dexpi_extractor():
     """Test that the dexpi extractor works."""
-    extractor = extractors.DexpiXML(config.DEXPI_EXAMPLE)
-    triples = extractor.extract()
+    triples = graph_loader.DexpiXML(config.DEXPI_EXAMPLE).extract()
 
     assert len(triples) == 1752

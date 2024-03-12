@@ -2,7 +2,7 @@ from typing import ClassVar
 
 from cognite.client import CogniteClient
 
-from cognite.neat.graph.transformations.transformer import RuleProcessingReport, domain2app_knowledge_graph
+from cognite.neat.graph.transformation.transformer import RuleProcessingReport, domain2app_knowledge_graph
 from cognite.neat.rules.exporter._rules2triples import get_instances_as_triples
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph

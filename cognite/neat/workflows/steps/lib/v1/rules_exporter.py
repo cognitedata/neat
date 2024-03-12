@@ -6,7 +6,7 @@ from typing import ClassVar, Literal, cast
 
 from cognite.client import data_modeling as dm
 
-import cognite.neat.graph.extractors._graph_capturing_sheet
+import cognite.neat.graph.extractor._graph_capturing_sheet
 from cognite.neat.exceptions import wrangle_warnings
 from cognite.neat.rules import exporter
 from cognite.neat.rules.exporter._rules2dms import DMSSchemaComponents
@@ -485,7 +485,7 @@ class ExportRulesToGraphCapturingSheet(Step):
 
         data_capture_sheet_path = staging_dir / sheet_name
 
-        cognite.neat.graph.extractors._graph_capturing_sheet.rules2graph_capturing_sheet(
+        cognite.neat.graph.extractor._graph_capturing_sheet.rules2graph_capturing_sheet(
             rules.rules, data_capture_sheet_path, auto_identifier_type=auto_identifier_type
         )
 

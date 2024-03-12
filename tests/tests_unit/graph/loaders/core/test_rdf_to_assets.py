@@ -5,7 +5,7 @@ import pytest
 from cognite.client.data_classes import Asset, AssetList, Label, LabelDefinition, LabelDefinitionList, LabelFilter
 from cognite.client.testing import monkeypatch_cognite_client
 
-from cognite.neat.graph.loaders.core.rdf_to_assets import (
+from cognite.neat.graph.loader.core.rdf_to_assets import (
     AssetLike,
     NeatMetadataKeys,
     _assets_to_update,

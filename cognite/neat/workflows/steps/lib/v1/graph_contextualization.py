@@ -1,6 +1,6 @@
 from typing import ClassVar, cast
 
-from cognite.neat.graph.transformations.entity_matcher import simple_entity_matcher
+from cognite.neat.graph.transformation.entity_matcher import simple_entity_matcher
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import SolutionGraph, SourceGraph
