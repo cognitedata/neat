@@ -17,7 +17,7 @@ Changes are grouped as follows:
 
 ## [0.67.1] - 12-03-24
 ## Changed
-- Addeded configurable embedded default transformation in GenerateNodesAndEdgesFromGraph. Not user can disable default transfomation logic , it is useful when transformation is done in dedicated transformation step.
+- Addeded configuraion that controls behaviour of embedded transformation logic in GenerateNodesAndEdgesFromGraph. Now user can disable default transfomation logic (before it was always on) , it is useful when transformation is done in dedicated transformation step.
 
 ## [0.67.0] - 07-03-24
 ## Fixed
