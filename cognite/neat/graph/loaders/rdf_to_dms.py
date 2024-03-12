@@ -55,6 +55,7 @@ class DMSLoader(CogniteLoader[InstanceApply]):
         }
 
         for class_name, triples in self._iterate_class_triples(exclude_classes=exclude):
+            logging.info(f"<DMSLoader> Processing class : {class_name}")
             counter = 0
             start_time = datetime_utc_now()
             for instance_dict in triples2dictionary(triples).values():

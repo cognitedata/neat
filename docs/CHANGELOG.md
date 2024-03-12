@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.67.1] - 12-03-24
+## Changed
+- Addeded configuraion that controls behaviour of embedded transformation logic in GenerateNodesAndEdgesFromGraph. Now user can disable default transfomation logic (before it was always on) , it is useful when transformation is done in dedicated transformation step.
+
 ## [0.67.0] - 07-03-24
 ## Fixed
 - Fixed issue with prefixes not being updated during GraphStore (oxi) reinitialization
