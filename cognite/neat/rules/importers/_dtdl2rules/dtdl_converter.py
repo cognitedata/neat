@@ -1,3 +1,4 @@
+from collections import Counter
 from collections.abc import Callable, Sequence
 
 from cognite.neat.rules import validation
@@ -46,6 +47,14 @@ class _DTDLConverter:
             CommandV2: self.convert_command,  # type: ignore[dict-item]
             Component: self.convert_component,  # type: ignore[dict-item]
         }
+
+    def get_most_common_prefix(self) -> str:
+        if not self.classes:
+            raise ValueError("No classes found")
+        counted = Counter(cls_.class_.prefix for cls_ in self.classes if isinstance(cls_.class_.prefix, str))
+        if not counted:
+            raise ValueError("No prefixes found")
+        return counted.most_common(1)[0][0]
 
     def convert(self, items: Sequence[DTDLBase]) -> None:
         self._item_by_id.update({item.id_: item for item in items if item.id_ is not None})

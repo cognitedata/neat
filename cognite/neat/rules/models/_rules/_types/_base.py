@@ -6,6 +6,8 @@ from typing import Any, ClassVar, cast
 from cognite.client.data_classes.data_modeling import ContainerId, DataModelId, ViewId
 from pydantic import BaseModel
 
+from cognite.neat.utils.text import to_pascal
+
 if sys.version_info >= (3, 11):
     from enum import StrEnum
     from typing import Self
@@ -172,14 +174,15 @@ class ContainerEntity(Entity):
     def from_id(cls, container_id: ContainerId) -> "ContainerEntity":
         return ContainerEntity(prefix=container_id.space, suffix=container_id.external_id)
 
-    def as_id(self, default_space: str | None) -> ContainerId:
+    def as_id(self, default_space: str | None, standardize_casing: bool = True) -> ContainerId:
         if self.space is Undefined and default_space is None:
             raise ValueError("Space is Undefined! Set default_space!")
 
+        external_id = to_pascal(self.external_id) if standardize_casing else self.external_id
         if self.space is Undefined:
-            return ContainerId(space=cast(str, default_space), external_id=self.external_id)
+            return ContainerId(space=cast(str, default_space), external_id=external_id)
         else:
-            return ContainerId(space=self.space, external_id=self.external_id)
+            return ContainerId(space=self.space, external_id=external_id)
 
 
 class ViewEntity(Entity):
@@ -201,7 +204,9 @@ class ViewEntity(Entity):
     def from_id(cls, view_id: ViewId) -> "ViewEntity":
         return ViewEntity(prefix=view_id.space, suffix=view_id.external_id, version=view_id.version)
 
-    def as_id(self, default_space: str | None = None, default_version: str | None = None) -> ViewId:
+    def as_id(
+        self, default_space: str | None = None, default_version: str | None = None, standardize_casing: bool = True
+    ) -> ViewId:
         space = default_space if self.space is Undefined else self.space
         version = self.version or default_version
 
@@ -210,7 +215,8 @@ class ViewEntity(Entity):
         if version is None:
             raise ValueError("version is required")
 
-        return ViewId(space=space, external_id=self.external_id, version=version)
+        external_id = to_pascal(self.external_id) if standardize_casing else self.external_id
+        return ViewId(space=space, external_id=external_id, version=version)
 
 
 class DataModelEntity(Entity):

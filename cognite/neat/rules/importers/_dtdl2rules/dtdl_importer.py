@@ -15,6 +15,7 @@ from cognite.neat.rules.models._rules import InformationRules, RoleTypes
 from cognite.neat.rules.models._rules.base import SchemaCompleteness, SheetList
 from cognite.neat.rules.models._rules.information_rules import InformationClass, InformationProperty
 from cognite.neat.rules.validation import IssueList, ValidationIssue
+from cognite.neat.utils.text import to_pascal
 
 
 class DTDLImporter(BaseImporter):
@@ -99,7 +100,7 @@ class DTDLImporter(BaseImporter):
                     issues.append(item)
                 else:
                     items.append(item)
-        return cls(items, directory.name, read_issues=issues)
+        return cls(items, directory.stem, read_issues=issues)
 
     @classmethod
     def from_zip(cls, zip_file: Path) -> "DTDLImporter":
@@ -113,7 +114,7 @@ class DTDLImporter(BaseImporter):
                             issues.append(item)
                         else:
                             items.append(item)
-        return cls(items, zip_file.name, read_issues=issues)
+        return cls(items, zip_file.stem, read_issues=issues)
 
     @overload
     def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules:
@@ -128,22 +129,31 @@ class DTDLImporter(BaseImporter):
     def to_rules(
         self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
     ) -> tuple[Rules | None, IssueList] | Rules:
-        container = _DTDLConverter(self._read_issues)
+        converter = _DTDLConverter(self._read_issues)
 
-        container.convert(self._items)
+        converter.convert(self._items)
 
         metadata = self._default_metadata()
         metadata["schema"] = self._schema_completeness.value
-        with _handle_issues(container.issues) as future:
+        if self.title:
+            metadata["title"] = to_pascal(self.title)
+        try:
+            most_common_prefix = converter.get_most_common_prefix()
+        except ValueError:
+            # No prefixes are defined so we just use the default prefix...
+            ...
+        else:
+            metadata["prefix"] = most_common_prefix
+        with _handle_issues(converter.issues) as future:
             rules = InformationRules(
                 metadata=metadata,
-                properties=SheetList[InformationProperty](data=container.properties),
-                classes=SheetList[InformationClass](data=container.classes),
+                properties=SheetList[InformationProperty](data=converter.properties),
+                classes=SheetList[InformationClass](data=converter.classes),
             )
         if future.result == "failure":
             if errors == "continue":
-                return None, container.issues
+                return None, converter.issues
             else:
-                raise container.issues.as_errors()
+                raise converter.issues.as_errors()
 
-        return self._to_output(rules, container.issues, errors, role)
+        return self._to_output(rules, converter.issues, errors, role)
