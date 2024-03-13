@@ -3,13 +3,13 @@ from pathlib import Path
 from typing import ClassVar, Literal, cast
 
 from cognite.neat.rules import exporters
-from cognite.neat.rules._shared import Rules
+from cognite.neat.rules._shared import DMSRules, InformationRules, Rules
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.data_contracts import CogniteClient, MultiRuleData
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
-__all__ = ["RulesToDMS", "RulesToExcel"]
+__all__ = ["RulesToDMS", "RulesToExcel", "RulesToOntology", "RulesToSHACL", "RulesToSemanticDataModel"]
 
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
@@ -180,3 +180,159 @@ class RulesToExcel(Step):
         )
 
         return FlowMessage(output_text=output_text)
+
+
+class RulesToOntology(Step):
+    """
+    This step exports Rules to OWL ontology
+    """
+
+    description = "This step exports Rules to OWL ontology"
+    version = "private-beta"
+    category = CATEGORY
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="File path",
+            value="staging/ontology.ttl",
+            label=("Relative path for the ontology file storage, " " It will be auto-created if not provided ! "),
+        )
+    ]
+
+    def run(self, rules: MultiRuleData) -> FlowMessage:  # type: ignore[override, syntax]
+        if self.configs is None or self.data_store_path is None:
+            raise StepNotInitialized(type(self).__name__)
+
+        if not rules.information and not rules.dms:
+            return FlowMessage(
+                error_text="Rules must be made either by Information Architect or DMS Architect!",
+                step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
+            )
+
+        default_path = self.data_store_path / "staging" / _get_default_file_name(rules, "ontology", "ttl")
+
+        storage_path = (
+            self.data_store_path / Path(self.configs["File path"]) if self.configs["File path"] else default_path
+        )
+        storage_path.parent.mkdir(parents=True, exist_ok=True)
+
+        exporter = exporters.OWLExporter()
+        exporter.export_to_file(storage_path, cast(InformationRules | DMSRules, rules.information or rules.dms))
+
+        relative_file_path = "/".join(storage_path.relative_to(self.data_store_path).parts)
+
+        output_text = (
+            "<p></p>"
+            "Rules exported as OWL ontology can be downloaded here : "
+            f'<a href="/data/{relative_file_path}?{time.time()}" '
+            f'target="_blank">{storage_path.stem}.ttl</a>'
+        )
+
+        return FlowMessage(output_text=output_text)
+
+
+class RulesToSHACL(Step):
+    """
+    This step exports Rules to SHACL
+    """
+
+    description = "This step exports Rules to SHACL"
+    version = "private-beta"
+    category = CATEGORY
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="File path",
+            value="staging/shacl.ttl",
+            label=(
+                "Relative path for the shacl file storage, "
+                "must end with .ttl ! It will be auto-created if not provided !"
+            ),
+        )
+    ]
+
+    def run(self, rules: MultiRuleData) -> FlowMessage:  # type: ignore[override, syntax]
+        if self.configs is None or self.data_store_path is None:
+            raise StepNotInitialized(type(self).__name__)
+
+        if not rules.information and not rules.dms:
+            return FlowMessage(
+                error_text="Rules must be made either by Information Architect or DMS Architect!",
+                step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
+            )
+
+        default_path = self.data_store_path / "staging" / _get_default_file_name(rules, "shacl", "ttl")
+
+        storage_path = (
+            self.data_store_path / Path(self.configs["File path"]) if self.configs["File path"] else default_path
+        )
+        storage_path.parent.mkdir(parents=True, exist_ok=True)
+
+        exporter = exporters.SHACLExporter()
+        exporter.export_to_file(storage_path, cast(InformationRules | DMSRules, rules.information or rules.dms))
+
+        relative_file_path = "/".join(storage_path.relative_to(self.data_store_path).parts)
+
+        output_text = (
+            "<p></p>"
+            "Rules exported as SHACL shapes can be downloaded here : "
+            f'<a href="/data/{relative_file_path}?{time.time()}" '
+            f'target="_blank">{storage_path.stem}.ttl</a>'
+        )
+
+        return FlowMessage(output_text=output_text)
+
+
+class RulesToSemanticDataModel(Step):
+    """
+    This step exports Rules to semantic data model
+    """
+
+    description = "This step exports Rules to semantic data model (ontology + SHACL)"
+    version = "private-beta"
+    category = CATEGORY
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="File path",
+            value="staging/semantic-data-model.ttl",
+            label=(
+                "Relative path for the semantic data model file storage, "
+                "must end with .ttl ! It will be auto-created if not provided !"
+            ),
+        )
+    ]
+
+    def run(self, rules: MultiRuleData) -> FlowMessage:  # type: ignore[override, syntax]
+        if self.configs is None or self.data_store_path is None:
+            raise StepNotInitialized(type(self).__name__)
+
+        if not rules.information and not rules.dms:
+            return FlowMessage(
+                error_text="Rules must be made either by Information Architect or DMS Architect!",
+                step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
+            )
+
+        default_path = self.data_store_path / "staging" / _get_default_file_name(rules, "semantic-data-model", "ttl")
+
+        storage_path = (
+            self.data_store_path / Path(self.configs["File path"]) if self.configs["File path"] else default_path
+        )
+        storage_path.parent.mkdir(parents=True, exist_ok=True)
+
+        exporter = exporters.SemanticDataModelExporter()
+        exporter.export_to_file(storage_path, cast(InformationRules | DMSRules, rules.information or rules.dms))
+
+        relative_file_path = "/".join(storage_path.relative_to(self.data_store_path).parts)
+
+        output_text = (
+            "<p></p>"
+            "Rules exported as semantic data model (OWL + SHACL) can be downloaded here : "
+            f'<a href="/data/{relative_file_path}?{time.time()}" '
+            f'target="_blank">{storage_path.stem}.ttl</a>'
+        )
+
+        return FlowMessage(output_text=output_text)
+
+
+def _get_default_file_name(rules: MultiRuleData, file_category: str = "ontology", extension: str = "ttl") -> str:
+    name = rules.information.metadata.prefix if rules.information else cast(DMSRules, rules.dms).metadata.space
+    version = rules.information.metadata.version if rules.information else cast(DMSRules, rules.dms).metadata.version
+    return f"{name}-v{version.strip().replace('.', '_')}-{file_category}.{extension}"
