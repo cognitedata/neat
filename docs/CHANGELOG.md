@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.67.3] - 13-03-24
+## Fixed
+* `ExcelImporter` now returns rules for the correct role type based on the input.
+
 ## [0.67.2] - 13-03-24
 ## Added
 - Standardization of casing in DMS exporter
