@@ -15,6 +15,15 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.67.2] - 13-03-24
+## Added
+- Standardization of casing in DMS exporter
+- In DTDL importer infer data model name and space.
+- Visualization of data model in UI through the new workflow `Visualize Data Model`
+## Changed
+- Deprecation of steps based on the single rule sheet, in favor of role-based rules.
+
+
 ## [0.67.1] - 12-03-24
 ## Changed
 - Addeded configuraion that controls behaviour of embedded transformation logic in GenerateNodesAndEdgesFromGraph. Now user can disable default transfomation logic (before it was always on) , it is useful when transformation is done in dedicated transformation step.
