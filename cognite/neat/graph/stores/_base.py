@@ -135,8 +135,8 @@ class NeatGraphStoreBase(ABC):
         logging.info("Adding prefix %s with namespace %s", self.base_prefix, self.namespace)
         logging.info("Graph initialized")
 
-    def reinit_graph(self):
-        """Reinitializes the graph."""
+    def reinitialize_graph(self):
+        """Reinitialize the graph."""
         self.init_graph(
             self.rdf_store_query_url,
             self.rdf_store_update_url,

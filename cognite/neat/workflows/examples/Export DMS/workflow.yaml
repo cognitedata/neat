@@ -20,18 +20,19 @@ steps:
     - step_295479
     trigger: true
     ui_config:
-        pos_x: 630
-        pos_y: 69
+        pos_x: 629
+        pos_y: 57
 -   complex_configs: {}
     configs:
-        Report Formatter: BasicHTML
-        role: infer
+        File name: ''
+        Report formatter: BasicHTML
+        Role: infer
     description: null
     enabled: true
     id: step_295479
     label: Validate
     max_retries: 0
-    method: ImportExcelValidator
+    method: ExcelToRules
     params: {}
     retry_delay: 3
     stype: stdstep
@@ -43,21 +44,21 @@ steps:
         pos_x: 630
         pos_y: 180
 -   complex_configs:
-        components:
+        Components:
             containers: true
             data_models: true
             spaces: true
             views: true
     configs:
-        dry_run: 'False'
-        existing_component_handling: update
-        multi_space_components_create: 'True'
+        Dry run: 'False'
+        Existing component handling: update
+        Multi-space components create: 'True'
     description: null
     enabled: true
     id: step_50885
     label: Export Data Model to CDF
     max_retries: 0
-    method: ExportDataModelStorage
+    method: RulesToDMS
     params: {}
     retry_delay: 3
     stype: stdstep

@@ -6,6 +6,7 @@ The specs are taken from:
  * Spec v2:  https://github.com/Azure/opendigitaltwins-dtdl/blob/master/DTDL/v2/DTDL.v2.md
  * Spec v3: https://github.com/Azure/opendigitaltwins-dtdl/blob/master/DTDL/v3/DTDL.v3.md
 """
+
 import re
 import warnings
 from abc import ABC

@@ -5,16 +5,15 @@ name: Validate Rules
 steps:
 -   complex_configs: {}
     configs:
-        Report Formatter: BasicHTML
-        role: infer
-        validation_report_file: rules_validation_report.txt
-        validation_report_storage_dir: rules_validation_report
+        File name: ''
+        Report formatter: BasicHTML
+        Role: infer
     description: null
     enabled: true
     id: step_31642
     label: Validate
     max_retries: 0
-    method: ImportExcelValidator
+    method: ExcelToRules
     params: {}
     retry_delay: 3
     stype: stdstep

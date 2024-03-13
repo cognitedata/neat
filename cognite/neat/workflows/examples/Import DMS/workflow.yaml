@@ -5,15 +5,15 @@ name: Import DMS
 steps:
 -   complex_configs: {}
     configs:
-        Data Model ID: playground_nordic44:nordic44
-        Report Formatter: BasicHTML
-        role: information_architect
+        Data model id: playground_nordic44:nordic44
+        Report formatter: BasicHTML
+        Role: information_architect
     description: null
     enabled: true
     id: step_725987
     label: Import DMS
     max_retries: 0
-    method: ImportFromDataModelStorage
+    method: DMSToRules
     params: {}
     retry_delay: 3
     stype: stdstep
@@ -26,13 +26,13 @@ steps:
         pos_y: 84
 -   complex_configs: {}
     configs:
-        styling: default
+        Styling: default
     description: null
     enabled: true
     id: step_419138
     label: Create Excel Spreadsheet
     max_retries: 0
-    method: ExportToExcel
+    method: RulesToExcel
     params: {}
     retry_delay: 3
     stype: stdstep

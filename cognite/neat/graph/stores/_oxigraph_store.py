@@ -73,7 +73,7 @@ class OxiGraphStore(NeatGraphStoreBase):
     def restart(self):
         """Restarts the graph"""
         self.close()
-        self.reinit_graph()
+        self.reinitialize_graph()
         logging.info("GraphStore restarted")
 
     def import_from_file(

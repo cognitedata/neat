@@ -10,6 +10,7 @@ from typing import Any
 from pydantic import BaseModel
 
 import cognite.neat.workflows.steps.lib
+import cognite.neat.workflows.steps.lib.v1
 from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
 from cognite.neat.exceptions import InvalidWorkFlowError
 from cognite.neat.workflows._exceptions import ConfigurationNotSet
@@ -46,6 +47,10 @@ class StepsRegistry:
             # classes already loaded - no need to reload
             return
         for name, step_cls in inspect.getmembers(cognite.neat.workflows.steps.lib):
+            if inspect.isclass(step_cls):
+                logging.info(f"Loading NEAT step {name}")
+                self._step_classes.append(step_cls)
+        for name, step_cls in inspect.getmembers(cognite.neat.workflows.steps.lib.v1):
             if inspect.isclass(step_cls):
                 logging.info(f"Loading NEAT step {name}")
                 self._step_classes.append(step_cls)

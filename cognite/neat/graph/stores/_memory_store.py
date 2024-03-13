@@ -40,4 +40,4 @@ class MemoryStore(NeatGraphStoreBase):
         # In the case of in-memory graph, we just reinitialize the graph
         # otherwise we would lose the prefixes and bindings, which fails
         # workflow
-        self.reinit_graph()
+        self.reinitialize_graph()
