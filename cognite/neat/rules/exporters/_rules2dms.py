@@ -22,7 +22,22 @@ class DMSExporter(CDFExporter[DMSSchema]):
     """Class for exporting rules object to CDF Data Model Storage (DMS).
 
     Args:
-        rules: Domain Model Service Architect rules object.
+        export_components (frozenset[Literal["all", "spaces", "data_models", "views", "containers"]], optional):
+            Which components to export. Defaults to frozenset({"all"}).
+        include_space (set[str], optional):
+            If set, only export components in the given spaces. Defaults to None which means all spaces.
+        existing_handling (Literal["fail", "skip", "update", "force"], optional): How to handle existing components.
+            Defaults to "update". See below for details.
+        standardize_casing(bool, optional): Whether to standardize the casing. This means PascalCase for names
+            of views, containers, and data models, and camelCase for properties.
+
+    ... note::
+
+        - "fail": If any component already exists, the export will fail.
+        - "skip": If any component already exists, it will be skipped.
+        - "update": If any component already exists, it will be updated.
+        - "force": If any component already exists, it will be deleted and recreated.
+
     """
 
     def __init__(
@@ -32,10 +47,12 @@ class DMSExporter(CDFExporter[DMSSchema]):
         ),
         include_space: set[str] | None = None,
         existing_handling: Literal["fail", "skip", "update", "force"] = "update",
+        standardize_casing: bool = True,
     ):
         self.export_components = export_components
         self.include_space = include_space
         self.existing_handling = existing_handling
+        self.fix_casing = standardize_casing
         self._schema: DMSSchema | None = None
 
     def export_to_file(self, filepath: Path, rules: Rules) -> None:
