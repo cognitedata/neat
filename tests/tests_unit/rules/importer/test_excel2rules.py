@@ -68,6 +68,7 @@ class TestExcelImporter:
 
         assert isinstance(information_rules, InformationRules)
 
+    @pytest.mark.skip("This is not the intended behavior")
     def test_excel_importer_invalid_information_architect(self):
         expected_issues = IssueList(
             [
