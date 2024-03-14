@@ -6,24 +6,21 @@ to TransformationRules for purpose of for example:
 """
 
 import logging
-import re
 import warnings
 from typing import Any
 
 from pydantic import ValidationError
 
-from cognite.neat.utils.utils import get_inheritance_path
 from cognite.neat.rules._analysis import (
-    get_classes_with_properties,
     get_class_parent_pairs,
-    to_class_dict,
-    to_class_property_pairs,
+    get_classes_with_properties,
     get_defined_classes,
+    to_class_dict,
 )
 from cognite.neat.rules.models._rules import InformationRules
-from cognite.neat.rules.models._rules.base import SchemaCompleteness
-
 from cognite.neat.rules.models._rules._types import ClassEntity
+from cognite.neat.rules.models._rules.base import SchemaCompleteness
+from cognite.neat.utils.utils import get_inheritance_path
 
 
 def subset_rules(rules: InformationRules, desired_classes: set[ClassEntity]) -> InformationRules:
@@ -65,7 +62,7 @@ def subset_rules(rules: InformationRules, desired_classes: set[ClassEntity]) -> 
     impossible_classes = desired_classes - possible_classes
 
     # need to add all the parent classes of the desired classes to the possible classes
-    parents = set()
+    parents: set[ClassEntity] = set()
     for class_ in possible_classes:
         parents = parents.union(
             {parent.as_class_entity() for parent in get_inheritance_path(class_, class_parents_pairs)}

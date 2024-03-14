@@ -219,7 +219,9 @@ def get_disconnected_classes(rules: InformationRules, consider_inheritance: bool
     return get_defined_classes(rules, consider_inheritance) - get_connected_classes(rules, consider_inheritance)
 
 
-def get_symmetric_pairs(rules: InformationRules, consider_inheritance: bool = False) -> set[tuple[str, str]]:
+def get_symmetric_pairs(
+    rules: InformationRules, consider_inheritance: bool = False
+) -> set[tuple[ClassEntity, ClassEntity]]:
     """Returns a set of pairs of symmetrically linked classes.
 
     Args:
@@ -231,7 +233,7 @@ def get_symmetric_pairs(rules: InformationRules, consider_inheritance: bool = Fa
     """
 
     # TODO: Find better name for this method
-    sym_pairs: set[tuple[str, str]] = set()
+    sym_pairs: set[tuple[ClassEntity, ClassEntity]] = set()
 
     class_linkage = get_class_linkage(rules, consider_inheritance)
     if class_linkage.empty:
