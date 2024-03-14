@@ -19,10 +19,10 @@ from cognite.neat.rules._analysis import (
     get_symmetric_pairs,
 )
 
-# should go to analysis, or to _rules2rules under exporters
-from cognite.neat.rules.exporter._rules2rules import subset_rules
-from cognite.neat.rules.models._rules import InformationRules as Rules
+
+from cognite.neat.rules.models._rules import InformationRules
 from cognite.neat.rules.models._rules._types import XSD_VALUE_TYPE_MAPPINGS
+from cognite.neat.rules.exporters._rules2rules import subset_rules
 from cognite.neat.utils.utils import remove_namespace
 
 from ._base import BaseExtractor
@@ -41,9 +41,18 @@ class MockGraphGenerator(BaseExtractor):
     """
 
     def __init__(
-        self, rules: Rules, class_count: dict, stop_on_exception: bool = False, allow_isolated_classes: bool = True
+        self,
+        rules: InformationRules,
+        class_count: dict,
+        stop_on_exception: bool = False,
+        allow_isolated_classes: bool = True,
     ):
         self.rules = rules
+        # needs to check if input is dict of ClassEntity and int, or dict of str and int
+        # if latter convert to ClassEntity and int
+        if not all(isinstance(key, str) for key in class_count.keys()):
+            raise ValueError("Class count keys must be of type str! or ClassEntity!")
+
         self.class_count = class_count
         self.stop_on_exception = stop_on_exception
         self.allow_isolated_classes = allow_isolated_classes
@@ -64,7 +73,7 @@ class MockGraphGenerator(BaseExtractor):
 
 
 def generate_triples(
-    transformation_rules: Rules, class_count: dict, stop_on_exception: bool = False, allow_isolated_classes: bool = True
+    rules: InformationRules, class_count: dict, stop_on_exception: bool = False, allow_isolated_classes: bool = True
 ) -> list[Triple]:
     """Generate mock triples based on data model defined transformation rules and desired number
     of class instances
@@ -81,11 +90,11 @@ def generate_triples(
     """
 
     # Figure out which classes are defined in the data model and which are not
-    if transformation_rules.metadata.namespace is None:
+    if rules.metadata.namespace is None:
         raise ValueError("Namespace must be defined in transformation rules!")
-    namespace = transformation_rules.metadata.namespace
+    namespace = rules.metadata.namespace
 
-    defined_classes = get_defined_classes(transformation_rules)
+    defined_classes = get_defined_classes(rules)
 
     if non_existing_classes := set(class_count.keys()) - defined_classes:
         msg = f"Class count contains classes {non_existing_classes} for which properties are not defined in Data Model!"
@@ -100,17 +109,17 @@ def generate_triples(
                 class_count.pop(class_)
 
     # Subset data model to only classes that are defined in class count
-    transformation_rules = (
-        subset_rules(transformation_rules, set(class_count.keys()), skip_validation=True)
+    rules = (
+        subset_rules(rules, set(class_count.keys()), skip_validation=True)
         if defined_classes != set(class_count.keys())
-        else transformation_rules
+        else rules
     )
 
-    class_linkage = get_class_linkage(transformation_rules)
+    class_linkage = get_class_linkage(rules)
 
     # Remove one of symmetric pairs from class linkage to maintain proper linking
     # among instances of symmetrically linked classes
-    if sym_pairs := get_symmetric_pairs(transformation_rules):
+    if sym_pairs := get_symmetric_pairs(rules):
         class_linkage = _remove_higher_occurring_sym_pair(class_linkage, sym_pairs)
 
     # Remove any of symmetric pairs containing classes that are not present class count
@@ -120,7 +129,7 @@ def generate_triples(
     generation_order = _prettify_generation_order(_get_generation_order(class_linkage))
 
     # Generated simple view of data model
-    class_definitions = _rules_to_dict(transformation_rules)
+    class_definitions = _rules_to_dict(rules)
 
     # pregenerate instance ids for each remaining class
     instance_ids = {key: [URIRef(namespace[f"{key}-{i}"]) for i in range(value)] for key, value in class_count.items()}
