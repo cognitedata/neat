@@ -53,8 +53,8 @@ class ExcelImporter(BaseImporter):
                 raise issues.as_errors() from None
             return None, issues
 
-        role = role or RoleTypes(metadata.get("role", RoleTypes.domain_expert))
-        role_enum = RoleTypes(role)
+        role_input = RoleTypes(metadata.get("role", RoleTypes.domain_expert))
+        role_enum = RoleTypes(role_input)
         rules_model = RULES_PER_ROLE[role_enum]
         sheet_names = {str(name) for name in excel_file.sheet_names}
         expected_sheet_names = rules_model.mandatory_fields(use_alias=True)
@@ -92,7 +92,7 @@ class ExcelImporter(BaseImporter):
             RoleTypes.dms_architect: DMSRules,
         }.get(role_enum)
         if not rules_cls:
-            issues.append(validation.InvalidRole(str(role)))
+            issues.append(validation.InvalidRole(str(role_input)))
             if errors == "raise":
                 raise issues.as_errors()
             return None, issues
@@ -105,9 +105,7 @@ class ExcelImporter(BaseImporter):
                 raise issues.as_errors() from e
             return None, issues
 
-        if errors == "raise":
-            return rules
-        return rules, issues
+        return self._to_output(rules, issues, errors=errors, role=role)
 
 
 class GoogleSheetImporter(BaseImporter):
