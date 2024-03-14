@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.67.4] - 14-03-24
+## Fixed
+* Upgrade to `cognite-sdk` `7.28.2` which has fixed bug for retrieving more than 100 data models, containers,
+  views, and spaces.
+
 ## [0.67.3] - 13-03-24
 ## Fixed
 * `ExcelImporter` now returns rules for the correct role type based on the input.
