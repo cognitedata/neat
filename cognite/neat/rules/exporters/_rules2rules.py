@@ -28,7 +28,7 @@ from cognite.neat.rules.models._rules._types import ClassEntity
 
 def subset_rules(rules: InformationRules, desired_classes: set[ClassEntity]) -> InformationRules:
     """
-    Subset transformation rules to only include desired classes and their properties.
+    Subset rules to only include desired classes and their properties.
 
     Args:
         rules: Instance of InformationRules to subset
@@ -36,10 +36,6 @@ def subset_rules(rules: InformationRules, desired_classes: set[ClassEntity]) -> 
 
     Returns:
         Instance of InformationRules
-
-    !!! note "Skipping Validation"
-        It is fine to skip validation since we are deriving the reduced data model from data
-        model (i.e. InformationRules) which has already been validated.
 
     !!! note "Inheritance"
         If desired classes contain a class that is a subclass of another class(es), the parent class(es)
@@ -52,6 +48,11 @@ def subset_rules(rules: InformationRules, desired_classes: set[ClassEntity]) -> 
         properties are part of desired classes. If a class is not part of desired classes, but it
         is a value type of a property of a class that is part of desired classes, derived reduced
         rules will be marked as partial.
+
+    !!! note "Validation"
+        This method will attempt to validate the reduced rules with custom validations.
+        If it fails, it will return a partial rules with a warning message, validated
+        only with base Pydantic validators.
     """
 
     if not rules.metadata.schema_ is not SchemaCompleteness.complete:
@@ -69,7 +70,6 @@ def subset_rules(rules: InformationRules, desired_classes: set[ClassEntity]) -> 
         parents = parents.union(
             {parent.as_class_entity() for parent in get_inheritance_path(class_, class_parents_pairs)}
         )
-
     possible_classes = possible_classes.union(parents)
 
     if not possible_classes:
