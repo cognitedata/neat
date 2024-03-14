@@ -35,24 +35,28 @@ class ExcelExporter(BaseExporter[Workbook]):
         # add each metadata property to the sheet as a row
         metadata_sheet.append(["prefix", metadata.prefix])
         metadata_sheet.append(["namespace", metadata.namespace])
-        metadata_sheet.append(["dataModelId", metadata.suffix])
+        metadata_sheet.append(["external_id", metadata.suffix])
         metadata_sheet.append(["title", metadata.name])
         metadata_sheet.append(["description", metadata.description])
         metadata_sheet.append(["version", metadata.version])
         metadata_sheet.append(
             [
                 "creator",
-                ",".join(metadata.creator if isinstance(metadata.creator, list) else [metadata.creator])
-                if metadata.creator
-                else "",
+                (
+                    ",".join(metadata.creator if isinstance(metadata.creator, list) else [metadata.creator])
+                    if metadata.creator
+                    else ""
+                ),
             ]
         )
         metadata_sheet.append(
             [
                 "contributor",
-                ",".join(metadata.contributor if isinstance(metadata.contributor, list) else [metadata.contributor])
-                if metadata.contributor
-                else "",
+                (
+                    ",".join(metadata.contributor if isinstance(metadata.contributor, list) else [metadata.contributor])
+                    if metadata.contributor
+                    else ""
+                ),
             ]
         )
         metadata_sheet.append(["created", metadata.created])
@@ -74,9 +78,11 @@ class ExcelExporter(BaseExporter[Workbook]):
                 [
                     class_.class_id,
                     class_.description,
-                    ",".join([parent_class.versioned_id for parent_class in class_.parent_class])
-                    if class_.parent_class
-                    else None,
+                    (
+                        ",".join([parent_class.versioned_id for parent_class in class_.parent_class])
+                        if class_.parent_class
+                        else None
+                    ),
                     str(class_.source),
                     class_.source_entity_name,
                     class_.match_type,
@@ -141,9 +147,11 @@ class ExcelExporter(BaseExporter[Workbook]):
                     property_.class_id,  # A
                     property_.property_id,  # B
                     property_.description,  # C
-                    property_.expected_value_type.versioned_id
-                    if property_.property_type == EntityTypes.object_property
-                    else property_.expected_value_type.suffix,  # D
+                    (
+                        property_.expected_value_type.versioned_id
+                        if property_.property_type == EntityTypes.object_property
+                        else property_.expected_value_type.suffix
+                    ),  # D
                     property_.min_count,  # E
                     property_.max_count,  # F
                     ",".join(property_.cdf_resource_type) if property_.cdf_resource_type else "",  # G
