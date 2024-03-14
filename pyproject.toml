@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cognite-neat"
-version = "0.67.3"
+version = "0.67.4"
 readme = "README.md"
 description = "Knowledge graph transformation"
 authors = [
@@ -70,7 +70,7 @@ tomli = { version = "^2.0.1", python = "<3.11" }
 
 uvicorn = { extras = ["standard"], version = "^0.21.0" }
 prometheus-client = "^0.17.0"
-cognite-sdk = "^7.20.0"
+cognite-sdk = "^7.28.2"
 deepdiff = "*"
 fastapi = "^0.100"
 schedule = "^1"
@@ -143,7 +143,7 @@ types-PyYAML = "^6"
 types-openpyxl = "^3"
 types-requests = "^2"
 types-setuptools = "^68"
-cognite-toolkit = "^0.1.0"
+#cognite-toolkit = "^0.1.0"
 
 [build-system]
 requires = ["poetry>=0.12"]
