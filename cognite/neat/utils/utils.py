@@ -325,3 +325,24 @@ def _order_expectations_by_type(exceptions: list[dict] | list[ErrorDetails]) -> 
 
 def remove_none_elements_from_set(s):
     return {x for x in s if x is not None}
+
+
+def get_inheritance_path(child: Any, child_parent: dict[Any, list[Any]]) -> list:
+    """Returns the inheritance path for a given child
+
+    Args:
+        child: Child class
+        child_parent: Dictionary of child to parent relationship
+
+    Returns:
+        Inheritance path for a given child
+
+    !!! note "No Circular Inheritance"
+        This method assumes that the child_parent dictionary is a tree and does not contain any cycles.
+    """
+    path = []
+    if child in child_parent:
+        path.extend(child_parent[child])
+        for parent in child_parent[child]:
+            path.extend(get_inheritance_path(parent, child_parent))
+    return path

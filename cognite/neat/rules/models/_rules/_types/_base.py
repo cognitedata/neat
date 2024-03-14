@@ -282,3 +282,6 @@ class ParentClassEntity(ClassEntity):
         if isinstance(value, ClassEntity):
             return cls(prefix=value.prefix, suffix=value.suffix, version=value.version)
         return super().from_raw(value)
+
+    def as_class_entity(self) -> ClassEntity:
+        return ClassEntity(prefix=self.prefix, suffix=self.suffix, version=self.version)
