@@ -1,1 +1,1 @@
-::: cognite.neat.graph.transformations.transformer.source2solution_graph
+::: cognite.neat.graph.transformation.transformer.source2solution_graph
