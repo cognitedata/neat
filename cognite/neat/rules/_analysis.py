@@ -171,6 +171,7 @@ def get_class_linkage(rules: InformationRules, consider_inheritance: bool = Fals
             class_linkage = pd.concat([class_linkage, new_row.to_frame().T], ignore_index=True)
 
     class_linkage.drop_duplicates(inplace=True)
+    class_linkage = class_linkage[["source_class", "connecting_property", "target_class", "max_occurrence"]]
 
     return class_linkage
 

@@ -1,29 +1,32 @@
-from cognite.neat.rules.analysis import (
+from cognite.neat.rules._analysis import (
     get_class_linkage,
     get_connected_classes,
     get_defined_classes,
     get_disconnected_classes,
     get_symmetric_pairs,
 )
+from cognite.neat.rules.models._rules import InformationRules
+from cognite.neat.rules.models._rules._types import ClassEntity
 
 
-def test_rules_analysis(transformation_rules):
-    rules = transformation_rules
+class TestRulesAnalysis:
+    def test_defined_classes(self, david_rules: InformationRules) -> None:
+        assert len(get_defined_classes(david_rules, consider_inheritance=False)) == 20
+        assert len(get_defined_classes(david_rules, consider_inheritance=True)) == 26
 
-    defined_classes = {
-        "GeographicalRegion",
-        "Orphanage",
-        "RootCIMNode",
-        "SubGeographicalRegion",
-        "Substation",
-        "Terminal",
-    }
+    def test_disconnected_classes(self, david_rules: InformationRules) -> None:
+        assert get_disconnected_classes(david_rules, consider_inheritance=False) == {
+            ClassEntity.from_raw("power:GeoLocation")
+        }
 
-    assert get_defined_classes(rules) == defined_classes
-    assert get_disconnected_classes(rules) == {"Orphanage"}
+    def test_connected_classes(self, david_rules: InformationRules) -> None:
+        assert len(get_connected_classes(david_rules, consider_inheritance=False)) == 24
+        assert len(get_connected_classes(david_rules, consider_inheritance=True)) == 25
 
-    defined_classes.remove("Orphanage")
+    def test_get_class_linkage(self, david_rules: InformationRules) -> None:
+        assert len(get_class_linkage(david_rules, consider_inheritance=False)) == 28
+        assert len(get_class_linkage(david_rules, consider_inheritance=True)) == 63
 
-    assert get_connected_classes(rules) == defined_classes
-    assert get_symmetric_pairs(rules) == {("Substation", "Terminal"), ("Terminal", "Substation")}
-    assert len(get_class_linkage(rules)) == 5
+    def test_symmetric_pairs(self, david_rules: InformationRules) -> None:
+        assert len(get_symmetric_pairs(david_rules, consider_inheritance=True)) == 0
+        assert len(get_symmetric_pairs(david_rules, consider_inheritance=False)) == 0
