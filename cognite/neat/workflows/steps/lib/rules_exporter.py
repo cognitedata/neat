@@ -4,6 +4,7 @@ from typing import ClassVar, Literal, cast
 
 from cognite.neat.rules import exporters
 from cognite.neat.rules._shared import DMSRules, InformationRules, Rules
+from cognite.neat.rules.models._rules import RoleTypes
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.data_contracts import CogniteClient, MultiRuleData
@@ -145,6 +146,14 @@ class RulesToExcel(Step):
             label="Styling of the Excel file",
             options=list(exporters.ExcelExporter.style_options),
         ),
+        Configurable(
+            name="Output role format",
+            value="input",
+            label="The role to use for the exported spreadsheet. If provided, the rules will be converted to "
+            "this role format before being written to excel. If not provided, the role from the input "
+            "rules will be used.",
+            options=["input", *RoleTypes.__members__.keys()],
+        ),
     ]
 
     def run(self, rules: MultiRuleData) -> FlowMessage:  # type: ignore[override, syntax]
@@ -152,8 +161,12 @@ class RulesToExcel(Step):
             raise StepNotInitialized(type(self).__name__)
 
         styling = cast(exporters.ExcelExporter.Style, self.configs.get("Styling", "default"))
+        role = self.configs.get("Output role format")
+        role_enum = None
+        if role != "input" and role is not None:
+            role_enum = RoleTypes[role]
 
-        excel_exporter = exporters.ExcelExporter(styling=styling)
+        excel_exporter = exporters.ExcelExporter(styling=styling, output_role=role_enum)
 
         rule_instance: Rules
         if rules.domain:
