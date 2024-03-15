@@ -393,12 +393,6 @@ TODO Step by step guide on how to visualize the shared data model.
 ## DMS Architect: Alice
 
 ### Implementing the Enterprise Data Model in CDF
-Neat supports exporting a data model to CDF either using an `AssetLoader` or `DMSLoader`. The `AssetLoader` is
-used to load the data model into the classical `AssetHierarchy` in CDF, while the `DMSLoader` is used to load the
-data model into the new Data Modeling Service (DMS) in CDF. The `DMSLoader` is the recommended way to load the
-data model into CDF, as it supports more advanced features such as defining dependencies between data. In this
-tutorial, we will focus on the `DMSLoader`.
-
 Once David has defined the enterprise data model, Alice will implement it in CDF. The focus of Alice is to make sure
 that the enterprise data model is implemented in CDF in a way that accounts for the expected usage of the data. For example, she
 needs to define how the data is stored and what properties are indexed for fast queries. In addition, she decides
@@ -420,25 +414,30 @@ Her tasks can be divided into **performance** and **quality** and summarized as 
    - Decide which properties should be mandatory.
    - Decide value types for properties (for example int32 vs int64).
 
-### Extending the <code>metadata</code> Sheet
+For details on designing of containers see [here](https://docs.cognite.com/cdf/dm/dm_guides/dm_best_practices_containers).
+
+### Changing the <code>metadata</code> Sheet
 
 Alice has to modify the `metadata` sheet to include the CDF specific information.
 
-|             |                         |
-|-------------|-------------------------|
-| role        | dms architect           |
-| prefix      | power                   |
-| namespace   | pwr                     |
-| space       | sp_power                |
-| externalId  | power_enterprise_model  |
-| version     | 1                       |
-| contributor | Jon, Emma, David, Alice |
-| created     | 2021-01-01              |
-| updated     | 2021-01-01              |
+|             |                              |
+|-------------|------------------------------|
+| role        | dms architect                |
+| schema      | complete                     |
+| space       | sp_power                     |
+| name        | Power to Consumer Data Model |
+| description |                              |
+| externalId  | power_enterprise_model       |
+| version     | 1                            |
+| creator     | Jon, Emma, David, Alice      |
+| created     | 2021-01-01                   |
+| updated     | 2021-01-01                   |
 
-First, she adds herself as a contributor, and then she adds the `space` and `externalId` columns. The `space`
+First, she adds herself as a creator, and then she adds the `space` and `externalId` columns. The `space`
 column is used to define the space in CDF where the data model should be loaded. The `externalId` column is used
 to define the external id of the enterprise data model. This is used to reference the data model from other parts of CDF.
+Note that if Alice got a sheet converted from David using the `To DMS Rules` workflow, thes `space` and `externalId`
+will be automatically filled out.
 
 ### The <code>properties</code> Sheet
 
@@ -463,11 +462,14 @@ The columns are as follows:
   `float32` if she knows that the values will never be larger than 32 bits.
 * **Relation**: This columns only applies to relationships between entities. It is used to specify how the relationship
   should be implemented in CDF. For example, if the relationship should be implemented as an edge or as a direct
-    relation.
+  relation.
 * **Nullable**: This only applies to primitive types. This column is used to specify whether the property is
   required or not. For example, Alice might decide that the `name` property of a `WindTurbine` is required,
   and she will set the `Nullable` column to `False`.
 * **IsList**: This only applies to primitive types. This column is used to specify whether the property is a list or not.
+  For example, say a `WindTurbine` can have multiple timeseries measuring the temperature, Alice might have a property
+  called `temperature` that is a list of Timeseries, which means she will set `Value Type` to `TimeSeries` and
+  `IsList` to `True`.
 
 #### Where to store the properties in CDF
 
@@ -479,7 +481,7 @@ The columns are as follows:
 * **Index**: This column is used to specify whether the property should be part of an index. For example, Alice might
   decide that the `name` property of a `WindTurbine` should be part of an index, and she will set the `Index` column
   to `name`.
-* **Constraints**: This column is used to specify constraints. For exmaple, Alice might decide that the `name`
+* **Constraints**: This column is used to specify constraints. For example, Alice might decide that the `name`
   property of a `WindTurbine` should be unique, so she will set the `Constraints` column to `unique`. If the property
   is a relation implemented as a direct relation, Alice can also specify that the source (other end of the relation)
   should be in a specific container.
@@ -495,16 +497,18 @@ The output of the `To DMS Rules` will produce two new sheets `Container` and `Vi
 to define constraints between the containers. The first three rows of the `Container` sheet for Alice look
 as follows:
 
-| Container      | Description | Constraint     |
-|----------------|-------------|----------------|
-| PowerAsset     |             |                |
-| GeneratingUnit |             | PowerAsset     |
-| WindTurbine    |             | GeneratingUnit |
+| Class          | Container      | Description | Constraint     |
+|----------------|----------------|-------------|----------------|
+| PowerAsset     | PowerAsset     |             |                |
+| GeneratingUnit | GeneratingUnit |             | PowerAsset     |
+| WindTurbine    | WindTurbine    |             | GeneratingUnit |
 
 
 Interpreting the first three rows, we see that all entries in the `GeneratingUnit` container must have a corresponding
 entry in the `PowerAsset` container. In addition, all entries in the `WindTurbine` container must have a corresponding
-entry in the `GeneratingUnit` container (and thus also the `PowerAsset` container.
+entry in the `GeneratingUnit` container (and thus also the `PowerAsset` container. Note that the first column of the
+container sheet is the `Class`. This is not used when exporting the data model to CDF, but it is kept to make it
+clear how the containers are related to the classes in the Information Sheet from David.
 
 ### The <code>View</code> Sheet
 
@@ -512,11 +516,11 @@ The `View` sheet is used to define which views implements other views. Implement
 properties from another view. The first three rows of the `View` sheet for Alice look as follows:
 
 
-| View           | Description | Implements     |
-|----------------|-------------|----------------|
-| PowerAsset     |             |                |
-| GeneratingUnit |             | PowerAsset     |
-| WindTurbine    |             | GeneratingUnit |
+| Class          | View           | Description | Implements     |
+|----------------|----------------|-------------|----------------|
+| PowerAsset     | PowerAsset     |             |                |
+| GeneratingUnit | GeneratingUnit |             | PowerAsset     |
+| WindTurbine    | WindTurbine    |             | GeneratingUnit |
 
 
 Interpreting the first three rows, we see that the `GeneratingUnit` view is reusing the properties from the `PowerAsset`
@@ -526,8 +530,10 @@ to note that the `View` and `Container` sheets are describing different things. 
 define constraints between the containers, Alice could have chosen to have no constraints between the `GeneratingUnit`
 and `WindTurbine` containers, but she still kept reusing the properties from the `PowerAsset` view. Similarly, Alice
 could have kept the constraints, and rewritten all properties for the `WindTurbine` view, without reusing the properties
-from the `GeneratingUnit` and `PowerAsset` views.
+from the `GeneratingUnit` and `PowerAsset` views. As with the `Container` sheet, the first column of the `View` sheet
+is the `Class`, such that it is clear how the views are related to the classes in the Information Sheet from David.
 
+### Download Alice's Spreadsheet
 Download Alice's spreadsheet from [here](spreadsheets/cdf-dms-architect-alice.xlsx).
 
 ### Validating in Neat
@@ -537,7 +543,7 @@ Note that since Alice has set her role as `dms architect` in the `metadata` shee
 suited for the DMSExported. Meaning that it will check that the rules can exported to CDF in a DMS format.
 
 
-### Exporting DMS to YAML
+### Exporting Data Model to YAML
 
 Once Alice has validated her sheet, she can export it to YAML. This is done by using the `Export DMS` workflow in
 the `neat` UI. This will generate a YAML file that can be used to load the data model into CDF.
@@ -546,7 +552,7 @@ This is useful if she want to give the data model to `cognite-toolkit` which can
 
 TODO Step by step guide on how to export to YAML.
 
-### Exporting DMS to CDF
+### Exporting Data Model to CDF
 
 Once Alice has validated her sheet, she can export it to CDF. This is done by using the `Export DMS to CDF` workflow in
 the `neat` UI. This will load the data model into CDF.
