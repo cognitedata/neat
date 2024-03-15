@@ -43,7 +43,7 @@ class MockGraphGenerator(BaseExtractor):
     def __init__(
         self,
         rules: InformationRules | DMSRules,
-        class_count: dict[str | ClassEntity, int],
+        class_count: dict[str | ClassEntity, int] | None = None,
         stop_on_exception: bool = False,
         allow_isolated_classes: bool = True,
     ):
@@ -54,16 +54,16 @@ class MockGraphGenerator(BaseExtractor):
         else:
             raise ValueError("Rules must be of type InformationRules or DMSRules!")
 
-        if not all(isinstance(key, str) for key in class_count.keys()) and not all(
-            isinstance(key, ClassEntity) for key in class_count.keys()
-        ):
-            raise ValueError("Class count keys must be of type str! or ClassEntity!")
+        if not class_count:
+            self.class_count = {class_: 1 for class_ in get_defined_classes(self.rules, consider_inheritance=True)}
         elif all(isinstance(key, str) for key in class_count.keys()):
             self.class_count = {
                 ClassEntity.from_raw(f"{self.rules.metadata.prefix}:{key}"): value for key, value in class_count.items()
             }
-        else:
+        elif all(isinstance(key, ClassEntity) for key in class_count.keys()):
             self.class_count = cast(dict[ClassEntity, int], class_count)
+        else:
+            raise ValueError("Class count keys must be of type str! or ClassEntity! or empty dict!")
 
         self.stop_on_exception = stop_on_exception
         self.allow_isolated_classes = allow_isolated_classes
