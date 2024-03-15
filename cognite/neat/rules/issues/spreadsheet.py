@@ -5,10 +5,12 @@ from functools import total_ordering
 from pathlib import Path
 from typing import Any, ClassVar
 
+from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from pydantic_core import ErrorDetails
 
 from cognite.neat.utils.spreadsheet import SpreadsheetRead
 
+from . import ValidationWarning
 from ._container_inconsistency import InconsistentContainerDefinition
 from .base import MultiValueError, NeatValidationError
 
@@ -16,6 +18,25 @@ if sys.version_info >= (3, 11):
     from typing import Self
 else:
     from typing_extensions import Self
+
+__all__ = [
+    "SpreadsheetError",
+    "SpreadsheetNotFoundError",
+    "MetadataSheetMissingOrFailedError",
+    "SheetMissingError",
+    "ReadSpreadsheetsError",
+    "InvalidRoleError",
+    "InvalidSheetError",
+    "InvalidRowError",
+    "InvalidPropertyError",
+    "InvalidClassError",
+    "InvalidContainerError",
+    "InvalidViewError",
+    "InvalidRowUnknownSheet",
+    "ReferenceNonExistingContainer",
+    "ReferencedNonExistingView",
+    "ClassNoPropertiesNoParentsWarning",
+]
 
 
 @dataclass(frozen=True)
@@ -102,7 +123,7 @@ class InvalidRoleError(NeatValidationError):
 
 
 @dataclass(frozen=True, order=True)
-class InvalidTableError(NeatValidationError, ABC):
+class InvalidSheetError(NeatValidationError, ABC):
     @classmethod
     @abstractmethod
     def from_pydantic_error(
@@ -137,7 +158,7 @@ class InvalidTableError(NeatValidationError, ABC):
 
             if len(error["loc"]) >= 4:
                 sheet_name, *_ = error["loc"]
-                error_cls = _INVALID_SPECIFICATION_BY_SHEET_NAME.get(str(sheet_name), InvalidRowUnknownSheet)
+                error_cls = _INVALID_ROW_ERROR_BY_SHEET_NAME.get(str(sheet_name), InvalidRowUnknownSheet)
                 output.append(error_cls.from_pydantic_error(error, read_info_by_sheet))
                 continue
 
@@ -147,7 +168,7 @@ class InvalidTableError(NeatValidationError, ABC):
 
 @dataclass(frozen=True)
 @total_ordering
-class InvalidRowError(InvalidTableError, ABC):
+class InvalidRowError(InvalidSheetError, ABC):
     description: ClassVar[str] = "This is a generic class for all invalid specifications."
     fix: ClassVar[str] = "Follow the instruction in the error message."
     sheet_name: ClassVar[str]
@@ -255,6 +276,62 @@ class InvalidRowUnknownSheet(InvalidRowError):
         return output
 
 
-_INVALID_SPECIFICATION_BY_SHEET_NAME = {
+_INVALID_ROW_ERROR_BY_SHEET_NAME = {
     cls_.sheet_name: cls_ for cls_ in InvalidRowError.__subclasses__() if cls_ is not InvalidRowError
 }
+
+
+@dataclass(frozen=True)
+class ReferenceNonExistingContainer(InvalidPropertyError):
+    description = "The container referenced by the property is missing in the container sheet"
+    fix = "Add the container to the container sheet"
+
+    container_id: ContainerId
+
+    def message(self) -> str:
+        return (
+            f"In {self.sheet_name}, row={self.row}, column={self.column}: The container with "
+            f"id {self.container_id} is missing in the container sheet."
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["container_id"] = self.container_id
+        return output
+
+
+@dataclass(frozen=True)
+class ReferencedNonExistingView(InvalidPropertyError):
+    description = "The view referenced by the property is missing in the view sheet"
+    fix = "Add the view to the view sheet"
+
+    view_id: ViewId
+
+    def message(self) -> str:
+        return (
+            f"In {self.sheet_name}, row={self.row}, column={self.column}: The view with "
+            f"id {self.view_id} is missing in the view sheet."
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["view_id"] = self.view_id
+        return output
+
+
+@dataclass(frozen=True, order=True)
+class ClassNoPropertiesNoParentsWarning(ValidationWarning):
+    description = "Class has no properties and no parents."
+    fix = "Check if the class should have properties or parents."
+
+    classes: list[str]
+
+    def dump(self) -> dict[str, list[str]]:
+        output = super().dump()
+        output["classes"] = self.classes
+        return output
+
+    def message(self) -> str:
+        if len(self.classes) > 1:
+            return f"Classes {', '.join(self.classes)} have no properties and no parents. This may be a mistake."
+        return f"Class {self.classes[0]} has no properties and no parents. This may be a mistake."

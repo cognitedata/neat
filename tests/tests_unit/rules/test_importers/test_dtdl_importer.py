@@ -1,5 +1,6 @@
 import pytest
 
+import cognite.neat.rules.issues.spreadsheet
 from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import DTDLImporter
 from cognite.neat.rules.importers._dtdl2rules.spec import DTMI, Interface
@@ -16,7 +17,9 @@ class TestDTDLImporter:
         expected_issues = IssueList(
             [
                 validation.MissingIdentifier(component_type="Object"),
-                validation.ClassNoPropertiesNoParents(["example_grid_transmission:baseReceiver(version=1)"]),
+                cognite.neat.rules.issues.spreadsheet.ClassNoPropertiesNoParentsWarning(
+                    ["example_grid_transmission:baseReceiver(version=1)"]
+                ),
             ]
         )
         dtdl_importer = DTDLImporter.from_directory(DTDL_IMPORTER_DATA / "energy-grid")

@@ -7,6 +7,20 @@ from cognite.client.data_classes import data_modeling as dm
 
 from .base import NeatValidationError
 
+__all__ = [
+    "DMSSchemaError",
+    "MissingSpaceError",
+    "MissingContainerError",
+    "MissingContainerPropertyError",
+    "MissingViewError",
+    "MissingParentViewError",
+    "MissingSourceViewError",
+    "MissingEdgeViewError",
+    "DuplicatedViewInDataModelError",
+    "DirectRelationMissingSourceError",
+    "ContainerPropertyUsedMultipleTimesError",
+]
+
 
 @dataclass(frozen=True)
 @total_ordering
@@ -23,7 +37,7 @@ class DMSSchemaError(NeatValidationError, ABC):
 
 
 @dataclass(frozen=True)
-class MissingSpace(DMSSchemaError):
+class MissingSpaceError(DMSSchemaError):
     description = "The spaced referred to by the Container/View/Node/Edge/DataModel does not exist"
     fix = "Create the space"
     space: str
@@ -40,7 +54,7 @@ class MissingSpace(DMSSchemaError):
 
 
 @dataclass(frozen=True)
-class MissingContainer(DMSSchemaError):
+class MissingContainerError(DMSSchemaError):
     description = "The container referred to by the View does not exist"
     fix = "Create the container"
     error_name: ClassVar[str] = "MissingContainer"
@@ -58,7 +72,7 @@ class MissingContainer(DMSSchemaError):
 
 
 @dataclass(frozen=True)
-class MissingContainerProperty(DMSSchemaError):
+class MissingContainerPropertyError(DMSSchemaError):
     description = "The property referred to by the View does not exist in the container"
     fix = "Create the property"
     error_name: ClassVar[str] = "MissingContainerProperty"
@@ -81,7 +95,7 @@ class MissingContainerProperty(DMSSchemaError):
 
 
 @dataclass(frozen=True)
-class MissingView(DMSSchemaError):
+class MissingViewError(DMSSchemaError):
     description = "The view referred to by the View/DataModel does not exist"
     fix = "Create the view"
     error_name: ClassVar[str] = "MissingView"
@@ -99,7 +113,7 @@ class MissingView(DMSSchemaError):
 
 
 @dataclass(frozen=True)
-class MissingParentView(MissingView):
+class MissingParentViewError(MissingViewError):
     description = "The parent view referred to by the View does not exist"
     fix = "Create the parent view"
     error_name: ClassVar[str] = "MissingParentView"
@@ -115,7 +129,7 @@ class MissingParentView(MissingView):
 
 
 @dataclass(frozen=True)
-class MissingSourceView(MissingView):
+class MissingSourceViewError(MissingViewError):
     description = "The source view referred to by the View does not exist"
     fix = "Create the source view"
     error_name: ClassVar[str] = "MissingSourceView"
@@ -132,7 +146,7 @@ class MissingSourceView(MissingView):
 
 
 @dataclass(frozen=True)
-class MissingEdgeView(MissingView):
+class MissingEdgeViewError(MissingViewError):
     description = "The edge view referred to by the View does not exist"
     fix = "Create the edge view"
     error_name: ClassVar[str] = "MissingEdgeView"
@@ -150,7 +164,7 @@ class MissingEdgeView(MissingView):
 
 
 @dataclass(frozen=True)
-class DuplicatedViewInDataModel(DMSSchemaError):
+class DuplicatedViewInDataModelError(DMSSchemaError):
     description = "The view is duplicated in the DataModel"
     fix = "Remove the duplicated view"
     error_name: ClassVar[str] = "DuplicatedViewInDataModel"
@@ -168,7 +182,7 @@ class DuplicatedViewInDataModel(DMSSchemaError):
 
 
 @dataclass(frozen=True)
-class DirectRelationMissingSource(DMSSchemaError):
+class DirectRelationMissingSourceError(DMSSchemaError):
     description = "The source view referred to by the DirectRelation does not exist"
     fix = "Create the source view"
     error_name: ClassVar[str] = "DirectRelationMissingSource"
@@ -186,7 +200,7 @@ class DirectRelationMissingSource(DMSSchemaError):
 
 
 @dataclass(frozen=True)
-class ContainerPropertyUsedMultipleTimes(DMSSchemaError):
+class ContainerPropertyUsedMultipleTimesError(DMSSchemaError):
     description = "The container property is used multiple times by the same view"
     fix = "Use unique container properties for when mapping to the same container"
     error_name: ClassVar[str] = "ContainerPropertyUsedMultipleTimes"

@@ -4,6 +4,7 @@ import pytest
 from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from pydantic.version import VERSION
 
+import cognite.neat.rules.issues.spreadsheet
 from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import ExcelImporter
 from cognite.neat.rules.issues import IssueList
@@ -59,7 +60,7 @@ def invalid_rules_filepaths():
         EXCEL_IMPORTER_DATA / "missing_view_container_dms_rules.xlsx",
         IssueList(
             [
-                validation.ReferencedNonExistingView(
+                cognite.neat.rules.issues.spreadsheet.ReferencedNonExistingView(
                     column="View",
                     row=4,
                     type="value_error.missing",
@@ -68,7 +69,7 @@ def invalid_rules_filepaths():
                     input=None,
                     url=None,
                 ),
-                validation.ReferenceNonExistingContainer(
+                cognite.neat.rules.issues.spreadsheet.ReferenceNonExistingContainer(
                     column="Container",
                     row=4,
                     type="value_error.missing",

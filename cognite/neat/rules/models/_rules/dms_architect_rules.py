@@ -14,6 +14,7 @@ from pydantic import Field, field_validator, model_validator
 from pydantic_core.core_schema import ValidationInfo
 from rdflib import Namespace
 
+import cognite.neat.rules.issues.spreadsheet
 from cognite.neat.rules import issues
 from cognite.neat.rules.models._rules.domain_rules import DomainRules
 from cognite.neat.utils.text import to_camel
@@ -384,7 +385,7 @@ class DMSRules(BaseRules):
                 and (view_id := prop.view.as_id(self.metadata.space, self.metadata.version)) not in defined_views
             ):
                 errors.append(
-                    issues.ReferencedNonExistingView(
+                    cognite.neat.rules.issues.spreadsheet.ReferencedNonExistingView(
                         column="View",
                         row=prop_no,
                         type="value_error.missing",
@@ -402,7 +403,7 @@ class DMSRules(BaseRules):
                     and (container_id := prop.container.as_id(self.metadata.space)) not in defined_containers
                 ):
                     errors.append(
-                        issues.ReferenceNonExistingContainer(
+                        cognite.neat.rules.issues.spreadsheet.ReferenceNonExistingContainer(
                             column="Container",
                             row=prop_no,
                             type="value_error.missing",
@@ -416,7 +417,7 @@ class DMSRules(BaseRules):
                 for constraint_no, constraint in enumerate(container.constraint or []):
                     if constraint.as_id(self.metadata.space) not in defined_containers:
                         errors.append(
-                            issues.ReferenceNonExistingContainer(
+                            cognite.neat.rules.issues.spreadsheet.ReferenceNonExistingContainer(
                                 column="Constraint",
                                 row=constraint_no,
                                 type="value_error.missing",
