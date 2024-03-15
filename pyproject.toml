@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cognite-neat"
-version = "0.67.4"
+version = "0.67.5"
 readme = "README.md"
 description = "Knowledge graph transformation"
 authors = [
@@ -123,7 +123,7 @@ all = [
 twine = "*"
 # Today, 4. March 2024, the latest verson of pytest 8.1 (released yesterday) is not compatible with pytest-regressions
 # This limit should be removed when pytest-regressions is updated to be compatible with pytest 8.1 and beoynd.
-pytest = {version = ">=8.0, <8.1"}
+pytest = { version = ">=8.0, <8.1" }
 pytest-cov = "*"
 pytest-notebook = "*"
 pytest-freezegun = "*"
