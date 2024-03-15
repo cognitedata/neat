@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from ._base import ValidationWarning
+from .base import ValidationWarning
 
 
 @dataclass(frozen=True, order=True)

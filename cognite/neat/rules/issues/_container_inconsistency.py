@@ -4,11 +4,11 @@ from typing import Any
 
 from cognite.client import data_modeling as dm
 
-from ._base import Error
+from .base import NeatValidationError
 
 
 @dataclass(frozen=True, order=True)
-class InconsistentContainerDefinition(Error, ABC):
+class InconsistentContainerDefinition(NeatValidationError, ABC):
     description = "This is a base class for all errors related to inconsistent container definitions"
     fix = "Ensure all properties using the same container have the same type, constraints, and indexes."
     container: dm.ContainerId

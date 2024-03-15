@@ -1,11 +1,11 @@
 from abc import ABC
 from dataclasses import dataclass
 
-from ._base import Error
+from .base import NeatValidationError
 
 
 @dataclass(frozen=True, order=True)
-class InvalidComponent(Error, ABC):
+class InvalidComponent(NeatValidationError, ABC):
     description = "This is a base class for all errors related invalid component definitions"
     fix = "Check if the component is defined in the DTDL file."
 
@@ -55,7 +55,7 @@ class MissingIdentifier(InvalidComponent):
 
 
 @dataclass(frozen=True, order=True)
-class UnsupportedPropertyType(Error):
+class UnsupportedPropertyType(NeatValidationError):
     description = "The property type is not supported"
     fix = "Check if the property type is defined in the DTDL file."
     component_type: str

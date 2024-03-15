@@ -2,7 +2,7 @@ from abc import ABC
 from dataclasses import dataclass
 from pathlib import Path
 
-from ._base import ValidationWarning
+from .base import ValidationWarning
 
 
 @dataclass(frozen=True, order=True)

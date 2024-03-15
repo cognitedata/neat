@@ -5,12 +5,12 @@ from typing import Any, ClassVar
 
 from cognite.client.data_classes import data_modeling as dm
 
-from ._base import Error
+from .base import NeatValidationError
 
 
 @dataclass(frozen=True)
 @total_ordering
-class DMSSchemaError(Error, ABC):
+class DMSSchemaError(NeatValidationError, ABC):
     def __lt__(self, other: object) -> bool:
         if not isinstance(other, DMSSchemaError):
             return NotImplemented
