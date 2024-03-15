@@ -548,16 +548,39 @@ suited for the DMSExported. Meaning that it will check that the rules can export
 Once Alice has validated her sheet, she can export it to YAML. This is done by using the `Export DMS` workflow in
 the `neat` UI. This will generate a YAML file that can be used to load the data model into CDF.
 
-This is useful if she want to give the data model to `cognite-toolkit` which can then govern the data model in CDF.
+This is useful if she wants to give the data model to `cognite-toolkit` which can then govern the data model in CDF.
 
-TODO Step by step guide on how to export to YAML.
+The workflow for exporting the data model to YAML is the same as for exporting it to CDF. See the next section
+for the step-by-step guide.
 
 ### Exporting Data Model to CDF
 
-Once Alice has validated her sheet, she can export it to CDF. This is done by using the `Export DMS to CDF` workflow in
+Once Alice has validated her sheet, she can export it to CDF. This is done by using the `Export DMS` workflow in
 the `neat` UI. This will load the data model into CDF.
 
-TODO Step by step guide on how to export to CDF.
+1. First, she selects the workflow `Export DMS` using the dropdown box in the upper left corner..
+
+<img src="images/export_dms_workflow.png" height="300">
+
+2. Then, she clicks on the `Export Data Model to CDF` step, so that she can change how the data model should be exported.
+   Alice, chose to dry run the export first, meaning that she can see the output of the export before actually exporting
+   the data model into CDF. She closes the configuration window by clicking the `Save` button.
+
+<img src="images/export_dms_config.png" height="300">
+
+3. Finally, she clicks on the `Upload Rules Spreadsheet` step, and uploads the file to the neat local storage. This will
+   trigger the workflow to execute, and the output of each step will be shown in the right panel.
+
+<img src="images/export_dms_executed.png" height="300">
+
+In the panel above, she can click for the report of the export, which will tell her what components of the data model
+that would have been uploaded to CDF (as she is running in dry run mode). In addition, she can download a zip file
+with the components in YAML format inside. The content of this zip file is compatible with a module in the
+`cognite-toolkit`.
+
+After inspecting the report and zip file, Alice is happy wiht the results. She then opens the `Export Data Model to CDF`
+and changes the `Dry Run` to `False`. She then clicks the `Save` button, and uploads the spreadsheet again. This time
+the data model will be uploaded to CDF.
 
 ### Summary
 
