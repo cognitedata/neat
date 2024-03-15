@@ -103,6 +103,9 @@ class Entity(BaseModel, arbitrary_types_allowed=True):
     def __hash__(self) -> int:
         return hash(self.versioned_id)
 
+    def as_non_versioned_entity(self) -> Self:
+        return self.from_string(f"{self.prefix}:{self.suffix}")
+
     @property
     def id(self) -> str:
         if self.prefix is Undefined:
@@ -265,13 +268,13 @@ class ClassEntity(Entity):
         else:
             return cls(prefix=Undefined, suffix=value)
 
-    @property
-    def view_id(self) -> ViewId:
-        return ViewId(space=self.space, external_id=self.external_id, version=self.version)
-
     @classmethod
     def from_view_id(cls, view_id: ViewId) -> Self:
         return cls(prefix=view_id.space, suffix=view_id.external_id, version=view_id.version)
+
+    @property
+    def view_id(self) -> ViewId:
+        return ViewId(space=self.space, external_id=self.external_id, version=self.version)
 
 
 class ParentClassEntity(ClassEntity):

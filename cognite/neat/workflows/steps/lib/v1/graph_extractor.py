@@ -186,7 +186,7 @@ class ExtractGraphFromMockGraph(Step):
     This step generate mock graph based on the defined classes and target number of instances
     """
 
-    description = "This step extracts instances from graph capture spreadsheet and loads them into solution graph"
+    description = "This step generate mock graph based on the defined classes and target number of instances"
     version = "private-alpha"
     category = CATEGORY
     configurables: ClassVar[list[Configurable]] = [
