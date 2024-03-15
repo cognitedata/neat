@@ -4,6 +4,14 @@ from pathlib import Path
 
 from .base import ValidationWarning
 
+__all__ = [
+    "FileReadWarning",
+    "InvalidFileFormat",
+    "UnsupportedSpecWarning",
+    "UnknownItemWarning",
+    "BugInImporterWarning",
+]
+
 
 @dataclass(frozen=True, order=True)
 class FileReadWarning(ValidationWarning, ABC):
@@ -35,7 +43,7 @@ class InvalidFileFormat(FileReadWarning):
 
 
 @dataclass(frozen=True, order=True)
-class UnsupportedSpec(FileReadWarning):
+class UnsupportedSpecWarning(FileReadWarning):
     description = "The spec in the file is not supported"
     fix = "Change to an supported spec"
 
@@ -57,7 +65,7 @@ class UnsupportedSpec(FileReadWarning):
 
 
 @dataclass(frozen=True, order=True)
-class UnknownItem(FileReadWarning):
+class UnknownItemWarning(FileReadWarning):
     description = "The file is missing an implementation"
     fix = "Check if the file is supported. If not, contact the neat team on Github."
 
@@ -73,7 +81,7 @@ class UnknownItem(FileReadWarning):
 
 
 @dataclass(frozen=True, order=True)
-class BugInImporter(FileReadWarning):
+class BugInImporterWarning(FileReadWarning):
     description = "A bug was raised during reading."
     fix = "No fix is available. Contact the neat team on Github"
 

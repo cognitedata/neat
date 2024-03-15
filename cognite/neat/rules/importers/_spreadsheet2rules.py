@@ -40,7 +40,7 @@ class ExcelImporter(BaseImporter):
         try:
             excel_file = pd.ExcelFile(self.filepath)
         except FileNotFoundError:
-            issue_list.append(issues.SpreadsheetNotFound(self.filepath.name))
+            issue_list.append(issues.SpreadsheetNotFoundError(self.filepath))
             if errors == "raise":
                 raise issue_list.as_errors() from None
             return None, issue_list
@@ -48,7 +48,7 @@ class ExcelImporter(BaseImporter):
         try:
             metadata = dict(pd.read_excel(excel_file, "Metadata", header=None).values)
         except ValueError:
-            issue_list.append(issues.MetadataSheetMissingOrFailed())
+            issue_list.append(issues.MetadataSheetMissingOrFailedError(self.filepath))
             if errors == "raise":
                 raise issue_list.as_errors() from None
             return None, issue_list
@@ -60,7 +60,7 @@ class ExcelImporter(BaseImporter):
         expected_sheet_names = rules_model.mandatory_fields(use_alias=True)
 
         if missing_sheets := expected_sheet_names.difference(sheet_names):
-            issue_list.append(issues.SpreadsheetMissing(list(missing_sheets)))
+            issue_list.append(issues.SheetMissingError(self.filepath, list(missing_sheets)))
             if errors == "raise":
                 raise issue_list.as_errors()
             return None, issue_list
@@ -79,7 +79,7 @@ class ExcelImporter(BaseImporter):
                         excel_file, sheet_name, return_read_info=True, expected_headers=[headers]
                     )
                 except Exception as e:
-                    issue_list.append(issues.ReadSpreadsheets(str(e)))
+                    issue_list.append(issues.ReadSpreadsheetsError(self.filepath, str(e)))
                     continue
         if issue_list:
             if errors == "raise":
@@ -92,7 +92,7 @@ class ExcelImporter(BaseImporter):
             RoleTypes.dms_architect: DMSRules,
         }.get(role_enum)
         if not rules_cls:
-            issue_list.append(issues.InvalidRole(str(role_input)))
+            issue_list.append(issues.InvalidRoleError(str(role_input)))
             if errors == "raise":
                 raise issue_list.as_errors()
             return None, issue_list
@@ -100,7 +100,7 @@ class ExcelImporter(BaseImporter):
         try:
             rules = rules_cls.model_validate(sheets)  # type: ignore[attr-defined]
         except ValidationError as e:
-            issue_list.extend(issues.InvalidSheetContent.from_pydantic_errors(e.errors(), read_info_by_sheet))
+            issue_list.extend(issues.InvalidTableError.from_pydantic_errors(e.errors(), read_info_by_sheet))
             if errors == "raise":
                 raise issue_list.as_errors() from e
             return None, issue_list

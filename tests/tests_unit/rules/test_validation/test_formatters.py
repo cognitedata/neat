@@ -10,7 +10,7 @@ from cognite.neat.rules.issues.formatters import BasicHTML
 def issues() -> IssueList:
     return IssueList(
         [
-            validation.InvalidPropertySpecification(
+            validation.InvalidPropertyError(
                 column="IsList",
                 row=4,
                 type="bool_parsing",

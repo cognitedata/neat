@@ -21,23 +21,9 @@ from ._dms_schema_errors import (
     MissingView,
 )
 from ._dms_sheets import ReferencedNonExistingView, ReferenceNonExistingContainer
-from ._fileread_warnings import BugInImporter, FileReadWarning, InvalidFileFormat, UnknownItem, UnsupportedSpec
 from ._import_errors import InvalidComponent, MissingIdentifier, MissingParentDefinition, UnsupportedPropertyType
 from ._importer_warnings import ImportIgnored, UnknownComponent, UnknownProperty, UnknownSubComponent
 from ._schema_inconsistency_warning import ClassNoPropertiesNoParents
-from ._spreadsheet import (
-    InvalidClassSpecification,
-    InvalidContainerSpecification,
-    InvalidPropertySpecification,
-    InvalidRole,
-    InvalidRowSpecification,
-    InvalidSheetContent,
-    InvalidViewSpecification,
-    MetadataSheetMissingOrFailed,
-    ReadSpreadsheets,
-    SpreadsheetMissing,
-    SpreadsheetNotFound,
-)
 from .base import (
     DefaultPydanticError,
     DefaultWarning,
@@ -47,13 +33,33 @@ from .base import (
     ValidationIssue,
     ValidationWarning,
 )
+from .fileread import (
+    BugInImporterWarning,
+    FileReadWarning,
+    InvalidFileFormat,
+    UnknownItemWarning,
+    UnsupportedSpecWarning,
+)
+from .spreadsheet import (
+    InvalidClassError,
+    InvalidContainerError,
+    InvalidPropertyError,
+    InvalidRoleError,
+    InvalidRowError,
+    InvalidTableError,
+    InvalidViewError,
+    MetadataSheetMissingOrFailedError,
+    ReadSpreadsheetsError,
+    SheetMissingError,
+    SpreadsheetNotFoundError,
+)
 
 __all__ = [
-    "UnknownItem",
-    "BugInImporter",
+    "UnknownItemWarning",
+    "BugInImporterWarning",
     "FileReadWarning",
     "InvalidFileFormat",
-    "UnsupportedSpec",
+    "UnsupportedSpecWarning",
     "DefaultPydanticError",
     "DefaultWarning",
     "ClassNoPropertiesNoParents",
@@ -71,17 +77,17 @@ __all__ = [
     "ValidationIssue",
     "UnsupportedPropertyType",
     "ValidationWarning",
-    "SpreadsheetNotFound",
-    "MetadataSheetMissingOrFailed",
-    "SpreadsheetMissing",
-    "ReadSpreadsheets",
-    "InvalidRole",
-    "InvalidSheetContent",
-    "InvalidRowSpecification",
-    "InvalidPropertySpecification",
-    "InvalidClassSpecification",
-    "InvalidViewSpecification",
-    "InvalidContainerSpecification",
+    "SpreadsheetNotFoundError",
+    "MetadataSheetMissingOrFailedError",
+    "SheetMissingError",
+    "ReadSpreadsheetsError",
+    "InvalidRoleError",
+    "InvalidTableError",
+    "InvalidRowError",
+    "InvalidPropertyError",
+    "InvalidClassError",
+    "InvalidViewError",
+    "InvalidContainerError",
     "MissingContainer",
     "MissingContainerProperty",
     "MissingView",

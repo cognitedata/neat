@@ -72,7 +72,7 @@ class DTDLImporter(BaseImporter):
         try:
             cls_by_type = DTDL_CLS_BY_TYPE_BY_SPEC[spec_version]
         except KeyError:
-            yield issues.UnsupportedSpec(filepath=filepath, version=spec_version, spec_name="DTDL")
+            yield issues.UnsupportedSpecWarning(filepath=filepath, version=spec_version, spec_name="DTDL")
             return
 
         for item in raw_list:
@@ -81,14 +81,14 @@ class DTDLImporter(BaseImporter):
                 continue
             cls_ = cls_by_type.get(type_)
             if cls_ is None:
-                yield issues.UnknownItem(reason=f"Unknown '@type' {type_}.", filepath=filepath)
+                yield issues.UnknownItemWarning(reason=f"Unknown '@type' {type_}.", filepath=filepath)
                 continue
             try:
                 yield cls_.model_validate(item)
             except ValidationError as e:
                 yield issues.InvalidFileFormat(filepath=filepath, reason=str(e))
             except Exception as e:
-                yield issues.BugInImporter(filepath=filepath, error=str(e), importer_name=cls.__name__)
+                yield issues.BugInImporterWarning(filepath=filepath, error=str(e), importer_name=cls.__name__)
 
     @classmethod
     def from_directory(cls, directory: Path) -> "DTDLImporter":

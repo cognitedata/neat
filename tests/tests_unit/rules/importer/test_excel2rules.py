@@ -7,7 +7,7 @@ from pydantic import ValidationError
 
 from cognite.neat.rules import importer
 from cognite.neat.rules.importers._spreadsheet2rules import ExcelImporter
-from cognite.neat.rules.issues import IssueList, SpreadsheetMissing
+from cognite.neat.rules.issues import IssueList, SheetMissingError
 from cognite.neat.rules.models import Tables
 from cognite.neat.rules.models._rules import DomainRules, InformationRules
 from cognite.neat.rules.models._rules.base import RoleTypes
@@ -72,7 +72,7 @@ class TestExcelImporter:
     def test_excel_importer_invalid_information_architect(self):
         expected_issues = IssueList(
             [
-                SpreadsheetMissing(["Classes"]),
+                SheetMissingError(["Classes"]),
             ]
         )
 

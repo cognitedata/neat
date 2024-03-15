@@ -14,7 +14,15 @@ if sys.version_info < (3, 11):
 else:
     pass
 
-__all__ = ["ValidationIssue"]
+__all__ = [
+    "ValidationIssue",
+    "NeatValidationError",
+    "DefaultPydanticError",
+    "ValidationWarning",
+    "DefaultWarning",
+    "IssueList",
+    "MultiValueError",
+]
 
 
 @dataclass(order=True, frozen=True)

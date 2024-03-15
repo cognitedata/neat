@@ -19,7 +19,7 @@ def valid_rules_filepaths():
 def invalid_rules_filepaths():
     yield pytest.param(
         DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "not-existing.xlsx",
-        IssueList([validation.SpreadsheetNotFound("not-existing.xlsx")]),
+        IssueList([validation.SpreadsheetNotFoundError("not-existing.xlsx")]),
         id="Not existing file",
     )
     major, minor, *_ = VERSION.split(".")
@@ -28,7 +28,7 @@ def invalid_rules_filepaths():
         EXCEL_IMPORTER_DATA / "invalid_property_dms_rules.xlsx",
         IssueList(
             [
-                validation.InvalidPropertySpecification(
+                validation.InvalidPropertyError(
                     column="IsList",
                     row=5,
                     type="bool_parsing",

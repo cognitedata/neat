@@ -2,6 +2,7 @@ import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from functools import total_ordering
+from pathlib import Path
 from typing import Any, ClassVar
 
 from pydantic_core import ErrorDetails
@@ -17,30 +18,40 @@ else:
     from typing_extensions import Self
 
 
-@dataclass(frozen=True, order=True)
-class SpreadsheetNotFound(NeatValidationError):
+@dataclass(frozen=True)
+class SpreadsheetError(NeatValidationError, ABC):
+    description = "Error when reading spreadsheet"
+    filepath: Path
+
+
+@dataclass(frozen=True)
+class SpreadsheetNotFoundError(SpreadsheetError):
     description: ClassVar[str] = "Spreadsheet not found"
     fix: ClassVar[str] = "Make sure to provide a valid spreadsheet"
 
-    spreadsheet_name: str
-
     def message(self) -> str:
-        return f"Spreadsheet {self.spreadsheet_name} not found"
+        return f"Spreadsheet {self.filepath.name} not found"
 
     def dump(self) -> dict[str, Any]:
         output = super().dump()
-        output["spreadsheet_name"] = self.spreadsheet_name
+        output["spreadsheet_name"] = str(self.filepath)
         return output
 
 
 @dataclass(frozen=True, order=True)
-class MetadataSheetMissingOrFailed(NeatValidationError):
+class MetadataSheetMissingOrFailedError(SpreadsheetError):
     description: ClassVar[str] = "Metadata sheet is missing or it failed validation for one or more fields"
     fix: ClassVar[str] = "Make sure to define compliant Metadata sheet before proceeding"
 
+    def message(self) -> str:
+        return (
+            f"Metadata sheet is missing or it failed validation for one or more fields in {self.filepath.name}. "
+            + self.fix
+        )
+
 
 @dataclass(frozen=True, order=True)
-class SpreadsheetMissing(NeatValidationError):
+class SheetMissingError(SpreadsheetError):
     description: ClassVar[str] = "Spreadsheet(s) is missing"
     fix: ClassVar[str] = "Make sure to provide compliant spreadsheet(s) before proceeding"
 
@@ -59,14 +70,14 @@ class SpreadsheetMissing(NeatValidationError):
 
 
 @dataclass(frozen=True, order=True)
-class ReadSpreadsheets(NeatValidationError):
+class ReadSpreadsheetsError(SpreadsheetError):
     description: ClassVar[str] = "Error reading spreadsheet(s)"
     fix: ClassVar[str] = "Is the excel document open in another program? Is the file corrupted?"
 
     error_message: str
 
     def message(self) -> str:
-        return f"Error reading spreadsheet(s): {self.error_message}"
+        return f"Error reading spreadsheet {self.filepath.name}: {self.error_message}"
 
     def dump(self) -> dict[str, Any]:
         output = super().dump()
@@ -75,7 +86,7 @@ class ReadSpreadsheets(NeatValidationError):
 
 
 @dataclass(frozen=True, order=True)
-class InvalidRole(NeatValidationError):
+class InvalidRoleError(NeatValidationError):
     description: ClassVar[str] = "Invalid role"
     fix: ClassVar[str] = "Make sure to provide a valid role"
 
@@ -91,7 +102,7 @@ class InvalidRole(NeatValidationError):
 
 
 @dataclass(frozen=True, order=True)
-class InvalidSheetContent(NeatValidationError, ABC):
+class InvalidTableError(NeatValidationError, ABC):
     @classmethod
     @abstractmethod
     def from_pydantic_error(
@@ -116,7 +127,7 @@ class InvalidSheetContent(NeatValidationError, ABC):
                             for row_no in row_numbers:
                                 # Adjusting the row number to the actual row number in the spreadsheet
                                 caught_error.row_numbers.add(reader.adjusted_row_number(row_no))
-                        if isinstance(caught_error, InvalidRowSpecification):
+                        if isinstance(caught_error, InvalidRowError):
                             # Adjusting the row number to the actual row number in the spreadsheet
                             new_row = reader.adjusted_row_number(caught_error.row)
                             # The error is frozen, so we have to use __setattr__ to change the row number
@@ -126,9 +137,7 @@ class InvalidSheetContent(NeatValidationError, ABC):
 
             if len(error["loc"]) >= 4:
                 sheet_name, *_ = error["loc"]
-                error_cls = _INVALID_SPECIFICATION_BY_SHEET_NAME.get(
-                    str(sheet_name), InvalidRowSpecificationUnknownSheet
-                )
+                error_cls = _INVALID_SPECIFICATION_BY_SHEET_NAME.get(str(sheet_name), InvalidRowUnknownSheet)
                 output.append(error_cls.from_pydantic_error(error, read_info_by_sheet))
                 continue
 
@@ -138,7 +147,7 @@ class InvalidSheetContent(NeatValidationError, ABC):
 
 @dataclass(frozen=True)
 @total_ordering
-class InvalidRowSpecification(InvalidSheetContent, ABC):
+class InvalidRowError(InvalidTableError, ABC):
     description: ClassVar[str] = "This is a generic class for all invalid specifications."
     fix: ClassVar[str] = "Follow the instruction in the error message."
     sheet_name: ClassVar[str]
@@ -151,12 +160,12 @@ class InvalidRowSpecification(InvalidSheetContent, ABC):
     url: str | None
 
     def __lt__(self, other: object) -> bool:
-        if not isinstance(other, InvalidRowSpecification):
+        if not isinstance(other, InvalidRowError):
             return NotImplemented
         return (self.sheet_name, self.row, self.column) < (other.sheet_name, other.row, other.column)
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, InvalidRowSpecification):
+        if not isinstance(other, InvalidRowError):
             return NotImplemented
         return (self.sheet_name, self.row, self.column) == (other.sheet_name, other.row, other.column)
 
@@ -199,27 +208,27 @@ class InvalidRowSpecification(InvalidSheetContent, ABC):
 
 
 @dataclass(frozen=True)
-class InvalidPropertySpecification(InvalidRowSpecification):
+class InvalidPropertyError(InvalidRowError):
     sheet_name = "Properties"
 
 
 @dataclass(frozen=True)
-class InvalidClassSpecification(InvalidRowSpecification):
+class InvalidClassError(InvalidRowError):
     sheet_name = "Classes"
 
 
 @dataclass(frozen=True)
-class InvalidContainerSpecification(InvalidRowSpecification):
+class InvalidContainerError(InvalidRowError):
     sheet_name = "Containers"
 
 
 @dataclass(frozen=True)
-class InvalidViewSpecification(InvalidRowSpecification):
+class InvalidViewError(InvalidRowError):
     sheet_name = "Views"
 
 
 @dataclass(frozen=True)
-class InvalidRowSpecificationUnknownSheet(InvalidRowSpecification):
+class InvalidRowUnknownSheet(InvalidRowError):
     sheet_name = "Unknown"
 
     actual_sheet_name: str
@@ -247,5 +256,5 @@ class InvalidRowSpecificationUnknownSheet(InvalidRowSpecification):
 
 
 _INVALID_SPECIFICATION_BY_SHEET_NAME = {
-    cls_.sheet_name: cls_ for cls_ in InvalidRowSpecification.__subclasses__() if cls_ is not InvalidRowSpecification
+    cls_.sheet_name: cls_ for cls_ in InvalidRowError.__subclasses__() if cls_ is not InvalidRowError
 }
