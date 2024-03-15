@@ -26,7 +26,7 @@ class GraphFromMockData(Step):
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
             name="Class count",
-            value='{"GeographicalRegion":5, "SubGeographicalRegion":10}',
+            value="",
             label="Target number of instances for each class",
         ),
         Configurable(name="Graph", value="solution", label="The name of target graph.", options=["source", "solution"]),
@@ -44,8 +44,11 @@ class GraphFromMockData(Step):
                 step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
             )
 
+        logging.info(50 * "#")
+        logging.info(50 * "#")
+        logging.info(self.configs["Class count"])
         try:
-            class_count = json.loads(self.configs["Class count"])
+            class_count = json.loads(self.configs["Class count"]) if self.configs["Class count"] else {}
         except Exception:
             return FlowMessage(
                 error_text="Defected JSON stored in class_count",
