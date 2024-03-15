@@ -14,19 +14,19 @@ units are partially overlapping, both in concepts and data. Lots of the value in
 taking data from different sources and making them easily accessible and understandable for all domain experts and all business units, as
 this unlocks the potential for cross-domain insights.
 
-The expert elicitation is the process of taking the knowledge from domain experts and turning it into a shared knowledge artifact such as an Enterprise Data Model (covering the entire suite of use-cases and domains and business units).
-`neat` has been designed to facilitate this process by providing a way to iterate on and developed this model.
+The expert elicitation is the process of distilling the domain expert knowledge and turning it into a shared knowledge artifact such as an Enterprise Data Model (covering the entire suite of use-cases and domains and business units).
+`neat` has been designed to facilitate this process by providing a way to iterate on and developed the enterprise data model.
 
 ## Use Case
 
-In this tutorial, we will focus on the Power & Utilities industry. We will have two domain experts, one that
-focuses on wind farm operation and one that focuses on grid analysis, lets call them Jon and Emma. In addition,
-we will have an information architect, let's call him David, who will be responsible for combining the
+In this tutorial, we will focus on the Power & Utilities industry, and try to build power to consumer data model.
+We will have two domain experts, one that focuses on wind farm operation and one that focuses on electrical grid, lets call them Jon and Emma.
+In addition, we will have an information architect, let's call him David, who will be responsible for combining the
 knowledge from Jon and Emma into an enterprise data model. Finally, we have a CDF expert, let's call her Alice,
 who will be responsible for implementing the enterprise data model in CDF. Note that in a real-world scenario,
 the information architect and the CDF solution architect (DMS - domain model service architect) might be the same
-person, but for the purpose of this tutorial, we will keep them separate to highlight that their required skills
-and how they use `neat` are different.
+person, but for the purpose of this tutorial, we will keep these roles separate to highlight required skills necessary for each role
+as well to highlight how their use of `neat` will be different.
 
 **Note** You don't need to be an expert in the Power & Utilities industry to follow this tutorial. The concepts
 are generic and can be applied to any industry in which you have domain experts with overlapping knowledge and data.
@@ -35,10 +35,11 @@ We have purposely simplified the domains to make it easier to follow this tutori
 ## Wind Farm Operation Expert: Jon
 
 ### Gathering Knowledge
-In `neat`, knowledge is captured in statements (i.e. sentences). A statement is a simple fact about a thing (e.g. wind turbine). In this tutorial, we will collect statements that describe the properties of physical objects that constitute an operational wind farm connected to a transmission grid. We will start with a wind turbine.
+In `neat`, knowledge is captured in statements (i.e. sentences). A statement is a simple fact about a thing (e.g. wind turbine). In this tutorial, we will collect statements that describe the properties of physical objects that constitute an operational wind farm connected to an electrical grid. We purposely use spreadsheets to
+collect these statements since anyone can use them. This is important, as we want to make sure that there is a seamless transition between the domain experts, information architect and CDF experts.
 
-For example, Jon might say that a wind turbine has a `name`, a `location`, `manufacturer`, `ratedPower`, `hubHeight`, `actualPower` and `arrayCableConnection`. These are all
-statements. In `neat`, we capture these statements in a spreadsheet format. We refer to a set of
+
+We will start with a wind turbine. For example, Jon might say that a wind turbine has a `name`, a `location`, `manufacturer`, `ratedPower`, `hubHeight`, `actualPower` and `arrayCableConnection`. These are all statements. In `neat`, we capture these statements in a spreadsheet format. We refer to a set of
 statements as `Properties`. The `Properties` sheet looks as follows for a domain expert like Jon:
 
 | Class       | Property           | Description     | Value Type  | Min Count  | Max Count  |
@@ -69,7 +70,7 @@ first row, we see that a `WindTurbine` is expected to have exactly one `name`. S
 
 In the similar fashion, Jon defines the properties for `WindFarm`, `Substation` and `ExportCable` in the `Properties` sheet.
 
-In addition to the `Properties` sheets, `neat` also requires one more sheet `Metadata` for domain experts.
+In addition to the `Properties` sheet, `neat` also requires `Metadata` sheet as well.
 In case of domain expert the `Metadata` sheet only requires `role` and `creator` to be set, where `role` represent the role a person has in modeling of the enterprise data model and `creator` is the name of the person from whom we are acquiring knowledge to create the model.
 For Jon the `Metadata` sheet looks as follows:
 
@@ -79,7 +80,7 @@ For Jon the `Metadata` sheet looks as follows:
 | creator | Jon           |
 
 
-Optionally, domain experts can also define classes in the `classes` sheet. Classes are used to group properties that define a thing. For example, a `WindTurbine` is a class, and the set of properties for a class defines what it means to be a member of that class. However, as it is optional, Jon skips this sheet, and leaves it to the information architect, David, to define that for him.
+Optionally, domain experts can also define classes in the `classes` sheet. Classes are used to group properties that define a thing (e.g., a real-life object). For example, a `WindTurbine` is a class, and the set of properties for a class defines what it means to be a member of that class. However, as it is optional, Jon skips this sheet, and leaves it to the information architect, David, to define that for him.
 
 Download Jon's spreadsheet from [here](spreadsheets/expert-wind-energy-jon.xlsx).
 
