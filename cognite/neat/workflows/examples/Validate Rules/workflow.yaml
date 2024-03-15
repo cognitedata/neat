@@ -20,6 +20,7 @@ steps:
     system_component_id: null
     transition_to:
     - step_942973
+    - step_715590
     trigger: false
     ui_config:
         pos_x: 557
@@ -43,4 +44,23 @@ steps:
     ui_config:
         pos_x: 558
         pos_y: -14
+-   complex_configs: {}
+    configs:
+        Output role format: input
+        Styling: default
+    description: null
+    enabled: true
+    id: step_715590
+    label: Convert Rules
+    max_retries: 0
+    method: RulesToExcel
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to: []
+    trigger: false
+    ui_config:
+        pos_x: 558
+        pos_y: 217
 system_components: []
