@@ -7,7 +7,7 @@ from pydantic_core import ErrorDetails
 
 from cognite.neat.graph.models import Triple
 from cognite.neat.graph.stores import NeatGraphStoreBase
-from cognite.neat.graph.transformations.query_generator.sparql import build_construct_query
+from cognite.neat.graph.transformation.query_generator.sparql import build_construct_query
 from cognite.neat.rules.models import Rules
 
 T_Output = TypeVar("T_Output")

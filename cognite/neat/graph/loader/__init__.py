@@ -1,4 +1,4 @@
-from cognite.neat.graph.loaders.core.labels import upload_labels
+from cognite.neat.graph.loader.core.labels import upload_labels
 
 from ._asset_loader import AssetLoader
 from ._base import BaseLoader, CogniteLoader

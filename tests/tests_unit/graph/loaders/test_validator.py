@@ -1,5 +1,5 @@
-from cognite.neat.graph.loaders.core.rdf_to_assets import rdf2assets
-from cognite.neat.graph.loaders.validator import validate_asset_hierarchy
+from cognite.neat.graph.loader.core.rdf_to_assets import rdf2assets
+from cognite.neat.graph.loader.validator import validate_asset_hierarchy
 from cognite.neat.graph.stores import MemoryStore
 
 

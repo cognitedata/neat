@@ -13,8 +13,8 @@ from pydantic._internal._model_construction import ModelMetaclass
 from rdflib import Graph, URIRef
 from typing_extensions import TypeAliasType
 
-from cognite.neat.graph.loaders.core.rdf_to_assets import NeatMetadataKeys
-from cognite.neat.graph.transformations.query_generator.sparql import build_construct_query, triples2dictionary
+from cognite.neat.graph.loader.core.rdf_to_assets import NeatMetadataKeys
+from cognite.neat.graph.transformation.query_generator.sparql import build_construct_query, triples2dictionary
 from cognite.neat.rules import exceptions
 from cognite.neat.rules.analysis import define_class_asset_mapping, to_class_property_pairs
 from cognite.neat.rules.exporter._rules2dms import DMSSchemaComponents
@@ -560,9 +560,11 @@ def to_node(
 
 def _to_node_using_view_id(self, view_id: ViewId) -> NodeApply:
     attributes: dict = {
-        attribute: getattr(self, attribute).isoformat()
-        if isinstance(getattr(self, attribute), date)
-        else getattr(self, attribute)
+        attribute: (
+            getattr(self, attribute).isoformat()
+            if isinstance(getattr(self, attribute), date)
+            else getattr(self, attribute)
+        )
         for attribute in self.attributes
     }
 
@@ -598,9 +600,11 @@ def _to_node_using_data_model(self, data_model, add_class_prefix) -> NodeApply:
         )
 
     attributes: dict = {
-        attribute: getattr(self, attribute).isoformat()
-        if isinstance(getattr(self, attribute), date)
-        else getattr(self, attribute)
+        attribute: (
+            getattr(self, attribute).isoformat()
+            if isinstance(getattr(self, attribute), date)
+            else getattr(self, attribute)
+        )
         for attribute in self.attributes
     }
     if add_class_prefix:

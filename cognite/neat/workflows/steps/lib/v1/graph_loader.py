@@ -8,9 +8,9 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes import Asset, AssetFilter
 from prometheus_client import Gauge
 
-from cognite.neat.graph import loaders
-from cognite.neat.graph.loaders import upload_labels
-from cognite.neat.graph.loaders.core.rdf_to_assets import (
+from cognite.neat.graph import loader as graph_loader
+from cognite.neat.graph.loader import upload_labels
+from cognite.neat.graph.loader.core.rdf_to_assets import (
     NeatMetadataKeys,
     categorize_assets,
     rdf2assets,
@@ -18,13 +18,13 @@ from cognite.neat.graph.loaders.core.rdf_to_assets import (
     unique_asset_labels,
     upload_assets,
 )
-from cognite.neat.graph.loaders.core.rdf_to_relationships import (
+from cognite.neat.graph.loader.core.rdf_to_relationships import (
     categorize_relationships,
     rdf2relationships,
     upload_relationships,
 )
-from cognite.neat.graph.loaders.rdf_to_dms import upload_edges, upload_nodes
-from cognite.neat.graph.loaders.validator import validate_asset_hierarchy
+from cognite.neat.graph.loader.rdf_to_dms import upload_edges, upload_nodes
+from cognite.neat.graph.loader.validator import validate_asset_hierarchy
 from cognite.neat.utils.utils import generate_exception_report
 from cognite.neat.workflows._exceptions import StepFlowContextNotInitialized, StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
@@ -127,7 +127,7 @@ class GenerateNodesAndEdgesFromGraph(Step):
             graph = cast(SourceGraph | SolutionGraph, self.flow_context["SourceGraph"])
 
         add_class_prefix = True if self.configs["add_class_prefix"] == "True" else False
-        loader = loaders.DMSLoader(rules.rules, graph.graph, add_class_prefix=add_class_prefix)
+        loader = graph_loader.DMSLoader(rules.rules, graph.graph, add_class_prefix=add_class_prefix)
         nodes, edges, exceptions = loader.as_nodes_and_edges(stop_on_exception=False)
 
         msg = f"Total count of: <ul><li>{ len(nodes) } nodes</li><li>{ len(edges) } edges</li></ul>"

@@ -10,8 +10,8 @@ from cognite.client.data_classes import LabelFilter, Relationship, RelationshipU
 from cognite.client.exceptions import CogniteDuplicatedError
 
 from cognite.neat.graph.exceptions import NamespaceRequired
-from cognite.neat.graph.loaders.core.models import RelationshipDefinition, RelationshipDefinitions
-from cognite.neat.graph.loaders.core.rdf_to_assets import _categorize_cdf_assets
+from cognite.neat.graph.loader.core.models import RelationshipDefinition, RelationshipDefinitions
+from cognite.neat.graph.loader.core.rdf_to_assets import _categorize_cdf_assets
 from cognite.neat.graph.stores import NeatGraphStoreBase
 from cognite.neat.rules.models.rules import Rules
 from cognite.neat.utils.utils import chunker, datetime_utc_now, epoch_now_ms, remove_namespace, retry_decorator

@@ -1,7 +1,6 @@
 import sys
 import warnings
 from abc import ABC
-from collections import defaultdict
 from pathlib import Path
 from typing import ClassVar
 
@@ -10,6 +9,7 @@ from rdflib import DCTERMS, OWL, RDF, RDFS, XSD, BNode, Graph, Literal, Namespac
 from rdflib.collection import Collection as GraphCollection
 
 from cognite.neat.rules import exceptions
+from cognite.neat.rules._analysis import to_class_dict, to_class_property_pairs, to_property_dict
 from cognite.neat.rules.models._rules import DMSRules
 from cognite.neat.rules.models._rules._types import XSD_VALUE_TYPE_MAPPINGS, EntityTypes
 from cognite.neat.rules.models._rules.information_rules import (
@@ -101,11 +101,11 @@ class Ontology(OntologyModel):
         if rules.metadata.namespace is None:
             raise exceptions.MissingDataModelPrefixOrNamespace()
 
-        class_dict = _to_class_dict(rules)
+        class_dict = to_class_dict(rules)
         return cls(
             properties=[
                 OWLProperty.from_list_of_properties(definition, rules.metadata.namespace)
-                for definition in _to_property_dict(rules).values()
+                for definition in to_property_dict(rules).values()
             ],
             classes=[
                 OWLClass.from_class(definition, rules.metadata.namespace, rules.prefixes)
@@ -113,11 +113,11 @@ class Ontology(OntologyModel):
             ],
             shapes=[
                 SHACLNodeShape.from_rules(
-                    class_dict[class_],
+                    class_dict[class_.suffix],
                     list(properties.values()),
                     rules.metadata.namespace,
                 )
-                for class_, properties in _to_class_property_pairs(rules).items()
+                for class_, properties in to_class_property_pairs(rules).items()
             ]
             + [
                 SHACLNodeShape.from_rules(
@@ -559,57 +559,3 @@ class SHACLPropertyShape(OntologyModel):
             ),
             namespace=namespace,
         )
-
-
-def _to_property_dict(rules: InformationRules) -> dict[str, list[InformationProperty]]:
-    property_: dict[str, list[InformationProperty]] = defaultdict(list)
-    for prop in rules.properties:
-        property_[prop.property_].append(prop)
-    return property_
-
-
-def _to_class_dict(rules: InformationRules) -> dict[str, InformationClass]:
-    class_: dict[str, InformationClass] = {}
-    for cls in rules.classes:
-        class_[cls.class_.suffix] = cls
-    return class_
-
-
-def _to_class_property_pairs(rules: InformationRules) -> dict[str, dict[str, InformationProperty]]:
-    class_property_pairs = {}
-
-    for class_, properties in _get_classes_with_properties(rules).items():
-        processed_properties = {}
-        for property_ in properties:
-            if property_.property_ in processed_properties:
-                warnings.warn(
-                    "Property has been defined more than once! Only first definition will be considered.", stacklevel=2
-                )
-                continue
-
-            processed_properties[property_.property_] = property_
-        class_property_pairs[class_] = processed_properties
-
-    return class_property_pairs
-
-
-def _get_classes_with_properties(rules: InformationRules) -> dict[str, list[InformationProperty]]:
-    """Returns classes that have been defined in the data model.
-
-    Args:
-        transformation_rules: Instance of TransformationRules holding the data model
-
-    Returns:
-        Dictionary of classes with a list of properties defined for them
-    """
-
-    class_property_pairs: dict[str, list[InformationProperty]] = {}
-
-    for property_ in rules.properties:
-        class_ = property_.class_.suffix
-        if class_ in class_property_pairs:
-            class_property_pairs[class_] += [property_]
-        else:
-            class_property_pairs[class_] = [property_]
-
-    return class_property_pairs

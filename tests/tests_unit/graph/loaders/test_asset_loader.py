@@ -3,9 +3,9 @@ from typing import Any
 import pytest
 from rdflib import Graph
 
-from cognite.neat.graph.loaders import AssetLoader
-from cognite.neat.graph.loaders.core.rdf_to_assets import rdf2assets
-from cognite.neat.graph.loaders.core.rdf_to_relationships import rdf2relationships
+from cognite.neat.graph.loader import AssetLoader
+from cognite.neat.graph.loader.core.rdf_to_assets import rdf2assets
+from cognite.neat.graph.loader.core.rdf_to_relationships import rdf2relationships
 from cognite.neat.graph.stores import MemoryStore
 from cognite.neat.rules.models import Rules
 
