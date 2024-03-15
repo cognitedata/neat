@@ -4,21 +4,21 @@ import pytest
 from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
 
+from cognite.neat.rules.issues.dms import (
+    ContainerPropertyUsedMultipleTimesError,
+    DirectRelationMissingSourceError,
+    DMSSchemaError,
+    DuplicatedViewInDataModelError,
+    MissingContainerError,
+    MissingContainerPropertyError,
+    MissingEdgeViewError,
+    MissingParentViewError,
+    MissingSourceViewError,
+    MissingSpaceError,
+    MissingViewError,
+)
 from cognite.neat.rules.models._rules.dms_schema import (
     DMSSchema,
-)
-from cognite.neat.rules.validation._dms_schema_errors import (
-    ContainerPropertyUsedMultipleTimes,
-    DirectRelationMissingSource,
-    DMSSchemaError,
-    DuplicatedViewInDataModel,
-    MissingContainer,
-    MissingContainerProperty,
-    MissingEdgeView,
-    MissingParentView,
-    MissingSourceView,
-    MissingSpace,
-    MissingView,
 )
 
 
@@ -39,11 +39,11 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
             data_models=dm.DataModelApplyList([data_model]),
         ),
         [
-            DuplicatedViewInDataModel(
+            DuplicatedViewInDataModelError(
                 view=dm.ViewId("my_space", "my_view1", "1"),
                 referred_by=dm.DataModelId("my_space", "my_data_model", "1"),
             ),
-            MissingView(
+            MissingViewError(
                 view=dm.ViewId("my_space", "my_view1", "1"),
                 referred_by=dm.DataModelId("my_space", "my_data_model", "1"),
             ),
@@ -101,16 +101,16 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
             containers=dm.ContainerApplyList([container]),
         ),
         [
-            MissingContainer(
+            MissingContainerError(
                 container=dm.ContainerId("my_space", "does_not_exist"),
                 referred_by=dm.ViewId("my_space", "my_view1", "1"),
             ),
-            MissingContainerProperty(
+            MissingContainerPropertyError(
                 container=dm.ContainerId("my_space", "my_container"),
                 property="non_existing",
                 referred_by=dm.ViewId("my_space", "my_view1", "1"),
             ),
-            ContainerPropertyUsedMultipleTimes(
+            ContainerPropertyUsedMultipleTimesError(
                 referred_by=frozenset(
                     {
                         (dm.ViewId("my_space", "my_view2", "1"), "value"),
@@ -159,11 +159,11 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
             containers=dm.ContainerApplyList([container]),
         ),
         [
-            MissingSpace(
+            MissingSpaceError(
                 space="non_existing_space",
                 referred_by=dm.ContainerId("non_existing_space", "my_container"),
             ),
-            DirectRelationMissingSource(
+            DirectRelationMissingSourceError(
                 view_id=dm.ViewId("my_space", "my_view1", "1"),
                 property="direct",
             ),
@@ -214,16 +214,16 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
             views=dm.ViewApplyList([view1, view2]),
         ),
         [
-            MissingParentView(
+            MissingParentViewError(
                 view=dm.ViewId("my_space", "non_existing", "1"),
                 referred_by=dm.ViewId("my_space", "my_view1", "1"),
             ),
-            MissingEdgeView(
+            MissingEdgeViewError(
                 view=dm.ViewId("my_space", "non_existing_edge_view", "1"),
                 property="non_existing",
                 referred_by=dm.ViewId("my_space", "my_view1", "1"),
             ),
-            MissingSourceView(
+            MissingSourceViewError(
                 view=dm.ViewId("my_space", "non_existing", "1"),
                 property="non_existing",
                 referred_by=dm.ViewId("my_space", "my_view1", "1"),
