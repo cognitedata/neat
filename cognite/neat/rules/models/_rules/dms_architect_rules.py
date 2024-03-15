@@ -14,7 +14,7 @@ from pydantic import Field, field_validator, model_validator
 from pydantic_core.core_schema import ValidationInfo
 from rdflib import Namespace
 
-from cognite.neat.rules import validation
+from cognite.neat.rules import issues
 from cognite.neat.rules.models._rules.domain_rules import DomainRules
 from cognite.neat.utils.text import to_camel
 
@@ -311,7 +311,7 @@ class DMSRules(BaseRules):
             if prop.container and prop.container_property:
                 container_properties_by_id[(prop.container, prop.container_property)].append((prop_no, prop))
 
-        errors: list[validation.InconsistentContainerDefinition] = []
+        errors: list[issues.InconsistentContainerDefinition] = []
         for (container, prop_name), properties in container_properties_by_id.items():
             if len(properties) == 1:
                 continue
@@ -320,34 +320,34 @@ class DMSRules(BaseRules):
             value_types = {prop.value_type for _, prop in properties if prop.value_type}
             if len(value_types) > 1:
                 errors.append(
-                    validation.MultiValueTypeDefinitions(
+                    issues.MultiValueTypeDefinitions(
                         container_id, prop_name, row_numbers, {str(v) for v in value_types}
                     )
                 )
             list_definitions = {prop.is_list for _, prop in properties if prop.is_list is not None}
             if len(list_definitions) > 1:
                 errors.append(
-                    validation.MultiValueIsListDefinitions(container_id, prop_name, row_numbers, list_definitions)
+                    issues.MultiValueIsListDefinitions(container_id, prop_name, row_numbers, list_definitions)
                 )
             nullable_definitions = {prop.nullable for _, prop in properties if prop.nullable is not None}
             if len(nullable_definitions) > 1:
                 errors.append(
-                    validation.MultiNullableDefinitions(container_id, prop_name, row_numbers, nullable_definitions)
+                    issues.MultiNullableDefinitions(container_id, prop_name, row_numbers, nullable_definitions)
                 )
             default_definitions = {prop.default for _, prop in properties if prop.default is not None}
             if len(default_definitions) > 1:
                 errors.append(
-                    validation.MultiDefaultDefinitions(container_id, prop_name, row_numbers, list(default_definitions))
+                    issues.MultiDefaultDefinitions(container_id, prop_name, row_numbers, list(default_definitions))
                 )
             index_definitions = {",".join(prop.index) for _, prop in properties if prop.index is not None}
             if len(index_definitions) > 1:
-                errors.append(validation.MultiIndexDefinitions(container_id, prop_name, row_numbers, index_definitions))
+                errors.append(issues.MultiIndexDefinitions(container_id, prop_name, row_numbers, index_definitions))
             constraint_definitions = {
                 ",".join(prop.constraint) for _, prop in properties if prop.constraint is not None
             }
             if len(constraint_definitions) > 1:
                 errors.append(
-                    validation.MultiUniqueConstraintDefinitions(
+                    issues.MultiUniqueConstraintDefinitions(
                         container_id, prop_name, row_numbers, constraint_definitions
                     )
                 )
@@ -369,7 +369,7 @@ class DMSRules(BaseRules):
                 prop.constraint = prop.constraint or constraint_definition
 
         if errors:
-            raise validation.MultiValueError(errors)
+            raise issues.MultiValueError(errors)
         return self
 
     @model_validator(mode="after")
@@ -377,14 +377,14 @@ class DMSRules(BaseRules):
         # There two checks are done in the same method to raise all the errors at once.
         defined_views = {view.view.as_id(self.metadata.space, self.metadata.version) for view in self.views}
 
-        errors: list[validation.Error] = []
+        errors: list[issues.NeatValidationError] = []
         for prop_no, prop in enumerate(self.properties):
             if (
                 prop.view
                 and (view_id := prop.view.as_id(self.metadata.space, self.metadata.version)) not in defined_views
             ):
                 errors.append(
-                    validation.ReferencedNonExistingView(
+                    issues.ReferencedNonExistingView(
                         column="View",
                         row=prop_no,
                         type="value_error.missing",
@@ -402,7 +402,7 @@ class DMSRules(BaseRules):
                     and (container_id := prop.container.as_id(self.metadata.space)) not in defined_containers
                 ):
                     errors.append(
-                        validation.ReferenceNonExistingContainer(
+                        issues.ReferenceNonExistingContainer(
                             column="Container",
                             row=prop_no,
                             type="value_error.missing",
@@ -416,7 +416,7 @@ class DMSRules(BaseRules):
                 for constraint_no, constraint in enumerate(container.constraint or []):
                     if constraint.as_id(self.metadata.space) not in defined_containers:
                         errors.append(
-                            validation.ReferenceNonExistingContainer(
+                            issues.ReferenceNonExistingContainer(
                                 column="Constraint",
                                 row=constraint_no,
                                 type="value_error.missing",
@@ -427,7 +427,7 @@ class DMSRules(BaseRules):
                             )
                         )
         if errors:
-            raise validation.MultiValueError(errors)
+            raise issues.MultiValueError(errors)
         return self
 
     @model_validator(mode="after")
@@ -438,7 +438,7 @@ class DMSRules(BaseRules):
         schema = self.as_schema()
         errors = schema.validate()
         if errors:
-            raise validation.MultiValueError(errors)
+            raise issues.MultiValueError(errors)
         return self
 
     def as_schema(self, standardize_casing: bool = True) -> DMSSchema:

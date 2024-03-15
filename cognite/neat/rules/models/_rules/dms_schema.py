@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 
-from cognite.neat.rules.validation._dms_schema_errors import (
+from cognite.neat.rules.issues._dms_schema_errors import (
     ContainerPropertyUsedMultipleTimes,
     DirectRelationMissingSource,
     DMSSchemaError,

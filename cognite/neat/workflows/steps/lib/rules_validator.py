@@ -5,10 +5,10 @@ from typing import ClassVar
 
 from cognite.client import CogniteClient
 
+from cognite.neat.rules.issues import IssueList, MissingContainer, MissingSpace, MissingView
+from cognite.neat.rules.issues.formatters import FORMATTER_BY_NAME
 from cognite.neat.rules.models._rules import DMSRules
 from cognite.neat.rules.models._rules.base import SchemaCompleteness
-from cognite.neat.rules.validation import IssueList, MissingContainer, MissingSpace, MissingView
-from cognite.neat.rules.validation.formatters import FORMATTER_BY_NAME
 from cognite.neat.utils import cdf_loaders
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus

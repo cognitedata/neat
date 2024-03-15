@@ -3,7 +3,7 @@ import xml.etree.ElementTree as ET
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from ._base import Error, IssueList, ValidationWarning
+from .base import IssueList, NeatValidationError, ValidationWarning
 
 __all__ = ["Formatter", "BasicHTML", "FORMATTER_BY_NAME"]
 
@@ -42,7 +42,7 @@ class BasicHTML(Formatter):
         self._body = ET.SubElement(self._doc, "body")
 
     def create_report(self, issues: IssueList) -> str:
-        errors = [issue for issue in issues if isinstance(issue, Error)]
+        errors = [issue for issue in issues if isinstance(issue, NeatValidationError)]
         warnings_ = [issue for issue in issues if isinstance(issue, ValidationWarning)]
         self._doc.clear()
         self._body = ET.SubElement(self._doc, "body")
@@ -61,12 +61,12 @@ class BasicHTML(Formatter):
 
         return ET.tostring(self._doc, encoding="unicode")
 
-    def _write_errors_or_warnings(self, issues: list[Error] | list[ValidationWarning]) -> None:
-        issue_name = "errors" if isinstance(issues[0], Error) else "warnings"
+    def _write_errors_or_warnings(self, issues: list[NeatValidationError] | list[ValidationWarning]) -> None:
+        issue_name = "errors" if isinstance(issues[0], NeatValidationError) else "warnings"
         main_categories = {base_ for issue in issues for base_ in type(issue).__bases__}
 
         for category in main_categories:
-            issues_in_category: list[Error] | list[ValidationWarning] = [  # type: ignore[assignment]
+            issues_in_category: list[NeatValidationError] | list[ValidationWarning] = [  # type: ignore[assignment]
                 issue for issue in issues if isinstance(issue, category)
             ]
             h3 = ET.SubElement(self._body, "h3")

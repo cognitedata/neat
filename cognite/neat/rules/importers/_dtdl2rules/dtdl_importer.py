@@ -6,15 +6,15 @@ from typing import Literal, overload
 
 from pydantic import ValidationError
 
-from cognite.neat.rules import validation
+from cognite.neat.rules import issues
 from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.importers._base import BaseImporter, _handle_issues
 from cognite.neat.rules.importers._dtdl2rules.dtdl_converter import _DTDLConverter
 from cognite.neat.rules.importers._dtdl2rules.spec import DTDL_CLS_BY_TYPE_BY_SPEC, DTDLBase, Interface
+from cognite.neat.rules.issues import IssueList, ValidationIssue
 from cognite.neat.rules.models._rules import InformationRules, RoleTypes
 from cognite.neat.rules.models._rules.base import SchemaCompleteness, SheetList
 from cognite.neat.rules.models._rules.information_rules import InformationClass, InformationProperty
-from cognite.neat.rules.validation import IssueList, ValidationIssue
 from cognite.neat.utils.text import to_pascal
 
 
@@ -50,7 +50,7 @@ class DTDLImporter(BaseImporter):
         raw = json.loads(file_content)
         if isinstance(raw, dict):
             if (context := raw.get("@context")) is None:
-                yield validation.InvalidFileFormat(filepath=filepath, reason="Missing '@context' key.")
+                yield issues.InvalidFileFormat(filepath=filepath, reason="Missing '@context' key.")
                 return
             raw_list = [raw]
         elif isinstance(raw, list):
@@ -58,11 +58,11 @@ class DTDLImporter(BaseImporter):
                 (entry["@context"] for entry in raw if isinstance(entry, dict) and "@context" in entry), None
             )
             if context is None:
-                yield validation.InvalidFileFormat(filepath=filepath, reason="Missing '@context' key.")
+                yield issues.InvalidFileFormat(filepath=filepath, reason="Missing '@context' key.")
                 return
             raw_list = raw
         else:
-            yield validation.InvalidFileFormat(filepath=filepath, reason="Content is not an object or array.")
+            yield issues.InvalidFileFormat(filepath=filepath, reason="Content is not an object or array.")
             return
 
         if isinstance(context, list):
@@ -72,23 +72,23 @@ class DTDLImporter(BaseImporter):
         try:
             cls_by_type = DTDL_CLS_BY_TYPE_BY_SPEC[spec_version]
         except KeyError:
-            yield validation.UnsupportedSpec(filepath=filepath, version=spec_version, spec_name="DTDL")
+            yield issues.UnsupportedSpec(filepath=filepath, version=spec_version, spec_name="DTDL")
             return
 
         for item in raw_list:
             if not (type_ := item.get("@type")):
-                yield validation.InvalidFileFormat(filepath=filepath, reason="Missing '@type' key.")
+                yield issues.InvalidFileFormat(filepath=filepath, reason="Missing '@type' key.")
                 continue
             cls_ = cls_by_type.get(type_)
             if cls_ is None:
-                yield validation.UnknownItem(reason=f"Unknown '@type' {type_}.", filepath=filepath)
+                yield issues.UnknownItem(reason=f"Unknown '@type' {type_}.", filepath=filepath)
                 continue
             try:
                 yield cls_.model_validate(item)
             except ValidationError as e:
-                yield validation.InvalidFileFormat(filepath=filepath, reason=str(e))
+                yield issues.InvalidFileFormat(filepath=filepath, reason=str(e))
             except Exception as e:
-                yield validation.BugInImporter(filepath=filepath, error=str(e), importer_name=cls.__name__)
+                yield issues.BugInImporter(filepath=filepath, error=str(e), importer_name=cls.__name__)
 
     @classmethod
     def from_directory(cls, directory: Path) -> "DTDLImporter":

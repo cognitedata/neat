@@ -1,12 +1,3 @@
-from ._base import (
-    DefaultPydanticError,
-    DefaultWarning,
-    Error,
-    IssueList,
-    MultiValueError,
-    ValidationIssue,
-    ValidationWarning,
-)
 from ._container_inconsistency import (
     InconsistentContainerDefinition,
     MultiDefaultDefinitions,
@@ -47,6 +38,15 @@ from ._spreadsheet import (
     SpreadsheetMissing,
     SpreadsheetNotFound,
 )
+from .base import (
+    DefaultPydanticError,
+    DefaultWarning,
+    IssueList,
+    MultiValueError,
+    NeatValidationError,
+    ValidationIssue,
+    ValidationWarning,
+)
 
 __all__ = [
     "UnknownItem",
@@ -66,7 +66,7 @@ __all__ = [
     "MissingParentDefinition",
     "MissingIdentifier",
     "IssueList",
-    "Error",
+    "NeatValidationError",
     "ValidationIssue",
     "ValidationIssue",
     "UnsupportedPropertyType",

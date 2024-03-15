@@ -1,7 +1,7 @@
 from collections import Counter
 from collections.abc import Callable, Sequence
 
-from cognite.neat.rules import validation
+from cognite.neat.rules import issues
 from cognite.neat.rules.importers._dtdl2rules.spec import (
     DTMI,
     Command,
@@ -18,6 +18,7 @@ from cognite.neat.rules.importers._dtdl2rules.spec import (
     Telemetry,
     TelemetryV2,
 )
+from cognite.neat.rules.issues import IssueList, ValidationIssue
 from cognite.neat.rules.models._rules._types import (
     XSD_VALUE_TYPE_MAPPINGS,
     ClassEntity,
@@ -25,7 +26,6 @@ from cognite.neat.rules.models._rules._types import (
     XSDValueType,
 )
 from cognite.neat.rules.models._rules.information_rules import InformationClass, InformationProperty
-from cognite.neat.rules.validation import IssueList, ValidationIssue
 
 
 class _DTDLConverter:
@@ -78,7 +78,7 @@ class _DTDLConverter:
             convert_method(item, parent)
         else:
             self.issues.append(
-                validation.UnknownComponent(
+                issues.UnknownComponent(
                     component_type=item.type,
                     instance_name=item.display_name,
                     instance_id=item.id_.model_dump() if item.id_ else None,
@@ -97,7 +97,7 @@ class _DTDLConverter:
         for sub_item_or_id in item.contents or []:
             if isinstance(sub_item_or_id, DTMI) and sub_item_or_id not in self._item_by_id:
                 self.issues.append(
-                    validation.UnknownProperty(
+                    issues.UnknownProperty(
                         component_type=item.type,
                         property_name=sub_item_or_id.path[-1],
                         instance_name=item.display_name,
@@ -135,7 +135,7 @@ class _DTDLConverter:
 
     def _missing_parent_warning(self, item):
         self.issues.append(
-            validation.MissingParentDefinition(
+            issues.MissingParentDefinition(
                 component_type=item.type,
                 instance_name=item.display_name,
                 instance_id=item.id_.model_dump() if item.id_ else None,
@@ -154,7 +154,7 @@ class _DTDLConverter:
             return None
         if item.request is None:
             self.issues.append(
-                validation.UnknownSubComponent(
+                issues.UnknownSubComponent(
                     component_type=item.type,
                     sub_component="request",
                     instance_name=item.display_name,
@@ -165,7 +165,7 @@ class _DTDLConverter:
         if item.response is not None:
             # Currently, we do not know how to handle response
             self.issues.append(
-                validation.ImportIgnored(
+                issues.ImportIgnored(
                     identifier=f"{parent}.response",
                     reason="Neat does not have a concept of response for commands. This will be ignored.",
                 )
@@ -216,7 +216,7 @@ class _DTDLConverter:
             else:
                 # Falling back to json
                 self.issues.append(
-                    validation.MissingIdentifier(
+                    issues.MissingIdentifier(
                         component_type="Unknown",
                         instance_name=item.target.model_dump(),
                         instance_id=item.target.model_dump(),
@@ -242,7 +242,7 @@ class _DTDLConverter:
     def convert_object(self, item: Object, _: str | None) -> None:
         if item.id_ is None:
             self.issues.append(
-                validation.MissingIdentifier(
+                issues.MissingIdentifier(
                     component_type=item.type,
                     instance_name=item.display_name,
                 )
@@ -283,7 +283,7 @@ class _DTDLConverter:
             return XSD_VALUE_TYPE_MAPPINGS[input_type]
         elif isinstance(input_type, str):
             self.issues.append(
-                validation.UnsupportedPropertyType(
+                issues.UnsupportedPropertyType(
                     component_type=item.type,
                     property_type=input_type,
                     property_name="schema",
@@ -295,7 +295,7 @@ class _DTDLConverter:
         elif isinstance(input_type, Object | Interface):
             if input_type.id_ is None:
                 self.issues.append(
-                    validation.MissingIdentifier(
+                    issues.MissingIdentifier(
                         component_type=input_type.type,
                         instance_name=input_type.display_name,
                     )
@@ -307,7 +307,7 @@ class _DTDLConverter:
                 return ClassEntity.from_raw(input_type.id_.as_class_id())
         else:
             self.issues.append(
-                validation.UnknownProperty(
+                issues.UnknownProperty(
                     component_type=item.type,
                     property_name="schema",
                     instance_name=item.display_name,

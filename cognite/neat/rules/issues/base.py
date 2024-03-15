@@ -14,6 +14,8 @@ if sys.version_info < (3, 11):
 else:
     pass
 
+__all__ = ["ValidationIssue"]
+
 
 @dataclass(order=True, frozen=True)
 class ValidationIssue(ABC):
@@ -36,12 +38,12 @@ class ValidationIssue(ABC):
 
 
 @dataclass(frozen=True, order=True)
-class Error(ValidationIssue, ABC):
+class NeatValidationError(ValidationIssue, ABC):
     def dump(self) -> dict[str, Any]:
         return {"error": type(self).__name__}
 
     @classmethod
-    def from_pydantic_errors(cls, errors: list[ErrorDetails], **kwargs) -> "list[Error]":
+    def from_pydantic_errors(cls, errors: list[ErrorDetails], **kwargs) -> "list[NeatValidationError]":
         """Convert a list of pydantic errors to a list of Error instances.
 
         This is intended to be overridden in subclasses to handle specific error types.
@@ -50,7 +52,7 @@ class Error(ValidationIssue, ABC):
 
 
 @dataclass(frozen=True, order=True)
-class DefaultPydanticError(Error):
+class DefaultPydanticError(NeatValidationError):
     type: str
     loc: tuple[int | str, ...]
     msg: str
@@ -58,7 +60,7 @@ class DefaultPydanticError(Error):
     ctx: dict[str, Any] | None
 
     @classmethod
-    def from_pydantic_error(cls, error: ErrorDetails) -> "Error":
+    def from_pydantic_error(cls, error: ErrorDetails) -> "NeatValidationError":
         return cls(
             type=error["type"],
             loc=error["loc"],
@@ -129,7 +131,7 @@ class IssueList(UserList[ValidationIssue]):
     def as_errors(self) -> ExceptionGroup:
         return ExceptionGroup(
             "Validation failed",
-            [ValueError(issue.message()) for issue in self if isinstance(issue, Error)],
+            [ValueError(issue.message()) for issue in self if isinstance(issue, NeatValidationError)],
         )
 
     def to_pandas(self) -> pd.DataFrame:
@@ -147,5 +149,5 @@ class MultiValueError(ValueError):
 
     """
 
-    def __init__(self, errors: Sequence[Error]):
+    def __init__(self, errors: Sequence[NeatValidationError]):
         self.errors = list(errors)

@@ -8,8 +8,8 @@ from pydantic_core import ErrorDetails
 
 from cognite.neat.utils.spreadsheet import SpreadsheetRead
 
-from ._base import Error, MultiValueError
 from ._container_inconsistency import InconsistentContainerDefinition
+from .base import MultiValueError, NeatValidationError
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -18,7 +18,7 @@ else:
 
 
 @dataclass(frozen=True, order=True)
-class SpreadsheetNotFound(Error):
+class SpreadsheetNotFound(NeatValidationError):
     description: ClassVar[str] = "Spreadsheet not found"
     fix: ClassVar[str] = "Make sure to provide a valid spreadsheet"
 
@@ -34,13 +34,13 @@ class SpreadsheetNotFound(Error):
 
 
 @dataclass(frozen=True, order=True)
-class MetadataSheetMissingOrFailed(Error):
+class MetadataSheetMissingOrFailed(NeatValidationError):
     description: ClassVar[str] = "Metadata sheet is missing or it failed validation for one or more fields"
     fix: ClassVar[str] = "Make sure to define compliant Metadata sheet before proceeding"
 
 
 @dataclass(frozen=True, order=True)
-class SpreadsheetMissing(Error):
+class SpreadsheetMissing(NeatValidationError):
     description: ClassVar[str] = "Spreadsheet(s) is missing"
     fix: ClassVar[str] = "Make sure to provide compliant spreadsheet(s) before proceeding"
 
@@ -59,7 +59,7 @@ class SpreadsheetMissing(Error):
 
 
 @dataclass(frozen=True, order=True)
-class ReadSpreadsheets(Error):
+class ReadSpreadsheets(NeatValidationError):
     description: ClassVar[str] = "Error reading spreadsheet(s)"
     fix: ClassVar[str] = "Is the excel document open in another program? Is the file corrupted?"
 
@@ -75,7 +75,7 @@ class ReadSpreadsheets(Error):
 
 
 @dataclass(frozen=True, order=True)
-class InvalidRole(Error):
+class InvalidRole(NeatValidationError):
     description: ClassVar[str] = "Invalid role"
     fix: ClassVar[str] = "Make sure to provide a valid role"
 
@@ -91,7 +91,7 @@ class InvalidRole(Error):
 
 
 @dataclass(frozen=True, order=True)
-class InvalidSheetContent(Error, ABC):
+class InvalidSheetContent(NeatValidationError, ABC):
     @classmethod
     @abstractmethod
     def from_pydantic_error(
@@ -102,8 +102,8 @@ class InvalidSheetContent(Error, ABC):
     @classmethod
     def from_pydantic_errors(
         cls, errors: list[ErrorDetails], read_info_by_sheet: dict[str, SpreadsheetRead] | None = None, **kwargs: Any
-    ) -> "list[Error]":
-        output: list[Error] = []
+    ) -> "list[NeatValidationError]":
+        output: list[NeatValidationError] = []
         for error in errors:
             if raised_error := error.get("ctx", {}).get("error"):
                 if isinstance(raised_error, MultiValueError):

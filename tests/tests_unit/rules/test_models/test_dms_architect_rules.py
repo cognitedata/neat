@@ -682,7 +682,7 @@ class TestDMSRules:
 
     @pytest.mark.parametrize("raw, expected_errors", list(invalid_container_definitions_test_cases()))
     def test_load_inconsistent_container_definitions(
-        self, raw: dict[str, dict[str, Any]], expected_errors: list[validation.Error]
+        self, raw: dict[str, dict[str, Any]], expected_errors: list[validation.NeatValidationError]
     ) -> None:
         with pytest.raises(ValueError) as e:
             DMSRules.model_validate(raw)

@@ -9,7 +9,7 @@ from pydantic import Field, model_validator
 from rdflib import Namespace
 
 from cognite.neat.constants import PREFIXES
-from cognite.neat.rules import exceptions, validation
+from cognite.neat.rules import exceptions, issues
 from cognite.neat.rules.models.rdfpath import (
     AllReferences,
     Hop,
@@ -260,7 +260,7 @@ class InformationRules(RuleModel):
         missing_classes = defined_classes.difference(referred_classes) - has_parent_classes
         if missing_classes:
             warnings.warn(
-                validation.ClassNoPropertiesNoParents([missing.versioned_id for missing in missing_classes]),
+                issues.ClassNoPropertiesNoParents([missing.versioned_id for missing in missing_classes]),
                 stacklevel=2,
             )
         return self
