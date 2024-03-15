@@ -1,17 +1,64 @@
+import json
 import logging
 from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, cast
 
+from cognite.neat.graph.extractors._mock_graph_generator import MockGraphGenerator
+from cognite.neat.rules._shared import DMSRules, InformationRules
 from cognite.neat.workflows._exceptions import StepNotInitialized
-from cognite.neat.workflows.model import FlowMessage
-from cognite.neat.workflows.steps.data_contracts import SourceGraph
+from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
+from cognite.neat.workflows.steps.data_contracts import MultiRuleData, SolutionGraph, SourceGraph
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
-__all__ = [
-    "GraphFromRdfFile",
-]
+__all__ = ["GraphFromRdfFile", "GraphFromMockData"]
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
+
+
+class GraphFromMockData(Step):
+    """
+    This step generate mock graph based on the defined classes and target number of instances
+    """
+
+    description = "This step generate mock graph based on the defined classes and target number of instances"
+    version = "private-beta"
+    category = CATEGORY
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="Class count",
+            value='{"GeographicalRegion":5, "SubGeographicalRegion":10}',
+            label="Target number of instances for each class",
+        ),
+        Configurable(name="Graph", value="solution", label="The name of target graph.", options=["source", "solution"]),
+    ]
+
+    def run(  # type: ignore[override, syntax]
+        self, rules: MultiRuleData, graph_store: SolutionGraph | SourceGraph
+    ) -> FlowMessage:
+        if self.configs is None:
+            raise StepNotInitialized(type(self).__name__)
+
+        if not rules.information and not rules.dms:
+            return FlowMessage(
+                error_text="Rules must be made either by Information Architect or DMS Architect!",
+                step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
+            )
+
+        try:
+            class_count = json.loads(self.configs["Class count"])
+        except Exception:
+            return FlowMessage(
+                error_text="Defected JSON stored in class_count",
+                step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
+            )
+
+        logging.info("Initiated generation of mock triples")
+
+        extractor = MockGraphGenerator(cast(InformationRules | DMSRules, rules.information or rules.dms), class_count)
+
+        graph_store.graph.add_triples(extractor.extract())
+
+        return FlowMessage(output_text=f"Instances loaded to the {graph_store.__name__}")
 
 
 class GraphFromRdfFile(Step):

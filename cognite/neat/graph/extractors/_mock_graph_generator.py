@@ -20,7 +20,7 @@ from cognite.neat.rules._analysis import (
     get_symmetric_pairs,
 )
 from cognite.neat.rules.exporters._rules2rules import subset_rules
-from cognite.neat.rules.models._rules import InformationRules
+from cognite.neat.rules.models._rules import DMSRules, InformationRules
 from cognite.neat.rules.models._rules._types import ClassEntity, EntityTypes, XSDValueType
 from cognite.neat.rules.models._rules.information_rules import InformationProperty
 from cognite.neat.utils.utils import remove_namespace
@@ -42,12 +42,17 @@ class MockGraphGenerator(BaseExtractor):
 
     def __init__(
         self,
-        rules: InformationRules,
+        rules: InformationRules | DMSRules,
         class_count: dict[str | ClassEntity, int],
         stop_on_exception: bool = False,
         allow_isolated_classes: bool = True,
     ):
-        self.rules = rules
+        if isinstance(rules, DMSRules):
+            self.rules = rules.as_information_architect_rules()
+        elif isinstance(rules, InformationRules):
+            self.rules = rules
+        else:
+            raise ValueError("Rules must be of type InformationRules or DMSRules!")
 
         if not all(isinstance(key, str) for key in class_count.keys()) and not all(
             isinstance(key, ClassEntity) for key in class_count.keys()
