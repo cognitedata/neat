@@ -52,13 +52,19 @@ class GraphFromMockData(Step):
                 step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
             )
 
+        if self.configs["Graph"] == "solution":
+            # Todo Anders: Why is the graph fetched from context when it is passed as an argument?
+            graph_store = cast(SourceGraph | SolutionGraph, self.flow_context["SolutionGraph"])
+        else:
+            graph_store = cast(SourceGraph | SolutionGraph, self.flow_context["SourceGraph"])
+
         logging.info("Initiated generation of mock triples")
 
         extractor = MockGraphGenerator(cast(InformationRules | DMSRules, rules.information or rules.dms), class_count)
 
         graph_store.graph.add_triples(extractor.extract())
 
-        return FlowMessage(output_text=f"Instances loaded to the {graph_store.__name__}")
+        return FlowMessage(output_text=f"Instances loaded to the {graph_store.__class__.__name__}")
 
 
 class GraphFromRdfFile(Step):

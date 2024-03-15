@@ -60,7 +60,7 @@ class MockGraphGenerator(BaseExtractor):
             raise ValueError("Class count keys must be of type str! or ClassEntity!")
         elif all(isinstance(key, str) for key in class_count.keys()):
             self.class_count = {
-                ClassEntity.from_raw(f"{rules.metadata.prefix}:{key}"): value for key, value in class_count.items()
+                ClassEntity.from_raw(f"{self.rules.metadata.prefix}:{key}"): value for key, value in class_count.items()
             }
         else:
             self.class_count = cast(dict[ClassEntity, int], class_count)
