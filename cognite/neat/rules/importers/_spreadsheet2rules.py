@@ -9,6 +9,7 @@ from typing import Literal, cast, overload
 import pandas as pd
 from pydantic import ValidationError
 
+import cognite.neat.rules.issues.spreadsheet_file
 from cognite.neat.rules import issues
 from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models._rules import RULES_PER_ROLE, DMSRules, DomainRules, InformationRules
@@ -40,7 +41,7 @@ class ExcelImporter(BaseImporter):
         try:
             excel_file = pd.ExcelFile(self.filepath)
         except FileNotFoundError:
-            issue_list.append(issues.SpreadsheetNotFoundError(self.filepath))
+            issue_list.append(cognite.neat.rules.issues.spreadsheet_file.SpreadsheetNotFoundError(self.filepath))
             if errors == "raise":
                 raise issue_list.as_errors() from None
             return None, issue_list
@@ -48,7 +49,9 @@ class ExcelImporter(BaseImporter):
         try:
             metadata = dict(pd.read_excel(excel_file, "Metadata", header=None).values)
         except ValueError:
-            issue_list.append(issues.MetadataSheetMissingOrFailedError(self.filepath))
+            issue_list.append(
+                cognite.neat.rules.issues.spreadsheet_file.MetadataSheetMissingOrFailedError(self.filepath)
+            )
             if errors == "raise":
                 raise issue_list.as_errors() from None
             return None, issue_list
@@ -60,7 +63,9 @@ class ExcelImporter(BaseImporter):
         expected_sheet_names = rules_model.mandatory_fields(use_alias=True)
 
         if missing_sheets := expected_sheet_names.difference(sheet_names):
-            issue_list.append(issues.SheetMissingError(self.filepath, list(missing_sheets)))
+            issue_list.append(
+                cognite.neat.rules.issues.spreadsheet_file.SheetMissingError(self.filepath, list(missing_sheets))
+            )
             if errors == "raise":
                 raise issue_list.as_errors()
             return None, issue_list
@@ -79,7 +84,9 @@ class ExcelImporter(BaseImporter):
                         excel_file, sheet_name, return_read_info=True, expected_headers=[headers]
                     )
                 except Exception as e:
-                    issue_list.append(issues.ReadSpreadsheetsError(self.filepath, str(e)))
+                    issue_list.append(
+                        cognite.neat.rules.issues.spreadsheet_file.ReadSpreadsheetsError(self.filepath, str(e))
+                    )
                     continue
         if issue_list:
             if errors == "raise":
@@ -92,7 +99,7 @@ class ExcelImporter(BaseImporter):
             RoleTypes.dms_architect: DMSRules,
         }.get(role_enum)
         if not rules_cls:
-            issue_list.append(issues.InvalidRoleError(str(role_input)))
+            issue_list.append(cognite.neat.rules.issues.spreadsheet_file.InvalidRoleError(str(role_input)))
             if errors == "raise":
                 raise issue_list.as_errors()
             return None, issue_list

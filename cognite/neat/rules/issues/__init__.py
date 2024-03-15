@@ -1,12 +1,3 @@
-from ._container_inconsistency import (
-    InconsistentContainerDefinition,
-    MultiDefaultDefinitions,
-    MultiIndexDefinitions,
-    MultiNullableDefinitions,
-    MultiUniqueConstraintDefinitions,
-    MultiValueIsListDefinitions,
-    MultiValueTypeDefinitions,
-)
 from ._import_errors import InvalidComponent, MissingIdentifier, MissingParentDefinition, UnsupportedPropertyType
 from ._importer_warnings import ImportIgnored, UnknownComponent, UnknownProperty, UnknownSubComponent
 from .base import (
@@ -34,7 +25,7 @@ from .dms import (
 from .fileread import (
     BugInImporterWarning,
     FileReadWarning,
-    InvalidFileFormat,
+    InvalidFileFormatWarning,
     UnknownItemWarning,
     UnsupportedSpecWarning,
 )
@@ -42,21 +33,16 @@ from .spreadsheet import (
     InvalidClassError,
     InvalidContainerError,
     InvalidPropertyError,
-    InvalidRoleError,
     InvalidRowError,
     InvalidSheetError,
     InvalidViewError,
-    MetadataSheetMissingOrFailedError,
-    ReadSpreadsheetsError,
-    SheetMissingError,
-    SpreadsheetNotFoundError,
 )
 
 __all__ = [
     "UnknownItemWarning",
     "BugInImporterWarning",
     "FileReadWarning",
-    "InvalidFileFormat",
+    "InvalidFileFormatWarning",
     "UnsupportedSpecWarning",
     "DefaultPydanticError",
     "DefaultWarning",
@@ -74,11 +60,6 @@ __all__ = [
     "ValidationIssue",
     "UnsupportedPropertyType",
     "ValidationWarning",
-    "SpreadsheetNotFoundError",
-    "MetadataSheetMissingOrFailedError",
-    "SheetMissingError",
-    "ReadSpreadsheetsError",
-    "InvalidRoleError",
     "InvalidSheetError",
     "InvalidRowError",
     "InvalidPropertyError",
@@ -95,12 +76,5 @@ __all__ = [
     "DuplicatedViewInDataModelError",
     "DirectRelationMissingSourceError",
     "ContainerPropertyUsedMultipleTimesError",
-    "InconsistentContainerDefinition",
-    "MultiValueTypeDefinitions",
-    "MultiValueIsListDefinitions",
-    "MultiNullableDefinitions",
-    "MultiDefaultDefinitions",
-    "MultiIndexDefinitions",
-    "MultiUniqueConstraintDefinitions",
     "DMSSchemaError",
 ]

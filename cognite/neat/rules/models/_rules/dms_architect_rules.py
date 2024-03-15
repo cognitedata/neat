@@ -312,7 +312,7 @@ class DMSRules(BaseRules):
             if prop.container and prop.container_property:
                 container_properties_by_id[(prop.container, prop.container_property)].append((prop_no, prop))
 
-        errors: list[issues.InconsistentContainerDefinition] = []
+        errors: list[cognite.neat.rules.issues.spreadsheet.InconsistentContainerDefinitionError] = []
         for (container, prop_name), properties in container_properties_by_id.items():
             if len(properties) == 1:
                 continue
@@ -321,34 +321,44 @@ class DMSRules(BaseRules):
             value_types = {prop.value_type for _, prop in properties if prop.value_type}
             if len(value_types) > 1:
                 errors.append(
-                    issues.MultiValueTypeDefinitions(
+                    cognite.neat.rules.issues.spreadsheet.MultiValueTypeError(
                         container_id, prop_name, row_numbers, {str(v) for v in value_types}
                     )
                 )
             list_definitions = {prop.is_list for _, prop in properties if prop.is_list is not None}
             if len(list_definitions) > 1:
                 errors.append(
-                    issues.MultiValueIsListDefinitions(container_id, prop_name, row_numbers, list_definitions)
+                    cognite.neat.rules.issues.spreadsheet.MultiValueIsListError(
+                        container_id, prop_name, row_numbers, list_definitions
+                    )
                 )
             nullable_definitions = {prop.nullable for _, prop in properties if prop.nullable is not None}
             if len(nullable_definitions) > 1:
                 errors.append(
-                    issues.MultiNullableDefinitions(container_id, prop_name, row_numbers, nullable_definitions)
+                    cognite.neat.rules.issues.spreadsheet.MultiNullableError(
+                        container_id, prop_name, row_numbers, nullable_definitions
+                    )
                 )
             default_definitions = {prop.default for _, prop in properties if prop.default is not None}
             if len(default_definitions) > 1:
                 errors.append(
-                    issues.MultiDefaultDefinitions(container_id, prop_name, row_numbers, list(default_definitions))
+                    cognite.neat.rules.issues.spreadsheet.MultiDefaultError(
+                        container_id, prop_name, row_numbers, list(default_definitions)
+                    )
                 )
             index_definitions = {",".join(prop.index) for _, prop in properties if prop.index is not None}
             if len(index_definitions) > 1:
-                errors.append(issues.MultiIndexDefinitions(container_id, prop_name, row_numbers, index_definitions))
+                errors.append(
+                    cognite.neat.rules.issues.spreadsheet.MultiIndexError(
+                        container_id, prop_name, row_numbers, index_definitions
+                    )
+                )
             constraint_definitions = {
                 ",".join(prop.constraint) for _, prop in properties if prop.constraint is not None
             }
             if len(constraint_definitions) > 1:
                 errors.append(
-                    issues.MultiUniqueConstraintDefinitions(
+                    cognite.neat.rules.issues.spreadsheet.MultiUniqueConstraintError(
                         container_id, prop_name, row_numbers, constraint_definitions
                     )
                 )

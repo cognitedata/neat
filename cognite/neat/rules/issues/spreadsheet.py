@@ -2,17 +2,15 @@ import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from functools import total_ordering
-from pathlib import Path
 from typing import Any, ClassVar
 
+from cognite.client.data_classes import data_modeling as dm
 from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from pydantic_core import ErrorDetails
 
 from cognite.neat.utils.spreadsheet import SpreadsheetRead
 
-from . import ValidationWarning
-from ._container_inconsistency import InconsistentContainerDefinition
-from .base import MultiValueError, NeatValidationError
+from .base import MultiValueError, NeatValidationError, ValidationWarning
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -20,12 +18,6 @@ else:
     from typing_extensions import Self
 
 __all__ = [
-    "SpreadsheetError",
-    "SpreadsheetNotFoundError",
-    "MetadataSheetMissingOrFailedError",
-    "SheetMissingError",
-    "ReadSpreadsheetsError",
-    "InvalidRoleError",
     "InvalidSheetError",
     "InvalidRowError",
     "InvalidPropertyError",
@@ -36,90 +28,14 @@ __all__ = [
     "ReferenceNonExistingContainer",
     "ReferencedNonExistingView",
     "ClassNoPropertiesNoParentsWarning",
+    "InconsistentContainerDefinitionError",
+    "MultiValueTypeError",
+    "MultiValueIsListError",
+    "MultiNullableError",
+    "MultiDefaultError",
+    "MultiIndexError",
+    "MultiUniqueConstraintError",
 ]
-
-
-@dataclass(frozen=True)
-class SpreadsheetError(NeatValidationError, ABC):
-    description = "Error when reading spreadsheet"
-    filepath: Path
-
-
-@dataclass(frozen=True)
-class SpreadsheetNotFoundError(SpreadsheetError):
-    description: ClassVar[str] = "Spreadsheet not found"
-    fix: ClassVar[str] = "Make sure to provide a valid spreadsheet"
-
-    def message(self) -> str:
-        return f"Spreadsheet {self.filepath.name} not found"
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["spreadsheet_name"] = str(self.filepath)
-        return output
-
-
-@dataclass(frozen=True, order=True)
-class MetadataSheetMissingOrFailedError(SpreadsheetError):
-    description: ClassVar[str] = "Metadata sheet is missing or it failed validation for one or more fields"
-    fix: ClassVar[str] = "Make sure to define compliant Metadata sheet before proceeding"
-
-    def message(self) -> str:
-        return (
-            f"Metadata sheet is missing or it failed validation for one or more fields in {self.filepath.name}. "
-            + self.fix
-        )
-
-
-@dataclass(frozen=True, order=True)
-class SheetMissingError(SpreadsheetError):
-    description: ClassVar[str] = "Spreadsheet(s) is missing"
-    fix: ClassVar[str] = "Make sure to provide compliant spreadsheet(s) before proceeding"
-
-    missing_spreadsheets: list[str]
-
-    def message(self) -> str:
-        if len(self.missing_spreadsheets) == 1:
-            return f"Spreadsheet {self.missing_spreadsheets[0]} is missing"
-        else:
-            return f"Spreadsheets {', '.join(self.missing_spreadsheets)} are missing"
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["missing_spreadsheets"] = self.missing_spreadsheets
-        return output
-
-
-@dataclass(frozen=True, order=True)
-class ReadSpreadsheetsError(SpreadsheetError):
-    description: ClassVar[str] = "Error reading spreadsheet(s)"
-    fix: ClassVar[str] = "Is the excel document open in another program? Is the file corrupted?"
-
-    error_message: str
-
-    def message(self) -> str:
-        return f"Error reading spreadsheet {self.filepath.name}: {self.error_message}"
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["error_message"] = self.error_message
-        return output
-
-
-@dataclass(frozen=True, order=True)
-class InvalidRoleError(NeatValidationError):
-    description: ClassVar[str] = "Invalid role"
-    fix: ClassVar[str] = "Make sure to provide a valid role"
-
-    provided_role: str
-
-    def message(self) -> str:
-        return f"Invalid role: {self.provided_role}"
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["provided_role"] = self.provided_role
-        return output
 
 
 @dataclass(frozen=True, order=True)
@@ -141,7 +57,7 @@ class InvalidSheetError(NeatValidationError, ABC):
                 if isinstance(raised_error, MultiValueError):
                     for caught_error in raised_error.errors:
                         reader = (read_info_by_sheet or {}).get("Properties", SpreadsheetRead())
-                        if isinstance(caught_error, InconsistentContainerDefinition):
+                        if isinstance(caught_error, InconsistentContainerDefinitionError):
                             row_numbers = list(caught_error.row_numbers)
                             # The Error classes are immutable, so we have to reuse the set.
                             caught_error.row_numbers.clear()
@@ -169,7 +85,7 @@ class InvalidSheetError(NeatValidationError, ABC):
 @dataclass(frozen=True)
 @total_ordering
 class InvalidRowError(InvalidSheetError, ABC):
-    description: ClassVar[str] = "This is a generic class for all invalid specifications."
+    description: ClassVar[str] = "This is a generic class for all invalid row specifications."
     fix: ClassVar[str] = "Follow the instruction in the error message."
     sheet_name: ClassVar[str]
 
@@ -335,3 +251,131 @@ class ClassNoPropertiesNoParentsWarning(ValidationWarning):
         if len(self.classes) > 1:
             return f"Classes {', '.join(self.classes)} have no properties and no parents. This may be a mistake."
         return f"Class {self.classes[0]} has no properties and no parents. This may be a mistake."
+
+
+@dataclass(frozen=True, order=True)
+class InconsistentContainerDefinitionError(NeatValidationError, ABC):
+    description = "This is a base class for all errors related to inconsistent container definitions"
+    fix = "Ensure all properties using the same container have the same type, constraints, and indexes."
+    container: dm.ContainerId
+    property_name: str
+    row_numbers: set[int]
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output.update(
+            {
+                "container": self.container.dump(),
+                "property_name": self.property_name,
+                "row_numbers": sorted(self.row_numbers),
+            }
+        )
+        return output
+
+
+@dataclass(frozen=True, order=True)
+class MultiValueTypeError(InconsistentContainerDefinitionError):
+    description = "The property has multiple value types"
+    fix = "Use the same value type for all properties using the same container."
+    value_types: set[str]
+
+    def message(self) -> str:
+        return (
+            f"{self.container}.{self.property_name} defined in rows: {sorted(self.row_numbers)} "
+            f"has different value types: {self.value_types}"
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["value_types"] = sorted(self.value_types)
+        return output
+
+
+@dataclass(frozen=True, order=True)
+class MultiValueIsListError(InconsistentContainerDefinitionError):
+    description = "The property has multiple list definitions"
+    fix = "Use the same list definition for all properties using the same container."
+    list_definitions: set[bool]
+
+    def message(self) -> str:
+        return (
+            f"{self.container}.{self.property_name} defined in rows: {sorted(self.row_numbers)} "
+            f"has different list definitions: {self.list_definitions}"
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["list_definitions"] = sorted(self.list_definitions)
+        return output
+
+
+@dataclass(frozen=True, order=True)
+class MultiNullableError(InconsistentContainerDefinitionError):
+    description = "The property has multiple nullable definitions"
+    fix = "Use the same nullable definition for all properties using the same container."
+    nullable_definitions: set[bool]
+
+    def message(self) -> str:
+        return (
+            f"{self.container}.{self.property_name} defined in rows: {sorted(self.row_numbers)} "
+            f"has different nullable definitions: {self.nullable_definitions}"
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["nullable_definitions"] = sorted(self.nullable_definitions)
+        return output
+
+
+@dataclass(frozen=True, order=True)
+class MultiDefaultError(InconsistentContainerDefinitionError):
+    description = "The property has multiple default definitions"
+    fix = "Use the same default definition for all properties using the same container."
+    default_definitions: list[str | int | dict | None]
+
+    def message(self) -> str:
+        return (
+            f"{self.container}.{self.property_name} defined in rows: {sorted(self.row_numbers)} "
+            f"has different default definitions: {self.default_definitions}"
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["default_definitions"] = self.default_definitions
+        return output
+
+
+@dataclass(frozen=True, order=True)
+class MultiIndexError(InconsistentContainerDefinitionError):
+    description = "The property has multiple index definitions"
+    fix = "Use the same index definition for all properties using the same container."
+    index_definitions: set[str]
+
+    def message(self) -> str:
+        return (
+            f"{self.container}.{self.property_name} defined in rows: {sorted(self.row_numbers)} "
+            f"has different index definitions: {self.index_definitions}"
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["index_definitions"] = sorted(self.index_definitions)
+        return output
+
+
+@dataclass(frozen=True, order=True)
+class MultiUniqueConstraintError(InconsistentContainerDefinitionError):
+    description = "The property has multiple unique constraint definitions"
+    fix = "Use the same unique constraint definition for all properties using the same container."
+    unique_constraint_definitions: set[str]
+
+    def message(self) -> str:
+        return (
+            f"{self.container}.{self.property_name} defined in rows: {sorted(self.row_numbers)} "
+            f"has different unique constraint definitions: {self.unique_constraint_definitions}"
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["unique_constraint_definitions"] = sorted(self.unique_constraint_definitions)
+        return output

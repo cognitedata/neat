@@ -5,6 +5,7 @@ from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from pydantic.version import VERSION
 
 import cognite.neat.rules.issues.spreadsheet
+import cognite.neat.rules.issues.spreadsheet_file
 from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import ExcelImporter
 from cognite.neat.rules.issues import IssueList
@@ -20,7 +21,13 @@ def valid_rules_filepaths():
 def invalid_rules_filepaths():
     yield pytest.param(
         DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "not-existing.xlsx",
-        IssueList([validation.SpreadsheetNotFoundError("not-existing.xlsx")]),
+        IssueList(
+            [
+                cognite.neat.rules.issues.spreadsheet_file.SpreadsheetNotFoundError(
+                    DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "not-existing.xlsx"
+                )
+            ]
+        ),
         id="Not existing file",
     )
     major, minor, *_ = VERSION.split(".")
@@ -46,7 +53,7 @@ def invalid_rules_filepaths():
         EXCEL_IMPORTER_DATA / "inconsistent_container_dms_rules.xlsx",
         IssueList(
             [
-                validation.MultiValueTypeDefinitions(
+                cognite.neat.rules.issues.spreadsheet.MultiValueTypeError(
                     container=ContainerId("neat", "Flowable"),
                     property_name="maxFlow",
                     row_numbers={4, 5},

@@ -6,7 +6,7 @@ from .base import ValidationWarning
 
 __all__ = [
     "FileReadWarning",
-    "InvalidFileFormat",
+    "InvalidFileFormatWarning",
     "UnsupportedSpecWarning",
     "UnknownItemWarning",
     "BugInImporterWarning",
@@ -27,7 +27,7 @@ class FileReadWarning(ValidationWarning, ABC):
 
 
 @dataclass(frozen=True, order=True)
-class InvalidFileFormat(FileReadWarning):
+class InvalidFileFormatWarning(FileReadWarning):
     description = "The file format is invalid"
     fix = "Check if the file format is supported."
 

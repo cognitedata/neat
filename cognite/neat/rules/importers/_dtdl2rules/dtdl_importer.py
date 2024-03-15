@@ -50,7 +50,7 @@ class DTDLImporter(BaseImporter):
         raw = json.loads(file_content)
         if isinstance(raw, dict):
             if (context := raw.get("@context")) is None:
-                yield issues.InvalidFileFormat(filepath=filepath, reason="Missing '@context' key.")
+                yield issues.InvalidFileFormatWarning(filepath=filepath, reason="Missing '@context' key.")
                 return
             raw_list = [raw]
         elif isinstance(raw, list):
@@ -58,11 +58,11 @@ class DTDLImporter(BaseImporter):
                 (entry["@context"] for entry in raw if isinstance(entry, dict) and "@context" in entry), None
             )
             if context is None:
-                yield issues.InvalidFileFormat(filepath=filepath, reason="Missing '@context' key.")
+                yield issues.InvalidFileFormatWarning(filepath=filepath, reason="Missing '@context' key.")
                 return
             raw_list = raw
         else:
-            yield issues.InvalidFileFormat(filepath=filepath, reason="Content is not an object or array.")
+            yield issues.InvalidFileFormatWarning(filepath=filepath, reason="Content is not an object or array.")
             return
 
         if isinstance(context, list):
@@ -77,7 +77,7 @@ class DTDLImporter(BaseImporter):
 
         for item in raw_list:
             if not (type_ := item.get("@type")):
-                yield issues.InvalidFileFormat(filepath=filepath, reason="Missing '@type' key.")
+                yield issues.InvalidFileFormatWarning(filepath=filepath, reason="Missing '@type' key.")
                 continue
             cls_ = cls_by_type.get(type_)
             if cls_ is None:
@@ -86,7 +86,7 @@ class DTDLImporter(BaseImporter):
             try:
                 yield cls_.model_validate(item)
             except ValidationError as e:
-                yield issues.InvalidFileFormat(filepath=filepath, reason=str(e))
+                yield issues.InvalidFileFormatWarning(filepath=filepath, reason=str(e))
             except Exception as e:
                 yield issues.BugInImporterWarning(filepath=filepath, error=str(e), importer_name=cls.__name__)
 
