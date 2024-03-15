@@ -6,7 +6,7 @@ from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
 from pydantic import ValidationError
 
-from cognite.neat.rules import validation
+from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import DMSImporter
 from cognite.neat.rules.models._rules._types import ViewEntity
 from cognite.neat.rules.models._rules.base import SheetList

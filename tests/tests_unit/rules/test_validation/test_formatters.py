@@ -1,9 +1,9 @@
 import pytest
 from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 
-from cognite.neat.rules import validation
-from cognite.neat.rules.validation import IssueList
-from cognite.neat.rules.validation.formatters import BasicHTML
+from cognite.neat.rules import issues as validation
+from cognite.neat.rules.issues import IssueList
+from cognite.neat.rules.issues.formatters import BasicHTML
 
 
 @pytest.fixture(scope="session")

@@ -4,10 +4,7 @@ import pytest
 from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
 
-from cognite.neat.rules.models._rules.dms_schema import (
-    DMSSchema,
-)
-from cognite.neat.rules.validation._dms_schema_errors import (
+from cognite.neat.rules.issues._dms_schema_errors import (
     ContainerPropertyUsedMultipleTimes,
     DirectRelationMissingSource,
     DMSSchemaError,
@@ -19,6 +16,9 @@ from cognite.neat.rules.validation._dms_schema_errors import (
     MissingSourceView,
     MissingSpace,
     MissingView,
+)
+from cognite.neat.rules.models._rules.dms_schema import (
+    DMSSchema,
 )
 
 

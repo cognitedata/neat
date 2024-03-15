@@ -81,7 +81,7 @@ class ExcelImporter(BaseImporter):
                 except Exception as e:
                     issue_list.append(issues.ReadSpreadsheets(str(e)))
                     continue
-        if issues:
+        if issue_list:
             if errors == "raise":
                 raise issue_list.as_errors()
             return None, issue_list
