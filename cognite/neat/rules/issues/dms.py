@@ -8,6 +8,7 @@ from .base import NeatValidationError, ValidationWarning
 
 __all__ = [
     "DMSSchemaError",
+    "DMSSchemaWarning",
     "MissingSpaceError",
     "MissingContainerError",
     "MissingContainerPropertyError",
@@ -18,6 +19,7 @@ __all__ = [
     "DuplicatedViewInDataModelError",
     "DirectRelationMissingSourceError",
     "ContainerPropertyUsedMultipleTimesError",
+    "DirectRelationListWarning",
 ]
 
 
