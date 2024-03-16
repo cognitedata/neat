@@ -6,6 +6,7 @@ from cognite.client.data_classes.data_modeling import DataModelIdentifier
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex, InvertedIndex
 from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 
+from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models._rules import DMSRules, DMSSchema, RoleTypes
 from cognite.neat.rules.models._rules._types import ClassEntity, ContainerEntity, DMSValueType, ViewEntity
 from cognite.neat.rules.models._rules.dms_architect_rules import (
@@ -15,7 +16,6 @@ from cognite.neat.rules.models._rules.dms_architect_rules import (
     DMSView,
     SheetList,
 )
-from cognite.neat.rules.validation import IssueList
 
 from ._base import BaseImporter, Rules
 

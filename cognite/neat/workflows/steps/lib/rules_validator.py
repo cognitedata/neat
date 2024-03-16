@@ -5,10 +5,11 @@ from typing import ClassVar
 
 from cognite.client import CogniteClient
 
+from cognite.neat.rules.issues import IssueList
+from cognite.neat.rules.issues.dms import MissingContainerError, MissingSpaceError, MissingViewError
+from cognite.neat.rules.issues.formatters import FORMATTER_BY_NAME
 from cognite.neat.rules.models._rules import DMSRules
 from cognite.neat.rules.models._rules.base import SchemaCompleteness
-from cognite.neat.rules.validation import IssueList, MissingContainer, MissingSpace, MissingView
-from cognite.neat.rules.validation.formatters import FORMATTER_BY_NAME
 from cognite.neat.utils import cdf_loaders
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
@@ -61,9 +62,9 @@ class ValidateRulesAgainstCDF(Step):
         if not errors:
             return FlowMessage(output_text="Rules are complete and valid. No need to fetch from CDF.")
 
-        missing_spaces = [error.space for error in errors if isinstance(error, MissingSpace)]
-        missing_views = [error.view for error in errors if isinstance(error, MissingView)]
-        missing_containers = [error.container for error in errors if isinstance(error, MissingContainer)]
+        missing_spaces = [error.space for error in errors if isinstance(error, MissingSpaceError)]
+        missing_views = [error.view for error in errors if isinstance(error, MissingViewError)]
+        missing_containers = [error.container for error in errors if isinstance(error, MissingContainerError)]
 
         retrieved_spaces = cdf_client.data_modeling.spaces.retrieve(missing_spaces).as_write()
         retrieved_containers = cdf_client.data_modeling.containers.retrieve(missing_containers).as_write()

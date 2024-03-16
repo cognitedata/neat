@@ -4,18 +4,18 @@ from dataclasses import dataclass, field
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 
-from cognite.neat.rules.validation._dms_schema_errors import (
-    ContainerPropertyUsedMultipleTimes,
-    DirectRelationMissingSource,
+from cognite.neat.rules.issues.dms import (
+    ContainerPropertyUsedMultipleTimesError,
+    DirectRelationMissingSourceError,
     DMSSchemaError,
-    DuplicatedViewInDataModel,
-    MissingContainer,
-    MissingContainerProperty,
-    MissingEdgeView,
-    MissingParentView,
-    MissingSourceView,
-    MissingSpace,
-    MissingView,
+    DuplicatedViewInDataModelError,
+    MissingContainerError,
+    MissingContainerPropertyError,
+    MissingEdgeViewError,
+    MissingParentViewError,
+    MissingSourceViewError,
+    MissingSpaceError,
+    MissingViewError,
 )
 from cognite.neat.utils.cdf_loaders import ViewLoader
 
@@ -66,25 +66,25 @@ class DMSSchema:
 
         for container in self.containers:
             if container.space not in defined_spaces:
-                errors.add(MissingSpace(space=container.space, referred_by=container.as_id()))
+                errors.add(MissingSpaceError(space=container.space, referred_by=container.as_id()))
 
         for view in self.views:
             view_id = view.as_id()
             if view.space not in defined_spaces:
-                errors.add(MissingSpace(space=view.space, referred_by=view_id))
+                errors.add(MissingSpaceError(space=view.space, referred_by=view_id))
 
             for parent in view.implements or []:
                 if parent not in defined_views:
-                    errors.add(MissingParentView(view=parent, referred_by=view_id))
+                    errors.add(MissingParentViewError(view=parent, referred_by=view_id))
 
             for prop_name, prop in (view.properties or {}).items():
                 if isinstance(prop, dm.MappedPropertyApply):
                     ref_container = defined_containers.get(prop.container)
                     if ref_container is None:
-                        errors.add(MissingContainer(container=prop.container, referred_by=view_id))
+                        errors.add(MissingContainerError(container=prop.container, referred_by=view_id))
                     elif prop.container_property_identifier not in ref_container.properties:
                         errors.add(
-                            MissingContainerProperty(
+                            MissingContainerPropertyError(
                                 container=prop.container,
                                 property=prop.container_property_identifier,
                                 referred_by=view_id,
@@ -94,17 +94,17 @@ class DMSSchema:
                         container_property = ref_container.properties[prop.container_property_identifier]
 
                         if isinstance(container_property.type, dm.DirectRelation) and prop.source is None:
-                            errors.add(DirectRelationMissingSource(view_id=view_id, property=prop_name))
+                            errors.add(DirectRelationMissingSourceError(view_id=view_id, property=prop_name))
 
                 if isinstance(prop, dm.EdgeConnectionApply) and prop.source not in defined_views:
-                    errors.add(MissingSourceView(view=prop.source, property=prop_name, referred_by=view_id))
+                    errors.add(MissingSourceViewError(view=prop.source, property=prop_name, referred_by=view_id))
 
                 if (
                     isinstance(prop, dm.EdgeConnectionApply)
                     and prop.edge_source is not None
                     and prop.edge_source not in defined_views
                 ):
-                    errors.add(MissingEdgeView(view=prop.edge_source, property=prop_name, referred_by=view_id))
+                    errors.add(MissingEdgeViewError(view=prop.edge_source, property=prop_name, referred_by=view_id))
 
             property_count = Counter(
                 (prop.container, prop.container_property_identifier)
@@ -121,7 +121,7 @@ class DMSSchema:
                         == (container_id, container_property_identifier)
                     ]
                     errors.add(
-                        ContainerPropertyUsedMultipleTimes(
+                        ContainerPropertyUsedMultipleTimesError(
                             container=container_id,
                             property=container_property_identifier,
                             referred_by=frozenset({(view_id, prop_name) for prop_name in view_properties}),
@@ -130,17 +130,17 @@ class DMSSchema:
 
         for model in self.data_models:
             if model.space not in defined_spaces:
-                errors.add(MissingSpace(space=model.space, referred_by=model.as_id()))
+                errors.add(MissingSpaceError(space=model.space, referred_by=model.as_id()))
 
             view_counts: dict[dm.ViewId, int] = defaultdict(int)
             for view_id_or_class in model.views or []:
                 view_id = view_id_or_class if isinstance(view_id_or_class, dm.ViewId) else view_id_or_class.as_id()
                 if view_id not in defined_views:
-                    errors.add(MissingView(referred_by=model.as_id(), view=view_id))
+                    errors.add(MissingViewError(referred_by=model.as_id(), view=view_id))
                 view_counts[view_id] += 1
 
             for view_id, count in view_counts.items():
                 if count > 1:
-                    errors.add(DuplicatedViewInDataModel(referred_by=model.as_id(), view=view_id))
+                    errors.add(DuplicatedViewInDataModelError(referred_by=model.as_id(), view=view_id))
 
         return list(errors)

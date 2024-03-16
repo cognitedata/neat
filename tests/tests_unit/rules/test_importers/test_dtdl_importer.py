@@ -1,11 +1,13 @@
 import pytest
 
-from cognite.neat.rules import validation
+import cognite.neat.rules.issues.importing
+import cognite.neat.rules.issues.spreadsheet
+from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import DTDLImporter
 from cognite.neat.rules.importers._dtdl2rules.spec import DTMI, Interface
+from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models._rules import InformationRules
 from cognite.neat.rules.models._rules.base import SchemaCompleteness
-from cognite.neat.rules.validation import IssueList
 from tests.tests_unit.rules.test_importers.constants import DTDL_IMPORTER_DATA
 
 
@@ -15,8 +17,10 @@ class TestDTDLImporter:
         # In addition, there is a class without properties
         expected_issues = IssueList(
             [
-                validation.MissingIdentifier(component_type="Object"),
-                validation.ClassNoPropertiesNoParents(["example_grid_transmission:baseReceiver(version=1)"]),
+                cognite.neat.rules.issues.importing.MissingIdentifierError(component_type="Object"),
+                cognite.neat.rules.issues.spreadsheet.ClassNoPropertiesNoParentsWarning(
+                    ["example_grid_transmission:baseReceiver(version=1)"]
+                ),
             ]
         )
         dtdl_importer = DTDLImporter.from_directory(DTDL_IMPORTER_DATA / "energy-grid")
@@ -29,13 +33,13 @@ class TestDTDLImporter:
     def test_import_temperature_controller_example_dtdl_v2(self) -> None:
         expected_issues = IssueList(
             [
-                validation.UnknownProperty(
+                validation.importing.UnknownPropertyWarning(
                     component_type="Component",
                     property_name="schema",
                     instance_name="Device Information interface",
                     instance_id=None,
                 ),
-                validation.ImportIgnored(
+                validation.importing.IgnoredComponentWarning(
                     reason="Neat does not have a concept of response for commands. This will be ignored.",
                     identifier="com_example:Thermostat(version=1).response",
                 ),

@@ -10,8 +10,8 @@ from pydantic import ValidationError
 from rdflib import Namespace
 
 from cognite.neat.rules._shared import Rules
+from cognite.neat.rules.issues.base import IssueList, NeatValidationError, ValidationWarning
 from cognite.neat.rules.models._rules import DMSRules, InformationRules, RoleTypes
-from cognite.neat.rules.validation import Error, IssueList, ValidationWarning
 
 
 class BaseImporter(ABC):
@@ -87,7 +87,7 @@ class _FutureResult:
 @contextmanager
 def _handle_issues(
     issues: IssueList,
-    error_cls: type[Error] = Error,
+    error_cls: type[NeatValidationError] = NeatValidationError,
     warning_cls: type[ValidationWarning] = ValidationWarning,
 ) -> Iterator[_FutureResult]:
     """This is an internal help function to handle issues and warnings.
