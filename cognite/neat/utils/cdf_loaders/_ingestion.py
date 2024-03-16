@@ -34,7 +34,7 @@ class TransformationLoader(
         return self.client.transformations.create(items)
 
     def retrieve(self, ids: SequenceNotStr[str]) -> TransformationList:
-        return self.client.transformations.retrieve_multiple(external_ids=ids)
+        return self.client.transformations.retrieve_multiple(external_ids=ids, ignore_unknown_ids=True)
 
     def update(self, items: Sequence[TransformationWrite]) -> TransformationList:
         return self.client.transformations.update(items)

@@ -87,6 +87,8 @@ class DMSExporter(CDFExporter[DMSSchema]):
             if isinstance(schema, PipelineSchema):
                 for transformation in schema.transformations:
                     zip_ref.writestr(f"transformations/{transformation.external_id}.yaml", transformation.dump_yaml())
+                # The RAW Databases are not written to file. This is because cognite-toolkit expects the RAW databases
+                # to be in the same file as the RAW tables.
                 for raw_table in schema.raw_tables:
                     zip_ref.writestr(f"raw/{raw_table.name}.yaml", raw_table.dump_yaml())
 

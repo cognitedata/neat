@@ -1,5 +1,7 @@
+import json
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
+from typing import ClassVar
 
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
@@ -156,6 +158,21 @@ class PipelineSchema(DMSSchema):
     databases: DatabaseWriteList = field(default_factory=lambda: DatabaseWriteList([]))
     raw_tables: RawTableWriteList = field(default_factory=lambda: RawTableWriteList([]))
 
+    _SQL_TYPE_BY_PROPERTY_TYPE: ClassVar[dict[type[dm.PropertyType], str]] = {
+        dm.Text: "STRING",
+        dm.Int32: "INTEGER",
+        dm.Int64: "INTEGER",
+        dm.Float32: "FLOAT",
+        dm.Float64: "DOUBLE",
+        dm.Date: "DATE",
+        dm.Timestamp: "TIMESTAMP",
+        dm.TimeSeriesReference: "STRING",
+        dm.FileReference: "STRING",
+        dm.SequenceReference: "STRING",
+        dm.Boolean: "BOOLEAN",
+        dm.Json: "STRING",
+    }
+
     @classmethod
     def from_dms(cls, schema: DMSSchema) -> "PipelineSchema":
         if not schema.data_models:
@@ -165,26 +182,33 @@ class PipelineSchema(DMSSchema):
         database_name = first_data_model.external_id[:32]
         database = DatabaseWrite(name=database_name)
         parent_views = {parent for view in schema.views for parent in view.implements or []}
+        container_by_id = {container.as_id(): container for container in schema.containers}
+
         transformations = TransformationWriteList([])
         raw_tables = RawTableWriteList([])
         for view in schema.views:
             if view.as_id() in parent_views:
                 # Skipping parents as they do not have their own data
                 continue
-            mapped_properties = [
-                prop for prop in (view.properties or {}).values() if isinstance(prop, dm.MappedPropertyApply)
-            ]
+            mapped_properties = {
+                prop_name: prop
+                for prop_name, prop in (view.properties or {}).items()
+                if isinstance(prop, dm.MappedPropertyApply)
+            }
             if mapped_properties:
                 view_table = RawTableWrite(name=f"{view.external_id}Properties", database=database_name)
                 raw_tables.append(view_table)
-
+                transformation = cls._create_property_transformation(
+                    mapped_properties, view, view_table, container_by_id
+                )
+                transformations.append(transformation)
             connection_properties = {
                 prop_name: prop
                 for prop_name, prop in (view.properties or {}).items()
                 if isinstance(prop, dm.EdgeConnectionApply)
             }
-            for prop_name, _connection_property in (connection_properties or {}).items():
-                view_table = RawTableWrite(name=f"{view.external_id}To{prop_name}Connection", database=database_name)
+            for prop_name, _connection_property in connection_properties.items():
+                view_table = RawTableWrite(name=f"{view.external_id}.{prop_name}Connection", database=database_name)
                 raw_tables.append(view_table)
 
         return cls(
@@ -199,8 +223,37 @@ class PipelineSchema(DMSSchema):
 
     @classmethod
     def _create_property_transformation(
-        cls, properties: list[dm.MappedPropertyApply], view: ViewApply, table: RawTableWrite
+        cls,
+        properties: dict[str, dm.MappedPropertyApply],
+        view: ViewApply,
+        table: RawTableWrite,
+        container_by_id: dict[dm.ContainerId, dm.ContainerApply],
     ) -> TransformationWrite:
+        mapping_mode = {
+            "version": 1,
+            "sourceType": "raw",
+            # 'mappings' is set here and overwritten further down to ensure the correct order
+            "mappings": [],
+            "sourceLevel1": table.database,
+            "sourceLevel2": table.name,
+        }
+        mappings = []
+        select_rows = []
+        for prop_name, prop in properties.items():
+            container = container_by_id.get(prop.container)
+            if container is not None:
+                sql_type = (
+                    cls._SQL_TYPE_BY_PROPERTY_TYPE.get(
+                        type(container.properties[prop.container_property_identifier].type)
+                    )
+                    or "STRING"
+                )
+            else:
+                sql_type = "STRING"
+            select_rows.append(f"cast(`{prop_name}` as {sql_type}) as prop_name")
+            mappings.append({"from": prop_name, "to": prop_name, "asType": sql_type})
+        mapping_mode["mappings"] = mappings
+
         return TransformationWrite(
             external_id=f"{table.name}Transformation",
             name=f"{table.name}Transformation",
@@ -210,9 +263,12 @@ class PipelineSchema(DMSSchema):
                 instance_space=table.database,
             ),
             conflict_mode="upsert",
-            query="""
-SELECT
-
+            query=f"""/* MAPPING_MODE_ENABLED: true */
+/* {json.dumps(mapping_mode)} */
+select
+  {",\n  ".join(select_rows)}
+from
+  `{table.database}`.`{table.name}`;
 """,
         )
 
