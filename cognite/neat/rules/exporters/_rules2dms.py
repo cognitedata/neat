@@ -1,8 +1,8 @@
 import warnings
 import zipfile
-from collections.abc import Iterable
+from collections.abc import Collection, Iterable
 from pathlib import Path
-from typing import Literal
+from typing import Literal, TypeAlias
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes._base import CogniteResourceList
@@ -17,6 +17,8 @@ from cognite.neat.utils.cdf_loaders import ContainerLoader, DataModelingLoader, 
 from ._base import CDFExporter
 from ._models import UploadResult
 
+Component: TypeAlias = Literal["all", "spaces", "data_models", "views", "containers"]
+
 
 class DMSExporter(CDFExporter[DMSSchema]):
     """Class for exporting rules object to CDF Data Model Storage (DMS).
@@ -28,7 +30,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
             If set, only export components in the given spaces. Defaults to None which means all spaces.
         existing_handling (Literal["fail", "skip", "update", "force"], optional): How to handle existing components.
             Defaults to "update". See below for details.
-        standardize_casing(bool, optional): Whether to standardize the casing. This means PascalCase for names
+        standardize_casing(bool, optional): Whether to standardize the casing. This means PascalCase for external ID
             of views, containers, and data models, and camelCase for properties.
 
     ... note::
@@ -42,14 +44,12 @@ class DMSExporter(CDFExporter[DMSSchema]):
 
     def __init__(
         self,
-        export_components: frozenset[Literal["all", "spaces", "data_models", "views", "containers"]] = frozenset(
-            {"all"}
-        ),
+        export_components: Component | Collection[Component] = "all",
         include_space: set[str] | None = None,
         existing_handling: Literal["fail", "skip", "update", "force"] = "update",
         standardize_casing: bool = True,
     ):
-        self.export_components = export_components
+        self.export_components = {export_components} if isinstance(export_components, str) else set(export_components)
         self.include_space = include_space
         self.existing_handling = existing_handling
         self.fix_casing = standardize_casing
