@@ -7,7 +7,7 @@ from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes import DatabaseWrite, DatabaseWriteList, TransformationWrite, TransformationWriteList
 from cognite.client.data_classes.data_modeling import ViewApply
-from cognite.client.data_classes.transformations.common import Nodes, ViewInfo
+from cognite.client.data_classes.transformations.common import Edges, EdgeType, Nodes, ViewInfo
 
 from cognite.neat.rules.issues.dms import (
     ContainerPropertyUsedMultipleTimesError,
@@ -174,13 +174,13 @@ class PipelineSchema(DMSSchema):
     }
 
     @classmethod
-    def from_dms(cls, schema: DMSSchema) -> "PipelineSchema":
+    def from_dms(cls, schema: DMSSchema, instance_space: str | None = None) -> "PipelineSchema":
         if not schema.data_models:
             raise ValueError("PipelineSchema must contain at least one data model")
         first_data_model = schema.data_models[0]
         # The database name is limited to 32 characters
         database_name = first_data_model.external_id[:32]
-        default_space = first_data_model.space
+        instance_space = instance_space or first_data_model.space
         database = DatabaseWrite(name=database_name)
         parent_views = {parent for view in schema.views for parent in view.implements or []}
         container_by_id = {container.as_id(): container for container in schema.containers}
@@ -200,7 +200,7 @@ class PipelineSchema(DMSSchema):
                 view_table = RawTableWrite(name=f"{view.external_id}Properties", database=database_name)
                 raw_tables.append(view_table)
                 transformation = cls._create_property_transformation(
-                    mapped_properties, view, view_table, container_by_id, default_space
+                    mapped_properties, view, view_table, container_by_id, instance_space
                 )
                 transformations.append(transformation)
             connection_properties = {
@@ -208,9 +208,13 @@ class PipelineSchema(DMSSchema):
                 for prop_name, prop in (view.properties or {}).items()
                 if isinstance(prop, dm.EdgeConnectionApply)
             }
-            for prop_name, _connection_property in connection_properties.items():
+            for prop_name, connection_property in connection_properties.items():
                 view_table = RawTableWrite(name=f"{view.external_id}.{prop_name}Connection", database=database_name)
                 raw_tables.append(view_table)
+                transformation = cls._create_connection_transformation(
+                    connection_property, view, view_table, instance_space
+                )
+                transformations.append(transformation)
 
         return cls(
             spaces=schema.spaces,
@@ -278,19 +282,42 @@ from
 
     @classmethod
     def _create_connection_transformation(
-        cls, properties: list[dm.EdgeConnectionApply], view: ViewApply, table: RawTableWrite, instance_space: str
+        cls, property_: dm.EdgeConnectionApply, view: ViewApply, table: RawTableWrite, instance_space: str
     ) -> TransformationWrite:
+        start, end = view.external_id, property_.source.external_id
+        if property_.direction == "inwards":
+            start, end = end, start
+        mapping_mode = {
+            "version": 1,
+            "sourceType": "raw",
+            "mappings": [
+                {"from": "externalId", "to": "externalId", "asType": "STRING"},
+                {"from": start, "to": "startNode", "asType": "STRUCT<`space`:STRING, `externalId`:STRING>"},
+                {"from": end, "to": "endNode", "asType": "STRUCT<`space`:STRING, `externalId`:STRING>"},
+            ],
+            "sourceLevel1": table.database,
+            "sourceLevel2": table.name,
+        }
+        select_rows = [
+            "cast(`externalId` as STRING) as externalId",
+            f"node_reference('{instance_space}', `{start}`) as startNode",
+            f"node_reference('{instance_space}', `{end}`) as endNode",
+        ]
+
         return TransformationWrite(
             external_id=f"{table.name}Transformation",
             name=f"{table.name}Transformation",
             ignore_null_fields=True,
-            destination=Nodes(
-                view=ViewInfo(view.space, view.external_id, view.version),
+            destination=Edges(
                 instance_space=instance_space,
+                edge_type=EdgeType(space=property_.type.space, external_id=property_.type.external_id),
             ),
             conflict_mode="upsert",
-            query="""
-SELECT
-
+            query=f"""/* MAPPING_MODE_ENABLED: true */
+/* {json.dumps(mapping_mode)} */
+select
+  {",\n  ".join(select_rows)}
+from
+  `{table.database}`.`{table.name}`;
 """,
         )

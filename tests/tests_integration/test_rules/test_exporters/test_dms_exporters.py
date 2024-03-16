@@ -109,9 +109,9 @@ def table_example_data() -> dict[str, list[Row]]:
             Row("item3", {"externalId": "item3", "name": "computer", "category": "electronics"}),
         ],
         "TableItem": [
-            Row("table1item1", {"externalId": "table1item1", "table": "table1", "item": "item1"}),
-            Row("table1item2", {"externalId": "table1item2", "table": "table1", "item": "item2"}),
-            Row("table2item3", {"externalId": "table2item3", "table": "table2", "item": "item3"}),
+            Row("table1item1", {"externalId": "table1item1", "Table": "table1", "Item": "item1"}),
+            Row("table1item2", {"externalId": "table1item2", "Table": "table1", "Item": "item2"}),
+            Row("table2item3", {"externalId": "table2item3", "Table": "table2", "Item": "item3"}),
         ],
     }
 

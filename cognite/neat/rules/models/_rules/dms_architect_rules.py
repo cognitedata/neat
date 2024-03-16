@@ -452,8 +452,10 @@ class DMSRules(BaseRules):
             raise issues.MultiValueError(errors)
         return self
 
-    def as_schema(self, standardize_casing: bool = True, include_pipeline: bool = False) -> DMSSchema:
-        return _DMSExporter(standardize_casing, include_pipeline).to_schema(self)
+    def as_schema(
+        self, standardize_casing: bool = True, include_pipeline: bool = False, instance_space: str | None = None
+    ) -> DMSSchema:
+        return _DMSExporter(standardize_casing, include_pipeline, instance_space).to_schema(self)
 
     def as_information_architect_rules(self) -> "InformationRules":
         return _DMSRulesConverter(self).as_information_architect_rules()
@@ -473,11 +475,15 @@ class _DMSExporter:
             are PascalCase and property names are camelCase.
         include_pipeline (bool): If True, the pipeline will be included with the schema. Pipeline means the
             raw tables and transformations necessary to populate the data model.
+        instance_space (str): The space to use for the instance. Defaults to None.
     """
 
-    def __init__(self, standardize_casing: bool = True, include_pipeline: bool = False):
+    def __init__(
+        self, standardize_casing: bool = True, include_pipeline: bool = False, instance_space: str | None = None
+    ):
         self.standardize_casing = standardize_casing
         self.include_pipeline = include_pipeline
+        self.instance_space = instance_space
 
     def to_schema(self, rules: DMSRules) -> DMSSchema:
         default_version = "1"
@@ -621,6 +627,9 @@ class _DMSExporter:
             spaces = dm.SpaceApplyList(
                 [rules.metadata.as_space()] + [dm.SpaceApply(space=space) for space in used_spaces]
             )
+        if self.instance_space:
+            data_model.space = self.instance_space
+            spaces.append(dm.SpaceApply(space=self.instance_space, name=self.instance_space))
 
         output = DMSSchema(
             spaces=spaces,
@@ -629,7 +638,7 @@ class _DMSExporter:
             containers=containers,
         )
         if self.include_pipeline:
-            return PipelineSchema.from_dms(output)
+            return PipelineSchema.from_dms(output, self.instance_space)
         return output
 
     @classmethod

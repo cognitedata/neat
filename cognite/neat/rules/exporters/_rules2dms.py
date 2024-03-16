@@ -6,8 +6,6 @@ from typing import Literal, TypeAlias
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes._base import CogniteResourceList
-from cognite.client.data_classes.data_modeling import SpaceApply
-from cognite.client.data_classes.transformations.common import Nodes
 from cognite.client.exceptions import CogniteAPIError
 
 from cognite.neat.rules._shared import Rules
@@ -98,21 +96,13 @@ class DMSExporter(CDFExporter[DMSSchema]):
 
     def export(self, rules: Rules) -> DMSSchema:
         if isinstance(rules, DMSRules):
-            schema = rules.as_schema(self.standardize_casing, self.export_pipeline)
+            return rules.as_schema(self.standardize_casing, self.export_pipeline, self.instance_space)
         elif isinstance(rules, InformationRules):
-            schema = rules.as_dms_architect_rules().as_schema(self.standardize_casing, self.export_pipeline)
+            return rules.as_dms_architect_rules().as_schema(
+                self.standardize_casing, self.export_pipeline, self.instance_space
+            )
         else:
             raise ValueError(f"{type(rules).__name__} cannot be exported to DMS")
-
-        if self.instance_space is not None:
-            schema.spaces.append(
-                SpaceApply(space=self.instance_space, name=self.instance_space, description="Space for instances")
-            )
-            if isinstance(schema, PipelineSchema):
-                for transformation in schema.transformations:
-                    if isinstance(transformation.destination, Nodes):
-                        transformation.destination.instance_space = self.instance_space
-        return schema
 
     def export_to_cdf(self, client: CogniteClient, rules: Rules, dry_run: bool = False) -> Iterable[UploadResult]:
         schema = self.export(rules)
