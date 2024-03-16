@@ -1,6 +1,7 @@
 import abc
 import math
 import re
+import warnings
 from collections import defaultdict
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
@@ -515,9 +516,12 @@ class _DMSExporter:
             rules, default_space, default_version
         )
 
+        container_to_drop = set()
         for container in containers:
             container_id = container.as_id()
             if not (container_properties := container_properties_by_id.get(container_id)):
+                warnings.warn(issues.dms.EmptyContainerWarning(container_id=container_id), stacklevel=2)
+                container_to_drop.add(container_id)
                 continue
             for prop in container_properties:
                 if prop.container_property is None:
@@ -576,7 +580,25 @@ class _DMSExporter:
                 continue
             for prop in view_properties:
                 view_property: ViewPropertyApply
-                if prop.container and prop.container_property and prop.view_property:
+                if prop.is_list and prop.relation == "direct":
+                    # This is not yet supported in the CDF API, a warning has already been issued, here we convert it to
+                    # a multiedge connection.
+                    if isinstance(prop.value_type, ViewEntity):
+                        source = prop.value_type.as_id(default_space, default_version, self.standardize_casing)
+                    else:
+                        raise ValueError(
+                            "Direct relation must have a view as value type. "
+                            "This should have been validated in the rules"
+                        )
+                    view_property = dm.MultiEdgeConnectionApply(
+                        type=dm.DirectRelationReference(
+                            space=source.space,
+                            external_id=f"{prop.view.external_id}.{prop.view_property}",
+                        ),
+                        source=source,
+                        direction="outwards",
+                    )
+                elif prop.container and prop.container_property and prop.view_property:
                     container_prop_identifier = (
                         to_camel(prop.container_property) if self.standardize_casing else prop.container_property
                     )
@@ -637,11 +659,21 @@ class _DMSExporter:
             data_model.space = self.instance_space
             spaces.append(dm.SpaceApply(space=self.instance_space, name=self.instance_space))
 
+        constraints = {
+            const.require
+            for container in containers
+            for const in (container.constraints or {}).values()
+            if isinstance(const, dm.RequiresConstraint)
+        }
+        container_to_drop = {container_id for container_id in container_to_drop if container_id not in constraints}
+
         output = DMSSchema(
             spaces=spaces,
             data_models=dm.DataModelApplyList([data_model]),
             views=views,
-            containers=containers,
+            containers=dm.ContainerApplyList(
+                [container for container in containers if container.as_id() not in container_to_drop]
+            ),
         )
         if self.include_pipeline:
             return PipelineSchema.from_dms(output, self.instance_space)
@@ -654,12 +686,23 @@ class _DMSExporter:
         container_properties_by_id: dict[dm.ContainerId, list[DMSProperty]] = defaultdict(list)
         view_properties_by_id: dict[dm.ViewId, list[DMSProperty]] = defaultdict(list)
         for prop in rules.properties:
+            view_id = prop.view.as_id(default_space, default_version)
+            view_properties_by_id[view_id].append(prop)
+
             if prop.container and prop.container_property:
+                if prop.relation == "direct" and prop.is_list:
+                    warnings.warn(
+                        issues.dms.DirectRelationListWarning(
+                            container_id=prop.container.as_id(default_space),
+                            view_id=prop.view.as_id(default_space, default_version),
+                            property=prop.container_property,
+                        ),
+                        stacklevel=2,
+                    )
+                    continue
                 container_id = prop.container.as_id(default_space)
                 container_properties_by_id[container_id].append(prop)
-            if prop.view and prop.view_property:
-                view_id = prop.view.as_id(default_space, default_version)
-                view_properties_by_id[view_id].append(prop)
+
         return container_properties_by_id, view_properties_by_id
 
 

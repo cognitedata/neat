@@ -241,3 +241,22 @@ class DirectRelationListWarning(DMSSchemaWarning):
         output["container_id"] = self.container_id.dump()
         output["property"] = self.property
         return output
+
+
+@dataclass(frozen=True)
+class EmptyContainerWarning(DMSSchemaWarning):
+    description = "The container is empty"
+    fix = "Add data to the container"
+    error_name: ClassVar[str] = "EmptyContainerWarning"
+    container_id: dm.ContainerId
+
+    def message(self) -> str:
+        return (
+            f"The container {self.container_id} is empty. Is this intended? Skipping this container "
+            "in the data model."
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["container_id"] = self.container_id.dump()
+        return output
