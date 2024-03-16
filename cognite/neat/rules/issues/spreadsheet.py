@@ -24,7 +24,7 @@ __all__ = [
     "InvalidClassError",
     "InvalidContainerError",
     "InvalidViewError",
-    "InvalidRowUnknownSheet",
+    "InvalidRowUnknownSheetError",
     "NonExistingContainerError",
     "NonExistingViewError",
     "ClassNoPropertiesNoParentsWarning",
@@ -74,7 +74,7 @@ class InvalidSheetError(NeatValidationError, ABC):
 
             if len(error["loc"]) >= 4:
                 sheet_name, *_ = error["loc"]
-                error_cls = _INVALID_ROW_ERROR_BY_SHEET_NAME.get(str(sheet_name), InvalidRowUnknownSheet)
+                error_cls = _INVALID_ROW_ERROR_BY_SHEET_NAME.get(str(sheet_name), InvalidRowUnknownSheetError)
                 output.append(error_cls.from_pydantic_error(error, read_info_by_sheet))
                 continue
 
@@ -165,7 +165,7 @@ class InvalidViewError(InvalidRowError):
 
 
 @dataclass(frozen=True)
-class InvalidRowUnknownSheet(InvalidRowError):
+class InvalidRowUnknownSheetError(InvalidRowError):
     sheet_name = "Unknown"
 
     actual_sheet_name: str

@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, ClassVar
 
-from cognite.neat.rules.issues import NeatValidationError
+from .base import NeatValidationError
 
 __all__ = [
     "SpreadsheetFileError",
