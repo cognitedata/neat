@@ -261,6 +261,7 @@ class PipelineSchema(DMSSchema):
             select_rows.append(f"cast(`{prop_name}` as {sql_type}) as {prop_name}")
             mappings.append({"from": prop_name, "to": prop_name, "asType": sql_type})
         mapping_mode["mappings"] = mappings
+        select = ",\n  ".join(select_rows)
 
         return TransformationWrite(
             external_id=f"{table.name}Transformation",
@@ -274,7 +275,7 @@ class PipelineSchema(DMSSchema):
             query=f"""/* MAPPING_MODE_ENABLED: true */
 /* {json.dumps(mapping_mode)} */
 select
-  {",\n  ".join(select_rows)}
+  {select}
 from
   `{table.database}`.`{table.name}`;
 """,
@@ -303,6 +304,7 @@ from
             f"node_reference('{instance_space}', `{start}`) as startNode",
             f"node_reference('{instance_space}', `{end}`) as endNode",
         ]
+        select = ",\n  ".join(select_rows)
 
         return TransformationWrite(
             external_id=f"{table.name}Transformation",
@@ -316,7 +318,7 @@ from
             query=f"""/* MAPPING_MODE_ENABLED: true */
 /* {json.dumps(mapping_mode)} */
 select
-  {",\n  ".join(select_rows)}
+  {select}
 from
   `{table.database}`.`{table.name}`;
 """,
