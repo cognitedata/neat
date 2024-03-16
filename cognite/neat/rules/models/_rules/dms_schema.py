@@ -161,7 +161,8 @@ class PipelineSchema(DMSSchema):
         if not schema.data_models:
             raise ValueError("PipelineSchema must contain at least one data model")
         first_data_model = schema.data_models[0]
-        database = DatabaseWrite(name=first_data_model.external_id)
+        database_name = first_data_model.external_id
+        database = DatabaseWrite(name=database_name)
         parent_views = {parent for view in schema.views for parent in view.implements or []}
         transformations = TransformationWriteList([])
         raw_tables = RawTableWriteList([])
@@ -172,20 +173,18 @@ class PipelineSchema(DMSSchema):
             mapped_properties = [
                 prop for prop in (view.properties or {}).values() if isinstance(prop, dm.MappedPropertyApply)
             ]
-            if mapped_properties and False:
-                view_table = RawTableWrite(name=f"{view.external_id}Properties", database=database.name)
+            if mapped_properties:
+                view_table = RawTableWrite(name=f"{view.external_id}Properties", database=database_name)
                 raw_tables.append(view_table)
-                transformation = cls._create_property_transformation(mapped_properties, view, view_table)
-                transformations.append(transformation)
 
-            connection_properties = [
-                prop for prop in (view.properties or {}).values() if isinstance(prop, dm.EdgeConnectionApply)
-            ]
-            if connection_properties and False:
-                view_table = RawTableWrite(name=f"{view.external_id}Connections", database=database.name)
+            connection_properties = {
+                prop_name: prop
+                for prop_name, prop in (view.properties or {}).items()
+                if isinstance(prop, dm.EdgeConnectionApply)
+            }
+            for prop_name, _connection_property in (connection_properties or {}).items():
+                view_table = RawTableWrite(name=f"{view.external_id}To{prop_name}Connection", database=database_name)
                 raw_tables.append(view_table)
-                transformation = cls._create_connection_transformation(connection_properties, view, view_table)
-                transformations.append(transformation)
 
         return cls(
             spaces=schema.spaces,

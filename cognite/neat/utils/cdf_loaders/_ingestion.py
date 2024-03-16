@@ -94,11 +94,13 @@ class RawTableLoader(ResourceLoader[RawTableID, RawTableWrite, RawTable, RawTabl
         )
 
     def create(self, items: Sequence[RawTableWrite]) -> RawTableList:
+        existing = set(self.retrieve([table.as_id() for table in items]).as_ids())
         output = RawTableList([])
         for db_name, tables in self._groupby_database(items):
-            created = self.client.raw.tables.create(
-                db_name=db_name, name=[table.name for table in tables if table.name]
-            )
+            to_create = [table.name for table in tables if table.name if table.as_id() not in existing]
+            if not to_create:
+                continue
+            created = self.client.raw.tables.create(db_name=db_name, name=to_create)
             for table in created:
                 output.append(
                     RawTable(
