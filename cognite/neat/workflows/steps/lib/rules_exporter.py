@@ -60,6 +60,23 @@ class RulesToDMS(Step):
             ),
             options=["True", "False"],
         ),
+        Configurable(
+            name="Create Pipeline",
+            value="False",
+            label=(
+                "Whether to create RAW database, tables and transformations for populating the data model."
+                "If this is set to True, "
+            ),
+            options=["True", "False"],
+        ),
+        Configurable(
+            name="Instance space",
+            value="",
+            label=(
+                "The space to use for the exported pipeline. If provided, the transformations will be set to populate"
+                "this space. If not provided, the space from the input rules will be used."
+            ),
+        ),
     ]
 
     def run(self, rules: MultiRuleData, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override, syntax]
@@ -75,6 +92,8 @@ class RulesToDMS(Step):
             if value
         }
         dry_run = self.configs["Dry run"] == "True"
+        export_pipeline = self.configs.get("Create Pipeline", "False") == "True"
+        instance_space = self.configs.get("Instance space") if export_pipeline else None
 
         if not components_to_create:
             return FlowMessage(
@@ -92,6 +111,9 @@ class RulesToDMS(Step):
             export_components=frozenset(components_to_create),
             include_space=None if multi_space_components_create else {dms_rules.metadata.space},
             existing_handling=existing_components_handling,
+            standardize_casing=False,
+            export_pipeline=export_pipeline,
+            instance_space=instance_space,
         )
 
         output_dir = self.data_store_path / Path("staging")
