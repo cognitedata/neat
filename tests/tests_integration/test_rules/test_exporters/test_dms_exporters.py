@@ -109,9 +109,9 @@ def table_example_data() -> dict[str, list[Row]]:
             Row("item3", {"externalId": "item3", "name": "computer", "category": "electronics"}),
         ],
         "TableItem": [
-            Row("table1item1", {"table": "table1", "item": "item1"}),
-            Row("table1item2", {"table": "table1", "item": "item2"}),
-            Row("table2item3", {"table": "table2", "item": "item3"}),
+            Row("table1item1", {"externalId": "table1item1", "table": "table1", "item": "item1"}),
+            Row("table1item2", {"externalId": "table1item2", "table": "table1", "item": "item2"}),
+            Row("table2item3", {"externalId": "table2item3", "table": "table2", "item": "item3"}),
         ],
     }
 
@@ -153,7 +153,12 @@ class TestDMSExporters:
     def test_export_pipeline_populate_and_retrieve_data(
         self, cognite_client: CogniteClient, table_example: InformationRules, table_example_data: dict[str, list[str]]
     ) -> None:
-        exporter = DMSExporter(existing_handling="force", export_pipeline=True, standardize_casing=True)
+        exporter = DMSExporter(
+            existing_handling="force",
+            export_pipeline=True,
+            standardize_casing=True,
+            instance_space="sp_table_example_data",
+        )
         schema = cast(PipelineSchema, exporter.export(table_example))
 
         # Write Pipeline to CDF
@@ -184,5 +189,9 @@ class TestDMSExporters:
         assert not missing_transformations, f"Missing transformations: {missing_transformations}"
 
         # Trigger transformations (if not already triggered)
+        for transformation in existing_transformations:
+            if transformation.last_finished_job is None:
+                # As of 16. March 2024, this must be done manually as we do not set credentials for the client
+                cognite_client.transformations.run(transformation.id, wait=True, timeout=30.0)
 
         # Verify data is in the data model

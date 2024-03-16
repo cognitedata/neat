@@ -180,6 +180,7 @@ class PipelineSchema(DMSSchema):
         first_data_model = schema.data_models[0]
         # The database name is limited to 32 characters
         database_name = first_data_model.external_id[:32]
+        default_space = first_data_model.space
         database = DatabaseWrite(name=database_name)
         parent_views = {parent for view in schema.views for parent in view.implements or []}
         container_by_id = {container.as_id(): container for container in schema.containers}
@@ -199,7 +200,7 @@ class PipelineSchema(DMSSchema):
                 view_table = RawTableWrite(name=f"{view.external_id}Properties", database=database_name)
                 raw_tables.append(view_table)
                 transformation = cls._create_property_transformation(
-                    mapped_properties, view, view_table, container_by_id
+                    mapped_properties, view, view_table, container_by_id, default_space
                 )
                 transformations.append(transformation)
             connection_properties = {
@@ -228,6 +229,7 @@ class PipelineSchema(DMSSchema):
         view: ViewApply,
         table: RawTableWrite,
         container_by_id: dict[dm.ContainerId, dm.ContainerApply],
+        instance_space: str,
     ) -> TransformationWrite:
         mapping_mode = {
             "version": 1,
@@ -262,7 +264,7 @@ class PipelineSchema(DMSSchema):
             ignore_null_fields=True,
             destination=Nodes(
                 view=ViewInfo(view.space, view.external_id, view.version),
-                instance_space=table.database,
+                instance_space=instance_space,
             ),
             conflict_mode="upsert",
             query=f"""/* MAPPING_MODE_ENABLED: true */
@@ -276,7 +278,7 @@ from
 
     @classmethod
     def _create_connection_transformation(
-        cls, properties: list[dm.EdgeConnectionApply], view: ViewApply, table: RawTableWrite
+        cls, properties: list[dm.EdgeConnectionApply], view: ViewApply, table: RawTableWrite, instance_space: str
     ) -> TransformationWrite:
         return TransformationWrite(
             external_id=f"{table.name}Transformation",
@@ -284,7 +286,7 @@ from
             ignore_null_fields=True,
             destination=Nodes(
                 view=ViewInfo(view.space, view.external_id, view.version),
-                instance_space=table.database,
+                instance_space=instance_space,
             ),
             conflict_mode="upsert",
             query="""
