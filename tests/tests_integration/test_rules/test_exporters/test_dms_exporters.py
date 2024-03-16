@@ -2,6 +2,7 @@ from typing import cast
 
 import pytest
 from cognite.client import CogniteClient
+from cognite.client import data_modeling as dm
 from cognite.client.data_classes import Row
 
 from cognite.neat.rules.exporters import DMSExporter
@@ -192,6 +193,29 @@ class TestDMSExporters:
         for transformation in existing_transformations:
             if transformation.last_finished_job is None:
                 # As of 16. March 2024, this must be done manually as we do not set credentials for the client
+                # It is kept here to show the complete flow to populate a data model
                 cognite_client.transformations.run(transformation.id, wait=True, timeout=30.0)
 
         # Verify data is in the data model
+        views = schema.views
+        table_view = next((view for view in views if view.external_id == "Table"), None)
+        assert table_view is not None, "Table view not found"
+        table_nodes = cognite_client.data_modeling.instances.list(
+            "node", space="sp_table_example_data", sources=[table_view.as_id()], limit=-1
+        )
+        assert len(table_nodes) == len(table_example_data["Table"])
+        item_view = next((view for view in views if view.external_id == "Item"), None)
+        item_nodes = cognite_client.data_modeling.instances.list(
+            "node", space="sp_table_example_data", sources=[item_view.as_id()], limit=-1
+        )
+        assert len(item_nodes) == len(table_example_data["Item"])
+
+        table_to_item_type = cast(dm.EdgeConnectionApply, table_view.properties["on"]).type
+
+        is_edge_type = dm.filters.Equals(
+            ["edge", "type"], {"space": table_to_item_type.space, "externalId": table_to_item_type.external_id}
+        )
+        table_item_edges = cognite_client.data_modeling.instances.list(
+            "edge", space="sp_table_example_data", filter=is_edge_type, limit=-1
+        )
+        assert len(table_item_edges) == len(table_example_data["TableItem"])
