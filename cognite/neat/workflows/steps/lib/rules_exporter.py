@@ -100,16 +100,19 @@ class RulesToDMS(Step):
                 error_text="No DMS Schema components selected for upload! Please select minimum one!",
                 step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
             )
-        dms_rules = rules.dms
-        if dms_rules is None:
+        input_rules = rules.dms or rules.information
+        if input_rules is None:
             return FlowMessage(
-                error_text="Missing DMS rules in the input data! Please ensure that a DMS rule is provided!",
+                error_text="Missing DMS or Information rules in the input data! "
+                "Please ensure that a DMS or Information rules is provided!",
                 step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
             )
 
         dms_exporter = exporters.DMSExporter(
             export_components=frozenset(components_to_create),
-            include_space=None if multi_space_components_create else {dms_rules.metadata.space},
+            include_space=None
+            if multi_space_components_create
+            else {input_rules.metadata.space if isinstance(input_rules, DMSRules) else input_rules.metadata.prefix},
             existing_handling=existing_components_handling,
             standardize_casing=False,
             export_pipeline=export_pipeline,
@@ -118,13 +121,18 @@ class RulesToDMS(Step):
 
         output_dir = self.data_store_path / Path("staging")
         output_dir.mkdir(parents=True, exist_ok=True)
-        schema_zip = f"{dms_rules.metadata.external_id}.zip"
+        file_name = (
+            input_rules.metadata.external_id
+            if isinstance(input_rules, DMSRules)
+            else input_rules.metadata.name.replace(" ", "_").lower()
+        )
+        schema_zip = f"{file_name}.zip"
         schema_full_path = output_dir / schema_zip
-        dms_exporter.export_to_file(schema_full_path, dms_rules)
+        dms_exporter.export_to_file(schema_full_path, input_rules)
 
         report_lines = ["# DMS Schema Export to CDF\n\n"]
         errors = []
-        for result in dms_exporter.export_to_cdf(client=cdf_client, rules=dms_rules, dry_run=dry_run):
+        for result in dms_exporter.export_to_cdf(client=cdf_client, rules=input_rules, dry_run=dry_run):
             report_lines.append(result.as_report_str())
             errors.extend(result.error_messages)
 
