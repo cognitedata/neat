@@ -1,21 +1,13 @@
 import re
-from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from graphlib import TopologicalSorter
-from typing import Any, Generic, Literal, TypeVar, cast
+from typing import Any, Literal, cast
 
 from cognite.client import CogniteClient
-from cognite.client.data_classes import (
-    Transformation,
-    TransformationList,
-    TransformationWrite,
-    TransformationWriteList,
-)
 from cognite.client.data_classes._base import (
     T_CogniteResourceList,
     T_WritableCogniteResource,
     T_WriteClass,
-    WriteableCogniteResourceList,
 )
 from cognite.client.data_classes.data_modeling import (
     Container,
@@ -25,7 +17,6 @@ from cognite.client.data_classes.data_modeling import (
     DataModel,
     DataModelApply,
     DataModelApplyList,
-    DataModelingId,
     DataModelList,
     RequiresConstraint,
     Space,
@@ -40,53 +31,12 @@ from cognite.client.data_classes.data_modeling import (
 from cognite.client.data_classes.data_modeling.ids import (
     ContainerId,
     DataModelId,
-    InstanceId,
-    VersionedDataModelingId,
     ViewId,
 )
 from cognite.client.exceptions import CogniteAPIError
 from cognite.client.utils.useful_types import SequenceNotStr
 
-T_ID = TypeVar("T_ID", bound=str | (int | (DataModelingId | (InstanceId | VersionedDataModelingId))))
-T_WritableCogniteResourceList = TypeVar("T_WritableCogniteResourceList", bound=WriteableCogniteResourceList)
-
-
-class ResourceLoader(
-    ABC,
-    Generic[T_ID, T_WriteClass, T_WritableCogniteResource, T_CogniteResourceList, T_WritableCogniteResourceList],
-):
-    resource_name: str
-
-    def __init__(self, client: CogniteClient) -> None:
-        self.client = client
-
-    @classmethod
-    @abstractmethod
-    def get_id(cls, item: T_WriteClass | T_WritableCogniteResource) -> T_ID:
-        raise NotImplementedError
-
-    @classmethod
-    def get_ids(cls, items: Sequence[T_WriteClass | T_WritableCogniteResource]) -> list[T_ID]:
-        return [cls.get_id(item) for item in items]
-
-    @abstractmethod
-    def create(self, items: Sequence[T_WriteClass]) -> T_WritableCogniteResourceList:
-        raise NotImplementedError
-
-    @abstractmethod
-    def retrieve(self, ids: SequenceNotStr[T_ID]) -> T_WritableCogniteResourceList:
-        raise NotImplementedError
-
-    @abstractmethod
-    def update(self, items: Sequence[T_WriteClass]) -> T_WritableCogniteResourceList:
-        raise NotImplementedError
-
-    @abstractmethod
-    def delete(self, ids: SequenceNotStr[T_ID]) -> list[T_ID]:
-        raise NotImplementedError
-
-    def are_equal(self, local: T_WriteClass, remote: T_WritableCogniteResource) -> bool:
-        return local == remote.as_write()
+from ._base import T_ID, ResourceLoader, T_WritableCogniteResourceList
 
 
 class DataModelingLoader(
@@ -296,29 +246,3 @@ class DataModelLoader(DataModelingLoader[DataModelId, DataModelApply, DataModel,
         )
 
         return local_dumped == cdf_resource_dumped
-
-
-class TransformationLoader(
-    ResourceLoader[str, TransformationWrite, Transformation, TransformationWriteList, TransformationList]
-):
-    resource_name = "transformations"
-
-    @classmethod
-    def get_id(cls, item: Transformation | TransformationWrite) -> str:
-        if item.external_id is None:
-            raise ValueError(f"Transformation {item} does not have an external_id")
-        return item.external_id
-
-    def create(self, items: Sequence[TransformationWrite]) -> TransformationList:
-        return self.client.transformations.create(items)
-
-    def retrieve(self, ids: SequenceNotStr[str]) -> TransformationList:
-        return self.client.transformations.retrieve_multiple(external_ids=ids)
-
-    def update(self, items: Sequence[TransformationWrite]) -> TransformationList:
-        return self.client.transformations.update(items)
-
-    def delete(self, ids: SequenceNotStr[str]) -> list[str]:
-        existing = self.retrieve(ids)
-        self.client.transformations.delete(external_id=ids, ignore_unknown_ids=True)
-        return existing.as_external_ids()
