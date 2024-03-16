@@ -395,7 +395,7 @@ class DMSRules(BaseRules):
                 and (view_id := prop.view.as_id(self.metadata.space, self.metadata.version)) not in defined_views
             ):
                 errors.append(
-                    cognite.neat.rules.issues.spreadsheet.ReferencedNonExistingView(
+                    cognite.neat.rules.issues.spreadsheet.NonExistingViewError(
                         column="View",
                         row=prop_no,
                         type="value_error.missing",
@@ -413,7 +413,7 @@ class DMSRules(BaseRules):
                     and (container_id := prop.container.as_id(self.metadata.space)) not in defined_containers
                 ):
                     errors.append(
-                        cognite.neat.rules.issues.spreadsheet.ReferenceNonExistingContainer(
+                        cognite.neat.rules.issues.spreadsheet.NonExistingContainerError(
                             column="Container",
                             row=prop_no,
                             type="value_error.missing",
@@ -427,7 +427,7 @@ class DMSRules(BaseRules):
                 for constraint_no, constraint in enumerate(container.constraint or []):
                     if constraint.as_id(self.metadata.space) not in defined_containers:
                         errors.append(
-                            cognite.neat.rules.issues.spreadsheet.ReferenceNonExistingContainer(
+                            cognite.neat.rules.issues.spreadsheet.NonExistingContainerError(
                                 column="Constraint",
                                 row=constraint_no,
                                 type="value_error.missing",

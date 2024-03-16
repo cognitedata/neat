@@ -25,8 +25,8 @@ __all__ = [
     "InvalidContainerError",
     "InvalidViewError",
     "InvalidRowUnknownSheet",
-    "ReferenceNonExistingContainer",
-    "ReferencedNonExistingView",
+    "NonExistingContainerError",
+    "NonExistingViewError",
     "ClassNoPropertiesNoParentsWarning",
     "InconsistentContainerDefinitionError",
     "MultiValueTypeError",
@@ -198,7 +198,7 @@ _INVALID_ROW_ERROR_BY_SHEET_NAME = {
 
 
 @dataclass(frozen=True)
-class ReferenceNonExistingContainer(InvalidPropertyError):
+class NonExistingContainerError(InvalidPropertyError):
     description = "The container referenced by the property is missing in the container sheet"
     fix = "Add the container to the container sheet"
 
@@ -217,7 +217,7 @@ class ReferenceNonExistingContainer(InvalidPropertyError):
 
 
 @dataclass(frozen=True)
-class ReferencedNonExistingView(InvalidPropertyError):
+class NonExistingViewError(InvalidPropertyError):
     description = "The view referenced by the property is missing in the view sheet"
     fix = "Add the view to the view sheet"
 

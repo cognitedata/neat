@@ -1,5 +1,6 @@
 import pytest
 
+import cognite.neat.rules.issues.importing
 import cognite.neat.rules.issues.spreadsheet
 from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import DTDLImporter
@@ -16,7 +17,7 @@ class TestDTDLImporter:
         # In addition, there is a class without properties
         expected_issues = IssueList(
             [
-                validation.MissingIdentifier(component_type="Object"),
+                cognite.neat.rules.issues.importing.MissingIdentifierError(component_type="Object"),
                 cognite.neat.rules.issues.spreadsheet.ClassNoPropertiesNoParentsWarning(
                     ["example_grid_transmission:baseReceiver(version=1)"]
                 ),
@@ -32,13 +33,13 @@ class TestDTDLImporter:
     def test_import_temperature_controller_example_dtdl_v2(self) -> None:
         expected_issues = IssueList(
             [
-                validation.UnknownProperty(
+                validation.UnknownPropertyWarning(
                     component_type="Component",
                     property_name="schema",
                     instance_name="Device Information interface",
                     instance_id=None,
                 ),
-                validation.ImportIgnored(
+                validation.IgnoredComponentWarning(
                     reason="Neat does not have a concept of response for commands. This will be ignored.",
                     identifier="com_example:Thermostat(version=1).response",
                 ),

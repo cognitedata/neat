@@ -67,7 +67,7 @@ def invalid_rules_filepaths():
         EXCEL_IMPORTER_DATA / "missing_view_container_dms_rules.xlsx",
         IssueList(
             [
-                cognite.neat.rules.issues.spreadsheet.ReferencedNonExistingView(
+                cognite.neat.rules.issues.spreadsheet.NonExistingViewError(
                     column="View",
                     row=4,
                     type="value_error.missing",
@@ -76,7 +76,7 @@ def invalid_rules_filepaths():
                     input=None,
                     url=None,
                 ),
-                cognite.neat.rules.issues.spreadsheet.ReferenceNonExistingContainer(
+                cognite.neat.rules.issues.spreadsheet.NonExistingContainerError(
                     column="Container",
                     row=4,
                     type="value_error.missing",

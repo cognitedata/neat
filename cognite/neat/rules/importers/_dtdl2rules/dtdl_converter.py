@@ -1,6 +1,7 @@
 from collections import Counter
 from collections.abc import Callable, Sequence
 
+import cognite.neat.rules.issues.importing
 from cognite.neat.rules import issues
 from cognite.neat.rules.importers._dtdl2rules.spec import (
     DTMI,
@@ -78,7 +79,7 @@ class _DTDLConverter:
             convert_method(item, parent)
         else:
             self.issues.append(
-                issues.UnknownComponent(
+                issues.UnknownComponentWarning(
                     component_type=item.type,
                     instance_name=item.display_name,
                     instance_id=item.id_.model_dump() if item.id_ else None,
@@ -97,7 +98,7 @@ class _DTDLConverter:
         for sub_item_or_id in item.contents or []:
             if isinstance(sub_item_or_id, DTMI) and sub_item_or_id not in self._item_by_id:
                 self.issues.append(
-                    issues.UnknownProperty(
+                    issues.UnknownPropertyWarning(
                         component_type=item.type,
                         property_name=sub_item_or_id.path[-1],
                         instance_name=item.display_name,
@@ -135,7 +136,7 @@ class _DTDLConverter:
 
     def _missing_parent_warning(self, item):
         self.issues.append(
-            issues.MissingParentDefinition(
+            cognite.neat.rules.issues.importing.MissingParentDefinitionError(
                 component_type=item.type,
                 instance_name=item.display_name,
                 instance_id=item.id_.model_dump() if item.id_ else None,
@@ -154,7 +155,7 @@ class _DTDLConverter:
             return None
         if item.request is None:
             self.issues.append(
-                issues.UnknownSubComponent(
+                issues.UnknownSubComponentWarning(
                     component_type=item.type,
                     sub_component="request",
                     instance_name=item.display_name,
@@ -165,7 +166,7 @@ class _DTDLConverter:
         if item.response is not None:
             # Currently, we do not know how to handle response
             self.issues.append(
-                issues.ImportIgnored(
+                issues.IgnoredComponentWarning(
                     identifier=f"{parent}.response",
                     reason="Neat does not have a concept of response for commands. This will be ignored.",
                 )
@@ -216,7 +217,7 @@ class _DTDLConverter:
             else:
                 # Falling back to json
                 self.issues.append(
-                    issues.MissingIdentifier(
+                    cognite.neat.rules.issues.importing.MissingIdentifierError(
                         component_type="Unknown",
                         instance_name=item.target.model_dump(),
                         instance_id=item.target.model_dump(),
@@ -242,7 +243,7 @@ class _DTDLConverter:
     def convert_object(self, item: Object, _: str | None) -> None:
         if item.id_ is None:
             self.issues.append(
-                issues.MissingIdentifier(
+                cognite.neat.rules.issues.importing.MissingIdentifierError(
                     component_type=item.type,
                     instance_name=item.display_name,
                 )
@@ -283,7 +284,7 @@ class _DTDLConverter:
             return XSD_VALUE_TYPE_MAPPINGS[input_type]
         elif isinstance(input_type, str):
             self.issues.append(
-                issues.UnsupportedPropertyType(
+                cognite.neat.rules.issues.importing.UnsupportedPropertyTypeError(
                     component_type=item.type,
                     property_type=input_type,
                     property_name="schema",
@@ -295,7 +296,7 @@ class _DTDLConverter:
         elif isinstance(input_type, Object | Interface):
             if input_type.id_ is None:
                 self.issues.append(
-                    issues.MissingIdentifier(
+                    cognite.neat.rules.issues.importing.MissingIdentifierError(
                         component_type=input_type.type,
                         instance_name=input_type.display_name,
                     )
@@ -307,7 +308,7 @@ class _DTDLConverter:
                 return ClassEntity.from_raw(input_type.id_.as_class_id())
         else:
             self.issues.append(
-                issues.UnknownProperty(
+                issues.UnknownPropertyWarning(
                     component_type=item.type,
                     property_name="schema",
                     instance_name=item.display_name,
