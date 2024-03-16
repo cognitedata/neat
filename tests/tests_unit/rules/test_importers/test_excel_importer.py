@@ -36,7 +36,7 @@ def invalid_rules_filepaths():
         EXCEL_IMPORTER_DATA / "invalid_property_dms_rules.xlsx",
         IssueList(
             [
-                validation.InvalidPropertyError(
+                validation.spreadsheet.InvalidPropertyError(
                     column="IsList",
                     row=5,
                     type="bool_parsing",

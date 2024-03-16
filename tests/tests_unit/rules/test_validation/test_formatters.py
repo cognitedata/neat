@@ -11,7 +11,7 @@ from cognite.neat.rules.issues.formatters import BasicHTML
 def issues() -> IssueList:
     return IssueList(
         [
-            validation.InvalidPropertyError(
+            validation.spreadsheet.InvalidPropertyError(
                 column="IsList",
                 row=4,
                 type="bool_parsing",
@@ -25,7 +25,7 @@ def issues() -> IssueList:
                 row_numbers={4, 5},
                 nullable_definitions={True, False},
             ),
-            validation.MissingContainerPropertyError(
+            validation.dms.MissingContainerPropertyError(
                 container=ContainerId("neat", "Flowable"), property="minFlow", referred_by=ViewId("neat", "Pump", "1")
             ),
         ],

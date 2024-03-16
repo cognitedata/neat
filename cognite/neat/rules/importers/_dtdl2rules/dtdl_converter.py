@@ -79,7 +79,7 @@ class _DTDLConverter:
             convert_method(item, parent)
         else:
             self.issues.append(
-                issues.UnknownComponentWarning(
+                issues.importing.UnknownComponentWarning(
                     component_type=item.type,
                     instance_name=item.display_name,
                     instance_id=item.id_.model_dump() if item.id_ else None,
@@ -98,7 +98,7 @@ class _DTDLConverter:
         for sub_item_or_id in item.contents or []:
             if isinstance(sub_item_or_id, DTMI) and sub_item_or_id not in self._item_by_id:
                 self.issues.append(
-                    issues.UnknownPropertyWarning(
+                    issues.importing.UnknownPropertyWarning(
                         component_type=item.type,
                         property_name=sub_item_or_id.path[-1],
                         instance_name=item.display_name,
@@ -155,7 +155,7 @@ class _DTDLConverter:
             return None
         if item.request is None:
             self.issues.append(
-                issues.UnknownSubComponentWarning(
+                issues.importing.UnknownSubComponentWarning(
                     component_type=item.type,
                     sub_component="request",
                     instance_name=item.display_name,
@@ -166,7 +166,7 @@ class _DTDLConverter:
         if item.response is not None:
             # Currently, we do not know how to handle response
             self.issues.append(
-                issues.IgnoredComponentWarning(
+                issues.importing.IgnoredComponentWarning(
                     identifier=f"{parent}.response",
                     reason="Neat does not have a concept of response for commands. This will be ignored.",
                 )
@@ -308,7 +308,7 @@ class _DTDLConverter:
                 return ClassEntity.from_raw(input_type.id_.as_class_id())
         else:
             self.issues.append(
-                issues.UnknownPropertyWarning(
+                issues.importing.UnknownPropertyWarning(
                     component_type=item.type,
                     property_name="schema",
                     instance_name=item.display_name,

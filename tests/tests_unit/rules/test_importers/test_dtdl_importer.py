@@ -33,13 +33,13 @@ class TestDTDLImporter:
     def test_import_temperature_controller_example_dtdl_v2(self) -> None:
         expected_issues = IssueList(
             [
-                validation.UnknownPropertyWarning(
+                validation.importing.UnknownPropertyWarning(
                     component_type="Component",
                     property_name="schema",
                     instance_name="Device Information interface",
                     instance_id=None,
                 ),
-                validation.IgnoredComponentWarning(
+                validation.importing.IgnoredComponentWarning(
                     reason="Neat does not have a concept of response for commands. This will be ignored.",
                     identifier="com_example:Thermostat(version=1).response",
                 ),
