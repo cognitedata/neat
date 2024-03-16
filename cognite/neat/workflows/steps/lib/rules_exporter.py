@@ -48,7 +48,7 @@ class RulesToDMS(Step):
                 "Skip the component if it already exists, "
                 " or Update the component try to update the component."
             ),
-            options=["fail", "skip", "update"],
+            options=["fail", "skip", "update", "force"],
         ),
         Configurable(
             name="Multi-space components create",
@@ -83,7 +83,7 @@ class RulesToDMS(Step):
         if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
         existing_components_handling = cast(
-            Literal["fail", "update", "skip"], self.configs["Existing component handling"]
+            Literal["fail", "update", "skip", "force"], self.configs["Existing component handling"]
         )
         multi_space_components_create: bool = self.configs["Multi-space components create"] == "True"
         components_to_create = {
@@ -147,9 +147,9 @@ class RulesToDMS(Step):
 
         output_text = (
             "<p></p>"
-            "Download DMS Export Report"
+            "Download DMS Export "
             f'<a href="/data/staging/{report_file}?{time.time()}" '
-            f'target="_blank">report</a>'
+            f'target="_blank">Report</a>'
             "<p></p>"
             "Download DMS exported schema"
             f'- <a href="/data/staging/{schema_zip}?{time.time()}" '
