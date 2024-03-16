@@ -43,6 +43,21 @@ class DMSSchema:
         views = dm.ViewList(data_model.views)
         container_ids = views.referenced_containers()
         containers = client.data_modeling.containers.retrieve(list(container_ids))
+        while True:
+            referenced_containers = {
+                const.require
+                for container in containers
+                for const in (container.constraints or {}).values()
+                if isinstance(const, dm.RequiresConstraint)
+            }
+            missing_containers = referenced_containers - set(containers.as_ids())
+            if not missing_containers:
+                break
+            found_containers = client.data_modeling.containers.retrieve(list(missing_containers))
+            containers.extend(found_containers)
+            if len(found_containers) != len(missing_containers):
+                break
+
         space_read = client.data_modeling.spaces.retrieve(data_model.space)
         if space_read is None:
             raise ValueError(f"Space {data_model.space} not found")
