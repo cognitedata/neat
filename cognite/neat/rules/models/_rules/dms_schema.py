@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
+from cognite.client.data_classes import DatabaseWriteList, TransformationWriteList
 
 from cognite.neat.rules.issues.dms import (
     ContainerPropertyUsedMultipleTimesError,
@@ -18,6 +19,7 @@ from cognite.neat.rules.issues.dms import (
     MissingViewError,
 )
 from cognite.neat.utils.cdf_loaders import ViewLoader
+from cognite.neat.utils.cdf_loaders.data_classes import RawTableWriteList
 
 
 @dataclass
@@ -144,3 +146,10 @@ class DMSSchema:
                     errors.add(DuplicatedViewInDataModelError(referred_by=model.as_id(), view=view_id))
 
         return list(errors)
+
+
+@dataclass
+class PipelineSchema(DMSSchema):
+    transformations: TransformationWriteList = field(default_factory=lambda: TransformationWriteList([]))
+    databases: DatabaseWriteList = field(default_factory=lambda: DatabaseWriteList([]))
+    raw_tables: RawTableWriteList = field(default_factory=lambda: RawTableWriteList([]))

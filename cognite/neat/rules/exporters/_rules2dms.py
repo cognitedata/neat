@@ -11,8 +11,18 @@ from cognite.client.exceptions import CogniteAPIError
 from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.models._rules import InformationRules
 from cognite.neat.rules.models._rules.dms_architect_rules import DMSRules
-from cognite.neat.rules.models._rules.dms_schema import DMSSchema
-from cognite.neat.utils.cdf_loaders import ContainerLoader, DataModelingLoader, DataModelLoader, SpaceLoader, ViewLoader
+from cognite.neat.rules.models._rules.dms_schema import DMSSchema, PipelineSchema
+from cognite.neat.utils.cdf_loaders import (
+    ContainerLoader,
+    DataModelingLoader,
+    DataModelLoader,
+    RawDatabaseLoader,
+    RawTableLoader,
+    ResourceLoader,
+    SpaceLoader,
+    TransformationLoader,
+    ViewLoader,
+)
 
 from ._base import CDFExporter
 from ._models import UploadResult
@@ -32,6 +42,8 @@ class DMSExporter(CDFExporter[DMSSchema]):
             Defaults to "update". See below for details.
         standardize_casing(bool, optional): Whether to standardize the casing. This means PascalCase for external ID
             of views, containers, and data models, and camelCase for properties.
+        export_pipeline (bool, optional): Whether to export the pipeline. Defaults to False. This means setting
+            up transformations, RAW databases and tables to populate the data model.
 
     ... note::
 
@@ -48,11 +60,13 @@ class DMSExporter(CDFExporter[DMSSchema]):
         include_space: set[str] | None = None,
         existing_handling: Literal["fail", "skip", "update", "force"] = "update",
         standardize_casing: bool = True,
+        export_pipeline: bool = False,
     ):
         self.export_components = {export_components} if isinstance(export_components, str) else set(export_components)
         self.include_space = include_space
         self.existing_handling = existing_handling
-        self.fix_casing = standardize_casing
+        self.standardize_casing = standardize_casing
+        self.export_pipeline = export_pipeline
         self._schema: DMSSchema | None = None
 
     def export_to_file(self, filepath: Path, rules: Rules) -> None:
@@ -70,18 +84,23 @@ class DMSExporter(CDFExporter[DMSSchema]):
                 zip_ref.writestr(f"data_models/{view.external_id}.view.yaml", view.dump_yaml())
             for container in schema.containers:
                 zip_ref.writestr(f"data_models/{container.external_id}.container.yaml", container.dump_yaml())
+            if isinstance(schema, PipelineSchema):
+                for transformation in schema.transformations:
+                    zip_ref.writestr(f"transformations/{transformation.external_id}.yaml", transformation.dump_yaml())
+                for raw_table in schema.raw_tables:
+                    zip_ref.writestr(f"raw/{raw_table.name}.yaml", raw_table.dump_yaml())
 
     def export(self, rules: Rules) -> DMSSchema:
         if isinstance(rules, DMSRules):
-            return rules.as_schema()
+            return rules.as_schema(self.standardize_casing)
         elif isinstance(rules, InformationRules):
-            return rules.as_dms_architect_rules().as_schema()
+            return rules.as_dms_architect_rules().as_schema(self.standardize_casing)
         else:
             raise ValueError(f"{type(rules).__name__} cannot be exported to DMS")
 
     def export_to_cdf(self, client: CogniteClient, rules: Rules, dry_run: bool = False) -> Iterable[UploadResult]:
         schema = self.export(rules)
-        to_export: list[tuple[CogniteResourceList, DataModelingLoader]] = []
+        to_export: list[tuple[CogniteResourceList, ResourceLoader]] = []
         if self.export_components.intersection({"all", "spaces"}):
             to_export.append((schema.spaces, SpaceLoader(client)))
         if self.export_components.intersection({"all", "containers"}):
@@ -90,6 +109,10 @@ class DMSExporter(CDFExporter[DMSSchema]):
             to_export.append((schema.views, ViewLoader(client, self.existing_handling)))
         if self.export_components.intersection({"all", "data_models"}):
             to_export.append((schema.data_models, DataModelLoader(client)))
+        if self.export_pipeline and isinstance(schema, PipelineSchema):
+            to_export.append((schema.databases, RawDatabaseLoader(client)))
+            to_export.append((schema.raw_tables, RawTableLoader(client)))
+            to_export.append((schema.transformations, TransformationLoader(client)))
 
         # The conversion from DMS to GraphQL does not seem to be triggered even if the views
         # are changed. This is a workaround to force the conversion.
@@ -102,7 +125,11 @@ class DMSExporter(CDFExporter[DMSSchema]):
             to_create, to_update, unchanged, to_delete = [], [], [], []
             is_redeploying = loader.resource_name == "data_models" and redeploy_data_model
             for item in items:
-                if self.include_space is not None and not loader.in_space(item, self.include_space):
+                if (
+                    isinstance(loader, DataModelingLoader)
+                    and self.include_space is not None
+                    and not loader.in_space(item, self.include_space)
+                ):
                     continue
 
                 cdf_item = cdf_item_by_id.get(loader.get_id(item))
@@ -141,7 +168,9 @@ class DMSExporter(CDFExporter[DMSSchema]):
                     except CogniteAPIError as e:
                         error_messages.append(f"Failed delete: {e.message}")
 
-                to_create = loader.sort_by_dependencies(to_create)
+                if isinstance(loader, DataModelingLoader):
+                    to_create = loader.sort_by_dependencies(to_create)
+
                 try:
                     loader.create(to_create)
                 except CogniteAPIError as e:
