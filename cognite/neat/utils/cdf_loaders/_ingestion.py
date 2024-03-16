@@ -61,7 +61,7 @@ class RawDatabaseLoader(ResourceLoader[str, DatabaseWrite, Database, DatabaseWri
         return DatabaseList([db for db in all_databases if db.name in ids])
 
     def update(self, items: Sequence[DatabaseWrite]) -> DatabaseList:
-        raise NotImplementedError("Updating databases is not supported")
+        raise NotImplementedError("The CDF API does not support updating a RAW database.")
 
     def delete(self, ids: SequenceNotStr[str]) -> list[str]:
         existing_databases = self.retrieve(ids)
@@ -124,7 +124,7 @@ class RawTableLoader(ResourceLoader[RawTableID, RawTableWrite, RawTable, RawTabl
         return output
 
     def update(self, items: Sequence[RawTableWrite]) -> RawTableList:
-        raise NotImplementedError("Updating tables is not supported")
+        raise NotImplementedError("The CDF API does not support updating a RAW table.")
 
     def delete(self, ids: SequenceNotStr[RawTableID]) -> list[RawTableID]:
         existing_tables = self.retrieve(ids)
