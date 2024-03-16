@@ -237,8 +237,10 @@ class PipelineSchema(DMSSchema):
             "sourceLevel1": table.database,
             "sourceLevel2": table.name,
         }
-        mappings = []
-        select_rows = []
+        mappings = [
+            {"from": "externalId", "to": "externalId", "asType": "STRING"},
+        ]
+        select_rows = ["cast(`externalId` as STRING) as externalId"]
         for prop_name, prop in properties.items():
             container = container_by_id.get(prop.container)
             if container is not None:
@@ -250,7 +252,7 @@ class PipelineSchema(DMSSchema):
                 )
             else:
                 sql_type = "STRING"
-            select_rows.append(f"cast(`{prop_name}` as {sql_type}) as prop_name")
+            select_rows.append(f"cast(`{prop_name}` as {sql_type}) as {prop_name}")
             mappings.append({"from": prop_name, "to": prop_name, "asType": sql_type})
         mapping_mode["mappings"] = mappings
 
