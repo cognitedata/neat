@@ -12,6 +12,7 @@ from cognite.client.data_classes import (
     TransformationWrite,
     TransformationWriteList,
 )
+from cognite.client.exceptions import CogniteAPIError
 from cognite.client.utils.useful_types import SequenceNotStr
 
 from ._base import ResourceLoader
@@ -61,6 +62,8 @@ class RawDatabaseLoader(ResourceLoader[str, DatabaseWrite, Database, DatabaseWri
         return DatabaseList([db for db in all_databases if db.name in ids])
 
     def update(self, items: Sequence[DatabaseWrite]) -> DatabaseList:
+        if not items:
+            return DatabaseList([])
         raise NotImplementedError("The CDF API does not support updating a RAW database.")
 
     def delete(self, ids: SequenceNotStr[str]) -> list[str]:
@@ -112,7 +115,11 @@ class RawTableLoader(ResourceLoader[RawTableID, RawTableWrite, RawTable, RawTabl
     def retrieve(self, ids: SequenceNotStr[RawTableID]) -> RawTableList:
         output = RawTableList([])
         for db_name, id_group in self._groupby_database(ids):
-            all_tables = self.client.raw.tables.list(db_name, limit=-1)
+            try:
+                all_tables = self.client.raw.tables.list(db_name, limit=-1)
+            except CogniteAPIError as e:
+                if e.code == 404 and e.message.startswith("Following databases not found"):
+                    continue
             looking_for = {table_id.table for table_id in id_group if table_id.table is not None}
             output.extend(
                 [
@@ -126,6 +133,8 @@ class RawTableLoader(ResourceLoader[RawTableID, RawTableWrite, RawTable, RawTabl
         return output
 
     def update(self, items: Sequence[RawTableWrite]) -> RawTableList:
+        if not items:
+            return RawTableList([])
         raise NotImplementedError("The CDF API does not support updating a RAW table.")
 
     def delete(self, ids: SequenceNotStr[RawTableID]) -> list[RawTableID]:

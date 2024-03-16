@@ -161,7 +161,8 @@ class PipelineSchema(DMSSchema):
         if not schema.data_models:
             raise ValueError("PipelineSchema must contain at least one data model")
         first_data_model = schema.data_models[0]
-        database_name = first_data_model.external_id
+        # The database name is limited to 32 characters
+        database_name = first_data_model.external_id[:32]
         database = DatabaseWrite(name=database_name)
         parent_views = {parent for view in schema.views for parent in view.implements or []}
         transformations = TransformationWriteList([])
