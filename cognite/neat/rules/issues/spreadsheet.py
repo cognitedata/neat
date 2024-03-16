@@ -38,7 +38,7 @@ __all__ = [
 ]
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class InvalidSheetError(NeatValidationError, ABC):
     @classmethod
     @abstractmethod
@@ -235,7 +235,7 @@ class NonExistingViewError(InvalidPropertyError):
         return output
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class ClassNoPropertiesNoParentsWarning(ValidationWarning):
     description = "Class has no properties and no parents."
     fix = "Check if the class should have properties or parents."
@@ -253,7 +253,7 @@ class ClassNoPropertiesNoParentsWarning(ValidationWarning):
         return f"Class {self.classes[0]} has no properties and no parents. This may be a mistake."
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class InconsistentContainerDefinitionError(NeatValidationError, ABC):
     description = "This is a base class for all errors related to inconsistent container definitions"
     fix = "Ensure all properties using the same container have the same type, constraints, and indexes."
@@ -273,7 +273,7 @@ class InconsistentContainerDefinitionError(NeatValidationError, ABC):
         return output
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class MultiValueTypeError(InconsistentContainerDefinitionError):
     description = "The property has multiple value types"
     fix = "Use the same value type for all properties using the same container."
@@ -291,7 +291,7 @@ class MultiValueTypeError(InconsistentContainerDefinitionError):
         return output
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class MultiValueIsListError(InconsistentContainerDefinitionError):
     description = "The property has multiple list definitions"
     fix = "Use the same list definition for all properties using the same container."
@@ -309,7 +309,7 @@ class MultiValueIsListError(InconsistentContainerDefinitionError):
         return output
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class MultiNullableError(InconsistentContainerDefinitionError):
     description = "The property has multiple nullable definitions"
     fix = "Use the same nullable definition for all properties using the same container."
@@ -327,7 +327,7 @@ class MultiNullableError(InconsistentContainerDefinitionError):
         return output
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class MultiDefaultError(InconsistentContainerDefinitionError):
     description = "The property has multiple default definitions"
     fix = "Use the same default definition for all properties using the same container."
@@ -345,7 +345,7 @@ class MultiDefaultError(InconsistentContainerDefinitionError):
         return output
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class MultiIndexError(InconsistentContainerDefinitionError):
     description = "The property has multiple index definitions"
     fix = "Use the same index definition for all properties using the same container."
@@ -363,7 +363,7 @@ class MultiIndexError(InconsistentContainerDefinitionError):
         return output
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class MultiUniqueConstraintError(InconsistentContainerDefinitionError):
     description = "The property has multiple unique constraint definitions"
     fix = "Use the same unique constraint definition for all properties using the same container."
