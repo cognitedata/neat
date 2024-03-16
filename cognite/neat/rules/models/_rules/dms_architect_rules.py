@@ -102,12 +102,18 @@ class DMSMetadata(BaseMetadata):
         )
 
     def as_data_model(self) -> dm.DataModelApply:
+        suffix = f"Creator: {', '.join(self.creator)}"
+        if self.description:
+            description = f"{self.description} Creator: {', '.join(self.creator)}"
+        else:
+            description = suffix
+
         return dm.DataModelApply(
             space=self.space,
             external_id=self.external_id,
             name=self.name or None,
             version=self.version or "missing",
-            description=f"{self.description} Creator: {', '.join(self.creator)}",
+            description=description,
             views=[],
         )
 
