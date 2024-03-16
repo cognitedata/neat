@@ -92,9 +92,9 @@ class DMSExporter(CDFExporter[DMSSchema]):
 
     def export(self, rules: Rules) -> DMSSchema:
         if isinstance(rules, DMSRules):
-            return rules.as_schema(self.standardize_casing)
+            return rules.as_schema(self.standardize_casing, self.export_pipeline)
         elif isinstance(rules, InformationRules):
-            return rules.as_dms_architect_rules().as_schema(self.standardize_casing)
+            return rules.as_dms_architect_rules().as_schema(self.standardize_casing, self.export_pipeline)
         else:
             raise ValueError(f"{type(rules).__name__} cannot be exported to DMS")
 
@@ -109,7 +109,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
             to_export.append((schema.views, ViewLoader(client, self.existing_handling)))
         if self.export_components.intersection({"all", "data_models"}):
             to_export.append((schema.data_models, DataModelLoader(client)))
-        if self.export_pipeline and isinstance(schema, PipelineSchema):
+        if isinstance(schema, PipelineSchema):
             to_export.append((schema.databases, RawDatabaseLoader(client)))
             to_export.append((schema.raw_tables, RawTableLoader(client)))
             to_export.append((schema.transformations, TransformationLoader(client)))

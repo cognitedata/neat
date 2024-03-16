@@ -38,7 +38,7 @@ from ._types import (
     XSDValueType,
 )
 from .base import BaseMetadata, BaseRules, RoleTypes, SchemaCompleteness, SheetEntity, SheetList
-from .dms_schema import DMSSchema
+from .dms_schema import DMSSchema, PipelineSchema
 
 if TYPE_CHECKING:
     from .information_rules import InformationRules
@@ -452,8 +452,8 @@ class DMSRules(BaseRules):
             raise issues.MultiValueError(errors)
         return self
 
-    def as_schema(self, standardize_casing: bool = True) -> DMSSchema:
-        return _DMSExporter(standardize_casing).to_schema(self)
+    def as_schema(self, standardize_casing: bool = True, include_pipeline: bool = False) -> DMSSchema:
+        return _DMSExporter(standardize_casing, include_pipeline).to_schema(self)
 
     def as_information_architect_rules(self) -> "InformationRules":
         return _DMSRulesConverter(self).as_information_architect_rules()
@@ -468,10 +468,16 @@ class _DMSExporter:
     This kept in this location such that it can be used by the DMSRules to validate the schema.
     (This module cannot have a dependency on the exporter module, as it would create a circular dependency.)
 
+    Args
+        standardize_casing (bool): If True, the casing of the identifiers will be standardized. This means external IDs
+            are PascalCase and property names are camelCase.
+        include_pipeline (bool): If True, the pipeline will be included with the schema. Pipeline means the
+            raw tables and transformations necessary to populate the data model.
     """
 
-    def __init__(self, standardize_casing: bool = True):
+    def __init__(self, standardize_casing: bool = True, include_pipeline: bool = False):
         self.standardize_casing = standardize_casing
+        self.include_pipeline = include_pipeline
 
     def to_schema(self, rules: DMSRules) -> DMSSchema:
         default_version = "1"
@@ -616,12 +622,15 @@ class _DMSExporter:
                 [rules.metadata.as_space()] + [dm.SpaceApply(space=space) for space in used_spaces]
             )
 
-        return DMSSchema(
+        output = DMSSchema(
             spaces=spaces,
             data_models=dm.DataModelApplyList([data_model]),
             views=views,
             containers=containers,
         )
+        if self.include_pipeline:
+            return PipelineSchema.from_dms(output)
+        return output
 
     @classmethod
     def _gather_properties(

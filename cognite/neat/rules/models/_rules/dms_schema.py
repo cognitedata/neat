@@ -3,7 +3,9 @@ from dataclasses import dataclass, field
 
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
-from cognite.client.data_classes import DatabaseWriteList, TransformationWriteList
+from cognite.client.data_classes import DatabaseWrite, DatabaseWriteList, TransformationWrite, TransformationWriteList
+from cognite.client.data_classes.data_modeling import ViewApply
+from cognite.client.data_classes.transformations.common import Nodes, ViewInfo
 
 from cognite.neat.rules.issues.dms import (
     ContainerPropertyUsedMultipleTimesError,
@@ -19,7 +21,7 @@ from cognite.neat.rules.issues.dms import (
     MissingViewError,
 )
 from cognite.neat.utils.cdf_loaders import ViewLoader
-from cognite.neat.utils.cdf_loaders.data_classes import RawTableWriteList
+from cognite.neat.utils.cdf_loaders.data_classes import RawTableWrite, RawTableWriteList
 
 
 @dataclass
@@ -153,3 +155,82 @@ class PipelineSchema(DMSSchema):
     transformations: TransformationWriteList = field(default_factory=lambda: TransformationWriteList([]))
     databases: DatabaseWriteList = field(default_factory=lambda: DatabaseWriteList([]))
     raw_tables: RawTableWriteList = field(default_factory=lambda: RawTableWriteList([]))
+
+    @classmethod
+    def from_dms(cls, schema: DMSSchema) -> "PipelineSchema":
+        if not schema.data_models:
+            raise ValueError("PipelineSchema must contain at least one data model")
+        first_data_model = schema.data_models[0]
+        database = DatabaseWrite(name=first_data_model.external_id)
+        parent_views = {parent for view in schema.views for parent in view.implements or []}
+        transformations = TransformationWriteList([])
+        raw_tables = RawTableWriteList([])
+        for view in schema.views:
+            if view.as_id() in parent_views:
+                # Skipping parents as they do not have their own data
+                continue
+            mapped_properties = [
+                prop for prop in (view.properties or {}).values() if isinstance(prop, dm.MappedPropertyApply)
+            ]
+            if mapped_properties and False:
+                view_table = RawTableWrite(name=f"{view.external_id}Properties", database=database.name)
+                raw_tables.append(view_table)
+                transformation = cls._create_property_transformation(mapped_properties, view, view_table)
+                transformations.append(transformation)
+
+            connection_properties = [
+                prop for prop in (view.properties or {}).values() if isinstance(prop, dm.EdgeConnectionApply)
+            ]
+            if connection_properties and False:
+                view_table = RawTableWrite(name=f"{view.external_id}Connections", database=database.name)
+                raw_tables.append(view_table)
+                transformation = cls._create_connection_transformation(connection_properties, view, view_table)
+                transformations.append(transformation)
+
+        return cls(
+            spaces=schema.spaces,
+            data_models=schema.data_models,
+            views=schema.views,
+            containers=schema.containers,
+            transformations=transformations,
+            databases=DatabaseWriteList([database]),
+            raw_tables=raw_tables,
+        )
+
+    @classmethod
+    def _create_property_transformation(
+        cls, properties: list[dm.MappedPropertyApply], view: ViewApply, table: RawTableWrite
+    ) -> TransformationWrite:
+        return TransformationWrite(
+            external_id=f"{table.name}Transformation",
+            name=f"{table.name}Transformation",
+            ignore_null_fields=True,
+            destination=Nodes(
+                view=ViewInfo(view.space, view.external_id, view.version),
+                instance_space=table.database,
+            ),
+            conflict_mode="upsert",
+            query="""
+SELECT
+
+""",
+        )
+
+    @classmethod
+    def _create_connection_transformation(
+        cls, properties: list[dm.EdgeConnectionApply], view: ViewApply, table: RawTableWrite
+    ) -> TransformationWrite:
+        return TransformationWrite(
+            external_id=f"{table.name}Transformation",
+            name=f"{table.name}Transformation",
+            ignore_null_fields=True,
+            destination=Nodes(
+                view=ViewInfo(view.space, view.external_id, view.version),
+                instance_space=table.database,
+            ),
+            conflict_mode="upsert",
+            query="""
+SELECT
+
+""",
+        )
