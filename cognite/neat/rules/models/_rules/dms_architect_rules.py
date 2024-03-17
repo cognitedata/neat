@@ -282,13 +282,14 @@ class DMSRules(BaseRules):
                     suffix=entity.view.external_id,
                     version=default_view_version if entity.view.version is None else entity.view.version,
                 )
-            if isinstance(entity.value_type, ViewEntity) and (
+            if isinstance(entity.value_type, ViewPropEntity) and (
                 entity.value_type.space is Undefined or entity.value_type.version is None
             ):
                 entity.value_type = ViewPropEntity(
                     prefix=default_space if entity.value_type.space is Undefined else entity.value_type.space,
                     suffix=entity.value_type.suffix,
                     version=default_view_version if entity.value_type.version is None else entity.value_type.version,
+                    property_=entity.value_type.property_,
                 )
 
         for container in self.containers or []:
@@ -586,7 +587,7 @@ class _DMSExporter:
                 view_property: ViewPropertyApply
                 if prop.is_list and prop.relation == "direct":
                     # This is not yet supported in the CDF API, a warning has already been issued, here we convert it to
-                    # a multiedge connection.
+                    # a multi-edge connection.
                     if isinstance(prop.value_type, ViewEntity):
                         source = prop.value_type.as_id(default_space, default_version, self.standardize_casing)
                     else:
@@ -638,16 +639,23 @@ class _DMSExporter:
                         direction="outwards",
                     )
                 elif prop.view and prop.view_property and prop.relation == "reversedirect":
-                    if isinstance(prop.value_type, ViewEntity):
+                    if isinstance(prop.value_type, ViewPropEntity):
                         source = prop.value_type.as_id(default_space, default_version, self.standardize_casing)
                     else:
                         raise ValueError(
                             "Reverse direct relation must have a view as value type. "
                             "This should have been validated in the rules"
                         )
+                    source_prop = prop.value_type.property_
+                    if source_prop is None:
+                        raise ValueError(
+                            "Reverse direct relation must set what it is the reverse property of. "
+                            f"Which property in {prop.value_type.versioned_id} is this the reverse of? Expecting "
+                            f"{prop.value_type.versioned_id}:<property>"
+                        )
                     args: dict[str, Any] = dict(
                         source=source,
-                        through=dm.PropertyId(source, prop.view_property),
+                        through=dm.PropertyId(source, source_prop),
                         description=prop.description,
                         name=prop.name,
                     )
