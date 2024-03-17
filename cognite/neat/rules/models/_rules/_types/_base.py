@@ -3,7 +3,7 @@ import sys
 from functools import total_ordering
 from typing import Any, ClassVar, cast
 
-from cognite.client.data_classes.data_modeling import ContainerId, DataModelId, ViewId
+from cognite.client.data_classes.data_modeling import ContainerId, DataModelId, PropertyId, ViewId
 from pydantic import BaseModel
 
 from cognite.neat.utils.text import to_pascal
@@ -31,6 +31,7 @@ class EntityTypes(StrEnum):
     xsd_value_type = "xsd_value_type"
     dms_value_type = "dms_value_type"
     view = "view"
+    view_prop = "view_prop"
     container = "container"
     datamodel = "datamodel"
     undefined = "undefined"
@@ -43,10 +44,14 @@ ALLOWED_PATTERN = r"[^a-zA-Z0-9-_.]"
 PREFIX_REGEX = r"[a-zA-Z]+[a-zA-Z0-9-_.]*[a-zA-Z0-9]+"
 SUFFIX_REGEX = r"[a-zA-Z0-9-_.]+[a-zA-Z0-9]|[-_.]*[a-zA-Z0-9]+"
 VERSION_REGEX = r"[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?"
+PROPERTY_REGEX = r"[a-zA-Z0-9][a-zA-Z0-9_-]*[a-zA-Z0-9]?"
 ENTITY_ID_REGEX = rf"{PREFIX_REGEX}:({SUFFIX_REGEX})"
 ENTITY_ID_REGEX_COMPILED = re.compile(rf"^(?P<prefix>{PREFIX_REGEX}):(?P<suffix>{SUFFIX_REGEX})$")
 VERSIONED_ENTITY_REGEX_COMPILED = re.compile(
     rf"^(?P<prefix>{PREFIX_REGEX}):(?P<suffix>{SUFFIX_REGEX})\(version=(?P<version>{VERSION_REGEX})\)$"
+)
+PROPERTY_ENTITY_REGEX_COMPILED = re.compile(
+    rf"^((?P<prefix>{PREFIX_REGEX}):)?(?P<suffix>{SUFFIX_REGEX})(\(version=(?P<version>{VERSION_REGEX})\))?:(?P<property>{PROPERTY_REGEX})$"
 )
 CLASS_ID_REGEX = rf"(?P<{EntityTypes.class_}>{ENTITY_ID_REGEX})"
 CLASS_ID_REGEX_COMPILED = re.compile(rf"^{CLASS_ID_REGEX}$")
@@ -220,6 +225,58 @@ class ViewEntity(Entity):
 
         external_id = to_pascal(self.external_id) if standardize_casing else self.external_id
         return ViewId(space=space, external_id=external_id, version=version)
+
+
+class ViewPropEntity(ViewEntity):
+    type_: ClassVar[EntityTypes] = EntityTypes.view_prop
+    property_: str | None = None
+
+    @classmethod
+    def from_raw(cls, value: Any) -> "ViewPropEntity":
+        if not value:
+            return ViewPropEntity(prefix=Undefined, suffix=value)
+        elif isinstance(value, ViewPropEntity):
+            return value
+
+        if result := PROPERTY_ENTITY_REGEX_COMPILED.match(value):
+            return cls(
+                prefix=result.group("prefix") or Undefined,
+                suffix=result.group("suffix"),
+                version=result.group("version"),
+                property_=result.group("property"),
+            )
+        elif ENTITY_ID_REGEX_COMPILED.match(value) or VERSIONED_ENTITY_REGEX_COMPILED.match(value):
+            return ViewPropEntity.from_string(entity_string=value)
+        else:
+            return ViewPropEntity(prefix=Undefined, suffix=value)
+
+    @classmethod
+    def from_prop_id(cls, prop_id: PropertyId) -> "ViewPropEntity":
+        return ViewPropEntity(
+            prefix=prop_id.source.space,
+            suffix=prop_id.source.external_id,
+            version=prop_id.source.version,
+            property_=prop_id.property,
+        )
+
+    def as_prop_id(
+        self, default_space: str | None = None, default_version: str | None = None, standardize_casing: bool = True
+    ) -> PropertyId:
+        if self.property_ is None:
+            raise ValueError("property is required to create PropertyId")
+        return PropertyId(
+            source=self.as_id(default_space, default_version, standardize_casing), property=self.property_
+        )
+
+    @property
+    def versioned_id(self) -> str:
+        if self.version is None:
+            output = self.id
+        else:
+            output = f"{self.id}(version={self.version})"
+        if self.property_:
+            output = f"{output}:{self.property_}"
+        return output
 
 
 class DataModelEntity(Entity):

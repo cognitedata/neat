@@ -7,6 +7,7 @@ from ._base import (
     ParentClassEntity,
     Undefined,
     ViewEntity,
+    ViewPropEntity,
 )
 from ._field import (
     CdfValueType,
@@ -36,6 +37,7 @@ __all__ = [
     "ParentClassEntity",
     "ContainerEntity",
     "ViewEntity",
+    "ViewPropEntity",
     "DataModelEntity",
     "XSDValueType",
     "DMSValueType",
