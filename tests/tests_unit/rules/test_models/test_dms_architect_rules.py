@@ -490,7 +490,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     value_type="Timeseries:activities",
                     relation="reversedirect",
                     view="Activity",
-                    view_property="name",
+                    view_property="timeseries",
                 ),
             ],
         ),

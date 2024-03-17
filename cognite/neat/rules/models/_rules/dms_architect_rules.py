@@ -653,21 +653,38 @@ class _DMSExporter:
                             f"Which property in {prop.value_type.versioned_id} is this the reverse of? Expecting "
                             f"{prop.value_type.versioned_id}:<property>"
                         )
-                    args: dict[str, Any] = dict(
-                        source=source,
-                        through=dm.PropertyId(source, source_prop),
-                        description=prop.description,
-                        name=prop.name,
+                    reverse_prop = next(
+                        (prop for prop in view_properties_by_id.get(source, []) if prop.property_ == source_prop), None
                     )
-                    reverse_direct_cls: dict[
-                        bool | None, type[dm.MultiReverseDirectRelationApply] | type[SingleReverseDirectRelationApply]
-                    ] = {
-                        True: dm.MultiReverseDirectRelationApply,
-                        False: SingleReverseDirectRelationApply,
-                        None: dm.MultiReverseDirectRelationApply,
-                    }
+                    if reverse_prop and reverse_prop.relation == "direct" and reverse_prop.is_list:
+                        warnings.warn(
+                            issues.dms.ReverseOfDirectRelationListWarning(view_id, prop.property_), stacklevel=2
+                        )
+                        view_property = dm.MultiEdgeConnectionApply(
+                            type=dm.DirectRelationReference(
+                                space=source.space,
+                                external_id=f"{reverse_prop.view.external_id}.{reverse_prop.view_property}",
+                            ),
+                            source=source,
+                            direction="inwards",
+                        )
+                    else:
+                        args: dict[str, Any] = dict(
+                            source=source,
+                            through=dm.PropertyId(source, source_prop),
+                            description=prop.description,
+                            name=prop.name,
+                        )
+                        reverse_direct_cls: dict[
+                            bool | None,
+                            type[dm.MultiReverseDirectRelationApply] | type[SingleReverseDirectRelationApply],
+                        ] = {
+                            True: dm.MultiReverseDirectRelationApply,
+                            False: SingleReverseDirectRelationApply,
+                            None: dm.MultiReverseDirectRelationApply,
+                        }
 
-                    view_property = reverse_direct_cls[prop.is_list](**args)
+                        view_property = reverse_direct_cls[prop.is_list](**args)
                 elif prop.view and prop.view_property and prop.relation:
                     warnings.warn(
                         issues.dms.UnsupportedRelationWarning(view_id, prop.view_property, prop.relation), stacklevel=2
