@@ -496,89 +496,58 @@ class _DMSExporter:
     def to_schema(self, rules: DMSRules) -> DMSSchema:
         default_version = "1"
         default_space = rules.metadata.space
-        data_model = rules.metadata.as_data_model()
-
-        containers = dm.ContainerApplyList(
-            [
-                dms_container.as_container(default_space, self.standardize_casing)
-                for dms_container in rules.containers or []
-            ]
-        )
-        views = dm.ViewApplyList(
-            [
-                dms_view.as_view(default_space, default_version, self.standardize_casing)
-                for dms_view in rules.views or []
-            ]
-        )
-        views_not_in_model = {
-            view.view.as_id(default_space, default_version, self.standardize_casing)
-            for view in rules.views
-            if not view.in_model
-        }
-
-        data_model.views = [view_id for view_id in views.as_ids() if view_id not in views_not_in_model]
 
         container_properties_by_id, view_properties_by_id = self._gather_properties(
             rules, default_space, default_version
         )
 
-        container_to_drop = set()
-        for container in containers:
-            container_id = container.as_id()
-            if not (container_properties := container_properties_by_id.get(container_id)):
-                warnings.warn(issues.dms.EmptyContainerWarning(container_id=container_id), stacklevel=2)
-                container_to_drop.add(container_id)
-                continue
-            for prop in container_properties:
-                if prop.container_property is None:
-                    continue
-                if isinstance(prop.value_type, DMSValueType):
-                    type_cls = prop.value_type.dms
-                else:
-                    type_cls = dm.DirectRelation
+        containers = self._create_containers(rules.containers, container_properties_by_id, default_space)
 
-                prop_name = to_camel(prop.container_property) if self.standardize_casing else prop.container_property
+        views = self._create_views(rules.views, view_properties_by_id, default_space, default_version)
 
-                if type_cls is dm.DirectRelation:
-                    container.properties[prop_name] = dm.ContainerProperty(
-                        type=dm.DirectRelation(),
-                        nullable=prop.nullable if prop.nullable is not None else True,
-                        default_value=prop.default,
-                        name=prop.name,
-                        description=prop.description,
-                    )
-                else:
-                    type_: CognitePropertyType
-                    if issubclass(type_cls, ListablePropertyType):
-                        type_ = type_cls(is_list=prop.is_list or False)
-                    else:
-                        type_ = cast(CognitePropertyType, type_cls())
-                    container.properties[prop_name] = dm.ContainerProperty(
-                        type=type_,
-                        nullable=prop.nullable if prop.nullable is not None else True,
-                        default_value=prop.default,
-                        name=prop.name,
-                        description=prop.description,
-                    )
+        views_not_in_model = {
+            view.view.as_id(default_space, default_version, self.standardize_casing)
+            for view in rules.views
+            if not view.in_model
+        }
+        data_model = rules.metadata.as_data_model()
+        data_model.views = [view_id for view_id in views.as_ids() if view_id not in views_not_in_model]
 
-            uniqueness_properties: dict[str, set[str]] = defaultdict(set)
-            for prop in container_properties:
-                if prop.container_property is not None:
-                    for constraint in prop.constraint or []:
-                        uniqueness_properties[constraint].add(prop.container_property)
-            for constraint_name, properties in uniqueness_properties.items():
-                container.constraints = container.constraints or {}
-                container.constraints[constraint_name] = dm.UniquenessConstraint(properties=list(properties))
+        spaces = self._create_spaces(rules.metadata, containers, views, data_model)
 
-            index_properties: dict[str, set[str]] = defaultdict(set)
-            for prop in container_properties:
-                if prop.container_property is not None:
-                    for index in prop.index or []:
-                        index_properties[index].add(prop.container_property)
-            for index_name, properties in index_properties.items():
-                container.indexes = container.indexes or {}
-                container.indexes[index_name] = BTreeIndex(properties=list(properties))
+        output = DMSSchema(
+            spaces=spaces,
+            data_models=dm.DataModelApplyList([data_model]),
+            views=views,
+            containers=containers,
+        )
+        if self.include_pipeline:
+            return PipelineSchema.from_dms(output, self.instance_space)
+        return output
 
+    def _create_spaces(self, metadata: DMSMetadata, containers, views, data_model):
+        used_spaces = {container.space for container in containers} | {view.space for view in views}
+        if len(used_spaces) == 1:
+            # We skip the default space and only use this space for the data model
+            data_model.space = used_spaces.pop()
+            spaces = dm.SpaceApplyList([dm.SpaceApply(space=data_model.space)])
+        else:
+            spaces = dm.SpaceApplyList([metadata.as_space()] + [dm.SpaceApply(space=space) for space in used_spaces])
+        if self.instance_space:
+            data_model.space = self.instance_space
+            spaces.append(dm.SpaceApply(space=self.instance_space, name=self.instance_space))
+        return spaces
+
+    def _create_views(
+        self,
+        dms_views: SheetList[DMSView],
+        view_properties_by_id: dict[dm.ViewId, list[DMSProperty]],
+        default_space: str,
+        default_version: str,
+    ) -> dm.ViewApplyList:
+        views = dm.ViewApplyList(
+            [dms_view.as_view(default_space, default_version, self.standardize_casing) for dms_view in dms_views]
+        )
         for view in views:
             view_id = view.as_id()
             view.properties = {}
@@ -651,20 +620,76 @@ class _DMSExporter:
                     continue
                 prop_name = to_camel(prop.view_property) if self.standardize_casing else prop.view_property
                 view.properties[prop_name] = view_property
+        return views
 
-        used_spaces = {container.space for container in containers} | {view.space for view in views}
-        if len(used_spaces) == 1:
-            # We skip the default space and only use this space for the data model
-            data_model.space = used_spaces.pop()
-            spaces = dm.SpaceApplyList([dm.SpaceApply(space=data_model.space)])
-        else:
-            spaces = dm.SpaceApplyList(
-                [rules.metadata.as_space()] + [dm.SpaceApply(space=space) for space in used_spaces]
-            )
-        if self.instance_space:
-            data_model.space = self.instance_space
-            spaces.append(dm.SpaceApply(space=self.instance_space, name=self.instance_space))
+    def _create_containers(
+        self,
+        dms_container: SheetList[DMSContainer] | None,
+        container_properties_by_id: dict[dm.ContainerId, list[DMSProperty]],
+        default_space: str,
+    ) -> dm.ContainerApplyList:
+        containers = dm.ContainerApplyList(
+            [
+                dms_container.as_container(default_space, self.standardize_casing)
+                for dms_container in dms_container or []
+            ]
+        )
+        container_to_drop = set()
+        for container in containers:
+            container_id = container.as_id()
+            if not (container_properties := container_properties_by_id.get(container_id)):
+                warnings.warn(issues.dms.EmptyContainerWarning(container_id=container_id), stacklevel=2)
+                container_to_drop.add(container_id)
+                continue
+            for prop in container_properties:
+                if prop.container_property is None:
+                    continue
+                if isinstance(prop.value_type, DMSValueType):
+                    type_cls = prop.value_type.dms
+                else:
+                    type_cls = dm.DirectRelation
 
+                prop_name = to_camel(prop.container_property) if self.standardize_casing else prop.container_property
+
+                if type_cls is dm.DirectRelation:
+                    container.properties[prop_name] = dm.ContainerProperty(
+                        type=dm.DirectRelation(),
+                        nullable=prop.nullable if prop.nullable is not None else True,
+                        default_value=prop.default,
+                        name=prop.name,
+                        description=prop.description,
+                    )
+                else:
+                    type_: CognitePropertyType
+                    if issubclass(type_cls, ListablePropertyType):
+                        type_ = type_cls(is_list=prop.is_list or False)
+                    else:
+                        type_ = cast(CognitePropertyType, type_cls())
+                    container.properties[prop_name] = dm.ContainerProperty(
+                        type=type_,
+                        nullable=prop.nullable if prop.nullable is not None else True,
+                        default_value=prop.default,
+                        name=prop.name,
+                        description=prop.description,
+                    )
+
+            uniqueness_properties: dict[str, set[str]] = defaultdict(set)
+            for prop in container_properties:
+                if prop.container_property is not None:
+                    for constraint in prop.constraint or []:
+                        uniqueness_properties[constraint].add(prop.container_property)
+            for constraint_name, properties in uniqueness_properties.items():
+                container.constraints = container.constraints or {}
+                container.constraints[constraint_name] = dm.UniquenessConstraint(properties=list(properties))
+
+            index_properties: dict[str, set[str]] = defaultdict(set)
+            for prop in container_properties:
+                if prop.container_property is not None:
+                    for index in prop.index or []:
+                        index_properties[index].add(prop.container_property)
+            for index_name, properties in index_properties.items():
+                container.indexes = container.indexes or {}
+                container.indexes[index_name] = BTreeIndex(properties=list(properties))
         constraints = {
             const.require
             for container in containers
@@ -672,18 +697,9 @@ class _DMSExporter:
             if isinstance(const, dm.RequiresConstraint)
         }
         container_to_drop = {container_id for container_id in container_to_drop if container_id not in constraints}
-
-        output = DMSSchema(
-            spaces=spaces,
-            data_models=dm.DataModelApplyList([data_model]),
-            views=views,
-            containers=dm.ContainerApplyList(
-                [container for container in containers if container.as_id() not in container_to_drop]
-            ),
+        return dm.ContainerApplyList(
+            [container for container in containers if container.as_id() not in container_to_drop]
         )
-        if self.include_pipeline:
-            return PipelineSchema.from_dms(output, self.instance_space)
-        return output
 
     @classmethod
     def _gather_properties(
