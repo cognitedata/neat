@@ -616,6 +616,21 @@ class _DMSExporter:
                     continue
                 prop_name = to_camel(prop.view_property) if self.standardize_casing else prop.view_property
                 view.properties[prop_name] = view_property
+
+        parent_views = {parent for view in views for parent in view.implements or []}
+        for view in views:
+            ref_containers = view.referenced_containers()
+            has_data = dm.filters.HasData(containers=list(ref_containers)) if ref_containers else None
+            node_type = dm.filters.Equals(["node", "type"], {"space": view.space, "externalId": view.external_id})
+            if view.as_id() in parent_views:
+                view.filter = has_data
+            elif has_data is None:
+                # Child filter without container properties
+                view.filter = node_type
+            else:
+                # child filter with its own container properties
+                view.filter = dm.filters.And(has_data, node_type)
+
         return views
 
     def _create_containers(
