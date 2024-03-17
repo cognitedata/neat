@@ -260,3 +260,26 @@ class EmptyContainerWarning(DMSSchemaWarning):
         output = super().dump()
         output["container_id"] = self.container_id.dump()
         return output
+
+
+@dataclass(frozen=True)
+class UnsupportedRelationWarning(DMSSchemaWarning):
+    description = "The relatio type is not supported by neat"
+    fix = "Change the relation to a supported type"
+    error_name: ClassVar[str] = "UnsupportedRelationWarning"
+    view_id: dm.ViewId
+    property: str
+    relation: str
+
+    def message(self) -> str:
+        return (
+            f"The relation {self.relation} in {self.view_id}.{self.property} is not supported."
+            "This property will be ignored."
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["view_id"] = self.view_id.dump()
+        output["property"] = self.property
+        output["relation"] = self.relation
+        return output

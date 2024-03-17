@@ -10,7 +10,7 @@ from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import PropertyType as CognitePropertyType
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex
 from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
-from cognite.client.data_classes.data_modeling.views import ViewPropertyApply
+from cognite.client.data_classes.data_modeling.views import SingleReverseDirectRelationApply, ViewPropertyApply
 from pydantic import Field, field_validator, model_validator
 from pydantic_core.core_schema import ValidationInfo
 from rdflib import Namespace
@@ -606,11 +606,7 @@ class _DMSExporter:
                         container_property_identifier=container_prop_identifier,
                         **extra_args,
                     )
-                elif prop.view and prop.view_property:
-                    if not prop.relation:
-                        continue
-                    if prop.relation != "multiedge":
-                        raise NotImplementedError(f"Currently only multiedge is supported, not {prop.relation}")
+                elif prop.view and prop.view_property and prop.relation == "multiedge":
                     if isinstance(prop.value_type, ViewEntity):
                         source = prop.value_type.as_id(default_space, default_version, self.standardize_casing)
                     else:
@@ -626,6 +622,34 @@ class _DMSExporter:
                         source=source,
                         direction="outwards",
                     )
+                elif prop.view and prop.view_property and prop.relation == "reversedirect":
+                    if isinstance(prop.value_type, ViewEntity):
+                        source = prop.value_type.as_id(default_space, default_version, self.standardize_casing)
+                    else:
+                        raise ValueError(
+                            "Reverse direct relation must have a view as value type. "
+                            "This should have been validated in the rules"
+                        )
+                    args: dict[str, Any] = dict(
+                        source=source,
+                        through=dm.PropertyId(source, prop.view_property),
+                        description=prop.description,
+                        name=prop.name,
+                    )
+                    reverse_direct_cls: dict[
+                        bool | None, type[dm.MultiReverseDirectRelationApply] | type[SingleReverseDirectRelationApply]
+                    ] = {
+                        True: dm.MultiReverseDirectRelationApply,
+                        False: SingleReverseDirectRelationApply,
+                        None: dm.MultiReverseDirectRelationApply,
+                    }
+
+                    view_property = reverse_direct_cls[prop.is_list](**args)
+                elif prop.view and prop.view_property and prop.relation:
+                    warnings.warn(
+                        issues.dms.UnsupportedRelationWarning(view_id, prop.view_property, prop.relation), stacklevel=2
+                    )
+                    continue
                 else:
                     continue
                 prop_name = to_camel(prop.view_property) if self.standardize_casing else prop.view_property
