@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Literal, overload
+from typing import Any, Literal, overload
 
 from pydantic import ValidationError
 from rdflib import Namespace
@@ -89,6 +89,7 @@ def _handle_issues(
     issues: IssueList,
     error_cls: type[NeatValidationError] = NeatValidationError,
     warning_cls: type[ValidationWarning] = ValidationWarning,
+    error_args: dict[str, Any] | None = None,
 ) -> Iterator[_FutureResult]:
     """This is an internal help function to handle issues and warnings.
 
@@ -106,7 +107,7 @@ def _handle_issues(
         try:
             yield future_result
         except ValidationError as e:
-            issues.extend(error_cls.from_pydantic_errors(e.errors()))
+            issues.extend(error_cls.from_pydantic_errors(e.errors(), **(error_args or {})))
             future_result._result = "failure"
         else:
             future_result._result = "success"

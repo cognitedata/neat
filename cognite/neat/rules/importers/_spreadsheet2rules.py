@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Literal, cast, overload
 
 import pandas as pd
-from pydantic import ValidationError
 
 import cognite.neat.rules.issues.spreadsheet_file
 from cognite.neat.rules import issues
@@ -17,7 +16,7 @@ from cognite.neat.rules.models._rules.base import RoleTypes
 from cognite.neat.utils.auxiliary import local_import
 from cognite.neat.utils.spreadsheet import SpreadsheetRead, read_spreadsheet
 
-from ._base import BaseImporter, Rules
+from ._base import BaseImporter, Rules, _handle_issues
 
 
 class ExcelImporter(BaseImporter):
@@ -97,19 +96,23 @@ class ExcelImporter(BaseImporter):
             RoleTypes.information_architect: InformationRules,
             RoleTypes.dms_architect: DMSRules,
         }.get(role_enum)
-        if not rules_cls:
+        if rules_cls is None:
             issue_list.append(cognite.neat.rules.issues.spreadsheet_file.InvalidRoleError(str(role_input)))
             if errors == "raise":
                 raise issue_list.as_errors()
             return None, issue_list
 
-        try:
+        with _handle_issues(
+            issue_list,
+            error_cls=issues.spreadsheet.InvalidSheetError,
+            error_args={"read_info_by_sheet": read_info_by_sheet},
+        ) as future:
             rules = rules_cls.model_validate(sheets)  # type: ignore[attr-defined]
-        except ValidationError as e:
-            issue_list.extend(issues.spreadsheet.InvalidSheetError.from_pydantic_errors(e.errors(), read_info_by_sheet))
-            if errors == "raise":
-                raise issue_list.as_errors() from e
-            return None, issue_list
+        if future.result == "failure":
+            if errors == "continue":
+                return None, issue_list
+            else:
+                raise issue_list.as_errors()
 
         return self._to_output(rules, issue_list, errors=errors, role=role)
 
