@@ -503,7 +503,9 @@ class _DMSExporter:
 
         containers = self._create_containers(rules.containers, container_properties_by_id, default_space)
 
-        views = self._create_views(rules.views, view_properties_by_id, default_space, default_version)
+        views, node_types = self._create_views_with_node_types(
+            rules.views, view_properties_by_id, default_space, default_version
+        )
 
         views_not_in_model = {
             view.view.as_id(default_space, default_version, self.standardize_casing)
@@ -520,12 +522,19 @@ class _DMSExporter:
             data_models=dm.DataModelApplyList([data_model]),
             views=views,
             containers=containers,
+            node_types=node_types,
         )
         if self.include_pipeline:
             return PipelineSchema.from_dms(output, self.instance_space)
         return output
 
-    def _create_spaces(self, metadata: DMSMetadata, containers, views, data_model):
+    def _create_spaces(
+        self,
+        metadata: DMSMetadata,
+        containers: dm.ContainerApplyList,
+        views: dm.ViewApplyList,
+        data_model: dm.DataModelApply,
+    ) -> dm.SpaceApplyList:
         used_spaces = {container.space for container in containers} | {view.space for view in views}
         if len(used_spaces) == 1:
             # We skip the default space and only use this space for the data model
@@ -538,13 +547,13 @@ class _DMSExporter:
             spaces.append(dm.SpaceApply(space=self.instance_space, name=self.instance_space))
         return spaces
 
-    def _create_views(
+    def _create_views_with_node_types(
         self,
         dms_views: SheetList[DMSView],
         view_properties_by_id: dict[dm.ViewId, list[DMSProperty]],
         default_space: str,
         default_version: str,
-    ) -> dm.ViewApplyList:
+    ) -> tuple[dm.ViewApplyList, dm.NodeApplyList]:
         views = dm.ViewApplyList(
             [dms_view.as_view(default_space, default_version, self.standardize_casing) for dms_view in dms_views]
         )
@@ -617,6 +626,7 @@ class _DMSExporter:
                 prop_name = to_camel(prop.view_property) if self.standardize_casing else prop.view_property
                 view.properties[prop_name] = view_property
 
+        node_types = dm.NodeApplyList([])
         parent_views = {parent for view in views for parent in view.implements or []}
         for view in views:
             ref_containers = view.referenced_containers()
@@ -627,11 +637,12 @@ class _DMSExporter:
             elif has_data is None:
                 # Child filter without container properties
                 view.filter = node_type
+                node_types.append(dm.NodeApply(space=view.space, external_id=view.external_id, sources=[]))
             else:
-                # child filter with its own container properties
+                # Child filter with its own container properties
                 view.filter = dm.filters.And(has_data, node_type)
-
-        return views
+                node_types.append(dm.NodeApply(space=view.space, external_id=view.external_id, sources=[]))
+        return views, node_types
 
     def _create_containers(
         self,
