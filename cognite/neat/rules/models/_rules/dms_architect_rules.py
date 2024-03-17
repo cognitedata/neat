@@ -146,7 +146,7 @@ class DMSMetadata(BaseMetadata):
 
 class DMSProperty(SheetEntity):
     property_: PropertyType = Field(alias="Property")
-    relation: Literal["direct", "multiedge"] | None = Field(None, alias="Relation")
+    relation: Literal["direct", "reversedirect", "multiedge"] | None = Field(None, alias="Relation")
     value_type: CdfValueType = Field(alias="Value Type")
     nullable: bool | None = Field(default=None, alias="Nullable")
     is_list: bool | None = Field(default=None, alias="IsList")

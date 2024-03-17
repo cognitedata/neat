@@ -403,6 +403,216 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         id="View not in model",
     )
 
+    dms_rules = DMSRules(
+        metadata=DMSMetadata(
+            # This is a complete schema, but we do not want to trigger the full validation
+            schema_="partial",
+            space="my_space",
+            external_id="my_data_model",
+            version="1",
+            creator=["Anders"],
+            created="2024-03-17T11:00:00",
+            updated="2024-03-17T11:00:00",
+            default_view_version="1",
+        ),
+        properties=SheetList[DMSProperty](
+            data=[
+                DMSProperty(
+                    class_="Asset",
+                    property_="name",
+                    value_type="text",
+                    container="Asset",
+                    container_property="name",
+                    view="Asset",
+                    view_property="name",
+                ),
+                DMSProperty(
+                    class_="Asset",
+                    property_="timeseries",
+                    value_type="Timeseries",
+                    relation="reversedirect",
+                    is_list=True,
+                    view="Asset",
+                    view_property="timeseries",
+                ),
+                DMSProperty(
+                    class_="Asset",
+                    property_="root",
+                    value_type="Asset",
+                    relation="direct",
+                    container="Asset",
+                    container_property="root",
+                    view="Asset",
+                    view_property="root",
+                ),
+                DMSProperty(
+                    class_="Asset",
+                    property_="children",
+                    value_type="Asset",
+                    relation="reversedirect",
+                    is_list=True,
+                    view="Asset",
+                    view_property="children",
+                ),
+                DMSProperty(
+                    class_="Timeseries",
+                    property_="name",
+                    value_type="text",
+                    container="Timeseries",
+                    container_property="name",
+                    view="Timeseries",
+                    view_property="name",
+                ),
+                DMSProperty(
+                    class_="Timeseries",
+                    property_="asset",
+                    value_type="Asset",
+                    relation="direct",
+                    container="Timeseries",
+                    container_property="asset",
+                    view="Timeseries",
+                    view_property="asset",
+                ),
+                DMSProperty(
+                    class_="Timeseries",
+                    property_="activities",
+                    value_type="Activity",
+                    relation="direct",
+                    is_list=True,
+                    container="Timeseries",
+                    container_property="activities",
+                    view="Timeseries",
+                    view_property="activities",
+                ),
+                DMSProperty(
+                    class_="Activity",
+                    property_="timeseries",
+                    value_type="Timeseries",
+                    relation="reversedirect",
+                    view="Activity",
+                    view_property="name",
+                ),
+            ],
+        ),
+        views=SheetList[DMSView](
+            data=[
+                DMSView(view="Asset", class_="Asset"),
+                DMSView(view="Timeseries", class_="Timeseries"),
+                DMSView(view="Activity", class_="Activity"),
+            ],
+        ),
+        containers=SheetList[DMSContainer](
+            data=[
+                DMSContainer(container="Asset", class_="Asset"),
+                DMSContainer(container="Timeseries", class_="Timeseries"),
+                DMSContainer(container="Activity", class_="Activity"),
+            ],
+        ),
+    )
+
+    expected_schema = DMSSchema(
+        spaces=dm.SpaceApplyList([dm.SpaceApply(space="my_space")]),
+        data_models=dm.DataModelApplyList(
+            [
+                dm.DataModelApply(
+                    space="my_space",
+                    external_id="my_data_model",
+                    version="1",
+                    description="Creator: Anders",
+                    views=[
+                        dm.ViewId(space="my_space", external_id="Asset", version="1"),
+                        dm.ViewId(space="my_space", external_id="Timeseries", version="1"),
+                        dm.ViewId(space="my_space", external_id="Activity", version="1"),
+                    ],
+                )
+            ]
+        ),
+        views=dm.ViewApplyList(
+            [
+                dm.ViewApply(
+                    space="my_space",
+                    external_id="Asset",
+                    version="1",
+                    properties={
+                        "name": dm.MappedPropertyApply(
+                            container=dm.ContainerId("my_space", "Asset"), container_property_identifier="name"
+                        ),
+                        "timeseries": dm.MultiReverseDirectRelationApply(
+                            source=dm.ViewId("my_space", "Timeseries", "1"),
+                            through=dm.PropertyId(source=dm.ViewId("my_space", "Timeseries", "1"), property="asset"),
+                        ),
+                        "root": dm.MappedPropertyApply(
+                            container=dm.ContainerId("my_space", "Asset"), container_property_identifier="root"
+                        ),
+                        "children": dm.MultiReverseDirectRelationApply(
+                            source=dm.ViewId("my_space", "Asset", "1"),
+                            through=dm.PropertyId(source=dm.ViewId("my_space", "Asset", "1"), property="root"),
+                        ),
+                    },
+                    filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "Asset")]),
+                ),
+                dm.ViewApply(
+                    space="my_space",
+                    external_id="Timeseries",
+                    version="1",
+                    properties={
+                        "name": dm.MappedPropertyApply(
+                            container=dm.ContainerId("my_space", "Timeseries"), container_property_identifier="name"
+                        ),
+                        "asset": dm.MappedPropertyApply(
+                            container=dm.ContainerId("my_space", "Asset"), container_property_identifier="asset"
+                        ),
+                        "activities": dm.MultiEdgeConnectionApply(
+                            type=dm.DirectRelationReference(space="my_space", external_id="Timeseries.activities"),
+                            source=dm.ViewId("my_space", "Activity", "1"),
+                            direction="outwards",
+                        ),
+                    },
+                    filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "Timeseries")]),
+                ),
+                dm.ViewApply(
+                    space="my_space",
+                    external_id="Activity",
+                    version="1",
+                    properties={
+                        "timeseries": dm.MultiEdgeConnectionApply(
+                            type=dm.DirectRelationReference(space="my_space", external_id="Timeseries.activities"),
+                            source=dm.ViewId("my_space", "Timeseries", "1"),
+                            direction="inwards",
+                        )
+                    },
+                    filter=None,
+                ),
+            ]
+        ),
+        containers=dm.ContainerApplyList(
+            [
+                dm.ContainerApply(
+                    space="my_space",
+                    external_id="Asset",
+                    properties={
+                        "name": dm.ContainerProperty(type=dm.Text(), nullable=True),
+                        "root": dm.ContainerProperty(type=dm.DirectRelation(), nullable=True),
+                    },
+                ),
+                dm.ContainerApply(
+                    space="my_space",
+                    external_id="Timeseries",
+                    properties={
+                        "name": dm.ContainerProperty(type=dm.Text(), nullable=True),
+                        "asset": dm.ContainerProperty(type=dm.DirectRelation(), nullable=True),
+                    },
+                ),
+            ]
+        ),
+        node_types=dm.NodeApplyList([]),
+    )
+    yield pytest.param(
+        dms_rules,
+        expected_schema,
+        id="Multiple relations and reverse relations",
+    )
+
 
 def valid_rules_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
