@@ -510,8 +510,13 @@ class _DMSExporter:
                 for dms_view in rules.views or []
             ]
         )
+        views_not_in_model = {
+            view.view.as_id(default_space, default_version, self.standardize_casing)
+            for view in rules.views
+            if not view.in_model
+        }
 
-        data_model.views = list(views.as_ids())
+        data_model.views = [view_id for view_id in views.as_ids() if view_id not in views_not_in_model]
 
         container_properties_by_id, view_properties_by_id = self._gather_properties(
             rules, default_space, default_version
