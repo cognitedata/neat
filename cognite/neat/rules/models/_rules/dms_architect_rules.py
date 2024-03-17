@@ -172,6 +172,20 @@ class DMSProperty(SheetEntity):
             raise ValueError(f"Reverse direct relation must not have container or container property, got {value}")
         return value
 
+    @field_validator("value_type", mode="after")
+    def relations_value_type(cls, value: CdfValueType, info: ValidationInfo) -> CdfValueType:
+        if (relation := info.data["relation"]) is None:
+            return value
+        if not isinstance(value, ViewPropEntity):
+            raise ValueError(f"Relations must have a value type that points to another view, got {value}")
+        if relation == "reversedirect" and value.property_ is None:
+            raise ValueError(
+                "Reverse direct relation must set what it is the reverse property of. "
+                f"Which property in {value.versioned_id} is this the reverse of? Expecting"
+                f"{value.versioned_id}:<property>"
+            )
+        return value
+
 
 class DMSContainer(SheetEntity):
     container: ContainerType = Field(alias="Container")
