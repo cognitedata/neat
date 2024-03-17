@@ -204,6 +204,7 @@ class DMSContainer(SheetEntity):
 class DMSView(SheetEntity):
     view: ViewType = Field(alias="View")
     implements: ViewListType | None = Field(None, alias="Implements")
+    in_model: bool = Field(True, alias="InModel")
 
     def as_view(self, default_space: str, default_version: str, standardize_casing: bool = True) -> dm.ViewApply:
         view_id = self.view.as_id(default_space, default_version, standardize_casing)
