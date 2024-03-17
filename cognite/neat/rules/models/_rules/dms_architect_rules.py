@@ -627,6 +627,7 @@ class _DMSExporter:
 
         node_types = dm.NodeApplyList([])
         parent_views = {parent for view in views for parent in view.implements or []}
+        node_type_flag = False
         for view in views:
             ref_containers = view.referenced_containers()
             has_data = dm.filters.HasData(containers=list(ref_containers)) if ref_containers else None
@@ -635,12 +636,18 @@ class _DMSExporter:
                 view.filter = has_data
             elif has_data is None:
                 # Child filter without container properties
-                view.filter = node_type
-                node_types.append(dm.NodeApply(space=view.space, external_id=view.external_id, sources=[]))
+                if node_type_flag:
+                    # Transformations do not yet support setting node type.
+                    view.filter = node_type
+                    node_types.append(dm.NodeApply(space=view.space, external_id=view.external_id, sources=[]))
             else:
                 # Child filter with its own container properties
-                view.filter = dm.filters.And(has_data, node_type)
-                node_types.append(dm.NodeApply(space=view.space, external_id=view.external_id, sources=[]))
+                if node_type_flag:
+                    # Transformations do not yet support setting node type.
+                    view.filter = dm.filters.And(has_data, node_type)
+                    node_types.append(dm.NodeApply(space=view.space, external_id=view.external_id, sources=[]))
+                else:
+                    view.filter = has_data
         return views, node_types
 
     def _create_containers(

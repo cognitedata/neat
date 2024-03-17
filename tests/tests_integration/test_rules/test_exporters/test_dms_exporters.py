@@ -101,13 +101,16 @@ def table_example() -> InformationRules:
 def table_example_data() -> dict[str, list[Row]]:
     return {
         "Table": [
-            Row("table1", {"externalId": "table1", "color": "brown", "height": 1.0, "width": 2.0}),
-            Row("table2", {"externalId": "table2", "color": "white", "height": 1.5, "width": 3.0}),
+            Row("table1", {"externalId": "table1", "color": "brown", "height": 1.0, "width": 2.0, "type": "Table"}),
+            Row(
+                "table2",
+                {"externalId": "table2", "color": "white", "height": 1.5, "width": 3.0, "type": "Table"},
+            ),
         ],
         "Item": [
-            Row("item1", {"externalId": "item1", "name": "chair", "category": "furniture"}),
-            Row("item2", {"externalId": "item2", "name": "lamp", "category": "lighting"}),
-            Row("item3", {"externalId": "item3", "name": "computer", "category": "electronics"}),
+            Row("item1", {"externalId": "item1", "name": "chair", "category": "furniture", "type": "Item"}),
+            Row("item2", {"externalId": "item2", "name": "lamp", "category": "lighting", "type": "Item"}),
+            Row("item3", {"externalId": "item3", "name": "computer", "category": "electronics", "type": "Item"}),
         ],
         "TableItem": [
             Row("table1item1", {"externalId": "table1item1", "Table": "table1", "Item": "item1"}),
