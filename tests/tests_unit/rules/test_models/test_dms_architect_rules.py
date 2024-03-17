@@ -542,7 +542,9 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                             through=dm.PropertyId(source=dm.ViewId("my_space", "Timeseries", "1"), property="asset"),
                         ),
                         "root": dm.MappedPropertyApply(
-                            container=dm.ContainerId("my_space", "Asset"), container_property_identifier="root"
+                            container=dm.ContainerId("my_space", "Asset"),
+                            container_property_identifier="root",
+                            source=dm.ViewId("my_space", "Asset", "1"),
                         ),
                         "children": dm.MultiReverseDirectRelationApply(
                             source=dm.ViewId("my_space", "Asset", "1"),
@@ -560,7 +562,9 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                             container=dm.ContainerId("my_space", "Timeseries"), container_property_identifier="name"
                         ),
                         "asset": dm.MappedPropertyApply(
-                            container=dm.ContainerId("my_space", "Asset"), container_property_identifier="asset"
+                            container=dm.ContainerId("my_space", "Timeseries"),
+                            container_property_identifier="asset",
+                            source=dm.ViewId("my_space", "Asset", "1"),
                         ),
                         "activities": dm.MultiEdgeConnectionApply(
                             type=dm.DirectRelationReference(space="my_space", external_id="Timeseries.activities"),
