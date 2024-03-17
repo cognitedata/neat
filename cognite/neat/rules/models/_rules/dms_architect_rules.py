@@ -794,13 +794,16 @@ class _DMSExporter:
             for index_name, properties in index_properties.items():
                 container.indexes = container.indexes or {}
                 container.indexes[index_name] = BTreeIndex(properties=list(properties))
-        constraints = {
-            const.require
-            for container in containers
-            for const in (container.constraints or {}).values()
-            if isinstance(const, dm.RequiresConstraint)
-        }
-        container_to_drop = {container_id for container_id in container_to_drop if container_id not in constraints}
+
+        # We might drop containers we convert direct relations of list into multi-edge connections
+        # which do not have a container.
+        for container in containers:
+            if container.constraints:
+                container.constraints = {
+                    name: const
+                    for name, const in container.constraints.items()
+                    if not (isinstance(const, dm.RequiresConstraint) and const.require in container_to_drop)
+                }
         return dm.ContainerApplyList(
             [container for container in containers if container.as_id() not in container_to_drop]
         )
