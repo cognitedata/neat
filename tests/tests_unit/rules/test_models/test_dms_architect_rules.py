@@ -113,6 +113,11 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                                 container=dm.ContainerId("my_space", "Asset"), container_property_identifier="name"
                             )
                         },
+                        filter=dm.filters.HasData(
+                            containers=[
+                                dm.ContainerId("my_space", "Asset"),
+                            ]
+                        ),
                     ),
                     dm.ViewApply(
                         space="my_space",
@@ -125,6 +130,10 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                                 container_property_identifier="ratedPower",
                             ),
                         },
+                        filter=dm.filters.And(
+                            dm.filters.HasData(containers=[dm.ContainerId("my_space", "GeneratingUnit")]),
+                            dm.filters.Equals(["node", "type"], {"space": "my_space", "externalId": "WindTurbine"}),
+                        ),
                     ),
                     dm.ViewApply(
                         space="my_space",
@@ -137,6 +146,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                                 direction="outwards",
                             )
                         },
+                        filter=dm.filters.Equals(["node", "type"], {"space": "my_space", "externalId": "WindFarm"}),
                     ),
                 ]
             ),
@@ -154,6 +164,20 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                             "ratedPower": dm.ContainerProperty(type=dm.Float64(), nullable=True),
                         },
                         constraints={"my_space_Asset": dm.RequiresConstraint(dm.ContainerId("my_space", "Asset"))},
+                    ),
+                ]
+            ),
+            node_types=dm.NodeApplyList(
+                [
+                    dm.NodeApply(
+                        space="my_space",
+                        external_id="WindTurbine",
+                        sources=[],
+                    ),
+                    dm.NodeApply(
+                        space="my_space",
+                        external_id="WindFarm",
+                        sources=[],
                     ),
                 ]
             ),
@@ -250,6 +274,10 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                             direction="outwards",
                         ),
                     },
+                    filter=dm.filters.And(
+                        dm.filters.HasData(containers=[dm.ContainerId("my_space", "Asset")]),
+                        dm.filters.Equals(["node", "type"], {"space": "my_space", "externalId": "WindFarm"}),
+                    ),
                 ),
                 dm.ViewApply(
                     space="my_space",
@@ -260,6 +288,10 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                             container=dm.ContainerId("my_space", "Asset"), container_property_identifier="name"
                         )
                     },
+                    filter=dm.filters.And(
+                        dm.filters.HasData(containers=[dm.ContainerId("my_space", "Asset")]),
+                        dm.filters.Equals(["node", "type"], {"space": "my_space", "externalId": "WindTurbine"}),
+                    ),
                 ),
             ]
         ),
@@ -269,6 +301,20 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     space="my_space",
                     external_id="Asset",
                     properties={"name": dm.ContainerProperty(type=dm.Text(), nullable=True)},
+                ),
+            ]
+        ),
+        node_types=dm.NodeApplyList(
+            [
+                dm.NodeApply(
+                    space="my_space",
+                    external_id="WindFarm",
+                    sources=[],
+                ),
+                dm.NodeApply(
+                    space="my_space",
+                    external_id="WindTurbine",
+                    sources=[],
                 ),
             ]
         ),
@@ -351,6 +397,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                             container=dm.ContainerId("my_space", "Asset"), container_property_identifier="name"
                         ),
                     },
+                    filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "Asset")]),
                 ),
                 dm.ViewApply(
                     external_id="WindTurbine",
@@ -363,6 +410,10 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                         ),
                     },
                     implements=[dm.ViewId("my_space", "Asset", "1")],
+                    filter=dm.filters.And(
+                        dm.filters.HasData(containers=[dm.ContainerId("my_space", "WindTurbine")]),
+                        dm.filters.Equals(["node", "type"], {"space": "my_space", "externalId": "WindTurbine"}),
+                    ),
                 ),
             ],
         ),
@@ -380,6 +431,15 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     properties={"maxPower": dm.ContainerProperty(type=dm.Float64(), nullable=True)},
                 ),
             ],
+        ),
+        node_types=dm.NodeApplyList(
+            [
+                dm.NodeApply(
+                    space="my_space",
+                    external_id="WindTurbine",
+                    sources=[],
+                ),
+            ]
         ),
     )
 
