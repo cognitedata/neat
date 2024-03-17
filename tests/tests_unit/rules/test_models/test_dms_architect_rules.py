@@ -1027,6 +1027,10 @@ class TestDMSRules:
         expected_schema.views = dm.ViewApplyList(sorted(expected_schema.views, key=lambda v: v.external_id))
         assert actual_schema.views.dump() == expected_schema.views.dump()
 
+        actual_schema.node_types = dm.NodeApplyList(sorted(actual_schema.node_types, key=lambda n: n.external_id))
+        expected_schema.node_types = dm.NodeApplyList(sorted(expected_schema.node_types, key=lambda n: n.external_id))
+        assert actual_schema.node_types.dump() == expected_schema.node_types.dump()
+
     def test_alice_as_information(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
         alice_rules = DMSRules.model_validate(alice_spreadsheet)
         info_rules = alice_rules.as_information_architect_rules()
