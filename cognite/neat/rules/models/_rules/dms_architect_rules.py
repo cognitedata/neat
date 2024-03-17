@@ -165,6 +165,12 @@ class DMSProperty(SheetEntity):
             raise ValueError("Direct relation must be nullable")
         return value
 
+    @field_validator("container_property", "container")
+    def reverse_direct_relation_has_no_container(cls, value, info: ValidationInfo) -> None:
+        if info.data.get("relation") == "reversedirect" and value is not None:
+            raise ValueError(f"Reverse direct relation must not have container or container property, got {value}")
+        return value
+
 
 class DMSContainer(SheetEntity):
     container: ContainerType = Field(alias="Container")
