@@ -130,10 +130,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                                 container_property_identifier="ratedPower",
                             ),
                         },
-                        filter=dm.filters.And(
-                            dm.filters.HasData(containers=[dm.ContainerId("my_space", "GeneratingUnit")]),
-                            dm.filters.Equals(["node", "type"], {"space": "my_space", "externalId": "WindTurbine"}),
-                        ),
+                        filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "GeneratingUnit")]),
                     ),
                     dm.ViewApply(
                         space="my_space",
@@ -146,7 +143,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                                 direction="outwards",
                             )
                         },
-                        filter=dm.filters.Equals(["node", "type"], {"space": "my_space", "externalId": "WindFarm"}),
+                        filter=None,
                     ),
                 ]
             ),
@@ -167,20 +164,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     ),
                 ]
             ),
-            node_types=dm.NodeApplyList(
-                [
-                    dm.NodeApply(
-                        space="my_space",
-                        external_id="WindTurbine",
-                        sources=[],
-                    ),
-                    dm.NodeApply(
-                        space="my_space",
-                        external_id="WindFarm",
-                        sources=[],
-                    ),
-                ]
-            ),
+            node_types=dm.NodeApplyList([]),
         ),
         id="Two properties, one container, one view",
     )
@@ -274,10 +258,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                             direction="outwards",
                         ),
                     },
-                    filter=dm.filters.And(
-                        dm.filters.HasData(containers=[dm.ContainerId("my_space", "Asset")]),
-                        dm.filters.Equals(["node", "type"], {"space": "my_space", "externalId": "WindFarm"}),
-                    ),
+                    filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "Asset")]),
                 ),
                 dm.ViewApply(
                     space="my_space",
@@ -288,10 +269,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                             container=dm.ContainerId("my_space", "Asset"), container_property_identifier="name"
                         )
                     },
-                    filter=dm.filters.And(
-                        dm.filters.HasData(containers=[dm.ContainerId("my_space", "Asset")]),
-                        dm.filters.Equals(["node", "type"], {"space": "my_space", "externalId": "WindTurbine"}),
-                    ),
+                    filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "Asset")]),
                 ),
             ]
         ),
@@ -304,20 +282,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ]
         ),
-        node_types=dm.NodeApplyList(
-            [
-                dm.NodeApply(
-                    space="my_space",
-                    external_id="WindFarm",
-                    sources=[],
-                ),
-                dm.NodeApply(
-                    space="my_space",
-                    external_id="WindTurbine",
-                    sources=[],
-                ),
-            ]
-        ),
+        node_types=dm.NodeApplyList([]),
     )
     yield pytest.param(
         dms_rules,
@@ -410,10 +375,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                         ),
                     },
                     implements=[dm.ViewId("my_space", "Asset", "1")],
-                    filter=dm.filters.And(
-                        dm.filters.HasData(containers=[dm.ContainerId("my_space", "WindTurbine")]),
-                        dm.filters.Equals(["node", "type"], {"space": "my_space", "externalId": "WindTurbine"}),
-                    ),
+                    filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "WindTurbine")]),
                 ),
             ],
         ),
@@ -432,15 +394,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ],
         ),
-        node_types=dm.NodeApplyList(
-            [
-                dm.NodeApply(
-                    space="my_space",
-                    external_id="WindTurbine",
-                    sources=[],
-                ),
-            ]
-        ),
+        node_types=dm.NodeApplyList([]),
     )
 
     yield pytest.param(
