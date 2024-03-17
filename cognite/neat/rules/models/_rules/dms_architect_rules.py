@@ -543,7 +543,6 @@ class _DMSExporter:
         else:
             spaces = dm.SpaceApplyList([metadata.as_space()] + [dm.SpaceApply(space=space) for space in used_spaces])
         if self.instance_space:
-            data_model.space = self.instance_space
             spaces.append(dm.SpaceApply(space=self.instance_space, name=self.instance_space))
         return spaces
 
