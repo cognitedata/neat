@@ -577,25 +577,21 @@ class _DMSExporter:
                     container_prop_identifier = (
                         to_camel(prop.container_property) if self.standardize_casing else prop.container_property
                     )
-                    if prop.relation == "direct":
-                        if isinstance(prop.value_type, ViewEntity):
-                            source = prop.value_type.as_id(default_space, default_version, self.standardize_casing)
-                        else:
-                            raise ValueError(
-                                "Direct relation must have a view as value type. "
-                                "This should have been validated in the rules"
-                            )
-
-                        view_property = dm.MappedPropertyApply(
-                            container=prop.container.as_id(default_space, self.standardize_casing),
-                            container_property_identifier=container_prop_identifier,
-                            source=source,
+                    extra_args: dict[str, Any] = {}
+                    if prop.relation == "direct" and isinstance(prop.value_type, ViewEntity):
+                        extra_args["source"] = prop.value_type.as_id(
+                            default_space, default_version, self.standardize_casing
                         )
-                    else:
-                        view_property = dm.MappedPropertyApply(
-                            container=prop.container.as_id(default_space, self.standardize_casing),
-                            container_property_identifier=container_prop_identifier,
+                    elif prop.relation == "direct" and not isinstance(prop.value_type, ViewEntity):
+                        raise ValueError(
+                            "Direct relation must have a view as value type. "
+                            "This should have been validated in the rules"
                         )
+                    view_property = dm.MappedPropertyApply(
+                        container=prop.container.as_id(default_space, self.standardize_casing),
+                        container_property_identifier=container_prop_identifier,
+                        **extra_args,
+                    )
                 elif prop.view and prop.view_property:
                     if not prop.relation:
                         continue
