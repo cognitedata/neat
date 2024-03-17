@@ -35,6 +35,7 @@ from ._types import (
     VersionType,
     ViewEntity,
     ViewListType,
+    ViewPropEntity,
     ViewType,
     XSDValueType,
 )
@@ -270,7 +271,7 @@ class DMSRules(BaseRules):
             if isinstance(entity.value_type, ViewEntity) and (
                 entity.value_type.space is Undefined or entity.value_type.version is None
             ):
-                entity.value_type = ViewEntity(
+                entity.value_type = ViewPropEntity(
                     prefix=default_space if entity.value_type.space is Undefined else entity.value_type.space,
                     suffix=entity.value_type.suffix,
                     version=default_view_version if entity.value_type.version is None else entity.value_type.version,

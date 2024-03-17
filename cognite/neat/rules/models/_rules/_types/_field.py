@@ -31,6 +31,7 @@ from ._base import (
     ParentClassEntity,
     Undefined,
     ViewEntity,
+    ViewPropEntity,
 )
 from ._value import DMS_VALUE_TYPE_MAPPINGS, XSD_VALUE_TYPE_MAPPINGS, DMSValueType, XSDValueType
 
@@ -247,12 +248,14 @@ SemanticValueType = Annotated[
 ]
 
 CdfValueType = Annotated[
-    DMSValueType | ViewEntity,
+    DMSValueType | ViewPropEntity,
     BeforeValidator(
-        lambda value: DMS_VALUE_TYPE_MAPPINGS[value] if value in DMS_VALUE_TYPE_MAPPINGS else ViewEntity.from_raw(value)
+        lambda value: DMS_VALUE_TYPE_MAPPINGS[value]
+        if value in DMS_VALUE_TYPE_MAPPINGS
+        else ViewPropEntity.from_raw(value)
     ),
     PlainSerializer(
-        lambda v: v.versioned_id if isinstance(v, ViewEntity) else v.dms()._type,
+        lambda v: v.versioned_id if isinstance(v, ViewPropEntity | ViewEntity) else v.dms()._type,
         return_type=str,
         when_used="unless-none",
     ),

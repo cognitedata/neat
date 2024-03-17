@@ -209,7 +209,7 @@ class ViewEntity(Entity):
             return ViewEntity(prefix=Undefined, suffix=value)
 
     @classmethod
-    def from_id(cls, view_id: ViewId) -> "ViewEntity":
+    def from_id(cls, view_id: ViewId) -> Self:
         return ViewEntity(prefix=view_id.space, suffix=view_id.external_id, version=view_id.version)
 
     def as_id(
@@ -237,6 +237,8 @@ class ViewPropEntity(ViewEntity):
             return ViewPropEntity(prefix=Undefined, suffix=value)
         elif isinstance(value, ViewPropEntity):
             return value
+        elif isinstance(value, ViewEntity):
+            return cls(prefix=value.prefix, suffix=value.suffix, version=value.version)
 
         if result := PROPERTY_ENTITY_REGEX_COMPILED.match(value):
             return cls(

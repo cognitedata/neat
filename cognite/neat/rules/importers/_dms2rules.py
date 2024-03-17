@@ -8,7 +8,13 @@ from cognite.client.data_classes.data_modeling.data_types import ListablePropert
 
 from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models._rules import DMSRules, DMSSchema, RoleTypes
-from cognite.neat.rules.models._rules._types import ClassEntity, ContainerEntity, DMSValueType, ViewEntity
+from cognite.neat.rules.models._rules._types import (
+    ClassEntity,
+    ContainerEntity,
+    DMSValueType,
+    ViewEntity,
+    ViewPropEntity,
+)
 from cognite.neat.rules.models._rules.dms_architect_rules import (
     DMSContainer,
     DMSMetadata,
@@ -85,12 +91,12 @@ class DMSImporter(BaseImporter):
                         if prop.source is None:
                             direct_value_type = "UNKNOWN"
                         else:
-                            direct_value_type = ViewEntity.from_id(prop.source)
+                            direct_value_type = ViewPropEntity.from_id(prop.source)
                         dms_property = DMSProperty(
                             class_=ClassEntity(prefix=view.space, suffix=view.external_id, version=view.version),
                             property_=prop_id,
                             description=prop.description,
-                            value_type=cast(ViewEntity | DMSValueType, direct_value_type),
+                            value_type=cast(ViewPropEntity | DMSValueType, direct_value_type),
                             relation="direct",
                             nullable=container_prop.nullable,
                             default=container_prop.default_value,
@@ -107,7 +113,7 @@ class DMSImporter(BaseImporter):
                             class_=ClassEntity(prefix=view.space, suffix=view.external_id, version=view.version),
                             property_=prop_id,
                             description=prop.description,
-                            value_type=cast(ViewEntity | DMSValueType, container_prop.type._type),
+                            value_type=cast(ViewPropEntity | DMSValueType, container_prop.type._type),
                             nullable=container_prop.nullable,
                             is_list=(
                                 container_prop.type.is_list
@@ -123,7 +129,7 @@ class DMSImporter(BaseImporter):
                             constraint=unique_constraints or None,
                         )
                 elif isinstance(prop, dm.MultiEdgeConnectionApply):
-                    view_entity = ViewEntity.from_id(prop.source)
+                    view_entity = ViewPropEntity.from_id(prop.source)
                     dms_property = DMSProperty(
                         class_=ClassEntity(prefix=view.space, suffix=view.external_id, version=view.version),
                         property_=prop_id,
