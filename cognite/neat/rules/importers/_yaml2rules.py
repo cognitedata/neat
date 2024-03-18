@@ -1,8 +1,9 @@
 from pathlib import Path
-from typing import Literal, overload, Any
+from typing import Any, Literal, overload
 
 from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models._rules import RoleTypes
+
 from ._base import BaseImporter, Rules
 
 
@@ -19,6 +20,7 @@ class YAMLImporter(BaseImporter):
         versions of the rules.
 
     """
+
     def __init__(self, raw_data: dict[str, Any]):
         self.raw_data = raw_data
 
@@ -43,4 +45,4 @@ class YAMLImporter(BaseImporter):
     def to_rules(
         self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
     ) -> tuple[Rules | None, IssueList] | Rules:
-        ...
+        raise NotImplementedError()

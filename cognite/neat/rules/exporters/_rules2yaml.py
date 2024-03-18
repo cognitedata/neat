@@ -1,8 +1,12 @@
+import warnings
 from pathlib import Path
 from typing import Literal, get_args
 
+import yaml
+
 from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.models._rules.base import RoleTypes
+
 from ._base import BaseExporter
 
 
@@ -25,19 +29,52 @@ class YAMLExporter(BaseExporter[str]):
 
     """
 
-    Format = Literal["single", "multiple"]
+    Files = Literal["single", "multiple"]
+    Format = Literal["yaml", "json"]
 
-    format_options = get_args(Format)
+    file_option = get_args(Files)
+    format_option = get_args(Format)
 
-    def __init__(self, format_: Format = "multiple", output_role: RoleTypes | None = None):
-        if format_ not in self.format_options:
-            raise ValueError(f"Invalid format: {format_}. Valid options are {self.format_options}")
-        self.format = format_
+    def __init__(self, files: Files = "multiple", output: Format = "yaml", output_role: RoleTypes | None = None):
+        if files not in self.file_option:
+            raise ValueError(f"Invalid files: {files}. Valid options are {self.file_option}")
+        if output not in self.format_option:
+            raise ValueError(f"Invalid output: {output}. Valid options are {self.format_option}")
+        self.files = files
+        self.output = output
         self.output_role = output_role
 
     def export_to_file(self, filepath: Path, rules: Rules) -> None:
-        """Exports transformation rules to YAML file(s)."""
-        raise NotImplementedError()
+        """Exports transformation rules to YAML/JSON file(s)."""
+        if self.files == "single":
+            if filepath.suffix != f".{self.output}":
+                warnings.warn(f"File extension is not .{self.output}, adding it to the file name", stacklevel=2)
+                filepath = filepath.with_suffix(f".{self.output}")
+            filepath.write_text(self.export(rules))
+        elif self.files == "multiple":
+            if filepath.is_file():
+                raise FileExistsError(f"{filepath} is a file, cannot export to a directory")
+            filepath.mkdir(parents=True, exist_ok=True)
+            rules = self._convert_to_output_role(rules, self.output_role)
+            for key, value in rules.model_dump().items():
+                if self.output == "json":
+                    content = rules.model_dump_json()
+                elif self.output == "yaml":
+                    content = yaml.safe_dump(value)
+                else:
+                    raise ValueError(f"Invalid output: {self.output}. Valid options are {self.format_option}")
+                (filepath / f"{key}.{self.output}").write_text(content)
 
     def export(self, rules: Rules) -> str:
+        """Export rules to YAML (or JSON) format.
+
+        Args:
+            rules: The rules to be exported.
+
+        Returns:
+            str: The rules in YAML (or JSON) format.
+        """
         rules = self._convert_to_output_role(rules, self.output_role)
+        if self.output == "json":
+            return rules.model_dump_json()
+        return yaml.safe_dump(rules.model_dump())
