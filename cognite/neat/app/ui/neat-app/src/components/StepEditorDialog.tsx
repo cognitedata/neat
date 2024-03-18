@@ -50,7 +50,7 @@ export default function StepEditorDialog(props: any)
 
     const handleDialogSave = () => {
         setDialogOpen(false);
-        console.log("handleDialogSave")
+
         console.dir(selectedStep);
         props.onClose(selectedStep,"save");
         setShowStepIdError(false);
@@ -75,7 +75,7 @@ export default function StepEditorDialog(props: any)
         fetch(neatApiRootUrl +'/api/workflow/'+props.workflowName+'/http_trigger/'+selectedStep.id, { method: 'POST', body: runPayload })
         .then(response => response.json())
         .then(data => {
-            console.log('Success:', data);
+
         }).catch((error) => {
             console.error('Error:', error);
         })
@@ -88,7 +88,7 @@ export default function StepEditorDialog(props: any)
       fetch(neatApiRootUrl +'/api/workflow/'+props.workflowName+'/resume/'+selectedStep.id+'/default', { method: 'POST', body: runPayload })
       .then(response => response.json())
       .then(data => {
-          console.log('Success:', data);
+
       }).catch((error) => {
           console.error('Error:', error);
       })
@@ -96,8 +96,8 @@ export default function StepEditorDialog(props: any)
   };
 
     const onUpload = (fileName:string , hash: string) => {
-      console.log("onUpload",fileName,hash)
-      setStatusText("File uplloaded "+fileName)
+
+      setStatusText("File uploaded "+fileName)
     }
 
     useEffect(() => {
@@ -123,7 +123,7 @@ export default function StepEditorDialog(props: any)
 
 
       const handleStepConfigurableChange = (name: string, value: any) => {
-        console.log('handleStepConfigurableChange')
+
         console.dir(selectedStep);
         let updStep= Object.assign({},selectedStep);
         if (selectedStep) {
@@ -136,7 +136,7 @@ export default function StepEditorDialog(props: any)
 
       const updateStepConfigsFromConfigurables = (stepTemplate: StepMetadata, currentStep:WorkflowStepDefinition,loadDefaults:boolean) =>  {
         // Configuring default valus from step template
-        console.log('updateStepConfigsFromConfigurables')
+
         let updStep= Object.assign({},currentStep);
         if (!updStep.configs || loadDefaults) {
           updStep.configs = new Map<string,string>();
@@ -170,7 +170,7 @@ export default function StepEditorDialog(props: any)
       }
 
       const handleStepConfigChange = (name: string, value: any) => {
-        console.log('handleStepConfigChange')
+
         let updStep= Object.assign({},selectedStep);
 
         if (selectedStep) {
@@ -251,14 +251,14 @@ export default function StepEditorDialog(props: any)
                 updStep[name] = value;
             }
           }
-          console.log("rendering view")
+
         }
         setSelectedStep(updStep);
       }
 
 
   function checkboxHandler(configItemName:string,selectedItemName:string,checked:boolean): void {
-    console.log('checkboxHandler : '+configItemName+' '+selectedItemName+' '+checked)
+
 
     if (selectedStep) {
       let updStep= Object.assign({},selectedStep);
@@ -442,7 +442,7 @@ return (
                         </Select>
                 </FormControl>
                 <LocalUploader
-                  fileType="staging"
+                  fileType={selectedStep?.params["file_type"]}
                   action="start_workflow"
                   onUpload={onUpload}
                   stepId={selectedStep.id}

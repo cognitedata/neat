@@ -30,7 +30,7 @@ export default function WorkflowDeleteDialog(props: any)
             'Content-Type': 'application/json;charset=utf-8'
           }
         }).then((response) => response.json()).then((data) => {
-              console.log("Workflow deleted");
+
               props.onDelete();
               setDialogOpen(false);
               window.location.reload();

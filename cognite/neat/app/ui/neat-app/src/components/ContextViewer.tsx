@@ -12,29 +12,6 @@ import { Anchor } from '@mui/icons-material';
 import NJsonViewer from './JsonViewer';
 
 
-
-/*
-Context payload example:
-[
-  {
-    "name": "StartFlowMessage",
-    "type": "FlowMessage"
-  },
-  {
-    "name": "CdfStore",
-    "type": "CdfStore"
-  },
-  {
-    "name": "CogniteClient",
-    "type": "CogniteClient"
-  },
-  {
-    "name": "FlowMessage",
-    "type": "FlowMessage"
-  }
-]
-*/
-
 export default function ContextViewer(props: any) {
     const neatApiRootUrl = getNeatApiRootUrl();
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -81,7 +58,7 @@ export default function ContextViewer(props: any) {
           console.error('Error:', error);
           setContextItem({"Error" : "  Error fetching or serializng object"});
         })
-        console.log("openQuickView",itemName);
+
     }
 
     return (

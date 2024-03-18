@@ -148,11 +148,11 @@ export function ConfigEditorDialog(props: any)
         props.onClose(configItem,"cancel");
     };
     const handleConfigItemChange = (name: string, value: any) => {
-        console.log('handleComponentConfigChange')
+
         console.dir(configItem);
         let updConfigItem = Object.assign({},configItem);
         updConfigItem[name] = value;
-        console.log("Updateed component")
+
         console.dir(updConfigItem);
         setConfigItem(updConfigItem);
     }

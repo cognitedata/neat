@@ -43,7 +43,7 @@ export default function WorkflowExecutionReport(props: any) {
       }
     )}
     const filterStats = (stats: WorkflowStats) => {
-      console.log("loadWorkflowStats")
+
       console.dir(stats)
       // detelete all log RUNNING entries that have both RUNNING and COMPLETED entries for the same step
       if (stats?.execution_log == null )

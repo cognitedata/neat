@@ -107,7 +107,7 @@ export default function WorkflowView() {
 
   useEffect(() => {
     syncWorkflowDefToNodesAndEdges(viewType);
-    console.log("workflow definition updated");
+
     console.dir(workflowDefinitions);
     startStatePolling(selectedWorkflow);
   }, [workflowDefinitions]);
@@ -172,7 +172,7 @@ export default function WorkflowView() {
 
 
 const filterStats = (stats: WorkflowStats) => {
-  console.log("loadWorkflowStats")
+
   console.dir(stats)
   // detelete all log RUNNING entries that have both RUNNING and COMPLETED entries for the same step
   if (stats.execution_log == null)
@@ -191,7 +191,7 @@ const filterStats = (stats: WorkflowStats) => {
 }
 
 const enrichWorkflowStats = (stats: WorkflowStats) => {
-  console.log("enrichWorkflowStats")
+
   // set labels from workflow definition
     for (let i = 0; i < stats.execution_log.length; i++) {
       const log = stats.execution_log[i];
@@ -352,26 +352,26 @@ const handleViewTypeChange = (
 };
 
 const onConnect = useCallback((params) => {
-  console.log('onConnect')
+
   setEdges((eds) => addEdge(params, eds))
   syncNodesAndEdgesToWorkflowDef();
   setEditState("Unsaved");
 }, [setEdges]);
 
 const onEdgeUpdateStart = useCallback(() => {
-  console.log('onEdgeUpdateStart')
+
   edgeUpdateSuccessful.current = false;
 }, []);
 
 const onEdgeUpdate = useCallback((oldEdge, newConnection) => {
-  console.log('onEdgeUpdate')
+
   edgeUpdateSuccessful.current = true;
   setEdges((els) => updateEdge(oldEdge, newConnection, els));
   setEditState("Unsaved");
 }, [setEdges]);
 
 const onEdgeUpdateEnd = useCallback((_, edge) => {
-  console.log('onEdgeUpdateEnd')
+
   if (!edgeUpdateSuccessful.current) {
     setEdges((eds) => eds.filter((e) => e.id !== edge.id));
     syncNodesAndEdgesToWorkflowDef();
@@ -382,13 +382,13 @@ const onEdgeUpdateEnd = useCallback((_, edge) => {
 }, [setEdges]);
 
 const onNodeClick = useCallback((event, node) => {
-  console.log('onNodeClick')
+
   console.dir(node);
   handleDialogClickOpen(node.id, viewType);
 }, [workflowDefinitions, viewType]);
 
 const onAddStep = (() => {
-  console.log('onAddStep')
+
   setEditState("Unsaved");
   const ui_config = new UIConfig();
   ui_config.pos_x = Math.round(window.innerWidth * 0.3);
@@ -413,7 +413,7 @@ const onAddStep = (() => {
 });
 
 const handleDialogClickOpen = (id: string, viewType: string) => {
-  console.log(viewType);
+
   if (viewType == "steps") {
     setSelectedStep(workflowDefinitions.getStepById(id));
     setDialogOpen(true);
@@ -441,7 +441,7 @@ const handleDialogClose = (step:WorkflowStepDefinition,action:string) => {
 };
 
 const solutionComponentEditorDialogHandler = (component: WorkflowSystemComponent,action: string) => {
-  console.log("OverviewComponentEditorDialogHandler")
+
   console.dir(component)
   switch (action) {
     case "save":
@@ -480,7 +480,7 @@ const handleCreateWorkflow = (wdef:WorkflowDefinition,action: string) => {
 }
 
 const onNodesChangeN = useCallback((nodeChanges: NodeChange[]) => {
-  // console.log('onNodesChange')
+
   // console.dir(nodeChanges);
   onNodesChange(nodeChanges);
   syncNodesAndEdgesToWorkflowDef();
@@ -488,7 +488,7 @@ const onNodesChangeN = useCallback((nodeChanges: NodeChange[]) => {
 }, [workflowDefinitions,nodes,edges]);
 
 const onEdgesChangeN = useCallback((edgeChanges: EdgeChange[]) => {
-  console.log('onEdgesChange')
+
   console.dir(edgeChanges);
   onEdgesChange(edgeChanges);
   syncNodesAndEdgesToWorkflowDef();
@@ -565,7 +565,7 @@ return (
               </Panel>
             </ReactFlow>
 
-            <Button variant="outlined" onClick={startWorkflow} sx={{ marginTop: 2, marginRight: 1 }}>Start workflow</Button>
+            <Button variant="outlined" onClick={ () => {saveWorkflow(); startWorkflow()} } sx={{ marginTop: 2, marginRight: 1 }}>Start workflow</Button>
             <Button variant="outlined" onClick={saveWorkflow} sx={{ marginTop: 2, marginRight: 1 }}>Save workflow</Button>
             <Button variant="outlined" onClick={reloadWorkflows} sx={{ marginTop: 2, marginRight: 1 }} >Reload</Button>
             <WorkflowImportExportDialog onDownloaded = {()=> reloadWorkflows()} />

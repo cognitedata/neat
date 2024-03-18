@@ -24,7 +24,7 @@ export default function WorkflowImportExportDialog(props: any)
     };
 
     const onDownloadSuccess = (fileName: string, hash: string) => {
-        console.log("onDownloadSuccess", fileName, hash)
+
         props.onDownloaded(fileName, hash);
         setDialogOpen(false);
     }

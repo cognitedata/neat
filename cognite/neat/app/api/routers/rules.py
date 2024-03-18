@@ -20,7 +20,7 @@ router = APIRouter()
 @router.get("/api/rules/list")
 def get_rules_list():
     rules_dir = Path(NEAT_APP.config.rules_store_path)
-    return {"result": [str(file.name) for file in rules_dir.glob("*.*")]}
+    return {"result": [str(file.name) for file in rules_dir.glob("*.xlsx")]}
 
 
 @router.get("/api/rules")

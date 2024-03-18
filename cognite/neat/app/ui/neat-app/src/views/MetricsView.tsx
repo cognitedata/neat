@@ -95,7 +95,7 @@ export default function MetricsTable() {
     .then((response) => {
       return response.json();
     }).then((jdata) => {
-      // console.log(text);
+
       // const parsed = parsePrometheusTextFormat(text);
       setData(jdata.prom_metrics);
       console.dir(jdata.prom_metrics);

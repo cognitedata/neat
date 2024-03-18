@@ -55,7 +55,7 @@ export default function CdfDownloader(props: any) {
         const neatApiRootUrl = getNeatApiRootUrl();
         const url = neatApiRootUrl+"/api/cdf/neat-resources?"+new URLSearchParams({"resource_type":resourceType}).toString();
         fetch(url).then((response) => response.json()).then((data) => {
-            console.log('Success:', data);
+
             // modify each row
             for (let i = 0; i < data.result.length; i++) {
                 data.result[i].last_updated_time_str = new Date(data.result[i].last_updated_time).toLocaleString();
@@ -121,7 +121,7 @@ export default function CdfDownloader(props: any) {
                 columns={columns}
                 pageSize={100}
                 onSelectionModelChange = {(newSelectionIds) => {
-                    console.log(newSelectionIds);
+
                     if (newSelectionIds.length > 0){
                         // find the selected row by id
                         const selectedRow = data.find((row) => row.id == newSelectionIds[0]);

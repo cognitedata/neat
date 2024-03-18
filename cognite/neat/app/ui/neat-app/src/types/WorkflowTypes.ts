@@ -176,7 +176,7 @@ export class WorkflowDefinition {
     // insertConfigItemFromTemplate(stepName : string,stepRegistry: StepRegistry) {
     //     let step_template = stepRegistry.getStepByName(stepName);
 
-    //     console.log(" Insert check")
+
     //     console.dir(step_template)
     //     console.dir(this.configs)
 
@@ -325,7 +325,7 @@ export class WorkflowDefinition {
                 });
             }
         });
-        console.log("Component edges: ");
+
         console.dir(edges)
         return edges;
     }
