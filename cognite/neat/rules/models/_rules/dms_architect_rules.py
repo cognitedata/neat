@@ -483,7 +483,7 @@ class _DMSExporter:
             are PascalCase and property names are camelCase.
         include_pipeline (bool): If True, the pipeline will be included with the schema. Pipeline means the
             raw tables and transformations necessary to populate the data model.
-        instance_space (str): The space to use for the instance. Defaults to None.
+        instance_space (str): The space to use for the instance. Defaults to None,`Rules.metadata.space` will be used
     """
 
     def __init__(
