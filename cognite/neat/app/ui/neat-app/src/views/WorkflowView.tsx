@@ -565,7 +565,8 @@ return (
               </Panel>
             </ReactFlow>
 
-            <Button variant="outlined" onClick={startWorkflow} sx={{ marginTop: 2, marginRight: 1 }}>Start workflow</Button>
+            {/* <Button variant="outlined" onClick={() => {saveWorkflow(); new Promise(resolve => setTimeout(resolve, 1000)); startWorkflow(); }} sx={{ marginTop: 2, marginRight: 1 }}>Start workflow</Button> */}
+            <Button variant="outlined" onClick={ () => {saveWorkflow(); startWorkflow()} } sx={{ marginTop: 2, marginRight: 1 }}>Start workflow</Button>
             <Button variant="outlined" onClick={saveWorkflow} sx={{ marginTop: 2, marginRight: 1 }}>Save workflow</Button>
             <Button variant="outlined" onClick={reloadWorkflows} sx={{ marginTop: 2, marginRight: 1 }} >Reload</Button>
             <WorkflowImportExportDialog onDownloaded = {()=> reloadWorkflows()} />
