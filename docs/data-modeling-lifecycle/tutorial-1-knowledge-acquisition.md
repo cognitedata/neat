@@ -19,7 +19,7 @@ The expert elicitation is the process of distilling the domain expert knowledge 
 
 ## Use Case
 
-In this tutorial, we will focus on the Power & Utilities industry, and try to build power to consumer data model.
+In this tutorial, we will focus on the Power & Utilities industry and try to build power to consumer data model.
 We will have two domain experts, one that focuses on wind farm operation and one that focuses on electrical grid, lets call them Jon and Emma.
 In addition, we will have an information architect, let's call him David, who will be responsible for combining the
 knowledge from Jon and Emma into an enterprise data model. Finally, we have a CDF expert, let's call her Alice,
