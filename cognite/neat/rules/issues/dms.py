@@ -1,6 +1,5 @@
 from abc import ABC
 from dataclasses import dataclass
-from functools import total_ordering
 from typing import Any, ClassVar
 
 from cognite.client.data_classes import data_modeling as dm
@@ -23,17 +22,8 @@ __all__ = [
 
 
 @dataclass(frozen=True)
-@total_ordering
 class DMSSchemaError(NeatValidationError, ABC):
-    def __lt__(self, other: object) -> bool:
-        if not isinstance(other, DMSSchemaError):
-            return NotImplemented
-        return type(self).__name__ < type(other).__name__
-
-    def __eq__(self, other) -> bool:
-        if not isinstance(other, DMSSchemaError):
-            return NotImplemented
-        return type(self).__name__ == type(other).__name__
+    ...
 
 
 @dataclass(frozen=True)
