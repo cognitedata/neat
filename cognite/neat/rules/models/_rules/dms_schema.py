@@ -243,7 +243,7 @@ class PipelineSchema(DMSSchema):
                 if isinstance(prop, dm.EdgeConnectionApply)
             }
             for prop_name, connection_property in connection_properties.items():
-                view_table = RawTableWrite(name=f"{view.external_id}.{prop_name}Connection", database=database_name)
+                view_table = RawTableWrite(name=f"{view.external_id}.{prop_name}Edge", database=database_name)
                 raw_tables.append(view_table)
                 transformation = cls._create_edge_transformation(connection_property, view, view_table, instance_space)
                 transformations.append(transformation)
