@@ -34,3 +34,16 @@ capabilities:
         - OWNER
       scope:
         all: {}
+  - rawAcl:
+      actions:
+        - READ
+        - WRITE
+        - LIST
+      scope:
+        all: {}
+  - transformationsAcl:
+      actions:
+        - READ
+        - WRITE
+      scope:
+        all: {}

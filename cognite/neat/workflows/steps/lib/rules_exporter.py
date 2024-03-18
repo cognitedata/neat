@@ -48,7 +48,7 @@ class RulesToDMS(Step):
                 "Skip the component if it already exists, "
                 " or Update the component try to update the component."
             ),
-            options=["fail", "skip", "update"],
+            options=["fail", "skip", "update", "force"],
         ),
         Configurable(
             name="Multi-space components create",
@@ -60,13 +60,30 @@ class RulesToDMS(Step):
             ),
             options=["True", "False"],
         ),
+        Configurable(
+            name="Create Pipeline",
+            value="False",
+            label=(
+                "Whether to create RAW database, tables and transformations for populating the data model."
+                "If this is set to True, "
+            ),
+            options=["True", "False"],
+        ),
+        Configurable(
+            name="Instance space",
+            value="",
+            label=(
+                "The space to use for the exported pipeline. If provided, the transformations will be set to populate"
+                "this space. If not provided, the space from the input rules will be used."
+            ),
+        ),
     ]
 
     def run(self, rules: MultiRuleData, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override, syntax]
         if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
         existing_components_handling = cast(
-            Literal["fail", "update", "skip"], self.configs["Existing component handling"]
+            Literal["fail", "update", "skip", "force"], self.configs["Existing component handling"]
         )
         multi_space_components_create: bool = self.configs["Multi-space components create"] == "True"
         components_to_create = {
@@ -75,34 +92,47 @@ class RulesToDMS(Step):
             if value
         }
         dry_run = self.configs["Dry run"] == "True"
+        export_pipeline = self.configs.get("Create Pipeline", "False") == "True"
+        instance_space = self.configs.get("Instance space") if export_pipeline else None
 
         if not components_to_create:
             return FlowMessage(
                 error_text="No DMS Schema components selected for upload! Please select minimum one!",
                 step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
             )
-        dms_rules = rules.dms
-        if dms_rules is None:
+        input_rules = rules.dms or rules.information
+        if input_rules is None:
             return FlowMessage(
-                error_text="Missing DMS rules in the input data! Please ensure that a DMS rule is provided!",
+                error_text="Missing DMS or Information rules in the input data! "
+                "Please ensure that a DMS or Information rules is provided!",
                 step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
             )
 
         dms_exporter = exporters.DMSExporter(
             export_components=frozenset(components_to_create),
-            include_space=None if multi_space_components_create else {dms_rules.metadata.space},
+            include_space=None
+            if multi_space_components_create
+            else {input_rules.metadata.space if isinstance(input_rules, DMSRules) else input_rules.metadata.prefix},
             existing_handling=existing_components_handling,
+            standardize_casing=False,
+            export_pipeline=export_pipeline,
+            instance_space=instance_space,
         )
 
         output_dir = self.data_store_path / Path("staging")
         output_dir.mkdir(parents=True, exist_ok=True)
-        schema_zip = f"{dms_rules.metadata.external_id}.zip"
+        file_name = (
+            input_rules.metadata.external_id
+            if isinstance(input_rules, DMSRules)
+            else input_rules.metadata.name.replace(" ", "_").lower()
+        )
+        schema_zip = f"{file_name}.zip"
         schema_full_path = output_dir / schema_zip
-        dms_exporter.export_to_file(schema_full_path, dms_rules)
+        dms_exporter.export_to_file(schema_full_path, input_rules)
 
         report_lines = ["# DMS Schema Export to CDF\n\n"]
         errors = []
-        for result in dms_exporter.export_to_cdf(client=cdf_client, rules=dms_rules, dry_run=dry_run):
+        for result in dms_exporter.export_to_cdf(client=cdf_client, rules=input_rules, dry_run=dry_run):
             report_lines.append(result.as_report_str())
             errors.extend(result.error_messages)
 
@@ -117,9 +147,9 @@ class RulesToDMS(Step):
 
         output_text = (
             "<p></p>"
-            "Download DMS Export Report"
+            "Download DMS Export "
             f'<a href="/data/staging/{report_file}?{time.time()}" '
-            f'target="_blank">report</a>'
+            f'target="_blank">Report</a>'
             "<p></p>"
             "Download DMS exported schema"
             f'- <a href="/data/staging/{schema_zip}?{time.time()}" '
