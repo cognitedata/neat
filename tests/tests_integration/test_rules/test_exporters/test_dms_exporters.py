@@ -181,8 +181,8 @@ class TestDMSExporters:
             cognite_client.raw.rows.insert(db_name, "TableProperties", table_example_data["Table"])
         if not cognite_client.raw.rows.list(db_name, "ItemProperties", limit=-1):
             cognite_client.raw.rows.insert(db_name, "ItemProperties", table_example_data["Item"])
-        if not cognite_client.raw.rows.list(db_name, "Table.OnConnection", limit=-1):
-            cognite_client.raw.rows.insert(db_name, "Table.OnConnection", table_example_data["TableItem"])
+        if not cognite_client.raw.rows.list(db_name, "Table.OnEdge", limit=-1):
+            cognite_client.raw.rows.insert(db_name, "Table.OnEdge", table_example_data["TableItem"])
 
         # Verify Transformations are written
         transformation_loader = TransformationLoader(cognite_client)
