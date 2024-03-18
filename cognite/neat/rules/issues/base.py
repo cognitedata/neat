@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from collections import UserList
 from collections.abc import Sequence
 from dataclasses import dataclass
+from functools import total_ordering
 from typing import Any, ClassVar
 from warnings import WarningMessage
 
@@ -25,7 +26,8 @@ __all__ = [
 ]
 
 
-@dataclass(order=True, frozen=True)
+@total_ordering
+@dataclass(frozen=True)
 class ValidationIssue(ABC):
     description: ClassVar[str]
     fix: ClassVar[str]
@@ -44,8 +46,18 @@ class ValidationIssue(ABC):
         """Return a dictionary representation of the issue."""
         raise NotImplementedError()
 
+    def __lt__(self, other: "ValidationIssue") -> bool:
+        if not isinstance(other, ValidationIssue):
+            return NotImplemented
+        return (type(self).__name__, self.message()) < (type(other).__name__, other.message())
 
-@dataclass(frozen=True, order=True)
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, ValidationIssue):
+            return NotImplemented
+        return (type(self).__name__, self.message()) == (type(other).__name__, other.message())
+
+
+@dataclass(frozen=True)
 class NeatValidationError(ValidationIssue, ABC):
     def dump(self) -> dict[str, Any]:
         return {"error": type(self).__name__}
@@ -59,7 +71,7 @@ class NeatValidationError(ValidationIssue, ABC):
         return [DefaultPydanticError.from_pydantic_error(error) for error in errors]
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class DefaultPydanticError(NeatValidationError):
     type: str
     loc: tuple[int | str, ...]
@@ -90,7 +102,7 @@ class DefaultPydanticError(NeatValidationError):
         return self.msg
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class ValidationWarning(ValidationIssue, ABC, UserWarning):
     def dump(self) -> dict[str, Any]:
         return {"warning": type(self).__name__}
@@ -100,7 +112,7 @@ class ValidationWarning(ValidationIssue, ABC, UserWarning):
         return DefaultWarning.from_warning_message(warning)
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class DefaultWarning(ValidationWarning):
     description = "A warning was raised during validation."
     fix = "No fix is available."
