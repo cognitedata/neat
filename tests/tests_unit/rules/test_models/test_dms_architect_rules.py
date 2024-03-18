@@ -113,6 +113,11 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                                 container=dm.ContainerId("my_space", "Asset"), container_property_identifier="name"
                             )
                         },
+                        filter=dm.filters.HasData(
+                            containers=[
+                                dm.ContainerId("my_space", "Asset"),
+                            ]
+                        ),
                     ),
                     dm.ViewApply(
                         space="my_space",
@@ -125,6 +130,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                                 container_property_identifier="ratedPower",
                             ),
                         },
+                        filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "GeneratingUnit")]),
                     ),
                     dm.ViewApply(
                         space="my_space",
@@ -137,6 +143,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                                 direction="outwards",
                             )
                         },
+                        filter=None,
                     ),
                 ]
             ),
@@ -157,6 +164,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     ),
                 ]
             ),
+            node_types=dm.NodeApplyList([]),
         ),
         id="Two properties, one container, one view",
     )
@@ -250,6 +258,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                             direction="outwards",
                         ),
                     },
+                    filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "Asset")]),
                 ),
                 dm.ViewApply(
                     space="my_space",
@@ -260,6 +269,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                             container=dm.ContainerId("my_space", "Asset"), container_property_identifier="name"
                         )
                     },
+                    filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "Asset")]),
                 ),
             ]
         ),
@@ -272,6 +282,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ]
         ),
+        node_types=dm.NodeApplyList([]),
     )
     yield pytest.param(
         dms_rules,
@@ -351,6 +362,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                             container=dm.ContainerId("my_space", "Asset"), container_property_identifier="name"
                         ),
                     },
+                    filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "Asset")]),
                 ),
                 dm.ViewApply(
                     external_id="WindTurbine",
@@ -363,6 +375,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                         ),
                     },
                     implements=[dm.ViewId("my_space", "Asset", "1")],
+                    filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "WindTurbine")]),
                 ),
             ],
         ),
@@ -381,6 +394,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ],
         ),
+        node_types=dm.NodeApplyList([]),
     )
 
     yield pytest.param(
@@ -966,6 +980,10 @@ class TestDMSRules:
         actual_schema.views = dm.ViewApplyList(sorted(actual_schema.views, key=lambda v: v.external_id))
         expected_schema.views = dm.ViewApplyList(sorted(expected_schema.views, key=lambda v: v.external_id))
         assert actual_schema.views.dump() == expected_schema.views.dump()
+
+        actual_schema.node_types = dm.NodeApplyList(sorted(actual_schema.node_types, key=lambda n: n.external_id))
+        expected_schema.node_types = dm.NodeApplyList(sorted(expected_schema.node_types, key=lambda n: n.external_id))
+        assert actual_schema.node_types.dump() == expected_schema.node_types.dump()
 
     def test_alice_as_information(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
         alice_rules = DMSRules.model_validate(alice_spreadsheet)

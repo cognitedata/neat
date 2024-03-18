@@ -496,32 +496,172 @@ class _DMSExporter:
     def to_schema(self, rules: DMSRules) -> DMSSchema:
         default_version = "1"
         default_space = rules.metadata.space
-        data_model = rules.metadata.as_data_model()
-
-        containers = dm.ContainerApplyList(
-            [
-                dms_container.as_container(default_space, self.standardize_casing)
-                for dms_container in rules.containers or []
-            ]
-        )
-        views = dm.ViewApplyList(
-            [
-                dms_view.as_view(default_space, default_version, self.standardize_casing)
-                for dms_view in rules.views or []
-            ]
-        )
-        views_not_in_model = {
-            view.view.as_id(default_space, default_version, self.standardize_casing)
-            for view in rules.views
-            if not view.in_model
-        }
-
-        data_model.views = [view_id for view_id in views.as_ids() if view_id not in views_not_in_model]
 
         container_properties_by_id, view_properties_by_id = self._gather_properties(
             rules, default_space, default_version
         )
 
+        containers = self._create_containers(rules.containers, container_properties_by_id, default_space)
+
+        views, node_types = self._create_views_with_node_types(
+            rules.views, view_properties_by_id, default_space, default_version
+        )
+
+        views_not_in_model = {
+            view.view.as_id(default_space, default_version, self.standardize_casing)
+            for view in rules.views
+            if not view.in_model
+        }
+        data_model = rules.metadata.as_data_model()
+        data_model.views = [view_id for view_id in views.as_ids() if view_id not in views_not_in_model]
+
+        spaces = self._create_spaces(rules.metadata, containers, views, data_model)
+
+        output = DMSSchema(
+            spaces=spaces,
+            data_models=dm.DataModelApplyList([data_model]),
+            views=views,
+            containers=containers,
+            node_types=node_types,
+        )
+        if self.include_pipeline:
+            return PipelineSchema.from_dms(output, self.instance_space)
+        return output
+
+    def _create_spaces(
+        self,
+        metadata: DMSMetadata,
+        containers: dm.ContainerApplyList,
+        views: dm.ViewApplyList,
+        data_model: dm.DataModelApply,
+    ) -> dm.SpaceApplyList:
+        used_spaces = {container.space for container in containers} | {view.space for view in views}
+        if len(used_spaces) == 1:
+            # We skip the default space and only use this space for the data model
+            data_model.space = used_spaces.pop()
+            spaces = dm.SpaceApplyList([dm.SpaceApply(space=data_model.space)])
+        else:
+            spaces = dm.SpaceApplyList([metadata.as_space()] + [dm.SpaceApply(space=space) for space in used_spaces])
+        if self.instance_space:
+            spaces.append(dm.SpaceApply(space=self.instance_space, name=self.instance_space))
+        return spaces
+
+    def _create_views_with_node_types(
+        self,
+        dms_views: SheetList[DMSView],
+        view_properties_by_id: dict[dm.ViewId, list[DMSProperty]],
+        default_space: str,
+        default_version: str,
+    ) -> tuple[dm.ViewApplyList, dm.NodeApplyList]:
+        views = dm.ViewApplyList(
+            [dms_view.as_view(default_space, default_version, self.standardize_casing) for dms_view in dms_views]
+        )
+        for view in views:
+            view_id = view.as_id()
+            view.properties = {}
+            if not (view_properties := view_properties_by_id.get(view_id)):
+                continue
+            for prop in view_properties:
+                view_property: ViewPropertyApply
+                if prop.is_list and prop.relation == "direct":
+                    # This is not yet supported in the CDF API, a warning has already been issued, here we convert it to
+                    # a multiedge connection.
+                    if isinstance(prop.value_type, ViewEntity):
+                        source = prop.value_type.as_id(default_space, default_version, self.standardize_casing)
+                    else:
+                        raise ValueError(
+                            "Direct relation must have a view as value type. "
+                            "This should have been validated in the rules"
+                        )
+                    view_property = dm.MultiEdgeConnectionApply(
+                        type=dm.DirectRelationReference(
+                            space=source.space,
+                            external_id=f"{prop.view.external_id}.{prop.view_property}",
+                        ),
+                        source=source,
+                        direction="outwards",
+                    )
+                elif prop.container and prop.container_property and prop.view_property:
+                    container_prop_identifier = (
+                        to_camel(prop.container_property) if self.standardize_casing else prop.container_property
+                    )
+                    extra_args: dict[str, Any] = {}
+                    if prop.relation == "direct" and isinstance(prop.value_type, ViewEntity):
+                        extra_args["source"] = prop.value_type.as_id(
+                            default_space, default_version, self.standardize_casing
+                        )
+                    elif prop.relation == "direct" and not isinstance(prop.value_type, ViewEntity):
+                        raise ValueError(
+                            "Direct relation must have a view as value type. "
+                            "This should have been validated in the rules"
+                        )
+                    view_property = dm.MappedPropertyApply(
+                        container=prop.container.as_id(default_space, self.standardize_casing),
+                        container_property_identifier=container_prop_identifier,
+                        **extra_args,
+                    )
+                elif prop.view and prop.view_property:
+                    if not prop.relation:
+                        continue
+                    if prop.relation != "multiedge":
+                        raise NotImplementedError(f"Currently only multiedge is supported, not {prop.relation}")
+                    if isinstance(prop.value_type, ViewEntity):
+                        source = prop.value_type.as_id(default_space, default_version, self.standardize_casing)
+                    else:
+                        raise ValueError(
+                            "Multiedge relation must have a view as value type. "
+                            "This should have been validated in the rules"
+                        )
+                    view_property = dm.MultiEdgeConnectionApply(
+                        type=dm.DirectRelationReference(
+                            space=source.space,
+                            external_id=f"{prop.view.external_id}.{prop.view_property}",
+                        ),
+                        source=source,
+                        direction="outwards",
+                    )
+                else:
+                    continue
+                prop_name = to_camel(prop.view_property) if self.standardize_casing else prop.view_property
+                view.properties[prop_name] = view_property
+
+        node_types = dm.NodeApplyList([])
+        parent_views = {parent for view in views for parent in view.implements or []}
+        node_type_flag = False
+        for view in views:
+            ref_containers = view.referenced_containers()
+            has_data = dm.filters.HasData(containers=list(ref_containers)) if ref_containers else None
+            node_type = dm.filters.Equals(["node", "type"], {"space": view.space, "externalId": view.external_id})
+            if view.as_id() in parent_views:
+                view.filter = has_data
+            elif has_data is None:
+                # Child filter without container properties
+                if node_type_flag:
+                    # Transformations do not yet support setting node type.
+                    view.filter = node_type
+                    node_types.append(dm.NodeApply(space=view.space, external_id=view.external_id, sources=[]))
+            else:
+                # Child filter with its own container properties
+                if node_type_flag:
+                    # Transformations do not yet support setting node type.
+                    view.filter = dm.filters.And(has_data, node_type)
+                    node_types.append(dm.NodeApply(space=view.space, external_id=view.external_id, sources=[]))
+                else:
+                    view.filter = has_data
+        return views, node_types
+
+    def _create_containers(
+        self,
+        dms_container: SheetList[DMSContainer] | None,
+        container_properties_by_id: dict[dm.ContainerId, list[DMSProperty]],
+        default_space: str,
+    ) -> dm.ContainerApplyList:
+        containers = dm.ContainerApplyList(
+            [
+                dms_container.as_container(default_space, self.standardize_casing)
+                for dms_container in dms_container or []
+            ]
+        )
         container_to_drop = set()
         for container in containers:
             container_id = container.as_id()
@@ -578,93 +718,6 @@ class _DMSExporter:
             for index_name, properties in index_properties.items():
                 container.indexes = container.indexes or {}
                 container.indexes[index_name] = BTreeIndex(properties=list(properties))
-
-        for view in views:
-            view_id = view.as_id()
-            view.properties = {}
-            if not (view_properties := view_properties_by_id.get(view_id)):
-                continue
-            for prop in view_properties:
-                view_property: ViewPropertyApply
-                if prop.is_list and prop.relation == "direct":
-                    # This is not yet supported in the CDF API, a warning has already been issued, here we convert it to
-                    # a multiedge connection.
-                    if isinstance(prop.value_type, ViewEntity):
-                        source = prop.value_type.as_id(default_space, default_version, self.standardize_casing)
-                    else:
-                        raise ValueError(
-                            "Direct relation must have a view as value type. "
-                            "This should have been validated in the rules"
-                        )
-                    view_property = dm.MultiEdgeConnectionApply(
-                        type=dm.DirectRelationReference(
-                            space=source.space,
-                            external_id=f"{prop.view.external_id}.{prop.view_property}",
-                        ),
-                        source=source,
-                        direction="outwards",
-                    )
-                elif prop.container and prop.container_property and prop.view_property:
-                    container_prop_identifier = (
-                        to_camel(prop.container_property) if self.standardize_casing else prop.container_property
-                    )
-                    if prop.relation == "direct":
-                        if isinstance(prop.value_type, ViewEntity):
-                            source = prop.value_type.as_id(default_space, default_version, self.standardize_casing)
-                        else:
-                            raise ValueError(
-                                "Direct relation must have a view as value type. "
-                                "This should have been validated in the rules"
-                            )
-
-                        view_property = dm.MappedPropertyApply(
-                            container=prop.container.as_id(default_space, self.standardize_casing),
-                            container_property_identifier=container_prop_identifier,
-                            source=source,
-                        )
-                    else:
-                        view_property = dm.MappedPropertyApply(
-                            container=prop.container.as_id(default_space, self.standardize_casing),
-                            container_property_identifier=container_prop_identifier,
-                        )
-                elif prop.view and prop.view_property:
-                    if not prop.relation:
-                        continue
-                    if prop.relation != "multiedge":
-                        raise NotImplementedError(f"Currently only multiedge is supported, not {prop.relation}")
-                    if isinstance(prop.value_type, ViewEntity):
-                        source = prop.value_type.as_id(default_space, default_version, self.standardize_casing)
-                    else:
-                        raise ValueError(
-                            "Multiedge relation must have a view as value type. "
-                            "This should have been validated in the rules"
-                        )
-                    view_property = dm.MultiEdgeConnectionApply(
-                        type=dm.DirectRelationReference(
-                            space=source.space,
-                            external_id=f"{prop.view.external_id}.{prop.view_property}",
-                        ),
-                        source=source,
-                        direction="outwards",
-                    )
-                else:
-                    continue
-                prop_name = to_camel(prop.view_property) if self.standardize_casing else prop.view_property
-                view.properties[prop_name] = view_property
-
-        used_spaces = {container.space for container in containers} | {view.space for view in views}
-        if len(used_spaces) == 1:
-            # We skip the default space and only use this space for the data model
-            data_model.space = used_spaces.pop()
-            spaces = dm.SpaceApplyList([dm.SpaceApply(space=data_model.space)])
-        else:
-            spaces = dm.SpaceApplyList(
-                [rules.metadata.as_space()] + [dm.SpaceApply(space=space) for space in used_spaces]
-            )
-        if self.instance_space:
-            data_model.space = self.instance_space
-            spaces.append(dm.SpaceApply(space=self.instance_space, name=self.instance_space))
-
         constraints = {
             const.require
             for container in containers
@@ -672,18 +725,9 @@ class _DMSExporter:
             if isinstance(const, dm.RequiresConstraint)
         }
         container_to_drop = {container_id for container_id in container_to_drop if container_id not in constraints}
-
-        output = DMSSchema(
-            spaces=spaces,
-            data_models=dm.DataModelApplyList([data_model]),
-            views=views,
-            containers=dm.ContainerApplyList(
-                [container for container in containers if container.as_id() not in container_to_drop]
-            ),
+        return dm.ContainerApplyList(
+            [container for container in containers if container.as_id() not in container_to_drop]
         )
-        if self.include_pipeline:
-            return PipelineSchema.from_dms(output, self.instance_space)
-        return output
 
     @classmethod
     def _gather_properties(
