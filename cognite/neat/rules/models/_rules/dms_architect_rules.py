@@ -591,6 +591,7 @@ class _DMSExporter:
         views = dm.ViewApplyList(
             [dms_view.as_view(default_space, default_version, self.standardize_casing) for dms_view in dms_views]
         )
+
         for view in views:
             view_id = view.as_id()
             view.properties = {}
@@ -708,29 +709,39 @@ class _DMSExporter:
                 prop_name = to_camel(prop.view_property) if self.standardize_casing else prop.view_property
                 view.properties[prop_name] = view_property
 
+        dms_view_by_view_id = {
+            view.view.as_id(default_space, default_version, self.standardize_casing): view for view in dms_views
+        }
         node_types = dm.NodeApplyList([])
-        parent_views = {parent for view in views for parent in view.implements or []}
-        node_type_flag = False
+        {parent for view in views for parent in view.implements or []}
+
         for view in views:
-            ref_containers = view.referenced_containers()
-            has_data = dm.filters.HasData(containers=list(ref_containers)) if ref_containers else None
-            node_type = dm.filters.Equals(["node", "type"], {"space": view.space, "externalId": view.external_id})
-            if view.as_id() in parent_views:
-                view.filter = has_data
-            elif has_data is None:
-                # Child filter without container properties
-                if node_type_flag:
-                    # Transformations do not yet support setting node type.
-                    view.filter = node_type
-                    node_types.append(dm.NodeApply(space=view.space, external_id=view.external_id, sources=[]))
-            else:
-                # Child filter with its own container properties
-                if node_type_flag:
-                    # Transformations do not yet support setting node type.
-                    view.filter = dm.filters.And(has_data, node_type)
-                    node_types.append(dm.NodeApply(space=view.space, external_id=view.external_id, sources=[]))
+            selected_filters = dms_view_by_view_id[view.as_id()].filter_
+
+            filters: list[dm.filters.Filter] = []
+            for selected_filter in selected_filters or ["hasData"]:
+                if selected_filter == "hasData":
+                    ref_containers = view.referenced_containers()
+                    if not ref_containers and selected_filter:
+                        warnings.warn(
+                            issues.dms.CannotCreateFilterWarning(
+                                view.as_id(), "View does not have any container properties.", selected_filter
+                            ),
+                            stacklevel=2,
+                        )
+                        continue
+                    filters.append(dm.filters.HasData(containers=list(ref_containers)))
+                elif selected_filter == "nodeType":
+                    filters.append(
+                        dm.filters.Equals(["node", "type"], {"space": view.space, "externalId": view.external_id})
+                    )
+                    node_types.append(dm.NodeApply(space=view.space, external_id=view.external_id))
                 else:
-                    view.filter = has_data
+                    warnings.warn(issues.dms.UnsupportedFilterWarning(view.as_id(), selected_filter), stacklevel=2)
+            if len(filters) > 1:
+                view.filter = dm.filters.And(*filters)
+            elif filters:
+                view.filter = filters[0]
         return views, node_types
 
     def _create_containers(

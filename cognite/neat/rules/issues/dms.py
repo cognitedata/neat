@@ -310,3 +310,39 @@ class UnsupportedRelationWarning(DMSSchemaWarning):
         output["property"] = self.property
         output["relation"] = self.relation
         return output
+
+
+@dataclass(frozen=True)
+class CannotCreateFilterWarning(DMSSchemaWarning):
+    description = "The filter cannot be created"
+    fix = "Change the filter to a supported type"
+    view_id: dm.ViewId
+    filter_type: str
+    reason: str
+
+    def message(self) -> str:
+        return f"The filter {self.filter_type} in {self.view_id} cannot be created: {self.reason}."
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["view_id"] = self.view_id.dump()
+        output["reason"] = self.reason
+        output["filter_type"] = self.filter_type
+        return output
+
+
+@dataclass(frozen=True)
+class UnsupportedFilterWarning(DMSSchemaWarning):
+    description = "The filter type is not supported by neat"
+    fix = "Change the filter to a supported type"
+    view_id: dm.ViewId
+    filter_type: str
+
+    def message(self) -> str:
+        return f"The filter {self.filter_type} in {self.view_id} is not supported. This filter will be ignored."
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["view_id"] = self.view_id.dump()
+        output["filter_type"] = self.filter_type
+        return output
