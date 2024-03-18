@@ -245,9 +245,7 @@ class PipelineSchema(DMSSchema):
             for prop_name, connection_property in connection_properties.items():
                 view_table = RawTableWrite(name=f"{view.external_id}.{prop_name}Connection", database=database_name)
                 raw_tables.append(view_table)
-                transformation = cls._create_connection_transformation(
-                    connection_property, view, view_table, instance_space
-                )
+                transformation = cls._create_edge_transformation(connection_property, view, view_table, instance_space)
                 transformations.append(transformation)
 
         return cls(
@@ -316,7 +314,7 @@ from
         )
 
     @classmethod
-    def _create_connection_transformation(
+    def _create_edge_transformation(
         cls, property_: dm.EdgeConnectionApply, view: ViewApply, table: RawTableWrite, instance_space: str
     ) -> TransformationWrite:
         start, end = view.external_id, property_.source.external_id
