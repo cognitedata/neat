@@ -1,3 +1,4 @@
+import json
 import warnings
 from pathlib import Path
 from typing import Literal, get_args
@@ -56,14 +57,17 @@ class YAMLExporter(BaseExporter[str]):
                 raise FileExistsError(f"{filepath} is a file, cannot export to a directory")
             filepath.mkdir(parents=True, exist_ok=True)
             rules = self._convert_to_output_role(rules, self.output_role)
-            for key, value in rules.model_dump().items():
-                if self.output == "json":
-                    content = rules.model_dump_json()
-                elif self.output == "yaml":
-                    content = yaml.safe_dump(value)
-                else:
-                    raise ValueError(f"Invalid output: {self.output}. Valid options are {self.format_option}")
-                (filepath / f"{key}.{self.output}").write_text(content)
+
+            # model_dump_json ensures that the output is in JSON format,
+            # if we don't do this, we will get Enums and other types that are not serializable to YAML
+            json_output = rules.model_dump_json()
+            if self.output == "json":
+                (filepath / f"rules.{self.output}").write_text(json_output)
+            elif self.output == "yaml":
+                for key, value in json.loads(json_output).items():
+                    (filepath / f"{key}.{self.output}").write_text(yaml.safe_dump(value))
+            else:
+                raise ValueError(f"Invalid output: {self.output}. Valid options are {self.format_option}")
 
     def export(self, rules: Rules) -> str:
         """Export rules to YAML (or JSON) format.
@@ -75,6 +79,9 @@ class YAMLExporter(BaseExporter[str]):
             str: The rules in YAML (or JSON) format.
         """
         rules = self._convert_to_output_role(rules, self.output_role)
+        # model_dump_json ensures that the output is in JSON format,
+        # if we don't do this, we will get Enums and other types that are not serializable to YAML
+        json_output = rules.model_dump_json()
         if self.output == "json":
-            return rules.model_dump_json()
-        return yaml.safe_dump(rules.model_dump())
+            return json_output
+        return yaml.safe_dump(json.loads(json_output))
