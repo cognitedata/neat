@@ -22,7 +22,7 @@ class ModelImportWarning(ValidationWarning, ABC):
     description = "A warning was raised during importing."
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class UnknownComponentWarning(ModelImportWarning):
     description = "Unknown component this will be ignored in the imports."
     fix = "Check if the component is defined in the source file."
@@ -46,7 +46,7 @@ class UnknownComponentWarning(ModelImportWarning):
         return f"{prefix} This will be ignored in the imports."
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class UnknownSubComponentWarning(UnknownComponentWarning):
     sub_component: str | None = None
 
@@ -63,7 +63,7 @@ class UnknownSubComponentWarning(UnknownComponentWarning):
         return f"{prefix} This will be ignored in the imports."
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class IgnoredComponentWarning(ModelImportWarning):
     description = "This will be ignored in the imports."
     fix = "No fix is available. "
@@ -85,7 +85,7 @@ class IgnoredComponentWarning(ModelImportWarning):
         return f"{prefix} {self.reason}"
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class UnknownPropertyWarning(ValidationWarning):
     description = "Unknown property this will be ignored in the imports."
     fix = "Check if the property is defined in the DTDL file."
@@ -120,7 +120,7 @@ class ModelImportError(NeatValidationError, ABC):
     fix = "No fix is available."
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class InvalidComponentError(ModelImportError, ABC):
     description = "This is a base class for all errors related invalid component definitions"
     fix = "Check if the component is defined in the DTDL file."
@@ -137,7 +137,7 @@ class InvalidComponentError(ModelImportError, ABC):
         return output
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class MissingParentDefinitionError(InvalidComponentError):
     description = "The parent component is missing"
     fix = "Check if the parent component is defined in the DTDL file."
@@ -149,7 +149,7 @@ class MissingParentDefinitionError(InvalidComponentError):
             return f"Parent component '{self.component_type}' is missing."
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class MissingIdentifierError(InvalidComponentError):
     description = "The identifier is missing"
     fix = "Check if the identifier is defined in the DTDL file."
@@ -170,7 +170,7 @@ class MissingIdentifierError(InvalidComponentError):
             return f"Identifier for component '{self.component_type}' is missing."
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class UnsupportedPropertyTypeError(ModelImportError):
     description = "The property type is not supported"
     fix = "Check if the property type is defined in the DTDL file."

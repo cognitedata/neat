@@ -35,7 +35,7 @@ class SpreadsheetNotFoundError(SpreadsheetFileError):
         return output
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class MetadataSheetMissingOrFailedError(SpreadsheetFileError):
     description: ClassVar[str] = "Metadata sheet is missing or it failed validation for one or more fields"
     fix: ClassVar[str] = "Make sure to define compliant Metadata sheet before proceeding"
@@ -47,7 +47,7 @@ class MetadataSheetMissingOrFailedError(SpreadsheetFileError):
         )
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class SheetMissingError(SpreadsheetFileError):
     description: ClassVar[str] = "Spreadsheet(s) is missing"
     fix: ClassVar[str] = "Make sure to provide compliant spreadsheet(s) before proceeding"
@@ -66,7 +66,7 @@ class SheetMissingError(SpreadsheetFileError):
         return output
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class ReadSpreadsheetsError(SpreadsheetFileError):
     description: ClassVar[str] = "Error reading spreadsheet(s)"
     fix: ClassVar[str] = "Is the excel document open in another program? Is the file corrupted?"
@@ -82,7 +82,7 @@ class ReadSpreadsheetsError(SpreadsheetFileError):
         return output
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class InvalidRoleError(NeatValidationError):
     description: ClassVar[str] = "Invalid role"
     fix: ClassVar[str] = "Make sure to provide a valid role"

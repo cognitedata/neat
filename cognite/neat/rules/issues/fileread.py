@@ -13,7 +13,7 @@ __all__ = [
 ]
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class FileReadWarning(ValidationWarning, ABC):
     description = "A warning was raised during reading."
     fix = "No fix is available."
@@ -26,7 +26,7 @@ class FileReadWarning(ValidationWarning, ABC):
         return output
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class InvalidFileFormatWarning(FileReadWarning):
     description = "The file format is invalid"
     fix = "Check if the file format is supported."
@@ -42,7 +42,7 @@ class InvalidFileFormatWarning(FileReadWarning):
         return output
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class UnsupportedSpecWarning(FileReadWarning):
     description = "The spec in the file is not supported"
     fix = "Change to an supported spec"
@@ -64,7 +64,7 @@ class UnsupportedSpecWarning(FileReadWarning):
         return output
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class UnknownItemWarning(FileReadWarning):
     description = "The file is missing an implementation"
     fix = "Check if the file is supported. If not, contact the neat team on Github."
@@ -80,7 +80,7 @@ class UnknownItemWarning(FileReadWarning):
         return output
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class BugInImporterWarning(FileReadWarning):
     description = "A bug was raised during reading."
     fix = "No fix is available. Contact the neat team on Github"
