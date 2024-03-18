@@ -1,4 +1,5 @@
 import json
+import warnings
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from typing import ClassVar
@@ -43,20 +44,7 @@ class DMSSchema:
         views = dm.ViewList(data_model.views)
         container_ids = views.referenced_containers()
         containers = client.data_modeling.containers.retrieve(list(container_ids))
-        while True:
-            referenced_containers = {
-                const.require
-                for container in containers
-                for const in (container.constraints or {}).values()
-                if isinstance(const, dm.RequiresConstraint)
-            }
-            missing_containers = referenced_containers - set(containers.as_ids())
-            if not missing_containers:
-                break
-            found_containers = client.data_modeling.containers.retrieve(list(missing_containers))
-            containers.extend(found_containers)
-            if len(found_containers) != len(missing_containers):
-                break
+        cls._append_referenced_containers(client, containers)
 
         space_read = client.data_modeling.spaces.retrieve(data_model.space)
         if space_read is None:
@@ -165,6 +153,37 @@ class DMSSchema:
                     errors.add(DuplicatedViewInDataModelError(referred_by=model.as_id(), view=view_id))
 
         return list(errors)
+
+    @classmethod
+    def _append_referenced_containers(cls, client: CogniteClient, containers: dm.ContainerList) -> None:
+        """Containers can reference each other through the 'requires' constraint.
+
+        This method retrieves all containers that are referenced by other containers through the 'requires' constraint,
+        including their parents.
+
+        """
+        for _ in range(10):  # Limiting the number of iterations to avoid infinite loops
+            referenced_containers = {
+                const.require
+                for container in containers
+                for const in (container.constraints or {}).values()
+                if isinstance(const, dm.RequiresConstraint)
+            }
+            missing_containers = referenced_containers - set(containers.as_ids())
+            if not missing_containers:
+                break
+            found_containers = client.data_modeling.containers.retrieve(list(missing_containers))
+            containers.extend(found_containers)
+            if len(found_containers) != len(missing_containers):
+                break
+        else:
+            warnings.warn(
+                "The maximum number of iterations was reached while resolving referenced containers."
+                "There might be referenced containers that are not included in the list of containers.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+        return None
 
 
 @dataclass
