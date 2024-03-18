@@ -356,7 +356,6 @@ which unlike the previous is a bit more demanding as it requires configuration o
 - `GraphFromRdfFile` : which will load the semantic data model (the Turtle file) into the internal RDF store
 
 The process of configuration and execution of these steps is shown in the video below:
-https://youtu.be/_iTQatLBpns
 
 <iframe width="840" height="472" src="https://www.youtube.com/embed/_iTQatLBpns?si=CM8mcFsd9NlGZCGi" title="Semantic Data Model Generation and Visualization" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
