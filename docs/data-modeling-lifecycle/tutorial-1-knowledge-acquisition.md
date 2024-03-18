@@ -99,7 +99,7 @@ To validate his sheet, Jon opens the `neat` UI and selects the `Validate Rules` 
 
 **Domain Expert Task.**
 
-1. (Required) Gathering statements in a spreadsheet.****
+1. (Required) Gathering statements in a spreadsheet.
 2. (Optional) Defining classes in a spreadsheet.
 
 **Domain Expert usage of `neat`**:
