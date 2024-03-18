@@ -97,7 +97,7 @@ export default function StepEditorDialog(props: any)
 
     const onUpload = (fileName:string , hash: string) => {
 
-      setStatusText("File uplloaded "+fileName)
+      setStatusText("File uploaded "+fileName)
     }
 
     useEffect(() => {
@@ -442,7 +442,7 @@ return (
                         </Select>
                 </FormControl>
                 <LocalUploader
-                  fileType="staging"
+                  fileType={selectedStep?.params["file_type"]}
                   action="start_workflow"
                   onUpload={onUpload}
                   stepId={selectedStep.id}

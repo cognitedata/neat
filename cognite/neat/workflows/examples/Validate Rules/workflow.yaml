@@ -10,8 +10,8 @@ steps:
         Role: infer
     description: null
     enabled: true
-    id: step_31642
-    label: Validate
+    id: step_validate_rules
+    label: Validate Rules
     max_retries: 0
     method: ExcelToRules
     params: {}
@@ -22,14 +22,14 @@ steps:
     - step_942973
     trigger: false
     ui_config:
-        pos_x: 557
-        pos_y: 105
+        pos_x: 558
+        pos_y: 97
 -   complex_configs: {}
     configs: {}
     description: null
     enabled: true
-    id: step_482871
-    label: Upload Rules Spreadsheet
+    id: step_upload_rules
+    label: Upload Rules Spreadsheets
     max_retries: 0
     method: null
     params:
@@ -39,6 +39,7 @@ steps:
     system_component_id: null
     transition_to:
     - step_31642
+    - step_validate_rules
     trigger: true
     ui_config:
         pos_x: 558
