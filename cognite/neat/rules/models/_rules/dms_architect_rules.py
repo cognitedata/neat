@@ -231,7 +231,14 @@ class DMSContainer(SheetEntity):
 class DMSView(SheetEntity):
     view: ViewType = Field(alias="View")
     implements: ViewListType | None = Field(None, alias="Implements")
+    filter_: list[Literal["hasData", "nodeType"]] | None = Field(None, alias="Filter")
     in_model: bool = Field(True, alias="InModel")
+
+    @field_validator("filter_", mode="before")
+    def split_comma_separated_filter(cls, value: Any) -> Any | None:
+        if isinstance(value, str):
+            return value.split(",")
+        return value
 
     def as_view(self, default_space: str, default_version: str, standardize_casing: bool = True) -> dm.ViewApply:
         view_id = self.view.as_id(default_space, default_version, standardize_casing)

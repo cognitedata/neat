@@ -74,8 +74,10 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             views=SheetList[DMSView](
                 data=[
                     DMSView(class_="Asset", view="Asset"),
-                    DMSView(class_="WindTurbine", view="WindTurbine", implements=["Asset"]),
-                    DMSView(class_="WindFarm", view="WindFarm"),
+                    DMSView(
+                        class_="WindTurbine", view="WindTurbine", implements=["Asset"], filter_=["hasData", "nodeType"]
+                    ),
+                    DMSView(class_="WindFarm", view="WindFarm", filter_=["nodeType"]),
                 ]
             ),
         ),
@@ -130,7 +132,10 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                                 container_property_identifier="ratedPower",
                             ),
                         },
-                        filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "GeneratingUnit")]),
+                        filter=dm.filters.And(
+                            dm.filters.HasData(containers=[dm.ContainerId("my_space", "GeneratingUnit")]),
+                            dm.filters.Equals(["node", "type"], {"space": "my_space", "externalId": "WindTurbine"}),
+                        ),
                     ),
                     dm.ViewApply(
                         space="my_space",
@@ -143,7 +148,13 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                                 direction="outwards",
                             )
                         },
-                        filter=None,
+                        filter=dm.filters.Equals(
+                            ["node", "type"],
+                            {
+                                "space": "my_space",
+                                "externalId": "WindFarm",
+                            },
+                        ),
                     ),
                 ]
             ),
