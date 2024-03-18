@@ -37,7 +37,7 @@ function Row(props: { row: any,properties: any }) {
   }
   const [fProps,setFProps] = useState(getPropertyByClass(row.class));
 
-  console.log("row = ",row.class);
+
 
   return (
     <React.Fragment>
@@ -99,28 +99,6 @@ function Row(props: { row: any,properties: any }) {
   );
 }
 
-/*
-"metadata": {
-        "prefix": "HqDemo",
-        "suffix": "HqDemo",
-        "namespace": "http://purl.org/cognite/neat/",
-        "version": "1.0.2",
-        "title": "HQB CIM data model",
-        "description": "This data model has been inferred with NEAT from HQB CIM dump",
-        "created": "2024-02-08T13:09:20.832000",
-        "updated": "2024-02-08T13:09:20.832000",
-        "creator": [
-            "NEAT"
-        ],
-        "contributor": [
-            "NEAT"
-        ],
-        "rights": "Unknown rights of usage",
-        "license": "Proprietary License",
-        "dataModelId": "HqDemo",
-        "source": null
-    },
-  */
 
 export default function TransformationTable() {
   const neatApiRootUrl = getNeatApiRootUrl();
@@ -149,14 +127,14 @@ export default function TransformationTable() {
     .then((response) => {
       return response.json();
     }).then((data) => {
-      // console.log(text);
+
       setAlertMsg("");
       if (data.classes)
         setData(data)
       else
         setAlertMsg("Rules file "+fileName+" is either invalid or missing. Please ensure that you have a valid Rules file.");
     }).catch((err) => {
-      console.log(err);
+
       setAlertMsg("Rules file "+fileName+" is either invalid or missing. Please ensure that you have a valid Rules file.");
     }
   )}
@@ -170,7 +148,7 @@ export default function TransformationTable() {
       setAlertMsg("");
       setData(data);
     }).catch((err) => {
-      console.log(err);
+
       setAlertMsg("Rules file "+fileName+" is either invalid or missing. Please ensure that you have a valid Rules file.");
     }
   )}
@@ -180,12 +158,12 @@ export default function TransformationTable() {
   const [filesToUpload, setFilesToUpload] = useState([])
 
   const onUpload = (fileName:string , hash: string) => {
-    console.log("onUpload",fileName,hash)
+
     loadDataset(fileName,hash);
   }
 
   const onDownloadSuccess = (fileName:string , hash: string) => {
-    console.log("onDownloadSuccess",fileName,hash)
+
     loadDataset(fileName,hash);
   }
 

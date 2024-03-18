@@ -81,7 +81,7 @@ export default function ContextViewer(props: any) {
           console.error('Error:', error);
           setContextItem({"Error" : "  Error fetching or serializng object"});
         })
-        console.log("openQuickView",itemName);
+
     }
 
     return (

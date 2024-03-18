@@ -41,7 +41,7 @@ export default function LocalUploader(props: any) {
         uploadFiles();
     };
     const handlePostUploadActionConfig = (name: string, value: any) => {
-        console.log('handleStepConfigChange')
+
         if (name == "auto_config_update"){
             setPostUploadConfigUpdate(value);
         }else if (name == "auto_workflow_start"){

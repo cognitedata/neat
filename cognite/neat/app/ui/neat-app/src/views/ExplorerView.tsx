@@ -72,7 +72,7 @@ export function QuerySelector(props:{selectedHandler:Function,settingsUpdateHand
     };
 
     const handleGraphChange = (event: SelectChangeEvent) => {
-      console.log("handleGraphChange",event.target.value);
+
       setGraphName(event.target.value);
     };
 
@@ -88,7 +88,7 @@ export function QuerySelector(props:{selectedHandler:Function,settingsUpdateHand
       setAdvancedMode(event.target.checked);
     };
     const handleHiddenNsPrefixModeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-      console.log("hiddenNsPrefixMode",event.target.checked);
+
       setHiddenNsPrefixMode(event.target.checked);
       props.settingsUpdateHandler();
     };
@@ -394,7 +394,7 @@ export default function QDataTable() {
          bhistory.splice(index);
          break;
       }
-      console.log("somethiong here");
+
     }
     bhistory.push(reference);
     const workflowName = getSelectedWorkflowName();
@@ -437,7 +437,7 @@ export default function QDataTable() {
    }
 
    const handleFilterChange = (filters:string[]) => {
-    console.log("handleFilterChange",filters);
+
     setFilters(filters);
    }
   const renderCellExpand = (params) => {
@@ -457,7 +457,7 @@ export default function QDataTable() {
   }
 
   const settingsUpdateHandler = (settings:any) => {
-    console.log("settingsUpdateHandler",settings);
+
     if (settings) {
       setGraphName(settings.graphName);
       setHiddenNsPrefixMode(settings.hiddenNsPrefixMode);
@@ -481,7 +481,7 @@ export default function QDataTable() {
     let query = {}
     let url = ""
 
-    console.log('reseting history');
+
     setLoading(true);
     const workflowName = getSelectedWorkflowName();
     if (qtype == "query") {
@@ -512,7 +512,7 @@ export default function QDataTable() {
   }
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    console.log("handleTabChange",newValue);
+
     setTabValue(newValue);
   };
 

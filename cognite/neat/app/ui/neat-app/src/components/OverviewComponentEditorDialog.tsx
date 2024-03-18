@@ -25,11 +25,11 @@ export default function OverviewComponentEditorDialog(props: any)
         props.onClose(component,"delete");
     };
     const handleStepConfigChange = (name: string, value: any) => {
-        console.log('handleComponentConfigChange')
+
         console.dir(component);
         let updComponent = Object.assign({},component);
         updComponent[name] = value;
-        console.log("Updateed component")
+
         console.dir(updComponent);
         setComponent(updComponent);
     }

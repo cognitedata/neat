@@ -43,7 +43,7 @@ export function GraphStyleDialog(props: any) {
     };
 
     const handleDialogSave = () => {
-      console.log("saving node style");
+
       const value = editorRef.current.getValue();
       setData(JSON.parse(value));
       localStorage.setItem('nodeTypeConfigMap_'+getSelectedWorkflowName(),value);
@@ -175,7 +175,7 @@ export function LoadGraph(props:{filters:Array<string>,nodeNameProperty:string,s
         if (localStorage.getItem('nodeTypeConfigMap_'+getSelectedWorkflowName())) {
           nodeTypeConfigMap = JSON.parse(localStorage.getItem('nodeTypeConfigMap_'+getSelectedWorkflowName()));
         }
-        console.log("loading dataset");
+
         let nodeNameProperty = ""
 
         try {
@@ -183,7 +183,7 @@ export function LoadGraph(props:{filters:Array<string>,nodeNameProperty:string,s
           if (nodeNameProp && nodeNameProp["id"])
               nodeNameProperty= "<"+nodeNameProp["id"]+">";
         }catch (e) {
-          console.log("error parsing node name property");
+
         }
         let graph = new Graph();
 
@@ -243,10 +243,10 @@ export function LoadGraph(props:{filters:Array<string>,nodeNameProperty:string,s
             setTimeout(() => {
               stop();
             }, 1000);
-            console.log("graph loaded");
+
           }).catch((error) => {
             props.onLoaded(false,"Error loading graph data from server");
-            console.log('Error:', error);
+
           }).finally(() => {
             setLoading(false);
             props.onLoaded(false,"");
@@ -308,14 +308,14 @@ export default function GraphExplorer(props:{filters:Array<string>,sparqlQuery:s
         if (nodeNamePropObj && nodeNamePropObj["id"])
             nodeNameProp= nodeNamePropObj;
       } catch (e) {
-        console.log("error parsing node name property");
+
       }
       setSelectedDataTypeProp(nodeNameProp);
       setSparqlQuery(props.sparqlQuery);
     }, []);
 
     useEffect(() => {
-      console.log("sparqlQuery changed");
+
 
     }, [props.sparqlQuery]);
 
@@ -324,7 +324,7 @@ export default function GraphExplorer(props:{filters:Array<string>,sparqlQuery:s
     }
 
     const loadDataTypeProps = () => {
-      console.log("--------loading data type props----------");
+
       const url = getNeatApiRootUrl()+"/api/get-datatype-properties";
       const workflowName = getSelectedWorkflowName();
       const request = new DatatypePropertyRequest();
@@ -379,7 +379,7 @@ export default function GraphExplorer(props:{filters:Array<string>,sparqlQuery:s
           }
           } `
       }
-      console.log("requesting linked nodes");
+
       setSparqlQuery(query);
     }
 
@@ -393,8 +393,8 @@ export default function GraphExplorer(props:{filters:Array<string>,sparqlQuery:s
           // node events
           rightClickNode: (event) => {
             // event.preventSigmaDefault();
-            console.log("clickNode", event.event, event.node )
-            console.log("node id: "+event.node);
+
+
             setLoaderMode("update");
             setSelectedNodeId(event.node);
             loadLinkedNodes(event.node);
@@ -418,7 +418,7 @@ export default function GraphExplorer(props:{filters:Array<string>,sparqlQuery:s
           mousemove: (e) => {
             if (draggedNode) {
               // Get new position of node
-              console.log("draggedNode",draggedNode);
+
               const pos = sigma.viewportToGraph(e);
               sigma.getGraph().setNodeAttribute(draggedNode, "x", pos.x);
               sigma.getGraph().setNodeAttribute(draggedNode, "y", pos.y);
@@ -433,44 +433,44 @@ export default function GraphExplorer(props:{filters:Array<string>,sparqlQuery:s
             setDraggedNode(e.node);
             sigma.getGraph().setNodeAttribute(e.node, "highlighted", true);
           },
-          // rightClickNode: (event) => console.log("rightClickNode", event.event, event.node, event.preventSigmaDefault),
-          // wheelNode: (event) => console.log("wheelNode", event.event, event.node, event.preventSigmaDefault),
-          // downNode: (event) => console.log("downNode", event.event, event.node, event.preventSigmaDefault),
-          // enterNode: (event) => console.log("enterNode", event.node),
-          // leaveNode: (event) => console.log("leaveNode", event.node),
+
+
+
+
+
           // // edge events
-          // clickEdge: (event) => console.log("clickEdge", event.event, event.edge, event.preventSigmaDefault),
-          // doubleClickEdge: (event) => console.log("doubleClickEdge", event.event, event.edge, event.preventSigmaDefault),
-          // rightClickEdge: (event) => console.log("rightClickEdge", event.event, event.edge, event.preventSigmaDefault),
-          // wheelEdge: (event) => console.log("wheelEdge", event.event, event.edge, event.preventSigmaDefault),
-          // downEdge: (event) => console.log("downEdge", event.event, event.edge, event.preventSigmaDefault),
-          // enterEdge: (event) => console.log("enterEdge", event.edge),
-          // leaveEdge: (event) => console.log("leaveEdge", event.edge),
+
+
+
+
+
+
+
           // // stage events
-          // clickStage: (event) => console.log("clickStage", event.event, event.preventSigmaDefault),
-          // doubleClickStage: (event) => console.log("doubleClickStage", event.event, event.preventSigmaDefault),
-          // rightClickStage: (event) => console.log("rightClickStage", event.event, event.preventSigmaDefault),
-          // wheelStage: (event) => console.log("wheelStage", event.event, event.preventSigmaDefault),
-          // downStage: (event) => console.log("downStage", event.event, event.preventSigmaDefault),
+
+
+
+
+
           // // default mouse events
-          // click: (event) => console.log("click", event.x, event.y),
-          // doubleClick: (event) => console.log("doubleClick", event.x, event.y),
-          // wheel: (event) => console.log("wheel", event.x, event.y, event.delta),
-          // rightClick: (event) => console.log("rightClick", event.x, event.y),
-          // mouseup: (event) => console.log("mouseup", event.x, event.y),
-          // mousedown: (event) => console.log("mousedown", event.x, event.y),
-          // mousemove: (event) => console.log("mousemove", event.x, event.y),
+
+
+
+
+
+
+
           // // default touch events
-          // touchup: (event) => console.log("touchup", event.touches),
-          // touchdown: (event) => console.log("touchdown", event.touches),
-          // touchmove: (event) => console.log("touchmove", event.touches),
+
+
+
           // // sigma kill
-          // kill: () => console.log("kill"),
-          // resize: () => console.log("resize"),
-          // beforeRender: () => console.log("beforeRender"),
-          // afterRender: () => console.log("afterRender"),
+
+
+
+
           // // sigma camera update
-          // updated: (event) => console.log("updated", event.x, event.y, event.angle, event.ratio),
+
         });
       }, [registerEvents, sigma, draggedNode]);
       return null;

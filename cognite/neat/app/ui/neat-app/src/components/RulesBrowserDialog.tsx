@@ -34,7 +34,7 @@ export default function RulesBrowserDialog(props: any)
             'Content-Type': 'application/json;charset=utf-8'
           }
         }).then((response) => response.json()).then((data) => {
-            console.log("Rules loaded");
+
             setRules(data.result);
 
         }).catch((error) => {
