@@ -4,6 +4,7 @@ from typing import ClassVar, Literal, cast
 
 from cognite.neat.rules import exporters
 from cognite.neat.rules._shared import DMSRules, InformationRules, Rules
+from cognite.neat.rules.models._rules import RoleTypes
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.data_contracts import CogniteClient, MultiRuleData
@@ -145,6 +146,14 @@ class RulesToExcel(Step):
             label="Styling of the Excel file",
             options=list(exporters.ExcelExporter.style_options),
         ),
+        Configurable(
+            name="Output role format",
+            value="input",
+            label="The role to use for the exported spreadsheet. If provided, the rules will be converted to "
+            "this role format before being written to excel. If not provided, the role from the input "
+            "rules will be used.",
+            options=["input", *RoleTypes.__members__.keys()],
+        ),
     ]
 
     def run(self, rules: MultiRuleData) -> FlowMessage:  # type: ignore[override, syntax]
@@ -152,29 +161,35 @@ class RulesToExcel(Step):
             raise StepNotInitialized(type(self).__name__)
 
         styling = cast(exporters.ExcelExporter.Style, self.configs.get("Styling", "default"))
+        role = self.configs.get("Output role format")
+        output_role = None
+        if role != "input" and role is not None:
+            output_role = RoleTypes[role]
 
-        excel_exporter = exporters.ExcelExporter(styling=styling)
+        excel_exporter = exporters.ExcelExporter(styling=styling, output_role=output_role)
 
         rule_instance: Rules
         if rules.domain:
             rule_instance = rules.domain
         elif rules.information:
             rule_instance = rules.information
+
         elif rules.dms:
             rule_instance = rules.dms
         else:
             output_errors = "No rules provided for export!"
             return FlowMessage(error_text=output_errors, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
-
+        if output_role is None:
+            output_role = rule_instance.metadata.role
         output_dir = self.data_store_path / Path("staging")
         output_dir.mkdir(parents=True, exist_ok=True)
-        file_name = f"exported_rules_{rule_instance.metadata.role.value}.xlsx"
+        file_name = f"exported_rules_{output_role.value}.xlsx"
         filepath = output_dir / file_name
         excel_exporter.export_to_file(filepath, rule_instance)
 
         output_text = (
             "<p></p>"
-            f"Download Excel Exported {rule_instance.metadata.role.value} rules: "
+            f"Download Excel Exported {output_role.value} rules: "
             f'- <a href="/data/staging/{file_name}?{time.time()}" '
             f'target="_blank">{file_name}</a>'
         )

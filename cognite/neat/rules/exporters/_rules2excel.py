@@ -8,7 +8,7 @@ from openpyxl.cell import MergedCell
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 
 from cognite.neat.rules._shared import Rules
-from cognite.neat.rules.models._rules.base import SheetEntity, SheetList
+from cognite.neat.rules.models._rules.base import RoleTypes, SheetEntity, SheetList
 
 from ._base import BaseExporter
 
@@ -19,6 +19,8 @@ class ExcelExporter(BaseExporter[Workbook]):
     Args:
         styling: The styling to use for the Excel file. Defaults to "default". See below for details
             on the different styles.
+        output_role: The role to use for the exported spreadsheet. If provided, the rules will be converted to
+            this role formate before being written to excel. If not provided, the role from the rules will be used.
 
     The following styles are available:
 
@@ -39,9 +41,12 @@ class ExcelExporter(BaseExporter[Workbook]):
     }
     style_options = get_args(Style)
 
-    def __init__(self, styling: Style = "default"):
+    def __init__(self, styling: Style = "default", output_role: RoleTypes | None = None):
+        if styling not in self.style_options:
+            raise ValueError(f"Invalid styling: {styling}. Valid options are {self.style_options}")
         self.styling = styling
         self._styling_level = self.style_options.index(styling)
+        self.output_role = output_role
 
     def export_to_file(self, filepath: Path, rules: Rules) -> None:
         """Exports transformation rules to excel file."""
@@ -53,6 +58,7 @@ class ExcelExporter(BaseExporter[Workbook]):
         return None
 
     def export(self, rules: Rules) -> Workbook:
+        rules = self._convert_to_output_role(rules, self.output_role)
         workbook = Workbook()
         # Remove default sheet named "Sheet"
         workbook.remove(workbook["Sheet"])

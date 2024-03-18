@@ -6,7 +6,8 @@ from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
 from pydantic import ValidationError
 
-from cognite.neat.rules import validation
+import cognite.neat.rules.issues.spreadsheet
+from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import DMSImporter
 from cognite.neat.rules.models._rules._types import ViewEntity
 from cognite.neat.rules.models._rules.base import SheetList
@@ -460,7 +461,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             "views": {"data": [{"view": "WindTurbine", "class_": "WindTurbine"}]},
         },
         [
-            validation.MultiValueTypeDefinitions(
+            cognite.neat.rules.issues.spreadsheet.MultiValueTypeError(
                 container_id,
                 "maxPower",
                 {0, 1},
@@ -507,7 +508,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             "views": {"data": [{"view": "WindTurbine", "class_": "WindTurbine"}]},
         },
         [
-            validation.MultiValueIsListDefinitions(
+            cognite.neat.rules.issues.spreadsheet.MultiValueIsListError(
                 container_id,
                 "maxPower",
                 {0, 1},
@@ -554,7 +555,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             "views": {"data": [{"view": "WindTurbine", "class_": "WindTurbine"}]},
         },
         [
-            validation.MultiNullableDefinitions(
+            cognite.neat.rules.issues.spreadsheet.MultiNullableError(
                 container_id,
                 "maxPower",
                 {0, 1},
@@ -601,7 +602,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             "views": {"data": [{"view": "WindTurbine", "class_": "WindTurbine"}]},
         },
         [
-            validation.MultiIndexDefinitions(
+            cognite.neat.rules.issues.spreadsheet.MultiIndexError(
                 container_id,
                 "name",
                 {0, 1},
@@ -648,7 +649,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             "views": {"data": [{"view": "WindTurbine", "class_": "WindTurbine"}]},
         },
         [
-            validation.MultiUniqueConstraintDefinitions(
+            cognite.neat.rules.issues.spreadsheet.MultiUniqueConstraintError(
                 container_id,
                 "name",
                 {0, 1},
@@ -682,7 +683,7 @@ class TestDMSRules:
 
     @pytest.mark.parametrize("raw, expected_errors", list(invalid_container_definitions_test_cases()))
     def test_load_inconsistent_container_definitions(
-        self, raw: dict[str, dict[str, Any]], expected_errors: list[validation.Error]
+        self, raw: dict[str, dict[str, Any]], expected_errors: list[validation.NeatValidationError]
     ) -> None:
         with pytest.raises(ValueError) as e:
             DMSRules.model_validate(raw)

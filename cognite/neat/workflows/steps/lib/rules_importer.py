@@ -5,9 +5,9 @@ from typing import ClassVar
 from cognite.client import CogniteClient
 
 from cognite.neat.rules import importers
+from cognite.neat.rules.issues.formatters import FORMATTER_BY_NAME
 from cognite.neat.rules.models._rules import RoleTypes
 from cognite.neat.rules.models._rules._types import DataModelEntity, Undefined
-from cognite.neat.rules.validation.formatters import FORMATTER_BY_NAME
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.data_contracts import MultiRuleData

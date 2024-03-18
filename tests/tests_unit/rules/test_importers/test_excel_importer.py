@@ -4,10 +4,12 @@ import pytest
 from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from pydantic.version import VERSION
 
-from cognite.neat.rules import validation
+import cognite.neat.rules.issues.spreadsheet
+import cognite.neat.rules.issues.spreadsheet_file
+from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import ExcelImporter
+from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models._rules import DMSRules
-from cognite.neat.rules.validation import IssueList
 from tests.config import DOC_KNOWLEDGE_ACQUISITION_TUTORIAL
 from tests.tests_unit.rules.test_importers.constants import EXCEL_IMPORTER_DATA
 
@@ -19,7 +21,13 @@ def valid_rules_filepaths():
 def invalid_rules_filepaths():
     yield pytest.param(
         DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "not-existing.xlsx",
-        IssueList([validation.SpreadsheetNotFound("not-existing.xlsx")]),
+        IssueList(
+            [
+                cognite.neat.rules.issues.spreadsheet_file.SpreadsheetNotFoundError(
+                    DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "not-existing.xlsx"
+                )
+            ]
+        ),
         id="Not existing file",
     )
     major, minor, *_ = VERSION.split(".")
@@ -28,7 +36,7 @@ def invalid_rules_filepaths():
         EXCEL_IMPORTER_DATA / "invalid_property_dms_rules.xlsx",
         IssueList(
             [
-                validation.InvalidPropertySpecification(
+                validation.spreadsheet.InvalidPropertyError(
                     column="IsList",
                     row=5,
                     type="bool_parsing",
@@ -45,7 +53,7 @@ def invalid_rules_filepaths():
         EXCEL_IMPORTER_DATA / "inconsistent_container_dms_rules.xlsx",
         IssueList(
             [
-                validation.MultiValueTypeDefinitions(
+                cognite.neat.rules.issues.spreadsheet.MultiValueTypeError(
                     container=ContainerId("neat", "Flowable"),
                     property_name="maxFlow",
                     row_numbers={4, 5},
@@ -59,7 +67,7 @@ def invalid_rules_filepaths():
         EXCEL_IMPORTER_DATA / "missing_view_container_dms_rules.xlsx",
         IssueList(
             [
-                validation.ReferencedNonExistingView(
+                cognite.neat.rules.issues.spreadsheet.NonExistingViewError(
                     column="View",
                     row=4,
                     type="value_error.missing",
@@ -68,7 +76,7 @@ def invalid_rules_filepaths():
                     input=None,
                     url=None,
                 ),
-                validation.ReferenceNonExistingContainer(
+                cognite.neat.rules.issues.spreadsheet.NonExistingContainerError(
                     column="Container",
                     row=4,
                     type="value_error.missing",
