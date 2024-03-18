@@ -161,6 +161,124 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         id="Two properties, one container, one view",
     )
 
+    dms_rules = DMSRules(
+        metadata=DMSMetadata(
+            schema_="complete",
+            space="my_space",
+            external_id="my_data_model",
+            version="1",
+            creator=["Anders"],
+            created="2024-03-16T23:00:00",
+            updated="2024-03-16T23:00:00",
+            default_view_version="1",
+        ),
+        properties=SheetList[DMSProperty](
+            data=[
+                DMSProperty(
+                    class_="WindFarm",
+                    property_="name",
+                    value_type="text",
+                    container="Asset",
+                    container_property="name",
+                    view="WindFarm",
+                    view_property="name",
+                ),
+                DMSProperty(
+                    class_="WindFarm",
+                    property_="windTurbines",
+                    value_type="WindTurbine",
+                    relation="direct",
+                    is_list=True,
+                    container="WindFarm",
+                    container_property="windTurbines",
+                    view="WindFarm",
+                    view_property="windTurbines",
+                ),
+                DMSProperty(
+                    class_="WindTurbine",
+                    property_="name",
+                    value_type="text",
+                    container="Asset",
+                    container_property="name",
+                    view="WindTurbine",
+                    view_property="name",
+                ),
+            ]
+        ),
+        views=SheetList[DMSView](
+            data=[
+                DMSView(view="WindFarm", class_="WindFarm"),
+                DMSView(view="WindTurbine", class_="WindTurbine"),
+            ]
+        ),
+        containers=SheetList[DMSContainer](
+            data=[
+                DMSContainer(container="Asset", class_="Asset"),
+                DMSContainer(class_="WindFarm", container="WindFarm", constraint="Asset"),
+            ]
+        ),
+    )
+    expected_schema = DMSSchema(
+        spaces=dm.SpaceApplyList([dm.SpaceApply(space="my_space")]),
+        data_models=dm.DataModelApplyList(
+            [
+                dm.DataModelApply(
+                    space="my_space",
+                    external_id="my_data_model",
+                    version="1",
+                    description="Creator: Anders",
+                    views=[
+                        dm.ViewId(space="my_space", external_id="WindFarm", version="1"),
+                        dm.ViewId(space="my_space", external_id="WindTurbine", version="1"),
+                    ],
+                )
+            ]
+        ),
+        views=dm.ViewApplyList(
+            [
+                dm.ViewApply(
+                    space="my_space",
+                    external_id="WindFarm",
+                    version="1",
+                    properties={
+                        "name": dm.MappedPropertyApply(
+                            container=dm.ContainerId("my_space", "Asset"), container_property_identifier="name"
+                        ),
+                        "windTurbines": dm.MultiEdgeConnectionApply(
+                            type=dm.DirectRelationReference(space="my_space", external_id="WindFarm.windTurbines"),
+                            source=dm.ViewId(space="my_space", external_id="WindTurbine", version="1"),
+                            direction="outwards",
+                        ),
+                    },
+                ),
+                dm.ViewApply(
+                    space="my_space",
+                    external_id="WindTurbine",
+                    version="1",
+                    properties={
+                        "name": dm.MappedPropertyApply(
+                            container=dm.ContainerId("my_space", "Asset"), container_property_identifier="name"
+                        )
+                    },
+                ),
+            ]
+        ),
+        containers=dm.ContainerApplyList(
+            [
+                dm.ContainerApply(
+                    space="my_space",
+                    external_id="Asset",
+                    properties={"name": dm.ContainerProperty(type=dm.Text(), nullable=True)},
+                ),
+            ]
+        ),
+    )
+    yield pytest.param(
+        dms_rules,
+        expected_schema,
+        id="Property with list of direct relations converted to multiedge",
+    )
+
 
 def valid_rules_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(

@@ -4,10 +4,11 @@ from typing import Any, ClassVar
 
 from cognite.client.data_classes import data_modeling as dm
 
-from .base import NeatValidationError
+from .base import NeatValidationError, ValidationWarning
 
 __all__ = [
     "DMSSchemaError",
+    "DMSSchemaWarning",
     "MissingSpaceError",
     "MissingContainerError",
     "MissingContainerPropertyError",
@@ -18,11 +19,17 @@ __all__ = [
     "DuplicatedViewInDataModelError",
     "DirectRelationMissingSourceError",
     "ContainerPropertyUsedMultipleTimesError",
+    "DirectRelationListWarning",
 ]
 
 
 @dataclass(frozen=True)
 class DMSSchemaError(NeatValidationError, ABC):
+    ...
+
+
+@dataclass(frozen=True)
+class DMSSchemaWarning(ValidationWarning, ABC):
     ...
 
 
@@ -209,4 +216,47 @@ class ContainerPropertyUsedMultipleTimesError(DMSSchemaError):
         output["container"] = self.container
         output["property"] = self.property
         output["referred_by"] = sorted(self.referred_by)
+        return output
+
+
+@dataclass(frozen=True)
+class DirectRelationListWarning(DMSSchemaWarning):
+    description = "The container property is set to a direct relation list, which is not supported by the CDF API"
+    fix = "Make the property into a multiedge connection instead"
+    error_name: ClassVar[str] = "DirectRelationListWarning"
+    view_id: dm.ViewId
+    container_id: dm.ContainerId
+    property: str
+
+    def message(self) -> str:
+        return (
+            f"The property in {self.container_id}.{self.property} is a list of direct relations. "
+            f"This is not supported by the API, so it will be converted to an MultiEdgeConnection on"
+            f"the view {self.view_id}.{self.property} instead"
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["view_id"] = self.view_id.dump()
+        output["container_id"] = self.container_id.dump()
+        output["property"] = self.property
+        return output
+
+
+@dataclass(frozen=True)
+class EmptyContainerWarning(DMSSchemaWarning):
+    description = "The container is empty"
+    fix = "Add data to the container"
+    error_name: ClassVar[str] = "EmptyContainerWarning"
+    container_id: dm.ContainerId
+
+    def message(self) -> str:
+        return (
+            f"The container {self.container_id} is empty. Is this intended? Skipping this container "
+            "in the data model."
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["container_id"] = self.container_id.dump()
         return output
