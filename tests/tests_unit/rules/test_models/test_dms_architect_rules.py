@@ -279,6 +279,116 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         id="Property with list of direct relations converted to multiedge",
     )
 
+    dms_rules = DMSRules(
+        metadata=DMSMetadata(
+            schema_="complete",
+            space="my_space",
+            external_id="my_data_model",
+            version="1",
+            creator=["Anders"],
+            created="2024-03-17T08:30:00",
+            updated="2024-03-17T08:30:00",
+            default_view_version="1",
+        ),
+        properties=SheetList[DMSProperty](
+            data=[
+                DMSProperty(
+                    class_="Asset",
+                    property_="name",
+                    value_type="text",
+                    container="Asset",
+                    container_property="name",
+                    view="Asset",
+                    view_property="name",
+                ),
+                DMSProperty(
+                    class_="WindTurbine",
+                    property_="maxPower",
+                    value_type="float64",
+                    container="WindTurbine",
+                    container_property="maxPower",
+                    view="WindTurbine",
+                    view_property="maxPower",
+                ),
+            ],
+        ),
+        views=SheetList[DMSView](
+            data=[
+                DMSView(view="Asset", class_="Asset", in_model=False),
+                DMSView(view="WindTurbine", class_="WindTurbine", implements=["Asset"]),
+            ],
+        ),
+        containers=SheetList[DMSContainer](
+            data=[
+                DMSContainer(container="Asset", class_="Asset"),
+                DMSContainer(class_="WindTurbine", container="WindTurbine", constraint="Asset"),
+            ],
+        ),
+    )
+    expected_schema = DMSSchema(
+        spaces=dm.SpaceApplyList([dm.SpaceApply(space="my_space")]),
+        data_models=dm.DataModelApplyList(
+            [
+                dm.DataModelApply(
+                    space="my_space",
+                    external_id="my_data_model",
+                    version="1",
+                    description="Creator: Anders",
+                    views=[
+                        dm.ViewId(space="my_space", external_id="WindTurbine", version="1"),
+                    ],
+                )
+            ]
+        ),
+        views=dm.ViewApplyList(
+            [
+                dm.ViewApply(
+                    external_id="Asset",
+                    space="my_space",
+                    version="1",
+                    properties={
+                        "name": dm.MappedPropertyApply(
+                            container=dm.ContainerId("my_space", "Asset"), container_property_identifier="name"
+                        ),
+                    },
+                ),
+                dm.ViewApply(
+                    external_id="WindTurbine",
+                    space="my_space",
+                    version="1",
+                    properties={
+                        "maxPower": dm.MappedPropertyApply(
+                            container=dm.ContainerId("my_space", "WindTurbine"),
+                            container_property_identifier="maxPower",
+                        ),
+                    },
+                    implements=[dm.ViewId("my_space", "Asset", "1")],
+                ),
+            ],
+        ),
+        containers=dm.ContainerApplyList(
+            [
+                dm.ContainerApply(
+                    space="my_space",
+                    external_id="Asset",
+                    properties={"name": dm.ContainerProperty(type=dm.Text(), nullable=True)},
+                ),
+                dm.ContainerApply(
+                    space="my_space",
+                    external_id="WindTurbine",
+                    constraints={"my_space_Asset": dm.RequiresConstraint(dm.ContainerId("my_space", "Asset"))},
+                    properties={"maxPower": dm.ContainerProperty(type=dm.Float64(), nullable=True)},
+                ),
+            ],
+        ),
+    )
+
+    yield pytest.param(
+        dms_rules,
+        expected_schema,
+        id="View not in model",
+    )
+
 
 def valid_rules_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
