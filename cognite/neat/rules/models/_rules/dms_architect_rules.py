@@ -719,7 +719,8 @@ class _DMSExporter:
             selected_filters = dms_view_by_view_id[view.as_id()].filter_
 
             filters: list[dm.filters.Filter] = []
-            for selected_filter in selected_filters or ["hasData"]:
+            default_filters = ["hasData"]
+            for selected_filter in selected_filters or default_filters:
                 if selected_filter == "hasData":
                     ref_containers = view.referenced_containers()
                     if not ref_containers and selected_filter:
