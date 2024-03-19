@@ -99,6 +99,8 @@ class DefaultPydanticError(NeatValidationError):
         return output
 
     def message(self) -> str:
+        if self.loc:
+            return f"{self.loc[0]} sheet field/column <{self.loc[1]}>: {self.msg}"
         return self.msg
 
 

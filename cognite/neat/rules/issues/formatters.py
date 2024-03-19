@@ -64,7 +64,6 @@ class BasicHTML(Formatter):
     def _write_errors_or_warnings(self, issues: list[NeatValidationError] | list[ValidationWarning]) -> None:
         issue_name = "errors" if isinstance(issues[0], NeatValidationError) else "warnings"
         main_categories = {base_ for issue in issues for base_ in type(issue).__bases__}
-
         for category in main_categories:
             issues_in_category: list[NeatValidationError] | list[ValidationWarning] = [  # type: ignore[assignment]
                 issue for issue in issues if isinstance(issue, category)
