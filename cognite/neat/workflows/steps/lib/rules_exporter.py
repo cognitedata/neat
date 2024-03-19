@@ -400,8 +400,10 @@ class RulesToCDFTransformations(Step):
             input_rules.metadata.space if isinstance(input_rules, DMSRules) else input_rules.metadata.prefix
         )
         instance_space = self.configs.get("Instance space") or default_instance_space
-        dry_run = self.configs["Dry run"] == "True"
-        dms_exporter = exporters.DMSExporter(export_pipeline=True, instance_space=instance_space, export_components=[])
+        dry_run = self.configs.get("Dry run", "False") == "True"
+        dms_exporter = exporters.DMSExporter(
+            export_pipeline=True, instance_space=instance_space, export_components=["spaces"]
+        )
         output_dir = self.data_store_path / Path("staging")
         output_dir.mkdir(parents=True, exist_ok=True)
         file_name = (
