@@ -339,7 +339,10 @@ class UnsupportedFilterWarning(DMSSchemaWarning):
     filter_type: str
 
     def message(self) -> str:
-        return f"The filter {self.filter_type} in {self.view_id} is not supported. This filter will be ignored. Contact the neat team for more information on custom filters."
+        return (
+            f"The filter {self.filter_type} in {self.view_id} is not supported. This filter will be ignored. "
+            "Contact the neat team for more information on custom filters."
+        )
 
     def dump(self) -> dict[str, Any]:
         output = super().dump()
