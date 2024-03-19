@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.68.1] - 19-03-24
+### Changed
+
+* Default workflow `Export DMS` now also exports transformations and raw tables.
+
 ## [0.68.0] - 19-03-24
 Multiple fixes and features for the upcoming v1.0.0 release.
 ## Added
@@ -36,9 +41,6 @@ Multiple fixes and features for the upcoming v1.0.0 release.
   * It was not releasing the Excel file after reading it.
   * Warnings were not captured.
   * Pydantic errors were not captured.
-  *
-* Replaced obsolete `dataModelID` Metadata filed to `external_id`
-
 
 ## [0.67.5] - 14-03-24
 ## Fixed
