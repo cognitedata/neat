@@ -10,7 +10,14 @@ from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.data_contracts import CogniteClient, DMSSchemaData, MultiRuleData
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
-__all__ = ["RulesToDMS", "RulesToExcel", "RulesToOntology", "RulesToSHACL", "RulesToSemanticDataModel"]
+__all__ = [
+    "RulesToDMS",
+    "RulesToExcel",
+    "RulesToOntology",
+    "RulesToSHACL",
+    "RulesToSemanticDataModel",
+    "RulesToCDFTransformations",
+]
 
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
@@ -62,7 +69,7 @@ class RulesToDMS(Step):
         ),
     ]
 
-    def run(self, rules: MultiRuleData, cdf_client: CogniteClient) -> (FlowMessage, DMSSchemaData):  # type: ignore[override, syntax]
+    def run(self, rules: MultiRuleData, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override]
         if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
         existing_components_handling = cast(
@@ -97,7 +104,7 @@ class RulesToDMS(Step):
             existing_handling=existing_components_handling,
             standardize_casing=False,
         )
-        schema = dms_exporter.export(input_rules)
+
         output_dir = self.data_store_path / Path("staging")
         output_dir.mkdir(parents=True, exist_ok=True)
         file_name = (
@@ -138,7 +145,7 @@ class RulesToDMS(Step):
         if errors:
             return FlowMessage(error_text=output_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
         else:
-            return FlowMessage(output_text=output_text), DMSSchemaData(schema_=schema)
+            return FlowMessage(output_text=output_text)
 
 
 class RulesToExcel(Step):
@@ -354,6 +361,87 @@ class RulesToSemanticDataModel(Step):
         )
 
         return FlowMessage(output_text=output_text)
+
+
+class RulesToCDFTransformations(Step):
+    description = "This step exports transformations and RAW tables to populate a data model in CDF"
+    version = "private-alpha"
+    category = CATEGORY
+    Configurable(
+        name="Dry run",
+        value="False",
+        label=("Whether to perform a dry run of the export. "),
+        options=["True", "False"],
+    )
+
+    Configurable(
+        name="Instance space",
+        value="",
+        label=(
+            "The space to use for the transformations instances. If provided, "
+            "the transformations will be set to populate"
+            "this space. If not provided, the space from the input rules will be used."
+        ),
+    ),
+
+    def run(self, rules: MultiRuleData, cdf_client: CogniteClient) -> (FlowMessage, DMSSchemaData):  # type: ignore[override, syntax]
+        if self.configs is None or self.data_store_path is None:
+            raise StepNotInitialized(type(self).__name__)
+
+        input_rules = rules.dms or rules.information
+        if input_rules is None:
+            return FlowMessage(
+                error_text="Missing DMS or Information rules in the input data! "
+                "Please ensure that a DMS or Information rules is provided!",
+                step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
+            )
+        default_instance_space = (
+            input_rules.metadata.space if isinstance(input_rules, DMSRules) else input_rules.metadata.prefix
+        )
+        instance_space = self.configs.get("Instance space") or default_instance_space
+        dry_run = self.configs["Dry run"] == "True"
+        dms_exporter = exporters.DMSExporter(export_pipeline=True, instance_space=instance_space, export_components=[])
+        output_dir = self.data_store_path / Path("staging")
+        output_dir.mkdir(parents=True, exist_ok=True)
+        file_name = (
+            input_rules.metadata.external_id
+            if isinstance(input_rules, DMSRules)
+            else input_rules.metadata.name.replace(" ", "_").lower()
+        )
+        schema_zip = f"{file_name}_pipeline.zip"
+        schema_full_path = output_dir / schema_zip
+        dms_exporter.export_to_file(schema_full_path, input_rules)
+
+        report_lines = ["# DMS Schema Export to CDF\n\n"]
+        errors = []
+        for result in dms_exporter.export_to_cdf(client=cdf_client, rules=input_rules, dry_run=dry_run):
+            report_lines.append(result.as_report_str())
+            errors.extend(result.error_messages)
+
+        report_lines.append("\n\n# ERRORS\n\n")
+        report_lines.extend(errors)
+
+        output_dir = self.data_store_path / Path("staging")
+        output_dir.mkdir(parents=True, exist_ok=True)
+        report_file = "pipeline_creation_report.txt"
+        report_full_path = output_dir / report_file
+        report_full_path.write_text("\n".join(report_lines))
+
+        output_text = (
+            "<p></p>"
+            "Download Pipeline Export "
+            f'<a href="/data/staging/{report_file}?{time.time()}" '
+            f'target="_blank">Report</a>'
+            "<p></p>"
+            "Download Pipeline exported schema"
+            f'- <a href="/data/staging/{schema_zip}?{time.time()}" '
+            f'target="_blank">{schema_zip}</a>'
+        )
+
+        if errors:
+            return FlowMessage(error_text=output_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
+        else:
+            return FlowMessage(output_text=output_text)
 
 
 def _get_default_file_name(rules: MultiRuleData, file_category: str = "ontology", extension: str = "ttl") -> str:
