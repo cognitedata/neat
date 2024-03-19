@@ -40,11 +40,16 @@ class MetadataSheetMissingOrFailedError(SpreadsheetFileError):
     description: ClassVar[str] = "Metadata sheet is missing or it failed validation for one or more fields"
     fix: ClassVar[str] = "Make sure to define compliant Metadata sheet before proceeding"
 
+    hint: str | None = None
+
     def message(self) -> str:
-        return (
+        output = (
             f"Metadata sheet is missing or it failed validation for one or more fields in {self.filepath.name}. "
             + self.fix
         )
+        if self.hint:
+            output += f" Hint: {self.hint}"
+        return output
 
 
 @dataclass(frozen=True)
