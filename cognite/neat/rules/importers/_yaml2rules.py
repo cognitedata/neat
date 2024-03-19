@@ -37,9 +37,9 @@ class YAMLImporter(BaseImporter):
     @classmethod
     def from_file(cls, filepath: Path):
         if not filepath.exists():
-            return cls({}, [issues.fileread.FileNotFound(filepath)])
+            return cls({}, [issues.fileread.FileNotFoundError(filepath)])
         if not filepath.is_file():
-            return cls({}, [issues.fileread.FileNotAFile(filepath)])
+            return cls({}, [issues.fileread.FileNotAFileError(filepath)])
         elif filepath.suffix not in [".yaml", ".yml"]:
             return cls({}, [issues.fileread.InvalidFileFormatError(filepath, [".yaml", ".yml"])])
         return cls(yaml.safe_load(filepath.read_text()), filepaths=[filepath])

@@ -11,8 +11,8 @@ __all__ = [
     "UnknownItemWarning",
     "BugInImporterWarning",
     "FileReadError",
-    "FileNotFound",
-    "FileNotAFile",
+    "FileNotFoundError",
+    "FileNotAFileError",
 ]
 
 
@@ -114,7 +114,8 @@ class BugInImporterWarning(FileReadWarning):
         return output
 
 
-class FileNotFound(FileReadError):
+@dataclass(frozen=True)
+class FileNotFoundError(FileReadError):
     description = "The file was not found"
     fix = "Check if the file exists."
 
@@ -122,7 +123,8 @@ class FileNotFound(FileReadError):
         return f"File {self.filepath} was not found. {self.fix}"
 
 
-class FileNotAFile(FileReadError):
+@dataclass(frozen=True)
+class FileNotAFileError(FileReadError):
     description = "The file is not a file"
     fix = "Check if the file exists."
 
