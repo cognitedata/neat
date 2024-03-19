@@ -7,7 +7,7 @@ from cognite.neat.rules._shared import DMSRules, InformationRules, Rules
 from cognite.neat.rules.models._rules import RoleTypes
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
-from cognite.neat.workflows.steps.data_contracts import CogniteClient, MultiRuleData
+from cognite.neat.workflows.steps.data_contracts import CogniteClient, DMSSchemaData, MultiRuleData
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
 __all__ = ["RulesToDMS", "RulesToExcel", "RulesToOntology", "RulesToSHACL", "RulesToSemanticDataModel"]
@@ -60,26 +60,9 @@ class RulesToDMS(Step):
             ),
             options=["True", "False"],
         ),
-        Configurable(
-            name="Create Pipeline",
-            value="False",
-            label=(
-                "Whether to create RAW database, tables and transformations for populating the data model."
-                "If this is set to True, "
-            ),
-            options=["True", "False"],
-        ),
-        Configurable(
-            name="Instance space",
-            value="",
-            label=(
-                "The space to use for the exported pipeline. If provided, the transformations will be set to populate"
-                "this space. If not provided, the space from the input rules will be used."
-            ),
-        ),
     ]
 
-    def run(self, rules: MultiRuleData, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override, syntax]
+    def run(self, rules: MultiRuleData, cdf_client: CogniteClient) -> (FlowMessage, DMSSchemaData):  # type: ignore[override, syntax]
         if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
         existing_components_handling = cast(
@@ -92,8 +75,6 @@ class RulesToDMS(Step):
             if value
         }
         dry_run = self.configs["Dry run"] == "True"
-        export_pipeline = self.configs.get("Create Pipeline", "False") == "True"
-        instance_space = self.configs.get("Instance space") if export_pipeline else None
 
         if not components_to_create:
             return FlowMessage(
@@ -115,10 +96,8 @@ class RulesToDMS(Step):
             else {input_rules.metadata.space if isinstance(input_rules, DMSRules) else input_rules.metadata.prefix},
             existing_handling=existing_components_handling,
             standardize_casing=False,
-            export_pipeline=export_pipeline,
-            instance_space=instance_space,
         )
-
+        schema = dms_exporter.export(input_rules)
         output_dir = self.data_store_path / Path("staging")
         output_dir.mkdir(parents=True, exist_ok=True)
         file_name = (
@@ -159,7 +138,7 @@ class RulesToDMS(Step):
         if errors:
             return FlowMessage(error_text=output_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
         else:
-            return FlowMessage(output_text=output_text)
+            return FlowMessage(output_text=output_text), DMSSchemaData(schema_=schema)
 
 
 class RulesToExcel(Step):
