@@ -51,7 +51,8 @@ VERSIONED_ENTITY_REGEX_COMPILED = re.compile(
     rf"^(?P<prefix>{PREFIX_REGEX}):(?P<suffix>{SUFFIX_REGEX})\(version=(?P<version>{VERSION_REGEX})\)$"
 )
 PROPERTY_ENTITY_REGEX_COMPILED = re.compile(
-    rf"^((?P<prefix>{PREFIX_REGEX}):)?(?P<suffix>{SUFFIX_REGEX})(\(version=(?P<version>{VERSION_REGEX})\))?:(?P<property>{PROPERTY_REGEX})$"
+    rf"^((?P<prefix>{PREFIX_REGEX}):)?(?P<suffix>{SUFFIX_REGEX})"
+    rf"\((version=(?P<version>{VERSION_REGEX}), )?property=(?P<property>{PROPERTY_REGEX})\)$"
 )
 CLASS_ID_REGEX = rf"(?P<{EntityTypes.class_}>{ENTITY_ID_REGEX})"
 CLASS_ID_REGEX_COMPILED = re.compile(rf"^{CLASS_ID_REGEX}$")
