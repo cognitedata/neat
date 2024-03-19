@@ -10,7 +10,7 @@ from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import PropertyType as CognitePropertyType
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex
 from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
-from cognite.client.data_classes.data_modeling.views import ViewPropertyApply
+from cognite.client.data_classes.data_modeling.views import SingleReverseDirectRelationApply, ViewPropertyApply
 from pydantic import Field, field_validator, model_validator
 from pydantic_core.core_schema import ValidationInfo
 from rdflib import Namespace
@@ -35,6 +35,7 @@ from ._types import (
     VersionType,
     ViewEntity,
     ViewListType,
+    ViewPropEntity,
     ViewType,
     XSDValueType,
 )
@@ -146,7 +147,7 @@ class DMSMetadata(BaseMetadata):
 
 class DMSProperty(SheetEntity):
     property_: PropertyType = Field(alias="Property")
-    relation: Literal["direct", "multiedge"] | None = Field(None, alias="Relation")
+    relation: Literal["direct", "reversedirect", "multiedge"] | None = Field(None, alias="Relation")
     value_type: CdfValueType = Field(alias="Value Type")
     nullable: bool | None = Field(default=None, alias="Nullable")
     is_list: bool | None = Field(default=None, alias="IsList")
@@ -163,6 +164,26 @@ class DMSProperty(SheetEntity):
     def direct_relation_must_be_nullable(cls, value: Any, info: ValidationInfo) -> None:
         if info.data.get("relation") == "direct" and value is False:
             raise ValueError("Direct relation must be nullable")
+        return value
+
+    @field_validator("container_property", "container")
+    def reverse_direct_relation_has_no_container(cls, value, info: ValidationInfo) -> None:
+        if info.data.get("relation") == "reversedirect" and value is not None:
+            raise ValueError(f"Reverse direct relation must not have container or container property, got {value}")
+        return value
+
+    @field_validator("value_type", mode="after")
+    def relations_value_type(cls, value: CdfValueType, info: ValidationInfo) -> CdfValueType:
+        if (relation := info.data["relation"]) is None:
+            return value
+        if not isinstance(value, ViewPropEntity):
+            raise ValueError(f"Relations must have a value type that points to another view, got {value}")
+        if relation == "reversedirect" and value.property_ is None:
+            raise ValueError(
+                "Reverse direct relation must set what it is the reverse property of. "
+                f"Which property in {value.versioned_id} is this the reverse of? Expecting"
+                f"{value.versioned_id}:<property>"
+            )
         return value
 
 
@@ -261,13 +282,14 @@ class DMSRules(BaseRules):
                     suffix=entity.view.external_id,
                     version=default_view_version if entity.view.version is None else entity.view.version,
                 )
-            if isinstance(entity.value_type, ViewEntity) and (
+            if isinstance(entity.value_type, ViewPropEntity) and (
                 entity.value_type.space is Undefined or entity.value_type.version is None
             ):
-                entity.value_type = ViewEntity(
+                entity.value_type = ViewPropEntity(
                     prefix=default_space if entity.value_type.space is Undefined else entity.value_type.space,
                     suffix=entity.value_type.suffix,
                     version=default_view_version if entity.value_type.version is None else entity.value_type.version,
+                    property_=entity.value_type.property_,
                 )
 
         for container in self.containers or []:
@@ -565,7 +587,7 @@ class _DMSExporter:
                 view_property: ViewPropertyApply
                 if prop.is_list and prop.relation == "direct":
                     # This is not yet supported in the CDF API, a warning has already been issued, here we convert it to
-                    # a multiedge connection.
+                    # a multi-edge connection.
                     if isinstance(prop.value_type, ViewEntity):
                         source = prop.value_type.as_id(default_space, default_version, self.standardize_casing)
                     else:
@@ -600,11 +622,7 @@ class _DMSExporter:
                         container_property_identifier=container_prop_identifier,
                         **extra_args,
                     )
-                elif prop.view and prop.view_property:
-                    if not prop.relation:
-                        continue
-                    if prop.relation != "multiedge":
-                        raise NotImplementedError(f"Currently only multiedge is supported, not {prop.relation}")
+                elif prop.view and prop.view_property and prop.relation == "multiedge":
                     if isinstance(prop.value_type, ViewEntity):
                         source = prop.value_type.as_id(default_space, default_version, self.standardize_casing)
                     else:
@@ -620,6 +638,58 @@ class _DMSExporter:
                         source=source,
                         direction="outwards",
                     )
+                elif prop.view and prop.view_property and prop.relation == "reversedirect":
+                    if isinstance(prop.value_type, ViewPropEntity):
+                        source = prop.value_type.as_id(default_space, default_version, self.standardize_casing)
+                    else:
+                        raise ValueError(
+                            "Reverse direct relation must have a view as value type. "
+                            "This should have been validated in the rules"
+                        )
+                    source_prop = prop.value_type.property_
+                    if source_prop is None:
+                        raise ValueError(
+                            "Reverse direct relation must set what it is the reverse property of. "
+                            f"Which property in {prop.value_type.versioned_id} is this the reverse of? Expecting "
+                            f"{prop.value_type.versioned_id}:<property>"
+                        )
+                    reverse_prop = next(
+                        (prop for prop in view_properties_by_id.get(source, []) if prop.property_ == source_prop), None
+                    )
+                    if reverse_prop and reverse_prop.relation == "direct" and reverse_prop.is_list:
+                        warnings.warn(
+                            issues.dms.ReverseOfDirectRelationListWarning(view_id, prop.property_), stacklevel=2
+                        )
+                        view_property = dm.MultiEdgeConnectionApply(
+                            type=dm.DirectRelationReference(
+                                space=source.space,
+                                external_id=f"{reverse_prop.view.external_id}.{reverse_prop.view_property}",
+                            ),
+                            source=source,
+                            direction="inwards",
+                        )
+                    else:
+                        args: dict[str, Any] = dict(
+                            source=source,
+                            through=dm.PropertyId(source, source_prop),
+                            description=prop.description,
+                            name=prop.name,
+                        )
+                        reverse_direct_cls: dict[
+                            bool | None,
+                            type[dm.MultiReverseDirectRelationApply] | type[SingleReverseDirectRelationApply],
+                        ] = {
+                            True: dm.MultiReverseDirectRelationApply,
+                            False: SingleReverseDirectRelationApply,
+                            None: dm.MultiReverseDirectRelationApply,
+                        }
+
+                        view_property = reverse_direct_cls[prop.is_list](**args)
+                elif prop.view and prop.view_property and prop.relation:
+                    warnings.warn(
+                        issues.dms.UnsupportedRelationWarning(view_id, prop.view_property, prop.relation), stacklevel=2
+                    )
+                    continue
                 else:
                     continue
                 prop_name = to_camel(prop.view_property) if self.standardize_casing else prop.view_property
