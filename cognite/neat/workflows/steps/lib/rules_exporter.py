@@ -7,7 +7,7 @@ from cognite.neat.rules._shared import DMSRules, InformationRules, Rules
 from cognite.neat.rules.models._rules import RoleTypes
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
-from cognite.neat.workflows.steps.data_contracts import CogniteClient, DMSSchemaData, MultiRuleData
+from cognite.neat.workflows.steps.data_contracts import CogniteClient, MultiRuleData
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
 __all__ = [
@@ -385,7 +385,7 @@ class RulesToCDFTransformations(Step):
         ),
     ]
 
-    def run(self, rules: MultiRuleData, cdf_client: CogniteClient) -> (FlowMessage, DMSSchemaData):  # type: ignore[override, syntax]
+    def run(self, rules: MultiRuleData, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override]
         if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
 
