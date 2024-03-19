@@ -451,7 +451,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 DMSProperty(
                     class_="Asset",
                     property_="timeseries",
-                    value_type="Timeseries:asset",
+                    value_type="Timeseries(property=asset)",
                     relation="reversedirect",
                     is_list=True,
                     view="Asset",
@@ -470,7 +470,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 DMSProperty(
                     class_="Asset",
                     property_="children",
-                    value_type="Asset:root",
+                    value_type="Asset(property=root)",
                     relation="reversedirect",
                     is_list=True,
                     view="Asset",
@@ -509,7 +509,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 DMSProperty(
                     class_="Activity",
                     property_="timeseries",
-                    value_type="Timeseries:activities",
+                    value_type="Timeseries(property=activities)",
                     relation="reversedirect",
                     view="Activity",
                     view_property="timeseries",
