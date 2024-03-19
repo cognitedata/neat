@@ -78,14 +78,18 @@ class DMSExporter(CDFExporter[DMSSchema]):
 
         schema = self.export(rules)
         with zipfile.ZipFile(filepath, "w") as zip_ref:
-            for space in schema.spaces:
-                zip_ref.writestr(f"data_models/{space.space}.space.yaml", space.dump_yaml())
-            for model in schema.data_models:
-                zip_ref.writestr(f"data_models/{model.external_id}.datamodel.yaml", model.dump_yaml())
-            for view in schema.views:
-                zip_ref.writestr(f"data_models/{view.external_id}.view.yaml", view.dump_yaml())
-            for container in schema.containers:
-                zip_ref.writestr(f"data_models/{container.external_id}.container.yaml", container.dump_yaml())
+            if self.export_components.intersection({"all", "spaces"}):
+                for space in schema.spaces:
+                    zip_ref.writestr(f"data_models/{space.space}.space.yaml", space.dump_yaml())
+            if self.export_components.intersection({"all", "data_models"}):
+                for model in schema.data_models:
+                    zip_ref.writestr(f"data_models/{model.external_id}.datamodel.yaml", model.dump_yaml())
+            if self.export_components.intersection({"all", "views"}):
+                for view in schema.views:
+                    zip_ref.writestr(f"data_models/{view.external_id}.view.yaml", view.dump_yaml())
+            if self.export_components.intersection({"all", "containers"}):
+                for container in schema.containers:
+                    zip_ref.writestr(f"data_models/{container.external_id}.container.yaml", container.dump_yaml())
             if isinstance(schema, PipelineSchema):
                 for transformation in schema.transformations:
                     zip_ref.writestr(f"transformations/{transformation.external_id}.yaml", transformation.dump_yaml())
