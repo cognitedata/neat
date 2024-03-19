@@ -148,6 +148,14 @@ class IssueList(UserList[ValidationIssue]):
         super().__init__(issues or [])
         self.title = title
 
+    @property
+    def errors(self) -> "IssueList":
+        return IssueList([issue for issue in self if isinstance(issue, NeatValidationError)])
+
+    @property
+    def warnings(self) -> "IssueList":
+        return IssueList([issue for issue in self if isinstance(issue, ValidationWarning)])
+
     def as_errors(self) -> ExceptionGroup:
         return ExceptionGroup(
             "Validation failed",
