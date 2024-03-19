@@ -367,22 +367,23 @@ class RulesToCDFTransformations(Step):
     description = "This step exports transformations and RAW tables to populate a data model in CDF"
     version = "private-alpha"
     category = CATEGORY
-    Configurable(
-        name="Dry run",
-        value="False",
-        label=("Whether to perform a dry run of the export. "),
-        options=["True", "False"],
-    )
-
-    Configurable(
-        name="Instance space",
-        value="",
-        label=(
-            "The space to use for the transformations instances. If provided, "
-            "the transformations will be set to populate"
-            "this space. If not provided, the space from the input rules will be used."
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="Dry run",
+            value="False",
+            label=("Whether to perform a dry run of the export. "),
+            options=["True", "False"],
         ),
-    ),
+        Configurable(
+            name="Instance space",
+            value="",
+            label=(
+                "The space to use for the transformations instances. If provided, "
+                "the transformations will be set to populate"
+                "this space. If not provided, the space from the input rules will be used."
+            ),
+        ),
+    ]
 
     def run(self, rules: MultiRuleData, cdf_client: CogniteClient) -> (FlowMessage, DMSSchemaData):  # type: ignore[override, syntax]
         if self.configs is None or self.data_store_path is None:
