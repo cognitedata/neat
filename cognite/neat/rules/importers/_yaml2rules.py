@@ -44,16 +44,6 @@ class YAMLImporter(BaseImporter):
             return cls({}, [issues.fileread.InvalidFileFormatError(filepath, [".yaml", ".yml"])])
         return cls(yaml.safe_load(filepath.read_text()), filepaths=[filepath])
 
-    @classmethod
-    def from_directory(cls, directory: Path):
-        if not directory.is_dir():
-            raise FileNotFoundError(f"{directory} is not a directory")
-        yaml_files = list(directory.glob("*.yaml")) + list(directory.glob("*.yml"))
-        content = {file.stem: yaml.safe_load(file.read_text()) for file in yaml_files}
-        if not content:
-            return cls({}, [issues.fileread.NoFilesFoundError(directory)], filepaths=yaml_files)
-        return cls(content, filepaths=yaml_files)
-
     @overload
     def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules:
         ...

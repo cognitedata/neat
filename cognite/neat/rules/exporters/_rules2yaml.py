@@ -15,13 +15,15 @@ class YAMLExporter(BaseExporter[str]):
     """Export rules to YAML.
 
     Args:
-        format: Whether to output the rules as multiple or a single YAML file(s). Defaults to "multiple".
+        files: The number of files to output. Defaults to "single".
+        output: The format to output the rules. Defaults to "yaml".
+        output_role: The role to output the rules for. Defaults to None, which means that the role
+            of the input rules will be used.
 
     The following formats are available:
 
     - "single": A single YAML file will containe the entire rules.
-    - "multiple": Each section in the rules (e.g. same as sheets in the spreadsheet exporter) will be exported to
-                    a separate YAML file.
+
     .. note::
 
         YAML files are typically used for storing rules when checked into version control systems, e.g., git-history.
@@ -30,13 +32,13 @@ class YAMLExporter(BaseExporter[str]):
 
     """
 
-    Files = Literal["single", "multiple"]
+    Files = Literal["single"]
     Format = Literal["yaml", "json"]
 
     file_option = get_args(Files)
     format_option = get_args(Format)
 
-    def __init__(self, files: Files = "multiple", output: Format = "yaml", output_role: RoleTypes | None = None):
+    def __init__(self, files: Files = "single", output: Format = "yaml", output_role: RoleTypes | None = None):
         if files not in self.file_option:
             raise ValueError(f"Invalid files: {files}. Valid options are {self.file_option}")
         if output not in self.format_option:
@@ -52,24 +54,8 @@ class YAMLExporter(BaseExporter[str]):
                 warnings.warn(f"File extension is not .{self.output}, adding it to the file name", stacklevel=2)
                 filepath = filepath.with_suffix(f".{self.output}")
             filepath.write_text(self.export(rules))
-        elif self.files == "multiple":
-            if filepath.is_file():
-                raise FileExistsError(f"{filepath} is a file, cannot export to a directory")
-            filepath.mkdir(parents=True, exist_ok=True)
-            rules = self._convert_to_output_role(rules, self.output_role)
-
-            # model_dump_json ensures that the output is in JSON format,
-            # if we don't do this, we will get Enums and other types that are not serializable to YAML
-            json_output = json.loads(rules.model_dump_json())
-            json_output["metadata"]["role"] = rules.metadata.role.value
-            if self.output == "json":
-                for key, value in json_output.items():
-                    (filepath / f"{key}.{self.output}").write_text(json.dumps(value))
-            elif self.output == "yaml":
-                for key, value in json_output.items():
-                    (filepath / f"{key}.{self.output}").write_text(yaml.safe_dump(value))
-            else:
-                raise ValueError(f"Invalid output: {self.output}. Valid options are {self.format_option}")
+        else:
+            raise NotImplementedError(f"Exporting to {self.files} files is not supported")
 
     def export(self, rules: Rules) -> str:
         """Export rules to YAML (or JSON) format.
