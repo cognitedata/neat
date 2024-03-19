@@ -10,7 +10,7 @@ from pydantic_core import ErrorDetails
 
 from cognite.neat.utils.spreadsheet import SpreadsheetRead
 
-from .base import MultiValueError, NeatValidationError, ValidationWarning
+from .base import DefaultPydanticError, MultiValueError, NeatValidationError, ValidationWarning
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -78,7 +78,7 @@ class InvalidSheetError(NeatValidationError, ABC):
                 output.append(error_cls.from_pydantic_error(error, read_info_by_sheet))
                 continue
 
-            raise NotImplementedError("Pydantic raised error not supported by this function.")
+            output.append(DefaultPydanticError.from_pydantic_error(error))
         return output
 
 

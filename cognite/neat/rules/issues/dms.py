@@ -20,6 +20,9 @@ __all__ = [
     "DirectRelationMissingSourceError",
     "ContainerPropertyUsedMultipleTimesError",
     "DirectRelationListWarning",
+    "ReverseOfDirectRelationListWarning",
+    "EmptyContainerWarning",
+    "UnsupportedRelationWarning",
 ]
 
 
@@ -244,6 +247,30 @@ class DirectRelationListWarning(DMSSchemaWarning):
 
 
 @dataclass(frozen=True)
+class ReverseOfDirectRelationListWarning(DMSSchemaWarning):
+    description = (
+        "The view property is set to a reverse of a direct relation list, which is not supported by the CDF API"
+    )
+    fix = "Make the property into a multiedge connection instead"
+    error_name: ClassVar[str] = "ReverseOfDirectRelationListWarning"
+    view_id: dm.ViewId
+    property: str
+
+    def message(self) -> str:
+        return (
+            f"The property pointed to be {self.view_id}.{self.property} is a list of direct relations. "
+            f"This is not supported by the API, so the {self.view_id}.{self.property} "
+            "will be converted from a reverse direct relation to an MultiEdgeConnection instead"
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["view_id"] = self.view_id.dump()
+        output["property"] = self.property
+        return output
+
+
+@dataclass(frozen=True)
 class EmptyContainerWarning(DMSSchemaWarning):
     description = "The container is empty"
     fix = "Add data to the container"
@@ -259,4 +286,27 @@ class EmptyContainerWarning(DMSSchemaWarning):
     def dump(self) -> dict[str, Any]:
         output = super().dump()
         output["container_id"] = self.container_id.dump()
+        return output
+
+
+@dataclass(frozen=True)
+class UnsupportedRelationWarning(DMSSchemaWarning):
+    description = "The relatio type is not supported by neat"
+    fix = "Change the relation to a supported type"
+    error_name: ClassVar[str] = "UnsupportedRelationWarning"
+    view_id: dm.ViewId
+    property: str
+    relation: str
+
+    def message(self) -> str:
+        return (
+            f"The relation {self.relation} in {self.view_id}.{self.property} is not supported."
+            "This property will be ignored."
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["view_id"] = self.view_id.dump()
+        output["property"] = self.property
+        output["relation"] = self.relation
         return output
