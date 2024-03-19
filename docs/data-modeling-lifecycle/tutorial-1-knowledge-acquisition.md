@@ -67,6 +67,10 @@ or something else? In this case, the `name`, `location`, and `manufacturer` are 
 expected to be text. The `Min Count` and `Max Count` columns specify how many data points are expected for each of these properties. In the
 first row, we see that a `WindTurbine` is expected to have exactly one `name`. Sames goes for the `location` and `manufacturer`. However, for `lifeExpectancy`, we see that it is optional, as the `Min Count` is 0. Also, `lifeExpectancy` is an integer, as it is expected to be a whole number.
 
+<a id="value-type-anchor"></a>
+!!! note annotate "Value Types"
+    The `Value Type` column is used to specify the type of the value that the property can hold. It takes either XSD type (`float`, `boolean`, `string`, etc) extended with additional types (`timeseries`, `file`, `sequence` and `json`) or a class defined in the `Classes` sheet (complex types).
+
 
 In the similar fashion, Jon defines the properties for `WindFarm`, `Substation` and `ExportCable` in the `Properties` sheet.
 
@@ -294,6 +298,7 @@ Let's now move to the `Properties` sheet. David will also combined and uplifted 
 | DisconnectSwitch       | maxCapacity          |             | float              |         0 |         1 |                                                  |            |
 
 
+Observe that we are using same range of value types as in case for [domain experts](#value-type-anchor).
 
 Here we see how inheritance and proper modeling of classes pays off. Instead of repeating properties from `GeneratingUnit` for `WindTurbine`, David only needs to define the properties specific only to `WindTurbine`. This is because `WindTurbine` is a subclass of `GeneratingUnit`, and thus inherits all the properties from `GeneratingUnit`. This is a good practice, as it reduces the amount of work needed to define the enterprise data model. In addition, it also makes the enterprise data model more consistent, as the same properties are used for similar things.
 
@@ -306,6 +311,10 @@ In addition, David will needs to update a `metadata` sheet, he is adding :
 - `namespace` : a globally unique identifier for the enterprise data model
 - `prefix` : a short name that can be used to reference the namespace in various downstream systems
 - `create` : a date when the enterprise data model was created
+- `schema` : a indication of schema completeness, which can be either one of the following:
+    -  `complete` - the data model is entirely defined in the spreadsheets
+    -  `partial` - the data model is defined within several spreadsheets
+    -  `extended` - data model is defined in spreadsheets and external sources (ontology, CDF, etc.)
 - `updated` : a date when the enterprise data model was last updated
 - `version` : a version of the enterprise data model
 - `title` : a title of the enterprise data model
@@ -321,6 +330,7 @@ He is adding him self as a co-creator as well. The `metadata` sheet for David mi
 | creator     | Jon, Emma, David                       |
 | namespace   | http://purl.org/cognite/power2consumer |
 | prefix      | power                                  |
+| schema      | complete                               |
 | created     | 2024-01-22                             |
 | updated     | 2024-02-09                             |
 | version     | 0.1.0                                  |
@@ -388,7 +398,7 @@ which he copy/paste under `Node Style Editor` in `Graph Explorer`:
 }
 ```
 
-### Visualize Semantic Data Model
+### Visualize Data Model through Mock Graph
 To fully comprehend semantic data mode, one needs to understand basic semantic concepts.
 But `neat` offer alternative way of visualizing the semantic data model, which is through
 generation of mock graph based on the data model described in spreadsheets, and optionally
