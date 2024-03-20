@@ -5,12 +5,12 @@ import pytest
 
 from cognite.neat.rules.models._rules import DMSRules, DomainRules, InformationRules
 from cognite.neat.utils.spreadsheet import read_spreadsheet
-from tests.config import DOC_KNOWLEDGE_ACQUISITION_TUTORIAL
+from tests.config import DOC_RULES
 
 
 @pytest.fixture(scope="session")
 def alice_spreadsheet() -> dict[str, dict[str, Any]]:
-    filepath = DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "cdf-dms-architect-alice.xlsx"
+    filepath = DOC_RULES / "cdf-dms-architect-alice.xlsx"
     excel_file = pd.ExcelFile(filepath)
     return {
         "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),
@@ -27,7 +27,7 @@ def alice_rules(alice_spreadsheet: dict[str, dict[str, Any]]) -> DMSRules:
 
 @pytest.fixture(scope="session")
 def david_spreadsheet() -> dict[str, dict[str, Any]]:
-    filepath = DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "information-architect-david.xlsx"
+    filepath = DOC_RULES / "information-architect-david.xlsx"
     excel_file = pd.ExcelFile(filepath)
     return {
         "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),
@@ -43,7 +43,7 @@ def david_rules(david_spreadsheet: dict[str, dict[str, Any]]) -> InformationRule
 
 @pytest.fixture(scope="session")
 def jon_spreadsheet() -> dict[str, dict[str, Any]]:
-    filepath = DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "expert-wind-energy-jon.xlsx"
+    filepath = DOC_RULES / "expert-wind-energy-jon.xlsx"
     excel_file = pd.ExcelFile(filepath)
     return {
         "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),
@@ -58,7 +58,7 @@ def jon_rules(jon_spreadsheet: dict[str, dict[str, Any]]) -> DomainRules:
 
 @pytest.fixture(scope="session")
 def emma_spreadsheet() -> dict[str, dict[str, Any]]:
-    filepath = DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "expert-grid-emma.xlsx"
+    filepath = DOC_RULES / "expert-grid-emma.xlsx"
     excel_file = pd.ExcelFile(filepath)
     return {
         "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),

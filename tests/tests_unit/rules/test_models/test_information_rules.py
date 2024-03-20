@@ -7,12 +7,12 @@ import pytest
 from cognite.neat.rules.models._rules import DMSRules
 from cognite.neat.rules.models._rules.information_rules import InformationRules, _InformationRulesConverter
 from cognite.neat.utils.spreadsheet import read_spreadsheet
-from tests.config import DOC_KNOWLEDGE_ACQUISITION_TUTORIAL
+from tests.config import DOC_RULES
 
 
 @pytest.fixture(scope="session")
 def david_spreadsheet() -> dict[str, dict[str, Any]]:
-    filepath = DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "information-architect-david.xlsx"
+    filepath = DOC_RULES / "information-architect-david.xlsx"
     excel_file = pd.ExcelFile(filepath)
     return {
         "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),
