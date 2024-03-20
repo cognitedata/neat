@@ -2,7 +2,26 @@
 
 There was no easy way to make data models and knowledge graphs, so we build NEAT.
 
+NEAT is great for:
+
+- Onboarding of domain experts to the semantic data modeling and knowledge graphs
+- Semantic data model development and deployment to Cognite Data Fusion
+- Conversion of (meta)data to knowledge graphs
+- Simplification of large and complex domain data models and knowledge graphs
+- Enrichment of knowledge graphs with additional information
+- Ingestion of knowledge graphs to CDF
+- Staging and playground area for data models and knowledge graphs
+
+NEAT is not meant as:
+
+- Long-term solution for storage of data models and knowledge graphs
+- Reasoning over semantic data models and knowledge graphs
+
+
 ![NEAT High Level](../artifacts/figs/features.png)
+
+
+
 
 ## Domain Expert Centric
 
