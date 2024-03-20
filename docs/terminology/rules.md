@@ -24,7 +24,6 @@ The amount of details that are requested from the user grows with the role that 
 
 === "Domain Expert Profile"
 
-
     | Field   | Description            | Predefined Value | Mandatory |
     |---------|------------------------|------------------|-----------|
     | role    | role of the person     | `domain expert`  | Yes       |
@@ -71,13 +70,13 @@ The amount of details that are requested from the user grows with the role that 
     | Reference    | Reference to the source of the class provided as `URI`         |                      | No        |
     | Match Type   | the match type between the source entity and the class         | `exact` or `partial` | No        |
 
-
 === "DMS CDF Architect Profile"
     !!! warning annotate "Work in Progress"
         This section is a work in progress!
 
 
-
+### Prefixes sheet
+The `Prefixes` sheet, if provided must contain the following columns:
 
 ## Properties sheet
 
@@ -132,8 +131,6 @@ The amount of details that are requested from the user grows with the role that 
 
 
 ## Prefixes sheet
-The `Prefixes` sheet is only optional for the Information Architect profile. It must contain the following columns:
-
 The `Prefixes` sheet only used for the Information Architect profile, and even in that it is optional.
 If used it mus have the following columns:
 
