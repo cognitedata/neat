@@ -38,8 +38,8 @@ The `Properties` sheet must contain following columns, thus information per row:
 - `Name`: human readable name of the property. This attribute is optional, but strongly advised if property id is cryptic.
 - `Description`: short description of the property. This attribute is optional, but strongly advised.
 - `Value Type`: type of the value that the property can hold. This attribute is mandatory. It takes either subset of XSD type (see note below) or a class defined in the `Classes` sheet
-- `Min Count`: minimum number of values that the property can hold. If no value is provided, the default value is `0`.
-- `Max Count`: maximum number of values that the property can hold. If no value is provided, the default value is `inf`.
+- `Min Count`: minimum number of values that the property can hold. If no value is provided, the default value is `0`, which means that the property is optional.
+- `Max Count`: maximum number of values that the property can hold. If no value is provided, the default value is `inf`, which means that the property can hold any number of values (listable).
 
 <a id="xsd-type-anchor"></a>
 !!! info annotate "XSD Value Types"
