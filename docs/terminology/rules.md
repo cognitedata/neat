@@ -19,89 +19,132 @@ The amount of details that are requested from the user grows with the role that 
 - `Prefixes`: contains the definition of the prefixes that are used in the semantic data model
 
 
-Now we will dwell into the details of the `Rules` object per role, thus per profile
 
-## Domain expert profile
-The most lightweight profile is the domain expert profile. The domain expert profile is designed for the domain expert who has deep knowledge about the domain that is being modeled. This person is typically not familiar with semantic data modeling and is not familiar with CDF. Therefore, the `Rules` object is designed to be as simple as possible and to require as little details as possible. The `Rules` object for the domain expert profile has two mandatory sheets, those being `Metadata` and `Properties`. The `Class` sheet is optional, but highly recommended.
+## Metadata sheet
 
-### Metadata sheet
-The `Metadata` must contain:
-
-- `role`: the role of the person, which must be set to `domain expert`
-- `creator`: the name of the person who is creating the `Rules` object, if multiple persons are creating the `Rules` object, the names are separated by comma
-
-### Properties sheet
-The `Properties` sheet must contain following columns, thus information per row:
-
-- `Class`: id of the class that the property is defined for. This attribute is mandatory. It is strongly advised to use `PascalCase` in this column.
-- `Property`: id of the property. This attribute is mandatory. It is strongly advised to use `camelCase` in this column.
-- `Name`: human readable name of the property. This attribute is optional, but strongly advised if property id is cryptic.
-- `Description`: short description of the property. This attribute is optional, but strongly advised.
-- `Value Type`: type of the value that the property can hold. This attribute is mandatory. It takes either subset of XSD type (see note below) or a class defined in the `Classes` sheet
-- `Min Count`: minimum number of values that the property can hold. If no value is provided, the default value is `0`, which means that the property is optional.
-- `Max Count`: maximum number of values that the property can hold. If no value is provided, the default value is `inf`, which means that the property can hold any number of values (listable).
-
-<a id="xsd-type-anchor"></a>
-!!! info annotate "XSD Value Types"
-    The following XSD types are supported:
-    `boolean`, `float`, `double` ,`integer` ,`nonPositiveInteger` ,`nonNegativeInteger` ,`negativeInteger` ,`long` ,`string` ,`langString` ,`anyURI` ,`normalizedString` ,`token` ,`dateTime` ,`dateTimeStamp`  and `date`.
-    In addition to the subset of XSD types, the following value types are supported:
-    `timeseries`, `file` , `sequence` and `json`
+=== "Domain Expert Profile"
 
 
-### Classes sheet
-The `Class` sheet, which is optional, if to be used must contain following columns, thus information per row:
-
-- `Class`: id of the class. This attribute is mandatory. It is strongly advised to use `PascalCase` in this column.
-- `Name`: human readable name of the class. This attribute is optional, but strongly advised if class id is crypt
-- `Description`: short description of the class. This attribute is optional, but strongly advised.
-- `Parent Class`: id of the parent class, which is used for inheritance. This attribute is optional, if not provided the class is considered to be a top level class.
+    | Field   | Description            | Predefined Value | Mandatory |
+    |---------|------------------------|------------------|-----------|
+    | role    | role of the person     | `domain expert`  | Yes       |
+    | creator | names of data model creators separated with comma |              | Yes       |
 
 
 
-## Information Architect profile
-The information architect profile is designed for the person who is familiar with semantic data modeling. This person is typically responsible for creating the semantic data model and the knowledge graph. The `Rules` object for the information architect profile has three mandatory sheets, those being `Metadata`, `Classes` and `Properties`, and optional `Prefixes` sheet if there are any prefixes used beyond the core prefix being defined with the data model.
+=== "Information Architect Profile"
 
-### Metadata sheet
-The `Metadata` must contain, everything that is mandatory for the domain expert profile, plus:
+    | Field       | Description                                                      | Predefined Value                    | Mandatory |
+    |-------------|------------------------------------------------------------------|-------------------------------------|-----------|
+    | role        | the role of the person                                           | `domain expert`                     | Yes       |
+    | creator     | names of data model creators separated with comma                |                                     | Yes       |
+    | schema      | indication of schema completeness                                | `complete`, `partial` or `extended` | Yes       |
+    | namespace   | data model namespace provided as URI                             |                                     | Yes       |
+    | prefix      | data model prefix which is used as a short form of the namespace |                                     | Yes       |
+    | version     | version of the data model                                        |                                     | Yes       |
+    | created     | data model creation date                                         |                                     | Yes       |
+    | updated     | data model last update date                                      |                                     | Yes       |
+    | title       | title of the data model                                          |                                     | No        |
+    | description | short description of the data model                              |                                     | No        |
+    | license     | license of the data model                                        |                                     | No        |
+    | rights      | usage right of the data model                                    |                                     | No        |
 
-- `role`: the role of the person, which must be set to `information architect`
-- `namespace`: the data model namespace provided as URI. This attribute is mandatory.
-- `prefix` : the data model prefix which is used as a short form of the namespace when data model is resolved as an RDF based data model. This attribute is mandatory.
-- `version`: version of the data model. This attribute is mandatory.
-- `schema`: a indication of schema completeness, which can be either one of the following:
-    - `complete`: the data model is entirely defined in the spreadsheets
-    - `partial`: the data model is defined within several spreadsheets
-    - `extended`: data model is defined in spreadsheets and external sources (ontology, CDF, etc.)
-- `title`: title of the data model, when resolved as an RDF based data model. This attribute is optional, but strongly advised.
-- `description`: short description of the data model. This attribute is optional, but strongly advised.
-- `created`: data model creation date. This attribute is mandatory.
-- `updated`: data model last update date. This attribute is mandatory.
-- `license`: license of the data model. This attribute is optional but strongly advised.
-- `rights`: usage right of the data model. This attribute is optional but strongly advised.
 
-### Classes and Properties sheet
-The `Classes` and `Properties` sheets must contain the same columns as for the domain expert profile, and can have in addition optional columns:
+=== "DMS CDF Architect Profile"
+    !!! warning annotate "Work in Progress"
+        This section is a work in progress!
 
-- `Reference`: reference to the source of the class or property provided as `URI`
-- `Match Type`: type of the match between the source entity and the class or property
 
-If the `Rules` object is used also to populate data model using [NEAT graph store](./graph.md), there are additional columns that are mandatory for the `Properties` sheet:
+## Classes sheet
 
-- `Rule Type`: type of the rule that is used to populate the data model, which can take one of the following values:
-    - `sparql`: SPARQL query that resolves against [NEAT graph store](./graph.md)
-    - `rdfpath`: simplified graph query directive that resolves as SPARQL query against [NEAT graph store](./graph.md)
-    - `rawlookup`: resolves as combination of `sparql` query against [NEAT graph store](./graph.md) and query against CDF RAW
-- `Rule`: the rule that is used to populate the data model. The rule is provided as a string, which is either SPARQL query or RDFPath query or RAW lookup query.
+=== "Domain Expert Profile"
+    Class sheet not mandatory for the domain expert profile, but if used should follow the Information Architect profile sheet.
 
-The range of value types is the same like in case of the domain expert profile (see more  [here](#xsd-type-anchor)).
+=== "Information Architect Profile"
 
-### Prefixes sheet
-The `Prefixes` sheet, if provided must contain the following columns:
+    | Column       | Description                                                    | Predefined Value     | Mandatory |
+    |--------------|----------------------------------------------------------------|----------------------|-----------|
+    | Class        | Class id being defined, use strongly advise `PascalCase` usage |                      | Yes       |
+    | Name         | Human readable name of the class                               |                      | No        |
+    | Description  | Short description of the class                                 |                      | Yes       |
+    | Parent Class | Parent class id, used for property inheritance                 |                      | No        |
+    | Reference    | Reference to the source of the class provided as `URI`         |                      | No        |
+    | Match Type   | the match type between the source entity and the class         | `exact` or `partial` | No        |
+
+
+=== "DMS CDF Architect Profile"
+    !!! warning annotate "Work in Progress"
+        This section is a work in progress!
+
+
+
+
+## Properties sheet
+
+=== "Domain Expert Profile"
+    | Column      | Description                                                                                                                                                                        | Predefined Value      | Mandatory |
+    |-------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------|-----------|
+    | Class       | Class id that the property is defined for, strongly advise `PascalCase` usage                                                                                                      |                       | Yes       |
+    | Property    | Property id, strongly advised to `camelCase` usage                                                                                                                                 |                       | Yes       |
+    | Name        | Human readable name of the property                                                                                                                                                |                       | No        |
+    | Description | Short description of the property                                                                                                                                                  |                       | Yes       |
+    | Value Type  | Value type that the property can hold. It takes either subset of XSD type (see note below) or a class defined                                                                      | XSD Types or Class id | Yes       |
+    | Min Count   | Minimum number of values that the property can hold. If no value is provided, the default value is  `0`, which means that the property is optional.                                |                       | Yes       |
+    | Max Count   | Maximum number of values that the property can hold. If no value is provided, the default value is  `inf`, which means that the property can hold any number of values (listable). |                       | Yes       |
+
+    <a id="xsd-type-anchor"></a>
+    !!! info annotate "XSD Value Types"
+        The following XSD types are supported:
+        `boolean`, `float`, `double` ,`integer` ,`nonPositiveInteger` ,`nonNegativeInteger` ,`negativeInteger` ,`long` ,`string` ,`langString` ,`anyURI` ,`normalizedString` ,`token` ,`dateTime` ,`dateTimeStamp`  and `date`.
+        In addition to the subset of XSD types, the following value types are supported:
+        `timeseries`, `file` , `sequence` and `json`
+
+=== "Information Architect Profile"
+
+    | Column      | Description                                                                                                                                                                        | Predefined Value                   | Mandatory |
+    |-------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------|-----------|
+    | Class       | Class id that the property is defined for, strongly advise `PascalCase` usage                                                                                                      |                                    | Yes       |
+    | Property    | Property id, strongly advised to `camelCase` usage                                                                                                                                 |                                    | Yes       |
+    | Name        | Human readable name of the property                                                                                                                                                |                                    | No        |
+    | Description | Short description of the property                                                                                                                                                  |                                    | Yes       |
+    | Value Type  | Value type that the property can hold. It takes either subset of XSD type (see note below) or a class defined                                                                      | XSD Types or Class id              | Yes       |
+    | Min Count   | Minimum number of values that the property can hold. If no value is provided, the default value is  `0`, which means that the property is optional.                                |                                    | Yes       |
+    | Max Count   | Maximum number of values that the property can hold. If no value is provided, the default value is  `inf`, which means that the property can hold any number of values (listable). |                                    | Yes       |
+    | Rule Type   | The rule type that is used to populate the data model                                                                                                                              | `sparql`, `rdfpath` or `rawlookup` | No        |
+    | Rule        | The rule that is used to populate the data model. The rule is provided as a string, which is either SPARQL query or RDFPath query or RAW lookup query                              |                                    | No        |
+    | Reference   | Reference to the source of the property provided as `URI`                                                                                                                          |                                    | No        |
+    | Match Type  | The match type between the source entity and the class                                                                                                                             | `exact` or `partial`               | No        |
+
+    !!! info annotate "XSD Value Types"
+        The following XSD types are supported:
+        `boolean`, `float`, `double` ,`integer` ,`nonPositiveInteger` ,`nonNegativeInteger` ,`negativeInteger` ,`long` ,`string` ,`langString` ,`anyURI` ,`normalizedString` ,`token` ,`dateTime` ,`dateTimeStamp`  and `date`.
+        In addition to the subset of XSD types, the following value types are supported:
+        `timeseries`, `file` , `sequence` and `json`
+
+    !!! info annotate "Data model population rule"
+        The `Rule Type` and `Rule` columns are used to populate the data model using [NEAT graph store](./graph.md).
+        They are optional, but if used, both must be provided !
+
+
+=== "DMS CDF Architect Profile"
+    !!! warning annotate "Work in Progress"
+        This section is a work in progress!
+
+
+## Prefixes sheet
+The `Prefixes` sheet is only optional for the Information Architect profile. It must contain the following columns:
+
+The `Prefixes` sheet only used for the Information Architect profile, and even in that it is optional.
+If used it mus have the following columns:
 
 - `Prefix`: the prefix that is used in the semantic data model
 - `Namespace`: the namespace that the prefix represents provided as `URI`
 
-## DMS CDF Architect
+## Views sheet
+!!! warning annotate "Work in Progress"
+    This section is a work in progress!
+
+
+## Containers sheet
 !!! warning annotate "Work in Progress"
     This section is a work in progress!
