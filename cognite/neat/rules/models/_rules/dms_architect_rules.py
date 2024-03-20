@@ -223,6 +223,7 @@ class DMSContainer(SheetEntity):
         return cls(
             class_=ClassEntity(prefix=container.space, suffix=container.external_id),
             container=ContainerType(prefix=container.space, suffix=container.external_id),
+            name=container.name or None,
             description=container.description,
             constraint=constraints or None,
         )

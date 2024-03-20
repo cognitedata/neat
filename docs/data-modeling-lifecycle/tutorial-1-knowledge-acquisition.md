@@ -481,23 +481,24 @@ For details on designing of containers see [here](https://docs.cognite.com/cdf/d
 
 Alice has to modify the `metadata` sheet to include the CDF specific information.
 
-|             |                              |
-|-------------|------------------------------|
-| role        | dms architect                |
-| schema      | complete                     |
-| space       | sp_power                     |
-| name        | Power to Consumer Data Model |
-| description |                              |
-| externalId  | power_enterprise_model       |
-| version     | 1                            |
-| creator     | Jon, Emma, David, Alice      |
-| created     | 2021-01-01                   |
-| updated     | 2021-01-01                   |
+|                      |                              |
+|----------------------|------------------------------|
+| role                 | dms architect                |
+| schema               | complete                     |
+| space                | sp_power                     |
+| name                 | Power to Consumer Data Model |
+| description          |                              |
+| externalId           | power_enterprise_model       |
+| version              | 1                            |
+| creator              | Jon, Emma, David, Alice      |
+| created              | 2021-01-01                   |
+| updated              | 2021-01-01                   |
+| default_view_version | 0.1.0                        |
 
 First, she adds herself as a creator, and then she adds the `space` and `externalId` columns. The `space`
 column is used to define the space in CDF where the data model should be loaded. The `externalId` column is used
 to define the external id of the enterprise data model. This is used to reference the data model from other parts of CDF.
-Note that if Alice got a sheet converted from David using the `To DMS Rules` workflow, thes `space` and `externalId`
+Note that if Alice got a sheet converted from David using the `To DMS Rules` workflow, the `space` and `externalId`
 will be automatically filled out.
 
 ### The <code>properties</code> Sheet
@@ -506,9 +507,9 @@ Using the workflow `To DMS Rules`, Alice will convert the `properties` sheet to 
 nine new columns as well as modify the `Value Type` column. The first row of the `properties` sheet for Alice
 might look as follows:
 
-| Class         | Property         | ValueType | Relation | Nullable | IsList | Container  | Container Property | Index | Constraints | View        | View Property |
-|---------------|------------------|-----------|----------|----------|--------|------------|--------------------|-------|-------------|-------------|---------------|
-| WindTurbine   | name             | Text      |          | False    | False  | PowerAsset | name               | name  |             | WindTurbine | name          |
+| Class         | Property         | ValueType | Relation | Nullable | IsList | Default | Container   | Container Property | Index | Constraints | View        | View Property |
+|---------------|------------------|-----------|----------|----------|--------|---------|-------------|--------------------|-------|-------------|-------------|---------------|
+| WindTurbine   | name             | Text      |          | False    | False  | Unknown |  PowerAsset | name       | name  |             | WindTurbine | name          |
 
 `neat` will fill out all the new columns with suggested values, but Alice can modify them as she sees fit and thus
 she has granular control over how the data should be stored in CDF.
@@ -531,6 +532,8 @@ The columns are as follows:
   For example, say a `WindTurbine` can have multiple timeseries measuring the temperature, Alice might have a property
   called `temperature` that is a list of Timeseries, which means she will set `Value Type` to `TimeSeries` and
   `IsList` to `True`.
+* **Default**: This column is used to specify a default value. For example, Alice might decide that the `name` property
+  of a `WindTurbine` should have a default value of `Unknown`, and she will set the `Default` column to `Unknown`.
 
 #### Where to store the properties in CDF
 
@@ -558,11 +561,11 @@ The output of the `To DMS Rules` will produce two new sheets `Container` and `Vi
 to define constraints between the containers. The first three rows of the `Container` sheet for Alice look
 as follows:
 
-| Class          | Container      | Description | Constraint     |
-|----------------|----------------|-------------|----------------|
-| PowerAsset     | PowerAsset     |             |                |
-| GeneratingUnit | GeneratingUnit |             | PowerAsset     |
-| WindTurbine    | WindTurbine    |             | GeneratingUnit |
+| Class          | Container      | Name | Description | Constraint     |
+|----------------|----------------|------|-------------|----------------|
+| PowerAsset     | PowerAsset     |      |             |                |
+| GeneratingUnit | GeneratingUnit |      |             | PowerAsset     |
+| WindTurbine    | WindTurbine    |      |             | GeneratingUnit |
 
 
 Interpreting the first three rows, we see that all entries in the `GeneratingUnit` container must have a corresponding
@@ -577,22 +580,35 @@ The `View` sheet is used to define which views implements other views. Implement
 properties from another view. The first three rows of the `View` sheet for Alice look as follows:
 
 
-| Class          | View           | Description | Implements     |
-|----------------|----------------|-------------|----------------|
-| PowerAsset     | PowerAsset     |             |                |
-| GeneratingUnit | GeneratingUnit |             | PowerAsset     |
-| WindTurbine    | WindTurbine    |             | GeneratingUnit |
+| Class          | View           | Name | Description    | Implements | Filter | InModel |
+|----------------|----------------|------|----------------|------------|--------|---------|
+| PowerAsset     | PowerAsset     |      |                |            |        | False   |
+| GeneratingUnit | GeneratingUnit |      | PowerAsset     |            |        | True    |
+| WindTurbine    | WindTurbine    |      | GeneratingUnit |            |        | True    |
 
 
 Interpreting the first three rows, we see that the `GeneratingUnit` view is reusing the properties from the `PowerAsset`
 view, and the `WindTurbine` view is reusing the properties from the `GeneratingUnit` view. It is the hierarchy of views
-will overlap the constraints between the containers, as Alice have chosen for this case. However, it is important
+will overlap the constraints between the containers, as Alice has chosen for this case. However, it is important
 to note that the `View` and `Container` sheets are describing different things. The `Container` sheet is used to
 define constraints between the containers, Alice could have chosen to have no constraints between the `GeneratingUnit`
 and `WindTurbine` containers, but she still kept reusing the properties from the `PowerAsset` view. Similarly, Alice
 could have kept the constraints, and rewritten all properties for the `WindTurbine` view, without reusing the properties
 from the `GeneratingUnit` and `PowerAsset` views. As with the `Container` sheet, the first column of the `View` sheet
 is the `Class`, such that it is clear how the views are related to the classes in the Information Sheet from David.
+
+In addition, there are two more columns in the `View` sheet that are used to define the view:
+
+* **Filter**: This used to control which filter the view should use. This can be empty, `hasData`, `nodeType`
+  or both `hasData, nodeType`. By default, all filters will get a `hasData` filter, this means that the view will
+  only show nodes that have properties in the container(s) that the view is mapping to. The `nodeType` filter is used
+  to filter on the nodes that have the type set to the same name as the view.
+* **InModel**: This column is used to specify whether the view is part of the model or not. In the example above, Alice
+  have decided that `PowerAsset` is not part of the data model by setting the `InModel` column to `False`. This means
+  that the view will still be created in CDF, but not be part of the model. The motivation for this is that this
+  view is an implementation detail, that should not be exposed to the users of the data model. In the GraphQL
+  representation of the model, having the `PowerAsset` will show links to all assets. This can clutter the model,
+  and thus Alice remove it.
 
 ### Download Alice's Spreadsheet
 Download Alice's spreadsheet from [here](spreadsheets/cdf-dms-architect-alice.xlsx).
