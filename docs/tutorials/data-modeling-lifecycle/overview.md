@@ -1,7 +1,7 @@
 # Overview
 
 !!! note annotate "Warning"
-    This course is a work in progress and is not yet complete.
+    This tutorial is a work in progress and it is not yet complete.
 
 
 The data modeling lifecycle is a process that domain experts, information architects and solution architects use to design, build, and maintain data models. The lifecycle consists of several stages, each of which has its own set of tasks and deliverables. For each stage we have build a comprehensive tutorial on how to use **NEAT** to perform the tasks and deliver the artifacts. The stages and the tutorials are as follows:
