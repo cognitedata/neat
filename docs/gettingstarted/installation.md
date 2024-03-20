@@ -1,9 +1,53 @@
 # Installation
 `neat` is distributed as a Python package and as a docker image. These two distributions have different use cases:
 
-* **Running in production**: `Docker`. This ensures that you have the correct version of all `neat` dependencies.
-* **Experimenting**: `Python` or `Docker` whichever you are the most comfortable.
+
 * **Developing custom workflows**: `Python` this enables you to import parts of `neat` to use in your workflow.
+* **Experimenting**: `Python` or `Docker` whichever you are the most comfortable.
+* **Running in production**: `Docker`. This ensures that you have the correct version of all `neat` dependencies.
+
+
+## Python package
+
+**Prerequisites**: Installed Python 3.11, see [python.org](https://www.python.org/downloads/)
+
+1. Create and enter directory for `neat` installation
+1. Create a virtual environment:
+2. Activate your virtual environment
+3. Install `cognite-neat`
+4. Setup configuration
+5. Run `neat`
+
+=== "Windows"
+
+    ```
+    mkdir neat && cd neat
+    ```
+    ```
+    python -m venv venv
+    ```
+    ```
+    venv\Scripts\activate.bat
+    ```
+    ```
+    pip install cognite-neat
+    ```
+
+=== "Mac/Linux"
+
+    ``` bash
+    mkdir neat && cd neat
+    ```
+    ``` bash
+    python -m venv venv
+    ```
+    ``` bash
+    source venv/bin/activate
+    ```
+    ``` bash
+    pip install cognite-neat
+    ```
+
 
 ## Docker
 
@@ -32,57 +76,6 @@ docker run -p 8000:8000 --name neat -v /tmp/neat-data:/app/data  cognite/neat:la
 ```
 
 Open `neat` in your browser: [http://localhost:8000](http://localhost:8000)
-
-
-## Python package
-
-**Prerequisites**: Installed Python 3.11, see [python.org](https://www.python.org/downloads/)
-
-1. Create and enter directory for `neat` installation
-1. Create a virtual environment:
-2. Activate your virtual environment
-3. Install `cognite-neat`
-4. Setup configuration
-5. Run `neat`
-
-=== "Windows"
-
-    ```
-    mkdir neat && cd neat
-    ```
-    ```
-    python -m venv venv
-    ```
-    ```
-    venv\Scripts\activate.bat
-    ```
-    ```
-    pip install cognite-neat
-    ```
-    Create `config.yaml`, see [Configuration](#configuration)
-    ```
-    neat
-    ```
-
-=== "Mac/Linux"
-
-    ``` bash
-    mkdir neat && cd neat
-    ```
-    ``` bash
-    python -m venv venv
-    ```
-    ``` bash
-    source venv/bin/activate
-    ```
-    ``` bash
-    pip install cognite-neat
-    ```
-    Create `config.yaml`, see [Configuration](#configuration)
-    ``` bash
-    neat
-    ```
-
 
 # Configuration
 
