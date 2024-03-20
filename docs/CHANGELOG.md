@@ -15,6 +15,33 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.68.1] - 19-03-24
+### Changed
+
+* Default workflow `Export DMS` now also exports transformations and raw tables.
+
+## [0.68.0] - 19-03-24
+Multiple fixes and features for the upcoming v1.0.0 release.
+## Added
+* YAML (json) Exporter and Importer
+* DMS Rules:
+  * Support for revers direct relations
+  * Views have support for InModel option to exclude views from the data model.
+  * Views have support for Filters (`hasData` and `nodeType`)
+  * List of direct relations are converted to edges.
+* Robustify reading of rules, all extra whitespaces are now stripped.
+* Option for exporting Transformations + Raw Tabels based on DMS rules.
+* Workflows:
+  * `ValidateWorklow` can also be used to covert rules.
+  * Visualization of data model workflows.
+
+
+## Fixed
+* Bugs in the `ExcelImporter`:
+  * It was not releasing the Excel file after reading it.
+  * Warnings were not captured.
+  * Pydantic errors were not captured.
+
 ## [0.67.5] - 14-03-24
 ## Fixed
 * Replaced obsolete `dataModelID` Metadata filed to `external_id`

@@ -41,8 +41,8 @@ steps:
     - step_50885
     trigger: false
     ui_config:
-        pos_x: 630
-        pos_y: 180
+        pos_x: 629
+        pos_y: 161
 -   complex_configs:
         Components:
             containers: true
@@ -63,9 +63,27 @@ steps:
     retry_delay: 3
     stype: stdstep
     system_component_id: null
+    transition_to:
+    - step_171560
+    trigger: false
+    ui_config:
+        pos_x: 629
+        pos_y: 243
+-   complex_configs: {}
+    configs: {}
+    description: null
+    enabled: true
+    id: step_171560
+    label: Export Transformations
+    max_retries: 0
+    method: RulesToCDFTransformations
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
     transition_to: []
     trigger: false
     ui_config:
-        pos_x: 630
-        pos_y: 274
+        pos_x: 629
+        pos_y: 342
 system_components: []

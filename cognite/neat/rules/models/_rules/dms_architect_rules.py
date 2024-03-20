@@ -223,6 +223,7 @@ class DMSContainer(SheetEntity):
         return cls(
             class_=ClassEntity(prefix=container.space, suffix=container.external_id),
             container=ContainerType(prefix=container.space, suffix=container.external_id),
+            name=container.name or None,
             description=container.description,
             constraint=constraints or None,
         )
@@ -570,7 +571,7 @@ class _DMSExporter:
             spaces = dm.SpaceApplyList([dm.SpaceApply(space=data_model.space)])
         else:
             spaces = dm.SpaceApplyList([metadata.as_space()] + [dm.SpaceApply(space=space) for space in used_spaces])
-        if self.instance_space:
+        if self.instance_space and self.instance_space not in {space.space for space in spaces}:
             spaces.append(dm.SpaceApply(space=self.instance_space, name=self.instance_space))
         return spaces
 
