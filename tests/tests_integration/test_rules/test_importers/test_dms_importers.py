@@ -4,12 +4,12 @@ from cognite.client.data_classes.data_modeling import DataModelId
 
 from cognite.neat.rules.importers import DMSImporter, ExcelImporter
 from cognite.neat.rules.models._rules import DMSRules, InformationRules, RoleTypes
-from tests.config import DOC_KNOWLEDGE_ACQUISITION_TUTORIAL
+from tests.config import DOC_RULES
 
 
 @pytest.fixture(scope="session")
 def alice_rules() -> DMSRules:
-    filepath = DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "cdf-dms-architect-alice.xlsx"
+    filepath = DOC_RULES / "cdf-dms-architect-alice.xlsx"
 
     excel_importer = ExcelImporter(filepath)
 

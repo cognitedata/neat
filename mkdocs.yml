@@ -6,49 +6,75 @@ theme:
   features:
     - content.code.copy
     - content.tooltips
-  logo: figs/logo.png
+  logo: artifacts/figs/logo.png
   palette:
     primary: indigo
 
 nav:
-  - Home: index.md
-  - Features: feature-overview.md
-  - Installation: installation.md
-  - Quickstart:
-      - Overview: quickstart/overview.md
-      - Data Model Import: quickstart/data-model-import.ipynb
-  - Data Modeling Lifecycle:
-      - Overview: data-modeling-lifecycle/overview.md
-      - Knowledge Acquisition: data-modeling-lifecycle/tutorial-1-knowledge-acquisition.md
-  - Fundamental Concepts:
-      - NEAT Flows:
-          - Data Modeling: data-modeling-flow.md
-          - Graph ETL: graph-etl-flow.md
-      - Rules: rules.md
-      - Transformation Engine: transformation-directive-types.md
+  - Getting Started:
+      - Why NEAT?: gettingstarted/why-neat.md # why NEAT, what is NEAT
+      - Installation: gettingstarted/installation.md # how to install as python package, docker
+      - Quick overview: notebooks/quick-overview.ipynb # basic usage, very minimal example/notebook
+  - Tutorials:
+      - Data Modeling Lifecycle:
+          - Overview: tutorials/data-modeling-lifecycle/overview.md
+          - Knowledge Acquisition: tutorials/data-modeling-lifecycle/part-1-knowledge-acquisition.md
       - Workflows:
-          - Overview: workflows.md
-          - Steps: workflow-steps.md
-          - Steps Library: steps-library.md
+          - Overview: tutorials/workflows/overview.md
+          - Steps Library: tutorials/workflows/steps-library.md
+          - Examples:
+              - Ontology to Data Model: tutorials/workflows/examples/ontology-to-data-model.md
+              - Export Rules to Ontology: tutorials/workflows/examples/export-rules-to-ontology.md
+              - Extract RDF Graph and Generate Assets: tutorials/workflows/examples/extract-rdf-graph-and-generate-assets.md
+              - Extract DEXPI Graph and Export Rules: tutorials/workflows/examples/extract-dexpi-graph-and-export-rules.md
+  - User Guide:
+      - Overview: user-guide/overview.md
+      - Rules Importing:
+          - Excel: notebooks/rules-importing-excel.ipynb
+          - Ontology: notebooks/rules-importing-ontology.ipynb
+          - DMS: notebooks/rules-importing-dms.ipynb
+          - Inference: notebooks/rules-importing-inference.ipynb
+      - Rules Exporting:
+          - Excel: notebooks/rules-exporting-excel.ipynb
+          - Ontology: notebooks/rules-exporting-ontology.ipynb
+          - DMS: notebooks/rules-exporting-dms.ipynb
+      - Graph Store:
+          - Memory Store: notebooks/graph-store-memory.ipynb
+          - Oxigraph Store: notebooks/graph-store-oxigraph.ipynb
+          - External Triple Store: notebooks/graph-store-external.ipynb
+      - Graph Extraction:
+          - RDF: notebooks/graph-extraction-rdf.ipynb
+          - DEXPI: notebooks/graph-extraction-dexpi.ipynb
+          - JSON: notebooks/graph-extraction-json.ipynb
+          - XML: notebooks/graph-extraction-xml.ipynb
+      - Graph Transformation:
+          - RDFPATH: notebooks/graph-transformation-rdfpath.ipynb
+          - CDF: notebooks/graph-transformation-cdf-transformations.ipynb
+      - Graph Loading:
+          - Assets: notebooks/graph-loading-assets.ipynb
+          - DMS Instances: notebooks/graph-loading-dms-instances.ipynb
+  - Terminology:
+      - Base Terminology: terminology/base-terminology.md
+      - Rules: terminology/rules.md
+      - Graph: terminology/graph.md
   - Reference:
       - Rules:
-          - Models: api/rules/models.md
-          - Analysis: api/rules/analysis.md
-          - Importers: api/rules/importers.md
-          - Parsers: api/rules/parsers.md
-          - Exporters: api/rules/exporters.md
+          - Models: reference/rules/models.md
+          - Analysis: reference/rules/analysis.md
+          - Importers: reference/rules/importers.md
+          - Parsers: reference/rules/parsers.md
+          - Exporters: reference/rules/exporters.md
       - Graph:
-          - Extractors: api/graph/extractors.md
-          - Transformers: api/graph/transformers.md
-          - Loaders: api/graph/loaders.md
-          - Stores: api/graph/stores.md
+          - Extractors: reference/graph/extractors.md
+          - Transformers: reference/graph/transformers.md
+          - Loaders: reference/graph/loaders.md
+          - Stores: reference/graph/stores.md
       - Workflows:
-          - Data Contracts: api/workflows/data_contracts.md
+          - Data Contracts: reference/workflows/data_contracts.md
           - Steps:
-              - Rules: api/workflows/steps/rules.md
-              - Graph: api/workflows/steps/graph.md
-      - Exceptions: api/exceptions.md
-  - Component Lifecycle Policy: componenets-lifecycle-policy.md
+              - Rules: reference/workflows/steps/rules.md
+              - Graph: reference/workflows/steps/graph.md
+      - Exceptions: reference/exceptions.md
   - Changelog​: CHANGELOG.md
 
 markdown_extensions:

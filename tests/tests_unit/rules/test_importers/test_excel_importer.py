@@ -10,23 +10,19 @@ from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import ExcelImporter
 from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models._rules import DMSRules
-from tests.config import DOC_KNOWLEDGE_ACQUISITION_TUTORIAL
+from tests.config import DOC_RULES
 from tests.tests_unit.rules.test_importers.constants import EXCEL_IMPORTER_DATA
 
 
 def valid_rules_filepaths():
-    yield pytest.param(DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "cdf-dms-architect-alice.xlsx", id="Alice rules")
+    yield pytest.param(DOC_RULES / "cdf-dms-architect-alice.xlsx", id="Alice rules")
 
 
 def invalid_rules_filepaths():
     yield pytest.param(
-        DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "not-existing.xlsx",
+        DOC_RULES / "not-existing.xlsx",
         IssueList(
-            [
-                cognite.neat.rules.issues.spreadsheet_file.SpreadsheetNotFoundError(
-                    DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "not-existing.xlsx"
-                )
-            ]
+            [cognite.neat.rules.issues.spreadsheet_file.SpreadsheetNotFoundError(DOC_RULES / "not-existing.xlsx")]
         ),
         id="Not existing file",
     )

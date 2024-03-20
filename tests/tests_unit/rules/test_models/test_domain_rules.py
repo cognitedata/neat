@@ -4,13 +4,13 @@ import pandas as pd
 import pytest
 
 from cognite.neat.rules.models._rules.domain_rules import DomainRules
-from tests.config import DOC_KNOWLEDGE_ACQUISITION_TUTORIAL
+from tests.config import DOC_RULES
 from tests.tests_unit.rules.test_models.utils import read_spreadsheet
 
 
 @pytest.fixture(scope="session")
 def jon_spreadsheet() -> dict[str, dict[str, Any]]:
-    filepath = DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "expert-wind-energy-jon.xlsx"
+    filepath = DOC_RULES / "expert-wind-energy-jon.xlsx"
     excel_file = pd.ExcelFile(filepath)
     return {
         "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),
@@ -20,7 +20,7 @@ def jon_spreadsheet() -> dict[str, dict[str, Any]]:
 
 @pytest.fixture(scope="session")
 def emma_spreadsheet() -> dict[str, dict[str, Any]]:
-    filepath = DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "expert-grid-emma.xlsx"
+    filepath = DOC_RULES / "expert-grid-emma.xlsx"
     excel_file = pd.ExcelFile(filepath)
     return {
         "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),

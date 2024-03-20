@@ -14,7 +14,7 @@ from cognite.neat.rules.models._rules import DomainRules, InformationRules
 from cognite.neat.rules.models._rules.base import RoleTypes
 from cognite.neat.rules.models.raw_rules import RawRules
 from tests import config
-from tests.config import DOC_KNOWLEDGE_ACQUISITION_TUTORIAL
+from tests.config import DOC_RULES
 
 if sys.version_info < (3, 11):
     pass
@@ -48,10 +48,8 @@ class TestExcelImporter:
     @pytest.mark.parametrize(
         "filepath",
         [
-            pytest.param(
-                DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "expert-wind-energy-jon.xlsx", id="expert-wind-energy-jon"
-            ),
-            pytest.param(DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "expert-grid-emma.xlsx", id="expert-grid-emma"),
+            pytest.param(DOC_RULES / "expert-wind-energy-jon.xlsx", id="expert-wind-energy-jon"),
+            pytest.param(DOC_RULES / "expert-grid-emma.xlsx", id="expert-grid-emma"),
         ],
     )
     def test_excel_importer_valid_domain_expert(self, filepath: Path):
@@ -60,9 +58,7 @@ class TestExcelImporter:
         assert isinstance(domain_rules, DomainRules)
 
     def test_excel_importer_valid_information_architect(self):
-        information_rules = ExcelImporter(
-            DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "information-architect-david.xlsx"
-        ).to_rules(
+        information_rules = ExcelImporter(DOC_RULES / "information-architect-david.xlsx").to_rules(
             errors="raise",
             role=RoleTypes.information_architect,
         )
@@ -77,7 +73,7 @@ class TestExcelImporter:
             ]
         )
 
-        _, issues = ExcelImporter(DOC_KNOWLEDGE_ACQUISITION_TUTORIAL / "expert-wind-energy-jon.xlsx").to_rules(
+        _, issues = ExcelImporter(DOC_RULES / "expert-wind-energy-jon.xlsx").to_rules(
             errors="continue",
             role=RoleTypes.information_architect,
         )
