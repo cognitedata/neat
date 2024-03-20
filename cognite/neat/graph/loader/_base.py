@@ -1,3 +1,4 @@
+import logging
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from typing import Generic, Literal, TypeVar, overload
@@ -42,9 +43,13 @@ class BaseLoader(ABC, Generic[T_Output]):
         for class_name in self.rules.classes:
             if exclude_classes is not None and class_name in exclude_classes:
                 continue
-            sparql_construct_query = build_construct_query(
-                self.graph_store.graph, class_name, self.rules, properties_optional=True
-            )
+            try:
+                sparql_construct_query = build_construct_query(
+                    self.graph_store.graph, class_name, self.rules, properties_optional=True
+                )
+            except Exception as e:
+                logging.error(f"Failed to build construct query for class {class_name}: {e}")
+                continue
 
             yield class_name, self.graph_store.query_delayed(sparql_construct_query)
 
