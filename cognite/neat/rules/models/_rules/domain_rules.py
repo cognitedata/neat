@@ -1,6 +1,7 @@
-from typing import ClassVar
+from typing import Any, ClassVar
 
-from pydantic import Field
+from pydantic import Field, model_serializer
+from pydantic_core.core_schema import SerializationInfo
 
 from ._types import ParentClassType, PropertyType, SemanticValueType, StrOrListType
 from .base import (
@@ -33,3 +34,14 @@ class DomainRules(RuleModel):
     metadata: DomainMetadata = Field(alias="Metadata")
     properties: SheetList[DomainProperty] = Field(alias="Properties")
     classes: SheetList[DomainClass] | None = Field(None, alias="Classes")
+
+    @model_serializer(mode="plain", when_used="always")
+    def domain_rules_serializer(self, info: SerializationInfo) -> dict[str, Any]:
+        kwargs = vars(info)
+        output: dict[str, Any] = {
+            "metadata": {"role": self.metadata.role.value, **self.metadata.model_dump(**kwargs)},
+            "properties": [prop.model_dump(**kwargs) for prop in self.properties],
+        }
+        if self.classes or not info.exclude_none:
+            output["classes"] = [cls.model_dump(**kwargs) for cls in self.classes or []] or None
+        return output
