@@ -546,7 +546,7 @@ class DMSRules(BaseRules):
             if info.by_alias
             else "metadata": {"role": self.metadata.role.value, **self.metadata.model_dump(**kwargs)},
             "Properties" if info.by_alias else "properties": properties,
-            "View" if info.by_alias else "views": views,
+            "Views" if info.by_alias else "views": views,
             "Containers" if info.by_alias else "containers": containers,
         }
 
