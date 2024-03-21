@@ -69,11 +69,10 @@ class YAMLExporter(BaseExporter[str]):
         rules = self._convert_to_output_role(rules, self.output_role)
         # model_dump_json ensures that the output is in JSON format,
         # if we don't do this, we will get Enums and other types that are not serializable to YAML
-        json_output = json.loads(rules.model_dump_json())
-        json_output["metadata"]["role"] = rules.metadata.role.value
+        json_output = rules.model_dump_json()
         if self.output == "json":
-            return json.dumps(json_output, indent=2)
+            return json_output
         elif self.output == "yaml":
-            return yaml.safe_dump(json_output)
+            return yaml.safe_dump(json.loads(json_output))
         else:
             raise ValueError(f"Invalid output: {self.output}. Valid options are {self.format_option}")
