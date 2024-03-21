@@ -5,7 +5,8 @@ from collections import defaultdict
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
 
-from pydantic import Field, model_validator
+from pydantic import Field, model_serializer, model_validator
+from pydantic_core.core_schema import SerializationInfo
 from rdflib import Namespace
 
 import cognite.neat.rules.issues.spreadsheet
@@ -267,6 +268,40 @@ class InformationRules(RuleModel):
                 stacklevel=2,
             )
         return self
+
+    @model_serializer(mode="plain", when_used="always")
+    def information_rules_serializer(self, info: SerializationInfo) -> dict[str, Any]:
+        kwargs = vars(info)
+        default_prefix = f"{self.metadata.prefix}:" if self.metadata.prefix else ""
+
+        field_names = ["Class"] if info.by_alias else ["class_"]
+        properties = []
+        for prop in self.properties:
+            dumped = prop.model_dump(**kwargs)
+            for field_name in field_names:
+                if value := dumped.get(field_name):
+                    dumped[field_name] = value.removeprefix(default_prefix)
+            properties.append(dumped)
+
+        field_names = ["Class"] if info.by_alias else ["class_"]
+        classes = []
+        parent_name = "Parent Class" if info.by_alias else "parent"
+        for prop in self.properties:
+            dumped = prop.model_dump(**kwargs)
+            for field_name in field_names:
+                if value := dumped.get(field_name):
+                    dumped[field_name] = value.removeprefix(default_prefix)
+            if value := dumped.get(parent_name):
+                dumped[parent_name] = ",".join(
+                    constraint.strip().removeprefix(default_prefix) for constraint in value.split(",")
+                )
+            classes.append(dumped)
+
+        return {
+            "metadata": {"role": self.metadata.role.value, **self.metadata.model_dump(**kwargs)},
+            "classes": self.classes.model_dump(**kwargs),
+            "properties": properties,
+        }
 
     def as_domain_rules(self) -> DomainRules:
         return _InformationRulesConverter(self).as_domain_rules()
