@@ -72,10 +72,52 @@ class DMSExporter(CDFExporter[DMSSchema]):
         self._schema: DMSSchema | None = None
 
     def export_to_file(self, filepath: Path, rules: Rules) -> None:
+        """Export the rules to a file(s).
+
+        If the file is a directory, the components will be exported to separate files, otherwise they will be
+        exported to a zip file.
+
+        Args:
+            filepath: Directory or zip file path to export to.
+            rules:
+        """
+        if filepath.is_file():
+            self._export_to_zip_file(filepath, rules)
+        else:
+            self._export_to_directory(filepath, rules)
+
+    def _export_to_directory(self, directory: Path, rules: Rules) -> None:
+        schema = self.export(rules)
+        data_models = directory / "data_models"
+        data_models.mkdir(exist_ok=True, parents=True)
+        if self.export_components.intersection({"all", "spaces"}):
+            for space in schema.spaces:
+                (data_models / f"{space.space}.space.yaml").write_text(space.dump_yaml())
+        if self.export_components.intersection({"all", "data_models"}):
+            for model in schema.data_models:
+                (data_models / f"{model.external_id}.datamodel.yaml").write_text(model.dump_yaml())
+        if self.export_components.intersection({"all", "views"}):
+            for view in schema.views:
+                (data_models / f"{view.external_id}.view.yaml").write_text(view.dump_yaml())
+        if self.export_components.intersection({"all", "containers"}):
+            for container in schema.containers:
+                (data_models / f"{container.external_id}.container.yaml").write_text(container.dump_yaml())
+        if isinstance(schema, PipelineSchema):
+            transformations = directory / "transformations"
+            transformations.mkdir(exist_ok=True, parents=True)
+            for transformation in schema.transformations:
+                (transformations / f"{transformation.external_id}.yaml").write_text(transformation.dump_yaml())
+            # The RAW Databases are not written to file. This is because cognite-toolkit expects the RAW databases
+            # to be in the same file as the RAW tables.
+            raw = directory / "raw"
+            raw.mkdir(exist_ok=True, parents=True)
+            for raw_table in schema.raw_tables:
+                (raw / f"{raw_table.name}.yaml").write_text(raw_table.dump_yaml())
+
+    def _export_to_zip_file(self, filepath: Path, rules: Rules) -> None:
         if filepath.suffix not in {".zip"}:
             warnings.warn("File extension is not .zip, adding it to the file name", stacklevel=2)
             filepath = filepath.with_suffix(".zip")
-
         schema = self.export(rules)
         with zipfile.ZipFile(filepath, "w") as zip_ref:
             if self.export_components.intersection({"all", "spaces"}):
