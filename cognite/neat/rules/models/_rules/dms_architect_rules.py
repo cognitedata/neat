@@ -505,10 +505,8 @@ class DMSRules(BaseRules):
         for prop in self.properties:
             dumped = prop.model_dump(**kwargs)
             for field_name in field_names:
-                if field_name in dumped:
-                    dumped[field_name] = (
-                        dumped[field_name].removeprefix(default_space).removesuffix(default_version_wrapped)
-                    )
+                if value := dumped.get(field_name):
+                    dumped[field_name] = value.removeprefix(default_space).removesuffix(default_version_wrapped)
             # Value type can have a property as well
             dumped[value_type_name] = dumped[value_type_name].replace(default_version, "")
             properties.append(dumped)
@@ -519,14 +517,12 @@ class DMSRules(BaseRules):
         for view in self.views:
             dumped = view.model_dump(**kwargs)
             for field_name in field_names:
-                if field_name in dumped:
-                    dumped[field_name] = (
-                        dumped[field_name].removeprefix(default_space).removesuffix(default_version_wrapped)
-                    )
-            if implements_name in dumped:
+                if value := dumped.get(field_name):
+                    dumped[field_name] = value.removeprefix(default_space).removesuffix(default_version_wrapped)
+            if value := dumped.get(implements_name):
                 dumped[implements_name] = ",".join(
                     parent.strip().removeprefix(default_space).removesuffix(default_version_wrapped)
-                    for parent in dumped[implements_name].split(",")
+                    for parent in value.split(",")
                 )
             views.append(dumped)
 
@@ -536,14 +532,12 @@ class DMSRules(BaseRules):
         for container in self.containers or []:
             dumped = container.model_dump(**kwargs)
             for field_name in field_names:
-                if field_name in dumped and isinstance(dumped[field_name], str):
-                    dumped[field_name] = (
-                        dumped[field_name].removeprefix(default_space).removesuffix(default_version_wrapped)
-                    )
-                if constraint_name in dumped:
+                if value := dumped.get(field_name):
+                    dumped[field_name] = value.removeprefix(default_space).removesuffix(default_version_wrapped)
+                if value := dumped.get(constraint_name):
                     dumped[constraint_name] = ",".join(
                         constraint.strip().removeprefix(default_space).removesuffix(default_version_wrapped)
-                        for constraint in dumped[constraint_name].split(",")
+                        for constraint in value.split(",")
                     )
             containers.append(dumped)
 
