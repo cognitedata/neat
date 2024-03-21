@@ -301,7 +301,7 @@ class InformationRules(RuleModel):
             "Metadata"
             if info.by_alias
             else "metadata": {"role": self.metadata.role.value, **self.metadata.model_dump(**kwargs)},
-            "Classes" if info.by_alias else "classes": self.classes.model_dump(**kwargs),
+            "Classes" if info.by_alias else "classes": classes,
             "Properties" if info.by_alias else "properties": properties,
         }
 

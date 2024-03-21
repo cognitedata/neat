@@ -1,4 +1,5 @@
 import itertools
+import types
 from pathlib import Path
 from types import GenericAlias
 from typing import Any, ClassVar, Literal, cast, get_args
@@ -8,7 +9,7 @@ from openpyxl.cell import MergedCell
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 
 from cognite.neat.rules._shared import Rules
-from cognite.neat.rules.models._rules.base import RoleTypes, SheetEntity, SheetList
+from cognite.neat.rules.models._rules.base import RoleTypes, SheetEntity
 
 from ._base import BaseExporter
 
@@ -63,29 +64,37 @@ class ExcelExporter(BaseExporter[Workbook]):
         # Remove default sheet named "Sheet"
         workbook.remove(workbook["Sheet"])
 
+        dumped_rules = rules.model_dump(by_alias=True)
+
         metadata_sheet = workbook.create_sheet("Metadata")
-        metadata_sheet.append(["role", rules.metadata.role.value])
-        for key, value in rules.metadata.model_dump(by_alias=True).items():
+        for key, value in dumped_rules["Metadata"].items():
             metadata_sheet.append([key, value])
 
         if self._styling_level > 1:
             for cell in metadata_sheet["A"]:
                 cell.font = Font(bold=True, size=12)
 
-        field_names_by_sheet_name = {
-            field.alias or field_name: field_name for field_name, field in rules.model_fields.items()
-        }
+        field_by_sheet_name = {field.alias or field_name: field for field_name, field in rules.model_fields.items()}
         for sheet_name in ["Properties", "Classes", "Views", "Containers"]:
-            if sheet_name not in field_names_by_sheet_name:
+            if sheet_name not in field_by_sheet_name:
                 continue
-            field_name = field_names_by_sheet_name[sheet_name]
             sheet = workbook.create_sheet(sheet_name)
-            data = getattr(rules, field_name)
-            if data is None:
+            rows = dumped_rules.get(sheet_name)
+            if rows is None:
                 continue
-            if not isinstance(data, SheetList):
-                raise ValueError(f"Expected {field_name} to be a SheetList, but got {type(data)}")
-            annotation = data.model_fields["data"].annotation
+            field_ = field_by_sheet_name[sheet_name]
+
+            sheet_list_type = field_.annotation
+            if isinstance(sheet_list_type, types.UnionType):
+                sheet_list = sheet_list_type.__args__[0]
+            else:
+                sheet_list = sheet_list_type
+
+            try:
+                annotation = sheet_list.model_fields["data"].annotation  # type: ignore[union-attr]
+            except Exception as e:
+                raise ValueError(f"Expected {sheet_name} to have a 'data' field") from e
+
             item_cls = self._get_item_class(cast(GenericAlias, annotation))
             skip = {"validators_to_skip"}
             headers = [
@@ -109,7 +118,7 @@ class ExcelExporter(BaseExporter[Workbook]):
             fill_color = next(fill_colors)
             last_class: str | None = None
             item: dict[str, Any]
-            for item in data.model_dump()["data"]:
+            for item in rows:
                 row = list(item.values())
                 class_ = row[0]
 
@@ -166,7 +175,10 @@ class ExcelExporter(BaseExporter[Workbook]):
     def _adjust_column_widths(cls, workbook: Workbook) -> None:
         for sheet in workbook:
             for column_cells in sheet.columns:
-                max_length = max(len(str(cell.value)) for cell in column_cells if cell.value is not None)
+                try:
+                    max_length = max(len(str(cell.value)) for cell in column_cells if cell.value is not None)
+                except ValueError:
+                    max_length = 0
 
                 selected_column = column_cells[0]
                 if isinstance(selected_column, MergedCell):
