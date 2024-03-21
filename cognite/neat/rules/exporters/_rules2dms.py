@@ -81,10 +81,10 @@ class DMSExporter(CDFExporter[DMSSchema]):
             filepath: Directory or zip file path to export to.
             rules:
         """
-        if filepath.is_file():
-            self._export_to_zip_file(filepath, rules)
-        else:
+        if filepath.is_dir():
             self._export_to_directory(filepath, rules)
+        else:
+            self._export_to_zip_file(filepath, rules)
 
     def _export_to_directory(self, directory: Path, rules: Rules) -> None:
         schema = self.export(rules)
