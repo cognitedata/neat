@@ -303,6 +303,7 @@ class InformationRules(RuleModel):
             else "metadata": {"role": self.metadata.role.value, **self.metadata.model_dump(**kwargs)},
             "Classes" if info.by_alias else "classes": classes,
             "Properties" if info.by_alias else "properties": properties,
+            "prefixes": {key: str(value) for key, value in self.prefixes.items()},
         }
 
     def as_domain_rules(self) -> DomainRules:
