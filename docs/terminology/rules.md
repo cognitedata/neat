@@ -30,10 +30,10 @@ The spreadsheet templates for the `Rules` object per role are accessible through
 
 === "Domain Expert Profile"
 
-    | Field   | Description            | Predefined Value | Mandatory |
-    |---------|------------------------|------------------|-----------|
-    | role    | Role of the person     | `domain expert`  | Yes       |
-    | creator | Names of data model creators separated with comma |              | Yes       |
+    | Field   | Description                                       | Predefined Value | Mandatory |
+    |---------|---------------------------------------------------|------------------|-----------|
+    | role    | Role of the person                                | `domain expert`  | Yes       |
+    | creator | Names of data model creators separated with comma |                  | Yes       |
 
     !!! tip annotate "Usage"
         More details on **Domain Expert** Profile **Metadata sheet** usage can be found [here](../tutorials/data-modeling-lifecycle/part-1-knowledge-acquisition.md#domain-expert-metadata-anchor)!
@@ -46,7 +46,7 @@ The spreadsheet templates for the `Rules` object per role are accessible through
     |-------------|------------------------------------------------------------------|-------------------------------------|-----------|
     | role        | The role of the person                                           | `domain expert`                     | Yes       |
     | creator     | Names of data model creators separated with comma                |                                     | Yes       |
-    | schema      | Indication of the data model completeness                                | `complete`, `partial` or `extended` | Yes       |
+    | schema      | Indication of the data model completeness                        | `complete`, `partial` or `extended` | Yes       |
     | namespace   | Data model namespace provided as URI                             |                                     | Yes       |
     | prefix      | Data model prefix which is used as a short form of the namespace |                                     | Yes       |
     | version     | Version of the data model                                        |                                     | Yes       |
@@ -63,19 +63,20 @@ The spreadsheet templates for the `Rules` object per role are accessible through
 
 
 === "DMS CDF Architect Profile"
-    | Field       | Description                                                      | Predefined Value                    | Mandatory |
-    |-------------|------------------------------------------------------------------|-------------------------------------|-----------|
-    | role        | The role of the person                                           | `dms expert`                        | Yes       |
-    | creator     | Names of data model creators separated with comma                |                                     | Yes       |
-    | schema      | Indication of schema completeness                                | `complete`, `partial` or `extended` | Yes       |
-    | space       | CDF space to which data model belongs                            |                                     | Yes       |
-    | externalId  | External id used to uniquely identify data model within a space  |                                     | Yes       |
-    | default_view_version | Default version to fall back if no version is provided for views that are part of the data model | | No |
-    | version     | Version of the data model                                        |                                     | Yes       |
-    | created     | Date model creation date                                         |                                     | Yes       |
-    | updated     | Date model last update date                                      |                                     | Yes       |
-    | name        | Name  of the data model                                          |                                     | No        |
-    | description | Short description of the data model                              |                                     | No        |
+
+    | Field       | Description                                                                                               | Predefined Value                    | Mandatory |
+    |-------------|-----------------------------------------------------------------------------------------------------------|-------------------------------------|-----------|
+    | role        | The role of the person                                                                                    | `dms expert`                        | Yes       |
+    | creator     | Names of data model creators separated with comma                                                         |                                     | Yes       |
+    | schema      | Indication of schema completeness                                                                         | `complete`, `partial` or `extended` | Yes       |
+    | space       | CDF space to which data model belongs                                                                     |                                     | Yes       |
+    | externalId  | External id used to uniquely identify data model within a space                                           |                                     | Yes       |
+    | default_view_version | Default version to fall back if no version is provided for views that are part of the data model |                                     | No        |
+    | version     | Version of the data model                                                                                 |                                     | Yes       |
+    | created     | Date model creation date                                                                                  |                                     | Yes       |
+    | updated     | Date model last update date                                                                               |                                     | Yes       |
+    | name        | Name  of the data model                                                                                   |                                     | No        |
+    | description | Short description of the data model                                                                       |                                     | No        |
 
     !!! tip annotate "Usage"
         More details on **DMS Architect** Profile **Metadata sheet**  usage can be found [here](../tutorials/data-modeling-lifecycle/part-1-knowledge-acquisition.md#changing-the-metadata-sheet)!
@@ -83,6 +84,7 @@ The spreadsheet templates for the `Rules` object per role are accessible through
 ## Classes sheet
 
 === "Domain Expert Profile"
+
     The class sheet is not mandatory for the domain expert profile, but if used should follow the Information Architect profile `Classes` sheet.
 
 === "Information Architect Profile"
@@ -103,6 +105,7 @@ The spreadsheet templates for the `Rules` object per role are accessible through
 ## Properties sheet
 
 === "Domain Expert Profile"
+
     | Column      | Description                                                                                                                                                                        | Predefined Value      | Mandatory |
     |-------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------|-----------|
     | Class       | Class id that the property is defined for, strongly advise `PascalCase` usage                                                                                                      |                       | Yes       |
@@ -156,6 +159,7 @@ The spreadsheet templates for the `Rules` object per role are accessible through
 
 
 === "DMS CDF Architect Profile"
+
     | Column             | Description                                                                                                                      | Predefined Value                          | Mandatory |
     |--------------------|----------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------|-----------|
     | Class              | Class id that the property is defined for, strongly advise PascalCase usage                                                      |                                           | Yes       |
@@ -171,7 +175,7 @@ The spreadsheet templates for the `Rules` object per role are accessible through
     | Match Type         | The match type between the source entity and the class                                                                           | `exact` or `partial`                      | No        |
     | Container          | Specifies container in which instances of given class/view are being stored in                                                   |                                           | No        |
     | Container Property | Specifies under which property instances of given class/view property are being stored under                                     |                                           | No        |
-    | Index              | Indicates which property is used as a part of index (takes name of property)                                                     |                                           | No        |
+    | Index              | The name of the index the property is part of                                                                                    |                                           | No        |
     | Constraints        | Constraint for given property                                                                                                    |                                           | No        |
     | View               | View id to which property is being defined for                                                                                   |                                           | Yes       |
     | View Property      | View property for which property is being defined for                                                                            |                                           | Yes       |
@@ -223,5 +227,5 @@ The `Prefixes` sheet is only used for the Information Architect profile when the
 
 | Column    | Description                                                                 |Predefined Value | Mandatory |
 |-----------|-----------------------------------------------------------------------------|-----------------|-----------|
-| Prefix    | Prefix that is used in the semantic data model                          |                 | Yes       |
-| Namespace | Namespace that the prefix represents provided as `URI`                  |                 | Yes       |
+| Prefix    | Prefix that is used in the semantic data model                              |                 | Yes       |
+| Namespace | Namespace that the prefix represents provided as `URI`                      |                 | Yes       |
