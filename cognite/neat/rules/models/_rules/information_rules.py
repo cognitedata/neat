@@ -298,9 +298,11 @@ class InformationRules(RuleModel):
             classes.append(dumped)
 
         return {
-            "metadata": {"role": self.metadata.role.value, **self.metadata.model_dump(**kwargs)},
-            "classes": self.classes.model_dump(**kwargs),
-            "properties": properties,
+            "Metadata"
+            if info.by_alias
+            else "metadata": {"role": self.metadata.role.value, **self.metadata.model_dump(**kwargs)},
+            "Classes" if info.by_alias else "classes": self.classes.model_dump(**kwargs),
+            "Properties" if info.by_alias else "properties": properties,
         }
 
     def as_domain_rules(self) -> DomainRules:

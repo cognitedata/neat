@@ -39,9 +39,13 @@ class DomainRules(RuleModel):
     def domain_rules_serializer(self, info: SerializationInfo) -> dict[str, Any]:
         kwargs = vars(info)
         output: dict[str, Any] = {
-            "metadata": {"role": self.metadata.role.value, **self.metadata.model_dump(**kwargs)},
-            "properties": [prop.model_dump(**kwargs) for prop in self.properties],
+            "Metadata"
+            if info.by_alias
+            else "metadata": {"role": self.metadata.role.value, **self.metadata.model_dump(**kwargs)},
+            "Properties" if info.by_alias else "properties": [prop.model_dump(**kwargs) for prop in self.properties],
         }
         if self.classes or not info.exclude_none:
-            output["classes"] = [cls.model_dump(**kwargs) for cls in self.classes or []] or None
+            output["Classes" if info.by_alias else "classes"] = [
+                cls.model_dump(**kwargs) for cls in self.classes or []
+            ] or None
         return output
