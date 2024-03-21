@@ -515,6 +515,7 @@ class DMSRules(BaseRules):
 
         views = []
         field_names = ["Class", "View", "Implements"] if info.by_alias else ["class_", "view", "implements"]
+        implements_name = "Implements" if info.by_alias else "implements"
         for view in self.views:
             dumped = view.model_dump(**kwargs)
             for field_name in field_names:
@@ -522,16 +523,27 @@ class DMSRules(BaseRules):
                     dumped[field_name] = (
                         dumped[field_name].removeprefix(default_space).removesuffix(default_version_wrapped)
                     )
+            if implements_name in dumped:
+                dumped[implements_name] = ",".join(
+                    parent.strip().removeprefix(default_space).removesuffix(default_version_wrapped)
+                    for parent in dumped[implements_name].split(",")
+                )
             views.append(dumped)
 
         containers = []
-        field_names = ["Class", "Container", "Constraint"] if info.by_alias else ["class_", "container", "constraint"]
+        field_names = ["Class", "Container"] if info.by_alias else ["class_", "container"]
+        constraint_name = "Constraint" if info.by_alias else "constraint"
         for container in self.containers or []:
             dumped = container.model_dump(**kwargs)
             for field_name in field_names:
                 if field_name in dumped and isinstance(dumped[field_name], str):
                     dumped[field_name] = (
                         dumped[field_name].removeprefix(default_space).removesuffix(default_version_wrapped)
+                    )
+                if constraint_name in dumped:
+                    dumped[constraint_name] = ",".join(
+                        constraint.strip().removeprefix(default_space).removesuffix(default_version_wrapped)
+                        for constraint in dumped[constraint_name].split(",")
                     )
             containers.append(dumped)
 

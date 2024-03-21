@@ -1261,7 +1261,7 @@ class TestDMSRules:
                 }
             ],
             "views": [{"view": "WindFarm", "class_": "WindFarm", "implements": "Sourceable,Describable"}],
-            "containers": [{"container": "Asset", "class_": "Asset", "constraints": "Sourceable,Describable"}],
+            "containers": [{"container": "Asset", "class_": "Asset", "constraint": "Sourceable,Describable"}],
         }
 
         actual_dump = dms_rules.model_dump(exclude_none=True, exclude_unset=True, exclude_defaults=True)
