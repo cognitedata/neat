@@ -83,7 +83,7 @@ The spreadsheet templates for the `Rules` object per role are accessible through
 ## Classes sheet
 
 === "Domain Expert Profile"
-    Class sheet not mandatory for the domain expert profile, but if used should follow the Information Architect profile `Classes` sheet.
+    The class sheet is not mandatory for the domain expert profile, but if used should follow the Information Architect profile `Classes` sheet.
 
 === "Information Architect Profile"
 
