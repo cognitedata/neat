@@ -1,3 +1,4 @@
+import datetime
 from collections.abc import Iterable
 from typing import Any
 
@@ -10,7 +11,7 @@ import cognite.neat.rules.issues.spreadsheet
 from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import DMSImporter
 from cognite.neat.rules.models._rules._types import ViewEntity
-from cognite.neat.rules.models._rules.base import SheetList
+from cognite.neat.rules.models._rules.base import SchemaCompleteness, SheetList
 from cognite.neat.rules.models._rules.dms_architect_rules import (
     DMSContainer,
     DMSMetadata,
@@ -1204,3 +1205,61 @@ class TestDMSRules:
         info_rules = alice_rules.as_information_architect_rules()
 
         assert isinstance(info_rules, InformationRules)
+
+    def test_dump_skip_default_space_and_version(self) -> None:
+        dms_rules = DMSRules(
+            metadata=DMSMetadata(
+                schema_="complete",
+                space="my_space",
+                external_id="my_data_model",
+                version="1",
+                creator=["Anders"],
+                created="2024-03-16",
+                updated="2024-03-16",
+            ),
+            properties=SheetList[DMSProperty](
+                data=[
+                    DMSProperty(
+                        class_="WindFarm",
+                        property_="name",
+                        value_type="text",
+                        container="Asset",
+                        container_property="name",
+                        view="WindFarm",
+                        view_property="name",
+                    ),
+                ]
+            ),
+            views=SheetList[DMSView](data=[DMSView(view="WindFarm", class_="WindFarm")]),
+            containers=SheetList[DMSContainer](data=[DMSContainer(container="Asset", class_="Asset")]),
+        )
+        expected_dump = {
+            "metadata": {
+                "role": "DMS Architect",
+                "schema_": SchemaCompleteness.complete,
+                "space": "my_space",
+                "external_id": "my_data_model",
+                "creator": "Anders",
+                "created": datetime.datetime(2024, 3, 16),
+                "updated": datetime.datetime(2024, 3, 16),
+                "version": "1",
+                "default_view_version": "1",
+            },
+            "properties": [
+                {
+                    "class_": "WindFarm",
+                    "property_": "name",
+                    "value_type": "text",
+                    "container": "Asset",
+                    "container_property": "name",
+                    "view": "WindFarm",
+                    "view_property": "name",
+                }
+            ],
+            "views": [{"view": "WindFarm", "class_": "WindFarm"}],
+            "containers": [{"container": "Asset", "class_": "Asset"}],
+        }
+
+        actual_dump = dms_rules.model_dump(exclude_none=True, exclude_unset=True, exclude_defaults=True)
+
+        assert actual_dump == expected_dump
