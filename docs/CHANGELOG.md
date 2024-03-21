@@ -15,6 +15,12 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.68.3] - 20-03-24
+### Fixed
+- returned functionality that was accidentally removed in 0.68.1 release.
+- removed excessive logging for workflow state endpoint.
+- gracefull handling of transformations that do not return any data.
+
 ## [0.68.2] - 21-03-24
 ### Added
 

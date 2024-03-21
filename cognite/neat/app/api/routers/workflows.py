@@ -37,7 +37,6 @@ def get_workflow_stats(
 ) -> WorkflowFullStateReport | None | dict[str, str]:
     if NEAT_APP.workflow_manager is None:
         return {"error": "NeatApp is not initialized"}
-    logging.info("Hit the get_workflow_stats endpoint")
     workflow = NEAT_APP.workflow_manager.get_workflow(workflow_name)
     if workflow is None:
         raise HTTPException(status_code=404, detail="workflow not found")

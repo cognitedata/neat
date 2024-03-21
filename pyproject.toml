@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cognite-neat"
-version = "0.68.2"
+version = "0.68.3"
 readme = "README.md"
 description = "Knowledge graph transformation"
 authors = [
