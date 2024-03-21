@@ -5,7 +5,7 @@ from collections import defaultdict
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 from rdflib import Namespace
 
 import cognite.neat.rules.issues.spreadsheet
@@ -210,6 +210,12 @@ class InformationRules(RuleModel):
     properties: SheetList[InformationProperty] = Field(alias="Properties")
     classes: SheetList[InformationClass] = Field(alias="Classes")
     prefixes: dict[str, Namespace] = Field(default_factory=lambda: PREFIXES.copy())
+
+    @field_validator("prefixes", mode="before")
+    def parse_str(cls, values: Any) -> Any:
+        if isinstance(values, dict):
+            return {key: Namespace(value) if isinstance(value, str) else value for key, value in values.items()}
+        return values
 
     @model_validator(mode="after")
     def update_entities_prefix(self) -> Self:
