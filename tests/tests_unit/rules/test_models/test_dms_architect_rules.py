@@ -1209,7 +1209,7 @@ class TestDMSRules:
     def test_dump_skip_default_space_and_version(self) -> None:
         dms_rules = DMSRules(
             metadata=DMSMetadata(
-                schema_="complete",
+                schema_="partial",
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -1230,13 +1230,17 @@ class TestDMSRules:
                     ),
                 ]
             ),
-            views=SheetList[DMSView](data=[DMSView(view="WindFarm", class_="WindFarm")]),
-            containers=SheetList[DMSContainer](data=[DMSContainer(container="Asset", class_="Asset")]),
+            views=SheetList[DMSView](
+                data=[DMSView(view="WindFarm", class_="WindFarm", implements=["Sourceable", "Describable"])]
+            ),
+            containers=SheetList[DMSContainer](
+                data=[DMSContainer(container="Asset", class_="Asset", constraint=["Sourceable", "Describable"])]
+            ),
         )
         expected_dump = {
             "metadata": {
                 "role": "DMS Architect",
-                "schema_": SchemaCompleteness.complete,
+                "schema_": SchemaCompleteness.partial,
                 "space": "my_space",
                 "external_id": "my_data_model",
                 "creator": "Anders",
@@ -1256,8 +1260,8 @@ class TestDMSRules:
                     "view_property": "name",
                 }
             ],
-            "views": [{"view": "WindFarm", "class_": "WindFarm"}],
-            "containers": [{"container": "Asset", "class_": "Asset"}],
+            "views": [{"view": "WindFarm", "class_": "WindFarm", "implements": "Sourceable,Describable"}],
+            "containers": [{"container": "Asset", "class_": "Asset", "constraints": "Sourceable,Describable"}],
         }
 
         actual_dump = dms_rules.model_dump(exclude_none=True, exclude_unset=True, exclude_defaults=True)
