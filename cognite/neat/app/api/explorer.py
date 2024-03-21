@@ -16,10 +16,10 @@ from cognite.neat.app.api.utils.logging import EndpointFilter
 app = FastAPI(title="Neat", lifespan=lifespan)
 
 # Define excluded endpoints
-excluded_endpoints = ["/api/workflow/stats"]
+EXCLUDED_ENDPOINTS = ["/api/workflow/stats"]
 
 # Add filter to the logger
-logging.getLogger("uvicorn.access").addFilter(EndpointFilter(excluded_endpoints))
+logging.getLogger("uvicorn.access").addFilter(EndpointFilter(EXCLUDED_ENDPOINTS))
 
 
 origins = [
