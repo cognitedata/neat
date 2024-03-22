@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.68.4] - 22-03-24
+### Fixed
+- remove_namespace missed check weather namespace is of actual HTTP type
+
+
 ## [0.68.3] - 20-03-24
 ### Fixed
 - returned functionality that was accidentally removed in 0.68.1 release.
