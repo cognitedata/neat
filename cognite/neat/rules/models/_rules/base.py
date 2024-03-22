@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import math
 import sys
+import types
 from collections.abc import Callable, Iterator
 from functools import wraps
 from typing import Any, ClassVar, Generic, TypeAlias, TypeVar
@@ -145,6 +146,42 @@ class RuleModel(BaseModel):
     def mandatory_fields(cls, use_alias=False) -> set[str]:
         """Returns a set of mandatory fields for the model."""
         return _get_required_fields(cls, use_alias)
+
+    @classmethod
+    def sheets(cls, by_alias: bool = False) -> list[str]:
+        """Returns a list of sheet names for the model."""
+        return [
+            (field.alias or field_name) if by_alias else field_name
+            for field_name, field in cls.model_fields.items()
+            if field_name != "validators_to_skip"
+        ]
+
+    @classmethod
+    def headers_by_sheet(cls, by_alias: bool = False) -> dict[str, list[str]]:
+        """Returns a list of headers for the model."""
+        headers_by_sheet: dict[str, list[str]] = {}
+        for field_name, field in cls.model_fields.items():
+            if field_name == "validators_to_skip":
+                continue
+            sheet_name = (field.alias or field_name) if by_alias else field_name
+            annotation = field.annotation
+            if isinstance(annotation, types.UnionType):
+                annotation = annotation.__args__[0]
+
+            if isinstance(annotation, type) and issubclass(annotation, SheetList):
+                # We know that this is a SheetList, so we can safely access the annotation
+                # which is the concrete type of the SheetEntity.
+                model_fields = annotation.model_fields["data"].annotation.__args__[0].model_fields  # type: ignore[union-attr]
+            elif isinstance(annotation, type) and issubclass(annotation, BaseModel):
+                model_fields = annotation.model_fields
+            else:
+                raise ValueError(f"Unsupported field type {field.annotation}")
+            headers_by_sheet[sheet_name] = [
+                (field.alias or field_name) if by_alias else field_name
+                for field_name, field in model_fields.items()
+                if field_name != "validators_to_skip"
+            ]
+        return headers_by_sheet
 
 
 class URL(BaseModel):

@@ -1,8 +1,7 @@
 import itertools
-import types
 from pathlib import Path
 from types import GenericAlias
-from typing import Any, ClassVar, Literal, cast, get_args
+from typing import Any, ClassVar, Literal, get_args
 
 from openpyxl import Workbook
 from openpyxl.cell import MergedCell
@@ -74,39 +73,16 @@ class ExcelExporter(BaseExporter[Workbook]):
             for cell in metadata_sheet["A"]:
                 cell.font = Font(bold=True, size=12)
 
-        field_by_sheet_name = {field.alias or field_name: field for field_name, field in rules.model_fields.items()}
-        for sheet_name in ["Properties", "Classes", "Views", "Containers"]:
-            if sheet_name not in field_by_sheet_name:
+        for sheet_name, headers in rules.headers_by_sheet(by_alias=True).items():
+            if sheet_name == "Metadata":
                 continue
             sheet = workbook.create_sheet(sheet_name)
-            rows = dumped_rules.get(sheet_name)
-            if rows is None:
-                continue
-            field_ = field_by_sheet_name[sheet_name]
 
-            sheet_list_type = field_.annotation
-            if isinstance(sheet_list_type, types.UnionType):
-                sheet_list = sheet_list_type.__args__[0]
-            else:
-                sheet_list = sheet_list_type
-
-            try:
-                annotation = sheet_list.model_fields["data"].annotation  # type: ignore[union-attr]
-            except Exception as e:
-                raise ValueError(f"Expected {sheet_name} to have a 'data' field") from e
-
-            item_cls = self._get_item_class(cast(GenericAlias, annotation))
-            skip = {"validators_to_skip"}
-            headers = [
-                field.alias or field_name
-                for field_name, field in item_cls.model_fields.items()
-                if field_name not in skip
-            ]
             # Reorder such that the first column is class + the first field of the subclass
             # of sheet entity. This is to make the properties/classes/views/containers sheet more readable.
             # For example, for the properties these that means class, property, name, description
             # instead of class, name, description, property
-            move = len(SheetEntity.model_fields) - len(skip)  # -1 is for the class field
+            move = len(SheetEntity.model_fields) - 1  # -1 is for the class field
             headers = headers[:1] + headers[move : move + 1] + headers[1:move] + headers[move + 1 :]
 
             main_header = self._main_header_by_sheet_name[sheet_name]
@@ -118,7 +94,7 @@ class ExcelExporter(BaseExporter[Workbook]):
             fill_color = next(fill_colors)
             last_class: str | None = None
             item: dict[str, Any]
-            for item in rows:
+            for item in dumped_rules.get(sheet_name, []):
                 row = list(item.values())
                 class_ = row[0]
 
