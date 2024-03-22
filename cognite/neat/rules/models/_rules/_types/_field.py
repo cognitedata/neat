@@ -239,7 +239,7 @@ def _semantic_value_type_before_validator(value: Any) -> Any:
 
 def _semantic_value_type_serializer(value: Any) -> str:
     if isinstance(value, ClassEntity):
-        return value.id
+        return value.versioned_id
     elif isinstance(value, XSDValueType):
         return value.suffix
     else:
