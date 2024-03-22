@@ -74,7 +74,7 @@ class ExcelExporter(BaseExporter[Workbook]):
                 cell.font = Font(bold=True, size=12)
 
         for sheet_name, headers in rules.headers_by_sheet(by_alias=True).items():
-            if sheet_name == "Metadata":
+            if sheet_name in ("Metadata", "prefixes"):
                 continue
             sheet = workbook.create_sheet(sheet_name)
 
@@ -94,7 +94,7 @@ class ExcelExporter(BaseExporter[Workbook]):
             fill_color = next(fill_colors)
             last_class: str | None = None
             item: dict[str, Any]
-            for item in dumped_rules.get(sheet_name, []):
+            for item in dumped_rules.get(sheet_name) or []:
                 row = list(item.values())
                 class_ = row[0]
 

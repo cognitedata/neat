@@ -175,7 +175,7 @@ class RuleModel(BaseModel):
             elif isinstance(annotation, type) and issubclass(annotation, BaseModel):
                 model_fields = annotation.model_fields
             else:
-                raise ValueError(f"Unsupported field type {field.annotation}")
+                model_fields = {}
             headers_by_sheet[sheet_name] = [
                 (field.alias or field_name) if by_alias else field_name
                 for field_name, field in model_fields.items()
