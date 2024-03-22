@@ -12,6 +12,7 @@ import pandas as pd
 from cognite.client import ClientConfig, CogniteClient
 from cognite.client.credentials import CredentialProvider, OAuthClientCredentials, OAuthInteractive, Token
 from cognite.client.exceptions import CogniteDuplicatedError, CogniteReadTimeout
+from pydantic import HttpUrl, TypeAdapter, ValidationError
 from pydantic_core import ErrorDetails
 from pyparsing import Any
 from rdflib import Literal, Namespace
@@ -112,10 +113,15 @@ def remove_namespace(
     else:
         raise TypeError(f"URI must be of type URIRef or str, got {type(URI)}")
 
-    output = tuple(
-        u.split(special_separator if special_separator in u else ("#" if "#" in u else "/"))[-1] for u in uris
-    )
-    return output if len(output) > 1 else output[0]
+    output = []
+    for u in uris:
+        try:
+            _ = TypeAdapter(HttpUrl).validate_python(u)
+            output.append(u.split(special_separator if special_separator in u else "#" if "#" in u else "/")[-1])
+        except ValidationError:
+            output.append(str(u))
+
+    return tuple(output) if len(output) > 1 else output[0]
 
 
 def get_namespace(URI: URIRef, special_separator: str = "#_") -> str:
