@@ -237,11 +237,20 @@ def _semantic_value_type_before_validator(value: Any) -> Any:
         return ClassEntity.from_raw(value)
 
 
+def _semantic_value_type_serializer(value: Any) -> str:
+    if isinstance(value, ClassEntity):
+        return value.versioned_id
+    elif isinstance(value, XSDValueType):
+        return value.suffix
+    else:
+        return str(value)
+
+
 SemanticValueType = Annotated[
     XSDValueType | ClassEntity,
     BeforeValidator(_semantic_value_type_before_validator),
     PlainSerializer(
-        lambda v: v.versioned_id,
+        _semantic_value_type_serializer,
         return_type=str,
         when_used="unless-none",
     ),
