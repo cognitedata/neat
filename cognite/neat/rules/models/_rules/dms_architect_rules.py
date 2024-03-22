@@ -542,9 +542,7 @@ class DMSRules(BaseRules):
             containers.append(dumped)
 
         return {
-            "Metadata"
-            if info.by_alias
-            else "metadata": {"role": self.metadata.role.value, **self.metadata.model_dump(**kwargs)},
+            "Metadata" if info.by_alias else "metadata": self.metadata.model_dump(**kwargs),
             "Properties" if info.by_alias else "properties": properties,
             "Views" if info.by_alias else "views": views,
             "Containers" if info.by_alias else "containers": containers,

@@ -6,12 +6,12 @@ from __future__ import annotations
 
 import math
 import sys
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from functools import wraps
 from typing import Any, ClassVar, Generic, TypeAlias, TypeVar
 
 import pandas as pd
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl, constr, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, constr, field_validator, model_serializer, model_validator
 from pydantic.fields import FieldInfo
 
 from cognite.neat.rules.models._rules._types import ClassType
@@ -170,6 +170,10 @@ class BaseMetadata(RuleModel):
     def mandatory_fields(cls, use_alias=False) -> set[str]:
         """Returns a set of mandatory fields for the model."""
         return _get_required_fields(cls, use_alias)
+
+    @model_serializer(mode="wrap")
+    def include_role(self, serializer: Callable) -> dict:
+        return {"role": self.role.value, **serializer(self)}
 
 
 class BaseRules(RuleModel):
