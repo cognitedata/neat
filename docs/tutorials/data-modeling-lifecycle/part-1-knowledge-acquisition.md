@@ -1,8 +1,5 @@
 # Data Modeling Lifecycle through Expert Elicitation: Building an Enterprise Data Model
 
-!!! warning annotate "Warning"
-    This tutorial is a work in progress and is not yet complete.
-
 This tutorial demonstrates the usage of `neat` through out the entire data modeling lifecycle producing an Enterprise Data Model in Cognite Data Fusion (CDF).
 The data modeling lifecycle is based on the so-called [Expert Elicitation](https://en.wikipedia.org/wiki/Expert_elicitation), and represents the recommended way of building enterprise data models.
 
