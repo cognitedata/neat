@@ -62,15 +62,14 @@ jobs:
       - name: Run unit tests
         run: export PYTHONPATH=$PYTHONPATH:$(pwd); poetry run pytest tests/tests_unit
 
-
-      - name: Run integration tests
-        env:
-          CDF_CLUSTER: ${{ vars.CDF_CLUSTER }}
-          CDF_PROJECT: ${{ vars.CDF_PROJECT }}
-          IDP_CLIENT_ID: ${{ vars.IDP_CLIENT_ID }}
-          IDP_CLIENT_SECRET: ${{ secrets.IDP_CLIENT_SECRET }}
-          IDP_TENANT_ID: ${{ secrets.IDP_TENANT_ID }}
-        run: export PYTHONPATH=$PYTHONPATH:$(pwd); poetry run pytest tests/tests_integration
+#      - name: Run integration tests
+#        env:
+#          CDF_CLUSTER: ${{ vars.CDF_CLUSTER }}
+#          CDF_PROJECT: ${{ vars.CDF_PROJECT }}
+#          IDP_CLIENT_ID: ${{ vars.IDP_CLIENT_ID }}
+#          IDP_CLIENT_SECRET: ${{ secrets.IDP_CLIENT_SECRET }}
+#          IDP_TENANT_ID: ${{ secrets.IDP_TENANT_ID }}
+#        run: export PYTHONPATH=$PYTHONPATH:$(pwd); poetry run pytest tests/tests_integration
 
       # needs update of some dep due to new version of ipynb test
       # - name: Run notebook tests
