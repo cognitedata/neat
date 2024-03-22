@@ -292,8 +292,8 @@ class InformationRules(RuleModel):
         field_names = ["Class"] if info.by_alias else ["class_"]
         classes = []
         parent_name = "Parent Class" if info.by_alias else "parent"
-        for prop in self.properties:
-            dumped = prop.model_dump(**kwargs)
+        for cls in self.classes:
+            dumped = cls.model_dump(**kwargs)
             for field_name in field_names:
                 if value := dumped.get(field_name):
                     dumped[field_name] = value.removeprefix(default_prefix)
