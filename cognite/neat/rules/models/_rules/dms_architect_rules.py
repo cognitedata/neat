@@ -11,8 +11,8 @@ from cognite.client.data_classes.data_modeling import PropertyType as CognitePro
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex
 from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 from cognite.client.data_classes.data_modeling.views import SingleReverseDirectRelationApply, ViewPropertyApply
-from pydantic import Field, field_validator, model_validator
-from pydantic_core.core_schema import ValidationInfo
+from pydantic import Field, field_validator, model_serializer, model_validator
+from pydantic_core.core_schema import SerializationInfo, ValidationInfo
 from rdflib import Namespace
 
 import cognite.neat.rules.issues.spreadsheet
@@ -488,6 +488,65 @@ class DMSRules(BaseRules):
         if errors:
             raise issues.MultiValueError(errors)
         return self
+
+    @model_serializer(mode="plain", when_used="always")
+    def dms_rules_serialization(self, info: SerializationInfo) -> dict[str, Any]:
+        kwargs = vars(info)
+        default_space = f"{self.metadata.space}:"
+        default_version = f"version={self.metadata.default_view_version}"
+        default_version_wrapped = f"({default_version})"
+        properties = []
+        field_names = (
+            ["Class", "View", "Value Type", "Container"]
+            if info.by_alias
+            else ["class_", "view", "value_type", "container"]
+        )
+        value_type_name = "Value Type" if info.by_alias else "value_type"
+        for prop in self.properties:
+            dumped = prop.model_dump(**kwargs)
+            for field_name in field_names:
+                if value := dumped.get(field_name):
+                    dumped[field_name] = value.removeprefix(default_space).removesuffix(default_version_wrapped)
+            # Value type can have a property as well
+            dumped[value_type_name] = dumped[value_type_name].replace(default_version, "")
+            properties.append(dumped)
+
+        views = []
+        field_names = ["Class", "View", "Implements"] if info.by_alias else ["class_", "view", "implements"]
+        implements_name = "Implements" if info.by_alias else "implements"
+        for view in self.views:
+            dumped = view.model_dump(**kwargs)
+            for field_name in field_names:
+                if value := dumped.get(field_name):
+                    dumped[field_name] = value.removeprefix(default_space).removesuffix(default_version_wrapped)
+            if value := dumped.get(implements_name):
+                dumped[implements_name] = ",".join(
+                    parent.strip().removeprefix(default_space).removesuffix(default_version_wrapped)
+                    for parent in value.split(",")
+                )
+            views.append(dumped)
+
+        containers = []
+        field_names = ["Class", "Container"] if info.by_alias else ["class_", "container"]
+        constraint_name = "Constraint" if info.by_alias else "constraint"
+        for container in self.containers or []:
+            dumped = container.model_dump(**kwargs)
+            for field_name in field_names:
+                if value := dumped.get(field_name):
+                    dumped[field_name] = value.removeprefix(default_space).removesuffix(default_version_wrapped)
+                if value := dumped.get(constraint_name):
+                    dumped[constraint_name] = ",".join(
+                        constraint.strip().removeprefix(default_space).removesuffix(default_version_wrapped)
+                        for constraint in value.split(",")
+                    )
+            containers.append(dumped)
+
+        return {
+            "Metadata" if info.by_alias else "metadata": self.metadata.model_dump(**kwargs),
+            "Properties" if info.by_alias else "properties": properties,
+            "Views" if info.by_alias else "views": views,
+            "Containers" if info.by_alias else "containers": containers,
+        }
 
     def as_schema(
         self, standardize_casing: bool = True, include_pipeline: bool = False, instance_space: str | None = None

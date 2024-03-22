@@ -1,17 +1,17 @@
 """This module contains the definition of `TransformationRules` pydantic model and all
 its sub-models and validators.
 """
-
 from __future__ import annotations
 
 import math
 import sys
-from collections.abc import Iterator
+import types
+from collections.abc import Callable, Iterator
 from functools import wraps
 from typing import Any, ClassVar, Generic, TypeAlias, TypeVar
 
 import pandas as pd
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl, constr, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, constr, field_validator, model_serializer, model_validator
 from pydantic.fields import FieldInfo
 
 from cognite.neat.rules.models._rules._types import ClassType
@@ -146,6 +146,48 @@ class RuleModel(BaseModel):
         """Returns a set of mandatory fields for the model."""
         return _get_required_fields(cls, use_alias)
 
+    @classmethod
+    def sheets(cls, by_alias: bool = False) -> list[str]:
+        """Returns a list of sheet names for the model."""
+        return [
+            (field.alias or field_name) if by_alias else field_name
+            for field_name, field in cls.model_fields.items()
+            if field_name != "validators_to_skip"
+        ]
+
+    @classmethod
+    def headers_by_sheet(cls, by_alias: bool = False) -> dict[str, list[str]]:
+        """Returns a list of headers for the model."""
+        headers_by_sheet: dict[str, list[str]] = {}
+        for field_name, field in cls.model_fields.items():
+            if field_name == "validators_to_skip":
+                continue
+            sheet_name = (field.alias or field_name) if by_alias else field_name
+            annotation = field.annotation
+
+            if isinstance(annotation, types.UnionType):
+                annotation = annotation.__args__[0]
+
+            try:
+                if isinstance(annotation, type) and issubclass(annotation, SheetList):
+                    # We know that this is a SheetList, so we can safely access the annotation
+                    # which is the concrete type of the SheetEntity.
+                    model_fields = annotation.model_fields["data"].annotation.__args__[0].model_fields  # type: ignore[union-attr]
+                elif isinstance(annotation, type) and issubclass(annotation, BaseModel):
+                    model_fields = annotation.model_fields
+                else:
+                    model_fields = {}
+            except TypeError:
+                # Python 3.10 raises TypeError: issubclass() arg 1 must be a class
+                # when calling issubclass(annotation, SheetList) with the dict annotation
+                model_fields = {}
+            headers_by_sheet[sheet_name] = [
+                (field.alias or field_name) if by_alias else field_name
+                for field_name, field in model_fields.items()
+                if field_name != "validators_to_skip"
+            ]
+        return headers_by_sheet
+
 
 class URL(BaseModel):
     url: HttpUrl
@@ -170,6 +212,10 @@ class BaseMetadata(RuleModel):
     def mandatory_fields(cls, use_alias=False) -> set[str]:
         """Returns a set of mandatory fields for the model."""
         return _get_required_fields(cls, use_alias)
+
+    @model_serializer(mode="wrap")
+    def include_role(self, serializer: Callable) -> dict:
+        return {"role": self.role.value, **serializer(self)}
 
 
 class BaseRules(RuleModel):

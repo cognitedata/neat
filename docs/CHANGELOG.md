@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.68.5] - 22-03-24
+### Improved
+- `ExcelExporter` and `YAMLExporter` now skips the default spaces and version when exporting rules.
+
 ## [0.68.4] - 22-03-24
 ### Fixed
 - remove_namespace missed check weather namespace is of actual HTTP type
