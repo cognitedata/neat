@@ -3,7 +3,6 @@ its sub-models and validators.
 """
 from __future__ import annotations
 
-import inspect
 import math
 import sys
 import types
@@ -169,14 +168,18 @@ class RuleModel(BaseModel):
             if isinstance(annotation, types.UnionType):
                 annotation = annotation.__args__[0]
 
-            is_class = inspect.isclass(annotation)
-            if is_class and isinstance(annotation, type) and issubclass(annotation, SheetList):
-                # We know that this is a SheetList, so we can safely access the annotation
-                # which is the concrete type of the SheetEntity.
-                model_fields = annotation.model_fields["data"].annotation.__args__[0].model_fields  # type: ignore[union-attr]
-            elif is_class and isinstance(annotation, type) and issubclass(annotation, BaseModel):
-                model_fields = annotation.model_fields
-            else:
+            try:
+                if isinstance(annotation, type) and issubclass(annotation, SheetList):
+                    # We know that this is a SheetList, so we can safely access the annotation
+                    # which is the concrete type of the SheetEntity.
+                    model_fields = annotation.model_fields["data"].annotation.__args__[0].model_fields  # type: ignore[union-attr]
+                elif isinstance(annotation, type) and issubclass(annotation, BaseModel):
+                    model_fields = annotation.model_fields
+                else:
+                    model_fields = {}
+            except TypeError:
+                # Python 3.10 raises TypeError: issubclass() arg 1 must be a class
+                # when calling issubclass(annotation, SheetList) with the dict annotation
                 model_fields = {}
             headers_by_sheet[sheet_name] = [
                 (field.alias or field_name) if by_alias else field_name
