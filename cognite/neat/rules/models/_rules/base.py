@@ -1,9 +1,9 @@
 """This module contains the definition of `TransformationRules` pydantic model and all
 its sub-models and validators.
 """
-
 from __future__ import annotations
 
+import inspect
 import math
 import sys
 import types
@@ -165,14 +165,16 @@ class RuleModel(BaseModel):
                 continue
             sheet_name = (field.alias or field_name) if by_alias else field_name
             annotation = field.annotation
+
             if isinstance(annotation, types.UnionType):
                 annotation = annotation.__args__[0]
 
-            if isinstance(annotation, type) and issubclass(annotation, SheetList):
+            is_class = inspect.isclass(annotation)
+            if is_class and isinstance(annotation, type) and issubclass(annotation, SheetList):
                 # We know that this is a SheetList, so we can safely access the annotation
                 # which is the concrete type of the SheetEntity.
                 model_fields = annotation.model_fields["data"].annotation.__args__[0].model_fields  # type: ignore[union-attr]
-            elif isinstance(annotation, type) and issubclass(annotation, BaseModel):
+            elif is_class and isinstance(annotation, type) and issubclass(annotation, BaseModel):
                 model_fields = annotation.model_fields
             else:
                 model_fields = {}
