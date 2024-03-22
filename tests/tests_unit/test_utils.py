@@ -1,7 +1,7 @@
 import pytest
 from cognite.client.exceptions import CogniteDuplicatedError, CogniteReadTimeout
 
-from cognite.neat.utils.utils import retry_decorator
+from cognite.neat.utils.utils import remove_namespace, retry_decorator
 
 
 def test_retry_decorator_t1():
@@ -74,3 +74,11 @@ def test_retry_decorator_t5():
             raise Exception("test5")
 
     timeout_test()
+
+
+def test_remove_namespace():
+    assert remove_namespace(
+        "http://www.example.org/index.html#section2", "http://www.example.org/index.html#section3"
+    ) == ("section2", "section3")
+    assert remove_namespace("www.example.org/index.html#section2") == "www.example.org/index.html#section2"
+    assert remove_namespace("all/hope/is#lost") == "all/hope/is#lost"
