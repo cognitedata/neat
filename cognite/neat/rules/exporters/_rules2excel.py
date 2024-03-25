@@ -77,6 +77,9 @@ class ExcelExporter(BaseExporter[Workbook]):
 
         self._write_sheets(workbook, dumped_rules, rules, is_reference=rules.is_reference)
 
+        if rules.is_reference:
+            self._write_metadata_sheet(workbook, dumped_rules["Metadata"], is_reference=True)
+
         if self._styling_level > 0:
             self._adjust_column_widths(workbook)
 
@@ -144,8 +147,11 @@ class ExcelExporter(BaseExporter[Workbook]):
                 for cell in sheet["2"]:
                     cell.font = Font(bold=True, size=14)
 
-    def _write_metadata_sheet(self, workbook: Workbook, metadata: dict[str, Any]):
-        metadata_sheet = workbook.create_sheet("Metadata")
+    def _write_metadata_sheet(self, workbook: Workbook, metadata: dict[str, Any], is_reference: bool = False) -> None:
+        if is_reference:
+            metadata_sheet = workbook.create_sheet("ReferenceMetadata")
+        else:
+            metadata_sheet = workbook.create_sheet("Metadata")
         for key, value in metadata.items():
             metadata_sheet.append([key, value])
 
