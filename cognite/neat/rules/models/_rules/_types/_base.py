@@ -211,7 +211,7 @@ class ViewEntity(Entity):
 
     @classmethod
     def from_id(cls, view_id: ViewId) -> Self:
-        return ViewEntity(prefix=view_id.space, suffix=view_id.external_id, version=view_id.version)
+        return cls(prefix=view_id.space, suffix=view_id.external_id, version=view_id.version)
 
     def as_id(
         self, default_space: str | None = None, default_version: str | None = None, standardize_casing: bool = True
