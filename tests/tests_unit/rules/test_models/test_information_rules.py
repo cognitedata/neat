@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 from cognite.neat.rules.models._rules import DMSRules
+from cognite.neat.rules.models._rules._types import XSD_VALUE_TYPE_MAPPINGS, XSDValueType
 from cognite.neat.rules.models._rules.information_rules import InformationRules, _InformationRulesConverter
 from cognite.neat.utils.spreadsheet import read_spreadsheet
 from tests.config import DOC_RULES
@@ -19,6 +20,52 @@ def david_spreadsheet() -> dict[str, dict[str, Any]]:
         "Properties": read_spreadsheet(excel_file, "Properties", expected_headers=["Property"]),
         "Classes": read_spreadsheet(excel_file, "Classes", expected_headers=["Class"]),
     }
+
+
+def case_insensitive_value_types():
+    yield pytest.param(
+        {
+            "Metadata": {
+                "role": "information architect",
+                "schema": "complete",
+                "creator": "Jon, Emma, David",
+                "namespace": "http://purl.org/cognite/power2consumer",
+                "prefix": "power",
+                "created": datetime(2024, 2, 9, 0, 0),
+                "updated": datetime(2024, 2, 9, 0, 0),
+                "version": "0.1.0",
+                "title": "Power to Consumer Data Model",
+                "license": "CC-BY 4.0",
+                "rights": "Free for use",
+            },
+            "Classes": [
+                {
+                    "Class": "GeneratingUnit",
+                    "Description": None,
+                    "Parent Class": None,
+                    "Source": "http://www.iec.ch/TC57/CIM#GeneratingUnit",
+                    "Match": "exact",
+                }
+            ],
+            "Properties": [
+                {
+                    "Class": "GeneratingUnit",
+                    "Property": "name",
+                    "Description": None,
+                    "Value Type": "StrING",
+                    "Min Count": 1,
+                    "Max Count": 1.0,
+                    "Default": None,
+                    "Source": None,
+                    "MatchType": None,
+                    "Rule Type": None,
+                    "Rule": None,
+                }
+            ],
+        },
+        (XSD_VALUE_TYPE_MAPPINGS["string"]),
+        id="case_insensitive",
+    )
 
 
 def invalid_domain_rules_cases():
@@ -152,6 +199,10 @@ class TestInformationRules:
             InformationRules.model_validate(incomplete_rules)
         errors = e.value.errors()
         assert errors[0]["msg"] == expected_exception
+
+    @pytest.mark.parametrize("rules, expected_exception", list(case_insensitive_value_types()))
+    def test_case_insensitivity(self, rules: dict[str, dict[str, Any]], expected_exception: XSDValueType) -> None:
+        assert InformationRules.model_validate(rules).properties.data[0].value_type == expected_exception
 
     def test_david_as_dms(self, david_spreadsheet: dict[str, dict[str, Any]]) -> None:
         david_rules = InformationRules.model_validate(david_spreadsheet)
