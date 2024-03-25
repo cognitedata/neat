@@ -126,7 +126,7 @@ class TestDMSExporters:
 
         exporter = DMSExporter()
 
-        uploaded = exporter.export_to_cdf(cognite_client, rules, dry_run=True)
+        uploaded = exporter.export_to_cdf(rules, cognite_client, dry_run=True)
         uploaded_by_name = {entity.name: entity for entity in uploaded}
 
         assert uploaded_by_name["containers"].total == len(rules.containers)
@@ -139,7 +139,7 @@ class TestDMSExporters:
 
         exporter = DMSExporter(existing_handling="force")
 
-        uploaded = exporter.export_to_cdf(cognite_client, rules, dry_run=False)
+        uploaded = exporter.export_to_cdf(rules, cognite_client, dry_run=False)
         uploaded_by_name = {entity.name: entity for entity in uploaded}
 
         assert uploaded_by_name["containers"].total == len(rules.containers)
@@ -166,7 +166,7 @@ class TestDMSExporters:
         schema = cast(PipelineSchema, exporter.export(table_example))
 
         # Write Pipeline to CDF
-        uploaded = list(exporter.export_to_cdf(cognite_client, table_example, dry_run=False))
+        uploaded = list(exporter.export_to_cdf(table_example, cognite_client, dry_run=False))
 
         # Verify Raw Tables are written
         assert uploaded
