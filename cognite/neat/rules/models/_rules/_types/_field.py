@@ -233,6 +233,8 @@ def _semantic_value_type_before_validator(value: Any) -> Any:
         return value
     elif value in XSD_VALUE_TYPE_MAPPINGS:
         return XSD_VALUE_TYPE_MAPPINGS[value]
+    elif value.lower() in XSD_VALUE_TYPE_MAPPINGS:
+        return XSD_VALUE_TYPE_MAPPINGS[value.lower()]
     else:
         return ClassEntity.from_raw(value)
 
@@ -259,9 +261,9 @@ SemanticValueType = Annotated[
 CdfValueType = Annotated[
     DMSValueType | ViewPropEntity,
     BeforeValidator(
-        lambda value: DMS_VALUE_TYPE_MAPPINGS[value]
-        if value in DMS_VALUE_TYPE_MAPPINGS
-        else ViewPropEntity.from_raw(value)
+        lambda value: (
+            DMS_VALUE_TYPE_MAPPINGS[value] if value in DMS_VALUE_TYPE_MAPPINGS else ViewPropEntity.from_raw(value)
+        )
     ),
     PlainSerializer(
         lambda v: v.versioned_id if isinstance(v, ViewPropEntity | ViewEntity) else v.dms()._type,
