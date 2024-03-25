@@ -1,6 +1,7 @@
 """This module contains the definition of `TransformationRules` pydantic model and all
 its sub-models and validators.
 """
+
 from __future__ import annotations
 
 import math
@@ -117,6 +118,12 @@ class SchemaCompleteness(StrEnum):
     complete = "complete"
     partial = "partial"
     extended = "extended"
+
+
+class ExtensionCategory(StrEnum):
+    addition = "addition"
+    reshape = "reshape"
+    rebuild = "rebuild"
 
 
 class RoleTypes(StrEnum):

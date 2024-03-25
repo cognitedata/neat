@@ -39,7 +39,7 @@ from ._types import (
     ViewType,
     XSDValueType,
 )
-from .base import BaseMetadata, BaseRules, RoleTypes, SchemaCompleteness, SheetEntity, SheetList
+from .base import BaseMetadata, BaseRules, ExtensionCategory, RoleTypes, SchemaCompleteness, SheetEntity, SheetList
 from .dms_schema import DMSSchema, PipelineSchema
 
 if TYPE_CHECKING:
@@ -62,6 +62,7 @@ del subclasses  # cleanup namespace
 class DMSMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.dms_architect
     schema_: SchemaCompleteness = Field(alias="schema")
+    extension: ExtensionCategory = ExtensionCategory.addition
     space: ExternalIdType
     name: str | None = Field(
         None,
