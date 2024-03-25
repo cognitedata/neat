@@ -32,7 +32,7 @@ from cognite.neat.rules._shared import Rules
 
 
 class GraphExporter(BaseExporter[Graph], ABC):
-    def export_to_file(self, filepath: Path, rules: Rules) -> None:
+    def export_to_file(self, rules: Rules, filepath: Path) -> None:
         self.export(rules).serialize(destination=filepath)
 
 

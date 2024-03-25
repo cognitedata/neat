@@ -47,7 +47,7 @@ class YAMLExporter(BaseExporter[str]):
         self.output = output
         self.output_role = output_role
 
-    def export_to_file(self, filepath: Path, rules: Rules) -> None:
+    def export_to_file(self, rules: Rules, filepath: Path) -> None:
         """Exports transformation rules to YAML/JSON file(s)."""
         if self.files == "single":
             if filepath.suffix != f".{self.output}":

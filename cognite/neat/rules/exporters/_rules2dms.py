@@ -71,7 +71,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
         self.instance_space = instance_space
         self._schema: DMSSchema | None = None
 
-    def export_to_file(self, filepath: Path, rules: Rules) -> None:
+    def export_to_file(self, rules: Rules, filepath: Path) -> None:
         """Export the rules to a file(s).
 
         If the file is a directory, the components will be exported to separate files, otherwise they will be
