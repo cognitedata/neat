@@ -21,7 +21,9 @@ tutorials will focus on all parts of the data modeling lifecycle process, from g
 of existing standards, building an enterprise model, build models for specific use cases, extending existing data
 models. You can follow the tutorial in any order. In addition, you can use
 [User Personas](./user-personas.md) as a lookup to get the structure of the `Acme Corporation` and the user
-personas that will be used in the tutorials.
+personas that will be used in the tutorials. **Note** the tutorials covers a large spectrum of tasks and roles, which
+includes many concepts. It is not intended that a single person should be able to do all the tasks, but rather that
+different people with different roles can work together to achieve the goal of building a data model.
 
 
 - **[Knowledge Acquisition](./part-1-knowledge-acquisition.md)**: In this tutorial, you will learn how to gather information
