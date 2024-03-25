@@ -211,6 +211,7 @@ class InformationRules(RuleModel):
     properties: SheetList[InformationProperty] = Field(alias="Properties")
     classes: SheetList[InformationClass] = Field(alias="Classes")
     prefixes: dict[str, Namespace] = Field(default_factory=lambda: PREFIXES.copy())
+    reference: "InformationRules | None" = Field(None, alias="Reference")
 
     @field_validator("prefixes", mode="before")
     def parse_str(cls, values: Any) -> Any:
