@@ -93,7 +93,6 @@ class DMSImporter(BaseImporter):
                         else:
                             direct_value_type = ViewPropEntity.from_id(prop.source)
 
-                        print(direct_value_type, type(direct_value_type))
                         dms_property = DMSProperty(
                             class_=ClassEntity(prefix=view.space, suffix=view.external_id, version=view.version),
                             property_=prop_id,
