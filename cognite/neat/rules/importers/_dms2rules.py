@@ -35,17 +35,20 @@ class DMSImporter(BaseImporter):
         return cls(DMSSchema.from_model_id(client, data_model_id))
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules:
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None, is_reference: bool = False) -> Rules:
         ...
 
     @overload
     def to_rules(
-        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
+        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None, is_reference: bool = False
     ) -> tuple[Rules | None, IssueList]:
         ...
 
     def to_rules(
-        self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
+        self,
+        errors: Literal["raise", "continue"] = "continue",
+        role: RoleTypes | None = None,
+        is_reference: bool = False,
     ) -> tuple[Rules | None, IssueList] | Rules:
         if role is RoleTypes.domain_expert:
             raise ValueError(f"Role {role} is not supported for DMSImporter")
@@ -151,6 +154,7 @@ class DMSImporter(BaseImporter):
                 data=[DMSContainer.from_container(container) for container in self.schema.containers]
             ),
             views=SheetList[DMSView](data=[DMSView.from_view(view) for view in self.schema.views]),
+            is_reference=is_reference,
         )
         output_rules: Rules
         if role is RoleTypes.information_architect:

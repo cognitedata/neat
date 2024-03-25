@@ -45,17 +45,20 @@ class YAMLImporter(BaseImporter):
         return cls(yaml.safe_load(filepath.read_text()), filepaths=[filepath])
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules:
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None, is_reference: bool = False) -> Rules:
         ...
 
     @overload
     def to_rules(
-        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
+        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None, is_reference: bool = False
     ) -> tuple[Rules | None, IssueList]:
         ...
 
     def to_rules(
-        self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
+        self,
+        errors: Literal["raise", "continue"] = "continue",
+        role: RoleTypes | None = None,
+        is_reference: bool = False,
     ) -> tuple[Rules | None, IssueList] | Rules:
         if any(issue for issue in self._read_issues if isinstance(issue, NeatValidationError)) or not self.raw_data:
             if errors == "raise":
@@ -104,4 +107,4 @@ class YAMLImporter(BaseImporter):
             else:
                 raise issue_list.as_errors()
 
-        return self._to_output(rules, issue_list, errors, role)
+        return self._to_output(rules, issue_list, errors, role, is_reference)

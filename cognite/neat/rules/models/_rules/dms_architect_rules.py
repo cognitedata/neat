@@ -268,6 +268,8 @@ class DMSRules(BaseRules):
     properties: SheetList[DMSProperty] = Field(alias="Properties")
     views: SheetList[DMSView] = Field(alias="Views")
     containers: SheetList[DMSContainer] | None = Field(None, alias="Containers")
+    reference: "DMSRules | None" = Field(None, alias="Reference")
+    is_reference: bool = False
 
     @model_validator(mode="after")
     def set_default_space_and_version(self) -> "DMSRules":
@@ -967,4 +969,5 @@ class _DMSRulesConverter:
             metadata=metadata,
             properties=SheetList[InformationProperty](data=properties),
             classes=SheetList[InformationClass](data=classes),
+            reference=self.dms.reference and self.dms.reference.as_information_architect_rules(),  # type: ignore[arg-type]
         )

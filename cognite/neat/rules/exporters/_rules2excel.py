@@ -76,7 +76,7 @@ class ExcelExporter(BaseExporter[Workbook]):
                 cell.font = Font(bold=True, size=12)
 
         for sheet_name, headers in rules.headers_by_sheet(by_alias=True).items():
-            if sheet_name in ("Metadata", "prefixes"):
+            if sheet_name in ("Metadata", "prefixes", "Reference", "is_reference"):
                 continue
             sheet = workbook.create_sheet(sheet_name)
 
