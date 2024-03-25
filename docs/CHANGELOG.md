@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.68.6] - 25-03-24
+### Improved
+- Input for InformationArchitect XSD value types are now case insensitive.
+
+
 ## [0.68.5] - 22-03-24
 ### Improved
 - `ExcelExporter` and `YAMLExporter` now skips the default spaces and version when exporting rules.
