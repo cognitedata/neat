@@ -4,7 +4,12 @@ from typing import Literal, overload
 
 from cognite.neat.exceptions import wrangle_warnings
 from cognite.neat.rules import exceptions
-from cognite.neat.rules.models.rules import Rules, dms_property_id_compliance_regex, view_id_compliance_regex
+from cognite.neat.rules.models.rules import (
+    Rules,
+    dms_property_id_compliance_regex,
+    value_id_compliance_regex,
+    view_id_compliance_regex,
+)
 
 
 @overload
@@ -85,7 +90,7 @@ def are_entity_names_dms_compliant(
                 flag = False
 
             # expected value type, as it is case sensitive should be ok
-            if not re.match(view_id_compliance_regex, property_.expected_value_type.external_id):
+            if not re.match(value_id_compliance_regex, property_.expected_value_type.external_id):
                 warnings.warn(
                     exceptions.EntityIDNotDMSCompliant(
                         "Value type", property_.expected_value_type.external_id, f"[Properties/Type/{row}]"

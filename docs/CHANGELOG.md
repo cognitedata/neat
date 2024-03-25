@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.68.8] - 25-03-24
+### Fixed
+- Remove harsh regex on Expected Value Types in Rules v1 DMS exporter
+
+
 ## [0.68.7] - 25-03-24
 ### Improved
 - Input for DmsArchitect DMS value types are now case insensitive.
