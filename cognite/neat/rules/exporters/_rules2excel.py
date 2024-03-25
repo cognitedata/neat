@@ -66,19 +66,33 @@ class ExcelExporter(BaseExporter[Workbook]):
         workbook.remove(workbook["Sheet"])
 
         dumped_rules = rules.model_dump(by_alias=True)
+        if rules.is_reference:
+            # Writes empty reference sheets
+            empty: dict[str, Any] = {field_alias: None for field_alias in dumped_rules["Metadata"].keys()}
+            empty["role"] = (self.output_role and self.output_role.value) or rules.metadata.role.value
+            self._write_metadata_sheet(workbook, empty)
+            self._write_sheets(workbook, {}, rules)
+        else:
+            self._write_metadata_sheet(workbook, dumped_rules["Metadata"])
 
-        metadata_sheet = workbook.create_sheet("Metadata")
-        for key, value in dumped_rules["Metadata"].items():
-            metadata_sheet.append([key, value])
+        self._write_sheets(workbook, dumped_rules, rules, is_reference=rules.is_reference)
 
-        if self._styling_level > 1:
-            for cell in metadata_sheet["A"]:
-                cell.font = Font(bold=True, size=12)
+        if rules.is_reference:
+            self._write_metadata_sheet(workbook, dumped_rules["Metadata"], is_reference=True)
 
+        if self._styling_level > 0:
+            self._adjust_column_widths(workbook)
+
+        return workbook
+
+    def _write_sheets(self, workbook: Workbook, dumped_rules: dict[str, Any], rules: Rules, is_reference: bool = False):
         for sheet_name, headers in rules.headers_by_sheet(by_alias=True).items():
             if sheet_name in ("Metadata", "prefixes", "Reference", "is_reference"):
                 continue
-            sheet = workbook.create_sheet(sheet_name)
+            if is_reference:
+                sheet = workbook.create_sheet(f"Ref{sheet_name}")
+            else:
+                sheet = workbook.create_sheet(sheet_name)
 
             # Reorder such that the first column is class + the first field of the subclass
             # of sheet entity. This is to make the properties/classes/views/containers sheet more readable.
@@ -133,9 +147,17 @@ class ExcelExporter(BaseExporter[Workbook]):
                 for cell in sheet["2"]:
                     cell.font = Font(bold=True, size=14)
 
-        if self._styling_level > 0:
-            self._adjust_column_widths(workbook)
-        return workbook
+    def _write_metadata_sheet(self, workbook: Workbook, metadata: dict[str, Any], is_reference: bool = False) -> None:
+        if is_reference:
+            metadata_sheet = workbook.create_sheet("RefMetadata")
+        else:
+            metadata_sheet = workbook.create_sheet("Metadata")
+        for key, value in metadata.items():
+            metadata_sheet.append([key, value])
+
+        if self._styling_level > 1:
+            for cell in metadata_sheet["A"]:
+                cell.font = Font(bold=True, size=12)
 
     @classmethod
     def _get_item_class(cls, annotation: GenericAlias) -> type[SheetEntity]:

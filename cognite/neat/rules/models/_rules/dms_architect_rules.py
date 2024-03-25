@@ -970,4 +970,5 @@ class _DMSRulesConverter:
             properties=SheetList[InformationProperty](data=properties),
             classes=SheetList[InformationClass](data=classes),
             reference=self.dms.reference and self.dms.reference.as_information_architect_rules(),  # type: ignore[arg-type]
+            is_reference=self.dms.is_reference,
         )

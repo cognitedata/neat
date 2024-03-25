@@ -33,3 +33,19 @@ class TestExcelExporter:
         assert "Metadata" in workbook.sheetnames
         assert "Properties" in workbook.sheetnames
         assert "Classes" in workbook.sheetnames
+
+    def test_export_dms_rules_alice_reference(self, alice_rules: DMSRules) -> None:
+        exporter = ExcelExporter(styling="maximal")
+        # Make a copy of the rules to avoid changing the original
+        alice_copy = alice_rules.copy()
+        alice_copy.is_reference = True
+        workbook = exporter.export(alice_copy)
+
+        assert "Metadata" in workbook.sheetnames
+        assert "Containers" in workbook.sheetnames
+        assert "Views" in workbook.sheetnames
+        assert "Properties" in workbook.sheetnames
+
+        assert "RefProperties" in workbook.sheetnames
+        assert "RefContainers" in workbook.sheetnames
+        assert "RefViews" in workbook.sheetnames
