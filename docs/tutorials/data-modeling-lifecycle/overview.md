@@ -2,7 +2,7 @@
 
 !!! warning annotate "Warning"
 
-    These set of tutorials are wok in progress, and there might be minor changes to the completed ones while others
+    This set of tutorials are work in progress, and there might be minor changes to the completed ones while others
     are being developed. We appreciate your understanding and patience.
 
 In this set of tutorials, we will walk you through the data modeling lifecycle and how **NEAT** can assist in the
