@@ -269,6 +269,7 @@ class DMSRules(BaseRules):
     views: SheetList[DMSView] = Field(alias="Views")
     containers: SheetList[DMSContainer] | None = Field(None, alias="Containers")
     reference: "DMSRules | None" = Field(None, alias="Reference")
+    is_reference: bool = False
 
     @model_validator(mode="after")
     def set_default_space_and_version(self) -> "DMSRules":
