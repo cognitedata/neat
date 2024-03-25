@@ -64,21 +64,21 @@ To make good forecasts, Olav needs historical and forecasted weather data. Thus,
 model with new concepts for the weather data. In addition, he needs to add a concept for the forecasted power output
 of the wind turbines.
 
-Olav chose to model the weather data as a `WeatherLocation`. The `WeatherLocation` concept will look
+Olav chose to model the weather data as a `WeatherStation`. The `WeatherStation` concept will look
 as follows:
 
 | Class            | Property              | Value Type   |
 |------------------|-----------------------|--------------|
-| WeatherLocation  | name                  | string       |
-| WeatherLocation  | type                  | string       |
-| WeatherLocation  | source                | string       |
-| WeatherLocation  | geoLocation           | Point        |
-| WeatherLocation  | windSpeed             | timeseries   |
-| WeatherLocation  | windFromDirection     | timeseries   |
-| WeatherLocation  | airTemperature        | timeseries   |
-| WeatherLocation  | airPressureAtSeaLevel | timeseries   |
-| WeatherLocation  | relativeHumidity      | timeseries   |
-| WeatherLocation  | cloudAreaFraction     | timeseries   |
+| WeatherStation  | name                  | string       |
+| WeatherStation  | type                  | string       |
+| WeatherStation  | source                | string       |
+| WeatherStation  | geoLocation           | Point        |
+| WeatherStation  | windSpeed             | timeseries   |
+| WeatherStation  | windFromDirection     | timeseries   |
+| WeatherStation  | airTemperature        | timeseries   |
+| WeatherStation  | airPressureAtSeaLevel | timeseries   |
+| WeatherStation  | relativeHumidity      | timeseries   |
+| WeatherStation  | cloudAreaFraction     | timeseries   |
 
 The advantage of this concept is that it can be used both for historical weather data and forecasted weather data.
 
@@ -88,8 +88,8 @@ The weather observations will be connected to the `WindFarm`:
 |--------------|---------------------|-----------------|-----------|-----------|
 | WindFarm     | name                | string          | 1         | 1         |
 | ...          | ...                 | ...             | ...       | ...       |
-| WindFarm     | weatherForecasts    | WeatherLocation | 0         | Inf       |
-| WindFarm     | weatherObservations | WeatherLocation | 0         | Inf       |
+| WindFarm     | weatherForecasts    | WeatherStation | 0         | Inf       |
+| WindFarm     | weatherObservations | WeatherStation | 0         | Inf       |
 
 The `weatherForecasts` will be used for the forecasted weather data, and the `weatherObservations` will be used for
 the historical weather data.
@@ -145,9 +145,9 @@ Olav has now defined the solution model for the forecasting use case. The next s
 **NEAT** gives him a good out of the box suggestion for how to implement the solution model, but to ensure that the
 model is well implemented Olav asks the DMS solution architect, Alice, to validate the model.
 
-Alice asks Olav a few questions on how he is planning to use the new `ForecastedPowerOutput` and `WeatherLocation`
+Alice asks Olav a few questions on how he is planning to use the new `ForecastedPowerOutput` and `WeatherStation`
 concepts. Based on Olav's answers, Alice suggests that the `name` and `algorithm` in the `ForecastedPowerOutput` should
-be indexed to ensure that the queries are fast. Also for the `WeatherLocation`, Alice suggests that the `name`,
+be indexed to ensure that the queries are fast. Also for the `WeatherStation`, Alice suggests that the `name`,
 `type`, and `source` should be indexed to ensure that the queries are fast.
 
 ## Download Olav's Solution Model
