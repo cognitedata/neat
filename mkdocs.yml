@@ -19,6 +19,8 @@ nav:
       - Data Modeling Lifecycle:
           - Overview: tutorials/data-modeling-lifecycle/overview.md
           - Knowledge Acquisition: tutorials/data-modeling-lifecycle/part-1-knowledge-acquisition.md
+          - Analytic Solution: tutorials/data-modeling-lifecycle/part-2-analytic-solution.md
+          - User Personas: tutorials/data-modeling-lifecycle/user-personas.md
       - Workflows:
           - Overview: tutorials/workflows/overview.md
           - Steps Library: tutorials/workflows/steps-library.md
