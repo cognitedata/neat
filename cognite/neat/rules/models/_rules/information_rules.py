@@ -65,7 +65,7 @@ else:
 class InformationMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.information_architect
     schema_: SchemaCompleteness = Field(alias="schema")
-    extension: ExtensionCategory = Field(default=ExtensionCategory.addition)
+    extension: ExtensionCategory = ExtensionCategory.addition
     prefix: PrefixType
     namespace: NamespaceType
 

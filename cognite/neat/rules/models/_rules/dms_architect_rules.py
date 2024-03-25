@@ -62,7 +62,7 @@ del subclasses  # cleanup namespace
 class DMSMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.dms_architect
     schema_: SchemaCompleteness = Field(alias="schema")
-    extension: ExtensionCategory = Field(default=ExtensionCategory.addition)
+    extension: ExtensionCategory = ExtensionCategory.addition
     space: ExternalIdType
     name: str | None = Field(
         None,
