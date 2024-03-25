@@ -10,7 +10,7 @@ from pydantic import ValidationError
 import cognite.neat.rules.issues.spreadsheet
 from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import DMSImporter
-from cognite.neat.rules.models._rules._types import ViewEntity
+from cognite.neat.rules.models._rules._types import DMS_VALUE_TYPE_MAPPINGS, ViewPropEntity
 from cognite.neat.rules.models._rules.base import SchemaCompleteness, SheetList
 from cognite.neat.rules.models._rules.dms_architect_rules import (
     DMSContainer,
@@ -59,7 +59,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     DMSProperty(
                         class_="WindFarm",
                         property_="WindTurbines",
-                        value_type=ViewEntity(suffix="WindTurbine"),
+                        value_type=ViewPropEntity(suffix="WindTurbine"),
                         relation="multiedge",
                         view="WindFarm",
                         view_property="windTurbines",
@@ -636,7 +636,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                     {
                         "class_": "WindTurbine",
                         "property_": "name",
-                        "value_type": "text",
+                        "value_type": "tEXt",
                         "container": "sp_core:Asset",
                         "container_property": "name",
                         "view": "sp_core:Asset",
@@ -825,7 +825,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                     DMSProperty(
                         class_="Plant",
                         property_="generators",
-                        value_type=ViewEntity(suffix="Generator"),
+                        value_type=ViewPropEntity(suffix="Generator"),
                         relation="multiedge",
                         view="Plant",
                         view_property="generators",
@@ -833,7 +833,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                     DMSProperty(
                         class_="Plant",
                         property_="reservoir",
-                        value_type=ViewEntity(suffix="Reservoir"),
+                        value_type=ViewPropEntity(suffix="Reservoir"),
                         relation="direct",
                         container="Asset",
                         container_property="child",
@@ -1137,6 +1137,8 @@ class TestDMSRules:
     def test_load_valid_rules(self, raw: dict[str, dict[str, Any]], expected_rules: DMSRules) -> None:
         valid_rules = DMSRules.model_validate(raw)
         assert valid_rules.model_dump() == expected_rules.model_dump()
+        # testing case insensitive value types
+        assert valid_rules.properties.data[0].value_type == DMS_VALUE_TYPE_MAPPINGS["text"]
 
     @pytest.mark.parametrize("raw, expected_errors", list(invalid_container_definitions_test_cases()))
     def test_load_inconsistent_container_definitions(

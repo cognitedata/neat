@@ -37,7 +37,7 @@ from ._types import (
     StrListType,
     Undefined,
     VersionType,
-    ViewEntity,
+    ViewPropEntity,
     XSDValueType,
 )
 from .base import BaseMetadata, MatchType, RoleTypes, RuleModel, SchemaCompleteness, SheetEntity, SheetList
@@ -349,10 +349,10 @@ class _InformationRulesConverter:
         views: list[DMSView] = [
             DMSView(
                 class_=cls_.class_,
-                view=ViewEntity(prefix=cls_.class_.prefix, suffix=cls_.class_.suffix, version=cls_.class_.version),
+                view=ViewPropEntity(prefix=cls_.class_.prefix, suffix=cls_.class_.suffix, version=cls_.class_.version),
                 description=cls_.description,
                 implements=[
-                    ViewEntity(prefix=parent.prefix, suffix=parent.suffix, version=parent.version)
+                    ViewPropEntity(prefix=parent.prefix, suffix=parent.suffix, version=parent.version)
                     for parent in cls_.parent or []
                 ],
             )
@@ -363,7 +363,7 @@ class _InformationRulesConverter:
         for class_ in self.information.classes:
             properties: list[DMSProperty] = properties_by_class.get(class_.class_.versioned_id, [])
             if not properties or all(
-                isinstance(prop.value_type, ViewEntity) and prop.relation != "direct" for prop in properties
+                isinstance(prop.value_type, ViewPropEntity) and prop.relation != "direct" for prop in properties
             ):
                 classes_without_properties.add(class_.class_.versioned_id)
 
@@ -407,14 +407,14 @@ class _InformationRulesConverter:
         if isinstance(prop.value_type, XSDValueType):
             value_type = cast(XSDValueType, prop.value_type).dms._type.casefold()  # type: ignore[attr-defined]
         elif isinstance(prop.value_type, ClassEntity):
-            value_type = ViewEntity(
+            value_type = ViewPropEntity(
                 prefix=prop.value_type.prefix, suffix=prop.value_type.suffix, version=prop.value_type.version
             )
         else:
             raise ValueError(f"Unsupported value type: {prop.value_type.type_}")
 
         relation: Literal["direct", "multiedge"] | None = None
-        if isinstance(value_type, ViewEntity):
+        if isinstance(value_type, ViewPropEntity):
             relation = "multiedge" if prop.is_list else "direct"
 
         container: ContainerEntity | None = None
@@ -444,7 +444,7 @@ class _InformationRulesConverter:
                 reference=prop.reference,
                 container=container,
                 container_property=container_property,
-                view=ViewEntity(prefix=prop.class_.prefix, suffix=prop.class_.suffix, version=prop.class_.version),
+                view=ViewPropEntity(prefix=prop.class_.prefix, suffix=prop.class_.suffix, version=prop.class_.version),
                 view_property=prop.property_,
             )
         except ValueError:
