@@ -1,18 +1,18 @@
 # Overview
 
-!!! note annotate "Warning"
+!!! warning annotate "Warning"
 
     These set of tutorials are wok in progress, and there might be minor changes to the completed ones while others
     are being developed. We appreciate your understanding and patience.
 
-In this set of tutorials, we will walk you through the data modeling lifecycle and how ***NEAT** can assist in the
+In this set of tutorials, we will walk you through the data modeling lifecycle and how **NEAT** can assist in the
 different tasks involved in the lifecycle. But first, let's understand what data modeling is and why it is important.
 
 Ultimately, the goal of data modeling is to use data to aid decision-making. To achieve this, a company
 needs to coordinate between multiple different people and departments. A set of data models can be used as
 the common language to share information and provide context for data such as timeseries and documents. The
 data models can then be used as the basis for multiple different applications/solutions/reports that are used to make
-decisions. In four words: **Data modeling is cooperation**.
+decisions. Simply put: **Data modeling is cooperation**.
 
 In this set of tutorials, we will focus on a fictions company, `Acme Corporation`, that works in the Power & Utilities
 industry. You don't need to know anything about the Power & Utilities industry to follow along. The tutorials will
