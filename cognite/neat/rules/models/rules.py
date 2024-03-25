@@ -193,6 +193,9 @@ view_id_compliance_regex = (
     r"Timestamp|JSONObject|Date|Numeric|Boolean|PageInfo|File|Sequence|TimeSeries)$)"
     r"(^[a-zA-Z][a-zA-Z0-9_]{0,253}[a-zA-Z0-9]?$)"
 )
+
+value_id_compliance_regex = r"(^[a-zA-Z][a-zA-Z0-9_]{0,253}[a-zA-Z0-9]?$)"
+
 dms_property_id_compliance_regex = (
     r"(?!^(space|externalId|createdTime|lastUpdatedTime|deletedTime|edge_id|"
     r"node_id|project_id|property_group|seq|tg_table_name|extensions)$)"
