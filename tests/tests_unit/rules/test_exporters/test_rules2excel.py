@@ -46,6 +46,6 @@ class TestExcelExporter:
         assert "Views" in workbook.sheetnames
         assert "Properties" in workbook.sheetnames
 
-        assert "ReferenceProperties" in workbook.sheetnames
-        assert "ReferenceContainers" in workbook.sheetnames
-        assert "ReferenceViews" in workbook.sheetnames
+        assert "RefProperties" in workbook.sheetnames
+        assert "RefContainers" in workbook.sheetnames
+        assert "RefViews" in workbook.sheetnames

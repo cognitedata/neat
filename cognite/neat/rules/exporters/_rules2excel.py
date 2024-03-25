@@ -90,7 +90,7 @@ class ExcelExporter(BaseExporter[Workbook]):
             if sheet_name in ("Metadata", "prefixes", "Reference", "is_reference"):
                 continue
             if is_reference:
-                sheet = workbook.create_sheet(f"Reference{sheet_name}")
+                sheet = workbook.create_sheet(f"Ref{sheet_name}")
             else:
                 sheet = workbook.create_sheet(sheet_name)
 
@@ -149,7 +149,7 @@ class ExcelExporter(BaseExporter[Workbook]):
 
     def _write_metadata_sheet(self, workbook: Workbook, metadata: dict[str, Any], is_reference: bool = False) -> None:
         if is_reference:
-            metadata_sheet = workbook.create_sheet("ReferenceMetadata")
+            metadata_sheet = workbook.create_sheet("RefMetadata")
         else:
             metadata_sheet = workbook.create_sheet("Metadata")
         for key, value in metadata.items():
