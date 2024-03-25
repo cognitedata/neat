@@ -24,17 +24,20 @@ class ExcelImporter(BaseImporter):
         self.filepath = filepath
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules:
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None, is_reference: bool = False) -> Rules:
         ...
 
     @overload
     def to_rules(
-        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
+        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None, is_reference: bool = False
     ) -> tuple[Rules | None, IssueList]:
         ...
 
     def to_rules(
-        self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
+        self,
+        errors: Literal["raise", "continue"] = "continue",
+        role: RoleTypes | None = None,
+        is_reference: bool = False,
     ) -> tuple[Rules | None, IssueList] | Rules:
         issue_list = IssueList(title=f"'{self.filepath.name}'")
         if not self.filepath.exists():
@@ -114,7 +117,7 @@ class ExcelImporter(BaseImporter):
             else:
                 raise issue_list.as_errors()
 
-        return self._to_output(rules, issue_list, errors=errors, role=role)
+        return self._to_output(rules, issue_list, errors=errors, role=role, is_reference=is_reference)
 
 
 class GoogleSheetImporter(BaseImporter):
@@ -123,17 +126,20 @@ class GoogleSheetImporter(BaseImporter):
         self.skiprows = skiprows
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules:
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None, is_reference: bool = False) -> Rules:
         ...
 
     @overload
     def to_rules(
-        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
+        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None, is_reference: bool = False
     ) -> tuple[Rules | None, IssueList]:
         ...
 
     def to_rules(
-        self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
+        self,
+        errors: Literal["raise", "continue"] = "continue",
+        role: RoleTypes | None = None,
+        is_reference: bool = False,
     ) -> tuple[Rules | None, IssueList] | Rules:
         local_import("gspread", "google")
         import gspread  # type: ignore[import]
@@ -150,10 +156,12 @@ class GoogleSheetImporter(BaseImporter):
             raise ValueError(f"Missing mandatory sheets: {missing_sheets}")
 
         if role == RoleTypes.domain_expert:
-            return rules_model.model_validate(sheets)
+            output = rules_model.model_validate(sheets)
         elif role == RoleTypes.information_architect:
-            return rules_model.model_validate(sheets)
+            output = rules_model.model_validate(sheets)
         elif role == RoleTypes.dms_architect:
-            return rules_model.model_validate(sheets)
+            output = rules_model.model_validate(sheets)
         else:
             raise ValueError(f"Role {role} is not valid.")
+
+        return self._to_output(output, IssueList(), errors=errors, role=role, is_reference=is_reference)
