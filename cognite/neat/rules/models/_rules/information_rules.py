@@ -396,6 +396,7 @@ class _InformationRulesConverter:
             ),
             views=SheetList[DMSView](data=views),
             containers=SheetList[DMSContainer](data=containers),
+            reference=self.information.reference and self.information.reference.as_dms_architect_rules(),  # type: ignore[arg-type]
         )
 
     @classmethod
