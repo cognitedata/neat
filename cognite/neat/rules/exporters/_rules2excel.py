@@ -50,7 +50,7 @@ class ExcelExporter(BaseExporter[Workbook]):
         self._styling_level = self.style_options.index(styling)
         self.output_role = output_role
 
-    def export_to_file(self, filepath: Path, rules: Rules) -> None:
+    def export_to_file(self, rules: Rules, filepath: Path) -> None:
         """Exports transformation rules to excel file."""
         data = self.export(rules)
         try:

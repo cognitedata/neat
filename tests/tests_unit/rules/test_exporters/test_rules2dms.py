@@ -15,7 +15,7 @@ class TestDMSExporter:
         schema = exporter.export(alice_rules)
         zipfile_path = tmp_path / "test.zip"
 
-        exporter.export_to_file(zipfile_path, alice_rules)
+        exporter.export_to_file(alice_rules, zipfile_path)
 
         counts = Counter()
         with zipfile.ZipFile(zipfile_path, "r") as zip_ref:

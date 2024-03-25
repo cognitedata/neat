@@ -114,11 +114,11 @@ class RulesToDMS(Step):
         )
         schema_zip = f"{file_name}.zip"
         schema_full_path = output_dir / schema_zip
-        dms_exporter.export_to_file(schema_full_path, input_rules)
+        dms_exporter.export_to_file(input_rules, schema_full_path)
 
         report_lines = ["# DMS Schema Export to CDF\n\n"]
         errors = []
-        for result in dms_exporter.export_to_cdf(client=cdf_client, rules=input_rules, dry_run=dry_run):
+        for result in dms_exporter.export_to_cdf(rules=input_rules, client=cdf_client, dry_run=dry_run):
             report_lines.append(result.as_report_str())
             errors.extend(result.error_messages)
 
@@ -201,7 +201,7 @@ class RulesToExcel(Step):
         output_dir.mkdir(parents=True, exist_ok=True)
         file_name = f"exported_rules_{output_role.value}.xlsx"
         filepath = output_dir / file_name
-        excel_exporter.export_to_file(filepath, rule_instance)
+        excel_exporter.export_to_file(rule_instance, filepath)
 
         output_text = (
             "<p></p>"
@@ -247,7 +247,7 @@ class RulesToOntology(Step):
         storage_path.parent.mkdir(parents=True, exist_ok=True)
 
         exporter = exporters.OWLExporter()
-        exporter.export_to_file(storage_path, cast(InformationRules | DMSRules, rules.information or rules.dms))
+        exporter.export_to_file(cast(InformationRules | DMSRules, rules.information or rules.dms), storage_path)
 
         relative_file_path = "/".join(storage_path.relative_to(self.data_store_path).parts)
 
@@ -298,7 +298,7 @@ class RulesToSHACL(Step):
         storage_path.parent.mkdir(parents=True, exist_ok=True)
 
         exporter = exporters.SHACLExporter()
-        exporter.export_to_file(storage_path, cast(InformationRules | DMSRules, rules.information or rules.dms))
+        exporter.export_to_file(cast(InformationRules | DMSRules, rules.information or rules.dms), storage_path)
 
         relative_file_path = "/".join(storage_path.relative_to(self.data_store_path).parts)
 
@@ -349,7 +349,7 @@ class RulesToSemanticDataModel(Step):
         storage_path.parent.mkdir(parents=True, exist_ok=True)
 
         exporter = exporters.SemanticDataModelExporter()
-        exporter.export_to_file(storage_path, cast(InformationRules | DMSRules, rules.information or rules.dms))
+        exporter.export_to_file(cast(InformationRules | DMSRules, rules.information or rules.dms), storage_path)
 
         relative_file_path = "/".join(storage_path.relative_to(self.data_store_path).parts)
 
@@ -413,11 +413,11 @@ class RulesToCDFTransformations(Step):
         )
         schema_zip = f"{file_name}_pipeline.zip"
         schema_full_path = output_dir / schema_zip
-        dms_exporter.export_to_file(schema_full_path, input_rules)
+        dms_exporter.export_to_file(input_rules, schema_full_path)
 
         report_lines = ["# DMS Schema Export to CDF\n\n"]
         errors = []
-        for result in dms_exporter.export_to_cdf(client=cdf_client, rules=input_rules, dry_run=dry_run):
+        for result in dms_exporter.export_to_cdf(rules=input_rules, client=cdf_client, dry_run=dry_run):
             report_lines.append(result.as_report_str())
             errors.extend(result.error_messages)
 

@@ -15,7 +15,7 @@ T_Export = TypeVar("T_Export")
 
 class BaseExporter(ABC, Generic[T_Export]):
     @abstractmethod
-    def export_to_file(self, filepath: Path, rules: Rules) -> None:
+    def export_to_file(self, rules: Rules, filepath: Path) -> None:
         raise NotImplementedError
 
     @abstractmethod
@@ -35,5 +35,5 @@ class BaseExporter(ABC, Generic[T_Export]):
 
 class CDFExporter(BaseExporter[T_Export]):
     @abstractmethod
-    def export_to_cdf(self, client: CogniteClient, rules: Rules, dry_run: bool = False) -> Iterable[UploadResult]:
+    def export_to_cdf(self, rules: Rules, client: CogniteClient, dry_run: bool = False) -> Iterable[UploadResult]:
         raise NotImplementedError

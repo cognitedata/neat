@@ -71,7 +71,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
         self.instance_space = instance_space
         self._schema: DMSSchema | None = None
 
-    def export_to_file(self, filepath: Path, rules: Rules) -> None:
+    def export_to_file(self, rules: Rules, filepath: Path) -> None:
         """Export the rules to a file(s).
 
         If the file is a directory, the components will be exported to separate files, otherwise they will be
@@ -150,7 +150,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
         else:
             raise ValueError(f"{type(rules).__name__} cannot be exported to DMS")
 
-    def export_to_cdf(self, client: CogniteClient, rules: Rules, dry_run: bool = False) -> Iterable[UploadResult]:
+    def export_to_cdf(self, rules: Rules, client: CogniteClient, dry_run: bool = False) -> Iterable[UploadResult]:
         schema = self.export(rules)
         to_export: list[tuple[CogniteResourceList, ResourceLoader]] = []
         if self.export_components.intersection({"all", "spaces"}):
