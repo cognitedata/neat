@@ -11,11 +11,73 @@ will be used as the basis for the solution model.
 
 ## Introduction
 
-Olav is a data scientist at `Acme Corporation`. He is responsible for building forecasting models for the wind farm
+Olav is an analyst at `Acme Corporation`. He is responsible for building forecasting models for the wind farm
 to predict the power output of the wind turbines. These forecasts are used by the trading department to sell
 the power on the market.
 
+## Download the Enterprise Model
+
+Olav starts by using **NEAT** to download the enterprise model. He opens **NEAT** and selects the `Import DMS`
+workflow, and then clicks on the `Import DMS` step. This opens the modal with the configuration for the import
+
+<img src="../../artifacts/figs/life_cycle_download_reference_model_analytic_soluteion_model.png" height="300">
+
+Olav selects the following options:
+
+* **Data model id**: This is the id of the enterprise model. Olav finds this ID by login into CDF.
+* **Report formatter**: This is used in the validation of the model. The enterprise model should be valid,
+  so this is likely not needed.
+* **Role**: This is which format Olav wants to download the model. He selects `information_architect`. This is
+  because he wants to focus in the modeling and not the implementation of the model.
+* **Reference**: This is whether the imported model should be used as a reference model. Olav sets this to
+  true as the enterprise model is a reference model. This means that the enterprise model will not be changed
+  and that the solution model will be built on top of the enterprise model.
+
+After clicking `Save` and `Save Workflow`, Olav runs the workflow by clicking `Start Workflow`. The workflow
+will execute and Olav can download the exported model by clicking `exported_rules_information_architect.xlsx`.
+Note that `rules` is the **NEAT** representation of a data model.
+
+The downloaded spreadsheet contains six sheets:
+
+* **Metadata**: This contains the metadata for the new solution model, and will only have headings
+* **Properties**: This contains the properties for the new solution model, and will only have headings
+* **Classes**: This contains the classes for the new solution model, and will only have headings
+* **RefProperties**: This will be all the properties from the enterprise model that Olav can use to lookup
+  what properties he wants to use in the solution model. In addition, this will be used in the validation
+  of the solution model.
+* **RefClasses**: This will be all the classes from the enterprise model. Similar to the `RefProperties`,
+  this will be used to look-up what classes Olav wants to use in the solution model, and will be validated
+  against.
+* **RefMetadata**: This will be the metadata from the enterprise model. This is there to establish linage
+  so that it is clear where the solution model comes from.
+
+## Setting up the Metadata for the Solution Model
+
+Olav starts by setting up the metadata for the solution model. He opens the `Metadata` sheet in the spreadsheet
+and fills in the following information:
+
+
+|             |                                                       |
+|-------------|-------------------------------------------------------|
+| role        | information architect                                 |
+| creator     | Olav                                                  |
+| namespace   | http://purl.org/cognite/power_analytic                |
+| prefix      | power_analytic                                        |
+| schema      | extended                                              |
+| created     | 2024-03-26                                            |
+| updated     | 2024-02-09                                            |
+| version     | 0.1.0                                                 |
+| title       | Power Forecast Model                                  |
+| description | Solution model for WindFarm power production forecast |
+
+The most important part of the metadata sheet is the `prefix` and `schema`. The `prefix` is used to indicate
+that this solution model will be in a different namespace than the enterprise model. The `schema` is used to
+tell **NEAT** that this model is an extension of the enterprise model and that it should be validated against it.
+
+For more information on the metadata sheet, see [here](../../terminology/rules.md#metadata-sheet).
+
 ## Selecting from the Enterprise Model
+
 The most important part of Olav's new solution model is the `WindTurbine` and the `WindFarm` concepts. First,
 let's look at the `WindTurbine` from the enterprise model.
 
@@ -57,6 +119,8 @@ The `ratedPower` and `activePower` are not needed as it is the sum for all the `
 
 Based on the choices above, Olav will also include `Point` and `Polygon` from the enterprise model as they are needed
 for the `geoLocation` of the `WindTurbine` and `WindFarm`.
+
+
 
 ## Adding new Concepts
 
