@@ -92,7 +92,7 @@ class TestExcelImporter:
     def test_import_valid_rules(self, filepath: Path):
         importer = ExcelImporter(filepath)
 
-        rules = importer.to_rules(errors="raise")
+        rules = importer.to_rules(error_handling="raise")
 
         assert isinstance(rules, DMSRules)
 
@@ -100,7 +100,7 @@ class TestExcelImporter:
     def test_import_invalid_rules(self, filepath: Path, expected_issues: IssueList):
         importer = ExcelImporter(filepath)
 
-        _, issues = importer.to_rules(errors="continue")
+        _, issues = importer.to_rules(error_handling="continue")
 
         assert len(issues) == len(expected_issues)
         assert sorted(issues) == sorted(expected_issues)

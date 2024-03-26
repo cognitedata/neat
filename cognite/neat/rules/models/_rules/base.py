@@ -118,6 +118,7 @@ class SchemaCompleteness(StrEnum):
     complete = "complete"
     partial = "partial"
     extended = "extended"
+    mapping = "mapping"
 
 
 class ExtensionCategory(StrEnum):
