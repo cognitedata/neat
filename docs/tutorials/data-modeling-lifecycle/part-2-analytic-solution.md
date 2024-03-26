@@ -1,10 +1,5 @@
 # Analytic Solution Data Model
 
-!!! warning annotate "Warning"
-
-    This tutorial is work in progress and is not yet completed.
-
-
 This tutorial demonstrates how to build a solution model for an analytic use case. We assume that there is already
 an enterprise model developed, as in the [Knowledge Acquisition](./part-1-knowledge-acquisition.md) tutorial, which
 will be used as the basis for the solution model.
@@ -39,16 +34,19 @@ Note that `rules` is the **NEAT** representation of a data model.
 
 The downloaded spreadsheet contains six sheets:
 
-* **Metadata**: This contains the metadata for the new solution model, and will only have headings (see definition of headings [here](../../terminology/rules.md#metadata-sheet))
+* **Metadata**: This contains the metadata for the new solution model, and will only have headings
+  (see definition of headings [here](../../terminology/rules.md#metadata-sheet))
 * **Properties**: This contains the properties for the new solution model, and will only have headings
-* **Classes**: This contains the classes for the new solution model, and will only have headings (see definition of headings [here](../../terminology/rules.md#classes-sheet))
-* **RefProperties**: This will be all the properties from the enterprise model that Olav can use to lookup
+  (see definition of headings [here](../../terminology/rules.md#properties-sheet))
+* **Classes**: This contains the classes for the new solution model, and will only have headings
+  (see definition of headings [here](../../terminology/rules.md#classes-sheet))
+* **ReferenceProperties**: This will be all the properties from the enterprise model that Olav can use to lookup
   what properties he wants to use in the solution model. In addition, this will be used in the validation
   of the solution model.
-* **RefClasses**: This will be all the classes from the enterprise model. Similar to the `RefProperties`,
-  this will be used to look-up what classes Olav wants to use in the solution model, and will be validated
+* **ReferenceClasses**: This will be all the classes from the enterprise model. Similar to the `RefProperties`,
+  this will be used to look up what classes Olav wants to use in the solution model, and will be validated
   against.
-* **RefMetadata**: This will be the metadata from the enterprise model. This is there to establish linage
+* **ReferenceMetadata**: This will be the metadata from the enterprise model. This is there to establish linage
   so that it is clear where the solution model comes from.
 
 ## Setting up the Metadata for the Solution Model
@@ -70,8 +68,9 @@ and fills in the following information:
 | title       | Power Forecast Model                                  |
 | description | Solution model for WindFarm power production forecast |
 
-The most important part of the metadata sheet is the `prefix` and `schema`. The `prefix` is used to indicate
-that this solution model will be in a different namespace than the enterprise model. The `schema` is used to
+The most important part of the metadata sheet is the `prefix` and `schema`. The `prefix` is used differentiate
+the solution model from the enterprise model. If Olav set the `prefix` to the same as the enterprise model, this
+would mean that this is an extension of the enterprise model and not a new model. The `schema` is used to
 tell **NEAT** that this model is an extension of the enterprise model and that it should be validated against it.
 
 For more information on the metadata sheet, see [here](../../terminology/rules.md#metadata-sheet).
@@ -123,7 +122,8 @@ for the `geoLocation` of the `WindTurbine` and `WindFarm`.
 ## Updating the Spreadsheet.
 
 Olav copies over all the classes and properties from the enterprise model to the solution model. He then removes
-the rows that are not needed for the new solution model. The spreadsheet will now look as follows (details of other columns excluded on purpose):
+the rows that are not needed for the new solution model. The spreadsheet will now look as follows
+(details of other columns excluded on purpose):
 
 | Class       | Property       | Value Type  |
 |-------------|----------------|-------------|
@@ -188,29 +188,29 @@ The weather observations will be connected to the `WindFarm`:
 The `weatherForecasts` will be used for the forecasted weather data, and the `weatherObservations` will be used for
 the historical weather data.
 
-The forecasted power output of the wind turbines will be modeled as a `PowerForecast`:
+The forecasted power output of the wind turbines will be modeled as a `timeseriesForecast`:
 
-| Class         | Property        | Value Type | Min Count | Max Count |
-|---------------|-----------------|------------|-----------|-----------|
-| PowerForecast | name            | string     | 1         | 1         |
-| PowerForecast | algorithm       | string     | 1         | 1         |
-| PowerForecast | inputTimeseries | timeseries | 1         | Inf       |
-| PowerForecast | parameters      | json       | 0         | 1         |
-| PowerForecast | forecast        | timeseries | 1         | 1         |
+| Class              | Property        | Value Type | Min Count | Max Count |
+|--------------------|-----------------|------------|-----------|-----------|
+| timeseriesForecast | name            | string     | 1         | 1         |
+| timeseriesForecast | algorithm       | string     | 1         | 1         |
+| timeseriesForecast | inputTimeseries | timeseries | 1         | Inf       |
+| timeseriesForecast | parameters      | json       | 0         | 1         |
+| timeseriesForecast | forecast        | timeseries | 1         | 1         |
 
 The `inputTimeseries` will be the input to the forecasting model, and the `forecast` will be the output of the
 forecasting model. The `parameters` will be used to store the parameters used in the forecasting model.
 
 Olav decides to store the forecasted power output for each wind turbine in the `WindFarm`:
 
-| Class        | Property            | Value Type     | Min Count | Max Count |
-|--------------|---------------------|----------------|-----------|-----------|
-| WindTurbine  | name                | string         | 1         | 1         |
-| ...          | ...                 | ...            | ...       | ...       |
-| WindTurbine  | powerForecasts      | PowerForecast  | 0         | Inf       |
-| WindTurbine  | minPowerForecast    | timeseries     | 0         | 1         |
-| WindTurbine  | mediumPowerForecast | timeseries     | 0         | 1         |
-| WindTurbine  | maxPowerForecast    | timeseries     | 0         | 1         |
+| Class        | Property            | Value Type         | Min Count | Max Count |
+|--------------|---------------------|--------------------|-----------|-----------|
+| WindTurbine  | name                | string             | 1         | 1         |
+| ...          | ...                 | ...                | ...       | ...       |
+| WindTurbine  | powerForecasts      | timeseriesForecast | 0         | Inf       |
+| WindTurbine  | minPowerForecast    | timeseries         | 0         | 1         |
+| WindTurbine  | mediumPowerForecast | timeseries         | 0         | 1         |
+| WindTurbine  | maxPowerForecast    | timeseries         | 0         | 1         |
 
 The `powerForecasts` will be used to store the forecasted power output for each wind turbine. In addition, Olav
 adds `minPowerForecast`, `mediumPowerForecast`, and `maxPowerForecast` to store the minimum, medium, and maximum
@@ -240,27 +240,48 @@ You can download Olav's spreadsheet [here](../../artifacts/rules/information-ana
 
 
 ## Implementing the Solution Model
+Olav has now defined the solution model for the forecasting use case. The next step is to implement it. First,
+Olav uses **NEAT** to convert the spreadsheet he has from information architect to dms architect format. He
+does this by selecting the `Validate Rules` workflow. Note that this will also validate that he has
+written up the spreadsheet correctly. In the `Validate Rules` workflow, Olav selects the `Convert Rules` step
+and sets `Output role format` to `dms_architect`. After running the workflow, Olav can download the converted
+spreadsheet by clicking `exported_rules_DMS_Architect.xlsx`.
 
-Olav has now defined the solution model for the forecasting use case. The next step is to implement the solution model.
-**NEAT** gives him a good out-of-the-box suggestion for how to implement the solution model, but to ensure that the
-model is well implemented, Olav asks the DMS solution architect, Alice, to validate the model.
+<img src="../../artifacts/figs/life_cycle_converter_model_analytic_solution_model.png" height="300">
 
-Alice asks Olav a few questions on how he is planning to use the new `ForecastedPowerOutput` and `WeatherStation`
-concepts. Based on Olav's answers, Alice suggests that the `name` and `algorithm` in the `ForecastedPowerOutput` should
+
+**NEAT** has given a good out-of-the-box suggestion for how to implement the solution model. However, to ensure that
+the solution model is well aligned with the enterprise model and is performant, Olav asks the DMS solution architect,
+Alice, to help him.
+
+Alice asks Olav a few questions on how he is planning to use the new `timeseriesForecast` and `WeatherStation`
+classes. Based on Olav's answers, Alice suggests that the `name` and `algorithm` in the `**ForecastedPowerOutput**` should
 be indexed to ensure that the queries are fast. Also for the `WeatherStation`, Alice suggests that the `name`,
-`type`, and `source` should be indexed to ensure that the queries are fast.
+`type`, and `source` should be indexed to ensure that the queries are fast. In addition, Alice ensures that the
+new `WindTurbine` and `WindFarm` views are mapping correctly to the `GeneratingUnit`, `EnergyArea`, `WindTurbine`, and
+`WindFarm` containers in the enterprise model.
+
+After the implementation is done, Alice validates the solution model by running the `Validate Rules` workflow with
+the new spreadsheet as input. The validation is successful, and the solution model is ready to be deployed.
+
+## Deploying the Solution Model
+
+Olav deploys the new solution model by selecting the `Export DMS` workflow. He deactivates the `Export Transformations`
+step by removing the dotted line connecting it from the `Export Data Model to CDF` step. This is because he does not
+need to create any transformations for populating the new solution model.
 
 
 ## Summary
 
-**Analytic Task**
+**Solution Modeller Task**
 
 1. Select from the enterprise model
 2. Add new concepts
+3. Ensure a good implementation of the solution model
 
 **Analytic Expert usage of **NEAT**:
 
-1. Select from the enterprise model
-2. Validate the model
-3. Add new concepts
+1. Download the enterprise model.
+2. Validate the solution model.
+3. Convert the solution model between the different roles.
 4. Deploy the model
