@@ -73,6 +73,9 @@ class ExcelImporter(BaseImporter):
                     raise issue_list.as_errors()
                 return None, issue_list
 
+            # need split between extension/mapping and reference sheets
+            extension_sheets, reference_sheets = _split_reference_sheets(excel_file)
+
             sheets: dict[str, dict | list] = {"Metadata": metadata}
             read_info_by_sheet: dict[str, SpreadsheetRead] = defaultdict(SpreadsheetRead)
             for sheet_name, headers in [
