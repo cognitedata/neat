@@ -120,7 +120,37 @@ The `ratedPower` and `activePower` are not needed as it is the sum for all the `
 Based on the choices above, Olav will also include `Point` and `Polygon` from the enterprise model as they are needed
 for the `geoLocation` of the `WindTurbine` and `WindFarm`.
 
+## Updating the Spreadsheet.
 
+Olav copies over all the classes and properties from the enterprise model to the solution model. He then removes
+the rows that are not needed for the new solution model. The spreadsheet will now look as follows:
+
+| Class       | Property       | Value Type  |
+|-------------|----------------|-------------|
+| WindTurbine | name           | string      |
+| WindTurbine | type           | string      |
+| WindTurbine | activePower    | timeseries  |
+| WindTurbine | geoLocation    | Point       |
+| WindTurbine | manufacturer   | string      |
+| WindTurbine | ratedPower     | float       |
+| WindTurbine | hubHeight      | float       |
+| WindTurbine | lifeExpectancy | integer     |
+|             |                |             |
+| WindFarm    | name           | string      |
+| WindFarm    | geoLocation    | Polygon     |
+| WindFarm    | windTurbines   | WindTurbine |
+|             |                |             |
+| GeoLocation | name           | string      |
+|             |                |             |
+| Point       | latitude       | float       |
+| Point       | longitude      | float       |
+|             |                |             |
+| Polygon     | point          | Point       |
+
+In addition, Olav removes the parent classes `GeneratingUnit` and `EnergyArea` and instead moves the properties he
+needs over to `WindTurbine` and `WindFarm`. The reason is that the `GeneratingUnit` and `EnergyArea` are generic
+concepts that would complicate the solution model as this forecast model is only for wind turbines and cannot be
+applied to other types of generating units.
 
 ## Adding new Concepts
 
@@ -158,29 +188,29 @@ The weather observations will be connected to the `WindFarm`:
 The `weatherForecasts` will be used for the forecasted weather data, and the `weatherObservations` will be used for
 the historical weather data.
 
-The forecasted power output of the wind turbines will be modeled as a `ForecastedPowerOutput`:
+The forecasted power output of the wind turbines will be modeled as a `PowerForecast`:
 
-| Class                   | Property           | Value Type | Min Count | Max Count |
-|-------------------------|--------------------|------------|-----------|-----------|
-| ForecastedPowerOutput   | name               | string     | 1         | 1         |
-| ForecastedPowerOutput   | algorithm          | string     | 1         | 1         |
-| ForecastedPowerOutput   | inputTimeseries    | timeseries | 1         | Inf       |
-| ForecastedPowerOutput   | forecastParameters | json       | 0         | 1         |
-| ForecastedPowerOutput   | forecast           | timeseries | 1         | 1         |
+| Class         | Property        | Value Type | Min Count | Max Count |
+|---------------|-----------------|------------|-----------|-----------|
+| PowerForecast | name            | string     | 1         | 1         |
+| PowerForecast | algorithm       | string     | 1         | 1         |
+| PowerForecast | inputTimeseries | timeseries | 1         | Inf       |
+| PowerForecast | parameters      | json       | 0         | 1         |
+| PowerForecast | forecast        | timeseries | 1         | 1         |
 
 The `inputTimeseries` will be the input to the forecasting model, and the `forecast` will be the output of the
-forecasting model. The `forecastParameters` will be used to store the parameters used in the forecasting model.
+forecasting model. The `parameters` will be used to store the parameters used in the forecasting model.
 
 Olav decides to store the forecasted power output for each wind turbine in the `WindFarm`:
 
-| Class         | Property            | Value Type            | Min Count | Max Count |
-|---------------|---------------------|-----------------------|-----------|-----------|
-| WindFarm      | name                | string                | 1         | 1         |
-| ...           | ...                 | ...                   | ...       | ...       |
-| WindFarm      | powerForecasts      | ForecastedPowerOutput | 0         | Inf       |
-| WindFarm      | minPowerForecast    | timeseries            | 0         | 1         |
-| WindFarm      | mediumPowerForecast | timeseries            | 0         | 1         |
-| WindFarm      | maxPowerForecast    | timeseries            | 0         | 1         |
+| Class        | Property            | Value Type     | Min Count | Max Count |
+|--------------|---------------------|----------------|-----------|-----------|
+| WindTurbine  | name                | string         | 1         | 1         |
+| ...          | ...                 | ...            | ...       | ...       |
+| WindTurbine  | powerForecasts      | PowerForecast  | 0         | Inf       |
+| WindTurbine  | minPowerForecast    | timeseries     | 0         | 1         |
+| WindTurbine  | mediumPowerForecast | timeseries     | 0         | 1         |
+| WindTurbine  | maxPowerForecast    | timeseries     | 0         | 1         |
 
 The `powerForecasts` will be used to store the forecasted power output for each wind turbine. In addition, Olav
 adds `minPowerForecast`, `mediumPowerForecast`, and `maxPowerForecast` to store the minimum, medium, and maximum
@@ -202,21 +232,24 @@ In addition, Olav adds `lowPowerForecast`, `highPowerForecast`, and `expectedPow
 Similar to the `min`, `medium`, and `max` properties, the `low`, `high`, and `expected` properties will be added
 back to the enterprise model.
 
+## Updating the Spreadsheet (Download Olav's spreadsheet)
+
+Olav adds the new concepts to the `Properties` and `Classes` sheets in the spreadsheet.
+
+You can download Olav's spreadsheet [here](../../artifacts/rules/information-analytics-olav.xlsx).
+
 
 ## Implementing the Solution Model
 
 Olav has now defined the solution model for the forecasting use case. The next step is to implement the solution model.
-**NEAT** gives him a good out of the box suggestion for how to implement the solution model, but to ensure that the
-model is well implemented Olav asks the DMS solution architect, Alice, to validate the model.
+**NEAT** gives him a good out-of-the-box suggestion for how to implement the solution model, but to ensure that the
+model is well implemented, Olav asks the DMS solution architect, Alice, to validate the model.
 
 Alice asks Olav a few questions on how he is planning to use the new `ForecastedPowerOutput` and `WeatherStation`
 concepts. Based on Olav's answers, Alice suggests that the `name` and `algorithm` in the `ForecastedPowerOutput` should
 be indexed to ensure that the queries are fast. Also for the `WeatherStation`, Alice suggests that the `name`,
 `type`, and `source` should be indexed to ensure that the queries are fast.
 
-## Download Olav's Solution Model
-
-TODO
 
 ## Summary
 
