@@ -123,7 +123,8 @@ for the `geoLocation` of the `WindTurbine` and `WindFarm`.
 ## Updating the Spreadsheet.
 
 Olav copies over all the classes and properties from the enterprise model to the solution model. He then removes
-the rows that are not needed for the new solution model. The spreadsheet will now look as follows (details of other columns excluded on purpose):
+the rows that are not needed for the new solution model. The spreadsheet will now look as follows 
+(details of other columns excluded on purpose):
 
 | Class       | Property       | Value Type  |
 |-------------|----------------|-------------|
