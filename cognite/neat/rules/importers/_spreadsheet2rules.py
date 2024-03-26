@@ -2,6 +2,7 @@
 In more details, it traverses the graph and abstracts class and properties, basically
 generating a list of rules based on which nodes that form the graph are made.
 """
+
 from collections import defaultdict
 from pathlib import Path
 from typing import Literal, cast, overload
@@ -24,14 +25,14 @@ class ExcelImporter(BaseImporter):
         self.filepath = filepath
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None, is_reference: bool = False) -> Rules:
-        ...
+    def to_rules(
+        self, errors: Literal["raise"], role: RoleTypes | None = None, is_reference: bool = False
+    ) -> Rules: ...
 
     @overload
     def to_rules(
         self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None, is_reference: bool = False
-    ) -> tuple[Rules | None, IssueList]:
-        ...
+    ) -> tuple[Rules | None, IssueList]: ...
 
     def to_rules(
         self,
@@ -60,9 +61,10 @@ class ExcelImporter(BaseImporter):
             role_input = RoleTypes(metadata.get("role", RoleTypes.domain_expert))
             role_enum = RoleTypes(role_input)
             rules_model = RULES_PER_ROLE[role_enum]
-            sheet_names = {str(name) for name in excel_file.sheet_names}
             expected_sheet_names = rules_model.mandatory_fields(use_alias=True)
+            reference_sheet_names = {f"Reference{sheet_name}" for sheet_name in expected_sheet_names}
 
+            sheet_names = {str(name) for name in excel_file.sheet_names}
             if missing_sheets := expected_sheet_names.difference(sheet_names):
                 issue_list.append(
                     cognite.neat.rules.issues.spreadsheet_file.SheetMissingError(self.filepath, list(missing_sheets))
@@ -120,20 +122,25 @@ class ExcelImporter(BaseImporter):
         return self._to_output(rules, issue_list, errors=errors, role=role, is_reference=is_reference)
 
 
+def _split_reference_sheets(
+    sheets: dict[str, pd.DataFrame]
+) -> tuple[dict[str, pd.DataFrame], dict[str, pd.DataFrame]]: ...
+
+
 class GoogleSheetImporter(BaseImporter):
     def __init__(self, sheet_id: str, skiprows: int = 1):
         self.sheet_id = sheet_id
         self.skiprows = skiprows
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None, is_reference: bool = False) -> Rules:
-        ...
+    def to_rules(
+        self, errors: Literal["raise"], role: RoleTypes | None = None, is_reference: bool = False
+    ) -> Rules: ...
 
     @overload
     def to_rules(
         self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None, is_reference: bool = False
-    ) -> tuple[Rules | None, IssueList]:
-        ...
+    ) -> tuple[Rules | None, IssueList]: ...
 
     def to_rules(
         self,
