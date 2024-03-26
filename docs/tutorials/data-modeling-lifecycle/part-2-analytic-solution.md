@@ -39,7 +39,7 @@ Note that `rules` is the **NEAT** representation of a data model.
 
 The downloaded spreadsheet contains six sheets:
 
-* **Metadata**: This contains the metadata for the new solution model, and will only have headings
+* **Metadata**: This contains the metadata for the new solution model, and will only have headings (see definition of headings [here](../../terminology/rules.md#metadata-sheet))
 * **Properties**: This contains the properties for the new solution model, and will only have headings
 * **Classes**: This contains the classes for the new solution model, and will only have headings
 * **RefProperties**: This will be all the properties from the enterprise model that Olav can use to lookup
