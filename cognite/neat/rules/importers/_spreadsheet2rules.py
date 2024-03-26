@@ -75,12 +75,13 @@ class ExcelImporter(BaseImporter):
         is_reference: bool = False,
     ) -> tuple[Rules | None, IssueList] | Rules:
         # placeholder for variables
-        user_metadata: dict = {}
-        reference_metadata: dict = {}
-        user_sheets: dict[str, dict | list] | None = {}
-        reference_sheets: dict[str, dict | list] | None = {}
-        user_rules: None | DMSRules | DomainRules | InformationRules = None
-        reference_rules: None | DMSRules | DomainRules | InformationRules = None
+        user_metadata: dict | None = None
+        user_sheets: dict[str, dict | list] | None = None
+        user_rules: DMSRules | DomainRules | InformationRules | None = None
+
+        reference_metadata: dict | None = None
+        reference_sheets: dict[str, dict | list] | None = None
+        reference_rules: DMSRules | DomainRules | InformationRules | None = None
 
         issue_list = IssueList(title=f"'{self.filepath.name}'")
 
@@ -91,8 +92,6 @@ class ExcelImporter(BaseImporter):
             return None, issue_list
 
         with pd.ExcelFile(self.filepath) as excel_file:
-            # here we get validated metadata and reference metadata
-
             if not is_reference:
                 user_metadata, issue_list = _get_metadata("Metadata", excel_file, issue_list)
                 if issue_list:
@@ -116,9 +115,7 @@ class ExcelImporter(BaseImporter):
                         raise issue_list.as_errors()
                     return None, issue_list
 
-            #########################################
-            ######## roles must be the same #########
-
+            # check role
             if user_metadata and reference_metadata:
                 if user_metadata.get("role") != reference_metadata.get("role"):
                     issue_list.append(cognite.neat.rules.issues.spreadsheet_file.RoleMismatchError(self.filepath))
@@ -126,9 +123,7 @@ class ExcelImporter(BaseImporter):
                         raise issue_list.as_errors()
                     return None, issue_list
 
-            #################################################
-            ######## checking if sheets are correct #########
-
+            # check and get user and/or reference sheets
             if user_metadata:
                 user_sheets, read_info_by_user_sheet, issue_list = _read_sheets(
                     user_metadata, excel_file, "user", issue_list
@@ -147,10 +142,8 @@ class ExcelImporter(BaseImporter):
                         raise issue_list.as_errors()
                     return None, issue_list
 
-            #################################################
-            ######## checking if rules are correct ##########
-
-            if user_sheets:
+            # validate and get user and/or reference Rules object(s)
+            if user_sheets and user_metadata:
                 rules_cls = RULES_PER_ROLE[RoleTypes(cast(str, user_metadata.get("role")))]
                 with _handle_issues(
                     issue_list,
@@ -164,7 +157,7 @@ class ExcelImporter(BaseImporter):
                     else:
                         raise issue_list.as_errors()
 
-            if reference_sheets:
+            if reference_sheets and reference_metadata:
                 rules_cls = RULES_PER_ROLE[RoleTypes(cast(str, reference_metadata.get("role")))]
                 with _handle_issues(
                     issue_list,
@@ -178,7 +171,11 @@ class ExcelImporter(BaseImporter):
                     else:
                         raise issue_list.as_errors()
 
-            # check if reference and user rules are for the same profile if not raise error
+            # usecase: solution model : copy referenced entities from reference Rules to user Rules
+            # missing to be added
+
+            # usecase extending enterprise model: copy user Rules to reference Rules
+            # missing to be added
 
         return self._to_output(
             cast(DomainRules | InformationRules | DMSRules, reference_rules if is_reference else user_rules),
