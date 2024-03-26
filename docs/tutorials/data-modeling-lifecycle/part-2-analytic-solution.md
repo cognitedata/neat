@@ -123,7 +123,7 @@ for the `geoLocation` of the `WindTurbine` and `WindFarm`.
 ## Updating the Spreadsheet.
 
 Olav copies over all the classes and properties from the enterprise model to the solution model. He then removes
-the rows that are not needed for the new solution model. The spreadsheet will now look as follows 
+the rows that are not needed for the new solution model. The spreadsheet will now look as follows
 (details of other columns excluded on purpose):
 
 | Class       | Property       | Value Type  |
@@ -274,14 +274,15 @@ need to create any transformations for populating the new solution model.
 
 ## Summary
 
-**Analytic Task**
+**Solution Modeller Task**
 
 1. Select from the enterprise model
 2. Add new concepts
+3. Ensure a good implementation of the solution model
 
 **Analytic Expert usage of **NEAT**:
 
 1. Download the enterprise model.
 2. Validate the solution model.
-3. Convert solution model between the different roles.
+3. Convert the solution model between the different roles.
 4. Deploy the model
