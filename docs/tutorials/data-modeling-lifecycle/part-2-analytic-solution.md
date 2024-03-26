@@ -189,29 +189,29 @@ The weather observations will be connected to the `WindFarm`:
 The `weatherForecasts` will be used for the forecasted weather data, and the `weatherObservations` will be used for
 the historical weather data.
 
-The forecasted power output of the wind turbines will be modeled as a `PowerForecast`:
+The forecasted power output of the wind turbines will be modeled as a `timeseriesForecast`:
 
-| Class         | Property        | Value Type | Min Count | Max Count |
-|---------------|-----------------|------------|-----------|-----------|
-| PowerForecast | name            | string     | 1         | 1         |
-| PowerForecast | algorithm       | string     | 1         | 1         |
-| PowerForecast | inputTimeseries | timeseries | 1         | Inf       |
-| PowerForecast | parameters      | json       | 0         | 1         |
-| PowerForecast | forecast        | timeseries | 1         | 1         |
+| Class              | Property        | Value Type | Min Count | Max Count |
+|--------------------|-----------------|------------|-----------|-----------|
+| timeseriesForecast | name            | string     | 1         | 1         |
+| timeseriesForecast | algorithm       | string     | 1         | 1         |
+| timeseriesForecast | inputTimeseries | timeseries | 1         | Inf       |
+| timeseriesForecast | parameters      | json       | 0         | 1         |
+| timeseriesForecast | forecast        | timeseries | 1         | 1         |
 
 The `inputTimeseries` will be the input to the forecasting model, and the `forecast` will be the output of the
 forecasting model. The `parameters` will be used to store the parameters used in the forecasting model.
 
 Olav decides to store the forecasted power output for each wind turbine in the `WindFarm`:
 
-| Class        | Property            | Value Type     | Min Count | Max Count |
-|--------------|---------------------|----------------|-----------|-----------|
-| WindTurbine  | name                | string         | 1         | 1         |
-| ...          | ...                 | ...            | ...       | ...       |
-| WindTurbine  | powerForecasts      | PowerForecast  | 0         | Inf       |
-| WindTurbine  | minPowerForecast    | timeseries     | 0         | 1         |
-| WindTurbine  | mediumPowerForecast | timeseries     | 0         | 1         |
-| WindTurbine  | maxPowerForecast    | timeseries     | 0         | 1         |
+| Class        | Property            | Value Type         | Min Count | Max Count |
+|--------------|---------------------|--------------------|-----------|-----------|
+| WindTurbine  | name                | string             | 1         | 1         |
+| ...          | ...                 | ...                | ...       | ...       |
+| WindTurbine  | powerForecasts      | timeseriesForecast | 0         | Inf       |
+| WindTurbine  | minPowerForecast    | timeseries         | 0         | 1         |
+| WindTurbine  | mediumPowerForecast | timeseries         | 0         | 1         |
+| WindTurbine  | maxPowerForecast    | timeseries         | 0         | 1         |
 
 The `powerForecasts` will be used to store the forecasted power output for each wind turbine. In addition, Olav
 adds `minPowerForecast`, `mediumPowerForecast`, and `maxPowerForecast` to store the minimum, medium, and maximum
@@ -241,15 +241,35 @@ You can download Olav's spreadsheet [here](../../artifacts/rules/information-ana
 
 
 ## Implementing the Solution Model
+Olav has now defined the solution model for the forecasting use case. The next step is to implement it. First,
+Olav uses **NEAT** to convert the spreadsheet he has from information architect to dms architect format. He
+does this by selecting the `Validate Rules` workflow. Note that this will also validate that he has
+written up the spreadsheet correctly. In the `Validate Rules` workflow, Olav selects the `Convert Rules` step
+and sets `Output role format` to `dms_architect`. After running the workflow, Olav can download the converted
+spreadsheet by clicking `exported_rules_DMS_Architect.xlsx`.
 
-Olav has now defined the solution model for the forecasting use case. The next step is to implement the solution model.
-**NEAT** gives him a good out-of-the-box suggestion for how to implement the solution model, but to ensure that the
-model is well implemented, Olav asks the DMS solution architect, Alice, to validate the model.
+<img src="../../artifacts/figs/life_cycle_converter_model_analytic_solution_model.png" height="300">
 
-Alice asks Olav a few questions on how he is planning to use the new `ForecastedPowerOutput` and `WeatherStation`
-concepts. Based on Olav's answers, Alice suggests that the `name` and `algorithm` in the `ForecastedPowerOutput` should
+
+**NEAT** has given a good out-of-the-box suggestion for how to implement the solution model. However, to ensure that
+the solution model is well aligned with the enterprise model and is performant, Olav asks the DMS solution architect,
+Alice, to help him.
+
+Alice asks Olav a few questions on how he is planning to use the new `timeseriesForecast` and `WeatherStation`
+classes. Based on Olav's answers, Alice suggests that the `name` and `algorithm` in the `**ForecastedPowerOutput**` should
 be indexed to ensure that the queries are fast. Also for the `WeatherStation`, Alice suggests that the `name`,
-`type`, and `source` should be indexed to ensure that the queries are fast.
+`type`, and `source` should be indexed to ensure that the queries are fast. In addition, Alice ensures that the
+new `WindTurbine` and `WindFarm` views are mapping correctly to the `GeneratingUnit`, `EnergyArea`, `WindTurbine`, and
+`WindFarm` containers in the enterprise model.
+
+After the implementation is done, Alice validates the solution model by running the `Validate Rules` workflow with
+the new spreadsheet as input. The validation is successful, and the solution model is ready to be deployed.
+
+## Deploying the Solution Model
+
+Olav deploys the new solution model by selecting the `Export DMS` workflow. He deactivates the `Export Transformations`
+step by removing the dotted line connecting it from the `Export Data Model to CDF` step. This is because he does not
+need to create any transformations for populating the new solution model.
 
 
 ## Summary
@@ -261,7 +281,7 @@ be indexed to ensure that the queries are fast. Also for the `WeatherStation`, A
 
 **Analytic Expert usage of **NEAT**:
 
-1. Select from the enterprise model
-2. Validate the model
-3. Add new concepts
+1. Download the enterprise model.
+2. Validate the solution model.
+3. Convert solution model between the different roles.
 4. Deploy the model
