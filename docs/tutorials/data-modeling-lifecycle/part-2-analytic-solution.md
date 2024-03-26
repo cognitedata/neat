@@ -1,10 +1,5 @@
 # Analytic Solution Data Model
 
-!!! warning annotate "Warning"
-
-    This tutorial is work in progress and is not yet completed.
-
-
 This tutorial demonstrates how to build a solution model for an analytic use case. We assume that there is already
 an enterprise model developed, as in the [Knowledge Acquisition](./part-1-knowledge-acquisition.md) tutorial, which
 will be used as the basis for the solution model.
