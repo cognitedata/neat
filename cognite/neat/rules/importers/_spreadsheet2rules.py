@@ -14,7 +14,7 @@ import cognite.neat.rules.issues.spreadsheet_file
 from cognite.neat.rules import issues
 from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models._rules import RULES_PER_ROLE, DMSRules, DomainRules, InformationRules
-from cognite.neat.rules.models._rules.base import RoleTypes, SchemaCompleteness
+from cognite.neat.rules.models._rules.base import RoleTypes, RulesCategory, SchemaCompleteness
 from cognite.neat.utils.auxiliary import local_import
 from cognite.neat.utils.spreadsheet import SpreadsheetRead, read_individual_sheet
 
@@ -53,6 +53,44 @@ class ExcelImporter(BaseImporter):
     def __init__(self, filepath: Path):
         self.filepath = filepath
 
+    def _to_single_rules(
+        self,
+        issue_list: IssueList,
+        rules_category: RulesCategory,
+        error_handling: Literal["raise", "continue"] = "continue",
+    ) -> tuple[Rules | None, IssueList]:
+        with pd.ExcelFile(self.filepath) as excel_file:
+            metadata, issue_list = _get_metadata(
+                "Metadata" if rules_category.user else "ReferenceMetadata", excel_file, issue_list
+            )
+            if issue_list:
+                if error_handling == "raise":
+                    raise issue_list.as_errors()
+                return None, issue_list
+
+            sheets, read_info_by_sheet, issue_list = _read_sheets(metadata, excel_file, rules_category, issue_list)
+
+            if issue_list:
+                if error_handling == "raise":
+                    raise issue_list.as_errors()
+                return None, issue_list
+
+            rules_cls = RULES_PER_ROLE[RoleTypes(cast(str, metadata.get("role")))]
+            with _handle_issues(
+                issue_list,
+                error_cls=issues.spreadsheet.InvalidSheetError,
+                error_args={"read_info_by_sheet": read_info_by_sheet},
+            ) as future:
+                rules = rules_cls.model_validate(sheets)  # type: ignore[attr-defined]
+
+            if future.result == "failure":
+                if error_handling == "continue":
+                    return None, issue_list
+                else:
+                    raise issue_list.as_errors()
+
+        return rules, issue_list
+
     @overload
     def to_rules(
         self, error_handling: Literal["raise"], role: RoleTypes | None = None, is_reference: bool = False
@@ -74,15 +112,6 @@ class ExcelImporter(BaseImporter):
         role: RoleTypes | None = None,
         is_reference: bool = False,
     ) -> tuple[Rules | None, IssueList] | Rules:
-        # placeholder for variables
-        user_metadata: dict | None = None
-        user_sheets: dict[str, dict | list] | None = None
-        user_rules: DMSRules | DomainRules | InformationRules | None = None
-
-        reference_metadata: dict | None = None
-        reference_sheets: dict[str, dict | list] | None = None
-        reference_rules: DMSRules | DomainRules | InformationRules | None = None
-
         issue_list = IssueList(title=f"'{self.filepath.name}'")
 
         if not self.filepath.exists():
@@ -91,94 +120,41 @@ class ExcelImporter(BaseImporter):
                 raise issue_list.as_errors() from None
             return None, issue_list
 
-        with pd.ExcelFile(self.filepath) as excel_file:
-            if not is_reference:
-                user_metadata, issue_list = _get_metadata("Metadata", excel_file, issue_list)
-                if issue_list:
-                    if error_handling == "raise":
-                        raise issue_list.as_errors()
-                    return None, issue_list
+        if not is_reference:
+            user_rules, issue_list = self._to_single_rules(issue_list, RulesCategory.user, error_handling)
+        else:
+            user_rules = None
 
-                schema = user_metadata.get("schema", None)
+        if issue_list:
+            if error_handling == "raise":
+                raise issue_list.as_errors()
+            return None, issue_list
 
-                if schema and schema == SchemaCompleteness.extended and not is_reference:
-                    reference_metadata, issue_list = _get_metadata("ReferenceMetadata", excel_file, issue_list)
-                    if issue_list:
-                        if error_handling == "raise":
-                            raise issue_list.as_errors()
-                        return None, issue_list
+        if is_reference or (
+            user_rules
+            and user_rules.metadata.role != RoleTypes.domain_expert
+            and cast(DMSRules | InformationRules, user_rules).metadata.schema_ == SchemaCompleteness.extended
+        ):
+            reference_rules, issue_list = self._to_single_rules(issue_list, RulesCategory.reference, error_handling)
+        else:
+            reference_rules = None
 
-            else:
-                reference_metadata, issue_list = _get_metadata("ReferenceMetadata", excel_file, issue_list)
-                if issue_list:
-                    if error_handling == "raise":
-                        raise issue_list.as_errors()
-                    return None, issue_list
+        if issue_list:
+            if error_handling == "raise":
+                raise issue_list.as_errors()
+            return None, issue_list
 
-            # check role
-            if user_metadata and reference_metadata:
-                if user_metadata.get("role") != reference_metadata.get("role"):
-                    issue_list.append(cognite.neat.rules.issues.spreadsheet_file.RoleMismatchError(self.filepath))
-                    if error_handling == "raise":
-                        raise issue_list.as_errors()
-                    return None, issue_list
+        if user_rules and reference_rules:
+            if user_rules.metadata.role != reference_rules.metadata.role:
+                issue_list.append(cognite.neat.rules.issues.spreadsheet_file.RoleMismatchError(self.filepath))
+                if error_handling == "raise":
+                    raise issue_list.as_errors()
+                return None, issue_list
 
-            # check and get user and/or reference sheets
-            if user_metadata:
-                user_sheets, read_info_by_user_sheet, issue_list = _read_sheets(
-                    user_metadata, excel_file, "user", issue_list
-                )
-                if issue_list:
-                    if error_handling == "raise":
-                        raise issue_list.as_errors()
-                    return None, issue_list
-
-            if reference_metadata:
-                reference_sheets, read_info_by_reference_sheet, issue_list = _read_sheets(
-                    reference_metadata, excel_file, "reference", issue_list
-                )
-                if issue_list:
-                    if error_handling == "raise":
-                        raise issue_list.as_errors()
-                    return None, issue_list
-
-            # validate and get user and/or reference Rules object(s)
-            if user_sheets and user_metadata:
-                rules_cls = RULES_PER_ROLE[RoleTypes(cast(str, user_metadata.get("role")))]
-                with _handle_issues(
-                    issue_list,
-                    error_cls=issues.spreadsheet.InvalidSheetError,
-                    error_args={"read_info_by_sheet": read_info_by_user_sheet},
-                ) as future:
-                    user_rules = rules_cls.model_validate(user_sheets)  # type: ignore[attr-defined]
-                if future.result == "failure":
-                    if error_handling == "continue":
-                        return None, issue_list
-                    else:
-                        raise issue_list.as_errors()
-
-            if reference_sheets and reference_metadata:
-                rules_cls = RULES_PER_ROLE[RoleTypes(cast(str, reference_metadata.get("role")))]
-                with _handle_issues(
-                    issue_list,
-                    error_cls=issues.spreadsheet.InvalidSheetError,
-                    error_args={"read_info_by_sheet": read_info_by_reference_sheet},
-                ) as future:
-                    reference_rules = rules_cls.model_validate(reference_sheets)  # type: ignore[attr-defined]
-                if future.result == "failure":
-                    if error_handling == "continue":
-                        return None, issue_list
-                    else:
-                        raise issue_list.as_errors()
-
-            # usecase: solution model : copy referenced entities from reference Rules to user Rules
-            # missing to be added
-
-            # usecase extending enterprise model: copy user Rules to reference Rules
-            # missing to be added
+        output_rules = cast(DomainRules | InformationRules | DMSRules, user_rules or reference_rules)
 
         return self._to_output(
-            cast(DomainRules | InformationRules | DMSRules, reference_rules if is_reference else user_rules),
+            output_rules,
             issue_list,
             errors=error_handling,
             role=role,
@@ -230,13 +206,16 @@ def _get_metadata(metadata_sheet_name: str, excel_file, issue_list) -> tuple[dic
 
 
 def _read_sheets(
-    metadata, excel_file: ExcelFile, sheet_category: str, issue_list
+    metadata, excel_file: ExcelFile, rules_category: RulesCategory, issue_list
 ) -> tuple[dict[str, dict | list] | None, dict[str, SpreadsheetRead] | None, IssueList]:
     read_info_by_sheet: dict[str, SpreadsheetRead] = defaultdict(SpreadsheetRead)
+
+    # this will rename ReferenceMetadata to Metadata
     sheets: dict[str, dict | list] = {"Metadata": metadata}
+
     expected_sheet_names = (
         {f"Reference{sheet_name}" for sheet_name in MANDATORY_SHEETS_PER_ROLE[RoleTypes(metadata.get("role"))]}
-        if sheet_category == "reference"
+        if rules_category == RulesCategory.reference
         else MANDATORY_SHEETS_PER_ROLE[RoleTypes(metadata.get("role"))]
     )
 
@@ -248,7 +227,7 @@ def _read_sheets(
         )
         return None, None, issue_list
 
-    for source_sheet_name, target_sheet_name, headers in SPREADSHEET_READ_CONFIG[sheet_category]:
+    for source_sheet_name, target_sheet_name, headers in SPREADSHEET_READ_CONFIG[rules_category]:
         if source_sheet_name in excel_file.sheet_names:
             try:
                 sheets[target_sheet_name], read_info_by_sheet[source_sheet_name] = read_individual_sheet(
