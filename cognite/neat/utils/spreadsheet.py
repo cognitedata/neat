@@ -32,7 +32,7 @@ class SpreadsheetRead:
 
 
 @overload
-def read_spreadsheet(
+def read_individual_sheet(
     excel_file: pd.ExcelFile,
     sheet_name: str,
     return_read_info: Literal[True],
@@ -42,7 +42,7 @@ def read_spreadsheet(
 
 
 @overload
-def read_spreadsheet(
+def read_individual_sheet(
     excel_file: pd.ExcelFile,
     sheet_name: str,
     return_read_info: Literal[False] = False,
@@ -51,7 +51,7 @@ def read_spreadsheet(
     ...
 
 
-def read_spreadsheet(
+def read_individual_sheet(
     excel_file: pd.ExcelFile,
     sheet_name: str,
     return_read_info: bool = False,

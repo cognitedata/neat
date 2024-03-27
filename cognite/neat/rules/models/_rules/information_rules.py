@@ -65,7 +65,7 @@ else:
 class InformationMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.information_architect
     schema_: SchemaCompleteness = Field(alias="schema")
-    extension: ExtensionCategory = ExtensionCategory.addition
+    extension: ExtensionCategory | None = ExtensionCategory.addition
     prefix: PrefixType
     namespace: NamespaceType
 
@@ -91,6 +91,13 @@ class InformationMetadata(BaseMetadata):
             "typically information architects are considered as contributors."
         ),
     )
+
+    @model_validator(mode="after")
+    def extension_none_but_schema_extend(self) -> Self:
+        if self.extension is None:
+            self.extension = ExtensionCategory.addition
+            return self
+        return self
 
 
 class InformationClass(SheetEntity):

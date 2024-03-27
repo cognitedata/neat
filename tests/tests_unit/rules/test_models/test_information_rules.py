@@ -7,7 +7,7 @@ import pytest
 from cognite.neat.rules.models._rules import DMSRules
 from cognite.neat.rules.models._rules._types import XSD_VALUE_TYPE_MAPPINGS, XSDValueType
 from cognite.neat.rules.models._rules.information_rules import InformationRules, _InformationRulesConverter
-from cognite.neat.utils.spreadsheet import read_spreadsheet
+from cognite.neat.utils.spreadsheet import read_individual_sheet
 from tests.config import DOC_RULES
 
 
@@ -17,8 +17,8 @@ def david_spreadsheet() -> dict[str, dict[str, Any]]:
     excel_file = pd.ExcelFile(filepath)
     return {
         "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),
-        "Properties": read_spreadsheet(excel_file, "Properties", expected_headers=["Property"]),
-        "Classes": read_spreadsheet(excel_file, "Classes", expected_headers=["Class"]),
+        "Properties": read_individual_sheet(excel_file, "Properties", expected_headers=["Property"]),
+        "Classes": read_individual_sheet(excel_file, "Classes", expected_headers=["Class"]),
     }
 
 

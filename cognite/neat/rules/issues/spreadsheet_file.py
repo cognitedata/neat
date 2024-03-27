@@ -39,12 +39,60 @@ class SpreadsheetNotFoundError(SpreadsheetFileError):
 class MetadataSheetMissingOrFailedError(SpreadsheetFileError):
     description: ClassVar[str] = "Metadata sheet is missing or it failed validation for one or more fields"
     fix: ClassVar[str] = "Make sure to define compliant Metadata sheet before proceeding"
+    hint: str | None = None
+    sheet_name: str = "Metadata"
+
+    def message(self) -> str:
+        output = (
+            f" {self.sheet_name} sheet is missing or it failed"
+            + f" validation for one or more fields in {self.filepath.name}. "
+            + self.fix
+        )
+        if self.hint:
+            output += f" Hint: {self.hint}"
+        return output
+
+
+@dataclass(frozen=True)
+class RoleMissingOrUnsupportedError(SpreadsheetFileError):
+    description: ClassVar[str] = "Role field in Metadata sheet is missing or its value is unsupported"
+    fix: ClassVar[str] = "Make sure to define compliant role in Metadata sheet before proceeding"
 
     hint: str | None = None
 
     def message(self) -> str:
         output = (
-            f"Metadata sheet is missing or it failed validation for one or more fields in {self.filepath.name}. "
+            f"Role field in Metadata sheet is missing or its value is unsupported {self.filepath.name}. " + self.fix
+        )
+        if self.hint:
+            output += f" Hint: {self.hint}"
+        return output
+
+
+@dataclass(frozen=True)
+class RoleMismatchError(SpreadsheetFileError):
+    description: ClassVar[str] = "Roles between user and reference Metadata sheets do not match"
+    fix: ClassVar[str] = "Make sure that both user and reference Metadata sheets have the same role defined"
+
+    hint: str | None = None
+
+    def message(self) -> str:
+        output = f"Roles between user and reference Metadata sheets do not match {self.filepath.name}. " + self.fix
+        if self.hint:
+            output += f" Hint: {self.hint}"
+        return output
+
+
+@dataclass(frozen=True)
+class SchemaMissingOrUnsupportedError(SpreadsheetFileError):
+    description: ClassVar[str] = "Schema field in Metadata sheet is missing or its value unsupported"
+    fix: ClassVar[str] = "Make sure to define compliant schema in Metadata sheet before proceeding"
+
+    hint: str | None = None
+
+    def message(self) -> str:
+        output = (
+            f"Schema field in Metadata sheet is missing or its value unsupported in file {self.filepath.name}. "
             + self.fix
         )
         if self.hint:

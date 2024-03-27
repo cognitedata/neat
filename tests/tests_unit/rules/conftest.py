@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 
 from cognite.neat.rules.models._rules import DMSRules, DomainRules, InformationRules
-from cognite.neat.utils.spreadsheet import read_spreadsheet
+from cognite.neat.utils.spreadsheet import read_individual_sheet
 from tests.config import DOC_RULES
 
 
@@ -14,9 +14,9 @@ def alice_spreadsheet() -> dict[str, dict[str, Any]]:
     excel_file = pd.ExcelFile(filepath)
     return {
         "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),
-        "Properties": read_spreadsheet(excel_file, "Properties", False, ["Property"]),
-        "Views": read_spreadsheet(excel_file, "Views", False, ["View"]),
-        "Containers": read_spreadsheet(excel_file, "Containers", False, ["Container"]),
+        "Properties": read_individual_sheet(excel_file, "Properties", False, ["Property"]),
+        "Views": read_individual_sheet(excel_file, "Views", False, ["View"]),
+        "Containers": read_individual_sheet(excel_file, "Containers", False, ["Container"]),
     }
 
 
@@ -31,8 +31,8 @@ def david_spreadsheet() -> dict[str, dict[str, Any]]:
     excel_file = pd.ExcelFile(filepath)
     return {
         "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),
-        "Properties": read_spreadsheet(excel_file, "Properties", expected_headers=["Property"]),
-        "Classes": read_spreadsheet(excel_file, "Classes", expected_headers=["Class"]),
+        "Properties": read_individual_sheet(excel_file, "Properties", expected_headers=["Property"]),
+        "Classes": read_individual_sheet(excel_file, "Classes", expected_headers=["Class"]),
     }
 
 
@@ -47,7 +47,7 @@ def jon_spreadsheet() -> dict[str, dict[str, Any]]:
     excel_file = pd.ExcelFile(filepath)
     return {
         "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),
-        "Properties": read_spreadsheet(excel_file, "Properties", expected_headers=["Property"]),
+        "Properties": read_individual_sheet(excel_file, "Properties", expected_headers=["Property"]),
     }
 
 
@@ -62,8 +62,8 @@ def emma_spreadsheet() -> dict[str, dict[str, Any]]:
     excel_file = pd.ExcelFile(filepath)
     return {
         "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),
-        "Properties": read_spreadsheet(excel_file, "Properties", expected_headers=["Property"]),
-        "Classes": read_spreadsheet(excel_file, "Classes", expected_headers=["Class"]),
+        "Properties": read_individual_sheet(excel_file, "Properties", expected_headers=["Property"]),
+        "Classes": read_individual_sheet(excel_file, "Classes", expected_headers=["Class"]),
     }
 
 
