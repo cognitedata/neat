@@ -53,44 +53,6 @@ class ExcelImporter(BaseImporter):
     def __init__(self, filepath: Path):
         self.filepath = filepath
 
-    def _to_single_rules(
-        self,
-        issue_list: IssueList,
-        rules_category: RulesCategory,
-        error_handling: Literal["raise", "continue"] = "continue",
-    ) -> tuple[Rules | None, IssueList]:
-        with pd.ExcelFile(self.filepath) as excel_file:
-            metadata, issue_list = _get_metadata(
-                "Metadata" if rules_category.user else "ReferenceMetadata", excel_file, issue_list
-            )
-            if issue_list:
-                if error_handling == "raise":
-                    raise issue_list.as_errors()
-                return None, issue_list
-
-            sheets, read_info_by_sheet, issue_list = _read_sheets(metadata, excel_file, rules_category, issue_list)
-
-            if issue_list:
-                if error_handling == "raise":
-                    raise issue_list.as_errors()
-                return None, issue_list
-
-            rules_cls = RULES_PER_ROLE[RoleTypes(cast(str, metadata.get("role")))]
-            with _handle_issues(
-                issue_list,
-                error_cls=issues.spreadsheet.InvalidSheetError,
-                error_args={"read_info_by_sheet": read_info_by_sheet},
-            ) as future:
-                rules = rules_cls.model_validate(sheets)  # type: ignore[attr-defined]
-
-            if future.result == "failure":
-                if error_handling == "continue":
-                    return None, issue_list
-                else:
-                    raise issue_list.as_errors()
-
-        return rules, issue_list
-
     @overload
     def to_rules(
         self, error_handling: Literal["raise"], role: RoleTypes | None = None, is_reference: bool = False
@@ -151,15 +113,53 @@ class ExcelImporter(BaseImporter):
                     raise issue_list.as_errors()
                 return None, issue_list
 
-        output_rules = cast(DomainRules | InformationRules | DMSRules, user_rules or reference_rules)
+        rules = cast(DomainRules | InformationRules | DMSRules, user_rules or reference_rules)
 
         return self._to_output(
-            output_rules,
+            rules,
             issue_list,
             errors=error_handling,
             role=role,
             is_reference=is_reference,
         )
+
+    def _to_single_rules(
+        self,
+        issue_list: IssueList,
+        rules_category: RulesCategory,
+        error_handling: Literal["raise", "continue"] = "continue",
+    ) -> tuple[Rules | None, IssueList]:
+        with pd.ExcelFile(self.filepath) as excel_file:
+            metadata, issue_list = _get_metadata(
+                "Metadata" if rules_category.user else "ReferenceMetadata", excel_file, issue_list
+            )
+            if issue_list:
+                if error_handling == "raise":
+                    raise issue_list.as_errors()
+                return None, issue_list
+
+            sheets, read_info_by_sheet, issue_list = _read_sheets(metadata, excel_file, rules_category, issue_list)
+
+            if issue_list:
+                if error_handling == "raise":
+                    raise issue_list.as_errors()
+                return None, issue_list
+
+            rules_cls = RULES_PER_ROLE[RoleTypes(cast(str, metadata.get("role")))]
+            with _handle_issues(
+                issue_list,
+                error_cls=issues.spreadsheet.InvalidSheetError,
+                error_args={"read_info_by_sheet": read_info_by_sheet},
+            ) as future:
+                rules = rules_cls.model_validate(sheets)  # type: ignore[attr-defined]
+
+            if future.result == "failure":
+                if error_handling == "continue":
+                    return None, issue_list
+                else:
+                    raise issue_list.as_errors()
+
+        return rules, issue_list
 
 
 def _is_there_metadata_sheet(
