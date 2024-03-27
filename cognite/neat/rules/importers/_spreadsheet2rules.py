@@ -138,14 +138,16 @@ class ExcelImporter(BaseImporter):
                     raise issue_list.as_errors()
                 return None, issue_list
 
-            sheets, read_info_by_sheet, issue_list = _read_sheets(metadata, excel_file, rules_category, issue_list)
+            sheets, read_info_by_sheet, issue_list = _read_sheets(
+                cast(dict, metadata), excel_file, rules_category, issue_list
+            )
 
             if issue_list:
                 if error_handling == "raise":
                     raise issue_list.as_errors()
                 return None, issue_list
 
-            rules_cls = RULES_PER_ROLE[RoleTypes(cast(str, metadata.get("role")))]
+            rules_cls = RULES_PER_ROLE[RoleTypes(cast(str, cast(dict, metadata).get("role")))]
             with _handle_issues(
                 issue_list,
                 error_cls=issues.spreadsheet.InvalidSheetError,
@@ -177,7 +179,7 @@ def _is_there_schema_field(metadata):
     return metadata.get("schema", "") in [schema.value for schema in SchemaCompleteness]
 
 
-def _get_metadata(metadata_sheet_name: str, excel_file, issue_list) -> tuple[dict, IssueList]:
+def _get_metadata(metadata_sheet_name: str, excel_file, issue_list) -> tuple[dict | None, IssueList]:
     # Check if there is a base metadata sheet
     if not _is_there_metadata_sheet(metadata_sheet_name, excel_file):
         issue_list.append(
@@ -185,14 +187,14 @@ def _get_metadata(metadata_sheet_name: str, excel_file, issue_list) -> tuple[dic
                 excel_file.io, sheet_name=metadata_sheet_name
             )
         )
-        return {}, issue_list
+        return None, issue_list
     else:
         metadata = dict(pd.read_excel(excel_file, metadata_sheet_name, header=None).replace(float("nan"), None).values)
 
     # check if there is a role field
     if not _is_there_role_field(metadata):
         issue_list.append(cognite.neat.rules.issues.spreadsheet_file.RoleMissingOrUnsupportedError(excel_file.io))
-        return {}, issue_list
+        return None, issue_list
     else:
         role_input = RoleTypes(cast(str, metadata.get("role")))
 
@@ -200,7 +202,7 @@ def _get_metadata(metadata_sheet_name: str, excel_file, issue_list) -> tuple[dic
     if role_input != RoleTypes.domain_expert:
         if not _is_there_schema_field(metadata):
             issue_list.append(cognite.neat.rules.issues.spreadsheet_file.SchemaMissingOrUnsupportedError(excel_file.io))
-            return {}, issue_list
+            return None, issue_list
 
     return metadata, issue_list
 
