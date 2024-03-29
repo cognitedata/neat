@@ -88,6 +88,8 @@ class WorkflowManager:
         return workflow
 
     def delete_workflow(self, name: str):
+        wf = self.get_workflow(name)
+        wf.cleanup_workflow_context()
         del self.workflow_registry[name]
         full_path = self.workflows_storage_path / name
         shutil.rmtree(full_path)
@@ -117,81 +119,54 @@ class WorkflowManager:
         self.save_workflow_to_storage(name)
         return workflow_definition
 
-    def load_workflows_from_storage(self, workflows_storage_path: str | Path | None = None):
+    def load_single_workflow_from_storage(self, workflow_name: str):
+        """Load single workflow from storage into memory"""
+
+        # check if workflow is already loaded. If so, perform context cleanup first
+        if workflow_name in self.workflow_registry:
+            self.workflow_registry[workflow_name].cleanup_workflow_context()
+            del self.workflow_registry[workflow_name]
+
+        workflow_path = self.workflows_storage_path / workflow_name
+        # THIS IS WHERE WE LOAD THE WORKFLOW MODULES
+        if workflow_path.is_dir():
+            logging.info(f"Loading workflow {workflow_name} from {workflow_path}")
+            try:
+                if (workflow_definition_path := workflow_path / "workflow.yaml").exists():
+                    with workflow_definition_path.open() as workflow_definition_file:
+                        workflow_definition: WorkflowDefinition = BaseWorkflow.deserialize_definition(
+                            workflow_definition_file.read(), output_format="yaml"
+                        )
+                else:
+                    logging.info(f"Definition file {workflow_definition_path} not found, skipping")
+                    return
+
+                # This is convinience feature when user wants to share self contained workflow
+                # folder as single zip file.
+                if (workflow_path / "rules").exists():
+                    logging.info(f"Copying rules from {workflow_path / 'rules'} to {self.rules_storage_path} ")
+                    for rule_file in os.listdir(workflow_path / "rules"):
+                        shutil.copy(workflow_path / "rules" / rule_file, self.rules_storage_path)
+
+                self.steps_registry.load_custom_step_classes(workflow_path, workflow_name)
+                self.register_workflow(BaseWorkflow, workflow_name, workflow_definition)
+
+            except Exception as e:
+                trace = traceback.format_exc()
+                logging.error(f"Error loading workflow {workflow_name}: error: {e} trace : {trace}")
+
+    def load_workflows_from_storage(self):
         """Loads workflows from disk/storage into memory, initializes and register them in the workflow registry"""
 
         # set workflow storage path
-        workflows_storage_path = Path(workflows_storage_path) if workflows_storage_path else self.workflows_storage_path
+        workflows_storage_path = self.workflows_storage_path
 
         # set system path to be used when importing individual workflows as python modules
         # via importlib.import_module(...)
         sys.path.append(str(workflows_storage_path))
 
         for workflow_name in os.listdir(workflows_storage_path):
-            workflow_path = workflows_storage_path / workflow_name
-            # THIS IS WHERE WE LOAD THE WORKFLOW MODULES
-            if workflow_path.is_dir():
-                logging.info(f"Loading workflow {workflow_name} from {workflow_path}")
-                try:
-                    if (workflow_definition_path := workflow_path / "workflow.yaml").exists():
-                        with workflow_definition_path.open() as workflow_definition_file:
-                            workflow_definition: WorkflowDefinition = BaseWorkflow.deserialize_definition(
-                                workflow_definition_file.read(), output_format="yaml"
-                            )
-                    else:
-                        logging.info(f"Definition file {workflow_definition_path} not found, skipping")
-                        continue
-
-                    # This is convinience feature when user wants to share self contained workflow
-                    # folder as single zip file.
-                    if (workflow_path / "rules").exists():
-                        logging.info(f"Copying rules from {workflow_path / 'rules'} to {self.rules_storage_path} ")
-                        for rule_file in os.listdir(workflow_path / "rules"):
-                            shutil.copy(workflow_path / "rules" / rule_file, self.rules_storage_path)
-
-                    # Comment: All our workflows implementation_module is None
-                    # what is this meant for ?, just to have different name?
-                    if workflow_definition.implementation_module:
-                        workflow_name = workflow_definition.implementation_module
-                        logging.info(f"Loading CUSTOM workflow module {workflow_name}")
-                    else:
-                        logging.info(f"Loading workflow module {workflow_name}")
-
-                    full_module_name = f"{workflow_name}.workflow"
-                    load_user_defined_workflow = False
-                    if full_module_name in sys.modules:
-                        logging.info(f"Reloading existing workflow module {workflow_name}")
-                        module = importlib.reload(sys.modules[full_module_name])
-                        load_user_defined_workflow = True
-                    else:
-                        try:
-                            module = importlib.import_module(full_module_name)
-                            load_user_defined_workflow = True
-                            logging.info(f"Workflow implementation class for {workflow_name} loaded successfully")
-                        except ModuleNotFoundError:
-                            pass
-
-                    self.steps_registry.load_custom_step_classes(workflow_path, workflow_name)
-                    # Dynamically load workflow classes which contain "NeatWorkflow" in their name
-                    # from workflow.py module in the workflow directory and
-                    # Instantiate them using the workflow definition loaded
-                    # from workflow.yaml file
-                    # WARNING: This will be deprecated in the future.
-                    if load_user_defined_workflow:
-                        for name, obj in inspect.getmembers(module):
-                            if "NeatWorkflow" in name and inspect.isclass(obj):
-                                logging.info(
-                                    f"Found class {name} in module {workflow_name},"
-                                    f" registering it as '{workflow_name}' in the workflow registry"
-                                )
-                                self.register_workflow(obj, workflow_name, workflow_definition)
-                                return
-                    else:
-                        self.register_workflow(BaseWorkflow, workflow_name, workflow_definition)
-
-                except Exception as e:
-                    trace = traceback.format_exc()
-                    logging.error(f"Error loading workflow {workflow_name}: error: {e} trace : {trace}")
+            self.load_single_workflow_from_storage(workflow_name)
 
     def register_workflow(self, obj, workflow_name, workflow_definition):
         """Register workflow in the workflow registry

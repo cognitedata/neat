@@ -67,6 +67,15 @@ def package_workflow(workflow_name: str):
     return {"package": package_file, "hash": hash}
 
 
+@router.post("/api/workflow/context-cleanup/{workflow_name}")
+def cleanup_workflow_data(workflow_name: str):
+    if NEAT_APP.cdf_store is None:
+        return {"error": "NeatApp is not initialized"}
+    workflow = NEAT_APP.workflow_manager.get_workflow(workflow_name)
+    workflow.cleanup_workflow_context()
+    return {"result": "ok"}
+
+
 @router.post("/api/workflow/create")
 def create_new_workflow(request: WorkflowDefinition):
     if NEAT_APP.workflow_manager is None:
@@ -104,6 +113,13 @@ def reload_workflows():
     return {"result": "ok", "workflows": NEAT_APP.workflow_manager.get_list_of_workflows()}
 
 
+@router.post("/api/workflow/reload-single-workflow/{workflow_name}")
+def reload_single_workflows(workflow_name: str):
+    NEAT_APP.workflow_manager.load_single_workflow_from_storage(workflow_name)
+    NEAT_APP.triggers_manager.reload_all_triggers()
+    return {"result": "ok", "workflows": NEAT_APP.workflow_manager.get_list_of_workflows()}
+
+
 @router.get("/api/workflow/workflow-definition/{workflow_name}")
 def get_workflow_definition(workflow_name: str):
     if NEAT_APP.workflow_manager is None:
@@ -127,6 +143,9 @@ def get_workflow_src(workflow_name: str, file_name: str):
 def update_workflow_definition(workflow_name: str, request: WorkflowDefinition):
     if NEAT_APP.workflow_manager is None:
         return {"error": "NeatApp is not initialized"}
+    wf = NEAT_APP.workflow_manager.get_workflow(workflow_name)
+    if wf is not None:
+        wf.cleanup_workflow_context()
     NEAT_APP.workflow_manager.update_workflow(workflow_name, request)
     NEAT_APP.workflow_manager.save_workflow_to_storage(workflow_name)
     return {"result": "ok"}

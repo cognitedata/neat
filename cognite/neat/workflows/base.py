@@ -78,6 +78,7 @@ class BaseWorkflow:
         self.metrics = NeatMetricsCollector(self.name, self.cdf_client)
         self.resume_event = Event()
         self.is_ephemeral = False  # if True, workflow will be deleted after completion
+        self.auto_workflow_cleanup = False
         self.step_classes = None
         self.data: dict[str, DataContract | FlowMessage | CdfStore | CogniteClient | None] = {}
         self.steps_registry: StepsRegistry = steps_registry or StepsRegistry()
@@ -134,7 +135,18 @@ class BaseWorkflow:
         timing_metrics.labels(wf_name=self.name, component="workflow", name="workflow").set(self.elapsed_time)
         logging.info(f"Workflow completed in {self.elapsed_time} seconds")
         self.report_workflow_execution()
+        if self.auto_workflow_cleanup:
+            self.auto_workflow_cleanup()
         return self.flow_message
+
+    def cleanup_workflow_context(self):
+        # This is special treatment for oxigraph store. It should be closed and deleted otherwise it can lead to errors.
+        # This is a temporary solution until we have a better way to handle this , for example by using close or cleanup method in the step
+        if "SolutionGraph" in self.data:
+            self.data["SolutionGraph"].graph.close()
+        if "SourceGraph" in self.data:
+            self.data["SourceGraph"].graph.close()
+        self.data.clear()
 
     def get_transition_step(self, transitions: list[str] | None) -> list[WorkflowStepDefinition]:
         return [stp for stp in self.workflow_steps if stp.id in transitions and stp.enabled] if transitions else []
