@@ -177,9 +177,8 @@ class ExcelImporter(BaseImporter):
         user_rules: Rules | None = None
         if not is_reference:
             user_rules = SpreadsheetReader(issue_list, is_reference=False).read(self.filepath)
-
-        if issue_list.has_errors:
-            return self._return_or_raise(issue_list, error_handling)
+            if issue_list.has_errors:
+                return self._return_or_raise(issue_list, error_handling)
 
         reference_rules: Rules | None = None
         if is_reference or (
@@ -188,16 +187,25 @@ class ExcelImporter(BaseImporter):
             and cast(DMSRules | InformationRules, user_rules).metadata.schema_ == SchemaCompleteness.extended
         ):
             reference_rules = SpreadsheetReader(issue_list, is_reference=True).read(self.filepath)
-
-        if issue_list.has_errors:
-            return self._return_or_raise(issue_list, error_handling)
+            if issue_list.has_errors:
+                return self._return_or_raise(issue_list, error_handling)
 
         if user_rules and reference_rules and user_rules.metadata.role != reference_rules.metadata.role:
             issue_list.append(issues.spreadsheet_file.RoleMismatchError(self.filepath))
             return self._return_or_raise(issue_list, error_handling)
 
+        if user_rules and reference_rules:
+            rules = user_rules
+            rules.reference = reference_rules
+        elif user_rules:
+            rules = user_rules
+        elif reference_rules:
+            rules = reference_rules
+        else:
+            raise ValueError("No rules found.")
+
         return self._to_output(
-            cast(Rules, user_rules or reference_rules),
+            rules,
             issue_list,
             errors=error_handling,
             role=role,
