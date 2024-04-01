@@ -70,9 +70,7 @@ class ExcelImporter(BaseImporter):
 
         if not self.filepath.exists():
             issue_list.append(cognite.neat.rules.issues.spreadsheet_file.SpreadsheetNotFoundError(self.filepath))
-            if error_handling == "raise":
-                raise issue_list.as_errors() from None
-            return None, issue_list
+            return self._return_or_raise(issue_list, error_handling)
 
         if not is_reference:
             user_rules, issue_list = self._to_single_rules(issue_list, RulesCategory.user, error_handling)
@@ -114,6 +112,14 @@ class ExcelImporter(BaseImporter):
             role=role,
             is_reference=is_reference,
         )
+
+    @classmethod
+    def _return_or_raise(
+        cls, issue_list: IssueList, error_handling: Literal["raise", "continue"]
+    ) -> tuple[None, IssueList]:
+        if error_handling == "raise":
+            raise issue_list.as_errors()
+        return None, issue_list
 
     def _to_single_rules(
         self,
@@ -164,11 +170,11 @@ def _is_there_metadata_sheet(
 
 
 def _is_there_role_field(metadata):
-    return metadata.get("role", "") in [role.value for role in RoleTypes]
+    return metadata.get("role", "") in [role.value for role in RoleTypes.__members__.values()]
 
 
 def _is_there_schema_field(metadata):
-    return metadata.get("schema", "") in [schema.value for schema in SchemaCompleteness]
+    return metadata.get("schema", "") in [schema.value for schema in SchemaCompleteness.__members__.values()]
 
 
 def _get_metadata(metadata_sheet_name: str, excel_file, issue_list) -> tuple[dict | None, IssueList]:
