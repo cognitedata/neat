@@ -36,16 +36,8 @@ SPREADSHEET_READ_CONFIG = {
 }
 
 MANDATORY_SHEETS_PER_ROLE: dict[RoleTypes, set[str]] = {
-    RoleTypes.domain_expert: {
-        str(sheet_name) for sheet_name in RULES_PER_ROLE[RoleTypes.domain_expert].mandatory_fields(use_alias=True)
-    },
-    RoleTypes.information_architect: {
-        str(sheet_name)
-        for sheet_name in RULES_PER_ROLE[RoleTypes.information_architect].mandatory_fields(use_alias=True)
-    },
-    RoleTypes.dms_architect: {
-        str(sheet_name) for sheet_name in RULES_PER_ROLE[RoleTypes.dms_architect].mandatory_fields(use_alias=True)
-    },
+    role_type: {str(sheet_name) for sheet_name in RULES_PER_ROLE[role_type].mandatory_fields(use_alias=True)}
+    for role_type in RoleTypes.__members__.values()
 }
 
 
