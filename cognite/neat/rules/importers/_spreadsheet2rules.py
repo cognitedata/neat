@@ -202,7 +202,9 @@ class ExcelImporter(BaseImporter):
         elif reference_rules:
             rules = reference_rules
         else:
-            raise ValueError("No rules found.")
+            raise ValueError(
+                "No rules were generated. This should have been caught earlier. " f"Bug in {type(self).__name__}."
+            )
 
         return self._to_output(
             rules,
