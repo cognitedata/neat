@@ -101,7 +101,7 @@ class SpreadsheetReader:
             ) as future:
                 rules = rules_cls.model_validate(sheets)  # type: ignore[attr-defined]
 
-            if future.result == "failure":
+            if future.result == "failure" or self.issue_list.has_errors:
                 return None
 
         return rules
