@@ -35,7 +35,7 @@ SPREADSHEET_READ_CONFIG = {
     ],
 }
 
-MANDATORY_SHEETS_PER_ROLE: dict[RoleTypes, set[str]] = {
+MANDATORY_SHEETS_BY_ROLE: dict[RoleTypes, set[str]] = {
     role_type: {str(sheet_name) for sheet_name in RULES_PER_ROLE[role_type].mandatory_fields(use_alias=True)}
     for role_type in RoleTypes.__members__.values()
 }
@@ -208,9 +208,9 @@ def _read_sheets(
     sheets: dict[str, dict | list] = {"Metadata": metadata}
 
     expected_sheet_names = (
-        {f"Reference{sheet_name}" for sheet_name in MANDATORY_SHEETS_PER_ROLE[RoleTypes(metadata.get("role"))]}
+        {f"Reference{sheet_name}" for sheet_name in MANDATORY_SHEETS_BY_ROLE[RoleTypes(metadata.get("role"))]}
         if rules_category == RulesCategory.reference
-        else MANDATORY_SHEETS_PER_ROLE[RoleTypes(metadata.get("role"))]
+        else MANDATORY_SHEETS_BY_ROLE[RoleTypes(metadata.get("role"))]
     )
 
     if missing_sheets := expected_sheet_names.difference(set(excel_file.sheet_names)):
