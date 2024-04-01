@@ -26,6 +26,11 @@ SOURCE_SHEET__TARGET_FIELD__HEADERS = [
     ("Views", "Views", "View"),
 ]
 
+MANDATORY_SHEETS_BY_ROLE: dict[RoleTypes, set[str]] = {
+    role_type: {str(sheet_name) for sheet_name in RULES_PER_ROLE[role_type].mandatory_fields(use_alias=True)}
+    for role_type in RoleTypes.__members__.values()
+}
+
 
 class MetadataRaw(UserDict):
     @classmethod
@@ -124,24 +129,18 @@ class SpreadsheetReader:
         for source_sheet_name, target_sheet_name, headers in SOURCE_SHEET__TARGET_FIELD__HEADERS:
             source_sheet_name = self.to_reference_sheet(source_sheet_name) if self._is_reference else source_sheet_name
 
-            if source_sheet_name in excel_file.sheet_names:
-                try:
-                    sheets[target_sheet_name], read_info_by_sheet[source_sheet_name] = read_individual_sheet(
-                        excel_file, source_sheet_name, return_read_info=True, expected_headers=[headers]
-                    )
-                except Exception as e:
-                    self.issue_list.append(
-                        issues.spreadsheet_file.ReadSpreadsheetsError(cast(Path, excel_file.io), str(e))
-                    )
-                    continue
+            if source_sheet_name not in excel_file.sheet_names:
+                continue
+
+            try:
+                sheets[target_sheet_name], read_info_by_sheet[source_sheet_name] = read_individual_sheet(
+                    excel_file, source_sheet_name, return_read_info=True, expected_headers=[headers]
+                )
+            except Exception as e:
+                self.issue_list.append(issues.spreadsheet_file.ReadSpreadsheetsError(cast(Path, excel_file.io), str(e)))
+                continue
 
         return sheets, read_info_by_sheet
-
-
-MANDATORY_SHEETS_BY_ROLE: dict[RoleTypes, set[str]] = {
-    role_type: {str(sheet_name) for sheet_name in RULES_PER_ROLE[role_type].mandatory_fields(use_alias=True)}
-    for role_type in RoleTypes.__members__.values()
-}
 
 
 class ExcelImporter(BaseImporter):
