@@ -53,13 +53,13 @@ class TestExcelImporter:
         ],
     )
     def test_excel_importer_valid_domain_expert(self, filepath: Path):
-        domain_rules = ExcelImporter(filepath).to_rules(error_handling="raise", role=RoleTypes.domain_expert)
+        domain_rules = ExcelImporter(filepath).to_rules(errors="raise", role=RoleTypes.domain_expert)
 
         assert isinstance(domain_rules, DomainRules)
 
     def test_excel_importer_valid_information_architect(self):
         information_rules = ExcelImporter(DOC_RULES / "information-architect-david.xlsx").to_rules(
-            error_handling="raise",
+            errors="raise",
             role=RoleTypes.information_architect,
         )
 
@@ -74,7 +74,7 @@ class TestExcelImporter:
         )
 
         _, issues = ExcelImporter(DOC_RULES / "expert-wind-energy-jon.xlsx").to_rules(
-            error_handling="continue",
+            errors="continue",
             role=RoleTypes.information_architect,
         )
 

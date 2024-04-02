@@ -71,7 +71,7 @@ class ExcelToRules(Step):
             role_enum = RoleTypes[role]
 
         excel_importer = importers.ExcelImporter(rules_file_path)
-        rules, issues = excel_importer.to_rules(role=role_enum, error_handling="continue")
+        rules, issues = excel_importer.to_rules(role=role_enum, errors="continue")
 
         if rules is None:
             output_dir = self.data_store_path / Path("staging")

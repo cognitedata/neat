@@ -25,7 +25,7 @@ def alice_rules() -> DMSRules:
 
     excel_importer = ExcelImporter(filepath)
 
-    return excel_importer.to_rules(error_handling="raise", role=RoleTypes.dms_architect)
+    return excel_importer.to_rules(errors="raise", role=RoleTypes.dms_architect)
 
 
 @pytest.fixture(scope="session")

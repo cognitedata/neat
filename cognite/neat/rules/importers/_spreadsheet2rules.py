@@ -148,15 +148,13 @@ class ExcelImporter(BaseImporter):
         self.filepath = filepath
 
     @overload
-    def to_rules(
-        self, error_handling: Literal["raise"], role: RoleTypes | None = None, is_reference: bool = False
-    ) -> Rules:
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None, is_reference: bool = False) -> Rules:
         ...
 
     @overload
     def to_rules(
         self,
-        error_handling: Literal["continue"] = "continue",
+        errors: Literal["continue"] = "continue",
         role: RoleTypes | None = None,
         is_reference: bool = False,
     ) -> tuple[Rules | None, IssueList]:
@@ -164,7 +162,7 @@ class ExcelImporter(BaseImporter):
 
     def to_rules(
         self,
-        error_handling: Literal["raise", "continue"] = "continue",
+        errors: Literal["raise", "continue"] = "continue",
         role: RoleTypes | None = None,
         is_reference: bool = False,
     ) -> tuple[Rules | None, IssueList] | Rules:
@@ -172,13 +170,13 @@ class ExcelImporter(BaseImporter):
 
         if not self.filepath.exists():
             issue_list.append(issues.spreadsheet_file.SpreadsheetNotFoundError(self.filepath))
-            return self._return_or_raise(issue_list, error_handling)
+            return self._return_or_raise(issue_list, errors)
 
         user_rules: Rules | None = None
         if not is_reference:
             user_rules = SpreadsheetReader(issue_list, is_reference=False).read(self.filepath)
             if issue_list.has_errors:
-                return self._return_or_raise(issue_list, error_handling)
+                return self._return_or_raise(issue_list, errors)
 
         reference_rules: Rules | None = None
         if is_reference or (
@@ -188,11 +186,11 @@ class ExcelImporter(BaseImporter):
         ):
             reference_rules = SpreadsheetReader(issue_list, is_reference=True).read(self.filepath)
             if issue_list.has_errors:
-                return self._return_or_raise(issue_list, error_handling)
+                return self._return_or_raise(issue_list, errors)
 
         if user_rules and reference_rules and user_rules.metadata.role != reference_rules.metadata.role:
             issue_list.append(issues.spreadsheet_file.RoleMismatchError(self.filepath))
-            return self._return_or_raise(issue_list, error_handling)
+            return self._return_or_raise(issue_list, errors)
 
         if user_rules and reference_rules:
             rules = user_rules
@@ -209,16 +207,14 @@ class ExcelImporter(BaseImporter):
         return self._to_output(
             rules,
             issue_list,
-            errors=error_handling,
+            errors=errors,
             role=role,
             is_reference=is_reference,
         )
 
     @classmethod
-    def _return_or_raise(
-        cls, issue_list: IssueList, error_handling: Literal["raise", "continue"]
-    ) -> tuple[None, IssueList]:
-        if error_handling == "raise":
+    def _return_or_raise(cls, issue_list: IssueList, errors: Literal["raise", "continue"]) -> tuple[None, IssueList]:
+        if errors == "raise":
             raise issue_list.as_errors()
         return None, issue_list
 

@@ -93,14 +93,14 @@ class TestExcelImporter:
     @pytest.mark.parametrize("filepath, rule_type, is_reference", valid_dms_rules_filepaths())
     def test_import_valid_rules(self, filepath: Path, rule_type: DMSRules | InformationRules, is_reference: bool):
         importer = ExcelImporter(filepath)
-        rules = importer.to_rules(error_handling="raise", is_reference=is_reference)
+        rules = importer.to_rules(errors="raise", is_reference=is_reference)
         assert isinstance(rules, rule_type)
 
     @pytest.mark.parametrize("filepath, expected_issues", invalid_rules_filepaths())
     def test_import_invalid_rules(self, filepath: Path, expected_issues: IssueList):
         importer = ExcelImporter(filepath)
 
-        _, issues = importer.to_rules(error_handling="continue")
+        _, issues = importer.to_rules(errors="continue")
 
         assert len(issues) == len(expected_issues)
         assert sorted(issues) == sorted(expected_issues)
