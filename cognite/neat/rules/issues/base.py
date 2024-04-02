@@ -158,6 +158,10 @@ class IssueList(UserList[ValidationIssue]):
         return IssueList([issue for issue in self if isinstance(issue, NeatValidationError)])
 
     @property
+    def has_errors(self) -> bool:
+        return any(isinstance(issue, NeatValidationError) for issue in self)
+
+    @property
     def warnings(self) -> "IssueList":
         return IssueList([issue for issue in self if isinstance(issue, ValidationWarning)])
 

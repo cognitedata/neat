@@ -2,21 +2,145 @@
 In more details, it traverses the graph and abstracts class and properties, basically
 generating a list of rules based on which nodes that form the graph are made.
 """
-from collections import defaultdict
+
+from collections import UserDict, defaultdict
 from pathlib import Path
 from typing import Literal, cast, overload
 
 import pandas as pd
+from pandas import ExcelFile
 
-import cognite.neat.rules.issues.spreadsheet_file
 from cognite.neat.rules import issues
 from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models._rules import RULES_PER_ROLE, DMSRules, DomainRules, InformationRules
-from cognite.neat.rules.models._rules.base import RoleTypes
+from cognite.neat.rules.models._rules.base import RoleTypes, SchemaCompleteness
 from cognite.neat.utils.auxiliary import local_import
-from cognite.neat.utils.spreadsheet import SpreadsheetRead, read_spreadsheet
+from cognite.neat.utils.spreadsheet import SpreadsheetRead, read_individual_sheet
 
 from ._base import BaseImporter, Rules, _handle_issues
+
+SOURCE_SHEET__TARGET_FIELD__HEADERS = [
+    ("Properties", "Properties", "Class"),
+    ("Classes", "Classes", "Class"),
+    ("Containers", "Containers", "Container"),
+    ("Views", "Views", "View"),
+]
+
+MANDATORY_SHEETS_BY_ROLE: dict[RoleTypes, set[str]] = {
+    role_type: {str(sheet_name) for sheet_name in RULES_PER_ROLE[role_type].mandatory_fields(use_alias=True)}
+    for role_type in RoleTypes.__members__.values()
+}
+
+
+class MetadataRaw(UserDict):
+    @classmethod
+    def from_excel(cls, excel_file: ExcelFile, metadata_sheet_name: str) -> "MetadataRaw":
+        return cls(pd.read_excel(excel_file, metadata_sheet_name, header=None).replace(float("nan"), None).values)
+
+    @property
+    def has_role_field(self) -> bool:
+        return self.get("role") in [role.value for role in RoleTypes.__members__.values()]
+
+    @property
+    def role(self) -> RoleTypes:
+        return RoleTypes(self["role"])
+
+    @property
+    def has_schema_field(self) -> bool:
+        return self.get("schema") in [schema.value for schema in SchemaCompleteness.__members__.values()]
+
+    def is_valid(self, issue_list: IssueList, filepath: Path) -> bool:
+        if not self.has_role_field:
+            issue_list.append(issues.spreadsheet_file.RoleMissingOrUnsupportedError(filepath))
+            return False
+
+        # check if there is a schema field if role is not domain expert
+        if self.role != RoleTypes.domain_expert and not self.has_schema_field:
+            issue_list.append(issues.spreadsheet_file.SchemaMissingOrUnsupportedError(filepath))
+            return False
+        return True
+
+
+class SpreadsheetReader:
+    def __init__(self, issue_list: IssueList, is_reference: bool = False):
+        self.issue_list = issue_list
+        self._is_reference = is_reference
+
+    @property
+    def metadata_sheet_name(self) -> str:
+        metadata_name = "Metadata"
+        return self.to_reference_sheet(metadata_name) if self._is_reference else metadata_name
+
+    def sheet_names(self, role: RoleTypes) -> set[str]:
+        names = MANDATORY_SHEETS_BY_ROLE[role]
+        return {self.to_reference_sheet(sheet_name) for sheet_name in names} if self._is_reference else names
+
+    @classmethod
+    def to_reference_sheet(cls, sheet_name: str) -> str:
+        return f"Reference{sheet_name}"
+
+    def read(self, filepath: Path) -> Rules | None:
+        with pd.ExcelFile(filepath) as excel_file:
+            if self.metadata_sheet_name not in excel_file.sheet_names:
+                self.issue_list.append(
+                    issues.spreadsheet_file.MetadataSheetMissingOrFailedError(
+                        filepath, sheet_name=self.metadata_sheet_name
+                    )
+                )
+                return None
+
+            metadata = MetadataRaw.from_excel(excel_file, self.metadata_sheet_name)
+
+            if not metadata.is_valid(self.issue_list, filepath):
+                return None
+
+            sheets, read_info_by_sheet = self._read_sheets(metadata, excel_file)
+            if self.issue_list.has_errors:
+                return None
+
+            rules_cls = RULES_PER_ROLE[metadata.role]
+            with _handle_issues(
+                self.issue_list,
+                error_cls=issues.spreadsheet.InvalidSheetError,
+                error_args={"read_info_by_sheet": read_info_by_sheet},
+            ) as future:
+                rules = rules_cls.model_validate(sheets)  # type: ignore[attr-defined]
+
+            if future.result == "failure" or self.issue_list.has_errors:
+                return None
+
+        return rules
+
+    def _read_sheets(
+        self, metadata: MetadataRaw, excel_file: ExcelFile
+    ) -> tuple[dict[str, dict | list] | None, dict[str, SpreadsheetRead]]:
+        read_info_by_sheet: dict[str, SpreadsheetRead] = defaultdict(SpreadsheetRead)
+
+        sheets: dict[str, dict | list] = {"Metadata": dict(metadata)}
+
+        expected_sheet_names = self.sheet_names(metadata.role)
+
+        if missing_sheets := expected_sheet_names.difference(set(excel_file.sheet_names)):
+            self.issue_list.append(
+                issues.spreadsheet_file.SheetMissingError(cast(Path, excel_file.io), list(missing_sheets))
+            )
+            return None, read_info_by_sheet
+
+        for source_sheet_name, target_sheet_name, headers in SOURCE_SHEET__TARGET_FIELD__HEADERS:
+            source_sheet_name = self.to_reference_sheet(source_sheet_name) if self._is_reference else source_sheet_name
+
+            if source_sheet_name not in excel_file.sheet_names:
+                continue
+
+            try:
+                sheets[target_sheet_name], read_info_by_sheet[source_sheet_name] = read_individual_sheet(
+                    excel_file, source_sheet_name, return_read_info=True, expected_headers=[headers]
+                )
+            except Exception as e:
+                self.issue_list.append(issues.spreadsheet_file.ReadSpreadsheetsError(cast(Path, excel_file.io), str(e)))
+                continue
+
+        return sheets, read_info_by_sheet
 
 
 class ExcelImporter(BaseImporter):
@@ -29,7 +153,10 @@ class ExcelImporter(BaseImporter):
 
     @overload
     def to_rules(
-        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None, is_reference: bool = False
+        self,
+        errors: Literal["continue"] = "continue",
+        role: RoleTypes | None = None,
+        is_reference: bool = False,
     ) -> tuple[Rules | None, IssueList]:
         ...
 
@@ -40,84 +167,56 @@ class ExcelImporter(BaseImporter):
         is_reference: bool = False,
     ) -> tuple[Rules | None, IssueList] | Rules:
         issue_list = IssueList(title=f"'{self.filepath.name}'")
+
         if not self.filepath.exists():
-            issue_list.append(cognite.neat.rules.issues.spreadsheet_file.SpreadsheetNotFoundError(self.filepath))
-            if errors == "raise":
-                raise issue_list.as_errors() from None
-            return None, issue_list
+            issue_list.append(issues.spreadsheet_file.SpreadsheetNotFoundError(self.filepath))
+            return self._return_or_raise(issue_list, errors)
 
-        with pd.ExcelFile(self.filepath) as excel_file:
-            try:
-                metadata = dict(pd.read_excel(excel_file, "Metadata", header=None).values)
-            except ValueError:
-                issue_list.append(
-                    cognite.neat.rules.issues.spreadsheet_file.MetadataSheetMissingOrFailedError(self.filepath)
-                )
-                if errors == "raise":
-                    raise issue_list.as_errors() from None
-                return None, issue_list
+        user_rules: Rules | None = None
+        if not is_reference:
+            user_rules = SpreadsheetReader(issue_list, is_reference=False).read(self.filepath)
+            if issue_list.has_errors:
+                return self._return_or_raise(issue_list, errors)
 
-            role_input = RoleTypes(metadata.get("role", RoleTypes.domain_expert))
-            role_enum = RoleTypes(role_input)
-            rules_model = RULES_PER_ROLE[role_enum]
-            sheet_names = {str(name) for name in excel_file.sheet_names}
-            expected_sheet_names = rules_model.mandatory_fields(use_alias=True)
+        reference_rules: Rules | None = None
+        if is_reference or (
+            user_rules
+            and user_rules.metadata.role != RoleTypes.domain_expert
+            and cast(DMSRules | InformationRules, user_rules).metadata.schema_ == SchemaCompleteness.extended
+        ):
+            reference_rules = SpreadsheetReader(issue_list, is_reference=True).read(self.filepath)
+            if issue_list.has_errors:
+                return self._return_or_raise(issue_list, errors)
 
-            if missing_sheets := expected_sheet_names.difference(sheet_names):
-                issue_list.append(
-                    cognite.neat.rules.issues.spreadsheet_file.SheetMissingError(self.filepath, list(missing_sheets))
-                )
-                if errors == "raise":
-                    raise issue_list.as_errors()
-                return None, issue_list
+        if user_rules and reference_rules and user_rules.metadata.role != reference_rules.metadata.role:
+            issue_list.append(issues.spreadsheet_file.RoleMismatchError(self.filepath))
+            return self._return_or_raise(issue_list, errors)
 
-            sheets: dict[str, dict | list] = {"Metadata": metadata}
-            read_info_by_sheet: dict[str, SpreadsheetRead] = defaultdict(SpreadsheetRead)
-            for sheet_name, headers in [
-                ("Properties", "Class"),
-                ("Classes", "Class"),
-                ("Containers", "Container"),
-                ("Views", "View"),
-            ]:
-                if sheet_name in excel_file.sheet_names:
-                    try:
-                        sheets[sheet_name], read_info_by_sheet[sheet_name] = read_spreadsheet(
-                            excel_file, sheet_name, return_read_info=True, expected_headers=[headers]
-                        )
-                    except Exception as e:
-                        issue_list.append(
-                            cognite.neat.rules.issues.spreadsheet_file.ReadSpreadsheetsError(self.filepath, str(e))
-                        )
-                        continue
-            if issue_list:
-                if errors == "raise":
-                    raise issue_list.as_errors()
-                return None, issue_list
+        if user_rules and reference_rules:
+            rules = user_rules
+            rules.reference = reference_rules
+        elif user_rules:
+            rules = user_rules
+        elif reference_rules:
+            rules = reference_rules
+        else:
+            raise ValueError(
+                "No rules were generated. This should have been caught earlier. " f"Bug in {type(self).__name__}."
+            )
 
-        rules_cls = {
-            RoleTypes.domain_expert: DomainRules,
-            RoleTypes.information_architect: InformationRules,
-            RoleTypes.dms_architect: DMSRules,
-        }.get(role_enum)
-        if rules_cls is None:
-            issue_list.append(cognite.neat.rules.issues.spreadsheet_file.InvalidRoleError(str(role_input)))
-            if errors == "raise":
-                raise issue_list.as_errors()
-            return None, issue_list
-
-        with _handle_issues(
+        return self._to_output(
+            rules,
             issue_list,
-            error_cls=issues.spreadsheet.InvalidSheetError,
-            error_args={"read_info_by_sheet": read_info_by_sheet},
-        ) as future:
-            rules = rules_cls.model_validate(sheets)  # type: ignore[attr-defined]
-        if future.result == "failure":
-            if errors == "continue":
-                return None, issue_list
-            else:
-                raise issue_list.as_errors()
+            errors=errors,
+            role=role,
+            is_reference=is_reference,
+        )
 
-        return self._to_output(rules, issue_list, errors=errors, role=role, is_reference=is_reference)
+    @classmethod
+    def _return_or_raise(cls, issue_list: IssueList, errors: Literal["raise", "continue"]) -> tuple[None, IssueList]:
+        if errors == "raise":
+            raise issue_list.as_errors()
+        return None, issue_list
 
 
 class GoogleSheetImporter(BaseImporter):
