@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Literal, cast, overload
 
 from cognite.client import CogniteClient
@@ -33,6 +34,16 @@ class DMSImporter(BaseImporter):
     @classmethod
     def from_data_model_id(cls, client: CogniteClient, data_model_id: DataModelIdentifier) -> "DMSImporter":
         return cls(DMSSchema.from_model_id(client, data_model_id))
+
+    @classmethod
+    def from_directory(cls, directory: str | Path) -> "DMSImporter":
+        return cls(DMSSchema.from_directory(directory))
+
+    @classmethod
+    def from_zip_file(cls, zip_file: str | Path) -> "DMSImporter":
+        if Path(zip_file).suffix != ".zip":
+            raise ValueError("File extension is not .zip")
+        return cls(DMSSchema.from_zip(zip_file))
 
     @overload
     def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None, is_reference: bool = False) -> Rules:
