@@ -119,7 +119,7 @@ class DMSSchema:
         """
         path_dir = Path(directory)
         exclude_set = exclude or set()
-        data_models = path_dir / "datamodels"
+        data_models = path_dir / "data_models"
         data_models.mkdir(parents=True, exist_ok=True)
         if "spaces" not in exclude_set:
             for space in self.spaces:
