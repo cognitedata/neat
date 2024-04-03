@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.68.9] - 03-04-24
+### Added
+- Helper method `from_directory` and `from_zip_file` to `DMSExporter` to load DMS schema from directory or zip file.
+  These methods are the complement of the `export_to_file()` method in `DMSExporter`.
+
 ## [0.68.8] - 25-03-24
 ### Fixed
 - Remove harsh regex on Expected Value Types in Rules v1 DMS exporter

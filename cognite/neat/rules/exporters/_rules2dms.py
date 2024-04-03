@@ -1,5 +1,4 @@
 import warnings
-import zipfile
 from collections.abc import Collection, Iterable
 from pathlib import Path
 from typing import Literal, TypeAlias
@@ -88,57 +87,23 @@ class DMSExporter(CDFExporter[DMSSchema]):
 
     def _export_to_directory(self, directory: Path, rules: Rules) -> None:
         schema = self.export(rules)
-        data_models = directory / "data_models"
-        data_models.mkdir(exist_ok=True, parents=True)
-        if self.export_components.intersection({"all", "spaces"}):
-            for space in schema.spaces:
-                (data_models / f"{space.space}.space.yaml").write_text(space.dump_yaml())
-        if self.export_components.intersection({"all", "data_models"}):
-            for model in schema.data_models:
-                (data_models / f"{model.external_id}.datamodel.yaml").write_text(model.dump_yaml())
-        if self.export_components.intersection({"all", "views"}):
-            for view in schema.views:
-                (data_models / f"{view.external_id}.view.yaml").write_text(view.dump_yaml())
-        if self.export_components.intersection({"all", "containers"}):
-            for container in schema.containers:
-                (data_models / f"{container.external_id}.container.yaml").write_text(container.dump_yaml())
-        if isinstance(schema, PipelineSchema):
-            transformations = directory / "transformations"
-            transformations.mkdir(exist_ok=True, parents=True)
-            for transformation in schema.transformations:
-                (transformations / f"{transformation.external_id}.yaml").write_text(transformation.dump_yaml())
-            # The RAW Databases are not written to file. This is because cognite-toolkit expects the RAW databases
-            # to be in the same file as the RAW tables.
-            raw = directory / "raw"
-            raw.mkdir(exist_ok=True, parents=True)
-            for raw_table in schema.raw_tables:
-                (raw / f"{raw_table.name}.yaml").write_text(raw_table.dump_yaml())
+        exclude = self._create_exclude_set()
+        schema.to_directory(directory, exclude=exclude)
 
     def _export_to_zip_file(self, filepath: Path, rules: Rules) -> None:
         if filepath.suffix not in {".zip"}:
             warnings.warn("File extension is not .zip, adding it to the file name", stacklevel=2)
             filepath = filepath.with_suffix(".zip")
         schema = self.export(rules)
-        with zipfile.ZipFile(filepath, "w") as zip_ref:
-            if self.export_components.intersection({"all", "spaces"}):
-                for space in schema.spaces:
-                    zip_ref.writestr(f"data_models/{space.space}.space.yaml", space.dump_yaml())
-            if self.export_components.intersection({"all", "data_models"}):
-                for model in schema.data_models:
-                    zip_ref.writestr(f"data_models/{model.external_id}.datamodel.yaml", model.dump_yaml())
-            if self.export_components.intersection({"all", "views"}):
-                for view in schema.views:
-                    zip_ref.writestr(f"data_models/{view.external_id}.view.yaml", view.dump_yaml())
-            if self.export_components.intersection({"all", "containers"}):
-                for container in schema.containers:
-                    zip_ref.writestr(f"data_models/{container.external_id}.container.yaml", container.dump_yaml())
-            if isinstance(schema, PipelineSchema):
-                for transformation in schema.transformations:
-                    zip_ref.writestr(f"transformations/{transformation.external_id}.yaml", transformation.dump_yaml())
-                # The RAW Databases are not written to file. This is because cognite-toolkit expects the RAW databases
-                # to be in the same file as the RAW tables.
-                for raw_table in schema.raw_tables:
-                    zip_ref.writestr(f"raw/{raw_table.name}.yaml", raw_table.dump_yaml())
+        exclude = self._create_exclude_set()
+        schema.to_zip(filepath, exclude=exclude)
+
+    def _create_exclude_set(self):
+        if "all" in self.export_components:
+            exclude = set()
+        else:
+            exclude = {"spaces", "data_models", "views", "containers"} - self.export_components
+        return exclude
 
     def export(self, rules: Rules) -> DMSSchema:
         if isinstance(rules, DMSRules):
