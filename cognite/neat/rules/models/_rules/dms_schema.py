@@ -27,6 +27,7 @@ from cognite.neat.rules.issues.dms import (
     MissingSpaceError,
     MissingViewError,
 )
+from cognite.neat.rules.models._rules._types._value import DMS_VALUE_TYPE_MAPPINGS
 from cognite.neat.utils.cdf_loaders import ViewLoader
 from cognite.neat.utils.cdf_loaders.data_classes import RawTableWrite, RawTableWriteList
 from cognite.neat.utils.text import to_camel
@@ -380,21 +381,6 @@ class PipelineSchema(DMSSchema):
         "raw": "raw_tables",
     }
 
-    _SQL_TYPE_BY_PROPERTY_TYPE: ClassVar[dict[type[dm.PropertyType], str]] = {
-        dm.Text: "STRING",
-        dm.Int32: "INTEGER",
-        dm.Int64: "INTEGER",
-        dm.Float32: "FLOAT",
-        dm.Float64: "DOUBLE",
-        dm.Date: "DATE",
-        dm.Timestamp: "TIMESTAMP",
-        dm.TimeSeriesReference: "STRING",
-        dm.FileReference: "STRING",
-        dm.SequenceReference: "STRING",
-        dm.Boolean: "BOOLEAN",
-        dm.Json: "STRING",
-    }
-
     def __post_init__(self):
         existing_databases = {database.name for database in self.databases}
         table_database = {table.database for table in self.raw_tables}
@@ -539,12 +525,14 @@ class PipelineSchema(DMSSchema):
         for prop_name, prop in properties.items():
             container = container_by_id.get(prop.container)
             if container is not None:
-                sql_type = (
-                    cls._SQL_TYPE_BY_PROPERTY_TYPE.get(
-                        type(container.properties[prop.container_property_identifier].type)
+                dms_type = container.properties[prop.container_property_identifier].type._type
+                if dms_type in DMS_VALUE_TYPE_MAPPINGS:
+                    sql_type = DMS_VALUE_TYPE_MAPPINGS[dms_type].sql
+                else:
+                    warnings.warn(
+                        f"Unknown DMS type '{dms_type}' for property '{prop_name}'", RuntimeWarning, stacklevel=2
                     )
-                    or "STRING"
-                )
+                    sql_type = "STRING"
             else:
                 sql_type = "STRING"
             select_rows.append(f"cast(`{prop_name}` as {sql_type}) as {prop_name}")
