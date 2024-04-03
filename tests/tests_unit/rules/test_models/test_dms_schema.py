@@ -1,4 +1,5 @@
 from collections.abc import Iterable
+from pathlib import Path
 
 import pytest
 from _pytest.mark import ParameterSet
@@ -319,4 +320,13 @@ class TestDMSSchema:
     def test_dump_load_schema(self, schema: DMSSchema) -> None:
         dumped_schema = schema.dump()
         loaded_schema = PipelineSchema.load(dumped_schema)
+        assert schema.dump() == loaded_schema.dump()
+
+    @pytest.mark.parametrize(
+        "schema",
+        list(valid_schema_test_cases()),
+    )
+    def test_to_and_from_directory(self, schema: DMSSchema, tmp_path: Path) -> None:
+        schema.to_directory(tmp_path)
+        loaded_schema = PipelineSchema.from_directory(tmp_path)
         assert schema.dump() == loaded_schema.dump()
