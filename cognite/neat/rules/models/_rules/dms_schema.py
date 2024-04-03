@@ -3,6 +3,7 @@ import sys
 import warnings
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field, fields
+from pathlib import Path
 from typing import Any, ClassVar, cast
 
 import yaml
@@ -74,6 +75,71 @@ class DMSSchema:
             views=view_write,
             containers=containers.as_write(),
         )
+
+    @classmethod
+    def from_directory(cls, directory: str | Path) -> Self:
+        """Load a schema from a directory containing YAML files.
+
+        The directory is expected to follow the Cognite-Toolkit convention
+        where each file is named as `resource_type.resource_name.yaml`.
+        """
+        data = cls._read_directory(directory)
+        return cls.load(data)
+
+    @classmethod
+    def _read_directory(cls, directory: str | Path) -> dict[str, list[Any]]:
+        data: dict[str, Any] = {}
+        for yaml_file in Path(directory).rglob("*.yaml"):
+            if "." in yaml_file.stem:
+                resource_type = yaml_file.stem.rsplit(".", 1)[-1]
+                attr_name = {
+                    "container": "containers",
+                    "view": "views",
+                    "datamodel": "data_models",
+                    "space": "spaces",
+                    "node": "node_types",
+                }.get(resource_type)
+                if attr_name:
+                    data.setdefault(attr_name, [])
+                    loaded = yaml.safe_load(yaml_file.read_text())
+                    if isinstance(loaded, list):
+                        data[attr_name].extend(loaded)
+                    else:
+                        data[attr_name].append(loaded)
+        return data
+
+    def to_directory(self, directory: str | Path, exclude: set[str] | None = None) -> None:
+        """Save the schema to a directory as YAML files. This is compatible with the Cognite-Toolkit convention.
+
+        Args:
+            directory (str | Path): The directory to save the schema to.
+            exclude (set[str]): A set of attributes to exclude from the output.
+        """
+        path_dir = Path(directory)
+        exclude_set = exclude or set()
+        data_models = path_dir / "datamodels"
+        data_models.mkdir(parents=True, exist_ok=True)
+        if "spaces" not in exclude_set:
+            for space in self.spaces:
+                (data_models / f"{space.space}.space.yaml").write_text(space.dump_yaml())
+        if "data_models" not in exclude_set:
+            for model in self.data_models:
+                (data_models / f"{model.external_id}.datamodel.yaml").write_text(model.dump_yaml())
+        if "views" not in exclude_set and self.views:
+            view_dir = data_models / "views"
+            view_dir.mkdir(parents=True, exist_ok=True)
+            for view in self.views:
+                (view_dir / f"{view.external_id}.view.yaml").write_text(view.dump_yaml())
+        if "containers" not in exclude_set and self.containers:
+            container_dir = data_models / "containers"
+            container_dir.mkdir(parents=True, exist_ok=True)
+            for container in self.containers:
+                (container_dir / f"{container.external_id}.container.yaml").write_text(container.dump_yaml())
+        if "node_types" not in exclude_set and self.node_types:
+            node_dir = data_models / "nodes"
+            node_dir.mkdir(parents=True, exist_ok=True)
+            for node in self.node_types:
+                (node_dir / f"{node.external_id}.node.yaml").write_text(node.dump_yaml())
 
     @classmethod
     def load(cls, data: str | dict[str, Any]) -> Self:
@@ -263,6 +329,43 @@ class PipelineSchema(DMSSchema):
         dm.Boolean: "BOOLEAN",
         dm.Json: "STRING",
     }
+
+    def __post_init__(self):
+        existing_databases = {database.name for database in self.databases}
+        table_database = {table.database for table in self.raw_tables}
+        if missing := table_database - existing_databases:
+            self.databases.extend([DatabaseWrite(name=database) for database in missing])
+
+    @classmethod
+    def _read_directory(cls, directory: str | Path) -> dict[str, list[Any]]:
+        data = super()._read_directory(directory)
+        for yaml_file in Path(directory).rglob("*.yaml"):
+            if yaml_file.parent.name in ("transformations", "raw"):
+                attr_name = {"raw": "raw_tables"}.get(yaml_file.parent.name, yaml_file.parent.name)
+                data.setdefault(attr_name, [])
+                loaded = yaml.safe_load(yaml_file.read_text())
+                if isinstance(loaded, list):
+                    data[attr_name].extend(loaded)
+                else:
+                    data[attr_name].append(loaded)
+        return data
+
+    def to_directory(self, directory: str | Path, exclude: set[str] | None = None) -> None:
+        super().to_directory(directory, exclude)
+        exclude_set = exclude or set()
+        path_dir = Path(directory)
+        if "transformations" not in exclude_set and self.transformations:
+            transformation_dir = path_dir / "transformations"
+            transformation_dir.mkdir(exist_ok=True, parents=True)
+            for transformation in self.transformations:
+                (transformation_dir / f"{transformation.external_id}.yaml").write_text(transformation.dump_yaml())
+        if "raw" not in exclude_set and self.raw_tables:
+            # The RAW Databases are not written to file. This is because cognite-toolkit expects the RAW databases
+            # to be in the same file as the RAW tables.
+            raw_dir = path_dir / "raw"
+            raw_dir.mkdir(exist_ok=True, parents=True)
+            for raw_table in self.raw_tables:
+                (raw_dir / f"{raw_table.name}.yaml").write_text(raw_table.dump_yaml())
 
     @classmethod
     def from_dms(cls, schema: DMSSchema, instance_space: str | None = None) -> "PipelineSchema":
