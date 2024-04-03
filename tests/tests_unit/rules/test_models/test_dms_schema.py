@@ -330,3 +330,12 @@ class TestDMSSchema:
         schema.to_directory(tmp_path)
         loaded_schema = PipelineSchema.from_directory(tmp_path)
         assert schema.dump() == loaded_schema.dump()
+
+    @pytest.mark.parametrize(
+        "schema",
+        list(valid_schema_test_cases()),
+    )
+    def test_to_and_from_zip(self, schema: DMSSchema, tmp_path: Path) -> None:
+        schema.to_zip(tmp_path / "schema.zip")
+        loaded_schema = PipelineSchema.from_zip(tmp_path / "schema.zip")
+        assert schema.dump() == loaded_schema.dump()
