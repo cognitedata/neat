@@ -1,9 +1,11 @@
 import json
+import sys
 import warnings
 from collections import Counter, defaultdict
-from dataclasses import dataclass, field
-from typing import ClassVar
+from dataclasses import dataclass, field, fields
+from typing import Any, ClassVar, cast
 
+import yaml
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes import DatabaseWrite, DatabaseWriteList, TransformationWrite, TransformationWriteList
@@ -25,6 +27,12 @@ from cognite.neat.rules.issues.dms import (
 )
 from cognite.neat.utils.cdf_loaders import ViewLoader
 from cognite.neat.utils.cdf_loaders.data_classes import RawTableWrite, RawTableWriteList
+from cognite.neat.utils.text import to_camel
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 
 @dataclass
@@ -66,6 +74,55 @@ class DMSSchema:
             views=view_write,
             containers=containers.as_write(),
         )
+
+    @classmethod
+    def load(cls, data: str | dict[str, Any]) -> Self:
+        if isinstance(data, str):
+            # YAML is a superset of JSON, so we can use the same parser
+            data_dict = yaml.safe_load(data)
+        else:
+            data_dict = data
+        loaded: dict[str, Any] = {}
+        for attr in fields(cls):
+            if items := data_dict.get(attr.name) or data_dict.get(to_camel(attr.name)):
+                loaded[attr.name] = attr.type.load(items)
+        return cls(**loaded)
+
+    def dump(self, camel_case: bool = True, sort: bool = True) -> dict[str, Any]:
+        """Dump the schema to a dictionary that can be serialized to JSON.
+
+        Args:
+            camel_case (bool): If True, the keys in the output dictionary will be in camel case.
+            sort (bool): If True, the items in the output dictionary will be sorted by their ID.
+                This is useful for deterministic output which is useful for comparing schemas.
+
+        Returns:
+            dict: The schema as a dictionary.
+        """
+        output: dict[str, Any] = {}
+        cls_fields = sorted(fields(self), key=lambda f: f.name) if sort else fields(self)
+        for attr in cls_fields:
+            if items := getattr(self, attr.name):
+                items = sorted(items, key=self._to_sortable_identifier) if sort else items
+                key = to_camel(attr.name) if camel_case else attr.name
+                output[key] = [item.dump(camel_case=camel_case) for item in items]
+        return output
+
+    @classmethod
+    def _to_sortable_identifier(cls, item: Any) -> str | tuple[str, str] | tuple[str, str, str]:
+        if isinstance(item, dm.ContainerApply | dm.ViewApply | dm.DataModelApply | dm.NodeApply | RawTableWrite):
+            identifier = item.as_id().as_tuple()
+            if len(identifier) == 3 and identifier[2] is None:
+                return identifier[:2]
+            return cast(tuple[str, str] | tuple[str, str, str], identifier)
+        elif isinstance(item, dm.SpaceApply):
+            return item.space
+        elif isinstance(item, TransformationWrite):
+            return item.external_id or ""
+        elif isinstance(item, DatabaseWrite):
+            return item.name or ""
+        else:
+            raise ValueError(f"Cannot sort item of type {type(item)}")
 
     def validate(self) -> list[DMSSchemaError]:
         errors: set[DMSSchemaError] = set()
