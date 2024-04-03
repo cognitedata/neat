@@ -525,12 +525,12 @@ class PipelineSchema(DMSSchema):
         for prop_name, prop in properties.items():
             container = container_by_id.get(prop.container)
             if container is not None:
-                dms_name = container.properties[prop.container_property_identifier].type._type
-                if dms_name in DMS_VALUE_TYPE_MAPPINGS:
-                    sql_type = DMS_VALUE_TYPE_MAPPINGS[dms_name].sql
+                dms_type = container.properties[prop.container_property_identifier].type._type
+                if dms_type in DMS_VALUE_TYPE_MAPPINGS:
+                    sql_type = DMS_VALUE_TYPE_MAPPINGS[dms_type].sql
                 else:
                     warnings.warn(
-                        f"Unknown DMS type '{dms_name}' for property '{prop_name}'", RuntimeWarning, stacklevel=2
+                        f"Unknown DMS type '{dms_type}' for property '{prop_name}'", RuntimeWarning, stacklevel=2
                     )
                     sql_type = "STRING"
             else:
