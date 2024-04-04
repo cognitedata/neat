@@ -198,12 +198,13 @@ PropertyType = Annotated[
 def _reference_entity_type_before_validator(value: Any | None = None) -> Any:
     if not value:
         return None
-    elif isinstance(value, rdflib.URIRef):
+    elif isinstance(value, rdflib.URIRef) or isinstance(value, ReferenceEntity):
         return value
-
-    elif type(ReferenceEntity.from_raw(value).prefix) == Undefined:
+    elif ReferenceEntity.from_raw(value).prefix == Undefined:
+        # case1: then this must be a URIRef!
         return rdflib.URIRef(str(TypeAdapter(HttpUrl).validate_python(value)))
     else:
+        # case2: this is a ReferenceEntity
         return ReferenceEntity.from_raw(value)
 
 
