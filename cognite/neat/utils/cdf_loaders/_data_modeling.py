@@ -1,4 +1,4 @@
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from graphlib import TopologicalSorter
 from typing import Any, Literal, cast
 
@@ -49,6 +49,27 @@ class DataModelingLoader(
     def sort_by_dependencies(self, items: list[T_WriteClass]) -> list[T_WriteClass]:
         return items
 
+    def _create_force(
+        self,
+        items: Sequence[T_WriteClass],
+        tried_force_deploy: set[T_ID],
+        create_method: Callable[[Sequence[T_WriteClass]], T_WritableCogniteResourceList],
+    ) -> T_WritableCogniteResourceList:
+        try:
+            return create_method(items)
+        except CogniteAPIError as e:
+            failed_items = {failed.as_id() for failed in e.failed if hasattr(failed, "as_id")}
+            to_redeploy = [
+                item for item in items if item.as_id() in failed_items and item.as_id() not in tried_force_deploy  # type: ignore[attr-defined]
+            ]
+            if not to_redeploy:
+                # Avoid infinite loop
+                raise e
+            ids = [item.as_id() for item in to_redeploy]  # type: ignore[attr-defined]
+            tried_force_deploy.update(ids)
+            self.delete(ids)
+            return self._create_force(to_redeploy, tried_force_deploy, create_method)
+
 
 class SpaceLoader(DataModelingLoader[str, SpaceApply, Space, SpaceApplyList, SpaceList]):
     resource_name = "spaces"
@@ -84,25 +105,10 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
         return item.as_id()
 
     def create(self, items: Sequence[ViewApply]) -> ViewList:
-        try:
+        if self.existing_handling == "force":
+            return self._create_force(items, self._tried_force_deploy, self.client.data_modeling.views.apply)
+        else:
             return self.client.data_modeling.views.apply(items)
-        except CogniteAPIError as e:
-            if self.existing_handling == "force" and e.failed:
-                failed_views = {view.as_id() for view in e.failed if isinstance(view, ViewApply)}
-                to_redeploy = ViewApplyList(
-                    [
-                        view
-                        for view in items
-                        if view.as_id() in failed_views and view.as_id() not in self._tried_force_deploy
-                    ]
-                )
-                if not to_redeploy:
-                    # Avoid infinite loop
-                    raise e
-                self._tried_force_deploy.update(to_redeploy.as_ids())
-                self.delete(to_redeploy.as_ids())
-                return self.create(to_redeploy)
-            raise e
 
     def retrieve(self, ids: SequenceNotStr[ViewId]) -> ViewList:
         return self.client.data_modeling.views.retrieve(cast(Sequence, ids))
@@ -204,7 +210,10 @@ class ContainerLoader(DataModelingLoader[ContainerId, ContainerApply, Container,
         ]
 
     def create(self, items: Sequence[ContainerApply]) -> ContainerList:
-        return self.client.data_modeling.containers.apply(items)
+        if self.existing_handling == "force":
+            return self._create_force(items, self._tried_force_deploy, self.client.data_modeling.containers.apply)
+        else:
+            return self.client.data_modeling.containers.apply(items)
 
     def retrieve(self, ids: SequenceNotStr[ContainerId]) -> ContainerList:
         return self.client.data_modeling.containers.retrieve(cast(Sequence, ids))
