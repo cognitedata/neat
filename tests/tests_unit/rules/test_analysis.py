@@ -4,6 +4,15 @@ from cognite.neat.rules.models._rules._types import ClassEntity
 
 
 class TestRulesAnalysis:
+    def test_class_parent_pairs(self, david_rules: InformationRules) -> None:
+        assert len(InformationArchitectRulesAnalysis(david_rules).class_parent_pairs()) == 26
+
+    def test_classes_with_properties(self, david_rules: InformationRules) -> None:
+        assert len(InformationArchitectRulesAnalysis(david_rules).classes_with_properties()) == 20
+
+    def test_class_property_pairs(self, david_rules: InformationRules) -> None:
+        assert len(InformationArchitectRulesAnalysis(david_rules).class_property_pairs()) == 20
+
     def test_defined_classes(self, david_rules: InformationRules) -> None:
         assert len(InformationArchitectRulesAnalysis(david_rules).defined_classes(consider_inheritance=False)) == 20
         assert len(InformationArchitectRulesAnalysis(david_rules).defined_classes(consider_inheritance=True)) == 26
@@ -37,4 +46,17 @@ class TestRulesAnalysis:
                 )
             )
             == 0
+        )
+
+    def test_subset_rules(self, david_rules: InformationRules) -> None:
+        assert InformationArchitectRulesAnalysis(david_rules).subset_rules(
+            {ClassEntity.from_raw("power:GeoLocation")}
+        ).classes.data[0].class_ == ClassEntity.from_raw("power:GeoLocation")
+        assert (
+            len(
+                InformationArchitectRulesAnalysis(david_rules)
+                .subset_rules({ClassEntity.from_raw("power:GeoLocation")})
+                .classes.data
+            )
+            == 1
         )

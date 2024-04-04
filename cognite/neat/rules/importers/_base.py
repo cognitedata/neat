@@ -51,6 +51,7 @@ class BaseImporter(ABC):
         is_reference: bool = False,
     ) -> tuple[Rules | None, IssueList] | Rules:
         """Converts the rules to the output format."""
+
         if rules.metadata.role is role or role is None:
             output = rules
         elif isinstance(rules, DMSRules) and role is RoleTypes.information_architect:
@@ -59,8 +60,10 @@ class BaseImporter(ABC):
             output = rules.as_dms_architect_rules()
         else:
             raise NotImplementedError(f"Role {role} is not supported for {type(rules).__name__} rules")
+
         if is_reference:
             output.is_reference = True
+
         if errors == "raise":
             return output
         else:
