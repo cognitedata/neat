@@ -30,6 +30,7 @@ from ._types import (
     ExternalIdType,
     ParentClassEntity,
     PropertyType,
+    ReferenceType,
     StrListType,
     Undefined,
     VersionType,
@@ -159,7 +160,7 @@ class DMSProperty(SheetEntity):
     nullable: bool | None = Field(default=None, alias="Nullable")
     is_list: bool | None = Field(default=None, alias="IsList")
     default: str | int | dict | None = Field(None, alias="Default")
-    reference: str | None = Field(None, alias="Reference")
+    reference: ReferenceType = Field(None, alias="Reference")
     container: ContainerType | None = Field(None, alias="Container")
     container_property: str | None = Field(None, alias="ContainerProperty")
     view: ViewType = Field(alias="View")
@@ -234,6 +235,7 @@ class DMSView(SheetEntity):
     view: ViewType = Field(alias="View")
     implements: ViewListType | None = Field(None, alias="Implements")
     in_model: bool = Field(True, alias="InModel")
+    reference: ReferenceType = Field(None, alias="Reference")
 
     def as_view(self, default_space: str, default_version: str, standardize_casing: bool = True) -> dm.ViewApply:
         view_id = self.view.as_id(default_space, default_version, standardize_casing)
