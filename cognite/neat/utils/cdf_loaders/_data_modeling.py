@@ -1,4 +1,3 @@
-import re
 from collections.abc import Sequence
 from graphlib import TopologicalSorter
 from typing import Any, Literal, cast
@@ -75,7 +74,7 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
     resource_name = "views"
 
     def __init__(self, client: CogniteClient, existing_handling: Literal["fail", "skip", "update", "force"] = "fail"):
-        self.client = client
+        super().__init__(client)
         self.existing_handling = existing_handling
         self._interfaces_by_id: dict[ViewId, View] = {}
         self._tried_force_deploy: set[ViewId] = set()
@@ -88,20 +87,21 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
         try:
             return self.client.data_modeling.views.apply(items)
         except CogniteAPIError as e:
-            if self.existing_handling == "force":
-                res = re.search(r"(?<=\')(.*?)(?=\')", e.message)
-                if res is None or ":" not in res.group(1) or "/" not in res.group(1):
-                    raise e
-                view_id_str = res.group(1)
-                space, external_id_version = view_id_str.split(":")
-                external_id, version = external_id_version.split("/")
-                view_id = ViewId(space, external_id, version)
-                if view_id in self._tried_force_deploy:
+            if self.existing_handling == "force" and e.failed:
+                failed_views = {view.as_id() for view in e.failed if isinstance(view, ViewApply)}
+                to_redeploy = ViewApplyList(
+                    [
+                        view
+                        for view in items
+                        if view.as_id() in failed_views and view.as_id() not in self._tried_force_deploy
+                    ]
+                )
+                if not to_redeploy:
                     # Avoid infinite loop
                     raise e
-                self._tried_force_deploy.add(view_id)
-                self.delete([view_id])
-                return self.create(items)
+                self._tried_force_deploy.update(to_redeploy.as_ids())
+                self.delete(to_redeploy.as_ids())
+                return self.create(to_redeploy)
             raise e
 
     def retrieve(self, ids: SequenceNotStr[ViewId]) -> ViewList:
