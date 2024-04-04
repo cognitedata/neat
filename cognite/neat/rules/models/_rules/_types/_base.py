@@ -6,6 +6,14 @@ from typing import Any, ClassVar, cast
 from cognite.client.data_classes.data_modeling import ContainerId, DataModelId, PropertyId, ViewId
 from pydantic import BaseModel
 
+from cognite.neat.rules.models.rdfpath import (
+    SINGLE_PROPERTY_REGEX_COMPILED,
+    AllReferences,
+    RDFPath,
+    SingleProperty,
+    TransformationRuleType,
+    parse_rule,
+)
 from cognite.neat.utils.text import to_pascal
 
 if sys.version_info >= (3, 11):
@@ -32,6 +40,7 @@ class EntityTypes(StrEnum):
     dms_value_type = "dms_value_type"
     view = "view"
     view_prop = "view_prop"
+    reference_entity = "reference_entity"
     container = "container"
     datamodel = "datamodel"
     undefined = "undefined"
@@ -205,9 +214,9 @@ class ViewEntity(Entity):
             return value
 
         if ENTITY_ID_REGEX_COMPILED.match(value) or VERSIONED_ENTITY_REGEX_COMPILED.match(value):
-            return ViewEntity.from_string(entity_string=value)
+            return cls.from_string(entity_string=value)
         else:
-            return ViewEntity(prefix=Undefined, suffix=value)
+            return cls(prefix=Undefined, suffix=value)
 
     @classmethod
     def from_id(cls, view_id: ViewId) -> Self:
@@ -249,9 +258,9 @@ class ViewPropEntity(ViewEntity):
                 property_=result.group("property"),
             )
         elif ENTITY_ID_REGEX_COMPILED.match(value) or VERSIONED_ENTITY_REGEX_COMPILED.match(value):
-            return ViewPropEntity.from_string(entity_string=value)
+            return cls.from_string(entity_string=value)
         else:
-            return ViewPropEntity(prefix=Undefined, suffix=value)
+            return cls(prefix=Undefined, suffix=value)
 
     @classmethod
     def from_prop_id(cls, prop_id: PropertyId) -> "ViewPropEntity":
@@ -280,6 +289,60 @@ class ViewPropEntity(ViewEntity):
         if self.property_:
             output = f"{output}:{self.property_}"
         return output
+
+
+class ReferenceEntity(ViewPropEntity):
+    type_: ClassVar[EntityTypes] = EntityTypes.reference_entity
+
+    @classmethod
+    def from_raw(cls, value: Any) -> "ReferenceEntity":
+        if not value:
+            return ReferenceEntity(prefix=Undefined, suffix=value)
+        elif isinstance(value, ReferenceEntity):
+            return value
+        elif isinstance(value, ViewEntity):
+            return cls(prefix=value.prefix, suffix=value.suffix, version=value.version)
+
+        if result := PROPERTY_ENTITY_REGEX_COMPILED.match(value):
+            return cls(
+                prefix=result.group("prefix") or Undefined,
+                suffix=result.group("suffix"),
+                version=result.group("version"),
+                property_=result.group("property"),
+            )
+        elif ENTITY_ID_REGEX_COMPILED.match(value) or VERSIONED_ENTITY_REGEX_COMPILED.match(value):
+            return cls.from_string(entity_string=value)
+        elif result := SINGLE_PROPERTY_REGEX_COMPILED.match(value):
+            return cls.from_rdfpath(value)
+        else:
+            return cls(prefix=Undefined, suffix=value)
+
+    @classmethod
+    def from_rdfpath(cls, rdfpath: RDFPath | str) -> "ReferenceEntity":
+        if isinstance(rdfpath, str):
+            rdfpath = parse_rule(rdfpath, TransformationRuleType.rdfpath)
+
+        if isinstance(rdfpath.traversal, AllReferences):
+            return cls(prefix=rdfpath.traversal.class_.prefix, suffix=rdfpath.traversal.class_.suffix)
+        elif isinstance(rdfpath.traversal, SingleProperty):
+            return cls(
+                prefix=rdfpath.traversal.class_.prefix,
+                suffix=rdfpath.traversal.class_.suffix,
+                property_=rdfpath.traversal.property.suffix,
+            )
+        else:
+            raise ValueError(f"Invalid RDFPath traversal type: {rdfpath.traversal}")
+
+    def as_rdfpath(self, default_prefix: str | None = None) -> RDFPath:
+        prefix = self.prefix if self.prefix is not Undefined else default_prefix
+
+        if prefix is None:
+            raise ValueError("prefix is required")
+
+        if self.property_:
+            return parse_rule(f"{prefix}:{self.suffix}({self.prefix}:{self.property_})", TransformationRuleType.rdfpath)
+        else:
+            return parse_rule(f"{self.prefix}:{self.suffix}", TransformationRuleType.rdfpath)
 
 
 class DataModelEntity(Entity):

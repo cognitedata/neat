@@ -1,5 +1,6 @@
 """
 """
+
 import re
 import sys
 from collections import Counter
@@ -40,31 +41,31 @@ class Lookup(StrEnum):
 
 
 # traversal direction
-direction_re = r"(?P<direction>(->|<-))"
+DIRECTION_REGEX = r"(?P<direction>(->|<-))"
 
 # steps
-step_re = rf"((->|<-){CLASS_ID_REGEX}({PROPERTY_ID_REGEX})?)"
-step_re_compiled = re.compile(step_re)
-step_class_re_compiled = re.compile(rf"(^{direction_re}{CLASS_ID_REGEX})$")
-step_class_and_property_re_compiled = re.compile(rf"(^{direction_re}{CLASS_ID_REGEX}{PROPERTY_ID_REGEX}$)")
+STEP_REGEX = rf"((->|<-){CLASS_ID_REGEX}({PROPERTY_ID_REGEX})?)"
+STEP_REGEX_COMPILED = re.compile(STEP_REGEX)
+STEP_CLASS_REGEX_COMPILED = re.compile(rf"(^{DIRECTION_REGEX}{CLASS_ID_REGEX})$")
+STEP_CLASS_AND_PROPERTY_REGEX_COMPILED = re.compile(rf"(^{DIRECTION_REGEX}{CLASS_ID_REGEX}{PROPERTY_ID_REGEX}$)")
 
 
 _traversal = "traversal"
-origin_re = rf"(?P<origin>{ENTITY_ID_REGEX})"
+ORIGIN_REGEX = rf"(?P<origin>{ENTITY_ID_REGEX})"
 
-hop_re_compiled = re.compile(rf"^{origin_re}(?P<{_traversal}>{step_re}+)$")
+HOP_REGEX_COMPILED = re.compile(rf"^{ORIGIN_REGEX}(?P<{_traversal}>{STEP_REGEX}+)$")
 
 # grabbing specific property for a class, property can be either object, annotation or data property
-single_property_re_compiled = re.compile(rf"^{CLASS_ID_REGEX}{PROPERTY_ID_REGEX}$")
+SINGLE_PROPERTY_REGEX_COMPILED = re.compile(rf"^{CLASS_ID_REGEX}{PROPERTY_ID_REGEX}$")
 
 # grabbing all properties for a class
-all_properties_re_compiled = re.compile(rf"^{CLASS_ID_REGEX}\(\*\)$")
+ALL_PROPERTIES_REGEX_COMPILED = re.compile(rf"^{CLASS_ID_REGEX}\(\*\)$")
 
-all_traversal_re_compiled = (
-    rf"({CLASS_ID_REGEX}\(\*\)|{CLASS_ID_REGEX}{PROPERTY_ID_REGEX}|{origin_re}(?P<{_traversal}>{step_re}+))"
+ALL_TRAVERSAL_REGEX_COMPILED = (
+    rf"({CLASS_ID_REGEX}\(\*\)|{CLASS_ID_REGEX}{PROPERTY_ID_REGEX}|{ORIGIN_REGEX}(?P<{_traversal}>{STEP_REGEX}+))"
 )
 
-table_re_compiled = re.compile(
+TABLE_REGEX_COMPILED = re.compile(
     rf"^(?P<{Lookup.table}>{SUFFIX_REGEX})\((?P<{Lookup.key}>{SUFFIX_REGEX}),\s*(?P<{Lookup.value}>{SUFFIX_REGEX})\)$"
 )
 
@@ -80,14 +81,14 @@ class Step(BaseModel):
 
     @classmethod
     def from_string(cls, raw: str, **kwargs) -> Self:
-        if result := step_class_and_property_re_compiled.match(raw):
+        if result := STEP_CLASS_AND_PROPERTY_REGEX_COMPILED.match(raw):
             return cls(
                 class_=Entity.from_string(result.group(EntityTypes.class_), type_="class"),
                 property=Entity.from_string(result.group(EntityTypes.property_), type_="property"),
                 direction=_direction_by_symbol[result.group("direction")],
                 **kwargs,
             )
-        elif result := step_class_re_compiled.match(raw):
+        elif result := STEP_CLASS_REGEX_COMPILED.match(raw):
             return cls(
                 class_=Entity.from_string(result.group(EntityTypes.class_)),
                 direction=_direction_by_symbol[result.group("direction")],
@@ -140,9 +141,11 @@ class Hop(Traversal):
     def from_string(cls, class_: str, traversal: str | list[Step]) -> Self:
         return cls(
             class_=Entity.from_string(class_),
-            traversal=[Step.from_string(result[0]) for result in step_re_compiled.findall(traversal)]
-            if isinstance(traversal, str)
-            else traversal,
+            traversal=(
+                [Step.from_string(result[0]) for result in STEP_REGEX_COMPILED.findall(traversal)]
+                if isinstance(traversal, str)
+                else traversal
+            ),
         )
 
 
@@ -175,20 +178,20 @@ class SPARQLQuery(RDFPath):
 def parse_traversal(raw: str) -> AllReferences | AllProperties | SingleProperty | Hop:
     if result := CLASS_ID_REGEX_COMPILED.match(raw):
         return AllReferences.from_string(class_=result.group(EntityTypes.class_))
-    elif result := all_properties_re_compiled.match(raw):
+    elif result := ALL_PROPERTIES_REGEX_COMPILED.match(raw):
         return AllProperties.from_string(class_=result.group(EntityTypes.class_))
-    elif result := single_property_re_compiled.match(raw):
+    elif result := SINGLE_PROPERTY_REGEX_COMPILED.match(raw):
         return SingleProperty.from_string(
             class_=result.group(EntityTypes.class_), property_=result.group(EntityTypes.property_)
         )
-    elif result := hop_re_compiled.match(raw):
+    elif result := HOP_REGEX_COMPILED.match(raw):
         return Hop.from_string(class_=result.group("origin"), traversal=result.group(_traversal))
     else:
         raise exceptions.NotValidRDFPath(raw).to_pydantic_custom_error()
 
 
 def parse_table_lookup(raw: str) -> TableLookup:
-    if result := table_re_compiled.match(raw):
+    if result := TABLE_REGEX_COMPILED.match(raw):
         return TableLookup(
             name=result.group(Lookup.table), key=result.group(Lookup.key), value=result.group(Lookup.value)
         )
