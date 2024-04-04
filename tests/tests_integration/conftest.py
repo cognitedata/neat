@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from tests.config import ROOT
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def cognite_client() -> CogniteClient:
     load_dotenv(ROOT / ".env", override=True)
 
