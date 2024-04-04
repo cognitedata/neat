@@ -60,13 +60,10 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
             it will not be included in the returned dictionary.
         """
 
-        class_property_pairs: dict[ClassEntity, list[InformationProperty]] = {}
+        class_property_pairs: dict[ClassEntity, list[InformationProperty]] = defaultdict(list)
 
         for property_ in self.rules.properties:
-            if property_.class_ in class_property_pairs:
-                class_property_pairs[property_.class_] += [property_]
-            else:
-                class_property_pairs[property_.class_] = [property_]
+            class_property_pairs[property_.class_].append(property_)
 
         if consider_inheritance:
             class_parent_pairs = self.class_parent_pairs()
@@ -76,7 +73,12 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
         return class_property_pairs
 
     @classmethod
-    def _add_inherited_properties(cls, class_, class_property_pairs, class_parent_pairs):
+    def _add_inherited_properties(
+        cls,
+        class_: ClassEntity,
+        class_property_pairs: dict[ClassEntity, list[InformationProperty]],
+        class_parent_pairs: dict[ClassEntity, list[ParentClassEntity]],
+    ):
         inheritance_path = get_inheritance_path(class_, class_parent_pairs)
         for parent in inheritance_path:
             # ParentClassEntity -> ClassEntity to match the type of class_property_pairs
@@ -150,7 +152,6 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
         """Returns a dataframe with the class linkage of the data model.
 
         Args:
-            rules: Instance of InformationRules holding the data model
             consider_inheritance: Whether to consider inheritance or not. Defaults False
 
         Returns:
@@ -183,7 +184,6 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
         """Return a set of classes that are connected to other classes.
 
         Args:
-            rules: Instance of InformationRules holding the data model
             consider_inheritance: Whether to consider inheritance or not. Defaults False
 
         Returns:
@@ -196,7 +196,6 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
         """Returns classes that have properties defined for them in the data model.
 
         Args:
-            rules: Instance of InformationRules holding the data model
             consider_inheritance: Whether to consider inheritance or not. Defaults False
 
         Returns:
@@ -211,7 +210,6 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
         """Return a set of classes that are disconnected (i.e. isolated) from other classes.
 
         Args:
-            rules: Instance of InformationRules holding the data model
             consider_inheritance: Whether to consider inheritance or not. Defaults False
 
         Returns:
@@ -225,11 +223,15 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
         """Returns a set of pairs of symmetrically linked classes.
 
         Args:
-            rules: Instance of InformationRules holding the data model
             consider_inheritance: Whether to consider inheritance or not. Defaults False
 
         Returns:
             Set of pairs of symmetrically linked classes
+
+        !!! note "Symmetrically Connected Classes"
+            Symmetrically connected classes are classes that are connected to each other
+            in both directions. For example, if class A is connected to class B, and class B
+            is connected to class A, then classes A and B are symmetrically connected.
         """
 
         # TODO: Find better name for this method

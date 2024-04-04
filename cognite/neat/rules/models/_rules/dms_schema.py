@@ -1,9 +1,13 @@
 import json
+import sys
 import warnings
+import zipfile
 from collections import Counter, defaultdict
-from dataclasses import dataclass, field
-from typing import ClassVar
+from dataclasses import dataclass, field, fields
+from pathlib import Path
+from typing import Any, ClassVar, cast
 
+import yaml
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes import DatabaseWrite, DatabaseWriteList, TransformationWrite, TransformationWriteList
@@ -23,8 +27,15 @@ from cognite.neat.rules.issues.dms import (
     MissingSpaceError,
     MissingViewError,
 )
+from cognite.neat.rules.models._rules._types._value import DMS_VALUE_TYPE_MAPPINGS
 from cognite.neat.utils.cdf_loaders import ViewLoader
 from cognite.neat.utils.cdf_loaders.data_classes import RawTableWrite, RawTableWriteList
+from cognite.neat.utils.text import to_camel
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 
 @dataclass
@@ -34,6 +45,14 @@ class DMSSchema:
     views: dm.ViewApplyList = field(default_factory=lambda: dm.ViewApplyList([]))
     containers: dm.ContainerApplyList = field(default_factory=lambda: dm.ContainerApplyList([]))
     node_types: dm.NodeApplyList = field(default_factory=lambda: dm.NodeApplyList([]))
+
+    _FIELD_NAME_BY_RESOURCE_TYPE: ClassVar[dict[str, str]] = {
+        "container": "containers",
+        "view": "views",
+        "datamodel": "data_models",
+        "space": "spaces",
+        "node": "node_types",
+    }
 
     @classmethod
     def from_model_id(cls, client: CogniteClient, data_model_id: dm.DataModelIdentifier) -> "DMSSchema":
@@ -66,6 +85,171 @@ class DMSSchema:
             views=view_write,
             containers=containers.as_write(),
         )
+
+    @classmethod
+    def from_directory(cls, directory: str | Path) -> Self:
+        """Load a schema from a directory containing YAML files.
+
+        The directory is expected to follow the Cognite-Toolkit convention
+        where each file is named as `resource_type.resource_name.yaml`.
+        """
+        data = cls._read_directory(Path(directory))
+        return cls.load(data)
+
+    @classmethod
+    def _read_directory(cls, directory: Path) -> dict[str, list[Any]]:
+        data: dict[str, Any] = {}
+        for yaml_file in directory.rglob("*.yaml"):
+            if "." in yaml_file.stem:
+                resource_type = yaml_file.stem.rsplit(".", 1)[-1]
+                if attr_name := cls._FIELD_NAME_BY_RESOURCE_TYPE.get(resource_type):
+                    data.setdefault(attr_name, [])
+                    loaded = yaml.safe_load(yaml_file.read_text())
+                    if isinstance(loaded, list):
+                        data[attr_name].extend(loaded)
+                    else:
+                        data[attr_name].append(loaded)
+        return data
+
+    def to_directory(self, directory: str | Path, exclude: set[str] | None = None) -> None:
+        """Save the schema to a directory as YAML files. This is compatible with the Cognite-Toolkit convention.
+
+        Args:
+            directory (str | Path): The directory to save the schema to.
+            exclude (set[str]): A set of attributes to exclude from the output.
+        """
+        path_dir = Path(directory)
+        exclude_set = exclude or set()
+        data_models = path_dir / "data_models"
+        data_models.mkdir(parents=True, exist_ok=True)
+        if "spaces" not in exclude_set:
+            for space in self.spaces:
+                (data_models / f"{space.space}.space.yaml").write_text(space.dump_yaml())
+        if "data_models" not in exclude_set:
+            for model in self.data_models:
+                (data_models / f"{model.external_id}.datamodel.yaml").write_text(model.dump_yaml())
+        if "views" not in exclude_set and self.views:
+            view_dir = data_models / "views"
+            view_dir.mkdir(parents=True, exist_ok=True)
+            for view in self.views:
+                (view_dir / f"{view.external_id}.view.yaml").write_text(view.dump_yaml())
+        if "containers" not in exclude_set and self.containers:
+            container_dir = data_models / "containers"
+            container_dir.mkdir(parents=True, exist_ok=True)
+            for container in self.containers:
+                (container_dir / f"{container.external_id}.container.yaml").write_text(container.dump_yaml())
+        if "node_types" not in exclude_set and self.node_types:
+            node_dir = data_models / "nodes"
+            node_dir.mkdir(parents=True, exist_ok=True)
+            for node in self.node_types:
+                (node_dir / f"{node.external_id}.node.yaml").write_text(node.dump_yaml())
+
+    @classmethod
+    def from_zip(cls, zip_file: str | Path) -> Self:
+        """Load a schema from a ZIP file containing YAML files.
+
+        The ZIP file is expected to follow the Cognite-Toolkit convention
+        where each file is named as `resource_type.resource_name.yaml`.
+        """
+        data = cls._read_zip(Path(zip_file))
+        return cls.load(data)
+
+    @classmethod
+    def _read_zip(cls, zip_file: Path) -> dict[str, list[Any]]:
+        data: dict[str, list[Any]] = {}
+        with zipfile.ZipFile(zip_file, "r") as zip_ref:
+            for file_info in zip_ref.infolist():
+                if file_info.filename.endswith(".yaml"):
+                    if "/" not in file_info.filename:
+                        continue
+                    filename = Path(file_info.filename.split("/")[-1])
+                    if "." not in filename.stem:
+                        continue
+                    resource_type = filename.stem.rsplit(".", 1)[-1]
+                    if attr_name := cls._FIELD_NAME_BY_RESOURCE_TYPE.get(resource_type):
+                        data.setdefault(attr_name, [])
+                        loaded = yaml.safe_load(zip_ref.read(file_info).decode())
+                        if isinstance(loaded, list):
+                            data[attr_name].extend(loaded)
+                        else:
+                            data[attr_name].append(loaded)
+        return data
+
+    def to_zip(self, zip_file: str | Path, exclude: set[str] | None = None) -> None:
+        """Save the schema to a ZIP file as YAML files. This is compatible with the Cognite-Toolkit convention.
+
+        Args:
+            zip_file (str | Path): The ZIP file to save the schema to.
+            exclude (set[str]): A set of attributes to exclude from the output.
+        """
+        exclude_set = exclude or set()
+        with zipfile.ZipFile(zip_file, "w") as zip_ref:
+            if "spaces" not in exclude_set:
+                for space in self.spaces:
+                    zip_ref.writestr(f"data_models/{space.space}.space.yaml", space.dump_yaml())
+            if "data_models" not in exclude_set:
+                for model in self.data_models:
+                    zip_ref.writestr(f"data_models/{model.external_id}.datamodel.yaml", model.dump_yaml())
+            if "views" not in exclude_set:
+                for view in self.views:
+                    zip_ref.writestr(f"data_models/views/{view.external_id}.view.yaml", view.dump_yaml())
+            if "containers" not in exclude_set:
+                for container in self.containers:
+                    zip_ref.writestr(
+                        f"data_models/containers{container.external_id}.container.yaml", container.dump_yaml()
+                    )
+            if "node_types" not in exclude_set:
+                for node in self.node_types:
+                    zip_ref.writestr(f"data_models/nodes/{node.external_id}.node.yaml", node.dump_yaml())
+
+    @classmethod
+    def load(cls, data: str | dict[str, Any]) -> Self:
+        if isinstance(data, str):
+            # YAML is a superset of JSON, so we can use the same parser
+            data_dict = yaml.safe_load(data)
+        else:
+            data_dict = data
+        loaded: dict[str, Any] = {}
+        for attr in fields(cls):
+            if items := data_dict.get(attr.name) or data_dict.get(to_camel(attr.name)):
+                loaded[attr.name] = attr.type.load(items)
+        return cls(**loaded)
+
+    def dump(self, camel_case: bool = True, sort: bool = True) -> dict[str, Any]:
+        """Dump the schema to a dictionary that can be serialized to JSON.
+
+        Args:
+            camel_case (bool): If True, the keys in the output dictionary will be in camel case.
+            sort (bool): If True, the items in the output dictionary will be sorted by their ID.
+                This is useful for deterministic output which is useful for comparing schemas.
+
+        Returns:
+            dict: The schema as a dictionary.
+        """
+        output: dict[str, Any] = {}
+        cls_fields = sorted(fields(self), key=lambda f: f.name) if sort else fields(self)
+        for attr in cls_fields:
+            if items := getattr(self, attr.name):
+                items = sorted(items, key=self._to_sortable_identifier) if sort else items
+                key = to_camel(attr.name) if camel_case else attr.name
+                output[key] = [item.dump(camel_case=camel_case) for item in items]
+        return output
+
+    @classmethod
+    def _to_sortable_identifier(cls, item: Any) -> str | tuple[str, str] | tuple[str, str, str]:
+        if isinstance(item, dm.ContainerApply | dm.ViewApply | dm.DataModelApply | dm.NodeApply | RawTableWrite):
+            identifier = item.as_id().as_tuple()
+            if len(identifier) == 3 and identifier[2] is None:
+                return identifier[:2]
+            return cast(tuple[str, str] | tuple[str, str, str], identifier)
+        elif isinstance(item, dm.SpaceApply):
+            return item.space
+        elif isinstance(item, TransformationWrite):
+            return item.external_id or ""
+        elif isinstance(item, DatabaseWrite):
+            return item.name or ""
+        else:
+            raise ValueError(f"Cannot sort item of type {type(item)}")
 
     def validate(self) -> list[DMSSchemaError]:
         errors: set[DMSSchemaError] = set()
@@ -192,20 +376,79 @@ class PipelineSchema(DMSSchema):
     databases: DatabaseWriteList = field(default_factory=lambda: DatabaseWriteList([]))
     raw_tables: RawTableWriteList = field(default_factory=lambda: RawTableWriteList([]))
 
-    _SQL_TYPE_BY_PROPERTY_TYPE: ClassVar[dict[type[dm.PropertyType], str]] = {
-        dm.Text: "STRING",
-        dm.Int32: "INTEGER",
-        dm.Int64: "INTEGER",
-        dm.Float32: "FLOAT",
-        dm.Float64: "DOUBLE",
-        dm.Date: "DATE",
-        dm.Timestamp: "TIMESTAMP",
-        dm.TimeSeriesReference: "STRING",
-        dm.FileReference: "STRING",
-        dm.SequenceReference: "STRING",
-        dm.Boolean: "BOOLEAN",
-        dm.Json: "STRING",
+    _FIELD_NAME_BY_RESOURCE_TYPE: ClassVar[dict[str, str]] = {
+        **DMSSchema._FIELD_NAME_BY_RESOURCE_TYPE,
+        "raw": "raw_tables",
     }
+
+    def __post_init__(self):
+        existing_databases = {database.name for database in self.databases}
+        table_database = {table.database for table in self.raw_tables}
+        if missing := table_database - existing_databases:
+            self.databases.extend([DatabaseWrite(name=database) for database in missing])
+
+    @classmethod
+    def _read_directory(cls, directory: Path) -> dict[str, list[Any]]:
+        data = super()._read_directory(directory)
+        for yaml_file in directory.rglob("*.yaml"):
+            if yaml_file.parent.name in ("transformations", "raw"):
+                attr_name = cls._FIELD_NAME_BY_RESOURCE_TYPE.get(yaml_file.parent.name, yaml_file.parent.name)
+                data.setdefault(attr_name, [])
+                loaded = yaml.safe_load(yaml_file.read_text())
+                if isinstance(loaded, list):
+                    data[attr_name].extend(loaded)
+                else:
+                    data[attr_name].append(loaded)
+        return data
+
+    def to_directory(self, directory: str | Path, exclude: set[str] | None = None) -> None:
+        super().to_directory(directory, exclude)
+        exclude_set = exclude or set()
+        path_dir = Path(directory)
+        if "transformations" not in exclude_set and self.transformations:
+            transformation_dir = path_dir / "transformations"
+            transformation_dir.mkdir(exist_ok=True, parents=True)
+            for transformation in self.transformations:
+                (transformation_dir / f"{transformation.external_id}.yaml").write_text(transformation.dump_yaml())
+        if "raw" not in exclude_set and self.raw_tables:
+            # The RAW Databases are not written to file. This is because cognite-toolkit expects the RAW databases
+            # to be in the same file as the RAW tables.
+            raw_dir = path_dir / "raw"
+            raw_dir.mkdir(exist_ok=True, parents=True)
+            for raw_table in self.raw_tables:
+                (raw_dir / f"{raw_table.name}.yaml").write_text(raw_table.dump_yaml())
+
+    def to_zip(self, zip_file: str | Path, exclude: set[str] | None = None) -> None:
+        super().to_zip(zip_file, exclude)
+        exclude_set = exclude or set()
+        with zipfile.ZipFile(zip_file, "a") as zip_ref:
+            if "transformations" not in exclude_set:
+                for transformation in self.transformations:
+                    zip_ref.writestr(f"transformations/{transformation.external_id}.yaml", transformation.dump_yaml())
+            if "raw" not in exclude_set:
+                # The RAW Databases are not written to file. This is because cognite-toolkit expects the RAW databases
+                # to be in the same file as the RAW tables.
+                for raw_table in self.raw_tables:
+                    zip_ref.writestr(f"raw/{raw_table.name}.yaml", raw_table.dump_yaml())
+
+    @classmethod
+    def _read_zip(cls, zip_file: Path) -> dict[str, list[Any]]:
+        data = super()._read_zip(zip_file)
+        with zipfile.ZipFile(zip_file, "r") as zip_ref:
+            for file_info in zip_ref.infolist():
+                if file_info.filename.endswith(".yaml"):
+                    if "/" not in file_info.filename:
+                        continue
+                    filepath = Path(file_info.filename)
+                    if (parent := filepath.parent.name) in ("transformations", "raw"):
+                        attr_name = cls._FIELD_NAME_BY_RESOURCE_TYPE.get(parent, parent)
+                        data.setdefault(attr_name, [])
+                        loaded = yaml.safe_load(zip_ref.read(file_info).decode())
+                        if isinstance(loaded, list):
+                            data[attr_name].extend(loaded)
+                        else:
+                            data[attr_name].append(loaded)
+        return data
 
     @classmethod
     def from_dms(cls, schema: DMSSchema, instance_space: str | None = None) -> "PipelineSchema":
@@ -282,12 +525,14 @@ class PipelineSchema(DMSSchema):
         for prop_name, prop in properties.items():
             container = container_by_id.get(prop.container)
             if container is not None:
-                sql_type = (
-                    cls._SQL_TYPE_BY_PROPERTY_TYPE.get(
-                        type(container.properties[prop.container_property_identifier].type)
+                dms_type = container.properties[prop.container_property_identifier].type._type
+                if dms_type in DMS_VALUE_TYPE_MAPPINGS:
+                    sql_type = DMS_VALUE_TYPE_MAPPINGS[dms_type].sql
+                else:
+                    warnings.warn(
+                        f"Unknown DMS type '{dms_type}' for property '{prop_name}'", RuntimeWarning, stacklevel=2
                     )
-                    or "STRING"
-                )
+                    sql_type = "STRING"
             else:
                 sql_type = "STRING"
             select_rows.append(f"cast(`{prop_name}` as {sql_type}) as {prop_name}")

@@ -2,11 +2,13 @@ import re
 import zipfile
 from collections import Counter
 from pathlib import Path
+from typing import cast
 
 from cognite.neat.rules.exporters._rules2dms import DMSExporter
 from cognite.neat.rules.models._rules.dms_architect_rules import (
     DMSRules,
 )
+from cognite.neat.rules.models._rules.dms_schema import PipelineSchema
 
 
 class TestDMSExporter:
@@ -27,3 +29,23 @@ class TestDMSExporter:
         assert counts["datamodel"] == len(schema.data_models)
         assert counts["view"] == len(schema.views)
         assert counts["container"] == len(schema.containers)
+
+    def test_export_dms_schema_with_pipeline(self, alice_rules: DMSRules, tmp_path) -> None:
+        exporter = DMSExporter(export_pipeline=True)
+        schema = cast(PipelineSchema, exporter.export(alice_rules))
+        exporter.export_to_file(alice_rules, tmp_path)
+
+        counts = Counter()
+        for yaml_file in (tmp_path / "data_models").rglob("*.yaml"):
+            if "." in yaml_file.stem:
+                resource_type = yaml_file.stem.rsplit(".")[-1]
+                counts.update([resource_type])
+        transformation_count = len(list((tmp_path / "transformations").rglob("*.yaml")))
+        table_count = len(list((tmp_path / "raw").rglob("*.yaml")))
+
+        assert counts["space"] == len(schema.spaces)
+        assert counts["datamodel"] == len(schema.data_models)
+        assert counts["view"] == len(schema.views)
+        assert counts["container"] == len(schema.containers)
+        assert transformation_count == len(schema.transformations)
+        assert table_count == len(schema.raw_tables)
