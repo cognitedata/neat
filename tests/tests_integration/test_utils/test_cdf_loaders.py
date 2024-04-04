@@ -2,7 +2,7 @@ import pytest
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 
-from cognite.neat.utils.cdf_loaders import ViewLoader
+from cognite.neat.utils.cdf_loaders import ContainerLoader, ViewLoader
 
 
 @pytest.fixture(scope="session")
@@ -65,3 +65,31 @@ class TestViewLoader:
         assert (
             new_created.properties["count"].container_property_identifier == new_prop
         ), "The property should have been updated"
+
+
+class TestContainerLoader:
+    def test_force_create(self, cognite_client: CogniteClient, space: dm.Space) -> None:
+        original = dm.ContainerApply(
+            space=space.space,
+            external_id="test_container",
+            properties={
+                "name": dm.ContainerProperty(type=dm.Text()),
+                "number": dm.ContainerProperty(type=dm.Int64()),
+            },
+        )
+        retrieved = cognite_client.data_modeling.containers.retrieve(original.as_id())
+        if retrieved is None:
+            cognite_client.data_modeling.containers.apply(original)
+            existing = original
+        else:
+            existing = retrieved
+        modified = dm.ContainerApply.load(original.dump_yaml())
+        # Change the type for each time the test runs to require a force update
+        new_prop = dm.Float64() if isinstance(existing.properties["number"].type, dm.Int64) else dm.Int64()
+        modified.properties["number"] = dm.ContainerProperty(type=new_prop)
+
+        loader = ContainerLoader(cognite_client, existing_handling="force")
+        new_created = loader.create([modified])[0]
+
+        assert new_created.as_id() == original.as_id(), "The container version should be the same"
+        assert new_created.properties["number"].type == new_prop, "The property should have been updated"
