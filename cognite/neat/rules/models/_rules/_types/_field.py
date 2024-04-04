@@ -29,6 +29,7 @@ from ._base import (
     ClassEntity,
     ContainerEntity,
     ParentClassEntity,
+    ReferenceEntity,
     Undefined,
     ViewEntity,
     ViewPropEntity,
@@ -194,15 +195,22 @@ PropertyType = Annotated[
 ]
 
 
+def _reference_entity_type_before_validator(value: Any | None = None) -> Any:
+    if not value:
+        return None
+    elif isinstance(value, rdflib.URIRef | ReferenceEntity):
+        return value
+    elif ReferenceEntity.from_raw(value).prefix == Undefined:
+        # case1: then this must be a URIRef!
+        return rdflib.URIRef(str(TypeAdapter(HttpUrl).validate_python(value)))
+    else:
+        # case2: this is a ReferenceEntity
+        return ReferenceEntity.from_raw(value)
+
+
 ReferenceType = Annotated[
-    rdflib.URIRef | None,
-    BeforeValidator(
-        lambda value: (
-            value
-            if not value or (value and isinstance(value, rdflib.URIRef))
-            else rdflib.URIRef(str(TypeAdapter(HttpUrl).validate_python(value)))
-        ),
-    ),
+    ReferenceEntity | rdflib.URIRef | None,
+    BeforeValidator(_reference_entity_type_before_validator),
 ]
 
 
