@@ -180,6 +180,11 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
 class ContainerLoader(DataModelingLoader[ContainerId, ContainerApply, Container, ContainerApplyList, ContainerList]):
     resource_name = "containers"
 
+    def __init__(self, client: CogniteClient, existing_handling: Literal["fail", "skip", "update", "force"] = "fail"):
+        super().__init__(client)
+        self.existing_handling = existing_handling
+        self._tried_force_deploy: set[ContainerId] = set()
+
     @classmethod
     def get_id(cls, item: Container | ContainerApply) -> ContainerId:
         return item.as_id()
