@@ -147,7 +147,6 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
         """Returns a dataframe with the class linkage of the data model.
 
         Args:
-            rules: Instance of InformationRules holding the data model
             consider_inheritance: Whether to consider inheritance or not. Defaults False
 
         Returns:
@@ -180,7 +179,6 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
         """Return a set of classes that are connected to other classes.
 
         Args:
-            rules: Instance of InformationRules holding the data model
             consider_inheritance: Whether to consider inheritance or not. Defaults False
 
         Returns:
@@ -193,7 +191,6 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
         """Returns classes that have properties defined for them in the data model.
 
         Args:
-            rules: Instance of InformationRules holding the data model
             consider_inheritance: Whether to consider inheritance or not. Defaults False
 
         Returns:
@@ -208,7 +205,6 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
         """Return a set of classes that are disconnected (i.e. isolated) from other classes.
 
         Args:
-            rules: Instance of InformationRules holding the data model
             consider_inheritance: Whether to consider inheritance or not. Defaults False
 
         Returns:
@@ -222,11 +218,15 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
         """Returns a set of pairs of symmetrically linked classes.
 
         Args:
-            rules: Instance of InformationRules holding the data model
             consider_inheritance: Whether to consider inheritance or not. Defaults False
 
         Returns:
             Set of pairs of symmetrically linked classes
+
+        !!! note "Symmetrically Connected Classes"
+            Symmetrically connected classes are classes that are connected to each other
+            in both directions. For example, if class A is connected to class B, and class B
+            is connected to class A, then classes A and B are symmetrically connected.
         """
 
         # TODO: Find better name for this method
