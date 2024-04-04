@@ -60,13 +60,10 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
             it will not be included in the returned dictionary.
         """
 
-        class_property_pairs: dict[ClassEntity, list[InformationProperty]] = {}
+        class_property_pairs: dict[ClassEntity, list[InformationProperty]] = defaultdict(list)
 
         for property_ in self.rules.properties:
-            if property_.class_ in class_property_pairs:
-                class_property_pairs[property_.class_] += [property_]
-            else:
-                class_property_pairs[property_.class_] = [property_]
+            class_property_pairs[property_.class_].append(property_)
 
         if consider_inheritance:
             class_parent_pairs = self.class_parent_pairs()
