@@ -4,6 +4,8 @@ from collections import Counter
 from pathlib import Path
 from typing import cast
 
+import pytest
+
 from cognite.neat.rules.exporters._rules2dms import DMSExporter
 from cognite.neat.rules.models._rules.dms_architect_rules import (
     DMSRules,
@@ -12,8 +14,9 @@ from cognite.neat.rules.models._rules.dms_schema import PipelineSchema
 
 
 class TestDMSExporter:
-    def test_export_dms_schema_to_zip(self, alice_rules: DMSRules, tmp_path: Path) -> None:
-        exporter = DMSExporter()
+    @pytest.mark.parametrize("standardize_casing", [True, False])
+    def test_export_dms_schema_to_zip(self, standardize_casing: bool, alice_rules: DMSRules, tmp_path: Path) -> None:
+        exporter = DMSExporter(standardize_casing=standardize_casing)
         schema = exporter.export(alice_rules)
         zipfile_path = tmp_path / "test.zip"
 
@@ -27,8 +30,8 @@ class TestDMSExporter:
 
         assert counts["space"] == len(schema.spaces)
         assert counts["datamodel"] == len(schema.data_models)
-        assert counts["view"] == len(schema.views)
-        assert counts["container"] == len(schema.containers)
+        assert counts["view"] == len(alice_rules.views)
+        assert counts["container"] == len(alice_rules.containers)
 
     def test_export_dms_schema_with_pipeline(self, alice_rules: DMSRules, tmp_path) -> None:
         exporter = DMSExporter(export_pipeline=True)

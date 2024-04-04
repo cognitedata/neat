@@ -167,6 +167,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             ),
             node_types=dm.NodeApplyList([]),
         ),
+        True,
         id="Two properties, one container, one view",
     )
 
@@ -288,6 +289,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         dms_rules,
         expected_schema,
+        True,
         id="Property with list of direct relations converted to multiedge",
     )
 
@@ -401,6 +403,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         dms_rules,
         expected_schema,
+        True,
         id="View not in model",
     )
 
@@ -615,7 +618,93 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         dms_rules,
         expected_schema,
+        True,
         id="Multiple relations and reverse relations",
+    )
+
+    dms_rules = DMSRules(
+        metadata=DMSMetadata(
+            schema_="complete",
+            space="my_space",
+            external_id="my_data_model",
+            version="1",
+            creator=["Anders"],
+            created="2024-03-17T11:00:00",
+            updated="2024-03-17T11:00:00",
+            default_view_version="1",
+        ),
+        properties=SheetList[DMSProperty](
+            data=[
+                DMSProperty(
+                    class_="generating_unit",
+                    property_="display_name",
+                    value_type="text",
+                    container="generating_unit",
+                    container_property="display_name",
+                    view="generating_unit",
+                    view_property="display_name",
+                )
+            ]
+        ),
+        views=SheetList[DMSView](
+            data=[
+                DMSView(view="generating_unit", class_="generating_unit"),
+            ],
+        ),
+        containers=SheetList[DMSContainer](
+            data=[
+                DMSContainer(container="generating_unit", class_="generating_unit"),
+            ],
+        ),
+    )
+
+    expected_schema = DMSSchema(
+        spaces=dm.SpaceApplyList([dm.SpaceApply(space="my_space")]),
+        data_models=dm.DataModelApplyList(
+            [
+                dm.DataModelApply(
+                    space="my_space",
+                    external_id="my_data_model",
+                    version="1",
+                    description="Creator: Anders",
+                    views=[
+                        dm.ViewId(space="my_space", external_id="generating_unit", version="1"),
+                    ],
+                )
+            ]
+        ),
+        views=dm.ViewApplyList(
+            [
+                dm.ViewApply(
+                    space="my_space",
+                    external_id="generating_unit",
+                    version="1",
+                    properties={
+                        "display_name": dm.MappedPropertyApply(
+                            container=dm.ContainerId("my_space", "generating_unit"),
+                            container_property_identifier="display_name",
+                        ),
+                    },
+                    filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "generating_unit")]),
+                ),
+            ]
+        ),
+        containers=dm.ContainerApplyList(
+            [
+                dm.ContainerApply(
+                    space="my_space",
+                    external_id="generating_unit",
+                    properties={"display_name": dm.ContainerProperty(type=dm.Text(), nullable=True)},
+                ),
+            ]
+        ),
+        node_types=dm.NodeApplyList([]),
+    )
+    yield pytest.param(
+        dms_rules,
+        expected_schema,
+        False,
+        id="No casing standardization",
     )
 
 
@@ -1184,9 +1273,9 @@ class TestDMSRules:
 
         assert recreated_rules.model_dump() == rules.model_dump()
 
-    @pytest.mark.parametrize("rules, expected_schema", rules_schema_tests_cases())
-    def test_as_schema(self, rules: DMSRules, expected_schema: DMSSchema) -> None:
-        actual_schema = rules.as_schema()
+    @pytest.mark.parametrize("rules, expected_schema, standardize_casing", rules_schema_tests_cases())
+    def test_as_schema(self, rules: DMSRules, expected_schema: DMSSchema, standardize_casing: bool) -> None:
+        actual_schema = rules.as_schema(standardize_casing)
 
         assert actual_schema.spaces.dump() == expected_schema.spaces.dump()
         actual_schema.data_models[0].views = sorted(actual_schema.data_models[0].views, key=lambda v: v.external_id)
