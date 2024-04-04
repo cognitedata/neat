@@ -78,6 +78,7 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
         self.client = client
         self.existing_handling = existing_handling
         self._interfaces_by_id: dict[ViewId, View] = {}
+        self._tried_force_deploy: set[ViewId] = set()
 
     @classmethod
     def get_id(cls, item: View | ViewApply) -> ViewId:
@@ -87,14 +88,19 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
         try:
             return self.client.data_modeling.views.apply(items)
         except CogniteAPIError as e:
-            if self.existing_handling == "force" and e.message.startswith("Cannot update view"):
+            if self.existing_handling == "force":
                 res = re.search(r"(?<=\')(.*?)(?=\')", e.message)
                 if res is None or ":" not in res.group(1) or "/" not in res.group(1):
                     raise e
                 view_id_str = res.group(1)
                 space, external_id_version = view_id_str.split(":")
                 external_id, version = external_id_version.split("/")
-                self.delete([ViewId(space, external_id, version)])
+                view_id = ViewId(space, external_id, version)
+                if view_id in self._tried_force_deploy:
+                    # Avoid infinite loop
+                    raise e
+                self._tried_force_deploy.add(view_id)
+                self.delete([view_id])
                 return self.create(items)
             raise e
 
