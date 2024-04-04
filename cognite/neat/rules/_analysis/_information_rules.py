@@ -73,7 +73,12 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
         return class_property_pairs
 
     @classmethod
-    def _add_inherited_properties(cls, class_, class_property_pairs, class_parent_pairs):
+    def _add_inherited_properties(
+        cls,
+        class_: ClassEntity,
+        class_property_pairs: dict[ClassEntity, list[InformationProperty]],
+        class_parent_pairs: dict[ClassEntity, list[ParentClassEntity]],
+    ):
         inheritance_path = get_inheritance_path(class_, class_parent_pairs)
         for parent in inheritance_path:
             # ParentClassEntity -> ClassEntity to match the type of class_property_pairs
