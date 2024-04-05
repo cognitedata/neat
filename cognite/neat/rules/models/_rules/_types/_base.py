@@ -282,12 +282,14 @@ class ViewPropEntity(ViewEntity):
 
     @property
     def versioned_id(self) -> str:
-        if self.version is None:
+        if self.version is None and self.property_ is None:
             output = self.id
-        else:
+        elif self.version is None:
+            output = f"{self.id}(property={self.property_})"
+        elif self.property_ is None:
             output = f"{self.id}(version={self.version})"
-        if self.property_:
-            output = f"{output}:{self.property_}"
+        else:
+            output = f"{self.id}(version={self.version}, property={self.property_})"
         return output
 
 
