@@ -1,9 +1,14 @@
+import sys
 from abc import ABC, abstractmethod
-from enum import StrEnum
 from typing import Generic, TypeVar
 
 from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.models._rules._types import ClassEntity
+
+if sys.version_info >= (3, 11):
+    from enum import StrEnum
+else:
+    from backports.strenum import StrEnum
 
 T_Rules = TypeVar("T_Rules", bound=Rules)
 
