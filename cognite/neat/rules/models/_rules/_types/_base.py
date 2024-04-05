@@ -291,60 +291,6 @@ class ViewPropEntity(ViewEntity):
         return output
 
 
-class ReferenceEntity(ViewPropEntity):
-    type_: ClassVar[EntityTypes] = EntityTypes.reference_entity
-
-    @classmethod
-    def from_raw(cls, value: Any) -> "ReferenceEntity":
-        if not value:
-            return ReferenceEntity(prefix=Undefined, suffix=value)
-        elif isinstance(value, ReferenceEntity):
-            return value
-        elif isinstance(value, ViewEntity):
-            return cls(prefix=value.prefix, suffix=value.suffix, version=value.version)
-
-        if result := PROPERTY_ENTITY_REGEX_COMPILED.match(value):
-            return cls(
-                prefix=result.group("prefix") or Undefined,
-                suffix=result.group("suffix"),
-                version=result.group("version"),
-                property_=result.group("property"),
-            )
-        elif ENTITY_ID_REGEX_COMPILED.match(value) or VERSIONED_ENTITY_REGEX_COMPILED.match(value):
-            return cls.from_string(entity_string=value)
-        elif result := SINGLE_PROPERTY_REGEX_COMPILED.match(value):
-            return cls.from_rdfpath(value)
-        else:
-            return cls(prefix=Undefined, suffix=value)
-
-    @classmethod
-    def from_rdfpath(cls, rdfpath: RDFPath | str) -> "ReferenceEntity":
-        if isinstance(rdfpath, str):
-            rdfpath = parse_rule(rdfpath, TransformationRuleType.rdfpath)
-
-        if isinstance(rdfpath.traversal, AllReferences):
-            return cls(prefix=rdfpath.traversal.class_.prefix, suffix=rdfpath.traversal.class_.suffix)
-        elif isinstance(rdfpath.traversal, SingleProperty):
-            return cls(
-                prefix=rdfpath.traversal.class_.prefix,
-                suffix=rdfpath.traversal.class_.suffix,
-                property_=rdfpath.traversal.property.suffix,
-            )
-        else:
-            raise ValueError(f"Invalid RDFPath traversal type: {rdfpath.traversal}")
-
-    def as_rdfpath(self, default_prefix: str | None = None) -> RDFPath:
-        prefix = self.prefix if self.prefix is not Undefined else default_prefix
-
-        if prefix is None:
-            raise ValueError("prefix is required")
-
-        if self.property_:
-            return parse_rule(f"{prefix}:{self.suffix}({self.prefix}:{self.property_})", TransformationRuleType.rdfpath)
-        else:
-            return parse_rule(f"{self.prefix}:{self.suffix}", TransformationRuleType.rdfpath)
-
-
 class DataModelEntity(Entity):
     type_: ClassVar[EntityTypes] = EntityTypes.datamodel
 
@@ -408,6 +354,63 @@ class ParentClassEntity(ClassEntity):
         if isinstance(value, ClassEntity):
             return cls(prefix=value.prefix, suffix=value.suffix, version=value.version)
         return super().from_raw(value)
+
+    def as_class_entity(self) -> ClassEntity:
+        return ClassEntity(prefix=self.prefix, suffix=self.suffix, version=self.version)
+
+
+class ReferenceEntity(ViewPropEntity):
+    type_: ClassVar[EntityTypes] = EntityTypes.reference_entity
+
+    @classmethod
+    def from_raw(cls, value: Any) -> "ReferenceEntity":
+        if not value:
+            return ReferenceEntity(prefix=Undefined, suffix=value)
+        elif isinstance(value, ReferenceEntity):
+            return value
+        elif isinstance(value, ViewEntity):
+            return cls(prefix=value.prefix, suffix=value.suffix, version=value.version)
+
+        if result := PROPERTY_ENTITY_REGEX_COMPILED.match(value):
+            return cls(
+                prefix=result.group("prefix") or Undefined,
+                suffix=result.group("suffix"),
+                version=result.group("version"),
+                property_=result.group("property"),
+            )
+        elif ENTITY_ID_REGEX_COMPILED.match(value) or VERSIONED_ENTITY_REGEX_COMPILED.match(value):
+            return cls.from_string(entity_string=value)
+        elif result := SINGLE_PROPERTY_REGEX_COMPILED.match(value):
+            return cls.from_rdfpath(value)
+        else:
+            return cls(prefix=Undefined, suffix=value)
+
+    @classmethod
+    def from_rdfpath(cls, rdfpath: RDFPath | str) -> "ReferenceEntity":
+        if isinstance(rdfpath, str):
+            rdfpath = parse_rule(rdfpath, TransformationRuleType.rdfpath)
+
+        if isinstance(rdfpath.traversal, AllReferences):
+            return cls(prefix=rdfpath.traversal.class_.prefix, suffix=rdfpath.traversal.class_.suffix)
+        elif isinstance(rdfpath.traversal, SingleProperty):
+            return cls(
+                prefix=rdfpath.traversal.class_.prefix,
+                suffix=rdfpath.traversal.class_.suffix,
+                property_=rdfpath.traversal.property.suffix,
+            )
+        else:
+            raise ValueError(f"Invalid RDFPath traversal type: {rdfpath.traversal}")
+
+    def as_rdfpath(self, default_prefix: str | None = None) -> RDFPath:
+        prefix = self.prefix if self.prefix is not Undefined else default_prefix
+
+        if prefix is None:
+            raise ValueError("prefix is required")
+
+        if self.property_:
+            return parse_rule(f"{prefix}:{self.suffix}({self.prefix}:{self.property_})", TransformationRuleType.rdfpath)
+        else:
+            return parse_rule(f"{self.prefix}:{self.suffix}", TransformationRuleType.rdfpath)
 
     def as_class_entity(self) -> ClassEntity:
         return ClassEntity(prefix=self.prefix, suffix=self.suffix, version=self.version)

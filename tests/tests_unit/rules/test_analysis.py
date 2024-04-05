@@ -60,3 +60,16 @@ class TestRulesAnalysis:
             )
             == 1
         )
+
+    def test_data_modeling_scenario(self, olav_rules: InformationRules) -> None:
+        olav_rules = olav_rules
+        assert InformationArchitectRulesAnalysis(olav_rules).data_modeling_scenario == "reuse components"
+
+    def test_directly_referred_classes(self, olav_rules: InformationRules) -> None:
+        assert len(InformationArchitectRulesAnalysis(olav_rules).directly_referred_classes) == 3
+
+    def test_inherited_referred_classes(self, olav_rules: InformationRules) -> None:
+        assert len(InformationArchitectRulesAnalysis(olav_rules).inherited_referred_classes) == 2
+
+    def test_referred_classes(self, olav_rules: InformationRules) -> None:
+        assert len(InformationArchitectRulesAnalysis(olav_rules).referred_classes) == 5
