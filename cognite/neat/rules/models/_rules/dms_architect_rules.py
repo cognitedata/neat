@@ -567,7 +567,7 @@ class DMSRules(BaseRules):
         return _DMSRulesConverter(self).as_domain_rules()
 
     def reference_self(self) -> Self:
-        new_rules = self.copy()
+        new_rules = self.copy(deep=True)
         for prop in new_rules.properties:
             prop.reference = ReferenceEntity(
                 prefix=prop.view.prefix, suffix=prop.view_property, version=prop.view.version, property_=prop.property_

@@ -337,7 +337,7 @@ class InformationRules(RuleModel):
         return _InformationRulesConverter(self).as_dms_architect_rules()
 
     def reference_self(self) -> "InformationRules":
-        new_self = self.copy()
+        new_self = self.copy(deep=True)
         for prop in new_self.properties:
             prop.reference = ReferenceEntity(
                 prefix=prop.class_.prefix,

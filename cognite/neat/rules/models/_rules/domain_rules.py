@@ -52,4 +52,4 @@ class DomainRules(RuleModel):
 
     def reference_self(self) -> "DomainRules":
         """DomainRules does not have reference field, so it returns a copy of itself."""
-        return self.copy()
+        return self.copy(deep=True)
