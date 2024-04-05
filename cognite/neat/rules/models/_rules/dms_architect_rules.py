@@ -234,8 +234,8 @@ class DMSContainer(SheetEntity):
 class DMSView(SheetEntity):
     view: ViewType = Field(alias="View")
     implements: ViewListType | None = Field(None, alias="Implements")
+    reference: ReferenceType = Field(alias="Reference", default=None)
     in_model: bool = Field(True, alias="InModel")
-    reference: ReferenceType = Field(None, alias="Reference")
 
     def as_view(self, default_space: str, default_version: str, standardize_casing: bool = True) -> dm.ViewApply:
         view_id = self.view.as_id(default_space, default_version, standardize_casing)
@@ -873,28 +873,27 @@ class _DMSExporter:
             [container for container in containers if container.as_id() not in container_to_drop]
         )
 
-    @classmethod
     def _gather_properties(
-        cls, rules: DMSRules, default_space: str, default_version: str
+        self, rules: DMSRules, default_space: str, default_version: str
     ) -> tuple[dict[dm.ContainerId, list[DMSProperty]], dict[dm.ViewId, list[DMSProperty]]]:
         container_properties_by_id: dict[dm.ContainerId, list[DMSProperty]] = defaultdict(list)
         view_properties_by_id: dict[dm.ViewId, list[DMSProperty]] = defaultdict(list)
         for prop in rules.properties:
-            view_id = prop.view.as_id(default_space, default_version)
+            view_id = prop.view.as_id(default_space, default_version, self.standardize_casing)
             view_properties_by_id[view_id].append(prop)
 
             if prop.container and prop.container_property:
                 if prop.relation == "direct" and prop.is_list:
                     warnings.warn(
                         issues.dms.DirectRelationListWarning(
-                            container_id=prop.container.as_id(default_space),
-                            view_id=prop.view.as_id(default_space, default_version),
+                            container_id=prop.container.as_id(default_space, self.standardize_casing),
+                            view_id=prop.view.as_id(default_space, default_version, self.standardize_casing),
                             property=prop.container_property,
                         ),
                         stacklevel=2,
                     )
                     continue
-                container_id = prop.container.as_id(default_space)
+                container_id = prop.container.as_id(default_space, self.standardize_casing)
                 container_properties_by_id[container_id].append(prop)
 
         return container_properties_by_id, view_properties_by_id

@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## TBD
+### Fixed
+- When using `DMSExporter` with `standardize_casing=False`, the `DMSExporter` would fail to export containers and
+  views. This is now fixed.
+
 ## [0.68.9] - 03-04-24
 ### Added
 - Helper method `from_directory` and `from_zip_file` to `DMSExporter` to load DMS schema from directory or zip file.
