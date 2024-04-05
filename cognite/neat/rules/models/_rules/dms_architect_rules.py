@@ -4,7 +4,7 @@ import re
 import warnings
 from collections import defaultdict
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, Self, cast
 
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import PropertyType as CognitePropertyType
@@ -30,6 +30,7 @@ from ._types import (
     ExternalIdType,
     ParentClassEntity,
     PropertyType,
+    ReferenceEntity,
     ReferenceType,
     StrListType,
     Undefined,
@@ -564,6 +565,22 @@ class DMSRules(BaseRules):
 
     def as_domain_expert_rules(self) -> DomainRules:
         return _DMSRulesConverter(self).as_domain_rules()
+
+    def reference_self(self) -> Self:
+        new_rules = self.copy()
+        for prop in new_rules.properties:
+            prop.reference = ReferenceEntity(
+                prefix=prop.view.prefix, suffix=prop.view_property, version=prop.view.version, property_=prop.property_
+            )
+        view: DMSView
+        for view in new_rules.views:
+            view.reference = ReferenceEntity(
+                prefix=view.view.prefix, suffix=view.view.suffix, version=view.view.version
+            )
+        container: DMSContainer
+        for container in new_rules.containers or []:
+            container.reference = ReferenceEntity(prefix=container.container.prefix, suffix=container.container.suffix)
+        return new_rules
 
 
 class _DMSExporter:
