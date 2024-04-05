@@ -4,6 +4,7 @@ from warnings import WarningMessage
 from pydantic_core import ErrorDetails, PydanticCustomError
 
 
+
 class NeatException(Exception):
     """Base class for all exceptions raised by NEAT."""
 
