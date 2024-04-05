@@ -20,6 +20,7 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
     def __init__(self, rules: InformationRules):
         self.rules = rules
 
+    @property
     def data_modeling_scenario(self) -> DataModelingScenario:
         if not self.rules.reference:
             return DataModelingScenario.from_scratch
