@@ -4,7 +4,7 @@ import re
 import warnings
 from collections import defaultdict
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, Self, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
 
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import PropertyType as CognitePropertyType
@@ -47,6 +47,7 @@ from .dms_schema import DMSSchema, PipelineSchema
 if TYPE_CHECKING:
     from .information_rules import InformationRules
 
+from typing import Self
 
 subclasses = list(CognitePropertyType.__subclasses__())
 _PropertyType_by_name: dict[str, type[CognitePropertyType]] = {}
