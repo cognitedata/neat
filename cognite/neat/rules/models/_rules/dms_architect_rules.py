@@ -1,6 +1,7 @@
 import abc
 import math
 import re
+import sys
 import warnings
 from collections import defaultdict
 from datetime import datetime
@@ -47,7 +48,11 @@ from .dms_schema import DMSSchema, PipelineSchema
 if TYPE_CHECKING:
     from .information_rules import InformationRules
 
-from typing import Self
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
+
 
 subclasses = list(CognitePropertyType.__subclasses__())
 _PropertyType_by_name: dict[str, type[CognitePropertyType]] = {}
