@@ -7,6 +7,7 @@ from __future__ import annotations
 import math
 import sys
 import types
+from abc import abstractmethod
 from collections.abc import Callable, Iterator
 from functools import wraps
 from typing import Any, ClassVar, Generic, TypeAlias, TypeVar
@@ -19,8 +20,10 @@ from cognite.neat.rules.models._rules._types import ClassType
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
+    from typing import Self
 else:
     from backports.strenum import StrEnum
+    from typing_extensions import Self
 
 
 METADATA_VALUE_MAX_LENGTH = 5120
@@ -245,6 +248,17 @@ class BaseRules(RuleModel):
     """
 
     metadata: BaseMetadata
+
+    @abstractmethod
+    def reference_self(self) -> Self:
+        """
+        Returns a copy of the rules with reference fields set to itself
+
+        For example, if the rules have a property with a reference field, then
+        the reference field will be set to the property itself. This is used when
+        exporting a reference model.
+        """
+        raise NotImplementedError
 
 
 # An sheet entity is either a class or a property.

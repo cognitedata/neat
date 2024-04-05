@@ -32,6 +32,7 @@ from ._types import (
     ParentClassType,
     PrefixType,
     PropertyType,
+    ReferenceEntity,
     ReferenceType,
     SemanticValueType,
     StrListType,
@@ -334,6 +335,23 @@ class InformationRules(RuleModel):
 
     def as_dms_architect_rules(self) -> "DMSRules":
         return _InformationRulesConverter(self).as_dms_architect_rules()
+
+    def reference_self(self) -> "InformationRules":
+        new_self = self.copy(deep=True)
+        for prop in new_self.properties:
+            prop.reference = ReferenceEntity(
+                prefix=prop.class_.prefix,
+                suffix=prop.class_.suffix,
+                version=prop.class_.version,
+                property_=prop.property_,
+            )
+
+        for cls_ in new_self.classes:
+            cls_.reference = ReferenceEntity(
+                prefix=cls_.class_.prefix, suffix=cls_.class_.suffix, version=cls_.class_.version
+            )
+
+        return new_self
 
 
 class _InformationRulesConverter:

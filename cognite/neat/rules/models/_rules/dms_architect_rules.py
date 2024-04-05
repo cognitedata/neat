@@ -1,6 +1,7 @@
 import abc
 import math
 import re
+import sys
 import warnings
 from collections import defaultdict
 from datetime import datetime
@@ -30,6 +31,7 @@ from ._types import (
     ExternalIdType,
     ParentClassEntity,
     PropertyType,
+    ReferenceEntity,
     ReferenceType,
     StrListType,
     Undefined,
@@ -45,6 +47,11 @@ from .dms_schema import DMSSchema, PipelineSchema
 
 if TYPE_CHECKING:
     from .information_rules import InformationRules
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 
 subclasses = list(CognitePropertyType.__subclasses__())
@@ -197,6 +204,7 @@ class DMSProperty(SheetEntity):
 
 class DMSContainer(SheetEntity):
     container: ContainerType = Field(alias="Container")
+    reference: ReferenceType = Field(alias="Reference", default=None)
     constraint: ContainerListType | None = Field(None, alias="Constraint")
 
     def as_container(self, default_space: str, standardize_casing: bool = True) -> dm.ContainerApply:
@@ -563,6 +571,22 @@ class DMSRules(BaseRules):
 
     def as_domain_expert_rules(self) -> DomainRules:
         return _DMSRulesConverter(self).as_domain_rules()
+
+    def reference_self(self) -> Self:
+        new_rules = self.copy(deep=True)
+        for prop in new_rules.properties:
+            prop.reference = ReferenceEntity(
+                prefix=prop.view.prefix, suffix=prop.view_property, version=prop.view.version, property_=prop.property_
+            )
+        view: DMSView
+        for view in new_rules.views:
+            view.reference = ReferenceEntity(
+                prefix=view.view.prefix, suffix=view.view.suffix, version=view.view.version
+            )
+        container: DMSContainer
+        for container in new_rules.containers or []:
+            container.reference = ReferenceEntity(prefix=container.container.prefix, suffix=container.container.suffix)
+        return new_rules
 
 
 class _DMSExporter:

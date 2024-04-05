@@ -65,7 +65,10 @@ class ExcelExporter(BaseExporter[Workbook]):
         # Remove default sheet named "Sheet"
         workbook.remove(workbook["Sheet"])
 
-        dumped_rules = rules.model_dump(by_alias=True)
+        if rules.is_reference:
+            dumped_rules = rules.reference_self().model_dump(by_alias=True)
+        else:
+            dumped_rules = rules.model_dump(by_alias=True)
         if rules.is_reference:
             # Writes empty reference sheets
             empty: dict[str, Any] = {field_alias: None for field_alias in dumped_rules["Metadata"].keys()}
