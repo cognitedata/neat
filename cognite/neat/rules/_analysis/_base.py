@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from enum import StrEnum
 from typing import Generic, TypeVar
 
 from cognite.neat.rules._shared import Rules
@@ -11,3 +12,9 @@ class BaseAnalysis(ABC, Generic[T_Rules]):
     @abstractmethod
     def subset_rules(self, desired_classes: set[ClassEntity]) -> T_Rules:
         raise NotImplementedError()
+
+
+class DataModelingScenario(StrEnum):
+    from_scratch = "from scratch"
+    reuse_components = "reuse components"
+    extend_reference = "extend reference"

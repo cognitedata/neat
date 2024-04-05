@@ -13,12 +13,21 @@ from cognite.neat.rules.models._rules.information_rules import InformationClass,
 from cognite.neat.rules.models.rdfpath import TransformationRuleType
 from cognite.neat.utils.utils import get_inheritance_path
 
-from ._base import BaseAnalysis
+from ._base import BaseAnalysis, DataModelingScenario
 
 
 class InformationArchitectRulesAnalysis(BaseAnalysis):
     def __init__(self, rules: InformationRules):
         self.rules = rules
+
+    def data_modeling_scenario(self) -> DataModelingScenario:
+        if not self.rules.reference:
+            return DataModelingScenario.from_scratch
+
+        if self.rules.metadata.namespace == self.rules.reference.metadata.namespace:
+            return DataModelingScenario.extend_reference
+        else:
+            return DataModelingScenario.reuse_components
 
     def class_parent_pairs(self) -> dict[ClassEntity, list[ParentClassEntity]]:
         """This only returns class - parent pairs only if parent is in the same data model"""
