@@ -77,7 +77,7 @@ class SpreadsheetReader:
 
     @classmethod
     def to_reference_sheet(cls, sheet_name: str) -> str:
-        return f"Reference{sheet_name}"
+        return f"Ref{sheet_name}"
 
     def read(self, filepath: Path) -> Rules | None:
         with pd.ExcelFile(filepath) as excel_file:
