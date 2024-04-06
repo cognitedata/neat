@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 
 from cognite.neat.rules.importers import ExcelImporter
-from cognite.neat.rules.models._rules import DMSRules, DomainRules, InformationRules
+from cognite.neat.rules.models._rules import DMSRules, DomainRules, InformationRules, RoleTypes
 from cognite.neat.utils.spreadsheet import read_individual_sheet
 from tests.config import DOC_RULES
 
@@ -43,11 +43,6 @@ def david_rules(david_spreadsheet: dict[str, dict[str, Any]]) -> InformationRule
 
 
 @pytest.fixture(scope="session")
-def olav_rules() -> InformationRules:
-    return ExcelImporter(DOC_RULES / "information-analytics-olav.xlsx").to_rules(errors="raise")
-
-
-@pytest.fixture(scope="session")
 def jon_spreadsheet() -> dict[str, dict[str, Any]]:
     filepath = DOC_RULES / "expert-wind-energy-jon.xlsx"
     excel_file = pd.ExcelFile(filepath)
@@ -76,3 +71,10 @@ def emma_spreadsheet() -> dict[str, dict[str, Any]]:
 @pytest.fixture(scope="session")
 def emma_rules(emma_spreadsheet: dict[str, dict[str, Any]]) -> DomainRules:
     return DomainRules.model_validate(emma_spreadsheet)
+
+
+@pytest.fixture(scope="session")
+def olav_rules() -> InformationRules:
+    return ExcelImporter(DOC_RULES / "information-analytics-olav.xlsx").to_rules(
+        errors="raise", role=RoleTypes.information_architect
+    )
