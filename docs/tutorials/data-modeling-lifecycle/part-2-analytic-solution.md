@@ -199,12 +199,12 @@ The advantage of this concept is that it can be used both for historical weather
 
 The weather observations will be connected to the `WindFarm`:
 
-| Class        | Property            | Value Type      | Min Count | Max Count |
-|--------------|---------------------|-----------------|-----------|-----------|
-| WindFarm     | name                | string          | 1         | 1         |
-| ...          | ...                 | ...             | ...       | ...       |
-| WindFarm     | weatherForecasts    | WeatherStation | 0         | Inf       |
-| WindFarm     | weatherObservations | WeatherStation | 0         | Inf       |
+| Class        | Property            | Value Type      | Min Count | Max Count | ... | Reference                       |
+|--------------|---------------------|-----------------|-----------|-----------|-----|---------------------------------|
+| WindFarm     | name                | string          | 1         | 1         |     | power:EnergyArea(property=name) |
+| ...          | ...                 | ...             | ...       | ...       |     |                                 |
+| WindFarm     | weatherForecasts    | WeatherStation  | 0         | Inf       |     |                                 |
+| WindFarm     | weatherObservations | WeatherStation  | 0         | Inf       |     |                                 |
 
 The `weatherForecasts` will be used for the forecasted weather data, and the `weatherObservations` will be used for
 the historical weather data.
@@ -224,14 +224,14 @@ forecasting model. The `parameters` will be used to store the parameters used in
 
 Olav decides to store the forecasted power output for each wind turbine in the `WindFarm`:
 
-| Class        | Property            | Value Type         | Min Count | Max Count |
-|--------------|---------------------|--------------------|-----------|-----------|
-| WindTurbine  | name                | string             | 1         | 1         |
-| ...          | ...                 | ...                | ...       | ...       |
-| WindTurbine  | powerForecasts      | timeseriesForecast | 0         | Inf       |
-| WindTurbine  | minPowerForecast    | timeseries         | 0         | 1         |
-| WindTurbine  | mediumPowerForecast | timeseries         | 0         | 1         |
-| WindTurbine  | maxPowerForecast    | timeseries         | 0         | 1         |
+| Class        | Property            | Value Type         | Min Count | Max Count | ... | Reference                           |
+|--------------|---------------------|--------------------|-----------|-----------|-----|-------------------------------------|
+| WindTurbine  | name                | string             | 1         | 1         |     | power:GeneratingUnit(property=name) |
+| ...          | ...                 | ...                | ...       | ...       |     |                                     |
+| WindTurbine  | powerForecasts      | timeseriesForecast | 0         | Inf       |     |                                     |
+| WindTurbine  | minPowerForecast    | timeseries         | 0         | 1         |     |                                     |
+| WindTurbine  | mediumPowerForecast | timeseries         | 0         | 1         |     |                                     |
+| WindTurbine  | maxPowerForecast    | timeseries         | 0         | 1         |     |                                     |
 
 The `powerForecasts` will be used to store the forecasted power output for each wind turbine. In addition, Olav
 adds `minPowerForecast`, `mediumPowerForecast`, and `maxPowerForecast` to store the minimum, medium, and maximum
@@ -242,22 +242,26 @@ tutorial for more information.
 
 In addition, Olav adds `lowPowerForecast`, `highPowerForecast`, and `expectedPowerForecast` to the `WindFarm`:
 
-| Class         | Property              | Value Type | Min Count | Max Count |
-|---------------|-----------------------|------------|-----------|-----------|
-| WindFarm      | name                  | string     | 1         | 1         |
-| ...           | ...                   | ...        | ...       | ...       |
-| WindFarm      | lowPowerForecast      | timeseries | 0         | 1         |
-| WindFarm      | highPowerForecast     | timeseries | 0         | 1         |
-| WindFarm      | expectedPowerForecast | timeseries | 0         | 1         |
+| Class         | Property              | Value Type | Min Count | Max Count | ... | Reference                       |
+|---------------|-----------------------|------------|-----------|-----------|-----|---------------------------------|
+| WindFarm      | name                  | string     | 1         | 1         |     | power:EnergyArea(property=name) |
+| ...           | ...                   | ...        | ...       | ...       |     |                                 |
+| WindFarm      | lowPowerForecast      | timeseries | 0         | 1         |     |                                 |
+| WindFarm      | highPowerForecast     | timeseries | 0         | 1         |     |                                 |
+| WindFarm      | expectedPowerForecast | timeseries | 0         | 1         |     |                                 |
 
 Similar to the `min`, `medium`, and `max` properties, the `low`, `high`, and `expected` properties will be added
 back to the enterprise model.
 
-## Updating the Spreadsheet (Download Olav's spreadsheet)
+Notice that for all the new properties that Olav has added, the `Reference` column is empty. This is because these
+properties are new and are not in the enterprise model. This is why Olav does not need to reference the enterprise
+
+
+## Updating the Spreadsheet (Download Olav's Information spreadsheet)
 
 Olav adds the new concepts to the `Properties` and `Classes` sheets in the spreadsheet.
 
-You can download Olav's spreadsheet [here](../../artifacts/rules/information-analytics-olav.xlsx).
+You can download Olav's spreadsheet [here with the information model](../../artifacts/rules/information-analytics-olav.xlsx).
 
 
 ## Implementing the Solution Model
@@ -285,6 +289,12 @@ new `WindTurbine` and `WindFarm` views are mapping correctly to the `GeneratingU
 After the implementation is done, Alice validates the solution model by running the `Validate Rules` workflow with
 the new spreadsheet as input. The validation is successful, and the solution model is ready to be deployed.
 
+## Updating the Spreadsheet (Download Olav's DMS spreadsheet)
+
+After the conversion and modification with the help of Alice, Olav's DMS spreadsheet is done.
+
+You can download Olav's spreadsheet [here with the MDS model](../../artifacts/rules/dms-analytics-olav.xlsx).
+
 ## Deploying the Solution Model
 
 Olav deploys the new solution model by selecting the `Export DMS` workflow. He deactivates the `Export Transformations`
@@ -300,7 +310,7 @@ need to create any transformations for populating the new solution model.
 2. Add new concepts
 3. Ensure a good implementation of the solution model
 
-**Analytic Expert usage of **NEAT**:
+**Analytic Expert usage of **NEAT****:
 
 1. Download the enterprise model.
 2. Validate the solution model.
