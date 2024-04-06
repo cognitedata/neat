@@ -53,8 +53,6 @@ class DMSExporter(CDFExporter[DMSSchema]):
 
     """
 
-    _new_line = "\n"
-
     def __init__(
         self,
         export_components: Component | Collection[Component] = "all",
@@ -90,7 +88,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
     def _export_to_directory(self, directory: Path, rules: Rules) -> None:
         schema = self.export(rules)
         exclude = self._create_exclude_set()
-        schema.to_directory(directory, exclude=exclude, new_line=self._new_line)
+        schema.to_directory(directory, exclude=exclude, new_line=self._new_line, encoding=self._encoding)
 
     def _export_to_zip_file(self, filepath: Path, rules: Rules) -> None:
         if filepath.suffix not in {".zip"}:
