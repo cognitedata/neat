@@ -28,7 +28,7 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
         if self.rules.metadata.namespace == self.rules.reference.metadata.namespace:
             return DataModelingScenario.extend_reference
         else:
-            return DataModelingScenario.reuse_components
+            return DataModelingScenario.build_solution
 
     @property
     def referred_classes(self) -> set[ClassEntity]:
@@ -37,7 +37,7 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
     @property
     def referred_classes_properties(self) -> list[InformationProperty]:
         referred_classes_properties = []
-        class_properties_dict = self.classes_with_properties(use_reference_rules=True)
+        class_properties_dict = self.classes_with_properties(use_reference=True)
 
         for class_ in self.referred_classes:
             if class_ in class_properties_dict:
@@ -61,14 +61,14 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
         dir_referred_classes = self.directly_referred_classes
         inherited_referred_classes = []
         for class_ in dir_referred_classes:
-            inherited_referred_classes.extend(self.class_inheritance_path(class_, use_reference_rules=True))
+            inherited_referred_classes.extend(self.class_inheritance_path(class_, use_reference=True))
         return set(inherited_referred_classes)
 
-    def class_parent_pairs(self, use_reference_rules: bool = False) -> dict[ClassEntity, list[ParentClassEntity]]:
+    def class_parent_pairs(self, use_reference: bool = False) -> dict[ClassEntity, list[ParentClassEntity]]:
         """This only returns class - parent pairs only if parent is in the same data model"""
         class_subclass_pairs: dict[ClassEntity, list[ParentClassEntity]] = {}
 
-        rules = cast(InformationRules, self.rules.reference if use_reference_rules else self.rules)
+        rules = cast(InformationRules, self.rules.reference if use_reference else self.rules)
 
         if not rules:
             return class_subclass_pairs
@@ -91,13 +91,13 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
         return class_subclass_pairs
 
     def classes_with_properties(
-        self, consider_inheritance: bool = False, use_reference_rules: bool = False
+        self, consider_inheritance: bool = False, use_reference: bool = False
     ) -> dict[ClassEntity, list[InformationProperty]]:
         """Returns classes that have been defined in the data model.
 
         Args:
             consider_inheritance: Whether to consider inheritance or not. Defaults False
-            use_reference_rules: Whether to use reference rules or not. Defaults False
+            use_reference: Whether to use reference rules or not. Defaults False
 
         Returns:
             Dictionary of classes with a list of properties defined for them
@@ -113,21 +113,21 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
 
         class_property_pairs: dict[ClassEntity, list[InformationProperty]] = defaultdict(list)
 
-        rules = cast(InformationRules, self.rules.reference if use_reference_rules else self.rules)
+        rules = cast(InformationRules, self.rules.reference if use_reference else self.rules)
 
         for property_ in rules.properties:
             class_property_pairs[property_.class_].append(property_)
 
         if consider_inheritance:
-            class_parent_pairs = self.class_parent_pairs(use_reference_rules=use_reference_rules)
+            class_parent_pairs = self.class_parent_pairs(use_reference=use_reference)
             for class_ in class_parent_pairs:
                 self._add_inherited_properties(class_, class_property_pairs, class_parent_pairs)
 
         return class_property_pairs
 
-    def class_inheritance_path(self, class_: ClassEntity | str, use_reference_rules: bool = False) -> list[ClassEntity]:
+    def class_inheritance_path(self, class_: ClassEntity | str, use_reference: bool = False) -> list[ClassEntity]:
         class_ = class_ if isinstance(class_, ClassEntity) else ClassEntity.from_raw(class_)
-        class_parent_pairs = self.class_parent_pairs(use_reference_rules)
+        class_parent_pairs = self.class_parent_pairs(use_reference)
         return get_inheritance_path(class_, class_parent_pairs)
 
     @classmethod
@@ -152,14 +152,14 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
                         class_property_pairs[class_] = [property_]
 
     def class_property_pairs(
-        self, only_rdfpath: bool = False, consider_inheritance: bool = False, use_reference_rules: bool = False
+        self, only_rdfpath: bool = False, consider_inheritance: bool = False, use_reference: bool = False
     ) -> dict[ClassEntity, dict[str, InformationProperty]]:
         """Returns a dictionary of classes with a dictionary of properties associated with them.
 
         Args:
             only_rdfpath : To consider only properties which have rule `rdfpath` set. Defaults False
             consider_inheritance: Whether to consider inheritance or not. Defaults False
-            use_reference_rules : Whether to use reference rules or not. Defaults False
+            use_reference : Whether to use reference rules or not. Defaults False
 
         Returns:
             Dictionary of classes with a dictionary of properties associated with them.
@@ -188,7 +188,7 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
 
         class_property_pairs = {}
 
-        for class_, properties in self.classes_with_properties(consider_inheritance, use_reference_rules).items():
+        for class_, properties in self.classes_with_properties(consider_inheritance, use_reference).items():
             processed_properties = {}
             for property_ in properties:
                 if property_.property_ in processed_properties:
@@ -207,12 +207,12 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
 
         return class_property_pairs
 
-    def class_linkage(self, consider_inheritance: bool = False, use_reference_rules: bool = False) -> pd.DataFrame:
+    def class_linkage(self, consider_inheritance: bool = False, use_reference: bool = False) -> pd.DataFrame:
         """Returns a dataframe with the class linkage of the data model.
 
         Args:
             consider_inheritance: Whether to consider inheritance or not. Defaults False
-            use_reference_rules: Whether to use reference rules or not. Defaults False
+            use_reference: Whether to use reference rules or not. Defaults False
 
         Returns:
             Dataframe with the class linkage of the data model
@@ -220,7 +220,7 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
 
         class_linkage = pd.DataFrame(columns=["source_class", "target_class", "connecting_property", "max_occurrence"])
 
-        class_property_pairs = self.classes_with_properties(consider_inheritance, use_reference_rules)
+        class_property_pairs = self.classes_with_properties(consider_inheritance, use_reference)
         properties = list(itertools.chain.from_iterable(class_property_pairs.values()))
 
         for property_ in properties:
@@ -240,62 +240,56 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
 
         return class_linkage
 
-    def connected_classes(
-        self, consider_inheritance: bool = False, use_reference_rules: bool = False
-    ) -> set[ClassEntity]:
+    def connected_classes(self, consider_inheritance: bool = False, use_reference: bool = False) -> set[ClassEntity]:
         """Return a set of classes that are connected to other classes.
 
         Args:
             consider_inheritance: Whether to consider inheritance or not. Defaults False
-            use_reference_rules: Whether to use reference rules or not. Defaults False
+            use_reference: Whether to use reference rules or not. Defaults False
 
         Returns:
             Set of classes that are connected to other classes
         """
-        class_linkage = self.class_linkage(consider_inheritance, use_reference_rules)
+        class_linkage = self.class_linkage(consider_inheritance, use_reference)
         return set(class_linkage.source_class.values).union(set(class_linkage.target_class.values))
 
-    def defined_classes(
-        self, consider_inheritance: bool = False, use_reference_rules: bool = False
-    ) -> set[ClassEntity]:
+    def defined_classes(self, consider_inheritance: bool = False, use_reference: bool = False) -> set[ClassEntity]:
         """Returns classes that have properties defined for them in the data model.
 
         Args:
             consider_inheritance: Whether to consider inheritance or not. Defaults False
-            use_reference_rules: Whether to use reference rules or not. Defaults False
+            use_reference: Whether to use reference rules or not. Defaults False
 
         Returns:
             Set of classes that have been defined in the data model
         """
-        class_property_pairs = self.classes_with_properties(consider_inheritance, use_reference_rules)
+        class_property_pairs = self.classes_with_properties(consider_inheritance, use_reference)
         properties = list(itertools.chain.from_iterable(class_property_pairs.values()))
 
         return {property.class_ for property in properties}
 
-    def disconnected_classes(
-        self, consider_inheritance: bool = False, use_reference_rules: bool = False
-    ) -> set[ClassEntity]:
+    def disconnected_classes(self, consider_inheritance: bool = False, use_reference: bool = False) -> set[ClassEntity]:
         """Return a set of classes that are disconnected (i.e. isolated) from other classes.
 
         Args:
             consider_inheritance: Whether to consider inheritance or not. Defaults False
-            use_reference_rules: Whether to use reference rules or not. Defaults False
+            use_reference: Whether to use reference rules or not. Defaults False
 
         Returns:
             Set of classes that are disconnected from other classes
         """
-        return self.defined_classes(consider_inheritance, use_reference_rules) - self.connected_classes(
-            consider_inheritance, use_reference_rules
+        return self.defined_classes(consider_inheritance, use_reference) - self.connected_classes(
+            consider_inheritance, use_reference
         )
 
     def symmetrically_connected_classes(
-        self, consider_inheritance: bool = False, use_reference_rules: bool = False
+        self, consider_inheritance: bool = False, use_reference: bool = False
     ) -> set[tuple[ClassEntity, ClassEntity]]:
         """Returns a set of pairs of symmetrically linked classes.
 
         Args:
             consider_inheritance: Whether to consider inheritance or not. Defaults False
-            use_reference_rules: Whether to use reference rules or not. Defaults False
+            use_reference: Whether to use reference rules or not. Defaults False
 
         Returns:
             Set of pairs of symmetrically linked classes
@@ -309,7 +303,7 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
         # TODO: Find better name for this method
         sym_pairs: set[tuple[ClassEntity, ClassEntity]] = set()
 
-        class_linkage = self.class_linkage(consider_inheritance, use_reference_rules)
+        class_linkage = self.class_linkage(consider_inheritance, use_reference)
         if class_linkage.empty:
             return sym_pairs
 
@@ -337,13 +331,13 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
             class_dict[definition.class_.suffix] = definition
         return class_dict
 
-    def subset_rules(self, desired_classes: set[ClassEntity], use_reference_rules: bool = False) -> InformationRules:
+    def subset_rules(self, desired_classes: set[ClassEntity], use_reference: bool = False) -> InformationRules:
         """
         Subset rules to only include desired classes and their properties.
 
         Args:
             desired_classes: Desired classes to include in the reduced data model
-            use_reference_rules: Whether to use reference rules or not. Defaults False
+            use_reference: Whether to use reference rules or not. Defaults False
 
         Returns:
             Instance of InformationRules
@@ -366,7 +360,7 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
             only with base Pydantic validators.
         """
 
-        rules = cast(InformationRules, self.rules.reference if use_reference_rules else self.rules)
+        rules = cast(InformationRules, self.rules.reference if use_reference else self.rules)
 
         if not rules.metadata.schema_ is not SchemaCompleteness.complete:
             raise ValueError("Rules are not complete cannot perform reduction!")
