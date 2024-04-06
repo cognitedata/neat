@@ -64,3 +64,17 @@ class TestExcelExporter:
         rows = next((rows for rows in workbook["RefViews"].columns if rows[1].value == "Reference"), None)
         assert rows is not None, "Reference column not found in RefViews sheet"
         assert sum(1 for row in rows[2:] if row.value is not None) >= len(alice_copy.views)
+
+    def test_export_rules_with_reference(self, olav_rules: InformationRules) -> None:
+        exporter = ExcelExporter(styling="maximal")
+        assert olav_rules.reference is not None, "Olav rules are expected to have a reference set"
+        expected_sheet_names = {"Metadata", "Classes", "Properties", "RefMetadata", "RefClasses", "RefProperties"}
+        # Make a copy of the rules to avoid changing the original
+        olav_copy = olav_rules.copy(deep=True)
+
+        workbook = exporter.export(olav_copy)
+
+        missing = expected_sheet_names - set(workbook.sheetnames)
+        assert not missing, f"Missing sheets: {missing}"
+        extra = set(workbook.sheetnames) - expected_sheet_names
+        assert not extra, f"Extra sheets: {extra}"
