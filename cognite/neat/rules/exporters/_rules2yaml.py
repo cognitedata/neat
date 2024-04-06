@@ -38,6 +38,8 @@ class YAMLExporter(BaseExporter[str]):
     file_option = get_args(Files)
     format_option = get_args(Format)
 
+    _new_line = "\n"
+
     def __init__(self, files: Files = "single", output: Format = "yaml", output_role: RoleTypes | None = None):
         if files not in self.file_option:
             raise ValueError(f"Invalid files: {files}. Valid options are {self.file_option}")
@@ -53,7 +55,7 @@ class YAMLExporter(BaseExporter[str]):
             if filepath.suffix != f".{self.output}":
                 warnings.warn(f"File extension is not .{self.output}, adding it to the file name", stacklevel=2)
                 filepath = filepath.with_suffix(f".{self.output}")
-            filepath.write_text(self.export(rules))
+            filepath.write_text(self.export(rules), encoding="utf-8", newline=self._new_line)
         else:
             raise NotImplementedError(f"Exporting to {self.files} files is not supported")
 
