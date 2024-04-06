@@ -124,6 +124,7 @@ class DMSSchema:
             directory (str | Path): The directory to save the schema to.
             exclude (set[str]): A set of attributes to exclude from the output.
             new_line (str): The line endings to use in the output files. Defaults to "\n".
+            encoding (str): The encoding to use in the output files. Defaults to "utf-8".
         """
         path_dir = Path(directory)
         exclude_set = exclude or set()
