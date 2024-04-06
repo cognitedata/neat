@@ -3,6 +3,7 @@ from typing import Any
 
 import pandas as pd
 import pytest
+from cognite.client import data_modeling as dm
 
 from cognite.neat.rules.models._rules import DMSRules
 from cognite.neat.rules.models._rules._types import XSD_VALUE_TYPE_MAPPINGS, XSDValueType
@@ -209,6 +210,32 @@ class TestInformationRules:
         dms_rules = david_rules.as_dms_architect_rules()
 
         assert isinstance(dms_rules, DMSRules)
+
+    def test_olav_as_dms(self, olav_rules: InformationRules) -> None:
+        dms_rules = olav_rules.as_dms_architect_rules()
+
+        assert isinstance(dms_rules, DMSRules)
+        schema = dms_rules.as_schema()
+
+        wind_turbine = next((view for view in schema.views if view.external_id == "WindTurbine"), None)
+        assert wind_turbine is not None
+        expected_containers = {
+            dm.ContainerId("power", "GeneratingUnit"),
+            dm.ContainerId("power", "WindTurbine"),
+            dm.ContainerId("power_analytics", "WindTurbine"),
+        }
+        missing = expected_containers - wind_turbine.referenced_containers()
+        assert not missing, f"Missing containers: {missing}"
+        extra = wind_turbine.referenced_containers() - expected_containers
+        assert not extra, f"Extra containers: {extra}"
+
+        wind_farm = next((view for view in schema.views if view.external_id == "WindFarm"), None)
+        assert wind_farm is not None
+        expected_containers = {dm.ContainerId("power", "EnergyArea"), dm.ContainerId("power_analytics", "WindFarm")}
+        missing = expected_containers - wind_farm.referenced_containers()
+        assert not missing, f"Missing containers: {missing}"
+        extra = wind_farm.referenced_containers() - expected_containers
+        assert not extra, f"Extra containers: {extra}"
 
 
 class TestInformationRulesConverter:
