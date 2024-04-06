@@ -40,13 +40,13 @@ The downloaded spreadsheet contains six sheets:
   (see definition of headings [here](../../terminology/rules.md#properties-sheet))
 * **Classes**: This contains the classes for the new solution model, and will only have headings
   (see definition of headings [here](../../terminology/rules.md#classes-sheet))
-* **ReferenceProperties**: This will be all the properties from the enterprise model that Olav can use to lookup
+* **RefProperties**: This will be all the properties from the enterprise model that Olav can use to lookup
   what properties he wants to use in the solution model. In addition, this will be used in the validation
   of the solution model.
-* **ReferenceClasses**: This will be all the classes from the enterprise model. Similar to the `RefProperties`,
+* **RefClasses**: This will be all the classes from the enterprise model. Similar to the `RefProperties`,
   this will be used to look up what classes Olav wants to use in the solution model, and will be validated
   against.
-* **ReferenceMetadata**: This will be the metadata from the enterprise model. This is there to establish linage
+* **RefMetadata**: This will be the metadata from the enterprise model. This is there to establish linage
   so that it is clear where the solution model comes from.
 
 ## Setting up the Metadata for the Solution Model
@@ -96,7 +96,7 @@ The most important properties for Olav's forecasting model are the `actualPower`
 he needs the `geoLocation` to calculate the wind speed and the `hubHeight` to adjust the wind speed to the height
 of the wind turbine. In addition, there might be differences in the power output between the wind turbines based
 on the manufacturer, life expectancy, and the type of wind turbine. However, Olav decides that
-arrayCableConnection is not important for his forecasting model, so the `WindTurbine`in the solution model will
+`arrayCableConnection` is not important for his forecasting model, so the `WindTurbine`in the solution model will
 not have this property.
 
 Next, let's look at the `WindFarm` from the enterprise model.
@@ -121,36 +121,57 @@ for the `geoLocation` of the `WindTurbine` and `WindFarm`.
 
 ## Updating the Spreadsheet.
 
-Olav copies over all the classes and properties from the enterprise model to the solution model. He then removes
-the rows that are not needed for the new solution model. The spreadsheet will now look as follows
-(details of other columns excluded on purpose):
+Olav copies over all the properties from the enterprise model to the solution model. He then removes
+the rows that are not needed for the new solution model. The `Properties` spreadsheet will now look as follows
+(only the most relevant columns shown here):
 
-| Class       | Property       | Value Type  |
-|-------------|----------------|-------------|
-| WindTurbine | name           | string      |
-| WindTurbine | type           | string      |
-| WindTurbine | activePower    | timeseries  |
-| WindTurbine | geoLocation    | Point       |
-| WindTurbine | manufacturer   | string      |
-| WindTurbine | ratedPower     | float       |
-| WindTurbine | hubHeight      | float       |
-| WindTurbine | lifeExpectancy | integer     |
-|             |                |             |
-| WindFarm    | name           | string      |
-| WindFarm    | geoLocation    | Polygon     |
-| WindFarm    | windTurbines   | WindTurbine |
-|             |                |             |
-| GeoLocation | name           | string      |
-|             |                |             |
-| Point       | latitude       | float       |
-| Point       | longitude      | float       |
-|             |                |             |
-| Polygon     | point          | Point       |
+| Class       | Property       | Value Type  | ... | Reference                                  |
+|-------------|----------------|-------------|-----|--------------------------------------------|
+| WindTurbine | name           | string      |     | power:GeneratingUnit(property=name)        |
+| WindTurbine | type           | string      |     | power:GeneratingUnit(property=type)        |
+| WindTurbine | activePower    | timeseries  |     | power:GeneratingUnit(property=activePower) |
+| WindTurbine | geoLocation    | Point       |     | power:GeneratingUnit(property=geoLocation) |
+| WindTurbine | manufacturer   | string      |     | power:WindTurbine(property=manufacturer)   |
+| WindTurbine | ratedPower     | float       |     | power:WindTurbine(property=ratedPower)     |
+| WindTurbine | hubHeight      | float       |     | power:WindTurbine(property=hubHeight)      |
+| WindTurbine | lifeExpectancy | integer     |     | power:WindTurbine(property=lifeExpectancy) |
+|             |                |             |     |                                            |
+| WindFarm    | name           | string      |     | power:EnergyArea(property=name)            |
+| WindFarm    | geoLocation    | Polygon     |     | power:EnergyArea(property=geoLocation)     |
+| WindFarm    | windTurbines   | WindTurbine |     | power:WindTurbine(property=windTurbines)   |
 
 In addition, Olav removes the parent classes `GeneratingUnit` and `EnergyArea` and instead moves the properties he
-needs over to `WindTurbine` and `WindFarm`. The reason is that the `GeneratingUnit` and `EnergyArea` are generic
+needs over to `WindTurbine` and `WindFarm`. He moves the properties by renaming `GeneratingUnit` to `WindTurbine` and
+`EnergyArea` to `WindFarm` in the `Class` column. The reason is that the `GeneratingUnit` and `EnergyArea` are generic
 concepts that would complicate the solution model as this forecast model is only for wind turbines and cannot be
 applied to other types of generating units.
+
+Furthermore, Olav copies over the `GeoLocation`, `Point`, and `Polygon` classes from the enterprise model to the solution
+model. In addition, he writes up `WindTurbine` and `WindFarm`. The `Classes` spreadsheet will now look as follows:
+
+| Class       | Parent Class | ... | Reference         |
+|-------------|--------------|-----|-------------------|
+| GeoLocation | GeoLocation  |     | power:GeoLocation |
+| Point       | GeoLocation  |     | power:Point       |
+| Polygon     |              |     | power:Polygon     |
+| WindTurbine |              |     |                   |
+| WindFarm    |              |     |                   |
+
+Notice that both the `Properties` and `Classes` sheets have a `Reference` column. This column is used to tell **NEAT**
+that the property or class is coming from the enterprise model. This is used in the validation of the solution model,
+as well as when creating the implementation of the solution model.
+
+If we look at the `Class` spreadsheet, we notice that `GeoLocation`, `Point`, and `Polygon` have a reference to the
+enterprise model. This is because these three classes are exact copies from the enterprise model, meaning that they
+will have the exact same properties as in the enterprise model. This is why Olav did not need to copy over the
+properties for these classes.
+
+The `WindTurbine` and `WindFarm` classes do not have a reference to the enterprise model, even though the enterprise
+model have a `WindTurbine` and `EnergyArea` class. This is because the `WindTurbine`and `EnergyArea` classes in this
+solution model are not the same as the `WindTurbine` and `EnergyArea` classes in the enterprise model. Olav has
+already removed the inheritance used in the enterprise model for these classes by moving the properties from
+`GeneratingUnit` and `EnergyArea` to `WindTurbine` and `WindFarm`. In addition, as we will see in the next section,
+Olav will add new properties to the `WindTurbine` and `WindFarm` classes that are not in the enterprise model.
 
 ## Adding new Concepts
 
