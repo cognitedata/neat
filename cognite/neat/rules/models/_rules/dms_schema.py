@@ -111,12 +111,20 @@ class DMSSchema:
                         data[attr_name].append(loaded)
         return data
 
-    def to_directory(self, directory: str | Path, exclude: set[str] | None = None) -> None:
+    def to_directory(
+        self,
+        directory: str | Path,
+        exclude: set[str] | None = None,
+        new_line: str | None = "\n",
+        encoding: str | None = "utf-8",
+    ) -> None:
         """Save the schema to a directory as YAML files. This is compatible with the Cognite-Toolkit convention.
 
         Args:
             directory (str | Path): The directory to save the schema to.
             exclude (set[str]): A set of attributes to exclude from the output.
+            new_line (str): The line endings to use in the output files. Defaults to "\n".
+            encoding (str): The encoding to use in the output files. Defaults to "utf-8".
         """
         path_dir = Path(directory)
         exclude_set = exclude or set()
@@ -124,25 +132,35 @@ class DMSSchema:
         data_models.mkdir(parents=True, exist_ok=True)
         if "spaces" not in exclude_set:
             for space in self.spaces:
-                (data_models / f"{space.space}.space.yaml").write_text(space.dump_yaml())
+                (data_models / f"{space.space}.space.yaml").write_text(
+                    space.dump_yaml(), newline=new_line, encoding=encoding
+                )
         if "data_models" not in exclude_set:
             for model in self.data_models:
-                (data_models / f"{model.external_id}.datamodel.yaml").write_text(model.dump_yaml())
+                (data_models / f"{model.external_id}.datamodel.yaml").write_text(
+                    model.dump_yaml(), newline=new_line, encoding=encoding
+                )
         if "views" not in exclude_set and self.views:
             view_dir = data_models / "views"
             view_dir.mkdir(parents=True, exist_ok=True)
             for view in self.views:
-                (view_dir / f"{view.external_id}.view.yaml").write_text(view.dump_yaml())
+                (view_dir / f"{view.external_id}.view.yaml").write_text(
+                    view.dump_yaml(), newline=new_line, encoding=encoding
+                )
         if "containers" not in exclude_set and self.containers:
             container_dir = data_models / "containers"
             container_dir.mkdir(parents=True, exist_ok=True)
             for container in self.containers:
-                (container_dir / f"{container.external_id}.container.yaml").write_text(container.dump_yaml())
+                (container_dir / f"{container.external_id}.container.yaml").write_text(
+                    container.dump_yaml(), newline=new_line, encoding=encoding
+                )
         if "node_types" not in exclude_set and self.node_types:
             node_dir = data_models / "nodes"
             node_dir.mkdir(parents=True, exist_ok=True)
             for node in self.node_types:
-                (node_dir / f"{node.external_id}.node.yaml").write_text(node.dump_yaml())
+                (node_dir / f"{node.external_id}.node.yaml").write_text(
+                    node.dump_yaml(), newline=new_line, encoding=encoding
+                )
 
     @classmethod
     def from_zip(cls, zip_file: str | Path) -> Self:
@@ -401,7 +419,13 @@ class PipelineSchema(DMSSchema):
                     data[attr_name].append(loaded)
         return data
 
-    def to_directory(self, directory: str | Path, exclude: set[str] | None = None) -> None:
+    def to_directory(
+        self,
+        directory: str | Path,
+        exclude: set[str] | None = None,
+        new_line: str | None = "\n",
+        encoding: str | None = "utf-8",
+    ) -> None:
         super().to_directory(directory, exclude)
         exclude_set = exclude or set()
         path_dir = Path(directory)
@@ -409,14 +433,18 @@ class PipelineSchema(DMSSchema):
             transformation_dir = path_dir / "transformations"
             transformation_dir.mkdir(exist_ok=True, parents=True)
             for transformation in self.transformations:
-                (transformation_dir / f"{transformation.external_id}.yaml").write_text(transformation.dump_yaml())
+                (transformation_dir / f"{transformation.external_id}.yaml").write_text(
+                    transformation.dump_yaml(), newline=new_line, encoding=encoding
+                )
         if "raw" not in exclude_set and self.raw_tables:
             # The RAW Databases are not written to file. This is because cognite-toolkit expects the RAW databases
             # to be in the same file as the RAW tables.
             raw_dir = path_dir / "raw"
             raw_dir.mkdir(exist_ok=True, parents=True)
             for raw_table in self.raw_tables:
-                (raw_dir / f"{raw_table.name}.yaml").write_text(raw_table.dump_yaml())
+                (raw_dir / f"{raw_table.name}.yaml").write_text(
+                    raw_table.dump_yaml(), newline=new_line, encoding=encoding
+                )
 
     def to_zip(self, zip_file: str | Path, exclude: set[str] | None = None) -> None:
         super().to_zip(zip_file, exclude)

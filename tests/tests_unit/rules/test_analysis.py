@@ -62,8 +62,7 @@ class TestRulesAnalysis:
         )
 
     def test_data_modeling_scenario(self, olav_rules: InformationRules) -> None:
-        olav_rules = olav_rules
-        assert InformationArchitectRulesAnalysis(olav_rules).data_modeling_scenario == "reuse components"
+        assert InformationArchitectRulesAnalysis(olav_rules).data_modeling_scenario == "build solution"
 
     def test_directly_referred_classes(self, olav_rules: InformationRules) -> None:
         assert len(InformationArchitectRulesAnalysis(olav_rules).directly_referred_classes) == 3

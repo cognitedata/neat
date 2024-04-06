@@ -21,5 +21,5 @@ class BaseAnalysis(ABC, Generic[T_Rules]):
 
 class DataModelingScenario(StrEnum):
     from_scratch = "from scratch"
-    reuse_components = "reuse components"
+    build_solution = "build solution"
     extend_reference = "extend reference"

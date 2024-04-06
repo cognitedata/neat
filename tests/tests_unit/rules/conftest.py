@@ -44,7 +44,7 @@ def david_rules(david_spreadsheet: dict[str, dict[str, Any]]) -> InformationRule
 
 @pytest.fixture(scope="session")
 def olav_rules() -> InformationRules:
-    return ExcelImporter(DOC_RULES / "information-analytics-olav.xlsx").to_rules()[0]
+    return ExcelImporter(DOC_RULES / "information-analytics-olav.xlsx").to_rules(errors="raise")
 
 
 @pytest.fixture(scope="session")

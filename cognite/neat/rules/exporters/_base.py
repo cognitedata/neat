@@ -14,6 +14,9 @@ T_Export = TypeVar("T_Export")
 
 
 class BaseExporter(ABC, Generic[T_Export]):
+    _new_line = "\n"
+    _encoding = "utf-8"
+
     @abstractmethod
     def export_to_file(self, rules: Rules, filepath: Path) -> None:
         raise NotImplementedError
