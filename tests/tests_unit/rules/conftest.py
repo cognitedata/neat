@@ -3,6 +3,7 @@ from typing import Any
 import pandas as pd
 import pytest
 
+from cognite.neat.rules.importers import ExcelImporter
 from cognite.neat.rules.models._rules import DMSRules, DomainRules, InformationRules
 from cognite.neat.utils.spreadsheet import read_individual_sheet
 from tests.config import DOC_RULES
@@ -39,6 +40,11 @@ def david_spreadsheet() -> dict[str, dict[str, Any]]:
 @pytest.fixture(scope="session")
 def david_rules(david_spreadsheet: dict[str, dict[str, Any]]) -> InformationRules:
     return InformationRules.model_validate(david_spreadsheet)
+
+
+@pytest.fixture(scope="session")
+def olav_rules() -> InformationRules:
+    return ExcelImporter(DOC_RULES / "information-analytics-olav.xlsx").to_rules(errors="raise")
 
 
 @pytest.fixture(scope="session")
