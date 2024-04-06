@@ -576,7 +576,7 @@ class DMSRules(BaseRules):
         new_rules = self.copy(deep=True)
         for prop in new_rules.properties:
             prop.reference = ReferenceEntity(
-                prefix=prop.view.prefix, suffix=prop.view_property, version=prop.view.version, property_=prop.property_
+                prefix=prop.view.prefix, suffix=prop.view.suffix, version=prop.view.version, property_=prop.property_
             )
         view: DMSView
         for view in new_rules.views:
