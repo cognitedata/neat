@@ -114,7 +114,7 @@ class InformationClass(SheetEntity):
     """
 
     parent: ParentClassType = Field(alias="Parent Class", default=None)
-    reference: ReferenceType = Field(alias="Source", default=None)
+    reference: ReferenceType = Field(alias="Reference", default=None)
     match_type: MatchType | None = Field(alias="Match Type", default=None)
     comment: str | None = Field(alias="Comment", default=None)
 

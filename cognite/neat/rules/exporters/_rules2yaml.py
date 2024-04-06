@@ -22,7 +22,7 @@ class YAMLExporter(BaseExporter[str]):
 
     The following formats are available:
 
-    - "single": A single YAML file will containe the entire rules.
+    - "single": A single YAML file will contain the entire rules.
 
     .. note::
 
@@ -53,7 +53,7 @@ class YAMLExporter(BaseExporter[str]):
             if filepath.suffix != f".{self.output}":
                 warnings.warn(f"File extension is not .{self.output}, adding it to the file name", stacklevel=2)
                 filepath = filepath.with_suffix(f".{self.output}")
-            filepath.write_text(self.export(rules))
+            filepath.write_text(self.export(rules), encoding=self._encoding, newline=self._new_line)
         else:
             raise NotImplementedError(f"Exporting to {self.files} files is not supported")
 
