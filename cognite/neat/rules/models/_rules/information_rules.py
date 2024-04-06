@@ -465,11 +465,9 @@ class _InformationRulesConverter:
             nullable = None
         elif relation == "direct":
             nullable = True
-            container = ContainerEntity(prefix=prop.class_.prefix, suffix=prop.class_.suffix)
-            container_property = prop.property_
+            container, container_property = cls._get_container(prop)
         else:
-            container = ContainerEntity(prefix=prop.class_.prefix, suffix=prop.class_.suffix)
-            container_property = prop.property_
+            container, container_property = cls._get_container(prop)
 
         try:
             return DMSProperty(
@@ -499,3 +497,13 @@ class _InformationRulesConverter:
         if prefix[-1] == "_":
             prefix = f"{prefix[:-1]}1"
         return prefix
+
+    @classmethod
+    def _get_container(cls, prop: InformationProperty) -> tuple[ContainerEntity, str]:
+        if isinstance(prop.reference, ReferenceEntity):
+            return (
+                ContainerEntity(prefix=prop.reference.prefix, suffix=prop.reference.suffix),
+                prop.reference.property_ or prop.property_,
+            )
+        else:
+            return ContainerEntity(prefix=prop.class_.prefix, suffix=prop.class_.suffix), prop.property_
