@@ -38,6 +38,7 @@ from ._types import (
     StrListType,
     Undefined,
     VersionType,
+    ViewEntity,
     ViewPropEntity,
     XSDValueType,
 )
@@ -388,10 +389,7 @@ class _InformationRulesConverter:
                 class_=cls_.class_,
                 view=ViewPropEntity(prefix=cls_.class_.prefix, suffix=cls_.class_.suffix, version=cls_.class_.version),
                 description=cls_.description,
-                implements=[
-                    ViewPropEntity(prefix=parent.prefix, suffix=parent.suffix, version=parent.version)
-                    for parent in cls_.parent or []
-                ],
+                implements=self._get_view_implements(cls_),
             )
             for cls_ in self.information.classes
         ]
@@ -507,3 +505,17 @@ class _InformationRulesConverter:
             )
         else:
             return ContainerEntity(prefix=prop.class_.prefix, suffix=prop.class_.suffix), prop.property_
+
+    @classmethod
+    def _get_view_implements(cls, cls_: InformationClass) -> list[ViewEntity]:
+        if isinstance(cls_.reference, ReferenceEntity):
+            return [
+                ViewPropEntity(
+                    prefix=cls_.reference.prefix, suffix=cls_.reference.suffix, version=cls_.reference.version
+                )
+            ]
+        else:
+            return [
+                ViewEntity(prefix=parent.prefix, suffix=parent.suffix, version=parent.version)
+                for parent in cls_.parent or []
+            ]
