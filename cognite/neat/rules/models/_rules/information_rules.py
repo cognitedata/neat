@@ -467,23 +467,20 @@ class _InformationRulesConverter:
         else:
             container, container_property = cls._get_container(prop)
 
-        try:
-            return DMSProperty(
-                class_=prop.class_,
-                property_=prop.property_,
-                value_type=value_type,
-                nullable=nullable,
-                is_list=is_list,
-                relation=relation,
-                default=prop.default,
-                reference=prop.reference,
-                container=container,
-                container_property=container_property,
-                view=ViewPropEntity(prefix=prop.class_.prefix, suffix=prop.class_.suffix, version=prop.class_.version),
-                view_property=prop.property_,
-            )
-        except ValueError:
-            raise
+        return DMSProperty(
+            class_=prop.class_,
+            property_=prop.property_,
+            value_type=value_type,
+            nullable=nullable,
+            is_list=is_list,
+            relation=relation,
+            default=prop.default,
+            reference=prop.reference,
+            container=container,
+            container_property=container_property,
+            view=ViewPropEntity(prefix=prop.class_.prefix, suffix=prop.class_.suffix, version=prop.class_.version),
+            view_property=prop.property_,
+        )
 
     @classmethod
     def _to_space(cls, prefix: str) -> str:
