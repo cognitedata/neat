@@ -29,6 +29,15 @@ def alice_rules() -> DMSRules:
 
 
 @pytest.fixture(scope="session")
+def olav_dms_rules() -> DMSRules:
+    filepath = DOC_RULES / "dms-analytics-olav.xlsx"
+
+    excel_importer = ExcelImporter(filepath)
+
+    return excel_importer.to_rules(errors="raise", role=RoleTypes.dms_architect)
+
+
+@pytest.fixture(scope="session")
 def table_example() -> InformationRules:
     return InformationRules(
         metadata=InformationMetadata(
