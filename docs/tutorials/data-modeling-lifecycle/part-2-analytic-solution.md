@@ -301,6 +301,9 @@ Olav deploys the new solution model by selecting the `Export DMS` workflow. He d
 step by removing the dotted line connecting it from the `Export Data Model to CDF` step. This is because he does not
 need to create any transformations for populating the new solution model.
 
+<img src="../../artifacts/figs/life_cycle_analitic_solution_export_dms.png" height="300">
+
+Olav then runs the workflow and his solution model is successfully deployed to CDF.
 
 ## Summary
 
