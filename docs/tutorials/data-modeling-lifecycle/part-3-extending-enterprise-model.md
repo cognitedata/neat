@@ -1,5 +1,11 @@
 # Extending the Enterprise Model
 
+!!! warning annotate "Warning"
+
+    This tutorial is work in progress, and there might be minor changes to the completed ones while others
+    are being developed. We appreciate your understanding and patience.
+
+
 This tutorial demonstrates how to extend the Enterprise model. Extending a model means changing it
 by adding, changing, or removing any of its elements **after it hs been put in production**.
 
