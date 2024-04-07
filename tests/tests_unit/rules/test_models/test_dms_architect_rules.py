@@ -1358,3 +1358,34 @@ class TestDMSRules:
         actual_dump = dms_rules.model_dump(exclude_none=True, exclude_unset=True, exclude_defaults=True)
 
         assert actual_dump == expected_dump
+
+    def test_olav_as_information(self, olav_dms_rules: DMSRules) -> None:
+        info_rules_copy = olav_dms_rules.copy(deep=True)
+        # In Olav's Rules, the references are set for traceability. We remove it
+        # to test that the references are correctly set in the conversion.
+        for prop in info_rules_copy.properties:
+            prop.reference = None
+        for view in info_rules_copy.views:
+            view.reference = None
+
+        info_rules = olav_dms_rules.as_information_architect_rules()
+
+        assert isinstance(info_rules, InformationRules)
+
+        # Check some samples
+        point = next((cls_ for cls_ in info_rules.classes if cls_.class_.versioned_id == "power_analytics:Point"), None)
+        assert point is not None
+        assert point.reference is not None
+        assert point.reference.versioned_id == "power:Point"
+
+        wind_turbine_name = next(
+            (
+                prop
+                for prop in info_rules.properties
+                if prop.property_ == "name" and prop.class_.versioned_id == "power_analytics:WindTurbine"
+            ),
+            None,
+        )
+        assert wind_turbine_name is not None
+        assert wind_turbine_name.reference is not None
+        assert wind_turbine_name.reference.versioned_id == "power:GeneratingUnit(property=name)"
