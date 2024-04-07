@@ -282,6 +282,16 @@ class DMSRules(BaseRules):
     reference: "DMSRules | None" = Field(None, alias="Reference")
     is_reference: bool = False
 
+    @field_validator("reference")
+    def extension_has_reference(cls, value: Any, info: ValidationInfo) -> Any:
+        if (
+            (metadata := info.data.get("metadata"))
+            and metadata.schema_ is SchemaCompleteness.extended
+            and value is None
+        ):
+            raise ValueError("With schema completeness extended, a reference must be provided")
+        return value
+
     @model_validator(mode="after")
     def set_default_space_and_version(self) -> "DMSRules":
         default_space = self.metadata.space
@@ -493,10 +503,21 @@ class DMSRules(BaseRules):
 
     @model_validator(mode="after")
     def validate_schema(self) -> "DMSRules":
-        if self.metadata.schema_ is not SchemaCompleteness.complete:
+        if self.metadata.schema_ is SchemaCompleteness.partial:
             return self
+        elif self.metadata.schema_ is SchemaCompleteness.complete:
+            rules = self
+        elif self.metadata.schema_ is SchemaCompleteness.extended:
+            if not self.reference:
+                raise ValueError("With schema completeness extended, a reference must be provided")
+            rules: DMSRules = self.copy()
+            rules.properties.extend(self.reference.properties.data)
+            rules.views.extend(self.reference.views.data)
+            rules.containers.extend(self.reference.containers or [])
+        else:
+            raise ValueError("Unknown schema completeness")
 
-        schema = self.as_schema()
+        schema = rules.as_schema()
         errors = schema.validate()
         if errors:
             raise issues.MultiValueError(errors)
