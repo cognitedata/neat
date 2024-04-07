@@ -176,15 +176,15 @@ Svein Harald thinks this is a good start, but he realizes that there are some op
 Svein Harald starts by adding the new concepts to the `Properties` sheet in the spreadsheet. He adds the following
 rows:
 
-| Class                     | Property      | Value Type                |
-|---------------------------|---------------|---------------------------|
-| TimeseriesForecastProduct | low           | timeseries                |
-| TimeseriesForecastProduct | expected      | timeseries                |
-| TimeseriesForecastProduct | high          | timeseries                |
-|                           |               |                           |
-| EnergyArea                | powerForecast | TimeseriesForecastProduct |
-|                           |               |                           |
-| GeneratingUnit            | powerForecast | TimeseriesForecastProduct |
+| Class                     | Property      | Value Type                | Min Count | Max Count  |
+|---------------------------|---------------|---------------------------|-----------|------------|
+| TimeseriesForecastProduct | low           | timeseries                | 1         | 1          |
+| TimeseriesForecastProduct | expected      | timeseries                | 1         | 1          |
+| TimeseriesForecastProduct | high          | timeseries                | 1         | 1          |
+|                           |               |                           |           |            |
+| EnergyArea                | powerForecast | TimeseriesForecastProduct | 0         | 1          |
+|                           |               |                           |           |            |
+| GeneratingUnit            | powerForecast | TimeseriesForecastProduct | 0         | 1          |
 
 With the new class `TimeseriesForecastProduct`, Svein Harald also adds the new class to the `Classes` sheet in the
 spreadsheet. He adds the following row:
@@ -193,18 +193,71 @@ spreadsheet. He adds the following row:
 |---------------------------|--------------|
 | TimeseriesForecastProduct |              |
 
+## Iterating on the Extension
+
+Olav takes the new concept `TimeseriesForecastProduct` to the trading department to get feedback. In the trading
+department, the trader Lars points out that it is challenging to get a context for the forecast. He suggests that they
+should add `named` and `description` properties to the `TimeseriesForecastProduct`. In addition, he points out that
+when he makes a decision based on the forecast, he first needs to be confident in the forecast. Olav asks what
+criteria Lars uses to determine whether he is confident in a forecast, and learns that the input data to the forecast
+is one of the most important factors. Furthermore, Olav wonders whether he should include a `confidence` property
+in the `TimeseriesForecastProduct`. Lars does not have a statical backgound, and explains that `confidence` becomes
+a very abstract concept for him. He instead explains that he is very happy with the three different timeseries
+`low`, `expected`, and `high` as they give him a good understanding of the forecast and the uncertainty.
+
+Olav goes back to Svein Harald, and together they add the following properties to the `Properties` sheet:
+
+| Class                     | Property    | Value Type | Min Count | Max Count |
+|---------------------------|-------------|------------|-----------|-----------|
+| TimeseriesForecastProduct | name        | string     | 1         | 1         |
+| TimeseriesForecastProduct | description | string     | 0         | 1         |
+| TimeseriesForecastProduct | sources     | string     | 0         | Inf       |
+| TimeseriesForecastProduct | low         | timeseries | 1         | 1         |
+| TimeseriesForecastProduct | expected    | timeseries | 1         | 1         |
+| TimeseriesForecastProduct | high        | timeseries | 1         | 1         |
+
+Note that the `sources` property is a list of strings that are used to create the forecast. Olav has checked with
+Lars that this is a good way to capture the input data to the forecast.
+
 ## Updating the Spreadsheet (Download Svein Harald's Information spreadsheet)
 
-Svein Harald adds the new concepts to the `Properties` and `Classes` sheets in the spreadsheet.
+The finshied spreadsheet with the extension of the Enterprise model is now done.
 
-You can download Svein Harald's spreadsheet [here with the information model](../../artifacts/rules/information-addition-svein-harald.xlsx).
-
+You can download it [here](../../artifacts/rules/information-addition-svein-harald.xlsx).
 
 ## Implementing the Extension
 
+Svein Harald and Olav have now defined all the extensions of the Enterprise model. Olav is happy with the results, and
+leaves it to Svein Harald to get the extension implemented.
+First, Svein Harald uses **NEAT** to convert the spreadsheet he has from information architect to dms architect format.
+He does this by selecting the `Validate Rules` workflow. Note that this will also validate that he has
+written up the spreadsheet correctly. In the `Validate Rules` workflow, Svein Harald selects the `Convert Rules` step
+and sets `Output role format` to `dms_architect`. After running the workflow, Svein Harald can download the converted
+spreadsheet by clicking `exported_rules_DMS_Architect.xlsx`.
+
+<img src="../../artifacts/figs/life_cycle_converter_model_analytic_solution_model.png" height="300">
+
+**NEAT** has given a good out-of-the-box suggestion for how to implement the extension model. However, to ensure that
+the solution model is well aligned with the existing Enterprise model and is performant, Svein Harald
+asks the DMS solution architect, Alice, to help him as he is not an expert in the implementation of the model.
+
+Alice and Svein Harald have a discussion about the new concepts. Alice suggests that they should add an index to the
+`name` and `sources` properties in the `TimeseriesForecastProduct` to ensure that the queries are performant.
+Svein Harald agrees and they add index to the `name` and `sources` properties in the `Properties` sheet.
+
+After the implementation is done, Alice validates the solution model by running the `Validate Rules` workflow with
+the new spreadsheet as input. The validation is successful, and the extension model is ready to be deployed.
+
 ## Updating the Spreadsheet (Download Olav's DMS spreadsheet)
 
+After the conversion and modification with the help of Alice, Svein Harald has the final spreadsheet that can be
+deployed.
+
+You can download it [here DMS model](../../artifacts/rules/dms-addition-svein-harald.xlsx).
+
 ## Deploying the Extension
+
+Todo
 
 ## Summary
 
