@@ -7,7 +7,7 @@
 
 
 This tutorial demonstrates how to extend the Enterprise model. Extending a model means changing it
-by adding, changing, or removing any of its elements **after it hs been put in production**.
+by adding, reshaping, or removing any of its elements **after it has been put in production**.
 
 We assume that there is already an enterprise model developed, as in the
 [Knowledge Acquisition](./part-1-knowledge-acquisition.md) tutorial, which will be the one we extend. In addition,
@@ -17,9 +17,9 @@ tutorial.
 ## Introduction
 
 Svein Harald is the head information architect at `Acme Corporation`. He has the ultimate responsibility for the
-enterprise model. Olav and his team have now developed a successful timeseries forecast model for power production the
+enterprise model. Olav and his team have now developed a successful timeseries forecast model for power production of the
 wind turbines at `Acme Corportation`, and the trading department is now eager to start using these new
-forecast when making decisions on when trading power. Svein Harald has been tasked with helping Olav and his team
+forecasts when making decisions on when trading power. Svein Harald has been tasked with helping Olav and his team
 share their result with the trading department and the rest of the organization.
 
 ## Why Extend the Enterprise Model?
@@ -53,10 +53,10 @@ such that these must be updated, it will be very costly for the organization.
 
 * **Additive Changes**: Adding new elements to the model. This is the least intrusive change and will not require
   changes in the solution models or use cases.
-* **Reshape Changes**: Changing the structure of the model. This is a more intrusive change and may require changes in
-  the solution models and use cases.
+* **Reshape Changes**: Changing the structure of the model (e.g., renaming entities). This is a more intrusive
+  change and may require changes in the solution models and use cases.
 * **Rebuild Changes**: Changing the semantics of the model. This is the most intrusive change and will require changes
-  in the solution models and use cases. In addition, it may also require data migration.
+  in the solution models and use cases. In addition, it may also require major data migration.
 
 When Svein and Olav are working on the extension, they identify that the changes they are introducing are
 Additive Changes as they are adding new forecast elements to the enterprise model.
@@ -101,13 +101,13 @@ The downloaded spreadsheet contains six sheets:
   (see definition of headings [here](../../terminology/rules.md#properties-sheet))
 * **Classes**: This contains the classes for the changes, and will only have headings
   (see definition of headings [here](../../terminology/rules.md#classes-sheet))
-* **RefProperties**: This will be all the properties from the enterprise model that Svein Harald can use to lookup
+* **RefProperties**: (READ ONLY) This will be all the properties from the enterprise model that Svein Harald can use to lookup
   what properties he wants to use in the solution model. In addition, this will be used in the validation
   of the solution model.
-* **RefClasses**: This will be all the classes from the current enterprise model. Similar to the `RefProperties`,
+* **RefClasses**: (READ ONLY) This will be all the classes from the current enterprise model. Similar to the `RefProperties`,
   this will be used to look up, and will be validated
   against.
-* **RefMetadata**: This will be the metadata from the current Enterprise model.
+* **RefMetadata**: (READ ONLY) This will be the metadata from the current Enterprise model.
 
 ## Setting up the Metadata for the Extension
 
@@ -143,7 +143,7 @@ Olav tells Svein Harald that it is the timeseries forecast for the `WindTurbine`
 the trading department. There is no need to include the `TimeseriesForecast` and `WeatherStation` in the enterprise
 model from the forecast solution model.
 
-Note here that Svein Harald and Olav are here following a principle of including only the bare minimum of
+Note here that Svein Harald and Olav are here following a conservative principle of including the bare minimum of
 what is needed by the trading department. This is to keep the complexity of the Enterprise model down. In addition, if
 they had included the `TimeseriesForecast` and `WeatherStation` in the enterprise model now, but later decided they
 actually needed these in the Enterprise model, however, slightly modified, they would have to do a reshape, or
@@ -174,8 +174,8 @@ Svein Harald thinks this is a good start, but he realizes that there are some op
   By introducing the `TimeseriesForecastProduct`, they can make the names consistent.
 * **Extensibility**: Svein Harald also realizes the new concept `TimeseriesForecastProduct` is likely to be extended
   in the future, for example, with a `confidence` property.
-* **Modeling**. In the forecst solution model, the forecast is modeled on the `WindTurbine` and `WindFarm`. Svein
-  Harald, however, decides that power production forecast are more generic concepts so he decides to add it to the
+* **Modeling**. In the forecast solution model, the forecast is modeled on the `WindTurbine` and `WindFarm`. Svein
+  Harald, however, decides that power production forecasts are more generic concepts, so he decides to add it to the
   parent classes `GeneratingUnit` and `EnergyArea` instead. This way, the Enterprise model is ready for forecast of
   other types of generating units and energy areas in the future.
 
