@@ -965,7 +965,7 @@ class _DMSRulesConverter:
                     for implemented_view in view.implements or []
                     if implemented_view.prefix == view.class_.prefix
                 ],
-                reference=self._get_reference(view),
+                reference=self._get_class_reference(view),
             )
             for view in self.dms.views
         ]
@@ -991,6 +991,7 @@ class _DMSRulesConverter:
                     description=property_.description,
                     min_count=0 if property_.nullable or property_.nullable is None else 1,
                     max_count=float("inf") if property_.is_list or property_.nullable is None else 1,
+                    reference=self._get_property_reference(property_),
                 )
             )
 
@@ -1003,7 +1004,7 @@ class _DMSRulesConverter:
         )
 
     @classmethod
-    def _get_reference(cls, view: DMSView) -> ReferenceEntity | None:
+    def _get_class_reference(cls, view: DMSView) -> ReferenceEntity | None:
         parents_other_namespace = [parent for parent in view.implements or [] if parent.prefix != view.class_.prefix]
         if len(parents_other_namespace) == 0:
             return None
@@ -1017,3 +1018,15 @@ class _DMSRulesConverter:
         other_parent = parents_other_namespace[0]
 
         return ReferenceEntity(prefix=other_parent.prefix, suffix=other_parent.suffix)
+
+    @classmethod
+    def _get_property_reference(cls, property_: DMSProperty) -> ReferenceEntity | None:
+        has_container_other_namespace = property_.container and property_.container.prefix != property_.class_.prefix
+        if not has_container_other_namespace:
+            return None
+        container = cast(ContainerEntity, property_.container)
+        return ReferenceEntity(
+            prefix=container.prefix,
+            suffix=container.suffix,
+            property_=property_.container_property,
+        )
