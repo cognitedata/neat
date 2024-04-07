@@ -280,7 +280,7 @@ the solution model is well aligned with the enterprise model and is performant, 
 Alice, to help him.
 
 Alice asks Olav a few questions on how he is planning to use the new `timeseriesForecast` and `WeatherStation`
-classes. Based on Olav's answers, Alice suggests that the `name` and `algorithm` in the `**ForecastedPowerOutput**` should
+classes. Based on Olav's answers, Alice suggests that the `name` and `algorithm` in the `ForecastedPowerOutput` should
 be indexed to ensure that the queries are fast. Also for the `WeatherStation`, Alice suggests that the `name`,
 `type`, and `source` should be indexed to ensure that the queries are fast. In addition, Alice ensures that the
 new `WindTurbine` and `WindFarm` views are mapping correctly to the `GeneratingUnit`, `EnergyArea`, `WindTurbine`, and
@@ -293,7 +293,7 @@ the new spreadsheet as input. The validation is successful, and the solution mod
 
 After the conversion and modification with the help of Alice, Olav's DMS spreadsheet is done.
 
-You can download Olav's spreadsheet [here with the MDS model](../../artifacts/rules/dms-analytics-olav.xlsx).
+You can download Olav's spreadsheet [here with the DMS model](../../artifacts/rules/dms-analytics-olav.xlsx).
 
 ## Deploying the Solution Model
 
@@ -310,7 +310,7 @@ need to create any transformations for populating the new solution model.
 2. Add new concepts
 3. Ensure a good implementation of the solution model
 
-**Analytic Expert usage of **NEAT****:
+**Analytic Expert usage of NEAT**:
 
 1. Download the enterprise model.
 2. Validate the solution model.
