@@ -39,8 +39,15 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
         referred_classes_properties = []
         class_properties_dict = self.classes_with_properties(use_reference=True)
 
-        for class_ in self.referred_classes:
+        referred_classes = [
+            class_.as_class_entity() if isinstance(class_, ParentClassEntity) else class_
+            for class_ in self.referred_classes
+        ]
+
+        for class_ in referred_classes:
+            print(class_)
             if class_ in class_properties_dict:
+                print(class_)
                 referred_classes_properties.extend(class_properties_dict[class_])
 
         return referred_classes_properties

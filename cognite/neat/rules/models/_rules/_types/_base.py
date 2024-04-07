@@ -282,13 +282,21 @@ class ViewPropEntity(ViewEntity):
 
     @property
     def versioned_id(self) -> str:
-        if self.version is None:
-            output = self.id
+        # contains both property and version -> View with property and version
+        if self.version and self.property_:
+            return f"{self.id}(version={self.version}, property={self.property_})"
+
+        # contains only property but not version -> View with property
+        elif self.property_:
+            return f"{self.id}(property={self.property_})"
+
+        # contains only version -> View only
+        elif self.version:
+            return f"{self.id}(version={self.version})"
+
+        # contains neither property nor version -> View only
         else:
-            output = f"{self.id}(version={self.version})"
-        if self.property_:
-            output = f"{output}:{self.property_}"
-        return output
+            return self.id
 
 
 class DataModelEntity(Entity):

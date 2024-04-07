@@ -211,6 +211,11 @@ def _reference_entity_type_before_validator(value: Any | None = None) -> Any:
 ReferenceType = Annotated[
     ReferenceEntity | rdflib.URIRef | None,
     BeforeValidator(_reference_entity_type_before_validator),
+    PlainSerializer(
+        lambda v: v.versioned_id,
+        return_type=str,
+        when_used="unless-none",
+    ),
 ]
 
 
