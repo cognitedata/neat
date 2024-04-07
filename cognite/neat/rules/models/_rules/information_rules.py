@@ -38,6 +38,7 @@ from ._types import (
     StrListType,
     Undefined,
     VersionType,
+    ViewEntity,
     ViewPropEntity,
     XSDValueType,
 )
@@ -388,10 +389,7 @@ class _InformationRulesConverter:
                 class_=cls_.class_,
                 view=ViewPropEntity(prefix=cls_.class_.prefix, suffix=cls_.class_.suffix, version=cls_.class_.version),
                 description=cls_.description,
-                implements=[
-                    ViewPropEntity(prefix=parent.prefix, suffix=parent.suffix, version=parent.version)
-                    for parent in cls_.parent or []
-                ],
+                implements=self._get_view_implements(cls_),
             )
             for cls_ in self.information.classes
         ]
@@ -465,29 +463,24 @@ class _InformationRulesConverter:
             nullable = None
         elif relation == "direct":
             nullable = True
-            container = ContainerEntity(prefix=prop.class_.prefix, suffix=prop.class_.suffix)
-            container_property = prop.property_
+            container, container_property = cls._get_container(prop)
         else:
-            container = ContainerEntity(prefix=prop.class_.prefix, suffix=prop.class_.suffix)
-            container_property = prop.property_
+            container, container_property = cls._get_container(prop)
 
-        try:
-            return DMSProperty(
-                class_=prop.class_,
-                property_=prop.property_,
-                value_type=value_type,
-                nullable=nullable,
-                is_list=is_list,
-                relation=relation,
-                default=prop.default,
-                reference=prop.reference,
-                container=container,
-                container_property=container_property,
-                view=ViewPropEntity(prefix=prop.class_.prefix, suffix=prop.class_.suffix, version=prop.class_.version),
-                view_property=prop.property_,
-            )
-        except ValueError:
-            raise
+        return DMSProperty(
+            class_=prop.class_,
+            property_=prop.property_,
+            value_type=value_type,
+            nullable=nullable,
+            is_list=is_list,
+            relation=relation,
+            default=prop.default,
+            reference=prop.reference,
+            container=container,
+            container_property=container_property,
+            view=ViewPropEntity(prefix=prop.class_.prefix, suffix=prop.class_.suffix, version=prop.class_.version),
+            view_property=prop.property_,
+        )
 
     @classmethod
     def _to_space(cls, prefix: str) -> str:
@@ -499,3 +492,27 @@ class _InformationRulesConverter:
         if prefix[-1] == "_":
             prefix = f"{prefix[:-1]}1"
         return prefix
+
+    @classmethod
+    def _get_container(cls, prop: InformationProperty) -> tuple[ContainerEntity, str]:
+        if isinstance(prop.reference, ReferenceEntity):
+            return (
+                ContainerEntity(prefix=prop.reference.prefix, suffix=prop.reference.suffix),
+                prop.reference.property_ or prop.property_,
+            )
+        else:
+            return ContainerEntity(prefix=prop.class_.prefix, suffix=prop.class_.suffix), prop.property_
+
+    @classmethod
+    def _get_view_implements(cls, cls_: InformationClass) -> list[ViewEntity]:
+        if isinstance(cls_.reference, ReferenceEntity):
+            return [
+                ViewPropEntity(
+                    prefix=cls_.reference.prefix, suffix=cls_.reference.suffix, version=cls_.reference.version
+                )
+            ]
+        else:
+            return [
+                ViewEntity(prefix=parent.prefix, suffix=parent.suffix, version=parent.version)
+                for parent in cls_.parent or []
+            ]
