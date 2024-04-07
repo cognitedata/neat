@@ -222,3 +222,23 @@ class TestDMSExporters:
             "edge", space="sp_table_example_data", filter=is_edge_type, limit=-1
         )
         assert len(table_item_edges) == len(table_example_data["TableItem"])
+
+    def test_export_olav_dms_to_cdf(self, cognite_client: CogniteClient, olav_dms_rules: DMSRules) -> None:
+        rules: DMSRules = olav_dms_rules
+
+        exporter = DMSExporter(existing_handling="force")
+
+        uploaded = exporter.export_to_cdf(rules, cognite_client, dry_run=False)
+        uploaded_by_name = {entity.name: entity for entity in uploaded}
+
+        assert uploaded_by_name["containers"].total == len(rules.containers)
+        assert uploaded_by_name["containers"].failed == 0
+
+        assert uploaded_by_name["views"].total == len(rules.views)
+        assert uploaded_by_name["views"].failed == 0
+
+        assert uploaded_by_name["data_models"].total == 1
+        assert uploaded_by_name["data_models"].failed == 0
+
+        assert uploaded_by_name["spaces"].total == 1
+        assert uploaded_by_name["spaces"].failed == 0
