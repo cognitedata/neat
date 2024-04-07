@@ -506,14 +506,17 @@ class DMSRules(BaseRules):
         if self.metadata.schema_ is SchemaCompleteness.partial:
             return self
         elif self.metadata.schema_ is SchemaCompleteness.complete:
-            rules = self
+            rules: DMSRules = self
         elif self.metadata.schema_ is SchemaCompleteness.extended:
             if not self.reference:
                 raise ValueError("With schema completeness extended, a reference must be provided")
-            rules: DMSRules = self.copy()
+            rules = self.copy()
             rules.properties.extend(self.reference.properties.data)
             rules.views.extend(self.reference.views.data)
-            rules.containers.extend(self.reference.containers or [])
+            if rules.containers and self.reference.containers:
+                rules.containers.extend(self.reference.containers.data)
+            elif not rules.containers and self.reference.containers:
+                rules.containers = self.reference.containers
         else:
             raise ValueError("Unknown schema completeness")
 
