@@ -7,7 +7,12 @@ from cognite.client import data_modeling as dm
 
 from cognite.neat.rules.models._rules import DMSRules
 from cognite.neat.rules.models._rules._types import XSD_VALUE_TYPE_MAPPINGS, XSDValueType
-from cognite.neat.rules.models._rules.information_rules import InformationRules, _InformationRulesConverter
+from cognite.neat.rules.models._rules.base import SheetList
+from cognite.neat.rules.models._rules.information_rules import (
+    InformationClass,
+    InformationRules,
+    _InformationRulesConverter,
+)
 from cognite.neat.utils.spreadsheet import read_individual_sheet
 from tests.config import DOC_RULES
 
@@ -212,7 +217,19 @@ class TestInformationRules:
         assert isinstance(dms_rules, DMSRules)
 
     def test_olav_as_dms(self, olav_rules: InformationRules) -> None:
-        dms_rules = olav_rules.as_dms_architect_rules()
+        olav_rules_copy = olav_rules.copy(deep=True)
+        # Todo: Remove this line when Olav's Information .xlsx file is available
+        new_classes = SheetList[InformationClass](data=[])
+        for cls_ in olav_rules_copy.classes:
+            if cls_.class_.versioned_id == "power_analytics:GeoLocation":
+                continue
+            elif cls_.class_.versioned_id in ("power_analytics:Point", "power_analytics:Polygon"):
+                cls_.parent = None
+            new_classes.append(cls_)
+        olav_rules_copy.classes = new_classes
+        ## End of temporary code
+
+        dms_rules = olav_rules_copy.as_dms_architect_rules()
 
         assert isinstance(dms_rules, DMSRules)
         schema = dms_rules.as_schema()
@@ -236,6 +253,14 @@ class TestInformationRules:
         assert not missing, f"Missing containers: {missing}"
         extra = wind_farm.referenced_containers() - expected_containers
         assert not extra, f"Extra containers: {extra}"
+
+        point = next((view for view in schema.views if view.external_id == "Point"), None)
+        assert point is not None
+        assert point.implements == [dm.ViewId("power", "Point", "0.1.0")]
+
+        polygon = next((view for view in schema.views if view.external_id == "Polygon"), None)
+        assert polygon is not None
+        assert polygon.implements == [dm.ViewId("power", "Polygon", "0.1.0")]
 
 
 class TestInformationRulesConverter:
