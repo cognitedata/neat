@@ -3,15 +3,18 @@ import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
 from contextlib import contextmanager
+from copy import deepcopy
 from datetime import datetime
 from typing import Any, Literal, overload
 
 from pydantic import ValidationError
 from rdflib import Namespace
 
+from cognite.neat.rules._analysis._information_rules import InformationArchitectRulesAnalysis
 from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.issues.base import IssueList, NeatValidationError, ValidationWarning
 from cognite.neat.rules.models._rules import DMSRules, InformationRules, RoleTypes
+from cognite.neat.rules.models._rules.base import SchemaCompleteness
 
 
 class BaseImporter(ABC):
@@ -68,6 +71,36 @@ class BaseImporter(ABC):
             return output
         else:
             return output, issues
+
+    @classmethod
+    def _validate_solution_rules(
+        cls,
+        rules: Rules,
+        issues: IssueList,
+    ) -> Rules | None:
+        if isinstance(rules, InformationRules):
+            analysis = InformationArchitectRulesAnalysis(rules)
+
+            cp_rules = deepcopy(rules)
+            cp_rules.reference = None
+
+            classes_to_add = analysis.referred_classes
+            classes_properties_to_add = analysis.referred_classes_properties
+
+            cp_rules.classes.data.extend(classes_to_add)
+            cp_rules.properties.data.extend(classes_properties_to_add)
+            cp_rules.metadata.schema_ = SchemaCompleteness.complete
+
+            with _handle_issues(issues) as future:
+                _ = InformationRules(**cp_rules.model_dump())
+
+            if future.result == "failure" or issues.has_errors:
+                return None
+            else:
+                return rules
+
+        else:
+            return rules
 
     def _default_metadata(self):
         return {

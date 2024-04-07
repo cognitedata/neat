@@ -11,6 +11,8 @@ import pandas as pd
 from pandas import ExcelFile
 
 from cognite.neat.rules import issues
+from cognite.neat.rules._analysis._base import DataModelingScenario
+from cognite.neat.rules._analysis._information_rules import InformationArchitectRulesAnalysis
 from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models._rules import RULES_PER_ROLE, DMSRules, DomainRules, InformationRules
 from cognite.neat.rules.models._rules.base import RoleTypes, SchemaCompleteness
@@ -203,6 +205,17 @@ class ExcelImporter(BaseImporter):
             raise ValueError(
                 "No rules were generated. This should have been caught earlier. " f"Bug in {type(self).__name__}."
             )
+
+        if (
+            rules
+            and rules.metadata.role == RoleTypes.information_architect
+            and cast(InformationRules, rules).metadata.schema_ == SchemaCompleteness.extended
+            and InformationArchitectRulesAnalysis(cast(InformationRules, rules)).data_modeling_scenario
+            == DataModelingScenario.build_solution
+        ):
+            rules = self._validate_solution_rules(rules, issue_list)
+            if issue_list.has_errors:
+                return self._return_or_raise(issue_list, errors)
 
         return self._to_output(
             rules,
