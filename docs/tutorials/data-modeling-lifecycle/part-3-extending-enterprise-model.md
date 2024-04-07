@@ -15,3 +15,7 @@ enterprise model. Olav and his team have now developed a successful timeseries f
 wind turbines at `Acme Corportation`, and the trading department is now eager to start using these new
 forecast when making decisions on when trading power. Svein Harald has been tasked with helping Olav and his team
 share their result with the trading department and the rest of the organization.
+
+## Why Extend the Enterprise Model?
+
+##
