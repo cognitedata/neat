@@ -212,7 +212,7 @@ ReferenceType = Annotated[
     ReferenceEntity | rdflib.URIRef | None,
     BeforeValidator(_reference_entity_type_before_validator),
     PlainSerializer(
-        lambda v: v.versioned_id,
+        lambda v: v.versioned_id if isinstance(v, ReferenceEntity) else v,
         return_type=str,
         when_used="unless-none",
     ),

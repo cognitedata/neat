@@ -31,26 +31,15 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
             return DataModelingScenario.build_solution
 
     @property
-    def referred_classes(self) -> set[ClassEntity]:
-        return self.directly_referred_classes.union(self.inherited_referred_classes)
+    def referred_classes(self) -> list[InformationClass]:
+        reference_classes = self.as_class_dict(use_reference=True)
 
-    @property
-    def referred_classes_properties(self) -> list[InformationProperty]:
-        referred_classes_properties = []
-        class_properties_dict = self.classes_with_properties(use_reference=True)
-
-        referred_classes = [
+        referred_class_ids = {
             class_.as_class_entity() if isinstance(class_, ParentClassEntity) else class_
-            for class_ in self.referred_classes
-        ]
+            for class_ in self.directly_referred_classes.union(self.inherited_referred_classes)
+        }
 
-        for class_ in referred_classes:
-            print(class_)
-            if class_ in class_properties_dict:
-                print(class_)
-                referred_classes_properties.extend(class_properties_dict[class_])
-
-        return referred_classes_properties
+        return [reference_classes[class_.suffix] for class_ in referred_class_ids]
 
     @property
     def directly_referred_classes(self) -> set[ClassEntity]:
@@ -70,6 +59,17 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
         for class_ in dir_referred_classes:
             inherited_referred_classes.extend(self.class_inheritance_path(class_, use_reference=True))
         return set(inherited_referred_classes)
+
+    @property
+    def referred_classes_properties(self) -> list[InformationProperty]:
+        referred_classes_properties = []
+        class_properties_dict = self.classes_with_properties(use_reference=True)
+
+        for class_ in self.referred_classes:
+            if class_.class_ in class_properties_dict:
+                referred_classes_properties.extend(class_properties_dict[class_.class_])
+
+        return referred_classes_properties
 
     def class_parent_pairs(self, use_reference: bool = False) -> dict[ClassEntity, list[ParentClassEntity]]:
         """This only returns class - parent pairs only if parent is in the same data model"""
@@ -322,19 +322,23 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
                 sym_pairs.add((source, target))
         return sym_pairs
 
-    def as_property_dict(
-        self,
-    ) -> dict[str, list[InformationProperty]]:
+    def as_property_dict(self, use_reference: bool = False) -> dict[str, list[InformationProperty]]:
         """This is used to capture all definitions of a property in the data model."""
+
+        rules = cast(InformationRules, self.rules.reference if use_reference else self.rules)
+
         property_dict: dict[str, list[InformationProperty]] = defaultdict(list)
-        for definition in self.rules.properties:
+        for definition in rules.properties:
             property_dict[definition.property_].append(definition)
         return property_dict
 
-    def as_class_dict(self) -> dict[str, InformationClass]:
+    def as_class_dict(self, use_reference: bool = False) -> dict[str, InformationClass]:
         """This is to simplify access to classes through dict."""
         class_dict: dict[str, InformationClass] = {}
-        for definition in self.rules.classes:
+
+        rules = cast(InformationRules, self.rules.reference if use_reference else self.rules)
+
+        for definition in rules.classes:
             class_dict[definition.class_.suffix] = definition
         return class_dict
 
