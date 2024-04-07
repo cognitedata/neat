@@ -23,6 +23,7 @@ __all__ = [
     "ReverseOfDirectRelationListWarning",
     "EmptyContainerWarning",
     "UnsupportedRelationWarning",
+    "MultipleReferenceWarning",
 ]
 
 
@@ -309,4 +310,22 @@ class UnsupportedRelationWarning(DMSSchemaWarning):
         output["view_id"] = self.view_id.dump()
         output["property"] = self.property
         output["relation"] = self.relation
+        return output
+
+
+@dataclass(frozen=True)
+class MultipleReferenceWarning(DMSSchemaWarning):
+    description = "The view is implements multiple views from other spaces"
+    fix = "Neat expects maximum one implementation of a view from another space"
+    error_name: ClassVar[str] = "MultipleReferenceWarning"
+    view_id: dm.ViewId
+    implements: list[dm.ViewId]
+
+    def message(self) -> str:
+        return f"The view {self.view_id} implements multiple views from other spaces: {self.implements}. " + self.fix
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["view_id"] = self.view_id.dump()
+        output["implements"] = [view.dump() for view in self.implements]
         return output

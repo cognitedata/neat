@@ -953,16 +953,19 @@ class _DMSRulesConverter:
             updated=dms.updated or updated or datetime.now(),
         )
 
-        classes: list[InformationClass] = [
+        classes = [
             InformationClass(
-                # we do not want version in class as we use URI for the class
+                # we do not want a version in class as we use URI for the class
                 class_=view.class_.as_non_versioned_entity(),
                 description=view.description,
                 parent=[
-                    # we do not want version in class as we use URI for the class
-                    ParentClassEntity(prefix=implented_view.prefix, suffix=implented_view.suffix)
-                    for implented_view in view.implements or []
+                    # we do not want a version in class as we use URI for the class
+                    ParentClassEntity(prefix=implemented_view.prefix, suffix=implemented_view.suffix)
+                    # We only want parents in the same namespace, parent in a different namespace is a reference
+                    for implemented_view in view.implements or []
+                    if implemented_view.prefix == view.class_.prefix
                 ],
+                reference=self._get_reference(view),
             )
             for view in self.dms.views
         ]
@@ -998,3 +1001,19 @@ class _DMSRulesConverter:
             reference=self.dms.reference and self.dms.reference.as_information_architect_rules(),  # type: ignore[arg-type]
             is_reference=self.dms.is_reference,
         )
+
+    @classmethod
+    def _get_reference(cls, view: DMSView) -> ReferenceEntity | None:
+        parents_other_namespace = [parent for parent in view.implements or [] if parent.prefix != view.class_.prefix]
+        if len(parents_other_namespace) == 0:
+            return None
+        if len(parents_other_namespace) > 1:
+            warnings.warn(
+                issues.dms.MultipleReferenceWarning(
+                    view_id=view.view.as_id(), implements=[v.as_id() for v in parents_other_namespace]
+                ),
+                stacklevel=2,
+            )
+        other_parent = parents_other_namespace[0]
+
+        return ReferenceEntity(prefix=other_parent.prefix, suffix=other_parent.suffix)
