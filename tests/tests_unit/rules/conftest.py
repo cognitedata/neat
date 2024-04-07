@@ -78,3 +78,8 @@ def olav_rules() -> InformationRules:
     return ExcelImporter(DOC_RULES / "information-analytics-olav.xlsx").to_rules(
         errors="raise", role=RoleTypes.information_architect
     )
+
+
+@pytest.fixture(scope="session")
+def olav_dms_rules() -> DMSRules:
+    return ExcelImporter(DOC_RULES / "dms-analytics-olav.xlsx").to_rules(errors="raise", role=RoleTypes.dms_architect)
