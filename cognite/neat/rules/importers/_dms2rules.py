@@ -159,13 +159,17 @@ class DMSImporter(BaseImporter):
 
                 properties.append(dms_property)
 
+        data_model_view_ids: set[dm.ViewId] = {
+            view.as_id() if isinstance(view, dm.View | dm.ViewApply) else view for view in data_model.views or []
+        }
+
         dms_rules = DMSRules(
             metadata=DMSMetadata.from_data_model(data_model),
             properties=properties,
             containers=SheetList[DMSContainer](
                 data=[DMSContainer.from_container(container) for container in self.schema.containers]
             ),
-            views=SheetList[DMSView](data=[DMSView.from_view(view) for view in self.schema.views]),
+            views=SheetList[DMSView](data=[DMSView.from_view(view, data_model_view_ids) for view in self.schema.views]),
             is_reference=is_reference,
         )
         output_rules: Rules

@@ -261,7 +261,7 @@ class DMSView(SheetEntity):
         )
 
     @classmethod
-    def from_view(cls, view: dm.ViewApply) -> "DMSView":
+    def from_view(cls, view: dm.ViewApply, data_model_view_ids: set[dm.ViewId]) -> "DMSView":
         return cls(
             class_=ClassEntity(prefix=view.space, suffix=view.external_id),
             view=ViewType(prefix=view.space, suffix=view.external_id, version=view.version),
@@ -271,6 +271,7 @@ class DMSView(SheetEntity):
                 for parent in view.implements
             ]
             or None,
+            in_model=view.as_id() in data_model_view_ids,
         )
 
 
