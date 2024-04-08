@@ -32,7 +32,6 @@ repos:
     - id: mypy
       name: mypy
       entry: dmypy run -- cognite/neat/
-
       files: ^.*.(py|pyi)$
       language: system
       pass_filenames: false
