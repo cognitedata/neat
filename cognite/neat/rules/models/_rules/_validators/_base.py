@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from cognite.neat.rules.issues import IssueList
-from cognite.neat.rules.models._rules import DMSRules, InformationRules
+from cognite.neat.rules.models._rules import DMSRules, DomainRules, InformationRules
 
 
 class BaseRulesValidator(ABC):
@@ -9,7 +9,7 @@ class BaseRulesValidator(ABC):
     BaseRulesImporter class which all validators inherit from.
     """
 
-    def __init__(self, rules: InformationRules | DMSRules, issue_list: IssueList):
+    def __init__(self, rules: DMSRules | InformationRules | DomainRules, issue_list: IssueList):
         self.issue_list = issue_list
         self.rules = rules
 

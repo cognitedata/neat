@@ -3,15 +3,13 @@ from typing import cast
 
 from cognite.neat.rules._analysis import DataModelingScenario, InformationArchitectRulesAnalysis
 from cognite.neat.rules.issues import IssueList, handle_issues
-from cognite.neat.rules.models._rules import DMSRules, DomainRules, InformationRules
+from cognite.neat.rules.models._rules import InformationRules
 from cognite.neat.rules.models._rules.base import SchemaCompleteness
 
+from ._base import BaseRulesValidator
 
-class DataModelingScenarioValidator:
-    def __init__(self, rules: DMSRules | InformationRules | DomainRules, issue_list: IssueList):
-        self.issue_list = issue_list
-        self.rules = rules
 
+class DataModelingScenarioValidator(BaseRulesValidator):
     def validate(self) -> IssueList:
         if isinstance(self.rules, InformationRules):
             return self._validate_information_rules()
