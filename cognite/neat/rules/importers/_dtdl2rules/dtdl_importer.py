@@ -8,10 +8,11 @@ from pydantic import ValidationError
 
 from cognite.neat.rules import issues
 from cognite.neat.rules._shared import Rules
-from cognite.neat.rules.importers._base import BaseImporter, _handle_issues
+from cognite.neat.rules.importers._base import BaseImporter
 from cognite.neat.rules.importers._dtdl2rules.dtdl_converter import _DTDLConverter
 from cognite.neat.rules.importers._dtdl2rules.spec import DTDL_CLS_BY_TYPE_BY_SPEC, DTDLBase, Interface
 from cognite.neat.rules.issues import IssueList, ValidationIssue
+from cognite.neat.rules.issues.base import handle_issues
 from cognite.neat.rules.models._rules import InformationRules, RoleTypes
 from cognite.neat.rules.models._rules.base import SchemaCompleteness, SheetList
 from cognite.neat.rules.models._rules.information_rules import InformationClass, InformationProperty
@@ -149,7 +150,7 @@ class DTDLImporter(BaseImporter):
             ...
         else:
             metadata["prefix"] = most_common_prefix
-        with _handle_issues(converter.issues) as future:
+        with handle_issues(converter.issues) as future:
             rules = InformationRules(
                 metadata=metadata,
                 properties=SheetList[InformationProperty](data=converter.properties),

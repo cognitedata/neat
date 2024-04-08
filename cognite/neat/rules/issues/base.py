@@ -1,13 +1,16 @@
 import sys
+import warnings
 from abc import ABC, abstractmethod
 from collections import UserList
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
+from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import total_ordering
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Literal
 from warnings import WarningMessage
 
 import pandas as pd
+from pydantic import ValidationError
 from pydantic_core import ErrorDetails
 
 if sys.version_info < (3, 11):
@@ -188,3 +191,44 @@ class MultiValueError(ValueError):
 
     def __init__(self, errors: Sequence[NeatValidationError]):
         self.errors = list(errors)
+
+
+class _FutureResult:
+    def __init__(self) -> None:
+        self._result: Literal["success", "failure", "pending"] = "pending"
+
+    @property
+    def result(self) -> Literal["success", "failure", "pending"]:
+        return self._result
+
+
+@contextmanager
+def handle_issues(
+    issues: IssueList,
+    error_cls: type[NeatValidationError] = NeatValidationError,
+    warning_cls: type[ValidationWarning] = ValidationWarning,
+    error_args: dict[str, Any] | None = None,
+) -> Iterator[_FutureResult]:
+    """This is an internal help function to handle issues and warnings.
+
+    Args:
+        issues: The issues list to append to.
+        error_cls: The class used to convert errors to issues.
+        warning_cls:  The class used to convert warnings to issues.
+
+    Returns:
+        FutureResult: A future result object that can be used to check the result of the context manager.
+    """
+    with warnings.catch_warnings(record=True) as warning_logger:
+        warnings.simplefilter("always")
+        future_result = _FutureResult()
+        try:
+            yield future_result
+        except ValidationError as e:
+            issues.extend(error_cls.from_pydantic_errors(e.errors(), **(error_args or {})))
+            future_result._result = "failure"
+        else:
+            future_result._result = "success"
+        finally:
+            if warning_logger:
+                issues.extend([warning_cls.from_warning(warning) for warning in warning_logger])

@@ -7,6 +7,7 @@ from .base import (
     NeatValidationError,
     ValidationIssue,
     ValidationWarning,
+    handle_issues,
 )
 
 __all__ = [
@@ -24,4 +25,5 @@ __all__ = [
     "importing",
     "spreadsheet",
     "spreadsheet_file",
+    "handle_issues",
 ]

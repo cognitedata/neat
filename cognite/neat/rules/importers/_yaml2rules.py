@@ -4,10 +4,10 @@ from typing import Any, Literal, overload
 import yaml
 
 from cognite.neat.rules import issues
-from cognite.neat.rules.issues import IssueList, NeatValidationError, ValidationIssue
+from cognite.neat.rules.issues import IssueList, NeatValidationError, ValidationIssue, handle_issues
 from cognite.neat.rules.models._rules import RULES_PER_ROLE, RoleTypes
 
-from ._base import BaseImporter, Rules, _handle_issues
+from ._base import BaseImporter, Rules
 
 
 class YAMLImporter(BaseImporter):
@@ -99,7 +99,7 @@ class YAMLImporter(BaseImporter):
         role_enum = RoleTypes(role_input)
         rules_model = RULES_PER_ROLE[role_enum]
 
-        with _handle_issues(issue_list) as future:
+        with handle_issues(issue_list) as future:
             rules = rules_model.model_validate(self.raw_data)
         if future.result == "failure":
             if errors == "continue":

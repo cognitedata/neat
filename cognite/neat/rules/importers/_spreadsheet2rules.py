@@ -11,15 +11,14 @@ import pandas as pd
 from pandas import ExcelFile
 
 from cognite.neat.rules import issues
-from cognite.neat.rules._analysis._base import DataModelingScenario
-from cognite.neat.rules._analysis._information_rules import InformationArchitectRulesAnalysis
-from cognite.neat.rules.issues import IssueList
+from cognite.neat.rules.issues import IssueList, handle_issues
 from cognite.neat.rules.models._rules import RULES_PER_ROLE, DMSRules, DomainRules, InformationRules
+from cognite.neat.rules.models._rules._validators import DataModelingScenarioValidator
 from cognite.neat.rules.models._rules.base import RoleTypes, SchemaCompleteness
 from cognite.neat.utils.auxiliary import local_import
 from cognite.neat.utils.spreadsheet import SpreadsheetRead, read_individual_sheet
 
-from ._base import BaseImporter, Rules, _handle_issues
+from ._base import BaseImporter, Rules
 
 SOURCE_SHEET__TARGET_FIELD__HEADERS = [
     ("Properties", "Properties", "Class"),
@@ -101,7 +100,7 @@ class SpreadsheetReader:
                 return None
 
             rules_cls = RULES_PER_ROLE[metadata.role]
-            with _handle_issues(
+            with handle_issues(
                 self.issue_list,
                 error_cls=issues.spreadsheet.InvalidSheetError,
                 error_args={"read_info_by_sheet": read_info_by_sheet},
@@ -197,6 +196,7 @@ class ExcelImporter(BaseImporter):
         if user_rules and reference_rules:
             rules = user_rules
             rules.reference = reference_rules
+            issue_list = DataModelingScenarioValidator(rules, issue_list).validate()
         elif user_rules:
             rules = user_rules
         elif reference_rules:
@@ -206,16 +206,8 @@ class ExcelImporter(BaseImporter):
                 "No rules were generated. This should have been caught earlier. " f"Bug in {type(self).__name__}."
             )
 
-        if (
-            rules
-            and rules.metadata.role == RoleTypes.information_architect
-            and cast(InformationRules, rules).metadata.schema_ == SchemaCompleteness.extended
-            and InformationArchitectRulesAnalysis(cast(InformationRules, rules)).data_modeling_scenario
-            == DataModelingScenario.build_solution
-        ):
-            rules = self._validate_solution_rules(rules, issue_list)
-            if issue_list.has_errors:
-                return self._return_or_raise(issue_list, errors)
+        if issue_list.has_errors:
+            return self._return_or_raise(issue_list, errors)
 
         return self._to_output(
             rules,

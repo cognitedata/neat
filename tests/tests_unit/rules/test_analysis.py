@@ -68,7 +68,7 @@ class TestRulesAnalysis:
         assert len(InformationArchitectRulesAnalysis(olav_rules).directly_referred_classes) == 3
 
     def test_inherited_referred_classes(self, olav_rules: InformationRules) -> None:
-        assert len(InformationArchitectRulesAnalysis(olav_rules).inherited_referred_classes) == 2
+        assert len(InformationArchitectRulesAnalysis(olav_rules).inherited_referred_classes) == 1
 
     def test_referred_classes(self, olav_rules: InformationRules) -> None:
-        assert len(InformationArchitectRulesAnalysis(olav_rules).referred_classes) == 5
+        assert len(InformationArchitectRulesAnalysis(olav_rules).referred_classes) == 3

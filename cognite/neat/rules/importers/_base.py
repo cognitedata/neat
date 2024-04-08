@@ -1,20 +1,13 @@
 import getpass
-import warnings
 from abc import ABC, abstractmethod
-from collections.abc import Iterator
-from contextlib import contextmanager
-from copy import deepcopy
 from datetime import datetime
-from typing import Any, Literal, overload
+from typing import Literal, overload
 
-from pydantic import ValidationError
 from rdflib import Namespace
 
-from cognite.neat.rules._analysis._information_rules import InformationArchitectRulesAnalysis
 from cognite.neat.rules._shared import Rules
-from cognite.neat.rules.issues.base import IssueList, NeatValidationError, ValidationWarning
+from cognite.neat.rules.issues.base import IssueList
 from cognite.neat.rules.models._rules import DMSRules, InformationRules, RoleTypes
-from cognite.neat.rules.models._rules.base import SchemaCompleteness
 
 
 class BaseImporter(ABC):
@@ -72,36 +65,6 @@ class BaseImporter(ABC):
         else:
             return output, issues
 
-    @classmethod
-    def _validate_solution_rules(
-        cls,
-        rules: Rules,
-        issues: IssueList,
-    ) -> Rules | None:
-        if isinstance(rules, InformationRules):
-            analysis = InformationArchitectRulesAnalysis(rules)
-
-            cp_rules = deepcopy(rules)
-            cp_rules.reference = None
-
-            classes_to_add = analysis.referred_classes
-            classes_properties_to_add = analysis.referred_classes_properties
-
-            cp_rules.classes.data.extend(classes_to_add)
-            cp_rules.properties.data.extend(classes_properties_to_add)
-            cp_rules.metadata.schema_ = SchemaCompleteness.complete
-
-            with _handle_issues(issues) as future:
-                _ = InformationRules(**cp_rules.model_dump())
-
-            if future.result == "failure" or issues.has_errors:
-                return None
-            else:
-                return rules
-
-        else:
-            return rules
-
     def _default_metadata(self):
         return {
             "prefix": "neat",
@@ -114,44 +77,3 @@ class BaseImporter(ABC):
             "creator": getpass.getuser(),
             "description": f"Imported using {type(self).__name__}",
         }
-
-
-class _FutureResult:
-    def __init__(self) -> None:
-        self._result: Literal["success", "failure", "pending"] = "pending"
-
-    @property
-    def result(self) -> Literal["success", "failure", "pending"]:
-        return self._result
-
-
-@contextmanager
-def _handle_issues(
-    issues: IssueList,
-    error_cls: type[NeatValidationError] = NeatValidationError,
-    warning_cls: type[ValidationWarning] = ValidationWarning,
-    error_args: dict[str, Any] | None = None,
-) -> Iterator[_FutureResult]:
-    """This is an internal help function to handle issues and warnings.
-
-    Args:
-        issues: The issues list to append to.
-        error_cls: The class used to convert errors to issues.
-        warning_cls:  The class used to convert warnings to issues.
-
-    Returns:
-        FutureResult: A future result object that can be used to check the result of the context manager.
-    """
-    with warnings.catch_warnings(record=True) as warning_logger:
-        warnings.simplefilter("always")
-        future_result = _FutureResult()
-        try:
-            yield future_result
-        except ValidationError as e:
-            issues.extend(error_cls.from_pydantic_errors(e.errors(), **(error_args or {})))
-            future_result._result = "failure"
-        else:
-            future_result._result = "success"
-        finally:
-            if warning_logger:
-                issues.extend([warning_cls.from_warning(warning) for warning in warning_logger])
