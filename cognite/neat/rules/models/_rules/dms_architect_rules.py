@@ -1,6 +1,7 @@
 import abc
 import math
 import re
+import sys
 import warnings
 from collections import defaultdict
 from datetime import datetime
@@ -30,6 +31,7 @@ from ._types import (
     ExternalIdType,
     ParentClassEntity,
     PropertyType,
+    ReferenceEntity,
     ReferenceType,
     StrListType,
     Undefined,
@@ -45,6 +47,11 @@ from .dms_schema import DMSSchema, PipelineSchema
 
 if TYPE_CHECKING:
     from .information_rules import InformationRules
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 
 subclasses = list(CognitePropertyType.__subclasses__())
@@ -197,6 +204,7 @@ class DMSProperty(SheetEntity):
 
 class DMSContainer(SheetEntity):
     container: ContainerType = Field(alias="Container")
+    reference: ReferenceType = Field(alias="Reference", default=None)
     constraint: ContainerListType | None = Field(None, alias="Constraint")
 
     def as_container(self, default_space: str, standardize_casing: bool = True) -> dm.ContainerApply:
@@ -253,7 +261,7 @@ class DMSView(SheetEntity):
         )
 
     @classmethod
-    def from_view(cls, view: dm.ViewApply) -> "DMSView":
+    def from_view(cls, view: dm.ViewApply, data_model_view_ids: set[dm.ViewId]) -> "DMSView":
         return cls(
             class_=ClassEntity(prefix=view.space, suffix=view.external_id),
             view=ViewType(prefix=view.space, suffix=view.external_id, version=view.version),
@@ -263,6 +271,7 @@ class DMSView(SheetEntity):
                 for parent in view.implements
             ]
             or None,
+            in_model=view.as_id() in data_model_view_ids,
         )
 
 
@@ -563,6 +572,22 @@ class DMSRules(BaseRules):
 
     def as_domain_expert_rules(self) -> DomainRules:
         return _DMSRulesConverter(self).as_domain_rules()
+
+    def reference_self(self) -> Self:
+        new_rules = self.copy(deep=True)
+        for prop in new_rules.properties:
+            prop.reference = ReferenceEntity(
+                prefix=prop.view.prefix, suffix=prop.view.suffix, version=prop.view.version, property_=prop.property_
+            )
+        view: DMSView
+        for view in new_rules.views:
+            view.reference = ReferenceEntity(
+                prefix=view.view.prefix, suffix=view.view.suffix, version=view.view.version
+            )
+        container: DMSContainer
+        for container in new_rules.containers or []:
+            container.reference = ReferenceEntity(prefix=container.container.prefix, suffix=container.container.suffix)
+        return new_rules
 
 
 class _DMSExporter:
@@ -929,16 +954,19 @@ class _DMSRulesConverter:
             updated=dms.updated or updated or datetime.now(),
         )
 
-        classes: list[InformationClass] = [
+        classes = [
             InformationClass(
-                # we do not want version in class as we use URI for the class
+                # we do not want a version in class as we use URI for the class
                 class_=view.class_.as_non_versioned_entity(),
                 description=view.description,
                 parent=[
-                    # we do not want version in class as we use URI for the class
-                    ParentClassEntity(prefix=implented_view.prefix, suffix=implented_view.suffix)
-                    for implented_view in view.implements or []
+                    # we do not want a version in class as we use URI for the class
+                    ParentClassEntity(prefix=implemented_view.prefix, suffix=implemented_view.suffix)
+                    # We only want parents in the same namespace, parent in a different namespace is a reference
+                    for implemented_view in view.implements or []
+                    if implemented_view.prefix == view.class_.prefix
                 ],
+                reference=self._get_class_reference(view),
             )
             for view in self.dms.views
         ]
@@ -964,6 +992,7 @@ class _DMSRulesConverter:
                     description=property_.description,
                     min_count=0 if property_.nullable or property_.nullable is None else 1,
                     max_count=float("inf") if property_.is_list or property_.nullable is None else 1,
+                    reference=self._get_property_reference(property_),
                 )
             )
 
@@ -973,4 +1002,32 @@ class _DMSRulesConverter:
             classes=SheetList[InformationClass](data=classes),
             reference=self.dms.reference and self.dms.reference.as_information_architect_rules(),  # type: ignore[arg-type]
             is_reference=self.dms.is_reference,
+        )
+
+    @classmethod
+    def _get_class_reference(cls, view: DMSView) -> ReferenceEntity | None:
+        parents_other_namespace = [parent for parent in view.implements or [] if parent.prefix != view.class_.prefix]
+        if len(parents_other_namespace) == 0:
+            return None
+        if len(parents_other_namespace) > 1:
+            warnings.warn(
+                issues.dms.MultipleReferenceWarning(
+                    view_id=view.view.as_id(), implements=[v.as_id() for v in parents_other_namespace]
+                ),
+                stacklevel=2,
+            )
+        other_parent = parents_other_namespace[0]
+
+        return ReferenceEntity(prefix=other_parent.prefix, suffix=other_parent.suffix)
+
+    @classmethod
+    def _get_property_reference(cls, property_: DMSProperty) -> ReferenceEntity | None:
+        has_container_other_namespace = property_.container and property_.container.prefix != property_.class_.prefix
+        if not has_container_other_namespace:
+            return None
+        container = cast(ContainerEntity, property_.container)
+        return ReferenceEntity(
+            prefix=container.prefix,
+            suffix=container.suffix,
+            property_=property_.container_property,
         )

@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 
 from cognite.neat.rules.importers import ExcelImporter
-from cognite.neat.rules.models._rules import DMSRules, DomainRules, InformationRules
+from cognite.neat.rules.models._rules import DMSRules, DomainRules, InformationRules, RoleTypes
 from cognite.neat.utils.spreadsheet import read_individual_sheet
 from tests.config import DOC_RULES
 
@@ -76,3 +76,8 @@ def emma_spreadsheet() -> dict[str, dict[str, Any]]:
 @pytest.fixture(scope="session")
 def emma_rules(emma_spreadsheet: dict[str, dict[str, Any]]) -> DomainRules:
     return DomainRules.model_validate(emma_spreadsheet)
+
+
+@pytest.fixture(scope="session")
+def olav_dms_rules() -> DMSRules:
+    return ExcelImporter(DOC_RULES / "dms-analytics-olav.xlsx").to_rules(errors="raise", role=RoleTypes.dms_architect)

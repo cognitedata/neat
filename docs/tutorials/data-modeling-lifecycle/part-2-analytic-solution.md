@@ -40,13 +40,13 @@ The downloaded spreadsheet contains six sheets:
   (see definition of headings [here](../../terminology/rules.md#properties-sheet))
 * **Classes**: This contains the classes for the new solution model, and will only have headings
   (see definition of headings [here](../../terminology/rules.md#classes-sheet))
-* **ReferenceProperties**: This will be all the properties from the enterprise model that Olav can use to lookup
+* **RefProperties**: This will be all the properties from the enterprise model that Olav can use to lookup
   what properties he wants to use in the solution model. In addition, this will be used in the validation
   of the solution model.
-* **ReferenceClasses**: This will be all the classes from the enterprise model. Similar to the `RefProperties`,
+* **RefClasses**: This will be all the classes from the enterprise model. Similar to the `RefProperties`,
   this will be used to look up what classes Olav wants to use in the solution model, and will be validated
   against.
-* **ReferenceMetadata**: This will be the metadata from the enterprise model. This is there to establish linage
+* **RefMetadata**: This will be the metadata from the enterprise model. This is there to establish linage
   so that it is clear where the solution model comes from.
 
 ## Setting up the Metadata for the Solution Model
@@ -96,7 +96,7 @@ The most important properties for Olav's forecasting model are the `actualPower`
 he needs the `geoLocation` to calculate the wind speed and the `hubHeight` to adjust the wind speed to the height
 of the wind turbine. In addition, there might be differences in the power output between the wind turbines based
 on the manufacturer, life expectancy, and the type of wind turbine. However, Olav decides that
-arrayCableConnection is not important for his forecasting model, so the `WindTurbine`in the solution model will
+`arrayCableConnection` is not important for his forecasting model, so the `WindTurbine`in the solution model will
 not have this property.
 
 Next, let's look at the `WindFarm` from the enterprise model.
@@ -121,36 +121,57 @@ for the `geoLocation` of the `WindTurbine` and `WindFarm`.
 
 ## Updating the Spreadsheet.
 
-Olav copies over all the classes and properties from the enterprise model to the solution model. He then removes
-the rows that are not needed for the new solution model. The spreadsheet will now look as follows
-(details of other columns excluded on purpose):
+Olav copies over all the properties from the enterprise model to the solution model. He then removes
+the rows that are not needed for the new solution model. The `Properties` spreadsheet will now look as follows
+(only the most relevant columns shown here):
 
-| Class       | Property       | Value Type  |
-|-------------|----------------|-------------|
-| WindTurbine | name           | string      |
-| WindTurbine | type           | string      |
-| WindTurbine | activePower    | timeseries  |
-| WindTurbine | geoLocation    | Point       |
-| WindTurbine | manufacturer   | string      |
-| WindTurbine | ratedPower     | float       |
-| WindTurbine | hubHeight      | float       |
-| WindTurbine | lifeExpectancy | integer     |
-|             |                |             |
-| WindFarm    | name           | string      |
-| WindFarm    | geoLocation    | Polygon     |
-| WindFarm    | windTurbines   | WindTurbine |
-|             |                |             |
-| GeoLocation | name           | string      |
-|             |                |             |
-| Point       | latitude       | float       |
-| Point       | longitude      | float       |
-|             |                |             |
-| Polygon     | point          | Point       |
+| Class       | Property       | Value Type  | ... | Reference                                  |
+|-------------|----------------|-------------|-----|--------------------------------------------|
+| WindTurbine | name           | string      |     | power:GeneratingUnit(property=name)        |
+| WindTurbine | type           | string      |     | power:GeneratingUnit(property=type)        |
+| WindTurbine | activePower    | timeseries  |     | power:GeneratingUnit(property=activePower) |
+| WindTurbine | geoLocation    | Point       |     | power:GeneratingUnit(property=geoLocation) |
+| WindTurbine | manufacturer   | string      |     | power:WindTurbine(property=manufacturer)   |
+| WindTurbine | ratedPower     | float       |     | power:WindTurbine(property=ratedPower)     |
+| WindTurbine | hubHeight      | float       |     | power:WindTurbine(property=hubHeight)      |
+| WindTurbine | lifeExpectancy | integer     |     | power:WindTurbine(property=lifeExpectancy) |
+|             |                |             |     |                                            |
+| WindFarm    | name           | string      |     | power:EnergyArea(property=name)            |
+| WindFarm    | geoLocation    | Polygon     |     | power:EnergyArea(property=geoLocation)     |
+| WindFarm    | windTurbines   | WindTurbine |     | power:WindTurbine(property=windTurbines)   |
 
 In addition, Olav removes the parent classes `GeneratingUnit` and `EnergyArea` and instead moves the properties he
-needs over to `WindTurbine` and `WindFarm`. The reason is that the `GeneratingUnit` and `EnergyArea` are generic
+needs over to `WindTurbine` and `WindFarm`. He moves the properties by renaming `GeneratingUnit` to `WindTurbine` and
+`EnergyArea` to `WindFarm` in the `Class` column. The reason is that the `GeneratingUnit` and `EnergyArea` are generic
 concepts that would complicate the solution model as this forecast model is only for wind turbines and cannot be
 applied to other types of generating units.
+
+Furthermore, Olav copies over the `GeoLocation`, `Point`, and `Polygon` classes from the enterprise model to the solution
+model. In addition, he writes up `WindTurbine` and `WindFarm`. The `Classes` spreadsheet will now look as follows:
+
+| Class       | Parent Class | ... | Reference         |
+|-------------|--------------|-----|-------------------|
+| GeoLocation | GeoLocation  |     | power:GeoLocation |
+| Point       | GeoLocation  |     | power:Point       |
+| Polygon     |              |     | power:Polygon     |
+| WindTurbine |              |     |                   |
+| WindFarm    |              |     |                   |
+
+Notice that both the `Properties` and `Classes` sheets have a `Reference` column. This column is used to tell **NEAT**
+that the property or class is coming from the enterprise model. This is used in the validation of the solution model,
+as well as when creating the implementation of the solution model.
+
+If we look at the `Class` spreadsheet, we notice that `GeoLocation`, `Point`, and `Polygon` have a reference to the
+enterprise model. This is because these three classes are exact copies from the enterprise model, meaning that they
+will have the exact same properties as in the enterprise model. This is why Olav did not need to copy over the
+properties for these classes.
+
+The `WindTurbine` and `WindFarm` classes do not have a reference to the enterprise model, even though the enterprise
+model have a `WindTurbine` and `EnergyArea` class. This is because the `WindTurbine`and `EnergyArea` classes in this
+solution model are not the same as the `WindTurbine` and `EnergyArea` classes in the enterprise model. Olav has
+already removed the inheritance used in the enterprise model for these classes by moving the properties from
+`GeneratingUnit` and `EnergyArea` to `WindTurbine` and `WindFarm`. In addition, as we will see in the next section,
+Olav will add new properties to the `WindTurbine` and `WindFarm` classes that are not in the enterprise model.
 
 ## Adding new Concepts
 
@@ -178,12 +199,12 @@ The advantage of this concept is that it can be used both for historical weather
 
 The weather observations will be connected to the `WindFarm`:
 
-| Class        | Property            | Value Type      | Min Count | Max Count |
-|--------------|---------------------|-----------------|-----------|-----------|
-| WindFarm     | name                | string          | 1         | 1         |
-| ...          | ...                 | ...             | ...       | ...       |
-| WindFarm     | weatherForecasts    | WeatherStation | 0         | Inf       |
-| WindFarm     | weatherObservations | WeatherStation | 0         | Inf       |
+| Class        | Property            | Value Type      | Min Count | Max Count | ... | Reference                       |
+|--------------|---------------------|-----------------|-----------|-----------|-----|---------------------------------|
+| WindFarm     | name                | string          | 1         | 1         |     | power:EnergyArea(property=name) |
+| ...          | ...                 | ...             | ...       | ...       |     |                                 |
+| WindFarm     | weatherForecasts    | WeatherStation  | 0         | Inf       |     |                                 |
+| WindFarm     | weatherObservations | WeatherStation  | 0         | Inf       |     |                                 |
 
 The `weatherForecasts` will be used for the forecasted weather data, and the `weatherObservations` will be used for
 the historical weather data.
@@ -203,14 +224,14 @@ forecasting model. The `parameters` will be used to store the parameters used in
 
 Olav decides to store the forecasted power output for each wind turbine in the `WindFarm`:
 
-| Class        | Property            | Value Type         | Min Count | Max Count |
-|--------------|---------------------|--------------------|-----------|-----------|
-| WindTurbine  | name                | string             | 1         | 1         |
-| ...          | ...                 | ...                | ...       | ...       |
-| WindTurbine  | powerForecasts      | timeseriesForecast | 0         | Inf       |
-| WindTurbine  | minPowerForecast    | timeseries         | 0         | 1         |
-| WindTurbine  | mediumPowerForecast | timeseries         | 0         | 1         |
-| WindTurbine  | maxPowerForecast    | timeseries         | 0         | 1         |
+| Class        | Property            | Value Type         | Min Count | Max Count | ... | Reference                           |
+|--------------|---------------------|--------------------|-----------|-----------|-----|-------------------------------------|
+| WindTurbine  | name                | string             | 1         | 1         |     | power:GeneratingUnit(property=name) |
+| ...          | ...                 | ...                | ...       | ...       |     |                                     |
+| WindTurbine  | powerForecasts      | timeseriesForecast | 0         | Inf       |     |                                     |
+| WindTurbine  | minPowerForecast    | timeseries         | 0         | 1         |     |                                     |
+| WindTurbine  | mediumPowerForecast | timeseries         | 0         | 1         |     |                                     |
+| WindTurbine  | maxPowerForecast    | timeseries         | 0         | 1         |     |                                     |
 
 The `powerForecasts` will be used to store the forecasted power output for each wind turbine. In addition, Olav
 adds `minPowerForecast`, `mediumPowerForecast`, and `maxPowerForecast` to store the minimum, medium, and maximum
@@ -221,22 +242,26 @@ tutorial for more information.
 
 In addition, Olav adds `lowPowerForecast`, `highPowerForecast`, and `expectedPowerForecast` to the `WindFarm`:
 
-| Class         | Property              | Value Type | Min Count | Max Count |
-|---------------|-----------------------|------------|-----------|-----------|
-| WindFarm      | name                  | string     | 1         | 1         |
-| ...           | ...                   | ...        | ...       | ...       |
-| WindFarm      | lowPowerForecast      | timeseries | 0         | 1         |
-| WindFarm      | highPowerForecast     | timeseries | 0         | 1         |
-| WindFarm      | expectedPowerForecast | timeseries | 0         | 1         |
+| Class         | Property              | Value Type | Min Count | Max Count | ... | Reference                       |
+|---------------|-----------------------|------------|-----------|-----------|-----|---------------------------------|
+| WindFarm      | name                  | string     | 1         | 1         |     | power:EnergyArea(property=name) |
+| ...           | ...                   | ...        | ...       | ...       |     |                                 |
+| WindFarm      | lowPowerForecast      | timeseries | 0         | 1         |     |                                 |
+| WindFarm      | highPowerForecast     | timeseries | 0         | 1         |     |                                 |
+| WindFarm      | expectedPowerForecast | timeseries | 0         | 1         |     |                                 |
 
 Similar to the `min`, `medium`, and `max` properties, the `low`, `high`, and `expected` properties will be added
 back to the enterprise model.
 
-## Updating the Spreadsheet (Download Olav's spreadsheet)
+Notice that for all the new properties that Olav has added, the `Reference` column is empty. This is because these
+properties are new and are not in the enterprise model. This is why Olav does not need to reference the enterprise
+
+
+## Updating the Spreadsheet (Download Olav's Information spreadsheet)
 
 Olav adds the new concepts to the `Properties` and `Classes` sheets in the spreadsheet.
 
-You can download Olav's spreadsheet [here](../../artifacts/rules/information-analytics-olav.xlsx).
+You can download Olav's spreadsheet [here with the information model](../../artifacts/rules/information-analytics-olav.xlsx).
 
 
 ## Implementing the Solution Model
@@ -255,7 +280,7 @@ the solution model is well aligned with the enterprise model and is performant, 
 Alice, to help him.
 
 Alice asks Olav a few questions on how he is planning to use the new `timeseriesForecast` and `WeatherStation`
-classes. Based on Olav's answers, Alice suggests that the `name` and `algorithm` in the `**ForecastedPowerOutput**` should
+classes. Based on Olav's answers, Alice suggests that the `name` and `algorithm` in the `ForecastedPowerOutput` should
 be indexed to ensure that the queries are fast. Also for the `WeatherStation`, Alice suggests that the `name`,
 `type`, and `source` should be indexed to ensure that the queries are fast. In addition, Alice ensures that the
 new `WindTurbine` and `WindFarm` views are mapping correctly to the `GeneratingUnit`, `EnergyArea`, `WindTurbine`, and
@@ -264,12 +289,21 @@ new `WindTurbine` and `WindFarm` views are mapping correctly to the `GeneratingU
 After the implementation is done, Alice validates the solution model by running the `Validate Rules` workflow with
 the new spreadsheet as input. The validation is successful, and the solution model is ready to be deployed.
 
+## Updating the Spreadsheet (Download Olav's DMS spreadsheet)
+
+After the conversion and modification with the help of Alice, Olav's DMS spreadsheet is done.
+
+You can download Olav's spreadsheet [here with the DMS model](../../artifacts/rules/dms-analytics-olav.xlsx).
+
 ## Deploying the Solution Model
 
 Olav deploys the new solution model by selecting the `Export DMS` workflow. He deactivates the `Export Transformations`
 step by removing the dotted line connecting it from the `Export Data Model to CDF` step. This is because he does not
 need to create any transformations for populating the new solution model.
 
+<img src="../../artifacts/figs/life_cycle_analitic_solution_export_dms.png" height="300">
+
+Olav then runs the workflow and his solution model is successfully deployed to CDF.
 
 ## Summary
 
@@ -279,7 +313,7 @@ need to create any transformations for populating the new solution model.
 2. Add new concepts
 3. Ensure a good implementation of the solution model
 
-**Analytic Expert usage of **NEAT**:
+**Analytic Expert usage of NEAT**:
 
 1. Download the enterprise model.
 2. Validate the solution model.

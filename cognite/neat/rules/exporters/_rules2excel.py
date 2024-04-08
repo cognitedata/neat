@@ -65,20 +65,27 @@ class ExcelExporter(BaseExporter[Workbook]):
         # Remove default sheet named "Sheet"
         workbook.remove(workbook["Sheet"])
 
-        dumped_rules = rules.model_dump(by_alias=True)
+        dumped_rules: dict[str, Any]
+        dumped_reference_rules: dict[str, Any] | None = None
         if rules.is_reference:
             # Writes empty reference sheets
-            empty: dict[str, Any] = {field_alias: None for field_alias in dumped_rules["Metadata"].keys()}
-            empty["role"] = (self.output_role and self.output_role.value) or rules.metadata.role.value
-            self._write_metadata_sheet(workbook, empty)
-            self._write_sheets(workbook, {}, rules)
+            dumped_rules = {
+                "Metadata": {field_alias: None for field_alias in rules.metadata.model_dump().keys()},
+            }
+            dumped_rules["Metadata"]["role"] = (
+                self.output_role and self.output_role.value
+            ) or rules.metadata.role.value
+            dumped_reference_rules = rules.reference_self().model_dump(by_alias=True)
         else:
-            self._write_metadata_sheet(workbook, dumped_rules["Metadata"])
+            dumped_rules = rules.model_dump(by_alias=True)
+            if rules.reference:
+                dumped_reference_rules = rules.reference.model_dump(by_alias=True)
 
-        self._write_sheets(workbook, dumped_rules, rules, is_reference=rules.is_reference)
-
-        if rules.is_reference:
-            self._write_metadata_sheet(workbook, dumped_rules["Metadata"], is_reference=True)
+        self._write_metadata_sheet(workbook, dumped_rules["Metadata"])
+        self._write_sheets(workbook, dumped_rules, rules)
+        if dumped_reference_rules:
+            self._write_sheets(workbook, dumped_reference_rules, rules, is_reference=True)
+            self._write_metadata_sheet(workbook, dumped_reference_rules["Metadata"], is_reference=True)
 
         if self._styling_level > 0:
             self._adjust_column_widths(workbook)

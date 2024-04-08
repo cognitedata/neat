@@ -33,7 +33,7 @@ from cognite.neat.rules._shared import Rules
 
 class GraphExporter(BaseExporter[Graph], ABC):
     def export_to_file(self, rules: Rules, filepath: Path) -> None:
-        self.export(rules).serialize(destination=filepath)
+        self.export(rules).serialize(destination=filepath, encoding=self._encoding, newline=self._new_line)
 
 
 class OWLExporter(GraphExporter):

@@ -49,3 +49,7 @@ class DomainRules(RuleModel):
                 cls.model_dump(**kwargs) for cls in self.classes or []
             ] or None
         return output
+
+    def reference_self(self) -> "DomainRules":
+        """DomainRules does not have reference field, so it returns a copy of itself."""
+        return self.copy(deep=True)
