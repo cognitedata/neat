@@ -74,10 +74,10 @@ class DMSSchema:
 
         view_loader = ViewLoader(client)
         # We need to include parent views in the schema to make sure that the schema is valid.
-        existing_view_ids = views.as_ids()
+        existing_view_ids = set(views.as_ids())
         parent_view_ids = {parent for view in views for parent in view.implements or []}
-        parents = view_loader.retrieve_all_parents(list(parent_view_ids - set(existing_view_ids)))
-        views.extend(parents)
+        parents = view_loader.retrieve_all_parents(list(parent_view_ids - existing_view_ids))
+        views.extend([parent for parent in parents if parent.as_id() not in existing_view_ids])
 
         # Converting views from read to write format requires to account for parents (implements)
         # as the read format contains all properties from all parents, while the write formate should not contain

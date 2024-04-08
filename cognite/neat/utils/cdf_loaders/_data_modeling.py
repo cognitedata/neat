@@ -165,20 +165,24 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
         """
         parent_ids = parents.copy()
         found: list[View] = []
+        found_ids: set[ViewId] = set()
         while parent_ids:
-            to_lookup = []
+            to_lookup: set[ViewId] = set()
             grand_parent_ids = []
             for parent in parent_ids:
-                if parent in cache:
+                if parent in found_ids:
+                    continue
+                elif parent in cache:
                     found.append(cache[parent])
                     grand_parent_ids.extend(cache[parent].implements or [])
                 else:
-                    to_lookup.append(parent)
+                    to_lookup.add(parent)
 
             if to_lookup:
-                looked_up = self.client.data_modeling.views.retrieve(to_lookup)
+                looked_up = self.client.data_modeling.views.retrieve(list(to_lookup))
                 cache.update({view.as_id(): view for view in looked_up})
                 found.extend(looked_up)
+                found_ids.update({view.as_id() for view in looked_up})
                 for view in looked_up:
                     grand_parent_ids.extend(view.implements or [])
 
