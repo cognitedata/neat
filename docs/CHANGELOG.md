@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.69.1] - 03-04-24
+### Fixed
+- Fixed issue with `DMSImporter` when importing data models with data models that reference views outside the data model.
+  This is now fixed.
+
 ## [0.69.0] - 03-04-24
 ### Added
 - Experimental support for working with a reference model in the Rules.
