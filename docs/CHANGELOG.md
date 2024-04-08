@@ -15,10 +15,20 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.69.0] - 03-04-24
+### Added
+- Experimental support for working with a reference model in the Rules.
+
 ### Fixed
 - When using `DMSExporter` with `standardize_casing=False`, the `DMSExporter` would fail to export containers and
   views. This is now fixed.
+
+### Changed
+- When using any exporter writing to file, the default new line character and encoding of the OS was used. This is now
+  changed to always use `utf-8` encoding and `'\n'` as the new line character. This is for working with **NEAT** in,
+  for example, git-history, across multiple users with different OSes.
+- In the `DMSExporter`, setting `existing_handling=force` will now also force the creation of `Containers` in addition
+  to `Views`.
 
 ## [0.68.9] - 03-04-24
 ### Added
