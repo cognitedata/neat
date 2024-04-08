@@ -4,8 +4,10 @@ from typing import Any
 import pandas as pd
 import pytest
 
+from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models._rules import DMSRules
 from cognite.neat.rules.models._rules._types import XSD_VALUE_TYPE_MAPPINGS, XSDValueType
+from cognite.neat.rules.models._rules._validators import DataModelingScenarioValidator
 from cognite.neat.rules.models._rules.information_rules import InformationRules, _InformationRulesConverter
 from cognite.neat.utils.spreadsheet import read_individual_sheet
 from tests.config import DOC_RULES
@@ -20,6 +22,121 @@ def david_spreadsheet() -> dict[str, dict[str, Any]]:
         "Properties": read_individual_sheet(excel_file, "Properties", expected_headers=["Property"]),
         "Classes": read_individual_sheet(excel_file, "Classes", expected_headers=["Class"]),
     }
+
+
+def correct_solution_rules():
+    yield pytest.param(
+        {
+            "Metadata": {
+                "role": "information architect",
+                "schema": "extended",
+                "creator": "Jon, Emma, David",
+                "namespace": "http://purl.org/cognite/power2consumer",
+                "prefix": "power2",
+                "created": datetime(2024, 2, 9, 0, 0),
+                "updated": datetime(2024, 2, 9, 0, 0),
+                "version": "0.1.0",
+                "title": "Power to Consumer Data Model",
+                "license": "CC-BY 4.0",
+                "rights": "Free for use",
+            },
+            "Classes": [
+                {
+                    "Class": "GeneratingUnit",
+                    "Description": None,
+                    "Parent Class": None,
+                    "Source": "http://www.iec.ch/TC57/CIM#GeneratingUnit",
+                    "Match": "exact",
+                },
+                {
+                    "Class": "Point",
+                    "Description": None,
+                    "Parent Class": None,
+                    "Source": "power:Point",
+                    "Match": "exact",
+                },
+            ],
+            "Properties": [
+                {
+                    "Class": "GeneratingUnit",
+                    "Property": "name",
+                    "Description": None,
+                    "Value Type": "StrING",
+                    "Min Count": 1,
+                    "Max Count": 1.0,
+                    "Default": None,
+                    "Source": None,
+                    "MatchType": None,
+                    "Rule Type": None,
+                    "Rule": None,
+                },
+                {
+                    "Class": "GeneratingUnit",
+                    "Property": "location",
+                    "Description": None,
+                    "Value Type": "power:Point",
+                    "Min Count": 1,
+                    "Max Count": 1.0,
+                    "Default": None,
+                    "Source": None,
+                    "MatchType": None,
+                    "Rule Type": None,
+                    "Rule": None,
+                },
+            ],
+            "Reference": {
+                "Metadata": {
+                    "role": "information architect",
+                    "schema": "extended",
+                    "creator": "Jon, Emma, David",
+                    "namespace": "http://purl.org/cognite/power2consumer",
+                    "prefix": "power",
+                    "created": datetime(2024, 2, 9, 0, 0),
+                    "updated": datetime(2024, 2, 9, 0, 0),
+                    "version": "0.1.0",
+                    "title": "Power to Consumer Data Model",
+                    "license": "CC-BY 4.0",
+                    "rights": "Free for use",
+                },
+                "Classes": [
+                    {
+                        "Class": "Point",
+                        "Description": None,
+                        "Parent Class": None,
+                    },
+                ],
+                "Properties": [
+                    {
+                        "Class": "Point",
+                        "Property": "latitude",
+                        "Description": None,
+                        "Value Type": "float",
+                        "Min Count": 1,
+                        "Max Count": 1.0,
+                        "Default": None,
+                        "Source": None,
+                        "MatchType": None,
+                        "Rule Type": None,
+                        "Rule": None,
+                    },
+                    {
+                        "Class": "Point",
+                        "Property": "longitude",
+                        "Description": None,
+                        "Value Type": "float",
+                        "Min Count": 1,
+                        "Max Count": 1.0,
+                        "Default": None,
+                        "Source": None,
+                        "MatchType": None,
+                        "Rule Type": None,
+                        "Rule": None,
+                    },
+                ],
+            },
+        },
+        id="extended_rules",
+    )
 
 
 def case_insensitive_value_types():
@@ -209,6 +326,16 @@ class TestInformationRules:
         dms_rules = david_rules.as_dms_architect_rules()
 
         assert isinstance(dms_rules, DMSRules)
+
+    @pytest.mark.parametrize("rules", list(correct_solution_rules()))
+    def solution_model_build(self, rules: dict[str, dict[str, Any]]) -> None:
+        issues = DataModelingScenarioValidator(InformationRules.model_validate(rules), IssueList()).validate()
+        assert len(issues) == 0
+
+        rules["Properties"][1]["Value Type"] = "power:Point2"
+
+        issues = DataModelingScenarioValidator(InformationRules.model_validate(rules), IssueList()).validate()
+        assert len(issues) == 1
 
 
 class TestInformationRulesConverter:

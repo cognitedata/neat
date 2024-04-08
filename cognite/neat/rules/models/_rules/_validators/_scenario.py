@@ -21,6 +21,7 @@ class DataModelingScenarioValidator:
     def _validate_information_rules(self) -> IssueList:
         analysis = InformationArchitectRulesAnalysis(cast(InformationRules, self.rules))
         if analysis.data_modeling_scenario == DataModelingScenario.build_solution:
+            print("Here")
             cp_rules = deepcopy(cast(InformationRules, self.rules))
             cp_rules.reference = None
 
