@@ -97,7 +97,7 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
     def __init__(self, client: CogniteClient, existing_handling: Literal["fail", "skip", "update", "force"] = "fail"):
         super().__init__(client)
         self.existing_handling = existing_handling
-        self._interfaces_by_id: dict[ViewId, View] = {}
+        self._cache_view_by_id: dict[ViewId, View] = {}
         self._tried_force_deploy: set[ViewId] = set()
 
     @classmethod
@@ -124,7 +124,7 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
         if view.properties:
             # All read version of views have all the properties of their parent views.
             # We need to remove these properties to compare with the local view.
-            parents = self._retrieve_view_ancestors(view.implements or [], self._interfaces_by_id)
+            parents = self._retrieve_view_ancestors(view.implements or [], self._cache_view_by_id)
             for parent in parents:
                 for prop_name in parent.properties.keys():
                     dumped["properties"].pop(prop_name, None)
@@ -150,6 +150,9 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
     def as_write(self, view: View) -> ViewApply:
         return ViewApply.load(self._as_write_raw(view))
 
+    def retrieve_all_parents(self, views: list[ViewId]) -> list[View]:
+        return self._retrieve_view_ancestors(views, self._cache_view_by_id)
+
     def _retrieve_view_ancestors(self, parents: list[ViewId], cache: dict[ViewId, View]) -> list[View]:
         """Retrieves all ancestors of a view.
 
@@ -160,22 +163,26 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
             parents: The parents of the view to retrieve all ancestors for
             cache: The cache to store the views in
         """
-        parent_ids = parents
+        parent_ids = parents.copy()
         found: list[View] = []
+        found_ids: set[ViewId] = set()
         while parent_ids:
-            to_lookup = []
+            to_lookup: set[ViewId] = set()
             grand_parent_ids = []
             for parent in parent_ids:
-                if parent in cache:
+                if parent in found_ids:
+                    continue
+                elif parent in cache:
                     found.append(cache[parent])
                     grand_parent_ids.extend(cache[parent].implements or [])
                 else:
-                    to_lookup.append(parent)
+                    to_lookup.add(parent)
 
             if to_lookup:
-                looked_up = self.client.data_modeling.views.retrieve(to_lookup)
+                looked_up = self.client.data_modeling.views.retrieve(list(to_lookup))
                 cache.update({view.as_id(): view for view in looked_up})
                 found.extend(looked_up)
+                found_ids.update({view.as_id() for view in looked_up})
                 for view in looked_up:
                     grand_parent_ids.extend(view.implements or [])
 
