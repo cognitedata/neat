@@ -16,7 +16,7 @@ from cognite.client.data_classes.transformations.common import Edges, EdgeType, 
 
 from cognite.neat.rules.issues.dms import (
     ContainerPropertyUsedMultipleTimesError,
-    DirectRelationMissingSourceError,
+    DirectRelationMissingSourceWarning,
     DMSSchemaError,
     DuplicatedViewInDataModelError,
     MissingContainerError,
@@ -311,7 +311,9 @@ class DMSSchema:
                         container_property = ref_container.properties[prop.container_property_identifier]
 
                         if isinstance(container_property.type, dm.DirectRelation) and prop.source is None:
-                            errors.add(DirectRelationMissingSourceError(view_id=view_id, property=prop_name))
+                            warnings.warn(
+                                DirectRelationMissingSourceWarning(view_id=view_id, property=prop_name), stacklevel=2
+                            )
 
                 if isinstance(prop, dm.EdgeConnectionApply) and prop.source not in defined_views:
                     errors.add(MissingSourceViewError(view=prop.source, property=prop_name, referred_by=view_id))

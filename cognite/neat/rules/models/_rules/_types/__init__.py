@@ -7,6 +7,7 @@ from ._base import (
     ParentClassEntity,
     ReferenceEntity,
     Undefined,
+    Unknown,
     ViewEntity,
     ViewPropEntity,
 )
@@ -32,6 +33,7 @@ from ._value import DMS_VALUE_TYPE_MAPPINGS, XSD_VALUE_TYPE_MAPPINGS, DMSValueTy
 
 __all__ = [
     "Undefined",
+    "Unknown",
     "Entity",
     "EntityTypes",
     "ClassEntity",

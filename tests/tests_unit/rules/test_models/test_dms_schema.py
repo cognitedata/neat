@@ -8,7 +8,7 @@ from cognite.client.data_classes import DatabaseWrite, DatabaseWriteList, Transf
 
 from cognite.neat.rules.issues.dms import (
     ContainerPropertyUsedMultipleTimesError,
-    DirectRelationMissingSourceError,
+    DirectRelationMissingSourceWarning,
     DMSSchemaError,
     DuplicatedViewInDataModelError,
     MissingContainerError,
@@ -164,7 +164,7 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
                 space="non_existing_space",
                 referred_by=dm.ContainerId("non_existing_space", "my_container"),
             ),
-            DirectRelationMissingSourceError(
+            DirectRelationMissingSourceWarning(
                 view_id=dm.ViewId("my_space", "my_view1", "1"),
                 property="direct",
             ),

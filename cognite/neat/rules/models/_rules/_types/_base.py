@@ -1,7 +1,7 @@
 import re
 import sys
 from functools import total_ordering
-from typing import Any, ClassVar, cast
+from typing import Any, ClassVar, Literal, cast, overload
 
 from cognite.client.data_classes.data_modeling import ContainerId, DataModelId, PropertyId, ViewId
 from pydantic import BaseModel
@@ -223,9 +223,37 @@ class ViewEntity(Entity):
     def from_id(cls, view_id: ViewId) -> Self:
         return cls(prefix=view_id.space, suffix=view_id.external_id, version=view_id.version)
 
+    @overload
     def as_id(
-        self, default_space: str | None = None, default_version: str | None = None, standardize_casing: bool = True
+        self,
+        allow_none: Literal[False] = False,
+        default_space: str | None = None,
+        default_version: str | None = None,
+        standardize_casing: bool = True,
     ) -> ViewId:
+        ...
+
+    @overload
+    def as_id(
+        self,
+        allow_none: Literal[True],
+        default_space: str | None = None,
+        default_version: str | None = None,
+        standardize_casing: bool = True,
+    ) -> ViewId | None:
+        ...
+
+    def as_id(
+        self,
+        allow_none: bool = False,
+        default_space: str | None = None,
+        default_version: str | None = None,
+        standardize_casing: bool = True,
+    ) -> ViewId | None:
+        if self.suffix is Unknown and allow_none:
+            return None
+        elif self.suffix is Unknown:
+            raise ValueError("suffix is Unknown and cannot be converted to ViewId")
         space = default_space if self.space is Undefined else self.space
         version = self.version or default_version
 
@@ -233,7 +261,6 @@ class ViewEntity(Entity):
             raise ValueError("space is required")
         if version is None:
             raise ValueError("version is required")
-
         external_id = to_pascal(self.external_id) if standardize_casing else self.external_id
         return ViewId(space=space, external_id=external_id, version=version)
 

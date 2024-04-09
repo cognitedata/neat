@@ -17,7 +17,7 @@ __all__ = [
     "MissingSourceViewError",
     "MissingEdgeViewError",
     "DuplicatedViewInDataModelError",
-    "DirectRelationMissingSourceError",
+    "DirectRelationMissingSourceWarning",
     "ContainerPropertyUsedMultipleTimesError",
     "DirectRelationListWarning",
     "ReverseOfDirectRelationListWarning",
@@ -183,7 +183,7 @@ class DuplicatedViewInDataModelError(DMSSchemaError):
 
 
 @dataclass(frozen=True)
-class DirectRelationMissingSourceError(DMSSchemaError):
+class DirectRelationMissingSourceWarning(DMSSchemaWarning):
     description = "The source view referred to by the DirectRelation does not exist"
     fix = "Create the source view"
     error_name: ClassVar[str] = "DirectRelationMissingSource"

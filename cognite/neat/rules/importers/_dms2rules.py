@@ -13,6 +13,8 @@ from cognite.neat.rules.models._rules._types import (
     ClassEntity,
     ContainerEntity,
     DMSValueType,
+    Undefined,
+    Unknown,
     ViewEntity,
     ViewPropEntity,
 )
@@ -103,7 +105,7 @@ class DMSImporter(BaseImporter):
                     if isinstance(container_prop.type, dm.DirectRelation):
                         direct_value_type: str | ViewEntity | DMSValueType
                         if prop.source is None:
-                            direct_value_type = "UNKNOWN"
+                            direct_value_type = ViewPropEntity(prefix=Undefined, suffix=Unknown)
                         else:
                             direct_value_type = ViewPropEntity.from_id(prop.source)
 
