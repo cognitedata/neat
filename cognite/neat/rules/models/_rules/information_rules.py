@@ -304,7 +304,7 @@ class InformationRules(RuleModel):
         kwargs = vars(info)
         default_prefix = f"{self.metadata.prefix}:" if self.metadata.prefix else ""
 
-        field_names = ["Class"] if info.by_alias else ["class_"]
+        field_names = ["Class", "Value Type"] if info.by_alias else ["class_", "value_type"]
         properties = []
         for prop in self.properties:
             dumped = prop.model_dump(**kwargs)
