@@ -175,12 +175,13 @@ class DMSExporter(CDFExporter[DMSSchema]):
         # are changed. This is a workaround to force the conversion.
         redeploy_data_model = False
 
-        for items, loader in to_export:
-            all_item_ids = loader.get_ids(items)
+        for all_items, loader in to_export:
+            all_item_ids = loader.get_ids(all_items)
             skipped = sum(1 for item_id in all_item_ids if item_id in schema.frozen_ids)
             item_ids = [item_id for item_id in all_item_ids if item_id not in schema.frozen_ids]
             cdf_items = loader.retrieve(item_ids)
             cdf_item_by_id = {loader.get_id(item): item for item in cdf_items}
+            items = [item for item in all_items if loader.get_id(item) in item_ids]
             to_create, to_update, unchanged, to_delete = [], [], [], []
             is_redeploying = loader.resource_name == "data_models" and redeploy_data_model
             for item in items:
