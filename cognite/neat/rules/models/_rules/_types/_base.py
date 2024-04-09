@@ -309,7 +309,7 @@ class ViewPropEntity(ViewEntity):
         if self.property_ is None:
             raise ValueError("property is required to create PropertyId")
         return PropertyId(
-            source=self.as_id(default_space, default_version, standardize_casing), property=self.property_
+            source=self.as_id(False, default_space, default_version, standardize_casing), property=self.property_
         )
 
     @property
