@@ -9,8 +9,8 @@ from cognite.client.exceptions import CogniteAPIError
 
 from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.models._rules import InformationRules
-from cognite.neat.rules.models._rules.base import ExtensionCategory
-from cognite.neat.rules.models._rules.dms_architect_rules import DMSRules
+from cognite.neat.rules.models._rules.base import ExtensionCategory, SheetList
+from cognite.neat.rules.models._rules.dms_architect_rules import DMSContainer, DMSRules
 from cognite.neat.rules.models._rules.dms_schema import DMSSchema, PipelineSchema
 from cognite.neat.utils.cdf_loaders import (
     ContainerLoader,
@@ -114,20 +114,43 @@ class DMSExporter(CDFExporter[DMSSchema]):
         else:
             raise ValueError(f"{type(rules).__name__} cannot be exported to DMS")
 
-        schema = dms_rules.as_schema(self.standardize_casing, self.export_pipeline, self.instance_space)
-        is_solution_model = dms_rules.reference and dms_rules.metadata.space != dms_rules.reference.metadata.space
+        is_solution_model = (
+            dms_rules.reference and dms_rules.metadata.external_id != dms_rules.reference.metadata.external_id
+        )
         is_new_model = dms_rules.reference is None
         if is_new_model or is_solution_model:
-            return schema
+            return dms_rules.as_schema(self.standardize_casing, self.export_pipeline, self.instance_space)
+
         # This is an extension of an existing model.
-        reference_schema = cast(DMSRules, dms_rules.reference).as_schema(self.standardize_casing, self.export_pipeline)
-        if dms_rules.metadata.extension is ExtensionCategory.addition:
+        reference_rules = cast(DMSRules, dms_rules.reference)
+        reference_schema = reference_rules.as_schema(self.standardize_casing, self.export_pipeline)
+
+        # Merging Reference with User Rules
+        combined_rules = dms_rules.copy(deep=True)
+        existing_containers = {container.class_ for container in combined_rules.containers or []}
+        if combined_rules.containers is None:
+            combined_rules.containers = SheetList[DMSContainer](data=[])
+        combined_rules.containers.extend(
+            [container for container in reference_rules.containers or [] if container.class_ not in existing_containers]
+        )
+        existing_views = {view.class_ for view in combined_rules.views}
+        combined_rules.views.extend([view for view in reference_rules.views if view.class_ not in existing_views])
+        existing_properties = {(property_.class_, property_.property_) for property_ in combined_rules.properties}
+        combined_rules.properties.extend(
+            [
+                property_
+                for property_ in reference_rules.properties
+                if (property_.class_, property_.property_) not in existing_properties
+            ]
+        )
+
+        schema = combined_rules.as_schema(self.standardize_casing, self.export_pipeline, self.instance_space)
+
+        if dms_rules.metadata.extension in (ExtensionCategory.addition, ExtensionCategory.reshape):
             # We do not freeze views as they might be changed, even for addition,
-            # in case for example new properties are added. The validation will catch this.
+            # in case, for example, new properties are added. The validation will catch this.
             schema.frozen_ids.update(set(reference_schema.containers.as_ids()))
             schema.frozen_ids.update(set(reference_schema.node_types.as_ids()))
-
-        schema.update(reference_schema)
         return schema
 
     def export_to_cdf(self, rules: Rules, client: CogniteClient, dry_run: bool = False) -> Iterable[UploadResult]:

@@ -367,13 +367,6 @@ class DMSSchema:
 
         return list(errors)
 
-    def update(self, other: "DMSSchema") -> None:
-        self.spaces.extend(other.spaces)
-        self.data_models.extend(other.data_models)
-        self.views.extend(other.views)
-        self.containers.extend(other.containers)
-        self.node_types.extend(other.node_types)
-
     @classmethod
     def _append_referenced_containers(cls, client: CogniteClient, containers: dm.ContainerList) -> None:
         """Containers can reference each other through the 'requires' constraint.
@@ -646,10 +639,3 @@ from
   `{table.database}`.`{table.name}`;
 """,
         )
-
-    def update(self, other: "DMSSchema") -> None:
-        super().update(other)
-        if isinstance(other, PipelineSchema):
-            self.transformations.extend(other.transformations)
-            self.databases.extend(other.databases)
-            self.raw_tables.extend(other.raw_tables)
