@@ -36,7 +36,7 @@ def invalid_rules_filepaths():
             [
                 validation.spreadsheet.InvalidPropertyError(
                     column="IsList",
-                    row=5,
+                    row=4,
                     type="bool_parsing",
                     msg="Input should be a valid boolean, unable to interpret input",
                     input="Apple",
@@ -54,7 +54,7 @@ def invalid_rules_filepaths():
                 cognite.neat.rules.issues.spreadsheet.MultiValueTypeError(
                     container=ContainerId("neat", "Flowable"),
                     property_name="maxFlow",
-                    row_numbers={4, 5},
+                    row_numbers={3, 4},
                     value_types={"float32", "float64"},
                 )
             ]
@@ -67,7 +67,7 @@ def invalid_rules_filepaths():
             [
                 cognite.neat.rules.issues.spreadsheet.NonExistingViewError(
                     column="View",
-                    row=4,
+                    row=3,
                     type="value_error.missing",
                     view_id=ViewId("neat", "Pump", "1"),
                     msg="",
@@ -76,7 +76,7 @@ def invalid_rules_filepaths():
                 ),
                 cognite.neat.rules.issues.spreadsheet.NonExistingContainerError(
                     column="Container",
-                    row=4,
+                    row=3,
                     type="value_error.missing",
                     container_id=ContainerId("neat", "Pump"),
                     msg="",
