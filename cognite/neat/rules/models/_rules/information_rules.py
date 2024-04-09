@@ -392,7 +392,7 @@ class _InformationRulesConverter:
                 class_=cls_.class_,
                 view=ViewPropEntity(prefix=cls_.class_.prefix, suffix=cls_.class_.suffix, version=cls_.class_.version),
                 description=cls_.description,
-                implements=self._get_view_implements(cls_),
+                implements=self._get_view_implements(cls_, info_metadata),
             )
             for cls_ in self.information.classes
         ]
@@ -507,8 +507,8 @@ class _InformationRulesConverter:
             return ContainerEntity(prefix=prop.class_.prefix, suffix=prop.class_.suffix), prop.property_
 
     @classmethod
-    def _get_view_implements(cls, cls_: InformationClass) -> list[ViewEntity]:
-        if isinstance(cls_.reference, ReferenceEntity):
+    def _get_view_implements(cls, cls_: InformationClass, metadata: InformationMetadata) -> list[ViewEntity]:
+        if isinstance(cls_.reference, ReferenceEntity) and cls_.reference.prefix != metadata.prefix:
             return [
                 ViewPropEntity(
                     prefix=cls_.reference.prefix, suffix=cls_.reference.suffix, version=cls_.reference.version
