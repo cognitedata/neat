@@ -101,7 +101,7 @@ class Entity(BaseModel, arbitrary_types_allowed=True):
 
     type_: ClassVar[EntityTypes] = EntityTypes.undefined
     prefix: str | Undefined = Undefined
-    suffix: str | Unknown = Unknown
+    suffix: str | Unknown
     version: str | None = None
     name: str | None = None
     description: str | None = None
