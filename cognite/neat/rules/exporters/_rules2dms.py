@@ -122,27 +122,29 @@ class DMSExporter(CDFExporter[DMSSchema]):
             return dms_rules.as_schema(self.standardize_casing, self.export_pipeline, self.instance_space)
 
         # This is an extension of an existing model.
-        reference_rules = cast(DMSRules, dms_rules.reference)
+        reference_rules = cast(DMSRules, dms_rules.reference).copy(deep=True)
         reference_schema = reference_rules.as_schema(self.standardize_casing, self.export_pipeline)
 
+        # Todo Move this to an appropriate location
         # Merging Reference with User Rules
         combined_rules = dms_rules.copy(deep=True)
         existing_containers = {container.class_ for container in combined_rules.containers or []}
         if combined_rules.containers is None:
             combined_rules.containers = SheetList[DMSContainer](data=[])
-        combined_rules.containers.extend(
-            [container for container in reference_rules.containers or [] if container.class_ not in existing_containers]
-        )
+        for container in reference_rules.containers or []:
+            if container.class_ not in existing_containers:
+                container.reference = None
+                combined_rules.containers.append(container)
         existing_views = {view.class_ for view in combined_rules.views}
-        combined_rules.views.extend([view for view in reference_rules.views if view.class_ not in existing_views])
+        for view in reference_rules.views:
+            if view.class_ not in existing_views:
+                view.reference = None
+                combined_rules.views.append(view)
         existing_properties = {(property_.class_, property_.property_) for property_ in combined_rules.properties}
-        combined_rules.properties.extend(
-            [
-                property_
-                for property_ in reference_rules.properties
-                if (property_.class_, property_.property_) not in existing_properties
-            ]
-        )
+        for property_ in reference_rules.properties:
+            if (property_.class_, property_.property_) not in existing_properties:
+                property_.reference = None
+                combined_rules.properties.append(property_)
 
         schema = combined_rules.as_schema(self.standardize_casing, self.export_pipeline, self.instance_space)
 
