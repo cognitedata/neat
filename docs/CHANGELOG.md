@@ -15,6 +15,12 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.70.2] - 03-04-24
+### Fixed
+- Bug when exporting an `addition` to of a ruleset in  `DMSExporter` when using the method `.export_to_cdf`
+### Changed
+- Updated the `DMSExporter` to sort views in data model by (`space`, `external_id`).
+
 ## [0.70.1] - 03-04-24
 ### Added
 - The `DMSExporter` now supports deploying an `addition` extension of a ruleset.
