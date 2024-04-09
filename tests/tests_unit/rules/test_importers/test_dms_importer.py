@@ -1,7 +1,10 @@
+from typing import cast
+
 from cognite.client import data_modeling as dm
 
 from cognite.neat.rules.importers import DMSImporter
-from cognite.neat.rules.models._rules import DMSSchema
+from cognite.neat.rules.issues.importing import UnknownValueTypeWarning
+from cognite.neat.rules.models._rules import DMSRules, DMSSchema
 
 
 class TestDMSImporter:
@@ -10,8 +13,15 @@ class TestDMSImporter:
 
         rules, issues = importer.to_rules(errors="continue")
 
-        assert len(issues) == 0
-        rules.as_information_architect_rules()
+        assert len(issues) == 1
+        assert issues[0] == UnknownValueTypeWarning("neat:OneView(version=1)", "direct")
+        dms_rules = cast(DMSRules, rules)
+        dump_dms = dms_rules.model_dump()
+        assert dump_dms["properties"][0]["value_type"] == "#N/A"
+
+        info_rules = dms_rules.as_information_architect_rules()
+        dump_info = info_rules.model_dump()
+        assert dump_info["properties"][0]["value_type"] == "#N/A"
 
 
 SCHEMA_WITH_DIRECT_RELATION_NONE = DMSSchema()
