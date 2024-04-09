@@ -89,6 +89,7 @@ VERSION_COMPLIANCE_REGEX = r"^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$"
 
 
 Undefined = type(object())
+Unknown = type(object())
 
 
 # mypy does not like the sentinel value, and it is not possible to ignore only the line with it below.
@@ -100,7 +101,7 @@ class Entity(BaseModel, arbitrary_types_allowed=True):
 
     type_: ClassVar[EntityTypes] = EntityTypes.undefined
     prefix: str | Undefined = Undefined
-    suffix: str
+    suffix: str | Unknown = Unknown
     version: str | None = None
     name: str | None = None
     description: str | None = None
