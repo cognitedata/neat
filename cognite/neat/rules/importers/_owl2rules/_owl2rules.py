@@ -58,9 +58,6 @@ class OWLImporter(BaseImporter):
         role: RoleTypes | None = None,
         is_reference: bool = False,
     ) -> tuple[Rules | None, IssueList] | Rules:
-        if role is not None and role != RoleTypes.information_architect:
-            raise ValueError(f"Role {role} is not supported for OWLImporter")
-
         graph = Graph()
         try:
             graph.parse(self.owl_filepath)
