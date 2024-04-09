@@ -26,6 +26,7 @@ from cognite.neat.rules.models.rdfpath import (
 from ._types import (
     ClassEntity,
     ContainerEntity,
+    Entity,
     EntityTypes,
     NamespaceType,
     ParentClassEntity,
@@ -42,6 +43,7 @@ from ._types import (
     ViewPropEntity,
     XSDValueType,
 )
+from ._types._base import Unknown
 from .base import (
     BaseMetadata,
     ExtensionCategory,
@@ -272,6 +274,7 @@ class InformationRules(RuleModel):
                 property_.value_type.versioned_id
                 for property_ in self.properties
                 if property_.type_ == EntityTypes.object_property
+                and not (isinstance(property_.value_type, Entity) and property_.value_type.suffix is Unknown)
             }
             if not referred_classes.issubset(defined_classes) or not referred_types.issubset(defined_classes):
                 missing_classes = referred_classes.difference(defined_classes).union(

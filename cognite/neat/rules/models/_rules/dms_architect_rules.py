@@ -246,7 +246,7 @@ class DMSView(SheetEntity):
     in_model: bool = Field(True, alias="InModel")
 
     def as_view(self, default_space: str, default_version: str, standardize_casing: bool = True) -> dm.ViewApply:
-        view_id = self.view.as_id(default_space, default_version, standardize_casing)
+        view_id = self.view.as_id(False, default_space, default_version, standardize_casing)
         return dm.ViewApply(
             space=view_id.space,
             external_id=view_id.external_id,
@@ -254,7 +254,8 @@ class DMSView(SheetEntity):
             name=self.name or None,
             description=self.description,
             implements=[
-                parent.as_id(default_space, default_version, standardize_casing) for parent in self.implements or []
+                parent.as_id(False, default_space, default_version, standardize_casing)
+                for parent in self.implements or []
             ]
             or None,
             properties={},
@@ -437,13 +438,13 @@ class DMSRules(BaseRules):
     @model_validator(mode="after")
     def referenced_views_and_containers_are_existing(self) -> "DMSRules":
         # There two checks are done in the same method to raise all the errors at once.
-        defined_views = {view.view.as_id(self.metadata.space, self.metadata.version) for view in self.views}
+        defined_views = {view.view.as_id(False, self.metadata.space, self.metadata.version) for view in self.views}
 
         errors: list[issues.NeatValidationError] = []
         for prop_no, prop in enumerate(self.properties):
             if (
                 prop.view
-                and (view_id := prop.view.as_id(self.metadata.space, self.metadata.version)) not in defined_views
+                and (view_id := prop.view.as_id(False, self.metadata.space, self.metadata.version)) not in defined_views
             ):
                 errors.append(
                     cognite.neat.rules.issues.spreadsheet.NonExistingViewError(
@@ -626,7 +627,7 @@ class _DMSExporter:
         )
 
         views_not_in_model = {
-            view.view.as_id(default_space, default_version, self.standardize_casing)
+            view.view.as_id(False, default_space, default_version, self.standardize_casing)
             for view in rules.views
             if not view.in_model
         }
@@ -685,7 +686,7 @@ class _DMSExporter:
                     # This is not yet supported in the CDF API, a warning has already been issued, here we convert it to
                     # a multi-edge connection.
                     if isinstance(prop.value_type, ViewEntity):
-                        source = prop.value_type.as_id(default_space, default_version, self.standardize_casing)
+                        source = prop.value_type.as_id(False, default_space, default_version, self.standardize_casing)
                     else:
                         raise ValueError(
                             "Direct relation must have a view as value type. "
@@ -706,7 +707,7 @@ class _DMSExporter:
                     extra_args: dict[str, Any] = {}
                     if prop.relation == "direct" and isinstance(prop.value_type, ViewEntity):
                         extra_args["source"] = prop.value_type.as_id(
-                            default_space, default_version, self.standardize_casing
+                            True, default_space, default_version, self.standardize_casing
                         )
                     elif prop.relation == "direct" and not isinstance(prop.value_type, ViewEntity):
                         raise ValueError(
@@ -720,7 +721,7 @@ class _DMSExporter:
                     )
                 elif prop.view and prop.view_property and prop.relation == "multiedge":
                     if isinstance(prop.value_type, ViewEntity):
-                        source = prop.value_type.as_id(default_space, default_version, self.standardize_casing)
+                        source = prop.value_type.as_id(False, default_space, default_version, self.standardize_casing)
                     else:
                         raise ValueError(
                             "Multiedge relation must have a view as value type. "
@@ -736,7 +737,7 @@ class _DMSExporter:
                     )
                 elif prop.view and prop.view_property and prop.relation == "reversedirect":
                     if isinstance(prop.value_type, ViewPropEntity):
-                        source = prop.value_type.as_id(default_space, default_version, self.standardize_casing)
+                        source = prop.value_type.as_id(False, default_space, default_version, self.standardize_casing)
                     else:
                         raise ValueError(
                             "Reverse direct relation must have a view as value type. "
@@ -904,7 +905,7 @@ class _DMSExporter:
         container_properties_by_id: dict[dm.ContainerId, list[DMSProperty]] = defaultdict(list)
         view_properties_by_id: dict[dm.ViewId, list[DMSProperty]] = defaultdict(list)
         for prop in rules.properties:
-            view_id = prop.view.as_id(default_space, default_version, self.standardize_casing)
+            view_id = prop.view.as_id(False, default_space, default_version, self.standardize_casing)
             view_properties_by_id[view_id].append(prop)
 
             if prop.container and prop.container_property:
@@ -912,7 +913,7 @@ class _DMSExporter:
                     warnings.warn(
                         issues.dms.DirectRelationListWarning(
                             container_id=prop.container.as_id(default_space, self.standardize_casing),
-                            view_id=prop.view.as_id(default_space, default_version, self.standardize_casing),
+                            view_id=prop.view.as_id(False, default_space, default_version, self.standardize_casing),
                             property=prop.container_property,
                         ),
                         stacklevel=2,
