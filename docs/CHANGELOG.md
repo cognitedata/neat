@@ -15,9 +15,15 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## [0.69.4] - 03-04-24
+## [0.70.1] - 03-04-24
 ### Added
 - The `DMSExporter` now supports deploying an `addition` extension of a ruleset.
+
+## [0.70.0] - 09-04-24
+### Added
+- Added `/api/core/convert`
+- Enabled OWL importer to produce DMS rules
+
 
 ## [0.69.3] - 03-04-24
 ### Fixed
