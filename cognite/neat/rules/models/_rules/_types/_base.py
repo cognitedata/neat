@@ -124,7 +124,9 @@ class Entity(BaseModel, arbitrary_types_allowed=True):
 
     @property
     def id(self) -> str:
-        if self.prefix is Undefined:
+        if self.suffix is Unknown:
+            return "#N/A"
+        elif self.prefix is Undefined:
             return self.suffix
         else:
             return f"{self.prefix}:{self.suffix}"
@@ -154,7 +156,9 @@ class Entity(BaseModel, arbitrary_types_allowed=True):
 
     @classmethod
     def from_string(cls, entity_string: str, base_prefix: str | None = None) -> Self:
-        if result := VERSIONED_ENTITY_REGEX_COMPILED.match(entity_string):
+        if entity_string == "#N/A":
+            return cls(prefix=Undefined, suffix=Unknown)
+        elif result := VERSIONED_ENTITY_REGEX_COMPILED.match(entity_string):
             return cls(
                 prefix=result.group("prefix"),
                 suffix=result.group("suffix"),
