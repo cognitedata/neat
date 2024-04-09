@@ -509,13 +509,17 @@ class _InformationRulesConverter:
     @classmethod
     def _get_view_implements(cls, cls_: InformationClass, metadata: InformationMetadata) -> list[ViewEntity]:
         if isinstance(cls_.reference, ReferenceEntity) and cls_.reference.prefix != metadata.prefix:
-            return [
-                ViewPropEntity(
-                    prefix=cls_.reference.prefix, suffix=cls_.reference.suffix, version=cls_.reference.version
-                )
+            # We use the reference for implements if it is in a different namespace
+            implements = [
+                ViewEntity(prefix=cls_.reference.prefix, suffix=cls_.reference.suffix, version=cls_.reference.version)
             ]
         else:
-            return [
+            implements = []
+
+        implements.extend(
+            [
                 ViewEntity(prefix=parent.prefix, suffix=parent.suffix, version=parent.version)
                 for parent in cls_.parent or []
             ]
+        )
+        return implements
