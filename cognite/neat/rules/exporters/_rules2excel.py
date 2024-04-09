@@ -70,7 +70,7 @@ class ExcelExporter(BaseExporter[Workbook]):
         if rules.is_reference:
             # Writes empty reference sheets
             dumped_rules = {
-                "Metadata": {field_alias: None for field_alias in rules.metadata.model_dump().keys()},
+                "Metadata": {field_alias: None for field_alias in rules.metadata.model_dump(by_alias=True).keys()},
             }
             dumped_rules["Metadata"]["role"] = (
                 self.output_role and self.output_role.value
