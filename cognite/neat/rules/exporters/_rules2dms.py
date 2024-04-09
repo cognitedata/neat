@@ -1,7 +1,7 @@
 import warnings
 from collections.abc import Collection, Iterable
 from pathlib import Path
-from typing import Literal, TypeAlias
+from typing import Literal, TypeAlias, cast
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes._base import CogniteResourceList
@@ -9,6 +9,7 @@ from cognite.client.exceptions import CogniteAPIError
 
 from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.models._rules import InformationRules
+from cognite.neat.rules.models._rules.base import ExtensionCategory
 from cognite.neat.rules.models._rules.dms_architect_rules import DMSRules
 from cognite.neat.rules.models._rules.dms_schema import DMSSchema, PipelineSchema
 from cognite.neat.utils.cdf_loaders import (
@@ -107,13 +108,27 @@ class DMSExporter(CDFExporter[DMSSchema]):
 
     def export(self, rules: Rules) -> DMSSchema:
         if isinstance(rules, DMSRules):
-            return rules.as_schema(self.standardize_casing, self.export_pipeline, self.instance_space)
+            dms_rules = rules
         elif isinstance(rules, InformationRules):
-            return rules.as_dms_architect_rules().as_schema(
-                self.standardize_casing, self.export_pipeline, self.instance_space
-            )
+            dms_rules = rules.as_dms_architect_rules()
         else:
             raise ValueError(f"{type(rules).__name__} cannot be exported to DMS")
+
+        schema = dms_rules.as_schema(self.standardize_casing, self.export_pipeline, self.instance_space)
+        is_solution_model = dms_rules.reference and dms_rules.metadata.space != dms_rules.reference.metadata.space
+        is_new_model = dms_rules.reference is None
+        if is_new_model or is_solution_model:
+            return schema
+        # This is an extension of an existing model.
+        reference_schema = cast(DMSRules, dms_rules.reference).as_schema(self.standardize_casing, self.export_pipeline)
+        if dms_rules.metadata.extension is ExtensionCategory.addition:
+            # We do not freeze views as they might be changed, even for addition,
+            # in case for example new properties are added. The validation will catch this.
+            schema.frozen_ids.update(set(reference_schema.containers.as_ids()))
+            schema.frozen_ids.update(set(reference_schema.node_types.as_ids()))
+
+        schema.update(reference_schema)
+        return schema
 
     def export_to_cdf(self, rules: Rules, client: CogniteClient, dry_run: bool = False) -> Iterable[UploadResult]:
         schema = self.export(rules)
@@ -136,7 +151,9 @@ class DMSExporter(CDFExporter[DMSSchema]):
         redeploy_data_model = False
 
         for items, loader in to_export:
-            item_ids = loader.get_ids(items)
+            all_item_ids = loader.get_ids(items)
+            skipped = sum(1 for item_id in all_item_ids if item_id in schema.frozen_ids)
+            item_ids = [item_id for item_id in all_item_ids if item_id not in schema.frozen_ids]
             cdf_items = loader.retrieve(item_ids)
             cdf_item_by_id = {loader.get_id(item): item for item in cdf_items}
             to_create, to_update, unchanged, to_delete = [], [], [], []
@@ -163,7 +180,6 @@ class DMSExporter(CDFExporter[DMSSchema]):
             created = len(to_create)
             failed_created = 0
 
-            skipped = 0
             if self.existing_handling in ["update", "force"]:
                 changed = len(to_update)
                 failed_changed = 0
