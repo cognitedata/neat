@@ -304,7 +304,7 @@ class InformationRules(RuleModel):
         kwargs = vars(info)
         default_prefix = f"{self.metadata.prefix}:" if self.metadata.prefix else ""
 
-        field_names = ["Class"] if info.by_alias else ["class_"]
+        field_names = ["Class", "Value Type"] if info.by_alias else ["class_", "value_type"]
         properties = []
         for prop in self.properties:
             dumped = prop.model_dump(**kwargs)
@@ -392,7 +392,7 @@ class _InformationRulesConverter:
                 class_=cls_.class_,
                 view=ViewPropEntity(prefix=cls_.class_.prefix, suffix=cls_.class_.suffix, version=cls_.class_.version),
                 description=cls_.description,
-                implements=self._get_view_implements(cls_),
+                implements=self._get_view_implements(cls_, info_metadata),
             )
             for cls_ in self.information.classes
         ]
@@ -507,15 +507,19 @@ class _InformationRulesConverter:
             return ContainerEntity(prefix=prop.class_.prefix, suffix=prop.class_.suffix), prop.property_
 
     @classmethod
-    def _get_view_implements(cls, cls_: InformationClass) -> list[ViewEntity]:
-        if isinstance(cls_.reference, ReferenceEntity):
-            return [
-                ViewPropEntity(
-                    prefix=cls_.reference.prefix, suffix=cls_.reference.suffix, version=cls_.reference.version
-                )
+    def _get_view_implements(cls, cls_: InformationClass, metadata: InformationMetadata) -> list[ViewEntity]:
+        if isinstance(cls_.reference, ReferenceEntity) and cls_.reference.prefix != metadata.prefix:
+            # We use the reference for implements if it is in a different namespace
+            implements = [
+                ViewEntity(prefix=cls_.reference.prefix, suffix=cls_.reference.suffix, version=cls_.reference.version)
             ]
         else:
-            return [
+            implements = []
+
+        implements.extend(
+            [
                 ViewEntity(prefix=parent.prefix, suffix=parent.suffix, version=parent.version)
                 for parent in cls_.parent or []
             ]
+        )
+        return implements

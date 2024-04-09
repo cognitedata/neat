@@ -211,7 +211,7 @@ class DMSContainer(SheetEntity):
         container_id = self.container.as_id(default_space, standardize_casing)
         constraints: dict[str, dm.Constraint] = {}
         for constraint in self.constraint or []:
-            requires = dm.RequiresConstraint(constraint.as_id(default_space))
+            requires = dm.RequiresConstraint(constraint.as_id(default_space, standardize_casing))
             constraints[f"{constraint.space}_{constraint.external_id}"] = requires
 
         return dm.ContainerApply(
@@ -796,7 +796,7 @@ class _DMSExporter:
         parent_views = {parent for view in views for parent in view.implements or []}
         node_type_flag = False
         for view in views:
-            ref_containers = view.referenced_containers()
+            ref_containers = sorted(view.referenced_containers(), key=lambda c: c.as_tuple())
             has_data = dm.filters.HasData(containers=list(ref_containers)) if ref_containers else None
             node_type = dm.filters.Equals(["node", "type"], {"space": view.space, "externalId": view.external_id})
             if view.as_id() in parent_views:
