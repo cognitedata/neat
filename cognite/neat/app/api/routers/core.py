@@ -12,7 +12,7 @@ from cognite.neat.rules.models._rules.base import RoleTypes
 router = APIRouter()
 
 
-@router.post("/api/io/convert")
+@router.post("/api/core/convert")
 async def convert_data_model_to_rules(file: UploadFile):
     suffix = Path(cast(str, file.filename)).suffix
 

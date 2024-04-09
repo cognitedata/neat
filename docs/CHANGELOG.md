@@ -15,6 +15,12 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.70.0] - 09-04-24
+### Added
+- Added `/api/core/convert`
+- Enabled OWL importer to produce DMS rules
+
+
 ## [0.69.3] - 03-04-24
 ### Fixed
 - Validation of `InformationRules` gives a warning if a reference class is used. This is now fixed.
