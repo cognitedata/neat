@@ -211,7 +211,7 @@ class DMSContainer(SheetEntity):
         container_id = self.container.as_id(default_space, standardize_casing)
         constraints: dict[str, dm.Constraint] = {}
         for constraint in self.constraint or []:
-            requires = dm.RequiresConstraint(constraint.as_id(default_space))
+            requires = dm.RequiresConstraint(constraint.as_id(default_space, standardize_casing))
             constraints[f"{constraint.space}_{constraint.external_id}"] = requires
 
         return dm.ContainerApply(
