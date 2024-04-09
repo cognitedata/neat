@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.69.3] - 03-04-24
+### Fixed
+- Validation of `InformationRules` gives a warning if a reference class is used. This is now fixed.
+- Validation of `InformationRules` returns an error if a importing a value type `Unknown`. This is now fixed.
+
 ## [0.69.2] - 03-04-24
 ### Fixed
 - Fixed issue with `DMSImporter` when importing data models with direct relations without `source` set. This would
