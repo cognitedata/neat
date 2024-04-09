@@ -7,6 +7,7 @@ from cognite.client.data_classes.data_modeling import DataModelIdentifier
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex, InvertedIndex
 from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 
+from cognite.neat.rules import issues
 from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models._rules import DMSRules, DMSSchema, RoleTypes
 from cognite.neat.rules.models._rules._types import (
@@ -65,12 +66,14 @@ class DMSImporter(BaseImporter):
     ) -> tuple[Rules | None, IssueList] | Rules:
         if role is RoleTypes.domain_expert:
             raise ValueError(f"Role {role} is not supported for DMSImporter")
+        issue_list = IssueList()
         data_model = self.schema.data_models[0]
 
         container_by_id = {container.as_id(): container for container in self.schema.containers}
 
         properties = SheetList[DMSProperty]()
         for view in self.schema.views:
+            class_entity = ClassEntity(prefix=view.space, suffix=view.external_id, version=view.version)
             for prop_id, prop in (view.properties or {}).items():
                 if isinstance(prop, dm.MappedPropertyApply):
                     if prop.container not in container_by_id:
@@ -105,12 +108,15 @@ class DMSImporter(BaseImporter):
                     if isinstance(container_prop.type, dm.DirectRelation):
                         direct_value_type: str | ViewEntity | DMSValueType
                         if prop.source is None:
+                            issue_list.append(
+                                issues.importing.UnknownValueTypeWarning(class_entity.versioned_id, prop_id)
+                            )
                             direct_value_type = ViewPropEntity(prefix=Undefined, suffix=Unknown)
                         else:
                             direct_value_type = ViewPropEntity.from_id(prop.source)
 
                         dms_property = DMSProperty(
-                            class_=ClassEntity(prefix=view.space, suffix=view.external_id, version=view.version),
+                            class_=class_entity,
                             property_=prop_id,
                             description=prop.description,
                             value_type=cast(ViewPropEntity | DMSValueType, direct_value_type),
@@ -182,4 +188,4 @@ class DMSImporter(BaseImporter):
         if errors == "raise":
             return output_rules
         else:
-            return output_rules, IssueList()
+            return output_rules, issue_list
