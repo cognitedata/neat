@@ -245,7 +245,7 @@ class InformationRules(RuleModel):
     def update_entities_prefix(self) -> Self:
         # update expected_value_types
         for property_ in self.properties:
-            if property_.value_type.prefix is Undefined:
+            if property_.value_type.prefix is Undefined and property_.value_type.suffix is not Unknown:
                 property_.value_type.prefix = self.metadata.prefix
             if property_.class_.prefix is Undefined:
                 property_.class_.prefix = self.metadata.prefix
@@ -286,7 +286,7 @@ class InformationRules(RuleModel):
 
     @model_validator(mode="after")
     def validate_class_has_properties_or_parent(self) -> Self:
-        defined_classes = {class_.class_ for class_ in self.classes}
+        defined_classes = {class_.class_ for class_ in self.classes if class_.reference is None}
         referred_classes = {property_.class_ for property_ in self.properties}
         has_parent_classes = {class_.class_ for class_ in self.classes if class_.parent}
         missing_classes = defined_classes.difference(referred_classes) - has_parent_classes

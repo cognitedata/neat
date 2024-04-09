@@ -31,6 +31,7 @@ from ._base import (
     ParentClassEntity,
     ReferenceEntity,
     Undefined,
+    Unknown,
     ViewEntity,
     ViewPropEntity,
 )
@@ -248,6 +249,8 @@ def _semantic_value_type_before_validator(value: Any) -> Any:
         return XSD_VALUE_TYPE_MAPPINGS[value]
     elif value.lower() in XSD_VALUE_TYPE_MAPPINGS:
         return XSD_VALUE_TYPE_MAPPINGS[value.lower()]
+    elif value == "#N/A":
+        return ClassEntity(prefix=Undefined, suffix=Unknown)
     else:
         return ClassEntity.from_raw(value)
 
