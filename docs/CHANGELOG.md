@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.71.0] - 10-04-24
+### Added
+- Added `/api/core/rules2dms`
+- Enabled conversion of rules to DMS views and containers
+
 ## [0.70.3] - 10-04-24
 ### Fixed
 - Bug when importing an OWL ontology while expecting compliant rules did not encounter for dangling classes (classes without a property or parent class). This is now fixed.
