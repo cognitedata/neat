@@ -6,7 +6,8 @@ from typing import cast
 
 from fastapi import APIRouter, UploadFile
 
-from cognite.neat.rules import importers
+from cognite.neat.rules import exporters, importers
+from cognite.neat.rules.models._rules import DMSRules
 from cognite.neat.rules.models._rules.base import RoleTypes
 
 router = APIRouter()
@@ -49,3 +50,13 @@ async def convert_data_model_to_rules(file: UploadFile):
     temp_filepath.unlink()
 
     return {"filename": file.filename, "content": rules.model_dump(by_alias=True) if rules else None, "issues": issues}
+
+
+@router.post("/api/core/rules2dms")
+async def convert_rules_to_dms(rules: DMSRules):
+    dms_schema = exporters.DMSExporter().export(rules)
+
+    return {
+        "views": dms_schema.views.dump() if dms_schema.views else None,
+        "containers": dms_schema.containers.dump() if dms_schema.containers else None,
+    }
