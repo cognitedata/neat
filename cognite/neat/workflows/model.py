@@ -45,9 +45,9 @@ class FlowMessage(BaseModel):
     headers: dict[str, str] | None = None  # The headers of the message
     output_text: str | None = None  # The output text of the step that is captured in the execution log
     error_text: str | None = None  # The error text of the step that is captured in the execution log
-    next_step_ids: list[str] | None = (
-        None  # If set, the workflow will skip default route and go to the next step in the list
-    )
+    next_step_ids: list[
+        str
+    ] | None = None  # If set, the workflow will skip default route and go to the next step in the list
     step_execution_status: StepExecutionStatus = StepExecutionStatus.UNKNOWN  # The status of the step execution
 
 
