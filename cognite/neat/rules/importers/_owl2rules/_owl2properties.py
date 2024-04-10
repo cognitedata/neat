@@ -24,7 +24,7 @@ def parse_owl_properties(graph: Graph, make_compliant: bool = False, language: s
 
     query = """
 
-    SELECT ?class ?property ?name ?description ?type ?minCount ?maxCount ?source
+    SELECT ?class ?property ?name ?description ?type ?minCount ?maxCount ?reference
      ?match ?propertyType
     WHERE {
         ?property a ?propertyType.
@@ -71,7 +71,7 @@ def _parse_raw_dataframe(query_results: list[tuple]) -> pd.DataFrame:
             "Value Type",
             "Min Count",
             "Max Count",
-            "Source",
+            "Reference",
             "Match Type",
             "_property_type",
         ],
@@ -81,7 +81,7 @@ def _parse_raw_dataframe(query_results: list[tuple]) -> pd.DataFrame:
 
     df.replace(np.nan, "", regex=True, inplace=True)
 
-    df.Source = df.Property
+    df.Reference = df.Property
     df.Class = df.Class.apply(lambda x: remove_namespace(x))
     df.Property = df.Property.apply(lambda x: remove_namespace(x))
     df["Value Type"] = df["Value Type"].apply(lambda x: remove_namespace(x))
@@ -109,7 +109,7 @@ def _clean_up_properties(df: pd.DataFrame) -> pd.DataFrame:
                     "Value Type": property_grouped_df["Value Type"].unique()[0],
                     "Min Count": property_grouped_df["Min Count"].unique()[0],
                     "Max Count": property_grouped_df["Max Count"].unique()[0],
-                    "Source": property_grouped_df["Source"].unique()[0],
+                    "Reference": property_grouped_df["Reference"].unique()[0],
                     "Match Type": property_grouped_df["Match Type"].unique()[0],
                     "Comment": property_grouped_df["Comment"].unique()[0],
                     "_property_type": property_grouped_df["_property_type"].unique()[0],

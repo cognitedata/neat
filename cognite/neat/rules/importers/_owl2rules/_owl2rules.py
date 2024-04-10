@@ -191,6 +191,7 @@ def _add_default_property_to_dangling_classes(components: dict[str, list[dict]])
                 "Comment": comment,
                 "Min Count": 0,
                 "Max Count": 1,
+                "Reference": "http://www.w3.org/2000/01/rdf-schema#label",
             }
         )
 
