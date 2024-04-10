@@ -9,7 +9,7 @@ from rdflib import DCTERMS, OWL, RDF, RDFS, XSD, BNode, Graph, Literal, Namespac
 from rdflib.collection import Collection as GraphCollection
 
 from cognite.neat.rules import exceptions
-from cognite.neat.rules._analysis import to_class_dict, to_class_property_pairs, to_property_dict
+from cognite.neat.rules._analysis._information_rules import InformationArchitectRulesAnalysis
 from cognite.neat.rules.models._rules import DMSRules
 from cognite.neat.rules.models._rules._types import XSD_VALUE_TYPE_MAPPINGS, EntityTypes
 from cognite.neat.rules.models._rules.information_rules import (
@@ -32,8 +32,8 @@ from cognite.neat.rules._shared import Rules
 
 
 class GraphExporter(BaseExporter[Graph], ABC):
-    def export_to_file(self, filepath: Path, rules: Rules) -> None:
-        self.export(rules).serialize(destination=filepath)
+    def export_to_file(self, rules: Rules, filepath: Path) -> None:
+        self.export(rules).serialize(destination=filepath, encoding=self._encoding, newline=self._new_line)
 
 
 class OWLExporter(GraphExporter):
@@ -101,11 +101,11 @@ class Ontology(OntologyModel):
         if rules.metadata.namespace is None:
             raise exceptions.MissingDataModelPrefixOrNamespace()
 
-        class_dict = to_class_dict(rules)
+        class_dict = InformationArchitectRulesAnalysis(rules).as_class_dict()
         return cls(
             properties=[
                 OWLProperty.from_list_of_properties(definition, rules.metadata.namespace)
-                for definition in to_property_dict(rules).values()
+                for definition in InformationArchitectRulesAnalysis(rules).as_property_dict().values()
             ],
             classes=[
                 OWLClass.from_class(definition, rules.metadata.namespace, rules.prefixes)
@@ -117,7 +117,7 @@ class Ontology(OntologyModel):
                     list(properties.values()),
                     rules.metadata.namespace,
                 )
-                for class_, properties in to_class_property_pairs(rules).items()
+                for class_, properties in InformationArchitectRulesAnalysis(rules).class_property_pairs().items()
             ]
             + [
                 SHACLNodeShape.from_rules(

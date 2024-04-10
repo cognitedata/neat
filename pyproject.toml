@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cognite-neat"
-version = "0.68.4"
+version = "0.70.2"
 readme = "README.md"
 description = "Knowledge graph transformation"
 authors = [
@@ -146,6 +146,7 @@ types-setuptools = "^68"
 # Temporarily removing cognite-toolkit as we need version 0.1.2 to be released due to the
 # current strict upper bound on cognite-sdk.
 #cognite-toolkit = {git = "https://github.com/cognitedata/cdf-project-templates.git", branch = "main"}
+
 
 [build-system]
 requires = ["poetry>=0.12"]

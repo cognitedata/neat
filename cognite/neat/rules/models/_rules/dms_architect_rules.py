@@ -1,6 +1,7 @@
 import abc
 import math
 import re
+import sys
 import warnings
 from collections import defaultdict
 from datetime import datetime
@@ -11,8 +12,8 @@ from cognite.client.data_classes.data_modeling import PropertyType as CognitePro
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex
 from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 from cognite.client.data_classes.data_modeling.views import SingleReverseDirectRelationApply, ViewPropertyApply
-from pydantic import Field, field_validator, model_validator
-from pydantic_core.core_schema import ValidationInfo
+from pydantic import Field, field_validator, model_serializer, model_validator
+from pydantic_core.core_schema import SerializationInfo, ValidationInfo
 from rdflib import Namespace
 
 import cognite.neat.rules.issues.spreadsheet
@@ -30,6 +31,8 @@ from ._types import (
     ExternalIdType,
     ParentClassEntity,
     PropertyType,
+    ReferenceEntity,
+    ReferenceType,
     StrListType,
     Undefined,
     VersionType,
@@ -39,11 +42,16 @@ from ._types import (
     ViewType,
     XSDValueType,
 )
-from .base import BaseMetadata, BaseRules, RoleTypes, SchemaCompleteness, SheetEntity, SheetList
+from .base import BaseMetadata, BaseRules, ExtensionCategory, RoleTypes, SchemaCompleteness, SheetEntity, SheetList
 from .dms_schema import DMSSchema, PipelineSchema
 
 if TYPE_CHECKING:
     from .information_rules import InformationRules
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 
 subclasses = list(CognitePropertyType.__subclasses__())
@@ -62,6 +70,7 @@ del subclasses  # cleanup namespace
 class DMSMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.dms_architect
     schema_: SchemaCompleteness = Field(alias="schema")
+    extension: ExtensionCategory = ExtensionCategory.addition
     space: ExternalIdType
     name: str | None = Field(
         None,
@@ -158,7 +167,7 @@ class DMSProperty(SheetEntity):
     nullable: bool | None = Field(default=None, alias="Nullable")
     is_list: bool | None = Field(default=None, alias="IsList")
     default: str | int | dict | None = Field(None, alias="Default")
-    reference: str | None = Field(None, alias="Reference")
+    reference: ReferenceType = Field(default=None, alias="Reference")
     container: ContainerType | None = Field(None, alias="Container")
     container_property: str | None = Field(None, alias="ContainerProperty")
     view: ViewType = Field(alias="View")
@@ -195,13 +204,14 @@ class DMSProperty(SheetEntity):
 
 class DMSContainer(SheetEntity):
     container: ContainerType = Field(alias="Container")
+    reference: ReferenceType = Field(alias="Reference", default=None)
     constraint: ContainerListType | None = Field(None, alias="Constraint")
 
     def as_container(self, default_space: str, standardize_casing: bool = True) -> dm.ContainerApply:
         container_id = self.container.as_id(default_space, standardize_casing)
         constraints: dict[str, dm.Constraint] = {}
         for constraint in self.constraint or []:
-            requires = dm.RequiresConstraint(constraint.as_id(default_space))
+            requires = dm.RequiresConstraint(constraint.as_id(default_space, standardize_casing))
             constraints[f"{constraint.space}_{constraint.external_id}"] = requires
 
         return dm.ContainerApply(
@@ -232,10 +242,11 @@ class DMSContainer(SheetEntity):
 class DMSView(SheetEntity):
     view: ViewType = Field(alias="View")
     implements: ViewListType | None = Field(None, alias="Implements")
+    reference: ReferenceType = Field(alias="Reference", default=None)
     in_model: bool = Field(True, alias="InModel")
 
     def as_view(self, default_space: str, default_version: str, standardize_casing: bool = True) -> dm.ViewApply:
-        view_id = self.view.as_id(default_space, default_version, standardize_casing)
+        view_id = self.view.as_id(False, default_space, default_version, standardize_casing)
         return dm.ViewApply(
             space=view_id.space,
             external_id=view_id.external_id,
@@ -243,14 +254,15 @@ class DMSView(SheetEntity):
             name=self.name or None,
             description=self.description,
             implements=[
-                parent.as_id(default_space, default_version, standardize_casing) for parent in self.implements or []
+                parent.as_id(False, default_space, default_version, standardize_casing)
+                for parent in self.implements or []
             ]
             or None,
             properties={},
         )
 
     @classmethod
-    def from_view(cls, view: dm.ViewApply) -> "DMSView":
+    def from_view(cls, view: dm.ViewApply, data_model_view_ids: set[dm.ViewId]) -> "DMSView":
         return cls(
             class_=ClassEntity(prefix=view.space, suffix=view.external_id),
             view=ViewType(prefix=view.space, suffix=view.external_id, version=view.version),
@@ -260,6 +272,7 @@ class DMSView(SheetEntity):
                 for parent in view.implements
             ]
             or None,
+            in_model=view.as_id() in data_model_view_ids,
         )
 
 
@@ -268,6 +281,8 @@ class DMSRules(BaseRules):
     properties: SheetList[DMSProperty] = Field(alias="Properties")
     views: SheetList[DMSView] = Field(alias="Views")
     containers: SheetList[DMSContainer] | None = Field(None, alias="Containers")
+    reference: "DMSRules | None" = Field(None, alias="Reference")
+    is_reference: bool = False
 
     @model_validator(mode="after")
     def set_default_space_and_version(self) -> "DMSRules":
@@ -423,13 +438,13 @@ class DMSRules(BaseRules):
     @model_validator(mode="after")
     def referenced_views_and_containers_are_existing(self) -> "DMSRules":
         # There two checks are done in the same method to raise all the errors at once.
-        defined_views = {view.view.as_id(self.metadata.space, self.metadata.version) for view in self.views}
+        defined_views = {view.view.as_id(False, self.metadata.space, self.metadata.version) for view in self.views}
 
         errors: list[issues.NeatValidationError] = []
         for prop_no, prop in enumerate(self.properties):
             if (
                 prop.view
-                and (view_id := prop.view.as_id(self.metadata.space, self.metadata.version)) not in defined_views
+                and (view_id := prop.view.as_id(False, self.metadata.space, self.metadata.version)) not in defined_views
             ):
                 errors.append(
                     cognite.neat.rules.issues.spreadsheet.NonExistingViewError(
@@ -489,6 +504,65 @@ class DMSRules(BaseRules):
             raise issues.MultiValueError(errors)
         return self
 
+    @model_serializer(mode="plain", when_used="always")
+    def dms_rules_serialization(self, info: SerializationInfo) -> dict[str, Any]:
+        kwargs = vars(info)
+        default_space = f"{self.metadata.space}:"
+        default_version = f"version={self.metadata.default_view_version}"
+        default_version_wrapped = f"({default_version})"
+        properties = []
+        field_names = (
+            ["Class", "View", "Value Type", "Container"]
+            if info.by_alias
+            else ["class_", "view", "value_type", "container"]
+        )
+        value_type_name = "Value Type" if info.by_alias else "value_type"
+        for prop in self.properties:
+            dumped = prop.model_dump(**kwargs)
+            for field_name in field_names:
+                if value := dumped.get(field_name):
+                    dumped[field_name] = value.removeprefix(default_space).removesuffix(default_version_wrapped)
+            # Value type can have a property as well
+            dumped[value_type_name] = dumped[value_type_name].replace(default_version, "")
+            properties.append(dumped)
+
+        views = []
+        field_names = ["Class", "View", "Implements"] if info.by_alias else ["class_", "view", "implements"]
+        implements_name = "Implements" if info.by_alias else "implements"
+        for view in self.views:
+            dumped = view.model_dump(**kwargs)
+            for field_name in field_names:
+                if value := dumped.get(field_name):
+                    dumped[field_name] = value.removeprefix(default_space).removesuffix(default_version_wrapped)
+            if value := dumped.get(implements_name):
+                dumped[implements_name] = ",".join(
+                    parent.strip().removeprefix(default_space).removesuffix(default_version_wrapped)
+                    for parent in value.split(",")
+                )
+            views.append(dumped)
+
+        containers = []
+        field_names = ["Class", "Container"] if info.by_alias else ["class_", "container"]
+        constraint_name = "Constraint" if info.by_alias else "constraint"
+        for container in self.containers or []:
+            dumped = container.model_dump(**kwargs)
+            for field_name in field_names:
+                if value := dumped.get(field_name):
+                    dumped[field_name] = value.removeprefix(default_space).removesuffix(default_version_wrapped)
+                if value := dumped.get(constraint_name):
+                    dumped[constraint_name] = ",".join(
+                        constraint.strip().removeprefix(default_space).removesuffix(default_version_wrapped)
+                        for constraint in value.split(",")
+                    )
+            containers.append(dumped)
+
+        return {
+            "Metadata" if info.by_alias else "metadata": self.metadata.model_dump(**kwargs),
+            "Properties" if info.by_alias else "properties": properties,
+            "Views" if info.by_alias else "views": views,
+            "Containers" if info.by_alias else "containers": containers,
+        }
+
     def as_schema(
         self, standardize_casing: bool = True, include_pipeline: bool = False, instance_space: str | None = None
     ) -> DMSSchema:
@@ -499,6 +573,22 @@ class DMSRules(BaseRules):
 
     def as_domain_expert_rules(self) -> DomainRules:
         return _DMSRulesConverter(self).as_domain_rules()
+
+    def reference_self(self) -> Self:
+        new_rules = self.copy(deep=True)
+        for prop in new_rules.properties:
+            prop.reference = ReferenceEntity(
+                prefix=prop.view.prefix, suffix=prop.view.suffix, version=prop.view.version, property_=prop.property_
+            )
+        view: DMSView
+        for view in new_rules.views:
+            view.reference = ReferenceEntity(
+                prefix=view.view.prefix, suffix=view.view.suffix, version=view.view.version
+            )
+        container: DMSContainer
+        for container in new_rules.containers or []:
+            container.reference = ReferenceEntity(prefix=container.container.prefix, suffix=container.container.suffix)
+        return new_rules
 
 
 class _DMSExporter:
@@ -537,12 +627,14 @@ class _DMSExporter:
         )
 
         views_not_in_model = {
-            view.view.as_id(default_space, default_version, self.standardize_casing)
+            view.view.as_id(False, default_space, default_version, self.standardize_casing)
             for view in rules.views
             if not view.in_model
         }
         data_model = rules.metadata.as_data_model()
-        data_model.views = [view_id for view_id in views.as_ids() if view_id not in views_not_in_model]
+        data_model.views = sorted(
+            [view_id for view_id in views.as_ids() if view_id not in views_not_in_model], key=lambda v: v.as_tuple()  # type: ignore[union-attr]
+        )
 
         spaces = self._create_spaces(rules.metadata, containers, views, data_model)
 
@@ -596,7 +688,7 @@ class _DMSExporter:
                     # This is not yet supported in the CDF API, a warning has already been issued, here we convert it to
                     # a multi-edge connection.
                     if isinstance(prop.value_type, ViewEntity):
-                        source = prop.value_type.as_id(default_space, default_version, self.standardize_casing)
+                        source = prop.value_type.as_id(False, default_space, default_version, self.standardize_casing)
                     else:
                         raise ValueError(
                             "Direct relation must have a view as value type. "
@@ -617,7 +709,7 @@ class _DMSExporter:
                     extra_args: dict[str, Any] = {}
                     if prop.relation == "direct" and isinstance(prop.value_type, ViewEntity):
                         extra_args["source"] = prop.value_type.as_id(
-                            default_space, default_version, self.standardize_casing
+                            True, default_space, default_version, self.standardize_casing
                         )
                     elif prop.relation == "direct" and not isinstance(prop.value_type, ViewEntity):
                         raise ValueError(
@@ -631,7 +723,7 @@ class _DMSExporter:
                     )
                 elif prop.view and prop.view_property and prop.relation == "multiedge":
                     if isinstance(prop.value_type, ViewEntity):
-                        source = prop.value_type.as_id(default_space, default_version, self.standardize_casing)
+                        source = prop.value_type.as_id(False, default_space, default_version, self.standardize_casing)
                     else:
                         raise ValueError(
                             "Multiedge relation must have a view as value type. "
@@ -647,7 +739,7 @@ class _DMSExporter:
                     )
                 elif prop.view and prop.view_property and prop.relation == "reversedirect":
                     if isinstance(prop.value_type, ViewPropEntity):
-                        source = prop.value_type.as_id(default_space, default_version, self.standardize_casing)
+                        source = prop.value_type.as_id(False, default_space, default_version, self.standardize_casing)
                     else:
                         raise ValueError(
                             "Reverse direct relation must have a view as value type. "
@@ -706,7 +798,7 @@ class _DMSExporter:
         parent_views = {parent for view in views for parent in view.implements or []}
         node_type_flag = False
         for view in views:
-            ref_containers = view.referenced_containers()
+            ref_containers = sorted(view.referenced_containers(), key=lambda c: c.as_tuple())
             has_data = dm.filters.HasData(containers=list(ref_containers)) if ref_containers else None
             node_type = dm.filters.Equals(["node", "type"], {"space": view.space, "externalId": view.external_id})
             if view.as_id() in parent_views:
@@ -809,28 +901,27 @@ class _DMSExporter:
             [container for container in containers if container.as_id() not in container_to_drop]
         )
 
-    @classmethod
     def _gather_properties(
-        cls, rules: DMSRules, default_space: str, default_version: str
+        self, rules: DMSRules, default_space: str, default_version: str
     ) -> tuple[dict[dm.ContainerId, list[DMSProperty]], dict[dm.ViewId, list[DMSProperty]]]:
         container_properties_by_id: dict[dm.ContainerId, list[DMSProperty]] = defaultdict(list)
         view_properties_by_id: dict[dm.ViewId, list[DMSProperty]] = defaultdict(list)
         for prop in rules.properties:
-            view_id = prop.view.as_id(default_space, default_version)
+            view_id = prop.view.as_id(False, default_space, default_version, self.standardize_casing)
             view_properties_by_id[view_id].append(prop)
 
             if prop.container and prop.container_property:
                 if prop.relation == "direct" and prop.is_list:
                     warnings.warn(
                         issues.dms.DirectRelationListWarning(
-                            container_id=prop.container.as_id(default_space),
-                            view_id=prop.view.as_id(default_space, default_version),
+                            container_id=prop.container.as_id(default_space, self.standardize_casing),
+                            view_id=prop.view.as_id(False, default_space, default_version, self.standardize_casing),
                             property=prop.container_property,
                         ),
                         stacklevel=2,
                     )
                     continue
-                container_id = prop.container.as_id(default_space)
+                container_id = prop.container.as_id(default_space, self.standardize_casing)
                 container_properties_by_id[container_id].append(prop)
 
         return container_properties_by_id, view_properties_by_id
@@ -866,16 +957,19 @@ class _DMSRulesConverter:
             updated=dms.updated or updated or datetime.now(),
         )
 
-        classes: list[InformationClass] = [
+        classes = [
             InformationClass(
-                # we do not want version in class as we use URI for the class
+                # we do not want a version in class as we use URI for the class
                 class_=view.class_.as_non_versioned_entity(),
                 description=view.description,
                 parent=[
-                    # we do not want version in class as we use URI for the class
-                    ParentClassEntity(prefix=implented_view.prefix, suffix=implented_view.suffix)
-                    for implented_view in view.implements or []
+                    # we do not want a version in class as we use URI for the class
+                    ParentClassEntity(prefix=implemented_view.prefix, suffix=implemented_view.suffix)
+                    # We only want parents in the same namespace, parent in a different namespace is a reference
+                    for implemented_view in view.implements or []
+                    if implemented_view.prefix == view.class_.prefix
                 ],
+                reference=self._get_class_reference(view),
             )
             for view in self.dms.views
         ]
@@ -901,6 +995,7 @@ class _DMSRulesConverter:
                     description=property_.description,
                     min_count=0 if property_.nullable or property_.nullable is None else 1,
                     max_count=float("inf") if property_.is_list or property_.nullable is None else 1,
+                    reference=self._get_property_reference(property_),
                 )
             )
 
@@ -908,4 +1003,34 @@ class _DMSRulesConverter:
             metadata=metadata,
             properties=SheetList[InformationProperty](data=properties),
             classes=SheetList[InformationClass](data=classes),
+            reference=self.dms.reference and self.dms.reference.as_information_architect_rules(),  # type: ignore[arg-type]
+            is_reference=self.dms.is_reference,
+        )
+
+    @classmethod
+    def _get_class_reference(cls, view: DMSView) -> ReferenceEntity | None:
+        parents_other_namespace = [parent for parent in view.implements or [] if parent.prefix != view.class_.prefix]
+        if len(parents_other_namespace) == 0:
+            return None
+        if len(parents_other_namespace) > 1:
+            warnings.warn(
+                issues.dms.MultipleReferenceWarning(
+                    view_id=view.view.as_id(), implements=[v.as_id() for v in parents_other_namespace]
+                ),
+                stacklevel=2,
+            )
+        other_parent = parents_other_namespace[0]
+
+        return ReferenceEntity(prefix=other_parent.prefix, suffix=other_parent.suffix)
+
+    @classmethod
+    def _get_property_reference(cls, property_: DMSProperty) -> ReferenceEntity | None:
+        has_container_other_namespace = property_.container and property_.container.prefix != property_.class_.prefix
+        if not has_container_other_namespace:
+            return None
+        container = cast(ContainerEntity, property_.container)
+        return ReferenceEntity(
+            prefix=container.prefix,
+            suffix=container.suffix,
+            property_=property_.container_property,
         )

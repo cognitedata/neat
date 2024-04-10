@@ -29,7 +29,9 @@ from ._base import (
     ClassEntity,
     ContainerEntity,
     ParentClassEntity,
+    ReferenceEntity,
     Undefined,
+    Unknown,
     ViewEntity,
     ViewPropEntity,
 )
@@ -194,14 +196,26 @@ PropertyType = Annotated[
 ]
 
 
+def _reference_entity_type_before_validator(value: Any | None = None) -> Any:
+    if not value:
+        return None
+    elif isinstance(value, rdflib.URIRef | ReferenceEntity):
+        return value
+    elif ReferenceEntity.from_raw(value).prefix == Undefined:
+        # case1: then this must be a URIRef!
+        return rdflib.URIRef(str(TypeAdapter(HttpUrl).validate_python(value)))
+    else:
+        # case2: this is a ReferenceEntity
+        return ReferenceEntity.from_raw(value)
+
+
 ReferenceType = Annotated[
-    rdflib.URIRef | None,
-    BeforeValidator(
-        lambda value: (
-            value
-            if not value or (value and isinstance(value, rdflib.URIRef))
-            else rdflib.URIRef(str(TypeAdapter(HttpUrl).validate_python(value)))
-        ),
+    ReferenceEntity | rdflib.URIRef | None,
+    BeforeValidator(_reference_entity_type_before_validator),
+    PlainSerializer(
+        lambda v: v.versioned_id if isinstance(v, ReferenceEntity) else str(v),
+        return_type=str,
+        when_used="unless-none",
     ),
 ]
 
@@ -233,6 +247,10 @@ def _semantic_value_type_before_validator(value: Any) -> Any:
         return value
     elif value in XSD_VALUE_TYPE_MAPPINGS:
         return XSD_VALUE_TYPE_MAPPINGS[value]
+    elif value.lower() in XSD_VALUE_TYPE_MAPPINGS:
+        return XSD_VALUE_TYPE_MAPPINGS[value.lower()]
+    elif value == "#N/A":
+        return ClassEntity(prefix=Undefined, suffix=Unknown)
     else:
         return ClassEntity.from_raw(value)
 
@@ -244,6 +262,17 @@ def _semantic_value_type_serializer(value: Any) -> str:
         return value.suffix
     else:
         return str(value)
+
+
+def _dms_value_type_before_validator(value: Any) -> Any:
+    if isinstance(value, DMSValueType | ViewPropEntity) or not isinstance(value, str):
+        return value
+    elif value in DMS_VALUE_TYPE_MAPPINGS:
+        return DMS_VALUE_TYPE_MAPPINGS[value]
+    elif value.lower() in DMS_VALUE_TYPE_MAPPINGS:
+        return DMS_VALUE_TYPE_MAPPINGS[value.lower()]
+    else:
+        return ViewPropEntity.from_raw(value)
 
 
 SemanticValueType = Annotated[
@@ -258,11 +287,7 @@ SemanticValueType = Annotated[
 
 CdfValueType = Annotated[
     DMSValueType | ViewPropEntity,
-    BeforeValidator(
-        lambda value: DMS_VALUE_TYPE_MAPPINGS[value]
-        if value in DMS_VALUE_TYPE_MAPPINGS
-        else ViewPropEntity.from_raw(value)
-    ),
+    BeforeValidator(_dms_value_type_before_validator),
     PlainSerializer(
         lambda v: v.versioned_id if isinstance(v, ViewPropEntity | ViewEntity) else v.dms()._type,
         return_type=str,

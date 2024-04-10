@@ -1,3 +1,4 @@
+import datetime
 from collections.abc import Iterable
 from typing import Any
 
@@ -9,8 +10,8 @@ from pydantic import ValidationError
 import cognite.neat.rules.issues.spreadsheet
 from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import DMSImporter
-from cognite.neat.rules.models._rules._types import ViewEntity
-from cognite.neat.rules.models._rules.base import SheetList
+from cognite.neat.rules.models._rules._types import DMS_VALUE_TYPE_MAPPINGS, ViewPropEntity
+from cognite.neat.rules.models._rules.base import SchemaCompleteness, SheetList
 from cognite.neat.rules.models._rules.dms_architect_rules import (
     DMSContainer,
     DMSMetadata,
@@ -58,7 +59,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     DMSProperty(
                         class_="WindFarm",
                         property_="WindTurbines",
-                        value_type=ViewEntity(suffix="WindTurbine"),
+                        value_type=ViewPropEntity(suffix="WindTurbine"),
                         relation="multiedge",
                         view="WindFarm",
                         view_property="windTurbines",
@@ -166,6 +167,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             ),
             node_types=dm.NodeApplyList([]),
         ),
+        True,
         id="Two properties, one container, one view",
     )
 
@@ -287,6 +289,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         dms_rules,
         expected_schema,
+        True,
         id="Property with list of direct relations converted to multiedge",
     )
 
@@ -400,6 +403,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         dms_rules,
         expected_schema,
+        True,
         id="View not in model",
     )
 
@@ -614,7 +618,93 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         dms_rules,
         expected_schema,
+        True,
         id="Multiple relations and reverse relations",
+    )
+
+    dms_rules = DMSRules(
+        metadata=DMSMetadata(
+            schema_="complete",
+            space="my_space",
+            external_id="my_data_model",
+            version="1",
+            creator=["Anders"],
+            created="2024-03-17T11:00:00",
+            updated="2024-03-17T11:00:00",
+            default_view_version="1",
+        ),
+        properties=SheetList[DMSProperty](
+            data=[
+                DMSProperty(
+                    class_="generating_unit",
+                    property_="display_name",
+                    value_type="text",
+                    container="generating_unit",
+                    container_property="display_name",
+                    view="generating_unit",
+                    view_property="display_name",
+                )
+            ]
+        ),
+        views=SheetList[DMSView](
+            data=[
+                DMSView(view="generating_unit", class_="generating_unit"),
+            ],
+        ),
+        containers=SheetList[DMSContainer](
+            data=[
+                DMSContainer(container="generating_unit", class_="generating_unit"),
+            ],
+        ),
+    )
+
+    expected_schema = DMSSchema(
+        spaces=dm.SpaceApplyList([dm.SpaceApply(space="my_space")]),
+        data_models=dm.DataModelApplyList(
+            [
+                dm.DataModelApply(
+                    space="my_space",
+                    external_id="my_data_model",
+                    version="1",
+                    description="Creator: Anders",
+                    views=[
+                        dm.ViewId(space="my_space", external_id="generating_unit", version="1"),
+                    ],
+                )
+            ]
+        ),
+        views=dm.ViewApplyList(
+            [
+                dm.ViewApply(
+                    space="my_space",
+                    external_id="generating_unit",
+                    version="1",
+                    properties={
+                        "display_name": dm.MappedPropertyApply(
+                            container=dm.ContainerId("my_space", "generating_unit"),
+                            container_property_identifier="display_name",
+                        ),
+                    },
+                    filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "generating_unit")]),
+                ),
+            ]
+        ),
+        containers=dm.ContainerApplyList(
+            [
+                dm.ContainerApply(
+                    space="my_space",
+                    external_id="generating_unit",
+                    properties={"display_name": dm.ContainerProperty(type=dm.Text(), nullable=True)},
+                ),
+            ]
+        ),
+        node_types=dm.NodeApplyList([]),
+    )
+    yield pytest.param(
+        dms_rules,
+        expected_schema,
+        False,
+        id="No casing standardization",
     )
 
 
@@ -635,7 +725,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                     {
                         "class_": "WindTurbine",
                         "property_": "name",
-                        "value_type": "text",
+                        "value_type": "tEXt",
                         "container": "sp_core:Asset",
                         "container_property": "name",
                         "view": "sp_core:Asset",
@@ -824,7 +914,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                     DMSProperty(
                         class_="Plant",
                         property_="generators",
-                        value_type=ViewEntity(suffix="Generator"),
+                        value_type=ViewPropEntity(suffix="Generator"),
                         relation="multiedge",
                         view="Plant",
                         view_property="generators",
@@ -832,7 +922,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                     DMSProperty(
                         class_="Plant",
                         property_="reservoir",
-                        value_type=ViewEntity(suffix="Reservoir"),
+                        value_type=ViewPropEntity(suffix="Reservoir"),
                         relation="direct",
                         container="Asset",
                         container_property="child",
@@ -1136,6 +1226,8 @@ class TestDMSRules:
     def test_load_valid_rules(self, raw: dict[str, dict[str, Any]], expected_rules: DMSRules) -> None:
         valid_rules = DMSRules.model_validate(raw)
         assert valid_rules.model_dump() == expected_rules.model_dump()
+        # testing case insensitive value types
+        assert valid_rules.properties.data[0].value_type == DMS_VALUE_TYPE_MAPPINGS["text"]
 
     @pytest.mark.parametrize("raw, expected_errors", list(invalid_container_definitions_test_cases()))
     def test_load_inconsistent_container_definitions(
@@ -1181,9 +1273,9 @@ class TestDMSRules:
 
         assert recreated_rules.model_dump() == rules.model_dump()
 
-    @pytest.mark.parametrize("rules, expected_schema", rules_schema_tests_cases())
-    def test_as_schema(self, rules: DMSRules, expected_schema: DMSSchema) -> None:
-        actual_schema = rules.as_schema()
+    @pytest.mark.parametrize("rules, expected_schema, standardize_casing", rules_schema_tests_cases())
+    def test_as_schema(self, rules: DMSRules, expected_schema: DMSSchema, standardize_casing: bool) -> None:
+        actual_schema = rules.as_schema(standardize_casing)
 
         assert actual_schema.spaces.dump() == expected_schema.spaces.dump()
         actual_schema.data_models[0].views = sorted(actual_schema.data_models[0].views, key=lambda v: v.external_id)
@@ -1204,3 +1296,96 @@ class TestDMSRules:
         info_rules = alice_rules.as_information_architect_rules()
 
         assert isinstance(info_rules, InformationRules)
+
+    def test_dump_skip_default_space_and_version(self) -> None:
+        dms_rules = DMSRules(
+            metadata=DMSMetadata(
+                schema_="partial",
+                space="my_space",
+                external_id="my_data_model",
+                version="1",
+                creator=["Anders"],
+                created="2024-03-16",
+                updated="2024-03-16",
+            ),
+            properties=SheetList[DMSProperty](
+                data=[
+                    DMSProperty(
+                        class_="WindFarm",
+                        property_="name",
+                        value_type="text",
+                        container="Asset",
+                        container_property="name",
+                        view="WindFarm",
+                        view_property="name",
+                    ),
+                ]
+            ),
+            views=SheetList[DMSView](
+                data=[DMSView(view="WindFarm", class_="WindFarm", implements=["Sourceable", "Describable"])]
+            ),
+            containers=SheetList[DMSContainer](
+                data=[DMSContainer(container="Asset", class_="Asset", constraint=["Sourceable", "Describable"])]
+            ),
+        )
+        expected_dump = {
+            "metadata": {
+                "role": "DMS Architect",
+                "schema_": SchemaCompleteness.partial,
+                "space": "my_space",
+                "external_id": "my_data_model",
+                "creator": "Anders",
+                "created": datetime.datetime(2024, 3, 16),
+                "updated": datetime.datetime(2024, 3, 16),
+                "version": "1",
+                "default_view_version": "1",
+            },
+            "properties": [
+                {
+                    "class_": "WindFarm",
+                    "property_": "name",
+                    "value_type": "text",
+                    "container": "Asset",
+                    "container_property": "name",
+                    "view": "WindFarm",
+                    "view_property": "name",
+                }
+            ],
+            "views": [{"view": "WindFarm", "class_": "WindFarm", "implements": "Sourceable,Describable"}],
+            "containers": [{"container": "Asset", "class_": "Asset", "constraint": "Sourceable,Describable"}],
+        }
+
+        actual_dump = dms_rules.model_dump(exclude_none=True, exclude_unset=True, exclude_defaults=True)
+
+        assert actual_dump == expected_dump
+
+    def test_olav_as_information(self, olav_dms_rules: DMSRules) -> None:
+        info_rules_copy = olav_dms_rules.copy(deep=True)
+        # In Olav's Rules, the references are set for traceability. We remove it
+        # to test that the references are correctly set in the conversion.
+        for prop in info_rules_copy.properties:
+            prop.reference = None
+        for view in info_rules_copy.views:
+            view.reference = None
+
+        info_rules = olav_dms_rules.as_information_architect_rules()
+
+        assert isinstance(info_rules, InformationRules)
+
+        # Check some samples
+        point = next((cls_ for cls_ in info_rules.classes if cls_.class_.versioned_id == "power_analytics:Point"), None)
+        assert point is not None
+        assert point.reference is not None
+        assert point.reference.versioned_id == "power:Point"
+
+        wind_turbine_name = next(
+            (
+                prop
+                for prop in info_rules.properties
+                if prop.property_ == "name" and prop.class_.versioned_id == "power_analytics:WindTurbine"
+            ),
+            None,
+        )
+        assert wind_turbine_name is not None
+        assert wind_turbine_name.reference is not None
+        assert wind_turbine_name.reference.versioned_id == "power:GeneratingUnit(property=name)"

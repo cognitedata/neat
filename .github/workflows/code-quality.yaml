@@ -25,6 +25,21 @@ jobs:
           poetry install -E all
 
       - name: Linting and static code checks
+        continue-on-error: true
+        id: pre-commit-first-run
+        run: |
+          pre-commit run --all-files
+
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        id: auto-commit-action
+        with:
+          create_branch: false
+          commit_message: Linting and static code checks
+
+      # If the first run failed, run the checks again to ensure that the changes are correct.
+      - name: Linting and static code checks try 2
+        if: steps.pre-commit-first-run.outcome != 'success'
         run: |
           pre-commit run --all-files
 
@@ -62,15 +77,14 @@ jobs:
       - name: Run unit tests
         run: export PYTHONPATH=$PYTHONPATH:$(pwd); poetry run pytest tests/tests_unit
 
-
-      - name: Run integration tests
-        env:
-          CDF_CLUSTER: ${{ vars.CDF_CLUSTER }}
-          CDF_PROJECT: ${{ vars.CDF_PROJECT }}
-          IDP_CLIENT_ID: ${{ vars.IDP_CLIENT_ID }}
-          IDP_CLIENT_SECRET: ${{ secrets.IDP_CLIENT_SECRET }}
-          IDP_TENANT_ID: ${{ secrets.IDP_TENANT_ID }}
-        run: export PYTHONPATH=$PYTHONPATH:$(pwd); poetry run pytest tests/tests_integration
+#      - name: Run integration tests
+#        env:
+#          CDF_CLUSTER: ${{ vars.CDF_CLUSTER }}
+#          CDF_PROJECT: ${{ vars.CDF_PROJECT }}
+#          IDP_CLIENT_ID: ${{ vars.IDP_CLIENT_ID }}
+#          IDP_CLIENT_SECRET: ${{ secrets.IDP_CLIENT_SECRET }}
+#          IDP_TENANT_ID: ${{ secrets.IDP_TENANT_ID }}
+#        run: export PYTHONPATH=$PYTHONPATH:$(pwd); poetry run pytest tests/tests_integration
 
       # needs update of some dep due to new version of ipynb test
       # - name: Run notebook tests
@@ -124,3 +138,44 @@ jobs:
       - name: Build documentation
         run: |
           mkdocs build
+
+
+  coverage:
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.12
+
+      - name: Set up cache
+        uses: actions/cache@v3.3.1
+        with:
+          path: .venv
+          key: venv-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('poetry.lock') }}
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.5.1
+
+      - run: poetry install -E all
+
+      - name: Create test coverage report
+        env:
+          CDF_CLUSTER: ${{ vars.CDF_CLUSTER }}
+          CDF_PROJECT: ${{ vars.CDF_PROJECT }}
+          IDP_CLIENT_ID: ${{ vars.IDP_CLIENT_ID }}
+          IDP_CLIENT_SECRET: ${{ secrets.IDP_CLIENT_SECRET }}
+          IDP_TENANT_ID: ${{ secrets.IDP_TENANT_ID }}
+        run: export PYTHONPATH=$PYTHONPATH:$(pwd); poetry run pytest --cov=cognite/ --cov-config=pyproject.toml --cov-report=xml:coverage.xml tests/
+
+      - name: Push coverage report to PR
+        uses: orgoro/coverage@v3.1
+        with:
+            coverageFile: coverage.xml
+            token: ${{ secrets.GITHUB_TOKEN }}
+            thresholdAll: 0.6

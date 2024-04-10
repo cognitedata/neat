@@ -22,7 +22,7 @@ class YAMLExporter(BaseExporter[str]):
 
     The following formats are available:
 
-    - "single": A single YAML file will containe the entire rules.
+    - "single": A single YAML file will contain the entire rules.
 
     .. note::
 
@@ -47,13 +47,13 @@ class YAMLExporter(BaseExporter[str]):
         self.output = output
         self.output_role = output_role
 
-    def export_to_file(self, filepath: Path, rules: Rules) -> None:
+    def export_to_file(self, rules: Rules, filepath: Path) -> None:
         """Exports transformation rules to YAML/JSON file(s)."""
         if self.files == "single":
             if filepath.suffix != f".{self.output}":
                 warnings.warn(f"File extension is not .{self.output}, adding it to the file name", stacklevel=2)
                 filepath = filepath.with_suffix(f".{self.output}")
-            filepath.write_text(self.export(rules))
+            filepath.write_text(self.export(rules), encoding=self._encoding, newline=self._new_line)
         else:
             raise NotImplementedError(f"Exporting to {self.files} files is not supported")
 
@@ -69,11 +69,10 @@ class YAMLExporter(BaseExporter[str]):
         rules = self._convert_to_output_role(rules, self.output_role)
         # model_dump_json ensures that the output is in JSON format,
         # if we don't do this, we will get Enums and other types that are not serializable to YAML
-        json_output = json.loads(rules.model_dump_json())
-        json_output["metadata"]["role"] = rules.metadata.role.value
+        json_output = rules.model_dump_json()
         if self.output == "json":
-            return json.dumps(json_output, indent=2)
+            return json_output
         elif self.output == "yaml":
-            return yaml.safe_dump(json_output)
+            return yaml.safe_dump(json.loads(json_output))
         else:
             raise ValueError(f"Invalid output: {self.output}. Valid options are {self.format_option}")

@@ -1,8 +1,7 @@
 import warnings
-import zipfile
 from collections.abc import Collection, Iterable
 from pathlib import Path
-from typing import Literal, TypeAlias
+from typing import Literal, TypeAlias, cast
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes._base import CogniteResourceList
@@ -10,7 +9,8 @@ from cognite.client.exceptions import CogniteAPIError
 
 from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.models._rules import InformationRules
-from cognite.neat.rules.models._rules.dms_architect_rules import DMSRules
+from cognite.neat.rules.models._rules.base import ExtensionCategory, SheetList
+from cognite.neat.rules.models._rules.dms_architect_rules import DMSContainer, DMSRules
 from cognite.neat.rules.models._rules.dms_schema import DMSSchema, PipelineSchema
 from cognite.neat.utils.cdf_loaders import (
     ContainerLoader,
@@ -71,7 +71,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
         self.instance_space = instance_space
         self._schema: DMSSchema | None = None
 
-    def export_to_file(self, filepath: Path, rules: Rules) -> None:
+    def export_to_file(self, rules: Rules, filepath: Path) -> None:
         """Export the rules to a file(s).
 
         If the file is a directory, the components will be exported to separate files, otherwise they will be
@@ -88,69 +88,74 @@ class DMSExporter(CDFExporter[DMSSchema]):
 
     def _export_to_directory(self, directory: Path, rules: Rules) -> None:
         schema = self.export(rules)
-        data_models = directory / "data_models"
-        data_models.mkdir(exist_ok=True, parents=True)
-        if self.export_components.intersection({"all", "spaces"}):
-            for space in schema.spaces:
-                (data_models / f"{space.space}.space.yaml").write_text(space.dump_yaml())
-        if self.export_components.intersection({"all", "data_models"}):
-            for model in schema.data_models:
-                (data_models / f"{model.external_id}.datamodel.yaml").write_text(model.dump_yaml())
-        if self.export_components.intersection({"all", "views"}):
-            for view in schema.views:
-                (data_models / f"{view.external_id}.view.yaml").write_text(view.dump_yaml())
-        if self.export_components.intersection({"all", "containers"}):
-            for container in schema.containers:
-                (data_models / f"{container.external_id}.container.yaml").write_text(container.dump_yaml())
-        if isinstance(schema, PipelineSchema):
-            transformations = directory / "transformations"
-            transformations.mkdir(exist_ok=True, parents=True)
-            for transformation in schema.transformations:
-                (transformations / f"{transformation.external_id}.yaml").write_text(transformation.dump_yaml())
-            # The RAW Databases are not written to file. This is because cognite-toolkit expects the RAW databases
-            # to be in the same file as the RAW tables.
-            raw = directory / "raw"
-            raw.mkdir(exist_ok=True, parents=True)
-            for raw_table in schema.raw_tables:
-                (raw / f"{raw_table.name}.yaml").write_text(raw_table.dump_yaml())
+        exclude = self._create_exclude_set()
+        schema.to_directory(directory, exclude=exclude, new_line=self._new_line, encoding=self._encoding)
 
     def _export_to_zip_file(self, filepath: Path, rules: Rules) -> None:
         if filepath.suffix not in {".zip"}:
             warnings.warn("File extension is not .zip, adding it to the file name", stacklevel=2)
             filepath = filepath.with_suffix(".zip")
         schema = self.export(rules)
-        with zipfile.ZipFile(filepath, "w") as zip_ref:
-            if self.export_components.intersection({"all", "spaces"}):
-                for space in schema.spaces:
-                    zip_ref.writestr(f"data_models/{space.space}.space.yaml", space.dump_yaml())
-            if self.export_components.intersection({"all", "data_models"}):
-                for model in schema.data_models:
-                    zip_ref.writestr(f"data_models/{model.external_id}.datamodel.yaml", model.dump_yaml())
-            if self.export_components.intersection({"all", "views"}):
-                for view in schema.views:
-                    zip_ref.writestr(f"data_models/{view.external_id}.view.yaml", view.dump_yaml())
-            if self.export_components.intersection({"all", "containers"}):
-                for container in schema.containers:
-                    zip_ref.writestr(f"data_models/{container.external_id}.container.yaml", container.dump_yaml())
-            if isinstance(schema, PipelineSchema):
-                for transformation in schema.transformations:
-                    zip_ref.writestr(f"transformations/{transformation.external_id}.yaml", transformation.dump_yaml())
-                # The RAW Databases are not written to file. This is because cognite-toolkit expects the RAW databases
-                # to be in the same file as the RAW tables.
-                for raw_table in schema.raw_tables:
-                    zip_ref.writestr(f"raw/{raw_table.name}.yaml", raw_table.dump_yaml())
+        exclude = self._create_exclude_set()
+        schema.to_zip(filepath, exclude=exclude)
+
+    def _create_exclude_set(self):
+        if "all" in self.export_components:
+            exclude = set()
+        else:
+            exclude = {"spaces", "data_models", "views", "containers"} - self.export_components
+        return exclude
 
     def export(self, rules: Rules) -> DMSSchema:
         if isinstance(rules, DMSRules):
-            return rules.as_schema(self.standardize_casing, self.export_pipeline, self.instance_space)
+            dms_rules = rules
         elif isinstance(rules, InformationRules):
-            return rules.as_dms_architect_rules().as_schema(
-                self.standardize_casing, self.export_pipeline, self.instance_space
-            )
+            dms_rules = rules.as_dms_architect_rules()
         else:
             raise ValueError(f"{type(rules).__name__} cannot be exported to DMS")
 
-    def export_to_cdf(self, client: CogniteClient, rules: Rules, dry_run: bool = False) -> Iterable[UploadResult]:
+        is_solution_model = (
+            dms_rules.reference and dms_rules.metadata.external_id != dms_rules.reference.metadata.external_id
+        )
+        is_new_model = dms_rules.reference is None
+        if is_new_model or is_solution_model:
+            return dms_rules.as_schema(self.standardize_casing, self.export_pipeline, self.instance_space)
+
+        # This is an extension of an existing model.
+        reference_rules = cast(DMSRules, dms_rules.reference).copy(deep=True)
+        reference_schema = reference_rules.as_schema(self.standardize_casing, self.export_pipeline)
+
+        # Todo Move this to an appropriate location
+        # Merging Reference with User Rules
+        combined_rules = dms_rules.copy(deep=True)
+        existing_containers = {container.class_ for container in combined_rules.containers or []}
+        if combined_rules.containers is None:
+            combined_rules.containers = SheetList[DMSContainer](data=[])
+        for container in reference_rules.containers or []:
+            if container.class_ not in existing_containers:
+                container.reference = None
+                combined_rules.containers.append(container)
+        existing_views = {view.class_ for view in combined_rules.views}
+        for view in reference_rules.views:
+            if view.class_ not in existing_views:
+                view.reference = None
+                combined_rules.views.append(view)
+        existing_properties = {(property_.class_, property_.property_) for property_ in combined_rules.properties}
+        for property_ in reference_rules.properties:
+            if (property_.class_, property_.property_) not in existing_properties:
+                property_.reference = None
+                combined_rules.properties.append(property_)
+
+        schema = combined_rules.as_schema(self.standardize_casing, self.export_pipeline, self.instance_space)
+
+        if dms_rules.metadata.extension in (ExtensionCategory.addition, ExtensionCategory.reshape):
+            # We do not freeze views as they might be changed, even for addition,
+            # in case, for example, new properties are added. The validation will catch this.
+            schema.frozen_ids.update(set(reference_schema.containers.as_ids()))
+            schema.frozen_ids.update(set(reference_schema.node_types.as_ids()))
+        return schema
+
+    def export_to_cdf(self, rules: Rules, client: CogniteClient, dry_run: bool = False) -> Iterable[UploadResult]:
         schema = self.export(rules)
         to_export: list[tuple[CogniteResourceList, ResourceLoader]] = []
         if self.export_components.intersection({"all", "spaces"}):
@@ -170,10 +175,13 @@ class DMSExporter(CDFExporter[DMSSchema]):
         # are changed. This is a workaround to force the conversion.
         redeploy_data_model = False
 
-        for items, loader in to_export:
-            item_ids = loader.get_ids(items)
+        for all_items, loader in to_export:
+            all_item_ids = loader.get_ids(all_items)
+            skipped = sum(1 for item_id in all_item_ids if item_id in schema.frozen_ids)
+            item_ids = [item_id for item_id in all_item_ids if item_id not in schema.frozen_ids]
             cdf_items = loader.retrieve(item_ids)
             cdf_item_by_id = {loader.get_id(item): item for item in cdf_items}
+            items = [item for item in all_items if loader.get_id(item) in item_ids]
             to_create, to_update, unchanged, to_delete = [], [], [], []
             is_redeploying = loader.resource_name == "data_models" and redeploy_data_model
             for item in items:
@@ -198,7 +206,6 @@ class DMSExporter(CDFExporter[DMSSchema]):
             created = len(to_create)
             failed_created = 0
 
-            skipped = 0
             if self.existing_handling in ["update", "force"]:
                 changed = len(to_update)
                 failed_changed = 0

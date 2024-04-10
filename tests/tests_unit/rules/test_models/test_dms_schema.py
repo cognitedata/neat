@@ -1,13 +1,17 @@
+import warnings
 from collections.abc import Iterable
+from pathlib import Path
 
 import pytest
 from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
+from cognite.client.data_classes import DatabaseWrite, DatabaseWriteList, TransformationWrite, TransformationWriteList
 
 from cognite.neat.rules.issues.dms import (
     ContainerPropertyUsedMultipleTimesError,
-    DirectRelationMissingSourceError,
+    DirectRelationMissingSourceWarning,
     DMSSchemaError,
+    DMSSchemaWarning,
     DuplicatedViewInDataModelError,
     MissingContainerError,
     MissingContainerPropertyError,
@@ -17,9 +21,8 @@ from cognite.neat.rules.issues.dms import (
     MissingSpaceError,
     MissingViewError,
 )
-from cognite.neat.rules.models._rules.dms_schema import (
-    DMSSchema,
-)
+from cognite.neat.rules.models._rules.dms_schema import DMSSchema, PipelineSchema
+from cognite.neat.utils.cdf_loaders.data_classes import RawTableWrite, RawTableWriteList
 
 
 def invalid_schema_test_cases() -> Iterable[ParameterSet]:
@@ -163,7 +166,7 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
                 space="non_existing_space",
                 referred_by=dm.ContainerId("non_existing_space", "my_container"),
             ),
-            DirectRelationMissingSourceError(
+            DirectRelationMissingSourceWarning(
                 view_id=dm.ViewId("my_space", "my_view1", "1"),
                 property="direct",
             ),
@@ -233,11 +236,113 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
     )
 
 
+def valid_schema_test_cases() -> Iterable[ParameterSet]:
+    dms_schema = DMSSchema(
+        spaces=dm.SpaceApplyList([dm.SpaceApply(space="my_space")]),
+        data_models=dm.DataModelApplyList(
+            [
+                dm.DataModelApply(
+                    space="my_space",
+                    external_id="my_data_model",
+                    version="1",
+                    views=[
+                        dm.ViewId("my_space", "my_view1", "1"),
+                        dm.ViewId("my_space", "my_view2", "1"),
+                    ],
+                )
+            ]
+        ),
+        containers=dm.ContainerApplyList(
+            [
+                dm.ContainerApply(
+                    space="my_space",
+                    external_id="my_container",
+                    properties={
+                        "name": dm.ContainerProperty(
+                            type=dm.Text(),
+                        ),
+                        "value": dm.ContainerProperty(
+                            type=dm.Int32(),
+                        ),
+                    },
+                )
+            ]
+        ),
+        views=dm.ViewApplyList(
+            [
+                dm.ViewApply(
+                    space="my_space",
+                    external_id="my_view1",
+                    version="1",
+                    properties={
+                        "name": dm.MappedPropertyApply(dm.ContainerId("my_space", "my_container"), "name"),
+                    },
+                ),
+                dm.ViewApply(
+                    space="my_space",
+                    external_id="my_view2",
+                    version="1",
+                    properties={
+                        "value": dm.MappedPropertyApply(dm.ContainerId("my_space", "my_container"), "value"),
+                    },
+                ),
+            ]
+        ),
+    )
+    yield pytest.param(dms_schema, id="DMS schema")
+
+    pipeline_schema = PipelineSchema(
+        # Serializing to ensure that we are copying the object
+        spaces=dm.SpaceApplyList.load(dms_schema.spaces.dump()),
+        data_models=dm.DataModelApplyList.load(dms_schema.data_models.dump()),
+        containers=dm.ContainerApplyList.load(dms_schema.containers.dump()),
+        views=dm.ViewApplyList.load(dms_schema.views.dump()),
+        transformations=TransformationWriteList(
+            [TransformationWrite(external_id="my_transformation", ignore_null_fields=True, name="My transformation")]
+        ),
+        databases=DatabaseWriteList([DatabaseWrite(name="my_database")]),
+        raw_tables=RawTableWriteList([RawTableWrite(name="my_raw_table", database="my_database")]),
+    )
+    yield pytest.param(pipeline_schema, id="Pipeline schema")
+
+
 class TestDMSSchema:
     @pytest.mark.parametrize(
-        "schema, expected_errors",
+        "schema, expected",
         list(invalid_schema_test_cases()),
     )
-    def test_invalid_schema(self, schema: DMSSchema, expected_errors: list[DMSSchemaError]) -> None:
-        errors = schema.validate()
+    def test_invalid_schema(self, schema: DMSSchema, expected: list[DMSSchemaError | DMSSchemaWarning]) -> None:
+        expected_errors = [error for error in expected if isinstance(error, DMSSchemaError)]
+        expected_warnings = [warning for warning in expected if isinstance(warning, DMSSchemaWarning)]
+        with warnings.catch_warnings(record=True) as warning_logger:
+            errors = schema.validate()
         assert sorted(errors) == sorted(expected_errors)
+        actual_warnings = [warning.message for warning in warning_logger]
+        assert sorted(actual_warnings) == sorted(expected_warnings)
+
+    @pytest.mark.parametrize(
+        "schema",
+        list(valid_schema_test_cases()),
+    )
+    def test_dump_load_schema(self, schema: DMSSchema) -> None:
+        dumped_schema = schema.dump()
+        loaded_schema = PipelineSchema.load(dumped_schema)
+        assert schema.dump() == loaded_schema.dump()
+
+    @pytest.mark.parametrize(
+        "schema",
+        list(valid_schema_test_cases()),
+    )
+    def test_to_and_from_directory(self, schema: DMSSchema, tmp_path: Path) -> None:
+        schema.to_directory(tmp_path)
+        loaded_schema = PipelineSchema.from_directory(tmp_path)
+        assert schema.dump() == loaded_schema.dump()
+
+    @pytest.mark.parametrize(
+        "schema",
+        list(valid_schema_test_cases()),
+    )
+    def test_to_and_from_zip(self, schema: DMSSchema, tmp_path: Path) -> None:
+        schema.to_zip(tmp_path / "schema.zip")
+        loaded_schema = PipelineSchema.from_zip(tmp_path / "schema.zip")
+        assert schema.dump() == loaded_schema.dump()

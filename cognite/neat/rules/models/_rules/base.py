@@ -6,20 +6,24 @@ from __future__ import annotations
 
 import math
 import sys
-from collections.abc import Iterator
+import types
+from abc import abstractmethod
+from collections.abc import Callable, Iterator
 from functools import wraps
 from typing import Any, ClassVar, Generic, TypeAlias, TypeVar
 
 import pandas as pd
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl, constr, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, constr, field_validator, model_serializer, model_validator
 from pydantic.fields import FieldInfo
 
 from cognite.neat.rules.models._rules._types import ClassType
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
+    from typing import Self
 else:
     from backports.strenum import StrEnum
+    from typing_extensions import Self
 
 
 METADATA_VALUE_MAX_LENGTH = 5120
@@ -119,6 +123,12 @@ class SchemaCompleteness(StrEnum):
     extended = "extended"
 
 
+class ExtensionCategory(StrEnum):
+    addition = "addition"
+    reshape = "reshape"
+    rebuild = "rebuild"
+
+
 class RoleTypes(StrEnum):
     domain_expert = "domain expert"
     information_architect = "information architect"
@@ -146,6 +156,48 @@ class RuleModel(BaseModel):
         """Returns a set of mandatory fields for the model."""
         return _get_required_fields(cls, use_alias)
 
+    @classmethod
+    def sheets(cls, by_alias: bool = False) -> list[str]:
+        """Returns a list of sheet names for the model."""
+        return [
+            (field.alias or field_name) if by_alias else field_name
+            for field_name, field in cls.model_fields.items()
+            if field_name != "validators_to_skip"
+        ]
+
+    @classmethod
+    def headers_by_sheet(cls, by_alias: bool = False) -> dict[str, list[str]]:
+        """Returns a list of headers for the model."""
+        headers_by_sheet: dict[str, list[str]] = {}
+        for field_name, field in cls.model_fields.items():
+            if field_name == "validators_to_skip":
+                continue
+            sheet_name = (field.alias or field_name) if by_alias else field_name
+            annotation = field.annotation
+
+            if isinstance(annotation, types.UnionType):
+                annotation = annotation.__args__[0]
+
+            try:
+                if isinstance(annotation, type) and issubclass(annotation, SheetList):
+                    # We know that this is a SheetList, so we can safely access the annotation
+                    # which is the concrete type of the SheetEntity.
+                    model_fields = annotation.model_fields["data"].annotation.__args__[0].model_fields  # type: ignore[union-attr]
+                elif isinstance(annotation, type) and issubclass(annotation, BaseModel):
+                    model_fields = annotation.model_fields
+                else:
+                    model_fields = {}
+            except TypeError:
+                # Python 3.10 raises TypeError: issubclass() arg 1 must be a class
+                # when calling issubclass(annotation, SheetList) with the dict annotation
+                model_fields = {}
+            headers_by_sheet[sheet_name] = [
+                (field.alias or field_name) if by_alias else field_name
+                for field_name, field in model_fields.items()
+                if field_name != "validators_to_skip"
+            ]
+        return headers_by_sheet
+
 
 class URL(BaseModel):
     url: HttpUrl
@@ -171,6 +223,10 @@ class BaseMetadata(RuleModel):
         """Returns a set of mandatory fields for the model."""
         return _get_required_fields(cls, use_alias)
 
+    @model_serializer(mode="wrap")
+    def include_role(self, serializer: Callable) -> dict:
+        return {"role": self.role.value, **serializer(self)}
+
 
 class BaseRules(RuleModel):
     """
@@ -192,6 +248,17 @@ class BaseRules(RuleModel):
     """
 
     metadata: BaseMetadata
+
+    @abstractmethod
+    def reference_self(self) -> Self:
+        """
+        Returns a copy of the rules with reference fields set to itself
+
+        For example, if the rules have a property with a reference field, then
+        the reference field will be set to the property itself. This is used when
+        exporting a reference model.
+        """
+        raise NotImplementedError
 
 
 # An sheet entity is either a class or a property.

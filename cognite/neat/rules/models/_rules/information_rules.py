@@ -5,7 +5,8 @@ from collections import defaultdict
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, field_validator, model_serializer, model_validator
+from pydantic_core.core_schema import SerializationInfo
 from rdflib import Namespace
 
 import cognite.neat.rules.issues.spreadsheet
@@ -25,21 +26,34 @@ from cognite.neat.rules.models.rdfpath import (
 from ._types import (
     ClassEntity,
     ContainerEntity,
+    Entity,
     EntityTypes,
     NamespaceType,
     ParentClassEntity,
     ParentClassType,
     PrefixType,
     PropertyType,
+    ReferenceEntity,
     ReferenceType,
     SemanticValueType,
     StrListType,
     Undefined,
     VersionType,
     ViewEntity,
+    ViewPropEntity,
     XSDValueType,
 )
-from .base import BaseMetadata, MatchType, RoleTypes, RuleModel, SchemaCompleteness, SheetEntity, SheetList
+from ._types._base import Unknown
+from .base import (
+    BaseMetadata,
+    ExtensionCategory,
+    MatchType,
+    RoleTypes,
+    RuleModel,
+    SchemaCompleteness,
+    SheetEntity,
+    SheetList,
+)
 from .domain_rules import DomainRules
 
 if TYPE_CHECKING:
@@ -55,6 +69,7 @@ else:
 class InformationMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.information_architect
     schema_: SchemaCompleteness = Field(alias="schema")
+    extension: ExtensionCategory | None = ExtensionCategory.addition
     prefix: PrefixType
     namespace: NamespaceType
 
@@ -81,6 +96,13 @@ class InformationMetadata(BaseMetadata):
         ),
     )
 
+    @model_validator(mode="after")
+    def extension_none_but_schema_extend(self) -> Self:
+        if self.extension is None:
+            self.extension = ExtensionCategory.addition
+            return self
+        return self
+
 
 class InformationClass(SheetEntity):
     """
@@ -95,7 +117,7 @@ class InformationClass(SheetEntity):
     """
 
     parent: ParentClassType = Field(alias="Parent Class", default=None)
-    reference: ReferenceType = Field(alias="Source", default=None)
+    reference: ReferenceType = Field(alias="Reference", default=None)
     match_type: MatchType | None = Field(alias="Match Type", default=None)
     comment: str | None = Field(alias="Comment", default=None)
 
@@ -210,6 +232,8 @@ class InformationRules(RuleModel):
     properties: SheetList[InformationProperty] = Field(alias="Properties")
     classes: SheetList[InformationClass] = Field(alias="Classes")
     prefixes: dict[str, Namespace] = Field(default_factory=lambda: PREFIXES.copy())
+    reference: "InformationRules | None" = Field(None, alias="Reference")
+    is_reference: bool = False
 
     @field_validator("prefixes", mode="before")
     def parse_str(cls, values: Any) -> Any:
@@ -221,7 +245,7 @@ class InformationRules(RuleModel):
     def update_entities_prefix(self) -> Self:
         # update expected_value_types
         for property_ in self.properties:
-            if property_.value_type.prefix is Undefined:
+            if property_.value_type.prefix is Undefined and property_.value_type.suffix is not Unknown:
                 property_.value_type.prefix = self.metadata.prefix
             if property_.class_.prefix is Undefined:
                 property_.class_.prefix = self.metadata.prefix
@@ -250,6 +274,7 @@ class InformationRules(RuleModel):
                 property_.value_type.versioned_id
                 for property_ in self.properties
                 if property_.type_ == EntityTypes.object_property
+                and not (isinstance(property_.value_type, Entity) and property_.value_type.suffix is Unknown)
             }
             if not referred_classes.issubset(defined_classes) or not referred_types.issubset(defined_classes):
                 missing_classes = referred_classes.difference(defined_classes).union(
@@ -261,7 +286,7 @@ class InformationRules(RuleModel):
 
     @model_validator(mode="after")
     def validate_class_has_properties_or_parent(self) -> Self:
-        defined_classes = {class_.class_ for class_ in self.classes}
+        defined_classes = {class_.class_ for class_ in self.classes if class_.reference is None}
         referred_classes = {property_.class_ for property_ in self.properties}
         has_parent_classes = {class_.class_ for class_ in self.classes if class_.parent}
         missing_classes = defined_classes.difference(referred_classes) - has_parent_classes
@@ -274,11 +299,63 @@ class InformationRules(RuleModel):
             )
         return self
 
+    @model_serializer(mode="plain", when_used="always")
+    def information_rules_serializer(self, info: SerializationInfo) -> dict[str, Any]:
+        kwargs = vars(info)
+        default_prefix = f"{self.metadata.prefix}:" if self.metadata.prefix else ""
+
+        field_names = ["Class", "Value Type"] if info.by_alias else ["class_", "value_type"]
+        properties = []
+        for prop in self.properties:
+            dumped = prop.model_dump(**kwargs)
+            for field_name in field_names:
+                if value := dumped.get(field_name):
+                    dumped[field_name] = value.removeprefix(default_prefix)
+            properties.append(dumped)
+
+        field_names = ["Class"] if info.by_alias else ["class_"]
+        classes = []
+        parent_name = "Parent Class" if info.by_alias else "parent"
+        for cls in self.classes:
+            dumped = cls.model_dump(**kwargs)
+            for field_name in field_names:
+                if value := dumped.get(field_name):
+                    dumped[field_name] = value.removeprefix(default_prefix)
+            if value := dumped.get(parent_name):
+                dumped[parent_name] = ",".join(
+                    constraint.strip().removeprefix(default_prefix) for constraint in value.split(",")
+                )
+            classes.append(dumped)
+
+        return {
+            "Metadata" if info.by_alias else "metadata": self.metadata.model_dump(**kwargs),
+            "Classes" if info.by_alias else "classes": classes,
+            "Properties" if info.by_alias else "properties": properties,
+            "prefixes": {key: str(value) for key, value in self.prefixes.items()},
+        }
+
     def as_domain_rules(self) -> DomainRules:
         return _InformationRulesConverter(self).as_domain_rules()
 
     def as_dms_architect_rules(self) -> "DMSRules":
         return _InformationRulesConverter(self).as_dms_architect_rules()
+
+    def reference_self(self) -> "InformationRules":
+        new_self = self.copy(deep=True)
+        for prop in new_self.properties:
+            prop.reference = ReferenceEntity(
+                prefix=prop.class_.prefix,
+                suffix=prop.class_.suffix,
+                version=prop.class_.version,
+                property_=prop.property_,
+            )
+
+        for cls_ in new_self.classes:
+            cls_.reference = ReferenceEntity(
+                prefix=cls_.class_.prefix, suffix=cls_.class_.suffix, version=cls_.class_.version
+            )
+
+        return new_self
 
 
 class _InformationRulesConverter:
@@ -313,12 +390,9 @@ class _InformationRulesConverter:
         views: list[DMSView] = [
             DMSView(
                 class_=cls_.class_,
-                view=ViewEntity(prefix=cls_.class_.prefix, suffix=cls_.class_.suffix, version=cls_.class_.version),
+                view=ViewPropEntity(prefix=cls_.class_.prefix, suffix=cls_.class_.suffix, version=cls_.class_.version),
                 description=cls_.description,
-                implements=[
-                    ViewEntity(prefix=parent.prefix, suffix=parent.suffix, version=parent.version)
-                    for parent in cls_.parent or []
-                ],
+                implements=self._get_view_implements(cls_, info_metadata),
             )
             for cls_ in self.information.classes
         ]
@@ -327,7 +401,7 @@ class _InformationRulesConverter:
         for class_ in self.information.classes:
             properties: list[DMSProperty] = properties_by_class.get(class_.class_.versioned_id, [])
             if not properties or all(
-                isinstance(prop.value_type, ViewEntity) and prop.relation != "direct" for prop in properties
+                isinstance(prop.value_type, ViewPropEntity) and prop.relation != "direct" for prop in properties
             ):
                 classes_without_properties.add(class_.class_.versioned_id)
 
@@ -359,6 +433,8 @@ class _InformationRulesConverter:
             ),
             views=SheetList[DMSView](data=views),
             containers=SheetList[DMSContainer](data=containers),
+            reference=self.information.reference and self.information.reference.as_dms_architect_rules(),  # type: ignore[arg-type]
+            is_reference=self.information.is_reference,
         )
 
     @classmethod
@@ -371,14 +447,14 @@ class _InformationRulesConverter:
         if isinstance(prop.value_type, XSDValueType):
             value_type = cast(XSDValueType, prop.value_type).dms._type.casefold()  # type: ignore[attr-defined]
         elif isinstance(prop.value_type, ClassEntity):
-            value_type = ViewEntity(
+            value_type = ViewPropEntity(
                 prefix=prop.value_type.prefix, suffix=prop.value_type.suffix, version=prop.value_type.version
             )
         else:
             raise ValueError(f"Unsupported value type: {prop.value_type.type_}")
 
         relation: Literal["direct", "multiedge"] | None = None
-        if isinstance(value_type, ViewEntity):
+        if isinstance(value_type, ViewPropEntity):
             relation = "multiedge" if prop.is_list else "direct"
 
         container: ContainerEntity | None = None
@@ -390,29 +466,24 @@ class _InformationRulesConverter:
             nullable = None
         elif relation == "direct":
             nullable = True
-            container = ContainerEntity(prefix=prop.class_.prefix, suffix=prop.class_.suffix)
-            container_property = prop.property_
+            container, container_property = cls._get_container(prop)
         else:
-            container = ContainerEntity(prefix=prop.class_.prefix, suffix=prop.class_.suffix)
-            container_property = prop.property_
+            container, container_property = cls._get_container(prop)
 
-        try:
-            return DMSProperty(
-                class_=prop.class_,
-                property_=prop.property_,
-                value_type=value_type,
-                nullable=nullable,
-                is_list=is_list,
-                relation=relation,
-                default=prop.default,
-                reference=prop.reference,
-                container=container,
-                container_property=container_property,
-                view=ViewEntity(prefix=prop.class_.prefix, suffix=prop.class_.suffix, version=prop.class_.version),
-                view_property=prop.property_,
-            )
-        except ValueError:
-            raise
+        return DMSProperty(
+            class_=prop.class_,
+            property_=prop.property_,
+            value_type=value_type,
+            nullable=nullable,
+            is_list=is_list,
+            relation=relation,
+            default=prop.default,
+            reference=prop.reference,
+            container=container,
+            container_property=container_property,
+            view=ViewPropEntity(prefix=prop.class_.prefix, suffix=prop.class_.suffix, version=prop.class_.version),
+            view_property=prop.property_,
+        )
 
     @classmethod
     def _to_space(cls, prefix: str) -> str:
@@ -424,3 +495,31 @@ class _InformationRulesConverter:
         if prefix[-1] == "_":
             prefix = f"{prefix[:-1]}1"
         return prefix
+
+    @classmethod
+    def _get_container(cls, prop: InformationProperty) -> tuple[ContainerEntity, str]:
+        if isinstance(prop.reference, ReferenceEntity):
+            return (
+                ContainerEntity(prefix=prop.reference.prefix, suffix=prop.reference.suffix),
+                prop.reference.property_ or prop.property_,
+            )
+        else:
+            return ContainerEntity(prefix=prop.class_.prefix, suffix=prop.class_.suffix), prop.property_
+
+    @classmethod
+    def _get_view_implements(cls, cls_: InformationClass, metadata: InformationMetadata) -> list[ViewEntity]:
+        if isinstance(cls_.reference, ReferenceEntity) and cls_.reference.prefix != metadata.prefix:
+            # We use the reference for implements if it is in a different namespace
+            implements = [
+                ViewEntity(prefix=cls_.reference.prefix, suffix=cls_.reference.suffix, version=cls_.reference.version)
+            ]
+        else:
+            implements = []
+
+        implements.extend(
+            [
+                ViewEntity(prefix=parent.prefix, suffix=parent.suffix, version=parent.version)
+                for parent in cls_.parent or []
+            ]
+        )
+        return implements

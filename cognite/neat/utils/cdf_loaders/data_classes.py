@@ -20,6 +20,9 @@ class RawTableID:
     table: str
     database: str
 
+    def as_tuple(self) -> tuple[str, str]:
+        return self.database, self.table
+
 
 class RawTableCore(WriteableCogniteResource["RawTableWrite"], ABC):
     """A NoSQL database table to store customer data

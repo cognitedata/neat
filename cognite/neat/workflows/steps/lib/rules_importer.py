@@ -116,6 +116,13 @@ class DMSToRules(Step):
             label="For what role Rules are intended?",
             options=["infer", *RoleTypes.__members__.keys()],
         ),
+        Configurable(
+            name="Reference",
+            value="false",
+            label="Whether the imported rules are a reference model or not. This is "
+            "used when you want to extend an existing model and this is the model that is being extended from.",
+            options=["true", "false"],
+        ),
     ]
 
     def run(self, cdf_client: CogniteClient) -> (FlowMessage, MultiRuleData):  # type: ignore[syntax, override]
@@ -135,6 +142,8 @@ class DMSToRules(Step):
             )
             return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
 
+        is_reference = self.configs.get("Reference", "false") == "true"
+
         dms_importer = importers.DMSImporter.from_data_model_id(cdf_client, datamodel_entity.as_id())
 
         # if role is None, it will be inferred from the rules file
@@ -143,7 +152,7 @@ class DMSToRules(Step):
         if role != "infer" and role is not None:
             role_enum = RoleTypes[role]
 
-        rules, issues = dms_importer.to_rules(role=role_enum, errors="continue")
+        rules, issues = dms_importer.to_rules(role=role_enum, errors="continue", is_reference=is_reference)
 
         if rules is None:
             output_dir = self.data_store_path / Path("staging")

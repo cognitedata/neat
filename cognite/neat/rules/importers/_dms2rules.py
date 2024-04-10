@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Literal, cast, overload
 
 from cognite.client import CogniteClient
@@ -6,12 +7,15 @@ from cognite.client.data_classes.data_modeling import DataModelIdentifier
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex, InvertedIndex
 from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 
+from cognite.neat.rules import issues
 from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models._rules import DMSRules, DMSSchema, RoleTypes
 from cognite.neat.rules.models._rules._types import (
     ClassEntity,
     ContainerEntity,
     DMSValueType,
+    Undefined,
+    Unknown,
     ViewEntity,
     ViewPropEntity,
 )
@@ -34,27 +38,42 @@ class DMSImporter(BaseImporter):
     def from_data_model_id(cls, client: CogniteClient, data_model_id: DataModelIdentifier) -> "DMSImporter":
         return cls(DMSSchema.from_model_id(client, data_model_id))
 
+    @classmethod
+    def from_directory(cls, directory: str | Path) -> "DMSImporter":
+        return cls(DMSSchema.from_directory(directory))
+
+    @classmethod
+    def from_zip_file(cls, zip_file: str | Path) -> "DMSImporter":
+        if Path(zip_file).suffix != ".zip":
+            raise ValueError("File extension is not .zip")
+        return cls(DMSSchema.from_zip(zip_file))
+
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules:
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None, is_reference: bool = False) -> Rules:
         ...
 
     @overload
     def to_rules(
-        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
+        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None, is_reference: bool = False
     ) -> tuple[Rules | None, IssueList]:
         ...
 
     def to_rules(
-        self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
+        self,
+        errors: Literal["raise", "continue"] = "continue",
+        role: RoleTypes | None = None,
+        is_reference: bool = False,
     ) -> tuple[Rules | None, IssueList] | Rules:
         if role is RoleTypes.domain_expert:
             raise ValueError(f"Role {role} is not supported for DMSImporter")
+        issue_list = IssueList()
         data_model = self.schema.data_models[0]
 
         container_by_id = {container.as_id(): container for container in self.schema.containers}
 
         properties = SheetList[DMSProperty]()
         for view in self.schema.views:
+            class_entity = ClassEntity(prefix=view.space, suffix=view.external_id, version=view.version)
             for prop_id, prop in (view.properties or {}).items():
                 if isinstance(prop, dm.MappedPropertyApply):
                     if prop.container not in container_by_id:
@@ -89,11 +108,15 @@ class DMSImporter(BaseImporter):
                     if isinstance(container_prop.type, dm.DirectRelation):
                         direct_value_type: str | ViewEntity | DMSValueType
                         if prop.source is None:
-                            direct_value_type = "UNKNOWN"
+                            issue_list.append(
+                                issues.importing.UnknownValueTypeWarning(class_entity.versioned_id, prop_id)
+                            )
+                            direct_value_type = ViewPropEntity(prefix=Undefined, suffix=Unknown)
                         else:
                             direct_value_type = ViewPropEntity.from_id(prop.source)
+
                         dms_property = DMSProperty(
-                            class_=ClassEntity(prefix=view.space, suffix=view.external_id, version=view.version),
+                            class_=class_entity,
                             property_=prop_id,
                             description=prop.description,
                             value_type=cast(ViewPropEntity | DMSValueType, direct_value_type),
@@ -144,13 +167,18 @@ class DMSImporter(BaseImporter):
 
                 properties.append(dms_property)
 
+        data_model_view_ids: set[dm.ViewId] = {
+            view.as_id() if isinstance(view, dm.View | dm.ViewApply) else view for view in data_model.views or []
+        }
+
         dms_rules = DMSRules(
             metadata=DMSMetadata.from_data_model(data_model),
             properties=properties,
             containers=SheetList[DMSContainer](
                 data=[DMSContainer.from_container(container) for container in self.schema.containers]
             ),
-            views=SheetList[DMSView](data=[DMSView.from_view(view) for view in self.schema.views]),
+            views=SheetList[DMSView](data=[DMSView.from_view(view, data_model_view_ids) for view in self.schema.views]),
+            is_reference=is_reference,
         )
         output_rules: Rules
         if role is RoleTypes.information_architect:
@@ -160,4 +188,4 @@ class DMSImporter(BaseImporter):
         if errors == "raise":
             return output_rules
         else:
-            return output_rules, IssueList()
+            return output_rules, issue_list

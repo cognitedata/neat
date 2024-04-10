@@ -32,7 +32,7 @@ class SpreadsheetRead:
 
 
 @overload
-def read_spreadsheet(
+def read_individual_sheet(
     excel_file: pd.ExcelFile,
     sheet_name: str,
     return_read_info: Literal[True],
@@ -42,7 +42,7 @@ def read_spreadsheet(
 
 
 @overload
-def read_spreadsheet(
+def read_individual_sheet(
     excel_file: pd.ExcelFile,
     sheet_name: str,
     return_read_info: Literal[False] = False,
@@ -51,7 +51,7 @@ def read_spreadsheet(
     ...
 
 
-def read_spreadsheet(
+def read_individual_sheet(
     excel_file: pd.ExcelFile,
     sheet_name: str,
     return_read_info: bool = False,
@@ -67,9 +67,13 @@ def read_spreadsheet(
     is_na = raw.isnull().all(axis=1)
     empty_rows = is_na[is_na].index.tolist()
 
-    output = raw.dropna(axis=0, how="all").replace(float("nan"), None).to_dict(orient="records")
+    raw.dropna(axis=0, how="all", inplace=True)
+    if "Value Type" in raw.columns:
+        # Special handling for Value Type column, #N/A is treated specially by NEAT it means Unknown
+        raw["Value Type"] = raw["Value Type"].replace(float("nan"), "#N/A")
+    output = raw.replace(float("nan"), None).to_dict(orient="records")
     if return_read_info:
-        return output, SpreadsheetRead(header_row=skiprows + 1, empty_rows=empty_rows, is_one_indexed=True)
+        return output, SpreadsheetRead(header_row=skiprows, empty_rows=empty_rows, is_one_indexed=True)
     return output
 
 

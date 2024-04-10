@@ -83,6 +83,62 @@ def test_raise_error10(transformation_rules):
         _ = DMSSchemaComponents.from_rules(rules=transformation_rules)
 
 
+def test_expected_value_type_cdf_resources():
+    metadata = Metadata(
+        name="Dummy Data Model",
+        description="A description",
+        version="0.1",
+        creator="Cognite",
+        created=datetime.utcnow(),
+        namespace=Namespace("http://purl.org/cognite/neat#"),
+        prefix="neat",
+    )
+    classes = {
+        "DummyClass": Class(class_id="DummyClass", description="A description", parent_class="mega:DummyClass"),
+        "EmptyClass": Class(class_id="EmptyClass"),
+    }
+    properties = {
+        "dummyTimeseries": Property(
+            class_id="DummyClass",
+            property_id="dummyTimeseries",
+            expected_value_type="timeseries",
+            max_count=1,
+        ),
+        "dummyFile": Property(
+            class_id="DummyClass",
+            property_id="dummyFile",
+            expected_value_type="file",
+            max_count=1,
+        ),
+        "dummySequence": Property(
+            class_id="DummyClass",
+            property_id="dummySequence",
+            expected_value_type="sequence",
+            max_count=1,
+        ),
+        "dummyJson": Property(
+            class_id="DummyClass",
+            property_id="dummyJson",
+            expected_value_type="json",
+            max_count=1,
+        ),
+    }
+
+    # Act
+    rules = Rules(metadata=metadata, classes=classes, properties=properties, prefixes={}, instances=[])
+    dms_schema = DMSSchemaComponents.from_rules(rules=rules)
+
+    assert (
+        type(dms_schema.containers["neat:DummyClass"].properties["dummyTimeseries"].type).__name__
+        == "TimeSeriesReference"
+    )
+    assert type(dms_schema.containers["neat:DummyClass"].properties["dummyFile"].type).__name__ == "FileReference"
+    assert (
+        type(dms_schema.containers["neat:DummyClass"].properties["dummySequence"].type).__name__ == "SequenceReference"
+    )
+    assert type(dms_schema.containers["neat:DummyClass"].properties["dummyJson"].type).__name__ == "Json"
+
+
 def test_raise_container_error():
     metadata = Metadata(
         name="Dummy Data Model",

@@ -15,6 +15,76 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.70.2] - 03-04-24
+### Fixed
+- Bug when exporting an `addition` to of a ruleset in  `DMSExporter` when using the method `.export_to_cdf`
+### Changed
+- Updated the `DMSExporter` to sort views in data model by (`space`, `external_id`).
+
+## [0.70.1] - 03-04-24
+### Added
+- The `DMSExporter` now supports deploying an `addition` extension of a ruleset.
+
+## [0.70.0] - 09-04-24
+### Added
+- Added `/api/core/convert`
+- Enabled OWL importer to produce DMS rules
+
+
+## [0.69.3] - 03-04-24
+### Fixed
+- Validation of `InformationRules` gives a warning if a reference class is used. This is now fixed.
+- Validation of `InformationRules` returns an error if a importing a value type `Unknown`. This is now fixed.
+
+## [0.69.2] - 03-04-24
+### Fixed
+- Fixed issue with `DMSImporter` when importing data models with direct relations without `source` set. This would
+  cause a validation issue. This is now fixed.
+
+## [0.69.1] - 03-04-24
+### Fixed
+- Fixed issue with `DMSImporter` when importing data models with data models that reference views outside the data model.
+  This is now fixed.
+
+## [0.69.0] - 03-04-24
+### Added
+- Experimental support for working with a reference model in the Rules.
+
+### Fixed
+- When using `DMSExporter` with `standardize_casing=False`, the `DMSExporter` would fail to export containers and
+  views. This is now fixed.
+
+### Changed
+- When using any exporter writing to file, the default new line character and encoding of the OS was used. This is now
+  changed to always use `utf-8` encoding and `'\n'` as the new line character. This is for working with **NEAT** in,
+  for example, git-history, across multiple users with different OSes.
+- In the `DMSExporter`, setting `existing_handling=force` will now also force the creation of `Containers` in addition
+  to `Views`.
+
+## [0.68.9] - 03-04-24
+### Added
+- Helper method `from_directory` and `from_zip_file` to `DMSExporter` to load DMS schema from directory or zip file.
+  These methods are the complement of the `export_to_file()` method in `DMSExporter`.
+
+## [0.68.8] - 25-03-24
+### Fixed
+- Remove harsh regex on Expected Value Types in Rules v1 DMS exporter
+
+
+## [0.68.7] - 25-03-24
+### Improved
+- Input for DmsArchitect DMS value types are now case insensitive.
+
+
+## [0.68.6] - 25-03-24
+### Improved
+- Input for InformationArchitect XSD value types are now case insensitive.
+
+
+## [0.68.5] - 22-03-24
+### Improved
+- `ExcelExporter` and `YAMLExporter` now skips the default spaces and version when exporting rules.
+
 ## [0.68.4] - 22-03-24
 ### Fixed
 - remove_namespace missed check weather namespace is of actual HTTP type

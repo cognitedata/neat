@@ -90,7 +90,7 @@ _DATA_TYPES: list[dict] = [
     # CDF specific types, not in XSD
     {"name": "timeseries", "python": TimeSeriesReference, "GraphQL": "TimeSeries", "dms": TimeSeriesReference},
     {"name": "file", "python": FileReference, "GraphQL": "File", "dms": FileReference},
-    {"name": "sequence", "python": SequenceReference, "GraphQL": "Sequence", "dms": TimeSeriesReference},
+    {"name": "sequence", "python": SequenceReference, "GraphQL": "Sequence", "dms": SequenceReference},
     {"name": "json", "python": Json, "GraphQL": "Json", "dms": Json},
 ]
 

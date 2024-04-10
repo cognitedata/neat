@@ -1,5 +1,4 @@
-import re
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from graphlib import TopologicalSorter
 from typing import Any, Literal, cast
 
@@ -50,6 +49,27 @@ class DataModelingLoader(
     def sort_by_dependencies(self, items: list[T_WriteClass]) -> list[T_WriteClass]:
         return items
 
+    def _create_force(
+        self,
+        items: Sequence[T_WriteClass],
+        tried_force_deploy: set[T_ID],
+        create_method: Callable[[Sequence[T_WriteClass]], T_WritableCogniteResourceList],
+    ) -> T_WritableCogniteResourceList:
+        try:
+            return create_method(items)
+        except CogniteAPIError as e:
+            failed_items = {failed.as_id() for failed in e.failed if hasattr(failed, "as_id")}
+            to_redeploy = [
+                item for item in items if item.as_id() in failed_items and item.as_id() not in tried_force_deploy  # type: ignore[attr-defined]
+            ]
+            if not to_redeploy:
+                # Avoid infinite loop
+                raise e
+            ids = [item.as_id() for item in to_redeploy]  # type: ignore[attr-defined]
+            tried_force_deploy.update(ids)
+            self.delete(ids)
+            return self._create_force(to_redeploy, tried_force_deploy, create_method)
+
 
 class SpaceLoader(DataModelingLoader[str, SpaceApply, Space, SpaceApplyList, SpaceList]):
     resource_name = "spaces"
@@ -75,28 +95,20 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
     resource_name = "views"
 
     def __init__(self, client: CogniteClient, existing_handling: Literal["fail", "skip", "update", "force"] = "fail"):
-        self.client = client
+        super().__init__(client)
         self.existing_handling = existing_handling
-        self._interfaces_by_id: dict[ViewId, View] = {}
+        self._cache_view_by_id: dict[ViewId, View] = {}
+        self._tried_force_deploy: set[ViewId] = set()
 
     @classmethod
     def get_id(cls, item: View | ViewApply) -> ViewId:
         return item.as_id()
 
     def create(self, items: Sequence[ViewApply]) -> ViewList:
-        try:
+        if self.existing_handling == "force":
+            return self._create_force(items, self._tried_force_deploy, self.client.data_modeling.views.apply)
+        else:
             return self.client.data_modeling.views.apply(items)
-        except CogniteAPIError as e:
-            if self.existing_handling == "force" and e.message.startswith("Cannot update view"):
-                res = re.search(r"(?<=\')(.*?)(?=\')", e.message)
-                if res is None or ":" not in res.group(1) or "/" not in res.group(1):
-                    raise e
-                view_id_str = res.group(1)
-                space, external_id_version = view_id_str.split(":")
-                external_id, version = external_id_version.split("/")
-                self.delete([ViewId(space, external_id, version)])
-                return self.create(items)
-            raise e
 
     def retrieve(self, ids: SequenceNotStr[ViewId]) -> ViewList:
         return self.client.data_modeling.views.retrieve(cast(Sequence, ids))
@@ -112,7 +124,7 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
         if view.properties:
             # All read version of views have all the properties of their parent views.
             # We need to remove these properties to compare with the local view.
-            parents = self._retrieve_view_ancestors(view.implements or [], self._interfaces_by_id)
+            parents = self._retrieve_view_ancestors(view.implements or [], self._cache_view_by_id)
             for parent in parents:
                 for prop_name in parent.properties.keys():
                     dumped["properties"].pop(prop_name, None)
@@ -138,6 +150,9 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
     def as_write(self, view: View) -> ViewApply:
         return ViewApply.load(self._as_write_raw(view))
 
+    def retrieve_all_parents(self, views: list[ViewId]) -> list[View]:
+        return self._retrieve_view_ancestors(views, self._cache_view_by_id)
+
     def _retrieve_view_ancestors(self, parents: list[ViewId], cache: dict[ViewId, View]) -> list[View]:
         """Retrieves all ancestors of a view.
 
@@ -148,22 +163,26 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
             parents: The parents of the view to retrieve all ancestors for
             cache: The cache to store the views in
         """
-        parent_ids = parents
+        parent_ids = parents.copy()
         found: list[View] = []
+        found_ids: set[ViewId] = set()
         while parent_ids:
-            to_lookup = []
+            to_lookup: set[ViewId] = set()
             grand_parent_ids = []
             for parent in parent_ids:
-                if parent in cache:
+                if parent in found_ids:
+                    continue
+                elif parent in cache:
                     found.append(cache[parent])
                     grand_parent_ids.extend(cache[parent].implements or [])
                 else:
-                    to_lookup.append(parent)
+                    to_lookup.add(parent)
 
             if to_lookup:
-                looked_up = self.client.data_modeling.views.retrieve(to_lookup)
+                looked_up = self.client.data_modeling.views.retrieve(list(to_lookup))
                 cache.update({view.as_id(): view for view in looked_up})
                 found.extend(looked_up)
+                found_ids.update({view.as_id() for view in looked_up})
                 for view in looked_up:
                     grand_parent_ids.extend(view.implements or [])
 
@@ -173,6 +192,11 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
 
 class ContainerLoader(DataModelingLoader[ContainerId, ContainerApply, Container, ContainerApplyList, ContainerList]):
     resource_name = "containers"
+
+    def __init__(self, client: CogniteClient, existing_handling: Literal["fail", "skip", "update", "force"] = "fail"):
+        super().__init__(client)
+        self.existing_handling = existing_handling
+        self._tried_force_deploy: set[ContainerId] = set()
 
     @classmethod
     def get_id(cls, item: Container | ContainerApply) -> ContainerId:
@@ -193,7 +217,10 @@ class ContainerLoader(DataModelingLoader[ContainerId, ContainerApply, Container,
         ]
 
     def create(self, items: Sequence[ContainerApply]) -> ContainerList:
-        return self.client.data_modeling.containers.apply(items)
+        if self.existing_handling == "force":
+            return self._create_force(items, self._tried_force_deploy, self.client.data_modeling.containers.apply)
+        else:
+            return self.client.data_modeling.containers.apply(items)
 
     def retrieve(self, ids: SequenceNotStr[ContainerId]) -> ContainerList:
         return self.client.data_modeling.containers.retrieve(cast(Sequence, ids))

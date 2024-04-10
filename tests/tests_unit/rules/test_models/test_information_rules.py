@@ -3,10 +3,17 @@ from typing import Any
 
 import pandas as pd
 import pytest
+from cognite.client import data_modeling as dm
 
 from cognite.neat.rules.models._rules import DMSRules
-from cognite.neat.rules.models._rules.information_rules import InformationRules, _InformationRulesConverter
-from cognite.neat.utils.spreadsheet import read_spreadsheet
+from cognite.neat.rules.models._rules._types import XSD_VALUE_TYPE_MAPPINGS, XSDValueType
+from cognite.neat.rules.models._rules.base import SheetList
+from cognite.neat.rules.models._rules.information_rules import (
+    InformationClass,
+    InformationRules,
+    _InformationRulesConverter,
+)
+from cognite.neat.utils.spreadsheet import read_individual_sheet
 from tests.config import DOC_RULES
 
 
@@ -16,9 +23,55 @@ def david_spreadsheet() -> dict[str, dict[str, Any]]:
     excel_file = pd.ExcelFile(filepath)
     return {
         "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),
-        "Properties": read_spreadsheet(excel_file, "Properties", expected_headers=["Property"]),
-        "Classes": read_spreadsheet(excel_file, "Classes", expected_headers=["Class"]),
+        "Properties": read_individual_sheet(excel_file, "Properties", expected_headers=["Property"]),
+        "Classes": read_individual_sheet(excel_file, "Classes", expected_headers=["Class"]),
     }
+
+
+def case_insensitive_value_types():
+    yield pytest.param(
+        {
+            "Metadata": {
+                "role": "information architect",
+                "schema": "complete",
+                "creator": "Jon, Emma, David",
+                "namespace": "http://purl.org/cognite/power2consumer",
+                "prefix": "power",
+                "created": datetime(2024, 2, 9, 0, 0),
+                "updated": datetime(2024, 2, 9, 0, 0),
+                "version": "0.1.0",
+                "title": "Power to Consumer Data Model",
+                "license": "CC-BY 4.0",
+                "rights": "Free for use",
+            },
+            "Classes": [
+                {
+                    "Class": "GeneratingUnit",
+                    "Description": None,
+                    "Parent Class": None,
+                    "Source": "http://www.iec.ch/TC57/CIM#GeneratingUnit",
+                    "Match": "exact",
+                }
+            ],
+            "Properties": [
+                {
+                    "Class": "GeneratingUnit",
+                    "Property": "name",
+                    "Description": None,
+                    "Value Type": "StrING",
+                    "Min Count": 1,
+                    "Max Count": 1.0,
+                    "Default": None,
+                    "Source": None,
+                    "MatchType": None,
+                    "Rule Type": None,
+                    "Rule": None,
+                }
+            ],
+        },
+        (XSD_VALUE_TYPE_MAPPINGS["string"]),
+        id="case_insensitive",
+    )
 
 
 def invalid_domain_rules_cases():
@@ -153,11 +206,61 @@ class TestInformationRules:
         errors = e.value.errors()
         assert errors[0]["msg"] == expected_exception
 
+    @pytest.mark.parametrize("rules, expected_exception", list(case_insensitive_value_types()))
+    def test_case_insensitivity(self, rules: dict[str, dict[str, Any]], expected_exception: XSDValueType) -> None:
+        assert InformationRules.model_validate(rules).properties.data[0].value_type == expected_exception
+
     def test_david_as_dms(self, david_spreadsheet: dict[str, dict[str, Any]]) -> None:
         david_rules = InformationRules.model_validate(david_spreadsheet)
         dms_rules = david_rules.as_dms_architect_rules()
 
         assert isinstance(dms_rules, DMSRules)
+
+    def test_olav_as_dms(self, olav_rules: InformationRules) -> None:
+        olav_rules_copy = olav_rules.copy(deep=True)
+        # Todo: Remove this line when Olav's Information .xlsx file is available
+        new_classes = SheetList[InformationClass](data=[])
+        for cls_ in olav_rules_copy.classes:
+            if cls_.class_.versioned_id == "power_analytics:GeoLocation":
+                continue
+            elif cls_.class_.versioned_id in ("power_analytics:Point", "power_analytics:Polygon"):
+                cls_.parent = None
+            new_classes.append(cls_)
+        olav_rules_copy.classes = new_classes
+        ## End of temporary code
+
+        dms_rules = olav_rules_copy.as_dms_architect_rules()
+
+        assert isinstance(dms_rules, DMSRules)
+        schema = dms_rules.as_schema()
+
+        wind_turbine = next((view for view in schema.views if view.external_id == "WindTurbine"), None)
+        assert wind_turbine is not None
+        expected_containers = {
+            dm.ContainerId("power", "GeneratingUnit"),
+            dm.ContainerId("power", "WindTurbine"),
+            dm.ContainerId("power_analytics", "WindTurbine"),
+        }
+        missing = expected_containers - wind_turbine.referenced_containers()
+        assert not missing, f"Missing containers: {missing}"
+        extra = wind_turbine.referenced_containers() - expected_containers
+        assert not extra, f"Extra containers: {extra}"
+
+        wind_farm = next((view for view in schema.views if view.external_id == "WindFarm"), None)
+        assert wind_farm is not None
+        expected_containers = {dm.ContainerId("power", "EnergyArea"), dm.ContainerId("power_analytics", "WindFarm")}
+        missing = expected_containers - wind_farm.referenced_containers()
+        assert not missing, f"Missing containers: {missing}"
+        extra = wind_farm.referenced_containers() - expected_containers
+        assert not extra, f"Extra containers: {extra}"
+
+        point = next((view for view in schema.views if view.external_id == "Point"), None)
+        assert point is not None
+        assert point.implements == [dm.ViewId("power", "Point", "0.1.0")]
+
+        polygon = next((view for view in schema.views if view.external_id == "Polygon"), None)
+        assert polygon is not None
+        assert polygon.implements == [dm.ViewId("power", "Polygon", "0.1.0")]
 
 
 class TestInformationRulesConverter:

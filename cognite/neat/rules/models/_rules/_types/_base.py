@@ -1,11 +1,19 @@
 import re
 import sys
 from functools import total_ordering
-from typing import Any, ClassVar, cast
+from typing import Any, ClassVar, Literal, cast, overload
 
 from cognite.client.data_classes.data_modeling import ContainerId, DataModelId, PropertyId, ViewId
 from pydantic import BaseModel
 
+from cognite.neat.rules.models.rdfpath import (
+    SINGLE_PROPERTY_REGEX_COMPILED,
+    AllReferences,
+    RDFPath,
+    SingleProperty,
+    TransformationRuleType,
+    parse_rule,
+)
 from cognite.neat.utils.text import to_pascal
 
 if sys.version_info >= (3, 11):
@@ -32,6 +40,7 @@ class EntityTypes(StrEnum):
     dms_value_type = "dms_value_type"
     view = "view"
     view_prop = "view_prop"
+    reference_entity = "reference_entity"
     container = "container"
     datamodel = "datamodel"
     undefined = "undefined"
@@ -80,6 +89,7 @@ VERSION_COMPLIANCE_REGEX = r"^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$"
 
 
 Undefined = type(object())
+Unknown = type(object())
 
 
 # mypy does not like the sentinel value, and it is not possible to ignore only the line with it below.
@@ -91,7 +101,7 @@ class Entity(BaseModel, arbitrary_types_allowed=True):
 
     type_: ClassVar[EntityTypes] = EntityTypes.undefined
     prefix: str | Undefined = Undefined
-    suffix: str
+    suffix: str | Unknown
     version: str | None = None
     name: str | None = None
     description: str | None = None
@@ -114,7 +124,9 @@ class Entity(BaseModel, arbitrary_types_allowed=True):
 
     @property
     def id(self) -> str:
-        if self.prefix is Undefined:
+        if self.suffix is Unknown:
+            return "#N/A"
+        elif self.prefix is Undefined:
             return self.suffix
         else:
             return f"{self.prefix}:{self.suffix}"
@@ -144,7 +156,9 @@ class Entity(BaseModel, arbitrary_types_allowed=True):
 
     @classmethod
     def from_string(cls, entity_string: str, base_prefix: str | None = None) -> Self:
-        if result := VERSIONED_ENTITY_REGEX_COMPILED.match(entity_string):
+        if entity_string == "#N/A":
+            return cls(prefix=Undefined, suffix=Unknown)
+        elif result := VERSIONED_ENTITY_REGEX_COMPILED.match(entity_string):
             return cls(
                 prefix=result.group("prefix"),
                 suffix=result.group("suffix"),
@@ -205,17 +219,45 @@ class ViewEntity(Entity):
             return value
 
         if ENTITY_ID_REGEX_COMPILED.match(value) or VERSIONED_ENTITY_REGEX_COMPILED.match(value):
-            return ViewEntity.from_string(entity_string=value)
+            return cls.from_string(entity_string=value)
         else:
-            return ViewEntity(prefix=Undefined, suffix=value)
+            return cls(prefix=Undefined, suffix=value)
 
     @classmethod
     def from_id(cls, view_id: ViewId) -> Self:
-        return ViewEntity(prefix=view_id.space, suffix=view_id.external_id, version=view_id.version)
+        return cls(prefix=view_id.space, suffix=view_id.external_id, version=view_id.version)
+
+    @overload
+    def as_id(
+        self,
+        allow_none: Literal[False] = False,
+        default_space: str | None = None,
+        default_version: str | None = None,
+        standardize_casing: bool = True,
+    ) -> ViewId:
+        ...
+
+    @overload
+    def as_id(
+        self,
+        allow_none: Literal[True],
+        default_space: str | None = None,
+        default_version: str | None = None,
+        standardize_casing: bool = True,
+    ) -> ViewId | None:
+        ...
 
     def as_id(
-        self, default_space: str | None = None, default_version: str | None = None, standardize_casing: bool = True
-    ) -> ViewId:
+        self,
+        allow_none: bool = False,
+        default_space: str | None = None,
+        default_version: str | None = None,
+        standardize_casing: bool = True,
+    ) -> ViewId | None:
+        if self.suffix is Unknown and allow_none:
+            return None
+        elif self.suffix is Unknown:
+            raise ValueError("suffix is Unknown and cannot be converted to ViewId")
         space = default_space if self.space is Undefined else self.space
         version = self.version or default_version
 
@@ -223,7 +265,6 @@ class ViewEntity(Entity):
             raise ValueError("space is required")
         if version is None:
             raise ValueError("version is required")
-
         external_id = to_pascal(self.external_id) if standardize_casing else self.external_id
         return ViewId(space=space, external_id=external_id, version=version)
 
@@ -249,9 +290,9 @@ class ViewPropEntity(ViewEntity):
                 property_=result.group("property"),
             )
         elif ENTITY_ID_REGEX_COMPILED.match(value) or VERSIONED_ENTITY_REGEX_COMPILED.match(value):
-            return ViewPropEntity.from_string(entity_string=value)
+            return cls.from_string(entity_string=value)
         else:
-            return ViewPropEntity(prefix=Undefined, suffix=value)
+            return cls(prefix=Undefined, suffix=value)
 
     @classmethod
     def from_prop_id(cls, prop_id: PropertyId) -> "ViewPropEntity":
@@ -268,17 +309,19 @@ class ViewPropEntity(ViewEntity):
         if self.property_ is None:
             raise ValueError("property is required to create PropertyId")
         return PropertyId(
-            source=self.as_id(default_space, default_version, standardize_casing), property=self.property_
+            source=self.as_id(False, default_space, default_version, standardize_casing), property=self.property_
         )
 
     @property
     def versioned_id(self) -> str:
-        if self.version is None:
+        if self.version is None and self.property_ is None:
             output = self.id
-        else:
+        elif self.version is None:
+            output = f"{self.id}(property={self.property_})"
+        elif self.property_ is None:
             output = f"{self.id}(version={self.version})"
-        if self.property_:
-            output = f"{output}:{self.property_}"
+        else:
+            output = f"{self.id}(version={self.version}, property={self.property_})"
         return output
 
 
@@ -345,6 +388,63 @@ class ParentClassEntity(ClassEntity):
         if isinstance(value, ClassEntity):
             return cls(prefix=value.prefix, suffix=value.suffix, version=value.version)
         return super().from_raw(value)
+
+    def as_class_entity(self) -> ClassEntity:
+        return ClassEntity(prefix=self.prefix, suffix=self.suffix, version=self.version)
+
+
+class ReferenceEntity(ViewPropEntity):
+    type_: ClassVar[EntityTypes] = EntityTypes.reference_entity
+
+    @classmethod
+    def from_raw(cls, value: Any) -> "ReferenceEntity":
+        if not value:
+            return ReferenceEntity(prefix=Undefined, suffix=value)
+        elif isinstance(value, ReferenceEntity):
+            return value
+        elif isinstance(value, ViewEntity):
+            return cls(prefix=value.prefix, suffix=value.suffix, version=value.version)
+
+        if result := PROPERTY_ENTITY_REGEX_COMPILED.match(value):
+            return cls(
+                prefix=result.group("prefix") or Undefined,
+                suffix=result.group("suffix"),
+                version=result.group("version"),
+                property_=result.group("property"),
+            )
+        elif ENTITY_ID_REGEX_COMPILED.match(value) or VERSIONED_ENTITY_REGEX_COMPILED.match(value):
+            return cls.from_string(entity_string=value)
+        elif result := SINGLE_PROPERTY_REGEX_COMPILED.match(value):
+            return cls.from_rdfpath(value)
+        else:
+            return cls(prefix=Undefined, suffix=value)
+
+    @classmethod
+    def from_rdfpath(cls, rdfpath: RDFPath | str) -> "ReferenceEntity":
+        if isinstance(rdfpath, str):
+            rdfpath = parse_rule(rdfpath, TransformationRuleType.rdfpath)
+
+        if isinstance(rdfpath.traversal, AllReferences):
+            return cls(prefix=rdfpath.traversal.class_.prefix, suffix=rdfpath.traversal.class_.suffix)
+        elif isinstance(rdfpath.traversal, SingleProperty):
+            return cls(
+                prefix=rdfpath.traversal.class_.prefix,
+                suffix=rdfpath.traversal.class_.suffix,
+                property_=rdfpath.traversal.property.suffix,
+            )
+        else:
+            raise ValueError(f"Invalid RDFPath traversal type: {rdfpath.traversal}")
+
+    def as_rdfpath(self, default_prefix: str | None = None) -> RDFPath:
+        prefix = self.prefix if self.prefix is not Undefined else default_prefix
+
+        if prefix is None:
+            raise ValueError("prefix is required")
+
+        if self.property_:
+            return parse_rule(f"{prefix}:{self.suffix}({self.prefix}:{self.property_})", TransformationRuleType.rdfpath)
+        else:
+            return parse_rule(f"{self.prefix}:{self.suffix}", TransformationRuleType.rdfpath)
 
     def as_class_entity(self) -> ClassEntity:
         return ClassEntity(prefix=self.prefix, suffix=self.suffix, version=self.version)

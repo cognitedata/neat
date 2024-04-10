@@ -8,7 +8,7 @@ from typing import Literal, overload
 
 from rdflib import DC, DCTERMS, OWL, RDF, RDFS, SKOS, Graph
 
-from cognite.neat.rules.importers._base import BaseImporter
+from cognite.neat.rules.importers._base import BaseImporter, Rules
 from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models._rules import InformationRules, RoleTypes
 from cognite.neat.rules.models.value_types import XSD_VALUE_TYPE_MAPPINGS
@@ -43,21 +43,21 @@ class OWLImporter(BaseImporter):
         self.make_compliant = make_compliant
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> InformationRules:
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None, is_reference: bool = False) -> Rules:
         ...
 
     @overload
     def to_rules(
-        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[InformationRules | None, IssueList]:
+        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None, is_reference: bool = False
+    ) -> tuple[Rules | None, IssueList]:
         ...
 
     def to_rules(
-        self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[InformationRules | None, IssueList] | InformationRules:
-        if role is not None and role != RoleTypes.information_architect:
-            raise ValueError(f"Role {role} is not supported for OWLImporter")
-
+        self,
+        errors: Literal["raise", "continue"] = "continue",
+        role: RoleTypes | None = None,
+        is_reference: bool = False,
+    ) -> tuple[Rules | None, IssueList] | Rules:
         graph = Graph()
         try:
             graph.parse(self.owl_filepath)
@@ -81,7 +81,8 @@ class OWLImporter(BaseImporter):
         if self.make_compliant:
             components = make_components_compliant(components)
 
-        return InformationRules.model_validate(components)
+        rules = InformationRules.model_validate(components)
+        return self._to_output(rules, IssueList(), errors, role, is_reference)
 
 
 def make_components_compliant(components: dict) -> dict:
