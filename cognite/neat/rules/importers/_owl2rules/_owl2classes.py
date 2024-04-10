@@ -25,7 +25,7 @@ def parse_owl_classes(graph: Graph, make_compliant: bool = False, language: str 
     """
 
     query = """
-        SELECT ?class ?name ?description ?parentClass ?source ?match ?comment
+        SELECT ?class ?name ?description ?parentClass ?reference ?match ?comment
         WHERE {
         ?class a owl:Class .
         OPTIONAL {?class rdfs:subClassOf ?parentClass }.
@@ -62,7 +62,7 @@ def parse_owl_classes(graph: Graph, make_compliant: bool = False, language: str 
 def _parse_raw_dataframe(query_results: list[tuple]) -> pd.DataFrame:
     df = pd.DataFrame(
         query_results,
-        columns=["Class", "Name", "Description", "Parent Class", "Source", "Match", "Comment"],
+        columns=["Class", "Name", "Description", "Parent Class", "Reference", "Match", "Comment"],
     )
     if df.empty:
         return df
@@ -70,9 +70,8 @@ def _parse_raw_dataframe(query_results: list[tuple]) -> pd.DataFrame:
     # # remove NaNs
     df.replace(np.nan, "", regex=True, inplace=True)
 
-    df.Source = df.Class
+    df.Reference = df.Class
     df.Class = df.Class.apply(lambda x: remove_namespace(x))
-    df["Source Entity Name"] = df.Class
     df["Match Type"] = len(df) * [MatchType.exact]
     df["Comment"] = len(df) * [None]
     df["Parent Class"] = df["Parent Class"].apply(lambda x: remove_namespace(x))
@@ -87,7 +86,7 @@ def _clean_up_classes(df: pd.DataFrame) -> pd.DataFrame:
             "Name": group_df["Name"].unique()[0],
             "Description": "\n".join(list(group_df.Description.unique())),
             "Parent Class": ", ".join(list(group_df["Parent Class"].unique())),
-            "Source": group_df["Source"].unique()[0],
+            "Reference": group_df["Reference"].unique()[0],
             "Match Type": group_df["Match Type"].unique()[0],
             "Comment": group_df["Comment"].unique()[0],
         }
@@ -154,7 +153,7 @@ def _object_property_class() -> dict:
         "Name": None,
         "Description": "The class of object properties.",
         "Parent Class": None,
-        "Source": OWL.ObjectProperty,
+        "Reference": OWL.ObjectProperty,
         "Match Type": MatchType.exact,
         "Comment": "Added by NEAT based on owl:ObjectProperty but adapted to NEAT and use in CDF.",
     }
@@ -166,7 +165,7 @@ def _data_type_property_class() -> dict:
         "Name": None,
         "Description": "The class of data properties.",
         "Parent Class": None,
-        "Source": OWL.DatatypeProperty,
+        "Reference": OWL.DatatypeProperty,
         "Match Type": MatchType.exact,
         "Comment": "Added by NEAT based on owl:DatatypeProperty but adapted to NEAT and use in CDF.",
     }
@@ -178,7 +177,7 @@ def _thing_class() -> dict:
         "Name": None,
         "Description": "The class of holding class individuals.",
         "Parent Class": None,
-        "Source": OWL.Thing,
+        "Reference": OWL.Thing,
         "Match Type": MatchType.exact,
         "Comment": (
             "Added by NEAT. "
@@ -206,7 +205,7 @@ def _add_parent_class(df: pd.DataFrame) -> list[dict]:
                 "Name": None,
                 "Description": None,
                 "Parent Class": None,
-                "Source": None,
+                "Reference": None,
                 "Match Type": None,
                 "Comment": (
                     "Added by NEAT. "

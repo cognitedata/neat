@@ -15,6 +15,14 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.70.3] - 10-04-24
+### Fixed
+- Bug when importing an OWL ontology while expecting compliant rules did not encounter for dangling classes (classes without a property or parent class). This is now fixed.
+### Improved
+- Handling of xsd types as case insensitive when importing an OWL ontology.
+### Added
+- Handling of rdf:Literals in OWL ontology import as xsd:string
+
 ## [0.70.2] - 03-04-24
 ### Fixed
 - Bug when exporting an `addition` to of a ruleset in  `DMSExporter` when using the method `.export_to_cdf`
