@@ -24,12 +24,12 @@ nav:
           - User Personas: tutorials/data-modeling-lifecycle/user-personas.md
       - Workflows:
           - Overview: tutorials/workflows/overview.md
-          - Steps Library: tutorials/workflows/steps-library.md
-          - Examples:
-              - Ontology to Data Model: tutorials/workflows/examples/ontology-to-data-model.md
-              - Export Rules to Ontology: tutorials/workflows/examples/export-rules-to-ontology.md
-              - Extract RDF Graph and Generate Assets: tutorials/workflows/examples/extract-rdf-graph-and-generate-assets.md
-              - Extract DEXPI Graph and Export Rules: tutorials/workflows/examples/extract-dexpi-graph-and-export-rules.md
+        #   - Steps Library: tutorials/workflows/steps-library.md
+        #   - Examples:
+        #       - Ontology to Data Model: tutorials/workflows/examples/ontology-to-data-model.md
+        #       - Export Rules to Ontology: tutorials/workflows/examples/export-rules-to-ontology.md
+        #       - Extract RDF Graph and Generate Assets: tutorials/workflows/examples/extract-rdf-graph-and-generate-assets.md
+        #       - Extract DEXPI Graph and Export Rules: tutorials/workflows/examples/extract-dexpi-graph-and-export-rules.md
   - User Guide:
       - Overview: user-guide/overview.md
       - Rules Importing:
