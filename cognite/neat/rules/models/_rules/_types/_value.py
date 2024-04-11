@@ -90,6 +90,9 @@ _DATA_TYPES: list[dict] = [
     {"name": "dateTime", "python": datetime, "GraphQL": "Timestamp", "dms": Timestamp, "SQL": "TIMESTAMP"},
     {"name": "dateTimeStamp", "python": datetime, "GraphQL": "Timestamp", "dms": Timestamp, "SQL": "TIMESTAMP"},
     {"name": "date", "python": date, "GraphQL": "String", "dms": Date, "SQL": "DATE"},
+    # Some RDF types which are not in XSD
+    {"name": "PlainLiteral", "python": str, "GraphQL": "String", "dms": Text, "SQL": "STRING"},
+    {"name": "Literal", "python": str, "GraphQL": "String", "dms": Text, "SQL": "STRING"},
     # CDF specific types, not in XSD
     {
         "name": "timeseries",

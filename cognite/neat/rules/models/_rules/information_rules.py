@@ -392,6 +392,7 @@ class _InformationRulesConverter:
                 class_=cls_.class_,
                 view=ViewPropEntity(prefix=cls_.class_.prefix, suffix=cls_.class_.suffix, version=cls_.class_.version),
                 description=cls_.description,
+                reference=cls_.reference,
                 implements=self._get_view_implements(cls_, info_metadata),
             )
             for cls_ in self.information.classes

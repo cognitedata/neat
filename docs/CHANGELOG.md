@@ -15,6 +15,12 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.72.1] - 11-04-24
+### Fixed
+- rdf:PlainLiteral and rdf:Literal was not resolving as string handled when exporting Rules to DMS schemas, this is now fixed
+- OwlImporter that works with v2 rules was using `XSD_VALUE_TYPE_MAPPINGS` for v1 rules, this is now fixed
+- added missing mapping for reference when converting information architect rules to dms architect rules
+
 ## [0.72.0] - 11-04-24
 ### Improved
 - Improved garbadge collection process in workflows. Now all resources are properly released after workflow execution or reloading.
