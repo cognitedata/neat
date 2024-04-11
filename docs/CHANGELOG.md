@@ -15,11 +15,20 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## [0.71.1] - 10-04-24
+## [0.72.1] - 11-04-24
 ### Fixed
 - rdf:PlainLiteral and rdf:Literal was not resolving as string handled when exporting Rules to DMS schemas, this is now fixed
 - OwlImporter that works with v2 rules was using `XSD_VALUE_TYPE_MAPPINGS` for v1 rules, this is now fixed
 - added missing mapping for reference when converting information architect rules to dms architect rules
+
+## [0.72.0] - 11-04-24
+### Improved
+- Improved garbadge collection process in workflows. Now all resources are properly released after workflow execution or reloading.
+This is expecially critical when working with statfull objects like graph stores or big objects allocated in memory.
+## Removed
+- Removed a lot of old and stale code from workflows engine.
+## Changed
+- Changed CORS policy for UI to allow all origins. This is a temporary solution until it is properly configured in the future.
 
 ## [0.71.0] - 10-04-24
 ### Added

@@ -94,6 +94,7 @@ class WorkflowStepDefinition(BaseModel):
     complex_configs: dict[str, Any] = Field(default_factory=dict)  # Complex step configurations
     max_retries: int = 0
     retry_delay: int = 3
+    auto_workflow_cleanup: bool = False
 
     @field_validator("configs", "params", mode="before")
     def none_as_empty_dict(cls, value):
