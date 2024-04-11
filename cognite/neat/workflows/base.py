@@ -136,12 +136,16 @@ class BaseWorkflow:
         logging.info(f"Workflow completed in {self.elapsed_time} seconds")
         self.report_workflow_execution()
         if self.auto_workflow_cleanup:
-            self.auto_workflow_cleanup()
+            self.cleanup_workflow_context()
         return self.flow_message
 
     def cleanup_workflow_context(self):
-        # This is special treatment for oxigraph store. It should be closed and deleted otherwise it can lead to errors.
-        # This is a temporary solution until we have a better way to handle this , for example by using close or cleanup method in the step
+        """
+        Cleans up the workflow context by closing and deleting graph stores and other structure.
+        It's a for of garbage collection to avoid memory leaks or other issues related to open handlers
+        or allocated resources
+
+        """
         if "SolutionGraph" in self.data:
             self.data["SolutionGraph"].graph.close()
         if "SourceGraph" in self.data:

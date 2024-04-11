@@ -72,7 +72,8 @@ def cleanup_workflow_data(workflow_name: str):
     if NEAT_APP.cdf_store is None:
         return {"error": "NeatApp is not initialized"}
     workflow = NEAT_APP.workflow_manager.get_workflow(workflow_name)
-    workflow.cleanup_workflow_context()
+    if workflow is not None:
+        workflow.cleanup_workflow_context()
     return {"result": "ok"}
 
 

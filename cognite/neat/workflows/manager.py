@@ -86,12 +86,12 @@ class WorkflowManager:
         return workflow
 
     def delete_workflow(self, name: str):
-        wf = self.get_workflow(name)
-        wf.cleanup_workflow_context()
+        workflow = self.get_workflow(name)
+        if workflow is not None:
+            workflow.cleanup_workflow_context()
         del self.workflow_registry[name]
         full_path = self.workflows_storage_path / name
         shutil.rmtree(full_path)
-        # TODO: check if more garbage collection is needed here.
 
     def update_workflow(self, name: str, workflow: WorkflowDefinition):
         self.workflow_registry[name].workflow_steps = workflow.steps
