@@ -4,7 +4,7 @@ Neat Workflow is concept that enables users to automate complex processes involv
 The workflow engine follows a modular, step-by-step process that can be customized to suit your specific data transformation needs. Each step in the workflow corresponds to a specific task, such as loading transformation rules, configuring graph stores, and loading the source graph.
 Users can customize the workflow by adding or removing steps, or by modifying the parameters in each step to match their specific data requirements.
 
-![Execution history](./artifacts/figs/wf-overview.gif)
+![Execution history](../../artifacts/figs/wf-overview.gif)
 
 ## Terminology
 
@@ -98,23 +98,23 @@ NEAT supports 3 ways to start workflow execution : persistent non-blocking, pers
 
 Only one running instance of workflow is allowed. If workflow execution is already running, new execution will dropped and error state returned to caller. Workflow execution is persisted in CDF and can be monitored via UI. All internal states preserved between executions.
 
-![Persistent non-blocking](./artifacts/figs/wf-persistent-non-blocking.png)
+![Persistent non-blocking](../../artifacts/figs/wf-persistent-non-blocking.png)
 
 **Persistent blocking(default)**
 
 Only one running instance of the workflows is allowed. If workflow execution is already running, new execution will be queued and started later or timeout after max_wait_time. Workflow execution is persisted in CDF and can be monitored via UI.All internal states preserved between executions.
 
-![Persistent blocking](./artifacts/figs/wf-persistent-blocking-mode.png)
+![Persistent blocking](../../artifacts/figs/wf-persistent-blocking-mode.png)
 
 **Ephemeral multi-instance mode**
 
 Multiple running instances of the workflow are allowed. Each instance is a copy of main workflow class and are executed in parallel each in its own thread . Workflow execution is persisted in CDF but can't be monitored via UI.All internal states are lost between executions (ephemeral).
 
-![Ephemeral mode](./artifacts/figs/wf-ephemeral-mode.png)
+![Ephemeral mode](../../artifacts/figs/wf-ephemeral-mode.png)
 
 Configuring the mode in UI :
 
-![Start mode UI](./artifacts/figs/wf-start-mode-ui.png)
+![Start mode UI](../../artifacts/figs/wf-start-mode-ui.png)
 
 ### Workflow configuration parameters
 
@@ -386,7 +386,7 @@ NEAT supports workflow sharing and storage via CDF.
 
 NEAT stores detailed execution history in CDF and available via NEAT UI , REST API or directly in CDF.
 
-![Execution history](./artifacts/figs/execution-history.gif)
+![Execution history](../../artifacts/figs/execution-history.gif)
 
 ### Data lineage
 
