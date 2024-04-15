@@ -144,7 +144,13 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                                 direction="outwards",
                             )
                         },
-                        filter=None,
+                        filter=dm.filters.Equals(
+                            ["node", "type"],
+                            {
+                                "space": "my_space",
+                                "externalId": "WindFarm",
+                            },
+                        ),
                     ),
                 ]
             ),
@@ -165,7 +171,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     ),
                 ]
             ),
-            node_types=dm.NodeApplyList([]),
+            node_types=dm.NodeApplyList([dm.NodeApply(space="my_space", external_id="WindFarm", sources=[])]),
         ),
         True,
         id="Two properties, one container, one view",
@@ -589,7 +595,13 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                             direction="inwards",
                         )
                     },
-                    filter=None,
+                    filter=dm.filters.Equals(
+                        ["node", "type"],
+                        {
+                            "space": "my_space",
+                            "externalId": "Activity",
+                        },
+                    ),
                 ),
             ]
         ),
@@ -613,7 +625,11 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ]
         ),
-        node_types=dm.NodeApplyList([]),
+        node_types=dm.NodeApplyList(
+            [
+                dm.NodeApply(space="my_space", external_id="Activity", sources=[]),
+            ]
+        ),
     )
     yield pytest.param(
         dms_rules,

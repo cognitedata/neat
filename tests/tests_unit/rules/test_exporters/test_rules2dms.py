@@ -25,13 +25,14 @@ class TestDMSExporter:
         counts = Counter()
         with zipfile.ZipFile(zipfile_path, "r") as zip_ref:
             for name in zip_ref.namelist():
-                matches = re.search(r"[a-zA-Z0-9_].(space|datamodel|view|container).yaml$", name)
+                matches = re.search(r"[a-zA-Z0-9_].(space|datamodel|view|container|node).yaml$", name)
                 counts.update([matches.group(1)])
 
         assert counts["space"] == len(schema.spaces)
         assert counts["datamodel"] == len(schema.data_models)
         assert counts["view"] == len(alice_rules.views)
         assert counts["container"] == len(alice_rules.containers)
+        assert counts["node"] == len(schema.node_types)
 
     def test_export_dms_schema_with_pipeline(self, alice_rules: DMSRules, tmp_path) -> None:
         exporter = DMSExporter(export_pipeline=True)

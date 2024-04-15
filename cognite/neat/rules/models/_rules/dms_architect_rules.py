@@ -243,6 +243,7 @@ class DMSView(SheetEntity):
     view: ViewType = Field(alias="View")
     implements: ViewListType | None = Field(None, alias="Implements")
     reference: ReferenceType = Field(alias="Reference", default=None)
+    filter_: Literal["hasData", "nodeType"] | None = Field(None, alias="Filter")
     in_model: bool = Field(True, alias="InModel")
 
     def as_view(self, default_space: str, default_version: str, standardize_casing: bool = True) -> dm.ViewApply:
@@ -677,6 +678,11 @@ class _DMSExporter:
         views = dm.ViewApplyList(
             [dms_view.as_view(default_space, default_version, self.standardize_casing) for dms_view in dms_views]
         )
+        dms_view_by_id = {
+            dms_view.view.as_id(False, default_space, default_version, self.standardize_casing): dms_view
+            for dms_view in dms_views
+        }
+
         for view in views:
             view_id = view.as_id()
             view.properties = {}
@@ -796,24 +802,30 @@ class _DMSExporter:
 
         node_types = dm.NodeApplyList([])
         parent_views = {parent for view in views for parent in view.implements or []}
-        node_type_flag = False
         for view in views:
             ref_containers = sorted(view.referenced_containers(), key=lambda c: c.as_tuple())
             has_data = dm.filters.HasData(containers=list(ref_containers)) if ref_containers else None
             node_type = dm.filters.Equals(["node", "type"], {"space": view.space, "externalId": view.external_id})
+            dms_view = dms_view_by_id.get(view.as_id())
             if view.as_id() in parent_views:
-                view.filter = has_data
-            elif has_data is None:
-                # Child filter without container properties
-                if node_type_flag:
-                    # Transformations do not yet support setting node type.
+                if dms_view and dms_view.filter_ == "nodeType":
+                    warnings.warn(issues.dms.NodeTypeFilterOnParentViewWarning(view.as_id()), stacklevel=2)
                     view.filter = node_type
                     node_types.append(dm.NodeApply(space=view.space, external_id=view.external_id, sources=[]))
+                else:
+                    view.filter = has_data
+            elif has_data is None:
+                # Child filter without container properties
+                if dms_view and dms_view.filter_ == "hasData":
+                    warnings.warn(issues.dms.HasDataFilterOnNoPropertiesViewWarning(view.as_id()), stacklevel=2)
+                view.filter = node_type
+                node_types.append(dm.NodeApply(space=view.space, external_id=view.external_id, sources=[]))
             else:
-                # Child filter with its own container properties
-                if node_type_flag:
-                    # Transformations do not yet support setting node type.
-                    view.filter = dm.filters.And(has_data, node_type)
+                if dms_view and (dms_view.filter_ == "hasData" or dms_view.filter_ is None):
+                    # Default option
+                    view.filter = has_data
+                elif dms_view and dms_view.filter_ == "nodeType":
+                    view.filter = node_type
                     node_types.append(dm.NodeApply(space=view.space, external_id=view.external_id, sources=[]))
                 else:
                     view.filter = has_data
