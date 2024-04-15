@@ -774,7 +774,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     property_="kinderen",
                     value_type="Asset",
                     relation="multiedge",
-                    reference="sp_enterprise:enterprise_model(property=children)",
+                    reference="sp_enterprise:Asset(property=children)",
                     view="Asset",
                     view_property="kinderen",
                 ),
@@ -800,7 +800,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     external_id="Asset",
                     version="1",
                     properties={
-                        "children": dm.MultiEdgeConnectionApply(
+                        "kinderen": dm.MultiEdgeConnectionApply(
                             type=dm.DirectRelationReference(
                                 space="sp_enterprise",
                                 external_id="Asset.children",
@@ -826,6 +826,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 )
             ]
         ),
+        node_types=dm.NodeApplyList([dm.NodeApply(space="sp_solution", external_id="Asset", sources=[])]),
     )
 
     yield pytest.param(
