@@ -1,11 +1,13 @@
 import json
 import shutil
 import tempfile
+from copy import deepcopy
 from pathlib import Path
 from typing import cast
 
 from fastapi import APIRouter, UploadFile
 
+from cognite.neat.app.api.configuration import NEAT_APP
 from cognite.neat.rules import exporters, importers
 from cognite.neat.rules.models._rules import DMSRules
 from cognite.neat.rules.models._rules.base import RoleTypes
@@ -55,8 +57,36 @@ async def convert_data_model_to_rules(file: UploadFile):
 @router.post("/api/core/rules2dms")
 async def convert_rules_to_dms(rules: DMSRules):
     dms_schema = exporters.DMSExporter().export(rules)
+    containers = {f"{container.space}:{container.external_id}": container.dump() for container in dms_schema.containers}
+    views = {f"{view.space}:{view.external_id}": view.dump() for view in dms_schema.views}
+
+    if views and containers:
+        _to_visualization_compliant_views(views, containers)
 
     return {
-        "views": dms_schema.views.dump() if dms_schema.views else None,
-        "containers": dms_schema.containers.dump() if dms_schema.containers else None,
+        "views": list(views.values()) if views else None,
+        "containers": list(containers.values()) if containers else None,
     }
+
+
+def _to_visualization_compliant_views(views, containers):
+    for view in views.values():
+        for property in view["properties"].values():
+            # needs coping information from container:
+            if property.get("container", None) and property["container"]["type"] == "container":
+                container_id = f"{property['container']['space']}:{property['container']['externalId']}"
+                container_property_def = deepcopy(
+                    containers[container_id]["properties"][property["containerPropertyIdentifier"]]
+                )
+                property["type"] = container_property_def["type"]
+                container_property_def.pop("type")
+                property.update(container_property_def)
+
+
+@router.post("/api/core/publish-rules")
+async def publish_rules_as_data_model(rules: DMSRules):
+    if NEAT_APP.cdf_client:
+        uploaded = exporters.DMSExporter().export_to_cdf(rules, NEAT_APP.cdf_client)
+        return {"uploaded": uploaded}
+    else:
+        return {"uploaded": []}
