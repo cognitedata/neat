@@ -771,12 +771,12 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             data=[
                 DMSProperty(
                     class_="Asset",
-                    property_="children",
+                    property_="kinderen",
                     value_type="Asset",
                     relation="multiedge",
                     reference="sp_enterprise:enterprise_model(property=children)",
                     view="Asset",
-                    view_property="children",
+                    view_property="kinderen",
                 ),
             ]
         ),
