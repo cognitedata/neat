@@ -173,6 +173,8 @@ class ResetGraphStores(Step):
         graph_store = cast(SourceGraph | SolutionGraph | None, self.flow_context.get(graph_name, None))
         if graph_store is not None:
             reset_store(graph_store.graph.internal_storage_dir, graph_store.graph)
+            if graph_name in self.flow_context:
+                del self.flow_context[graph_name]
             return FlowMessage(output_text="Reset operation completed")
         else:
             return FlowMessage(output_text="Stores already reset")
@@ -237,6 +239,9 @@ class ConfigureGraphStore(Step):
         if self.configs["init_procedure"] == "reset":
             logging.info("Resetting graph")
             reset_store(store_dir, graph_store.graph if graph_store else None)
+            if graph_name in self.flow_context:
+                del self.flow_context[graph_name]
+            graph_store = None
             logging.info("Graph reset complete")
 
         prefixes = rules_data.rules.prefixes if rules_data else PREFIXES.copy()
@@ -267,8 +272,8 @@ class ConfigureGraphStore(Step):
 def reset_store(data_store_dir: Path | None, graph_store: stores.NeatGraphStoreBase | None = None):
     if isinstance(graph_store, stores.OxiGraphStore):
         if graph_store:
-            graph_store.drop()
-            graph_store.reinitialize_graph()
+            graph_store.close()
+            graph_store.drop_graph_store_storage(data_store_dir)
         elif data_store_dir:
             graph_store.drop_graph_store_storage(data_store_dir)
     elif isinstance(graph_store, stores.GraphDBStore):

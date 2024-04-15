@@ -2,7 +2,7 @@
 
 * [Graph Store](#graph-store)
 * [Rules Exporter](#rules-exporter)
-* [Input/Output](#input/output)
+* [Input/Output](#Input/Output)
 * [Graph Extractor](#graph-extractor)
 * [Graph Loader](#graph-loader)
 * [Rules Importer](#rules-importer)

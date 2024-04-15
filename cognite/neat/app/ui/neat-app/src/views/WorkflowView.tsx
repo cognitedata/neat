@@ -313,7 +313,7 @@ const syncWorkflowDefToNodesAndEdges = (viewType:string) => {
 
 
 const reloadWorkflows = () => {
-  const url = neatApiRootUrl + "/api/workflow/reload-workflows";
+  const url = neatApiRootUrl + "/api/workflow/reload-single-workflow/"+selectedWorkflow;
   fetch(url, {
     method: "post", body: "", headers: {
       'Content-Type': 'application/json;charset=utf-8'

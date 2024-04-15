@@ -1,7 +1,6 @@
 import logging
 import os
 import shutil
-import time
 from pathlib import Path
 
 from rdflib import Graph, Namespace
@@ -63,7 +62,7 @@ class OxiGraphStore(NeatGraphStoreBase):
 
     def close(self):
         """Closes the graph."""
-        if self.graph:
+        if self.graph is not None:
             try:
                 self.graph.store._inner.flush()  # type: ignore[attr-defined]
                 self.graph.close(True)
@@ -102,7 +101,7 @@ class OxiGraphStore(NeatGraphStoreBase):
             # after closing the graph and creating a new one
             if self.internal_storage_dir.exists():
                 self.storage_dirs_to_delete.append(self.internal_storage_dir)
-            self.internal_storage_dir = Path(str(self.internal_storage_dir_orig) + "_" + str(time.time()))
+            self.garbage_collector()
 
         except Exception as e:
             logging.error(f"Error dropping graph : {e}")
@@ -115,9 +114,12 @@ class OxiGraphStore(NeatGraphStoreBase):
         self.storage_dirs_to_delete = []
 
     def __del__(self):
-        if self.graph:
-            if self.graph.store:
-                self.graph.store._inner.flush()
+        if self.graph is not None:
+            if self.graph.store is not None:
+                try:
+                    self.graph.store._inner.flush()
+                except Exception:
+                    logging.debug("Error flushing graph")
             self.graph.close()
         # It requires more investigation os.remove(self.internal_storage_dir / "LOCK")
 

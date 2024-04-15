@@ -11,7 +11,7 @@ from rdflib import DC, DCTERMS, OWL, RDF, RDFS, SKOS, Graph
 from cognite.neat.rules.importers._base import BaseImporter, Rules
 from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models._rules import InformationRules, RoleTypes
-from cognite.neat.rules.models.value_types import XSD_VALUE_TYPE_MAPPINGS
+from cognite.neat.rules.models._rules._types import XSD_VALUE_TYPE_MAPPINGS
 
 from ._owl2classes import parse_owl_classes
 from ._owl2metadata import parse_owl_metadata
@@ -136,6 +136,7 @@ def _add_missing_value_types(components: dict) -> dict:
 
     # to avoid issue of case sensitivity for xsd types
     value_types_lower = {v.lower() for v in candidate_value_types}
+
     xsd_types_lower = {x.lower() for x in xsd_types}
 
     # Create a mapping from lowercase strings to original strings
