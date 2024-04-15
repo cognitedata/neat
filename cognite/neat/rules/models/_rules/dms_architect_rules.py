@@ -825,9 +825,17 @@ class _DMSExporter:
         parent_views = {parent for view in views for parent in view.implements or []}
         for view in views:
             ref_containers = sorted(view.referenced_containers(), key=lambda c: c.as_tuple())
-            has_data = dm.filters.HasData(containers=list(ref_containers)) if ref_containers else None
-            node_type = dm.filters.Equals(["node", "type"], {"space": view.space, "externalId": view.external_id})
             dms_view = dms_view_by_id.get(view.as_id())
+            has_data = dm.filters.HasData(containers=list(ref_containers)) if ref_containers else None
+            if dms_view and isinstance(dms_view.reference, ReferenceEntity):
+                # If the view is a reference, we implement the reference view,
+                # and need the filter to match the reference
+                ref_view = dms_view.reference.as_id(False, default_space, default_version, self.standardize_casing)
+                node_type = dm.filters.Equals(
+                    ["node", "type"], {"space": ref_view.space, "externalId": ref_view.external_id}
+                )
+            else:
+                node_type = dm.filters.Equals(["node", "type"], {"space": view.space, "externalId": view.external_id})
             if view.as_id() in parent_views:
                 if dms_view and dms_view.filter_ == "nodeType":
                     warnings.warn(issues.dms.NodeTypeFilterOnParentViewWarning(view.as_id()), stacklevel=2)
