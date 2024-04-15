@@ -776,12 +776,21 @@ class _DMSExporter:
                         warnings.warn(
                             issues.dms.ReverseOfDirectRelationListWarning(view_id, prop.property_), stacklevel=2
                         )
-                        view_property = dm.MultiEdgeConnectionApply(
-                            type=dm.DirectRelationReference(
+                        if isinstance(reverse_prop.reference, ReferenceEntity):
+                            ref_view_prop = reverse_prop.reference.as_prop_id(
+                                default_space, default_version, self.standardize_casing
+                            )
+                            edge_type = dm.DirectRelationReference(
+                                space=ref_view_prop.source.space,
+                                external_id=f"{ref_view_prop.source.external_id}.{ref_view_prop.property}",
+                            )
+                        else:
+                            edge_type = dm.DirectRelationReference(
                                 space=source.space,
-                                # Todo Need to use the reference if it is there
                                 external_id=f"{reverse_prop.view.external_id}.{reverse_prop.view_property}",
-                            ),
+                            )
+                        view_property = dm.MultiEdgeConnectionApply(
+                            type=edge_type,
                             source=source,
                             direction="inwards",
                         )
