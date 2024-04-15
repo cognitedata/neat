@@ -19,7 +19,6 @@ from rdflib import Namespace
 import cognite.neat.rules.issues.spreadsheet
 from cognite.neat.rules import issues
 from cognite.neat.rules.models._rules.domain_rules import DomainRules
-from cognite.neat.utils.text import to_camel
 
 from ._types import (
     CdfValueType,
@@ -207,11 +206,11 @@ class DMSContainer(SheetEntity):
     reference: ReferenceType = Field(alias="Reference", default=None)
     constraint: ContainerListType | None = Field(None, alias="Constraint")
 
-    def as_container(self, default_space: str, standardize_casing: bool = True) -> dm.ContainerApply:
-        container_id = self.container.as_id(default_space, standardize_casing)
+    def as_container(self, default_space: str) -> dm.ContainerApply:
+        container_id = self.container.as_id(default_space)
         constraints: dict[str, dm.Constraint] = {}
         for constraint in self.constraint or []:
-            requires = dm.RequiresConstraint(constraint.as_id(default_space, standardize_casing))
+            requires = dm.RequiresConstraint(constraint.as_id(default_space))
             constraints[f"{constraint.space}_{constraint.external_id}"] = requires
 
         return dm.ContainerApply(
@@ -246,18 +245,15 @@ class DMSView(SheetEntity):
     filter_: Literal["hasData", "nodeType"] | None = Field(None, alias="Filter")
     in_model: bool = Field(True, alias="InModel")
 
-    def as_view(self, default_space: str, default_version: str, standardize_casing: bool = True) -> dm.ViewApply:
-        view_id = self.view.as_id(False, default_space, default_version, standardize_casing)
+    def as_view(self, default_space: str, default_version: str) -> dm.ViewApply:
+        view_id = self.view.as_id(False, default_space, default_version)
         return dm.ViewApply(
             space=view_id.space,
             external_id=view_id.external_id,
             version=view_id.version or default_version,
             name=self.name or None,
             description=self.description,
-            implements=[
-                parent.as_id(False, default_space, default_version, standardize_casing)
-                for parent in self.implements or []
-            ]
+            implements=[parent.as_id(False, default_space, default_version) for parent in self.implements or []]
             or None,
             properties={},
         )
@@ -564,10 +560,8 @@ class DMSRules(BaseRules):
             "Containers" if info.by_alias else "containers": containers,
         }
 
-    def as_schema(
-        self, standardize_casing: bool = True, include_pipeline: bool = False, instance_space: str | None = None
-    ) -> DMSSchema:
-        return _DMSExporter(standardize_casing, include_pipeline, instance_space).to_schema(self)
+    def as_schema(self, include_pipeline: bool = False, instance_space: str | None = None) -> DMSSchema:
+        return _DMSExporter(include_pipeline, instance_space).to_schema(self)
 
     def as_information_architect_rules(self) -> "InformationRules":
         return _DMSRulesConverter(self).as_information_architect_rules()
@@ -599,17 +593,12 @@ class _DMSExporter:
     (This module cannot have a dependency on the exporter module, as it would create a circular dependency.)
 
     Args
-        standardize_casing (bool): If True, the casing of the identifiers will be standardized. This means external IDs
-            are PascalCase and property names are camelCase.
         include_pipeline (bool): If True, the pipeline will be included with the schema. Pipeline means the
             raw tables and transformations necessary to populate the data model.
         instance_space (str): The space to use for the instance. Defaults to None,`Rules.metadata.space` will be used
     """
 
-    def __init__(
-        self, standardize_casing: bool = True, include_pipeline: bool = False, instance_space: str | None = None
-    ):
-        self.standardize_casing = standardize_casing
+    def __init__(self, include_pipeline: bool = False, instance_space: str | None = None):
         self.include_pipeline = include_pipeline
         self.instance_space = instance_space
 
@@ -628,9 +617,7 @@ class _DMSExporter:
         )
 
         views_not_in_model = {
-            view.view.as_id(False, default_space, default_version, self.standardize_casing)
-            for view in rules.views
-            if not view.in_model
+            view.view.as_id(False, default_space, default_version) for view in rules.views if not view.in_model
         }
         data_model = rules.metadata.as_data_model()
         data_model.views = sorted(
@@ -675,12 +662,9 @@ class _DMSExporter:
         default_space: str,
         default_version: str,
     ) -> tuple[dm.ViewApplyList, dm.NodeApplyList]:
-        views = dm.ViewApplyList(
-            [dms_view.as_view(default_space, default_version, self.standardize_casing) for dms_view in dms_views]
-        )
+        views = dm.ViewApplyList([dms_view.as_view(default_space, default_version) for dms_view in dms_views])
         dms_view_by_id = {
-            dms_view.view.as_id(False, default_space, default_version, self.standardize_casing): dms_view
-            for dms_view in dms_views
+            dms_view.view.as_id(False, default_space, default_version): dms_view for dms_view in dms_views
         }
 
         for view in views:
@@ -694,7 +678,7 @@ class _DMSExporter:
                     # This is not yet supported in the CDF API, a warning has already been issued, here we convert it to
                     # a multi-edge connection.
                     if isinstance(prop.value_type, ViewEntity):
-                        source = prop.value_type.as_id(False, default_space, default_version, self.standardize_casing)
+                        source = prop.value_type.as_id(False, default_space, default_version)
                     else:
                         raise ValueError(
                             "Direct relation must have a view as value type. "
@@ -709,36 +693,30 @@ class _DMSExporter:
                         direction="outwards",
                     )
                 elif prop.container and prop.container_property and prop.view_property:
-                    container_prop_identifier = (
-                        to_camel(prop.container_property) if self.standardize_casing else prop.container_property
-                    )
+                    container_prop_identifier = prop.container_property
                     extra_args: dict[str, Any] = {}
                     if prop.relation == "direct" and isinstance(prop.value_type, ViewEntity):
-                        extra_args["source"] = prop.value_type.as_id(
-                            True, default_space, default_version, self.standardize_casing
-                        )
+                        extra_args["source"] = prop.value_type.as_id(True, default_space, default_version)
                     elif prop.relation == "direct" and not isinstance(prop.value_type, ViewEntity):
                         raise ValueError(
                             "Direct relation must have a view as value type. "
                             "This should have been validated in the rules"
                         )
                     view_property = dm.MappedPropertyApply(
-                        container=prop.container.as_id(default_space, self.standardize_casing),
+                        container=prop.container.as_id(default_space),
                         container_property_identifier=container_prop_identifier,
                         **extra_args,
                     )
                 elif prop.view and prop.view_property and prop.relation == "multiedge":
                     if isinstance(prop.value_type, ViewEntity):
-                        source = prop.value_type.as_id(False, default_space, default_version, self.standardize_casing)
+                        source = prop.value_type.as_id(False, default_space, default_version)
                     else:
                         raise ValueError(
                             "Multiedge relation must have a view as value type. "
                             "This should have been validated in the rules"
                         )
                     if isinstance(prop.reference, ReferenceEntity):
-                        ref_view_prop = prop.reference.as_prop_id(
-                            default_space, default_version, self.standardize_casing
-                        )
+                        ref_view_prop = prop.reference.as_prop_id(default_space, default_version)
                         edge_type = dm.DirectRelationReference(
                             space=ref_view_prop.source.space,
                             external_id=f"{ref_view_prop.source.external_id}.{ref_view_prop.property}",
@@ -756,7 +734,7 @@ class _DMSExporter:
                     )
                 elif prop.view and prop.view_property and prop.relation == "reversedirect":
                     if isinstance(prop.value_type, ViewPropEntity):
-                        source = prop.value_type.as_id(False, default_space, default_version, self.standardize_casing)
+                        source = prop.value_type.as_id(False, default_space, default_version)
                     else:
                         raise ValueError(
                             "Reverse direct relation must have a view as value type. "
@@ -777,9 +755,7 @@ class _DMSExporter:
                             issues.dms.ReverseOfDirectRelationListWarning(view_id, prop.property_), stacklevel=2
                         )
                         if isinstance(reverse_prop.reference, ReferenceEntity):
-                            ref_view_prop = reverse_prop.reference.as_prop_id(
-                                default_space, default_version, self.standardize_casing
-                            )
+                            ref_view_prop = reverse_prop.reference.as_prop_id(default_space, default_version)
                             edge_type = dm.DirectRelationReference(
                                 space=ref_view_prop.source.space,
                                 external_id=f"{ref_view_prop.source.external_id}.{ref_view_prop.property}",
@@ -818,7 +794,7 @@ class _DMSExporter:
                     continue
                 else:
                     continue
-                prop_name = to_camel(prop.view_property) if self.standardize_casing else prop.view_property
+                prop_name = prop.view_property
                 view.properties[prop_name] = view_property
 
         node_types = dm.NodeApplyList([])
@@ -830,7 +806,7 @@ class _DMSExporter:
             if dms_view and isinstance(dms_view.reference, ReferenceEntity):
                 # If the view is a reference, we implement the reference view,
                 # and need the filter to match the reference
-                ref_view = dms_view.reference.as_id(False, default_space, default_version, self.standardize_casing)
+                ref_view = dms_view.reference.as_id(False, default_space, default_version)
                 node_type = dm.filters.Equals(
                     ["node", "type"], {"space": ref_view.space, "externalId": ref_view.external_id}
                 )
@@ -867,10 +843,7 @@ class _DMSExporter:
         default_space: str,
     ) -> dm.ContainerApplyList:
         containers = dm.ContainerApplyList(
-            [
-                dms_container.as_container(default_space, self.standardize_casing)
-                for dms_container in dms_container or []
-            ]
+            [dms_container.as_container(default_space) for dms_container in dms_container or []]
         )
         container_to_drop = set()
         for container in containers:
@@ -887,7 +860,7 @@ class _DMSExporter:
                 else:
                     type_cls = dm.DirectRelation
 
-                prop_name = to_camel(prop.container_property) if self.standardize_casing else prop.container_property
+                prop_name = prop.container_property
 
                 if type_cls is dm.DirectRelation:
                     container.properties[prop_name] = dm.ContainerProperty(
@@ -948,21 +921,21 @@ class _DMSExporter:
         container_properties_by_id: dict[dm.ContainerId, list[DMSProperty]] = defaultdict(list)
         view_properties_by_id: dict[dm.ViewId, list[DMSProperty]] = defaultdict(list)
         for prop in rules.properties:
-            view_id = prop.view.as_id(False, default_space, default_version, self.standardize_casing)
+            view_id = prop.view.as_id(False, default_space, default_version)
             view_properties_by_id[view_id].append(prop)
 
             if prop.container and prop.container_property:
                 if prop.relation == "direct" and prop.is_list:
                     warnings.warn(
                         issues.dms.DirectRelationListWarning(
-                            container_id=prop.container.as_id(default_space, self.standardize_casing),
-                            view_id=prop.view.as_id(False, default_space, default_version, self.standardize_casing),
+                            container_id=prop.container.as_id(default_space),
+                            view_id=prop.view.as_id(False, default_space, default_version),
                             property=prop.container_property,
                         ),
                         stacklevel=2,
                     )
                     continue
-                container_id = prop.container.as_id(default_space, self.standardize_casing)
+                container_id = prop.container.as_id(default_space)
                 container_properties_by_id[container_id].append(prop)
 
         return container_properties_by_id, view_properties_by_id

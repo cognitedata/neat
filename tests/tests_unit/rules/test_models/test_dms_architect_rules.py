@@ -173,7 +173,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             ),
             node_types=dm.NodeApplyList([dm.NodeApply(space="my_space", external_id="WindFarm", sources=[])]),
         ),
-        True,
         id="Two properties, one container, one view",
     )
 
@@ -295,7 +294,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         dms_rules,
         expected_schema,
-        True,
         id="Property with list of direct relations converted to multiedge",
     )
 
@@ -409,7 +407,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         dms_rules,
         expected_schema,
-        True,
         id="View not in model",
     )
 
@@ -634,7 +631,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         dms_rules,
         expected_schema,
-        True,
         id="Multiple relations and reverse relations",
     )
 
@@ -719,7 +715,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         dms_rules,
         expected_schema,
-        False,
         id="No casing standardization",
     )
 
@@ -832,7 +827,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         dms_rules,
         expected_schema,
-        True,
         id="Edge Reference to another data model",
     )
 
@@ -1402,9 +1396,9 @@ class TestDMSRules:
 
         assert recreated_rules.model_dump() == rules.model_dump()
 
-    @pytest.mark.parametrize("rules, expected_schema, standardize_casing", rules_schema_tests_cases())
-    def test_as_schema(self, rules: DMSRules, expected_schema: DMSSchema, standardize_casing: bool) -> None:
-        actual_schema = rules.as_schema(standardize_casing)
+    @pytest.mark.parametrize("rules, expected_schema", rules_schema_tests_cases())
+    def test_as_schema(self, rules: DMSRules, expected_schema: DMSSchema) -> None:
+        actual_schema = rules.as_schema()
 
         assert actual_schema.spaces.dump() == expected_schema.spaces.dump()
         actual_schema.data_models[0].views = sorted(actual_schema.data_models[0].views, key=lambda v: v.external_id)

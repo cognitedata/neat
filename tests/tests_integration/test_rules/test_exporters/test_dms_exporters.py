@@ -169,7 +169,6 @@ class TestDMSExporters:
         exporter = DMSExporter(
             existing_handling="force",
             export_pipeline=True,
-            standardize_casing=True,
             instance_space="sp_table_example_data",
         )
         schema = cast(PipelineSchema, exporter.export(table_example))
