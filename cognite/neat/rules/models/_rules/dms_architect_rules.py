@@ -817,12 +817,7 @@ class _DMSExporter:
             elif has_data is None:
                 # Child filter without container properties
                 if dms_view and dms_view.filter_ == "hasData":
-                    # Todo Create an appropriate warning class
-                    warnings.warn(
-                        f"Cannot set hasData filter on view {view.as_id()} as it does not have "
-                        "properties in any containers",
-                        stacklevel=2,
-                    )
+                    warnings.warn(issues.dms.HasDataFilterOnNoPropertiesViewWarning(view.as_id()), stacklevel=2)
                 view.filter = node_type
                 node_types.append(dm.NodeApply(space=view.space, external_id=view.external_id, sources=[]))
             else:
