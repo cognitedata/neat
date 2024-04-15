@@ -809,11 +809,11 @@ class _DMSExporter:
             dms_view = dms_view_by_id.get(view.as_id())
             if view.as_id() in parent_views:
                 if dms_view and dms_view.filter_ == "nodeType":
-                    # Todo Create an appropriate warning
-                    warnings.warn(
-                        f"Cannot set nodeType filter, {view.as_id()} on a" " view that is an interface", stacklevel=2
-                    )
-                view.filter = has_data
+                    warnings.warn(issues.dms.NodeTypeFilterOnParentViewWarning(view.as_id()), stacklevel=2)
+                    view.filter = node_type
+                    node_types.append(dm.NodeApply(space=view.space, external_id=view.external_id, sources=[]))
+                else:
+                    view.filter = has_data
             elif has_data is None:
                 # Child filter without container properties
                 if dms_view and dms_view.filter_ == "hasData":
@@ -822,9 +822,10 @@ class _DMSExporter:
                 node_types.append(dm.NodeApply(space=view.space, external_id=view.external_id, sources=[]))
             else:
                 if dms_view and (dms_view.filter_ == "hasData" or dms_view.filter_ is None):
+                    # Default option
                     view.filter = has_data
                 elif dms_view and dms_view.filter_ == "nodeType":
-                    view.filter = dm.filters.And(has_data, node_type)
+                    view.filter = node_type
                     node_types.append(dm.NodeApply(space=view.space, external_id=view.external_id, sources=[]))
                 else:
                     view.filter = has_data

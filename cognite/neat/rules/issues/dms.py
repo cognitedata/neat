@@ -25,6 +25,7 @@ __all__ = [
     "UnsupportedRelationWarning",
     "MultipleReferenceWarning",
     "HasDataFilterOnNoPropertiesViewWarning",
+    "NodeTypeFilterOnParentViewWarning",
 ]
 
 
@@ -340,7 +341,32 @@ class HasDataFilterOnNoPropertiesViewWarning(DMSSchemaWarning):
     view_id: dm.ViewId
 
     def message(self) -> str:
-        return f"Cannot set hasData filter on view {self.view_id} as it does not have properties in any containers"
+        return (
+            f"Cannot set hasData filter on view {self.view_id} as it does not have properties in any containers. "
+            "Using a node type filter instead."
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["view_id"] = self.view_id.dump()
+        return output
+
+
+@dataclass(frozen=True)
+class NodeTypeFilterOnParentViewWarning(DMSSchemaWarning):
+    description = (
+        "Setting a node type filter on a parent view. This is no "
+        "recommended as parent views are typically used for multiple type of nodes."
+    )
+    fix = "Use a HasData filter instead"
+    error_name: ClassVar[str] = "NodeTypeFilterOnParentViewWarning"
+    view_id: dm.ViewId
+
+    def message(self) -> str:
+        return (
+            f"Setting a node type filter on parent view {self.view_id}. This is not recommended as "
+            "parent views are typically used for multiple types of nodes."
+        )
 
     def dump(self) -> dict[str, Any]:
         output = super().dump()
