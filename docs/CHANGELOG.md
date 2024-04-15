@@ -15,6 +15,13 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.72.2] - 15-04-24
+### Fixed
+- `rules2dms` API route is now producing expected `View` objects to be visualized in CDF
+### Added
+- `publish-rules` API route added allowing publishing rules as DMS Schema components to CDF
+
+
 ## [0.72.1] - 11-04-24
 ### Fixed
 - rdf:PlainLiteral and rdf:Literal was not resolving as string handled when exporting Rules to DMS schemas, this is now fixed
