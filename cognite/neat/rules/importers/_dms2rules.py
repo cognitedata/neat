@@ -63,7 +63,7 @@ class DMSImporter(BaseImporter):
 
         is_extension = new_model_id is not None
         if is_extension:
-            # Seems a bug in mypy that it does not understand that this is ok
+            # It seems a bug in mypy that it does not understand that this is ok
             new_model_id_parsed = dm.DataModelId.load(new_model_id)  # type: ignore[arg-type]
             is_solution = new_model_id_parsed != data_model.as_id()
             if is_solution:
