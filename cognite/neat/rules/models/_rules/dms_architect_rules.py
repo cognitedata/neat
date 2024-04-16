@@ -570,12 +570,16 @@ class DMSRules(BaseRules):
                     )
             containers.append(dumped)
 
-        return {
+        output = {
             "Metadata" if info.by_alias else "metadata": self.metadata.model_dump(**kwargs),
             "Properties" if info.by_alias else "properties": properties,
             "Views" if info.by_alias else "views": views,
             "Containers" if info.by_alias else "containers": containers,
+            "is_reference": self.is_reference,
         }
+        if self.reference is not None:
+            output["Reference" if info.by_alias else "reference"] = self.reference.model_dump(**kwargs)
+        return output
 
     def as_schema(self, include_pipeline: bool = False, instance_space: str | None = None) -> DMSSchema:
         return _DMSExporter(include_pipeline, instance_space).to_schema(self)
