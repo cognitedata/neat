@@ -3,6 +3,7 @@ import re
 
 from rdflib import Graph, Namespace
 
+from cognite.neat.constants import DEFAULT_NAMESPACE
 from cognite.neat.rules.models._rules.base import RoleTypes, SchemaCompleteness
 from cognite.neat.rules.models.rules import (
     prefix_compliance_regex,
@@ -29,23 +30,23 @@ def parse_owl_metadata(graph: Graph, make_compliant: bool = False) -> dict:
     """
     # TODO: Move dataframe to dict representation
 
-    query = """SELECT ?namespace ?prefix ?version ?created ?updated ?title ?description ?creator ?rights ?license
-    WHERE {
+    query = f"""SELECT ?namespace ?prefix ?version ?created ?updated ?title ?description ?creator ?rights ?license
+    WHERE {{
         ?namespace a owl:Ontology .
-        OPTIONAL {?namespace owl:versionInfo ?version }.
-        OPTIONAL {?namespace dcterms:creator ?creator }.
-        OPTIONAL {?namespace dcterms:title|rdfs:label|skos:prefLabel ?title }.
-        OPTIONAL {?namespace dcterms:modified ?updated }.
-        OPTIONAL {?namespace dcterms:created ?created }.
-        OPTIONAL {?namespace dcterms:description ?description }.
+        OPTIONAL {{?namespace owl:versionInfo ?version }}.
+        OPTIONAL {{?namespace dcterms:creator ?creator }}.
+        OPTIONAL {{?namespace <{DEFAULT_NAMESPACE.prefix}> ?prefix }}.
+        OPTIONAL {{?namespace dcterms:title|rdfs:label|skos:prefLabel ?title }}.
+        OPTIONAL {{?namespace dcterms:modified ?updated }}.
+        OPTIONAL {{?namespace dcterms:created ?created }}.
+        OPTIONAL {{?namespace dcterms:description ?description }}.
+        OPTIONAL {{?namespace dcterms:rights|dc:rights ?rights }}.
 
-        OPTIONAL {?namespace dcterms:rights|dc:rights ?rights }.
-
-        OPTIONAL {?namespace dcterms:license|dc:license ?license }.
+        OPTIONAL {{?namespace dcterms:license|dc:license ?license }}.
         FILTER (!isBlank(?namespace))
         FILTER (!bound(?description) || LANG(?description) = "" || LANGMATCHES(LANG(?description), "en"))
         FILTER (!bound(?title) || LANG(?title) = "" || LANGMATCHES(LANG(?title), "en"))
-    }
+    }}
     """
 
     results = [{item for item in sublist} for sublist in list(zip(*graph.query(query), strict=True))]
@@ -72,7 +73,6 @@ def parse_owl_metadata(graph: Graph, make_compliant: bool = False) -> dict:
     )
 
     if make_compliant:
-        raw_metadata.pop("created")
         return make_metadata_compliant(raw_metadata)
 
     return raw_metadata
@@ -176,7 +176,7 @@ def fix_date(
     if date := metadata.get(date_type, None):
         try:
             if isinstance(date, datetime.datetime):
-                pass
+                return metadata
             elif isinstance(date, datetime.date):
                 metadata[date_type] = datetime.datetime.combine(metadata[date_type], datetime.datetime.min.time())
             elif isinstance(date, str):

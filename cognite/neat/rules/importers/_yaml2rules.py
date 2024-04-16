@@ -74,10 +74,10 @@ class YAMLImporter(BaseImporter):
             )
             metadata_file = Path()
         else:
-            metadata_file_nullable = next((file for file in self._filepaths if file.stem == "metadata"), None)
+            metadata_file_nullable = next((file for file in self._filepaths if file.stem == "Metadata"), None)
             metadata_file = metadata_file_nullable or self._filepaths[0]
 
-        if "metadata" not in self.raw_data:
+        if "Metadata" not in self.raw_data:
             self._read_issues.append(
                 issues.spreadsheet_file.MetadataSheetMissingOrFailedError(metadata_file, "Metadata not found in file")
             )
@@ -85,7 +85,7 @@ class YAMLImporter(BaseImporter):
                 raise self._read_issues.as_errors()
             return None, self._read_issues
 
-        metadata = self.raw_data["metadata"]
+        metadata = self.raw_data["Metadata"]
 
         if "role" not in metadata:
             self._read_issues.append(
