@@ -718,43 +718,9 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         id="No casing standardization",
     )
 
-    DMSRules(
-        metadata=DMSMetadata(
-            schema_="complete",
-            space="sp_enterprise",
-            external_id="enterprise_model",
-            version="1",
-            creator="Alice",
-            created="2021-01-01T00:00:00",
-            updated="2021-01-01T00:00:00",
-        ),
-        properties=SheetList[DMSProperty](
-            data=[
-                DMSProperty(
-                    class_="Asset",
-                    property_="children",
-                    value_type="Asset",
-                    relation="multiedge",
-                    view="Asset",
-                    view_property="children",
-                ),
-            ]
-        ),
-        containers=SheetList[DMSContainer](
-            data=[
-                DMSContainer(container="Asset", class_="Asset"),
-            ]
-        ),
-        views=SheetList[DMSView](
-            data=[
-                DMSView(view="Asset", class_="Asset"),
-            ]
-        ),
-    )
-
     dms_rules = DMSRules(
         metadata=DMSMetadata(
-            schema_="extended",
+            schema_="complete",
             space="sp_solution",
             external_id="solution_model",
             version="1",
