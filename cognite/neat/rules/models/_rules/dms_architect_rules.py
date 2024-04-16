@@ -501,18 +501,14 @@ class DMSRules(BaseRules):
                 raise ValueError(
                     "The schema is set to 'extended', but no reference rules are provided to validate against"
                 )
-            is_solution = self.metadata.space != self.reference.metadata.space
-            if is_solution:
-                rules = self
-            else:
-                # This is an extension of the reference rules, we need to merge the two
-                rules = self.copy(deep=True)
-                rules.properties.extend(self.reference.properties.data)
-                rules.views.extend(self.reference.views.data)
-                if rules.containers and self.reference.containers:
-                    rules.containers.extend(self.reference.containers.data)
-                elif not rules.containers and self.reference.containers:
-                    rules.containers = self.reference.containers
+            # This is an extension of the reference rules, we need to merge the two
+            rules = self.copy(deep=True)
+            rules.properties.extend(self.reference.properties.data)
+            rules.views.extend(self.reference.views.data)
+            if rules.containers and self.reference.containers:
+                rules.containers.extend(self.reference.containers.data)
+            elif not rules.containers and self.reference.containers:
+                rules.containers = self.reference.containers
         else:
             raise ValueError("Unknown schema completeness")
 
