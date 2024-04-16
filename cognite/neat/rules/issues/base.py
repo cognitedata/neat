@@ -68,7 +68,15 @@ class NeatValidationError(ValidationIssue, ABC):
 
         This is intended to be overridden in subclasses to handle specific error types.
         """
-        return [DefaultPydanticError.from_pydantic_error(error) for error in errors]
+        all_errors = []
+        for error in errors:
+            if isinstance(ctx := error.get("ctx"), dict) and isinstance(
+                multi_error := ctx.get("error"), MultiValueError
+            ):
+                all_errors.extend(multi_error.errors)
+            else:
+                all_errors.append(DefaultPydanticError.from_pydantic_error(error))
+        return all_errors
 
 
 @dataclass(frozen=True)
