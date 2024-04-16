@@ -281,16 +281,6 @@ class DMSRules(BaseRules):
     reference: "DMSRules | None" = Field(None, alias="Reference")
     is_reference: bool = False
 
-    @field_validator("reference")
-    def extension_has_reference(cls, value: Any, info: ValidationInfo) -> Any:
-        if (
-            (metadata := info.data.get("metadata"))
-            and metadata.schema_ is SchemaCompleteness.extended
-            and value is None
-        ):
-            raise ValueError("With schema completeness extended, a reference must be provided")
-        return value
-
     @model_validator(mode="after")
     def set_default_space_and_version(self) -> "DMSRules":
         default_space = self.metadata.space
@@ -508,14 +498,21 @@ class DMSRules(BaseRules):
             rules: DMSRules = self
         elif self.metadata.schema_ is SchemaCompleteness.extended:
             if not self.reference:
-                raise ValueError("With schema completeness extended, a reference must be provided")
-            rules = self.copy()
-            rules.properties.extend(self.reference.properties.data)
-            rules.views.extend(self.reference.views.data)
-            if rules.containers and self.reference.containers:
-                rules.containers.extend(self.reference.containers.data)
-            elif not rules.containers and self.reference.containers:
-                rules.containers = self.reference.containers
+                raise ValueError(
+                    "The schema is set to 'extended', but no reference rules are provided to validate against"
+                )
+            is_solution = self.metadata.space != self.reference.metadata.space
+            if is_solution:
+                rules = self
+            else:
+                # This is an extension of the reference rules, we need to merge the two
+                rules = self.copy(deep=True)
+                rules.properties.extend(self.reference.properties.data)
+                rules.views.extend(self.reference.views.data)
+                if rules.containers and self.reference.containers:
+                    rules.containers.extend(self.reference.containers.data)
+                elif not rules.containers and self.reference.containers:
+                    rules.containers = self.reference.containers
         else:
             raise ValueError("Unknown schema completeness")
 
