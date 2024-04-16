@@ -236,6 +236,13 @@ class ChangingContainerError(DMSSchemaError):
     changed_properties: list[str] | None = None
     changed_attributes: list[str] | None = None
 
+    def __post_init__(self):
+        # Sorting for deterministic output
+        if self.changed_properties:
+            self.changed_properties.sort()
+        if self.changed_attributes:
+            self.changed_attributes.sort()
+
     def message(self) -> str:
         if self.changed_properties:
             changed = f" properties {self.changed_properties}."
@@ -264,6 +271,13 @@ class ChangingViewError(DMSSchemaError):
     view_id: dm.ViewId
     changed_properties: list[str] | None = None
     changed_attributes: list[str] | None = None
+
+    def __post_init__(self):
+        # Sorting for deterministic output
+        if self.changed_properties:
+            self.changed_properties.sort()
+        if self.changed_attributes:
+            self.changed_attributes.sort()
 
     def message(self) -> str:
         if self.changed_properties:
