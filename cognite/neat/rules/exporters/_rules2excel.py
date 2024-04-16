@@ -166,6 +166,12 @@ class ExcelExporter(BaseExporter[Workbook]):
                     cell.font = Font(bold=True, size=14)
 
     def _write_metadata_sheet(self, workbook: Workbook, metadata: dict[str, Any], is_reference: bool = False) -> None:
+        # Excel does not support timezone in datetime strings
+        if isinstance(metadata.get("created"), datetime):
+            metadata["created"] = metadata["created"].replace(tzinfo=None)
+        if isinstance(metadata.get("updated"), datetime):
+            metadata["updated"] = metadata["updated"].replace(tzinfo=None)
+
         if is_reference:
             metadata_sheet = workbook.create_sheet("RefMetadata")
         else:
@@ -222,7 +228,12 @@ class ExcelExporter(BaseExporter[Workbook]):
         else:
             raise ValueError(f"Unsupported rules type: {type(rules)}")
         existing_metadata = rules.metadata.model_dump(by_alias=True)
-        now_iso = datetime.now().isoformat()
+        if isinstance(existing_metadata["created"], datetime):
+            metadata["created"] = existing_metadata["created"].replace(tzinfo=None)
+        if isinstance(existing_metadata["updated"], datetime):
+            metadata["updated"] = existing_metadata["updated"].replace(tzinfo=None)
+        # Excel does not support timezone in datetime strings
+        now_iso = datetime.now().replace(tzinfo=None).isoformat()
         is_info = isinstance(rules, InformationRules)
         is_dms = not is_info
         is_extension = self.new_model_id is not None
@@ -267,5 +278,7 @@ class ExcelExporter(BaseExporter[Workbook]):
             metadata["schema"] = SchemaCompleteness.extended.value
         else:
             metadata["schema"] = SchemaCompleteness.complete.value
+
+        metadata["extension"] = "addition"
 
         return metadata

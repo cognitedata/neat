@@ -1,10 +1,7 @@
-from pathlib import Path
-
 import pytest
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import DataModelId
 
-from cognite.neat.rules.exporters import ExcelExporter
 from cognite.neat.rules.importers import DMSImporter, ExcelImporter
 from cognite.neat.rules.models._rules import DMSRules, InformationRules, RoleTypes
 from tests.config import DOC_RULES
@@ -32,7 +29,5 @@ class TestDMSImporter:
         )
 
         rules = dms_exporter.to_rules(errors="raise", role=RoleTypes.information_architect, is_reference=True)
-
-        ExcelExporter(styling="maximal").export_to_file(rules, Path("tmp.xlsx"))
 
         assert isinstance(rules, InformationRules)
