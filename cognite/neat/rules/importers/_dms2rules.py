@@ -1,4 +1,3 @@
-from datetime import datetime
 from pathlib import Path
 from typing import Literal, cast, overload
 
@@ -38,18 +37,12 @@ class DMSImporter(BaseImporter):
         self.metadata = metadata
 
     @classmethod
-    def from_data_model_id(
-        cls, client: CogniteClient, data_model_id: DataModelIdentifier, new_model_id: DataModelIdentifier | None = None
-    ) -> "DMSImporter":
+    def from_data_model_id(cls, client: CogniteClient, data_model_id: DataModelIdentifier) -> "DMSImporter":
         """Create a DMSImporter ready to convert the given data model to rules.
 
         Args:
             client: Instantiated CogniteClient to retrieve data model.
             data_model_id: Data Model to retrieve.
-            new_model_id: In case you are extending the data model given by data_model_id, you can provide the
-                new model id to create the metadata for the new model. Note if you are extending the model,
-                the new_data_model_id should be equal data_model_id, while if you are creating a solution model
-                and using data_model_id as a reference, then, new_data_model_id should be different from data_model_id.
 
         Returns:
             DMSImporter: DMSImporter instance
@@ -59,49 +52,23 @@ class DMSImporter(BaseImporter):
             raise ValueError(f"Data model {data_model_id} not found")
         data_model = data_models.latest_version()
         schema = DMSSchema.from_data_model(client, data_model)
-        description_raw, creator_raw = DMSMetadata._get_description_and_creator(data_model.description)
+        description, creator = DMSMetadata._get_description_and_creator(data_model.description)
 
-        is_extension = new_model_id is not None
-        if is_extension:
-            # It seems a bug in mypy that it does not understand that this is ok
-            new_model_id_parsed = dm.DataModelId.load(new_model_id)  # type: ignore[arg-type]
-            is_solution = new_model_id_parsed != data_model.as_id()
-            if is_solution:
-                use_id = new_model_id_parsed
-                name = use_id.external_id
-                creator = ["YOUR NAME"]
-                description = None
-                created = datetime.now()
-            else:
-                use_id = data_model.as_id()
-                name = data_model.name or use_id.external_id
-                creator = creator_raw
-                description = description_raw
-                created = ms_to_datetime(data_model.created_time)
-
-            updated = datetime.now()
-            schema_completeness = SchemaCompleteness.extended
-        else:
-            use_id = data_model.as_id()
-            name = data_model.name or use_id.external_id
-            schema_completeness = SchemaCompleteness.complete
-            creator = creator_raw
-            description = description_raw
-            created = ms_to_datetime(data_model.created_time)
-            updated = ms_to_datetime(data_model.last_updated_time)
+        created = ms_to_datetime(data_model.created_time)
+        updated = ms_to_datetime(data_model.last_updated_time)
 
         metadata = DMSMetadata(
-            schema_=schema_completeness,
+            schema_=SchemaCompleteness.complete,
             extension=ExtensionCategory.addition,
-            space=use_id.space,
-            external_id=use_id.external_id,
-            name=name,
-            version=use_id.version or "0.1.0",
+            space=data_model.space,
+            external_id=data_model.external_id,
+            name=data_model.name or data_model.external_id,
+            version=data_model.version or "0.1.0",
             updated=updated,
             created=created,
             creator=creator,
             description=description,
-            default_view_version=use_id.version or "0.1.0",
+            default_view_version=data_model.version or "0.1.0",
         )
         return cls(schema, metadata)
 
