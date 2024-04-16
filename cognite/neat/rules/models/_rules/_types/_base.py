@@ -14,7 +14,6 @@ from cognite.neat.rules.models.rdfpath import (
     TransformationRuleType,
     parse_rule,
 )
-from cognite.neat.utils.text import to_pascal
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -197,15 +196,14 @@ class ContainerEntity(Entity):
     def from_id(cls, container_id: ContainerId) -> "ContainerEntity":
         return ContainerEntity(prefix=container_id.space, suffix=container_id.external_id)
 
-    def as_id(self, default_space: str | None, standardize_casing: bool = True) -> ContainerId:
+    def as_id(self, default_space: str | None) -> ContainerId:
         if self.space is Undefined and default_space is None:
             raise ValueError("Space is Undefined! Set default_space!")
 
-        external_id = to_pascal(self.external_id) if standardize_casing else self.external_id
         if self.space is Undefined:
-            return ContainerId(space=cast(str, default_space), external_id=external_id)
+            return ContainerId(space=cast(str, default_space), external_id=self.external_id)
         else:
-            return ContainerId(space=self.space, external_id=external_id)
+            return ContainerId(space=self.space, external_id=self.external_id)
 
 
 class ViewEntity(Entity):
@@ -233,7 +231,6 @@ class ViewEntity(Entity):
         allow_none: Literal[False] = False,
         default_space: str | None = None,
         default_version: str | None = None,
-        standardize_casing: bool = True,
     ) -> ViewId:
         ...
 
@@ -243,7 +240,6 @@ class ViewEntity(Entity):
         allow_none: Literal[True],
         default_space: str | None = None,
         default_version: str | None = None,
-        standardize_casing: bool = True,
     ) -> ViewId | None:
         ...
 
@@ -252,7 +248,6 @@ class ViewEntity(Entity):
         allow_none: bool = False,
         default_space: str | None = None,
         default_version: str | None = None,
-        standardize_casing: bool = True,
     ) -> ViewId | None:
         if self.suffix is Unknown and allow_none:
             return None
@@ -265,8 +260,7 @@ class ViewEntity(Entity):
             raise ValueError("space is required")
         if version is None:
             raise ValueError("version is required")
-        external_id = to_pascal(self.external_id) if standardize_casing else self.external_id
-        return ViewId(space=space, external_id=external_id, version=version)
+        return ViewId(space=space, external_id=self.external_id, version=version)
 
 
 class ViewPropEntity(ViewEntity):
@@ -303,14 +297,10 @@ class ViewPropEntity(ViewEntity):
             property_=prop_id.property,
         )
 
-    def as_prop_id(
-        self, default_space: str | None = None, default_version: str | None = None, standardize_casing: bool = True
-    ) -> PropertyId:
+    def as_prop_id(self, default_space: str | None = None, default_version: str | None = None) -> PropertyId:
         if self.property_ is None:
             raise ValueError("property is required to create PropertyId")
-        return PropertyId(
-            source=self.as_id(False, default_space, default_version, standardize_casing), property=self.property_
-        )
+        return PropertyId(source=self.as_id(False, default_space, default_version), property=self.property_)
 
     @property
     def versioned_id(self) -> str:

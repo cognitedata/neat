@@ -102,7 +102,6 @@ class RulesToDMS(Step):
             if multi_space_components_create
             else {input_rules.metadata.space if isinstance(input_rules, DMSRules) else input_rules.metadata.prefix},
             existing_handling=existing_components_handling,
-            standardize_casing=False,
         )
 
         output_dir = self.data_store_path / Path("staging")
