@@ -1620,4 +1620,4 @@ class TestDMSRules:
 
         actual_issues = validation.NeatValidationError.from_pydantic_errors(e.value.errors())
 
-        assert actual_issues == expected_issues
+        assert sorted(actual_issues) == sorted(expected_issues)
