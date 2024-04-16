@@ -40,8 +40,6 @@ class DMSExporter(CDFExporter[DMSSchema]):
             If set, only export components in the given spaces. Defaults to None which means all spaces.
         existing_handling (Literal["fail", "skip", "update", "force"], optional): How to handle existing components.
             Defaults to "update". See below for details.
-        standardize_casing(bool, optional): Whether to standardize the casing. This means PascalCase for external ID
-            of views, containers, and data models, and camelCase for properties.
         export_pipeline (bool, optional): Whether to export the pipeline. Defaults to False. This means setting
             up transformations, RAW databases and tables to populate the data model.
         instance_space (str, optional): The space to use for the instance. Defaults to None.
@@ -59,14 +57,12 @@ class DMSExporter(CDFExporter[DMSSchema]):
         export_components: Component | Collection[Component] = "all",
         include_space: set[str] | None = None,
         existing_handling: Literal["fail", "skip", "update", "force"] = "update",
-        standardize_casing: bool = True,
         export_pipeline: bool = False,
         instance_space: str | None = None,
     ):
         self.export_components = {export_components} if isinstance(export_components, str) else set(export_components)
         self.include_space = include_space
         self.existing_handling = existing_handling
-        self.standardize_casing = standardize_casing
         self.export_pipeline = export_pipeline
         self.instance_space = instance_space
         self._schema: DMSSchema | None = None
@@ -119,11 +115,11 @@ class DMSExporter(CDFExporter[DMSSchema]):
         )
         is_new_model = dms_rules.reference is None
         if is_new_model or is_solution_model:
-            return dms_rules.as_schema(self.standardize_casing, self.export_pipeline, self.instance_space)
+            return dms_rules.as_schema(self.export_pipeline, self.instance_space)
 
         # This is an extension of an existing model.
         reference_rules = cast(DMSRules, dms_rules.reference).copy(deep=True)
-        reference_schema = reference_rules.as_schema(self.standardize_casing, self.export_pipeline)
+        reference_schema = reference_rules.as_schema(self.export_pipeline)
 
         # Todo Move this to an appropriate location
         # Merging Reference with User Rules
@@ -146,7 +142,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
                 property_.reference = None
                 combined_rules.properties.append(property_)
 
-        schema = combined_rules.as_schema(self.standardize_casing, self.export_pipeline, self.instance_space)
+        schema = combined_rules.as_schema(self.export_pipeline, self.instance_space)
 
         if dms_rules.metadata.extension in (ExtensionCategory.addition, ExtensionCategory.reshape):
             # We do not freeze views as they might be changed, even for addition,

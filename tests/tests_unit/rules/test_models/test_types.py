@@ -49,7 +49,7 @@ class TestViewPropEntity:
         actual = ViewPropEntity.from_raw(raw)
 
         assert actual == expected
-        assert actual.as_prop_id("default_space", "default_version", standardize_casing=False) == expected_id
+        assert actual.as_prop_id("default_space", "default_version") == expected_id
 
 
 class TestReferenceType:
