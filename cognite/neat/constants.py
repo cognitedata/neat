@@ -11,7 +11,7 @@ EXAMPLE_RULES = PACKAGE_DIRECTORY / "rules" / "examples"
 EXAMPLE_GRAPHS = PACKAGE_DIRECTORY / "graph" / "examples"
 EXAMPLE_WORKFLOWS = PACKAGE_DIRECTORY / "workflows" / "examples"
 
-DEFAULT_NAMESPACE = Namespace("http://purl.org/cognite/neat/")
+DEFAULT_NAMESPACE = Namespace("http://purl.org/cognite/neat#")
 
 PREFIXES = {
     "rdf": RDF._NS,

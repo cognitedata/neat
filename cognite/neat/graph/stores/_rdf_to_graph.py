@@ -26,6 +26,7 @@ def rdf_file_to_graph(
     """
 
     if filepath.is_file():
+        print(base_namespace)
         graph.parse(filepath, publicID=base_namespace)
     else:
         for filename in filepath.iterdir():
