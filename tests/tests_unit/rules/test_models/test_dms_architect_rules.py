@@ -1295,7 +1295,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
     )
 
 
-def invalid_rules_test_cases() -> Iterable[ParameterSet]:
+def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
     ref_rules = DMSRules(
         metadata=DMSMetadata(
             schema_="complete",
@@ -1390,7 +1390,7 @@ def invalid_rules_test_cases() -> Iterable[ParameterSet]:
                 DMSProperty(
                     class_="WindTurbine",
                     property_="name",
-                    value_type="json",
+                    value_type="text",
                     container="Asset",
                     container_property="name",
                     view="Asset",
@@ -1413,7 +1413,7 @@ def invalid_rules_test_cases() -> Iterable[ParameterSet]:
 
     yield pytest.param(
         changing_view,
-        [validation.dms.ChangingViewError(dm.ViewId("my_space", "Asset", "1"), ["name"])],
+        [validation.dms.ChangingViewError(dm.ViewId("my_space", "Asset", "1"), ["navn"])],
         id="Addition extension, changing view",
     )
 
@@ -1610,8 +1610,8 @@ class TestDMSRules:
         assert wind_turbine_name.reference is not None
         assert wind_turbine_name.reference.versioned_id == "power:GeneratingUnit(property=name)"
 
-    @pytest.mark.parametrize("rules, expected_issues", list(invalid_rules_test_cases()))
-    def test_load_invalid_rules(self, rules: DMSRules, expected_issues: list[validation.ValidationIssue]):
+    @pytest.mark.parametrize("rules, expected_issues", list(invalid_extended_rules_test_cases()))
+    def test_load_invalid_extended_rules(self, rules: DMSRules, expected_issues: list[validation.ValidationIssue]):
         raw = rules.model_dump(by_alias=True)
         raw["Metadata"]["schema"] = "extended"
 

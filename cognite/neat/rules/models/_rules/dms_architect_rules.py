@@ -504,9 +504,13 @@ class DMSRules(BaseRules):
             # This is an extension of the reference rules, we need to merge the two
             rules = self.copy(deep=True)
             rules.properties.extend(self.reference.properties.data)
-            rules.views.extend(self.reference.views.data)
+            existing_views = {view.view.as_id(False) for view in rules.views}
+            rules.views.extend([view for view in self.reference.views if view.view.as_id(False) not in existing_views])
             if rules.containers and self.reference.containers:
-                rules.containers.extend(self.reference.containers.data)
+                existing_containers = {container.container.as_id() for container in rules.containers.data}
+                rules.containers.extend(
+                    [container for container in self.reference.containers if container.container.as_id() not in existing_containers]
+                )
             elif not rules.containers and self.reference.containers:
                 rules.containers = self.reference.containers
         else:
