@@ -15,10 +15,86 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.72.2] - 15-04-24
+### Fixed
+- `rules2dms` API route is now producing expected `View` objects to be visualized in CDF
+### Added
+- `publish-rules` API route added allowing publishing rules as DMS Schema components to CDF
+
+
+## [0.72.1] - 11-04-24
+### Fixed
+- rdf:PlainLiteral and rdf:Literal was not resolving as string handled when exporting Rules to DMS schemas, this is now fixed
+- OwlImporter that works with v2 rules was using `XSD_VALUE_TYPE_MAPPINGS` for v1 rules, this is now fixed
+- added missing mapping for reference when converting information architect rules to dms architect rules
+
+## [0.72.0] - 11-04-24
+### Improved
+- Improved garbadge collection process in workflows. Now all resources are properly released after workflow execution or reloading.
+This is expecially critical when working with statfull objects like graph stores or big objects allocated in memory.
+## Removed
+- Removed a lot of old and stale code from workflows engine.
+## Changed
+- Changed CORS policy for UI to allow all origins. This is a temporary solution until it is properly configured in the future.
+
+## [0.71.0] - 10-04-24
+### Added
+- Added `/api/core/rules2dms`
+- Enabled conversion of rules to DMS views and containers
+
+## [0.70.3] - 10-04-24
+### Fixed
+- Bug when importing an OWL ontology while expecting compliant rules did not encounter for dangling classes (classes without a property or parent class). This is now fixed.
+### Improved
+- Handling of xsd types as case insensitive when importing an OWL ontology.
+### Added
+- Handling of rdf:Literals in OWL ontology import as xsd:string
+
+## [0.70.2] - 03-04-24
+### Fixed
+- Bug when exporting an `addition` to of a ruleset in  `DMSExporter` when using the method `.export_to_cdf`
+### Changed
+- Updated the `DMSExporter` to sort views in data model by (`space`, `external_id`).
+
+## [0.70.1] - 03-04-24
+### Added
+- The `DMSExporter` now supports deploying an `addition` extension of a ruleset.
+
+## [0.70.0] - 09-04-24
+### Added
+- Added `/api/core/convert`
+- Enabled OWL importer to produce DMS rules
+
+
+## [0.69.3] - 03-04-24
+### Fixed
+- Validation of `InformationRules` gives a warning if a reference class is used. This is now fixed.
+- Validation of `InformationRules` returns an error if a importing a value type `Unknown`. This is now fixed.
+
+## [0.69.2] - 03-04-24
+### Fixed
+- Fixed issue with `DMSImporter` when importing data models with direct relations without `source` set. This would
+  cause a validation issue. This is now fixed.
+
+## [0.69.1] - 03-04-24
+### Fixed
+- Fixed issue with `DMSImporter` when importing data models with data models that reference views outside the data model.
+  This is now fixed.
+
+## [0.69.0] - 03-04-24
+### Added
+- Experimental support for working with a reference model in the Rules.
+
 ### Fixed
 - When using `DMSExporter` with `standardize_casing=False`, the `DMSExporter` would fail to export containers and
   views. This is now fixed.
+
+### Changed
+- When using any exporter writing to file, the default new line character and encoding of the OS was used. This is now
+  changed to always use `utf-8` encoding and `'\n'` as the new line character. This is for working with **NEAT** in,
+  for example, git-history, across multiple users with different OSes.
+- In the `DMSExporter`, setting `existing_handling=force` will now also force the creation of `Containers` in addition
+  to `Views`.
 
 ## [0.68.9] - 03-04-24
 ### Added

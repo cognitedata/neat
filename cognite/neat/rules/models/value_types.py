@@ -83,6 +83,7 @@ _DATA_TYPES: list[dict] = [
     {"name": "anyURI", "python": str, "GraphQL": "String", "dms": Text},
     {"name": "normalizedString", "python": str, "GraphQL": "String", "dms": Text},
     {"name": "token", "python": str, "GraphQL": "String", "dms": Text},
+    {"name": "PlainLiteral", "python": str, "GraphQL": "String", "dms": Text},
     # Graphql does not have a datetime/date type this is CDF specific
     {"name": "dateTime", "python": datetime, "GraphQL": "Timestamp", "dms": Timestamp},
     {"name": "dateTimeStamp", "python": datetime, "GraphQL": "Timestamp", "dms": Timestamp},

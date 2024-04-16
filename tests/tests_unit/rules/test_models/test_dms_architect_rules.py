@@ -144,7 +144,13 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                                 direction="outwards",
                             )
                         },
-                        filter=None,
+                        filter=dm.filters.Equals(
+                            ["node", "type"],
+                            {
+                                "space": "my_space",
+                                "externalId": "WindFarm",
+                            },
+                        ),
                     ),
                 ]
             ),
@@ -165,9 +171,8 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     ),
                 ]
             ),
-            node_types=dm.NodeApplyList([]),
+            node_types=dm.NodeApplyList([dm.NodeApply(space="my_space", external_id="WindFarm", sources=[])]),
         ),
-        True,
         id="Two properties, one container, one view",
     )
 
@@ -289,7 +294,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         dms_rules,
         expected_schema,
-        True,
         id="Property with list of direct relations converted to multiedge",
     )
 
@@ -403,7 +407,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         dms_rules,
         expected_schema,
-        True,
         id="View not in model",
     )
 
@@ -589,7 +592,13 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                             direction="inwards",
                         )
                     },
-                    filter=None,
+                    filter=dm.filters.Equals(
+                        ["node", "type"],
+                        {
+                            "space": "my_space",
+                            "externalId": "Activity",
+                        },
+                    ),
                 ),
             ]
         ),
@@ -613,12 +622,15 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ]
         ),
-        node_types=dm.NodeApplyList([]),
+        node_types=dm.NodeApplyList(
+            [
+                dm.NodeApply(space="my_space", external_id="Activity", sources=[]),
+            ]
+        ),
     )
     yield pytest.param(
         dms_rules,
         expected_schema,
-        True,
         id="Multiple relations and reverse relations",
     )
 
@@ -703,8 +715,119 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         dms_rules,
         expected_schema,
-        False,
         id="No casing standardization",
+    )
+
+    DMSRules(
+        metadata=DMSMetadata(
+            schema_="complete",
+            space="sp_enterprise",
+            external_id="enterprise_model",
+            version="1",
+            creator="Alice",
+            created="2021-01-01T00:00:00",
+            updated="2021-01-01T00:00:00",
+        ),
+        properties=SheetList[DMSProperty](
+            data=[
+                DMSProperty(
+                    class_="Asset",
+                    property_="children",
+                    value_type="Asset",
+                    relation="multiedge",
+                    view="Asset",
+                    view_property="children",
+                ),
+            ]
+        ),
+        containers=SheetList[DMSContainer](
+            data=[
+                DMSContainer(container="Asset", class_="Asset"),
+            ]
+        ),
+        views=SheetList[DMSView](
+            data=[
+                DMSView(view="Asset", class_="Asset"),
+            ]
+        ),
+    )
+
+    dms_rules = DMSRules(
+        metadata=DMSMetadata(
+            schema_="extended",
+            space="sp_solution",
+            external_id="solution_model",
+            version="1",
+            creator="Bob",
+            created="2021-01-01T00:00:00",
+            updated="2021-01-01T00:00:00",
+        ),
+        properties=SheetList[DMSProperty](
+            data=[
+                DMSProperty(
+                    class_="Asset",
+                    property_="kinderen",
+                    value_type="Asset",
+                    relation="multiedge",
+                    reference="sp_enterprise:Asset(property=children)",
+                    view="Asset",
+                    view_property="kinderen",
+                ),
+            ]
+        ),
+        views=SheetList[DMSView](
+            data=[
+                DMSView(view="Asset", class_="Asset"),
+            ]
+        ),
+    )
+
+    expected_schema = DMSSchema(
+        spaces=dm.SpaceApplyList(
+            [
+                dm.SpaceApply(space="sp_solution"),
+            ]
+        ),
+        views=dm.ViewApplyList(
+            [
+                dm.ViewApply(
+                    space="sp_solution",
+                    external_id="Asset",
+                    version="1",
+                    properties={
+                        "kinderen": dm.MultiEdgeConnectionApply(
+                            type=dm.DirectRelationReference(
+                                space="sp_enterprise",
+                                external_id="Asset.children",
+                            ),
+                            source=dm.ViewId("sp_solution", "Asset", "1"),
+                            direction="outwards",
+                        ),
+                    },
+                    filter=dm.filters.Equals(["node", "type"], {"space": "sp_solution", "externalId": "Asset"}),
+                ),
+            ]
+        ),
+        data_models=dm.DataModelApplyList(
+            [
+                dm.DataModelApply(
+                    space="sp_solution",
+                    external_id="solution_model",
+                    version="1",
+                    description="Creator: Bob",
+                    views=[
+                        dm.ViewId(space="sp_solution", external_id="Asset", version="1"),
+                    ],
+                )
+            ]
+        ),
+        node_types=dm.NodeApplyList([dm.NodeApply(space="sp_solution", external_id="Asset", sources=[])]),
+    )
+
+    yield pytest.param(
+        dms_rules,
+        expected_schema,
+        id="Edge Reference to another data model",
     )
 
 
@@ -1273,9 +1396,9 @@ class TestDMSRules:
 
         assert recreated_rules.model_dump() == rules.model_dump()
 
-    @pytest.mark.parametrize("rules, expected_schema, standardize_casing", rules_schema_tests_cases())
-    def test_as_schema(self, rules: DMSRules, expected_schema: DMSSchema, standardize_casing: bool) -> None:
-        actual_schema = rules.as_schema(standardize_casing)
+    @pytest.mark.parametrize("rules, expected_schema", rules_schema_tests_cases())
+    def test_as_schema(self, rules: DMSRules, expected_schema: DMSSchema) -> None:
+        actual_schema = rules.as_schema()
 
         assert actual_schema.spaces.dump() == expected_schema.spaces.dump()
         actual_schema.data_models[0].views = sorted(actual_schema.data_models[0].views, key=lambda v: v.external_id)

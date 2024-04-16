@@ -11,7 +11,7 @@ from rdflib import DC, DCTERMS, OWL, RDF, RDFS, SKOS, Graph
 from cognite.neat.rules.importers._base import BaseImporter, Rules
 from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models._rules import InformationRules, RoleTypes
-from cognite.neat.rules.models.value_types import XSD_VALUE_TYPE_MAPPINGS
+from cognite.neat.rules.models._rules._types import XSD_VALUE_TYPE_MAPPINGS
 
 from ._owl2classes import parse_owl_classes
 from ._owl2metadata import parse_owl_metadata
@@ -58,9 +58,6 @@ class OWLImporter(BaseImporter):
         role: RoleTypes | None = None,
         is_reference: bool = False,
     ) -> tuple[Rules | None, IssueList] | Rules:
-        if role is not None and role != RoleTypes.information_architect:
-            raise ValueError(f"Role {role} is not supported for OWLImporter")
-
         graph = Graph()
         try:
             graph.parse(self.owl_filepath)
@@ -91,6 +88,7 @@ class OWLImporter(BaseImporter):
 def make_components_compliant(components: dict) -> dict:
     components = _add_missing_classes(components)
     components = _add_missing_value_types(components)
+    components = _add_default_property_to_dangling_classes(components)
 
     return components
 
@@ -132,11 +130,25 @@ def _add_missing_value_types(components: dict) -> dict:
     """
 
     xsd_types = set(XSD_VALUE_TYPE_MAPPINGS.keys())
-    value_types = {definition["Value Type"] for definition in components["Properties"]}
+    candidate_value_types = {definition["Value Type"] for definition in components["Properties"]} - {
+        definition["Class"] for definition in components["Classes"]
+    }
 
-    classes = {definition["Class"] for definition in components["Classes"]}
+    # to avoid issue of case sensitivity for xsd types
+    value_types_lower = {v.lower() for v in candidate_value_types}
 
-    for class_ in value_types.difference(classes).difference(xsd_types):
+    xsd_types_lower = {x.lower() for x in xsd_types}
+
+    # Create a mapping from lowercase strings to original strings
+    value_types_mapping = {v.lower(): v for v in candidate_value_types}
+
+    # Find the difference
+    difference = value_types_lower - xsd_types_lower
+
+    # Convert the difference back to the original case
+    difference_original_case = {value_types_mapping[d] for d in difference}
+
+    for class_ in difference_original_case:
         components["Classes"].append(
             {
                 "Class": class_,
@@ -145,6 +157,42 @@ def _add_missing_value_types(components: dict) -> dict:
                     "This is a class that a domain of a property but was not defined in the ontology. "
                     "It is added by NEAT to make the ontology compliant with CDF."
                 ),
+            }
+        )
+
+    return components
+
+
+def _add_default_property_to_dangling_classes(components: dict[str, list[dict]]) -> dict:
+    """Add missing classes to Classes.
+
+    Args:
+        tables: imported tables from owl ontology
+
+    Returns:
+        Updated tables with missing classes added to containers
+    """
+
+    dangling_classes = {
+        definition["Class"] for definition in components["Classes"] if not definition.get("Parent Class", None)
+    } - {definition["Class"] for definition in components["Properties"]}
+
+    comment = (
+        "Added by NEAT. "
+        "This is property has been added to this class since otherwise it will create "
+        "dangling classes in the ontology."
+    )
+
+    for class_ in dangling_classes:
+        components["Properties"].append(
+            {
+                "Class": class_,
+                "Property": "label",
+                "Value Type": "string",
+                "Comment": comment,
+                "Min Count": 0,
+                "Max Count": 1,
+                "Reference": "http://www.w3.org/2000/01/rdf-schema#label",
             }
         )
 

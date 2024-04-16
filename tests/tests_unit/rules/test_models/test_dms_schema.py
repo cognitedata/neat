@@ -1,3 +1,4 @@
+import warnings
 from collections.abc import Iterable
 from pathlib import Path
 
@@ -8,8 +9,9 @@ from cognite.client.data_classes import DatabaseWrite, DatabaseWriteList, Transf
 
 from cognite.neat.rules.issues.dms import (
     ContainerPropertyUsedMultipleTimesError,
-    DirectRelationMissingSourceError,
+    DirectRelationMissingSourceWarning,
     DMSSchemaError,
+    DMSSchemaWarning,
     DuplicatedViewInDataModelError,
     MissingContainerError,
     MissingContainerPropertyError,
@@ -164,7 +166,7 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
                 space="non_existing_space",
                 referred_by=dm.ContainerId("non_existing_space", "my_container"),
             ),
-            DirectRelationMissingSourceError(
+            DirectRelationMissingSourceWarning(
                 view_id=dm.ViewId("my_space", "my_view1", "1"),
                 property="direct",
             ),
@@ -306,12 +308,17 @@ def valid_schema_test_cases() -> Iterable[ParameterSet]:
 
 class TestDMSSchema:
     @pytest.mark.parametrize(
-        "schema, expected_errors",
+        "schema, expected",
         list(invalid_schema_test_cases()),
     )
-    def test_invalid_schema(self, schema: DMSSchema, expected_errors: list[DMSSchemaError]) -> None:
-        errors = schema.validate()
+    def test_invalid_schema(self, schema: DMSSchema, expected: list[DMSSchemaError | DMSSchemaWarning]) -> None:
+        expected_errors = [error for error in expected if isinstance(error, DMSSchemaError)]
+        expected_warnings = [warning for warning in expected if isinstance(warning, DMSSchemaWarning)]
+        with warnings.catch_warnings(record=True) as warning_logger:
+            errors = schema.validate()
         assert sorted(errors) == sorted(expected_errors)
+        actual_warnings = [warning.message for warning in warning_logger]
+        assert sorted(actual_warnings) == sorted(expected_warnings)
 
     @pytest.mark.parametrize(
         "schema",

@@ -4,8 +4,6 @@ from collections import Counter
 from pathlib import Path
 from typing import cast
 
-import pytest
-
 from cognite.neat.rules.exporters._rules2dms import DMSExporter
 from cognite.neat.rules.models._rules.dms_architect_rules import (
     DMSRules,
@@ -14,9 +12,8 @@ from cognite.neat.rules.models._rules.dms_schema import PipelineSchema
 
 
 class TestDMSExporter:
-    @pytest.mark.parametrize("standardize_casing", [True, False])
-    def test_export_dms_schema_to_zip(self, standardize_casing: bool, alice_rules: DMSRules, tmp_path: Path) -> None:
-        exporter = DMSExporter(standardize_casing=standardize_casing)
+    def test_export_dms_schema_to_zip(self, alice_rules: DMSRules, tmp_path: Path) -> None:
+        exporter = DMSExporter()
         schema = exporter.export(alice_rules)
         zipfile_path = tmp_path / "test.zip"
 
@@ -25,13 +22,14 @@ class TestDMSExporter:
         counts = Counter()
         with zipfile.ZipFile(zipfile_path, "r") as zip_ref:
             for name in zip_ref.namelist():
-                matches = re.search(r"[a-zA-Z0-9_].(space|datamodel|view|container).yaml$", name)
+                matches = re.search(r"[a-zA-Z0-9_].(space|datamodel|view|container|node).yaml$", name)
                 counts.update([matches.group(1)])
 
         assert counts["space"] == len(schema.spaces)
         assert counts["datamodel"] == len(schema.data_models)
         assert counts["view"] == len(alice_rules.views)
         assert counts["container"] == len(alice_rules.containers)
+        assert counts["node"] == len(schema.node_types)
 
     def test_export_dms_schema_with_pipeline(self, alice_rules: DMSRules, tmp_path) -> None:
         exporter = DMSExporter(export_pipeline=True)

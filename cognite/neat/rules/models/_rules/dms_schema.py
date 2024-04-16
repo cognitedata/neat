@@ -16,7 +16,7 @@ from cognite.client.data_classes.transformations.common import Edges, EdgeType, 
 
 from cognite.neat.rules.issues.dms import (
     ContainerPropertyUsedMultipleTimesError,
-    DirectRelationMissingSourceError,
+    DirectRelationMissingSourceWarning,
     DMSSchemaError,
     DuplicatedViewInDataModelError,
     MissingContainerError,
@@ -45,6 +45,9 @@ class DMSSchema:
     views: dm.ViewApplyList = field(default_factory=lambda: dm.ViewApplyList([]))
     containers: dm.ContainerApplyList = field(default_factory=lambda: dm.ContainerApplyList([]))
     node_types: dm.NodeApplyList = field(default_factory=lambda: dm.NodeApplyList([]))
+    # The frozen ids are parts of the schema that should not be modified or deleted.
+    # This is used the exporting the schema.
+    frozen_ids: set[dm.ViewId | dm.ContainerId | dm.NodeId] = field(default_factory=set)
 
     _FIELD_NAME_BY_RESOURCE_TYPE: ClassVar[dict[str, str]] = {
         "container": "containers",
@@ -72,11 +75,17 @@ class DMSSchema:
         data_model_write = data_model.as_write()
         data_model_write.views = list(views.as_write())
 
+        view_loader = ViewLoader(client)
+        # We need to include parent views in the schema to make sure that the schema is valid.
+        existing_view_ids = set(views.as_ids())
+        parent_view_ids = {parent for view in views for parent in view.implements or []}
+        parents = view_loader.retrieve_all_parents(list(parent_view_ids - existing_view_ids))
+        views.extend([parent for parent in parents if parent.as_id() not in existing_view_ids])
+
         # Converting views from read to write format requires to account for parents (implements)
         # as the read format contains all properties from all parents, while the write formate should not contain
         # properties from any parents.
         # The ViewLoader as_write method looks up parents and remove properties from them.
-        view_loader = ViewLoader(client)
         view_write = dm.ViewApplyList([view_loader.as_write(view) for view in views])
 
         return cls(
@@ -305,7 +314,9 @@ class DMSSchema:
                         container_property = ref_container.properties[prop.container_property_identifier]
 
                         if isinstance(container_property.type, dm.DirectRelation) and prop.source is None:
-                            errors.add(DirectRelationMissingSourceError(view_id=view_id, property=prop_name))
+                            warnings.warn(
+                                DirectRelationMissingSourceWarning(view_id=view_id, property=prop_name), stacklevel=2
+                            )
 
                 if isinstance(prop, dm.EdgeConnectionApply) and prop.source not in defined_views:
                     errors.add(MissingSourceViewError(view=prop.source, property=prop_name, referred_by=view_id))

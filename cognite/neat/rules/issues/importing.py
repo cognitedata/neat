@@ -9,6 +9,7 @@ __all__ = [
     "UnknownSubComponentWarning",
     "IgnoredComponentWarning",
     "UnknownPropertyWarning",
+    "UnknownValueTypeWarning",
     "ModelImportError",
     "InvalidComponentError",
     "MissingParentDefinitionError",
@@ -112,6 +113,23 @@ class UnknownPropertyWarning(ValidationWarning):
         else:
             prefix = f"Unknown property '{self.property_name}' of component '{self.component_type}'"
         return f"{prefix} This will be ignored in the imports."
+
+
+@dataclass(frozen=True)
+class UnknownValueTypeWarning(ModelImportWarning):
+    description = "Unknown value type. This limits validation done by NEAT. "
+    fix = "Set the value type"
+    class_id: str
+    property_id: str
+
+    def dump(self) -> dict[str, str]:
+        return {"class_id": self.class_id, "property_id": self.property_id}
+
+    def message(self) -> str:
+        return (
+            f"Unknown value type for property '{self.property_id}' of class '{self.class_id}'. "
+            "This limits validation done by NEAT."
+        )
 
 
 @dataclass(frozen=True)
