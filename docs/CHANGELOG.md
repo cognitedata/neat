@@ -16,6 +16,8 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 ## [0.72.3] - 16-04-24
+### Fixed
+- `ExcelImporter` was resetting `role` value to value set in rules instead of keeping value provided as arg
 ### Changed
 - Default namespace set to `http://purl.org/cognite/neat#` instead of `http://purl.org/cognite/app#`
 - OwlImporter for rules v2 has `make_compliant` set to False by default

@@ -171,7 +171,7 @@ class ExcelImporter(BaseImporter):
         is_reference: bool = False,
     ) -> tuple[Rules | None, IssueList] | Rules:
         issue_list = IssueList(title=f"'{self.filepath.name}'")
-
+        print(role)
         if not self.filepath.exists():
             issue_list.append(issues.spreadsheet_file.SpreadsheetNotFoundError(self.filepath))
             return self._return_or_raise(issue_list, errors)
@@ -199,23 +199,23 @@ class ExcelImporter(BaseImporter):
         if user_result and reference_result:
             user_result.sheets["reference"] = reference_result.sheets
             sheets = user_result.sheets
-            role = user_result.role
+            original_role = user_result.role
             read_info_by_sheet = user_result.read_info_by_sheet
             read_info_by_sheet.update(reference_result.read_info_by_sheet)
         elif user_result:
             sheets = user_result.sheets
-            role = user_result.role
+            original_role = user_result.role
             read_info_by_sheet = user_result.read_info_by_sheet
         elif reference_result:
             sheets = reference_result.sheets
-            role = reference_result.role
+            original_role = reference_result.role
             read_info_by_sheet = reference_result.read_info_by_sheet
         else:
             raise ValueError(
                 "No rules were generated. This should have been caught earlier. " f"Bug in {type(self).__name__}."
             )
 
-        rules_cls = RULES_PER_ROLE[role]
+        rules_cls = RULES_PER_ROLE[original_role]
         with _handle_issues(
             issue_list,
             error_cls=issues.spreadsheet.InvalidSheetError,
