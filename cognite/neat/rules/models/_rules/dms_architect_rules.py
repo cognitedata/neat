@@ -735,11 +735,22 @@ class _DMSExporter:
                             "Multiedge relation must have a view as value type. "
                             "This should have been validated in the rules"
                         )
-                    view_property = dm.MultiEdgeConnectionApply(
-                        type=dm.DirectRelationReference(
+                    if isinstance(prop.reference, ReferenceEntity):
+                        ref_view_prop = prop.reference.as_prop_id(
+                            default_space, default_version, self.standardize_casing
+                        )
+                        edge_type = dm.DirectRelationReference(
+                            space=ref_view_prop.source.space,
+                            external_id=f"{ref_view_prop.source.external_id}.{ref_view_prop.property}",
+                        )
+                    else:
+                        edge_type = dm.DirectRelationReference(
                             space=source.space,
                             external_id=f"{prop.view.external_id}.{prop.view_property}",
-                        ),
+                        )
+
+                    view_property = dm.MultiEdgeConnectionApply(
+                        type=edge_type,
                         source=source,
                         direction="outwards",
                     )
@@ -765,11 +776,21 @@ class _DMSExporter:
                         warnings.warn(
                             issues.dms.ReverseOfDirectRelationListWarning(view_id, prop.property_), stacklevel=2
                         )
-                        view_property = dm.MultiEdgeConnectionApply(
-                            type=dm.DirectRelationReference(
+                        if isinstance(reverse_prop.reference, ReferenceEntity):
+                            ref_view_prop = reverse_prop.reference.as_prop_id(
+                                default_space, default_version, self.standardize_casing
+                            )
+                            edge_type = dm.DirectRelationReference(
+                                space=ref_view_prop.source.space,
+                                external_id=f"{ref_view_prop.source.external_id}.{ref_view_prop.property}",
+                            )
+                        else:
+                            edge_type = dm.DirectRelationReference(
                                 space=source.space,
                                 external_id=f"{reverse_prop.view.external_id}.{reverse_prop.view_property}",
-                            ),
+                            )
+                        view_property = dm.MultiEdgeConnectionApply(
+                            type=edge_type,
                             source=source,
                             direction="inwards",
                         )
@@ -804,9 +825,17 @@ class _DMSExporter:
         parent_views = {parent for view in views for parent in view.implements or []}
         for view in views:
             ref_containers = sorted(view.referenced_containers(), key=lambda c: c.as_tuple())
-            has_data = dm.filters.HasData(containers=list(ref_containers)) if ref_containers else None
-            node_type = dm.filters.Equals(["node", "type"], {"space": view.space, "externalId": view.external_id})
             dms_view = dms_view_by_id.get(view.as_id())
+            has_data = dm.filters.HasData(containers=list(ref_containers)) if ref_containers else None
+            if dms_view and isinstance(dms_view.reference, ReferenceEntity):
+                # If the view is a reference, we implement the reference view,
+                # and need the filter to match the reference
+                ref_view = dms_view.reference.as_id(False, default_space, default_version, self.standardize_casing)
+                node_type = dm.filters.Equals(
+                    ["node", "type"], {"space": ref_view.space, "externalId": ref_view.external_id}
+                )
+            else:
+                node_type = dm.filters.Equals(["node", "type"], {"space": view.space, "externalId": view.external_id})
             if view.as_id() in parent_views:
                 if dms_view and dms_view.filter_ == "nodeType":
                     warnings.warn(issues.dms.NodeTypeFilterOnParentViewWarning(view.as_id()), stacklevel=2)
