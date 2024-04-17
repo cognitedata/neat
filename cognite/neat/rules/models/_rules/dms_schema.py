@@ -63,6 +63,10 @@ class DMSSchema:
         if len(data_models) == 0:
             raise ValueError(f"Data model {data_model_id} not found")
         data_model = data_models.latest_version()
+        return cls.from_data_model(client, data_model)
+
+    @classmethod
+    def from_data_model(cls, client: CogniteClient, data_model: dm.DataModel) -> "DMSSchema":
         views = dm.ViewList(data_model.views)
         container_ids = views.referenced_containers()
         containers = client.data_modeling.containers.retrieve(list(container_ids))
