@@ -15,7 +15,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## [0.72.4] - 17-04-24
+## [0.73.0] - 17-04-24
 ### Added
 - Proper parsing/serialization of `inf`
 - Added `new_model_id` to `ExcelExporter` to allow automatically setting metadata sheet when creating a new model
