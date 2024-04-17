@@ -134,16 +134,16 @@ class DMSMetadata(BaseMetadata):
         )
 
     @classmethod
-    def _get_description_and_creator(cls, description_raw: str | None) -> tuple[str, list[str]]:
+    def _get_description_and_creator(cls, description_raw: str | None) -> tuple[str | None, list[str]]:
         if description_raw and (description_match := re.search(r"Creator: (.+)", description_raw)):
             creator = description_match.group(1).split(", ")
-            description = description_raw.replace(f" Creator: {', '.join(creator)}", "")
+            description = description_raw.replace(description_match.string, "").strip() or None
         elif description_raw:
             creator = ["MISSING"]
             description = description_raw
         else:
             creator = ["MISSING"]
-            description = "Missing description"
+            description = None
         return description, creator
 
     @classmethod
