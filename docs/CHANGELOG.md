@@ -15,6 +15,21 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.73.0] - 17-04-24
+### Added
+- Proper parsing/serialization of `inf`
+- Added `new_model_id` to `ExcelExporter` to allow automatically setting metadata sheet when creating a new model
+- In `DMSRules`, the user can now set `EdgeType` or `HasData` filter.
+- The `DMSExporter` now validates data models wrt to a reference model, when `schema=extended`.
+
+### Fixed
+- In `DMSExporter`, `edge_type` is set correctly when referencing a multiedge property.
+- Updated `cognite-sdk` to `6.37.0`, this broke neat with `ImportError: cannot import name 'ListablePropertyType'...`.
+  This is now fixed.
+
+### Removed
+- The `DMSExporter` no longer has a `standardize_casing` parameter. Neat is no longer opinionated about casing.
+
 ## [0.72.3] - 16-04-24
 ### Fixed
 - `ExcelImporter` was resetting `role` value to value set in rules instead of keeping value provided as arg
