@@ -1,6 +1,7 @@
+import math
 from typing import Any, ClassVar
 
-from pydantic import Field, model_serializer
+from pydantic import Field, field_serializer, field_validator, model_serializer
 from pydantic_core.core_schema import SerializationInfo
 
 from ._types import ParentClassType, PropertyType, SemanticValueType, StrOrListType
@@ -23,6 +24,18 @@ class DomainProperty(SheetEntity):
     value_type: SemanticValueType = Field(alias="Value Type")
     min_count: int | None = Field(alias="Min Count", default=None)
     max_count: int | float | None = Field(alias="Max Count", default=None)
+
+    @field_serializer("max_count", when_used="json-unless-none")
+    def serialize_max_count(self, value: int | float | None) -> int | float | None | str:
+        if isinstance(value, float) and math.isinf(value):
+            return None
+        return value
+
+    @field_validator("max_count", mode="before")
+    def parse_max_count(cls, value: int | float | None) -> int | float | None:
+        if value is None:
+            return float("inf")
+        return value
 
 
 class DomainClass(SheetEntity):

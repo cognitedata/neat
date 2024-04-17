@@ -1,3 +1,4 @@
+import math
 import re
 import sys
 import warnings
@@ -5,7 +6,7 @@ from collections import defaultdict
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
 
-from pydantic import Field, field_validator, model_serializer, model_validator
+from pydantic import Field, field_serializer, field_validator, model_serializer, model_validator
 from pydantic_core.core_schema import SerializationInfo
 from rdflib import Namespace
 
@@ -47,6 +48,7 @@ from ._types._base import Unknown
 from .base import (
     BaseMetadata,
     ExtensionCategory,
+    ExtensionCategoryType,
     MatchType,
     RoleTypes,
     RuleModel,
@@ -69,7 +71,7 @@ else:
 class InformationMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.information_architect
     schema_: SchemaCompleteness = Field(alias="schema")
-    extension: ExtensionCategory | None = ExtensionCategory.addition
+    extension: ExtensionCategoryType | None = ExtensionCategory.addition
     prefix: PrefixType
     namespace: NamespaceType
 
@@ -155,6 +157,18 @@ class InformationProperty(SheetEntity):
         alias="Rule", default=None
     )
     comment: str | None = Field(alias="Comment", default=None)
+
+    @field_serializer("max_count", when_used="json-unless-none")
+    def serialize_max_count(self, value: int | float | None) -> int | float | None | str:
+        if isinstance(value, float) and math.isinf(value):
+            return None
+        return value
+
+    @field_validator("max_count", mode="before")
+    def parse_max_count(cls, value: int | float | None) -> int | float | None:
+        if value is None:
+            return float("inf")
+        return value
 
     @model_validator(mode="after")
     def is_valid_rule(self):

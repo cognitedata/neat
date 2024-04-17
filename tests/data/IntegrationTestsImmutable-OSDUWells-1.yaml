@@ -1073,6 +1073,7 @@
               space: IntegrationTestsImmutable
               version: "0.1.0"
             type: direct
+            list: false
         type:
           autoIncrement: false
           container:
@@ -1324,6 +1325,7 @@
               space: IntegrationTestsImmutable
               version: "0.1.0"
             type: direct
+            list: false
         CoordinateQualityCheckDateTime:
           autoIncrement: false
           container:
@@ -1461,6 +1463,7 @@
               space: IntegrationTestsImmutable
               version: "0.1.0"
             type: direct
+            list: false
       space: IntegrationTestsImmutable
       usedFor: node
       version: "0.1.0"
@@ -2094,6 +2097,7 @@
               space: IntegrationTestsImmutable
               version: "0.1.0"
             type: direct
+            list: false
         StatusSummaryID:
           autoIncrement: false
           container:
@@ -2478,6 +2482,7 @@
               space: IntegrationTestsImmutable
               version: "0.1.0"
             type: direct
+            list: false
         ancestry:
           autoIncrement: false
           container:
@@ -2495,6 +2500,7 @@
               space: IntegrationTestsImmutable
               version: "0.1.0"
             type: direct
+            list: false
         createTime:
           autoIncrement: false
           container:
@@ -2542,6 +2548,7 @@
               space: IntegrationTestsImmutable
               version: "0.1.0"
             type: direct
+            list: false
         id:
           autoIncrement: false
           container:
@@ -2589,6 +2596,7 @@
               space: IntegrationTestsImmutable
               version: "0.1.0"
             type: direct
+            list: false
         meta:
           description: null
           direction: outwards
@@ -2649,6 +2657,7 @@
               space: IntegrationTestsImmutable
               version: "0.1.0"
             type: direct
+            list: false
         version:
           autoIncrement: false
           container:
@@ -2744,6 +2753,7 @@
               space: IntegrationTestsImmutable
               version: "0.1.0"
             type: direct
+            list: false
         CoordinateQualityCheckDateTime:
           autoIncrement: false
           container:
@@ -2881,6 +2891,7 @@
               space: IntegrationTestsImmutable
               version: "0.1.0"
             type: direct
+            list: false
       space: IntegrationTestsImmutable
       usedFor: node
       version: "0.1.0"
@@ -2923,6 +2934,7 @@
               space: IntegrationTestsImmutable
               version: "0.1.0"
             type: direct
+            list: false
         CoordinateQualityCheckDateTime:
           autoIncrement: false
           container:
@@ -3060,6 +3072,7 @@
               space: IntegrationTestsImmutable
               version: "0.1.0"
             type: direct
+            list: false
       space: IntegrationTestsImmutable
       usedFor: node
       version: "0.1.0"
@@ -3430,6 +3443,7 @@
               space: IntegrationTestsImmutable
               version: "0.1.0"
             type: direct
+            list: false
         HistoricalInterests:
           description: null
           direction: outwards
@@ -3563,6 +3577,7 @@
               space: IntegrationTestsImmutable
               version: "0.1.0"
             type: direct
+            list: false
         ResourceCurationStatus:
           autoIncrement: false
           container:
@@ -3729,6 +3744,7 @@
               space: IntegrationTestsImmutable
               version: "0.1.0"
             type: direct
+            list: false
         StatusSummaryID:
           autoIncrement: false
           container:
@@ -3971,6 +3987,7 @@
               space: IntegrationTestsImmutable
               version: "0.1.0"
             type: direct
+            list: false
         ancestry:
           autoIncrement: false
           container:
@@ -3988,6 +4005,7 @@
               space: IntegrationTestsImmutable
               version: "0.1.0"
             type: direct
+            list: false
         createTime:
           autoIncrement: false
           container:
@@ -4035,6 +4053,7 @@
               space: IntegrationTestsImmutable
               version: "0.1.0"
             type: direct
+            list: false
         id:
           autoIncrement: false
           container:
@@ -4082,6 +4101,7 @@
               space: IntegrationTestsImmutable
               version: "0.1.0"
             type: direct
+            list: false
         meta:
           description: null
           direction: outwards
@@ -4142,6 +4162,7 @@
               space: IntegrationTestsImmutable
               version: "0.1.0"
             type: direct
+            list: false
         version:
           autoIncrement: false
           container:
@@ -4482,6 +4503,7 @@
               space: IntegrationTestsImmutable
               version: "0.1.0"
             type: direct
+            list: false
         CoordinateQualityCheckDateTime:
           autoIncrement: false
           container:
@@ -4619,6 +4641,7 @@
               space: IntegrationTestsImmutable
               version: "0.1.0"
             type: direct
+            list: false
       space: IntegrationTestsImmutable
       usedFor: node
       version: "0.1.0"
@@ -4661,6 +4684,7 @@
               space: IntegrationTestsImmutable
               version: "0.1.0"
             type: direct
+            list: false
         CoordinateQualityCheckDateTime:
           autoIncrement: false
           container:
@@ -4798,6 +4822,7 @@
               space: IntegrationTestsImmutable
               version: "0.1.0"
             type: direct
+            list: false
       space: IntegrationTestsImmutable
       usedFor: node
       version: "0.1.0"
@@ -5435,6 +5460,7 @@
               space: IntegrationTestsImmutable
               version: "0.1.0"
             type: direct
+            list: false
         SpatialPoint:
           autoIncrement: false
           container:
@@ -5452,6 +5478,7 @@
               space: IntegrationTestsImmutable
               version: "0.1.0"
             type: direct
+            list: false
         StartDateTime:
           autoIncrement: false
           container:
@@ -5671,6 +5698,7 @@
               space: IntegrationTestsImmutable
               version: "0.1.0"
             type: direct
+            list: false
         WellboreID:
           autoIncrement: false
           container:
@@ -5713,6 +5741,7 @@
               space: IntegrationTestsImmutable
               version: "0.1.0"
             type: direct
+            list: false
         ancestry:
           autoIncrement: false
           container:
@@ -5730,6 +5759,7 @@
               space: IntegrationTestsImmutable
               version: "0.1.0"
             type: direct
+            list: false
         createTime:
           autoIncrement: false
           container:
@@ -5777,6 +5807,7 @@
               space: IntegrationTestsImmutable
               version: "0.1.0"
             type: direct
+            list: false
         id:
           autoIncrement: false
           container:
@@ -5824,6 +5855,7 @@
               space: IntegrationTestsImmutable
               version: "0.1.0"
             type: direct
+            list: false
         meta:
           description: null
           direction: outwards
@@ -5884,6 +5916,7 @@
               space: IntegrationTestsImmutable
               version: "0.1.0"
             type: direct
+            list: false
         version:
           autoIncrement: false
           container:

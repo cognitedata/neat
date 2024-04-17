@@ -4,6 +4,7 @@ from typing import cast
 from openpyxl import Workbook
 from openpyxl.cell import Cell
 from openpyxl.styles import Alignment, Border, Font, NamedStyle, PatternFill, Side
+from openpyxl.worksheet.worksheet import Worksheet
 
 from cognite.neat.rules.models._base import EntityTypes
 
@@ -190,7 +191,7 @@ class ExcelExporter(BaseExporter[Workbook]):
             if sheet == "Metadata":
                 continue
             if sheet == "Classes" or sheet == "Properties":
-                sheet_obj = data[sheet]
+                sheet_obj = cast(Worksheet, data[sheet])
                 if sheet == "Classes":
                     sheet_obj.freeze_panes = "A3"
                 else:
@@ -207,6 +208,6 @@ class ExcelExporter(BaseExporter[Workbook]):
                     cell.fill = PatternFill("solid", start_color="D5DBD5")
                     cell.alignment = Alignment(horizontal="center", vertical="center")
                     adjusted_width = (len(str(cell.value)) + 5) * 1.2
-                    data[sheet].column_dimensions[cell.column_letter].width = adjusted_width
+                    cast(Worksheet, data[sheet]).column_dimensions[cell.column_letter].width = adjusted_width
 
         return data

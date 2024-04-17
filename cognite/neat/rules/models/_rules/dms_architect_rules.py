@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import PropertyType as CognitePropertyType
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex
-from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 from cognite.client.data_classes.data_modeling.views import SingleReverseDirectRelationApply, ViewPropertyApply
 from pydantic import Field, field_validator, model_serializer, model_validator
 from pydantic_core.core_schema import SerializationInfo, ValidationInfo
@@ -984,10 +983,7 @@ class _DMSExporter:
                     )
                 else:
                     type_: CognitePropertyType
-                    if issubclass(type_cls, ListablePropertyType):
-                        type_ = type_cls(is_list=prop.is_list or False)
-                    else:
-                        type_ = cast(CognitePropertyType, type_cls())
+                    type_ = type_cls(is_list=prop.is_list or False)
                     container.properties[prop_name] = dm.ContainerProperty(
                         type=type_,
                         nullable=prop.nullable if prop.nullable is not None else True,

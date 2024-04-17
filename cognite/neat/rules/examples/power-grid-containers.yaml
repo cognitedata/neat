@@ -53,6 +53,7 @@
       type:
         container: null
         type: direct
+        list: false
   space: workshop
   usedFor: node
 - externalId: SubGeographicalRegion
@@ -81,6 +82,7 @@
       type:
         container: null
         type: direct
+        list: false
   space: workshop
   usedFor: node
 - externalId: Substation
@@ -109,5 +111,6 @@
       type:
         container: null
         type: direct
+        list: false
   space: workshop
   usedFor: node

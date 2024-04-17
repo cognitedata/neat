@@ -34,7 +34,6 @@ from cognite.client.data_classes.data_modeling import (
     ViewApply,
     ViewId,
 )
-from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 from cognite.client.data_classes.data_modeling.views import (
     ConnectionDefinitionApply,
     SingleHopConnectionDefinitionApply,
@@ -284,12 +283,9 @@ class DMSSchemaComponents(BaseModel):
                     if (
                         not isinstance(existing_property.type, DirectRelation)
                         and not isinstance(api_container_property.type, DirectRelation)
-                        and cast(ListablePropertyType, existing_property.type).is_list
-                        != cast(ListablePropertyType, api_container_property.type).is_list
+                        and existing_property.type.is_list != api_container_property.type.is_list
                     ):
-                        cast(
-                            ListablePropertyType, containers[container_id].properties[container_property_id].type
-                        ).is_list = True
+                        containers[container_id].properties[container_property_id].type.is_list = True
 
         if errors:
             raise ExceptionGroup("Properties value types have been redefined! This is prohibited! Aborting!", errors)
@@ -302,10 +298,7 @@ class DMSSchemaComponents(BaseModel):
 
         # Literal, i.e. Node attribute
         if property_.property_type is EntityTypes.data_property:
-            property_type = cast(
-                type[ListablePropertyType],
-                cast(ValueTypeMapping, property_.expected_value_type.mapping).dms,
-            )
+            property_type = cast(ValueTypeMapping, property_.expected_value_type.mapping).dms
             return ContainerProperty(
                 type=property_type(is_list=is_one_to_many),
                 nullable=property_.min_count == 0,
