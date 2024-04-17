@@ -24,7 +24,7 @@ Changes are grouped as follows:
 
 ### Fixed
 - In `DMSExporter`, `edge_type` is set correctly when referencing a multiedge property.
-- Updated `cognite-sdk` to `6.37.0`, this broke neat with `ImportError: cannot import name 'ListablePropertyType'...`.
+- Updated `cognite-sdk` to `7.37.0`, this broke neat with `ImportError: cannot import name 'ListablePropertyType'...`.
   This is now fixed.
 
 ### Removed
