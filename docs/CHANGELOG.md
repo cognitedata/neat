@@ -18,6 +18,8 @@ Changes are grouped as follows:
 ## [0.73.1] - 17-04-24
 ### Added
 - Extended DEXPI for schemas 3.3 (no Attibute URI in genericAttributes and text without label parent).
+### Fixed
+- added missing py.typed (to enable mypy in projects using neat, ie docparser)
 
 ## [0.73.0] - 17-04-24
 ### Added
