@@ -47,6 +47,7 @@ from ._types._base import Unknown
 from .base import (
     BaseMetadata,
     ExtensionCategory,
+    ExtensionCategoryType,
     MatchType,
     RoleTypes,
     RuleModel,
@@ -69,7 +70,7 @@ else:
 class InformationMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.information_architect
     schema_: SchemaCompleteness = Field(alias="schema")
-    extension: ExtensionCategory | None = ExtensionCategory.addition
+    extension: ExtensionCategoryType | None = ExtensionCategory.addition
     prefix: PrefixType
     namespace: NamespaceType
 

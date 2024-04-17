@@ -10,10 +10,21 @@ import types
 from abc import abstractmethod
 from collections.abc import Callable, Iterator
 from functools import wraps
-from typing import Any, ClassVar, Generic, TypeAlias, TypeVar
+from typing import Annotated, Any, ClassVar, Generic, TypeAlias, TypeVar
 
 import pandas as pd
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl, constr, field_validator, model_serializer, model_validator
+from pydantic import (
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    Field,
+    HttpUrl,
+    PlainSerializer,
+    constr,
+    field_validator,
+    model_serializer,
+    model_validator,
+)
 from pydantic.fields import FieldInfo
 
 from cognite.neat.rules.models._rules._types import ClassType
@@ -318,3 +329,14 @@ class SheetList(BaseModel, Generic[T_Entity]):
     def mandatory_fields(cls, use_alias=False) -> set[str]:
         """Returns a set of mandatory fields for the model."""
         return _get_required_fields(cls, use_alias)
+
+
+ExtensionCategoryType = Annotated[
+    ExtensionCategory,
+    PlainSerializer(
+        lambda v: v.value if isinstance(v, ExtensionCategory) else v,
+        return_type=str,
+        when_used="unless-none",
+    ),
+    BeforeValidator(lambda v: ExtensionCategory(v) if isinstance(v, str) else v),
+]
