@@ -11,6 +11,7 @@ from openpyxl.cell import Cell
 from openpyxl.styles import Alignment, Border, Font, NamedStyle, PatternFill, Side
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
+from openpyxl.worksheet.worksheet import Worksheet
 from rdflib import RDF, XSD, Literal, Namespace, URIRef
 
 from cognite.neat.graph import exceptions
@@ -321,7 +322,7 @@ def rules2graph_capturing_sheet(
         workbook.create_sheet(title=class_)
 
         # Add header rows
-        workbook[class_].append(["identifier", *list(properties.keys())])
+        cast(Worksheet, workbook[class_]).append(["identifier", *list(properties.keys())])
 
         if auto_identifier_type and auto_identifier_type == "index-based":  # default, easy to read
             logging.debug(f"Configuring index-based automatic identifiers for sheet {class_}")
@@ -350,35 +351,35 @@ def _add_index_identifiers(workbook: Workbook, sheet: str, no_rows: int):
     """Adds index-based auto identifier to a sheet identifier column"""
     for i in range(no_rows):
         prefix = to_dms_name(sheet, "class", True)
-        workbook[sheet][f"A{i+2}"] = f'=IF(ISBLANK(B{i+2}), "","{prefix}-{i+1}")'
+        workbook[sheet][f"A{i+2}"] = f'=IF(ISBLANK(B{i+2}), "","{prefix}-{i+1}")'  # type: ignore[index]
 
 
 def _add_uuid_identifiers(workbook: Workbook, sheet: str, no_rows: int):
     """Adds UUID-based auto identifier to a sheet identifier column"""
     for i in range(no_rows):
         prefix = to_dms_name(sheet, "class", True)
-        workbook[sheet][f"A{i+2}"] = f'=IF(ISBLANK(B{i+2}), "","{prefix}-{uuid.uuid4()}")'
+        workbook[sheet][f"A{i+2}"] = f'=IF(ISBLANK(B{i+2}), "","{prefix}-{uuid.uuid4()}")'  # type: ignore[index]
 
 
 def _add_drop_down_list(workbook: Workbook, sheet: str, column: str, no_rows: int, value_sheet: str, value_column: str):
     """Adds a drop down list to a column"""
     drop_down_list = DataValidation(type="list", formula1=f"={value_sheet}!{value_column}$2:{value_column}${no_rows}")
 
-    workbook[sheet].add_data_validation(drop_down_list)
+    cast(Worksheet, workbook[sheet]).add_data_validation(drop_down_list)
 
     for i in range(no_rows):
-        drop_down_list.add(workbook[sheet][f"{column}{i+2}"])
+        drop_down_list.add(workbook[sheet][f"{column}{i+2}"])  # type: ignore[index, misc]
 
 
 def _adjust_column_width(workbook: Workbook):
     """Adjusts the column width based on the content"""
     for sheet in workbook.sheetnames:
-        for cell_tuple in workbook[sheet].columns:
+        for cell_tuple in cast(Worksheet, workbook[sheet]).columns:
             # Wrong type annotation in openpyxl
             cell = cast(Cell, cell_tuple[0])  # type: ignore[index]
             if cell.value:
                 adjusted_width = (len(str(cell.value)) + 5) * 1.2
-                workbook[sheet].column_dimensions[cell.column_letter].width = adjusted_width
+                cast(Worksheet, workbook[sheet]).column_dimensions[cell.column_letter].width = adjusted_width
 
 
 def _set_header_style(workbook: Workbook):
@@ -390,12 +391,13 @@ def _set_header_style(workbook: Workbook):
     workbook.add_named_style(style)
 
     for sheet in workbook.sheetnames:
-        for cell_tuple in workbook[sheet].columns:
+        for cell_tuple in cast(Worksheet, workbook[sheet]).columns:
             # Wrong type annotation in openpyxl
             cell = cast(Cell, cell_tuple[0])  # type: ignore[index]
-            workbook[sheet][f"{cell.column_letter}1"].style = style
+            worksheet = cast(Worksheet, workbook[sheet])
+            worksheet[f"{cell.column_letter}1"].style = style
             if f"{cell.column_letter}1" == "A1":
-                workbook[sheet][f"{cell.column_letter}1"].fill = PatternFill("solid", start_color="2FB5F2")
+                worksheet[f"{cell.column_letter}1"].fill = PatternFill("solid", start_color="2FB5F2")
             else:
-                workbook[sheet][f"{cell.column_letter}1"].fill = PatternFill("solid", start_color="FFB202")
-            workbook[sheet][f"{cell.column_letter}1"].alignment = Alignment(horizontal="center", vertical="center")
+                worksheet[f"{cell.column_letter}1"].fill = PatternFill("solid", start_color="FFB202")
+            worksheet[f"{cell.column_letter}1"].alignment = Alignment(horizontal="center", vertical="center")

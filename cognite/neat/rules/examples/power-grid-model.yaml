@@ -81,6 +81,7 @@ views:
         type:
           container: null
           type: direct
+          list: false
           source:
             space: workshop
             externalId: GeographicalRegion
@@ -132,6 +133,7 @@ views:
         type:
           container: null
           type: direct
+          list: false
           source:
             space: workshop
             externalId: SubGeographicalRegion
@@ -195,6 +197,7 @@ views:
         type:
           container: null
           type: direct
+          list: false
           source:
             space: workshop
             externalId: Substation

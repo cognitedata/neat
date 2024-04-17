@@ -5,7 +5,6 @@ from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex, InvertedIndex
-from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 from cognite.client.utils import ms_to_datetime
 
 from cognite.neat.rules import issues
@@ -172,11 +171,7 @@ class DMSImporter(BaseImporter):
                             description=prop.description,
                             value_type=cast(ViewPropEntity | DMSValueType, container_prop.type._type),
                             nullable=container_prop.nullable,
-                            is_list=(
-                                container_prop.type.is_list
-                                if isinstance(container_prop.type, ListablePropertyType)
-                                else False
-                            ),
+                            is_list=container_prop.type.is_list,
                             default=container_prop.default_value,
                             container=ContainerEntity.from_id(container.as_id()),
                             container_property=prop.container_property_identifier,

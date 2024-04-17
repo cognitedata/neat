@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Literal, overload
+from typing import Literal, cast, overload
 
 import pandas as pd
 from openpyxl import load_workbook
@@ -58,7 +58,7 @@ def read_individual_sheet(
     expected_headers: list[str] | None = None,
 ) -> tuple[list[dict], SpreadsheetRead] | list[dict]:
     if expected_headers:
-        target_row = _get_row_number(load_workbook(excel_file)[sheet_name], expected_headers)
+        target_row = _get_row_number(cast(Worksheet, load_workbook(excel_file)[sheet_name]), expected_headers)
         skiprows = target_row - 1 if target_row is not None else 0
     else:
         skiprows = 0

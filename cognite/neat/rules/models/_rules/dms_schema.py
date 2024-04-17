@@ -271,7 +271,7 @@ class DMSSchema:
         if isinstance(item, dm.ContainerApply | dm.ViewApply | dm.DataModelApply | dm.NodeApply | RawTableWrite):
             identifier = item.as_id().as_tuple()
             if len(identifier) == 3 and identifier[2] is None:
-                return identifier[:2]
+                return identifier[:2]  # type: ignore[misc]
             return cast(tuple[str, str] | tuple[str, str, str], identifier)
         elif isinstance(item, dm.SpaceApply):
             return item.space
