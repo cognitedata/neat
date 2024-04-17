@@ -3,11 +3,12 @@ from __future__ import annotations
 import itertools
 from pathlib import Path
 from types import GenericAlias
-from typing import Any, ClassVar, Literal, get_args
+from typing import Any, ClassVar, Literal, cast, get_args
 
 from openpyxl import Workbook
 from openpyxl.cell import MergedCell
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.worksheet.worksheet import Worksheet
 
 from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.models._rules.base import RoleTypes, SheetEntity
@@ -181,6 +182,7 @@ class ExcelExporter(BaseExporter[Workbook]):
     @classmethod
     def _adjust_column_widths(cls, workbook: Workbook) -> None:
         for sheet in workbook:
+            sheet = cast(Worksheet, sheet)
             for column_cells in sheet.columns:
                 try:
                     max_length = max(len(str(cell.value)) for cell in column_cells if cell.value is not None)
