@@ -134,18 +134,21 @@ class DMSMetadata(BaseMetadata):
         )
 
     @classmethod
-    def from_data_model(cls, data_model: dm.DataModelApply) -> "DMSMetadata":
-        description = None
-        if data_model.description and (description_match := re.search(r"Creator: (.+)", data_model.description)):
+    def _get_description_and_creator(cls, description_raw: str | None) -> tuple[str | None, list[str]]:
+        if description_raw and (description_match := re.search(r"Creator: (.+)", description_raw)):
             creator = description_match.group(1).split(", ")
-            data_model.description.replace(f" Creator: {', '.join(creator)}", "")
-        elif data_model.description:
+            description = description_raw.replace(description_match.string, "").strip() or None
+        elif description_raw:
             creator = ["MISSING"]
-            description = data_model.description
+            description = description_raw
         else:
             creator = ["MISSING"]
-            description = "Missing description"
+            description = None
+        return description, creator
 
+    @classmethod
+    def from_data_model(cls, data_model: dm.DataModelApply) -> "DMSMetadata":
+        description, creator = cls._get_description_and_creator(data_model.description)
         return cls(
             schema_=SchemaCompleteness.complete,
             space=data_model.space,

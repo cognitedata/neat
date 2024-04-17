@@ -6,8 +6,10 @@ from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex, InvertedIndex
 from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
+from cognite.client.utils import ms_to_datetime
 
 from cognite.neat.rules import issues
+from cognite.neat.rules.importers._base import BaseImporter, Rules
 from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models._rules import DMSRules, DMSSchema, RoleTypes
 from cognite.neat.rules.models._rules._types import (
@@ -19,6 +21,7 @@ from cognite.neat.rules.models._rules._types import (
     ViewEntity,
     ViewPropEntity,
 )
+from cognite.neat.rules.models._rules.base import ExtensionCategory, SchemaCompleteness
 from cognite.neat.rules.models._rules.dms_architect_rules import (
     DMSContainer,
     DMSMetadata,
@@ -27,16 +30,47 @@ from cognite.neat.rules.models._rules.dms_architect_rules import (
     SheetList,
 )
 
-from ._base import BaseImporter, Rules
-
 
 class DMSImporter(BaseImporter):
-    def __init__(self, schema: DMSSchema):
+    def __init__(self, schema: DMSSchema, metadata: DMSMetadata | None = None):
         self.schema = schema
+        self.metadata = metadata
 
     @classmethod
     def from_data_model_id(cls, client: CogniteClient, data_model_id: DataModelIdentifier) -> "DMSImporter":
-        return cls(DMSSchema.from_model_id(client, data_model_id))
+        """Create a DMSImporter ready to convert the given data model to rules.
+
+        Args:
+            client: Instantiated CogniteClient to retrieve data model.
+            data_model_id: Data Model to retrieve.
+
+        Returns:
+            DMSImporter: DMSImporter instance
+        """
+        data_models = client.data_modeling.data_models.retrieve(data_model_id, inline_views=True)
+        if len(data_models) == 0:
+            raise ValueError(f"Data model {data_model_id} not found")
+        data_model = data_models.latest_version()
+        schema = DMSSchema.from_data_model(client, data_model)
+        description, creator = DMSMetadata._get_description_and_creator(data_model.description)
+
+        created = ms_to_datetime(data_model.created_time)
+        updated = ms_to_datetime(data_model.last_updated_time)
+
+        metadata = DMSMetadata(
+            schema_=SchemaCompleteness.complete,
+            extension=ExtensionCategory.addition,
+            space=data_model.space,
+            external_id=data_model.external_id,
+            name=data_model.name or data_model.external_id,
+            version=data_model.version or "0.1.0",
+            updated=updated,
+            created=created,
+            creator=creator,
+            description=description,
+            default_view_version=data_model.version or "0.1.0",
+        )
+        return cls(schema, metadata)
 
     @classmethod
     def from_directory(cls, directory: str | Path) -> "DMSImporter":
@@ -172,7 +206,7 @@ class DMSImporter(BaseImporter):
         }
 
         dms_rules = DMSRules(
-            metadata=DMSMetadata.from_data_model(data_model),
+            metadata=self.metadata or DMSMetadata.from_data_model(data_model),
             properties=properties,
             containers=SheetList[DMSContainer](
                 data=[DMSContainer.from_container(container) for container in self.schema.containers]
