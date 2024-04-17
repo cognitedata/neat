@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import itertools
+from datetime import datetime
 from pathlib import Path
 from types import GenericAlias
 from typing import Any, ClassVar, Literal, get_args
@@ -10,7 +11,8 @@ from openpyxl.cell import MergedCell
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 
 from cognite.neat.rules._shared import Rules
-from cognite.neat.rules.models._rules.base import RoleTypes, SheetEntity
+from cognite.neat.rules.models._rules import DMSRules, DomainRules, InformationRules
+from cognite.neat.rules.models._rules.base import RoleTypes, SchemaCompleteness, SheetEntity
 
 from ._base import BaseExporter
 
@@ -23,6 +25,9 @@ class ExcelExporter(BaseExporter[Workbook]):
             on the different styles.
         output_role: The role to use for the exported spreadsheet. If provided, the rules will be converted to
             this role formate before being written to excel. If not provided, the role from the rules will be used.
+        new_model_id: The new model ID to use for the exported spreadsheet. This is only applicable if the input
+            rules have 'is_reference' set. If provided, the model ID will be used to automatically create the
+            new metadata sheet in the Excel file.
 
     The following styles are available:
 
@@ -43,12 +48,18 @@ class ExcelExporter(BaseExporter[Workbook]):
     }
     style_options = get_args(Style)
 
-    def __init__(self, styling: Style = "default", output_role: RoleTypes | None = None):
+    def __init__(
+        self,
+        styling: Style = "default",
+        output_role: RoleTypes | None = None,
+        new_model_id: tuple[str, str, str] | None = None,
+    ):
         if styling not in self.style_options:
             raise ValueError(f"Invalid styling: {styling}. Valid options are {self.style_options}")
         self.styling = styling
         self._styling_level = self.style_options.index(styling)
         self.output_role = output_role
+        self.new_model_id = new_model_id
 
     def export_to_file(self, rules: Rules, filepath: Path) -> None:
         """Exports transformation rules to excel file."""
@@ -70,7 +81,7 @@ class ExcelExporter(BaseExporter[Workbook]):
         if rules.is_reference:
             # Writes empty reference sheets
             dumped_rules = {
-                "Metadata": {field_alias: None for field_alias in rules.metadata.model_dump(by_alias=True).keys()},
+                "Metadata": self._create_metadata_sheet_user_rules(rules),
             }
             dumped_rules["Metadata"]["role"] = (
                 self.output_role and self.output_role.value
@@ -155,6 +166,12 @@ class ExcelExporter(BaseExporter[Workbook]):
                     cell.font = Font(bold=True, size=14)
 
     def _write_metadata_sheet(self, workbook: Workbook, metadata: dict[str, Any], is_reference: bool = False) -> None:
+        # Excel does not support timezone in datetime strings
+        if isinstance(metadata.get("created"), datetime):
+            metadata["created"] = metadata["created"].replace(tzinfo=None)
+        if isinstance(metadata.get("updated"), datetime):
+            metadata["updated"] = metadata["updated"].replace(tzinfo=None)
+
         if is_reference:
             metadata_sheet = workbook.create_sheet("RefMetadata")
         else:
@@ -194,3 +211,74 @@ class ExcelExporter(BaseExporter[Workbook]):
                 current = sheet.column_dimensions[selected_column.column_letter].width or (max_length + 0.5)
                 sheet.column_dimensions[selected_column.column_letter].width = max(current, max_length + 0.5)
         return None
+
+    def _create_metadata_sheet_user_rules(self, rules: Rules) -> dict[str, Any]:
+        metadata: dict[str, Any] = {
+            field_alias: None for field_alias in rules.metadata.model_dump(by_alias=True).keys()
+        }
+        if "creator" in metadata:
+            metadata["creator"] = "YOUR NAME"
+
+        if isinstance(rules, DomainRules):
+            return metadata
+        elif isinstance(rules, DMSRules):
+            existing_model_id = (rules.metadata.space, rules.metadata.external_id, rules.metadata.version)
+        elif isinstance(rules, InformationRules):
+            existing_model_id = (rules.metadata.prefix, rules.metadata.name, rules.metadata.version)
+        else:
+            raise ValueError(f"Unsupported rules type: {type(rules)}")
+        existing_metadata = rules.metadata.model_dump(by_alias=True)
+        if isinstance(existing_metadata["created"], datetime):
+            metadata["created"] = existing_metadata["created"].replace(tzinfo=None)
+        if isinstance(existing_metadata["updated"], datetime):
+            metadata["updated"] = existing_metadata["updated"].replace(tzinfo=None)
+        # Excel does not support timezone in datetime strings
+        now_iso = datetime.now().replace(tzinfo=None).isoformat()
+        is_info = isinstance(rules, InformationRules)
+        is_dms = not is_info
+        is_extension = self.new_model_id is not None
+        is_solution = is_extension and self.new_model_id != existing_model_id
+
+        if is_solution:
+            metadata["prefix" if is_info else "space"] = self.new_model_id[0]  # type: ignore[index]
+            metadata["title" if is_info else "externalId"] = self.new_model_id[1]  # type: ignore[index]
+            metadata["version"] = self.new_model_id[2]  # type: ignore[index]
+        else:
+            metadata["prefix" if is_info else "space"] = existing_model_id[0]
+            metadata["title" if is_info else "externalId"] = existing_model_id[1]
+            metadata["version"] = existing_model_id[2]
+
+        if is_solution and is_info:
+            metadata["namespace"] = f"http://purl.org/{self.new_model_id[0]}/"  # type: ignore[index]
+        elif is_info:
+            metadata["namespace"] = existing_metadata["namespace"]
+
+        if is_solution and is_dms:
+            metadata["name"] = self.new_model_id[1]  # type: ignore[index]
+
+        if is_solution:
+            metadata["created"] = now_iso
+        else:
+            metadata["created"] = existing_metadata["created"]
+
+        if is_solution or is_extension:
+            metadata["updated"] = now_iso
+        else:
+            metadata["updated"] = existing_metadata["updated"]
+
+        if is_solution:
+            metadata["creator"] = "YOUR NAME"
+        else:
+            metadata["creator"] = existing_metadata["creator"]
+
+        if not is_solution:
+            metadata["description"] = existing_metadata["description"]
+
+        if is_extension:
+            metadata["schema"] = SchemaCompleteness.extended.value
+        else:
+            metadata["schema"] = SchemaCompleteness.complete.value
+
+        metadata["extension"] = "addition"
+
+        return metadata
