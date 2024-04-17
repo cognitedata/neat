@@ -23,6 +23,8 @@ Changes are grouped as follows:
 
 ### Fixed
 - In `DMSExporter`, `edge_type` is set correctly when referencing a multiedge property.
+- Updated `cognite-sdk` to `6.37.0`, this broke neat with `ImportError: cannot import name 'ListablePropertyType'...`.
+  This is now fixed.
 
 ### Removed
 - The `DMSExporter` no longer has a `standardize_casing` parameter. Neat is no longer opinionated about casing.
