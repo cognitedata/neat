@@ -249,7 +249,7 @@ class ExcelExporter(BaseExporter[Workbook]):
             metadata["version"] = existing_model_id[2]
 
         if is_solution and is_info:
-            metadata["namespace"] = f"http://purl.org/{self.new_model_id[0]}/{self.new_model_id[1]}"  # type: ignore[index]
+            metadata["namespace"] = f"http://purl.org/{self.new_model_id[0]}/"  # type: ignore[index]
         elif is_info:
             metadata["namespace"] = existing_metadata["namespace"]
 
