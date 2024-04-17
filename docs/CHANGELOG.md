@@ -15,6 +15,18 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.72.3] - 16-04-24
+### Fixed
+- `ExcelImporter` was resetting `role` value to value set in rules instead of keeping value provided as arg
+### Changed
+- Default namespace set to `http://purl.org/cognite/neat#` instead of `http://purl.org/cognite/app#`
+- OwlImporter for rules v2 has `make_compliant` set to False by default
+### Added
+- When creating OWL from rules, prefix will be saved under property `neat:prefix` (hence change of default namespace)
+- When reading OWL if there is `neat:prefix` value will be added to `rules.metadata.prefix`
+- By default we are defaulting OWL properties to min 0 and max 1 occurrence if no occurrence is set
+- Added test for generation of complete rules out of partial rules
+
 ## [0.72.2] - 15-04-24
 ### Fixed
 - `rules2dms` API route is now producing expected `View` objects to be visualized in CDF

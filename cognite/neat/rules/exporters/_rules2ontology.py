@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator
 from rdflib import DCTERMS, OWL, RDF, RDFS, XSD, BNode, Graph, Literal, Namespace, URIRef
 from rdflib.collection import Collection as GraphCollection
 
+from cognite.neat.constants import DEFAULT_NAMESPACE as NEAT_NAMESPACE
 from cognite.neat.rules import exceptions
 from cognite.neat.rules._analysis._information_rules import InformationArchitectRulesAnalysis
 from cognite.neat.rules.models._rules import DMSRules
@@ -217,6 +218,7 @@ class OWLMetadata(InformationMetadata):
             (URIRef(self.namespace), DCTERMS.hasVersion, Literal(self.version)),
             (URIRef(self.namespace), OWL.versionInfo, Literal(self.version)),
             (URIRef(self.namespace), RDFS.label, Literal(self.name)),
+            (URIRef(self.namespace), NEAT_NAMESPACE.prefix, Literal(self.prefix)),
             (URIRef(self.namespace), DCTERMS.title, Literal(self.name)),
             (URIRef(self.namespace), DCTERMS.created, Literal(self.created, datatype=XSD.dateTime)),
             (URIRef(self.namespace), DCTERMS.description, Literal(self.description)),

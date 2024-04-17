@@ -494,11 +494,116 @@ class DMSRules(BaseRules):
         return self
 
     @model_validator(mode="after")
-    def validate_schema(self) -> "DMSRules":
-        if self.metadata.schema_ is not SchemaCompleteness.complete:
+    def validate_extension(self) -> "DMSRules":
+        if self.metadata.schema_ is not SchemaCompleteness.extended:
+            return self
+        if not self.reference:
+            raise ValueError("The schema is set to 'extended', but no reference rules are provided to validate against")
+        is_solution = self.metadata.space != self.reference.metadata.space
+        if is_solution:
+            return self
+        if self.metadata.extension is ExtensionCategory.rebuild:
+            # Everything is allowed
+            return self
+        # Is an extension of an existing model.
+        user_schema = self.as_schema()
+        ref_schema = self.reference.as_schema()
+        new_containers = {container.as_id(): container for container in user_schema.containers}
+        existing_containers = {container.as_id(): container for container in ref_schema.containers}
+
+        errors: list[issues.NeatValidationError] = []
+        for container_id, container in new_containers.items():
+            existing_container = existing_containers.get(container_id)
+            if not existing_container or existing_container == container:
+                # No problem
+                continue
+            new_dumped = container.dump()
+            existing_dumped = existing_container.dump()
+            changed_attributes, changed_properties = self._changed_attributes_and_properties(
+                new_dumped, existing_dumped
+            )
+            errors.append(
+                issues.dms.ChangingContainerError(
+                    container_id=container_id,
+                    changed_properties=changed_properties or None,
+                    changed_attributes=changed_attributes or None,
+                )
+            )
+
+        if self.metadata.extension is ExtensionCategory.reshape and errors:
+            raise issues.MultiValueError(errors)
+        elif self.metadata.extension is ExtensionCategory.reshape:
+            # Reshape allows changes to views
             return self
 
-        schema = self.as_schema()
+        new_views = {view.as_id(): view for view in user_schema.views}
+        existing_views = {view.as_id(): view for view in ref_schema.views}
+        for view_id, view in new_views.items():
+            existing_view = existing_views.get(view_id)
+            if not existing_view or existing_view == view:
+                # No problem
+                continue
+            changed_attributes, changed_properties = self._changed_attributes_and_properties(
+                view.dump(), existing_view.dump()
+            )
+            errors.append(
+                issues.dms.ChangingViewError(
+                    view_id=view_id,
+                    changed_properties=changed_properties or None,
+                    changed_attributes=changed_attributes or None,
+                )
+            )
+
+        if errors:
+            raise issues.MultiValueError(errors)
+        return self
+
+    @staticmethod
+    def _changed_attributes_and_properties(
+        new_dumped: dict[str, Any], existing_dumped: dict[str, Any]
+    ) -> tuple[list[str], list[str]]:
+        """Helper method to find the changed attributes and properties between two containers or views."""
+        new_attributes = {key: value for key, value in new_dumped.items() if key != "properties"}
+        existing_attributes = {key: value for key, value in existing_dumped.items() if key != "properties"}
+        changed_attributes = [key for key in new_attributes if new_attributes[key] != existing_attributes.get(key)]
+        new_properties = new_dumped.get("properties", {})
+        existing_properties = existing_dumped.get("properties", {})
+        changed_properties = [prop for prop in new_properties if new_properties[prop] != existing_properties.get(prop)]
+        return changed_attributes, changed_properties
+
+    @model_validator(mode="after")
+    def validate_schema(self) -> "DMSRules":
+        if self.metadata.schema_ is SchemaCompleteness.partial:
+            return self
+        elif self.metadata.schema_ is SchemaCompleteness.complete:
+            rules: DMSRules = self
+        elif self.metadata.schema_ is SchemaCompleteness.extended:
+            if not self.reference:
+                raise ValueError(
+                    "The schema is set to 'extended', but no reference rules are provided to validate against"
+                )
+            # This is an extension of the reference rules, we need to merge the two
+            rules = self.copy(deep=True)
+            rules.properties.extend(self.reference.properties.data)
+            existing_views = {view.view.as_id(False) for view in rules.views}
+            rules.views.extend([view for view in self.reference.views if view.view.as_id(False) not in existing_views])
+            if rules.containers and self.reference.containers:
+                existing_containers = {
+                    container.container.as_id(self.metadata.space) for container in rules.containers.data
+                }
+                rules.containers.extend(
+                    [
+                        container
+                        for container in self.reference.containers
+                        if container.container.as_id(self.reference.metadata.space) not in existing_containers
+                    ]
+                )
+            elif not rules.containers and self.reference.containers:
+                rules.containers = self.reference.containers
+        else:
+            raise ValueError("Unknown schema completeness")
+
+        schema = rules.as_schema()
         errors = schema.validate()
         if errors:
             raise issues.MultiValueError(errors)
@@ -556,12 +661,16 @@ class DMSRules(BaseRules):
                     )
             containers.append(dumped)
 
-        return {
+        output = {
             "Metadata" if info.by_alias else "metadata": self.metadata.model_dump(**kwargs),
             "Properties" if info.by_alias else "properties": properties,
             "Views" if info.by_alias else "views": views,
             "Containers" if info.by_alias else "containers": containers,
+            "is_reference": self.is_reference,
         }
+        if self.reference is not None:
+            output["Reference" if info.by_alias else "reference"] = self.reference.model_dump(**kwargs)
+        return output
 
     def as_schema(self, include_pipeline: bool = False, instance_space: str | None = None) -> DMSSchema:
         return _DMSExporter(include_pipeline, instance_space).to_schema(self)

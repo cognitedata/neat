@@ -1,0 +1,97 @@
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix neat: <http://purl.org/cognite/neat#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix power: <http://purl.org/cognite/power2consumer/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+power: a owl:Ontology ;
+    rdfs:label "Power to Consumer Data Model" ;
+    neat:prefix "power" ;
+    dct:created "2024-02-09T00:00:00"^^xsd:dateTime ;
+    dct:creator "David",
+        "Emma",
+        "Jon" ;
+    dct:description "None" ;
+    dct:hasVersion "0.1.0" ;
+    dct:modified "2024-02-09T00:00:00"^^xsd:dateTime ;
+    dct:title "Power to Consumer Data Model" ;
+    owl:versionInfo "0.1.0" .
+
+power:arrayCable a owl:ObjectProperty ;
+    rdfs:label "arrayCable" ;
+    rdfs:comment "" ;
+    rdfs:domain power:WindFarm ;
+    rdfs:range power:ArrayCable .
+
+power:arrayCableConnection a owl:ObjectProperty ;
+    rdfs:label "arrayCableConnection" ;
+    rdfs:comment "" ;
+    rdfs:domain power:WindTurbine ;
+    rdfs:range power:ArrayCable .
+
+power:exportCable a owl:ObjectProperty ;
+    rdfs:label "exportCable" ;
+    rdfs:comment "" ;
+    rdfs:domain power:WindFarm ;
+    rdfs:range power:ExportCable .
+
+power:hubHeight a owl:DatatypeProperty ;
+    rdfs:label "hubHeight" ;
+    rdfs:comment "" ;
+    rdfs:domain power:WindTurbine ;
+    rdfs:range xsd:float .
+
+power:lifeExpectancy a owl:DatatypeProperty ;
+    rdfs:label "lifeExpectancy" ;
+    rdfs:comment "" ;
+    rdfs:domain power:WindTurbine ;
+    rdfs:range xsd:integer .
+
+power:manufacturer a owl:DatatypeProperty ;
+    rdfs:label "manufacturer" ;
+    rdfs:comment "" ;
+    rdfs:domain power:WindTurbine ;
+    rdfs:range xsd:string .
+
+power:primaryPowerLine a owl:ObjectProperty ;
+    rdfs:label "primaryPowerLine" ;
+    rdfs:comment "" ;
+    rdfs:domain power:OffshoreSubstation ;
+    rdfs:range power:ArrayCable .
+
+power:ratedPower a owl:DatatypeProperty ;
+    rdfs:label "ratedPower" ;
+    rdfs:comment "" ;
+    rdfs:domain power:WindTurbine ;
+    rdfs:range xsd:float .
+
+power:secondaryPowerLine a owl:ObjectProperty ;
+    rdfs:label "secondaryPowerLine" ;
+    rdfs:comment "" ;
+    rdfs:domain power:OffshoreSubstation ;
+    rdfs:range power:ExportCable .
+
+power:substation a owl:ObjectProperty ;
+    rdfs:label "substation" ;
+    rdfs:comment "" ;
+    rdfs:domain power:WindFarm ;
+    rdfs:range power:OffshoreSubstation .
+
+power:windTurbines a owl:ObjectProperty ;
+    rdfs:label "windTurbines" ;
+    rdfs:comment "" ;
+    rdfs:domain power:WindFarm ;
+    rdfs:range power:WindTurbine .
+
+power:OffshoreSubstation a owl:Class ;
+    rdfs:label "OffshoreSubstation" ;
+    rdfs:subClassOf power:Substation .
+
+power:WindFarm a owl:Class ;
+    rdfs:label "WindFarm" ;
+    rdfs:subClassOf power:EnergyArea .
+
+power:WindTurbine a owl:Class ;
+    rdfs:label "WindTurbine" ;
+    rdfs:subClassOf power:GeneratingUnit .
