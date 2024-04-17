@@ -15,6 +15,17 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.72.4] - 17-04-24
+### Added
+- Added `new_model_id` to `ExcelExporter` to allow automatically setting metadata sheet when creating a new model
+- In `DMSRules`, the user can now set `EdgeType` or `HasData` filter.
+
+### Fixed
+- In `DMSExporter`, `edge_type` is set correctly when referencing a multiedge property.
+
+### Removed
+- The `DMSExporter` no longer has a `standardize_casing` parameter. Neat is no longer opinionated about casing.
+
 ## [0.72.3] - 16-04-24
 ### Fixed
 - `ExcelImporter` was resetting `role` value to value set in rules instead of keeping value provided as arg
