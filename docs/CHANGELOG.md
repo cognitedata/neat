@@ -17,6 +17,7 @@ Changes are grouped as follows:
 
 ## [0.72.4] - 17-04-24
 ### Added
+- Proper parsing/serialization of `inf`
 - Added `new_model_id` to `ExcelExporter` to allow automatically setting metadata sheet when creating a new model
 - In `DMSRules`, the user can now set `EdgeType` or `HasData` filter.
 - The `DMSExporter` now validates data models wrt to a reference model, when `schema=extended`.
