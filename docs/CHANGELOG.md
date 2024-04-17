@@ -19,6 +19,7 @@ Changes are grouped as follows:
 ### Added
 - Added `new_model_id` to `ExcelExporter` to allow automatically setting metadata sheet when creating a new model
 - In `DMSRules`, the user can now set `EdgeType` or `HasData` filter.
+- The `DMSExporter` now validates data models wrt to a reference model, when `schema=extended`.
 
 ### Fixed
 - In `DMSExporter`, `edge_type` is set correctly when referencing a multiedge property.
