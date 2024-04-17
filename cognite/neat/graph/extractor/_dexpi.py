@@ -103,6 +103,10 @@ def _add_node_label(id_: str, nodes: dict, element: Element) -> dict:
         if grandchildren := get_children(children[0], "Text", 1):
             if "String" in grandchildren[0].attrib:
                 nodes[id_]["header"]["label"] = grandchildren[0].attrib["String"]
+    # extension for schema version 3.3, where text is used to "label" without a <label> parent
+    elif children := get_children(element, "Text", 1):
+        if "String" in children[0].attrib:
+                nodes[id_]["header"]["label"] = children[0].attrib["String"]
 
     return nodes
 
@@ -111,10 +115,12 @@ def _add_node_generic_attributes(id_: str, nodes: dict, element: Element) -> dic
     if children := get_children(element, "GenericAttributes", 1):
         if grandchildren := get_children(children[0], "GenericAttribute"):
             for generic_attribute in grandchildren:
-                if generic_attribute.attrib["AttributeURI"] not in nodes[id_]:
-                    nodes[id_]["attributes"][generic_attribute.attrib["AttributeURI"]] = [generic_attribute.attrib]
-                else:
-                    nodes[id_]["attributes"][generic_attribute.attrib["AttributeURI"]].append(generic_attribute.attrib)
+                # extension for schema version 3.3, where "AttributeURI" is not included
+                if "AttributeURI" in generic_attribute.attrib:
+                    if generic_attribute.attrib["AttributeURI"] not in nodes[id_]:
+                        nodes[id_]["attributes"][generic_attribute.attrib["AttributeURI"]] = [generic_attribute.attrib]
+                    else:
+                        nodes[id_]["attributes"][generic_attribute.attrib["AttributeURI"]].append(generic_attribute.attrib)
 
     return nodes
 
