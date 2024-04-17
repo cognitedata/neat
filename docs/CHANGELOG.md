@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.73.1] - 17-04-24
+### Added
+- Extended DEXPI for schemas 3.3 (no Attibute URI in genericAttributes and text without label parent).
+
 ## [0.73.0] - 17-04-24
 ### Added
 - Proper parsing/serialization of `inf`
