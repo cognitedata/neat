@@ -40,6 +40,8 @@ def parse_owl_properties(graph: Graph, make_compliant: bool = False, language: s
         FILTER (!bound(?class) || !isBlank(?class))
         FILTER (!bound(?name) || LANG(?name) = "" || LANGMATCHES(LANG(?name), "en"))
         FILTER (!bound(?description) || LANG(?description) = "" || LANGMATCHES(LANG(?description), "en"))
+        BIND(IF(bound(?minCount), ?minCount, 0) AS ?minCount)
+        BIND(IF(bound(?maxCount), ?maxCount, 1) AS ?maxCount)
     }
     """
 

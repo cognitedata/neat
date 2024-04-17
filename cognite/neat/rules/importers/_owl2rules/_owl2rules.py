@@ -38,7 +38,7 @@ class OWLImporter(BaseImporter):
 
     """
 
-    def __init__(self, owl_filepath: Path, make_compliant: bool = True):
+    def __init__(self, owl_filepath: Path, make_compliant: bool = False):
         self.owl_filepath = owl_filepath
         self.make_compliant = make_compliant
 
