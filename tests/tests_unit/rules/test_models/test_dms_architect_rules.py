@@ -11,7 +11,7 @@ import cognite.neat.rules.issues.spreadsheet
 from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import DMSImporter
 from cognite.neat.rules.models._rules._types import DMS_VALUE_TYPE_MAPPINGS, ViewPropEntity
-from cognite.neat.rules.models._rules.base import SchemaCompleteness, SheetList
+from cognite.neat.rules.models._rules.base import ExtensionCategory, SchemaCompleteness, SheetList
 from cognite.neat.rules.models._rules.dms_architect_rules import (
     DMSContainer,
     DMSMetadata,
@@ -1295,6 +1295,137 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
     )
 
 
+def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
+    ref_rules = DMSRules(
+        metadata=DMSMetadata(
+            schema_="complete",
+            space="my_space",
+            external_id="my_data_model",
+            version="1",
+            creator=["Anders"],
+            created="2021-01-01T00:00:00",
+            updated="2021-01-01T00:00:00",
+        ),
+        properties=SheetList[DMSProperty](
+            data=[
+                DMSProperty(
+                    class_="WindTurbine",
+                    property_="name",
+                    value_type="text",
+                    container="Asset",
+                    container_property="name",
+                    view="Asset",
+                    view_property="name",
+                ),
+            ]
+        ),
+        containers=SheetList[DMSContainer](
+            data=[
+                DMSContainer(container="Asset", class_="Asset"),
+            ]
+        ),
+        views=SheetList[DMSView](
+            data=[
+                DMSView(view="Asset", class_="Asset"),
+            ]
+        ),
+    )
+
+    changing_container = DMSRules(
+        metadata=DMSMetadata(
+            schema_="complete",
+            extension="addition",
+            space="my_space",
+            external_id="my_data_model",
+            version="1",
+            creator=["Anders"],
+            created="2021-01-01T00:00:00",
+            updated="2021-01-01T00:00:00",
+        ),
+        properties=SheetList[DMSProperty](
+            data=[
+                DMSProperty(
+                    class_="WindTurbine",
+                    property_="name",
+                    value_type="json",
+                    container="Asset",
+                    container_property="name",
+                    view="Asset",
+                    view_property="name",
+                ),
+            ]
+        ),
+        containers=SheetList[DMSContainer](
+            data=[
+                DMSContainer(container="Asset", class_="Asset"),
+            ]
+        ),
+        views=SheetList[DMSView](
+            data=[
+                DMSView(view="Asset", class_="Asset"),
+            ]
+        ),
+        reference=ref_rules,
+    )
+
+    yield pytest.param(
+        changing_container,
+        [validation.dms.ChangingContainerError(dm.ContainerId("my_space", "Asset"), ["name"])],
+        id="Addition extension, changing container",
+    )
+
+    changing_view = DMSRules(
+        metadata=DMSMetadata(
+            schema_="complete",
+            extension="addition",
+            space="my_space",
+            external_id="my_data_model",
+            version="1",
+            creator=["Anders"],
+            created="2021-01-01T00:00:00",
+            updated="2021-01-01T00:00:00",
+        ),
+        properties=SheetList[DMSProperty](
+            data=[
+                DMSProperty(
+                    class_="WindTurbine",
+                    property_="name",
+                    value_type="text",
+                    container="Asset",
+                    container_property="name",
+                    view="Asset",
+                    view_property="navn",
+                ),
+            ]
+        ),
+        containers=SheetList[DMSContainer](
+            data=[
+                DMSContainer(container="Asset", class_="Asset"),
+            ]
+        ),
+        views=SheetList[DMSView](
+            data=[
+                DMSView(view="Asset", class_="Asset"),
+            ]
+        ),
+        reference=ref_rules,
+    )
+
+    yield pytest.param(
+        changing_view,
+        [validation.dms.ChangingViewError(dm.ViewId("my_space", "Asset", "1"), ["navn"])],
+        id="Addition extension, changing view",
+    )
+
+    changing_container2 = changing_container.copy(deep=True)
+    changing_container2.metadata.extension = ExtensionCategory.reshape
+
+    yield pytest.param(
+        changing_container2,
+        [validation.dms.ChangingContainerError(dm.ContainerId("my_space", "Asset"), ["name"])],
+    )
+
+
 class TestDMSRules:
     def test_load_valid_alice_rules(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
         valid_rules = DMSRules.model_validate(alice_spreadsheet)
@@ -1442,6 +1573,7 @@ class TestDMSRules:
             ],
             "views": [{"view": "WindFarm", "class_": "WindFarm", "implements": "Sourceable,Describable"}],
             "containers": [{"container": "Asset", "class_": "Asset", "constraint": "Sourceable,Describable"}],
+            "is_reference": False,
         }
 
         actual_dump = dms_rules.model_dump(exclude_none=True, exclude_unset=True, exclude_defaults=True)
@@ -1478,3 +1610,15 @@ class TestDMSRules:
         assert wind_turbine_name is not None
         assert wind_turbine_name.reference is not None
         assert wind_turbine_name.reference.versioned_id == "power:GeneratingUnit(property=name)"
+
+    @pytest.mark.parametrize("rules, expected_issues", list(invalid_extended_rules_test_cases()))
+    def test_load_invalid_extended_rules(self, rules: DMSRules, expected_issues: list[validation.ValidationIssue]):
+        raw = rules.model_dump(by_alias=True)
+        raw["Metadata"]["schema"] = "extended"
+
+        with pytest.raises(ValidationError) as e:
+            DMSRules.model_validate(raw)
+
+        actual_issues = validation.NeatValidationError.from_pydantic_errors(e.value.errors())
+
+        assert sorted(actual_issues) == sorted(expected_issues)
