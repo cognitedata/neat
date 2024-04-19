@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.73.2] - 19-04-24
+### Fixed
+- updated prometheus-client to 0.20.0
+
 ## [0.73.1] - 17-04-24
 ### Added
 - Extended DEXPI for schemas 3.3 (no Attibute URI in genericAttributes and text without label parent).
