@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.73.3] - 19-04-24
+### Fixed
+- updated uvicorn to 0.20.0
+- updated fastapi to 0.110
+
 ## [0.73.2] - 19-04-24
 ### Fixed
 - updated prometheus-client to 0.20.0
