@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.73.4] - 19-04-24
+### Fixed
+- updated urllib3 to 2.2.1
+
 ## [0.73.3] - 19-04-24
 ### Fixed
 - updated uvicorn to 0.20.0
