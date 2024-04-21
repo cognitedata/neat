@@ -7,9 +7,11 @@ from rdflib import Namespace
 
 from cognite.neat.app.api.configuration import NEAT_APP
 from cognite.neat.app.api.data_classes.rest import TransformationRulesUpdateRequest
-from cognite.neat.rules import exporter, importer
+from cognite.neat.rules import exporter, importer, importers
 from cognite.neat.rules.models._base import EntityTypes
+from cognite.neat.rules.models._rules.base import RoleTypes
 from cognite.neat.rules.models.rules import Class, Classes, Metadata, Properties, Property, Rules
+from cognite.neat.rules.models._rules import InformationRules, DomainRules, DMSRules
 from cognite.neat.workflows.steps.data_contracts import RulesData
 from cognite.neat.workflows.steps.lib.v1.rules_importer import ImportExcelToRules
 from cognite.neat.workflows.utils import get_file_hash
@@ -32,6 +34,7 @@ def get_rules(
     workflow_name: str = "default",
     file_name: str | None = None,
     version: str | None = None,
+    as_role: str | None = None,
 ) -> dict[str, Any]:
     if NEAT_APP.cdf_store is None or NEAT_APP.workflow_manager is None:
         return {"error": "NeatApp is not initialized"}
@@ -72,9 +75,11 @@ def get_rules(
     error_text = ""
     properties = []
     classes = []
+    rules_schema_version = ""
+    remaped_rules = {}
     try:
+        # Trying to load rules V1
         rules = cast(Rules, importer.ExcelImporter(path).to_rules(return_report=False, skip_validation=False))
-
         properties = [
             {
                 "class": value.class_id,
@@ -101,18 +106,36 @@ def get_rules(
             }
             for value in rules.classes.values()
         ]
+        rules_schema_version = "v1"
+        remaped_rules = {"properties": properties, "metadata": rules.metadata.model_dump(), "classes": classes}
 
     except Exception as e:
         error_text = str(e)
 
+    if rules_schema_version == "":
+        try:
+            role = RoleTypes(as_role) if as_role else None
+            rules = cast(
+                tuple[InformationRules | DMSRules | DomainRules],
+                importers.ExcelImporter(path).to_rules(role=role),
+            )
+            rules = rules[0]
+            error_text = ""
+            rules_schema_version = "v2"
+            remaped_rules = rules.model_dump()
+        except Exception as e:
+            error_text = str(e)
+            rules_schema_version = "unknown"
+
+    # return rules.model_dump()
+
     return {
-        "properties": properties,
-        "metadata": rules.metadata.model_dump(),
-        "classes": classes,
+        "rules": remaped_rules,
         "file_name": path.name,
         "hash": get_file_hash(path),
         "error_text": error_text,
         "src": src,
+        "rules_schema_version": rules_schema_version,
     }
 
 
