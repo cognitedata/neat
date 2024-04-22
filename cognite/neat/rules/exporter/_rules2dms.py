@@ -15,7 +15,7 @@ from cognite.neat.rules.models.value_types import ValueTypeMapping
 if sys.version_info >= (3, 11):
     from typing import Self
 else:
-    from typing_extensions import Self
+    from typing import Self
 
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm

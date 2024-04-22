@@ -26,9 +26,7 @@ from cognite.neat.utils.utils import generate_exception_report
 if sys.version_info >= (3, 11):
     from datetime import UTC
 else:
-    from datetime import timezone
-
-    UTC = timezone.utc
+    UTC = UTC
 
 EdgeOneToOne: TypeAlias = TypeAliasType("EdgeOneToOne", str)  # type: ignore[valid-type]
 EdgeOneToMany: TypeAlias = TypeAliasType("EdgeOneToMany", list[str])  # type: ignore[valid-type]

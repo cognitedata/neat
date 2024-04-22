@@ -15,7 +15,7 @@ from .base import DefaultPydanticError, MultiValueError, NeatValidationError, Va
 if sys.version_info >= (3, 11):
     from typing import Self
 else:
-    from typing_extensions import Self
+    from typing import Self
 
 __all__ = [
     "InvalidSheetError",

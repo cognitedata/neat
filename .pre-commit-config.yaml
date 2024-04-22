@@ -5,6 +5,9 @@ repos:
       -   id: ruff
           args:
             - --exit-non-zero-on-fix
+            - --fix
+            - --line-length=120
+            - --target-version=py311
 
   - repo: https://github.com/psf/black
     rev: 23.3.0

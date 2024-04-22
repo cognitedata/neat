@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 if sys.version_info >= (3, 11):
     from typing import Self
 else:
-    from typing_extensions import Self
+    from typing import Self
 
 from cognite.neat.rules import exceptions
 from cognite.neat.rules.analysis import to_class_property_pairs

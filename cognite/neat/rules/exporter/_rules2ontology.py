@@ -19,7 +19,7 @@ from cognite.neat.utils.utils import generate_exception_report, remove_namespace
 if sys.version_info >= (3, 11):
     from typing import Self
 else:
-    from typing_extensions import Self
+    from typing import Self
 
 
 class GraphExporter(BaseExporter[Graph], ABC):

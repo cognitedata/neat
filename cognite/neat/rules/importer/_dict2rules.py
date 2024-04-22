@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Literal
 
 import pandas as pd
@@ -36,7 +36,7 @@ class ArbitraryDictImporter(BaseImporter):
                 description="OpenAPI to DM transformation rules",
                 version="0.1",
                 creator="Cognite",
-                created=datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+                created=datetime.now(UTC).replace(microsecond=0).isoformat(),
                 namespace="http://purl.org/cognite/neat#",
                 prefix="neat",
                 data_model_name="OpenAPI",

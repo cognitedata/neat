@@ -19,7 +19,7 @@ from cognite.neat.rules.models.rules import Rules
 if sys.version_info >= (3, 11):
     from typing import Self
 else:
-    from typing_extensions import Self
+    from typing import Self
 
 prom_qsm = Summary("store_query_time_summary", "Time spent processing queries", ["query"])
 prom_sq = Gauge("store_single_query_time", "Time spent processing a single query", ["query"])

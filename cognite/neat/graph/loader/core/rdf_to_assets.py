@@ -24,11 +24,9 @@ if sys.version_info >= (3, 11):
     from datetime import UTC
     from typing import Self
 else:
-    from datetime import timezone
+    from typing import Self
 
-    from typing_extensions import Self
-
-    UTC = timezone.utc
+    UTC = UTC
 
 EXCLUDE_PATHS = [
     "root['labels']",

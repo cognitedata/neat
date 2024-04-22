@@ -23,9 +23,7 @@ from ._base import CogniteLoader
 if sys.version_info >= (3, 11):
     from datetime import UTC
 else:
-    from datetime import timezone
-
-    UTC = timezone.utc
+    UTC = UTC
 
 METADATA_VALUE_MAX_LENGTH = 5120
 

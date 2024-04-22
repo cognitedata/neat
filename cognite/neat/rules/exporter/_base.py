@@ -9,7 +9,7 @@ from cognite.neat.rules.models.rules import Rules
 if sys.version_info >= (3, 11):
     from typing import Self
 else:
-    from typing_extensions import Self
+    from typing import Self
 
 T_Export = TypeVar("T_Export")
 

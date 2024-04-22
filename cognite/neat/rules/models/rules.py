@@ -54,7 +54,7 @@ from cognite.neat.rules.models.value_types import XSD_VALUE_TYPE_MAPPINGS, Value
 if sys.version_info >= (3, 11):
     from typing import Self
 else:
-    from typing_extensions import Self
+    from typing import Self
 
 __all__ = [
     "Class",

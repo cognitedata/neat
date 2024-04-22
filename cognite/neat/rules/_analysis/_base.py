@@ -8,7 +8,7 @@ from cognite.neat.rules.models._rules._types import ClassEntity
 if sys.version_info >= (3, 11):
     from enum import StrEnum
 else:
-    from backports.strenum import StrEnum
+    from enum import StrEnum
 
 T_Rules = TypeVar("T_Rules", bound=Rules)
 
