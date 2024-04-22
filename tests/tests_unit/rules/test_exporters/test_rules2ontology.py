@@ -3,7 +3,7 @@ from pathlib import Path
 from rdflib import RDF, Graph, Namespace
 
 from cognite.neat.rules.exporters._rules2ontology import SemanticDataModelExporter
-from cognite.neat.rules.models._rules import InformationRules
+from cognite.neat.rules.models.rules import InformationRules
 
 SHACL = Namespace("http://www.w3.org/ns/shacl#")
 

@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeAlias
 
 from pydantic import BaseModel, Field, field_validator, model_serializer, model_validator
 
-from cognite.neat.rules.models._rules._types import ClassEntity
+from cognite.neat.rules.models.rules._types import ClassEntity
 
 if TYPE_CHECKING:
     from pydantic.type_adapter import IncEx

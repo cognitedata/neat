@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from cognite.neat.rules.exporter import ExcelExporter
-from cognite.neat.rules.importer import ExcelImporter
+from cognite.neat.legacy.rules.exporters import ExcelExporter
+from cognite.neat.legacy.rules.importers import ExcelImporter
 
 
 def test_rules2excel(simple_rules, tmp_path: Path) -> None:

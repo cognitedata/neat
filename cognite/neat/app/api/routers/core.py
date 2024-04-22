@@ -9,8 +9,7 @@ from fastapi import APIRouter, UploadFile
 
 from cognite.neat.app.api.configuration import NEAT_APP
 from cognite.neat.rules import exporters, importers
-from cognite.neat.rules.models._rules import DMSRules
-from cognite.neat.rules.models._rules.base import RoleTypes
+from cognite.neat.rules.models.rules import DMSRules, RoleTypes
 
 router = APIRouter()
 

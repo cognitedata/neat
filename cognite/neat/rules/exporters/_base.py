@@ -6,7 +6,7 @@ from typing import Generic, TypeVar
 from cognite.client import CogniteClient
 
 from cognite.neat.rules._shared import Rules
-from cognite.neat.rules.models._rules import DMSRules, InformationRules, RoleTypes
+from cognite.neat.rules.models.rules import DMSRules, InformationRules, RoleTypes
 
 from ._models import UploadResult
 

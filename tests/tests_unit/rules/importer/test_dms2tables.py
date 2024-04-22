@@ -2,13 +2,13 @@ import pytest
 from cognite.client.data_classes.data_modeling import DataModel, DataModelApply, View, ViewList
 from yaml import safe_load
 
-from cognite.neat.rules import examples, importer
-from cognite.neat.rules.models import rules
+from cognite.neat.legacy.rules import examples, importers
+from cognite.neat.legacy.rules.models import rules
 
 
 @pytest.fixture(scope="session")
 def power_grid_rules() -> rules.Rules:
-    return importer.ExcelImporter(examples.power_grid_model).to_rules()
+    return importers.ExcelImporter(examples.power_grid_model).to_rules()
 
 
 @pytest.fixture(scope="session")
@@ -24,7 +24,7 @@ def power_grid_views(power_grid_data_model: DataModelApply) -> ViewList:
 def test_import_information_model(power_grid_rules: rules.Rules, power_grid_views: ViewList) -> None:
     # Arrange
     # add views
-    dms_importer = importer.DMSImporter(power_grid_views)
+    dms_importer = importers.DMSImporter(power_grid_views)
 
     # Act
     rules = dms_importer.to_rules()

@@ -13,10 +13,10 @@ import pandas as pd
 from rdflib import RDF, Literal, Namespace, URIRef
 
 from cognite.neat.graph.models import Triple
-from cognite.neat.rules._analysis._information_rules import InformationArchitectRulesAnalysis
-from cognite.neat.rules.models._rules import DMSRules, InformationRules
-from cognite.neat.rules.models._rules._types import ClassEntity, EntityTypes, XSDValueType
-from cognite.neat.rules.models._rules.information_rules import InformationProperty
+from cognite.neat.rules.analysis import InformationArchitectRulesAnalysis
+from cognite.neat.rules.models.rules import DMSRules, InformationRules
+from cognite.neat.rules.models.rules._information_rules import InformationProperty
+from cognite.neat.rules.models.rules._types import ClassEntity, EntityTypes, XSDValueType
 from cognite.neat.utils.utils import remove_namespace
 
 from ._base import BaseExtractor

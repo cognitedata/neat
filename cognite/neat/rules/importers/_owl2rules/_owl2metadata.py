@@ -4,10 +4,10 @@ import re
 from rdflib import Graph, Namespace
 
 from cognite.neat.constants import DEFAULT_NAMESPACE
-from cognite.neat.rules.models._rules.base import RoleTypes, SchemaCompleteness
-from cognite.neat.rules.models.rules import (
-    prefix_compliance_regex,
-    version_compliance_regex,
+from cognite.neat.rules.models.rules._base import RoleTypes, SchemaCompleteness
+from cognite.neat.rules.models.rules._types._base import (
+    PREFIX_COMPLIANCE_REGEX,
+    VERSION_COMPLIANCE_REGEX,
 )
 from cognite.neat.utils.utils import convert_rdflib_content, remove_none_elements_from_set
 
@@ -148,7 +148,7 @@ def fix_description(metadata: dict, default: str = "This model has been inferred
 
 def fix_prefix(metadata: dict, default: str = "neat") -> dict:
     if prefix := metadata.get("prefix", None):
-        if not isinstance(prefix, str) or not re.match(prefix_compliance_regex, prefix):
+        if not isinstance(prefix, str) or not re.match(PREFIX_COMPLIANCE_REGEX, prefix):
             metadata["prefix"] = default
     else:
         metadata["prefix"] = default
@@ -193,7 +193,7 @@ def fix_date(
 
 def fix_version(metadata: dict, default: str = "1.0.0") -> dict:
     if version := metadata.get("version", None):
-        if not re.match(version_compliance_regex, version):
+        if not re.match(VERSION_COMPLIANCE_REGEX, version):
             metadata["version"] = default
     else:
         metadata["version"] = default

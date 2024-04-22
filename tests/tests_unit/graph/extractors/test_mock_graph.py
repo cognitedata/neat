@@ -1,7 +1,7 @@
-from cognite.neat.graph import extractor, loader
-from cognite.neat.graph.loader.core import rdf_to_relationships
-from cognite.neat.graph.stores import MemoryStore
-from cognite.neat.rules.models.rules import Rules
+from cognite.neat.legacy.graph import extractors, loaders
+from cognite.neat.legacy.graph.loaders.core import rdf_to_relationships
+from cognite.neat.legacy.graph.stores import MemoryStore
+from cognite.neat.legacy.rules.models.rules import Rules
 from cognite.neat.utils.utils import remove_namespace
 
 
@@ -19,7 +19,7 @@ def test_mock_graph(transformation_rules: Rules):
     graph_store = MemoryStore(prefixes=rules.prefixes, namespace=rules.metadata.namespace)
     graph_store.init_graph(base_prefix=rules.metadata.prefix)
 
-    mock_triples = extractor.MockGraphGenerator(rules, class_count).extract()
+    mock_triples = extractors.MockGraphGenerator(rules, class_count).extract()
     graph_store.add_triples(mock_triples)
 
     graph_class_count = {
@@ -33,7 +33,7 @@ def test_mock_graph(transformation_rules: Rules):
         )
     }
 
-    assets = loader.rdf2assets(graph_store, rules, data_set_id=123456)
+    assets = loaders.rdf2assets(graph_store, rules, data_set_id=123456)
     relationships = rdf_to_relationships.rdf2relationships(graph_store, rules, data_set_id=123456)
 
     assert len(mock_triples) == 503

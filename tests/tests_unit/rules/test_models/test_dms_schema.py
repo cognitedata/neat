@@ -21,7 +21,7 @@ from cognite.neat.rules.issues.dms import (
     MissingSpaceError,
     MissingViewError,
 )
-from cognite.neat.rules.models._rules.dms_schema import DMSSchema, PipelineSchema
+from cognite.neat.rules.models.rules._dms_schema import DMSSchema, PipelineSchema
 from cognite.neat.utils.cdf_loaders.data_classes import RawTableWrite, RawTableWriteList
 
 

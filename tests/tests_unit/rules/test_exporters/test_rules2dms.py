@@ -5,10 +5,10 @@ from pathlib import Path
 from typing import cast
 
 from cognite.neat.rules.exporters._rules2dms import DMSExporter
-from cognite.neat.rules.models._rules.dms_architect_rules import (
+from cognite.neat.rules.models.rules._dms_architect_rules import (
     DMSRules,
 )
-from cognite.neat.rules.models._rules.dms_schema import PipelineSchema
+from cognite.neat.rules.models.rules._dms_schema import PipelineSchema
 
 
 class TestDMSExporter:

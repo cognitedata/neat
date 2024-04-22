@@ -1,6 +1,6 @@
 from cognite.neat.rules import importers
-from cognite.neat.rules._analysis._information_rules import InformationArchitectRulesAnalysis
-from cognite.neat.rules.models._rules._types import ClassEntity, EntityTypes
+from cognite.neat.rules.analysis import InformationArchitectRulesAnalysis
+from cognite.neat.rules.models.rules._types import ClassEntity, EntityTypes
 
 
 def test_owl_importer():

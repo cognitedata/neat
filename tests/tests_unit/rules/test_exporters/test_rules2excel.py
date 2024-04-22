@@ -1,5 +1,5 @@
 from cognite.neat.rules.exporters import ExcelExporter
-from cognite.neat.rules.models._rules import DMSRules, DomainRules, InformationRules
+from cognite.neat.rules.models.rules import DMSRules, DomainRules, InformationRules
 
 
 class TestExcelExporter:

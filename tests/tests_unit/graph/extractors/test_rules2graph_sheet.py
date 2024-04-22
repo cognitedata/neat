@@ -1,6 +1,6 @@
-from cognite.neat.graph import extractor as graph_extractor
-from cognite.neat.graph.extractor._graph_capturing_sheet import rules2graph_capturing_sheet
-from cognite.neat.rules.importer import ExcelImporter
+from cognite.neat.legacy.graph import extractors as graph_extractor
+from cognite.neat.legacy.graph.extractors._graph_capturing_sheet import rules2graph_capturing_sheet
+from cognite.neat.legacy.rules.importers import ExcelImporter
 from tests import config
 
 

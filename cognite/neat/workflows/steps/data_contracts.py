@@ -4,10 +4,10 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes import Asset, AssetUpdate, Relationship, RelationshipUpdate
 from cognite.client.data_classes.data_modeling import EdgeApply, NodeApply
 
-from cognite.neat.graph.stores import NeatGraphStoreBase
-from cognite.neat.rules.exporter._rules2dms import DMSSchemaComponents
-from cognite.neat.rules.models._rules import DMSRules, DomainRules, InformationRules
-from cognite.neat.rules.models.rules import Rules
+from cognite.neat.legacy.graph.stores import NeatGraphStoreBase
+from cognite.neat.legacy.rules.exporters._rules2dms import DMSSchemaComponents
+from cognite.neat.legacy.rules.models.rules import Rules
+from cognite.neat.rules.models.rules import DMSRules, DomainRules, InformationRules
 from cognite.neat.workflows.steps.step_model import DataContract
 
 

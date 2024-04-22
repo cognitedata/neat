@@ -14,12 +14,11 @@ from rdflib.query import Result, ResultRow
 from cognite.neat.constants import DEFAULT_NAMESPACE, PREFIXES
 from cognite.neat.graph.models import Triple
 from cognite.neat.graph.stores._rdf_to_graph import rdf_file_to_graph
-from cognite.neat.rules.models.rules import Rules
 
 if sys.version_info >= (3, 11):
-    from typing import Self
+    pass
 else:
-    from typing_extensions import Self
+    pass
 
 prom_qsm = Summary("store_query_time_summary", "Time spent processing queries", ["query"])
 prom_sq = Gauge("store_single_query_time", "Time spent processing a single query", ["query"])
@@ -63,26 +62,6 @@ class NeatGraphStoreBase(ABC):
         self.internal_storage_dir_orig: Path | None = None
         self.storage_dirs_to_delete: list[Path] = []
         self.queries = _Queries(self)
-
-    @classmethod
-    def from_rules(cls, rules: Rules) -> Self:
-        """
-        Creates a new instance of NeatGraphStore from TransformationRules and runs the .init_graph() method on it.
-
-        Args:
-            rules: TransformationRules object containing information about the graph store.
-
-        Returns:
-            An instantiated instance of NeatGraphStore
-
-        """
-        if rules.metadata.namespace is None:
-            namespace = DEFAULT_NAMESPACE
-        else:
-            namespace = rules.metadata.namespace
-        store = cls(prefixes=rules.prefixes, namespace=namespace)
-        store.init_graph(base_prefix=rules.metadata.prefix)
-        return store
 
     @abstractmethod
     def _set_graph(self) -> None:

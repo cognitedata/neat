@@ -9,9 +9,9 @@ from typing import ClassVar, cast
 from rdflib import RDF, XSD, Literal, Namespace, URIRef
 
 from cognite.neat.constants import PREFIXES
-from cognite.neat.graph import extractor
-from cognite.neat.graph.extractor._mock_graph_generator import generate_triples as generate_mock_triples
-from cognite.neat.rules.exporter._rules2triples import get_instances_as_triples
+from cognite.neat.legacy.graph import extractors
+from cognite.neat.legacy.graph.extractors._mock_graph_generator import generate_triples as generate_mock_triples
+from cognite.neat.legacy.rules.exporters._rules2triples import get_instances_as_triples
 from cognite.neat.utils.utils import create_sha256_hash
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
@@ -114,7 +114,7 @@ class ExtractGraphFromDexpiFile(Step):
         base_namespace = self.configs.get("base_namespace", None)
 
         if file_path:
-            triples = extractor.DexpiXML(self.data_store_path / Path(file_path), base_namespace).extract()
+            triples = extractors.DexpiXML(self.data_store_path / Path(file_path), base_namespace).extract()
             source_graph.graph.add_triples(triples, verbose=True)
 
             logging.info(f"Loaded {file_path} into source graph.")
@@ -162,7 +162,7 @@ class ExtractGraphFromGraphCapturingSheet(Step):
         if file_path:
             logging.info(f"Processing graph capture sheet {self.data_store_path / Path(file_path)}")
 
-            triples = extractor.GraphCapturingSheet(
+            triples = extractors.GraphCapturingSheet(
                 rules=rules.rules,
                 filepath=self.data_store_path / Path(file_path),
                 namespace=self.configs.get("base_namespace", None),

@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import ClassVar, cast
 
 from cognite.neat.constants import PREFIXES
-from cognite.neat.graph import stores
+from cognite.neat.legacy.graph import stores
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
@@ -262,6 +262,12 @@ class ConfigureGraphStore(Step):
             "neat-tnt",
             internal_storage_dir=store_dir,
         )
+        logging.info(50 * "*")
+        logging.info(50 * "*")
+        logging.info(50 * "*")
+        logging.info(type(new_graph_store))
+        logging.info(50 * "*")
+        logging.info(50 * "*")
 
         return (
             FlowMessage(output_text="Graph store configured successfully"),

@@ -4,7 +4,7 @@ from typing import ClassVar, Literal, cast
 
 from cognite.neat.rules import exporters
 from cognite.neat.rules._shared import DMSRules, InformationRules, Rules
-from cognite.neat.rules.models._rules import RoleTypes
+from cognite.neat.rules.models.rules import RoleTypes
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.data_contracts import CogniteClient, MultiRuleData
@@ -98,9 +98,11 @@ class RulesToDMS(Step):
 
         dms_exporter = exporters.DMSExporter(
             export_components=frozenset(components_to_create),
-            include_space=None
-            if multi_space_components_create
-            else {input_rules.metadata.space if isinstance(input_rules, DMSRules) else input_rules.metadata.prefix},
+            include_space=(
+                None
+                if multi_space_components_create
+                else {input_rules.metadata.space if isinstance(input_rules, DMSRules) else input_rules.metadata.prefix}
+            ),
             existing_handling=existing_components_handling,
         )
 

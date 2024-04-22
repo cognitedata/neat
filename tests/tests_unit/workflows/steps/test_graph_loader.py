@@ -2,8 +2,8 @@ from cognite.client.data_classes import Asset, AssetList, Label
 from cognite.client.testing import monkeypatch_cognite_client
 
 from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
-from cognite.neat.graph.stores import MemoryStore
-from cognite.neat.rules.exporter._core.rules2labels import get_labels
+from cognite.neat.legacy.graph.stores import MemoryStore
+from cognite.neat.legacy.rules.exporters._core.rules2labels import get_labels
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph
 from cognite.neat.workflows.steps.lib.v1.graph_loader import GenerateAssetsFromGraph
 

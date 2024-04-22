@@ -3,7 +3,7 @@ from pathlib import Path
 
 from cognite.neat.config import copy_examples_to_directory
 from cognite.neat.constants import EXAMPLE_GRAPHS, EXAMPLE_RULES, EXAMPLE_WORKFLOWS
-from cognite.neat.rules.models.rules import Rules
+from cognite.neat.legacy.rules.models.rules import Rules
 
 
 def test_load_excel(transformation_rules: Rules):

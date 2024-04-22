@@ -4,8 +4,8 @@ from typing import Literal, overload
 
 from cognite.neat.exceptions import wrangle_warnings
 from cognite.neat.rules import exceptions
-from cognite.neat.rules.models._rules import InformationRules
-from cognite.neat.rules.models._rules._types._base import DMS_PROPERTY_ID_COMPLIANCE_REGEX, VIEW_ID_COMPLIANCE_REGEX
+from cognite.neat.rules.models.rules import InformationRules
+from cognite.neat.rules.models.rules._types._base import DMS_PROPERTY_ID_COMPLIANCE_REGEX, VIEW_ID_COMPLIANCE_REGEX
 
 
 @overload
