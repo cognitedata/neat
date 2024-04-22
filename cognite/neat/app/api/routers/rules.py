@@ -11,7 +11,6 @@ from cognite.neat.rules import exporter, importer, importers
 from cognite.neat.rules.models._base import EntityTypes
 from cognite.neat.rules.models._rules.base import RoleTypes
 from cognite.neat.rules.models.rules import Class, Classes, Metadata, Properties, Property, Rules
-from cognite.neat.rules.models._rules import InformationRules, DomainRules, DMSRules
 from cognite.neat.workflows.steps.data_contracts import RulesData
 from cognite.neat.workflows.steps.lib.rules_exporter import RulesToExcel
 from cognite.neat.workflows.steps.lib.rules_importer import ExcelToRules
@@ -126,19 +125,14 @@ def get_rules(
     if rules_schema_version == "" or rules_schema_version == "v2":
         try:
             role = RoleTypes(as_role) if as_role else None
-            rules = cast(
-                tuple[InformationRules | DMSRules | DomainRules],
-                importers.ExcelImporter(path).to_rules(role=role),
-            )
-            rules = rules[0]
+            rules_v2, issues = importers.ExcelImporter(path).to_rules(role=role)
             error_text = ""
             rules_schema_version = "v2"
-            remaped_rules = rules.model_dump()
+            if rules_v2:
+                remaped_rules = rules_v2.model_dump()
         except Exception as e:
             error_text = str(e)
             rules_schema_version = "unknown"
-
-    # return rules.model_dump()
 
     return {
         "rules": remaped_rules,

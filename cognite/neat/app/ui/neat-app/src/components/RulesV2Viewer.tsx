@@ -345,7 +345,7 @@ function DMSArchitectViews(props: { row: any}) {
                 </TableBody>
               </Table> )}
       </TableContainer>
-           
+
     </React.Fragment>
   );
 }
@@ -536,14 +536,14 @@ export default function RulesV2Viewer(props: any) {
                 <img width="70" src="./img/architect-icon.svg" alt="Information Architect"  />
                 <span>Information Architect</span>
               </div>
-             </ToggleButton> 
+             </ToggleButton>
             <ToggleButton value="DMS Architect">
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <img width="70" src="./img/developer-icon.svg" alt="DMS Expert" />
                 <span>CDF DM Expert</span>
               </div>
             </ToggleButton>
-          </ToggleButtonGroup>  
+          </ToggleButtonGroup>
           <Tabs value={selectedTab} onChange={handleTabChange} aria-label="Metadata tabs">
             <Tab label="Metadata" />
             <Tab label="Data model" />
@@ -554,11 +554,11 @@ export default function RulesV2Viewer(props: any) {
           {alertMsg != "" && (<Alert severity="warning" onClose={() => { setAlertMsg("")}}>
             <AlertTitle>Warning</AlertTitle>
               {alertMsg}
-          </Alert> )}     
+          </Alert> )}
           {selectedTab === 0 && rules.metadata && (
           <MetadataTable metadata={rules.metadata} />
           )}
-          
+
      {selectedTab == 1 && role == "information architect" && (
         <TableContainer component={Paper}>
           <InformationArchitectDataModelEditor data={editorData} open={editorOpen} onClose={() => {setEditorOpen(false)}} />

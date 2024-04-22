@@ -39,7 +39,7 @@ export default function TransformationTable() {
   const [alertMsg, setAlertMsg] = useState("");
   const [selectedWorkflow, setSelectedWorkflow] = useState<string>(getSelectedWorkflowName());
   const [selectedTab, setSelectedTab] = useState(1);
-  
+
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setSelectedTab(newValue);
@@ -121,7 +121,7 @@ export default function TransformationTable() {
     <RulesV1Viewer rules={data.rules} ></RulesV1Viewer>
     )}
     {data?.rules_schema_version == "v2" && (
-     <Box>  
+     <Box>
      <RulesV2Viewer rules={data.rules} onRoleChange={onRoleChange} ></RulesV2Viewer>
     </Box>
     )}
