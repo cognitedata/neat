@@ -62,7 +62,7 @@ export default function TransformationTable() {
     }).then((data) => {
 
       setAlertMsg("");
-      if (data.classes)
+      if (data.rules.metadata)
         setData(data)
       else
         setAlertMsg("Rules file "+fileName+" is either invalid or missing. Please ensure that you have a valid Rules file.");

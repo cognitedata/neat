@@ -13,6 +13,8 @@ from cognite.neat.rules.models._rules.base import RoleTypes
 from cognite.neat.rules.models.rules import Class, Classes, Metadata, Properties, Property, Rules
 from cognite.neat.rules.models._rules import InformationRules, DomainRules, DMSRules
 from cognite.neat.workflows.steps.data_contracts import RulesData
+from cognite.neat.workflows.steps.lib.rules_exporter import RulesToExcel
+from cognite.neat.workflows.steps.lib.rules_importer import ExcelToRules
 from cognite.neat.workflows.steps.lib.v1.rules_importer import ImportExcelToRules
 from cognite.neat.workflows.utils import get_file_hash
 
@@ -36,6 +38,7 @@ def get_rules(
     version: str | None = None,
     as_role: str | None = None,
 ) -> dict[str, Any]:
+    rules_schema_version = ""
     if NEAT_APP.cdf_store is None or NEAT_APP.workflow_manager is None:
         return {"error": "NeatApp is not initialized"}
     if workflow_name != "undefined":
@@ -49,6 +52,15 @@ def get_rules(
                     file_name = step.configs["file_name"]
                     version = step.configs["version"]
                     break
+                if step.method == RulesToExcel.__name__ or step.method == ExcelToRules.__name__:
+                    rules_schema_version = "v2"
+                    as_role = step.configs.get("as_role", "")
+                    file_name = step.configs.get("File name", "")
+                    if file_name:
+                        break
+                    file_name = step.configs.get("File path", "")
+                    break
+
     if not file_name:
         return {"error": "File name is not provided"}
     rules_file = Path(file_name)
@@ -75,44 +87,43 @@ def get_rules(
     error_text = ""
     properties = []
     classes = []
-    rules_schema_version = ""
     remaped_rules = {}
     try:
         # Trying to load rules V1
-        rules = cast(Rules, importer.ExcelImporter(path).to_rules(return_report=False, skip_validation=False))
-        properties = [
-            {
-                "class": value.class_id,
-                "property": value.property_id,
-                "property_description": value.description,
-                "property_type": (
-                    value.expected_value_type.versioned_id
-                    if value.property_type == EntityTypes.object_property
-                    else value.expected_value_type.suffix
-                ),
-                "cdf_resource_type": value.cdf_resource_type,
-                "cdf_metadata_type": value.resource_type_property,
-                "rule_type": value.rule_type,
-                "rule": value.rule,
-            }
-            for value in rules.properties.values()
-        ]
+        if rules_schema_version == "" or rules_schema_version == "v1":
+            rules = cast(Rules, importer.ExcelImporter(path).to_rules(return_report=False, skip_validation=False))
+            properties = [
+                {
+                    "class": value.class_id,
+                    "property": value.property_id,
+                    "property_description": value.description,
+                    "property_type": (
+                        value.expected_value_type.versioned_id
+                        if value.property_type == EntityTypes.object_property
+                        else value.expected_value_type.suffix
+                    ),
+                    "cdf_resource_type": value.cdf_resource_type,
+                    "cdf_metadata_type": value.resource_type_property,
+                    "rule_type": value.rule_type,
+                    "rule": value.rule,
+                }
+                for value in rules.properties.values()
+            ]
 
-        classes = [
-            {
-                "class": value.class_id,
-                "class_description": value.description,
-                "cdf_resource_type": value.cdf_resource_type,
-            }
-            for value in rules.classes.values()
-        ]
-        rules_schema_version = "v1"
-        remaped_rules = {"properties": properties, "metadata": rules.metadata.model_dump(), "classes": classes}
-
+            classes = [
+                {
+                    "class": value.class_id,
+                    "class_description": value.description,
+                    "cdf_resource_type": value.cdf_resource_type,
+                }
+                for value in rules.classes.values()
+            ]
+            rules_schema_version = "v1"
+            remaped_rules = {"properties": properties, "metadata": rules.metadata.model_dump(), "classes": classes}
     except Exception as e:
         error_text = str(e)
 
-    if rules_schema_version == "":
+    if rules_schema_version == "" or rules_schema_version == "v2":
         try:
             role = RoleTypes(as_role) if as_role else None
             rules = cast(

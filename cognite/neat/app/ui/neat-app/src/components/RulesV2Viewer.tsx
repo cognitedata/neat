@@ -16,8 +16,9 @@ import Paper from '@mui/material/Paper';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import { getNeatApiRootUrl, getSelectedWorkflowName } from 'components/Utils';
-import { Alert, AlertTitle, Tab, Tabs, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import { Alert, AlertTitle, Button, Tab, Tabs, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { Image } from '@mui/icons-material';
+import InformationArchitectDataModelEditor from './RulesV2Editor';
 
 function MetadataTable(props: any) {
   const metadata = props.metadata;
@@ -73,7 +74,37 @@ function MetadataTable(props: any) {
   );
 }
 
-function InformationArchitectPropsRow(props: { row: any,properties: any }) {
+/*
+Class:
+{
+"class_": "Sourceable",
+"name": null,
+"description": null,
+"parent": null,
+"reference": null,
+"match_type": null,
+"comment": null
+},
+
+Property:
+{
+"class_": "Asset",
+"name": null,
+"description": null,
+"property_": "Systemstatus",
+"value_type": "string",
+"min_count": 1,
+"max_count": 1,
+"default": null,
+"reference": null,
+"match_type": null,
+"rule_type": null,
+"rule": null,
+"comment": null
+},
+*/
+
+function InformationArchitectPropsRow(props: { row: any,properties: any,onEditClick: any}) {
   const { row,properties } = props;
   const [open, setOpen] = React.useState(false);
   const getPropertyByClass = (className: string) => {
@@ -96,9 +127,11 @@ function InformationArchitectPropsRow(props: { row: any,properties: any }) {
         <TableCell component="th" scope="row">
           {row.class_}
         </TableCell>
-        <TableCell align="right">{row.description}</TableCell>
         <TableCell align="right">{row.name}</TableCell>
-        <TableCell align="right">{row.parent}</TableCell>
+        <TableCell align="right">{row.description}</TableCell>
+        <TableCell align="right">{row.reference}</TableCell>
+        <TableCell align="right">{row.match_type}</TableCell>
+        <TableCell align="right">{row.comment}</TableCell>
         <TableCell align="center"></TableCell>
       </TableRow>
       <TableRow>
@@ -111,22 +144,33 @@ function InformationArchitectPropsRow(props: { row: any,properties: any }) {
               { fProps != undefined &&(<Table size="small" aria-label="purchases">
                 <TableHead>
                   <TableRow>
-                    <TableCell><b>Property</b></TableCell>
+                    <TableCell><b>Property Id</b></TableCell>
+                    <TableCell><b>Name</b></TableCell>
                     <TableCell><b>Description</b></TableCell>
                     <TableCell><b>Value type</b></TableCell>
                     <TableCell><b>Min count</b></TableCell>
                     <TableCell><b>Max count</b></TableCell>
+                    <TableCell><b>Default</b></TableCell>
+                    <TableCell><b>Reference</b></TableCell>
+                    <TableCell><b>Match type</b></TableCell>
+                    <TableCell><b>Comment</b></TableCell>
+                    <TableCell><b>Action</b></TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {fProps?.map((pr) => (
                     <TableRow key={pr.class_+pr.property_}>
                       <TableCell component="th" scope="row"> {pr.property_} </TableCell>
+                      <TableCell>{pr.name}</TableCell>
                       <TableCell>{pr.description}</TableCell>
                       <TableCell>{pr.value_type}</TableCell>
                       <TableCell>{pr.min_count}</TableCell>
                       <TableCell>{pr.max_count}</TableCell>
-                      <TableCell></TableCell>
+                      <TableCell>{pr.default}</TableCell>
+                      <TableCell>{pr.reference}</TableCell>
+                      <TableCell>{pr.match_type}</TableCell>
+                      <TableCell>{pr.comment}</TableCell>
+                      <TableCell> <Button onClick={()=>{props.onEditClick(pr);}}>Edit</Button> </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -159,12 +203,20 @@ function InformationArchitectPropsRow(props: { row: any,properties: any }) {
 },
 */
 
-function DMSArchitectPropsRow(props: { row: any,properties: any }) {
-  const { row,properties } = props;
+function DMSArchitectPropsRow(props: { row: any,properties: any,views: any}) {
+  const { row,properties,views } = props;
   const [open, setOpen] = React.useState(false);
   const getPropertyByClass = (className: string) => {
     const r = properties.filter((f: any) => f.class_ == className);
     return r;
+  }
+  const getViewNameByClassId = (className: string) => {
+    const r = views.filter((f: any) => f.class_ == className);
+    try {
+      return r[0].name;
+    } catch (e) {
+      return "";
+    }
   }
   const [fProps,setFProps] = useState(getPropertyByClass(row.class_));
   return (
@@ -182,9 +234,8 @@ function DMSArchitectPropsRow(props: { row: any,properties: any }) {
         <TableCell component="th" scope="row">
           {row.class_}
         </TableCell>
+        <TableCell align="right">{ getViewNameByClassId(row.class_) }</TableCell>
         <TableCell align="right">{row.description}</TableCell>
-        <TableCell align="right">{row.name}</TableCell>
-        <TableCell align="right">{row.parent}</TableCell>
         <TableCell align="center"></TableCell>
       </TableRow>
       <TableRow>
@@ -197,7 +248,8 @@ function DMSArchitectPropsRow(props: { row: any,properties: any }) {
               { fProps != undefined &&(<Table size="small" aria-label="purchases">
                 <TableHead>
                   <TableRow>
-                    <TableCell><b>Property</b></TableCell>
+                    <TableCell><b>Property Id</b></TableCell>
+                    <TableCell><b>Property name</b></TableCell>
                     <TableCell><b>Description</b></TableCell>
                     <TableCell><b>Value type</b></TableCell>
                     <TableCell><b>Nullable</b></TableCell>
@@ -216,6 +268,7 @@ function DMSArchitectPropsRow(props: { row: any,properties: any }) {
                   {fProps?.map((pr) => (
                     <TableRow key={pr.class_+pr.property_}>
                       <TableCell component="th" scope="row"> {pr.property_} </TableCell>
+                      <TableCell>{pr.name}</TableCell>
                       <TableCell>{pr.description}</TableCell>
                       <TableCell>{pr.value_type}</TableCell>
                       <TableCell>{pr.nullable}</TableCell>
@@ -237,6 +290,110 @@ function DMSArchitectPropsRow(props: { row: any,properties: any }) {
           </Collapse>
         </TableCell>
       </TableRow>
+    </React.Fragment>
+  );
+}
+
+/*
+
+{
+"class_": "CurrentLimit",
+"name": null,
+"description": null,
+"view": "CurrentLimit",
+"implements": null,
+"reference": null,
+"filter_": null,
+"in_model": true
+},
+
+*/
+
+function DMSArchitectViews(props: { row: any}) {
+  const {row} = props;
+  const [open, setOpen] = React.useState(false);
+  return (
+    <React.Fragment>
+      <TableContainer component={Paper}>
+              { row != undefined &&(<Table size="small" aria-label="purchases">
+                <TableHead>
+                  <TableRow>
+                    <TableCell><b>External Id</b></TableCell>
+                    <TableCell><b>Name</b></TableCell>
+                    <TableCell><b>Description</b></TableCell>
+                    <TableCell><b>View</b></TableCell>
+                    <TableCell><b>Implements</b></TableCell>
+                    <TableCell><b>Reference</b></TableCell>
+                    <TableCell><b>Filter</b></TableCell>
+                    <TableCell><b>In model</b></TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {row?.map((pr) => (
+                    <TableRow key={pr.class_}>
+                      <TableCell component="th" scope="row"> {pr.class_} </TableCell>
+                      <TableCell>{pr.name}</TableCell>
+                      <TableCell>{pr.description}</TableCell>
+                      <TableCell>{pr.view}</TableCell>
+                      <TableCell>{pr.implements}</TableCell>
+                      <TableCell>{pr.reference}</TableCell>
+                      <TableCell>{pr.filter_}</TableCell>
+                      <TableCell>{pr.in_model}</TableCell>
+                      <TableCell></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table> )}
+      </TableContainer>
+           
+    </React.Fragment>
+  );
+}
+
+/*
+{
+"class_": "OperationalLimitSet",
+"name": null,
+"description": null,
+"container": "OperationalLimitSet",
+"reference": null,
+"constraint": null
+},
+*/
+
+
+function DMSArchitectContainers(props: { row: any}) {
+  const {row} = props;
+  const [open, setOpen] = React.useState(false);
+  return (
+    <React.Fragment>
+      <TableContainer component={Paper}>
+              { row != undefined &&(<Table size="small" aria-label="purchases">
+                <TableHead>
+                  <TableRow>
+                    <TableCell><b>External Id</b></TableCell>
+                    <TableCell><b>Name</b></TableCell>
+                    <TableCell><b>Description</b></TableCell>
+                    <TableCell><b>Container</b></TableCell>
+                    <TableCell><b>Reference</b></TableCell>
+                    <TableCell><b>Constraint</b></TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {row?.map((pr) => (
+                    <TableRow key={pr.class_}>
+                    <TableCell component="th" scope="row"> {pr.class_} </TableCell>
+                    <TableCell>{pr.name}</TableCell>
+                    <TableCell>{pr.description}</TableCell>
+                    <TableCell>{pr.container}</TableCell>
+                    <TableCell>{pr.reference}</TableCell>
+                    <TableCell>{pr.constraint}</TableCell>
+                    <TableCell></TableCell>
+                  </TableRow>
+                  ))}
+                </TableBody>
+              </Table> )}
+      </TableContainer>
     </React.Fragment>
   );
 }
@@ -264,6 +421,7 @@ function InformationArchitectTransformationRow(props: { row: any,properties: any
         <TableCell component="th" scope="row">
           {row.class_}
         </TableCell>
+        <TableCell align="right">{row.name}</TableCell>
         <TableCell align="right">{row.description}</TableCell>
         <TableCell align="center"></TableCell>
       </TableRow>
@@ -308,10 +466,14 @@ export default function RulesV2Viewer(props: any) {
   const neatApiRootUrl = getNeatApiRootUrl();
   const [rules, setRules] = useState({"classes":[],
   "properties":[],
+  "views":[],
+  "containers":[],
   "metadata":{"prefix":"","role":"","extension":"","schema_":"","suffix":"","namespace":"","version":"","title":"","description":"","created":"","updated":"","creator":[],"contributor":[],"rights":"","license":"","dataModelId":"","source":""}});
   const [selectedTab, setSelectedTab] = useState(1);
   const [role, setRole] = useState("");
   const [alertMsg, setAlertMsg] = useState("");
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editorData, setEditorData] = useState({});
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setSelectedTab(newValue);
@@ -389,31 +551,37 @@ export default function RulesV2Viewer(props: any) {
             { role ==  "DMS Architect" && ( <Tab label="CDF DM Views" /> ) }
             { role ==  "DMS Architect" && ( <Tab label="CDF DM Containers" /> ) }
           </Tabs>
+          {alertMsg != "" && (<Alert severity="warning" onClose={() => { setAlertMsg("")}}>
+            <AlertTitle>Warning</AlertTitle>
+              {alertMsg}
+          </Alert> )}     
           {selectedTab === 0 && rules.metadata && (
           <MetadataTable metadata={rules.metadata} />
           )}
-     {alertMsg != "" && (<Alert severity="warning" onClose={() => { setAlertMsg("")}}>
-      <AlertTitle>Warning</AlertTitle>
-        {alertMsg}
-    </Alert> )}     
+          
      {selectedTab == 1 && role == "information architect" && (
         <TableContainer component={Paper}>
+          <InformationArchitectDataModelEditor data={editorData} open={editorOpen} onClose={() => {setEditorOpen(false)}} />
           <Table aria-label="collapsible table">
             <TableHead>
               <TableRow>
                 <TableCell />
-                <TableCell> <b>Class</b></TableCell>
+                <TableCell> <b>Class Id</b></TableCell>
+                <TableCell align="right"><b>Name</b></TableCell>
                 <TableCell align="right"><b>Description</b></TableCell>
-                <TableCell align="right"></TableCell>
+                <TableCell align="right">Reference</TableCell>
+                <TableCell align="right">Match type</TableCell>
+                <TableCell align="right">Comment</TableCell>
                 <TableCell align="right"></TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {rules.classes?.map((row:any) => (
-                <InformationArchitectPropsRow key={row.class} row={row} properties={rules.properties} />
+                <InformationArchitectPropsRow key={row.class} row={row} properties={rules.properties} onEditClick={(data)=>{setEditorOpen(true);setEditorData(data) }} />
               ))}
             </TableBody>
           </Table>
+          <Button variant="outlined" size="small" color="success" style={{margin:5}}  onClick={() => setEditorOpen(true)}>Add</Button>
         </TableContainer>
      )}
       {selectedTab == 2 && role == "information architect" && (
@@ -422,9 +590,12 @@ export default function RulesV2Viewer(props: any) {
             <TableHead>
               <TableRow>
                 <TableCell />
-                <TableCell> <b>Class</b></TableCell>
+                <TableCell> <b>Class Id</b></TableCell>
+                <TableCell align="right"><b>Name</b></TableCell>
                 <TableCell align="right"><b>Description</b></TableCell>
-                <TableCell align="right"></TableCell>
+                <TableCell align="right">Reference</TableCell>
+                <TableCell align="right">Match type</TableCell>
+                <TableCell align="right">Comment</TableCell>
                 <TableCell align="right"></TableCell>
               </TableRow>
             </TableHead>
@@ -442,57 +613,26 @@ export default function RulesV2Viewer(props: any) {
             <TableHead>
               <TableRow>
                 <TableCell />
-                <TableCell> <b>Class</b></TableCell>
+                <TableCell> <b>Class Id</b></TableCell>
+                <TableCell align="right"><b>Name</b></TableCell>
                 <TableCell align="right"><b>Description</b></TableCell>
                 <TableCell align="right"></TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {getListOfClassesFromProperties(rules.properties)?.map((row:any) => (
-                <DMSArchitectPropsRow key={row.class} row={row} properties={rules.properties} />
+                <DMSArchitectPropsRow key={row.class} row={row} properties={rules.properties} views={rules.views} />
               ))}
             </TableBody>
           </Table>
         </TableContainer>
      )}
      {selectedTab == 2 && role == "DMS Architect" && (
-        <TableContainer component={Paper}>
-          <Table aria-label="collapsible table">
-            <TableHead>
-              <TableRow>
-                <TableCell />
-                <TableCell> <b>Class</b></TableCell>
-                <TableCell align="right"><b>Description</b></TableCell>
-                <TableCell align="right"></TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {getListOfClassesFromProperties(rules.properties)?.map((row:any) => (
-                <DMSArchitectPropsRow key={row.class} row={row} properties={rules.properties} />
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <DMSArchitectViews row={rules.views} />
      )}
      {selectedTab == 3 && role == "DMS Architect" && (
-        <TableContainer component={Paper}>
-          <Table aria-label="collapsible table">
-            <TableHead>
-              <TableRow>
-                <TableCell />
-                <TableCell> <b>Class</b></TableCell>
-                <TableCell align="right"><b>Description</b></TableCell>
-                <TableCell align="right"></TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {getListOfClassesFromProperties(rules.properties)?.map((row:any) => (
-                <DMSArchitectPropsRow key={row.class} row={row} properties={rules.properties} />
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-     )}
+        <DMSArchitectContainers row={rules.containers} />
+      )}
     </Box>
   );
 }
