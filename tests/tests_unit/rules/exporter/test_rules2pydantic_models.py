@@ -3,9 +3,9 @@ from cognite.client.data_classes.data_modeling import DataModel as CogniteDataMo
 from rdflib import URIRef
 from yaml import safe_load
 
-from cognite.neat.rules import examples, exceptions
-from cognite.neat.rules.exporter._rules2pydantic_models import rules_to_pydantic_models
-from cognite.neat.rules.importer._dms2rules import DMSImporter
+from cognite.neat.legacy.rules import examples, exceptions
+from cognite.neat.legacy.rules.exporters._rules2pydantic_models import rules_to_pydantic_models
+from cognite.neat.legacy.rules.importers._dms2rules import DMSImporter
 
 
 def test_rules2pydantic_models(dms_compliant_rules, source_knowledge_graph):

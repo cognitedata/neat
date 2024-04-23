@@ -10,17 +10,17 @@ from pydantic import ValidationError
 import cognite.neat.rules.issues.spreadsheet
 from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import DMSImporter
-from cognite.neat.rules.models._rules._types import DMS_VALUE_TYPE_MAPPINGS, ViewPropEntity
-from cognite.neat.rules.models._rules.base import ExtensionCategory, SchemaCompleteness, SheetList
-from cognite.neat.rules.models._rules.dms_architect_rules import (
+from cognite.neat.rules.models.rules._base import ExtensionCategory, SchemaCompleteness, SheetList
+from cognite.neat.rules.models.rules._dms_architect_rules import (
     DMSContainer,
     DMSMetadata,
     DMSProperty,
     DMSRules,
     DMSView,
 )
-from cognite.neat.rules.models._rules.dms_schema import DMSSchema
-from cognite.neat.rules.models._rules.information_rules import InformationRules
+from cognite.neat.rules.models.rules._dms_schema import DMSSchema
+from cognite.neat.rules.models.rules._information_rules import InformationRules
+from cognite.neat.rules.models.rules._types import DMS_VALUE_TYPE_MAPPINGS, ViewPropEntity
 
 
 def rules_schema_tests_cases() -> Iterable[ParameterSet]:

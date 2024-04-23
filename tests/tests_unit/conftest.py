@@ -6,12 +6,12 @@ from pathlib import Path
 import pytest
 from rdflib import RDF, Literal, Namespace
 
-from cognite.neat.graph import extractor, loader
-from cognite.neat.graph.stores import MemoryStore
-from cognite.neat.graph.transformation.transformer import domain2app_knowledge_graph
-from cognite.neat.rules import importer
-from cognite.neat.rules.exporter._rules2triples import get_instances_as_triples
-from cognite.neat.rules.models.rules import Rules
+from cognite.neat.legacy.graph import extractors, loaders
+from cognite.neat.legacy.graph.stores import MemoryStore
+from cognite.neat.legacy.graph.transformations.transformer import domain2app_knowledge_graph
+from cognite.neat.legacy.rules import importers
+from cognite.neat.legacy.rules.exporters._rules2triples import get_instances_as_triples
+from cognite.neat.legacy.rules.models.rules import Rules
 from tests import config as config
 
 # Setup config for Neat App
@@ -33,27 +33,27 @@ os.environ["NEAT_LOAD_EXAMPLES"] = "1"
 
 @pytest.fixture(scope="session")
 def nordic44_inferred_rules() -> Rules:
-    return importer.ExcelImporter(config.NORDIC44_INFERRED_RULES).to_rules()
+    return importers.ExcelImporter(config.NORDIC44_INFERRED_RULES).to_rules()
 
 
 @pytest.fixture(scope="session")
 def transformation_rules() -> Rules:
-    return importer.ExcelImporter(config.TNT_TRANSFORMATION_RULES).to_rules()
+    return importers.ExcelImporter(config.TNT_TRANSFORMATION_RULES).to_rules()
 
 
 @pytest.fixture(scope="session")
 def dms_compliant_rules() -> Rules:
-    return importer.ExcelImporter(config.TNT_TRANSFORMATION_RULES_DMS_COMPLIANT).to_rules()
+    return importers.ExcelImporter(config.TNT_TRANSFORMATION_RULES_DMS_COMPLIANT).to_rules()
 
 
 @pytest.fixture(scope="session")
 def simple_rules() -> Rules:
-    return importer.ExcelImporter(config.SIMPLE_TRANSFORMATION_RULES).to_rules()
+    return importers.ExcelImporter(config.SIMPLE_TRANSFORMATION_RULES).to_rules()
 
 
 @pytest.fixture(scope="session")
 def transformation_rules_date() -> Rules:
-    return importer.ExcelImporter(config.SIMPLE_TRANSFORMATION_RULES_DATES).to_rules()
+    return importers.ExcelImporter(config.SIMPLE_TRANSFORMATION_RULES_DATES).to_rules()
 
 
 @pytest.fixture(scope="function")
@@ -146,7 +146,7 @@ def mock_knowledge_graph(transformation_rules) -> MemoryStore:
         "Terminal": 2,
     }
 
-    mock_triples = extractor.MockGraphGenerator(transformation_rules, class_count).extract()
+    mock_triples = extractors.MockGraphGenerator(transformation_rules, class_count).extract()
     mock_graph.add_triples(mock_triples, batch_size=20000)
 
     return mock_graph
@@ -154,12 +154,12 @@ def mock_knowledge_graph(transformation_rules) -> MemoryStore:
 
 @pytest.fixture(scope="function")
 def mock_rdf_assets(mock_knowledge_graph, transformation_rules):
-    return loader.rdf2assets(mock_knowledge_graph, transformation_rules, data_set_id=123456)
+    return loaders.rdf2assets(mock_knowledge_graph, transformation_rules, data_set_id=123456)
 
 
 @pytest.fixture(scope="function")
 def mock_cdf_assets(mock_knowledge_graph, transformation_rules):
-    return loader.rdf2assets(mock_knowledge_graph, transformation_rules, data_set_id=123456)
+    return loaders.rdf2assets(mock_knowledge_graph, transformation_rules, data_set_id=123456)
 
 
 @pytest.fixture(scope="function")

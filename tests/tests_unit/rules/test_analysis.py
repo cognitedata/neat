@@ -1,6 +1,6 @@
-from cognite.neat.rules._analysis._information_rules import InformationArchitectRulesAnalysis
-from cognite.neat.rules.models._rules import InformationRules
-from cognite.neat.rules.models._rules._types import ClassEntity
+from cognite.neat.rules.analysis import InformationArchitectRulesAnalysis
+from cognite.neat.rules.models.rules import InformationRules
+from cognite.neat.rules.models.rules._types import ClassEntity
 
 
 class TestRulesAnalysis:

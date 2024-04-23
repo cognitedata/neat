@@ -13,8 +13,8 @@ from pandas import ExcelFile
 
 from cognite.neat.rules import issues
 from cognite.neat.rules.issues import IssueList
-from cognite.neat.rules.models._rules import RULES_PER_ROLE, DMSRules, DomainRules, InformationRules
-from cognite.neat.rules.models._rules.base import RoleTypes, SchemaCompleteness
+from cognite.neat.rules.models.rules import RULES_PER_ROLE, DMSRules, DomainRules, InformationRules
+from cognite.neat.rules.models.rules._base import RoleTypes, SchemaCompleteness
 from cognite.neat.utils.auxiliary import local_import
 from cognite.neat.utils.spreadsheet import SpreadsheetRead, read_individual_sheet
 

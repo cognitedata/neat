@@ -1,10 +1,10 @@
-from cognite.neat.rules import importer
+from cognite.neat.legacy.rules import importers
 from tests import data
 
 
 def test_json2rules_power_grid() -> None:
     # Arrange
-    json_importer = importer.ArbitraryJSONImporter(data.POWER_GRID_JSON, "child-to-parent")
+    json_importer = importers.ArbitraryJSONImporter(data.POWER_GRID_JSON, "child-to-parent")
     expected_properties = {
         "GeographicalRegion": {"name"},
         "SubGraphicalRegion": {"name", "parent"},

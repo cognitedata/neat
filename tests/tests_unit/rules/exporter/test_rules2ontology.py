@@ -4,8 +4,8 @@ from pathlib import Path
 import pytest
 from rdflib import Graph
 
-from cognite.neat.rules.exceptions import PropertiesDefinedMultipleTimes
-from cognite.neat.rules.exporter import OWLExporter, SemanticDataModelExporter, SHACLExporter
+from cognite.neat.legacy.rules.exceptions import PropertiesDefinedMultipleTimes
+from cognite.neat.legacy.rules.exporters import OWLExporter, SemanticDataModelExporter, SHACLExporter
 
 
 def test_rules2owl(transformation_rules, tmp_path):

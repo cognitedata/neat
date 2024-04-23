@@ -10,8 +10,16 @@ from cognite.client.utils import ms_to_datetime
 from cognite.neat.rules import issues
 from cognite.neat.rules.importers._base import BaseImporter, Rules
 from cognite.neat.rules.issues import IssueList
-from cognite.neat.rules.models._rules import DMSRules, DMSSchema, RoleTypes
-from cognite.neat.rules.models._rules._types import (
+from cognite.neat.rules.models.rules import DMSRules, DMSSchema, RoleTypes
+from cognite.neat.rules.models.rules._base import ExtensionCategory, SchemaCompleteness
+from cognite.neat.rules.models.rules._dms_architect_rules import (
+    DMSContainer,
+    DMSMetadata,
+    DMSProperty,
+    DMSView,
+    SheetList,
+)
+from cognite.neat.rules.models.rules._types import (
     ClassEntity,
     ContainerEntity,
     DMSValueType,
@@ -19,14 +27,6 @@ from cognite.neat.rules.models._rules._types import (
     Unknown,
     ViewEntity,
     ViewPropEntity,
-)
-from cognite.neat.rules.models._rules.base import ExtensionCategory, SchemaCompleteness
-from cognite.neat.rules.models._rules.dms_architect_rules import (
-    DMSContainer,
-    DMSMetadata,
-    DMSProperty,
-    DMSView,
-    SheetList,
 )
 
 

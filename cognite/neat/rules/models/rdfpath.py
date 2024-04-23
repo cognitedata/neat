@@ -10,7 +10,7 @@ from pydantic import BaseModel, field_validator
 
 from cognite.neat.rules import exceptions
 
-from ._base import (
+from ._entity import (
     CLASS_ID_REGEX,
     CLASS_ID_REGEX_COMPILED,
     ENTITY_ID_REGEX,
@@ -83,8 +83,8 @@ class Step(BaseModel):
     def from_string(cls, raw: str, **kwargs) -> Self:
         if result := STEP_CLASS_AND_PROPERTY_REGEX_COMPILED.match(raw):
             return cls(
-                class_=Entity.from_string(result.group(EntityTypes.class_), type_="class"),
-                property=Entity.from_string(result.group(EntityTypes.property_), type_="property"),
+                class_=Entity.from_string(result.group(EntityTypes.class_)),
+                property=Entity.from_string(result.group(EntityTypes.property_)),
                 direction=_direction_by_symbol[result.group("direction")],
                 **kwargs,
             )
@@ -107,21 +107,19 @@ class SingleProperty(Traversal):
 
     @classmethod
     def from_string(cls, class_: str, property_: str) -> Self:
-        return cls(
-            class_=Entity.from_string(class_, type_="class"), property=Entity.from_string(property_, type_="property")
-        )
+        return cls(class_=Entity.from_string(class_), property=Entity.from_string(property_))
 
 
 class AllReferences(Traversal):
     @classmethod
     def from_string(cls, class_: str) -> Self:
-        return cls(class_=Entity.from_string(class_, type_="class"))
+        return cls(class_=Entity.from_string(class_))
 
 
 class AllProperties(Traversal):
     @classmethod
     def from_string(cls, class_: str) -> Self:
-        return cls(class_=Entity.from_string(class_, type_="class"))
+        return cls(class_=Entity.from_string(class_))
 
 
 class Origin(BaseModel):

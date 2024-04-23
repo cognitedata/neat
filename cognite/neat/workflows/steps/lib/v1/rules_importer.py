@@ -9,10 +9,10 @@ import yaml
 from prometheus_client import Gauge
 from rdflib import Namespace
 
-from cognite.neat.rules import exporter, importer
-from cognite.neat.rules.models.rdfpath import TransformationRuleType
-from cognite.neat.rules.models.rules import Class, Classes, Metadata, Properties, Property, Rules
-from cognite.neat.rules.models.value_types import ValueType
+from cognite.neat.legacy.rules import exporters, importers
+from cognite.neat.legacy.rules.models.rdfpath import TransformationRuleType
+from cognite.neat.legacy.rules.models.rules import Class, Classes, Metadata, Properties, Property, Rules
+from cognite.neat.legacy.rules.models.value_types import ValueType
 from cognite.neat.utils.utils import generate_exception_report
 from cognite.neat.workflows import utils
 from cognite.neat.workflows._exceptions import StepNotInitialized
@@ -93,7 +93,7 @@ class ImportExcelToRules(Step):
         else:
             store.load_rules_file_from_cdf(str(rules_file), version)
 
-        raw_rules = importer.ExcelImporter(rules_file_path).to_raw_rules()
+        raw_rules = importers.ExcelImporter(rules_file_path).to_raw_rules()
         rules, errors, _ = raw_rules.to_rules(return_report=True, skip_validation=False)
         report = "# RULES VALIDATION REPORT\n\n" + generate_exception_report(errors, "Errors")
 
@@ -157,15 +157,15 @@ class ImportOntologyToRules(Step):
 
         make_compliant = self.configs["make_compliant"] == "True"
         try:
-            rules = importer.OWLImporter(ontology_file_path).to_rules(make_compliant=make_compliant)
+            rules = importers.OWLImporter(ontology_file_path).to_rules(make_compliant=make_compliant)
         except Exception:
-            rules = importer.OWLImporter(ontology_file_path).to_rules(
+            rules = importers.OWLImporter(ontology_file_path).to_rules(
                 skip_validation=True, make_compliant=make_compliant
             )
         assert isinstance(rules, Rules)
-        exporter.ExcelExporter.from_rules(rules).export_to_file(excel_file_path)
+        exporters.ExcelExporter.from_rules(rules).export_to_file(excel_file_path)
 
-        if report := importer.ExcelImporter(filepath=excel_file_path).to_raw_rules().validate_rules():
+        if report := importers.ExcelImporter(filepath=excel_file_path).to_raw_rules().validate_rules():
             report_file_path.write_text(report)
 
         relative_excel_file_path = str(excel_file_path).split("/data/")[1]
@@ -581,18 +581,18 @@ class ImportGraphToRules(Step):
         report_file_path = excel_file_path.parent / f"report_{excel_file_path.stem}.txt"
 
         try:
-            rules = importer.GraphImporter(
+            rules = importers.GraphImporter(
                 graph_store.graph.graph, int(self.configs["max_number_of_instances"])
             ).to_rules()
         except Exception:
-            rules = importer.GraphImporter(
+            rules = importers.GraphImporter(
                 graph_store.graph.graph, int(self.configs["max_number_of_instances"])
             ).to_rules(skip_validation=True)
 
         assert isinstance(rules, Rules)
-        exporter.ExcelExporter.from_rules(rules).export_to_file(excel_file_path)
+        exporters.ExcelExporter.from_rules(rules).export_to_file(excel_file_path)
 
-        if report := importer.ExcelImporter(filepath=excel_file_path).to_raw_rules().validate_rules():
+        if report := importers.ExcelImporter(filepath=excel_file_path).to_raw_rules().validate_rules():
             report_file_path.write_text(report)
 
         relative_excel_file_path = str(excel_file_path).split("/data/")[1]

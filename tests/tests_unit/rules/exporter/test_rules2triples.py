@@ -1,4 +1,4 @@
-from cognite.neat.rules.models.rules import Rules
+from cognite.neat.legacy.rules.models.rules import Rules
 
 
 def test_extra_triples(transformation_rules: Rules):

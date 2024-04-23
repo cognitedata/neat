@@ -1,7 +1,7 @@
 import pytest
 from cognite.client.data_classes.data_modeling import DataModelId, PropertyId, ViewId
 
-from cognite.neat.rules.models._rules._types import DataModelEntity, ReferenceEntity, ViewPropEntity
+from cognite.neat.rules.models.rules._types import DataModelEntity, ReferenceEntity, ViewPropEntity
 
 
 class TestDataModelEntity:

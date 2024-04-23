@@ -1,4 +1,4 @@
-from cognite.neat.rules.importer._graph2rules import GraphImporter
+from cognite.neat.legacy.rules.importers._graph2rules import GraphImporter
 
 
 def test_graph2tables_nordic44(source_knowledge_graph):

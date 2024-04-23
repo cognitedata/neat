@@ -61,23 +61,23 @@ nav:
       - Rules: terminology/rules.md
       - Graph: terminology/graph.md
   - Reference:
-      - Rules:
-          - Models: reference/rules/models.md
-          - Analysis: reference/rules/analysis.md
-          - Importers: reference/rules/importers.md
-          - Parsers: reference/rules/parsers.md
-          - Exporters: reference/rules/exporters.md
-      - Graph:
-          - Extractors: reference/graph/extractors.md
-          - Transformers: reference/graph/transformers.md
-          - Loaders: reference/graph/loaders.md
-          - Stores: reference/graph/stores.md
-      - Workflows:
-          - Data Contracts: reference/workflows/data_contracts.md
-          - Steps:
-              - Rules: reference/workflows/steps/rules.md
-              - Graph: reference/workflows/steps/graph.md
-      - Exceptions: reference/exceptions.md
+      - Legacy:
+          - Rules:
+              - Models: reference/legacy/rules/models.md
+              - Analysis: reference/legacy/rules/analysis.md
+              - Importers: reference/legacy/rules/importers.md
+              - Exporters: reference/legacy/rules/exporters.md
+          - Graph:
+              - Extractors: reference/legacy/graph/extractors.md
+              - Transformers: reference/legacy/graph/transformers.md
+              - Loaders: reference/legacy/graph/loaders.md
+              - Stores: reference/legacy/graph/stores.md
+          - Workflows:
+              - Data Contracts: reference/legacy/workflows/data_contracts.md
+              - Steps:
+                  - Rules: reference/legacy/workflows/steps/rules.md
+                  - Graph: reference/legacy/workflows/steps/graph.md
+          - Exceptions: reference/legacy/exceptions.md
   - Changelog​: CHANGELOG.md
 
 markdown_extensions:

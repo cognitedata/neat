@@ -1,4 +1,4 @@
-from cognite.neat.graph import extractor as graph_loader
+from cognite.neat.legacy.graph import extractors as graph_loader
 from tests import config
 
 

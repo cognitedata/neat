@@ -12,8 +12,8 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.worksheet.worksheet import Worksheet
 
 from cognite.neat.rules._shared import Rules
-from cognite.neat.rules.models._rules import DMSRules, DomainRules, InformationRules
-from cognite.neat.rules.models._rules.base import RoleTypes, SchemaCompleteness, SheetEntity
+from cognite.neat.rules.models.rules import DMSRules, DomainRules, InformationRules
+from cognite.neat.rules.models.rules._base import RoleTypes, SchemaCompleteness, SheetEntity
 
 from ._base import BaseExporter
 

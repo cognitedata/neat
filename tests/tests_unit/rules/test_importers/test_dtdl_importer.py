@@ -6,8 +6,8 @@ from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import DTDLImporter
 from cognite.neat.rules.importers._dtdl2rules.spec import DTMI, Interface
 from cognite.neat.rules.issues import IssueList
-from cognite.neat.rules.models._rules import InformationRules
-from cognite.neat.rules.models._rules.base import SchemaCompleteness
+from cognite.neat.rules.models.rules import InformationRules
+from cognite.neat.rules.models.rules._base import SchemaCompleteness
 from tests.tests_unit.rules.test_importers.constants import DTDL_IMPORTER_DATA
 
 

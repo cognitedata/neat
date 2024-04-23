@@ -1,6 +1,6 @@
-from cognite.neat.graph.loader.core.rdf_to_assets import rdf2assets
-from cognite.neat.graph.loader.validator import validate_asset_hierarchy
-from cognite.neat.graph.stores import MemoryStore
+from cognite.neat.legacy.graph.loaders.core.rdf_to_assets import rdf2assets
+from cognite.neat.legacy.graph.loaders.validator import validate_asset_hierarchy
+from cognite.neat.legacy.graph.stores import MemoryStore
 
 
 def test_orphan_assets(transformation_rules, solution_knowledge_graph):

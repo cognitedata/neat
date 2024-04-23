@@ -4,10 +4,10 @@ from datetime import datetime
 import pytest
 from rdflib import Namespace
 
-from cognite.neat.rules.exceptions import EntitiesContainNonDMSCompliantCharacters
-from cognite.neat.rules.exporter._rules2dms import DMSSchemaComponents
-from cognite.neat.rules.models._base import ParentClass
-from cognite.neat.rules.models.rules import Class, Metadata, Property, Rules
+from cognite.neat.legacy.rules.exceptions import EntitiesContainNonDMSCompliantCharacters
+from cognite.neat.legacy.rules.exporters._rules2dms import DMSSchemaComponents
+from cognite.neat.legacy.rules.models._base import ParentClass
+from cognite.neat.legacy.rules.models.rules import Class, Metadata, Property, Rules
 
 if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup

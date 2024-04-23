@@ -1,8 +1,8 @@
 import pandas as pd
 
 from cognite.neat.constants import PREFIXES
-from cognite.neat.graph.stores import NeatGraphStoreBase
-from cognite.neat.graph.transformation.query_generator.sparql import build_sparql_query
+from cognite.neat.legacy.graph.stores import NeatGraphStoreBase
+from cognite.neat.legacy.graph.transformations.query_generator.sparql import build_sparql_query
 
 
 def test_graph_traversal(source_knowledge_graph: NeatGraphStoreBase):

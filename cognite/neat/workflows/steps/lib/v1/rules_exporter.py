@@ -6,12 +6,12 @@ from typing import ClassVar, Literal, cast
 
 from cognite.client import data_modeling as dm
 
-import cognite.neat.graph.extractor._graph_capturing_sheet
+import cognite.neat.legacy.graph.extractors._graph_capturing_sheet
 from cognite.neat.exceptions import wrangle_warnings
-from cognite.neat.rules import exporter
-from cognite.neat.rules.exporter._rules2dms import DMSSchemaComponents
-from cognite.neat.rules.exporter._rules2graphql import GraphQLSchema
-from cognite.neat.rules.exporter._rules2ontology import Ontology
+from cognite.neat.legacy.rules import exporters
+from cognite.neat.legacy.rules.exporters._rules2dms import DMSSchemaComponents
+from cognite.neat.legacy.rules.exporters._rules2graphql import GraphQLSchema
+from cognite.neat.legacy.rules.exporters._rules2ontology import Ontology
 from cognite.neat.utils.utils import generate_exception_report
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
@@ -485,7 +485,7 @@ class ExportRulesToGraphCapturingSheet(Step):
 
         data_capture_sheet_path = staging_dir / sheet_name
 
-        cognite.neat.graph.extractor._graph_capturing_sheet.rules2graph_capturing_sheet(
+        cognite.neat.legacy.graph.extractors._graph_capturing_sheet.rules2graph_capturing_sheet(
             rules.rules, data_capture_sheet_path, auto_identifier_type=auto_identifier_type
         )
 
@@ -509,5 +509,5 @@ class ExportRulesToExcel(Step):
 
     def run(self, rules_data: RulesData) -> FlowMessage:  # type: ignore[override, syntax]
         full_path = Path(self.data_store_path) / Path(self.configs["output_file_path"])
-        exporter.ExcelExporter.from_rules(rules=rules_data.rules).export_to_file(filepath=full_path)
+        exporters.ExcelExporter.from_rules(rules=rules_data.rules).export_to_file(filepath=full_path)
         return FlowMessage(output_text="Generated Excel file from rules")

@@ -5,9 +5,9 @@ from IPython.display import Markdown, display
 from pydantic import ValidationError
 
 from cognite.neat.constants import PREFIXES
-from cognite.neat.graph.stores import MemoryStore
-from cognite.neat.graph.transformation.query_generator import build_sparql_query
-from cognite.neat.rules.models.rdfpath import (
+from cognite.neat.legacy.graph.stores import MemoryStore
+from cognite.neat.legacy.graph.transformations.query_generator import build_sparql_query
+from cognite.neat.legacy.rules.models.rdfpath import (
     AllProperties,
     AllReferences,
     Entity,
@@ -20,7 +20,7 @@ from cognite.neat.rules.models.rdfpath import (
     parse_rule,
     parse_traversal,
 )
-from cognite.neat.rules.models.rules import Property
+from cognite.neat.legacy.rules.models.rules import Property
 from tests import config
 
 nan = float("nan")

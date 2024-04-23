@@ -5,7 +5,7 @@ import yaml
 
 from cognite.neat.rules import issues
 from cognite.neat.rules.issues import IssueList, NeatValidationError, ValidationIssue
-from cognite.neat.rules.models._rules import RULES_PER_ROLE, RoleTypes
+from cognite.neat.rules.models.rules import RULES_PER_ROLE, RoleTypes
 
 from ._base import BaseImporter, Rules, _handle_issues
 

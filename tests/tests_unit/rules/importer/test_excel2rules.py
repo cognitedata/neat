@@ -5,14 +5,14 @@ import pandas as pd
 import pytest
 from pydantic import ValidationError
 
-from cognite.neat.rules import importer
+from cognite.neat.legacy.rules import importers
+from cognite.neat.legacy.rules.models import Tables
+from cognite.neat.legacy.rules.models.raw_rules import RawRules
 from cognite.neat.rules.importers._spreadsheet2rules import ExcelImporter
 from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.issues.spreadsheet_file import SheetMissingError
-from cognite.neat.rules.models import Tables
-from cognite.neat.rules.models._rules import DomainRules, InformationRules
-from cognite.neat.rules.models._rules.base import RoleTypes
-from cognite.neat.rules.models.raw_rules import RawRules
+from cognite.neat.rules.models.rules import DomainRules, InformationRules
+from cognite.neat.rules.models.rules._base import RoleTypes
 from tests import config
 from tests.config import DOC_RULES
 
@@ -22,7 +22,7 @@ if sys.version_info < (3, 11):
 
 @pytest.fixture(scope="session")
 def raw_rules() -> dict[str, pd.DataFrame]:
-    return importer.ExcelImporter(config.TNT_TRANSFORMATION_RULES).to_raw_rules()
+    return importers.ExcelImporter(config.TNT_TRANSFORMATION_RULES).to_raw_rules()
 
 
 def test_raw_rules_validation(raw_rules):
@@ -30,7 +30,7 @@ def test_raw_rules_validation(raw_rules):
 
 
 def generate_invalid_raw_rules_test_data():
-    raw_tables = importer.ExcelImporter(config.TNT_TRANSFORMATION_RULES).to_tables()
+    raw_tables = importers.ExcelImporter(config.TNT_TRANSFORMATION_RULES).to_tables()
 
     invalid_class_label = raw_tables
     invalid_class_label[Tables.properties] = invalid_class_label[Tables.properties].copy()

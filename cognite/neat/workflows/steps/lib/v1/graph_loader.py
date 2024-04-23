@@ -8,9 +8,9 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes import Asset, AssetFilter
 from prometheus_client import Gauge
 
-from cognite.neat.graph import loader as graph_loader
-from cognite.neat.graph.loader import upload_labels
-from cognite.neat.graph.loader.core.rdf_to_assets import (
+from cognite.neat.legacy.graph import loaders as graph_loader
+from cognite.neat.legacy.graph.loaders import upload_labels
+from cognite.neat.legacy.graph.loaders.core.rdf_to_assets import (
     NeatMetadataKeys,
     categorize_assets,
     rdf2assets,
@@ -18,14 +18,14 @@ from cognite.neat.graph.loader.core.rdf_to_assets import (
     unique_asset_labels,
     upload_assets,
 )
-from cognite.neat.graph.loader.core.rdf_to_relationships import (
+from cognite.neat.legacy.graph.loaders.core.rdf_to_relationships import (
     categorize_relationships,
     rdf2relationships,
     upload_relationships,
 )
-from cognite.neat.graph.loader.rdf_to_dms import upload_edges, upload_nodes
-from cognite.neat.graph.loader.validator import validate_asset_hierarchy
-from cognite.neat.rules.models.rdfpath import TransformationRuleType
+from cognite.neat.legacy.graph.loaders.rdf_to_dms import upload_edges, upload_nodes
+from cognite.neat.legacy.graph.loaders.validator import validate_asset_hierarchy
+from cognite.neat.legacy.rules.models.rdfpath import TransformationRuleType
 from cognite.neat.utils.utils import generate_exception_report
 from cognite.neat.workflows._exceptions import StepFlowContextNotInitialized, StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus

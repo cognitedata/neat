@@ -4,7 +4,7 @@ from cognite.client import data_modeling as dm
 
 from cognite.neat.rules.importers import DMSImporter
 from cognite.neat.rules.issues.importing import UnknownValueTypeWarning
-from cognite.neat.rules.models._rules import DMSRules, DMSSchema
+from cognite.neat.rules.models.rules import DMSRules, DMSSchema
 
 
 class TestDMSImporter:
