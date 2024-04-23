@@ -15,9 +15,13 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## [0.75.1] - 23-05-24
+## [0.75.2] - 23-05-24
 ### Fixed
 - Allowing that multiple View properties can map to the same Container property
+
+## [0.75.1] - 23-05-24
+### Fixed
+- No spaces in any of the subfolders of the `neat` package.
 
 ## [0.75.0] - 23-05-24
 ### Added

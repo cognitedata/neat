@@ -32,3 +32,9 @@ def test_consistent_version_variables():
         "Failed to obtain docker version",
     )
     assert neat.__version__ == changelog_version == pyproject_toml == docker_version, "Inconsistent version variables"
+
+
+def test_no_spaces_in_sub_folders() -> None:
+    name_by_location = {path: path.name for path in (ROOT / "cognite").rglob("*") if path.is_dir() and " " in path.name}
+
+    assert not name_by_location, f"Subfolders with spaces found: {name_by_location}"
