@@ -17,7 +17,7 @@ Changes are grouped as follows:
 
 ## [0.75.1] - 23-05-24
 ### Fixed
-- Not allowing that multiple View properties can map to the same Container property
+- Allowing that multiple View properties can map to the same Container property
 
 ## [0.75.0] - 23-05-24
 ### Added
