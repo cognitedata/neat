@@ -12,6 +12,15 @@ from cognite.neat.rules.models.rules._dms_schema import PipelineSchema
 
 
 class TestDMSExporter:
+    def test_export_dms_schema_has_names_description(self, alice_rules: DMSRules) -> None:
+        exporter = DMSExporter()
+        schema = exporter.export(alice_rules)
+
+        assert schema.views[0].name == "Generating Unit"
+        assert schema.views[0].description == "An asset that is creating power"
+        assert schema.views[0].properties["activePower"].name == "active power"
+        assert schema.views[0].properties["activePower"].description == "Active power of generating unit"
+
     def test_export_dms_schema_to_zip(self, alice_rules: DMSRules, tmp_path: Path) -> None:
         exporter = DMSExporter()
         schema = exporter.export(alice_rules)
