@@ -971,25 +971,21 @@ class _DMSExporter:
                 else:
                     type_cls = dm.DirectRelation
 
-                prop_name = prop.container_property
+                prop_id = prop.container_property
 
                 if type_cls is dm.DirectRelation:
-                    container.properties[prop_name] = dm.ContainerProperty(
+                    container.properties[prop_id] = dm.ContainerProperty(
                         type=dm.DirectRelation(),
                         nullable=prop.nullable if prop.nullable is not None else True,
                         default_value=prop.default,
-                        name=prop.name,
-                        description=prop.description,
                     )
                 else:
                     type_: CognitePropertyType
                     type_ = type_cls(is_list=prop.is_list or False)
-                    container.properties[prop_name] = dm.ContainerProperty(
+                    container.properties[prop_id] = dm.ContainerProperty(
                         type=type_,
                         nullable=prop.nullable if prop.nullable is not None else True,
                         default_value=prop.default,
-                        name=prop.name,
-                        description=prop.description,
                     )
 
             uniqueness_properties: dict[str, set[str]] = defaultdict(set)
