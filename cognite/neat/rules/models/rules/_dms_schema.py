@@ -332,12 +332,20 @@ class DMSSchema:
                 ):
                     errors.add(MissingEdgeViewError(view=prop.edge_source, property=prop_name, referred_by=view_id))
 
+            # This allows for multiple view properties to be mapped to the same container property,
+            # as long as they have different external_id, otherwise this will lead to raising
+            # error ContainerPropertyUsedMultipleTimesError
             property_count = Counter(
-                (prop.container, prop.container_property_identifier)
-                for prop in (view.properties or {}).values()
+                (prop.container, prop.container_property_identifier, view_property_identifier)
+                for view_property_identifier, prop in (view.properties or {}).items()
                 if isinstance(prop, dm.MappedPropertyApply)
             )
-            for (container_id, container_property_identifier), count in property_count.items():
+
+            for (
+                container_id,
+                container_property_identifier,
+                _,
+            ), count in property_count.items():
                 if count > 1:
                     view_properties = [
                         prop_name
