@@ -7,10 +7,15 @@ from rdflib import Namespace
 
 from cognite.neat.app.api.configuration import NEAT_APP
 from cognite.neat.app.api.data_classes.rest import TransformationRulesUpdateRequest
-from cognite.neat.legacy.rules import exporters, importers
+from cognite.neat.legacy.rules import exporters as legacy_exporters
+from cognite.neat.legacy.rules import importers as legacy_importers
 from cognite.neat.legacy.rules.models._base import EntityTypes
 from cognite.neat.legacy.rules.models.rules import Class, Classes, Metadata, Properties, Property, Rules
+from cognite.neat.rules import importers
+from cognite.neat.rules.models.rules import RoleTypes
 from cognite.neat.workflows.steps.data_contracts import RulesData
+from cognite.neat.workflows.steps.lib.rules_exporter import RulesToExcel
+from cognite.neat.workflows.steps.lib.rules_importer import ExcelToRules
 from cognite.neat.workflows.steps.lib.v1.rules_importer import ImportExcelToRules
 from cognite.neat.workflows.utils import get_file_hash
 
@@ -32,7 +37,9 @@ def get_rules(
     workflow_name: str = "default",
     file_name: str | None = None,
     version: str | None = None,
+    as_role: str | None = None,
 ) -> dict[str, Any]:
+    rules_schema_version = ""
     if NEAT_APP.cdf_store is None or NEAT_APP.workflow_manager is None:
         return {"error": "NeatApp is not initialized"}
     if workflow_name != "undefined":
@@ -46,6 +53,15 @@ def get_rules(
                     file_name = step.configs["file_name"]
                     version = step.configs["version"]
                     break
+                if step.method == RulesToExcel.__name__ or step.method == ExcelToRules.__name__:
+                    rules_schema_version = "v2"
+                    as_role = step.configs.get("as_role", "")
+                    file_name = step.configs.get("File name", "")
+                    if file_name:
+                        break
+                    file_name = step.configs.get("File path", "")
+                    break
+
     if not file_name:
         return {"error": "File name is not provided"}
     rules_file = Path(file_name)
@@ -72,47 +88,63 @@ def get_rules(
     error_text = ""
     properties = []
     classes = []
+    remaped_rules = {}
     try:
-        rules = cast(Rules, importers.ExcelImporter(path).to_rules(return_report=False, skip_validation=False))
+        # Trying to load rules V1
+        if rules_schema_version == "" or rules_schema_version == "v1":
+            rules = cast(
+                Rules, legacy_importers.ExcelImporter(path).to_rules(return_report=False, skip_validation=False)
+            )
+            properties = [
+                {
+                    "class": value.class_id,
+                    "property": value.property_id,
+                    "property_description": value.description,
+                    "property_type": (
+                        value.expected_value_type.versioned_id
+                        if value.property_type == EntityTypes.object_property
+                        else value.expected_value_type.suffix
+                    ),
+                    "cdf_resource_type": value.cdf_resource_type,
+                    "cdf_metadata_type": value.resource_type_property,
+                    "rule_type": value.rule_type,
+                    "rule": value.rule,
+                }
+                for value in rules.properties.values()
+            ]
 
-        properties = [
-            {
-                "class": value.class_id,
-                "property": value.property_id,
-                "property_description": value.description,
-                "property_type": (
-                    value.expected_value_type.versioned_id
-                    if value.property_type == EntityTypes.object_property
-                    else value.expected_value_type.suffix
-                ),
-                "cdf_resource_type": value.cdf_resource_type,
-                "cdf_metadata_type": value.resource_type_property,
-                "rule_type": value.rule_type,
-                "rule": value.rule,
-            }
-            for value in rules.properties.values()
-        ]
-
-        classes = [
-            {
-                "class": value.class_id,
-                "class_description": value.description,
-                "cdf_resource_type": value.cdf_resource_type,
-            }
-            for value in rules.classes.values()
-        ]
-
+            classes = [
+                {
+                    "class": value.class_id,
+                    "class_description": value.description,
+                    "cdf_resource_type": value.cdf_resource_type,
+                }
+                for value in rules.classes.values()
+            ]
+            rules_schema_version = "v1"
+            remaped_rules = {"properties": properties, "metadata": rules.metadata.model_dump(), "classes": classes}
     except Exception as e:
         error_text = str(e)
 
+    if rules_schema_version == "" or rules_schema_version == "v2":
+        try:
+            role = RoleTypes(as_role) if as_role else None
+            rules_v2, issues = importers.ExcelImporter(path).to_rules(role=role)
+            error_text = ""
+            rules_schema_version = "v2"
+            if rules_v2:
+                remaped_rules = rules_v2.model_dump()
+        except Exception as e:
+            error_text = str(e)
+            rules_schema_version = "unknown"
+
     return {
-        "properties": properties,
-        "metadata": rules.metadata.model_dump(),
-        "classes": classes,
+        "rules": remaped_rules,
         "file_name": path.name,
         "hash": get_file_hash(path),
         "error_text": error_text,
         "src": src,
+        "rules_schema_version": rules_schema_version,
     }
 
 
@@ -120,7 +152,9 @@ def get_rules(
 def get_original_rules_from_file(file_name: str):
     # """Endpoint for retrieving raw transformation from file"""
     path = Path(NEAT_APP.config.rules_store_path) / file_name
-    rules = cast(Rules, importers.ExcelImporter(filepath=path).to_rules(return_report=False, skip_validation=False))
+    rules = cast(
+        Rules, legacy_importers.ExcelImporter(filepath=path).to_rules(return_report=False, skip_validation=False)
+    )
     return Response(content=rules.model_dump_json(), media_type="application/json")
 
 
@@ -165,5 +199,5 @@ def upsert_rules(request: TransformationRulesUpdateRequest):
         else:
             path = Path(NEAT_APP.config.data_store_path) / rules_file
 
-        exporters.ExcelExporter(rules=rules).export_to_file(path)
+        legacy_exporters.ExcelExporter(rules=rules).export_to_file(path)
     return {"status": "ok"}

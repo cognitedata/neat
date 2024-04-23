@@ -404,6 +404,7 @@ class _InformationRulesConverter:
         views: list[DMSView] = [
             DMSView(
                 class_=cls_.class_,
+                name=cls_.name,
                 view=ViewPropEntity(prefix=cls_.class_.prefix, suffix=cls_.class_.suffix, version=cls_.class_.version),
                 description=cls_.description,
                 reference=cls_.reference,
@@ -427,6 +428,7 @@ class _InformationRulesConverter:
             containers.append(
                 DMSContainer(
                     class_=class_.class_,
+                    name=class_.name,
                     container=ContainerEntity(prefix=class_.class_.prefix, suffix=class_.class_.suffix),
                     description=class_.description,
                     constraint=[
@@ -487,6 +489,7 @@ class _InformationRulesConverter:
 
         return DMSProperty(
             class_=prop.class_,
+            name=prop.name,
             property_=prop.property_,
             value_type=value_type,
             nullable=nullable,

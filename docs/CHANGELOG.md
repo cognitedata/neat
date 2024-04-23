@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.74.0] - 23-05-24
+### Added
+- added UI+api support for RulesV2. Read-only in the release , editable in the next release.
+
 ## [0.73.4] - 19-04-24
 ### Fixed
 - updated urllib3 to 2.2.1
