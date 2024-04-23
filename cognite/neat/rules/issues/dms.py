@@ -206,7 +206,7 @@ class DirectRelationMissingSourceWarning(DMSSchemaWarning):
 
 @dataclass(frozen=True)
 class ContainerPropertyUsedMultipleTimesError(DMSSchemaError):
-    description = "The container property is used multiple times by the same view"
+    description = "The container property is used multiple times by the same view property"
     fix = "Use unique container properties for when mapping to the same container"
     error_name: ClassVar[str] = "ContainerPropertyUsedMultipleTimes"
     container: dm.ContainerId

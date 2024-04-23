@@ -8,7 +8,6 @@ from cognite.client import data_modeling as dm
 from cognite.client.data_classes import DatabaseWrite, DatabaseWriteList, TransformationWrite, TransformationWriteList
 
 from cognite.neat.rules.issues.dms import (
-    ContainerPropertyUsedMultipleTimesError,
     DirectRelationMissingSourceWarning,
     DMSSchemaError,
     DMSSchemaWarning,
@@ -112,16 +111,6 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
                 container=dm.ContainerId("my_space", "my_container"),
                 property="non_existing",
                 referred_by=dm.ViewId("my_space", "my_view1", "1"),
-            ),
-            ContainerPropertyUsedMultipleTimesError(
-                referred_by=frozenset(
-                    {
-                        (dm.ViewId("my_space", "my_view2", "1"), "value"),
-                        (dm.ViewId("my_space", "my_view2", "1"), "value2"),
-                    }
-                ),
-                container=dm.ContainerId("my_space", "my_container"),
-                property="value",
             ),
         ],
         id="Missing container and properties. Container property used multiple times.",
