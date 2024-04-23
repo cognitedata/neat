@@ -57,7 +57,7 @@ def test_workflow_workflows(workflow_names: list[str], fastapi_client: TestClien
 def test_rules(transformation_rules: Rules, fastapi_client: TestClient):
     # transformation_rules load Rules-Nordic44-to-TNT.xlsx
     # /api/rules fetch rules related to default workflow which are Rules-Nordic44-to-TNT.xlsx
-    response = fastapi_client.get("/api/rules", params={"workflow_name": "Extract RDF Graph and Generate Assets"})
+    response = fastapi_client.get("/api/rules", params={"workflow_name": "Extract_RDF_Graph_and_Generate_Assets"})
 
     # Assert
     assert response.status_code == 200
@@ -67,17 +67,17 @@ def test_rules(transformation_rules: Rules, fastapi_client: TestClient):
 
 
 @pytest.mark.freeze_time("2024-01-21")
-@pytest.mark.parametrize("workflow_name", ["Extract RDF Graph and Generate Assets"])
+@pytest.mark.parametrize("workflow_name", ["Extract_RDF_Graph_and_Generate_Assets"])
 def test_workflow_start(
     workflow_name: str, cognite_client: CogniteClient, fastapi_client: TestClient, data_regression, tmp_path
 ):
     # Arrange
-    if workflow_name == "Extract RDF Graph and Generate Assets":
+    if workflow_name == "Extract_RDF_Graph_and_Generate_Assets":
         # When running this test in GitHub actions, you get permission issues with the default disk_store_dir.
-        response = fastapi_client.get("/api/workflow/workflow-definition/Extract RDF Graph and Generate Assets")
+        response = fastapi_client.get("/api/workflow/workflow-definition/Extract_RDF_Graph_and_Generate_Assets")
         definition = WorkflowDefinition(**response.json()["definition"])
         response = fastapi_client.post(
-            "/api/workflow/workflow-definition/Extract RDF Graph and Generate Assets", json=definition.model_dump()
+            "/api/workflow/workflow-definition/Extract_RDF_Graph_and_Generate_Assets", json=definition.model_dump()
         )
         assert response.status_code == 200
 
@@ -99,7 +99,7 @@ def test_workflow_start(
     data_regression.check(data, basename=f"{workflow_name}_workflow")
 
 
-@pytest.mark.parametrize("workflow_name", ["Extract RDF Graph and Generate Assets"])
+@pytest.mark.parametrize("workflow_name", ["Extract_RDF_Graph_and_Generate_Assets"])
 def test_workflow_stats(workflow_name: str, fastapi_client: TestClient):
     # Act
     response = fastapi_client.get(f"/api/workflow/stats/{workflow_name}")
@@ -118,7 +118,7 @@ def test_workflow_reload_workflows(workflow_names: list[str], fastapi_client: Te
     assert sorted(response.json()["workflows"]) == sorted(workflow_names)
 
 
-@pytest.mark.parametrize("workflow_name", ["Extract RDF Graph and Generate Assets"])
+@pytest.mark.parametrize("workflow_name", ["Extract_RDF_Graph_and_Generate_Assets"])
 def test_workflow_workflow_definition_get(workflow_name: str, fastapi_client: TestClient):
     # Act
     response = fastapi_client.get(f"/api/workflow/workflow-definition/{workflow_name}")
@@ -152,7 +152,7 @@ def test_list_queries(fastapi_client: TestClient):
     assert response.json() == query_templates
 
 
-@pytest.mark.parametrize("workflow_name", ["Extract RDF Graph and Generate Assets"])
+@pytest.mark.parametrize("workflow_name", ["Extract_RDF_Graph_and_Generate_Assets"])
 def test_query(workflow_name: str, fastapi_client: TestClient):
     # Act
     workflow = NEAT_APP.workflow_manager.get_workflow(workflow_name)
@@ -181,7 +181,7 @@ def test_query(workflow_name: str, fastapi_client: TestClient):
     assert {"class": "http://iec.ch/TC57/2013/CIM-schema-cim16#Terminal"} in content["rows"]
 
 
-@pytest.mark.parametrize("workflow_name", ["Extract RDF Graph and Generate Assets"])
+@pytest.mark.parametrize("workflow_name", ["Extract_RDF_Graph_and_Generate_Assets"])
 def test_execute_rule(workflow_name: str, fastapi_client: TestClient):
     # Act
     workflow = NEAT_APP.workflow_manager.get_workflow(workflow_name)
@@ -210,7 +210,7 @@ def test_execute_rule(workflow_name: str, fastapi_client: TestClient):
     } in content["rows"]
 
 
-@pytest.mark.parametrize("workflow_name", ["Extract RDF Graph and Generate Assets"])
+@pytest.mark.parametrize("workflow_name", ["Extract_RDF_Graph_and_Generate_Assets"])
 def test_get_datatype_properties(workflow_name: str, fastapi_client: TestClient):
     # Act
     workflow = NEAT_APP.workflow_manager.get_workflow(workflow_name)
@@ -237,7 +237,7 @@ def test_get_datatype_properties(workflow_name: str, fastapi_client: TestClient)
     "This test is dependent on the data in the graph, thus it is dependens "
     "on test execution in a specific order. This needs to be fixed before it can be added back in."
 )
-@pytest.mark.parametrize("workflow_name", ["Extract RDF Graph and Generate Assets"])
+@pytest.mark.parametrize("workflow_name", ["Extract_RDF_Graph_and_Generate_Assets"])
 def test_object_properties(workflow_name: str, fastapi_client: TestClient):
     reference = quote("http://purl.org/cognite/neat#_lazarevac")
     graph_name = "source"
@@ -258,7 +258,7 @@ def test_object_properties(workflow_name: str, fastapi_client: TestClient):
     } in content["rows"]
 
 
-@pytest.mark.parametrize("workflow_name", ["Extract RDF Graph and Generate Assets"])
+@pytest.mark.parametrize("workflow_name", ["Extract_RDF_Graph_and_Generate_Assets"])
 def test_search(workflow_name: str, fastapi_client: TestClient):
     search_str = "Serbia"
     graph_name = "source"
@@ -281,7 +281,7 @@ def test_search(workflow_name: str, fastapi_client: TestClient):
     } in content["rows"]
 
 
-@pytest.mark.parametrize("workflow_name", ["Extract RDF Graph and Generate Assets"])
+@pytest.mark.parametrize("workflow_name", ["Extract_RDF_Graph_and_Generate_Assets"])
 def test_get_classes(workflow_name: str, fastapi_client: TestClient):
     # Act
     response = fastapi_client.get(f"/api/get-classes?graph_name=source&workflow_name={workflow_name}&cache=true")

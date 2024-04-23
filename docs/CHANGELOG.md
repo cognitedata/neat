@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.75.1] - 23-05-24
+### Fixed
+- No spaces in any of the subfolders of the `neat` package.
+
 ## [0.75.0] - 23-05-24
 ### Added
 - Added and moved all v1 rules related code base under `legacy` module
