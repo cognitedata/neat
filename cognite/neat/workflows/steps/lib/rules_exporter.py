@@ -98,9 +98,11 @@ class RulesToDMS(Step):
 
         dms_exporter = exporters.DMSExporter(
             export_components=frozenset(components_to_create),
-            include_space=None
-            if multi_space_components_create
-            else {input_rules.metadata.space if isinstance(input_rules, DMSRules) else input_rules.metadata.prefix},
+            include_space=(
+                None
+                if multi_space_components_create
+                else {input_rules.metadata.space if isinstance(input_rules, DMSRules) else input_rules.metadata.prefix}
+            ),
             existing_handling=existing_components_handling,
         )
 
@@ -169,6 +171,11 @@ class RulesToExcel(Step):
             "rules will be used.",
             options=["input", *RoleTypes.__members__.keys()],
         ),
+        Configurable(
+            name="File path",
+            value="",
+            label="File path to the generated Excel file.For example: 'staging/exported-rules.xlsx'",
+        ),
     ]
 
     def run(self, rules: MultiRuleData) -> FlowMessage:  # type: ignore[override, syntax]
@@ -200,12 +207,18 @@ class RulesToExcel(Step):
         output_dir.mkdir(parents=True, exist_ok=True)
         file_name = f"exported_rules_{output_role.value}.xlsx"
         filepath = output_dir / file_name
+        if self.configs.get("File path", ""):
+            file_name = self.configs["File path"]
+            filepath = Path(self.data_store_path) / Path(file_name)
+        else:
+            file_name = f"staging/{file_name}"
+
         excel_exporter.export_to_file(rule_instance, filepath)
 
         output_text = (
             "<p></p>"
             f"Download Excel Exported {output_role.value} rules: "
-            f'- <a href="/data/staging/{file_name}?{time.time()}" '
+            f'- <a href="/data/{file_name}?{time.time()}" '
             f'target="_blank">{file_name}</a>'
         )
 

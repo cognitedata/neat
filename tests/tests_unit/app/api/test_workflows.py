@@ -62,8 +62,8 @@ def test_rules(transformation_rules: Rules, fastapi_client: TestClient):
     # Assert
     assert response.status_code == 200
     rules = response.json()
-    assert len(transformation_rules.classes) == len(rules["classes"])
-    assert len(transformation_rules.properties) == len(rules["properties"])
+    assert len(transformation_rules.classes) == len(rules["rules"]["classes"])
+    assert len(transformation_rules.properties) == len(rules["rules"]["properties"])
 
 
 @pytest.mark.freeze_time("2024-01-21")
