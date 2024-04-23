@@ -1,6 +1,6 @@
 ## Base Exception Classes
 ::: cognite.neat.exceptions
 ## Transformation Rules Exceptions
-::: cognite.neat.rules.exceptions
+::: cognite.neat.legacy.rules.exceptions
 ## Neat Graph Exceptions
-::: cognite.neat.graph.exceptions
+::: cognite.neat.legacy.graph.exceptions

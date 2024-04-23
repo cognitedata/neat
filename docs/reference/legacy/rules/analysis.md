@@ -1,2 +1,2 @@
 This module holds methods that perform various analysis of `TransformationRules`.
-::: cognite.neat.rules.analysis
+::: cognite.neat.legacy.rules.analysis
