@@ -4,9 +4,7 @@ from cognite.neat.rules.models.rules._types import ClassEntity, EntityTypes
 
 
 def test_owl_importer():
-    rules, _ = importers.OWLImporter(
-        owl_filepath="https://data.nobelprize.org/terms.rdf", make_compliant=True
-    ).to_rules()
+    rules, _ = importers.OWLImporter(filepath="https://data.nobelprize.org/terms.rdf", make_compliant=True).to_rules()
 
     assert len(rules.classes) == 11
     assert len(rules.properties) == 16
