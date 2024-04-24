@@ -20,7 +20,72 @@ import { Alert, AlertTitle, Button, Tab, Tabs, ToggleButton, ToggleButtonGroup }
 import { Image } from '@mui/icons-material';
 import InformationArchitectDataModelEditor from './RulesV2Editor';
 
-function MetadataTable(props: any) {
+function InformationMetadataTable(props: any) {
+  const metadata = props.metadata;
+  return (
+    <Box sx={{marginTop:5}}>
+      <TableContainer component={Paper}>
+        <Table aria-label="metadata table">
+          <TableBody>
+            <TableRow>
+              <TableCell><b>Title</b></TableCell>
+              <TableCell>{metadata?.name}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell><b>Role</b></TableCell>
+              <TableCell>{metadata?.role}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell><b>Schema state</b></TableCell>
+              <TableCell>{metadata?.schema_}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell><b>Extension</b></TableCell>
+              <TableCell>{metadata?.extension}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell><b>Description</b></TableCell>
+              <TableCell>{metadata?.description}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell><b>Namespace</b></TableCell>
+              <TableCell>{metadata?.namespace}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell><b>Prefix</b></TableCell>
+              <TableCell>{metadata?.prefix}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell><b>Version</b></TableCell>
+              <TableCell>{metadata?.version}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell><b>Created at</b></TableCell>
+              <TableCell>{metadata?.created}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell><b>Updated at</b></TableCell>
+              <TableCell>{metadata?.updated}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell><b>Creator</b></TableCell>
+              <TableCell>{metadata?.creator}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell><b>License</b></TableCell>
+              <TableCell>{metadata?.license}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell><b>Rights</b></TableCell>
+              <TableCell>{metadata?.rights}</TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
+  );
+}
+function DmsMetadataTable(props: any) {
   const metadata = props.metadata;
   return (
     <Box sx={{marginTop:5}}>
@@ -52,6 +117,10 @@ function MetadataTable(props: any) {
               <TableCell>{metadata?.space}</TableCell>
             </TableRow>
             <TableRow>
+              <TableCell><b>External ID</b></TableCell>
+              <TableCell>{metadata?.external_id}</TableCell>
+            </TableRow>
+            <TableRow>
               <TableCell><b>Version</b></TableCell>
               <TableCell>{metadata?.version}</TableCell>
             </TableRow>
@@ -74,35 +143,6 @@ function MetadataTable(props: any) {
   );
 }
 
-/*
-Class:
-{
-"class_": "Sourceable",
-"name": null,
-"description": null,
-"parent": null,
-"reference": null,
-"match_type": null,
-"comment": null
-},
-
-Property:
-{
-"class_": "Asset",
-"name": null,
-"description": null,
-"property_": "Systemstatus",
-"value_type": "string",
-"min_count": 1,
-"max_count": 1,
-"default": null,
-"reference": null,
-"match_type": null,
-"rule_type": null,
-"rule": null,
-"comment": null
-},
-*/
 
 function InformationArchitectPropsRow(props: { row: any,properties: any,onEditClick: any}) {
   const { row,properties } = props;
@@ -182,26 +222,7 @@ function InformationArchitectPropsRow(props: { row: any,properties: any,onEditCl
     </React.Fragment>
   );
 }
-/*
-{
-"class_": "CurrentLimit",
-"name": null,
-"description": null,
-"property_": "CurrentLimit_value",
-"relation": null,
-"value_type": "text",
-"nullable": false,
-"is_list": false,
-"default": null,
-"reference": null,
-"container": "CurrentLimit",
-"container_property": "CurrentLimit_value",
-"view": "CurrentLimit",
-"view_property": "CurrentLimit_value",
-"index": null,
-"constraint": null
-},
-*/
+
 
 function DMSArchitectPropsRow(props: { row: any,properties: any,views: any}) {
   const { row,properties,views } = props;
@@ -555,8 +576,9 @@ export default function RulesV2Viewer(props: any) {
             <AlertTitle>Warning</AlertTitle>
               {alertMsg}
           </Alert> )}
-          {selectedTab === 0 && rules.metadata && (
-          <MetadataTable metadata={rules.metadata} />
+
+      {selectedTab === 0 && role == "information architect" && (
+          <InformationMetadataTable metadata={rules.metadata} />
           )}
 
      {selectedTab == 1 && role == "information architect" && (
@@ -607,6 +629,9 @@ export default function RulesV2Viewer(props: any) {
           </Table>
         </TableContainer>
      )}
+      {selectedTab === 0 && role == "DMS Architect" && (
+          <DmsMetadataTable metadata={rules.metadata} />
+          )}
       {selectedTab == 1 && role == "DMS Architect" && (
         <TableContainer component={Paper}>
           <Table aria-label="collapsible table">
