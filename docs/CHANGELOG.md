@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.75.3] - 23-05-24
+### Fixed
+- Names and descriptions were not considered for views and view properties
+
 ## [0.75.2] - 23-05-24
 ### Fixed
 - Allowing that multiple View properties can map to the same Container property

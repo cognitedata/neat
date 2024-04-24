@@ -266,6 +266,7 @@ class DMSView(SheetEntity):
             class_=ClassEntity(prefix=view.space, suffix=view.external_id),
             view=ViewType(prefix=view.space, suffix=view.external_id, version=view.version),
             description=view.description,
+            name=view.name,
             implements=[
                 ViewType(prefix=parent.space, suffix=parent.external_id, version=parent.version)
                 for parent in view.implements
@@ -802,6 +803,8 @@ class _DMSExporter:
                         ),
                         source=source,
                         direction="outwards",
+                        name=prop.name,
+                        description=prop.description,
                     )
                 elif prop.container and prop.container_property and prop.view_property:
                     container_prop_identifier = prop.container_property
@@ -816,6 +819,8 @@ class _DMSExporter:
                     view_property = dm.MappedPropertyApply(
                         container=prop.container.as_id(default_space),
                         container_property_identifier=container_prop_identifier,
+                        name=prop.name,
+                        description=prop.description,
                         **extra_args,
                     )
                 elif prop.view and prop.view_property and prop.relation == "multiedge":
@@ -842,6 +847,8 @@ class _DMSExporter:
                         type=edge_type,
                         source=source,
                         direction="outwards",
+                        name=prop.name,
+                        description=prop.description,
                     )
                 elif prop.view and prop.view_property and prop.relation == "reversedirect":
                     if isinstance(prop.value_type, ViewPropEntity):
@@ -880,6 +887,8 @@ class _DMSExporter:
                             type=edge_type,
                             source=source,
                             direction="inwards",
+                            name=prop.name,
+                            description=prop.description,
                         )
                     else:
                         args: dict[str, Any] = dict(
@@ -905,8 +914,8 @@ class _DMSExporter:
                     continue
                 else:
                     continue
-                prop_name = prop.view_property
-                view.properties[prop_name] = view_property
+                prop_id = prop.view_property
+                view.properties[prop_id] = view_property
 
         node_types = dm.NodeApplyList([])
         parent_views = {parent for view in views for parent in view.implements or []}
@@ -971,10 +980,10 @@ class _DMSExporter:
                 else:
                     type_cls = dm.DirectRelation
 
-                prop_name = prop.container_property
+                prop_id = prop.container_property
 
                 if type_cls is dm.DirectRelation:
-                    container.properties[prop_name] = dm.ContainerProperty(
+                    container.properties[prop_id] = dm.ContainerProperty(
                         type=dm.DirectRelation(),
                         nullable=prop.nullable if prop.nullable is not None else True,
                         default_value=prop.default,
@@ -984,7 +993,7 @@ class _DMSExporter:
                 else:
                     type_: CognitePropertyType
                     type_ = type_cls(is_list=prop.is_list or False)
-                    container.properties[prop_name] = dm.ContainerProperty(
+                    container.properties[prop_id] = dm.ContainerProperty(
                         type=type_,
                         nullable=prop.nullable if prop.nullable is not None else True,
                         default_value=prop.default,

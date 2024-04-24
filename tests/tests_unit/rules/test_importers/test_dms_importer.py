@@ -18,6 +18,10 @@ class TestDMSImporter:
         dms_rules = cast(DMSRules, rules)
         dump_dms = dms_rules.model_dump()
         assert dump_dms["properties"][0]["value_type"] == "#N/A"
+        assert dump_dms["properties"][0]["name"] == "direct"
+        assert dump_dms["properties"][0]["description"] == "Direction Relation"
+        assert dump_dms["views"][0]["name"] == "OneView"
+        assert dump_dms["views"][0]["description"] == "One View"
 
         info_rules = dms_rules.as_information_architect_rules()
         dump_info = info_rules.model_dump()
@@ -40,11 +44,7 @@ SCHEMA_WITH_DIRECT_RELATION_NONE.containers.append(
     dm.ContainerApply(
         space="neat",
         external_id="container",
-        properties={
-            "direct": dm.ContainerProperty(
-                type=dm.DirectRelation(),
-            )
-        },
+        properties={"direct": dm.ContainerProperty(type=dm.DirectRelation())},
     )
 )
 SCHEMA_WITH_DIRECT_RELATION_NONE.views.append(
@@ -52,9 +52,15 @@ SCHEMA_WITH_DIRECT_RELATION_NONE.views.append(
         space="neat",
         external_id="OneView",
         version="1",
+        name="OneView",
+        description="One View",
         properties={
             "direct": dm.MappedPropertyApply(
-                container=dm.ContainerId("neat", "container"), container_property_identifier="direct", source=None
+                container=dm.ContainerId("neat", "container"),
+                container_property_identifier="direct",
+                source=None,
+                name="direct",
+                description="Direction Relation",
             )
         },
     )
