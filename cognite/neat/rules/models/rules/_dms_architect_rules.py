@@ -987,6 +987,8 @@ class _DMSExporter:
                         type=dm.DirectRelation(),
                         nullable=prop.nullable if prop.nullable is not None else True,
                         default_value=prop.default,
+                        name=prop.name,
+                        description=prop.description,
                     )
                 else:
                     type_: CognitePropertyType
@@ -995,6 +997,8 @@ class _DMSExporter:
                         type=type_,
                         nullable=prop.nullable if prop.nullable is not None else True,
                         default_value=prop.default,
+                        name=prop.name,
+                        description=prop.description,
                     )
 
             uniqueness_properties: dict[str, set[str]] = defaultdict(set)
