@@ -15,6 +15,12 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.75.4] - 24-05-24
+### Fixed
+- Rendering of correct metadata in UI for information architect
+### Added
+- Added `OntologyToRules` that works with V2 Rules (profiling)
+
 ## [0.75.3] - 23-05-24
 ### Fixed
 - Names and descriptions were not considered for views and view properties
