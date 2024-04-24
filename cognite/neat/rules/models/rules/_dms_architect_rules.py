@@ -762,7 +762,8 @@ class _DMSExporter:
             data_model.space = used_spaces.pop()
             spaces = dm.SpaceApplyList([dm.SpaceApply(space=data_model.space)])
         else:
-            spaces = dm.SpaceApplyList([metadata.as_space()] + [dm.SpaceApply(space=space) for space in used_spaces])
+            used_spaces.add(metadata.space)
+            spaces = dm.SpaceApplyList([dm.SpaceApply(space=space) for space in used_spaces])
         if self.instance_space and self.instance_space not in {space.space for space in spaces}:
             spaces.append(dm.SpaceApply(space=self.instance_space, name=self.instance_space))
         return spaces

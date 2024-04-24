@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.75.5] - 24-05-24
+### Fixed
+- Potential of having duplicated spaces are now fixed
+
 ## [0.75.4] - 24-05-24
 ### Fixed
 - Rendering of correct metadata in UI for information architect

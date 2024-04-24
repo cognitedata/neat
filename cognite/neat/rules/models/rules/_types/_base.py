@@ -30,7 +30,7 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
-
+# mypy: ignore-errors
 VERSION_ID_REGEX = rf"\(version=(?P<version>{VERSION_REGEX})\)"
 
 
