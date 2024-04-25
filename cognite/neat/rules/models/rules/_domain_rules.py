@@ -48,7 +48,6 @@ class DomainRules(RuleModel):
     properties: SheetList[DomainProperty] = Field(alias="Properties")
     classes: SheetList[DomainClass] | None = Field(None, alias="Classes")
     reference: "DomainRules | None" = Field(None, alias="Reference")
-    is_reference: bool = False
 
     @model_serializer(mode="plain", when_used="always")
     def domain_rules_serializer(self, info: SerializationInfo) -> dict[str, Any]:
