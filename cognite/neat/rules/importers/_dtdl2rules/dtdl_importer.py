@@ -119,20 +119,17 @@ class DTDLImporter(BaseImporter):
         return cls(items, zip_file.stem, read_issues=issues)
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None, is_reference: bool = False) -> Rules:
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules:
         ...
 
     @overload
     def to_rules(
-        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None, is_reference: bool = False
+        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
     ) -> tuple[Rules | None, IssueList]:
         ...
 
     def to_rules(
-        self,
-        errors: Literal["raise", "continue"] = "continue",
-        role: RoleTypes | None = None,
-        is_reference: bool = False,
+        self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
     ) -> tuple[Rules | None, IssueList] | Rules:
         converter = _DTDLConverter(self._read_issues)
 
@@ -161,4 +158,4 @@ class DTDLImporter(BaseImporter):
             else:
                 raise converter.issues.as_errors()
 
-        return self._to_output(rules, converter.issues, errors, role, is_reference)
+        return self._to_output(rules, converter.issues, errors, role)

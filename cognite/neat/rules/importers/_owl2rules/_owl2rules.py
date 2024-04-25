@@ -43,20 +43,17 @@ class OWLImporter(BaseImporter):
         self.make_compliant = make_compliant
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None, is_reference: bool = False) -> Rules:
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules:
         ...
 
     @overload
     def to_rules(
-        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None, is_reference: bool = False
+        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
     ) -> tuple[Rules | None, IssueList]:
         ...
 
     def to_rules(
-        self,
-        errors: Literal["raise", "continue"] = "continue",
-        role: RoleTypes | None = None,
-        is_reference: bool = False,
+        self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
     ) -> tuple[Rules | None, IssueList] | Rules:
         graph = Graph()
         try:
@@ -82,7 +79,7 @@ class OWLImporter(BaseImporter):
             components = make_components_compliant(components)
 
         rules = InformationRules.model_validate(components)
-        return self._to_output(rules, IssueList(), errors, role, is_reference)
+        return self._to_output(rules, IssueList(), errors, role)
 
 
 def make_components_compliant(components: dict) -> dict:

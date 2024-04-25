@@ -72,7 +72,7 @@ class ExcelToRules(Step):
             role_enum = RoleTypes[role]
 
         excel_importer = importers.ExcelImporter(rules_file_path)
-        rules, issues = excel_importer.to_rules(role=role_enum, errors="continue")
+        rules, issues = excel_importer.to_rules(errors="continue", role=role_enum)
 
         if rules is None:
             output_dir = self.data_store_path / Path("staging")
@@ -151,7 +151,7 @@ class OntologyToRules(Step):
             role_enum = RoleTypes[role]
 
         ontology_importer = importers.OWLImporter(filepath=rules_file_path, make_compliant=make_compliant)
-        rules, issues = ontology_importer.to_rules(role=role_enum, errors="continue")
+        rules, issues = ontology_importer.to_rules(errors="continue", role=role_enum)
 
         if rules is None:
             output_dir = self.data_store_path / Path("staging")
@@ -196,13 +196,6 @@ class DMSToRules(Step):
             label="For what role Rules are intended?",
             options=["infer", *RoleTypes.__members__.keys()],
         ),
-        Configurable(
-            name="Reference",
-            value="false",
-            label="Whether the imported rules are a reference model or not. This is "
-            "used when you want to extend an existing model and this is the model that is being extended from.",
-            options=["true", "false"],
-        ),
     ]
 
     def run(self, cdf_client: CogniteClient) -> (FlowMessage, MultiRuleData):  # type: ignore[syntax, override]
@@ -222,8 +215,6 @@ class DMSToRules(Step):
             )
             return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
 
-        is_reference = self.configs.get("Reference", "false") == "true"
-
         dms_importer = importers.DMSImporter.from_data_model_id(cdf_client, datamodel_entity.as_id())
 
         # if role is None, it will be inferred from the rules file
@@ -232,7 +223,7 @@ class DMSToRules(Step):
         if role != "infer" and role is not None:
             role_enum = RoleTypes[role]
 
-        rules, issues = dms_importer.to_rules(role=role_enum, errors="continue", is_reference=is_reference)
+        rules, issues = dms_importer.to_rules(errors="continue", role=role_enum)
 
         if rules is None:
             output_dir = self.data_store_path / Path("staging")

@@ -59,8 +59,7 @@ class TestExcelImporter:
 
     def test_excel_importer_valid_information_architect(self):
         information_rules = ExcelImporter(DOC_RULES / "information-architect-david.xlsx").to_rules(
-            errors="raise",
-            role=RoleTypes.information_architect,
+            errors="raise", role=RoleTypes.information_architect
         )
 
         assert isinstance(information_rules, InformationRules)
@@ -74,8 +73,7 @@ class TestExcelImporter:
         )
 
         _, issues = ExcelImporter(DOC_RULES / "expert-wind-energy-jon.xlsx").to_rules(
-            errors="continue",
-            role=RoleTypes.information_architect,
+            errors="continue", role=RoleTypes.information_architect
         )
 
         assert issues == expected_issues

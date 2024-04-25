@@ -20,21 +20,18 @@ class BaseImporter(ABC):
     """
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None, is_reference: bool = False) -> Rules:
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules:
         ...
 
     @overload
     def to_rules(
-        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None, is_reference: bool = False
+        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
     ) -> tuple[Rules | None, IssueList]:
         ...
 
     @abstractmethod
     def to_rules(
-        self,
-        errors: Literal["raise", "continue"] = "continue",
-        role: RoleTypes | None = None,
-        is_reference: bool = False,
+        self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
     ) -> tuple[Rules | None, IssueList] | Rules:
         """
         Creates `Rules` object from the data for target role.
@@ -48,7 +45,6 @@ class BaseImporter(ABC):
         issues: IssueList,
         errors: Literal["raise", "continue"] = "continue",
         role: RoleTypes | None = None,
-        is_reference: bool = False,
     ) -> tuple[Rules | None, IssueList] | Rules:
         """Converts the rules to the output format."""
 
@@ -60,9 +56,6 @@ class BaseImporter(ABC):
             output = rules.as_dms_architect_rules()
         else:
             raise NotImplementedError(f"Role {role} is not supported for {type(rules).__name__} rules")
-
-        if is_reference:
-            output.is_reference = True
 
         if errors == "raise":
             return output
