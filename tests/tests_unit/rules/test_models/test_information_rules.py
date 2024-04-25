@@ -217,7 +217,7 @@ class TestInformationRules:
         assert isinstance(dms_rules, DMSRules)
 
     def test_olav_as_dms(self, olav_rules: InformationRules) -> None:
-        olav_rules_copy = olav_rules.copy(deep=True)
+        olav_rules_copy = olav_rules.model_copy(deep=True)
         # Todo: Remove this line when Olav's Information .xlsx file is available
         new_classes = SheetList[InformationClass](data=[])
         for cls_ in olav_rules_copy.classes:

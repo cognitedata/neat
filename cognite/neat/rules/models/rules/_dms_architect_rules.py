@@ -583,7 +583,7 @@ class DMSRules(BaseRules):
                     "The schema is set to 'extended', but no reference rules are provided to validate against"
                 )
             # This is an extension of the reference rules, we need to merge the two
-            rules = self.copy(deep=True)
+            rules = self.model_copy(deep=True)
             rules.properties.extend(self.reference.properties.data)
             existing_views = {view.view.as_id(False) for view in rules.views}
             rules.views.extend([view for view in self.reference.views if view.view.as_id(False) not in existing_views])
@@ -682,7 +682,7 @@ class DMSRules(BaseRules):
         return _DMSRulesConverter(self).as_domain_rules()
 
     def reference_self(self) -> Self:
-        new_rules = self.copy(deep=True)
+        new_rules = self.model_copy(deep=True)
         for prop in new_rules.properties:
             prop.reference = ReferenceEntity(
                 prefix=prop.view.prefix, suffix=prop.view.suffix, version=prop.view.version, property_=prop.property_

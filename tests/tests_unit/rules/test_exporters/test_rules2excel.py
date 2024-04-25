@@ -37,7 +37,7 @@ class TestExcelExporter:
     def test_export_dms_rules_alice_reference(self, alice_rules: DMSRules) -> None:
         exporter = ExcelExporter(styling="maximal")
         # Make a copy of the rules to avoid changing the original
-        alice_copy = alice_rules.copy()
+        alice_copy = alice_rules.model_copy()
         alice_copy.is_reference = True
         workbook = exporter.export(alice_copy)
 
@@ -70,7 +70,7 @@ class TestExcelExporter:
         assert olav_rules.reference is not None, "Olav rules are expected to have a reference set"
         expected_sheet_names = {"Metadata", "Classes", "Properties", "RefMetadata", "RefClasses", "RefProperties"}
         # Make a copy of the rules to avoid changing the original
-        olav_copy = olav_rules.copy(deep=True)
+        olav_copy = olav_rules.model_copy(deep=True)
 
         workbook = exporter.export(olav_copy)
 

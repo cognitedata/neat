@@ -1417,7 +1417,7 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
         id="Addition extension, changing view",
     )
 
-    changing_container2 = changing_container.copy(deep=True)
+    changing_container2 = changing_container.model_copy(deep=True)
     changing_container2.metadata.extension = ExtensionCategory.reshape
 
     yield pytest.param(
@@ -1468,7 +1468,7 @@ class TestDMSRules:
 
     def test_alice_to_and_from_DMS(self, alice_rules: DMSRules) -> None:
         schema = alice_rules.as_schema()
-        rules = alice_rules.copy()
+        rules = alice_rules.model_copy()
         recreated_rules = DMSImporter(schema).to_rules(errors="raise")
 
         # Sorting to avoid order differences
@@ -1581,7 +1581,7 @@ class TestDMSRules:
         assert actual_dump == expected_dump
 
     def test_olav_as_information(self, olav_dms_rules: DMSRules) -> None:
-        info_rules_copy = olav_dms_rules.copy(deep=True)
+        info_rules_copy = olav_dms_rules.model_copy(deep=True)
         # In Olav's Rules, the references are set for traceability. We remove it
         # to test that the references are correctly set in the conversion.
         for prop in info_rules_copy.properties:

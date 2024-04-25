@@ -118,12 +118,12 @@ class DMSExporter(CDFExporter[DMSSchema]):
             return dms_rules.as_schema(self.export_pipeline, self.instance_space)
 
         # This is an extension of an existing model.
-        reference_rules = cast(DMSRules, dms_rules.reference).copy(deep=True)
+        reference_rules = cast(DMSRules, dms_rules.reference).model_copy(deep=True)
         reference_schema = reference_rules.as_schema(self.export_pipeline)
 
         # Todo Move this to an appropriate location
         # Merging Reference with User Rules
-        combined_rules = dms_rules.copy(deep=True)
+        combined_rules = dms_rules.model_copy(deep=True)
         existing_containers = {container.class_ for container in combined_rules.containers or []}
         if combined_rules.containers is None:
             combined_rules.containers = SheetList[DMSContainer](data=[])
