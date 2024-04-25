@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## TBD
+### Fixed
+- When importing an `Excel` rules set with a reference model, the `ExcelImporter` would produce the warning
+  `The copy method is deprecated; use the model_copy instead`. This is now fixed.
+
 ## [0.75.5] - 24-05-24
 ### Fixed
 - Potential of having duplicated spaces are now fixed
