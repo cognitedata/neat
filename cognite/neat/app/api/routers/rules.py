@@ -224,17 +224,29 @@ def upsert_rules(request: TransformationRulesUpdateRequest):
 def create_new_rule(request: NewRuleV2Request):
     role = request.role
     rules_file = Path(request.rule_file)
+    rules_file_str = request.rule_file
+    if not rules_file_str:
+        rules_file_str = f"{request.name.replace(' ', '_')}.xlsx"
+    rules_file = Path(rules_file_str)
     if str(rules_file.parent) == ".":
         path = Path(NEAT_APP.config.rules_store_path) / rules_file
     else:
         path = Path(NEAT_APP.config.data_store_path) / rules_file
+    description = request.name
+    if description == "":
+        description = request.name
+
+    base_model_file_mapping = {
+        "cdf_core": "cdf-core-spec.xlsx",
+    }
+
     if role == RoleTypes.information_architect:
         metadata = InformationMetadata(
             schema=SchemaCompleteness.complete,
             version="1.0",
             title=request.name,
             prefix=request.name.lower().replace(" ", "_"),
-            description=request.description,
+            description=description,
             created=time.time(),
             updated=time.time(),
             creator="Cognite",
@@ -246,7 +258,7 @@ def create_new_rule(request: NewRuleV2Request):
     return {
         "rules": rules.model_dump(),
         "error_text": "",
-        "file_name": path.name,
+        "file_name": rules_file_str,
         "hash": get_file_hash(path),
         "src": "local",
         "rules_schema_version": "v2",

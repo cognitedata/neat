@@ -75,10 +75,12 @@ export function DMSArchitectRulesViewer(props: any) {
             )}
             {selectedTab == 2 && (
                 <DMSArchitectViews row={rules.views} />
+
             )}
             {selectedTab == 3 && (
                 <DMSArchitectContainers row={rules.containers} />
             )}
+            <Button variant="outlined" size="small" color="success" style={{ margin: 5 }} onClick={() => setEditorOpen(true)}>Publish model to CDF</Button>
         </React.Fragment>
     );
 }
@@ -223,6 +225,7 @@ export function DMSArchitectPropsRow(props: { row: any, properties: any, views: 
                                         <TableCell><b>View property</b></TableCell>
                                         <TableCell><b>Index</b></TableCell>
                                         <TableCell><b>Constraint</b></TableCell>
+                                        <TableCell><b>Actions</b></TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -256,7 +259,7 @@ export function DMSArchitectPropsRow(props: { row: any, properties: any, views: 
                                             <TableCell>{pr.view_property}</TableCell>
                                             <TableCell>{pr.index}</TableCell>
                                             <TableCell>{pr.constraint}</TableCell>
-                                            <TableCell></TableCell>
+                                            <TableCell><Button onClick={() => { props.onEditClick(row, "class_edit"); }}>Edit</Button></TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>
@@ -338,6 +341,7 @@ export function DMSArchitectViews(props: { row: any }) {
                             <TableCell><b>Reference</b></TableCell>
                             <TableCell><b>Filter</b></TableCell>
                             <TableCell><b>In model</b></TableCell>
+                            <TableCell><b>Actions</b></TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -351,7 +355,7 @@ export function DMSArchitectViews(props: { row: any }) {
                                 <TableCell>{pr.reference}</TableCell>
                                 <TableCell>{pr.filter_}</TableCell>
                                 <TableCell>{pr.in_model}</TableCell>
-                                <TableCell></TableCell>
+                                <TableCell><Button onClick={() => { }}>Edit</Button></TableCell>
                             </TableRow>
                         ))}
                     </TableBody>

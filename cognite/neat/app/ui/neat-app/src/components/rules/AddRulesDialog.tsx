@@ -10,7 +10,7 @@ import React from "react"
 import { useEffect, useState } from "react"
 import { WorkflowDefinition } from "types/WorkflowTypes"
 import AddCircleOutlineOutlinedIcon from '@mui/icons-material/AddCircleOutlineOutlined';
-import { InputLabel, MenuItem, Select } from "@mui/material"
+import { InputLabel, MenuItem, Select, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material"
 import { getNeatApiRootUrl } from "components/Utils"
 
 
@@ -18,11 +18,11 @@ export default function AddNewRulesaDialog(props: any) {
     const neatApiRootUrl = getNeatApiRootUrl();
     const [dialogOpen, setDialogOpen] = useState(false);
     const [rules, setRules] = useState<any>({
-        "role": "information architect",
+        "role": "",
         "base_data_model": "",
         "name": "",
         "description": "",
-        "rule_file": "data-model-1.xlsx"
+        "rule_file": ""
     });
     const handleDialogCreate = () => {
         // send new rules to the server
@@ -41,6 +41,10 @@ export default function AddNewRulesaDialog(props: any) {
     };
 
     const handleStepConfigChange = (name: string, value: any) => {
+        console.log(name, value);
+        if (value == null) {
+            return;
+        }
         setRules({ ...rules, [name]: value });
     }
     useEffect(() => {
@@ -59,24 +63,51 @@ export default function AddNewRulesaDialog(props: any) {
             <Dialog open={dialogOpen} onClose={handleDialogCancel}>
                 <DialogTitle>Create New Data Model</DialogTitle>
                 <DialogContent>
-                    <FormControl sx={{ width: 500, marginTop: 3 }} >
-                        <InputLabel id="role-label">Set your role</InputLabel>
+                    <Typography variant="body1" color="textSecondary">Define your role:</Typography>
+                    <ToggleButtonGroup
+                        color="primary"
+                        value={rules?.role}
+                        exclusive
+                        onChange={(event: React.SyntheticEvent, newValue: string) => { handleStepConfigChange("role", newValue) }}
+                        aria-label="Platform"
+                    >
+                        <ToggleButton value="domain expert">
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <img width="70" src="./img/sme-icon.svg" alt="Domain expert" />
+                                <span>Domain Expert</span>
+                            </div>
+                        </ToggleButton>
+                        <ToggleButton value="information architect">
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <img width="70" src="./img/architect-icon.svg" alt="Information Architect" />
+                                <span>Information Architect</span>
+                            </div>
+                        </ToggleButton>
+                        <ToggleButton value="DMS Architect">
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <img width="70" src="./img/developer-icon.svg" alt="DMS Expert" />
+                                <span>CDF DM Expert</span>
+                            </div>
+                        </ToggleButton>
+                    </ToggleButtonGroup>
+                    <FormControl sx={{ width: 500, marginTop: 1 }} >
+                        <InputLabel id="role-label">Base model</InputLabel>
                         <Select sx={{ marginTop: 1 }}
                             id="step-config-stype"
                             labelId="role-label"
-                            value={rules?.role}
+                            value={rules?.base_data_model}
                             label="Your role"
                             size='small'
                             variant="outlined"
-                            onChange={(event) => { handleStepConfigChange("role", event.target.value) }}
+                            onChange={(event) => { handleStepConfigChange("base_data_model", event.target.value) }}
                         >
-                            <MenuItem value="domain expert">SME or Domain expert</MenuItem>
-                            <MenuItem value="information architect">Information architect</MenuItem>
-                            <MenuItem value="DMS Architect">CDF MD architect or developer</MenuItem>
+                            <MenuItem value="scratch">Start from scratch</MenuItem>
+                            <MenuItem value="cdf_core">CDF Core model</MenuItem>
+                            <MenuItem value="power_grid">Electrical grid model</MenuItem>
                         </Select>
                         <TextField sx={{ marginTop: 1 }} fullWidth label="Data model name" size='small' variant="outlined" value={rules?.name} onChange={(event) => { handleStepConfigChange("name", event.target.value) }} />
                         <TextField sx={{ marginTop: 1 }} fullWidth label="Description" size='small' variant="outlined" value={rules?.description} onChange={(event) => { handleStepConfigChange("description", event.target.value) }} />
-                        <TextField sx={{ marginTop: 1 }} fullWidth label="File name" size='small' variant="outlined" value={rules?.file_name} onChange={(event) => { handleStepConfigChange("rule_file", event.target.value) }} />
+                        <TextField sx={{ marginTop: 1 }} fullWidth label="File name" size='small' variant="outlined" value={rules?.rule_file} onChange={(event) => { handleStepConfigChange("rule_file", event.target.value) }} />
                     </FormControl>
                 </DialogContent>
                 <DialogActions>
