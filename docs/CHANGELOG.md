@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## TBD
+### Added
+- `DMSExporter` now supports skipping of export of `node_types`.
+
 ## [0.75.5] - 24-05-24
 ### Fixed
 - Potential of having duplicated spaces are now fixed
