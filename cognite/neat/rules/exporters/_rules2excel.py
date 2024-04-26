@@ -29,6 +29,11 @@ class ExcelExporter(BaseExporter[Workbook]):
         new_model_id: The new model ID to use for the exported spreadsheet. This is only applicable if the input
             rules have 'is_reference' set. If provided, the model ID will be used to automatically create the
             new metadata sheet in the Excel file.
+        is_reference: If True, the rules are considered to be a reference model. The exported Excel file will
+            then contain empty sheets for the main rules and this data model will be dumped to the reference sheets.
+            This is useful when you are building a solution model based on an Enterprise model, then the
+            Enterprise model will serve as the reference model. It is also useful when you are extending an existing
+            model, then the existing model will serve as the reference model. Defaults to False.
 
     The following styles are available:
 
@@ -54,6 +59,7 @@ class ExcelExporter(BaseExporter[Workbook]):
         styling: Style = "default",
         output_role: RoleTypes | None = None,
         new_model_id: tuple[str, str, str] | None = None,
+        is_reference: bool = False,
     ):
         if styling not in self.style_options:
             raise ValueError(f"Invalid styling: {styling}. Valid options are {self.style_options}")
@@ -61,6 +67,7 @@ class ExcelExporter(BaseExporter[Workbook]):
         self._styling_level = self.style_options.index(styling)
         self.output_role = output_role
         self.new_model_id = new_model_id
+        self.is_reference = is_reference
 
     def export_to_file(self, rules: Rules, filepath: Path) -> None:
         """Exports transformation rules to excel file."""
@@ -79,7 +86,7 @@ class ExcelExporter(BaseExporter[Workbook]):
 
         dumped_rules: dict[str, Any]
         dumped_reference_rules: dict[str, Any] | None = None
-        if rules.is_reference:
+        if self.is_reference:
             # Writes empty reference sheets
             dumped_rules = {
                 "Metadata": self._create_metadata_sheet_user_rules(rules),
