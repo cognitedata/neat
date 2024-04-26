@@ -67,7 +67,7 @@ class TestExcelExporter:
         assert olav_rules.reference is not None, "Olav rules are expected to have a reference set"
         expected_sheet_names = {"Metadata", "Classes", "Properties", "RefMetadata", "RefClasses", "RefProperties"}
         # Make a copy of the rules to avoid changing the original
-        olav_copy = olav_rules.copy(deep=True)
+        olav_copy = olav_rules.model_copy(deep=True)
 
         workbook = exporter.export(olav_copy)
 

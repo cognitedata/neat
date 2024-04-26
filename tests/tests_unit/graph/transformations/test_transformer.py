@@ -24,7 +24,7 @@ def test_domain2app_knowledge_graph(transformation_rules: Rules, source_knowledg
 
 def test_domain2app_knowledge_graph_raw_lookup(transformation_rules: Rules, source_knowledge_graph: Graph):
     # Arrange
-    rules = transformation_rules.copy(deep=True)
+    rules = transformation_rules.model_copy(deep=True)
     rules.properties["row 18"].rule += " | TerminalName(NordicName, TNTName)"
     rules.properties["row 18"].rule_type = TransformationRuleType.rawlookup
     domain_graph = source_knowledge_graph
