@@ -27,7 +27,7 @@ from cognite.neat.utils.cdf_loaders import (
 from ._base import CDFExporter
 from ._models import UploadResult
 
-Component: TypeAlias = Literal["all", "spaces", "data_models", "views", "containers"]
+Component: TypeAlias = Literal["all", "spaces", "data_models", "views", "containers", "node_types"]
 
 
 class DMSExporter(CDFExporter[DMSSchema]):
@@ -99,7 +99,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
         if "all" in self.export_components:
             exclude = set()
         else:
-            exclude = {"spaces", "data_models", "views", "containers"} - self.export_components
+            exclude = {"spaces", "data_models", "views", "containers", "node_types"} - self.export_components
         return exclude
 
     def export(self, rules: Rules) -> DMSSchema:

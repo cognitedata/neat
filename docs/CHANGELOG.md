@@ -20,6 +20,10 @@ Changes are grouped as follows:
 - All `NEAT` importers does not have `is_reference` parameter in `.to_rules()` method. This has been moved
   to the `ExcelExporter` `__init__` method. This is because this is the only place where this parameter was used.
 
+### Added
+- `DMSExporter` now supports skipping of export of `node_types`.
+
+
 ## [0.75.5] - 24-05-24
 ### Fixed
 - Potential of having duplicated spaces are now fixed
