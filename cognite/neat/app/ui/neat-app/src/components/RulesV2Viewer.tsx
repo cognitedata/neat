@@ -94,7 +94,7 @@ export default function RulesV2Viewer(props: any) {
         <DomainExpertRulesViewer rules={rules} />
       )}
       {role == "information architect" && (
-        <InformationArchitectRulesViewer rules={rules} />
+        <InformationArchitectRulesViewer rules={rules} fileName={props.fileName} />
       )}
       {role == "DMS Architect" && (
         <DMSArchitectRulesViewer rules={rules} />

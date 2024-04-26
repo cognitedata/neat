@@ -31,23 +31,32 @@ const GroupItems = styled('ul')({
 });
 
 export function InformationArchitectRulesViewer(props: any) {
-    const { rules } = props;
+    const [rules, setRules] = React.useState<any>({})
     const [selectedTab, setSelectedTab] = React.useState(0);
     const [editorOpen, setEditorOpen] = React.useState(false);
     const [editorData, setEditorData] = React.useState({});
 
     const handlePropertyEdit = (data: any) => {
         // merge data with existing properties
-        const newProperties = [...rules.properties];
-        const index = newProperties.findIndex((f: any) => (f.property_ == data.property_ && f.class_ == data.class_));
-        if (index > -1) {
-            newProperties[index] = data;
-        } else {
-            newProperties.push(data);
-        }
-        rules.properties = newProperties;
+        // const newProperties = [...rules.properties];
+        // const index = newProperties.findIndex((f: any) => (f.property_ == data.property_ && f.class_ == data.class_));
+        // if (index > -1) {
+        //     newProperties[index] = data;
+        // } else {
+        //     newProperties.push(data);
+        // }
+        // rules.properties = newProperties;
+        const newRules = { ...rules };
+
+        setRules(newRules);
         setEditorOpen(false);
     }
+
+    React.useEffect(() => {
+        setRules(props.rules);
+    }, [props.rules]);
+
+
 
     return (
         <React.Fragment>
@@ -69,7 +78,7 @@ export function InformationArchitectRulesViewer(props: any) {
             )}
             {selectedTab === 1 && (
                 <TableContainer component={Paper}>
-                    <InformationArchitectDataModelPropertyEditor data={editorData} classes={rules.classes} open={editorOpen} onSave={handlePropertyEdit} onClose={() => { setEditorOpen(false) }} />
+                    <InformationArchitectDataModelPropertyEditor data={editorData} classes={rules.classes} fileName={props.fileName} open={editorOpen} onSaved={handlePropertyEdit} onClose={() => { setEditorOpen(false) }} />
                     <Table aria-label="collapsible table">
                         <TableHead>
                             <TableRow>
@@ -85,7 +94,11 @@ export function InformationArchitectRulesViewer(props: any) {
                         </TableHead>
                         <TableBody>
                             {rules.classes?.map((row: any) => (
-                                <InformationArchitectPropsRow row={row} properties={rules.properties} onEditClick={(data, action) => { setEditorData(data); setEditorOpen(true); }} />
+                                <React.Fragment>
+                                    <InformationArchitectPropsRow row={row} properties={rules.properties} onEditClick={(data, action) => { setEditorData(data); setEditorOpen(true); }} />
+
+                                </React.Fragment>
+
                             ))}
                         </TableBody>
                     </Table>
@@ -234,6 +247,7 @@ const valueTypesBaseline = [
 ];
 
 export default function InformationArchitectDataModelPropertyEditor(props: any) {
+    const neatApiRootUrl = getNeatApiRootUrl();
     const [dialogOpen, setDialogOpen] = React.useState(false);
     const [data, setData] = React.useState<any>({});
     const [valueTypes, setValueTypes] = React.useState<any>(valueTypesBaseline);
@@ -245,7 +259,17 @@ export default function InformationArchitectDataModelPropertyEditor(props: any) 
     }, [props.data, props.open, props.classes]);
 
     const handleSave = () => {
-        props.onSave(data);
+        // send new rules to the server
+        const request = { role: "information architect", rule_file: props.fileName, rule_component: data };
+        fetch(neatApiRootUrl + '/api/rules/property/upsert', { method: 'POST', body: JSON.stringify(request), headers: { 'Content-Type': 'application/json' } })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                props.onSaved(data);
+            }).catch((error) => {
+                console.error('Error:', error);
+            })
+        setDialogOpen(false);
     };
 
     const loadUserDefinedTypes = (classes: any) => {
@@ -276,9 +300,9 @@ export default function InformationArchitectDataModelPropertyEditor(props: any) 
                 <DialogContent sx={{ height: '90vh' }}>
                     <FormControl sx={{ marginTop: 2 }} fullWidth >
                         <TextField sx={{ marginTop: 1 }} fullWidth label="Class Id" size='small' variant="outlined" value={data?.class_} onChange={(event) => { handleConfigChange("class_", event.target.value) }} />
+                        <TextField sx={{ marginTop: 1 }} fullWidth label="Property Id" size='small' variant="outlined" value={data?.property_} onChange={(event) => { handleConfigChange("property_", event.target.value) }} />
                         <TextField sx={{ marginTop: 1 }} fullWidth label="Name" size='small' variant="outlined" value={data?.name} onChange={(event) => { handleConfigChange("name", event.target.value) }} />
                         <TextField sx={{ marginTop: 1 }} fullWidth label="Description" size='small' variant="outlined" value={data?.description} onChange={(event) => { handleConfigChange("description", event.target.value) }} />
-                        <TextField sx={{ marginTop: 1 }} fullWidth label="Property" size='small' variant="outlined" value={data?.property_} onChange={(event) => { handleConfigChange("property_", event.target.value) }} />
                         <FormControl sx={{ marginTop: 2 }} fullWidth >
                             <Autocomplete
                                 disablePortal
@@ -300,7 +324,7 @@ export default function InformationArchitectDataModelPropertyEditor(props: any) 
                                     </li>
                                 )}
                                 onChange={(event: React.SyntheticEvent, value, reason, details) => { handleConfigChange("value_type", value.name) }}
-                                renderInput={(params) => <TextField {...params} label="Valu type (Value type that the property can hold. It takes either subset of XSD type (see note below) or a class defined)" />}
+                                renderInput={(params) => <TextField {...params} label="Value type (Value type that the property can hold. It takes either subset of XSD type (see note below) or a class defined)" />}
                             />
                         </FormControl>
                         <TextField sx={{ marginTop: 1 }} fullWidth label="Min count (Minimum number of values that the property can hold. If no value is provided, the default value is 0, which means that the property is optional.)" size='small' variant="outlined" value={data?.min_count} onChange={(event) => { handleConfigChange("min_count", event.target.value) }} />
@@ -359,6 +383,10 @@ export function InformationArchitectPropsRow(props: { row: any, properties: any,
     const getPropertyByClass = (className: string) => {
         const r = properties.filter((f: any) => f.class_ == className);
         return r;
+    }
+    const addNewProperty = () => {
+        const newProperty = { class_: row.class_, property_: "", name: "", description: "", value_type: "", min_count: 1, max_count: 1, default: null, reference: null, match_type: null, rule_type: null, rule: null, comment: null };
+        props.onEditClick(newProperty, "prop_edit");
     }
     const [fProps, setFProps] = React.useState(getPropertyByClass(row.class_));
     return (
@@ -424,6 +452,7 @@ export function InformationArchitectPropsRow(props: { row: any, properties: any,
                                     ))}
                                 </TableBody>
                             </Table>)}
+                            <Button variant="outlined" size="small" color="success" style={{ margin: 5 }} onClick={addNewProperty}>Add new property</Button>
                         </Box>
                     </Collapse>
                 </TableCell>

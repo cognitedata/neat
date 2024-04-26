@@ -15,8 +15,7 @@ import { List, ListItem, ListItemButton, ListItemText } from "@mui/material"
 import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 
 
-export default function RulesBrowserDialog(props: any)
-{
+export default function RulesBrowserDialog(props: any) {
     const neatApiRootUrl = getNeatApiRootUrl();
     const [dialogOpen, setDialogOpen] = useState(false);
     const [rules, setRules] = useState<string[]>([]);
@@ -30,15 +29,15 @@ export default function RulesBrowserDialog(props: any)
     const loadListOfRules = () => {
         const url = neatApiRootUrl + "/api/rules/list";
         fetch(url, {
-          method: "get", headers: {
-            'Content-Type': 'application/json;charset=utf-8'
-          }
+            method: "get", headers: {
+                'Content-Type': 'application/json;charset=utf-8'
+            }
         }).then((response) => response.json()).then((data) => {
 
             setRules(data.result);
 
         }).catch((error) => {
-          console.error('Error:', error);
+            console.error('Error:', error);
         })
     }
 
@@ -52,29 +51,34 @@ export default function RulesBrowserDialog(props: any)
         setDialogOpen(false);
     }
 
-return (
-<React.Fragment >
-<IconButton color="info" aria-label="open browser" onClick={(event)=>{setDialogOpen(true)} }>
-    <TravelExploreIcon  />
-</IconButton>
-<Dialog open={dialogOpen}  onClose={handleDialogCancel} >
-<DialogTitle>Data modele (rules) browser </DialogTitle>
-<DialogContent sx={{height:"60vh"}} >
-    {/* render list of rules */}
-    <List>
-        {rules.map((rule, index) => {
-            return <ListItem key={index}>
-                 <ListItemButton onClick={(event) => {onSelectRule(rule)}}>
-                    <ListItemText primary={rule}  />
-                </ListItemButton>
-               </ListItem>
-        })}
-    </List>
-</DialogContent>
-<DialogActions>
-  <Button variant="outlined" size="small" onClick={handleDialogCancel}>Close</Button>
-</DialogActions>
-</Dialog>
-</React.Fragment>
-)
+    return (
+        <React.Fragment >
+            <Button
+                size="small"
+                onClick={(event) => { setDialogOpen(true) }}
+                sx={{ alignItems: "center", justifyContent: "center" }}
+            >
+                <TravelExploreIcon sx={{ marginRight: "0.5rem" }} />
+                Catalog
+            </Button>
+            <Dialog open={dialogOpen} onClose={handleDialogCancel} >
+                <DialogTitle>Data models browser </DialogTitle>
+                <DialogContent sx={{ height: "60vh" }} >
+                    {/* render list of rules */}
+                    <List>
+                        {rules.map((rule, index) => {
+                            return <ListItem key={index}>
+                                <ListItemButton onClick={(event) => { onSelectRule(rule) }}>
+                                    <ListItemText primary={rule} />
+                                </ListItemButton>
+                            </ListItem>
+                        })}
+                    </List>
+                </DialogContent>
+                <DialogActions>
+                    <Button variant="outlined" size="small" onClick={handleDialogCancel}>Close</Button>
+                </DialogActions>
+            </Dialog>
+        </React.Fragment>
+    )
 }

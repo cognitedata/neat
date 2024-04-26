@@ -1,23 +1,37 @@
 import logging
 from pathlib import Path
+import time
 from typing import Any, cast
 
 from fastapi import APIRouter, Response
 from rdflib import Namespace
 
 from cognite.neat.app.api.configuration import NEAT_APP
-from cognite.neat.app.api.data_classes.rest import TransformationRulesUpdateRequest
+from cognite.neat.app.api.data_classes.rest import (
+    NewRuleV2Request,
+    RuleV2MetadataUpsertRequest,
+    RuleV2PropertyUpsertRequest,
+    TransformationRulesUpdateRequest,
+)
 from cognite.neat.legacy.rules import exporters as legacy_exporters
 from cognite.neat.legacy.rules import importers as legacy_importers
 from cognite.neat.legacy.rules.models._base import EntityTypes
 from cognite.neat.legacy.rules.models.rules import Class, Classes, Metadata, Properties, Property, Rules
-from cognite.neat.rules import importers
+from cognite.neat.rules import exporters, importers
 from cognite.neat.rules.models.rules import RoleTypes
 from cognite.neat.workflows.steps.data_contracts import RulesData
 from cognite.neat.workflows.steps.lib.rules_exporter import RulesToExcel
 from cognite.neat.workflows.steps.lib.rules_importer import ExcelToRules
 from cognite.neat.workflows.steps.lib.v1.rules_importer import ImportExcelToRules
 from cognite.neat.workflows.utils import get_file_hash
+from cognite.neat.rules.models.rules._information_rules import (
+    InformationMetadata,
+    InformationProperty,
+    InformationClass,
+    InformationRules,
+)
+
+from cognite.neat.rules.models.rules._base import SchemaCompleteness
 
 router = APIRouter()
 
@@ -134,6 +148,9 @@ def get_rules(
             rules_schema_version = "v2"
             if rules_v2:
                 remaped_rules = rules_v2.model_dump()
+            else:
+                logging.error(f"Error while loading rules from {path}, issues: {issues}")
+                error_text = str(issues)
         except Exception as e:
             error_text = str(e)
             rules_schema_version = "unknown"
@@ -201,3 +218,76 @@ def upsert_rules(request: TransformationRulesUpdateRequest):
 
         legacy_exporters.ExcelExporter(rules=rules).export_to_file(path)
     return {"status": "ok"}
+
+
+@router.post("/api/rules/new")
+def create_new_rule(request: NewRuleV2Request):
+    role = request.role
+    rules_file = Path(request.rule_file)
+    if str(rules_file.parent) == ".":
+        path = Path(NEAT_APP.config.rules_store_path) / rules_file
+    else:
+        path = Path(NEAT_APP.config.data_store_path) / rules_file
+    if role == RoleTypes.information_architect:
+        metadata = InformationMetadata(
+            schema=SchemaCompleteness.complete,
+            version="1.0",
+            title=request.name,
+            prefix=request.name.lower().replace(" ", "_"),
+            description=request.description,
+            created=time.time(),
+            updated=time.time(),
+            creator="Cognite",
+            namespace="http://purl.org/cognite/neat#",
+            license="",
+        )
+    rules = InformationRules(metadata=metadata, classes=[], properties=[])
+    exporters.ExcelExporter().export_to_file(rules=rules, filepath=path)
+    return {
+        "rules": rules.model_dump(),
+        "error_text": "",
+        "file_name": path.name,
+        "hash": get_file_hash(path),
+        "src": "local",
+        "rules_schema_version": "v2",
+    }
+
+
+@router.post("/api/rules/metadata/upsert")
+def upsert_rule_component(request: RuleV2MetadataUpsertRequest):
+    role = RoleTypes(request.role)
+    rules_file = Path(request.rule_file)
+    if str(rules_file.parent) == ".":
+        path = Path(NEAT_APP.config.rules_store_path) / rules_file
+    else:
+        path = Path(NEAT_APP.config.data_store_path) / rules_file
+    rules, issues = importers.ExcelImporter(filepath=path).to_rules()
+    if rules.metadata.role != role:
+        return {"error_text": f"Role {role} is not allowed to update the rule file"}
+
+    if role == RoleTypes.information_architect:
+        request_metadata = cast(InformationMetadata, request.rule_component)
+        rules.metadata = request_metadata
+    exporters.ExcelExporter().export_to_file(rules=rules, filepath=path)
+    return {"rules": rules.model_dump(), "error_text": issues}
+
+
+@router.post("/api/rules/property/upsert")
+def upsert_rule_property(request: RuleV2PropertyUpsertRequest):
+    role = RoleTypes(request.role)
+    rules_file = Path(request.rule_file)
+    if str(rules_file.parent) == ".":
+        path = Path(NEAT_APP.config.rules_store_path) / rules_file
+    else:
+        path = Path(NEAT_APP.config.data_store_path) / rules_file
+    rules, issues = importers.ExcelImporter(filepath=path).to_rules()
+    if rules.metadata.role != role:
+        return {"error_text": f"Role {role} is not allowed to update the rule file"}
+
+    if role == RoleTypes.information_architect:
+        request_property = cast(InformationProperty, request.rule_component)
+        # update property or add new one
+        rules.properties.append(request_property)
+
+    exporters.ExcelExporter().export_to_file(rules=rules, filepath=path)
+    return {"rules": rules.model_dump(), "error_text": issues}

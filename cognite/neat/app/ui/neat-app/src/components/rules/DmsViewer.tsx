@@ -13,6 +13,10 @@ import { getNeatApiRootUrl, getSelectedWorkflowName } from 'components/Utils';
 import { Alert, AlertTitle, Box, Button, Collapse, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Tab, Tabs, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import { Image } from '@mui/icons-material';
 import JsonViewer from 'components/JsonViewer';
+import CheckIcon from '@mui/icons-material/Check';
+import ClearIcon from '@mui/icons-material/Clear';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 
 export function DMSArchitectRulesViewer(props: any) {
@@ -208,9 +212,9 @@ export function DMSArchitectPropsRow(props: { row: any, properties: any, views: 
                                         <TableCell><b>Property name</b></TableCell>
                                         <TableCell><b>Description</b></TableCell>
                                         <TableCell><b>Value type</b></TableCell>
+                                        <TableCell><b>Relation</b></TableCell>
                                         <TableCell><b>Nullable</b></TableCell>
                                         <TableCell><b>Is list</b></TableCell>
-                                        <TableCell><b>Relation</b></TableCell>
                                         <TableCell><b>Default</b></TableCell>
                                         <TableCell><b>Reference</b></TableCell>
                                         <TableCell><b>Container</b></TableCell>
@@ -228,9 +232,22 @@ export function DMSArchitectPropsRow(props: { row: any, properties: any, views: 
                                             <TableCell>{pr.name}</TableCell>
                                             <TableCell>{pr.description}</TableCell>
                                             <TableCell>{pr.value_type}</TableCell>
-                                            <TableCell>{pr.nullable}</TableCell>
-                                            <TableCell>{pr.is_list}</TableCell>
-                                            <TableCell>{pr.relation}</TableCell>
+                                            <TableCell>
+                                                <Box sx={{ display: 'flex', justifyContent: 'left', alignItems: 'center' }}>
+                                                    {pr.relation == "direct" && (
+                                                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                                            <ArrowBackIcon></ArrowBackIcon> {pr.class_}
+                                                        </Box>
+                                                    )}{pr.relation == "reversedirect" && (
+                                                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                                            <ArrowForwardIcon></ArrowForwardIcon> {pr.class_}
+                                                        </Box>
+                                                    )}
+                                                    {pr.relation != null && (<Box sx={{ display: 'flex', justifyContent: 'left', alignItems: 'center' }}>{" (" + pr.relation + ")"}</Box>)}
+                                                </Box>
+                                            </TableCell>
+                                            <TableCell>{pr.nullable && (<CheckIcon></CheckIcon>)} {!pr.nullable && (<ClearIcon></ClearIcon>)} </TableCell>
+                                            <TableCell>{pr.is_list && (<CheckIcon></CheckIcon>)} {!pr.is_list && (<ClearIcon></ClearIcon>)}</TableCell>
                                             <TableCell>{pr.default}</TableCell>
                                             <TableCell>{pr.reference}</TableCell>
                                             <TableCell>{pr.container}</TableCell>

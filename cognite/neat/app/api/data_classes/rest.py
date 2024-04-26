@@ -1,6 +1,14 @@
 import logging
 
 from pydantic import BaseModel, field_validator, model_validator
+from cognite.neat.rules.models.rules._domain_rules import DomainMetadata, DomainProperty, DomainClass
+from cognite.neat.rules.models.rules._information_rules import (
+    InformationMetadata,
+    InformationProperty,
+    InformationClass,
+)
+from cognite.neat.rules.models.rules._dms_architect_rules import DMSMetadata, DMSProperty, DMSView, DMSContainer
+from cognite.neat.rules.models.rules import RoleTypes
 
 
 class QueryRequest(BaseModel):
@@ -76,3 +84,36 @@ class TransformationRulesUpdateRequest(BaseModel):
     file_name: str = ""
     output_format: str = "excel"
     rules_object: dict = {}
+
+
+class NewRuleV2Request(BaseModel):
+    role: RoleTypes
+    base_data_model: str
+    name: str
+    description: str
+    rule_file: str
+
+
+class RuleV2MetadataUpsertRequest(BaseModel):
+    role: RoleTypes
+    rule_file: str
+    rule_component: DomainMetadata | InformationMetadata | DMSMetadata
+
+
+class RuleV2PropertyUpsertRequest(BaseModel):
+    role: RoleTypes
+    rule_file: str
+    rule_component: DomainProperty | InformationProperty | DMSProperty
+
+
+class RulesV2ClassUpsertRequest(BaseModel):
+    role: RoleTypes
+    rule_file: str
+    rule_component: DomainClass | InformationClass
+
+
+class RulesV2DMSComponentsUpsertRequest(BaseModel):
+    role: RoleTypes
+    rule_file: str
+    rule_component_name: str
+    rule_component: DMSView | DMSContainer
