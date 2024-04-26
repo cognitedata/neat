@@ -247,7 +247,6 @@ class InformationRules(RuleModel):
     classes: SheetList[InformationClass] = Field(alias="Classes")
     prefixes: dict[str, Namespace] = Field(default_factory=lambda: PREFIXES.copy())
     reference: "InformationRules | None" = Field(None, alias="Reference")
-    is_reference: bool = False
 
     @field_validator("prefixes", mode="before")
     def parse_str(cls, values: Any) -> Any:
@@ -451,7 +450,6 @@ class _InformationRulesConverter:
             views=SheetList[DMSView](data=views),
             containers=SheetList[DMSContainer](data=containers),
             reference=self.information.reference and self.information.reference.as_dms_architect_rules(),  # type: ignore[arg-type]
-            is_reference=self.information.is_reference,
         )
 
     @classmethod

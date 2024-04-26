@@ -15,9 +15,8 @@ from tests.tests_unit.rules.test_importers.constants import EXCEL_IMPORTER_DATA
 
 
 def valid_dms_rules_filepaths():
-    yield pytest.param(DOC_RULES / "cdf-dms-architect-alice.xlsx", DMSRules, False, id="Alice rules")
-    yield pytest.param(DOC_RULES / "information-analytics-olav.xlsx", InformationRules, False, id="Olav user rules")
-    yield pytest.param(DOC_RULES / "information-analytics-olav.xlsx", InformationRules, True, id="Olav reference rules")
+    yield pytest.param(DOC_RULES / "cdf-dms-architect-alice.xlsx", DMSRules, id="Alice rules")
+    yield pytest.param(DOC_RULES / "information-analytics-olav.xlsx", InformationRules, id="Olav user rules")
 
 
 def invalid_rules_filepaths():
@@ -90,10 +89,10 @@ def invalid_rules_filepaths():
 
 
 class TestExcelImporter:
-    @pytest.mark.parametrize("filepath, rule_type, is_reference", valid_dms_rules_filepaths())
-    def test_import_valid_rules(self, filepath: Path, rule_type: DMSRules | InformationRules, is_reference: bool):
+    @pytest.mark.parametrize("filepath, rule_type", valid_dms_rules_filepaths())
+    def test_import_valid_rules(self, filepath: Path, rule_type: DMSRules | InformationRules):
         importer = ExcelImporter(filepath)
-        rules = importer.to_rules(errors="raise", is_reference=is_reference)
+        rules = importer.to_rules(errors="raise")
         assert isinstance(rules, rule_type)
 
     @pytest.mark.parametrize("filepath, expected_issues", invalid_rules_filepaths())

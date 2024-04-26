@@ -16,6 +16,13 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 ## TBD
+### Changed
+- All `NEAT` importers does not have `is_reference` parameter in `.to_rules()` method. This has been moved
+  to the `ExcelExporter` `__init__` method. This is because this is the only place where this parameter was used.
+
+### Added
+- `DMSExporter` now supports skipping of export of `node_types`.
+
 ### Fixed
 - When importing an `Excel` rules set with a reference model, the `ExcelImporter` would produce the warning
   `The copy method is deprecated; use the model_copy instead`. This is now fixed.
