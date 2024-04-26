@@ -15,7 +15,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.75.6] - 26-05-24
 ### Changed
 - All `NEAT` importers does not have `is_reference` parameter in `.to_rules()` method. This has been moved
   to the `ExcelExporter` `__init__` method. This is because this is the only place where this parameter was used.
