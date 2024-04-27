@@ -3,10 +3,10 @@ import sys
 import threading
 from abc import ABC, abstractmethod
 from functools import total_ordering
-from typing import Any, ClassVar, Generic, TypeVar
+from typing import Annotated, Any, ClassVar, Generic, TypeVar
 
 from cognite.client.data_classes.data_modeling.ids import ContainerId, DataModelId, PropertyId, ViewId
-from pydantic import BaseModel, Field, model_serializer, model_validator
+from pydantic import BaseModel, BeforeValidator, Field, PlainSerializer, model_serializer, model_validator
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -193,7 +193,7 @@ class ClassEntity(Entity):
     version: str | None = None
 
 
-class ParentClassEntity(Entity):
+class ParentClassEntity(ClassEntity):
     type_: ClassVar[EntityTypes] = EntityTypes.parent_class
 
 
@@ -273,3 +273,24 @@ class DataModelEntity(DMSVersionedEntity[DataModelId]):
 
 class ReferenceEntity(PropertyEntity):
     type_: ClassVar[EntityTypes] = EntityTypes.reference_entity
+
+
+def _split_str(v: Any) -> list[str]:
+    if isinstance(v, str):
+        return v.replace(", ", ",").split(",")
+    return v
+
+
+def _join_str(v: list[ClassEntity]) -> str | None:
+    return ",".join([entry.id for entry in v]) if v else None
+
+
+ParentEntityList = Annotated[
+    list[ParentClassEntity],
+    BeforeValidator(_split_str),
+    PlainSerializer(
+        _join_str,
+        return_type=str,
+        when_used="unless-none",
+    ),
+]
