@@ -110,9 +110,7 @@ class Entity(BaseModel):
         return str(self)
 
     def as_tuple(self) -> tuple[str, ...]:
-        extra: tuple[str, ...] = tuple(
-            [v if isinstance(v, str) else str(v or "") for v in self.model_dump().items() if isinstance(v, str | None)]
-        )
+        extra: tuple[str, ...] = tuple([str(v or "") for v in self.model_dump().items() if isinstance(v, str | None)])
         if isinstance(self.prefix, _Undefined):
             return str(self.suffix), *extra
         else:
