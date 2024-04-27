@@ -160,10 +160,21 @@ class Entity(BaseModel):
 
     @property
     def id(self) -> str:
+        # We have overwritten the serialization to str, so we need to do it manually
+        model_dump = (
+            (field.alias or field_name, v)
+            for field_name, field in self.model_fields.items()
+            if (v := getattr(self, field_name)) is not None and field_name not in {"prefix", "suffix"}
+        )
+        args = ",".join([f"{k}={v}" for k, v in model_dump])
         if self.prefix is Undefined:
-            return str(self.suffix)
+            base_id = str(self.suffix)
         else:
-            return f"{self.prefix}:{self.suffix!s}"
+            base_id = f"{self.prefix}:{self.suffix!s}"
+        if args:
+            return f"{base_id}({args})"
+        else:
+            return base_id
 
     @property
     def versioned_id(self) -> str:
