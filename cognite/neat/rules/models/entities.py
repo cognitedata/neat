@@ -1,9 +1,11 @@
 import re
 import sys
+import threading
+from abc import ABC, abstractmethod
 from functools import total_ordering
-from typing import Any, ClassVar, cast
+from typing import Any, ClassVar, Generic, TypeVar
 
-from cognite.client.data_classes.data_modeling.ids import ContainerId, DataModelId, ViewId
+from cognite.client.data_classes.data_modeling.ids import ContainerId, DataModelId, PropertyId, ViewId
 from pydantic import BaseModel, Field, model_serializer, model_validator
 
 if sys.version_info >= (3, 11):
@@ -169,55 +171,78 @@ class ParentClassEntity(Entity):
     type_: ClassVar[EntityTypes] = EntityTypes.parent_class
 
 
-class DMSEntity(Entity):
+T_ID = TypeVar("T_ID", bound=ContainerId | ViewId | DataModelId | PropertyId)
+
+
+class DMSEntity(Entity, Generic[T_ID], ABC):
     type_: ClassVar[EntityTypes] = EntityTypes.undefined
+    default_space_by_thread: ClassVar[dict[threading.Thread, str]] = {}
     suffix: str
+
+    @classmethod
+    def set_default_space(cls, space: str) -> None:
+        cls.default_space_by_thread[threading.current_thread()] = space
 
     @property
     def space(self) -> str:
         """Returns entity space in CDF."""
-        if self.prefix is Undefined:
-            raise NotImplementedError()
-            # if default_space is None:
+        if isinstance(self.prefix, _Undefined):
+            return self.default_space_by_thread.get(threading.current_thread(), "MISSING")
         else:
-            return cast(str, self.prefix)
+            return self.prefix
 
     @property
     def external_id(self) -> str:
         """Returns entity external id in CDF."""
         return self.suffix
 
+    @abstractmethod
+    def as_id(self) -> T_ID:
+        raise NotImplementedError("Method as_id must be implemented in subclasses")
 
-class ContainerEntity(DMSEntity):
+
+class ContainerEntity(DMSEntity[ContainerId]):
     type_: ClassVar[EntityTypes] = EntityTypes.container
 
     def as_id(self) -> ContainerId:
         return ContainerId(space=self.space, external_id=self.external_id)
 
 
-class DMSVersionedEntity(DMSEntity):
+class DMSVersionedEntity(DMSEntity[T_ID], ABC):
     version: str | None = None
+    default_version_by_thread: ClassVar[dict[threading.Thread, str]] = {}
+
+    @property
+    def version_with_fallback(self) -> str:
+        if self.version is not None:
+            return self.version
+        return self.default_version_by_thread.get(threading.current_thread(), "MISSING")
 
 
-class ViewEntity(DMSVersionedEntity):
+class ViewEntity(DMSVersionedEntity[ViewId]):
     type_: ClassVar[EntityTypes] = EntityTypes.view
 
     def as_id(
         self,
     ) -> ViewId:
-        return ViewId(space=self.space, external_id=self.external_id, version=self.version)
+        return ViewId(space=self.space, external_id=self.external_id, version=self.version_with_fallback)
 
 
-class PropertyEntity(DMSVersionedEntity):
+class PropertyEntity(DMSVersionedEntity[PropertyId]):
     type_: ClassVar[EntityTypes] = EntityTypes.property_
     property_: str = Field(alias="property")
 
+    def as_id(self) -> PropertyId:
+        return PropertyId(
+            source=ViewId(self.space, self.external_id, self.version_with_fallback), property=self.property_
+        )
 
-class DataModelEntity(DMSVersionedEntity):
+
+class DataModelEntity(DMSVersionedEntity[DataModelId]):
     type_: ClassVar[EntityTypes] = EntityTypes.datamodel
 
     def as_id(self) -> DataModelId:
-        return DataModelId(space=self.space, external_id=self.external_id, version=self.version)
+        return DataModelId(space=self.space, external_id=self.external_id, version=self.version_with_fallback)
 
 
 class ReferenceEntity(PropertyEntity):

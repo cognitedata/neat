@@ -1,8 +1,19 @@
 from typing import Any
 
 import pytest
+from cognite.client.data_classes.data_modeling import ContainerId, DataModelId, ViewId
 
-from cognite.neat.rules.models.entities import ClassEntity, Entity, PropertyEntity, Undefined, Unknown, ViewEntity
+from cognite.neat.rules.models.entities import (
+    ClassEntity,
+    ContainerEntity,
+    DataModelEntity,
+    DMSEntity,
+    Entity,
+    PropertyEntity,
+    Undefined,
+    Unknown,
+    ViewEntity,
+)
 
 
 class TestEntities:
@@ -45,3 +56,20 @@ class TestEntities:
         loaded = cls_.load(raw)
 
         assert loaded == expected
+
+    @pytest.mark.parametrize(
+        "entity, default_space, expected_id",
+        [
+            (ContainerEntity.load("Person"), "sp_default_space", ContainerId("sp_default_space", "Person")),
+            (ViewEntity.load("Person(version=1.0)"), "sp_default_space", ViewId("sp_default_space", "Person", "1.0")),
+            (
+                DataModelEntity.load("my_space:my_model(version=1)"),
+                "sp_default_space",
+                DataModelId("my_space", "my_model", "1"),
+            ),
+        ],
+    )
+    def test_default_space(self, entity: DMSEntity, default_space: str, expected_id: Any):
+        DMSEntity.set_default_space(default_space)
+
+        assert entity.as_id() == expected_id
