@@ -82,6 +82,8 @@ class Entity(BaseModel):
     def load(cls, data: Any) -> Self:
         if isinstance(data, cls):
             return data
+        elif isinstance(data, dict):
+            return cls.model_validate(data)
         elif not isinstance(data, str):
             raise ValueError(f"Cannot load {cls.__name__} from {data}")
 
@@ -108,10 +110,13 @@ class Entity(BaseModel):
         return str(self)
 
     def as_tuple(self) -> tuple[str, ...]:
+        extra: tuple[str, ...] = tuple(
+            [v if isinstance(v, str) else str(v or "") for v in self.model_dump().items() if isinstance(v, str | None)]
+        )
         if isinstance(self.prefix, _Undefined):
-            return (str(self.suffix),)
+            return str(self.suffix), *extra
         else:
-            return self.prefix, str(self.suffix)
+            return self.prefix, str(self.suffix), *extra
 
     def __lt__(self, other: object) -> bool:
         if not isinstance(other, Entity):
@@ -175,13 +180,6 @@ class ContainerEntity(DMSEntity):
         return ContainerId(space=self.space, external_id=self.external_id)
 
 
-class ViewNonVersionedEntity(DMSEntity):
-    _type = EntityTypes.view_non_versioned
-
-    def as_id(self) -> ViewId:
-        return ViewId(space=self.space, external_id=self.external_id)
-
-
 class DMSVersionedEntity(DMSEntity):
     version: str | None = None
 
@@ -195,9 +193,8 @@ class ViewEntity(DMSVersionedEntity):
         return ViewId(space=self.space, external_id=self.external_id, version=self.version)
 
 
-class PropertyEntity(DMSEntity):
+class PropertyEntity(DMSVersionedEntity):
     type_: ClassVar[EntityTypes] = EntityTypes.property_
-    version: str | None = None
     property_: str = Field(alias="property")
 
 
