@@ -4,7 +4,7 @@ from functools import total_ordering
 from typing import Any, ClassVar, cast
 
 from cognite.client.data_classes.data_modeling.ids import ContainerId, DataModelId, ViewId
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_serializer, model_validator
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -80,37 +80,52 @@ class Entity(BaseModel):
 
     @classmethod
     def load(cls, data: Any) -> Self:
+        return cls.model_validate(data)
+
+    @model_validator(mode="before")
+    def _load(cls, data: Any) -> dict:
         if isinstance(data, cls):
-            return data
+            return data.model_dump()
         elif isinstance(data, dict):
-            return cls.model_validate(data)
+            return data
         elif not isinstance(data, str):
             raise ValueError(f"Cannot load {cls.__name__} from {data}")
 
         return cls._parse(data)
 
+    @model_serializer(when_used="unless-none", return_type=str)
+    def as_str(self) -> str:
+        return str(self)
+
     @classmethod
-    def _parse(cls, raw: str) -> Self:
+    def _parse(cls, raw: str) -> dict:
         if not (result := _ENTITY_PATTERN.match(raw)):
-            return cls(prefix=Undefined, suffix=Unknown)
+            return dict(prefix=Undefined, suffix=Unknown)
         prefix = result.group("prefix") or Undefined
         suffix = result.group("suffix")
         content = result.group("content")
         if content is None:
-            return cls(prefix=prefix, suffix=suffix)
+            return dict(prefix=prefix, suffix=suffix)
         extra_args = dict(pair.strip().split("=") for pair in content.split(","))
         expected_args = {field_.alias or field_name for field_name, field_ in cls.model_fields.items()}
         for key in list(extra_args):
             if key not in expected_args:
                 # Todo Warning about unknown key
                 del extra_args[key]
-        return cls(prefix=prefix, suffix=suffix, **extra_args)
+        return dict(prefix=prefix, suffix=suffix, **extra_args)
 
     def dump(self) -> str:
         return str(self)
 
     def as_tuple(self) -> tuple[str, ...]:
-        extra: tuple[str, ...] = tuple([str(v or "") for v in self.model_dump().items() if isinstance(v, str | None)])
+        # We haver overwritten the serialization to str, so we need to do it manually
+        extra: tuple[str, ...] = tuple(
+            [
+                str(v or "")
+                for field_name in self.model_fields
+                if isinstance(v := getattr(self, field_name), str | None) and field_name not in {"prefix", "suffix"}
+            ]
+        )
         if isinstance(self.prefix, _Undefined):
             return str(self.suffix), *extra
         else:
@@ -133,7 +148,9 @@ class Entity(BaseModel):
         return self.id
 
     def __repr__(self) -> str:
-        args = ",".join([f"{k}={v}" for k, v in self.model_dump(exclude_none=True).items()])
+        # We have overwritten the serialization to str, so we need to do it manually
+        model_dump = ((k, v) for k in self.model_fields if (v := getattr(self, k)) is not None)
+        args = ",".join([f"{k}={v}" for k, v in model_dump])
         return f"{self.type_.value}({args})"
 
     @property
