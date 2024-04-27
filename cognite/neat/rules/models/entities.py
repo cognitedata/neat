@@ -4,7 +4,7 @@ from functools import total_ordering
 from typing import Any, ClassVar, cast
 
 from cognite.client.data_classes.data_modeling.ids import ContainerId, DataModelId, ViewId
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -30,7 +30,6 @@ class EntityTypes(StrEnum):
     xsd_value_type = "xsd_value_type"
     dms_value_type = "dms_value_type"
     view = "view"
-    view_prop = "view_prop"
     reference_entity = "reference_entity"
     container = "container"
     datamodel = "datamodel"
@@ -53,6 +52,8 @@ _VERSIONED_ENTITY_REGEX_COMPILED = re.compile(
 _CLASS_ID_REGEX = rf"(?P<{EntityTypes.class_}>{_ENTITY_ID_REGEX})"
 _CLASS_ID_REGEX_COMPILED = re.compile(rf"^{_CLASS_ID_REGEX}$")
 _PROPERTY_ID_REGEX = rf"\((?P<{EntityTypes.property_}>{_ENTITY_ID_REGEX})\)"
+
+_ENTITY_PATTERN = re.compile(r"^(?P<prefix>.*?):?(?P<suffix>[^(:]*)(\((?P<content>[^)]+)\))?$")
 
 
 class _Undefined(BaseModel):
@@ -84,25 +85,43 @@ class Entity(BaseModel):
         elif not isinstance(data, str):
             raise ValueError(f"Cannot load {cls.__name__} from {data}")
 
-        if result := _ENTITY_ID_REGEX_COMPILED.match(data):
-            return cls(prefix=result.group("prefix"), suffix=result.group("suffix"))
-        elif data == str(Unknown):
+        return cls._parse(data)
+
+    @classmethod
+    def _parse(cls, raw: str) -> Self:
+        if not (result := _ENTITY_PATTERN.match(raw)):
             return cls(prefix=Undefined, suffix=Unknown)
-        else:
-            return cls(prefix=Undefined, suffix=data)
+        prefix = result.group("prefix") or Undefined
+        suffix = result.group("suffix")
+        content = result.group("content")
+        if content is None:
+            return cls(prefix=prefix, suffix=suffix)
+        extra_args = dict(pair.strip().split("=") for pair in content.split(","))
+        expected_args = {field_.alias or field_name for field_name, field_ in cls.model_fields.items()}
+        for key in list(extra_args):
+            if key not in expected_args:
+                # Todo Warning about unknown key
+                del extra_args[key]
+        return cls(prefix=prefix, suffix=suffix, **extra_args)
 
     def dump(self) -> str:
         return str(self)
 
+    def as_tuple(self) -> tuple[str, ...]:
+        if isinstance(self.prefix, _Undefined):
+            return (str(self.suffix),)
+        else:
+            return self.prefix, str(self.suffix)
+
     def __lt__(self, other: object) -> bool:
         if not isinstance(other, Entity):
             return NotImplemented
-        return str(self) < str(other)
+        return self.as_tuple() < other.as_tuple()
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Entity):
             return NotImplemented
-        return str(self) == str(other)
+        return self.as_tuple() == other.as_tuple()
 
     def __hash__(self) -> int:
         return hash(str(self))
@@ -111,7 +130,8 @@ class Entity(BaseModel):
         return self.id
 
     def __repr__(self) -> str:
-        return f"{self.type_.value}(prefix={self.prefix}, suffix={self.suffix})"
+        args = ",".join([f"{k}={v}" for k, v in self.model_dump(exclude_none=True).items()])
+        return f"{self.type_.value}({args})"
 
     @property
     def id(self) -> str:
@@ -165,17 +185,6 @@ class ViewNonVersionedEntity(DMSEntity):
 class DMSVersionedEntity(DMSEntity):
     version: str | None = None
 
-    def __str__(self) -> str:
-        if self.version is None:
-            return self.id
-        return f"{self.id}(version={self.version})"
-
-    @classmethod
-    def load(cls, data: Any) -> Self:
-        if isinstance(data, str) and (result := _VERSIONED_ENTITY_REGEX_COMPILED.match(data)):
-            return cls(prefix=result.group("prefix"), suffix=result.group("suffix"), version=result.group("version"))
-        return super().load(data)
-
 
 class ViewEntity(DMSVersionedEntity):
     type_: ClassVar[EntityTypes] = EntityTypes.view
@@ -186,15 +195,10 @@ class ViewEntity(DMSVersionedEntity):
         return ViewId(space=self.space, external_id=self.external_id, version=self.version)
 
 
-class ViewPropEntity(DMSVersionedEntity):
-    type_: ClassVar[EntityTypes] = EntityTypes.view_prop
-    property_: str
-
-    @classmethod
-    def load(cls, data: Any) -> Self:
-        raise NotImplementedError()
-        # if isinstance(data, str) and (result := _PROPERTY_ID_REGEX.match(data)):
-        #     return cls(
+class PropertyEntity(DMSEntity):
+    type_: ClassVar[EntityTypes] = EntityTypes.property_
+    version: str | None = None
+    property_: str = Field(alias="property")
 
 
 class DataModelEntity(DMSVersionedEntity):
@@ -204,5 +208,5 @@ class DataModelEntity(DMSVersionedEntity):
         return DataModelId(space=self.space, external_id=self.external_id, version=self.version)
 
 
-class ReferenceEntity(ViewPropEntity):
+class ReferenceEntity(PropertyEntity):
     type_: ClassVar[EntityTypes] = EntityTypes.reference_entity
