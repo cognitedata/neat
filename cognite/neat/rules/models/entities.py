@@ -162,9 +162,21 @@ class Entity(BaseModel):
         else:
             return f"{self.prefix}:{self.suffix!s}"
 
+    @property
+    def versioned_id(self) -> str:
+        # Todo: Remove. Is here for backwards compatibility
+        return self.id
+
+    def as_non_versioned_entity(self) -> str:
+        # Todo: Remove. Is here for backwards compatibility
+        if self.prefix is Undefined:
+            return f"{self.suffix!s}"
+        return f"{self.prefix}:{self.suffix!s}"
+
 
 class ClassEntity(Entity):
     type_: ClassVar[EntityTypes] = EntityTypes.class_
+    version: str | None = None
 
 
 class ParentClassEntity(Entity):
