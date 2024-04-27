@@ -7,10 +7,11 @@ from typing import Any, cast
 import pandas as pd
 from pydantic import ValidationError
 
+from cognite.neat.rules.models.entities import ClassEntity
 from cognite.neat.rules.models.rdfpath import TransformationRuleType
 from cognite.neat.rules.models.rules._base import SchemaCompleteness
 from cognite.neat.rules.models.rules._information_rules import InformationClass, InformationProperty, InformationRules
-from cognite.neat.rules.models.rules._types._base import ClassEntity, EntityTypes, ParentClassEntity, ReferenceEntity
+from cognite.neat.rules.models.rules._types._base import EntityTypes, ParentClassEntity, ReferenceEntity
 from cognite.neat.utils.utils import get_inheritance_path
 
 from ._base import BaseAnalysis, DataModelingScenario
@@ -126,7 +127,7 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
         return class_property_pairs
 
     def class_inheritance_path(self, class_: ClassEntity | str, use_reference: bool = False) -> list[ClassEntity]:
-        class_ = class_ if isinstance(class_, ClassEntity) else ClassEntity.from_raw(class_)
+        class_ = class_ if isinstance(class_, ClassEntity) else ClassEntity.load(class_)
         class_parent_pairs = self.class_parent_pairs(use_reference)
         return get_inheritance_path(class_, class_parent_pairs)
 
@@ -229,7 +230,8 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
                     {
                         "source_class": property_.class_,
                         "connecting_property": property_.property_,
-                        "target_class": property_.value_type,
+                        # Todo Remove once we have done the full migration.
+                        "target_class": ClassEntity.load(property_.value_type.versioned_id),
                         "max_occurrence": property_.max_count,
                     }
                 )

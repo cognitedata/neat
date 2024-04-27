@@ -288,9 +288,9 @@ class DMSRules(BaseRules):
         default_space = self.metadata.space
         default_view_version = self.metadata.default_view_version
         for entity in self.properties:
-            if entity.class_.prefix is Undefined or entity.class_.version is None:
+            if not isinstance(entity.class_.prefix, str) or entity.class_.version is None:
                 entity.class_ = ClassEntity(
-                    prefix=default_space if entity.class_.prefix is Undefined else entity.class_.prefix,
+                    prefix=default_space if not isinstance(entity.class_.prefix, str) else entity.class_.prefix,
                     suffix=entity.class_.suffix,
                     version=default_view_version if entity.class_.version is None else entity.class_.version,
                 )
@@ -314,7 +314,7 @@ class DMSRules(BaseRules):
                 )
 
         for container in self.containers or []:
-            if container.class_.prefix is Undefined:
+            if not isinstance(container.class_.prefix, str):
                 container.class_ = ClassEntity(prefix=default_space, suffix=container.class_.suffix)
             if container.container.space is Undefined:
                 container.container = ContainerEntity(prefix=default_space, suffix=container.container.external_id)
@@ -328,9 +328,9 @@ class DMSRules(BaseRules):
             ] or None
 
         for view in self.views or []:
-            if view.class_.prefix is Undefined or view.class_.version is None:
+            if not isinstance(view.class_.prefix, str) or view.class_.version is None:
                 view.class_ = ClassEntity(
-                    prefix=default_space if view.class_.prefix is Undefined else view.class_.prefix,
+                    prefix=default_space if not isinstance(view.class_.prefix, str) else view.class_.prefix,
                     suffix=view.class_.suffix,
                     version=default_view_version if view.class_.version is None else view.class_.version,
                 )

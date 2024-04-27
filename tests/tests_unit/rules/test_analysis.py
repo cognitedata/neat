@@ -1,6 +1,6 @@
 from cognite.neat.rules.analysis import InformationArchitectRulesAnalysis
+from cognite.neat.rules.models.entities import ClassEntity
 from cognite.neat.rules.models.rules import InformationRules
-from cognite.neat.rules.models.rules._types import ClassEntity
 
 
 class TestRulesAnalysis:
@@ -19,7 +19,7 @@ class TestRulesAnalysis:
 
     def test_disconnected_classes(self, david_rules: InformationRules) -> None:
         assert InformationArchitectRulesAnalysis(david_rules).disconnected_classes(consider_inheritance=False) == {
-            ClassEntity.from_raw("power:GeoLocation")
+            ClassEntity.load("power:GeoLocation")
         }
 
     def test_connected_classes(self, david_rules: InformationRules) -> None:
@@ -50,12 +50,12 @@ class TestRulesAnalysis:
 
     def test_subset_rules(self, david_rules: InformationRules) -> None:
         assert InformationArchitectRulesAnalysis(david_rules).subset_rules(
-            {ClassEntity.from_raw("power:GeoLocation")}
-        ).classes.data[0].class_ == ClassEntity.from_raw("power:GeoLocation")
+            {ClassEntity.load("power:GeoLocation")}
+        ).classes.data[0].class_ == ClassEntity.load("power:GeoLocation")
         assert (
             len(
                 InformationArchitectRulesAnalysis(david_rules)
-                .subset_rules({ClassEntity.from_raw("power:GeoLocation")})
+                .subset_rules({ClassEntity.load("power:GeoLocation")})
                 .classes.data
             )
             == 1

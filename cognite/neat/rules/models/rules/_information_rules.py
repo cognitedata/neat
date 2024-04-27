@@ -13,6 +13,7 @@ from rdflib import Namespace
 import cognite.neat.rules.issues.spreadsheet
 from cognite.neat.constants import PREFIXES
 from cognite.neat.rules import exceptions
+from cognite.neat.rules.models.entities import ParentEntityList
 from cognite.neat.rules.models.rdfpath import (
     AllReferences,
     Hop,
@@ -43,7 +44,6 @@ from ._types import (
     EntityTypes,
     NamespaceType,
     ParentClassEntity,
-    ParentClassType,
     PrefixType,
     PropertyType,
     ReferenceEntity,
@@ -118,7 +118,7 @@ class InformationClass(SheetEntity):
         match_type: The match type of the resource being described and the source entity.
     """
 
-    parent: ParentClassType = Field(alias="Parent Class", default=None)
+    parent: ParentEntityList | None = Field(alias="Parent Class", default=None)
     reference: ReferenceType = Field(alias="Reference", default=None)
     match_type: MatchType | None = Field(alias="Match Type", default=None)
     comment: str | None = Field(alias="Comment", default=None)
@@ -260,16 +260,16 @@ class InformationRules(RuleModel):
         for property_ in self.properties:
             if property_.value_type.prefix is Undefined and property_.value_type.suffix is not Unknown:
                 property_.value_type.prefix = self.metadata.prefix
-            if property_.class_.prefix is Undefined:
+            if not isinstance(property_.class_.prefix, str):
                 property_.class_.prefix = self.metadata.prefix
 
         # update parent classes
         for class_ in self.classes:
             if class_.parent:
                 for parent in cast(list[ParentClassEntity], class_.parent):
-                    if parent.prefix is Undefined:
+                    if not isinstance(parent.prefix, str):
                         parent.prefix = self.metadata.prefix
-            if class_.class_.prefix is Undefined:
+            if not isinstance(class_.class_.prefix, str):
                 class_.class_.prefix = self.metadata.prefix
 
         return self
