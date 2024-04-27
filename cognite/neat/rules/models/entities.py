@@ -196,6 +196,9 @@ class ClassEntity(Entity):
 class ParentClassEntity(ClassEntity):
     type_: ClassVar[EntityTypes] = EntityTypes.parent_class
 
+    def as_class_entity(self) -> ClassEntity:
+        return ClassEntity(prefix=self.prefix, suffix=self.suffix, version=self.version)
+
 
 T_ID = TypeVar("T_ID", bound=ContainerId | ViewId | DataModelId | PropertyId)
 
