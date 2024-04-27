@@ -90,6 +90,9 @@ class Entity(BaseModel):
             return data.model_dump()
         elif isinstance(data, dict):
             return data
+        elif hasattr(data, "versioned_id"):
+            # Todo: Remove. Is here for backwards compatibility
+            data = data.versioned_id
         elif not isinstance(data, str):
             raise ValueError(f"Cannot load {cls.__name__} from {data}")
 
