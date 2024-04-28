@@ -4,7 +4,7 @@ from typing import Any, ClassVar
 
 from cognite.client.data_classes import data_modeling as dms
 from pydantic import BaseModel, model_serializer, model_validator
-from pydantic_core.core_schema import ValidationInfo
+from pydantic.functional_validators import ModelWrapValidatorHandler
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -28,15 +28,15 @@ class Literal(BaseModel):
         return self.model_dump(by_alias=True)
 
     @model_validator(mode="wrap")
-    def _load(cls, data: Any, info: ValidationInfo) -> Any:
-        if isinstance(data, cls | dict):
-            return data
-        elif isinstance(data, str):
+    def _load(cls, value: Any, handler: ModelWrapValidatorHandler["Literal"]) -> Any:
+        if isinstance(value, cls | dict):
+            return value
+        elif isinstance(value, str):
             try:
-                return _LITERAL_BY_NAME[data.casefold()]()
+                return _LITERAL_BY_NAME[value.casefold()]()
             except KeyError:
-                raise ValueError(f"Unknown literal type: {data}") from None
-        raise ValueError(f"Cannot load {cls.__name__} from {data}")
+                raise ValueError(f"Unknown literal type: {value}") from None
+        raise ValueError(f"Cannot load {cls.__name__} from {value}")
 
     @model_serializer(when_used="unless-none", return_type=str)
     def as_str(self) -> str:
