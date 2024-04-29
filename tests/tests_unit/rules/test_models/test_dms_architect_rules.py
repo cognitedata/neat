@@ -20,11 +20,12 @@ from cognite.neat.rules.models.rules._dms_architect_rules import (
 )
 from cognite.neat.rules.models.rules._dms_schema import DMSSchema
 from cognite.neat.rules.models.rules._information_rules import InformationRules
-from cognite.neat.rules.models.entities import ViewEntity
+from cognite.neat.rules.models.entities import ViewEntity, EntitiesCreator
 from cognite.neat.rules.models.data_types import String
 
 
 def rules_schema_tests_cases() -> Iterable[ParameterSet]:
+    creator = EntitiesCreator("sp_my_space", "1")
     yield pytest.param(
         DMSRules(
             metadata=DMSMetadata(
@@ -40,44 +41,44 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             properties=SheetList[DMSProperty](
                 data=[
                     DMSProperty(
-                        class_="WindTurbine",
+                        class_=creator.class_("WindTurbine"),
                         property_="name",
                         value_type="text",
-                        container="Asset",
+                        container=creator.container("Asset"),
                         container_property="name",
-                        view="Asset",
+                        view=creator.view("Asset"),
                         view_property="name",
                     ),
                     DMSProperty(
-                        class_="WindTurbine",
+                        class_=creator.class_("WindTurbine"),
                         property_="ratedPower",
                         value_type="float64",
-                        container="GeneratingUnit",
+                        container=creator.container("GeneratingUnit"),
                         container_property="ratedPower",
-                        view="WindTurbine",
+                        view=creator.view("WindTurbine"),
                         view_property="ratedPower",
                     ),
                     DMSProperty(
-                        class_="WindFarm",
+                        class_=creator.class_("WindFarm"),
                         property_="WindTurbines",
-                        value_type=ViewEntity(suffix="WindTurbine"),
+                        value_type=creator.view("WindTurbine"),
                         relation="multiedge",
-                        view="WindFarm",
+                        view=creator.view("WindFarm"),
                         view_property="windTurbines",
                     ),
                 ]
             ),
             containers=SheetList[DMSContainer](
                 data=[
-                    DMSContainer(container="Asset", class_="Asset"),
-                    DMSContainer(class_="GeneratingUnit", container="GeneratingUnit", constraint="Asset"),
+                    DMSContainer(container=creator.container("Asset"), class_=creator.class_("Asset")),
+                    DMSContainer(class_=creator.class_("GeneratingUnit"), container=creator.container("GeneratingUnit"), constraint=[creator.container("Asset")]),
                 ]
             ),
             views=SheetList[DMSView](
                 data=[
-                    DMSView(class_="Asset", view="Asset"),
-                    DMSView(class_="WindTurbine", view="WindTurbine", implements=["Asset"]),
-                    DMSView(class_="WindFarm", view="WindFarm"),
+                    DMSView(class_=creator.class_("Asset"), view=creator.view("Asset")),
+                    DMSView(class_=creator.class_("WindTurbine"), view=creator.view("WindTurbine"), implements=[creator.view("Asset")]),
+                    DMSView(class_=creator.class_("WindFarm"), view=creator.view("WindFarm")),
                 ]
             ),
         ),
@@ -177,6 +178,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         id="Two properties, one container, one view",
     )
 
+    creator = EntitiesCreator("sp_my_space", "1")
     dms_rules = DMSRules(
         metadata=DMSMetadata(
             schema_="complete",
@@ -191,7 +193,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         properties=SheetList[DMSProperty](
             data=[
                 DMSProperty(
-                    class_="WindFarm",
+                    class_=creator.class_("WindFarm"),
                     property_="name",
                     value_type="text",
                     container="Asset",
@@ -200,7 +202,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     view_property="name",
                 ),
                 DMSProperty(
-                    class_="WindFarm",
+                    class_=creator.class_("WindFarm"),
                     property_="windTurbines",
                     value_type="WindTurbine",
                     relation="direct",
@@ -799,6 +801,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
 
 
 def valid_rules_tests_cases() -> Iterable[ParameterSet]:
+    creator = EntitiesCreator("sp_space", "1")
     yield pytest.param(
         {
             "metadata": {
@@ -866,35 +869,35 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
             properties=SheetList[DMSProperty](
                 data=[
                     DMSProperty(
-                        class_="WindTurbine",
+                        class_=creator.class_("WindTurbine"),
                         property_="name",
                         value_type="text",
                         container="sp_core:Asset",
                         container_property="name",
-                        view="sp_core:Asset",
+                        view="sp_core:Asset(version=1)",
                         view_property="name",
                     ),
                     DMSProperty(
-                        class_="WindTurbine",
+                        class_=creator.class_("WindTurbine"),
                         property_="ratedPower",
                         value_type="float64",
-                        container="GeneratingUnit",
+                        container=creator.container("GeneratingUnit"),
                         container_property="ratedPower",
-                        view="WindTurbine",
+                        view=creator.view("WindTurbine"),
                         view_property="ratedPower",
                     ),
                 ]
             ),
             containers=SheetList[DMSContainer](
                 data=[
-                    DMSContainer(container="sp_core:Asset", class_="Asset"),
-                    DMSContainer(class_="GeneratingUnit", container="GeneratingUnit", constraint="sp_core:Asset"),
+                    DMSContainer(container="sp_core:Asset", class_=creator.class_("Asset")),
+                    DMSContainer(class_=creator.class_("GeneratingUnit"), container=creator.container("GeneratingUnit"), constraint="sp_core:Asset"),
                 ]
             ),
             views=SheetList[DMSView](
                 data=[
-                    DMSView(view="sp_core:Asset", class_="Asset"),
-                    DMSView(class_="WindTurbine", view="WindTurbine", implements=["sp_core:Asset"]),
+                    DMSView(view="sp_core:Asset(version=1)", class_=creator.class_("Asset")),
+                    DMSView(class_=creator.class_("WindTurbine"), view=creator.view("WindTurbine"), implements=["sp_core:Asset(version=1)"]),
                 ]
             ),
         ),
@@ -993,64 +996,64 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
             properties=SheetList[DMSProperty](
                 data=[
                     DMSProperty(
-                        class_="Plant",
+                        class_=creator.class_("Plant"),
                         property_="name",
                         value_type="text",
-                        container="Asset",
+                        container=creator.container("Asset"),
                         container_property="name",
-                        view="Asset",
+                        view=creator.view("Asset"),
                         view_property="name",
                     ),
                     DMSProperty(
-                        class_="Plant",
+                        class_=creator.class_("Plant"),
                         property_="generators",
-                        value_type=ViewEntity(suffix="Generator"),
+                        value_type=creator.view("Generator"),
                         relation="multiedge",
-                        view="Plant",
+                        view=creator.view("Plant"),
                         view_property="generators",
                     ),
                     DMSProperty(
-                        class_="Plant",
+                        class_=creator.class_("Plant"),
                         property_="reservoir",
-                        value_type=ViewEntity(suffix="Reservoir"),
+                        value_type=creator.view("Reservoir"),
                         relation="direct",
-                        container="Asset",
+                        container=creator.container("Asset"),
                         container_property="child",
-                        view="Plant",
+                        view=creator.view("Plant"),
                         view_property="reservoir",
                     ),
                     DMSProperty(
-                        class_="Generator",
+                        class_=creator.class_("Generator"),
                         property_="name",
                         value_type="text",
-                        container="Asset",
+                        container=creator.container("Asset"),
                         container_property="name",
-                        view="Asset",
+                        view=creator.view("Asset"),
                         view_property="name",
                     ),
                     DMSProperty(
-                        class_="Reservoir",
+                        class_=creator.class_("Reservoir"),
                         property_="name",
                         value_type="text",
-                        container="Asset",
+                        container=creator.container("Asset"),
                         container_property="name",
-                        view="Asset",
+                        view=creator.view("Asset"),
                         view_property="name",
                     ),
                 ]
             ),
             containers=SheetList[DMSContainer](
                 data=[
-                    DMSContainer(container="Asset", class_="Asset"),
-                    DMSContainer(class_="Plant", container="Plant", constraint="Asset"),
+                    DMSContainer(container=creator.container("Asset"), class_=creator.class_("Asset")),
+                    DMSContainer(class_=creator.class_("Plant"), container=creator.container("Plant"), constraint=[creator.container("Asset")]),
                 ]
             ),
             views=SheetList[DMSView](
                 data=[
-                    DMSView(view="Asset", class_="Asset"),
-                    DMSView(class_="Plant", view="Plant", implements=["Asset"]),
-                    DMSView(class_="Generator", view="Generator", implements=["Asset"]),
-                    DMSView(class_="Reservoir", view="Reservoir", implements=["Asset"]),
+                    DMSView(view=creator.view("Asset"), class_=creator.class_("Asset")),
+                    DMSView(class_=creator.class_("Plant"), view=creator.view("Plant"), implements=[creator.view("Asset")]),
+                    DMSView(class_=creator.class_("Generator"), view=creator.view("Generator"), implements=[creator.view("Asset")]),
+                    DMSView(class_=creator.class_("Reservoir"), view=creator.view("Reservoir"), implements=[creator.view("Asset")]),
                 ]
             ),
         ),
@@ -1297,6 +1300,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
 
 
 def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
+    creator = EntitiesCreator("my_space", "1")
     ref_rules = DMSRules(
         metadata=DMSMetadata(
             schema_="complete",
@@ -1310,24 +1314,24 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
         properties=SheetList[DMSProperty](
             data=[
                 DMSProperty(
-                    class_="WindTurbine",
+                    class_=creator.class_("WindTurbine"),
                     property_="name",
                     value_type="text",
-                    container="Asset",
+                    container=creator.container("Asset"),
                     container_property="name",
-                    view="Asset",
+                    view=creator.view("Asset"),
                     view_property="name",
                 ),
             ]
         ),
         containers=SheetList[DMSContainer](
             data=[
-                DMSContainer(container="Asset", class_="Asset"),
+                DMSContainer(container=creator.container("Asset"), class_=creator.class_("Asset")),
             ]
         ),
         views=SheetList[DMSView](
             data=[
-                DMSView(view="Asset", class_="Asset"),
+                DMSView(view=creator.view("Asset"), class_=creator.class_("Asset")),
             ]
         ),
     )
@@ -1346,24 +1350,24 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
         properties=SheetList[DMSProperty](
             data=[
                 DMSProperty(
-                    class_="WindTurbine",
+                    class_=creator.class_("WindTurbine"),
                     property_="name",
                     value_type="json",
-                    container="Asset",
+                    container=creator.container("Asset"),
                     container_property="name",
-                    view="Asset",
+                    view=creator.view("Asset"),
                     view_property="name",
                 ),
             ]
         ),
         containers=SheetList[DMSContainer](
             data=[
-                DMSContainer(container="Asset", class_="Asset"),
+                DMSContainer(container=creator.container("Asset"), class_=creator.class_("Asset")),
             ]
         ),
         views=SheetList[DMSView](
             data=[
-                DMSView(view="Asset", class_="Asset"),
+                DMSView(view=creator.view("Asset"), class_=creator.class_("Asset")),
             ]
         ),
         reference=ref_rules,
@@ -1389,24 +1393,24 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
         properties=SheetList[DMSProperty](
             data=[
                 DMSProperty(
-                    class_="WindTurbine",
+                    class_=creator.class_("WindTurbine"),
                     property_="name",
                     value_type="text",
-                    container="Asset",
+                    container=creator.container("Asset"),
                     container_property="name",
-                    view="Asset",
+                    view=creator.view("Asset"),
                     view_property="navn",
                 ),
             ]
         ),
         containers=SheetList[DMSContainer](
             data=[
-                DMSContainer(container="Asset", class_="Asset"),
+                DMSContainer(container=creator.container("Asset"), class_=creator.class_("Asset")),
             ]
         ),
         views=SheetList[DMSView](
             data=[
-                DMSView(view="Asset", class_="Asset"),
+                DMSView(view=creator.view("Asset"), class_=creator.class_("Asset")),
             ]
         ),
         reference=ref_rules,
@@ -1519,6 +1523,7 @@ class TestDMSRules:
         assert isinstance(info_rules, InformationRules)
 
     def test_dump_skip_default_space_and_version(self) -> None:
+        creator = EntitiesCreator("my_space", "1")
         dms_rules = DMSRules(
             metadata=DMSMetadata(
                 schema_="partial",
@@ -1532,7 +1537,7 @@ class TestDMSRules:
             properties=SheetList[DMSProperty](
                 data=[
                     DMSProperty(
-                        class_="WindFarm",
+                        class_=creator.class_("WindFarm"),
                         property_="name",
                         value_type="text",
                         container="Asset",
@@ -1543,10 +1548,10 @@ class TestDMSRules:
                 ]
             ),
             views=SheetList[DMSView](
-                data=[DMSView(view="WindFarm", class_="WindFarm", implements=["Sourceable", "Describable"])]
+                data=[DMSView(view="WindFarm", class_=creator.class_("WindFarm"), implements=["Sourceable", "Describable"])]
             ),
             containers=SheetList[DMSContainer](
-                data=[DMSContainer(container="Asset", class_="Asset", constraint=["Sourceable", "Describable"])]
+                data=[DMSContainer(container="Asset", class_=creator.class_("Asset"), constraint=["Sourceable", "Describable"])]
             ),
         )
         expected_dump = {

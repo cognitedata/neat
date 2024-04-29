@@ -4,9 +4,10 @@ import re
 import sys
 import warnings
 from collections import defaultdict
+from collections.abc import Sequence
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
-
+from dataclasses import dataclass
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import PropertyType as CognitePropertyType
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex
@@ -208,7 +209,7 @@ class DMSContainer(SheetEntity):
     reference: ReferenceEntity | AnyHttpUrl | None = Field(alias="Reference", default=None)
     constraint: ContainerEntityList | None = Field(None, alias="Constraint")
 
-    def as_container(self, default_space: str) -> dm.ContainerApply:
+    def as_container(self) -> dm.ContainerApply:
         container_id = self.container.as_id()
         constraints: dict[str, dm.Constraint] = {}
         for constraint in self.constraint or []:
@@ -233,7 +234,7 @@ class DMSContainer(SheetEntity):
             # UniquenessConstraint it handled in the properties
         return cls(
             class_=ClassEntity(prefix=container.space, suffix=container.external_id),
-            container=ContainerEntity(prefix=container.space, suffix=container.external_id),
+            container=ContainerEntity(space=container.space, externalId=container.external_id),
             name=container.name or None,
             description=container.description,
             constraint=constraints or None,
@@ -247,12 +248,12 @@ class DMSView(SheetEntity):
     filter_: Literal["hasData", "nodeType"] | None = Field(None, alias="Filter")
     in_model: bool = Field(True, alias="InModel")
 
-    def as_view(self, default_space: str, default_version: str) -> dm.ViewApply:
+    def as_view(self) -> dm.ViewApply:
         view_id = self.view.as_id()
         return dm.ViewApply(
             space=view_id.space,
             external_id=view_id.external_id,
-            version=view_id.version or default_version,
+            version=view_id.version,
             name=self.name or None,
             description=self.description,
             implements=[parent.as_id() for parent in self.implements or []] or None,
@@ -283,89 +284,7 @@ class DMSRules(BaseRules):
     reference: "DMSRules | None" = Field(None, alias="Reference")
 
     @model_validator(mode="after")
-    def set_default_space_and_version(self) -> "DMSRules":
-        default_space = self.metadata.space
-        default_view_version = self.metadata.default_view_version
-        for entity in self.properties:
-            if entity.class_.prefix is Undefined or entity.class_.version is None:
-                entity.class_ = ClassEntity(
-                    prefix=default_space if entity.class_.prefix is Undefined else entity.class_.prefix,
-                    suffix=entity.class_.suffix,
-                    version=default_view_version if entity.class_.version is None else entity.class_.version,
-                )
-            if entity.container and entity.container.space is Undefined:
-                entity.container = ContainerEntity(prefix=default_space, suffix=entity.container.external_id)
-
-            if entity.view and (entity.view.space is Undefined or entity.view.version is None):
-                entity.view = ViewEntity(
-                    prefix=default_space if entity.view.space is Undefined else entity.view.space,
-                    suffix=entity.view.external_id,
-                    version=default_view_version if entity.view.version is None else entity.view.version,
-                )
-            if isinstance(entity.value_type, ViewPropertyEntity) and (
-                entity.value_type.space is Undefined or entity.value_type.version is None
-            ):
-                entity.value_type = ViewPropertyEntity(
-                    prefix=default_space if entity.value_type.space is Undefined else entity.value_type.space,
-                    suffix=entity.value_type.suffix,
-                    version=default_view_version if entity.value_type.version is None else entity.value_type.version,
-                    property=entity.value_type.property_,
-                )
-            elif isinstance(entity.value_type, ViewEntity) and (
-                entity.value_type.space is Undefined or entity.value_type.version is None
-            ):
-                entity.value_type = ViewEntity(
-                    prefix=default_space if entity.value_type.space is Undefined else entity.value_type.space,
-                    suffix=entity.value_type.external_id,
-                    version=default_view_version if entity.value_type.version is None else entity.value_type.version,
-                )
-
-        for container in self.containers or []:
-            if not isinstance(container.class_.prefix, str):
-                container.class_ = ClassEntity(prefix=default_space, suffix=container.class_.suffix)
-            if container.container.space is Undefined:
-                container.container = ContainerEntity(prefix=default_space, suffix=container.container.external_id)
-            container.constraint = [
-                (
-                    ContainerEntity(prefix=default_space, suffix=constraint.external_id)
-                    if constraint.space is Undefined
-                    else constraint
-                )
-                for constraint in container.constraint or []
-            ] or None
-
-        for view in self.views or []:
-            if not isinstance(view.class_.prefix, str) or view.class_.version is None:
-                view.class_ = ClassEntity(
-                    prefix=default_space if not isinstance(view.class_.prefix, str) else view.class_.prefix,
-                    suffix=view.class_.suffix,
-                    version=default_view_version if view.class_.version is None else view.class_.version,
-                )
-
-            if view.view.space is Undefined or view.view.version is None:
-                view.view = ViewEntity(
-                    prefix=default_space if view.view.space is Undefined else view.view.space,
-                    suffix=view.view.external_id,
-                    version=default_view_version if view.view.version is None else view.view.version,
-                )
-            view.implements = [
-                (
-                    ViewEntity(
-                        prefix=default_space if parent.space is Undefined else parent.space,
-                        suffix=parent.external_id,
-                        version=default_view_version if parent.version is None else parent.version,
-                    )
-                    if parent.space is Undefined or parent.version is None
-                    else parent
-                )
-                for parent in view.implements or []
-            ] or None
-
-        return self
-
-    @model_validator(mode="after")
     def consistent_container_properties(self) -> "DMSRules":
-        DMSEntity.set_default_space(self.metadata.space)
         container_properties_by_id: dict[tuple[ContainerEntity, str], list[tuple[int, DMSProperty]]] = defaultdict(list)
         for prop_no, prop in enumerate(self.properties):
             if prop.container and prop.container_property:
@@ -444,8 +363,6 @@ class DMSRules(BaseRules):
 
     @model_validator(mode="after")
     def referenced_views_and_containers_are_existing(self) -> "DMSRules":
-        DMSVersionedEntity.set_default_space(self.metadata.space)
-        DMSVersionedEntity.set_default_version(self.metadata.default_view_version)
         # There two checks are done in the same method to raise all the errors at once.
         defined_views = {view.view.as_id() for view in self.views}
 
@@ -715,19 +632,15 @@ class _DMSExporter:
         self.instance_space = instance_space
 
     def to_schema(self, rules: DMSRules) -> DMSSchema:
-        DMSVersionedEntity.set_default_space(rules.metadata.space)
-        DMSVersionedEntity.set_default_version(rules.metadata.default_view_version)
         default_version = "1"
         default_space = rules.metadata.space
 
-        container_properties_by_id, view_properties_by_id = self._gather_properties(
-            rules, default_space, default_version
-        )
+        container_properties_by_id, view_properties_by_id = self._gather_properties(rules)
 
-        containers = self._create_containers(rules.containers, container_properties_by_id, default_space)
+        containers = self._create_containers(rules.containers, container_properties_by_id)
 
         views, node_types = self._create_views_with_node_types(
-            rules.views, view_properties_by_id, default_space, default_version
+            rules.views, view_properties_by_id
         )
 
         views_not_in_model = {view.view.as_id() for view in rules.views if not view.in_model}
@@ -772,10 +685,8 @@ class _DMSExporter:
         self,
         dms_views: SheetList[DMSView],
         view_properties_by_id: dict[dm.ViewId, list[DMSProperty]],
-        default_space: str,
-        default_version: str,
     ) -> tuple[dm.ViewApplyList, dm.NodeApplyList]:
-        views = dm.ViewApplyList([dms_view.as_view(default_space, default_version) for dms_view in dms_views])
+        views = dm.ViewApplyList([dms_view.as_view() for dms_view in dms_views])
         dms_view_by_id = {dms_view.view.as_id(): dms_view for dms_view in dms_views}
 
         for view in views:
@@ -959,10 +870,9 @@ class _DMSExporter:
         self,
         dms_container: SheetList[DMSContainer] | None,
         container_properties_by_id: dict[dm.ContainerId, list[DMSProperty]],
-        default_space: str,
     ) -> dm.ContainerApplyList:
         containers = dm.ContainerApplyList(
-            [dms_container.as_container(default_space) for dms_container in dms_container or []]
+            [dms_container.as_container() for dms_container in dms_container or []]
         )
         container_to_drop = set()
         for container in containers:
@@ -1032,7 +942,7 @@ class _DMSExporter:
         )
 
     def _gather_properties(
-        self, rules: DMSRules, default_space: str, default_version: str
+        self, rules: DMSRules
     ) -> tuple[dict[dm.ContainerId, list[DMSProperty]], dict[dm.ViewId, list[DMSProperty]]]:
         container_properties_by_id: dict[dm.ContainerId, list[DMSProperty]] = defaultdict(list)
         view_properties_by_id: dict[dm.ViewId, list[DMSProperty]] = defaultdict(list)

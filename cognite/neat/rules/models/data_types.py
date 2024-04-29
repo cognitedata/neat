@@ -60,6 +60,9 @@ class DataType(BaseModel):
     def __hash__(self) -> int:
         return hash(str(self))
 
+    @classmethod
+    def is_data_type(cls, value: str) -> bool:
+        return value.casefold() in _DATA_TYPE_BY_NAME or value.casefold() in _DATA_TYPE_BY_DMS_TYPE
 
 class Boolean(DataType):
     name = "boolean"

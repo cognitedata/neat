@@ -244,6 +244,9 @@ class DMSEntity(Entity, Generic[T_ID], ABC):
     def from_id(cls, id: T_ID) -> Self:
         raise NotImplementedError("Method from_id must be implemented in subclasses")
 
+    def as_class(self) -> ClassEntity:
+        return ClassEntity(prefix=self.space, suffix=self.external_id)
+
 
 class ContainerEntity(DMSEntity[ContainerId]):
     type_: ClassVar[EntityTypes] = EntityTypes.container
@@ -258,6 +261,9 @@ class ContainerEntity(DMSEntity[ContainerId]):
 
 class DMSVersionedEntity(DMSEntity[T_ID], ABC):
     version: str
+
+    def as_class(self) -> ClassEntity:
+        return ClassEntity(prefix=self.space, suffix=self.external_id, version=self.version)
 
 
 class ViewEntity(DMSVersionedEntity[ViewId]):
@@ -352,3 +358,28 @@ ViewEntityList = Annotated[
         when_used="unless-none",
     ),
 ]
+
+
+class EntitiesCreator:
+    """Factory for creating entities.
+
+    Convenience class for creating entities with default values.
+    """
+    def __init__(self, default_prefix: str, default_version: str):
+        self.default_prefix = default_prefix
+        self.default_version = default_version
+
+    def view(self, external_id: str, space: str | None = None, version: str | None = None) -> ViewEntity:
+        return ViewEntity(space=space or self.default_prefix, externalId=external_id, version=version or self.default_version)
+
+    def container(self, external_id: str, space: str | None = None) -> ContainerEntity:
+        return ContainerEntity(space=space or self.default_prefix, externalId=external_id)
+
+    def datamodel(self, external_id: str, space: str | None = None, version: str | None = None) -> DataModelEntity:
+        return DataModelEntity(space=space or self.default_prefix, externalId=external_id, version=version or self.default_version)
+
+    def class_(self, external_id: str, space: str | None = None, version: str | None = None) -> ClassEntity:
+        return ClassEntity(prefix=space or self.default_prefix, suffix=external_id, version=version or self.default_version)
+
+    def parent_class(self, external_id: str, space: str | None = None, version: str | None = None) -> ParentClassEntity:
+        return ParentClassEntity(prefix=space or self.default_prefix, suffix=external_id, version=version or self.default_version)
