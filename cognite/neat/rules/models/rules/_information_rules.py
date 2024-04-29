@@ -6,8 +6,7 @@ from collections import defaultdict
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
 
-import rdflib
-from pydantic import Field, field_serializer, field_validator, model_serializer, model_validator
+from pydantic import AnyHttpUrl, Field, field_serializer, field_validator, model_serializer, model_validator
 from pydantic_core.core_schema import SerializationInfo
 from rdflib import Namespace
 
@@ -22,11 +21,11 @@ from cognite.neat.rules.models.entities import (
     EntityTypes,
     ParentClassEntity,
     ParentEntityList,
-    ViewPropertyEntity,
     ReferenceEntity,
     Undefined,
     Unknown,
     ViewEntity,
+    ViewPropertyEntity,
 )
 from cognite.neat.rules.models.rdfpath import (
     AllReferences,
@@ -56,10 +55,8 @@ from ._types import (
     PrefixType,
     PropertyType,
     StrListType,
-    URIRefType,
     VersionType,
 )
-
 
 if TYPE_CHECKING:
     from ._dms_architect_rules import DMSProperty, DMSRules
@@ -122,7 +119,7 @@ class InformationClass(SheetEntity):
     """
 
     parent: ParentEntityList | None = Field(alias="Parent Class", default=None)
-    reference: ReferenceEntity | rdflib.URIRef | None = Field(alias="Reference", default=None)
+    reference: ReferenceEntity | AnyHttpUrl | None = Field(alias="Reference", default=None)
     match_type: MatchType | None = Field(alias="Match Type", default=None)
     comment: str | None = Field(alias="Comment", default=None)
 
@@ -153,7 +150,7 @@ class InformationProperty(SheetEntity):
     min_count: int | None = Field(alias="Min Count", default=None)
     max_count: int | float | None = Field(alias="Max Count", default=None)
     default: Any | None = Field(alias="Default", default=None)
-    reference: ReferenceEntity | URIRefType | None = Field(alias="Reference", default=None)
+    reference: ReferenceEntity | AnyHttpUrl | None = Field(alias="Reference", default=None)
     match_type: MatchType | None = Field(alias="Match Type", default=None)
     rule_type: str | TransformationRuleType | None = Field(alias="Rule Type", default=None)
     rule: str | AllReferences | SingleProperty | Hop | RawLookup | SPARQLQuery | Traversal | None = Field(
@@ -419,7 +416,7 @@ class _InformationRulesConverter:
         for class_ in self.information.classes:
             properties: list[DMSProperty] = properties_by_class.get(class_.class_.versioned_id, [])
             if not properties or all(
-                    isinstance(prop.value_type, ViewPropertyEntity) and prop.relation != "direct" for prop in properties
+                isinstance(prop.value_type, ViewPropertyEntity) and prop.relation != "direct" for prop in properties
             ):
                 classes_without_properties.add(class_.class_.versioned_id)
 
@@ -472,7 +469,7 @@ class _InformationRulesConverter:
             raise ValueError(f"Unsupported value type: {prop.value_type.type_}")
 
         relation: Literal["direct", "multiedge"] | None = None
-        if isinstance(value_type, (ViewEntity, ViewPropertyEntity)):
+        if isinstance(value_type, ViewEntity | ViewPropertyEntity):
             relation = "multiedge" if prop.is_list else "direct"
 
         container: ContainerEntity | None = None

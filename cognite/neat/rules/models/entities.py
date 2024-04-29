@@ -236,6 +236,10 @@ class ContainerEntity(DMSEntity[ContainerId]):
     def as_id(self) -> ContainerId:
         return ContainerId(space=self.space, external_id=self.external_id)
 
+    @classmethod
+    def from_id(cls, id: ContainerId) -> "ContainerEntity":
+        return cls(prefix=id.space, suffix=id.external_id)
+
 
 class DMSVersionedEntity(DMSEntity[T_ID], ABC):
     version: str | None = None
@@ -263,7 +267,7 @@ class ViewEntity(DMSVersionedEntity[ViewId]):
 
 class ViewPropertyEntity(DMSVersionedEntity[PropertyId]):
     type_: ClassVar[EntityTypes] = EntityTypes.property_
-    property_: str = Field( alias="property")
+    property_: str = Field(alias="property")
 
     def as_id(self) -> PropertyId:
         return PropertyId(
@@ -284,6 +288,11 @@ class ReferenceEntity(ClassEntity):
 
     def as_view_id(self) -> ViewId:
         return ViewId(space=self.prefix, external_id=self.suffix, version=self.version)
+
+    def as_view_property_id(self) -> PropertyId:
+        if self.property_ is None:
+            raise ValueError("Property is not defined")
+        return PropertyId(source=self.as_view_id(), property=self.property_)
 
 
 def _split_str(v: Any) -> list[str]:
