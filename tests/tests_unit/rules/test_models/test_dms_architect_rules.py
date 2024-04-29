@@ -20,7 +20,7 @@ from cognite.neat.rules.models.rules._dms_architect_rules import (
 )
 from cognite.neat.rules.models.rules._dms_schema import DMSSchema
 from cognite.neat.rules.models.rules._information_rules import InformationRules
-from cognite.neat.rules.models.rules._types import DMS_VALUE_TYPE_MAPPINGS, ViewPropEntity
+from cognite.neat.rules.models.entities import ViewPropertyEntity, ViewEntity
 
 
 def rules_schema_tests_cases() -> Iterable[ParameterSet]:
@@ -59,7 +59,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     DMSProperty(
                         class_="WindFarm",
                         property_="WindTurbines",
-                        value_type=ViewPropEntity(suffix="WindTurbine"),
+                        value_type=ViewEntity(suffix="WindTurbine"),
                         relation="multiedge",
                         view="WindFarm",
                         view_property="windTurbines",
@@ -1003,7 +1003,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                     DMSProperty(
                         class_="Plant",
                         property_="generators",
-                        value_type=ViewPropEntity(suffix="Generator"),
+                        value_type=ViewEntity(suffix="Generator"),
                         relation="multiedge",
                         view="Plant",
                         view_property="generators",
@@ -1011,7 +1011,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                     DMSProperty(
                         class_="Plant",
                         property_="reservoir",
-                        value_type=ViewPropEntity(suffix="Reservoir"),
+                        value_type=ViewEntity(suffix="Reservoir"),
                         relation="direct",
                         container="Asset",
                         container_property="child",

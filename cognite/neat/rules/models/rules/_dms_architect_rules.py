@@ -22,26 +22,15 @@ from cognite.neat.rules.models.rules._domain_rules import DomainRules
 from ._base import BaseMetadata, BaseRules, ExtensionCategory, RoleTypes, SchemaCompleteness, SheetEntity, SheetList
 from ._dms_schema import DMSSchema, PipelineSchema
 from ._types import (
-    CdfValueType,
-    ClassEntity,
-    ContainerEntity,
-    ContainerListType,
-    ContainerType,
-    DMSValueType,
     ExternalIdType,
-    ParentClassEntity,
     PropertyType,
-    ReferenceEntity,
-    ReferenceType,
     StrListType,
-    Undefined,
     VersionType,
-    ViewEntity,
-    ViewListType,
-    ViewPropEntity,
-    ViewType,
-    XSDValueType,
+    URIRefType,
+
 )
+from cognite.neat.rules.models.entities import ClassEntity, ContainerEntity, ReferenceEntity, ViewEntity, ViewPropertyEntity, ParentClassEntity, Undefined, Unknown, ViewEntityList, ContainerEntityList, DMSVersionedEntity, DMSEntity
+from cognite.neat.rules.models.data_types import DataType
 
 if TYPE_CHECKING:
     from ._information_rules import InformationRules
@@ -164,14 +153,14 @@ class DMSMetadata(BaseMetadata):
 class DMSProperty(SheetEntity):
     property_: PropertyType = Field(alias="Property")
     relation: Literal["direct", "reversedirect", "multiedge"] | None = Field(None, alias="Relation")
-    value_type: CdfValueType = Field(alias="Value Type")
+    value_type: DataType | ViewPropertyEntity | ViewEntity = Field(alias="Value Type")
     nullable: bool | None = Field(default=None, alias="Nullable")
     is_list: bool | None = Field(default=None, alias="IsList")
     default: str | int | dict | None = Field(None, alias="Default")
-    reference: ReferenceType = Field(default=None, alias="Reference")
-    container: ContainerType | None = Field(None, alias="Container")
+    reference: ReferenceEntity | URIRefType | None = Field(default=None, alias="Reference")
+    container: ContainerEntity | None = Field(None, alias="Container")
     container_property: str | None = Field(None, alias="ContainerProperty")
-    view: ViewType = Field(alias="View")
+    view: ViewEntity = Field(alias="View")
     view_property: str = Field(alias="ViewProperty")
     index: StrListType | None = Field(None, alias="Index")
     constraint: StrListType | None = Field(None, alias="Constraint")
@@ -189,12 +178,13 @@ class DMSProperty(SheetEntity):
         return value
 
     @field_validator("value_type", mode="after")
-    def relations_value_type(cls, value: CdfValueType, info: ValidationInfo) -> CdfValueType:
+    def relations_value_type(cls, value: DataType | ClassEntity, info: ValidationInfo) -> DataType | ClassEntity:
         if (relation := info.data["relation"]) is None:
             return value
-        if not isinstance(value, ViewPropEntity):
+        if not isinstance(value, (ViewEntity, ViewPropertyEntity)):
             raise ValueError(f"Relations must have a value type that points to another view, got {value}")
         if relation == "reversedirect" and value.property_ is None:
+            # Todo fix this error message. It have the wrong syntax for how to have a property
             raise ValueError(
                 "Reverse direct relation must set what it is the reverse property of. "
                 f"Which property in {value.versioned_id} is this the reverse of? Expecting"
@@ -204,15 +194,15 @@ class DMSProperty(SheetEntity):
 
 
 class DMSContainer(SheetEntity):
-    container: ContainerType = Field(alias="Container")
-    reference: ReferenceType = Field(alias="Reference", default=None)
-    constraint: ContainerListType | None = Field(None, alias="Constraint")
+    container: ContainerEntity = Field(alias="Container")
+    reference: ReferenceEntity | URIRefType | None = Field(alias="Reference", default=None)
+    constraint: ContainerEntityList | None = Field(None, alias="Constraint")
 
     def as_container(self, default_space: str) -> dm.ContainerApply:
-        container_id = self.container.as_id(default_space)
+        container_id = self.container.as_id()
         constraints: dict[str, dm.Constraint] = {}
         for constraint in self.constraint or []:
-            requires = dm.RequiresConstraint(constraint.as_id(default_space))
+            requires = dm.RequiresConstraint(constraint.as_id())
             constraints[f"{constraint.space}_{constraint.external_id}"] = requires
 
         return dm.ContainerApply(
@@ -233,7 +223,7 @@ class DMSContainer(SheetEntity):
             # UniquenessConstraint it handled in the properties
         return cls(
             class_=ClassEntity(prefix=container.space, suffix=container.external_id),
-            container=ContainerType(prefix=container.space, suffix=container.external_id),
+            container=ContainerEntity(prefix=container.space, suffix=container.external_id),
             name=container.name or None,
             description=container.description,
             constraint=constraints or None,
@@ -241,21 +231,21 @@ class DMSContainer(SheetEntity):
 
 
 class DMSView(SheetEntity):
-    view: ViewType = Field(alias="View")
-    implements: ViewListType | None = Field(None, alias="Implements")
-    reference: ReferenceType = Field(alias="Reference", default=None)
+    view: ViewEntity = Field(alias="View")
+    implements: ViewEntityList | None = Field(None, alias="Implements")
+    reference: ReferenceEntity | URIRefType | None = Field(alias="Reference", default=None)
     filter_: Literal["hasData", "nodeType"] | None = Field(None, alias="Filter")
     in_model: bool = Field(True, alias="InModel")
 
     def as_view(self, default_space: str, default_version: str) -> dm.ViewApply:
-        view_id = self.view.as_id(False, default_space, default_version)
+        view_id = self.view.as_id()
         return dm.ViewApply(
             space=view_id.space,
             external_id=view_id.external_id,
             version=view_id.version or default_version,
             name=self.name or None,
             description=self.description,
-            implements=[parent.as_id(False, default_space, default_version) for parent in self.implements or []]
+            implements=[parent.as_id() for parent in self.implements or []]
             or None,
             properties={},
         )
@@ -264,11 +254,11 @@ class DMSView(SheetEntity):
     def from_view(cls, view: dm.ViewApply, data_model_view_ids: set[dm.ViewId]) -> "DMSView":
         return cls(
             class_=ClassEntity(prefix=view.space, suffix=view.external_id),
-            view=ViewType(prefix=view.space, suffix=view.external_id, version=view.version),
+            view=ViewEntity(prefix=view.space, suffix=view.external_id, version=view.version),
             description=view.description,
             name=view.name,
             implements=[
-                ViewType(prefix=parent.space, suffix=parent.external_id, version=parent.version)
+                ViewEntity(prefix=parent.space, suffix=parent.external_id, version=parent.version)
                 for parent in view.implements
             ]
             or None,
@@ -288,9 +278,9 @@ class DMSRules(BaseRules):
         default_space = self.metadata.space
         default_view_version = self.metadata.default_view_version
         for entity in self.properties:
-            if not isinstance(entity.class_.prefix, str) or entity.class_.version is None:
+            if entity.class_.prefix is Undefined or entity.class_.version is None:
                 entity.class_ = ClassEntity(
-                    prefix=default_space if not isinstance(entity.class_.prefix, str) else entity.class_.prefix,
+                    prefix=default_space if entity.class_.prefix is Undefined else entity.class_.prefix,
                     suffix=entity.class_.suffix,
                     version=default_view_version if entity.class_.version is None else entity.class_.version,
                 )
@@ -303,14 +293,22 @@ class DMSRules(BaseRules):
                     suffix=entity.view.external_id,
                     version=default_view_version if entity.view.version is None else entity.view.version,
                 )
-            if isinstance(entity.value_type, ViewPropEntity) and (
+            if isinstance(entity.value_type, ViewPropertyEntity) and (
                 entity.value_type.space is Undefined or entity.value_type.version is None
             ):
-                entity.value_type = ViewPropEntity(
+                entity.value_type = ViewPropertyEntity(
                     prefix=default_space if entity.value_type.space is Undefined else entity.value_type.space,
                     suffix=entity.value_type.suffix,
                     version=default_view_version if entity.value_type.version is None else entity.value_type.version,
-                    property_=entity.value_type.property_,
+                    property=entity.value_type.property_,
+                )
+            elif isinstance(entity.value_type, ViewEntity) and (
+                entity.value_type.space is Undefined or entity.value_type.version is None
+            ):
+                entity.value_type = ViewEntity(
+                    prefix=default_space if entity.value_type.space is Undefined else entity.value_type.space,
+                    suffix=entity.value_type.external_id,
+                    version=default_view_version if entity.value_type.version is None else entity.value_type.version,
                 )
 
         for container in self.containers or []:
@@ -358,6 +356,7 @@ class DMSRules(BaseRules):
 
     @model_validator(mode="after")
     def consistent_container_properties(self) -> "DMSRules":
+        DMSEntity.set_default_space(self.metadata.space)
         container_properties_by_id: dict[tuple[ContainerEntity, str], list[tuple[int, DMSProperty]]] = defaultdict(list)
         for prop_no, prop in enumerate(self.properties):
             if prop.container and prop.container_property:
@@ -367,7 +366,7 @@ class DMSRules(BaseRules):
         for (container, prop_name), properties in container_properties_by_id.items():
             if len(properties) == 1:
                 continue
-            container_id = container.as_id(self.metadata.space)
+            container_id = container.as_id()
             row_numbers = {prop_no for prop_no, _ in properties}
             value_types = {prop.value_type for _, prop in properties if prop.value_type}
             if len(value_types) > 1:
@@ -436,14 +435,16 @@ class DMSRules(BaseRules):
 
     @model_validator(mode="after")
     def referenced_views_and_containers_are_existing(self) -> "DMSRules":
+        DMSVersionedEntity.set_default_space(self.metadata.space)
+        DMSVersionedEntity.set_default_version(self.metadata.default_view_version)
         # There two checks are done in the same method to raise all the errors at once.
-        defined_views = {view.view.as_id(False, self.metadata.space, self.metadata.version) for view in self.views}
+        defined_views = {view.view.as_id() for view in self.views}
 
         errors: list[issues.NeatValidationError] = []
         for prop_no, prop in enumerate(self.properties):
             if (
                 prop.view
-                and (view_id := prop.view.as_id(False, self.metadata.space, self.metadata.version)) not in defined_views
+                and (view_id := prop.view.as_id()) not in defined_views
             ):
                 errors.append(
                     cognite.neat.rules.issues.spreadsheet.NonExistingViewError(
@@ -457,11 +458,11 @@ class DMSRules(BaseRules):
                     )
                 )
         if self.metadata.schema_ is SchemaCompleteness.complete:
-            defined_containers = {container.container.as_id(self.metadata.space) for container in self.containers or []}
+            defined_containers = {container.container.as_id() for container in self.containers or []}
             for prop_no, prop in enumerate(self.properties):
                 if (
                     prop.container
-                    and (container_id := prop.container.as_id(self.metadata.space)) not in defined_containers
+                    and (container_id := prop.container.as_id()) not in defined_containers
                 ):
                     errors.append(
                         cognite.neat.rules.issues.spreadsheet.NonExistingContainerError(
@@ -476,7 +477,7 @@ class DMSRules(BaseRules):
                     )
             for _container_no, container in enumerate(self.containers or []):
                 for constraint_no, constraint in enumerate(container.constraint or []):
-                    if constraint.as_id(self.metadata.space) not in defined_containers:
+                    if constraint.as_id() not in defined_containers:
                         errors.append(
                             cognite.neat.rules.issues.spreadsheet.NonExistingContainerError(
                                 column="Constraint",
@@ -584,17 +585,17 @@ class DMSRules(BaseRules):
             # This is an extension of the reference rules, we need to merge the two
             rules = self.model_copy(deep=True)
             rules.properties.extend(self.reference.properties.data)
-            existing_views = {view.view.as_id(False) for view in rules.views}
-            rules.views.extend([view for view in self.reference.views if view.view.as_id(False) not in existing_views])
+            existing_views = {view.view.as_id() for view in rules.views}
+            rules.views.extend([view for view in self.reference.views if view.view.as_id() not in existing_views])
             if rules.containers and self.reference.containers:
                 existing_containers = {
-                    container.container.as_id(self.metadata.space) for container in rules.containers.data
+                    container.container.as_id() for container in rules.containers.data
                 }
                 rules.containers.extend(
                     [
                         container
                         for container in self.reference.containers
-                        if container.container.as_id(self.reference.metadata.space) not in existing_containers
+                        if container.container.as_id() not in existing_containers
                     ]
                 )
             elif not rules.containers and self.reference.containers:
@@ -713,6 +714,8 @@ class _DMSExporter:
         self.instance_space = instance_space
 
     def to_schema(self, rules: DMSRules) -> DMSSchema:
+        DMSVersionedEntity.set_default_space(rules.metadata.space)
+        DMSVersionedEntity.set_default_version(rules.metadata.default_view_version)
         default_version = "1"
         default_space = rules.metadata.space
 
@@ -727,7 +730,7 @@ class _DMSExporter:
         )
 
         views_not_in_model = {
-            view.view.as_id(False, default_space, default_version) for view in rules.views if not view.in_model
+            view.view.as_id() for view in rules.views if not view.in_model
         }
         data_model = rules.metadata.as_data_model()
         data_model.views = sorted(
@@ -775,7 +778,7 @@ class _DMSExporter:
     ) -> tuple[dm.ViewApplyList, dm.NodeApplyList]:
         views = dm.ViewApplyList([dms_view.as_view(default_space, default_version) for dms_view in dms_views])
         dms_view_by_id = {
-            dms_view.view.as_id(False, default_space, default_version): dms_view for dms_view in dms_views
+            dms_view.view.as_id(): dms_view for dms_view in dms_views
         }
 
         for view in views:
@@ -789,7 +792,7 @@ class _DMSExporter:
                     # This is not yet supported in the CDF API, a warning has already been issued, here we convert it to
                     # a multi-edge connection.
                     if isinstance(prop.value_type, ViewEntity):
-                        source = prop.value_type.as_id(False, default_space, default_version)
+                        source = prop.value_type.as_id()
                     else:
                         raise ValueError(
                             "Direct relation must have a view as value type. "
@@ -809,14 +812,14 @@ class _DMSExporter:
                     container_prop_identifier = prop.container_property
                     extra_args: dict[str, Any] = {}
                     if prop.relation == "direct" and isinstance(prop.value_type, ViewEntity):
-                        extra_args["source"] = prop.value_type.as_id(True, default_space, default_version)
+                        extra_args["source"] = prop.value_type.as_id()
                     elif prop.relation == "direct" and not isinstance(prop.value_type, ViewEntity):
                         raise ValueError(
                             "Direct relation must have a view as value type. "
                             "This should have been validated in the rules"
                         )
                     view_property = dm.MappedPropertyApply(
-                        container=prop.container.as_id(default_space),
+                        container=prop.container.as_id(),
                         container_property_identifier=container_prop_identifier,
                         name=prop.name,
                         description=prop.description,
@@ -824,14 +827,14 @@ class _DMSExporter:
                     )
                 elif prop.view and prop.view_property and prop.relation == "multiedge":
                     if isinstance(prop.value_type, ViewEntity):
-                        source = prop.value_type.as_id(False, default_space, default_version)
+                        source = prop.value_type.as_id()
                     else:
                         raise ValueError(
                             "Multiedge relation must have a view as value type. "
                             "This should have been validated in the rules"
                         )
                     if isinstance(prop.reference, ReferenceEntity):
-                        ref_view_prop = prop.reference.as_prop_id(default_space, default_version)
+                        ref_view_prop = prop.reference.as_id()
                         edge_type = dm.DirectRelationReference(
                             space=ref_view_prop.source.space,
                             external_id=f"{ref_view_prop.source.external_id}.{ref_view_prop.property}",
@@ -850,8 +853,8 @@ class _DMSExporter:
                         description=prop.description,
                     )
                 elif prop.view and prop.view_property and prop.relation == "reversedirect":
-                    if isinstance(prop.value_type, ViewPropEntity):
-                        source = prop.value_type.as_id(False, default_space, default_version)
+                    if isinstance(prop.value_type, ViewPropertyEntity):
+                        source = prop.value_type.as_id()
                     else:
                         raise ValueError(
                             "Reverse direct relation must have a view as value type. "
@@ -872,7 +875,7 @@ class _DMSExporter:
                             issues.dms.ReverseOfDirectRelationListWarning(view_id, prop.property_), stacklevel=2
                         )
                         if isinstance(reverse_prop.reference, ReferenceEntity):
-                            ref_view_prop = reverse_prop.reference.as_prop_id(default_space, default_version)
+                            ref_view_prop = reverse_prop.reference.as_prop_id()
                             edge_type = dm.DirectRelationReference(
                                 space=ref_view_prop.source.space,
                                 external_id=f"{ref_view_prop.source.external_id}.{ref_view_prop.property}",
@@ -925,9 +928,9 @@ class _DMSExporter:
             if dms_view and isinstance(dms_view.reference, ReferenceEntity):
                 # If the view is a reference, we implement the reference view,
                 # and need the filter to match the reference
-                ref_view = dms_view.reference.as_id(False, default_space, default_version)
+                ref_view = dms_view.reference.as_id()
                 node_type = dm.filters.Equals(
-                    ["node", "type"], {"space": ref_view.space, "externalId": ref_view.external_id}
+                    ["node", "type"], {"space": ref_view.source.space, "externalId": ref_view.source.external_id}
                 )
             else:
                 node_type = dm.filters.Equals(["node", "type"], {"space": view.space, "externalId": view.external_id})
@@ -974,7 +977,7 @@ class _DMSExporter:
             for prop in container_properties:
                 if prop.container_property is None:
                     continue
-                if isinstance(prop.value_type, DMSValueType):
+                if isinstance(prop.value_type, DataType):
                     type_cls = prop.value_type.dms
                 else:
                     type_cls = dm.DirectRelation
@@ -1037,21 +1040,21 @@ class _DMSExporter:
         container_properties_by_id: dict[dm.ContainerId, list[DMSProperty]] = defaultdict(list)
         view_properties_by_id: dict[dm.ViewId, list[DMSProperty]] = defaultdict(list)
         for prop in rules.properties:
-            view_id = prop.view.as_id(False, default_space, default_version)
+            view_id = prop.view.as_id()
             view_properties_by_id[view_id].append(prop)
 
             if prop.container and prop.container_property:
                 if prop.relation == "direct" and prop.is_list:
                     warnings.warn(
                         issues.dms.DirectRelationListWarning(
-                            container_id=prop.container.as_id(default_space),
-                            view_id=prop.view.as_id(False, default_space, default_version),
+                            container_id=prop.container.as_id(),
+                            view_id=prop.view.as_id(),
                             property=prop.container_property,
                         ),
                         stacklevel=2,
                     )
                     continue
-                container_id = prop.container.as_id(default_space)
+                container_id = prop.container.as_id()
                 container_properties_by_id[container_id].append(prop)
 
         return container_properties_by_id, view_properties_by_id
@@ -1105,10 +1108,10 @@ class _DMSRulesConverter:
         ]
 
         properties: list[InformationProperty] = []
-        value_type: XSDValueType | ClassEntity | str
+        value_type: DataType | ClassEntity | str
         for property_ in self.dms.properties:
-            if isinstance(property_.value_type, DMSValueType):
-                value_type = cast(DMSValueType, property_.value_type).xsd
+            if isinstance(property_.value_type, DataType):
+                value_type = value_type
             elif isinstance(property_.value_type, ViewEntity):
                 value_type = ClassEntity(
                     prefix=property_.value_type.prefix,
@@ -1121,7 +1124,7 @@ class _DMSRulesConverter:
                 InformationProperty(
                     class_=property_.class_.as_non_versioned_entity(),
                     property_=property_.view_property,
-                    value_type=cast(XSDValueType | ClassEntity, value_type),
+                    value_type=value_type,
                     description=property_.description,
                     min_count=0 if property_.nullable or property_.nullable is None else 1,
                     max_count=float("inf") if property_.is_list or property_.nullable is None else 1,

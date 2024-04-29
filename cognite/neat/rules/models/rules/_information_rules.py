@@ -22,7 +22,7 @@ from cognite.neat.rules.models.entities import (
     EntityTypes,
     ParentClassEntity,
     ParentEntityList,
-    PropertyEntity,
+    ViewPropertyEntity,
     ReferenceEntity,
     Undefined,
     Unknown,
@@ -407,7 +407,7 @@ class _InformationRulesConverter:
             DMSView(
                 class_=cls_.class_,
                 name=cls_.name,
-                view=PropertyEntity(prefix=cls_.class_.prefix, suffix=cls_.class_.suffix, version=cls_.class_.version),
+                view=ViewPropertyEntity(prefix=cls_.class_.prefix, suffix=cls_.class_.suffix, version=cls_.class_.version),
                 description=cls_.description,
                 reference=cls_.reference,
                 implements=self._get_view_implements(cls_, info_metadata),
@@ -419,7 +419,7 @@ class _InformationRulesConverter:
         for class_ in self.information.classes:
             properties: list[DMSProperty] = properties_by_class.get(class_.class_.versioned_id, [])
             if not properties or all(
-                isinstance(prop.value_type, PropertyEntity) and prop.relation != "direct" for prop in properties
+                    isinstance(prop.value_type, ViewPropertyEntity) and prop.relation != "direct" for prop in properties
             ):
                 classes_without_properties.add(class_.class_.versioned_id)
 
@@ -465,14 +465,14 @@ class _InformationRulesConverter:
         if isinstance(prop.value_type, DataType):
             value_type = prop.value_type.dms._type.casefold()  # type: ignore[attr-defined]
         elif isinstance(prop.value_type, ClassEntity):
-            value_type = PropertyEntity(
+            value_type = ViewPropertyEntity(
                 prefix=prop.value_type.prefix, suffix=prop.value_type.suffix, version=prop.value_type.version
             )
         else:
             raise ValueError(f"Unsupported value type: {prop.value_type.type_}")
 
         relation: Literal["direct", "multiedge"] | None = None
-        if isinstance(value_type, PropertyEntity):
+        if isinstance(value_type, ViewPropertyEntity):
             relation = "multiedge" if prop.is_list else "direct"
 
         container: ContainerEntity | None = None
@@ -500,7 +500,7 @@ class _InformationRulesConverter:
             reference=prop.reference,
             container=container,
             container_property=container_property,
-            view=PropertyEntity(prefix=prop.class_.prefix, suffix=prop.class_.suffix, version=prop.class_.version),
+            view=ViewPropertyEntity(prefix=prop.class_.prefix, suffix=prop.class_.suffix, version=prop.class_.version),
             view_property=prop.property_,
         )
 

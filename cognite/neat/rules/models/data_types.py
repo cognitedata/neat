@@ -5,6 +5,7 @@ from typing import Any, ClassVar
 from cognite.client.data_classes import data_modeling as dms
 from pydantic import BaseModel, model_serializer, model_validator
 from pydantic.functional_validators import ModelWrapValidatorHandler
+from pydantic.main import Model
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -13,6 +14,12 @@ else:
 
 
 class DataType(BaseModel):
+    # These are necessary for Pydantic to work
+    # pydantic gets confused as we have no fields.
+    __pydantic_extra__ = ()
+    __pydantic_fields_set__ = ()
+    __pydantic_private__ = {}
+
     name: ClassVar[str]
     python: ClassVar[type]
     dms: ClassVar[type[dms.PropertyType]]

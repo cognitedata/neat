@@ -205,18 +205,18 @@ T_ID = TypeVar("T_ID", bound=ContainerId | ViewId | DataModelId | PropertyId)
 
 class DMSEntity(Entity, Generic[T_ID], ABC):
     type_: ClassVar[EntityTypes] = EntityTypes.undefined
-    default_space_by_thread: ClassVar[dict[threading.Thread, str]] = {}
+    _default_space_by_thread: ClassVar[dict[threading.Thread, str]] = {}
     suffix: str
 
     @classmethod
     def set_default_space(cls, space: str) -> None:
-        cls.default_space_by_thread[threading.current_thread()] = space
+        cls._default_space_by_thread[threading.current_thread()] = space
 
     @property
     def space(self) -> str:
         """Returns entity space in CDF."""
         if isinstance(self.prefix, _Undefined):
-            return self.default_space_by_thread.get(threading.current_thread(), "MISSING")
+            return self._default_space_by_thread.get(threading.current_thread(), "MISSING")
         else:
             return self.prefix
 
@@ -239,13 +239,17 @@ class ContainerEntity(DMSEntity[ContainerId]):
 
 class DMSVersionedEntity(DMSEntity[T_ID], ABC):
     version: str | None = None
-    default_version_by_thread: ClassVar[dict[threading.Thread, str]] = {}
+    _default_version_by_thread: ClassVar[dict[threading.Thread, str]] = {}
+
+    @classmethod
+    def set_default_version(cls, version: str) -> None:
+        cls._default_version_by_thread[threading.current_thread()] = version
 
     @property
     def version_with_fallback(self) -> str:
         if self.version is not None:
             return self.version
-        return self.default_version_by_thread.get(threading.current_thread(), "MISSING")
+        return self._default_version_by_thread.get(threading.current_thread(), "MISSING")
 
 
 class ViewEntity(DMSVersionedEntity[ViewId]):
@@ -257,13 +261,11 @@ class ViewEntity(DMSVersionedEntity[ViewId]):
         return ViewId(space=self.space, external_id=self.external_id, version=self.version_with_fallback)
 
 
-class PropertyEntity(DMSVersionedEntity[PropertyId]):
+class ViewPropertyEntity(DMSVersionedEntity[PropertyId]):
     type_: ClassVar[EntityTypes] = EntityTypes.property_
-    property_: str | None = Field(None, alias="property")
+    property_: str = Field( alias="property")
 
     def as_id(self) -> PropertyId:
-        if self.property_ is None:
-            raise ValueError("PropertyEntity must have a property to create a PropertyId.")
         return PropertyId(
             source=ViewId(self.space, self.external_id, self.version_with_fallback), property=self.property_
         )
@@ -276,8 +278,9 @@ class DataModelEntity(DMSVersionedEntity[DataModelId]):
         return DataModelId(space=self.space, external_id=self.external_id, version=self.version_with_fallback)
 
 
-class ReferenceEntity(PropertyEntity):
+class ReferenceEntity(ClassEntity):
     type_: ClassVar[EntityTypes] = EntityTypes.reference_entity
+    property_: str | None = Field(None, alias="property")
 
 
 def _split_str(v: Any) -> list[str]:
@@ -292,6 +295,26 @@ def _join_str(v: list[ClassEntity]) -> str | None:
 
 ParentEntityList = Annotated[
     list[ParentClassEntity],
+    BeforeValidator(_split_str),
+    PlainSerializer(
+        _join_str,
+        return_type=str,
+        when_used="unless-none",
+    ),
+]
+
+ContainerEntityList = Annotated[
+    list[ContainerEntity],
+    BeforeValidator(_split_str),
+    PlainSerializer(
+        _join_str,
+        return_type=str,
+        when_used="unless-none",
+    ),
+]
+
+ViewEntityList = Annotated[
+    list[ViewEntity],
     BeforeValidator(_split_str),
     PlainSerializer(
         _join_str,
