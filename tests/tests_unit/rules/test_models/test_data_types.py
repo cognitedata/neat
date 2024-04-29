@@ -24,7 +24,7 @@ class DemoProperty(BaseModel):
         return self.model_dump(by_alias=True)
 
 
-class TestLiterals:
+class TestDataTypes:
     @pytest.mark.parametrize(
         "raw, expected",
         [

@@ -372,7 +372,7 @@ class DMSRules(BaseRules):
             if len(value_types) > 1:
                 errors.append(
                     cognite.neat.rules.issues.spreadsheet.MultiValueTypeError(
-                        container_id, prop_name, row_numbers, {str(v) for v in value_types}
+                        container_id, prop_name, row_numbers, {v.dms._type for v in value_types}
                     )
                 )
             list_definitions = {prop.is_list for _, prop in properties if prop.is_list is not None}
@@ -928,9 +928,9 @@ class _DMSExporter:
             if dms_view and isinstance(dms_view.reference, ReferenceEntity):
                 # If the view is a reference, we implement the reference view,
                 # and need the filter to match the reference
-                ref_view = dms_view.reference.as_id()
+                ref_view = dms_view.reference.as_view_id()
                 node_type = dm.filters.Equals(
-                    ["node", "type"], {"space": ref_view.source.space, "externalId": ref_view.source.external_id}
+                    ["node", "type"], {"space": ref_view.space, "externalId": ref_view.external_id}
                 )
             else:
                 node_type = dm.filters.Equals(["node", "type"], {"space": view.space, "externalId": view.external_id})
@@ -1111,8 +1111,8 @@ class _DMSRulesConverter:
         value_type: DataType | ClassEntity | str
         for property_ in self.dms.properties:
             if isinstance(property_.value_type, DataType):
-                value_type = value_type
-            elif isinstance(property_.value_type, ViewEntity):
+                value_type = property_.value_type
+            elif isinstance(property_.value_type, (ViewEntity, ViewPropertyEntity)):
                 value_type = ClassEntity(
                     prefix=property_.value_type.prefix,
                     suffix=property_.value_type.suffix,

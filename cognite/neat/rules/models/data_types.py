@@ -39,10 +39,12 @@ class DataType(BaseModel):
         if isinstance(value, cls | dict):
             return value
         elif isinstance(value, str):
-            try:
-                return _DATA_TYPE_BY_NAME[value.casefold()]()
-            except KeyError:
-                raise ValueError(f"Unknown literal type: {value}") from None
+            value_standardized = value.casefold()
+            if cls_ := _DATA_TYPE_BY_DMS_TYPE.get(value_standardized):
+                return cls_()
+            elif cls_ := _DATA_TYPE_BY_NAME.get(value_standardized):
+                return cls_()
+            raise ValueError(f"Unknown literal type: {value}") from None
         raise ValueError(f"Cannot load {cls.__name__} from {value}")
 
     @model_serializer(when_used="unless-none", return_type=str)
@@ -54,6 +56,9 @@ class DataType(BaseModel):
 
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, type(self))
+
+    def __hash__(self) -> int:
+        return hash(str(self))
 
 
 class Boolean(DataType):
@@ -181,18 +186,16 @@ class DateTime(DataType):
     xsd = "xsd:dateTimeStamp"
     sql = "TIMESTAMP"
 
-
-class DateTimeStamp(DataType):
-    name = "dateTimeStamp"
+class Timestamp(DataType):
+    name = "timestamp"
     python = datetime
     dms = dms.Timestamp
     graphql = "Timestamp"
     xsd = "xsd:dateTimeStamp"
     sql = "TIMESTAMP"
 
-
-class Timestamp(DataType):
-    name = "timestamp"
+class DateTimeStamp(DataType):
+    name = "dateTimeStamp"
     python = datetime
     dms = dms.Timestamp
     graphql = "Timestamp"
@@ -264,3 +267,6 @@ class Json(DataType):
 
 
 _DATA_TYPE_BY_NAME = {cls.name.casefold(): cls for cls in DataType.__subclasses__()}
+_seen = set()
+_DATA_TYPE_BY_DMS_TYPE = {cls.dms._type.casefold(): cls for cls in DataType.__subclasses__() if cls.dms._type not in _seen and not _seen.add(cls.dms._type)}
+del _seen

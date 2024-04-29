@@ -282,6 +282,9 @@ class ReferenceEntity(ClassEntity):
     type_: ClassVar[EntityTypes] = EntityTypes.reference_entity
     property_: str | None = Field(None, alias="property")
 
+    def as_view_id(self) -> ViewId:
+        return ViewId(space=self.prefix, external_id=self.suffix, version=self.version)
+
 
 def _split_str(v: Any) -> list[str]:
     if isinstance(v, str):

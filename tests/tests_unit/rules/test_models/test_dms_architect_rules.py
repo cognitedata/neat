@@ -20,7 +20,8 @@ from cognite.neat.rules.models.rules._dms_architect_rules import (
 )
 from cognite.neat.rules.models.rules._dms_schema import DMSSchema
 from cognite.neat.rules.models.rules._information_rules import InformationRules
-from cognite.neat.rules.models.entities import ViewPropertyEntity, ViewEntity
+from cognite.neat.rules.models.entities import ViewEntity
+from cognite.neat.rules.models.data_types import String
 
 
 def rules_schema_tests_cases() -> Iterable[ParameterSet]:
@@ -1447,7 +1448,7 @@ class TestDMSRules:
         valid_rules = DMSRules.model_validate(raw)
         assert valid_rules.model_dump() == expected_rules.model_dump()
         # testing case insensitive value types
-        assert valid_rules.properties.data[0].value_type == DMS_VALUE_TYPE_MAPPINGS["text"]
+        assert isinstance(valid_rules.properties.data[0].value_type, String)
 
     @pytest.mark.parametrize("raw, expected_errors", list(invalid_container_definitions_test_cases()))
     def test_load_inconsistent_container_definitions(
