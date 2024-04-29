@@ -6,6 +6,7 @@ from collections import defaultdict
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
 
+import rdflib
 from pydantic import Field, field_serializer, field_validator, model_serializer, model_validator
 from pydantic_core.core_schema import SerializationInfo
 from rdflib import Namespace
@@ -13,7 +14,20 @@ from rdflib import Namespace
 import cognite.neat.rules.issues.spreadsheet
 from cognite.neat.constants import PREFIXES
 from cognite.neat.rules import exceptions
-from cognite.neat.rules.models.entities import ParentEntityList
+from cognite.neat.rules.models.data_types import DataType
+from cognite.neat.rules.models.entities import (
+    ClassEntity,
+    ContainerEntity,
+    Entity,
+    EntityTypes,
+    ParentClassEntity,
+    ParentEntityList,
+    PropertyEntity,
+    ReferenceEntity,
+    Undefined,
+    Unknown,
+    ViewEntity,
+)
 from cognite.neat.rules.models.rdfpath import (
     AllReferences,
     Hop,
@@ -38,25 +52,14 @@ from ._base import (
 )
 from ._domain_rules import DomainRules
 from ._types import (
-    ClassEntity,
-    ContainerEntity,
-    Entity,
-    EntityTypes,
     NamespaceType,
-    ParentClassEntity,
     PrefixType,
     PropertyType,
-    ReferenceEntity,
-    ReferenceType,
-    SemanticValueType,
     StrListType,
-    Undefined,
+    URIRefType,
     VersionType,
-    ViewEntity,
-    ViewPropEntity,
-    XSDValueType,
 )
-from ._types._base import Unknown
+
 
 if TYPE_CHECKING:
     from ._dms_architect_rules import DMSProperty, DMSRules
@@ -119,7 +122,7 @@ class InformationClass(SheetEntity):
     """
 
     parent: ParentEntityList | None = Field(alias="Parent Class", default=None)
-    reference: ReferenceType = Field(alias="Reference", default=None)
+    reference: ReferenceEntity | rdflib.URIRef | None = Field(alias="Reference", default=None)
     match_type: MatchType | None = Field(alias="Match Type", default=None)
     comment: str | None = Field(alias="Comment", default=None)
 
@@ -146,11 +149,11 @@ class InformationProperty(SheetEntity):
     """
 
     property_: PropertyType = Field(alias="Property")
-    value_type: SemanticValueType = Field(alias="Value Type")
+    value_type: DataType | ClassEntity = Field(alias="Value Type")
     min_count: int | None = Field(alias="Min Count", default=None)
     max_count: int | float | None = Field(alias="Max Count", default=None)
     default: Any | None = Field(alias="Default", default=None)
-    reference: ReferenceType = Field(alias="Reference", default=None)
+    reference: ReferenceEntity | URIRefType | None = Field(alias="Reference", default=None)
     match_type: MatchType | None = Field(alias="Match Type", default=None)
     rule_type: str | TransformationRuleType | None = Field(alias="Rule Type", default=None)
     rule: str | AllReferences | SingleProperty | Hop | RawLookup | SPARQLQuery | Traversal | None = Field(
@@ -223,9 +226,9 @@ class InformationProperty(SheetEntity):
     @property
     def type_(self) -> EntityTypes:
         """Type of property based on value type. Either data (attribute) or object (edge) property."""
-        if self.value_type.type_ == EntityTypes.xsd_value_type:
+        if isinstance(self.value_type, DataType):
             return EntityTypes.data_property
-        elif self.value_type.type_ == EntityTypes.class_:
+        elif isinstance(self.value_type, ClassEntity):
             return EntityTypes.object_property
         else:
             return EntityTypes.undefined
@@ -258,9 +261,9 @@ class InformationRules(RuleModel):
     def update_entities_prefix(self) -> Self:
         # update expected_value_types
         for property_ in self.properties:
-            if property_.value_type.prefix is Undefined and property_.value_type.suffix is not Unknown:
+            if isinstance(property_.value_type, ClassEntity) and property_.value_type.prefix is Undefined:
                 property_.value_type.prefix = self.metadata.prefix
-            if not isinstance(property_.class_.prefix, str):
+            if property_.class_.prefix is Undefined:
                 property_.class_.prefix = self.metadata.prefix
 
         # update parent classes
@@ -269,7 +272,7 @@ class InformationRules(RuleModel):
                 for parent in cast(list[ParentClassEntity], class_.parent):
                     if not isinstance(parent.prefix, str):
                         parent.prefix = self.metadata.prefix
-            if not isinstance(class_.class_.prefix, str):
+            if class_.class_.prefix is Undefined:
                 class_.class_.prefix = self.metadata.prefix
 
         return self
@@ -404,7 +407,7 @@ class _InformationRulesConverter:
             DMSView(
                 class_=cls_.class_,
                 name=cls_.name,
-                view=ViewPropEntity(prefix=cls_.class_.prefix, suffix=cls_.class_.suffix, version=cls_.class_.version),
+                view=PropertyEntity(prefix=cls_.class_.prefix, suffix=cls_.class_.suffix, version=cls_.class_.version),
                 description=cls_.description,
                 reference=cls_.reference,
                 implements=self._get_view_implements(cls_, info_metadata),
@@ -416,7 +419,7 @@ class _InformationRulesConverter:
         for class_ in self.information.classes:
             properties: list[DMSProperty] = properties_by_class.get(class_.class_.versioned_id, [])
             if not properties or all(
-                isinstance(prop.value_type, ViewPropEntity) and prop.relation != "direct" for prop in properties
+                isinstance(prop.value_type, PropertyEntity) and prop.relation != "direct" for prop in properties
             ):
                 classes_without_properties.add(class_.class_.versioned_id)
 
@@ -459,17 +462,17 @@ class _InformationRulesConverter:
         from ._dms_architect_rules import DMSProperty
 
         # returns property type, which can be ObjectProperty or DatatypeProperty
-        if isinstance(prop.value_type, XSDValueType):
-            value_type = cast(XSDValueType, prop.value_type).dms._type.casefold()  # type: ignore[attr-defined]
+        if isinstance(prop.value_type, DataType):
+            value_type = prop.value_type.dms._type.casefold()  # type: ignore[attr-defined]
         elif isinstance(prop.value_type, ClassEntity):
-            value_type = ViewPropEntity(
+            value_type = PropertyEntity(
                 prefix=prop.value_type.prefix, suffix=prop.value_type.suffix, version=prop.value_type.version
             )
         else:
             raise ValueError(f"Unsupported value type: {prop.value_type.type_}")
 
         relation: Literal["direct", "multiedge"] | None = None
-        if isinstance(value_type, ViewPropEntity):
+        if isinstance(value_type, PropertyEntity):
             relation = "multiedge" if prop.is_list else "direct"
 
         container: ContainerEntity | None = None
@@ -497,7 +500,7 @@ class _InformationRulesConverter:
             reference=prop.reference,
             container=container,
             container_property=container_property,
-            view=ViewPropEntity(prefix=prop.class_.prefix, suffix=prop.class_.suffix, version=prop.class_.version),
+            view=PropertyEntity(prefix=prop.class_.prefix, suffix=prop.class_.suffix, version=prop.class_.version),
             view_property=prop.property_,
         )
 

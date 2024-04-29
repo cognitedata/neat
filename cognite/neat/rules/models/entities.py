@@ -259,9 +259,11 @@ class ViewEntity(DMSVersionedEntity[ViewId]):
 
 class PropertyEntity(DMSVersionedEntity[PropertyId]):
     type_: ClassVar[EntityTypes] = EntityTypes.property_
-    property_: str = Field(alias="property")
+    property_: str | None = Field(None, alias="property")
 
     def as_id(self) -> PropertyId:
+        if self.property_ is None:
+            raise ValueError("PropertyEntity must have a property to create a PropertyId.")
         return PropertyId(
             source=ViewId(self.space, self.external_id, self.version_with_fallback), property=self.property_
         )
