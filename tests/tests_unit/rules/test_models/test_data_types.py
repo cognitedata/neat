@@ -1,7 +1,7 @@
 from typing import Any
 
 import pytest
-from pydantic import BaseModel, Field
+from pydantic import AnyHttpUrl, BaseModel, Field
 
 from cognite.neat.rules.models.data_types import (
     Boolean,
@@ -13,15 +13,16 @@ from cognite.neat.rules.models.data_types import (
     NonNegativeInteger,
     NonPositiveInteger,
 )
-from cognite.neat.rules.models.entities import ClassEntity
+from cognite.neat.rules.models.entities import ClassEntity, ReferenceEntity
 
 
 class DemoProperty(BaseModel):
     property_: str = Field(alias="property")
     value_type: DataType | ClassEntity = Field(alias="valueType")
+    reference: ReferenceEntity | AnyHttpUrl | None = Field(None, alias="Reference")
 
     def dump(self) -> dict[str, Any]:
-        return self.model_dump(by_alias=True)
+        return self.model_dump(by_alias=True, exclude_none=True)
 
 
 class TestDataTypes:
@@ -45,8 +46,16 @@ class TestDataTypes:
         "raw, expected",
         [
             (
-                {"property": "a_boolean", "valueType": "boolean"},
-                DemoProperty(property="a_boolean", valueType=Boolean()),
+                {
+                    "property": "a_boolean",
+                    "valueType": "boolean",
+                    "Reference": "power:GeneratingUnit(property=activePower)",
+                },
+                DemoProperty(
+                    property="a_boolean",
+                    valueType=Boolean(),
+                    Reference=ReferenceEntity(prefix="power", suffix="GeneratingUnit", property="activePower"),
+                ),
             ),
             (
                 {"property": "a_float", "valueType": "float"},
