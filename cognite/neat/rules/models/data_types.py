@@ -12,7 +12,7 @@ else:
     from typing_extensions import Self
 
 
-class Literal(BaseModel):
+class DataType(BaseModel):
     name: ClassVar[str]
     python: ClassVar[type]
     dms: ClassVar[type[dms.PropertyType]]
@@ -28,7 +28,7 @@ class Literal(BaseModel):
         return self.model_dump(by_alias=True)
 
     @model_validator(mode="wrap")
-    def _load(cls, value: Any, handler: ModelWrapValidatorHandler["Literal"]) -> Any:
+    def _load(cls, value: Any, handler: ModelWrapValidatorHandler["DataType"]) -> Any:
         if isinstance(value, cls | dict):
             return value
         elif isinstance(value, str):
@@ -49,7 +49,7 @@ class Literal(BaseModel):
         return isinstance(other, type(self))
 
 
-class Boolean(Literal):
+class Boolean(DataType):
     name = "boolean"
     python = bool
     dms = dms.Boolean
@@ -58,7 +58,7 @@ class Boolean(Literal):
     sql = "BOOLEAN"
 
 
-class Float(Literal):
+class Float(DataType):
     name = "float"
     python = float
     dms = dms.Float32
@@ -67,7 +67,7 @@ class Float(Literal):
     sql = "FLOAT"
 
 
-class Double(Literal):
+class Double(DataType):
     name = "double"
     python = float
     dms = dms.Float64
@@ -76,7 +76,7 @@ class Double(Literal):
     sql = "FLOAT"
 
 
-class Integer(Literal):
+class Integer(DataType):
     name = "integer"
     python = int
     dms = dms.Int32
@@ -85,7 +85,7 @@ class Integer(Literal):
     sql = "INTEGER"
 
 
-class NonPositiveInteger(Literal):
+class NonPositiveInteger(DataType):
     name = "nonPositiveInteger"
     python = int
     dms = dms.Int32
@@ -94,7 +94,7 @@ class NonPositiveInteger(Literal):
     sql = "INTEGER"
 
 
-class NonNegativeInteger(Literal):
+class NonNegativeInteger(DataType):
     name = "nonNegativeInteger"
     python = int
     dms = dms.Int32
@@ -103,7 +103,7 @@ class NonNegativeInteger(Literal):
     sql = "INTEGER"
 
 
-class Long(Literal):
+class Long(DataType):
     name = "long"
     python = int
     dms = dms.Int64
@@ -112,7 +112,7 @@ class Long(Literal):
     sql = "BIGINT"
 
 
-class AnyURI(Literal):
+class AnyURI(DataType):
     name = "anyURI"
     python = str
     dms = dms.Text
@@ -121,7 +121,7 @@ class AnyURI(Literal):
     sql = "STRING"
 
 
-class NormalizedString(Literal):
+class NormalizedString(DataType):
     name = "normalizedString"
     python = str
     dms = dms.Text
@@ -130,7 +130,7 @@ class NormalizedString(Literal):
     sql = "STRING"
 
 
-class Token(Literal):
+class Token(DataType):
     name = "token"
     python = str
     dms = dms.Text
@@ -139,7 +139,7 @@ class Token(Literal):
     sql = "STRING"
 
 
-class DateTime(Literal):
+class DateTime(DataType):
     name = "dateTime"
     python = datetime
     dms = dms.Timestamp
@@ -148,7 +148,7 @@ class DateTime(Literal):
     sql = "TIMESTAMP"
 
 
-class DateTimeStamp(Literal):
+class DateTimeStamp(DataType):
     name = "dateTimeStamp"
     python = datetime
     dms = dms.Timestamp
@@ -157,7 +157,7 @@ class DateTimeStamp(Literal):
     sql = "TIMESTAMP"
 
 
-class Date(Literal):
+class Date(DataType):
     name = "date"
     python = date
     dms = dms.Date
@@ -166,7 +166,7 @@ class Date(Literal):
     sql = "DATE"
 
 
-class PlainLiteral(Literal):
+class PlainLiteral(DataType):
     name = "PlainLiteral"
     python = str
     dms = dms.Text
@@ -175,11 +175,16 @@ class PlainLiteral(Literal):
     sql = "STRING"
 
 
-#
-# class Literal(Literal):
+class Literal(DataType):
+    name = "Literal"
+    python = str
+    dms = dms.Text
+    graphql = "String"
+    xsd = "xsd:string"
+    sql = "STRING"
 
 
-class Timeseries(Literal):
+class Timeseries(DataType):
     name = "timeseries"
     python = dms.TimeSeriesReference
     dms = dms.TimeSeriesReference
@@ -188,7 +193,7 @@ class Timeseries(Literal):
     sql = "STRING"
 
 
-class File(Literal):
+class File(DataType):
     name = "file"
     python = dms.FileReference
     dms = dms.FileReference
@@ -197,7 +202,7 @@ class File(Literal):
     sql = "STRING"
 
 
-class Sequence(Literal):
+class Sequence(DataType):
     name = "sequence"
     python = dms.SequenceReference
     dms = dms.SequenceReference
@@ -206,7 +211,7 @@ class Sequence(Literal):
     sql = "STRING"
 
 
-class Json(Literal):
+class Json(DataType):
     name = "json"
     python = dms.Json
     dms = dms.Json
@@ -215,4 +220,4 @@ class Json(Literal):
     sql = "STRING"
 
 
-_LITERAL_BY_NAME = {cls.name.casefold(): cls for cls in Literal.__subclasses__()}
+_LITERAL_BY_NAME = {cls.name.casefold(): cls for cls in DataType.__subclasses__()}
