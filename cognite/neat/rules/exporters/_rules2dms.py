@@ -166,6 +166,13 @@ class DMSExporter(CDFExporter[DMSSchema]):
             to_delete = []
 
             for item in items:
+                if (
+                    isinstance(loader, DataModelingLoader)
+                    and self.include_space is not None
+                    and not loader.in_space(item, self.include_space)
+                ):
+                    continue
+
                 cdf_item = cdf_item_by_id.get(loader.get_id(item))
                 if cdf_item:
                     to_delete.append(cdf_item)
