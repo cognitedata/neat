@@ -1,6 +1,5 @@
 import re
 import sys
-import threading
 from abc import ABC, abstractmethod
 from functools import total_ordering
 from typing import Annotated, Any, ClassVar, Generic, TypeVar
@@ -70,10 +69,11 @@ class _Unknown(BaseModel):
 # This is a trick to make Undefined and Unknown singletons
 Undefined = _Undefined()
 Unknown = _Unknown()
+_PARSE = object()
 
 
 @total_ordering
-class Entity(BaseModel):
+class Entity(BaseModel, extra="ignore"):
     """Entity is a class or property in OWL/RDF sense."""
 
     type_: ClassVar[EntityTypes] = EntityTypes.undefined
@@ -81,22 +81,39 @@ class Entity(BaseModel):
     suffix: str | _Unknown
 
     @classmethod
-    def load(cls, data: Any) -> Self:
-        return cls.model_validate(data)
+    def load(cls, data: Any, **defaults) -> Self:
+        if isinstance(data, cls):
+            return data
+        if defaults and isinstance(defaults, dict):
+            # This is trick to pass in default values
+            return cls.model_validate({_PARSE: data, "defaults": defaults})
+        else:
+            return cls.model_validate(data)
 
     @model_validator(mode="before")
     def _load(cls, data: Any) -> dict:
-        if isinstance(data, cls):
-            return data.model_dump()
-        elif isinstance(data, dict):
+        defaults = {}
+        if isinstance(data, dict) and _PARSE in data:
+            defaults = data.get("defaults", {})
+            data = data[_PARSE]
+        if isinstance(data, dict):
+            data.update(defaults)
             return data
         elif hasattr(data, "versioned_id"):
             # Todo: Remove. Is here for backwards compatibility
             data = data.versioned_id
         elif not isinstance(data, str):
             raise ValueError(f"Cannot load {cls.__name__} from {data}")
-
-        return cls._parse(data)
+        result = cls._parse(data)
+        output = defaults.copy()
+        # Populate by alias
+        for field_name, field_ in cls.model_fields.items():
+            name = field_.alias or field_name
+            if (field_value := result.get(field_name)) and not (field_value in [Unknown, Undefined] and name in output):
+                output[name] = result.pop(field_name)
+            elif name not in output and name in result:
+                output[name] = result.pop(name)
+        return output
 
     @model_serializer(when_used="unless-none", return_type=str)
     def as_str(self) -> str:
@@ -205,20 +222,13 @@ T_ID = TypeVar("T_ID", bound=ContainerId | ViewId | DataModelId | PropertyId)
 
 class DMSEntity(Entity, Generic[T_ID], ABC):
     type_: ClassVar[EntityTypes] = EntityTypes.undefined
-    _default_space_by_thread: ClassVar[dict[threading.Thread, str]] = {}
-    suffix: str
-
-    @classmethod
-    def set_default_space(cls, space: str) -> None:
-        cls._default_space_by_thread[threading.current_thread()] = space
+    prefix: str = Field(alias="space")
+    suffix: str = Field(alias="externalId")
 
     @property
     def space(self) -> str:
         """Returns entity space in CDF."""
-        if isinstance(self.prefix, _Undefined):
-            return self._default_space_by_thread.get(threading.current_thread(), "MISSING")
-        else:
-            return self.prefix
+        return self.prefix
 
     @property
     def external_id(self) -> str:
@@ -228,6 +238,11 @@ class DMSEntity(Entity, Generic[T_ID], ABC):
     @abstractmethod
     def as_id(self) -> T_ID:
         raise NotImplementedError("Method as_id must be implemented in subclasses")
+
+    @classmethod
+    @abstractmethod
+    def from_id(cls, id: T_ID) -> Self:
+        raise NotImplementedError("Method from_id must be implemented in subclasses")
 
 
 class ContainerEntity(DMSEntity[ContainerId]):
@@ -242,18 +257,7 @@ class ContainerEntity(DMSEntity[ContainerId]):
 
 
 class DMSVersionedEntity(DMSEntity[T_ID], ABC):
-    version: str | None = None
-    _default_version_by_thread: ClassVar[dict[threading.Thread, str]] = {}
-
-    @classmethod
-    def set_default_version(cls, version: str) -> None:
-        cls._default_version_by_thread[threading.current_thread()] = version
-
-    @property
-    def version_with_fallback(self) -> str:
-        if self.version is not None:
-            return self.version
-        return self._default_version_by_thread.get(threading.current_thread(), "MISSING")
+    version: str
 
 
 class ViewEntity(DMSVersionedEntity[ViewId]):
@@ -262,7 +266,11 @@ class ViewEntity(DMSVersionedEntity[ViewId]):
     def as_id(
         self,
     ) -> ViewId:
-        return ViewId(space=self.space, external_id=self.external_id, version=self.version_with_fallback)
+        return ViewId(space=self.space, external_id=self.external_id, version=self.version)
+
+    @classmethod
+    def from_id(cls, id: ViewId) -> "ViewEntity":
+        return cls(prefix=id.space, suffix=id.external_id, version=id.version)
 
 
 class ViewPropertyEntity(DMSVersionedEntity[PropertyId]):
@@ -270,8 +278,12 @@ class ViewPropertyEntity(DMSVersionedEntity[PropertyId]):
     property_: str = Field(alias="property")
 
     def as_id(self) -> PropertyId:
-        return PropertyId(
-            source=ViewId(self.space, self.external_id, self.version_with_fallback), property=self.property_
+        return PropertyId(source=ViewId(self.space, self.external_id, self.version), property=self.property_)
+
+    @classmethod
+    def from_id(cls, id: PropertyId) -> "ViewPropertyEntity":
+        return cls(
+            prefix=id.source.space, suffix=id.source.external_id, version=id.source.version, property_=id.property
         )
 
 
@@ -279,7 +291,11 @@ class DataModelEntity(DMSVersionedEntity[DataModelId]):
     type_: ClassVar[EntityTypes] = EntityTypes.datamodel
 
     def as_id(self) -> DataModelId:
-        return DataModelId(space=self.space, external_id=self.external_id, version=self.version_with_fallback)
+        return DataModelId(space=self.space, external_id=self.external_id, version=self.version)
+
+    @classmethod
+    def from_id(cls, id: DataModelId) -> "DataModelEntity":
+        return cls(prefix=id.space, suffix=id.external_id, version=id.version)
 
 
 class ReferenceEntity(ClassEntity):
@@ -287,11 +303,13 @@ class ReferenceEntity(ClassEntity):
     property_: str | None = Field(None, alias="property")
 
     def as_view_id(self) -> ViewId:
+        if self.prefix is Undefined or self.suffix is Unknown:
+            raise ValueError("Prefix is not defined or suffix is unknown")
         return ViewId(space=self.prefix, external_id=self.suffix, version=self.version)
 
     def as_view_property_id(self) -> PropertyId:
-        if self.property_ is None:
-            raise ValueError("Property is not defined")
+        if self.property_ is None or self.prefix is Undefined or self.suffix is Unknown:
+            raise ValueError("Property is not defined or prefix is not defined or suffix is unknown")
         return PropertyId(source=self.as_view_id(), property=self.property_)
 
 
