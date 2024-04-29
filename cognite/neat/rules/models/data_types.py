@@ -33,7 +33,7 @@ class DataType(BaseModel):
             return value
         elif isinstance(value, str):
             try:
-                return _LITERAL_BY_NAME[value.casefold()]()
+                return _DATA_TYPE_BY_NAME[value.casefold()]()
             except KeyError:
                 raise ValueError(f"Unknown literal type: {value}") from None
         raise ValueError(f"Cannot load {cls.__name__} from {value}")
@@ -256,4 +256,4 @@ class Json(DataType):
     sql = "STRING"
 
 
-_LITERAL_BY_NAME = {cls.name.casefold(): cls for cls in DataType.__subclasses__()}
+_DATA_TYPE_BY_NAME = {cls.name.casefold(): cls for cls in DataType.__subclasses__()}
