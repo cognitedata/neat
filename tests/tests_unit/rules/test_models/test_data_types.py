@@ -3,9 +3,9 @@ from typing import Any
 import pytest
 from pydantic import BaseModel, Field
 
-from cognite.neat.rules.models.entities import ClassEntity
-from cognite.neat.rules.models.literals import (
+from cognite.neat.rules.models.data_types import (
     Boolean,
+    DataType,
     Double,
     Float,
     Integer,
@@ -13,11 +13,12 @@ from cognite.neat.rules.models.literals import (
     NonNegativeInteger,
     NonPositiveInteger,
 )
+from cognite.neat.rules.models.entities import ClassEntity
 
 
 class DemoProperty(BaseModel):
     property_: str = Field(alias="property")
-    value_type: Literal | ClassEntity = Field(alias="valueType")
+    value_type: DataType | ClassEntity = Field(alias="valueType")
 
     def dump(self) -> dict[str, Any]:
         return self.model_dump(by_alias=True)

@@ -103,6 +103,15 @@ class NonNegativeInteger(DataType):
     sql = "INTEGER"
 
 
+class NegativeInteger(DataType):
+    name = "negativeInteger"
+    python = int
+    dms = dms.Int32
+    graphql = "Int"
+    xsd = "xsd:negativeInteger"
+    sql = "INTEGER"
+
+
 class Long(DataType):
     name = "long"
     python = int
@@ -110,6 +119,24 @@ class Long(DataType):
     graphql = "Int"
     xsd = "xsd:long"
     sql = "BIGINT"
+
+
+class String(DataType):
+    name = "string"
+    python = str
+    dms = dms.Text
+    graphql = "String"
+    xsd = "xsd:string"
+    sql = "STRING"
+
+
+class LangString(DataType):
+    name = "langString"
+    python = str
+    dms = dms.Text
+    graphql = "String"
+    xsd = "xsd:string"
+    sql = "STRING"
 
 
 class AnyURI(DataType):
@@ -150,6 +177,15 @@ class DateTime(DataType):
 
 class DateTimeStamp(DataType):
     name = "dateTimeStamp"
+    python = datetime
+    dms = dms.Timestamp
+    graphql = "Timestamp"
+    xsd = "xsd:dateTimeStamp"
+    sql = "TIMESTAMP"
+
+
+class Timestamp(DataType):
+    name = "timestamp"
     python = datetime
     dms = dms.Timestamp
     graphql = "Timestamp"
