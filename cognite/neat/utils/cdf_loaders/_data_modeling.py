@@ -87,8 +87,10 @@ class SpaceLoader(DataModelingLoader[str, SpaceApply, Space, SpaceApplyList, Spa
     def update(self, items: Sequence[SpaceApply]) -> SpaceList:
         return self.create(items)
 
-    def delete(self, ids: SequenceNotStr[str]) -> list[str]:
-        return self.client.data_modeling.spaces.delete(ids)
+    def delete(self, ids: SequenceNotStr[str] | Sequence[Space | SpaceApply]) -> list[str]:
+        if all(isinstance(item, Space) for item in ids) or all(isinstance(item, SpaceApply) for item in ids):
+            ids = [cast(Space | SpaceApply, item).space for item in ids]
+        return self.client.data_modeling.spaces.delete(cast(SequenceNotStr[str], ids))
 
 
 class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, ViewList]):

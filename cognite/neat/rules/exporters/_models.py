@@ -30,6 +30,7 @@ class UploadResult(UploadResultCore):
     skipped: int = 0
     failed_created: int = 0
     failed_changed: int = 0
+    failed_deleted: int = 0
     error_messages: list[str] = field(default_factory=list)
 
     @property
@@ -38,7 +39,7 @@ class UploadResult(UploadResultCore):
 
     @property
     def failed(self) -> int:
-        return self.failed_created + self.failed_changed
+        return self.failed_created + self.failed_changed + self.failed_deleted
 
     def as_report_str(self) -> str:
         line = []
@@ -50,9 +51,13 @@ class UploadResult(UploadResultCore):
             line.append(f"skipped {self.skipped}")
         if self.unchanged:
             line.append(f"unchanged {self.unchanged}")
+        if self.deleted:
+            line.append(f"deleted {self.deleted}")
         if self.failed_created:
             line.append(f"failed to create {self.failed_created}")
         if self.failed_changed:
             line.append(f"failed to update {self.failed_changed}")
+        if self.failed_deleted:
+            line.append(f"failed to delete {self.failed_deleted}")
 
         return f"{self.name.title()}: {', '.join(line)}"
