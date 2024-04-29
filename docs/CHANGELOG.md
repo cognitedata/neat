@@ -15,7 +15,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## [0.75.6] - 26-05-24
+## [0.75.7] - 29-05-24
 ### Added
 - `DMSExporter` now supports deletion of data model and data model components
 - `DeleteDataModelFromCDF` added to the step library
