@@ -24,6 +24,7 @@ from cognite.neat.rules.models.data_types import DataType
 
 from ._base import BaseExporter
 from ._validation import are_properties_redefined
+from ..models.entities import ClassEntity
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -553,7 +554,7 @@ class SHACLPropertyShape(OntologyModel):
             node_kind=SHACL.IRI if definition.type_ == EntityTypes.object_property else SHACL.Literal,
             expected_value_type=(
                 namespace[f"{definition.value_type.suffix}Shape"]
-                if definition.type_ == EntityTypes.object_property
+                if isinstance(definition.value_type, ClassEntity)
                 else XSD[definition.value_type.xsd]
             ),
             min_count=definition.min_count,
