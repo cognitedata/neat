@@ -167,7 +167,7 @@ class DMSImporter(BaseImporter):
                             property_=prop_id,
                             description=prop.description,
                             name=prop.name,
-                            value_type=cast(ViewPropEntity | DMSValueType, container_prop.type._type),
+                            value_type=cast(ViewPropertyEntity | DataType, container_prop.type._type),
                             nullable=container_prop.nullable,
                             is_list=container_prop.type.is_list,
                             default=container_prop.default_value,
@@ -179,7 +179,7 @@ class DMSImporter(BaseImporter):
                             constraint=unique_constraints or None,
                         )
                 elif isinstance(prop, dm.MultiEdgeConnectionApply):
-                    view_entity = ViewPropEntity.from_id(prop.source)
+                    view_entity = ViewEntity.from_id(prop.source)
                     dms_property = DMSProperty(
                         class_=ClassEntity(prefix=view.space, suffix=view.external_id, version=view.version),
                         property_=prop_id,
