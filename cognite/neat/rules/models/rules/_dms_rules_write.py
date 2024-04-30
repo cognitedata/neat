@@ -6,14 +6,15 @@ from ._base import ExtensionCategory, SchemaCompleteness, SheetList
 from cognite.neat.rules.models.entities import ViewEntity, ViewPropertyEntity, ClassEntity, ReferenceEntity, ContainerEntity
 from cognite.neat.rules.models.data_types import DataType
 
+
 @dataclass
 class DMSMetadataWrite:
     schema_: Literal["complete", "partial", "extended"]
-    extension: Literal["addition", "reshape", "rebuild"]
     space: str
     external_id: str
     creator: str
     version: str
+    extension: Literal["addition", "reshape", "rebuild"] = 'addition'
     name: str | None = None
     description: str | None = None
     created: datetime| str | None = None
@@ -137,6 +138,7 @@ class DMSRulesWrite:
     properties: Sequence[DMSPropertyWrite]
     views: Sequence[DMSViewWrite]
     containers: Sequence[DMSContainerWrite] | None
+    reference: "DMSRulesWrite | DMSRules | None" = None
 
     def as_read(self) -> DMSRules:
         default_space = self.metadata.space
@@ -146,4 +148,5 @@ class DMSRulesWrite:
             properties=SheetList[DMSProperty](data=[prop.as_read(default_space, default_version) for prop in self.properties]),
             views=SheetList[DMSView](data=[view.as_read(default_space, default_version) for view in self.views]),
             containers=SheetList[DMSContainer](data=[container.as_read(default_space) for container in self.containers or []] or []),
+            reference=self.reference.as_read() if isinstance(self.reference, DMSRulesWrite) else self.reference if self.reference else None
         )
