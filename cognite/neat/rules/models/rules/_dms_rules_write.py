@@ -43,12 +43,12 @@ class DMSMetadataWrite:
             default_view_version=data.get("default_view_version")
         )
 
-    def as_read(self) -> DMSMetadata:
-        return DMSMetadata(
-            schema_=SchemaCompleteness(self.schema_),
+    def dump(self) -> dict[str, Any]:
+        return dict(
+            schema=SchemaCompleteness(self.schema_),
             extension=ExtensionCategory(self.extension),
             space=self.space,
-            external_id=self.external_id,
+            externalId=self.external_id,
             creator=self.creator,
             version=self.version,
             name=self.name,
@@ -106,7 +106,7 @@ class DMSPropertyWrite:
             constraint=data.get("constraint")
         )
 
-    def as_read(self, default_space, default_version) -> DMSProperty:
+    def dump(self, default_space: str, default_version: str) -> dict[str, Any]:
         value_type: DataType | ViewPropertyEntity | ViewEntity
         if DataType.is_data_type(self.value_type):
             value_type = DataType.load(self.value_type)
@@ -116,24 +116,24 @@ class DMSPropertyWrite:
             except ValueError:
                 value_type = ViewEntity.load(self.value_type, space=default_space, version=default_version)
 
-        return DMSProperty(
-            view=ViewEntity.load(self.view, space=default_space, version=default_version),
-            view_property=self.view_property,
-            value_type=value_type,
-            property_=self.property_ or self.view_property,
-            class_=ClassEntity.load(self.class_, prefix=default_space, version=default_version) if self.class_ else None,
-            name=self.name,
-            description=self.description,
-            relation=self.relation,
-            nullable=self.nullable,
-            is_list=self.is_list,
-            default=self.default,
-            reference=self.reference,
-            container=ContainerEntity.load(self.container, space=default_space, version=default_version) if self.container else None,
-            container_property=self.container_property,
-            index=self.index,
-            constraint=self.constraint,
-        )
+        return {
+            "View":ViewEntity.load(self.view, space=default_space, version=default_version),
+            "ViewProperty": self.view_property,
+            "Value Type": value_type,
+            "Property":self.property_ or self.view_property,
+            "Class":ClassEntity.load(self.class_, prefix=default_space, version=default_version) if self.class_ else None,
+            "Name":self.name,
+            "Description":self.description,
+            "Relation":self.relation,
+            "Nullable":self.nullable,
+            "IsList":self.is_list,
+            "Default":self.default,
+            "Reference":self.reference,
+            "Container":ContainerEntity.load(self.container, space=default_space, version=default_version) if self.container else None,
+            "ContainerProperty":self.container_property,
+            "Index":self.index,
+            "Constraint":self.constraint,
+        }
 
 
 @dataclass
@@ -163,15 +163,15 @@ class DMSContainerWrite:
             constraint=data.get("constraint")
         )
 
-    def as_read(self, default_space: str) -> DMSContainer:
+    def dump(self, default_space: str) -> dict[str, Any]:
         container = ContainerEntity.load(self.container, space=default_space)
-        return DMSContainer(
-            container=container,
-            class_=ClassEntity.load(self.class_, prefix=default_space) if self.class_ else container.as_class(),
-            name=self.name,
-            description=self.description,
-            reference=self.reference,
-            constraint=[ContainerEntity.load(constraint.strip(), space=default_space) for constraint in self.constraint.split(",")] if self.constraint else None
+        return dict(
+            Container=container,
+            Class=ClassEntity.load(self.class_, prefix=default_space) if self.class_ else container.as_class(),
+            Name=self.name,
+            Description=self.description,
+            Reference=self.reference,
+            Constraint=[ContainerEntity.load(constraint.strip(), space=default_space) for constraint in self.constraint.split(",")] if self.constraint else None
         )
 
 
@@ -206,17 +206,17 @@ class DMSViewWrite:
             in_model=data.get("in_model", True)
         )
 
-    def as_read(self, default_space: str, default_version: str) -> DMSView:
+    def dump(self, default_space: str, default_version: str) -> dict[str, Any]:
         view = ViewEntity.load(self.view, space=default_space, version=default_version)
-        return DMSView(
-            view=view,
-            class_=ClassEntity.load(self.class_, prefix=default_space, version=default_version) if self.class_ else view.as_class(),
-            name=self.name,
-            description=self.description,
-            implements=[ViewEntity.load(implement, space=default_space, version=default_version) for implement in self.implements.split(",")] if self.implements else None,
-            reference=self.reference,
-            filter_=self.filter_,
-            in_model=self.in_model
+        return dict(
+            View=view,
+            Class=ClassEntity.load(self.class_, prefix=default_space, version=default_version) if self.class_ else view.as_class(),
+            Name=self.name,
+            Description=self.description,
+            Implements=[ViewEntity.load(implement, space=default_space, version=default_version) for implement in self.implements.split(",")] if self.implements else None,
+            Reference=self.reference,
+            Filter=self.filter_,
+            InModel=self.in_model
         )
 
 
@@ -242,14 +242,24 @@ class DMSRulesWrite:
         )
 
     def as_read(self) -> DMSRules:
+        return DMSRules.model_validate(self.dump())
+
+    def dump(self) -> dict[str, Any]:
         default_space = self.metadata.space
         default_version = self.metadata.version
-        return DMSRules(
-            metadata=self.metadata.as_read(),
-            properties=SheetList[DMSProperty](data=[prop.as_read(default_space, default_version) for prop in self.properties]),
-            views=SheetList[DMSView](data=[view.as_read(default_space, default_version) for view in self.views]),
-            containers=SheetList[DMSContainer](data=[container.as_read(default_space) for container in self.containers or []] or []),
-            reference=self.reference.as_read() if isinstance(self.reference, DMSRulesWrite) else self.reference if self.reference else None
+        reference: dict[str, Any] | None = None
+        if isinstance(self.reference, DMSRulesWrite):
+            reference = self.reference.dump()
+        elif isinstance(self.reference, DMSRules):
+            # We need to load through the DMSRulesWrite to set the correct default space and version
+            reference = DMSRulesWrite.load(self.reference.model_dump()).dump()
+
+        return dict(
+            Metadata=self.metadata.dump(),
+            Properties=[prop.dump(default_space, default_version) for prop in self.properties],
+            Views=[view.dump(default_space, default_version) for view in self.views],
+            Containers=[container.dump(default_space) for container in self.containers or []] or None,
+            Reference=reference
         )
 
 
