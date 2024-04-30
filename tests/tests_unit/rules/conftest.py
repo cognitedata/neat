@@ -7,7 +7,7 @@ from cognite.neat.rules.importers import ExcelImporter
 from cognite.neat.rules.models.rules import DMSRules, DomainRules, InformationRules, RoleTypes
 from cognite.neat.utils.spreadsheet import read_individual_sheet
 from tests.config import DOC_RULES
-
+from cognite.neat.rules.models.rules._dms_rules_write import DMSRulesWrite
 
 @pytest.fixture(scope="session")
 def alice_spreadsheet() -> dict[str, dict[str, Any]]:
@@ -23,7 +23,7 @@ def alice_spreadsheet() -> dict[str, dict[str, Any]]:
 
 @pytest.fixture(scope="session")
 def alice_rules(alice_spreadsheet: dict[str, dict[str, Any]]) -> DMSRules:
-    return DMSRules.model_validate(alice_spreadsheet)
+    return DMSRulesWrite.load(alice_spreadsheet).as_read()
 
 
 @pytest.fixture(scope="session")

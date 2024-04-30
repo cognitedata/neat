@@ -13,7 +13,6 @@ from cognite.neat.rules.importers import DMSImporter
 from cognite.neat.rules.models.rules._base import ExtensionCategory, SchemaCompleteness, SheetList
 from cognite.neat.rules.models.rules._dms_architect_rules import (
     DMSContainer,
-    DMSMetadata,
     DMSProperty,
     DMSRules,
     DMSView,
@@ -875,11 +874,11 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 ]
             ,
             views=[
-                    DMSViewWrite(view="sp_core:Asset(version=1)", class_="Asset"),
+                    DMSViewWrite(view="sp_core:Asset(version=1)"),
                     DMSViewWrite(class_="WindTurbine", view="WindTurbine", implements="sp_core:Asset(version=1)"),
                 ]
             ,
-        ),
+        ).as_read(),
         id="Two properties, two containers, two views. Primary data types, no relations.",
     )
 
@@ -1030,7 +1029,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                     DMSViewWrite(class_="Reservoir", view="Reservoir", implements="Asset"),
                 ]
             ,
-        ),
+        ).as_read(),
         id="Five properties, two containers, four views. Direct relations and Multiedge.",
     )
 
@@ -1385,7 +1384,7 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
         id="Addition extension, changing view",
     )
 
-    changing_container2 = changing_container.model_copy(deep=True)
+    changing_container2 = changing_container.as_read().model_copy(deep=True)
     changing_container2.metadata.extension = ExtensionCategory.reshape
 
     yield pytest.param(
@@ -1396,7 +1395,7 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
 
 class TestDMSRules:
     def test_load_valid_alice_rules(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
-        valid_rules = DMSRules.model_validate(alice_spreadsheet)
+        valid_rules = DMSRulesWrite.load(alice_spreadsheet).as_read()
 
         assert isinstance(valid_rules, DMSRules)
 
@@ -1412,7 +1411,7 @@ class TestDMSRules:
 
     @pytest.mark.parametrize("raw, expected_rules", list(valid_rules_tests_cases()))
     def test_load_valid_rules(self, raw: dict[str, dict[str, Any]], expected_rules: DMSRules) -> None:
-        valid_rules = DMSRules.model_validate(raw)
+        valid_rules = DMSRulesWrite.load(raw).as_read()
         assert valid_rules.model_dump() == expected_rules.model_dump()
         # testing case insensitive value types
         assert isinstance(valid_rules.properties.data[0].value_type, String)
@@ -1422,7 +1421,7 @@ class TestDMSRules:
         self, raw: dict[str, dict[str, Any]], expected_errors: list[validation.NeatValidationError]
     ) -> None:
         with pytest.raises(ValueError) as e:
-            DMSRules.model_validate(raw)
+            DMSRulesWrite.load(raw).as_read()
 
         assert isinstance(e.value, ValidationError)
         validation_errors = e.value.errors()
@@ -1461,8 +1460,9 @@ class TestDMSRules:
 
         assert recreated_rules.model_dump() == rules.model_dump()
 
-    @pytest.mark.parametrize("rules, expected_schema", rules_schema_tests_cases())
-    def test_as_schema(self, rules: DMSRules, expected_schema: DMSSchema) -> None:
+    @pytest.mark.parametrize("input_rules, expected_schema", rules_schema_tests_cases())
+    def test_as_schema(self, input_rules: DMSRulesWrite, expected_schema: DMSSchema) -> None:
+        rules = input_rules.as_read()
         actual_schema = rules.as_schema()
 
         assert actual_schema.spaces.dump() == expected_schema.spaces.dump()

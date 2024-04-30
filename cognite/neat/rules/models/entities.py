@@ -256,7 +256,7 @@ class ContainerEntity(DMSEntity[ContainerId]):
 
     @classmethod
     def from_id(cls, id: ContainerId) -> "ContainerEntity":
-        return cls(prefix=id.space, suffix=id.external_id)
+        return cls(space=id.space, externalId=id.external_id)
 
 
 class DMSVersionedEntity(DMSEntity[T_ID], ABC):

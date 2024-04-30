@@ -178,7 +178,7 @@ class DMSProperty(SheetEntity):
 
     @field_validator("nullable")
     def direct_relation_must_be_nullable(cls, value: Any, info: ValidationInfo) -> None:
-        if info.data.get("relation") == "direct" and value is False:
+        if info.data.get("relatVion") == "direct" and value is False:
             raise ValueError("Direct relation must be nullable")
         return value
 
@@ -264,11 +264,11 @@ class DMSView(SheetEntity):
     def from_view(cls, view: dm.ViewApply, data_model_view_ids: set[dm.ViewId]) -> "DMSView":
         return cls(
             class_=ClassEntity(prefix=view.space, suffix=view.external_id),
-            view=ViewEntity(prefix=view.space, suffix=view.external_id, version=view.version),
+            view=ViewEntity(space=view.space, externalId=view.external_id, version=view.version),
             description=view.description,
             name=view.name,
             implements=[
-                ViewEntity(prefix=parent.space, suffix=parent.external_id, version=parent.version)
+                ViewEntity(space=parent.space, externalId=parent.external_id, version=parent.version)
                 for parent in view.implements
             ]
             or None,
@@ -632,9 +632,6 @@ class _DMSExporter:
         self.instance_space = instance_space
 
     def to_schema(self, rules: DMSRules) -> DMSSchema:
-        default_version = "1"
-        default_space = rules.metadata.space
-
         container_properties_by_id, view_properties_by_id = self._gather_properties(rules)
 
         containers = self._create_containers(rules.containers, container_properties_by_id)
@@ -783,19 +780,19 @@ class _DMSExporter:
                             issues.dms.ReverseOfDirectRelationListWarning(view_id, prop.property_), stacklevel=2
                         )
                         if isinstance(reverse_prop.reference, ReferenceEntity):
-                            ref_view_prop = reverse_prop.reference.as_prop_id()
+                            ref_view_prop = reverse_prop.reference.as_view_property_id()
                             edge_type = dm.DirectRelationReference(
                                 space=ref_view_prop.source.space,
                                 external_id=f"{ref_view_prop.source.external_id}.{ref_view_prop.property}",
                             )
                         else:
                             edge_type = dm.DirectRelationReference(
-                                space=source.space,
+                                space=source.source.space,
                                 external_id=f"{reverse_prop.view.external_id}.{reverse_prop.view_property}",
                             )
                         view_property = dm.MultiEdgeConnectionApply(
                             type=edge_type,
-                            source=source,
+                            source=source.source,
                             direction="inwards",
                             name=prop.name,
                             description=prop.description,
@@ -803,7 +800,7 @@ class _DMSExporter:
                     else:
                         args: dict[str, Any] = dict(
                             source=source,
-                            through=dm.PropertyId(source, source_prop),
+                            through=dm.PropertyId(source.source, source_prop),
                             description=prop.description,
                             name=prop.name,
                         )
