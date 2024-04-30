@@ -699,7 +699,9 @@ class _DMSExporter:
                     # This is not yet supported in the CDF API, a warning has already been issued, here we convert it to
                     # a multi-edge connection.
                     if isinstance(prop.value_type, ViewEntity):
-                        source = prop.value_type.as_id()
+                        source_view_id = prop.value_type.as_id()
+                    elif isinstance(prop.value_type, ViewPropertyEntity):
+                        source_view_id = prop.value_type.as_id().source
                     else:
                         raise ValueError(
                             "Direct relation must have a view as value type. "
@@ -707,10 +709,10 @@ class _DMSExporter:
                         )
                     view_property = dm.MultiEdgeConnectionApply(
                         type=dm.DirectRelationReference(
-                            space=source.space,
+                            space=source_view_id.space,
                             external_id=f"{prop.view.external_id}.{prop.view_property}",
                         ),
-                        source=source,
+                        source=source_view_id,
                         direction="outwards",
                         name=prop.name,
                         description=prop.description,
@@ -734,7 +736,7 @@ class _DMSExporter:
                     )
                 elif prop.view and prop.view_property and prop.relation == "multiedge":
                     if isinstance(prop.value_type, ViewEntity):
-                        source = prop.value_type.as_id()
+                        source_view_id = prop.value_type.as_id()
                     else:
                         raise ValueError(
                             "Multiedge relation must have a view as value type. "
@@ -748,20 +750,20 @@ class _DMSExporter:
                         )
                     else:
                         edge_type = dm.DirectRelationReference(
-                            space=source.space,
+                            space=source_view_id.space,
                             external_id=f"{prop.view.external_id}.{prop.view_property}",
                         )
 
                     view_property = dm.MultiEdgeConnectionApply(
                         type=edge_type,
-                        source=source,
+                        source=source_view_id,
                         direction="outwards",
                         name=prop.name,
                         description=prop.description,
                     )
                 elif prop.view and prop.view_property and prop.relation == "reversedirect":
                     if isinstance(prop.value_type, ViewPropertyEntity):
-                        source = prop.value_type.as_id()
+                        source_prop_id = prop.value_type.as_id()
                     else:
                         raise ValueError(
                             "Reverse direct relation must have a view as value type. "
@@ -775,7 +777,7 @@ class _DMSExporter:
                             f"{prop.value_type.versioned_id}:<property>"
                         )
                     reverse_prop = next(
-                        (prop for prop in view_properties_by_id.get(source, []) if prop.property_ == source_prop), None
+                        (prop for prop in view_properties_by_id.get(source_prop_id.source, []) if prop.property_ == source_prop), None
                     )
                     if reverse_prop and reverse_prop.relation == "direct" and reverse_prop.is_list:
                         warnings.warn(
@@ -789,20 +791,20 @@ class _DMSExporter:
                             )
                         else:
                             edge_type = dm.DirectRelationReference(
-                                space=source.source.space,
+                                space=source_prop_id.source.space,
                                 external_id=f"{reverse_prop.view.external_id}.{reverse_prop.view_property}",
                             )
                         view_property = dm.MultiEdgeConnectionApply(
                             type=edge_type,
-                            source=source.source,
+                            source=source_prop_id.source,
                             direction="inwards",
                             name=prop.name,
                             description=prop.description,
                         )
                     else:
                         args: dict[str, Any] = dict(
-                            source=source,
-                            through=dm.PropertyId(source.source, source_prop),
+                            source=source_prop_id.source,
+                            through=dm.PropertyId(source_prop_id.source, source_prop),
                             description=prop.description,
                             name=prop.name,
                         )
