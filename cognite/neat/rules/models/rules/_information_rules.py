@@ -382,7 +382,7 @@ class _InformationRulesConverter:
         from ._dms_architect_rules import DMSContainer, DMSMetadata, DMSProperty, DMSRules, DMSView
 
         info_metadata = self.information.metadata
-
+        default_version = info_metadata.version
         space = self._to_space(info_metadata.prefix)
 
         metadata = DMSMetadata(
@@ -398,13 +398,17 @@ class _InformationRulesConverter:
 
         properties_by_class: dict[str, list[DMSProperty]] = defaultdict(list)
         for prop in self.information.properties:
-            properties_by_class[prop.class_.versioned_id].append(self._as_dms_property(prop))
+            properties_by_class[prop.class_.versioned_id].append(self._as_dms_property(prop, default_version))
 
         views: list[DMSView] = [
             DMSView(
                 class_=cls_.class_,
                 name=cls_.name,
-                view=ViewEntity(prefix=cls_.class_.prefix, suffix=cls_.class_.suffix, version=cls_.class_.version),
+                view=ViewEntity(
+                    space=cls_.class_.prefix,
+                    externalId=cls_.class_.suffix,
+                    version=cls_.class_.version or default_version,
+                ),
                 description=cls_.description,
                 reference=cls_.reference,
                 implements=self._get_view_implements(cls_, info_metadata),
@@ -428,12 +432,12 @@ class _InformationRulesConverter:
                 DMSContainer(
                     class_=class_.class_,
                     name=class_.name,
-                    container=ContainerEntity(prefix=class_.class_.prefix, suffix=class_.class_.suffix),
+                    container=ContainerEntity(space=class_.class_.prefix, externalId=class_.class_.suffix),
                     description=class_.description,
                     constraint=[
                         ContainerEntity(
-                            prefix=parent.prefix,
-                            suffix=parent.suffix,
+                            space=parent.prefix,
+                            externalId=parent.suffix,
                         )
                         for parent in class_.parent or []
                         if parent.versioned_id not in classes_without_properties
@@ -453,7 +457,7 @@ class _InformationRulesConverter:
         )
 
     @classmethod
-    def _as_dms_property(cls, prop: InformationProperty) -> "DMSProperty":
+    def _as_dms_property(cls, prop: InformationProperty, default_version: str) -> "DMSProperty":
         """This creates the first"""
 
         from ._dms_architect_rules import DMSProperty
@@ -463,7 +467,9 @@ class _InformationRulesConverter:
             value_type = prop.value_type.dms._type.casefold()  # type: ignore[attr-defined]
         elif isinstance(prop.value_type, ClassEntity):
             value_type = ViewEntity(
-                prefix=prop.value_type.prefix, suffix=prop.value_type.suffix, version=prop.value_type.version
+                space=prop.value_type.prefix,
+                externalId=prop.value_type.suffix,
+                version=prop.value_type.version or default_version,
             )
         else:
             raise ValueError(f"Unsupported value type: {prop.value_type.type_}")
@@ -497,7 +503,9 @@ class _InformationRulesConverter:
             reference=prop.reference,
             container=container,
             container_property=container_property,
-            view=ViewEntity(prefix=prop.class_.prefix, suffix=prop.class_.suffix, version=prop.class_.version),
+            view=ViewEntity(
+                space=prop.class_.prefix, externalId=prop.class_.suffix, version=prop.class_.version or default_version
+            ),
             view_property=prop.property_,
         )
 
@@ -516,25 +524,29 @@ class _InformationRulesConverter:
     def _get_container(cls, prop: InformationProperty) -> tuple[ContainerEntity, str]:
         if isinstance(prop.reference, ReferenceEntity):
             return (
-                ContainerEntity(prefix=prop.reference.prefix, suffix=prop.reference.suffix),
+                ContainerEntity(space=prop.reference.prefix, externalId=prop.reference.suffix),
                 prop.reference.property_ or prop.property_,
             )
         else:
-            return ContainerEntity(prefix=prop.class_.prefix, suffix=prop.class_.suffix), prop.property_
+            return ContainerEntity(space=prop.class_.prefix, externalId=prop.class_.suffix), prop.property_
 
     @classmethod
     def _get_view_implements(cls, cls_: InformationClass, metadata: InformationMetadata) -> list[ViewEntity]:
         if isinstance(cls_.reference, ReferenceEntity) and cls_.reference.prefix != metadata.prefix:
             # We use the reference for implements if it is in a different namespace
             implements = [
-                ViewEntity(prefix=cls_.reference.prefix, suffix=cls_.reference.suffix, version=cls_.reference.version)
+                ViewEntity(
+                    space=cls_.reference.prefix,
+                    externalId=cls_.reference.suffix,
+                    version=cls_.reference.version or metadata.version,
+                )
             ]
         else:
             implements = []
 
         implements.extend(
             [
-                ViewEntity(prefix=parent.prefix, suffix=parent.suffix, version=parent.version)
+                ViewEntity(space=parent.prefix, externalId=parent.suffix, version=parent.version or metadata.version)
                 for parent in cls_.parent or []
             ]
         )
