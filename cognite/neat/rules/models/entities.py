@@ -2,10 +2,10 @@ import re
 import sys
 from abc import ABC, abstractmethod
 from functools import total_ordering
-from typing import Annotated, Any, ClassVar, Generic, TypeVar, Literal
+from typing import Annotated, Any, ClassVar, Generic, Literal, TypeVar
 
 from cognite.client.data_classes.data_modeling.ids import ContainerId, DataModelId, PropertyId, ViewId
-from pydantic import BaseModel, BeforeValidator, Field, PlainSerializer, model_serializer, model_validator, AnyHttpUrl
+from pydantic import AnyHttpUrl, BaseModel, BeforeValidator, Field, PlainSerializer, model_serializer, model_validator
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum

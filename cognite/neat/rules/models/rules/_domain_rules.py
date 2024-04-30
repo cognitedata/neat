@@ -4,6 +4,9 @@ from typing import Any, ClassVar
 from pydantic import Field, field_serializer, field_validator, model_serializer
 from pydantic_core.core_schema import SerializationInfo
 
+from cognite.neat.rules.models.data_types import DataType
+from cognite.neat.rules.models.entities import ClassEntity, ParentEntityList
+
 from ._base import (
     BaseMetadata,
     RoleTypes,
@@ -12,8 +15,6 @@ from ._base import (
     SheetList,
 )
 from ._types import PropertyType, StrOrListType
-from cognite.neat.rules.models.entities import ClassEntity, ParentEntityList
-from cognite.neat.rules.models.data_types import DataType
 
 
 class DomainMetadata(BaseMetadata):

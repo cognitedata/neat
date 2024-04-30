@@ -5,7 +5,6 @@ from typing import Any, ClassVar
 from cognite.client.data_classes import data_modeling as dms
 from pydantic import BaseModel, model_serializer, model_validator
 from pydantic.functional_validators import ModelWrapValidatorHandler
-from pydantic.main import Model
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -63,6 +62,7 @@ class DataType(BaseModel):
     @classmethod
     def is_data_type(cls, value: str) -> bool:
         return value.casefold() in _DATA_TYPE_BY_NAME or value.casefold() in _DATA_TYPE_BY_DMS_TYPE
+
 
 class Boolean(DataType):
     name = "boolean"
@@ -189,6 +189,7 @@ class DateTime(DataType):
     xsd = "xsd:dateTimeStamp"
     sql = "TIMESTAMP"
 
+
 class Timestamp(DataType):
     name = "timestamp"
     python = datetime
@@ -196,6 +197,7 @@ class Timestamp(DataType):
     graphql = "Timestamp"
     xsd = "xsd:dateTimeStamp"
     sql = "TIMESTAMP"
+
 
 class DateTimeStamp(DataType):
     name = "dateTimeStamp"
@@ -271,5 +273,9 @@ class Json(DataType):
 
 _DATA_TYPE_BY_NAME = {cls.name.casefold(): cls for cls in DataType.__subclasses__()}
 _seen = set()
-_DATA_TYPE_BY_DMS_TYPE = {cls.dms._type.casefold(): cls for cls in DataType.__subclasses__() if cls.dms._type not in _seen and not _seen.add(cls.dms._type)}
+_DATA_TYPE_BY_DMS_TYPE = {
+    cls.dms._type.casefold(): cls
+    for cls in DataType.__subclasses__()
+    if cls.dms._type not in _seen and not _seen.add(cls.dms._type)
+}
 del _seen

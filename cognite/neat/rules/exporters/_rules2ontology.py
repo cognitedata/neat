@@ -18,12 +18,12 @@ from cognite.neat.rules.models.rules._information_rules import (
     InformationProperty,
     InformationRules,
 )
-from cognite.neat.rules.models.rules._types import XSD_VALUE_TYPE_MAPPINGS, EntityTypes
+from cognite.neat.rules.models.rules._types import EntityTypes
 from cognite.neat.utils.utils import generate_exception_report, remove_namespace
+from neat.rules.models.data_types import DataType
 
 from ._base import BaseExporter
 from ._validation import are_properties_redefined
-from ..models.data_types import DataType
 
 if sys.version_info >= (3, 11):
     from typing import Self

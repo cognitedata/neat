@@ -5,10 +5,10 @@ import yaml
 
 from cognite.neat.rules import issues
 from cognite.neat.rules.issues import IssueList, NeatValidationError, ValidationIssue
-from cognite.neat.rules.models.rules import RULES_PER_ROLE, RoleTypes, DMSRules
+from cognite.neat.rules.models.rules import RULES_PER_ROLE, DMSRules, RoleTypes
+from neat.rules.models.rules._dms_rules_write import DMSRulesWrite
 
 from ._base import BaseImporter, Rules, _handle_issues
-from ..models.rules._dms_rules_write import DMSRulesWrite
 
 
 class YAMLImporter(BaseImporter):

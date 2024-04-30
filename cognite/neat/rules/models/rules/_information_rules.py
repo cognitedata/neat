@@ -6,7 +6,7 @@ from collections import defaultdict
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
 
-from pydantic import AnyHttpUrl, Field, field_serializer, field_validator, model_serializer, model_validator
+from pydantic import Field, field_serializer, field_validator, model_serializer, model_validator
 from pydantic_core.core_schema import SerializationInfo
 from rdflib import Namespace
 
@@ -24,9 +24,9 @@ from cognite.neat.rules.models.entities import (
     ReferenceEntity,
     Undefined,
     Unknown,
+    URLEntity,
     ViewEntity,
     ViewPropertyEntity,
-    URLEntity,
 )
 from cognite.neat.rules.models.rdfpath import (
     AllReferences,

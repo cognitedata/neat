@@ -11,7 +11,7 @@ from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import PropertyType as CognitePropertyType
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex
 from cognite.client.data_classes.data_modeling.views import SingleReverseDirectRelationApply, ViewPropertyApply
-from pydantic import AnyHttpUrl, Field, field_serializer, field_validator, model_serializer, model_validator
+from pydantic import Field, field_serializer, field_validator, model_serializer, model_validator
 from pydantic_core.core_schema import SerializationInfo, ValidationInfo
 from rdflib import Namespace
 
@@ -22,15 +22,15 @@ from cognite.neat.rules.models.entities import (
     ClassEntity,
     ContainerEntity,
     ContainerEntityList,
+    DMSUnknownEntity,
     ParentClassEntity,
     ReferenceEntity,
+    Undefined,
+    Unknown,
+    URLEntity,
     ViewEntity,
     ViewEntityList,
     ViewPropertyEntity,
-    DMSUnknownEntity,
-    URLEntity,
-    Undefined,
-    Unknown
 )
 from cognite.neat.rules.models.rules._domain_rules import DomainRules
 
@@ -783,7 +783,12 @@ class _DMSExporter:
                             f"{prop.value_type.versioned_id}:<property>"
                         )
                     reverse_prop = next(
-                        (prop for prop in view_properties_by_id.get(source_prop_id.source, []) if prop.property_ == source_prop), None
+                        (
+                            prop
+                            for prop in view_properties_by_id.get(source_prop_id.source, [])
+                            if prop.property_ == source_prop
+                        ),
+                        None,
                     )
                     if reverse_prop and reverse_prop.relation == "direct" and reverse_prop.is_list:
                         warnings.warn(

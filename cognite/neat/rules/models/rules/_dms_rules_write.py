@@ -1,13 +1,20 @@
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Sequence, Literal, Any
+from typing import Any, Literal
 
 from pydantic import BaseModel
 
-from ._dms_architect_rules import DMSRules, DMSView, DMSMetadata, DMSProperty, DMSContainer
-from ._base import ExtensionCategory, SchemaCompleteness, SheetList
-from cognite.neat.rules.models.entities import ViewEntity, ViewPropertyEntity, ClassEntity, ReferenceEntity, ContainerEntity
 from cognite.neat.rules.models.data_types import DataType
+from cognite.neat.rules.models.entities import (
+    ClassEntity,
+    ContainerEntity,
+    ViewEntity,
+    ViewPropertyEntity,
+)
+
+from ._base import ExtensionCategory, SchemaCompleteness
+from ._dms_architect_rules import DMSContainer, DMSMetadata, DMSProperty, DMSRules, DMSView
 
 
 @dataclass
@@ -17,7 +24,7 @@ class DMSMetadataWrite:
     external_id: str
     creator: str
     version: str
-    extension: Literal["addition", "reshape", "rebuild"] = 'addition'
+    extension: Literal["addition", "reshape", "rebuild"] = "addition"
     name: str | None = None
     description: str | None = None
     created: datetime | str | None = None
@@ -40,7 +47,7 @@ class DMSMetadataWrite:
             description=data.get("description"),
             created=data.get("created"),
             updated=data.get("updated"),
-            default_view_version=data.get("default_view_version")
+            default_view_version=data.get("default_view_version"),
         )
 
     def dump(self) -> dict[str, Any]:
@@ -79,7 +86,9 @@ class DMSPropertyWrite:
     constraint: str | list[str] | None = None
 
     @classmethod
-    def load(cls, data: dict[str, Any] | list[dict[str, Any]] | None) -> "DMSPropertyWrite | list[DMSPropertyWrite] | None":
+    def load(
+        cls, data: dict[str, Any] | list[dict[str, Any]] | None
+    ) -> "DMSPropertyWrite | list[DMSPropertyWrite] | None":
         if data is None:
             return None
         if isinstance(data, list) or (isinstance(data, dict) and isinstance(data.get("data"), list)):
@@ -103,7 +112,7 @@ class DMSPropertyWrite:
             container=data.get("container"),
             container_property=data.get("container_property"),
             index=data.get("index"),
-            constraint=data.get("constraint")
+            constraint=data.get("constraint"),
         )
 
     def dump(self, default_space: str, default_version: str) -> dict[str, Any]:
@@ -117,22 +126,26 @@ class DMSPropertyWrite:
                 value_type = ViewEntity.load(self.value_type, space=default_space, version=default_version)
 
         return {
-            "View":ViewEntity.load(self.view, space=default_space, version=default_version),
+            "View": ViewEntity.load(self.view, space=default_space, version=default_version),
             "ViewProperty": self.view_property,
             "Value Type": value_type,
-            "Property":self.property_ or self.view_property,
-            "Class":ClassEntity.load(self.class_, prefix=default_space, version=default_version) if self.class_ else None,
-            "Name":self.name,
-            "Description":self.description,
-            "Relation":self.relation,
-            "Nullable":self.nullable,
-            "IsList":self.is_list,
-            "Default":self.default,
-            "Reference":self.reference,
-            "Container":ContainerEntity.load(self.container, space=default_space, version=default_version) if self.container else None,
-            "ContainerProperty":self.container_property,
-            "Index":self.index,
-            "Constraint":self.constraint,
+            "Property": self.property_ or self.view_property,
+            "Class": ClassEntity.load(self.class_, prefix=default_space, version=default_version)
+            if self.class_
+            else None,
+            "Name": self.name,
+            "Description": self.description,
+            "Relation": self.relation,
+            "Nullable": self.nullable,
+            "IsList": self.is_list,
+            "Default": self.default,
+            "Reference": self.reference,
+            "Container": ContainerEntity.load(self.container, space=default_space, version=default_version)
+            if self.container
+            else None,
+            "ContainerProperty": self.container_property,
+            "Index": self.index,
+            "Constraint": self.constraint,
         }
 
 
@@ -160,7 +173,7 @@ class DMSContainerWrite:
             name=data.get("name"),
             description=data.get("description"),
             reference=data.get("reference"),
-            constraint=data.get("constraint")
+            constraint=data.get("constraint"),
         )
 
     def dump(self, default_space: str) -> dict[str, Any]:
@@ -171,7 +184,12 @@ class DMSContainerWrite:
             Name=self.name,
             Description=self.description,
             Reference=self.reference,
-            Constraint=[ContainerEntity.load(constraint.strip(), space=default_space) for constraint in self.constraint.split(",")] if self.constraint else None
+            Constraint=[
+                ContainerEntity.load(constraint.strip(), space=default_space)
+                for constraint in self.constraint.split(",")
+            ]
+            if self.constraint
+            else None,
         )
 
 
@@ -203,20 +221,27 @@ class DMSViewWrite:
             implements=data.get("implements"),
             reference=data.get("reference"),
             filter_=data.get("filter_"),
-            in_model=data.get("in_model", True)
+            in_model=data.get("in_model", True),
         )
 
     def dump(self, default_space: str, default_version: str) -> dict[str, Any]:
         view = ViewEntity.load(self.view, space=default_space, version=default_version)
         return dict(
             View=view,
-            Class=ClassEntity.load(self.class_, prefix=default_space, version=default_version) if self.class_ else view.as_class(),
+            Class=ClassEntity.load(self.class_, prefix=default_space, version=default_version)
+            if self.class_
+            else view.as_class(),
             Name=self.name,
             Description=self.description,
-            Implements=[ViewEntity.load(implement, space=default_space, version=default_version) for implement in self.implements.split(",")] if self.implements else None,
+            Implements=[
+                ViewEntity.load(implement, space=default_space, version=default_version)
+                for implement in self.implements.split(",")
+            ]
+            if self.implements
+            else None,
             Reference=self.reference,
             Filter=self.filter_,
-            InModel=self.in_model
+            InModel=self.in_model,
         )
 
 
@@ -238,7 +263,7 @@ class DMSRulesWrite:
             properties=DMSPropertyWrite.load(data.get("properties")),
             views=DMSViewWrite.load(data.get("views")),
             containers=DMSContainerWrite.load(data.get("containers")),
-            reference=DMSRulesWrite.load(data.get("reference"))
+            reference=DMSRulesWrite.load(data.get("reference")),
         )
 
     def as_read(self) -> DMSRules:
@@ -259,7 +284,7 @@ class DMSRulesWrite:
             Properties=[prop.dump(default_space, default_version) for prop in self.properties],
             Views=[view.dump(default_space, default_version) for view in self.views],
             Containers=[container.dump(default_space) for container in self.containers or []] or None,
-            Reference=reference
+            Reference=reference,
         )
 
 
