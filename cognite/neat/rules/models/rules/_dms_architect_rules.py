@@ -4,15 +4,14 @@ import re
 import sys
 import warnings
 from collections import defaultdict
-from collections.abc import Sequence
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
-from dataclasses import dataclass
+
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import PropertyType as CognitePropertyType
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex
 from cognite.client.data_classes.data_modeling.views import SingleReverseDirectRelationApply, ViewPropertyApply
-from pydantic import AnyHttpUrl, Field, field_validator, model_serializer, model_validator
+from pydantic import AnyHttpUrl, Field, field_serializer, field_validator, model_serializer, model_validator
 from pydantic_core.core_schema import SerializationInfo, ValidationInfo
 from rdflib import Namespace
 
@@ -23,11 +22,8 @@ from cognite.neat.rules.models.entities import (
     ClassEntity,
     ContainerEntity,
     ContainerEntityList,
-    DMSEntity,
-    DMSVersionedEntity,
     ParentClassEntity,
     ReferenceEntity,
-    Undefined,
     ViewEntity,
     ViewEntityList,
     ViewPropertyEntity,
@@ -202,6 +198,14 @@ class DMSProperty(SheetEntity):
                 f"{value.versioned_id}:<property>"
             )
         return value
+
+    @field_serializer("value_type", when_used="always")
+    @staticmethod
+    def as_dms_type(value_type: DataType | ViewPropertyEntity | ViewEntity) -> str:
+        if isinstance(value_type, DataType):
+            return value_type.dms._type
+        else:
+            return str(value_type)
 
 
 class DMSContainer(SheetEntity):
@@ -636,9 +640,7 @@ class _DMSExporter:
 
         containers = self._create_containers(rules.containers, container_properties_by_id)
 
-        views, node_types = self._create_views_with_node_types(
-            rules.views, view_properties_by_id
-        )
+        views, node_types = self._create_views_with_node_types(rules.views, view_properties_by_id)
 
         views_not_in_model = {view.view.as_id() for view in rules.views if not view.in_model}
         data_model = rules.metadata.as_data_model()
@@ -868,9 +870,7 @@ class _DMSExporter:
         dms_container: SheetList[DMSContainer] | None,
         container_properties_by_id: dict[dm.ContainerId, list[DMSProperty]],
     ) -> dm.ContainerApplyList:
-        containers = dm.ContainerApplyList(
-            [dms_container.as_container() for dms_container in dms_container or []]
-        )
+        containers = dm.ContainerApplyList([dms_container.as_container() for dms_container in dms_container or []])
         container_to_drop = set()
         for container in containers:
             container_id = container.as_id()
@@ -1068,5 +1068,5 @@ class _DMSRulesConverter:
         return ReferenceEntity(
             prefix=container.prefix,
             suffix=container.suffix,
-            property_=property_.container_property,
+            property=property_.container_property,
         )
