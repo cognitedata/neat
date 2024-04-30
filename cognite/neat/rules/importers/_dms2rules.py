@@ -19,15 +19,14 @@ from cognite.neat.rules.models.rules._dms_architect_rules import (
     DMSView,
     SheetList,
 )
-from cognite.neat.rules.models.rules._types import (
+from cognite.neat.rules.models.entities import (
     ClassEntity,
     ContainerEntity,
-    DMSValueType,
-    Undefined,
-    Unknown,
     ViewEntity,
-    ViewPropEntity,
+    ViewPropertyEntity,
+    DMSUnknownEntity,
 )
+from cognite.neat.rules.models.data_types import DataType
 
 
 class DMSImporter(BaseImporter):
@@ -136,21 +135,21 @@ class DMSImporter(BaseImporter):
                             raise NotImplementedError(f"Constraint type {type(constraint_obj)} not implemented")
 
                     if isinstance(container_prop.type, dm.DirectRelation):
-                        direct_value_type: str | ViewEntity | DMSValueType
+                        direct_value_type: str | ViewEntity | DataType | DMSUnknownEntity
                         if prop.source is None:
                             issue_list.append(
                                 issues.importing.UnknownValueTypeWarning(class_entity.versioned_id, prop_id)
                             )
-                            direct_value_type = ViewPropEntity(prefix=Undefined, suffix=Unknown)
+                            direct_value_type = DMSUnknownEntity()
                         else:
-                            direct_value_type = ViewPropEntity.from_id(prop.source)
+                            direct_value_type = ViewEntity.from_id(prop.source)
 
                         dms_property = DMSProperty(
                             class_=class_entity,
                             property_=prop_id,
                             description=prop.description,
                             name=prop.name,
-                            value_type=cast(ViewPropEntity | DMSValueType, direct_value_type),
+                            value_type=direct_value_type,
                             relation="direct",
                             nullable=container_prop.nullable,
                             default=container_prop.default_value,

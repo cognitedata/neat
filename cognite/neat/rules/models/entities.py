@@ -2,7 +2,7 @@ import re
 import sys
 from abc import ABC, abstractmethod
 from functools import total_ordering
-from typing import Annotated, Any, ClassVar, Generic, TypeVar
+from typing import Annotated, Any, ClassVar, Generic, TypeVar, Literal
 
 from cognite.client.data_classes.data_modeling.ids import ContainerId, DataModelId, PropertyId, ViewId
 from pydantic import BaseModel, BeforeValidator, Field, PlainSerializer, model_serializer, model_validator
@@ -217,7 +217,7 @@ class ParentClassEntity(ClassEntity):
         return ClassEntity(prefix=self.prefix, suffix=self.suffix, version=self.version)
 
 
-T_ID = TypeVar("T_ID", bound=ContainerId | ViewId | DataModelId | PropertyId)
+T_ID = TypeVar("T_ID", bound=ContainerId | ViewId | DataModelId | PropertyId | None)
 
 
 class DMSEntity(Entity, Generic[T_ID], ABC):
@@ -276,7 +276,24 @@ class ViewEntity(DMSVersionedEntity[ViewId]):
 
     @classmethod
     def from_id(cls, id: ViewId) -> "ViewEntity":
-        return cls(prefix=id.space, suffix=id.external_id, version=id.version)
+        return cls(space=id.space, externalId=id.external_id, version=id.version)
+
+
+# This is needed to handle direct relations with source=None
+class DMSUnknownEntity(DMSEntity[None]):
+    type_: ClassVar[EntityTypes] = EntityTypes.undefined
+    prefix: Literal[""] = Field("", alias="space")
+    suffix: Literal[""] = Field("", alias="externalId")
+
+    def as_id(self) -> None:
+        return None
+
+    @classmethod
+    def from_id(cls, id: None) -> "DMSUnknownEntity":
+        return cls(space="", externalId="")
+
+    def __str__(self) -> str:
+        return str(Unknown)
 
 
 class ViewPropertyEntity(DMSVersionedEntity[PropertyId]):
@@ -317,6 +334,9 @@ class ReferenceEntity(ClassEntity):
         if self.property_ is None or self.prefix is Undefined or self.suffix is Unknown:
             raise ValueError("Property is not defined or prefix is not defined or suffix is unknown")
         return PropertyId(source=self.as_view_id(), property=self.property_)
+
+    def as_class_entity(self) -> ClassEntity:
+        return ClassEntity(prefix=self.prefix, suffix=self.suffix, version=self.version)
 
 
 def _split_str(v: Any) -> list[str]:

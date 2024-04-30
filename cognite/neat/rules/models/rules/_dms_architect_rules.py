@@ -27,6 +27,9 @@ from cognite.neat.rules.models.entities import (
     ViewEntity,
     ViewEntityList,
     ViewPropertyEntity,
+    DMSUnknownEntity,
+Undefined,
+Unknown
 )
 from cognite.neat.rules.models.rules._domain_rules import DomainRules
 
@@ -160,7 +163,7 @@ class DMSMetadata(BaseMetadata):
 class DMSProperty(SheetEntity):
     property_: PropertyType = Field(alias="Property")
     relation: Literal["direct", "reversedirect", "multiedge"] | None = Field(None, alias="Relation")
-    value_type: DataType | ViewPropertyEntity | ViewEntity = Field(alias="Value Type")
+    value_type: DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity = Field(alias="Value Type")
     nullable: bool | None = Field(default=None, alias="Nullable")
     is_list: bool | None = Field(default=None, alias="IsList")
     default: str | int | dict | None = Field(None, alias="Default")
@@ -188,7 +191,7 @@ class DMSProperty(SheetEntity):
     def relations_value_type(cls, value: DataType | ClassEntity, info: ValidationInfo) -> DataType | ClassEntity:
         if (relation := info.data["relation"]) is None:
             return value
-        if not isinstance(value, ViewEntity | ViewPropertyEntity):
+        if not isinstance(value, ViewEntity | ViewPropertyEntity | DMSUnknownEntity):
             raise ValueError(f"Relations must have a value type that points to another view, got {value}")
         if relation == "reversedirect" and value.property_ is None:
             # Todo fix this error message. It have the wrong syntax for how to have a property
@@ -722,6 +725,8 @@ class _DMSExporter:
                     extra_args: dict[str, Any] = {}
                     if prop.relation == "direct" and isinstance(prop.value_type, ViewEntity):
                         extra_args["source"] = prop.value_type.as_id()
+                    elif isinstance(prop.value_type, DMSUnknownEntity):
+                        extra_args["source"] = None
                     elif prop.relation == "direct" and not isinstance(prop.value_type, ViewEntity):
                         raise ValueError(
                             "Direct relation must have a view as value type. "
@@ -1022,6 +1027,11 @@ class _DMSRulesConverter:
                 value_type = ClassEntity(
                     prefix=property_.value_type.prefix,
                     suffix=property_.value_type.suffix,
+                )
+            elif isinstance(property_.value_type, DMSUnknownEntity):
+                value_type = ClassEntity(
+                    prefix=Undefined,
+                    suffix=Unknown,
                 )
             else:
                 raise ValueError(f"Unsupported value type: {property_.value_type.type_}")
