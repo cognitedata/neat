@@ -116,7 +116,7 @@ class Ontology(OntologyModel):
             ],
             shapes=[
                 SHACLNodeShape.from_rules(
-                    class_dict[class_.suffix],
+                    class_dict[str(class_.suffix)],
                     list(properties.values()),
                     rules.metadata.namespace,
                 )
@@ -251,15 +251,15 @@ class OWLClass(OntologyModel):
             sub_class_of = []
             for parent_class in definition.parent:
                 try:
-                    sub_class_of.append(prefixes[parent_class.prefix][parent_class.suffix])
+                    sub_class_of.append(prefixes[str(parent_class.prefix)][str(parent_class.suffix)])
                 except KeyError:
-                    sub_class_of.append(namespace[parent_class.suffix])
+                    sub_class_of.append(namespace[str(parent_class.suffix)])
         else:
             sub_class_of = None
 
         return cls(
-            id_=namespace[definition.class_.suffix],
-            label=definition.name or definition.class_.suffix,
+            id_=namespace[str(definition.class_.suffix)],
+            label=definition.name or str(definition.class_.suffix),
             comment=definition.description,
             sub_class_of=sub_class_of,
             namespace=namespace,

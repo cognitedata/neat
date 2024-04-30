@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Literal, overload
+from typing import Any, Literal, overload, cast
 
 from pydantic import BaseModel
 
@@ -37,11 +37,11 @@ class DMSMetadataWrite:
             return None
         _add_alias(data, DMSMetadata)
         return cls(
-            schema_=data.get("schema_"),
-            space=data.get("space"),
-            external_id=data.get("external_id"),
-            creator=data.get("creator"),
-            version=data.get("version"),
+            schema_=data.get("schema_"), # type: ignore[arg-type]
+            space=data.get("space"), # type: ignore[arg-type]
+            external_id=data.get("external_id"), # type: ignore[arg-type]
+            creator=data.get("creator"), # type: ignore[arg-type]
+            version=data.get("version"), # type: ignore[arg-type]
             extension=data.get("extension", "addition"),
             name=data.get("name"),
             description=data.get("description"),
@@ -86,20 +86,38 @@ class DMSPropertyWrite:
     constraint: str | list[str] | None = None
 
     @classmethod
+    @overload
+    def load(
+        cls, data: None
+    ) -> None: ...
+
+    @classmethod
+    @overload
+    def load(
+        cls, data: dict[str, Any]
+    ) -> "DMSPropertyWrite": ...
+
+    @classmethod
+    @overload
+    def load(
+        cls, data: list[dict[str, Any]]
+    ) -> list["DMSPropertyWrite"]: ...
+
+    @classmethod
     def load(
         cls, data: dict[str, Any] | list[dict[str, Any]] | None
     ) -> "DMSPropertyWrite | list[DMSPropertyWrite] | None":
         if data is None:
             return None
         if isinstance(data, list) or (isinstance(data, dict) and isinstance(data.get("data"), list)):
-            items = data.get("data") if isinstance(data, dict) else data
+            items = cast(list[dict[str, Any]], data.get("data") if isinstance(data, dict) else data)
             return [loaded for item in items if (loaded := cls.load(item)) is not None]
 
         _add_alias(data, DMSProperty)
         return cls(
-            view=data.get("view"),
-            view_property=data.get("view_property"),
-            value_type=data.get("value_type"),
+            view=data.get("view"), # type: ignore[arg-type]
+            view_property=data.get("view_property"), # type: ignore[arg-type]
+            value_type=data.get("value_type"), # type: ignore[arg-type]
             property_=data.get("property_"),
             class_=data.get("class_"),
             name=data.get("name"),
@@ -159,16 +177,35 @@ class DMSContainerWrite:
     constraint: str | None = None
 
     @classmethod
-    def load(cls, data: dict[str, Any] | list[dict[str, Any]] | None) -> "DMSContainerWrite | None":
+    @overload
+    def load(
+        cls, data: None
+    ) -> None: ...
+
+    @classmethod
+    @overload
+    def load(
+        cls, data: dict[str, Any]
+    ) -> "DMSContainerWrite": ...
+
+    @classmethod
+    @overload
+    def load(
+        cls, data: list[dict[str, Any]]
+    ) -> list["DMSContainerWrite"]: ...
+
+
+    @classmethod
+    def load(cls, data: dict[str, Any] | list[dict[str, Any]] | None) -> "DMSContainerWrite | list[DMSContainerWrite] | None":
         if data is None:
             return None
         if isinstance(data, list) or (isinstance(data, dict) and isinstance(data.get("data"), list)):
-            items = data.get("data") if isinstance(data, dict) else data
+            items = cast(list[dict[str, Any]], data.get("data") if isinstance(data, dict) else data)
             return [loaded for item in items if (loaded := cls.load(item)) is not None]
 
         _add_alias(data, DMSContainer)
         return cls(
-            container=data.get("container"),
+            container=data.get("container"), # type: ignore[arg-type]
             class_=data.get("class_"),
             name=data.get("name"),
             description=data.get("description"),
@@ -205,16 +242,34 @@ class DMSViewWrite:
     in_model: bool = True
 
     @classmethod
+    @overload
+    def load(
+        cls, data: None
+    ) -> None: ...
+
+    @classmethod
+    @overload
+    def load(
+        cls, data: dict[str, Any]
+    ) -> "DMSViewWrite": ...
+
+    @classmethod
+    @overload
+    def load(
+        cls, data: list[dict[str, Any]]
+    ) -> list["DMSViewWrite"]: ...
+
+    @classmethod
     def load(cls, data: dict[str, Any] | list[dict[str, Any]] | None) -> "DMSViewWrite | list[DMSViewWrite] | None":
         if data is None:
             return None
         if isinstance(data, list) or (isinstance(data, dict) and isinstance(data.get("data"), list)):
-            items = data.get("data") if isinstance(data, dict) else data
+            items = cast(list[dict[str, Any]], data.get("data") if isinstance(data, dict) else data)
             return [loaded for item in items if (loaded := cls.load(item)) is not None]
         _add_alias(data, DMSView)
 
         return cls(
-            view=data.get("view"),
+            view=data.get("view"), # type: ignore[arg-type]
             class_=data.get("class"),
             name=data.get("name"),
             description=data.get("description"),
@@ -267,10 +322,10 @@ class DMSRulesWrite:
             return None
         _add_alias(data, DMSRules)
         return cls(
-            metadata=DMSMetadataWrite.load(data.get("metadata")),
-            properties=DMSPropertyWrite.load(data.get("properties")),
-            views=DMSViewWrite.load(data.get("views")),
-            containers=DMSContainerWrite.load(data.get("containers")),
+            metadata=DMSMetadataWrite.load(data.get("metadata")), # type: ignore[arg-type]
+            properties=DMSPropertyWrite.load(data.get("properties")), # type: ignore[arg-type]
+            views=DMSViewWrite.load(data.get("views")), # type: ignore[arg-type]
+            containers=DMSContainerWrite.load(data.get("containers")) or [],
             reference=DMSRulesWrite.load(data.get("reference")),
         )
 

@@ -26,7 +26,7 @@ def are_entity_names_dms_compliant(
     flag: bool = True
     with warnings.catch_warnings(record=True) as validation_warnings:
         for class_ in rules.classes:
-            if not re.match(VIEW_ID_COMPLIANCE_REGEX, class_.class_.suffix):
+            if not re.match(VIEW_ID_COMPLIANCE_REGEX, str(class_.class_.suffix)):
                 warnings.warn(
                     exceptions.EntityIDNotDMSCompliant(
                         "Class", class_.class_.versioned_id, f"[Classes/Class/{class_.class_.versioned_id}]"
@@ -38,7 +38,7 @@ def are_entity_names_dms_compliant(
 
         for row, property_ in enumerate(rules.properties):
             # check class id which would resolve as view/container id
-            if not re.match(VIEW_ID_COMPLIANCE_REGEX, property_.class_.suffix):
+            if not re.match(VIEW_ID_COMPLIANCE_REGEX, str(property_.class_.suffix)):
                 warnings.warn(
                     exceptions.EntityIDNotDMSCompliant(
                         "Class", property_.class_.versioned_id, f"[Properties/Class/{row}]"

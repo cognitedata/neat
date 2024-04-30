@@ -328,7 +328,7 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
         """This is to simplify access to classes through dict."""
         class_dict: dict[str, InformationClass] = {}
         for definition in self.rules.classes:
-            class_dict[definition.class_.suffix] = definition
+            class_dict[str(definition.class_.suffix)] = definition
         return class_dict
 
     def subset_rules(self, desired_classes: set[ClassEntity], use_reference: bool = False) -> InformationRules:
@@ -398,7 +398,7 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
 
         logging.info(f"Reducing data model to only include the following classes: {possible_classes}")
         for class_ in possible_classes:
-            reduced_data_model["classes"].append(class_as_dict[class_.suffix])
+            reduced_data_model["classes"].append(class_as_dict[str(class_.suffix)])
 
         class_property_pairs = self.classes_with_properties(consider_inheritance=False)
 

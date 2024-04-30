@@ -215,6 +215,7 @@ class ExcelImporter(BaseImporter):
             error_cls=issues.spreadsheet.InvalidSheetError,
             error_args={"read_info_by_sheet": read_info_by_sheet},
         ) as future:
+            rules: Rules
             if rules_cls is DMSRules:
                 rules = DMSRulesWrite.load(sheets).as_read()
             else:
