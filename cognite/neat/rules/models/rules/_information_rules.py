@@ -285,7 +285,7 @@ class InformationRules(RuleModel):
                 parent.versioned_id for class_ in self.classes for parent in class_.parent or []
             }
             referred_types = {
-                property_.value_type.versioned_id
+                str(property_.value_type)
                 for property_ in self.properties
                 if property_.type_ == EntityTypes.object_property
                 and not (isinstance(property_.value_type, Entity) and property_.value_type.suffix is Unknown)
@@ -361,7 +361,7 @@ class InformationRules(RuleModel):
                 prefix=prop.class_.prefix,
                 suffix=prop.class_.suffix,
                 version=prop.class_.version,
-                property_=prop.property_,
+                property=prop.property_,
             )
 
         for cls_ in new_self.classes:
@@ -384,6 +384,7 @@ class _InformationRulesConverter:
 
         info_metadata = self.information.metadata
         default_version = info_metadata.version
+        default_space = self._to_space(info_metadata.prefix)
         space = self._to_space(info_metadata.prefix)
 
         metadata = DMSMetadata(
@@ -399,17 +400,13 @@ class _InformationRulesConverter:
 
         properties_by_class: dict[str, list[DMSProperty]] = defaultdict(list)
         for prop in self.information.properties:
-            properties_by_class[prop.class_.versioned_id].append(self._as_dms_property(prop, default_version))
+            properties_by_class[prop.class_.versioned_id].append(self._as_dms_property(prop, default_space, default_version))
 
         views: list[DMSView] = [
             DMSView(
                 class_=cls_.class_,
                 name=cls_.name,
-                view=ViewEntity(
-                    space=cls_.class_.prefix,
-                    externalId=cls_.class_.suffix,
-                    version=cls_.class_.version or default_version,
-                ),
+                view=cls_.class_.as_view_entity(default_space, default_version),
                 description=cls_.description,
                 reference=cls_.reference,
                 implements=self._get_view_implements(cls_, info_metadata),
@@ -458,7 +455,7 @@ class _InformationRulesConverter:
         )
 
     @classmethod
-    def _as_dms_property(cls, prop: InformationProperty, default_version: str) -> "DMSProperty":
+    def _as_dms_property(cls, prop: InformationProperty, default_space: str, default_version: str) -> "DMSProperty":
         """This creates the first"""
 
         from ._dms_architect_rules import DMSProperty
@@ -488,9 +485,9 @@ class _InformationRulesConverter:
             nullable = None
         elif relation == "direct":
             nullable = True
-            container, container_property = cls._get_container(prop)
+            container, container_property = cls._get_container(prop, default_space)
         else:
-            container, container_property = cls._get_container(prop)
+            container, container_property = cls._get_container(prop, default_space)
 
         return DMSProperty(
             class_=prop.class_,
@@ -522,10 +519,10 @@ class _InformationRulesConverter:
         return prefix
 
     @classmethod
-    def _get_container(cls, prop: InformationProperty) -> tuple[ContainerEntity, str]:
+    def _get_container(cls, prop: InformationProperty, default_space: str) -> tuple[ContainerEntity, str]:
         if isinstance(prop.reference, ReferenceEntity):
             return (
-                ContainerEntity(space=prop.reference.prefix, externalId=prop.reference.suffix),
+                ContainerEntity(space=prop.reference.prefix, externalId=str(prop.reference.suffix)),
                 prop.reference.property_ or prop.property_,
             )
         else:

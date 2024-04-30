@@ -15,8 +15,8 @@ else:
 class DataType(BaseModel):
     # These are necessary for Pydantic to work
     # pydantic gets confused as we have no fields.
-    __pydantic_extra__ = ()
-    __pydantic_fields_set__ = ()
+    __pydantic_extra__ = None
+    __pydantic_fields_set__ = set()
     __pydantic_private__ = {}
 
     name: ClassVar[str]
@@ -276,6 +276,6 @@ _seen = set()
 _DATA_TYPE_BY_DMS_TYPE = {
     cls.dms._type.casefold(): cls
     for cls in DataType.__subclasses__()
-    if cls.dms._type not in _seen and not _seen.add(cls.dms._type)
+    if cls.dms._type not in _seen and not _seen.add(cls.dms._type) # type: ignore[func-returns-value]
 }
 del _seen

@@ -209,6 +209,14 @@ class ClassEntity(Entity):
     type_: ClassVar[EntityTypes] = EntityTypes.class_
     version: str | None = None
 
+    def as_view_entity(self, default_space: str, default_version) -> "ViewEntity":
+        if self.version is None:
+            version = default_version
+        else:
+            version = self.version
+        space = self.prefix if isinstance(self.prefix, _Undefined) else default_space
+        return ViewEntity(space=space, externalId=self.suffix, version=version)
+
 
 class ParentClassEntity(ClassEntity):
     type_: ClassVar[EntityTypes] = EntityTypes.parent_class
@@ -276,6 +284,8 @@ class ViewEntity(DMSVersionedEntity[ViewId]):
 
     @classmethod
     def from_id(cls, id: ViewId) -> "ViewEntity":
+        if id.version is None:
+            raise ValueError("Version must be specified")
         return cls(space=id.space, externalId=id.external_id, version=id.version)
 
 
@@ -305,8 +315,12 @@ class ViewPropertyEntity(DMSVersionedEntity[PropertyId]):
 
     @classmethod
     def from_id(cls, id: PropertyId) -> "ViewPropertyEntity":
+        if isinstance(id.source, ContainerId):
+            raise ValueError("Only view source are supported")
+        if id.source.version is None:
+            raise ValueError("Version must be specified")
         return cls(
-            prefix=id.source.space, suffix=id.source.external_id, version=id.source.version, property_=id.property
+            space=id.source.space, externalId=id.source.external_id, version=id.source.version, property=id.property
         )
 
 
@@ -318,7 +332,9 @@ class DataModelEntity(DMSVersionedEntity[DataModelId]):
 
     @classmethod
     def from_id(cls, id: DataModelId) -> "DataModelEntity":
-        return cls(prefix=id.space, suffix=id.external_id, version=id.version)
+        if id.version is None:
+            raise ValueError("Version must be specified")
+        return cls(space=id.space, externalId=id.external_id, version=id.version)
 
 
 class ReferenceEntity(ClassEntity):
@@ -326,7 +342,7 @@ class ReferenceEntity(ClassEntity):
     property_: str | None = Field(None, alias="property")
 
     def as_view_id(self) -> ViewId:
-        if self.prefix is Undefined or self.suffix is Unknown:
+        if isinstance(self.prefix, _Undefined) or isinstance(self.suffix, _Unknown):
             raise ValueError("Prefix is not defined or suffix is unknown")
         return ViewId(space=self.prefix, external_id=self.suffix, version=self.version)
 

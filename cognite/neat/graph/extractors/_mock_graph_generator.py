@@ -56,7 +56,7 @@ class MockGraphGenerator(BaseExtractor):
             }
         elif all(isinstance(key, str) for key in class_count.keys()):
             self.class_count = {
-                ClassEntity.from_raw(f"{self.rules.metadata.prefix}:{key}"): value for key, value in class_count.items()
+                ClassEntity.load(f"{self.rules.metadata.prefix}:{key}"): value for key, value in class_count.items()
             }
         elif all(isinstance(key, ClassEntity) for key in class_count.keys()):
             self.class_count = cast(dict[ClassEntity, int], class_count)
@@ -148,7 +148,7 @@ def generate_triples(
     triples: list[Triple] = []
     for class_ in class_count:
         triples += [
-            (class_instance_id, RDF.type, URIRef(namespace[class_.suffix]))
+            (class_instance_id, RDF.type, URIRef(namespace[str(class_.suffix)]))
             for class_instance_id in instance_ids[class_]
         ]
 

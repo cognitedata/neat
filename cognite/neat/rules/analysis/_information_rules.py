@@ -229,8 +229,7 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
                     {
                         "source_class": property_.class_,
                         "connecting_property": property_.property_,
-                        # Todo Remove once we have done the full migration.
-                        "target_class": ClassEntity.load(property_.value_type.versioned_id),
+                        "target_class": property_.value_type,
                         "max_occurrence": property_.max_count,
                     }
                 )

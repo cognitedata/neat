@@ -261,7 +261,6 @@ class DMSRulesWrite:
     @overload
     def load(cls, data: None) -> None: ...
 
-
     @classmethod
     def load(cls, data: dict | None) -> "DMSRulesWrite | None":
         if data is None:
@@ -272,7 +271,7 @@ class DMSRulesWrite:
             properties=DMSPropertyWrite.load(data.get("properties")),
             views=DMSViewWrite.load(data.get("views")),
             containers=DMSContainerWrite.load(data.get("containers")),
-            reference=DMSRulesWrite.load(data.get("reference"), allow_none=True),
+            reference=DMSRulesWrite.load(data.get("reference")),
         )
 
     def as_read(self) -> DMSRules:
