@@ -1,7 +1,8 @@
 from typing import Any
 
 import pytest
-from pydantic import AnyHttpUrl, BaseModel, Field
+from pydantic import AnyHttpUrl, BaseModel, Field, field_serializer
+from pydantic.networks import Url
 
 from cognite.neat.rules.models.data_types import (
     Boolean,
@@ -19,10 +20,14 @@ from cognite.neat.rules.models.entities import ClassEntity, ReferenceEntity
 class DemoProperty(BaseModel):
     property_: str = Field(alias="property")
     value_type: DataType | ClassEntity = Field(alias="valueType")
-    reference: ReferenceEntity | AnyHttpUrl | None = Field(None, alias="Reference")
+    reference: AnyHttpUrl | ReferenceEntity | None = Field(None, alias="Reference", union_mode="left_to_right")
 
     def dump(self) -> dict[str, Any]:
         return self.model_dump(by_alias=True, exclude_none=True)
+
+    @field_serializer("reference", when_used="unless-none")
+    def as_str(reference: AnyHttpUrl) -> str:
+        return str(reference)
 
 
 class TestDataTypes:
@@ -58,12 +63,36 @@ class TestDataTypes:
                 ),
             ),
             (
-                {"property": "a_float", "valueType": "float"},
-                DemoProperty(property="a_float", valueType=Float()),
+                {
+                    "property": "a_float",
+                    "valueType": "float",
+                    "Reference": "http://www.w3.org/2003/01/geo/wgs84_pos#location",
+                },
+                DemoProperty(
+                    property="a_float",
+                    valueType=Float(),
+                    Reference=Url("http://www.w3.org/2003/01/geo/wgs84_pos#location"),
+                ),
             ),
             (
-                {"property": "a_class", "valueType": "my_namespace:person"},
-                DemoProperty(property="a_class", valueType=ClassEntity(prefix="my_namespace", suffix="person")),
+                {"property": "a_class", "valueType": "my_namespace:person", "Reference": "GeneratingUnit"},
+                DemoProperty(
+                    property="a_class",
+                    valueType=ClassEntity(prefix="my_namespace", suffix="person"),
+                    Reference=ReferenceEntity(suffix="GeneratingUnit"),
+                ),
+            ),
+            (
+                {
+                    "property": "a_class_versioned",
+                    "valueType": "my_namespace:person(version=1)",
+                    "Reference": "power:GeneratingUnit",
+                },
+                DemoProperty(
+                    property="a_class_versioned",
+                    valueType=ClassEntity(prefix="my_namespace", suffix="person", version="1"),
+                    Reference=ReferenceEntity(prefix="power", suffix="GeneratingUnit"),
+                ),
             ),
         ],
     )
