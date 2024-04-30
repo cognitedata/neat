@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any, Literal, overload
 
 from pydantic import BaseModel
 
@@ -254,6 +254,15 @@ class DMSRulesWrite:
     reference: "DMSRulesWrite | DMSRules | None" = None
 
     @classmethod
+    @overload
+    def load(cls, data: dict[str, Any]) -> "DMSRulesWrite": ...
+
+    @classmethod
+    @overload
+    def load(cls, data: None) -> None: ...
+
+
+    @classmethod
     def load(cls, data: dict | None) -> "DMSRulesWrite | None":
         if data is None:
             return None
@@ -263,7 +272,7 @@ class DMSRulesWrite:
             properties=DMSPropertyWrite.load(data.get("properties")),
             views=DMSViewWrite.load(data.get("views")),
             containers=DMSContainerWrite.load(data.get("containers")),
-            reference=DMSRulesWrite.load(data.get("reference")),
+            reference=DMSRulesWrite.load(data.get("reference"), allow_none=True),
         )
 
     def as_read(self) -> DMSRules:

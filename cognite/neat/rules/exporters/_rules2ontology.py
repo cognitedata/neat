@@ -20,7 +20,7 @@ from cognite.neat.rules.models.rules._information_rules import (
 )
 from cognite.neat.rules.models.rules._types import EntityTypes
 from cognite.neat.utils.utils import generate_exception_report, remove_namespace
-from neat.rules.models.data_types import DataType
+from cognite.neat.rules.models.data_types import DataType
 
 from ._base import BaseExporter
 from ._validation import are_properties_redefined

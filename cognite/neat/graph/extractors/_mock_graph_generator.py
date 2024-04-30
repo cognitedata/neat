@@ -16,7 +16,8 @@ from cognite.neat.graph.models import Triple
 from cognite.neat.rules.analysis import InformationArchitectRulesAnalysis
 from cognite.neat.rules.models.rules import DMSRules, InformationRules
 from cognite.neat.rules.models.rules._information_rules import InformationProperty
-from cognite.neat.rules.models.rules._types import ClassEntity, EntityTypes, XSDValueType
+from cognite.neat.rules.models.entities import ClassEntity, EntityTypes
+from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.utils.utils import remove_namespace
 
 from ._base import BaseExtractor
@@ -246,7 +247,7 @@ def _remove_non_requested_sym_pairs(class_linkage: pd.DataFrame, class_count: di
 
 
 def _generate_mock_data_property_triples(
-    instance_ids: list[URIRef], property_: str, namespace: Namespace, value_type: XSDValueType
+    instance_ids: list[URIRef], property_: str, namespace: Namespace, value_type: DataType
 ) -> list[tuple[URIRef, URIRef, Literal]]:
     """Generates triples for data properties."""
 
@@ -338,7 +339,7 @@ def _generate_triples_per_class(
                 instance_ids[class_],
                 property_.property_,
                 namespace,
-                cast(XSDValueType, property_.value_type),
+                cast(DataType, property_.value_type),
             )
 
         elif property_.type_ == EntityTypes.object_property:
