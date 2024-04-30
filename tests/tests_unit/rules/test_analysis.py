@@ -71,4 +71,15 @@ class TestRulesAnalysis:
         assert len(InformationArchitectRulesAnalysis(olav_rules).inherited_referred_classes) == 1
 
     def test_referred_classes(self, olav_rules: InformationRules) -> None:
-        assert len(InformationArchitectRulesAnalysis(olav_rules).referred_classes) == 4
+        expected = {
+            ClassEntity(prefix="power", suffix="GeoLocation"),
+            ClassEntity(prefix="power", suffix="Point"),
+            ClassEntity(prefix="power", suffix="Polygon"),
+        }
+
+        actual = InformationArchitectRulesAnalysis(olav_rules).referred_classes
+
+        missing = expected - actual
+        assert not missing, f"Missing classes: {missing}"
+        extra = actual - expected
+        assert not extra, f"Extra classes: {extra}"
