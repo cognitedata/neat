@@ -23,6 +23,7 @@ from cognite.neat.utils.utils import generate_exception_report, remove_namespace
 
 from ._base import BaseExporter
 from ._validation import are_properties_redefined
+from ..models.data_types import DataType
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -325,9 +326,9 @@ class OWLProperty(OntologyModel):
         for definition in definitions:
             owl_property.type_.add(OWL[definition.type_])
             owl_property.range_.add(
-                XSD[definition.value_type.suffix]
-                if definition.value_type.suffix in XSD_VALUE_TYPE_MAPPINGS
-                else namespace[definition.value_type.suffix]
+                XSD[definition.value_type.xsd]
+                if isinstance(definition.value_type, DataType)
+                else namespace[definition.value_type]
             )
             owl_property.domain.add(namespace[definition.class_.suffix])
             owl_property.label.add(definition.name or definition.property_)
@@ -553,7 +554,7 @@ class SHACLPropertyShape(OntologyModel):
             expected_value_type=(
                 namespace[f"{definition.value_type.suffix}Shape"]
                 if definition.type_ == EntityTypes.object_property
-                else XSD[definition.value_type.suffix]
+                else XSD[definition.value_type.xsd]
             ),
             min_count=definition.min_count,
             max_count=(
