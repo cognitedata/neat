@@ -14,13 +14,13 @@ from cognite.neat.rules.models.data_types import (
     NonNegativeInteger,
     NonPositiveInteger,
 )
-from cognite.neat.rules.models.entities import ClassEntity, ReferenceEntity
+from cognite.neat.rules.models.entities import ClassEntity, ReferenceEntity, URLEntity
 
 
 class DemoProperty(BaseModel):
     property_: str = Field(alias="property")
     value_type: DataType | ClassEntity = Field(alias="valueType")
-    reference: AnyHttpUrl | ReferenceEntity | None = Field(None, alias="Reference", union_mode="left_to_right")
+    reference: URLEntity | ReferenceEntity | None = Field(None, alias="Reference", union_mode="left_to_right")
 
     def dump(self) -> dict[str, Any]:
         return self.model_dump(by_alias=True, exclude_none=True)

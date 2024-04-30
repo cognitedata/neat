@@ -5,7 +5,7 @@ from functools import total_ordering
 from typing import Annotated, Any, ClassVar, Generic, TypeVar, Literal
 
 from cognite.client.data_classes.data_modeling.ids import ContainerId, DataModelId, PropertyId, ViewId
-from pydantic import BaseModel, BeforeValidator, Field, PlainSerializer, model_serializer, model_validator
+from pydantic import BaseModel, BeforeValidator, Field, PlainSerializer, model_serializer, model_validator, AnyHttpUrl
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -379,27 +379,7 @@ ViewEntityList = Annotated[
     ),
 ]
 
-
-class EntitiesCreator:
-    """Factory for creating entities.
-
-    Convenience class for creating entities with default values.
-    """
-    def __init__(self, default_prefix: str, default_version: str):
-        self.default_prefix = default_prefix
-        self.default_version = default_version
-
-    def view(self, external_id: str, space: str | None = None, version: str | None = None) -> ViewEntity:
-        return ViewEntity(space=space or self.default_prefix, externalId=external_id, version=version or self.default_version)
-
-    def container(self, external_id: str, space: str | None = None) -> ContainerEntity:
-        return ContainerEntity(space=space or self.default_prefix, externalId=external_id)
-
-    def datamodel(self, external_id: str, space: str | None = None, version: str | None = None) -> DataModelEntity:
-        return DataModelEntity(space=space or self.default_prefix, externalId=external_id, version=version or self.default_version)
-
-    def class_(self, external_id: str, space: str | None = None, version: str | None = None) -> ClassEntity:
-        return ClassEntity(prefix=space or self.default_prefix, suffix=external_id, version=version or self.default_version)
-
-    def parent_class(self, external_id: str, space: str | None = None, version: str | None = None) -> ParentClassEntity:
-        return ParentClassEntity(prefix=space or self.default_prefix, suffix=external_id, version=version or self.default_version)
+URLEntity = Annotated[
+    AnyHttpUrl,
+    PlainSerializer(lambda v: str(v), return_type=str, when_used="unless-none"),
+]

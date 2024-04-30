@@ -26,6 +26,7 @@ from cognite.neat.rules.models.entities import (
     Unknown,
     ViewEntity,
     ViewPropertyEntity,
+    URLEntity,
 )
 from cognite.neat.rules.models.rdfpath import (
     AllReferences,
@@ -119,7 +120,7 @@ class InformationClass(SheetEntity):
     """
 
     parent: ParentEntityList | None = Field(alias="Parent Class", default=None)
-    reference: AnyHttpUrl | ReferenceEntity | None = Field(alias="Reference", default=None, union_mode="left_to_right")
+    reference: URLEntity | ReferenceEntity | None = Field(alias="Reference", default=None, union_mode="left_to_right")
     match_type: MatchType | None = Field(alias="Match Type", default=None)
     comment: str | None = Field(alias="Comment", default=None)
 
@@ -150,7 +151,7 @@ class InformationProperty(SheetEntity):
     min_count: int | None = Field(alias="Min Count", default=None)
     max_count: int | float | None = Field(alias="Max Count", default=None)
     default: Any | None = Field(alias="Default", default=None)
-    reference: AnyHttpUrl | ReferenceEntity | None = Field(alias="Reference", default=None, union_mode="left_to_right")
+    reference: URLEntity | ReferenceEntity | None = Field(alias="Reference", default=None, union_mode="left_to_right")
     match_type: MatchType | None = Field(alias="Match Type", default=None)
     rule_type: str | TransformationRuleType | None = Field(alias="Rule Type", default=None)
     rule: str | AllReferences | SingleProperty | Hop | RawLookup | SPARQLQuery | Traversal | None = Field(
