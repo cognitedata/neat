@@ -430,13 +430,9 @@ class _InformationRulesConverter:
                 DMSContainer(
                     class_=class_.class_,
                     name=class_.name,
-                    container=ContainerEntity(space=class_.class_.prefix, externalId=class_.class_.suffix),
+                    container=class_.class_.as_container_entity(default_space),
                     description=class_.description,
-                    constraint=[
-                        ContainerEntity(
-                            space=parent.prefix,
-                            externalId=parent.suffix,
-                        )
+                    constraint=[parent.as_container_entity(default_space)
                         for parent in class_.parent or []
                         if parent.versioned_id not in classes_without_properties
                     ]
@@ -461,14 +457,11 @@ class _InformationRulesConverter:
         from ._dms_architect_rules import DMSProperty
 
         # returns property type, which can be ObjectProperty or DatatypeProperty
+        value_type: DataType | ViewEntity
         if isinstance(prop.value_type, DataType):
-            value_type = prop.value_type.dms._type.casefold()  # type: ignore[attr-defined]
+            value_type = prop.value_type
         elif isinstance(prop.value_type, ClassEntity):
-            value_type = ViewEntity(
-                space=prop.value_type.prefix,
-                externalId=prop.value_type.suffix,
-                version=prop.value_type.version or default_version,
-            )
+            value_type = prop.value_type.as_view_entity(default_space, default_version)
         else:
             raise ValueError(f"Unsupported value type: {prop.value_type.type_}")
 
@@ -501,9 +494,7 @@ class _InformationRulesConverter:
             reference=prop.reference,
             container=container,
             container_property=container_property,
-            view=ViewEntity(
-                space=prop.class_.prefix, externalId=prop.class_.suffix, version=prop.class_.version or default_version
-            ),
+            view=prop.class_.as_view_entity(default_space, default_version),
             view_property=prop.property_,
         )
 
@@ -522,29 +513,25 @@ class _InformationRulesConverter:
     def _get_container(cls, prop: InformationProperty, default_space: str) -> tuple[ContainerEntity, str]:
         if isinstance(prop.reference, ReferenceEntity):
             return (
-                ContainerEntity(space=prop.reference.prefix, externalId=str(prop.reference.suffix)),
+                prop.reference.as_container_entity(default_space),
                 prop.reference.property_ or prop.property_,
             )
         else:
-            return ContainerEntity(space=prop.class_.prefix, externalId=prop.class_.suffix), prop.property_
+            return prop.class_.as_container_entity(default_space), prop.property_
 
     @classmethod
     def _get_view_implements(cls, cls_: InformationClass, metadata: InformationMetadata) -> list[ViewEntity]:
         if isinstance(cls_.reference, ReferenceEntity) and cls_.reference.prefix != metadata.prefix:
             # We use the reference for implements if it is in a different namespace
             implements = [
-                ViewEntity(
-                    space=cls_.reference.prefix,
-                    externalId=cls_.reference.suffix,
-                    version=cls_.reference.version or metadata.version,
-                )
+                cls_.reference.as_view_entity(metadata.prefix, metadata.version),
             ]
         else:
             implements = []
 
         implements.extend(
             [
-                ViewEntity(space=parent.prefix, externalId=parent.suffix, version=parent.version or metadata.version)
+                parent.as_view_entity(metadata.prefix, metadata.version)
                 for parent in cls_.parent or []
             ]
         )

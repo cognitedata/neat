@@ -21,12 +21,8 @@ from cognite.neat.rules.importers._dtdl2rules.spec import (
 )
 from cognite.neat.rules.issues import IssueList, ValidationIssue
 from cognite.neat.rules.models.rules._information_rules import InformationClass, InformationProperty
-from cognite.neat.rules.models.rules._types import (
-    XSD_VALUE_TYPE_MAPPINGS,
-    ClassEntity,
-    ParentClassEntity,
-    XSDValueType,
-)
+from cognite.neat.rules.models.entities import ClassEntity, ParentClassEntity
+from cognite.neat.rules.models.data_types import DataType, Json, String, _DATA_TYPE_BY_NAME
 
 
 class _DTDLConverter:
@@ -123,7 +119,7 @@ class _DTDLConverter:
             return None
 
         prop = InformationProperty(
-            class_=ClassEntity.from_raw(parent),
+            class_=ClassEntity.load(parent),
             property_=item.name,
             name=item.display_name,
             description=item.description,
@@ -175,7 +171,7 @@ class _DTDLConverter:
         if value_type is None:
             return
         prop = InformationProperty(
-            class_=ClassEntity.from_raw(parent),
+            class_=ClassEntity.load(parent),
             property_=item.name,
             name=item.display_name,
             description=item.description,
@@ -211,7 +207,7 @@ class _DTDLConverter:
             self._missing_parent_warning(item)
             return None
         if item.target is not None:
-            value_type: XSDValueType | ClassEntity
+            value_type: DataType | ClassEntity
             if item.target in self._item_by_id:
                 value_type = item.target.as_class_id()
             else:
@@ -223,10 +219,10 @@ class _DTDLConverter:
                         instance_id=item.target.model_dump(),
                     )
                 )
-                value_type = XSD_VALUE_TYPE_MAPPINGS["json"]
+                value_type = Json()
 
             prop = InformationProperty(
-                class_=ClassEntity.from_raw(parent),
+                class_=ClassEntity.load(parent),
                 property_=item.name,
                 name=item.display_name,
                 description=item.description,
@@ -275,13 +271,13 @@ class _DTDLConverter:
 
     def schema_to_value_type(
         self, schema: Schema | Interface | DTMI | None, item: DTDLBase
-    ) -> XSDValueType | ClassEntity | None:
+    ) -> DataType | ClassEntity | None:
         input_type = self._item_by_id.get(schema) if isinstance(schema, DTMI) else schema
 
         if isinstance(input_type, Enum):
-            return XSD_VALUE_TYPE_MAPPINGS["string"]
-        elif isinstance(input_type, str) and input_type in XSD_VALUE_TYPE_MAPPINGS:
-            return XSD_VALUE_TYPE_MAPPINGS[input_type]
+            return String()
+        elif isinstance(input_type, str) and input_type.casefold() in _DATA_TYPE_BY_NAME:
+            return _DATA_TYPE_BY_NAME[input_type.casefold()]()
         elif isinstance(input_type, str):
             self.issues.append(
                 cognite.neat.rules.issues.importing.UnsupportedPropertyTypeError(
@@ -301,11 +297,11 @@ class _DTDLConverter:
                         instance_name=input_type.display_name,
                     )
                 )
-                return XSD_VALUE_TYPE_MAPPINGS["json"]
+                return Json()
             else:
                 if isinstance(input_type, Object):
                     self.convert_object(input_type, None)
-                return ClassEntity.from_raw(input_type.id_.as_class_id())
+                return ClassEntity.load(input_type.id_.as_class_id())
         else:
             self.issues.append(
                 issues.importing.UnknownPropertyWarning(

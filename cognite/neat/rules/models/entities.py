@@ -57,7 +57,7 @@ _PROPERTY_ID_REGEX = rf"\((?P<{EntityTypes.property_}>{_ENTITY_ID_REGEX})\)"
 _ENTITY_PATTERN = re.compile(r"^(?P<prefix>.*?):?(?P<suffix>[^(:]*)(\((?P<content>[^)]+)\))?$")
 
 
-class _Undefined(BaseModel):
+class _UndefinedType(BaseModel):
     ...
 
 
@@ -67,7 +67,7 @@ class _Unknown(BaseModel):
 
 
 # This is a trick to make Undefined and Unknown singletons
-Undefined = _Undefined()
+Undefined = _UndefinedType()
 Unknown = _Unknown()
 _PARSE = object()
 
@@ -77,7 +77,7 @@ class Entity(BaseModel, extra="ignore"):
     """Entity is a class or property in OWL/RDF sense."""
 
     type_: ClassVar[EntityTypes] = EntityTypes.undefined
-    prefix: str | _Undefined = Undefined
+    prefix: str | _UndefinedType = Undefined
     suffix: str | _Unknown
 
     @classmethod
@@ -148,7 +148,7 @@ class Entity(BaseModel, extra="ignore"):
                 if isinstance(v := getattr(self, field_name), str | None) and field_name not in {"prefix", "suffix"}
             ]
         )
-        if isinstance(self.prefix, _Undefined):
+        if isinstance(self.prefix, _UndefinedType):
             return str(self.suffix), *extra
         else:
             return self.prefix, str(self.suffix), *extra
@@ -214,8 +214,12 @@ class ClassEntity(Entity):
             version = default_version
         else:
             version = self.version
-        space = self.prefix if isinstance(self.prefix, _Undefined) else default_space
-        return ViewEntity(space=space, externalId=self.suffix, version=version)
+        space = default_space if isinstance(self.prefix, _UndefinedType) else self.prefix
+        return ViewEntity(space=space, externalId=str(self.suffix), version=version)
+
+    def as_container_entity(self, default_space: str) -> "ContainerEntity":
+        space = default_space if isinstance(self.prefix, _UndefinedType) else self.prefix
+        return ContainerEntity(space=space, externalId=str(self.suffix))
 
 
 class ParentClassEntity(ClassEntity):
@@ -342,7 +346,7 @@ class ReferenceEntity(ClassEntity):
     property_: str | None = Field(None, alias="property")
 
     def as_view_id(self) -> ViewId:
-        if isinstance(self.prefix, _Undefined) or isinstance(self.suffix, _Unknown):
+        if isinstance(self.prefix, _UndefinedType) or isinstance(self.suffix, _Unknown):
             raise ValueError("Prefix is not defined or suffix is unknown")
         return ViewId(space=self.prefix, external_id=self.suffix, version=self.version)
 

@@ -326,12 +326,14 @@ class OWLProperty(OntologyModel):
         )
         for definition in definitions:
             owl_property.type_.add(OWL[definition.type_])
-            owl_property.range_.add(
-                XSD[definition.value_type.xsd]
-                if isinstance(definition.value_type, DataType)
-                else namespace[definition.value_type]
-            )
-            owl_property.domain.add(namespace[definition.class_.suffix])
+
+            if isinstance(definition.value_type, DataType):
+                owl_property.range_.add(XSD[definition.value_type.xsd])
+            elif isinstance(definition.value_type, ClassEntity):
+                owl_property.range_.add(namespace[str(definition.value_type.suffix)])
+            else:
+                raise ValueError(f"Value type {definition.value_type} is not supported")
+            owl_property.domain.add(namespace[str(definition.class_.suffix)])
             owl_property.label.add(definition.name or definition.property_)
             if definition.description:
                 owl_property.comment.add(definition.description)
@@ -495,12 +497,12 @@ class SHACLNodeShape(OntologyModel):
         cls, class_definition: InformationClass, property_definitions: list[InformationProperty], namespace: Namespace
     ) -> "SHACLNodeShape":
         if class_definition.parent:
-            parent = [namespace[parent.suffix + "Shape"] for parent in class_definition.parent]
+            parent = [namespace[str(parent.suffix) + "Shape"] for parent in class_definition.parent]
         else:
             parent = None
         return cls(
-            id_=namespace[f"{class_definition.class_.suffix}Shape"],
-            target_class=namespace[class_definition.class_.suffix],
+            id_=namespace[f"{str(class_definition.class_.suffix)}Shape"],
+            target_class=namespace[str(class_definition.class_.suffix)],
             parent=parent,
             property_shapes=[SHACLPropertyShape.from_property(prop, namespace) for prop in property_definitions],
             namespace=namespace,
