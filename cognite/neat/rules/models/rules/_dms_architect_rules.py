@@ -164,7 +164,7 @@ class DMSProperty(SheetEntity):
     nullable: bool | None = Field(default=None, alias="Nullable")
     is_list: bool | None = Field(default=None, alias="IsList")
     default: str | int | dict | None = Field(None, alias="Default")
-    reference: ReferenceEntity | AnyHttpUrl | None = Field(default=None, alias="Reference")
+    reference: AnyHttpUrl | ReferenceEntity | None = Field(default=None, alias="Reference", union_mode="left_to_right")
     container: ContainerEntity | None = Field(None, alias="Container")
     container_property: str | None = Field(None, alias="ContainerProperty")
     view: ViewEntity = Field(alias="View")
@@ -210,7 +210,7 @@ class DMSProperty(SheetEntity):
 
 class DMSContainer(SheetEntity):
     container: ContainerEntity = Field(alias="Container")
-    reference: ReferenceEntity | AnyHttpUrl | None = Field(alias="Reference", default=None)
+    reference: AnyHttpUrl | ReferenceEntity | None = Field(alias="Reference", default=None, union_mode="left_to_right")
     constraint: ContainerEntityList | None = Field(None, alias="Constraint")
 
     def as_container(self) -> dm.ContainerApply:
@@ -248,7 +248,7 @@ class DMSContainer(SheetEntity):
 class DMSView(SheetEntity):
     view: ViewEntity = Field(alias="View")
     implements: ViewEntityList | None = Field(None, alias="Implements")
-    reference: ReferenceEntity | AnyHttpUrl | None = Field(alias="Reference", default=None)
+    reference: AnyHttpUrl | ReferenceEntity | None = Field(alias="Reference", default=None, union_mode="left_to_right")
     filter_: Literal["hasData", "nodeType"] | None = Field(None, alias="Filter")
     in_model: bool = Field(True, alias="InModel")
 
