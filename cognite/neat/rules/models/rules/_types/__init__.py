@@ -12,23 +12,13 @@ from ._base import (
     ViewPropEntity,
 )
 from ._field import (
-    CdfValueType,
-    ClassType,
-    ContainerListType,
-    ContainerType,
     ExternalIdType,
     NamespaceType,
-    ParentClassType,
     PrefixType,
     PropertyType,
-    ReferenceType,
-    SemanticValueType,
     StrListType,
     StrOrListType,
-    URIRefType,
     VersionType,
-    ViewListType,
-    ViewType,
 )
 from ._value import DMS_VALUE_TYPE_MAPPINGS, XSD_VALUE_TYPE_MAPPINGS, DMSValueType, XSDValueType
 
@@ -54,15 +44,5 @@ __all__ = [
     "PrefixType",
     "ExternalIdType",
     "VersionType",
-    "ParentClassType",
-    "ClassType",
     "PropertyType",
-    "SemanticValueType",
-    "URIRefType",
-    "CdfValueType",
-    "ReferenceType",
-    "ContainerType",
-    "ViewType",
-    "ContainerListType",
-    "ViewListType",
 ]
