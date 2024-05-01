@@ -51,6 +51,7 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
+_DEFAULT_VERSION = "1"
 
 subclasses = list(CognitePropertyType.__subclasses__())
 _PropertyType_by_name: dict[str, type[CognitePropertyType]] = {}
@@ -261,7 +262,7 @@ class DMSView(SheetEntity):
         return dm.ViewApply(
             space=view_id.space,
             external_id=view_id.external_id,
-            version=view_id.version,
+            version=view_id.version or _DEFAULT_VERSION,
             name=self.name or None,
             description=self.description,
             implements=[parent.as_id() for parent in self.implements or []] or None,
@@ -276,7 +277,9 @@ class DMSView(SheetEntity):
             description=view.description,
             name=view.name,
             implements=[
-                ViewEntity(space=parent.space, externalId=parent.external_id, version=parent.version)
+                ViewEntity(
+                    space=parent.space, externalId=parent.external_id, version=parent.version or _DEFAULT_VERSION
+                )
                 for parent in view.implements
             ]
             or None,
@@ -308,7 +311,7 @@ class DMSRules(BaseRules):
             if len(value_types) > 1:
                 errors.append(
                     cognite.neat.rules.issues.spreadsheet.MultiValueTypeError(
-                        container_id, prop_name, row_numbers, {v.dms._type for v in value_types}
+                        container_id, prop_name, row_numbers, {str(v) for v in value_types}
                     )
                 )
             list_definitions = {prop.is_list for _, prop in properties if prop.is_list is not None}
@@ -411,7 +414,7 @@ class DMSRules(BaseRules):
                                 column="Constraint",
                                 row=constraint_no,
                                 type="value_error.missing",
-                                container_id=constraint.as_id(self.metadata.space),
+                                container_id=constraint.as_id(),
                                 msg="",
                                 input=None,
                                 url=None,
@@ -610,7 +613,7 @@ class DMSRules(BaseRules):
         new_rules = self.model_copy(deep=True)
         for prop in new_rules.properties:
             prop.reference = ReferenceEntity(
-                prefix=prop.view.prefix, suffix=prop.view.suffix, version=prop.view.version, property_=prop.property_
+                prefix=prop.view.prefix, suffix=prop.view.suffix, version=prop.view.version, property=prop.property_
             )
         view: DMSView
         for view in new_rules.views:
@@ -705,7 +708,7 @@ class _DMSExporter:
                     if isinstance(prop.value_type, ViewEntity):
                         source_view_id = prop.value_type.as_id()
                     elif isinstance(prop.value_type, ViewPropertyEntity):
-                        source_view_id = prop.value_type.as_id().source
+                        source_view_id = prop.value_type.as_view_id()
                     else:
                         raise ValueError(
                             "Direct relation must have a view as value type. "
@@ -770,6 +773,7 @@ class _DMSExporter:
                 elif prop.view and prop.view_property and prop.relation == "reversedirect":
                     if isinstance(prop.value_type, ViewPropertyEntity):
                         source_prop_id = prop.value_type.as_id()
+                        source_view_id = cast(dm.ViewId, source_prop_id.source)
                     else:
                         raise ValueError(
                             "Reverse direct relation must have a view as value type. "
@@ -785,7 +789,7 @@ class _DMSExporter:
                     reverse_prop = next(
                         (
                             prop
-                            for prop in view_properties_by_id.get(source_prop_id.source, [])
+                            for prop in view_properties_by_id.get(source_view_id, [])
                             if prop.property_ == source_prop
                         ),
                         None,
@@ -807,14 +811,14 @@ class _DMSExporter:
                             )
                         view_property = dm.MultiEdgeConnectionApply(
                             type=edge_type,
-                            source=source_prop_id.source,
+                            source=source_prop_id.source,  # type: ignore[arg-type]
                             direction="inwards",
                             name=prop.name,
                             description=prop.description,
                         )
                     else:
                         args: dict[str, Any] = dict(
-                            source=source_prop_id.source,
+                            source=source_view_id,
                             through=dm.PropertyId(source_prop_id.source, source_prop),
                             description=prop.description,
                             name=prop.name,
@@ -1010,7 +1014,7 @@ class _DMSRulesConverter:
         classes = [
             InformationClass(
                 # we do not want a version in class as we use URI for the class
-                class_=view.class_.as_non_versioned_entity(),
+                class_=ClassEntity(prefix=view.class_.prefix, suffix=view.class_.suffix),
                 description=view.description,
                 parent=[
                     # we do not want a version in class as we use URI for the class
@@ -1044,7 +1048,8 @@ class _DMSRulesConverter:
 
             properties.append(
                 InformationProperty(
-                    class_=property_.class_.as_non_versioned_entity(),
+                    # Removing version
+                    class_=ClassEntity(suffix=property_.class_.suffix, prefix=property_.class_.prefix),
                     property_=property_.view_property,
                     value_type=value_type,
                     description=property_.description,
