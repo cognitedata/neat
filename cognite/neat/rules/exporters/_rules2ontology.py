@@ -12,7 +12,7 @@ from cognite.neat.constants import DEFAULT_NAMESPACE as NEAT_NAMESPACE
 from cognite.neat.rules import exceptions
 from cognite.neat.rules.analysis import InformationArchitectRulesAnalysis
 from cognite.neat.rules.models.data_types import DataType
-from cognite.neat.rules.models.entities import ClassEntity
+from cognite.neat.rules.models.entities import ClassEntity, EntityTypes
 from cognite.neat.rules.models.rules import DMSRules
 from cognite.neat.rules.models.rules._information_rules import (
     InformationClass,
@@ -20,7 +20,6 @@ from cognite.neat.rules.models.rules._information_rules import (
     InformationProperty,
     InformationRules,
 )
-from cognite.neat.rules.models.rules._types import EntityTypes
 from cognite.neat.utils.utils import generate_exception_report, remove_namespace
 
 from ._base import BaseExporter

@@ -27,7 +27,7 @@ from cognite.neat.rules.issues.dms import (
     MissingSpaceError,
     MissingViewError,
 )
-from cognite.neat.rules.models.rules._types._value import DMS_VALUE_TYPE_MAPPINGS
+from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
 from cognite.neat.utils.cdf_loaders import ViewLoader
 from cognite.neat.utils.cdf_loaders.data_classes import RawTableWrite, RawTableWriteList
 from cognite.neat.utils.text import to_camel
@@ -577,8 +577,8 @@ class PipelineSchema(DMSSchema):
             container = container_by_id.get(prop.container)
             if container is not None:
                 dms_type = container.properties[prop.container_property_identifier].type._type
-                if dms_type in DMS_VALUE_TYPE_MAPPINGS:
-                    sql_type = DMS_VALUE_TYPE_MAPPINGS[dms_type].sql
+                if dms_type in _DATA_TYPE_BY_DMS_TYPE:
+                    sql_type = _DATA_TYPE_BY_DMS_TYPE[dms_type].sql
                 else:
                     warnings.warn(
                         f"Unknown DMS type '{dms_type}' for property '{prop_name}'", RuntimeWarning, stacklevel=2

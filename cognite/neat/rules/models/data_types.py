@@ -222,7 +222,7 @@ class PlainLiteral(DataType):
     python = str
     dms = dms.Text
     graphql = "String"
-    xsd = "xsd:string"
+    xsd = "xsd:plainLiteral"
     sql = "STRING"
 
 
@@ -279,3 +279,4 @@ _DATA_TYPE_BY_DMS_TYPE = {
     if cls.dms._type not in _seen and not _seen.add(cls.dms._type)  # type: ignore[func-returns-value]
 }
 del _seen
+_XSD_TYPES = {cls_.xsd for cls_ in _DATA_TYPE_BY_NAME.values()}

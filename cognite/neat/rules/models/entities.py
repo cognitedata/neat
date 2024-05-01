@@ -61,14 +61,14 @@ class _UndefinedType(BaseModel):
     ...
 
 
-class _Unknown(BaseModel):
+class _UnknownType(BaseModel):
     def __str__(self) -> str:
         return "#N/A"
 
 
 # This is a trick to make Undefined and Unknown singletons
 Undefined = _UndefinedType()
-Unknown = _Unknown()
+Unknown = _UnknownType()
 _PARSE = object()
 
 
@@ -78,7 +78,7 @@ class Entity(BaseModel, extra="ignore"):
 
     type_: ClassVar[EntityTypes] = EntityTypes.undefined
     prefix: str | _UndefinedType = Undefined
-    suffix: str | _Unknown
+    suffix: str | _UnknownType
 
     @classmethod
     def load(cls, data: Any, **defaults) -> Self:
@@ -349,7 +349,7 @@ class ReferenceEntity(ClassEntity):
     property_: str | None = Field(None, alias="property")
 
     def as_view_id(self) -> ViewId:
-        if isinstance(self.prefix, _UndefinedType) or isinstance(self.suffix, _Unknown):
+        if isinstance(self.prefix, _UndefinedType) or isinstance(self.suffix, _UnknownType):
             raise ValueError("Prefix is not defined or suffix is unknown")
         return ViewId(space=self.prefix, external_id=self.suffix, version=self.version)
 
