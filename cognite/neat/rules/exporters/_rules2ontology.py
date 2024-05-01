@@ -11,6 +11,8 @@ from rdflib.collection import Collection as GraphCollection
 from cognite.neat.constants import DEFAULT_NAMESPACE as NEAT_NAMESPACE
 from cognite.neat.rules import exceptions
 from cognite.neat.rules.analysis import InformationArchitectRulesAnalysis
+from cognite.neat.rules.models.data_types import DataType
+from cognite.neat.rules.models.entities import ClassEntity
 from cognite.neat.rules.models.rules import DMSRules
 from cognite.neat.rules.models.rules._information_rules import (
     InformationClass,
@@ -20,11 +22,9 @@ from cognite.neat.rules.models.rules._information_rules import (
 )
 from cognite.neat.rules.models.rules._types import EntityTypes
 from cognite.neat.utils.utils import generate_exception_report, remove_namespace
-from cognite.neat.rules.models.data_types import DataType
 
 from ._base import BaseExporter
 from ._validation import are_properties_redefined
-from ..models.entities import ClassEntity
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -501,7 +501,7 @@ class SHACLNodeShape(OntologyModel):
         else:
             parent = None
         return cls(
-            id_=namespace[f"{str(class_definition.class_.suffix)}Shape"],
+            id_=namespace[f"{class_definition.class_.suffix!s}Shape"],
             target_class=namespace[str(class_definition.class_.suffix)],
             parent=parent,
             property_shapes=[SHACLPropertyShape.from_property(prop, namespace) for prop in property_definitions],

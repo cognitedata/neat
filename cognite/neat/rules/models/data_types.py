@@ -276,6 +276,6 @@ _seen = set()
 _DATA_TYPE_BY_DMS_TYPE = {
     cls.dms._type.casefold(): cls
     for cls in DataType.__subclasses__()
-    if cls.dms._type not in _seen and not _seen.add(cls.dms._type) # type: ignore[func-returns-value]
+    if cls.dms._type not in _seen and not _seen.add(cls.dms._type)  # type: ignore[func-returns-value]
 }
 del _seen

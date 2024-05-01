@@ -400,7 +400,9 @@ class _InformationRulesConverter:
 
         properties_by_class: dict[str, list[DMSProperty]] = defaultdict(list)
         for prop in self.information.properties:
-            properties_by_class[prop.class_.versioned_id].append(self._as_dms_property(prop, default_space, default_version))
+            properties_by_class[prop.class_.versioned_id].append(
+                self._as_dms_property(prop, default_space, default_version)
+            )
 
         views: list[DMSView] = [
             DMSView(
@@ -432,7 +434,8 @@ class _InformationRulesConverter:
                     name=class_.name,
                     container=class_.class_.as_container_entity(default_space),
                     description=class_.description,
-                    constraint=[parent.as_container_entity(default_space)
+                    constraint=[
+                        parent.as_container_entity(default_space)
                         for parent in class_.parent or []
                         if parent.versioned_id not in classes_without_properties
                     ]
@@ -529,10 +532,5 @@ class _InformationRulesConverter:
         else:
             implements = []
 
-        implements.extend(
-            [
-                parent.as_view_entity(metadata.prefix, metadata.version)
-                for parent in cls_.parent or []
-            ]
-        )
+        implements.extend([parent.as_view_entity(metadata.prefix, metadata.version) for parent in cls_.parent or []])
         return implements

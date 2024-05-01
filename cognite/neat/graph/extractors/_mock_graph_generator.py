@@ -14,10 +14,10 @@ from rdflib import RDF, Literal, Namespace, URIRef
 
 from cognite.neat.graph.models import Triple
 from cognite.neat.rules.analysis import InformationArchitectRulesAnalysis
+from cognite.neat.rules.models.data_types import DataType
+from cognite.neat.rules.models.entities import ClassEntity, EntityTypes
 from cognite.neat.rules.models.rules import DMSRules, InformationRules
 from cognite.neat.rules.models.rules._information_rules import InformationProperty
-from cognite.neat.rules.models.entities import ClassEntity, EntityTypes
-from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.utils.utils import remove_namespace
 
 from ._base import BaseExtractor

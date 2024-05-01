@@ -20,9 +20,9 @@ from cognite.neat.rules.importers._dtdl2rules.spec import (
     TelemetryV2,
 )
 from cognite.neat.rules.issues import IssueList, ValidationIssue
-from cognite.neat.rules.models.rules._information_rules import InformationClass, InformationProperty
+from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_NAME, DataType, Json, String
 from cognite.neat.rules.models.entities import ClassEntity, ParentClassEntity
-from cognite.neat.rules.models.data_types import DataType, Json, String, _DATA_TYPE_BY_NAME
+from cognite.neat.rules.models.rules._information_rules import InformationClass, InformationProperty
 
 
 class _DTDLConverter:
