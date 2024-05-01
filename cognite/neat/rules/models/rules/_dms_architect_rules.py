@@ -179,7 +179,7 @@ class DMSProperty(SheetEntity):
 
     @field_validator("nullable")
     def direct_relation_must_be_nullable(cls, value: Any, info: ValidationInfo) -> None:
-        if info.data.get("relatVion") == "direct" and value is False:
+        if info.data.get("relation") == "direct" and value is False:
             raise ValueError("Direct relation must be nullable")
         return value
 
@@ -311,7 +311,10 @@ class DMSRules(BaseRules):
             if len(value_types) > 1:
                 errors.append(
                     cognite.neat.rules.issues.spreadsheet.MultiValueTypeError(
-                        container_id, prop_name, row_numbers, {str(v) for v in value_types}
+                        container_id,
+                        prop_name,
+                        row_numbers,
+                        {v.dms._type if isinstance(v, DataType) else str(v) for v in value_types},
                     )
                 )
             list_definitions = {prop.is_list for _, prop in properties if prop.is_list is not None}
