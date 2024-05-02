@@ -195,7 +195,7 @@ class DirectRelationMissingSourceWarning(DMSSchemaWarning):
     property: str
 
     def message(self) -> str:
-        return f"The source view referred to by {self.view_id}.{self.property} does not exist"
+        return f"The source view referred to by '{self.view_id.external_id}.{self.property}' does not exist."
 
     def dump(self) -> dict[str, Any]:
         output = super().dump()
