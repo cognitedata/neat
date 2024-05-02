@@ -11,6 +11,7 @@ from cognite.neat.rules.models.entities import (
     ReferenceEntity,
     Undefined,
     Unknown,
+    UnknownEntity,
     ViewEntity,
     ViewPropertyEntity,
 )
@@ -29,7 +30,7 @@ class TestEntities:
                 "subject:person(version=1.0)",
                 ViewEntity(space="subject", externalId="person", version="1.0"),
             ),
-            (Entity, "#N/A", Entity(prefix=Undefined, suffix=Unknown)),
+            (UnknownEntity, "#N/A", UnknownEntity()),
             (ViewEntity, "Person", ViewEntity(space=DEFAULT_SPACE, externalId="Person", version=DEFAULT_VERSION)),
             (ViewEntity, "Person(version=3)", ViewEntity(space=DEFAULT_SPACE, externalId="Person", version="3")),
             (
@@ -60,17 +61,17 @@ class TestEntities:
             (
                 ViewEntity,
                 "#N/A",
-                DMSUnknownEntity(),
+                DMSUnknownEntity.from_id(None),
             ),
             (
                 ViewPropertyEntity,
                 "#N/A",
-                DMSUnknownEntity(),
+                DMSUnknownEntity.from_id(None),
             ),
             (
                 ClassEntity,
                 "#N/A",
-                Entity(prefix=Undefined, suffix=Unknown),
+                UnknownEntity(prefix=Undefined, suffix=Unknown),
             ),
         ],
     )
