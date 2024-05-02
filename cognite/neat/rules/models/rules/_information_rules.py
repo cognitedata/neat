@@ -17,6 +17,7 @@ from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import (
     ClassEntity,
     ContainerEntity,
+    DMSUnknownEntity,
     Entity,
     EntityTypes,
     ParentClassEntity,
@@ -24,10 +25,12 @@ from cognite.neat.rules.models.entities import (
     ReferenceEntity,
     Undefined,
     Unknown,
+    UnknownEntity,
     URLEntity,
     ViewEntity,
     ViewPropertyEntity,
     _UndefinedType,
+    _UnknownType,
 )
 from cognite.neat.rules.models.rdfpath import (
     AllReferences,
@@ -148,7 +151,7 @@ class InformationProperty(SheetEntity):
     """
 
     property_: PropertyType = Field(alias="Property")
-    value_type: DataType | ClassEntity = Field(alias="Value Type")
+    value_type: DataType | ClassEntity | UnknownEntity = Field(alias="Value Type", union_mode="left_to_right")
     min_count: int | None = Field(alias="Min Count", default=None)
     max_count: int | float | None = Field(alias="Max Count", default=None)
     default: Any | None = Field(alias="Default", default=None)
@@ -281,15 +284,15 @@ class InformationRules(RuleModel):
         # update expected_value_types
 
         if self.metadata.schema_ == SchemaCompleteness.complete:
-            defined_classes = {class_.class_.versioned_id for class_ in self.classes}
-            referred_classes = {property_.class_.versioned_id for property_ in self.properties} | {
-                parent.versioned_id for class_ in self.classes for parent in class_.parent or []
+            defined_classes = {str(class_.class_) for class_ in self.classes}
+            referred_classes = {str(property_.class_) for property_ in self.properties} | {
+                str(parent) for class_ in self.classes for parent in class_.parent or []
             }
             referred_types = {
                 str(property_.value_type)
                 for property_ in self.properties
-                if property_.type_ == EntityTypes.object_property
-                and not (isinstance(property_.value_type, Entity) and property_.value_type.suffix is Unknown)
+                if isinstance(property_.value_type, Entity)
+                and not isinstance(property_.value_type.suffix, _UnknownType)
             }
             if not referred_classes.issubset(defined_classes) or not referred_types.issubset(defined_classes):
                 missing_classes = referred_classes.difference(defined_classes).union(
@@ -302,7 +305,7 @@ class InformationRules(RuleModel):
     @model_validator(mode="after")
     def validate_class_has_properties_or_parent(self) -> Self:
         defined_classes = {class_.class_ for class_ in self.classes if class_.reference is None}
-        referred_classes = {property_.class_ for property_ in self.properties}
+        referred_classes = {property_.class_ for property_ in self.properties if property_.class_.suffix is not Unknown}
         has_parent_classes = {class_.class_ for class_ in self.classes if class_.parent}
         missing_classes = defined_classes.difference(referred_classes) - has_parent_classes
         if missing_classes:
@@ -467,9 +470,11 @@ class _InformationRulesConverter:
         from ._dms_architect_rules import DMSProperty
 
         # returns property type, which can be ObjectProperty or DatatypeProperty
-        value_type: DataType | ViewEntity
+        value_type: DataType | ViewEntity | ViewPropertyEntity | DMSUnknownEntity
         if isinstance(prop.value_type, DataType):
             value_type = prop.value_type
+        elif isinstance(prop.value_type, UnknownEntity):
+            value_type = DMSUnknownEntity()
         elif isinstance(prop.value_type, ClassEntity):
             value_type = prop.value_type.as_view_entity(default_space, default_version)
         else:

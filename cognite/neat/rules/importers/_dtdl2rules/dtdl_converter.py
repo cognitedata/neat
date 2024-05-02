@@ -1,5 +1,6 @@
 from collections import Counter
 from collections.abc import Callable, Sequence
+from typing import cast
 
 import cognite.neat.rules.issues.importing
 from cognite.neat.rules import issues
@@ -88,7 +89,12 @@ class _DTDLConverter:
             name=item.display_name,
             description=item.description,
             comment=item.comment,
-            parent=[ParentClassEntity.load(parent.as_class_id()) for parent in item.extends or []] or None,
+            parent=[
+                cast(ParentClassEntity, parent_entity)
+                for parent in item.extends or []
+                if isinstance(parent_entity := ParentClassEntity.load(parent.as_class_id()), ParentClassEntity)
+            ]
+            or None,
         )
         self.classes.append(class_)
         for sub_item_or_id in item.contents or []:

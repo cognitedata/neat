@@ -25,8 +25,7 @@ from cognite.neat.rules.models.entities import (
     DMSUnknownEntity,
     ParentClassEntity,
     ReferenceEntity,
-    Undefined,
-    Unknown,
+    UnknownEntity,
     URLEntity,
     ViewEntity,
     ViewEntityList,
@@ -1042,10 +1041,7 @@ class _DMSRulesConverter:
                     suffix=property_.value_type.suffix,
                 )
             elif isinstance(property_.value_type, DMSUnknownEntity):
-                value_type = ClassEntity(
-                    prefix=Undefined,
-                    suffix=Unknown,
-                )
+                value_type = UnknownEntity()
             else:
                 raise ValueError(f"Unsupported value type: {property_.value_type.type_}")
 

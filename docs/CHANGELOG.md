@@ -15,13 +15,16 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## [0.75.7] - 29-05-24
+## [0.75.8] - 02-05-24
+### Fixed
+- `DMSExporter` now correctly exports direct relations with unknown source.
+
+## [0.75.7] - 29-04-24
 ### Added
 - `DMSExporter` now supports deletion of data model and data model components
 - `DeleteDataModelFromCDF` added to the step library
 
-
-## [0.75.6] - 26-05-24
+## [0.75.6] - 26-04-24
 ### Changed
 - All `NEAT` importers does not have `is_reference` parameter in `.to_rules()` method. This has been moved
   to the `ExcelExporter` `__init__` method. This is because this is the only place where this parameter was used.
@@ -33,33 +36,33 @@ Changes are grouped as follows:
 - When importing an `Excel` rules set with a reference model, the `ExcelImporter` would produce the warning
   `The copy method is deprecated; use the model_copy instead`. This is now fixed.
 
-## [0.75.5] - 24-05-24
+## [0.75.5] - 24-04-24
 ### Fixed
 - Potential of having duplicated spaces are now fixed
 
-## [0.75.4] - 24-05-24
+## [0.75.4] - 24-04-24
 ### Fixed
 - Rendering of correct metadata in UI for information architect
 ### Added
 - Added `OntologyToRules` that works with V2 Rules (profiling)
 
-## [0.75.3] - 23-05-24
+## [0.75.3] - 23-04-24
 ### Fixed
 - Names and descriptions were not considered for views and view properties
 
-## [0.75.2] - 23-05-24
+## [0.75.2] - 23-04-24
 ### Fixed
 - Allowing that multiple View properties can map to the same Container property
 
-## [0.75.1] - 23-05-24
+## [0.75.1] - 23-04-24
 ### Fixed
 - No spaces in any of the subfolders of the `neat` package.
 
-## [0.75.0] - 23-05-24
+## [0.75.0] - 23-04-24
 ### Added
 - Added and moved all v1 rules related code base under `legacy` module
 
-## [0.74.0] - 23-05-24
+## [0.74.0] - 23-04-24
 ### Added
 - added UI+api support for RulesV2. Read-only in the release , editable in the next release.
 

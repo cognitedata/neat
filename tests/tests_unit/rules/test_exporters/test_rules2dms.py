@@ -4,11 +4,16 @@ from collections import Counter
 from pathlib import Path
 from typing import cast
 
-from cognite.neat.rules.exporters._rules2dms import DMSExporter
+import pytest
+from cognite.client import data_modeling as dm
+
+from cognite.neat.rules import importers
+from cognite.neat.rules.exporters import DMSExporter
 from cognite.neat.rules.models.rules._dms_architect_rules import (
     DMSRules,
 )
 from cognite.neat.rules.models.rules._dms_schema import PipelineSchema
+from tests.data import DMS_UNKNOWN_VALUE_TYPE, INFORMATION_UNKNOWN_VALUE_TYPE
 
 
 class TestDMSExporter:
@@ -59,3 +64,34 @@ class TestDMSExporter:
         assert counts["container"] == len(schema.containers)
         assert transformation_count == len(schema.transformations)
         assert table_count == len(schema.raw_tables)
+
+
+class TestImportExportDMS:
+    @pytest.mark.parametrize(
+        "filepath",
+        [
+            pytest.param(INFORMATION_UNKNOWN_VALUE_TYPE, id="Information source"),
+            pytest.param(DMS_UNKNOWN_VALUE_TYPE, id="DMS source"),
+        ],
+    )
+    def test_import_excel_export_dms(self, filepath: Path) -> None:
+        rules = importers.ExcelImporter(filepath).to_rules(errors="raise")
+
+        exported = DMSExporter().export(rules)
+
+        assert len(exported.views) == 1
+        view = exported.views[0]
+        assert view.as_id() == dm.ViewId("badmodel", "GeneratingUnit", "0.1.0")
+        assert "geoLocation" in view.properties
+        prop = view.properties["geoLocation"]
+        assert isinstance(prop, dm.MappedPropertyApply)
+        # This model is missing the value type (is set #N/A in the excel file)
+        assert prop.source is None
+        assert prop.container == dm.ContainerId("badmodel", "GeneratingUnit")
+        assert len(exported.containers) == 1
+        container = exported.containers[0]
+        assert container.as_id() == dm.ContainerId("badmodel", "GeneratingUnit")
+        assert "geoLocation" in container.properties
+        prop = container.properties["geoLocation"]
+        assert isinstance(prop, dm.ContainerProperty)
+        assert prop.type == dm.DirectRelation()

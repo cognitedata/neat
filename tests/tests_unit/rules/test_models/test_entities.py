@@ -6,10 +6,10 @@ from cognite.client.data_classes.data_modeling import DataModelId, PropertyId, V
 from cognite.neat.rules.models.entities import (
     ClassEntity,
     DataModelEntity,
+    DMSUnknownEntity,
     Entity,
     ReferenceEntity,
-    Undefined,
-    Unknown,
+    UnknownEntity,
     ViewEntity,
     ViewPropertyEntity,
 )
@@ -28,7 +28,7 @@ class TestEntities:
                 "subject:person(version=1.0)",
                 ViewEntity(space="subject", externalId="person", version="1.0"),
             ),
-            (Entity, "#N/A", Entity(prefix=Undefined, suffix=Unknown)),
+            (UnknownEntity, "#N/A", UnknownEntity()),
             (ViewEntity, "Person", ViewEntity(space=DEFAULT_SPACE, externalId="Person", version=DEFAULT_VERSION)),
             (ViewEntity, "Person(version=3)", ViewEntity(space=DEFAULT_SPACE, externalId="Person", version="3")),
             (
@@ -55,6 +55,21 @@ class TestEntities:
                 ViewPropertyEntity,
                 "sp_my_space:Person(version=1, property=name)",
                 ViewPropertyEntity(space="sp_my_space", externalId="Person", version="1", property="name"),
+            ),
+            (
+                ViewEntity,
+                "#N/A",
+                DMSUnknownEntity.from_id(None),
+            ),
+            (
+                ViewPropertyEntity,
+                "#N/A",
+                DMSUnknownEntity.from_id(None),
+            ),
+            (
+                ClassEntity,
+                "#N/A",
+                UnknownEntity(),
             ),
         ],
     )
