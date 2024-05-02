@@ -27,6 +27,7 @@ from cognite.neat.rules.models.entities import (
     URLEntity,
     ViewEntity,
     ViewPropertyEntity,
+    _UndefinedType,
 )
 from cognite.neat.rules.models.rdfpath import (
     AllReferences,
@@ -358,7 +359,9 @@ class InformationRules(RuleModel):
         new_self = self.model_copy(deep=True)
         for prop in new_self.properties:
             prop.reference = ReferenceEntity(
-                prefix=prop.class_.prefix,
+                prefix=prop.class_.prefix
+                if not isinstance(prop.class_.prefix, _UndefinedType)
+                else self.metadata.prefix,
                 suffix=prop.class_.suffix,
                 version=prop.class_.version,
                 property=prop.property_,
@@ -366,7 +369,11 @@ class InformationRules(RuleModel):
 
         for cls_ in new_self.classes:
             cls_.reference = ReferenceEntity(
-                prefix=cls_.class_.prefix, suffix=cls_.class_.suffix, version=cls_.class_.version
+                prefix=cls_.class_.prefix
+                if not isinstance(cls_.class_.prefix, _UndefinedType)
+                else self.metadata.prefix,
+                suffix=cls_.class_.suffix,
+                version=cls_.class_.version,
             )
 
         return new_self

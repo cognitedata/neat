@@ -346,6 +346,7 @@ class DataModelEntity(DMSVersionedEntity[DataModelId]):
 
 class ReferenceEntity(ClassEntity):
     type_: ClassVar[EntityTypes] = EntityTypes.reference_entity
+    prefix: str
     property_: str | None = Field(None, alias="property")
 
     def as_view_id(self) -> ViewId:

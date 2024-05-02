@@ -75,11 +75,15 @@ class TestDataTypes:
                 ),
             ),
             (
-                {"property": "a_class", "valueType": "my_namespace:person", "Reference": "GeneratingUnit"},
+                {
+                    "property": "a_class",
+                    "valueType": "my_namespace:person",
+                    "Reference": "another_namespace:GeneratingUnit",
+                },
                 DemoProperty(
                     property="a_class",
                     valueType=ClassEntity(prefix="my_namespace", suffix="person"),
-                    Reference=ReferenceEntity(suffix="GeneratingUnit"),
+                    Reference=ReferenceEntity(prefix="another_namespace", suffix="GeneratingUnit"),
                 ),
             ),
             (
