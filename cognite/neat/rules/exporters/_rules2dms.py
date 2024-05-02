@@ -151,21 +151,55 @@ class DMSExporter(CDFExporter[DMSSchema]):
             schema.frozen_ids.update(set(reference_schema.node_types.as_ids()))
         return schema
 
+    def delete_from_cdf(self, rules: Rules, client: CogniteClient, dry_run: bool = False) -> Iterable[UploadResult]:
+        schema, to_export = self._prepare_schema_and_exporters(rules, client)
+
+        # we need to reverse order in which we are picking up the items to delete
+        # as they are sorted in the order of creation and we need to delete them in reverse order
+        for all_items, loader in reversed(to_export):
+            all_item_ids = loader.get_ids(all_items)
+            skipped = sum(1 for item_id in all_item_ids if item_id in schema.frozen_ids)
+            item_ids = [item_id for item_id in all_item_ids if item_id not in schema.frozen_ids]
+            cdf_items = loader.retrieve(item_ids)
+            cdf_item_by_id = {loader.get_id(item): item for item in cdf_items}
+            items = [item for item in all_items if loader.get_id(item) in item_ids]
+            to_delete = []
+
+            for item in items:
+                if (
+                    isinstance(loader, DataModelingLoader)
+                    and self.include_space is not None
+                    and not loader.in_space(item, self.include_space)
+                ):
+                    continue
+
+                cdf_item = cdf_item_by_id.get(loader.get_id(item))
+                if cdf_item:
+                    to_delete.append(cdf_item)
+
+            deleted = len(to_delete)
+            failed_deleted = 0
+
+            error_messages: list[str] = []
+            if not dry_run:
+                if to_delete:
+                    try:
+                        loader.delete(to_delete)
+                    except CogniteAPIError as e:
+                        failed_deleted = len(e.failed) + len(e.unknown)
+                        deleted -= failed_deleted
+                        error_messages.append(f"Failed delete: {e.message}")
+
+            yield UploadResult(
+                name=loader.resource_name,
+                deleted=deleted,
+                skipped=skipped,
+                failed_deleted=failed_deleted,
+                error_messages=error_messages,
+            )
+
     def export_to_cdf(self, rules: Rules, client: CogniteClient, dry_run: bool = False) -> Iterable[UploadResult]:
-        schema = self.export(rules)
-        to_export: list[tuple[CogniteResourceList, ResourceLoader]] = []
-        if self.export_components.intersection({"all", "spaces"}):
-            to_export.append((schema.spaces, SpaceLoader(client)))
-        if self.export_components.intersection({"all", "containers"}):
-            to_export.append((schema.containers, ContainerLoader(client)))
-        if self.export_components.intersection({"all", "views"}):
-            to_export.append((schema.views, ViewLoader(client, self.existing_handling)))
-        if self.export_components.intersection({"all", "data_models"}):
-            to_export.append((schema.data_models, DataModelLoader(client)))
-        if isinstance(schema, PipelineSchema):
-            to_export.append((schema.databases, RawDatabaseLoader(client)))
-            to_export.append((schema.raw_tables, RawTableLoader(client)))
-            to_export.append((schema.transformations, TransformationLoader(client)))
+        schema, to_export = self._prepare_schema_and_exporters(rules, client)
 
         # The conversion from DMS to GraphQL does not seem to be triggered even if the views
         # are changed. This is a workaround to force the conversion.
@@ -254,3 +288,22 @@ class DMSExporter(CDFExporter[DMSSchema]):
 
             if loader.resource_name == "views" and (created or changed) and not redeploy_data_model:
                 redeploy_data_model = True
+
+    def _prepare_schema_and_exporters(
+        self, rules, client
+    ) -> tuple[DMSSchema, list[tuple[CogniteResourceList, ResourceLoader]]]:
+        schema = self.export(rules)
+        to_export: list[tuple[CogniteResourceList, ResourceLoader]] = []
+        if self.export_components.intersection({"all", "spaces"}):
+            to_export.append((schema.spaces, SpaceLoader(client)))
+        if self.export_components.intersection({"all", "containers"}):
+            to_export.append((schema.containers, ContainerLoader(client)))
+        if self.export_components.intersection({"all", "views"}):
+            to_export.append((schema.views, ViewLoader(client, self.existing_handling)))
+        if self.export_components.intersection({"all", "data_models"}):
+            to_export.append((schema.data_models, DataModelLoader(client)))
+        if isinstance(schema, PipelineSchema):
+            to_export.append((schema.databases, RawDatabaseLoader(client)))
+            to_export.append((schema.raw_tables, RawTableLoader(client)))
+            to_export.append((schema.transformations, TransformationLoader(client)))
+        return schema, to_export

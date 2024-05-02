@@ -17,10 +17,107 @@ __all__ = [
     "RulesToSHACL",
     "RulesToSemanticDataModel",
     "RulesToCDFTransformations",
+    "DeleteDataModelFromCDF",
 ]
 
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
+
+
+class DeleteDataModelFromCDF(Step):
+    """
+    This step deletes data model and its components from CDF
+    """
+
+    description = "This step deletes data model and its components from CDF."
+    version = "private-beta"
+    category = CATEGORY
+
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="Dry run",
+            value="False",
+            label=("Whether to perform a dry run of the deleter. "),
+            options=["True", "False"],
+        ),
+        Configurable(
+            name="Components",
+            type="multi_select",
+            value="",
+            label="Select which DMS schema component(s) to be deleted from CDF",
+            options=["spaces", "containers", "views", "data_models"],
+        ),
+        Configurable(
+            name="Multi-space components deletion",
+            value="False",
+            label=(
+                "Whether to delete only components belonging to the data model space"
+                " (i.e. space define under Metadata sheet of Rules), "
+                "or also additionally delete components outside of the data model space."
+            ),
+            options=["True", "False"],
+        ),
+    ]
+
+    def run(self, rules: MultiRuleData, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override]
+        if self.configs is None or self.data_store_path is None:
+            raise StepNotInitialized(type(self).__name__)
+        components_to_delete = {
+            cast(Literal["all", "spaces", "data_models", "views", "containers"], key)
+            for key, value in self.complex_configs["Components"].items()
+            if value
+        }
+        dry_run = self.configs["Dry run"] == "True"
+        multi_space_components_delete: bool = self.configs["Multi-space components deletion"] == "True"
+
+        if not components_to_delete:
+            return FlowMessage(
+                error_text="No DMS Schema components selected for removal! Please select minimum one!",
+                step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
+            )
+        input_rules = rules.dms or rules.information
+        if input_rules is None:
+            return FlowMessage(
+                error_text="Missing DMS or Information rules in the input data! "
+                "Please ensure that a DMS or Information rules is provided!",
+                step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
+            )
+
+        dms_exporter = exporters.DMSExporter(
+            export_components=frozenset(components_to_delete),
+            include_space=(
+                None
+                if multi_space_components_delete
+                else {input_rules.metadata.space if isinstance(input_rules, DMSRules) else input_rules.metadata.prefix}
+            ),
+        )
+
+        report_lines = ["# Data Model Deletion from CDF\n\n"]
+        errors = []
+        for result in dms_exporter.delete_from_cdf(rules=input_rules, client=cdf_client, dry_run=dry_run):
+            report_lines.append(result.as_report_str())
+            errors.extend(result.error_messages)
+
+        report_lines.append("\n\n# ERRORS\n\n")
+        report_lines.extend(errors)
+
+        output_dir = self.data_store_path / Path("staging")
+        output_dir.mkdir(parents=True, exist_ok=True)
+        report_file = "dms_component_creation_report.txt"
+        report_full_path = output_dir / report_file
+        report_full_path.write_text("\n".join(report_lines))
+
+        output_text = (
+            "<p></p>"
+            "Download Data Model Deletion "
+            f'<a href="/data/staging/{report_file}?{time.time()}" '
+            f'target="_blank">Report</a>'
+        )
+
+        if errors:
+            return FlowMessage(error_text=output_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
+        else:
+            return FlowMessage(output_text=output_text)
 
 
 class RulesToDMS(Step):
