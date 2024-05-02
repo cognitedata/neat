@@ -15,7 +15,7 @@ from rdflib import RDF, Literal, Namespace, URIRef
 from cognite.neat.graph.models import Triple
 from cognite.neat.rules.analysis import InformationArchitectRulesAnalysis
 from cognite.neat.rules.models.data_types import DataType
-from cognite.neat.rules.models.entities import ClassEntity, Entity, EntityTypes
+from cognite.neat.rules.models.entities import ClassEntity, EntityTypes
 from cognite.neat.rules.models.rules import DMSRules, InformationRules
 from cognite.neat.rules.models.rules._information_rules import InformationProperty
 from cognite.neat.utils.utils import remove_namespace
@@ -38,7 +38,7 @@ class MockGraphGenerator(BaseExtractor):
     def __init__(
         self,
         rules: InformationRules | DMSRules,
-        class_count: dict[str | ClassEntity | Entity, int] | None = None,
+        class_count: dict[str | ClassEntity, int] | None = None,
         stop_on_exception: bool = False,
         allow_isolated_classes: bool = True,
     ):
