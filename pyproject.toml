@@ -26,18 +26,21 @@ line-length = 120
 target_version = ['py310']
 include = '\.py$'
 
-[tool.ruff]
+[tool.ruff.lint]
 # See https://docs.astral.sh/ruff/rules/ for an overview of ruff rules
+select = ["E", "W", "F", "I", "RUF", "TID", "UP", "B", "FLY", "PTH", "ERA"]
+fixable = ["E", "W", "F", "I", "RUF", "TID", "UP", "B", "FLY", "PTH", "ERA"]
+ignore = []
+
+[tool.ruff.lint.isort]
+known-third-party = ["cognite.client"]
+
+[tool.ruff]
 line-length = 120
 target-version = "py310"
 exclude = ["examples", "examples-pydantic-v1", "scripts"]
-select = ["E", "W", "F", "I", "RUF", "TID", "UP", "B", "FLY", "PTH", "ERA"]
-fixable = ["E", "W", "F", "I", "RUF", "TID", "UP", "B", "FLY", "PTH", "ERA"]
 fix = true
-ignore = []
 
-[tool.ruff.isort]
-known-third-party = ["cognite.client"]
 
 [tool.mypy]
 explicit_package_bases = true

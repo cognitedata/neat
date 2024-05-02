@@ -79,7 +79,7 @@ class BasicHTML(Formatter):
 
 
 FORMATTER_BY_NAME: dict[str, type[Formatter]] = {
-    subclass.__name__: subclass
+    subclass.__name__: subclass  # type: ignore[type-abstract]
     for subclass in Formatter.__subclasses__()
     if ABC not in subclass.__bases__  # type: ignore[type-abstract]
 }

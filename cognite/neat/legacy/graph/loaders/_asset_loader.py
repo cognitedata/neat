@@ -342,8 +342,8 @@ class AssetLoader(CogniteLoader[AssetResource]):
             A dictionary with property type as key and a list of values as value.
         """
         properties_value_tuples: list[tuple[str, str]] = [
-            remove_namespace(prop, value)
-            for _, prop, value in properties_values  # type: ignore[misc]
+            remove_namespace(prop, value)  # type: ignore[misc]
+            for _, prop, value in properties_values
         ]
         # We add an identifier which will be used as fallback for external_id
         properties_value_tuples.append((self._identifier, remove_namespace(instance_id)))
