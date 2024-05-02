@@ -75,7 +75,7 @@ jobs:
       - run: poetry install -E all
 
       - name: Run unit tests
-        run: export PYTHONPATH=$PYTHONPATH:$(pwd); poetry run pytest tests/tests_unit
+        run: export PYTHONPATH=$PYTHONPATH:$(pwd); poetry run pytest tests/ -n8
 
 #      - name: Run integration tests
 #        env:
@@ -171,7 +171,7 @@ jobs:
           IDP_CLIENT_ID: ${{ vars.IDP_CLIENT_ID }}
           IDP_CLIENT_SECRET: ${{ secrets.IDP_CLIENT_SECRET }}
           IDP_TENANT_ID: ${{ secrets.IDP_TENANT_ID }}
-        run: export PYTHONPATH=$PYTHONPATH:$(pwd); poetry run pytest --cov=cognite/ --cov-config=pyproject.toml --cov-report=xml:coverage.xml tests/
+        run: export PYTHONPATH=$PYTHONPATH:$(pwd); poetry run pytest --cov=cognite/ --cov-config=pyproject.toml --cov-report=xml:coverage.xml tests/ -n8
 
       - name: Push coverage report to PR
         uses: orgoro/coverage@v3.1
