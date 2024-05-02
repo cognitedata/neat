@@ -134,7 +134,7 @@ def _add_missing_value_types(components: dict) -> dict:
     # to avoid issue of case sensitivity for xsd types
     value_types_lower = {v.lower() for v in candidate_value_types}
 
-    xsd_types_lower = {x.lower().removeprefix("xsd:") for x in xsd_types}
+    xsd_types_lower = {x.lower() for x in xsd_types}
 
     # Create a mapping from lowercase strings to original strings
     value_types_mapping = {v.lower(): v for v in candidate_value_types}
