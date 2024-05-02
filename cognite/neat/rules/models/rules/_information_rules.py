@@ -30,6 +30,7 @@ from cognite.neat.rules.models.entities import (
     ViewEntity,
     ViewPropertyEntity,
     _UndefinedType,
+    _UnknownType,
 )
 from cognite.neat.rules.models.rdfpath import (
     AllReferences,
@@ -290,7 +291,8 @@ class InformationRules(RuleModel):
             referred_types = {
                 str(property_.value_type)
                 for property_ in self.properties
-                if isinstance(property_.value_type, Entity) and property_.value_type.suffix is not Unknown
+                if isinstance(property_.value_type, Entity)
+                and not isinstance(property_.value_type.suffix, _UnknownType)
             }
             if not referred_classes.issubset(defined_classes) or not referred_types.issubset(defined_classes):
                 missing_classes = referred_classes.difference(defined_classes).union(

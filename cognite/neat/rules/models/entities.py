@@ -244,6 +244,10 @@ class UnknownEntity(ClassEntity):
     prefix: _UndefinedType = Undefined
     suffix: _UnknownType = Unknown  # type: ignore[assignment]
 
+    @property
+    def id(self) -> str:
+        return str(Unknown)
+
 
 T_ID = TypeVar("T_ID", bound=ContainerId | ViewId | DataModelId | PropertyId | None)
 
@@ -334,7 +338,8 @@ class DMSUnknownEntity(DMSEntity[None]):
     def from_id(cls, id: None) -> "DMSUnknownEntity":
         return cls(space=Undefined, externalId=Unknown)
 
-    def __str__(self) -> str:
+    @property
+    def id(self) -> str:
         return str(Unknown)
 
 
