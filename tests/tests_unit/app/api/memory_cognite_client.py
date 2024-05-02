@@ -1,3 +1,4 @@
+import os
 from collections.abc import Iterator, Sequence
 from contextlib import contextmanager, suppress
 from typing import Any, Literal, TypeVar
@@ -34,7 +35,7 @@ class MemoryClient:
     _RESOURCE_PATH: str
 
     def __init__(self, list_cls: type[T_CogniteResourceList], cls: type[T_CogniteResource]) -> None:
-        self.store: dict[ExternalId | ID, T_CogniteResource] = {}
+        self.store: dict[int, dict[ExternalId | ID, T_CogniteResource]] = {os.getpid(): {}}
         self._next_id = 1
         self._CREATE_LIMIT = 10_000
         self._RESOURCE_PATH = "assets"
@@ -54,7 +55,7 @@ class MemoryClient:
         params: dict | None = None,
         headers: dict | None = None,
     ) -> T_CogniteResource | None:
-        return self.store.get(identifier.as_primitive())
+        return self.store[os.getpid()].get(identifier.as_primitive())
 
     def _retrieve_multiple(
         self,
@@ -84,7 +85,7 @@ class MemoryClient:
         return self.list_cls(self._list_unique_in_store())
 
     def _list_unique_in_store(self) -> T_CogniteResourceList:
-        unique_ids = {id(item): item for item in self.store.values()}
+        unique_ids = {id(item): item for item in self.store[os.getpid()].values()}
         return self.list_cls(unique_ids.values())
 
     def dump(self, ordered: bool = False, exclude: set[str] | None = None) -> list[dict]:
@@ -140,7 +141,7 @@ class MemoryClient:
         is_single = not isinstance(items, Sequence)
         create_items = [items] if is_single else items
         for item in create_items:
-            self.store[item.external_id] = item
+            self.store[os.getpid()][item.external_id] = item
         return create_items
 
 

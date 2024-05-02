@@ -35,8 +35,6 @@ class DMSImporter(BaseImporter):
     """
 
     def __init__(self, views: Sequence[View] | DataModel[View], metadata: dict[str, str | float] | None = None):
-        super().__init__()
-
         if isinstance(views, DataModel):
             self.views = views.views
         else:

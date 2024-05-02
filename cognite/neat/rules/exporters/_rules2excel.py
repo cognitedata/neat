@@ -205,8 +205,8 @@ class ExcelExporter(BaseExporter[Workbook]):
 
     @classmethod
     def _adjust_column_widths(cls, workbook: Workbook) -> None:
-        for sheet in workbook:
-            sheet = cast(Worksheet, sheet)
+        for sheet_ in workbook:
+            sheet = cast(Worksheet, sheet_)
             for column_cells in sheet.columns:
                 try:
                     max_length = max(len(str(cell.value)) for cell in column_cells if cell.value is not None)

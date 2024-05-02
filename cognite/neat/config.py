@@ -1,4 +1,6 @@
+import os
 import shutil
+import sys
 from pathlib import Path
 
 from cognite.neat.constants import EXAMPLE_GRAPHS, EXAMPLE_RULES, EXAMPLE_WORKFLOWS
@@ -15,10 +17,18 @@ def copy_examples_to_directory(target_data_dir: Path):
     """
 
     print(f"Copying examples into {target_data_dir}")
-    _copy_examples(EXAMPLE_RULES, target_data_dir / "rules")
-    _copy_examples(EXAMPLE_GRAPHS, target_data_dir / "source-graphs")
-    _copy_examples(EXAMPLE_WORKFLOWS, target_data_dir / "workflows")
-    (target_data_dir / "staging").mkdir(exist_ok=True, parents=True)
+    is_test_running = "pytest" in sys.modules
+    if is_test_running:
+        pid = os.getpid()
+        _copy_examples(EXAMPLE_RULES, target_data_dir / f"rules-{pid}")
+        _copy_examples(EXAMPLE_GRAPHS, target_data_dir / f"source-graphs-{pid}")
+        _copy_examples(EXAMPLE_WORKFLOWS, target_data_dir / f"workflows-{pid}")
+        (target_data_dir / f"staging-{pid}").mkdir(exist_ok=True, parents=True)
+    else:
+        _copy_examples(EXAMPLE_RULES, target_data_dir / "rules")
+        _copy_examples(EXAMPLE_GRAPHS, target_data_dir / "source-graphs")
+        _copy_examples(EXAMPLE_WORKFLOWS, target_data_dir / "workflows")
+        (target_data_dir / "staging").mkdir(exist_ok=True, parents=True)
 
 
 def create_data_dir_structure(target_data_dir: Path):

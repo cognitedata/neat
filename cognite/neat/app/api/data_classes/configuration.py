@@ -68,15 +68,30 @@ class Config(BaseModel):
 
     @property
     def rules_store_path(self) -> Path:
-        return self.data_store_path / "rules"
+        is_test_running = "pytest" in sys.modules
+        if is_test_running:
+            pid = os.getpid()
+            return self.data_store_path / f"rules-{pid}"
+        else:
+            return self.data_store_path / "rules"
 
     @property
     def workflows_store_path(self) -> Path:
-        return self.data_store_path / "workflows"
+        is_test_running = "pytest" in sys.modules
+        if is_test_running:
+            pid = os.getpid()
+            return self.data_store_path / f"workflows-{pid}"
+        else:
+            return self.data_store_path / "workflows"
 
     @property
     def source_graph_path(self) -> Path:
-        return self.data_store_path / "source-graphs"
+        is_test_running = "pytest" in sys.modules
+        if is_test_running:
+            pid = os.getpid()
+            return self.data_store_path / f"source-graphs-{pid}"
+        else:
+            return self.data_store_path / "source-graphs"
 
     @classmethod
     def from_yaml(cls, filepath: Path) -> Self:
