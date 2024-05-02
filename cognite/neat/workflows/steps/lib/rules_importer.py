@@ -6,7 +6,7 @@ from cognite.client import CogniteClient
 
 from cognite.neat.rules import importers
 from cognite.neat.rules.issues.formatters import FORMATTER_BY_NAME
-from cognite.neat.rules.models.entities import DataModelEntity, Undefined
+from cognite.neat.rules.models.entities import DataModelEntity, DMSUnknownEntity
 from cognite.neat.rules.models.rules import RoleTypes
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
@@ -208,7 +208,7 @@ class DMSToRules(Step):
             return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
 
         datamodel_entity = DataModelEntity.load(datamodel_id_str)
-        if datamodel_entity.space is Undefined:
+        if isinstance(datamodel_entity, DMSUnknownEntity):
             error_text = (
                 f"Data model id should be in the format 'my_space:my_data_model(version=1)' "
                 f"or 'my_space:my_data_model', failed to parse space from {datamodel_id_str}"

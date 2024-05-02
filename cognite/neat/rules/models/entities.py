@@ -2,7 +2,7 @@ import re
 import sys
 from abc import ABC, abstractmethod
 from functools import total_ordering
-from typing import Annotated, Any, ClassVar, Generic, Literal, TypeVar
+from typing import Annotated, Any, ClassVar, Generic, TypeVar, cast
 
 from cognite.client.data_classes.data_modeling.ids import ContainerId, DataModelId, PropertyId, ViewId
 from pydantic import AnyHttpUrl, BaseModel, BeforeValidator, Field, PlainSerializer, model_serializer, model_validator
@@ -78,12 +78,14 @@ class Entity(BaseModel, extra="ignore"):
 
     type_: ClassVar[EntityTypes] = EntityTypes.undefined
     prefix: str | _UndefinedType = Undefined
-    suffix: str | _UnknownType
+    suffix: str
 
     @classmethod
-    def load(cls, data: Any, **defaults) -> Self:
+    def load(cls: "type[T_Entity]", data: Any, **defaults) -> "T_Entity | UnknownEntity":
         if isinstance(data, cls):
             return data
+        elif isinstance(data, str) and data == str(Unknown):
+            return UnknownEntity(prefix=Undefined, suffix=Unknown)
         if defaults and isinstance(defaults, dict):
             # This is trick to pass in default values
             return cls.model_validate({_PARSE: data, "defaults": defaults})
@@ -91,7 +93,7 @@ class Entity(BaseModel, extra="ignore"):
             return cls.model_validate(data)
 
     @model_validator(mode="before")
-    def _load(cls, data: Any) -> dict:
+    def _load(cls, data: Any) -> "dict | Entity":
         defaults = {}
         if isinstance(data, dict) and _PARSE in data:
             defaults = data.get("defaults", {})
@@ -104,6 +106,11 @@ class Entity(BaseModel, extra="ignore"):
             data = data.versioned_id
         elif not isinstance(data, str):
             raise ValueError(f"Cannot load {cls.__name__} from {data}")
+        elif data == str(Unknown) and cls.type_ != EntityTypes.undefined:
+            return cls(prefix=Undefined, suffix=Unknown)  # type: ignore[arg-type]
+        elif data == str(Unknown):
+            raise ValueError(f"Unknown is not allowed for {cls.type_} entity")
+
         result = cls._parse(data)
         output = defaults.copy()
         # Populate by alias
@@ -205,6 +212,9 @@ class Entity(BaseModel, extra="ignore"):
         return f"{self.prefix}:{self.suffix!s}"
 
 
+T_Entity = TypeVar("T_Entity", bound=Entity)
+
+
 class ClassEntity(Entity):
     type_: ClassVar[EntityTypes] = EntityTypes.class_
     version: str | None = None
@@ -229,6 +239,12 @@ class ParentClassEntity(ClassEntity):
         return ClassEntity(prefix=self.prefix, suffix=self.suffix, version=self.version)
 
 
+class UnknownEntity(ClassEntity):
+    type_ = EntityTypes.undefined
+    prefix: _UndefinedType = Undefined
+    suffix: _UnknownType = Unknown  # type: ignore[assignment]
+
+
 T_ID = TypeVar("T_ID", bound=ContainerId | ViewId | DataModelId | PropertyId | None)
 
 
@@ -236,6 +252,12 @@ class DMSEntity(Entity, Generic[T_ID], ABC):
     type_: ClassVar[EntityTypes] = EntityTypes.undefined
     prefix: str = Field(alias="space")
     suffix: str = Field(alias="externalId")
+
+    @classmethod
+    def load(cls: "type[T_DMSEntity]", data: Any, **defaults) -> "T_DMSEntity | DMSUnknownEntity":  # type: ignore[override]
+        if isinstance(data, str) and data == str(Unknown):
+            return DMSUnknownEntity.from_id(None)
+        return cast(T_DMSEntity, super().load(data, **defaults))
 
     @property
     def space(self) -> str:
@@ -258,6 +280,9 @@ class DMSEntity(Entity, Generic[T_ID], ABC):
 
     def as_class(self) -> ClassEntity:
         return ClassEntity(prefix=self.space, suffix=self.external_id)
+
+
+T_DMSEntity = TypeVar("T_DMSEntity", bound=DMSEntity)
 
 
 class ContainerEntity(DMSEntity[ContainerId]):
@@ -296,15 +321,15 @@ class ViewEntity(DMSVersionedEntity[ViewId]):
 # This is needed to handle direct relations with source=None
 class DMSUnknownEntity(DMSEntity[None]):
     type_: ClassVar[EntityTypes] = EntityTypes.undefined
-    prefix: Literal[""] = Field("", alias="space")
-    suffix: Literal[""] = Field("", alias="externalId")
+    prefix: _UnknownType = Field(Unknown, alias="space")  # type: ignore[assignment]
+    suffix: _UndefinedType = Field(Undefined, alias="externalId")  # type: ignore[assignment]
 
     def as_id(self) -> None:
         return None
 
     @classmethod
     def from_id(cls, id: None) -> "DMSUnknownEntity":
-        return cls(space="", externalId="")
+        return cls(space=Unknown, externalId=Undefined)
 
     def __str__(self) -> str:
         return str(Unknown)

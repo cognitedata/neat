@@ -281,15 +281,14 @@ class InformationRules(RuleModel):
         # update expected_value_types
 
         if self.metadata.schema_ == SchemaCompleteness.complete:
-            defined_classes = {class_.class_.versioned_id for class_ in self.classes}
-            referred_classes = {property_.class_.versioned_id for property_ in self.properties} | {
-                parent.versioned_id for class_ in self.classes for parent in class_.parent or []
+            defined_classes = {str(class_.class_) for class_ in self.classes}
+            referred_classes = {str(property_.class_) for property_ in self.properties} | {
+                str(parent) for class_ in self.classes for parent in class_.parent or []
             }
             referred_types = {
                 str(property_.value_type)
                 for property_ in self.properties
-                if property_.type_ == EntityTypes.object_property
-                and not (isinstance(property_.value_type, Entity) and property_.value_type.suffix is Unknown)
+                if isinstance(property_.value_type, Entity) and property_.value_type.suffix is not Unknown
             }
             if not referred_classes.issubset(defined_classes) or not referred_types.issubset(defined_classes):
                 missing_classes = referred_classes.difference(defined_classes).union(
@@ -302,7 +301,7 @@ class InformationRules(RuleModel):
     @model_validator(mode="after")
     def validate_class_has_properties_or_parent(self) -> Self:
         defined_classes = {class_.class_ for class_ in self.classes if class_.reference is None}
-        referred_classes = {property_.class_ for property_ in self.properties}
+        referred_classes = {property_.class_ for property_ in self.properties if property_.class_.suffix is not Unknown}
         has_parent_classes = {class_.class_ for class_ in self.classes if class_.parent}
         missing_classes = defined_classes.difference(referred_classes) - has_parent_classes
         if missing_classes:

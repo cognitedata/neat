@@ -27,6 +27,7 @@ from cognite.neat.rules.models.entities import (
     ReferenceEntity,
     Undefined,
     Unknown,
+    UnknownEntity,
     URLEntity,
     ViewEntity,
     ViewEntityList,
@@ -1042,7 +1043,7 @@ class _DMSRulesConverter:
                     suffix=property_.value_type.suffix,
                 )
             elif isinstance(property_.value_type, DMSUnknownEntity):
-                value_type = ClassEntity(
+                value_type = UnknownEntity(
                     prefix=Undefined,
                     suffix=Unknown,
                 )

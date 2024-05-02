@@ -9,6 +9,8 @@ from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import (
     ClassEntity,
     ContainerEntity,
+    DMSUnknownEntity,
+    Unknown,
     ViewEntity,
     ViewPropertyEntity,
 )
@@ -131,9 +133,11 @@ class DMSPropertyWrite:
         )
 
     def dump(self, default_space: str, default_version: str) -> dict[str, Any]:
-        value_type: DataType | ViewPropertyEntity | ViewEntity
+        value_type: DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity
         if DataType.is_data_type(self.value_type):
             value_type = DataType.load(self.value_type)
+        elif self.value_type == str(Unknown):
+            value_type = DMSUnknownEntity()
         else:
             try:
                 value_type = ViewPropertyEntity.load(self.value_type, space=default_space, version=default_version)
