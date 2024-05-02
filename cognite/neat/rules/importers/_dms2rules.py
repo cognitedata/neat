@@ -10,6 +10,14 @@ from cognite.client.utils import ms_to_datetime
 from cognite.neat.rules import issues
 from cognite.neat.rules.importers._base import BaseImporter, Rules
 from cognite.neat.rules.issues import IssueList
+from cognite.neat.rules.models.data_types import DataType
+from cognite.neat.rules.models.entities import (
+    ClassEntity,
+    ContainerEntity,
+    DMSUnknownEntity,
+    ViewEntity,
+    ViewPropertyEntity,
+)
 from cognite.neat.rules.models.rules import DMSRules, DMSSchema, RoleTypes
 from cognite.neat.rules.models.rules._base import ExtensionCategory, SchemaCompleteness
 from cognite.neat.rules.models.rules._dms_architect_rules import (
@@ -18,15 +26,6 @@ from cognite.neat.rules.models.rules._dms_architect_rules import (
     DMSProperty,
     DMSView,
     SheetList,
-)
-from cognite.neat.rules.models.rules._types import (
-    ClassEntity,
-    ContainerEntity,
-    DMSValueType,
-    Undefined,
-    Unknown,
-    ViewEntity,
-    ViewPropEntity,
 )
 
 
@@ -136,21 +135,21 @@ class DMSImporter(BaseImporter):
                             raise NotImplementedError(f"Constraint type {type(constraint_obj)} not implemented")
 
                     if isinstance(container_prop.type, dm.DirectRelation):
-                        direct_value_type: str | ViewEntity | DMSValueType
+                        direct_value_type: str | ViewEntity | DataType | DMSUnknownEntity
                         if prop.source is None:
                             issue_list.append(
                                 issues.importing.UnknownValueTypeWarning(class_entity.versioned_id, prop_id)
                             )
-                            direct_value_type = ViewPropEntity(prefix=Undefined, suffix=Unknown)
+                            direct_value_type = DMSUnknownEntity()
                         else:
-                            direct_value_type = ViewPropEntity.from_id(prop.source)
+                            direct_value_type = ViewEntity.from_id(prop.source)
 
                         dms_property = DMSProperty(
                             class_=class_entity,
                             property_=prop_id,
                             description=prop.description,
                             name=prop.name,
-                            value_type=cast(ViewPropEntity | DMSValueType, direct_value_type),
+                            value_type=direct_value_type,
                             relation="direct",
                             nullable=container_prop.nullable,
                             default=container_prop.default_value,
@@ -168,7 +167,7 @@ class DMSImporter(BaseImporter):
                             property_=prop_id,
                             description=prop.description,
                             name=prop.name,
-                            value_type=cast(ViewPropEntity | DMSValueType, container_prop.type._type),
+                            value_type=cast(ViewPropertyEntity | DataType, container_prop.type._type),
                             nullable=container_prop.nullable,
                             is_list=container_prop.type.is_list,
                             default=container_prop.default_value,
@@ -180,7 +179,7 @@ class DMSImporter(BaseImporter):
                             constraint=unique_constraints or None,
                         )
                 elif isinstance(prop, dm.MultiEdgeConnectionApply):
-                    view_entity = ViewPropEntity.from_id(prop.source)
+                    view_entity = ViewEntity.from_id(prop.source)
                     dms_property = DMSProperty(
                         class_=ClassEntity(prefix=view.space, suffix=view.external_id, version=view.version),
                         property_=prop_id,

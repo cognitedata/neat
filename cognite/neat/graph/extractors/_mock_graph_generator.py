@@ -14,9 +14,10 @@ from rdflib import RDF, Literal, Namespace, URIRef
 
 from cognite.neat.graph.models import Triple
 from cognite.neat.rules.analysis import InformationArchitectRulesAnalysis
+from cognite.neat.rules.models.data_types import DataType
+from cognite.neat.rules.models.entities import ClassEntity, EntityTypes
 from cognite.neat.rules.models.rules import DMSRules, InformationRules
 from cognite.neat.rules.models.rules._information_rules import InformationProperty
-from cognite.neat.rules.models.rules._types import ClassEntity, EntityTypes, XSDValueType
 from cognite.neat.utils.utils import remove_namespace
 
 from ._base import BaseExtractor
@@ -55,7 +56,7 @@ class MockGraphGenerator(BaseExtractor):
             }
         elif all(isinstance(key, str) for key in class_count.keys()):
             self.class_count = {
-                ClassEntity.from_raw(f"{self.rules.metadata.prefix}:{key}"): value for key, value in class_count.items()
+                ClassEntity.load(f"{self.rules.metadata.prefix}:{key}"): value for key, value in class_count.items()
             }
         elif all(isinstance(key, ClassEntity) for key in class_count.keys()):
             self.class_count = cast(dict[ClassEntity, int], class_count)
@@ -147,7 +148,7 @@ def generate_triples(
     triples: list[Triple] = []
     for class_ in class_count:
         triples += [
-            (class_instance_id, RDF.type, URIRef(namespace[class_.suffix]))
+            (class_instance_id, RDF.type, URIRef(namespace[str(class_.suffix)]))
             for class_instance_id in instance_ids[class_]
         ]
 
@@ -246,7 +247,7 @@ def _remove_non_requested_sym_pairs(class_linkage: pd.DataFrame, class_count: di
 
 
 def _generate_mock_data_property_triples(
-    instance_ids: list[URIRef], property_: str, namespace: Namespace, value_type: XSDValueType
+    instance_ids: list[URIRef], property_: str, namespace: Namespace, value_type: DataType
 ) -> list[tuple[URIRef, URIRef, Literal]]:
     """Generates triples for data properties."""
 
@@ -338,7 +339,7 @@ def _generate_triples_per_class(
                 instance_ids[class_],
                 property_.property_,
                 namespace,
-                cast(XSDValueType, property_.value_type),
+                cast(DataType, property_.value_type),
             )
 
         elif property_.type_ == EntityTypes.object_property:

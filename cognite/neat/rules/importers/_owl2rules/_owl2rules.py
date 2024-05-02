@@ -10,8 +10,8 @@ from rdflib import DC, DCTERMS, OWL, RDF, RDFS, SKOS, Graph
 
 from cognite.neat.rules.importers._base import BaseImporter, Rules
 from cognite.neat.rules.issues import IssueList
+from cognite.neat.rules.models.data_types import _XSD_TYPES
 from cognite.neat.rules.models.rules import InformationRules, RoleTypes
-from cognite.neat.rules.models.rules._types import XSD_VALUE_TYPE_MAPPINGS
 
 from ._owl2classes import parse_owl_classes
 from ._owl2metadata import parse_owl_metadata
@@ -126,7 +126,7 @@ def _add_missing_value_types(components: dict) -> dict:
         Updated tables with missing properties added to containers
     """
 
-    xsd_types = set(XSD_VALUE_TYPE_MAPPINGS.keys())
+    xsd_types = _XSD_TYPES
     candidate_value_types = {definition["Value Type"] for definition in components["Properties"]} - {
         definition["Class"] for definition in components["Classes"]
     }

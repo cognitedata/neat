@@ -7,10 +7,10 @@ from typing import Any, cast
 import pandas as pd
 from pydantic import ValidationError
 
+from cognite.neat.rules.models.entities import ClassEntity, EntityTypes, ParentClassEntity, ReferenceEntity
 from cognite.neat.rules.models.rdfpath import TransformationRuleType
 from cognite.neat.rules.models.rules._base import SchemaCompleteness
 from cognite.neat.rules.models.rules._information_rules import InformationClass, InformationProperty, InformationRules
-from cognite.neat.rules.models.rules._types._base import ClassEntity, EntityTypes, ParentClassEntity, ReferenceEntity
 from cognite.neat.utils.utils import get_inheritance_path
 
 from ._base import BaseAnalysis, DataModelingScenario
@@ -126,7 +126,7 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
         return class_property_pairs
 
     def class_inheritance_path(self, class_: ClassEntity | str, use_reference: bool = False) -> list[ClassEntity]:
-        class_ = class_ if isinstance(class_, ClassEntity) else ClassEntity.from_raw(class_)
+        class_ = class_ if isinstance(class_, ClassEntity) else ClassEntity.load(class_)
         class_parent_pairs = self.class_parent_pairs(use_reference)
         return get_inheritance_path(class_, class_parent_pairs)
 
@@ -328,7 +328,7 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
         """This is to simplify access to classes through dict."""
         class_dict: dict[str, InformationClass] = {}
         for definition in self.rules.classes:
-            class_dict[definition.class_.suffix] = definition
+            class_dict[str(definition.class_.suffix)] = definition
         return class_dict
 
     def subset_rules(self, desired_classes: set[ClassEntity], use_reference: bool = False) -> InformationRules:
@@ -398,7 +398,7 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
 
         logging.info(f"Reducing data model to only include the following classes: {possible_classes}")
         for class_ in possible_classes:
-            reduced_data_model["classes"].append(class_as_dict[class_.suffix])
+            reduced_data_model["classes"].append(class_as_dict[str(class_.suffix)])
 
         class_property_pairs = self.classes_with_properties(consider_inheritance=False)
 

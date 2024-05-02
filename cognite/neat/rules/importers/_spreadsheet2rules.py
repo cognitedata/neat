@@ -15,6 +15,7 @@ from cognite.neat.rules import issues
 from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models.rules import RULES_PER_ROLE, DMSRules, DomainRules, InformationRules
 from cognite.neat.rules.models.rules._base import RoleTypes, SchemaCompleteness
+from cognite.neat.rules.models.rules._dms_rules_write import DMSRulesWrite
 from cognite.neat.utils.auxiliary import local_import
 from cognite.neat.utils.spreadsheet import SpreadsheetRead, read_individual_sheet
 
@@ -214,7 +215,11 @@ class ExcelImporter(BaseImporter):
             error_cls=issues.spreadsheet.InvalidSheetError,
             error_args={"read_info_by_sheet": read_info_by_sheet},
         ) as future:
-            rules = rules_cls.model_validate(sheets)  # type: ignore[attr-defined]
+            rules: Rules
+            if rules_cls is DMSRules:
+                rules = DMSRulesWrite.load(sheets).as_read()
+            else:
+                rules = rules_cls.model_validate(sheets)  # type: ignore[attr-defined]
 
         if future.result == "failure" or issue_list.has_errors:
             return self._return_or_raise(issue_list, errors)

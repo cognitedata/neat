@@ -4,6 +4,9 @@ from typing import Any, ClassVar
 from pydantic import Field, field_serializer, field_validator, model_serializer
 from pydantic_core.core_schema import SerializationInfo
 
+from cognite.neat.rules.models.data_types import DataType
+from cognite.neat.rules.models.entities import ClassEntity, ParentEntityList
+
 from ._base import (
     BaseMetadata,
     RoleTypes,
@@ -11,7 +14,7 @@ from ._base import (
     SheetEntity,
     SheetList,
 )
-from ._types import ParentClassType, PropertyType, SemanticValueType, StrOrListType
+from ._types import PropertyType, StrOrListType
 
 
 class DomainMetadata(BaseMetadata):
@@ -21,7 +24,7 @@ class DomainMetadata(BaseMetadata):
 
 class DomainProperty(SheetEntity):
     property_: PropertyType = Field(alias="Property")
-    value_type: SemanticValueType = Field(alias="Value Type")
+    value_type: DataType | ClassEntity = Field(alias="Value Type")
     min_count: int | None = Field(alias="Min Count", default=None)
     max_count: int | float | None = Field(alias="Max Count", default=None)
 
@@ -40,7 +43,7 @@ class DomainProperty(SheetEntity):
 
 class DomainClass(SheetEntity):
     description: str | None = Field(None, alias="Description")
-    parent: ParentClassType = Field(alias="Parent Class")
+    parent: ParentEntityList | None = Field(alias="Parent Class")
 
 
 class DomainRules(RuleModel):

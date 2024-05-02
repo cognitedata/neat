@@ -11,6 +11,8 @@ from rdflib.collection import Collection as GraphCollection
 from cognite.neat.constants import DEFAULT_NAMESPACE as NEAT_NAMESPACE
 from cognite.neat.rules import exceptions
 from cognite.neat.rules.analysis import InformationArchitectRulesAnalysis
+from cognite.neat.rules.models.data_types import DataType
+from cognite.neat.rules.models.entities import ClassEntity, EntityTypes
 from cognite.neat.rules.models.rules import DMSRules
 from cognite.neat.rules.models.rules._information_rules import (
     InformationClass,
@@ -18,7 +20,6 @@ from cognite.neat.rules.models.rules._information_rules import (
     InformationProperty,
     InformationRules,
 )
-from cognite.neat.rules.models.rules._types import XSD_VALUE_TYPE_MAPPINGS, EntityTypes
 from cognite.neat.utils.utils import generate_exception_report, remove_namespace
 
 from ._base import BaseExporter
@@ -114,7 +115,7 @@ class Ontology(OntologyModel):
             ],
             shapes=[
                 SHACLNodeShape.from_rules(
-                    class_dict[class_.suffix],
+                    class_dict[str(class_.suffix)],
                     list(properties.values()),
                     rules.metadata.namespace,
                 )
@@ -249,15 +250,15 @@ class OWLClass(OntologyModel):
             sub_class_of = []
             for parent_class in definition.parent:
                 try:
-                    sub_class_of.append(prefixes[parent_class.prefix][parent_class.suffix])
+                    sub_class_of.append(prefixes[str(parent_class.prefix)][str(parent_class.suffix)])
                 except KeyError:
-                    sub_class_of.append(namespace[parent_class.suffix])
+                    sub_class_of.append(namespace[str(parent_class.suffix)])
         else:
             sub_class_of = None
 
         return cls(
-            id_=namespace[definition.class_.suffix],
-            label=definition.name or definition.class_.suffix,
+            id_=namespace[str(definition.class_.suffix)],
+            label=definition.name or str(definition.class_.suffix),
             comment=definition.description,
             sub_class_of=sub_class_of,
             namespace=namespace,
@@ -324,12 +325,14 @@ class OWLProperty(OntologyModel):
         )
         for definition in definitions:
             owl_property.type_.add(OWL[definition.type_])
-            owl_property.range_.add(
-                XSD[definition.value_type.suffix]
-                if definition.value_type.suffix in XSD_VALUE_TYPE_MAPPINGS
-                else namespace[definition.value_type.suffix]
-            )
-            owl_property.domain.add(namespace[definition.class_.suffix])
+
+            if isinstance(definition.value_type, DataType):
+                owl_property.range_.add(XSD[definition.value_type.xsd])
+            elif isinstance(definition.value_type, ClassEntity):
+                owl_property.range_.add(namespace[str(definition.value_type.suffix)])
+            else:
+                raise ValueError(f"Value type {definition.value_type} is not supported")
+            owl_property.domain.add(namespace[str(definition.class_.suffix)])
             owl_property.label.add(definition.name or definition.property_)
             if definition.description:
                 owl_property.comment.add(definition.description)
@@ -493,12 +496,12 @@ class SHACLNodeShape(OntologyModel):
         cls, class_definition: InformationClass, property_definitions: list[InformationProperty], namespace: Namespace
     ) -> "SHACLNodeShape":
         if class_definition.parent:
-            parent = [namespace[parent.suffix + "Shape"] for parent in class_definition.parent]
+            parent = [namespace[str(parent.suffix) + "Shape"] for parent in class_definition.parent]
         else:
             parent = None
         return cls(
-            id_=namespace[f"{class_definition.class_.suffix}Shape"],
-            target_class=namespace[class_definition.class_.suffix],
+            id_=namespace[f"{class_definition.class_.suffix!s}Shape"],
+            target_class=namespace[str(class_definition.class_.suffix)],
             parent=parent,
             property_shapes=[SHACLPropertyShape.from_property(prop, namespace) for prop in property_definitions],
             namespace=namespace,
@@ -552,8 +555,8 @@ class SHACLPropertyShape(OntologyModel):
             node_kind=SHACL.IRI if definition.type_ == EntityTypes.object_property else SHACL.Literal,
             expected_value_type=(
                 namespace[f"{definition.value_type.suffix}Shape"]
-                if definition.type_ == EntityTypes.object_property
-                else XSD[definition.value_type.suffix]
+                if isinstance(definition.value_type, ClassEntity)
+                else XSD[definition.value_type.xsd]
             ),
             min_count=definition.min_count,
             max_count=(

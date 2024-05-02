@@ -1,12 +1,11 @@
 import re
 import sys
-import threading
 from abc import ABC, abstractmethod
 from functools import total_ordering
-from typing import Annotated, Any, ClassVar, Generic, TypeVar
+from typing import Annotated, Any, ClassVar, Generic, Literal, TypeVar
 
 from cognite.client.data_classes.data_modeling.ids import ContainerId, DataModelId, PropertyId, ViewId
-from pydantic import BaseModel, BeforeValidator, Field, PlainSerializer, model_serializer, model_validator
+from pydantic import AnyHttpUrl, BaseModel, BeforeValidator, Field, PlainSerializer, model_serializer, model_validator
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -58,45 +57,63 @@ _PROPERTY_ID_REGEX = rf"\((?P<{EntityTypes.property_}>{_ENTITY_ID_REGEX})\)"
 _ENTITY_PATTERN = re.compile(r"^(?P<prefix>.*?):?(?P<suffix>[^(:]*)(\((?P<content>[^)]+)\))?$")
 
 
-class _Undefined(BaseModel):
+class _UndefinedType(BaseModel):
     ...
 
 
-class _Unknown(BaseModel):
+class _UnknownType(BaseModel):
     def __str__(self) -> str:
         return "#N/A"
 
 
 # This is a trick to make Undefined and Unknown singletons
-Undefined = _Undefined()
-Unknown = _Unknown()
+Undefined = _UndefinedType()
+Unknown = _UnknownType()
+_PARSE = object()
 
 
 @total_ordering
-class Entity(BaseModel):
+class Entity(BaseModel, extra="ignore"):
     """Entity is a class or property in OWL/RDF sense."""
 
     type_: ClassVar[EntityTypes] = EntityTypes.undefined
-    prefix: str | _Undefined = Undefined
-    suffix: str | _Unknown
+    prefix: str | _UndefinedType = Undefined
+    suffix: str | _UnknownType
 
     @classmethod
-    def load(cls, data: Any) -> Self:
-        return cls.model_validate(data)
+    def load(cls, data: Any, **defaults) -> Self:
+        if isinstance(data, cls):
+            return data
+        if defaults and isinstance(defaults, dict):
+            # This is trick to pass in default values
+            return cls.model_validate({_PARSE: data, "defaults": defaults})
+        else:
+            return cls.model_validate(data)
 
     @model_validator(mode="before")
     def _load(cls, data: Any) -> dict:
-        if isinstance(data, cls):
-            return data.model_dump()
-        elif isinstance(data, dict):
+        defaults = {}
+        if isinstance(data, dict) and _PARSE in data:
+            defaults = data.get("defaults", {})
+            data = data[_PARSE]
+        if isinstance(data, dict):
+            data.update(defaults)
             return data
         elif hasattr(data, "versioned_id"):
             # Todo: Remove. Is here for backwards compatibility
             data = data.versioned_id
         elif not isinstance(data, str):
             raise ValueError(f"Cannot load {cls.__name__} from {data}")
-
-        return cls._parse(data)
+        result = cls._parse(data)
+        output = defaults.copy()
+        # Populate by alias
+        for field_name, field_ in cls.model_fields.items():
+            name = field_.alias or field_name
+            if (field_value := result.get(field_name)) and not (field_value in [Unknown, Undefined] and name in output):
+                output[name] = result.pop(field_name)
+            elif name not in output and name in result:
+                output[name] = result.pop(name)
+        return output
 
     @model_serializer(when_used="unless-none", return_type=str)
     def as_str(self) -> str:
@@ -131,7 +148,7 @@ class Entity(BaseModel):
                 if isinstance(v := getattr(self, field_name), str | None) and field_name not in {"prefix", "suffix"}
             ]
         )
-        if isinstance(self.prefix, _Undefined):
+        if isinstance(self.prefix, _UndefinedType):
             return str(self.suffix), *extra
         else:
             return self.prefix, str(self.suffix), *extra
@@ -192,6 +209,18 @@ class ClassEntity(Entity):
     type_: ClassVar[EntityTypes] = EntityTypes.class_
     version: str | None = None
 
+    def as_view_entity(self, default_space: str, default_version) -> "ViewEntity":
+        if self.version is None:
+            version = default_version
+        else:
+            version = self.version
+        space = default_space if isinstance(self.prefix, _UndefinedType) else self.prefix
+        return ViewEntity(space=space, externalId=str(self.suffix), version=version)
+
+    def as_container_entity(self, default_space: str) -> "ContainerEntity":
+        space = default_space if isinstance(self.prefix, _UndefinedType) else self.prefix
+        return ContainerEntity(space=space, externalId=str(self.suffix))
+
 
 class ParentClassEntity(ClassEntity):
     type_: ClassVar[EntityTypes] = EntityTypes.parent_class
@@ -200,25 +229,18 @@ class ParentClassEntity(ClassEntity):
         return ClassEntity(prefix=self.prefix, suffix=self.suffix, version=self.version)
 
 
-T_ID = TypeVar("T_ID", bound=ContainerId | ViewId | DataModelId | PropertyId)
+T_ID = TypeVar("T_ID", bound=ContainerId | ViewId | DataModelId | PropertyId | None)
 
 
 class DMSEntity(Entity, Generic[T_ID], ABC):
     type_: ClassVar[EntityTypes] = EntityTypes.undefined
-    default_space_by_thread: ClassVar[dict[threading.Thread, str]] = {}
-    suffix: str
-
-    @classmethod
-    def set_default_space(cls, space: str) -> None:
-        cls.default_space_by_thread[threading.current_thread()] = space
+    prefix: str = Field(alias="space")
+    suffix: str = Field(alias="externalId")
 
     @property
     def space(self) -> str:
         """Returns entity space in CDF."""
-        if isinstance(self.prefix, _Undefined):
-            return self.default_space_by_thread.get(threading.current_thread(), "MISSING")
-        else:
-            return self.prefix
+        return self.prefix
 
     @property
     def external_id(self) -> str:
@@ -229,6 +251,14 @@ class DMSEntity(Entity, Generic[T_ID], ABC):
     def as_id(self) -> T_ID:
         raise NotImplementedError("Method as_id must be implemented in subclasses")
 
+    @classmethod
+    @abstractmethod
+    def from_id(cls, id: T_ID) -> Self:
+        raise NotImplementedError("Method from_id must be implemented in subclasses")
+
+    def as_class(self) -> ClassEntity:
+        return ClassEntity(prefix=self.space, suffix=self.external_id)
+
 
 class ContainerEntity(DMSEntity[ContainerId]):
     type_: ClassVar[EntityTypes] = EntityTypes.container
@@ -236,16 +266,16 @@ class ContainerEntity(DMSEntity[ContainerId]):
     def as_id(self) -> ContainerId:
         return ContainerId(space=self.space, external_id=self.external_id)
 
+    @classmethod
+    def from_id(cls, id: ContainerId) -> "ContainerEntity":
+        return cls(space=id.space, externalId=id.external_id)
+
 
 class DMSVersionedEntity(DMSEntity[T_ID], ABC):
-    version: str | None = None
-    default_version_by_thread: ClassVar[dict[threading.Thread, str]] = {}
+    version: str
 
-    @property
-    def version_with_fallback(self) -> str:
-        if self.version is not None:
-            return self.version
-        return self.default_version_by_thread.get(threading.current_thread(), "MISSING")
+    def as_class(self) -> ClassEntity:
+        return ClassEntity(prefix=self.space, suffix=self.external_id, version=self.version)
 
 
 class ViewEntity(DMSVersionedEntity[ViewId]):
@@ -254,16 +284,50 @@ class ViewEntity(DMSVersionedEntity[ViewId]):
     def as_id(
         self,
     ) -> ViewId:
-        return ViewId(space=self.space, external_id=self.external_id, version=self.version_with_fallback)
+        return ViewId(space=self.space, external_id=self.external_id, version=self.version)
+
+    @classmethod
+    def from_id(cls, id: ViewId) -> "ViewEntity":
+        if id.version is None:
+            raise ValueError("Version must be specified")
+        return cls(space=id.space, externalId=id.external_id, version=id.version)
 
 
-class PropertyEntity(DMSVersionedEntity[PropertyId]):
+# This is needed to handle direct relations with source=None
+class DMSUnknownEntity(DMSEntity[None]):
+    type_: ClassVar[EntityTypes] = EntityTypes.undefined
+    prefix: Literal[""] = Field("", alias="space")
+    suffix: Literal[""] = Field("", alias="externalId")
+
+    def as_id(self) -> None:
+        return None
+
+    @classmethod
+    def from_id(cls, id: None) -> "DMSUnknownEntity":
+        return cls(space="", externalId="")
+
+    def __str__(self) -> str:
+        return str(Unknown)
+
+
+class ViewPropertyEntity(DMSVersionedEntity[PropertyId]):
     type_: ClassVar[EntityTypes] = EntityTypes.property_
     property_: str = Field(alias="property")
 
     def as_id(self) -> PropertyId:
-        return PropertyId(
-            source=ViewId(self.space, self.external_id, self.version_with_fallback), property=self.property_
+        return PropertyId(source=ViewId(self.space, self.external_id, self.version), property=self.property_)
+
+    def as_view_id(self) -> ViewId:
+        return ViewId(space=self.space, external_id=self.external_id, version=self.version)
+
+    @classmethod
+    def from_id(cls, id: PropertyId) -> "ViewPropertyEntity":
+        if isinstance(id.source, ContainerId):
+            raise ValueError("Only view source are supported")
+        if id.source.version is None:
+            raise ValueError("Version must be specified")
+        return cls(
+            space=id.source.space, externalId=id.source.external_id, version=id.source.version, property=id.property
         )
 
 
@@ -271,11 +335,32 @@ class DataModelEntity(DMSVersionedEntity[DataModelId]):
     type_: ClassVar[EntityTypes] = EntityTypes.datamodel
 
     def as_id(self) -> DataModelId:
-        return DataModelId(space=self.space, external_id=self.external_id, version=self.version_with_fallback)
+        return DataModelId(space=self.space, external_id=self.external_id, version=self.version)
+
+    @classmethod
+    def from_id(cls, id: DataModelId) -> "DataModelEntity":
+        if id.version is None:
+            raise ValueError("Version must be specified")
+        return cls(space=id.space, externalId=id.external_id, version=id.version)
 
 
-class ReferenceEntity(PropertyEntity):
+class ReferenceEntity(ClassEntity):
     type_: ClassVar[EntityTypes] = EntityTypes.reference_entity
+    prefix: str
+    property_: str | None = Field(None, alias="property")
+
+    def as_view_id(self) -> ViewId:
+        if isinstance(self.prefix, _UndefinedType) or isinstance(self.suffix, _UnknownType):
+            raise ValueError("Prefix is not defined or suffix is unknown")
+        return ViewId(space=self.prefix, external_id=self.suffix, version=self.version)
+
+    def as_view_property_id(self) -> PropertyId:
+        if self.property_ is None or self.prefix is Undefined or self.suffix is Unknown:
+            raise ValueError("Property is not defined or prefix is not defined or suffix is unknown")
+        return PropertyId(source=self.as_view_id(), property=self.property_)
+
+    def as_class_entity(self) -> ClassEntity:
+        return ClassEntity(prefix=self.prefix, suffix=self.suffix, version=self.version)
 
 
 def _split_str(v: Any) -> list[str]:
@@ -296,4 +381,29 @@ ParentEntityList = Annotated[
         return_type=str,
         when_used="unless-none",
     ),
+]
+
+ContainerEntityList = Annotated[
+    list[ContainerEntity],
+    BeforeValidator(_split_str),
+    PlainSerializer(
+        _join_str,
+        return_type=str,
+        when_used="unless-none",
+    ),
+]
+
+ViewEntityList = Annotated[
+    list[ViewEntity],
+    BeforeValidator(_split_str),
+    PlainSerializer(
+        _join_str,
+        return_type=str,
+        when_used="unless-none",
+    ),
+]
+
+URLEntity = Annotated[
+    AnyHttpUrl,
+    PlainSerializer(lambda v: str(v), return_type=str, when_used="unless-none"),
 ]

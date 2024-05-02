@@ -10,23 +10,29 @@ from pydantic import ValidationError
 import cognite.neat.rules.issues.spreadsheet
 from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import DMSImporter
+from cognite.neat.rules.models.data_types import String
 from cognite.neat.rules.models.rules._base import ExtensionCategory, SchemaCompleteness, SheetList
 from cognite.neat.rules.models.rules._dms_architect_rules import (
     DMSContainer,
-    DMSMetadata,
     DMSProperty,
     DMSRules,
     DMSView,
 )
+from cognite.neat.rules.models.rules._dms_rules_write import (
+    DMSContainerWrite,
+    DMSMetadataWrite,
+    DMSPropertyWrite,
+    DMSRulesWrite,
+    DMSViewWrite,
+)
 from cognite.neat.rules.models.rules._dms_schema import DMSSchema
 from cognite.neat.rules.models.rules._information_rules import InformationRules
-from cognite.neat.rules.models.rules._types import DMS_VALUE_TYPE_MAPPINGS, ViewPropEntity
 
 
 def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
-        DMSRules(
-            metadata=DMSMetadata(
+        DMSRulesWrite(
+            metadata=DMSMetadataWrite(
                 schema_="complete",
                 space="my_space",
                 external_id="my_data_model",
@@ -36,49 +42,43 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 created="2021-01-01T00:00:00",
                 updated="2021-01-01T00:00:00",
             ),
-            properties=SheetList[DMSProperty](
-                data=[
-                    DMSProperty(
-                        class_="WindTurbine",
-                        property_="name",
-                        value_type="text",
-                        container="Asset",
-                        container_property="name",
-                        view="Asset",
-                        view_property="name",
-                    ),
-                    DMSProperty(
-                        class_="WindTurbine",
-                        property_="ratedPower",
-                        value_type="float64",
-                        container="GeneratingUnit",
-                        container_property="ratedPower",
-                        view="WindTurbine",
-                        view_property="ratedPower",
-                    ),
-                    DMSProperty(
-                        class_="WindFarm",
-                        property_="WindTurbines",
-                        value_type=ViewPropEntity(suffix="WindTurbine"),
-                        relation="multiedge",
-                        view="WindFarm",
-                        view_property="windTurbines",
-                    ),
-                ]
-            ),
-            containers=SheetList[DMSContainer](
-                data=[
-                    DMSContainer(container="Asset", class_="Asset"),
-                    DMSContainer(class_="GeneratingUnit", container="GeneratingUnit", constraint="Asset"),
-                ]
-            ),
-            views=SheetList[DMSView](
-                data=[
-                    DMSView(class_="Asset", view="Asset"),
-                    DMSView(class_="WindTurbine", view="WindTurbine", implements=["Asset"]),
-                    DMSView(class_="WindFarm", view="WindFarm"),
-                ]
-            ),
+            properties=[
+                DMSPropertyWrite(
+                    class_="WindTurbine",
+                    property_="name",
+                    value_type="text",
+                    container="Asset",
+                    container_property="name",
+                    view="Asset",
+                    view_property="name",
+                ),
+                DMSPropertyWrite(
+                    class_="WindTurbine",
+                    property_="ratedPower",
+                    value_type="float64",
+                    container="GeneratingUnit",
+                    container_property="ratedPower",
+                    view="WindTurbine",
+                    view_property="ratedPower",
+                ),
+                DMSPropertyWrite(
+                    class_="WindFarm",
+                    property_="WindTurbines",
+                    value_type="WindTurbine",
+                    relation="multiedge",
+                    view="WindFarm",
+                    view_property="windTurbines",
+                ),
+            ],
+            containers=[
+                DMSContainerWrite(container="Asset", class_="Asset"),
+                DMSContainerWrite(class_="GeneratingUnit", container="GeneratingUnit", constraint="Asset"),
+            ],
+            views=[
+                DMSViewWrite("Asset"),
+                DMSViewWrite(view="WindTurbine", implements="Asset"),
+                DMSViewWrite(view="WindFarm"),
+            ],
         ),
         DMSSchema(
             spaces=dm.SpaceApplyList(
@@ -176,62 +176,56 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         id="Two properties, one container, one view",
     )
 
-    dms_rules = DMSRules(
-        metadata=DMSMetadata(
+    dms_rules = DMSRulesWrite(
+        metadata=DMSMetadataWrite(
             schema_="complete",
             space="my_space",
             external_id="my_data_model",
             version="1",
-            creator=["Anders"],
+            creator="Anders",
             created="2024-03-16T23:00:00",
             updated="2024-03-16T23:00:00",
             default_view_version="1",
         ),
-        properties=SheetList[DMSProperty](
-            data=[
-                DMSProperty(
-                    class_="WindFarm",
-                    property_="name",
-                    value_type="text",
-                    container="Asset",
-                    container_property="name",
-                    view="WindFarm",
-                    view_property="name",
-                ),
-                DMSProperty(
-                    class_="WindFarm",
-                    property_="windTurbines",
-                    value_type="WindTurbine",
-                    relation="direct",
-                    is_list=True,
-                    container="WindFarm",
-                    container_property="windTurbines",
-                    view="WindFarm",
-                    view_property="windTurbines",
-                ),
-                DMSProperty(
-                    class_="WindTurbine",
-                    property_="name",
-                    value_type="text",
-                    container="Asset",
-                    container_property="name",
-                    view="WindTurbine",
-                    view_property="name",
-                ),
-            ]
-        ),
-        views=SheetList[DMSView](
-            data=[
-                DMSView(view="WindFarm", class_="WindFarm"),
-                DMSView(view="WindTurbine", class_="WindTurbine"),
-            ]
-        ),
-        containers=SheetList[DMSContainer](
-            data=[
-                DMSContainer(container="Asset", class_="Asset"),
-                DMSContainer(class_="WindFarm", container="WindFarm", constraint="Asset"),
-            ]
-        ),
+        properties=[
+            DMSPropertyWrite(
+                class_="WindFarm",
+                property_="name",
+                value_type="text",
+                container="Asset",
+                container_property="name",
+                view="WindFarm",
+                view_property="name",
+            ),
+            DMSPropertyWrite(
+                class_="WindFarm",
+                property_="windTurbines",
+                value_type="WindTurbine",
+                relation="direct",
+                is_list=True,
+                container="WindFarm",
+                container_property="windTurbines",
+                view="WindFarm",
+                view_property="windTurbines",
+            ),
+            DMSPropertyWrite(
+                class_="WindTurbine",
+                property_="name",
+                value_type="text",
+                container="Asset",
+                container_property="name",
+                view="WindTurbine",
+                view_property="name",
+            ),
+        ],
+        views=[
+            DMSViewWrite(view="WindFarm", class_="WindFarm"),
+            DMSViewWrite(view="WindTurbine", class_="WindTurbine"),
+        ],
+        containers=[
+            DMSContainerWrite(container="Asset", class_="Asset"),
+            DMSContainerWrite(class_="WindFarm", container="WindFarm", constraint="Asset"),
+        ],
     )
     expected_schema = DMSSchema(
         spaces=dm.SpaceApplyList([dm.SpaceApply(space="my_space")]),
@@ -297,51 +291,44 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         id="Property with list of direct relations converted to multiedge",
     )
 
-    dms_rules = DMSRules(
-        metadata=DMSMetadata(
+    dms_rules = DMSRulesWrite(
+        metadata=DMSMetadataWrite(
             schema_="complete",
             space="my_space",
             external_id="my_data_model",
             version="1",
-            creator=["Anders"],
+            creator="Anders",
             created="2024-03-17T08:30:00",
             updated="2024-03-17T08:30:00",
-            default_view_version="1",
         ),
-        properties=SheetList[DMSProperty](
-            data=[
-                DMSProperty(
-                    class_="Asset",
-                    property_="name",
-                    value_type="text",
-                    container="Asset",
-                    container_property="name",
-                    view="Asset",
-                    view_property="name",
-                ),
-                DMSProperty(
-                    class_="WindTurbine",
-                    property_="maxPower",
-                    value_type="float64",
-                    container="WindTurbine",
-                    container_property="maxPower",
-                    view="WindTurbine",
-                    view_property="maxPower",
-                ),
-            ],
-        ),
-        views=SheetList[DMSView](
-            data=[
-                DMSView(view="Asset", class_="Asset", in_model=False),
-                DMSView(view="WindTurbine", class_="WindTurbine", implements=["Asset"]),
-            ],
-        ),
-        containers=SheetList[DMSContainer](
-            data=[
-                DMSContainer(container="Asset", class_="Asset"),
-                DMSContainer(class_="WindTurbine", container="WindTurbine", constraint="Asset"),
-            ],
-        ),
+        properties=[
+            DMSPropertyWrite(
+                class_="Asset",
+                property_="name",
+                value_type="text",
+                container="Asset",
+                container_property="name",
+                view="Asset",
+                view_property="name",
+            ),
+            DMSPropertyWrite(
+                class_="WindTurbine",
+                property_="maxPower",
+                value_type="float64",
+                container="WindTurbine",
+                container_property="maxPower",
+                view="WindTurbine",
+                view_property="maxPower",
+            ),
+        ],
+        views=[
+            DMSViewWrite(view="Asset", class_="Asset", in_model=False),
+            DMSViewWrite(view="WindTurbine", class_="WindTurbine", implements="Asset"),
+        ],
+        containers=[
+            DMSContainerWrite(container="Asset", class_="Asset"),
+            DMSContainerWrite(class_="WindTurbine", container="WindTurbine", constraint="Asset"),
+        ],
     )
     expected_schema = DMSSchema(
         spaces=dm.SpaceApplyList([dm.SpaceApply(space="my_space")]),
@@ -410,111 +397,105 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         id="View not in model",
     )
 
-    dms_rules = DMSRules(
-        metadata=DMSMetadata(
+    dms_rules = DMSRulesWrite(
+        metadata=DMSMetadataWrite(
             # This is a complete schema, but we do not want to trigger the full validation
             schema_="partial",
             space="my_space",
             external_id="my_data_model",
             version="1",
-            creator=["Anders"],
+            creator="Anders",
             created="2024-03-17T11:00:00",
             updated="2024-03-17T11:00:00",
             default_view_version="1",
         ),
-        properties=SheetList[DMSProperty](
-            data=[
-                DMSProperty(
-                    class_="Asset",
-                    property_="name",
-                    value_type="text",
-                    container="Asset",
-                    container_property="name",
-                    view="Asset",
-                    view_property="name",
-                ),
-                DMSProperty(
-                    class_="Asset",
-                    property_="timeseries",
-                    value_type="Timeseries(property=asset)",
-                    relation="reversedirect",
-                    is_list=True,
-                    view="Asset",
-                    view_property="timeseries",
-                ),
-                DMSProperty(
-                    class_="Asset",
-                    property_="root",
-                    value_type="Asset",
-                    relation="direct",
-                    container="Asset",
-                    container_property="root",
-                    view="Asset",
-                    view_property="root",
-                ),
-                DMSProperty(
-                    class_="Asset",
-                    property_="children",
-                    value_type="Asset(property=root)",
-                    relation="reversedirect",
-                    is_list=True,
-                    view="Asset",
-                    view_property="children",
-                ),
-                DMSProperty(
-                    class_="Timeseries",
-                    property_="name",
-                    value_type="text",
-                    container="Timeseries",
-                    container_property="name",
-                    view="Timeseries",
-                    view_property="name",
-                ),
-                DMSProperty(
-                    class_="Timeseries",
-                    property_="asset",
-                    value_type="Asset",
-                    relation="direct",
-                    container="Timeseries",
-                    container_property="asset",
-                    view="Timeseries",
-                    view_property="asset",
-                ),
-                DMSProperty(
-                    class_="Timeseries",
-                    property_="activities",
-                    value_type="Activity",
-                    relation="direct",
-                    is_list=True,
-                    container="Timeseries",
-                    container_property="activities",
-                    view="Timeseries",
-                    view_property="activities",
-                ),
-                DMSProperty(
-                    class_="Activity",
-                    property_="timeseries",
-                    value_type="Timeseries(property=activities)",
-                    relation="reversedirect",
-                    view="Activity",
-                    view_property="timeseries",
-                ),
-            ],
-        ),
-        views=SheetList[DMSView](
-            data=[
-                DMSView(view="Asset", class_="Asset"),
-                DMSView(view="Timeseries", class_="Timeseries"),
-                DMSView(view="Activity", class_="Activity"),
-            ],
-        ),
-        containers=SheetList[DMSContainer](
-            data=[
-                DMSContainer(container="Asset", class_="Asset"),
-                DMSContainer(container="Timeseries", class_="Timeseries"),
-                DMSContainer(container="Activity", class_="Activity"),
-            ],
-        ),
+        properties=[
+            DMSPropertyWrite(
+                class_="Asset",
+                property_="name",
+                value_type="text",
+                container="Asset",
+                container_property="name",
+                view="Asset",
+                view_property="name",
+            ),
+            DMSPropertyWrite(
+                class_="Asset",
+                property_="timeseries",
+                value_type="Timeseries(property=asset)",
+                relation="reversedirect",
+                is_list=True,
+                view="Asset",
+                view_property="timeseries",
+            ),
+            DMSPropertyWrite(
+                class_="Asset",
+                property_="root",
+                value_type="Asset",
+                relation="direct",
+                container="Asset",
+                container_property="root",
+                view="Asset",
+                view_property="root",
+            ),
+            DMSPropertyWrite(
+                class_="Asset",
+                property_="children",
+                value_type="Asset(property=root)",
+                relation="reversedirect",
+                is_list=True,
+                view="Asset",
+                view_property="children",
+            ),
+            DMSPropertyWrite(
+                class_="Timeseries",
+                property_="name",
+                value_type="text",
+                container="Timeseries",
+                container_property="name",
+                view="Timeseries",
+                view_property="name",
+            ),
+            DMSPropertyWrite(
+                class_="Timeseries",
+                property_="asset",
+                value_type="Asset",
+                relation="direct",
+                container="Timeseries",
+                container_property="asset",
+                view="Timeseries",
+                view_property="asset",
+            ),
+            DMSPropertyWrite(
+                class_="Timeseries",
+                property_="activities",
+                value_type="Activity",
+                relation="direct",
+                is_list=True,
+                container="Timeseries",
+                container_property="activities",
+                view="Timeseries",
+                view_property="activities",
+            ),
+            DMSPropertyWrite(
+                class_="Activity",
+                property_="timeseries",
+                value_type="Timeseries(property=activities)",
+                relation="reversedirect",
+                view="Activity",
+                view_property="timeseries",
+            ),
+        ],
+        views=[
+            DMSViewWrite(view="Asset", class_="Asset"),
+            DMSViewWrite(view="Timeseries", class_="Timeseries"),
+            DMSViewWrite(view="Activity", class_="Activity"),
+        ],
+        containers=[
+            DMSContainerWrite(container="Asset", class_="Asset"),
+            DMSContainerWrite(container="Timeseries", class_="Timeseries"),
+            DMSContainerWrite(container="Activity", class_="Activity"),
+        ],
     )
 
     expected_schema = DMSSchema(
@@ -634,40 +615,34 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         id="Multiple relations and reverse relations",
     )
 
-    dms_rules = DMSRules(
-        metadata=DMSMetadata(
+    dms_rules = DMSRulesWrite(
+        metadata=DMSMetadataWrite(
             schema_="complete",
             space="my_space",
             external_id="my_data_model",
             version="1",
-            creator=["Anders"],
+            creator="Anders",
             created="2024-03-17T11:00:00",
             updated="2024-03-17T11:00:00",
             default_view_version="1",
         ),
-        properties=SheetList[DMSProperty](
-            data=[
-                DMSProperty(
-                    class_="generating_unit",
-                    property_="display_name",
-                    value_type="text",
-                    container="generating_unit",
-                    container_property="display_name",
-                    view="generating_unit",
-                    view_property="display_name",
-                )
-            ]
-        ),
-        views=SheetList[DMSView](
-            data=[
-                DMSView(view="generating_unit", class_="generating_unit"),
-            ],
-        ),
-        containers=SheetList[DMSContainer](
-            data=[
-                DMSContainer(container="generating_unit", class_="generating_unit"),
-            ],
-        ),
+        properties=[
+            DMSPropertyWrite(
+                class_="generating_unit",
+                property_="display_name",
+                value_type="text",
+                container="generating_unit",
+                container_property="display_name",
+                view="generating_unit",
+                view_property="display_name",
+            )
+        ],
+        views=[
+            DMSViewWrite(view="generating_unit", class_="generating_unit"),
+        ],
+        containers=[
+            DMSContainerWrite(container="generating_unit", class_="generating_unit"),
+        ],
     )
 
     expected_schema = DMSSchema(
@@ -718,8 +693,8 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         id="No casing standardization",
     )
 
-    dms_rules = DMSRules(
-        metadata=DMSMetadata(
+    dms_rules = DMSRulesWrite(
+        metadata=DMSMetadataWrite(
             schema_="complete",
             space="sp_solution",
             external_id="solution_model",
@@ -728,24 +703,20 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             created="2021-01-01T00:00:00",
             updated="2021-01-01T00:00:00",
         ),
-        properties=SheetList[DMSProperty](
-            data=[
-                DMSProperty(
-                    class_="Asset",
-                    property_="kinderen",
-                    value_type="Asset",
-                    relation="multiedge",
-                    reference="sp_enterprise:Asset(property=children)",
-                    view="Asset",
-                    view_property="kinderen",
-                ),
-            ]
-        ),
-        views=SheetList[DMSView](
-            data=[
-                DMSView(view="Asset", class_="Asset"),
-            ]
-        ),
+        properties=[
+            DMSPropertyWrite(
+                class_="Asset",
+                property_="kinderen",
+                value_type="Asset",
+                relation="multiedge",
+                reference="sp_enterprise:Asset(property=children)",
+                view="Asset",
+                view_property="kinderen",
+            ),
+        ],
+        views=[
+            DMSViewWrite(view="Asset", class_="Asset"),
+        ],
     )
 
     expected_schema = DMSSchema(
@@ -852,51 +823,45 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 ]
             },
         },
-        DMSRules(
-            metadata=DMSMetadata(
+        DMSRulesWrite(
+            metadata=DMSMetadataWrite(
                 schema_="partial",
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
-                creator=["Anders"],
+                creator="Anders",
                 created="2021-01-01T00:00:00",
                 updated="2021-01-01T00:00:00",
             ),
-            properties=SheetList[DMSProperty](
-                data=[
-                    DMSProperty(
-                        class_="WindTurbine",
-                        property_="name",
-                        value_type="text",
-                        container="sp_core:Asset",
-                        container_property="name",
-                        view="sp_core:Asset",
-                        view_property="name",
-                    ),
-                    DMSProperty(
-                        class_="WindTurbine",
-                        property_="ratedPower",
-                        value_type="float64",
-                        container="GeneratingUnit",
-                        container_property="ratedPower",
-                        view="WindTurbine",
-                        view_property="ratedPower",
-                    ),
-                ]
-            ),
-            containers=SheetList[DMSContainer](
-                data=[
-                    DMSContainer(container="sp_core:Asset", class_="Asset"),
-                    DMSContainer(class_="GeneratingUnit", container="GeneratingUnit", constraint="sp_core:Asset"),
-                ]
-            ),
-            views=SheetList[DMSView](
-                data=[
-                    DMSView(view="sp_core:Asset", class_="Asset"),
-                    DMSView(class_="WindTurbine", view="WindTurbine", implements=["sp_core:Asset"]),
-                ]
-            ),
-        ),
+            properties=[
+                DMSPropertyWrite(
+                    class_="WindTurbine",
+                    property_="name",
+                    value_type="text",
+                    container="sp_core:Asset",
+                    container_property="name",
+                    view="sp_core:Asset(version=1)",
+                    view_property="name",
+                ),
+                DMSPropertyWrite(
+                    class_="WindTurbine",
+                    property_="ratedPower",
+                    value_type="float64",
+                    container="GeneratingUnit",
+                    container_property="ratedPower",
+                    view="WindTurbine",
+                    view_property="ratedPower",
+                ),
+            ],
+            containers=[
+                DMSContainerWrite(container="sp_core:Asset", class_="Asset"),
+                DMSContainerWrite(class_="GeneratingUnit", container="GeneratingUnit", constraint="sp_core:Asset"),
+            ],
+            views=[
+                DMSViewWrite(view="sp_core:Asset(version=1)"),
+                DMSViewWrite(class_="WindTurbine", view="WindTurbine", implements="sp_core:Asset(version=1)"),
+            ],
+        ).as_read(),
         id="Two properties, two containers, two views. Primary data types, no relations.",
     )
 
@@ -979,80 +944,74 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 ]
             },
         },
-        DMSRules(
-            metadata=DMSMetadata(
+        DMSRulesWrite(
+            metadata=DMSMetadataWrite(
                 schema_="complete",
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
-                creator=["Anders"],
+                creator="Anders",
                 created="2021-01-01T00:00:00",
                 updated="2021-01-01T00:00:00",
             ),
-            properties=SheetList[DMSProperty](
-                data=[
-                    DMSProperty(
-                        class_="Plant",
-                        property_="name",
-                        value_type="text",
-                        container="Asset",
-                        container_property="name",
-                        view="Asset",
-                        view_property="name",
-                    ),
-                    DMSProperty(
-                        class_="Plant",
-                        property_="generators",
-                        value_type=ViewPropEntity(suffix="Generator"),
-                        relation="multiedge",
-                        view="Plant",
-                        view_property="generators",
-                    ),
-                    DMSProperty(
-                        class_="Plant",
-                        property_="reservoir",
-                        value_type=ViewPropEntity(suffix="Reservoir"),
-                        relation="direct",
-                        container="Asset",
-                        container_property="child",
-                        view="Plant",
-                        view_property="reservoir",
-                    ),
-                    DMSProperty(
-                        class_="Generator",
-                        property_="name",
-                        value_type="text",
-                        container="Asset",
-                        container_property="name",
-                        view="Asset",
-                        view_property="name",
-                    ),
-                    DMSProperty(
-                        class_="Reservoir",
-                        property_="name",
-                        value_type="text",
-                        container="Asset",
-                        container_property="name",
-                        view="Asset",
-                        view_property="name",
-                    ),
-                ]
-            ),
-            containers=SheetList[DMSContainer](
-                data=[
-                    DMSContainer(container="Asset", class_="Asset"),
-                    DMSContainer(class_="Plant", container="Plant", constraint="Asset"),
-                ]
-            ),
-            views=SheetList[DMSView](
-                data=[
-                    DMSView(view="Asset", class_="Asset"),
-                    DMSView(class_="Plant", view="Plant", implements=["Asset"]),
-                    DMSView(class_="Generator", view="Generator", implements=["Asset"]),
-                    DMSView(class_="Reservoir", view="Reservoir", implements=["Asset"]),
-                ]
-            ),
-        ),
+            properties=[
+                DMSPropertyWrite(
+                    class_="Plant",
+                    property_="name",
+                    value_type="text",
+                    container="Asset",
+                    container_property="name",
+                    view="Asset",
+                    view_property="name",
+                ),
+                DMSPropertyWrite(
+                    class_="Plant",
+                    property_="generators",
+                    value_type="Generator",
+                    relation="multiedge",
+                    view="Plant",
+                    view_property="generators",
+                ),
+                DMSPropertyWrite(
+                    class_="Plant",
+                    property_="reservoir",
+                    value_type="Reservoir",
+                    relation="direct",
+                    container="Asset",
+                    container_property="child",
+                    view="Plant",
+                    view_property="reservoir",
+                ),
+                DMSPropertyWrite(
+                    class_="Generator",
+                    property_="name",
+                    value_type="text",
+                    container="Asset",
+                    container_property="name",
+                    view="Asset",
+                    view_property="name",
+                ),
+                DMSPropertyWrite(
+                    class_="Reservoir",
+                    property_="name",
+                    value_type="text",
+                    container="Asset",
+                    container_property="name",
+                    view="Asset",
+                    view_property="name",
+                ),
+            ],
+            containers=[
+                DMSContainerWrite(container="Asset", class_="Asset"),
+                DMSContainerWrite(class_="Plant", container="Plant", constraint="Asset"),
+            ],
+            views=[
+                DMSViewWrite(view="Asset", class_="Asset"),
+                DMSViewWrite(class_="Plant", view="Plant", implements="Asset"),
+                DMSViewWrite(class_="Generator", view="Generator", implements="Asset"),
+                DMSViewWrite(class_="Reservoir", view="Reservoir", implements="Asset"),
+            ],
+        ).as_read(),
         id="Five properties, two containers, four views. Direct relations and Multiedge.",
     )
 
@@ -1296,77 +1255,65 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
 
 
 def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
-    ref_rules = DMSRules(
-        metadata=DMSMetadata(
+    ref_rules = DMSRulesWrite(
+        metadata=DMSMetadataWrite(
             schema_="complete",
             space="my_space",
             external_id="my_data_model",
             version="1",
-            creator=["Anders"],
+            creator="Anders",
             created="2021-01-01T00:00:00",
             updated="2021-01-01T00:00:00",
         ),
-        properties=SheetList[DMSProperty](
-            data=[
-                DMSProperty(
-                    class_="WindTurbine",
-                    property_="name",
-                    value_type="text",
-                    container="Asset",
-                    container_property="name",
-                    view="Asset",
-                    view_property="name",
-                ),
-            ]
-        ),
-        containers=SheetList[DMSContainer](
-            data=[
-                DMSContainer(container="Asset", class_="Asset"),
-            ]
-        ),
-        views=SheetList[DMSView](
-            data=[
-                DMSView(view="Asset", class_="Asset"),
-            ]
-        ),
-    )
+        properties=[
+            DMSPropertyWrite(
+                class_="WindTurbine",
+                property_="name",
+                value_type="text",
+                container="Asset",
+                container_property="name",
+                view="Asset",
+                view_property="name",
+            ),
+        ],
+        containers=[
+            DMSContainerWrite(container="Asset", class_="Asset"),
+        ],
+        views=[
+            DMSViewWrite(view="Asset", class_="Asset"),
+        ],
+    ).as_read()
 
-    changing_container = DMSRules(
-        metadata=DMSMetadata(
+    changing_container = DMSRulesWrite(
+        metadata=DMSMetadataWrite(
             schema_="complete",
             extension="addition",
             space="my_space",
             external_id="my_data_model",
             version="1",
-            creator=["Anders"],
+            creator="Anders",
             created="2021-01-01T00:00:00",
             updated="2021-01-01T00:00:00",
         ),
-        properties=SheetList[DMSProperty](
-            data=[
-                DMSProperty(
-                    class_="WindTurbine",
-                    property_="name",
-                    value_type="json",
-                    container="Asset",
-                    container_property="name",
-                    view="Asset",
-                    view_property="name",
-                ),
-            ]
-        ),
-        containers=SheetList[DMSContainer](
-            data=[
-                DMSContainer(container="Asset", class_="Asset"),
-            ]
-        ),
-        views=SheetList[DMSView](
-            data=[
-                DMSView(view="Asset", class_="Asset"),
-            ]
-        ),
+        properties=[
+            DMSPropertyWrite(
+                class_="WindTurbine",
+                property_="name",
+                value_type="json",
+                container="Asset",
+                container_property="name",
+                view="Asset",
+                view_property="name",
+            ),
+        ],
+        containers=[
+            DMSContainerWrite(container="Asset", class_="Asset"),
+        ],
+        views=[
+            DMSViewWrite(view="Asset", class_="Asset"),
+        ],
         reference=ref_rules,
-    )
+    ).as_read()
 
     yield pytest.param(
         changing_container,
@@ -1374,42 +1321,36 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
         id="Addition extension, changing container",
     )
 
-    changing_view = DMSRules(
-        metadata=DMSMetadata(
+    changing_view = DMSRulesWrite(
+        metadata=DMSMetadataWrite(
             schema_="complete",
             extension="addition",
             space="my_space",
             external_id="my_data_model",
             version="1",
-            creator=["Anders"],
+            creator="Anders",
             created="2021-01-01T00:00:00",
             updated="2021-01-01T00:00:00",
         ),
-        properties=SheetList[DMSProperty](
-            data=[
-                DMSProperty(
-                    class_="WindTurbine",
-                    property_="name",
-                    value_type="text",
-                    container="Asset",
-                    container_property="name",
-                    view="Asset",
-                    view_property="navn",
-                ),
-            ]
-        ),
-        containers=SheetList[DMSContainer](
-            data=[
-                DMSContainer(container="Asset", class_="Asset"),
-            ]
-        ),
-        views=SheetList[DMSView](
-            data=[
-                DMSView(view="Asset", class_="Asset"),
-            ]
-        ),
+        properties=[
+            DMSPropertyWrite(
+                class_="WindTurbine",
+                property_="name",
+                value_type="text",
+                container="Asset",
+                container_property="name",
+                view="Asset",
+                view_property="navn",
+            ),
+        ],
+        containers=[
+            DMSContainerWrite(container="Asset", class_="Asset"),
+        ],
+        views=[
+            DMSViewWrite(view="Asset", class_="Asset"),
+        ],
         reference=ref_rules,
-    )
+    ).as_read()
 
     yield pytest.param(
         changing_view,
@@ -1428,7 +1369,7 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
 
 class TestDMSRules:
     def test_load_valid_alice_rules(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
-        valid_rules = DMSRules.model_validate(alice_spreadsheet)
+        valid_rules = DMSRulesWrite.load(alice_spreadsheet).as_read()
 
         assert isinstance(valid_rules, DMSRules)
 
@@ -1444,17 +1385,17 @@ class TestDMSRules:
 
     @pytest.mark.parametrize("raw, expected_rules", list(valid_rules_tests_cases()))
     def test_load_valid_rules(self, raw: dict[str, dict[str, Any]], expected_rules: DMSRules) -> None:
-        valid_rules = DMSRules.model_validate(raw)
+        valid_rules = DMSRulesWrite.load(raw).as_read()
         assert valid_rules.model_dump() == expected_rules.model_dump()
         # testing case insensitive value types
-        assert valid_rules.properties.data[0].value_type == DMS_VALUE_TYPE_MAPPINGS["text"]
+        assert isinstance(valid_rules.properties.data[0].value_type, String)
 
     @pytest.mark.parametrize("raw, expected_errors", list(invalid_container_definitions_test_cases()))
     def test_load_inconsistent_container_definitions(
         self, raw: dict[str, dict[str, Any]], expected_errors: list[validation.NeatValidationError]
     ) -> None:
         with pytest.raises(ValueError) as e:
-            DMSRules.model_validate(raw)
+            DMSRulesWrite.load(raw).as_read()
 
         assert isinstance(e.value, ValidationError)
         validation_errors = e.value.errors()
@@ -1493,8 +1434,9 @@ class TestDMSRules:
 
         assert recreated_rules.model_dump() == rules.model_dump()
 
-    @pytest.mark.parametrize("rules, expected_schema", rules_schema_tests_cases())
-    def test_as_schema(self, rules: DMSRules, expected_schema: DMSSchema) -> None:
+    @pytest.mark.parametrize("input_rules, expected_schema", rules_schema_tests_cases())
+    def test_as_schema(self, input_rules: DMSRulesWrite, expected_schema: DMSSchema) -> None:
+        rules = input_rules.as_read()
         actual_schema = rules.as_schema()
 
         assert actual_schema.spaces.dump() == expected_schema.spaces.dump()
@@ -1512,42 +1454,36 @@ class TestDMSRules:
         assert actual_schema.node_types.dump() == expected_schema.node_types.dump()
 
     def test_alice_as_information(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
-        alice_rules = DMSRules.model_validate(alice_spreadsheet)
+        alice_rules = DMSRulesWrite.load(alice_spreadsheet).as_read()
         info_rules = alice_rules.as_information_architect_rules()
 
         assert isinstance(info_rules, InformationRules)
 
     def test_dump_skip_default_space_and_version(self) -> None:
-        dms_rules = DMSRules(
-            metadata=DMSMetadata(
+        dms_rules = DMSRulesWrite(
+            metadata=DMSMetadataWrite(
                 schema_="partial",
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
-                creator=["Anders"],
+                creator="Anders",
                 created="2024-03-16",
                 updated="2024-03-16",
             ),
-            properties=SheetList[DMSProperty](
-                data=[
-                    DMSProperty(
-                        class_="WindFarm",
-                        property_="name",
-                        value_type="text",
-                        container="Asset",
-                        container_property="name",
-                        view="WindFarm",
-                        view_property="name",
-                    ),
-                ]
-            ),
-            views=SheetList[DMSView](
-                data=[DMSView(view="WindFarm", class_="WindFarm", implements=["Sourceable", "Describable"])]
-            ),
-            containers=SheetList[DMSContainer](
-                data=[DMSContainer(container="Asset", class_="Asset", constraint=["Sourceable", "Describable"])]
-            ),
-        )
+            properties=[
+                DMSPropertyWrite(
+                    class_="WindFarm",
+                    property_="name",
+                    value_type="text",
+                    container="Asset",
+                    container_property="name",
+                    view="WindFarm",
+                    view_property="name",
+                ),
+            ],
+            views=[DMSViewWrite(view="WindFarm", class_="WindFarm", implements="Sourceable,Describable")],
+            containers=[DMSContainerWrite(container="Asset", class_="Asset", constraint="Sourceable,Describable")],
+        ).as_read()
         expected_dump = {
             "metadata": {
                 "role": "DMS Architect",
@@ -1616,7 +1552,7 @@ class TestDMSRules:
         raw["Metadata"]["schema"] = "extended"
 
         with pytest.raises(ValidationError) as e:
-            DMSRules.model_validate(raw)
+            DMSRulesWrite.load(raw).as_read()
 
         actual_issues = validation.NeatValidationError.from_pydantic_errors(e.value.errors())
 

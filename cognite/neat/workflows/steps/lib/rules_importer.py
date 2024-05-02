@@ -6,8 +6,8 @@ from cognite.client import CogniteClient
 
 from cognite.neat.rules import importers
 from cognite.neat.rules.issues.formatters import FORMATTER_BY_NAME
+from cognite.neat.rules.models.entities import DataModelEntity, Undefined
 from cognite.neat.rules.models.rules import RoleTypes
-from cognite.neat.rules.models.rules._types import DataModelEntity, Undefined
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.data_contracts import MultiRuleData
@@ -207,7 +207,7 @@ class DMSToRules(Step):
             error_text = "Expected input payload to contain 'Data model id' key."
             return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
 
-        datamodel_entity = DataModelEntity.from_raw(datamodel_id_str)
+        datamodel_entity = DataModelEntity.load(datamodel_id_str)
         if datamodel_entity.space is Undefined:
             error_text = (
                 f"Data model id should be in the format 'my_space:my_data_model(version=1)' "

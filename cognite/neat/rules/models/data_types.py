@@ -13,6 +13,12 @@ else:
 
 
 class DataType(BaseModel):
+    # These are necessary for Pydantic to work
+    # pydantic gets confused as we have no fields.
+    __pydantic_extra__ = None
+    __pydantic_fields_set__ = set()
+    __pydantic_private__ = {}
+
     name: ClassVar[str]
     python: ClassVar[type]
     dms: ClassVar[type[dms.PropertyType]]
@@ -32,10 +38,12 @@ class DataType(BaseModel):
         if isinstance(value, cls | dict):
             return value
         elif isinstance(value, str):
-            try:
-                return _DATA_TYPE_BY_NAME[value.casefold()]()
-            except KeyError:
-                raise ValueError(f"Unknown literal type: {value}") from None
+            value_standardized = value.casefold()
+            if cls_ := _DATA_TYPE_BY_DMS_TYPE.get(value_standardized):
+                return cls_()
+            elif cls_ := _DATA_TYPE_BY_NAME.get(value_standardized):
+                return cls_()
+            raise ValueError(f"Unknown literal type: {value}") from None
         raise ValueError(f"Cannot load {cls.__name__} from {value}")
 
     @model_serializer(when_used="unless-none", return_type=str)
@@ -48,13 +56,20 @@ class DataType(BaseModel):
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, type(self))
 
+    def __hash__(self) -> int:
+        return hash(str(self))
+
+    @classmethod
+    def is_data_type(cls, value: str) -> bool:
+        return value.casefold() in _DATA_TYPE_BY_NAME or value.casefold() in _DATA_TYPE_BY_DMS_TYPE
+
 
 class Boolean(DataType):
     name = "boolean"
     python = bool
     dms = dms.Boolean
     graphql = "Boolean"
-    xsd = "xsd:boolean"
+    xsd = "boolean"
     sql = "BOOLEAN"
 
 
@@ -63,7 +78,7 @@ class Float(DataType):
     python = float
     dms = dms.Float32
     graphql = "Float"
-    xsd = "xsd:float"
+    xsd = "float"
     sql = "FLOAT"
 
 
@@ -72,7 +87,7 @@ class Double(DataType):
     python = float
     dms = dms.Float64
     graphql = "Float"
-    xsd = "xsd:double"
+    xsd = "double"
     sql = "FLOAT"
 
 
@@ -81,7 +96,7 @@ class Integer(DataType):
     python = int
     dms = dms.Int32
     graphql = "Int"
-    xsd = "xsd:integer"
+    xsd = "integer"
     sql = "INTEGER"
 
 
@@ -90,7 +105,7 @@ class NonPositiveInteger(DataType):
     python = int
     dms = dms.Int32
     graphql = "Int"
-    xsd = "xsd:nonPositiveInteger"
+    xsd = "nonPositiveInteger"
     sql = "INTEGER"
 
 
@@ -99,7 +114,7 @@ class NonNegativeInteger(DataType):
     python = int
     dms = dms.Int32
     graphql = "Int"
-    xsd = "xsd:nonNegativeInteger"
+    xsd = "nonNegativeInteger"
     sql = "INTEGER"
 
 
@@ -108,7 +123,7 @@ class NegativeInteger(DataType):
     python = int
     dms = dms.Int32
     graphql = "Int"
-    xsd = "xsd:negativeInteger"
+    xsd = "negativeInteger"
     sql = "INTEGER"
 
 
@@ -117,7 +132,7 @@ class Long(DataType):
     python = int
     dms = dms.Int64
     graphql = "Int"
-    xsd = "xsd:long"
+    xsd = "long"
     sql = "BIGINT"
 
 
@@ -126,7 +141,7 @@ class String(DataType):
     python = str
     dms = dms.Text
     graphql = "String"
-    xsd = "xsd:string"
+    xsd = "string"
     sql = "STRING"
 
 
@@ -135,7 +150,7 @@ class LangString(DataType):
     python = str
     dms = dms.Text
     graphql = "String"
-    xsd = "xsd:string"
+    xsd = "string"
     sql = "STRING"
 
 
@@ -144,7 +159,7 @@ class AnyURI(DataType):
     python = str
     dms = dms.Text
     graphql = "String"
-    xsd = "xsd:anyURI"
+    xsd = "anyURI"
     sql = "STRING"
 
 
@@ -153,7 +168,7 @@ class NormalizedString(DataType):
     python = str
     dms = dms.Text
     graphql = "String"
-    xsd = "xsd:normalizedString"
+    xsd = "normalizedString"
     sql = "STRING"
 
 
@@ -162,7 +177,7 @@ class Token(DataType):
     python = str
     dms = dms.Text
     graphql = "String"
-    xsd = "xsd:string"
+    xsd = "string"
     sql = "STRING"
 
 
@@ -171,16 +186,7 @@ class DateTime(DataType):
     python = datetime
     dms = dms.Timestamp
     graphql = "Timestamp"
-    xsd = "xsd:dateTimeStamp"
-    sql = "TIMESTAMP"
-
-
-class DateTimeStamp(DataType):
-    name = "dateTimeStamp"
-    python = datetime
-    dms = dms.Timestamp
-    graphql = "Timestamp"
-    xsd = "xsd:dateTimeStamp"
+    xsd = "dateTimeStamp"
     sql = "TIMESTAMP"
 
 
@@ -189,7 +195,16 @@ class Timestamp(DataType):
     python = datetime
     dms = dms.Timestamp
     graphql = "Timestamp"
-    xsd = "xsd:dateTimeStamp"
+    xsd = "dateTimeStamp"
+    sql = "TIMESTAMP"
+
+
+class DateTimeStamp(DataType):
+    name = "dateTimeStamp"
+    python = datetime
+    dms = dms.Timestamp
+    graphql = "Timestamp"
+    xsd = "dateTimeStamp"
     sql = "TIMESTAMP"
 
 
@@ -198,7 +213,7 @@ class Date(DataType):
     python = date
     dms = dms.Date
     graphql = "String"
-    xsd = "xsd:date"
+    xsd = "date"
     sql = "DATE"
 
 
@@ -207,7 +222,7 @@ class PlainLiteral(DataType):
     python = str
     dms = dms.Text
     graphql = "String"
-    xsd = "xsd:string"
+    xsd = "plainLiteral"
     sql = "STRING"
 
 
@@ -216,7 +231,7 @@ class Literal(DataType):
     python = str
     dms = dms.Text
     graphql = "String"
-    xsd = "xsd:string"
+    xsd = "string"
     sql = "STRING"
 
 
@@ -225,7 +240,7 @@ class Timeseries(DataType):
     python = dms.TimeSeriesReference
     dms = dms.TimeSeriesReference
     graphql = "TimeSeries"
-    xsd = "xsd:string"
+    xsd = "string"
     sql = "STRING"
 
 
@@ -234,7 +249,7 @@ class File(DataType):
     python = dms.FileReference
     dms = dms.FileReference
     graphql = "File"
-    xsd = "xsd:string"
+    xsd = "string"
     sql = "STRING"
 
 
@@ -243,7 +258,7 @@ class Sequence(DataType):
     python = dms.SequenceReference
     dms = dms.SequenceReference
     graphql = "Sequence"
-    xsd = "xsd:string"
+    xsd = "string"
     sql = "STRING"
 
 
@@ -252,8 +267,16 @@ class Json(DataType):
     python = dms.Json
     dms = dms.Json
     graphql = "Json"
-    xsd = "xsd:string"
+    xsd = "string"
     sql = "STRING"
 
 
 _DATA_TYPE_BY_NAME = {cls.name.casefold(): cls for cls in DataType.__subclasses__()}
+_seen = set()
+_DATA_TYPE_BY_DMS_TYPE = {
+    cls.dms._type.casefold(): cls
+    for cls in DataType.__subclasses__()
+    if cls.dms._type not in _seen and not _seen.add(cls.dms._type)  # type: ignore[func-returns-value]
+}
+del _seen
+_XSD_TYPES = {cls_.xsd for cls_ in _DATA_TYPE_BY_NAME.values()}
