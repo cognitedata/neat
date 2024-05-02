@@ -24,6 +24,7 @@ from cognite.neat.rules.models.entities import (
     ReferenceEntity,
     Undefined,
     Unknown,
+    UnknownEntity,
     URLEntity,
     ViewEntity,
     ViewPropertyEntity,
@@ -148,7 +149,7 @@ class InformationProperty(SheetEntity):
     """
 
     property_: PropertyType = Field(alias="Property")
-    value_type: DataType | ClassEntity = Field(alias="Value Type")
+    value_type: DataType | ClassEntity | UnknownEntity = Field(alias="Value Type", union_mode="left_to_right")
     min_count: int | None = Field(alias="Min Count", default=None)
     max_count: int | float | None = Field(alias="Max Count", default=None)
     default: Any | None = Field(alias="Default", default=None)

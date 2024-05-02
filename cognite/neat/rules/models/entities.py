@@ -106,8 +106,8 @@ class Entity(BaseModel, extra="ignore"):
             data = data.versioned_id
         elif not isinstance(data, str):
             raise ValueError(f"Cannot load {cls.__name__} from {data}")
-        elif data == str(Unknown) and cls.type_ != EntityTypes.undefined:
-            return cls(prefix=Undefined, suffix=Unknown)  # type: ignore[arg-type]
+        elif data == str(Unknown) and cls.type_ == EntityTypes.undefined:
+            return dict(prefix=Undefined, suffix=Unknown)  # type: ignore[arg-type]
         elif data == str(Unknown):
             raise ValueError(f"Unknown is not allowed for {cls.type_} entity")
 

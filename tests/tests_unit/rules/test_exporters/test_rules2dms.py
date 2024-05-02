@@ -72,4 +72,18 @@ class TestImportExportDMS:
         exported = DMSExporter().export(rules)
 
         assert len(exported.views) == 1
-        assert exported.views[0].as_id() == dm.ViewId("badmodel", "GeneratingUnit", "0.1.0")
+        view = exported.views[0]
+        assert view.as_id() == dm.ViewId("badmodel", "GeneratingUnit", "0.1.0")
+        assert "geoLocation" in view.properties
+        prop = view.properties["geoLocation"]
+        assert isinstance(prop, dm.MappedPropertyApply)
+        # This model is missing the value type (is set #N/A in the excel file)
+        assert prop.source is None
+        assert prop.container == dm.ContainerId("badmodel", "GeneratingUnit")
+        assert len(exported.containers) == 1
+        container = exported.containers[0]
+        assert container.as_id() == dm.ContainerId("badmodel", "GeneratingUnit")
+        assert "geoLocation" in container.properties
+        prop = container.properties["geoLocation"]
+        assert isinstance(prop, dm.ContainerProperty)
+        assert prop.type == dm.DirectRelation()
