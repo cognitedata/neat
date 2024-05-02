@@ -240,7 +240,7 @@ class ParentClassEntity(ClassEntity):
 
 
 class UnknownEntity(ClassEntity):
-    type_ = EntityTypes.undefined
+    type_: ClassVar[EntityTypes] = EntityTypes.undefined
     prefix: _UndefinedType = Undefined
     suffix: _UnknownType = Unknown  # type: ignore[assignment]
 

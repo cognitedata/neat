@@ -9,8 +9,6 @@ from cognite.neat.rules.models.entities import (
     DMSUnknownEntity,
     Entity,
     ReferenceEntity,
-    Undefined,
-    Unknown,
     UnknownEntity,
     ViewEntity,
     ViewPropertyEntity,
@@ -71,7 +69,7 @@ class TestEntities:
             (
                 ClassEntity,
                 "#N/A",
-                UnknownEntity(prefix=Undefined, suffix=Unknown),
+                UnknownEntity(),
             ),
         ],
     )
