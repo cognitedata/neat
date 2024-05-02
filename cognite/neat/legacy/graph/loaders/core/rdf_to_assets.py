@@ -772,8 +772,7 @@ def categorize_assets(
     partitions: int = 2,
     stop_on_exception: bool = False,
     meta_keys: NeatMetadataKeys | None = None,
-) -> dict:
-    ...
+) -> dict: ...
 
 
 @overload
@@ -785,8 +784,7 @@ def categorize_assets(
     partitions: int = 2,
     stop_on_exception: bool = False,
     meta_keys: NeatMetadataKeys | None = None,
-) -> tuple[dict, dict]:
-    ...
+) -> tuple[dict, dict]: ...
 
 
 def categorize_assets(
@@ -1000,13 +998,11 @@ AssetLike: TypeAlias = Asset | dict[str, Any]
 
 
 @overload
-def remove_non_existing_labels(client: CogniteClient, assets: Sequence[AssetLike]) -> Sequence[AssetLike]:
-    ...
+def remove_non_existing_labels(client: CogniteClient, assets: Sequence[AssetLike]) -> Sequence[AssetLike]: ...
 
 
 @overload
-def remove_non_existing_labels(client: CogniteClient, assets: Mapping[str, AssetLike]) -> Mapping[str, AssetLike]:
-    ...
+def remove_non_existing_labels(client: CogniteClient, assets: Mapping[str, AssetLike]) -> Mapping[str, AssetLike]: ...
 
 
 def remove_non_existing_labels(

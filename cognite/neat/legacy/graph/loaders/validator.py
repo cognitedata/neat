@@ -46,7 +46,7 @@ def _find_circular_reference_path(
 
 
 def validate_asset_hierarchy(
-    assets: dict[str, dict[str, Any]]
+    assets: dict[str, dict[str, Any]],
 ) -> tuple[list[str], list[list[str]], dict[str, list[str]]]:
     """Validates asset hierarchy and reports on orphan assets and circular dependency
 

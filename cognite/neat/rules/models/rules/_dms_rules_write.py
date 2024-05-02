@@ -89,18 +89,15 @@ class DMSPropertyWrite:
 
     @classmethod
     @overload
-    def load(cls, data: None) -> None:
-        ...
+    def load(cls, data: None) -> None: ...
 
     @classmethod
     @overload
-    def load(cls, data: dict[str, Any]) -> "DMSPropertyWrite":
-        ...
+    def load(cls, data: dict[str, Any]) -> "DMSPropertyWrite": ...
 
     @classmethod
     @overload
-    def load(cls, data: list[dict[str, Any]]) -> list["DMSPropertyWrite"]:
-        ...
+    def load(cls, data: list[dict[str, Any]]) -> list["DMSPropertyWrite"]: ...
 
     @classmethod
     def load(
@@ -179,18 +176,15 @@ class DMSContainerWrite:
 
     @classmethod
     @overload
-    def load(cls, data: None) -> None:
-        ...
+    def load(cls, data: None) -> None: ...
 
     @classmethod
     @overload
-    def load(cls, data: dict[str, Any]) -> "DMSContainerWrite":
-        ...
+    def load(cls, data: dict[str, Any]) -> "DMSContainerWrite": ...
 
     @classmethod
     @overload
-    def load(cls, data: list[dict[str, Any]]) -> list["DMSContainerWrite"]:
-        ...
+    def load(cls, data: list[dict[str, Any]]) -> list["DMSContainerWrite"]: ...
 
     @classmethod
     def load(
@@ -242,18 +236,15 @@ class DMSViewWrite:
 
     @classmethod
     @overload
-    def load(cls, data: None) -> None:
-        ...
+    def load(cls, data: None) -> None: ...
 
     @classmethod
     @overload
-    def load(cls, data: dict[str, Any]) -> "DMSViewWrite":
-        ...
+    def load(cls, data: dict[str, Any]) -> "DMSViewWrite": ...
 
     @classmethod
     @overload
-    def load(cls, data: list[dict[str, Any]]) -> list["DMSViewWrite"]:
-        ...
+    def load(cls, data: list[dict[str, Any]]) -> list["DMSViewWrite"]: ...
 
     @classmethod
     def load(cls, data: dict[str, Any] | list[dict[str, Any]] | None) -> "DMSViewWrite | list[DMSViewWrite] | None":
@@ -306,13 +297,11 @@ class DMSRulesWrite:
 
     @classmethod
     @overload
-    def load(cls, data: dict[str, Any]) -> "DMSRulesWrite":
-        ...
+    def load(cls, data: dict[str, Any]) -> "DMSRulesWrite": ...
 
     @classmethod
     @overload
-    def load(cls, data: None) -> None:
-        ...
+    def load(cls, data: None) -> None: ...
 
     @classmethod
     def load(cls, data: dict | None) -> "DMSRulesWrite | None":

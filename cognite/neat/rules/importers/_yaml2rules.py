@@ -46,14 +46,12 @@ class YAMLImporter(BaseImporter):
         return cls(yaml.safe_load(filepath.read_text()), filepaths=[filepath])
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules:
-        ...
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules: ...
 
     @overload
     def to_rules(
         self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[Rules | None, IssueList]:
-        ...
+    ) -> tuple[Rules | None, IssueList]: ...
 
     def to_rules(
         self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None

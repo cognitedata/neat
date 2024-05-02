@@ -9,8 +9,7 @@ from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
 from cognite.neat.workflows.model import FlowMessage, WorkflowConfigs
 
 
-class Config(BaseModel):
-    ...
+class Config(BaseModel): ...
 
 
 class Configurable(BaseModel):
@@ -79,5 +78,4 @@ class Step(ABC):
         self.flow_context = context
 
     @abstractmethod
-    def run(self, *input_data: DataContract) -> DataContract | tuple[FlowMessage, DataContract] | FlowMessage:
-        ...
+    def run(self, *input_data: DataContract) -> DataContract | tuple[FlowMessage, DataContract] | FlowMessage: ...

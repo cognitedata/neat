@@ -654,7 +654,8 @@ class _DMSExporter:
         views_not_in_model = {view.view.as_id() for view in rules.views if not view.in_model}
         data_model = rules.metadata.as_data_model()
         data_model.views = sorted(
-            [view_id for view_id in views.as_ids() if view_id not in views_not_in_model], key=lambda v: v.as_tuple()  # type: ignore[union-attr]
+            [view_id for view_id in views.as_ids() if view_id not in views_not_in_model],
+            key=lambda v: v.as_tuple(),  # type: ignore[union-attr]
         )
 
         spaces = self._create_spaces(rules.metadata, containers, views, data_model)

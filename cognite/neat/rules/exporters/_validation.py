@@ -9,13 +9,13 @@ from cognite.neat.rules.models.rules._types._base import DMS_PROPERTY_ID_COMPLIA
 
 
 @overload
-def are_entity_names_dms_compliant(rules: InformationRules, return_report: Literal[True]) -> tuple[bool, list[dict]]:
-    ...
+def are_entity_names_dms_compliant(
+    rules: InformationRules, return_report: Literal[True]
+) -> tuple[bool, list[dict]]: ...
 
 
 @overload
-def are_entity_names_dms_compliant(rules: InformationRules, return_report: Literal[False] = False) -> bool:
-    ...
+def are_entity_names_dms_compliant(rules: InformationRules, return_report: Literal[False] = False) -> bool: ...
 
 
 def are_entity_names_dms_compliant(
@@ -66,13 +66,11 @@ def are_entity_names_dms_compliant(
 
 
 @overload
-def are_properties_redefined(rules: InformationRules, return_report: Literal[True]) -> tuple[bool, list[dict]]:
-    ...
+def are_properties_redefined(rules: InformationRules, return_report: Literal[True]) -> tuple[bool, list[dict]]: ...
 
 
 @overload
-def are_properties_redefined(rules: InformationRules, return_report: Literal[False] = False) -> bool:
-    ...
+def are_properties_redefined(rules: InformationRules, return_report: Literal[False] = False) -> bool: ...
 
 
 def are_properties_redefined(rules: InformationRules, return_report: bool = False) -> bool | tuple[bool, list[dict]]:

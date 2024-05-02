@@ -43,14 +43,12 @@ class OWLImporter(BaseImporter):
         self.make_compliant = make_compliant
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules:
-        ...
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules: ...
 
     @overload
     def to_rules(
         self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[Rules | None, IssueList]:
-        ...
+    ) -> tuple[Rules | None, IssueList]: ...
 
     def to_rules(
         self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None

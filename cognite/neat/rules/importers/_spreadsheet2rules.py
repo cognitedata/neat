@@ -153,16 +153,14 @@ class ExcelImporter(BaseImporter):
         self.filepath = filepath
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules:
-        ...
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules: ...
 
     @overload
     def to_rules(
         self,
         errors: Literal["continue"] = "continue",
         role: RoleTypes | None = None,
-    ) -> tuple[Rules | None, IssueList]:
-        ...
+    ) -> tuple[Rules | None, IssueList]: ...
 
     def to_rules(
         self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
@@ -244,14 +242,12 @@ class GoogleSheetImporter(BaseImporter):
         self.skiprows = skiprows
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules:
-        ...
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules: ...
 
     @overload
     def to_rules(
         self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[Rules | None, IssueList]:
-        ...
+    ) -> tuple[Rules | None, IssueList]: ...
 
     def to_rules(
         self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None

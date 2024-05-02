@@ -57,8 +57,7 @@ _PROPERTY_ID_REGEX = rf"\((?P<{EntityTypes.property_}>{_ENTITY_ID_REGEX})\)"
 _ENTITY_PATTERN = re.compile(r"^(?P<prefix>.*?):?(?P<suffix>[^(:]*)(\((?P<content>[^)]+)\))?$")
 
 
-class _UndefinedType(BaseModel):
-    ...
+class _UndefinedType(BaseModel): ...
 
 
 class _UnknownType(BaseModel):
