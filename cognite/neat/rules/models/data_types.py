@@ -69,7 +69,7 @@ class Boolean(DataType):
     python = bool
     dms = dms.Boolean
     graphql = "Boolean"
-    xsd = "xsd:boolean"
+    xsd = "boolean"
     sql = "BOOLEAN"
 
 
@@ -78,7 +78,7 @@ class Float(DataType):
     python = float
     dms = dms.Float32
     graphql = "Float"
-    xsd = "xsd:float"
+    xsd = "float"
     sql = "FLOAT"
 
 
@@ -87,7 +87,7 @@ class Double(DataType):
     python = float
     dms = dms.Float64
     graphql = "Float"
-    xsd = "xsd:double"
+    xsd = "double"
     sql = "FLOAT"
 
 
@@ -96,7 +96,7 @@ class Integer(DataType):
     python = int
     dms = dms.Int32
     graphql = "Int"
-    xsd = "xsd:integer"
+    xsd = "integer"
     sql = "INTEGER"
 
 
@@ -105,7 +105,7 @@ class NonPositiveInteger(DataType):
     python = int
     dms = dms.Int32
     graphql = "Int"
-    xsd = "xsd:nonPositiveInteger"
+    xsd = "nonPositiveInteger"
     sql = "INTEGER"
 
 
@@ -114,7 +114,7 @@ class NonNegativeInteger(DataType):
     python = int
     dms = dms.Int32
     graphql = "Int"
-    xsd = "xsd:nonNegativeInteger"
+    xsd = "nonNegativeInteger"
     sql = "INTEGER"
 
 
@@ -123,7 +123,7 @@ class NegativeInteger(DataType):
     python = int
     dms = dms.Int32
     graphql = "Int"
-    xsd = "xsd:negativeInteger"
+    xsd = "negativeInteger"
     sql = "INTEGER"
 
 
@@ -132,7 +132,7 @@ class Long(DataType):
     python = int
     dms = dms.Int64
     graphql = "Int"
-    xsd = "xsd:long"
+    xsd = "long"
     sql = "BIGINT"
 
 
@@ -141,7 +141,7 @@ class String(DataType):
     python = str
     dms = dms.Text
     graphql = "String"
-    xsd = "xsd:string"
+    xsd = "string"
     sql = "STRING"
 
 
@@ -150,7 +150,7 @@ class LangString(DataType):
     python = str
     dms = dms.Text
     graphql = "String"
-    xsd = "xsd:string"
+    xsd = "string"
     sql = "STRING"
 
 
@@ -159,7 +159,7 @@ class AnyURI(DataType):
     python = str
     dms = dms.Text
     graphql = "String"
-    xsd = "xsd:anyURI"
+    xsd = "anyURI"
     sql = "STRING"
 
 
@@ -168,7 +168,7 @@ class NormalizedString(DataType):
     python = str
     dms = dms.Text
     graphql = "String"
-    xsd = "xsd:normalizedString"
+    xsd = "normalizedString"
     sql = "STRING"
 
 
@@ -177,7 +177,7 @@ class Token(DataType):
     python = str
     dms = dms.Text
     graphql = "String"
-    xsd = "xsd:string"
+    xsd = "string"
     sql = "STRING"
 
 
@@ -186,7 +186,7 @@ class DateTime(DataType):
     python = datetime
     dms = dms.Timestamp
     graphql = "Timestamp"
-    xsd = "xsd:dateTimeStamp"
+    xsd = "dateTimeStamp"
     sql = "TIMESTAMP"
 
 
@@ -195,7 +195,7 @@ class Timestamp(DataType):
     python = datetime
     dms = dms.Timestamp
     graphql = "Timestamp"
-    xsd = "xsd:dateTimeStamp"
+    xsd = "dateTimeStamp"
     sql = "TIMESTAMP"
 
 
@@ -204,7 +204,7 @@ class DateTimeStamp(DataType):
     python = datetime
     dms = dms.Timestamp
     graphql = "Timestamp"
-    xsd = "xsd:dateTimeStamp"
+    xsd = "dateTimeStamp"
     sql = "TIMESTAMP"
 
 
@@ -213,7 +213,7 @@ class Date(DataType):
     python = date
     dms = dms.Date
     graphql = "String"
-    xsd = "xsd:date"
+    xsd = "date"
     sql = "DATE"
 
 
@@ -222,7 +222,7 @@ class PlainLiteral(DataType):
     python = str
     dms = dms.Text
     graphql = "String"
-    xsd = "xsd:plainLiteral"
+    xsd = "plainLiteral"
     sql = "STRING"
 
 
@@ -231,7 +231,7 @@ class Literal(DataType):
     python = str
     dms = dms.Text
     graphql = "String"
-    xsd = "xsd:string"
+    xsd = "string"
     sql = "STRING"
 
 
@@ -240,7 +240,7 @@ class Timeseries(DataType):
     python = dms.TimeSeriesReference
     dms = dms.TimeSeriesReference
     graphql = "TimeSeries"
-    xsd = "xsd:string"
+    xsd = "string"
     sql = "STRING"
 
 
@@ -249,7 +249,7 @@ class File(DataType):
     python = dms.FileReference
     dms = dms.FileReference
     graphql = "File"
-    xsd = "xsd:string"
+    xsd = "string"
     sql = "STRING"
 
 
@@ -258,7 +258,7 @@ class Sequence(DataType):
     python = dms.SequenceReference
     dms = dms.SequenceReference
     graphql = "Sequence"
-    xsd = "xsd:string"
+    xsd = "string"
     sql = "STRING"
 
 
@@ -267,7 +267,7 @@ class Json(DataType):
     python = dms.Json
     dms = dms.Json
     graphql = "Json"
-    xsd = "xsd:string"
+    xsd = "string"
     sql = "STRING"
 
 
