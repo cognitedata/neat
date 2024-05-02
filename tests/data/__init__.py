@@ -24,3 +24,4 @@ CAPACITY_BID_CONTAINERS: dm.ContainerApplyList = dm.ContainerApplyList._load(
 CAPACITY_BID_JSON = DATA_DIR / "mock_capacity_bid.json"
 
 INFORMATION_UNKNOWN_VALUE_TYPE = DATA_DIR / "information-unknown-value-type.xlsx"
+DMS_UNKNOWN_VALUE_TYPE = DATA_DIR / "dms-unknown-value-type.xlsx"

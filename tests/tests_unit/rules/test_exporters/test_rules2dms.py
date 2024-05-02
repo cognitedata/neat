@@ -4,6 +4,7 @@ from collections import Counter
 from pathlib import Path
 from typing import cast
 
+import pytest
 from cognite.client import data_modeling as dm
 
 from cognite.neat.rules import importers
@@ -12,7 +13,7 @@ from cognite.neat.rules.models.rules._dms_architect_rules import (
     DMSRules,
 )
 from cognite.neat.rules.models.rules._dms_schema import PipelineSchema
-from tests.data import INFORMATION_UNKNOWN_VALUE_TYPE
+from tests.data import DMS_UNKNOWN_VALUE_TYPE, INFORMATION_UNKNOWN_VALUE_TYPE
 
 
 class TestDMSExporter:
@@ -66,8 +67,15 @@ class TestDMSExporter:
 
 
 class TestImportExportDMS:
-    def test_import_excel_export_dms(self) -> None:
-        rules = importers.ExcelImporter(INFORMATION_UNKNOWN_VALUE_TYPE).to_rules(errors="raise")
+    @pytest.mark.parametrize(
+        "filepath",
+        [
+            pytest.param(INFORMATION_UNKNOWN_VALUE_TYPE, id="Information source"),
+            pytest.param(DMS_UNKNOWN_VALUE_TYPE, id="DMS source"),
+        ],
+    )
+    def test_import_excel_export_dms(self, filepath: Path) -> None:
+        rules = importers.ExcelImporter(filepath).to_rules(errors="raise")
 
         exported = DMSExporter().export(rules)
 
