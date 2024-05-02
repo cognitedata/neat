@@ -4,11 +4,15 @@ from collections import Counter
 from pathlib import Path
 from typing import cast
 
-from cognite.neat.rules.exporters._rules2dms import DMSExporter
+from cognite.client import data_modeling as dm
+
+from cognite.neat.rules import importers
+from cognite.neat.rules.exporters import DMSExporter
 from cognite.neat.rules.models.rules._dms_architect_rules import (
     DMSRules,
 )
 from cognite.neat.rules.models.rules._dms_schema import PipelineSchema
+from tests.data import INFORMATION_UNKNOWN_VALUE_TYPE
 
 
 class TestDMSExporter:
@@ -59,3 +63,13 @@ class TestDMSExporter:
         assert counts["container"] == len(schema.containers)
         assert transformation_count == len(schema.transformations)
         assert table_count == len(schema.raw_tables)
+
+
+class TestImportExportDMS:
+    def test_import_excel_export_dms(self) -> None:
+        rules = importers.ExcelImporter(INFORMATION_UNKNOWN_VALUE_TYPE).to_rules(errors="raise")
+
+        exported = DMSExporter().export(rules)
+
+        assert len(exported.views) == 1
+        assert exported.views[0].as_id() == dm.ViewId("badmodel", "GeneratingUnit", "0.1.0")
