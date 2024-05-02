@@ -318,18 +318,21 @@ class ViewEntity(DMSVersionedEntity[ViewId]):
         return cls(space=id.space, externalId=id.external_id, version=id.version)
 
 
-# This is needed to handle direct relations with source=None
 class DMSUnknownEntity(DMSEntity[None]):
+    """This is a special entity that represents an unknown entity.
+
+    The use case is for direct relations where the source is not known."""
+
     type_: ClassVar[EntityTypes] = EntityTypes.undefined
-    prefix: _UnknownType = Field(Unknown, alias="space")  # type: ignore[assignment]
-    suffix: _UndefinedType = Field(Undefined, alias="externalId")  # type: ignore[assignment]
+    prefix: _UndefinedType = Field(Undefined, alias="space")  # type: ignore[assignment]
+    suffix: _UnknownType = Field(Unknown, alias="externalId")  # type: ignore[assignment]
 
     def as_id(self) -> None:
         return None
 
     @classmethod
     def from_id(cls, id: None) -> "DMSUnknownEntity":
-        return cls(space=Unknown, externalId=Undefined)
+        return cls(space=Undefined, externalId=Unknown)
 
     def __str__(self) -> str:
         return str(Unknown)

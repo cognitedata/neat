@@ -17,6 +17,7 @@ from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import (
     ClassEntity,
     ContainerEntity,
+    DMSUnknownEntity,
     Entity,
     EntityTypes,
     ParentClassEntity,
@@ -467,9 +468,11 @@ class _InformationRulesConverter:
         from ._dms_architect_rules import DMSProperty
 
         # returns property type, which can be ObjectProperty or DatatypeProperty
-        value_type: DataType | ViewEntity
+        value_type: DataType | ViewEntity | ViewPropertyEntity | DMSUnknownEntity
         if isinstance(prop.value_type, DataType):
             value_type = prop.value_type
+        elif isinstance(prop.value_type, UnknownEntity):
+            value_type = DMSUnknownEntity()
         elif isinstance(prop.value_type, ClassEntity):
             value_type = prop.value_type.as_view_entity(default_space, default_version)
         else:
