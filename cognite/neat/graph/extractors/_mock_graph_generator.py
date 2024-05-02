@@ -38,7 +38,7 @@ class MockGraphGenerator(BaseExtractor):
     def __init__(
         self,
         rules: InformationRules | DMSRules,
-        class_count: dict[str | ClassEntity | Entity, int] | None = None,
+        class_count: dict[str | ClassEntity, int] | None = None,
         stop_on_exception: bool = False,
         allow_isolated_classes: bool = True,
     ):
