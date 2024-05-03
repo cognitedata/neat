@@ -955,6 +955,7 @@ class _DMSExporter:
     def _create_view_filter(
         self, view: dm.ViewApply, dms_view: DMSView | None, parent_views: set[dm.ViewId], node_types: dm.NodeApplyList
     ) -> dm.Filter:
+        selected_filter_name = (dms_view and dms_view.filter_ and dms_view.filter_.name) or ""
         ref_containers = view.referenced_containers()
         has_data = dm.filters.HasData(containers=list(ref_containers)) if ref_containers else None
         if dms_view and isinstance(dms_view.reference, ReferenceEntity):
@@ -968,7 +969,7 @@ class _DMSExporter:
             node_type = dm.filters.Equals(["node", "type"], {"space": view.space, "externalId": view.external_id})
 
         if view.as_id() in parent_views:
-            if dms_view and dms_view.filter_ and dms_view.filter_.name == "nodeType":
+            if selected_filter_name == "nodeType":
                 warnings.warn(issues.dms.NodeTypeFilterOnParentViewWarning(view.as_id()), stacklevel=2)
                 node_types.append(dm.NodeApply(space=view.space, external_id=view.external_id, sources=[]))
                 return node_type
@@ -976,15 +977,15 @@ class _DMSExporter:
                 return cast(dm.Filter, has_data)
         elif has_data is None:
             # Child filter without container properties
-            if dms_view and dms_view.filter_ and dms_view.filter_.name == "hasData":
+            if selected_filter_name == "hasData":
                 warnings.warn(issues.dms.HasDataFilterOnNoPropertiesViewWarning(view.as_id()), stacklevel=2)
             node_types.append(dm.NodeApply(space=view.space, external_id=view.external_id, sources=[]))
             return node_type
         else:
-            if dms_view and ((dms_view.filter_ and dms_view.filter_.name == "hasData") or dms_view.filter_ is None):
+            if dms_view and ((selected_filter_name == "hasData") or dms_view.filter_ is None):
                 # Default option
                 return has_data
-            elif dms_view and dms_view.filter_ and dms_view.filter_.name == "nodeType":
+            elif selected_filter_name == "nodeType":
                 node_types.append(dm.NodeApply(space=view.space, external_id=view.external_id, sources=[]))
                 return node_type
             else:
