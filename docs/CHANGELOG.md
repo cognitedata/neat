@@ -15,6 +15,13 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## TBD
+### Added
+- In `DMSRules`, added support for setting containerId and nodeId in `View.Filter`. Earlier, only `nodeType` and
+  `hasData` were supported which always used an implicit `containerId` and `nodeId` respectively. Now, the user can
+  specify the node type and container id(s) by setting `nodeType(my_space:my_node_type)` and
+  `hasData(my_space:my_container_id, my_space:my_other_container_id)`.
+
 ## [0.75.8] - 02-05-24
 ### Fixed
 - `DMSExporter` now correctly exports direct relations with unknown source.
