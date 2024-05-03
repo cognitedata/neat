@@ -11,8 +11,8 @@ import yaml
 from cognite.client import ClientConfig, CogniteClient
 from prometheus_client import Gauge
 
-from cognite.neat.app.api.configuration import Config
 from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
+from cognite.neat.config import Config
 from cognite.neat.utils.utils import retry_decorator
 from cognite.neat.workflows import cdf_store, utils
 from cognite.neat.workflows._exceptions import ConfigurationNotSet, InvalidStepOutputException
