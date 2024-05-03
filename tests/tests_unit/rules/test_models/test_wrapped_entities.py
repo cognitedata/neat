@@ -38,3 +38,5 @@ class TestWrappedEntities:
         loaded = cls_.load(raw)
 
         assert loaded == expected
+        assert repr(loaded) == repr(expected)
+        assert str(loaded) == str(expected)
