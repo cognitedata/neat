@@ -60,6 +60,7 @@ class DMSMetadataWrite:
             extension=ExtensionCategory(self.extension),
             space=self.space,
             externalId=self.external_id,
+            dataModelType=self.data_model_type,
             creator=self.creator,
             version=self.version,
             name=self.name,
