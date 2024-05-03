@@ -69,7 +69,6 @@ class ExportDMSSchemaComponentsToYAML(Step):
     version = "private-alpha"
     category = CATEGORY
     configurables: ClassVar[list[Configurable]] = [
-        Configurable(name="storage_dir", value="staging", label="Directory to store DMS schema files"),
         Configurable(
             name="format",
             value="yaml-dump",
@@ -82,10 +81,9 @@ class ExportDMSSchemaComponentsToYAML(Step):
         if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
 
-        staging_dir_str = self.configs["storage_dir"]
         format_ = self.configs["format"]
 
-        staging_dir = self.data_store_path / Path(staging_dir_str)
+        staging_dir = self.config.staging_path
         staging_dir.mkdir(parents=True, exist_ok=True)
 
         if format_ in ["yaml-dump", "all"]:
@@ -119,10 +117,10 @@ class ExportDMSSchemaComponentsToYAML(Step):
                 "<p></p>"
                 "DMS Schema exported and can be downloaded here : "
                 "<p></p>"
-                f'- <a href="/data/{staging_dir_str}/{_data_model_file_name}?{time.time()}" '
+                f'- <a href="/data/{self.config.staging_path.name}/{_data_model_file_name}?{time.time()}" '
                 f'target="_blank">{_data_model_file_name}</a>'
                 "<p></p>"
-                f'- <a href="/data/{staging_dir_str}/{_container_file_name}?{time.time()}" '
+                f'- <a href="/data/{self.config.staging_path.name}/{_container_file_name}?{time.time()}" '
                 f'target="_blank">{_container_file_name}</a>'
             )
 
@@ -205,7 +203,7 @@ class ExportDMSSchemaComponentsToCDF(Step):
 
         # report
         report_file = "dms_component_creation_report.txt"
-        report_dir = self.data_store_path / Path("staging")
+        report_dir = self.config.staging_path
         report_dir.mkdir(parents=True, exist_ok=True)
         report_full_path = report_dir / report_file
         report_full_path.write_text(report)
@@ -280,7 +278,7 @@ class DeleteDMSSchemaComponents(Step):
 
         # report
         report_file = "dms_component_removal_report.txt"
-        report_dir = self.data_store_path / Path("staging")
+        report_dir = self.config.staging_path
         report_dir.mkdir(parents=True, exist_ok=True)
         report_full_path = report_dir / report_file
         report_full_path.write_text(report)

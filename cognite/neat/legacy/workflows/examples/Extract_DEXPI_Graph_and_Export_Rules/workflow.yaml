@@ -1,0 +1,139 @@
+configs: []
+description: null
+implementation_module: null
+name: Extract DEXPI Graph and Export Rules
+steps:
+  - complex_configs: {}
+    configs: {}
+    description: null
+    enabled: true
+    id: step_trigger
+    label: Workflow Trigger
+    max_retries: 0
+    method: null
+    params: {}
+    retry_delay: 3
+    stype: http_trigger
+    system_component_id: null
+    transition_to:
+      - step_128344
+      - step_configure_graph_store
+    trigger: true
+    ui_config:
+      pos_x: 352
+      pos_y: 106
+  - complex_configs: {}
+    configs:
+      db_server_api_root_url: ""
+      disk_store_dir: dexpi-graph
+      graph_name: source
+      init_procedure: reset
+      sparql_query_url: ""
+      sparql_update_url: ""
+      store_type: oxigraph
+    description: null
+    enabled: true
+    id: step_configure_graph_store
+    label: Graph Store Config
+    max_retries: 0
+    method: ConfigureGraphStore
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+      - step_download_dexpi_file
+    trigger: false
+    ui_config:
+      pos_x: 353
+      pos_y: 176
+  - complex_configs: {}
+    configs:
+      base_namespace: http://purl.org/cognite/neat#
+      file_path: source-graphs/depxi_example.xml
+    description: null
+    enabled: true
+    id: step_load_ttl
+    label: Extract Graph from DEXPI file
+    max_retries: 0
+    method: ExtractGraphFromDexpiFile
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+      - infer_rules
+    trigger: false
+    ui_config:
+      pos_x: 354
+      pos_y: 344
+  - complex_configs: {}
+    configs:
+      api_url: https://raw.githubusercontent.com/cognitedata/neat/main/tests/data/depxi_example.xml
+      auth_mode: none
+      http_method: GET
+      output_file_path: source-graphs/depxi_example.xml
+      password: ""
+      response_destination: file
+      token: ""
+      username: ""
+    description: null
+    enabled: true
+    id: step_download_dexpi_file
+    label: Download DISC DEXPI example
+    max_retries: 0
+    method: DownloadDataFromRestApiToFile
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+      - step_load_ttl
+    trigger: false
+    ui_config:
+      pos_x: 354
+      pos_y: 250
+  - complex_configs: {}
+    configs:
+      excel_file_path: rules/inferred-rules.xlsx
+      file_name: inferred_transformations.xlsx
+      max_number_of_instances: "-1"
+      storage_dir: staging
+    description: null
+    enabled: true
+    id: infer_rules
+    label: Import/infer Rules from Graph
+    max_retries: 0
+    method: ImportGraphToRules
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+      - import_inferred_rules
+    trigger: false
+    ui_config:
+      pos_x: 356
+      pos_y: 442
+  - complex_configs: {}
+    configs:
+      file_name: inferred-rules.xlsx
+      validation_report_file: rules_validation_report.txt
+      validation_report_storage_dir: rules_validation_report
+      version: ""
+    description: null
+    enabled: true
+    id: import_inferred_rules
+    label: Import Inferred Rules
+    max_retries: 0
+    method: ImportExcelToRules
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to: []
+    trigger: false
+    ui_config:
+      pos_x: 356
+      pos_y: 537
+system_components: []

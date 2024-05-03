@@ -1,15 +1,12 @@
 import typing
 from abc import ABC, abstractmethod
-from pathlib import Path
 from typing import ClassVar, TypeVar
 
 from pydantic import BaseModel, ConfigDict
 
 from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
+from cognite.neat.config import Config
 from cognite.neat.workflows.model import FlowMessage, WorkflowConfigs
-
-
-class Config(BaseModel): ...
 
 
 class Configurable(BaseModel):
@@ -44,7 +41,7 @@ class Step(ABC):
     )
     docs_url: str = "https://cognite-neat.readthedocs-hosted.com/en/latest/"  # url to the documentation of the step
 
-    def __init__(self, data_store_path: Path | None = None):
+    def __init__(self, config: Config):
         self.log: bool = False
         self.configs: dict[str, str] = {}
         self.complex_configs: dict[
@@ -52,7 +49,8 @@ class Step(ABC):
         ] = {}  # complex configs are meant for more complex configurations. Value can be any type.
         self.workflow_id: str = ""
         self.workflow_run_id: str = ""
-        self.data_store_path = Path(data_store_path) if data_store_path is not None else Path.cwd()
+        self.config = config
+        self.data_store_path = config.data_store_path
 
     @property
     def _not_configured_message(self) -> str:

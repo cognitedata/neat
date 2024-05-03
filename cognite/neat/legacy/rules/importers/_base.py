@@ -15,9 +15,6 @@ class BaseImporter(ABC):
     """
 
     @abstractmethod
-    def __init__(self): ...
-
-    @abstractmethod
     def to_tables(self) -> dict[str, pd.DataFrame]:
         """Creates raw tables from the data."""
         raise NotImplementedError

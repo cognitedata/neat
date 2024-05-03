@@ -101,7 +101,7 @@ class DeleteDataModelFromCDF(Step):
         report_lines.append("\n\n# ERRORS\n\n")
         report_lines.extend(errors)
 
-        output_dir = self.data_store_path / Path("staging")
+        output_dir = self.config.staging_path
         output_dir.mkdir(parents=True, exist_ok=True)
         report_file = "dms_component_creation_report.txt"
         report_full_path = output_dir / report_file
@@ -203,7 +203,7 @@ class RulesToDMS(Step):
             existing_handling=existing_components_handling,
         )
 
-        output_dir = self.data_store_path / Path("staging")
+        output_dir = self.config.staging_path
         output_dir.mkdir(parents=True, exist_ok=True)
         file_name = (
             input_rules.metadata.external_id
@@ -223,7 +223,7 @@ class RulesToDMS(Step):
         report_lines.append("\n\n# ERRORS\n\n")
         report_lines.extend(errors)
 
-        output_dir = self.data_store_path / Path("staging")
+        output_dir = self.config.staging_path
         output_dir.mkdir(parents=True, exist_ok=True)
         report_file = "dms_component_creation_report.txt"
         report_full_path = output_dir / report_file
@@ -348,7 +348,7 @@ class RulesToOntology(Step):
                 step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
             )
 
-        default_path = self.data_store_path / "staging" / _get_default_file_name(rules, "ontology", "ttl")
+        default_path = self.config.staging_path / _get_default_file_name(rules, "ontology", "ttl")
 
         storage_path = (
             self.data_store_path / Path(self.configs["File path"]) if self.configs["File path"] else default_path
@@ -399,7 +399,7 @@ class RulesToSHACL(Step):
                 step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
             )
 
-        default_path = self.data_store_path / "staging" / _get_default_file_name(rules, "shacl", "ttl")
+        default_path = self.config.staging_path / _get_default_file_name(rules, "shacl", "ttl")
 
         storage_path = (
             self.data_store_path / Path(self.configs["File path"]) if self.configs["File path"] else default_path
@@ -450,7 +450,7 @@ class RulesToSemanticDataModel(Step):
                 step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
             )
 
-        default_path = self.data_store_path / "staging" / _get_default_file_name(rules, "semantic-data-model", "ttl")
+        default_path = self.config.staging_path / _get_default_file_name(rules, "semantic-data-model", "ttl")
 
         storage_path = (
             self.data_store_path / Path(self.configs["File path"]) if self.configs["File path"] else default_path
@@ -513,7 +513,7 @@ class RulesToCDFTransformations(Step):
         dms_exporter = exporters.DMSExporter(
             export_pipeline=True, instance_space=instance_space, export_components=["spaces"]
         )
-        output_dir = self.data_store_path / Path("staging")
+        output_dir = self.config.staging_path
         output_dir.mkdir(parents=True, exist_ok=True)
         file_name = (
             input_rules.metadata.external_id
@@ -533,7 +533,7 @@ class RulesToCDFTransformations(Step):
         report_lines.append("\n\n# ERRORS\n\n")
         report_lines.extend(errors)
 
-        output_dir = self.data_store_path / Path("staging")
+        output_dir = self.config.staging_path
         output_dir.mkdir(parents=True, exist_ok=True)
         report_file = "pipeline_creation_report.txt"
         report_full_path = output_dir / report_file

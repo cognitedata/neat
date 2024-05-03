@@ -1,0 +1,95 @@
+configs: []
+description: null
+implementation_module: null
+name: Visualize Data Model Using Mock Graph
+steps:
+  - complex_configs: {}
+    configs:
+      File name: information-architect-david.xlsx
+      Report formatter: BasicHTML
+      Role: infer
+    description: null
+    enabled: true
+    id: step_verify_rules
+    label: Verify Rules
+    max_retries: 0
+    method: ExcelToRules
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+      - step_configure_graph_store
+    trigger: false
+    ui_config:
+      pos_x: 507
+      pos_y: 250
+  - complex_configs: {}
+    configs:
+      Disk storage directory: mock-graph-store
+      Graph: source
+      Graph store type: oxigraph
+      GraphDB API root URL: ""
+      Init procedure: reset
+      Query URL: ""
+      Update URL: ""
+    description: null
+    enabled: true
+    id: step_configure_graph_store
+    label: Configure Graph Store
+    max_retries: 0
+    method: GraphStoreConfiguration
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+      - step_166101
+      - step_mock_graph_generation
+    trigger: false
+    ui_config:
+      pos_x: 506
+      pos_y: 314
+  - complex_configs: {}
+    configs:
+      Class count:
+        '{"WindTurbine" : 1, "WindFarm" : 1, "OffshoreSubstation" : 1,
+        "DistributionSubstation" : 1, "OnshoreSubstation" : 1, "ArrayCable" :
+        1, "ExportCable" : 1, "Transmission" : 1, "DistributionLine" : 1, "Meter"
+        : 1, "ElectricCarCharger" : 1}'
+      Graph: source
+    description: null
+    enabled: true
+    id: step_mock_graph_generation
+    label: Generate Mock Graph
+    max_retries: 0
+    method: GraphFromMockData
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to: []
+    trigger: false
+    ui_config:
+      pos_x: 506
+      pos_y: 390
+  - complex_configs: {}
+    configs: {}
+    description: null
+    enabled: true
+    id: step_upload_rules
+    label: Upload Rules
+    max_retries: 0
+    method: null
+    params:
+      file_type: rules
+    retry_delay: 3
+    stype: file_uploader
+    system_component_id: null
+    transition_to:
+      - step_verify_rules
+    trigger: true
+    ui_config:
+      pos_x: 507
+      pos_y: 177
+system_components: []

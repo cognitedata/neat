@@ -68,7 +68,7 @@ class ImportExcelToRules(Step):
             raise ValueError(f"Step {type(self).__name__} has not been configured.")
         rules_file = Path(self.configs["file_name"])
         if str(rules_file.parent) == ".":
-            rules_file_path = Path(self.data_store_path) / "rules" / rules_file
+            rules_file_path = self.config.rules_store_path / rules_file
         else:
             rules_file_path = Path(self.data_store_path) / rules_file
 

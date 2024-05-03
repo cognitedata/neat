@@ -1,0 +1,111 @@
+configs: []
+description: null
+implementation_module: null
+name: Visualize Semantic Data Model
+steps:
+-   complex_configs: {}
+    configs: {}
+    description: null
+    enabled: true
+    id: step_upload_excel_rules
+    label: Upload Excel Rules
+    max_retries: 0
+    method: null
+    params:
+        file_type: rules
+    retry_delay: 3
+    stype: file_uploader
+    system_component_id: null
+    transition_to:
+    - step_421523
+    - step_excel_to_rules
+    trigger: true
+    ui_config:
+        pos_x: 498
+        pos_y: 149
+-   complex_configs: {}
+    configs:
+        File name: ''
+        Report formatter: BasicHTML
+        Role: infer
+    description: null
+    enabled: true
+    id: step_excel_to_rules
+    label: Import and Validate Rules
+    max_retries: 0
+    method: ExcelToRules
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+    - step_rules_to_ontology
+    trigger: false
+    ui_config:
+        pos_x: 497
+        pos_y: 234
+-   complex_configs: {}
+    configs:
+        File path: staging/semantic-data-model.ttl
+    description: null
+    enabled: true
+    id: step_rules_to_ontology
+    label: Rules to Ontology
+    max_retries: 0
+    method: RulesToSemanticDataModel
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+    - step_configure_graph_store
+    trigger: false
+    ui_config:
+        pos_x: 497
+        pos_y: 323
+-   complex_configs: {}
+    configs:
+        Disk storage directory: semantic-data-model
+        Graph: source
+        Graph store type: oxigraph
+        GraphDB API root URL: ''
+        Init procedure: reset
+        Query URL: ''
+        Update URL: ''
+    description: null
+    enabled: true
+    id: step_configure_graph_store
+    label: Configure Graph Store
+    max_retries: 0
+    method: GraphStoreConfiguration
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+    - step_load_semantic_data_model
+    trigger: false
+    ui_config:
+        pos_x: 495
+        pos_y: 399
+-   complex_configs: {}
+    configs:
+        Add base URI: 'False'
+        File path: staging/semantic-data-model.ttl
+        MIME type: text/turtle
+    description: null
+    enabled: true
+    id: step_load_semantic_data_model
+    label: Load Semantic Data Model
+    max_retries: 0
+    method: GraphFromRdfFile
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to: []
+    trigger: false
+    ui_config:
+        pos_x: 495
+        pos_y: 476
+system_components: []

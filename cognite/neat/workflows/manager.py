@@ -4,12 +4,12 @@ import shutil
 import sys
 import time
 import traceback
-from pathlib import Path
 
 from cognite.client import CogniteClient
 from prometheus_client import Gauge
 from pydantic import BaseModel
 
+from cognite.neat.config import Config
 from cognite.neat.workflows import BaseWorkflow
 from cognite.neat.workflows.base import WorkflowDefinition
 from cognite.neat.workflows.model import FlowMessage, InstanceStartMethod, WorkflowState
@@ -28,32 +28,21 @@ class WorkflowStartStatus(BaseModel, arbitrary_types_allowed=True):
 class WorkflowManager:
     """Workflow manager is responsible for loading, saving and managing workflows
     client: CogniteClient
-    registry_storage_type: str = "file"
-    workflows_storage_path: Path = Path("workflows")
-    rules_storage_path: Path = Path("rules")
-    data_set_id: int = None,
+    config: Config
     """
 
-    def __init__(
-        self,
-        client: CogniteClient | None = None,
-        registry_storage_type: str = "file",
-        workflows_storage_path: Path | None = None,
-        rules_storage_path: Path | None = None,
-        data_store_path: Path | None = None,
-        data_set_id: int | None = None,
-    ):
+    def __init__(self, client: CogniteClient, config: Config):
         self.client = client
-        self.data_set_id = data_set_id
-        self.data_store_path = data_store_path
+        self.data_set_id = config.cdf_default_dataset_id
+        self.data_store_path = config.data_store_path
         self.workflow_registry: dict[str, BaseWorkflow] = {}
         self.ephemeral_instance_registry: dict[str, BaseWorkflow] = {}
-        self.workflows_storage_type = registry_storage_type
-        # todo use pathlib
-        self.workflows_storage_path = workflows_storage_path if workflows_storage_path else Path("workflows")
-        self.rules_storage_path = rules_storage_path if rules_storage_path else Path("rules")
+        self.workflows_storage_type = config.workflows_store_type
+        self.config = config
+        self.workflows_storage_path = config.workflows_store_path
+        self.rules_storage_path = config.rules_store_path
         self.task_builder = WorkflowTaskBuilder(client, self)
-        self.steps_registry = StepsRegistry(self.data_store_path)
+        self.steps_registry = StepsRegistry(self.config)
         self.steps_registry.load_step_classes()
 
     def update_cdf_client(self, client: CogniteClient):
