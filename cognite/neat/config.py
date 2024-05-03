@@ -67,7 +67,7 @@ class Config(BaseModel):
     def _dir_suffix(self) -> str:
         is_test_running = "pytest" in sys.modules
         if is_test_running:
-            return ""
+            return f"-{os.getpid()}"
         return ""
 
     @property

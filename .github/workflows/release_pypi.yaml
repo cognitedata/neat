@@ -47,7 +47,7 @@ jobs:
       - name: Test
         env:
           CI: 1
-        run: pytest -n8
+        run: pytest
 
       - uses: codecov/codecov-action@v3
         with:
