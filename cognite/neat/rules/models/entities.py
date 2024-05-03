@@ -403,6 +403,12 @@ class ReferenceEntity(ClassEntity):
             raise ValueError("Property is not defined or prefix is not defined or suffix is unknown")
         return PropertyId(source=self.as_view_id(), property=self.property_)
 
+    def as_node_id(self) -> NodeId:
+        return NodeId(space=self.prefix, external_id=self.suffix)
+
+    def as_node_entity(self) -> DMSNodeEntity:
+        return DMSNodeEntity(space=self.prefix, externalId=self.suffix)
+
     def as_class_entity(self) -> ClassEntity:
         return ClassEntity(prefix=self.prefix, suffix=self.suffix, version=self.version)
 

@@ -22,6 +22,7 @@ from cognite.neat.rules.models.entities import (
     ClassEntity,
     ContainerEntity,
     ContainerEntityList,
+    DMSNodeEntity,
     DMSUnknownEntity,
     ParentClassEntity,
     ReferenceEntity,
@@ -32,7 +33,7 @@ from cognite.neat.rules.models.entities import (
     ViewPropertyEntity,
 )
 from cognite.neat.rules.models.rules._domain_rules import DomainRules
-from cognite.neat.rules.models.wrapped_entities import HasDataFilter, NodeTypeFilter
+from cognite.neat.rules.models.wrapped_entities import DMSFilter, HasDataFilter, NodeTypeFilter
 
 from ._base import (
     BaseMetadata,
@@ -660,7 +661,9 @@ class _DMSExporter:
 
         containers = self._create_containers(rules.containers, container_properties_by_id)
 
-        views, node_types = self._create_views_with_node_types(rules.views, view_properties_by_id)
+        views, node_types = self._create_views_with_node_types(
+            rules.views, view_properties_by_id, rules.metadata.data_model_type
+        )
 
         views_not_in_model = {view.view.as_id() for view in rules.views if not view.in_model}
         data_model = rules.metadata.as_data_model()
@@ -705,6 +708,7 @@ class _DMSExporter:
         self,
         dms_views: SheetList[DMSView],
         view_properties_by_id: dict[dm.ViewId, list[DMSProperty]],
+        data_model_type: DataModelType,
     ) -> tuple[dm.ViewApplyList, dm.NodeApplyList]:
         views = dm.ViewApplyList([dms_view.as_view() for dms_view in dms_views])
         dms_view_by_id = {dms_view.view.as_id(): dms_view for dms_view in dms_views}
@@ -861,16 +865,29 @@ class _DMSExporter:
         parent_views = {parent for view in views for parent in view.implements or []}
         for view in views:
             dms_view = dms_view_by_id.get(view.as_id())
-            view.filter = self._create_view_filter(view, dms_view, parent_views)
-            if (
-                isinstance(view.filter, dm.filters.Equals)
-                and isinstance(view.filter._value, dict)
-                and (node_space := view.filter._value.get("space"))
-                and (node_ext_id := view.filter._value.get("externalId"))
-            ):
-                node_types.append(dm.NodeApply(space=node_space, external_id=node_ext_id))
+            dms_properties = view_properties_by_id.get(view.as_id(), [])
+            view_filter = self._create_view_filter(view, dms_view, data_model_type, dms_properties)
+
+            view.filter = view_filter.as_dms_filter()
+
+            if isinstance(view_filter, NodeTypeFilter):
+                node_types.append(view_filter.nodes)
                 if view.as_id() in parent_views:
                     warnings.warn(issues.dms.NodeTypeFilterOnParentViewWarning(view.as_id()), stacklevel=2)
+            elif isinstance(view_filter, HasDataFilter) and data_model_type is DataModelType.solution:
+                if dms_view and isinstance(dms_view.reference, ReferenceEntity):
+                    references = {dms_view.reference.as_view_id()}
+                elif any(True for prop in dms_properties if isinstance(prop.reference, ReferenceEntity)):
+                    references = {
+                        prop.reference.as_view_id()
+                        for prop in dms_properties
+                        if isinstance(prop.reference, ReferenceEntity)
+                    }
+                else:
+                    continue
+                warnings.warn(
+                    issues.dms.HasDataFilterOnReferencedViewWarning(view.as_id(), list(references)), stacklevel=2
+                )
 
         return views, node_types
 
@@ -972,44 +989,39 @@ class _DMSExporter:
 
         return container_properties_by_id, view_properties_by_id
 
+    @staticmethod
     def _create_view_filter(
-        self, view: dm.ViewApply, dms_view: DMSView | None, parent_views: set[dm.ViewId]
-    ) -> dm.Filter:
+        view: dm.ViewApply,
+        dms_view: DMSView | None,
+        data_model_type: DataModelType,
+        dms_properties: list[DMSProperty],
+    ) -> DMSFilter:
         selected_filter_name = (dms_view and dms_view.filter_ and dms_view.filter_.name) or ""
         if dms_view and dms_view.filter_ and not dms_view.filter_.is_empty:
-            # Has Explicit Filter
-            return dms_view.filter_.as_filter()
+            # Has Explicit Filter, use it
+            return dms_view.filter_
 
+        if data_model_type is DataModelType.solution and selected_filter_name in [NodeTypeFilter.name, ""]:
+            if dms_view and isinstance(dms_view.reference, ReferenceEntity):
+                return NodeTypeFilter(inner=[dms_view.reference.as_node_entity()])
+            elif dms_properties and (
+                node_ids := {
+                    prop.reference.as_node_entity()
+                    for prop in dms_properties
+                    if isinstance(prop.reference, ReferenceEntity)
+                }
+            ):
+                return NodeTypeFilter(inner=list(node_ids))
+        # Enterprise Model or (Solution + HasData)
         ref_containers = view.referenced_containers()
-        has_data = dm.filters.HasData(containers=list(ref_containers)) if ref_containers else None
-        if dms_view and isinstance(dms_view.reference, ReferenceEntity):
-            # If the view is a reference, we implement the reference view,
-            # and need the filter to match the reference
-            ref_view = dms_view.reference.as_view_id()
-            node_type = dm.filters.Equals(
-                ["node", "type"], {"space": ref_view.space, "externalId": ref_view.external_id}
-            )
-        else:
-            node_type = dm.filters.Equals(["node", "type"], {"space": view.space, "externalId": view.external_id})
-
-        if view.as_id() in parent_views:
-            if selected_filter_name == "nodeType":
-                return node_type
-            else:
-                return cast(dm.Filter, has_data)
-        elif has_data is None:
+        if not ref_containers or selected_filter_name == HasDataFilter.name:
             # Child filter without container properties
-            if selected_filter_name == "hasData":
+            if selected_filter_name == HasDataFilter.name:
                 warnings.warn(issues.dms.HasDataFilterOnNoPropertiesViewWarning(view.as_id()), stacklevel=2)
-            return node_type
+            return NodeTypeFilter(inner=[DMSNodeEntity(space=view.space, externalId=view.external_id)])
         else:
-            if dms_view and ((selected_filter_name == "hasData") or dms_view.filter_ is None):
-                # Default option
-                return has_data
-            elif selected_filter_name == "nodeType":
-                return node_type
-            else:
-                return has_data
+            # HasData or not provided (this is the default)
+            return HasDataFilter(inner=[ContainerEntity.from_id(id_) for id_ in ref_containers])
 
 
 class _DMSRulesConverter:
