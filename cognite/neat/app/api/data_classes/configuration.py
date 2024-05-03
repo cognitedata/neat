@@ -67,31 +67,23 @@ class Config(BaseModel):
     stop_on_error: bool = False
 
     @property
-    def rules_store_path(self) -> Path:
+    def _dir_suffix(self) -> str:
         is_test_running = "pytest" in sys.modules
         if is_test_running:
-            pid = os.getpid()
-            return self.data_store_path / f"rules-{pid}"
-        else:
-            return self.data_store_path / "rules"
+            return f"-{os.getpid()}"
+        return ""
+
+    @property
+    def rules_store_path(self) -> Path:
+        return self.data_store_path / f"rules{self._dir_suffix}"
 
     @property
     def workflows_store_path(self) -> Path:
-        is_test_running = "pytest" in sys.modules
-        if is_test_running:
-            pid = os.getpid()
-            return self.data_store_path / f"workflows-{pid}"
-        else:
-            return self.data_store_path / "workflows"
+        return self.data_store_path / f"workflows{self._dir_suffix}"
 
     @property
     def source_graph_path(self) -> Path:
-        is_test_running = "pytest" in sys.modules
-        if is_test_running:
-            pid = os.getpid()
-            return self.data_store_path / f"source-graphs-{pid}"
-        else:
-            return self.data_store_path / "source-graphs"
+        return self.data_store_path / f"source-graphs{self._dir_suffix}"
 
     @classmethod
     def from_yaml(cls, filepath: Path) -> Self:
