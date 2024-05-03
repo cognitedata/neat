@@ -14,9 +14,9 @@ from cognite.neat.legacy.rules.models.rules import Class, Classes, Metadata, Pro
 from cognite.neat.rules import importers
 from cognite.neat.rules.models.rules import RoleTypes
 from cognite.neat.workflows.steps.data_contracts import RulesData
-from cognite.neat.workflows.steps.lib.rules_exporter import RulesToExcel
-from cognite.neat.workflows.steps.lib.rules_importer import ExcelToRules
-from cognite.neat.workflows.steps.lib.v1.rules_importer import ImportExcelToRules
+from cognite.neat.workflows.steps.lib.current.rules_exporter import RulesToExcel
+from cognite.neat.workflows.steps.lib.current.rules_importer import ExcelToRules
+from cognite.neat.workflows.steps.lib.legacy.rules_importer import ImportExcelToRules
 from cognite.neat.workflows.utils import get_file_hash
 
 router = APIRouter()

@@ -10,7 +10,7 @@ from cognite.neat.config import Config
 from cognite.neat.legacy.graph.stores import MemoryStore
 from cognite.neat.legacy.rules.exporters._core.rules2labels import get_labels
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph
-from cognite.neat.workflows.steps.lib.v1.graph_loader import GenerateAssetsFromGraph
+from cognite.neat.workflows.steps.lib.legacy.graph_loader import GenerateAssetsFromGraph
 
 
 @pytest.fixture
