@@ -45,7 +45,7 @@ class BaseWorkflow:
         self,
         name: str,
         client: CogniteClient,
-        steps_registry: StepsRegistry | None = None,
+        steps_registry: StepsRegistry,
         workflow_steps: list[WorkflowStepDefinition] | None = None,
         default_dataset_id: int | None = None,
     ):
@@ -81,7 +81,7 @@ class BaseWorkflow:
         self.auto_workflow_cleanup = False
         self.step_classes = None
         self.data: dict[str, DataContract | FlowMessage | CdfStore | CogniteClient | None] = {}
-        self.steps_registry: StepsRegistry = steps_registry or StepsRegistry()
+        self.steps_registry: StepsRegistry = steps_registry
 
     def start(self, sync=False, is_ephemeral=False, **kwargs) -> FlowMessage | None:
         """Starts workflow execution.sync=True will block until workflow is completed and
@@ -223,7 +223,7 @@ class BaseWorkflow:
 
     def copy(self) -> "BaseWorkflow":
         """Create a copy of the workflow"""
-        new_instance = self.__class__(self.name, self.cdf_client)
+        new_instance = self.__class__(self.name, self.cdf_client, self.steps_registry)
         new_instance.workflow_steps = self.workflow_steps
         new_instance.configs = self.configs
         new_instance.set_task_builder(self.task_builder)

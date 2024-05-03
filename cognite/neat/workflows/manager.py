@@ -42,7 +42,7 @@ class WorkflowManager:
         self.workflows_storage_path = config.workflows_store_path
         self.rules_storage_path = config.rules_store_path
         self.task_builder = WorkflowTaskBuilder(client, self)
-        self.steps_registry = StepsRegistry(self.data_store_path)
+        self.steps_registry = StepsRegistry(self.config)
         self.steps_registry.load_step_classes()
 
     def update_cdf_client(self, client: CogniteClient):
