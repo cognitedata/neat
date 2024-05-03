@@ -26,12 +26,10 @@ class BaseLoader(ABC, Generic[T_Output]):
         self.graph_store = graph_store
 
     @overload
-    def load(self, stop_on_exception: Literal[True]) -> Iterable[T_Output]:
-        ...
+    def load(self, stop_on_exception: Literal[True]) -> Iterable[T_Output]: ...
 
     @overload
-    def load(self, stop_on_exception: Literal[False] = False) -> Iterable[T_Output | ErrorDetails]:
-        ...
+    def load(self, stop_on_exception: Literal[False] = False) -> Iterable[T_Output | ErrorDetails]: ...
 
     @abstractmethod
     def load(self, stop_on_exception: bool = False) -> Iterable[T_Output | ErrorDetails]:

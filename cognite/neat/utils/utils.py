@@ -74,13 +74,11 @@ def _get_cognite_client(config: CogniteClientConfig, credentials: CredentialProv
 
 
 @overload
-def remove_namespace(*URI: URIRef | str, special_separator: str = "#_") -> str:
-    ...
+def remove_namespace(*URI: URIRef | str, special_separator: str = "#_") -> str: ...
 
 
 @overload
-def remove_namespace(*URI: tuple[URIRef | str, ...], special_separator: str = "#_") -> tuple[str, ...]:
-    ...
+def remove_namespace(*URI: tuple[URIRef | str, ...], special_separator: str = "#_") -> tuple[str, ...]: ...
 
 
 def remove_namespace(

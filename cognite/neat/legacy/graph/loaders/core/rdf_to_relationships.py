@@ -343,8 +343,7 @@ def categorize_relationships(
     data_set_id: int,
     return_report: Literal[False] = False,
     partitions: int = 40,
-) -> dict[str, list[Relationship] | list[RelationshipUpdate]]:
-    ...
+) -> dict[str, list[Relationship] | list[RelationshipUpdate]]: ...
 
 
 @overload
@@ -354,8 +353,7 @@ def categorize_relationships(
     data_set_id: int,
     return_report: Literal[True],
     partitions: int = 40,
-) -> tuple[dict[str, list[Relationship] | list[RelationshipUpdate]], dict[str, set]]:
-    ...
+) -> tuple[dict[str, list[Relationship] | list[RelationshipUpdate]], dict[str, set]]: ...
 
 
 def categorize_relationships(

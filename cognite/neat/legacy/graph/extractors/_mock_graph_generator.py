@@ -1,5 +1,4 @@
-"""This module is used to generate mock graph data for purposes of testing of NEAT.
-"""
+"""This module is used to generate mock graph data for purposes of testing of NEAT."""
 
 import logging
 import random

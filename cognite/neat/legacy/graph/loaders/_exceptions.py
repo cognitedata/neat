@@ -1,6 +1,4 @@
-"""This module contains the definition of validation errors and warnings raised by various extractors
-"""
-
+"""This module contains the definition of validation errors and warnings raised by various extractors"""
 
 from pydantic_core import ErrorDetails, PydanticCustomError
 

@@ -32,13 +32,11 @@ __all__ = [
 
 
 @dataclass(frozen=True)
-class DMSSchemaError(NeatValidationError, ABC):
-    ...
+class DMSSchemaError(NeatValidationError, ABC): ...
 
 
 @dataclass(frozen=True)
-class DMSSchemaWarning(ValidationWarning, ABC):
-    ...
+class DMSSchemaWarning(ValidationWarning, ABC): ...
 
 
 @dataclass(frozen=True)

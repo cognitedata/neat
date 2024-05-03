@@ -222,7 +222,9 @@ def execute_rule(request: RuleRequest):
         start_time = time.perf_counter()
         rules = cast(RulesData, workflow_context["RulesData"]).rules
         sparql_query = query_generator.build_sparql_query(
-            graph, request.rule, prefixes=rules.prefixes  # type: ignore[arg-type]
+            graph,  # type: ignore[arg-type]
+            request.rule,
+            prefixes=rules.prefixes,
         )
     else:
         logging.error("Unknown rule type")

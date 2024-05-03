@@ -60,7 +60,9 @@ class DataModelingLoader(
         except CogniteAPIError as e:
             failed_items = {failed.as_id() for failed in e.failed if hasattr(failed, "as_id")}
             to_redeploy = [
-                item for item in items if item.as_id() in failed_items and item.as_id() not in tried_force_deploy  # type: ignore[attr-defined]
+                item
+                for item in items
+                if item.as_id() in failed_items and item.as_id() not in tried_force_deploy  # type: ignore[attr-defined]
             ]
             if not to_redeploy:
                 # Avoid infinite loop

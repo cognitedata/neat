@@ -20,14 +20,12 @@ class BaseImporter(ABC):
     """
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules:
-        ...
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules: ...
 
     @overload
     def to_rules(
         self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[Rules | None, IssueList]:
-        ...
+    ) -> tuple[Rules | None, IssueList]: ...
 
     @abstractmethod
     def to_rules(
