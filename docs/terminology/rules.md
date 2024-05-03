@@ -191,15 +191,15 @@ The spreadsheet templates for the `Rules` object per role are accessible through
 ## Views sheet
 This sheet is only used for the DMS/CDF Architect, and it is mandatory. The sheet should have the following columns:
 
-| Column             | Description                                                                                                        | Predefined Value              | Mandatory |
-|--------------------|--------------------------------------------------------------------------------------------------------------------|-------------------------------|-----------|
-| Class              | Class id, originally coming from Information Architect sheet, used for linage. strongly advised to PascalCase usage|                               | Yes       |
-| View               | View id, strongly advised to PascalCase usage                                                                      |                               | Yes       |
-| Name               | Human readable name of the view being defined                                                                      |                               | No        |
-| Description        | Short description of the view being defined                                                                        |                               | Yes       |
-| Implements         | List of parent view ids which the view being defined implements                                                    |                               | No        |
-| Filter             | Filter(s) which the view being defined should use                                                                  | `hasData`, `nodeType` or both | No        |
-| InModel            | Indicates whether the view being defined is a part of the data model                                               | `True`, `False`               | No        |
+| Column             | Description                                                                                                        | Predefined Value      | Mandatory |
+|--------------------|--------------------------------------------------------------------------------------------------------------------|-----------------------|-----------|
+| Class              | Class id, originally coming from Information Architect sheet, used for linage. strongly advised to PascalCase usage|                       | Yes       |
+| View               | View id, strongly advised to PascalCase usage                                                                      |                       | Yes       |
+| Name               | Human readable name of the view being defined                                                                      |                       | No        |
+| Description        | Short description of the view being defined                                                                        |                       | Yes       |
+| Implements         | List of parent view ids which the view being defined implements                                                    |                       | No        |
+| Filter             | Filter(s) which the view being defined should use                                                                  | `hasData`, `nodeType` | No        |
+| InModel            | Indicates whether the view being defined is a part of the data model                                               | `True`, `False`       | No        |
 
 
 !!! tip annotate "Usage"
