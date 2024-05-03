@@ -171,7 +171,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     ),
                 ]
             ),
-            node_types=dm.NodeApplyList([dm.NodeApply(space="my_space", external_id="WindFarm", sources=[])]),
+            node_types=dm.NodeApplyList([dm.NodeApply(space="my_space", external_id="WindFarm")]),
         ),
         id="Two properties, one container, one view",
     )
@@ -605,7 +605,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         ),
         node_types=dm.NodeApplyList(
             [
-                dm.NodeApply(space="my_space", external_id="Activity", sources=[]),
+                dm.NodeApply(space="my_space", external_id="Activity"),
             ]
         ),
     )
@@ -638,7 +638,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             )
         ],
         views=[
-            DMSViewWrite(view="generating_unit", class_="generating_unit"),
+            DMSViewWrite(view="generating_unit", class_="generating_unit", filter_="NodeType(sp_other:wind_turbine)"),
         ],
         containers=[
             DMSContainerWrite(container="generating_unit", class_="generating_unit"),
@@ -672,7 +672,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                             container_property_identifier="display_name",
                         ),
                     },
-                    filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "generating_unit")]),
+                    filter=dm.filters.Equals(["node", "type"], {"space": "sp_other", "externalId": "wind_turbine"}),
                 ),
             ]
         ),
@@ -685,12 +685,12 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ]
         ),
-        node_types=dm.NodeApplyList([]),
+        node_types=dm.NodeApplyList([dm.NodeApply(space="sp_other", external_id="wind_turbine")]),
     )
     yield pytest.param(
         dms_rules,
         expected_schema,
-        id="No casing standardization",
+        id="Explict set NodeType Filter",
     )
 
     dms_rules = DMSRulesWrite(
@@ -758,7 +758,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 )
             ]
         ),
-        node_types=dm.NodeApplyList([dm.NodeApply(space="sp_solution", external_id="Asset", sources=[])]),
+        node_types=dm.NodeApplyList([dm.NodeApply(space="sp_solution", external_id="Asset")]),
     )
 
     yield pytest.param(
