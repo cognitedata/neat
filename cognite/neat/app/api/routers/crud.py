@@ -47,13 +47,13 @@ async def file_upload_handler(
     file_name = ""
     file_version = ""
     if file_type == "file_from_editor":
-        upload_dir = NEAT_APP.workflow_manager.data_store_path / "workflows" / workflow_name
+        upload_dir = NEAT_APP.workflow_manager.config.workflows_store_path / workflow_name
     elif file_type == "workflow":
-        upload_dir = NEAT_APP.workflow_manager.data_store_path / "workflows"
+        upload_dir = NEAT_APP.workflow_manager.config.workflows_store_path
     elif file_type == "staging":
-        upload_dir = NEAT_APP.workflow_manager.data_store_path / "staging"
+        upload_dir = NEAT_APP.workflow_manager.config.staging_path
     elif file_type == "source_graph":
-        upload_dir = NEAT_APP.workflow_manager.data_store_path / "source-graphs"
+        upload_dir = NEAT_APP.workflow_manager.config.source_graph_path
 
     for file in files:
         logging.info(

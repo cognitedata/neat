@@ -75,7 +75,7 @@ class ExcelToRules(Step):
         rules, issues = excel_importer.to_rules(errors="continue", role=role_enum)
 
         if rules is None:
-            output_dir = self.data_store_path / Path("staging")
+            output_dir = self.config.staging_path
             report_writer = FORMATTER_BY_NAME[self.configs["Report formatter"]]()
             report_writer.write_to_file(issues, file_or_dir_path=output_dir)
             report_file = report_writer.default_file_name
@@ -137,7 +137,7 @@ class OntologyToRules(Step):
         make_compliant = self.configs.get("Make compliant", "True") == "True"
 
         if file_name:
-            rules_file_path = Path(self.data_store_path) / "rules" / file_name
+            rules_file_path = self.config.rules_store_path / file_name
         elif full_path:
             rules_file_path = full_path
         else:
@@ -154,7 +154,7 @@ class OntologyToRules(Step):
         rules, issues = ontology_importer.to_rules(errors="continue", role=role_enum)
 
         if rules is None:
-            output_dir = self.data_store_path / Path("staging")
+            output_dir = self.config.staging_path
             report_writer = FORMATTER_BY_NAME[self.configs["Report formatter"]]()
             report_writer.write_to_file(issues, file_or_dir_path=output_dir)
             report_file = report_writer.default_file_name
@@ -226,7 +226,7 @@ class DMSToRules(Step):
         rules, issues = dms_importer.to_rules(errors="continue", role=role_enum)
 
         if rules is None:
-            output_dir = self.data_store_path / Path("staging")
+            output_dir = self.config.staging_path
             report_writer = FORMATTER_BY_NAME[self.configs["Report formatter"]]()
             report_writer.write_to_file(issues, file_or_dir_path=output_dir)
             report_file = report_writer.default_file_name
