@@ -67,7 +67,8 @@ class Config(BaseModel):
     def _dir_suffix(self) -> str:
         is_test_running = "pytest" in sys.modules
         if is_test_running:
-            return f"-{os.getpid()}"
+            # Todo change the below to f"-{os.getpid()}" when all tests supports parallel execution.
+            return ""
         return ""
 
     @property
