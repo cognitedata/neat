@@ -615,7 +615,7 @@ class DMSRules(BaseRules):
         return output
 
     def as_schema(self, include_pipeline: bool = False, instance_space: str | None = None) -> DMSSchema:
-        return _DMSExporter(include_pipeline, instance_space).to_schema(self)
+        return _DMSExporter(self, include_pipeline, instance_space).to_schema()
 
     def as_information_architect_rules(self) -> "InformationRules":
         return _DMSRulesConverter(self).as_information_architect_rules()
@@ -652,11 +652,19 @@ class _DMSExporter:
         instance_space (str): The space to use for the instance. Defaults to None,`Rules.metadata.space` will be used
     """
 
-    def __init__(self, include_pipeline: bool = False, instance_space: str | None = None):
+    def __init__(self, rules: DMSRules, include_pipeline: bool = False, instance_space: str | None = None):
         self.include_pipeline = include_pipeline
         self.instance_space = instance_space
+        self.rules = rules
+        ref_schema = rules.reference.as_schema() if rules.reference else None
+        if ref_schema:
+            # We skip version as that will always be missing in the reference
+            self._ref_views_by_id = {dm.ViewId(view.space, view.external_id): view for view in ref_schema.views}
+        else:
+            self._ref_views_by_id = {}
 
-    def to_schema(self, rules: DMSRules) -> DMSSchema:
+    def to_schema(self) -> DMSSchema:
+        rules = self.rules
         container_properties_by_id, view_properties_by_id = self._gather_properties(rules)
 
         containers = self._create_containers(rules.containers, container_properties_by_id)
@@ -989,8 +997,8 @@ class _DMSExporter:
 
         return container_properties_by_id, view_properties_by_id
 
-    @staticmethod
     def _create_view_filter(
+        self,
         view: dm.ViewApply,
         dms_view: DMSView | None,
         data_model_type: DataModelType,
@@ -1002,14 +1010,23 @@ class _DMSExporter:
             return dms_view.filter_
 
         if data_model_type is DataModelType.solution and selected_filter_name in [NodeTypeFilter.name, ""]:
-            if dms_view and isinstance(dms_view.reference, ReferenceEntity):
-                return NodeTypeFilter(inner=[dms_view.reference.as_node_entity()])
-            elif dms_properties and (
-                node_ids := {
-                    prop.reference.as_node_entity()
-                    for prop in dms_properties
-                    if isinstance(prop.reference, ReferenceEntity)
-                }
+            if (
+                dms_view
+                and isinstance(dms_view.reference, ReferenceEntity)
+                and not dms_properties
+                and (ref_view := self._ref_views_by_id.get(dms_view.reference.as_view_id()))
+                and ref_view.filter
+            ):
+                # No new properties, only reference, reuse the reference filter
+                return DMSFilter.from_dms_filter(ref_view.filter)
+            elif node_ids := {
+                prop.reference.as_node_entity()
+                for prop in dms_properties
+                if isinstance(prop.reference, ReferenceEntity)
+            } | (
+                {dms_view.reference.as_node_entity()}
+                if dms_view and isinstance(dms_view.reference, ReferenceEntity)
+                else set()
             ):
                 return NodeTypeFilter(inner=list(node_ids))
         # Enterprise Model or (Solution + HasData)

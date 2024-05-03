@@ -88,6 +88,33 @@ class DMSFilter(WrappedEntity):
     def as_dms_filter(self, default: Any | None = None) -> dm.filters.Filter:
         raise NotImplementedError
 
+    @classmethod
+    def from_dms_filter(cls, filter: dm.Filter) -> "DMSFilter":
+        dumped = filter.dump()
+        if (body := dumped.get(dm.filters.Equals._filter_name)) and (value := body.get("value")):
+            space = value.get("space")
+            external_id = value.get("externalId")
+            if space is not None and external_id is not None:
+                return NodeTypeFilter(inner=[DMSNodeEntity(space=space, externalId=external_id)])
+        elif (body := dumped.get(dm.filters.In._filter_name)) and (values := body.get("values")):
+            return NodeTypeFilter(
+                inner=[
+                    DMSNodeEntity(space=entry["space"], externalId=entry["externalId"])
+                    for entry in values
+                    if isinstance(entry, dict) and "space" in entry and "externalId" in entry
+                ]
+            )
+        elif body := dumped.get(dm.filters.HasData._filter_name):
+            return HasDataFilter(
+                inner=[
+                    ContainerEntity(space=entry["space"], externalId=entry["externalId"])
+                    for entry in body
+                    if isinstance(entry, dict) and "space" in entry and "externalId" in entry
+                ]
+            )
+
+        raise ValueError(f"Cannot convert {filter._filter_name} to {cls.__name__}")
+
 
 class NodeTypeFilter(DMSFilter):
     name: ClassVar[str] = "nodeType"
