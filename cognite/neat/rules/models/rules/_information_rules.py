@@ -45,6 +45,7 @@ from cognite.neat.rules.models.rdfpath import (
 
 from ._base import (
     BaseMetadata,
+    DataModelType,
     ExtensionCategory,
     ExtensionCategoryType,
     MatchType,
@@ -77,6 +78,7 @@ class InformationMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.information_architect
     schema_: SchemaCompleteness = Field(alias="schema")
     extension: ExtensionCategoryType | None = ExtensionCategory.addition
+    data_model_type: DataModelType = Field(DataModelType.solution, alias="dataModelType")
     prefix: PrefixType
     namespace: NamespaceType
 

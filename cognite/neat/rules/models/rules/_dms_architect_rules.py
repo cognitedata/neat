@@ -34,7 +34,16 @@ from cognite.neat.rules.models.entities import (
 from cognite.neat.rules.models.rules._domain_rules import DomainRules
 from cognite.neat.rules.models.wrapped_entities import HasDataFilter, NodeTypeFilter
 
-from ._base import BaseMetadata, BaseRules, ExtensionCategory, RoleTypes, SchemaCompleteness, SheetEntity, SheetList
+from ._base import (
+    BaseMetadata,
+    BaseRules,
+    DataModelType,
+    ExtensionCategory,
+    RoleTypes,
+    SchemaCompleteness,
+    SheetEntity,
+    SheetList,
+)
 from ._dms_schema import DMSSchema, PipelineSchema
 from ._types import (
     ExternalIdType,
@@ -70,6 +79,7 @@ class DMSMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.dms_architect
     schema_: SchemaCompleteness = Field(alias="schema")
     extension: ExtensionCategory = ExtensionCategory.addition
+    data_model_type: DataModelType = Field(DataModelType.solution, alias="dataModelType")
     space: ExternalIdType
     name: str | None = Field(
         None,
