@@ -447,10 +447,10 @@ class NodeTypeFilterOnParentViewWarning(DMSSchemaWarning):
 
 
 @dataclass(frozen=True)
-class HasDataFilterOnReferencedViewWarning(DMSSchemaWarning):
+class HasDataFilterOnViewWithReferencesWarning(DMSSchemaWarning):
     description = (
-        "Setting a hasData filter on a solution view which reference other views is not recommended."
-        "This will lead to no nodes being returned in the solution view."
+        "Setting a hasData filter on a solution view which reference other containers is not recommended."
+        "This will lead to no nodes being returned when querying the solution view."
     )
     fix = "Use a node type filter instead"
     error_name: ClassVar[str] = "HasDataFilterOnReferencedViewWarning"
@@ -461,7 +461,7 @@ class HasDataFilterOnReferencedViewWarning(DMSSchemaWarning):
     def message(self) -> str:
         return (
             f"Setting a hasData filter on view {self.view_id} which references other views {self.references}. "
-            "This is not recommended as it will lead to no nodes being returned in the solution view."
+            "This is not recommended as it will lead to no nodes being returned when querying the solution view."
         )
 
     def dump(self) -> dict[str, Any]:

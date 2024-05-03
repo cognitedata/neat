@@ -886,7 +886,7 @@ class _DMSExporter:
                 else:
                     continue
                 warnings.warn(
-                    issues.dms.HasDataFilterOnReferencedViewWarning(view.as_id(), list(references)), stacklevel=2
+                    issues.dms.HasDataFilterOnViewWithReferencesWarning(view.as_id(), list(references)), stacklevel=2
                 )
 
         return views, node_types
