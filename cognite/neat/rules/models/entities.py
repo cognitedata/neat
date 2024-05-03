@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from functools import total_ordering
 from typing import Annotated, Any, ClassVar, Generic, TypeVar, cast
 
-from cognite.client.data_classes.data_modeling.ids import ContainerId, DataModelId, PropertyId, ViewId
+from cognite.client.data_classes.data_modeling.ids import ContainerId, DataModelId, NodeId, PropertyId, ViewId
 from pydantic import AnyHttpUrl, BaseModel, BeforeValidator, Field, PlainSerializer, model_serializer, model_validator
 
 if sys.version_info >= (3, 11):
@@ -30,6 +30,7 @@ class EntityTypes(StrEnum):
     data_value_type = "data_value_type"  # these are strings, floats, ...
     xsd_value_type = "xsd_value_type"
     dms_value_type = "dms_value_type"
+    dms_node = "dms_node"
     view = "view"
     reference_entity = "reference_entity"
     container = "container"
@@ -248,7 +249,7 @@ class UnknownEntity(ClassEntity):
         return str(Unknown)
 
 
-T_ID = TypeVar("T_ID", bound=ContainerId | ViewId | DataModelId | PropertyId | None)
+T_ID = TypeVar("T_ID", bound=ContainerId | ViewId | DataModelId | PropertyId | NodeId | None)
 
 
 class DMSEntity(Entity, Generic[T_ID], ABC):
@@ -374,6 +375,17 @@ class DataModelEntity(DMSVersionedEntity[DataModelId]):
         if id.version is None:
             raise ValueError("Version must be specified")
         return cls(space=id.space, externalId=id.external_id, version=id.version)
+
+
+class DMSNodeEntity(DMSEntity[NodeId]):
+    type_: ClassVar[EntityTypes] = EntityTypes.dms_node
+
+    def as_id(self) -> NodeId:
+        return NodeId(space=self.space, external_id=self.external_id)
+
+    @classmethod
+    def from_id(cls, id: NodeId) -> "DMSNodeEntity":
+        return cls(space=id.space, externalId=id.external_id)
 
 
 class ReferenceEntity(ClassEntity):
