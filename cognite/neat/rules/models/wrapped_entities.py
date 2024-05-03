@@ -4,7 +4,7 @@ from functools import total_ordering
 from typing import Any, ClassVar, TypeVar
 
 from cognite.client import data_modeling as dm
-from cognite.client.data_classes.data_modeling import ContainerId, NodeApply, NodeApplyList, NodeId
+from cognite.client.data_classes.data_modeling import ContainerId, NodeId
 from pydantic import BaseModel, model_serializer, model_validator
 
 from cognite.neat.rules.models.entities import ContainerEntity, DMSNodeEntity, Entity
@@ -122,8 +122,8 @@ class NodeTypeFilter(DMSFilter):
     inner: list[DMSNodeEntity] | None = None  # type: ignore[assignment]
 
     @property
-    def nodes(self) -> NodeApplyList:
-        return NodeApplyList([NodeApply(node.space, node.external_id) for node in self.inner or []])
+    def nodes(self) -> list[NodeId]:
+        return [node.as_id() for node in self.inner or []]
 
     def as_dms_filter(self, default: Collection[NodeId] | None = None) -> dm.Filter:
         if self.inner is not None:

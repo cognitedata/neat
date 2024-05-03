@@ -869,7 +869,7 @@ class _DMSExporter:
                 prop_id = prop.view_property
                 view.properties[prop_id] = view_property
 
-        node_types = dm.NodeApplyList([])
+        unique_node_types: set[dm.NodeId] = set()
         parent_views = {parent for view in views for parent in view.implements or []}
         for view in views:
             dms_view = dms_view_by_id.get(view.as_id())
@@ -879,7 +879,7 @@ class _DMSExporter:
             view.filter = view_filter.as_dms_filter()
 
             if isinstance(view_filter, NodeTypeFilter):
-                node_types.extend(view_filter.nodes)
+                unique_node_types.update(view_filter.nodes)
                 if view.as_id() in parent_views:
                     warnings.warn(issues.dms.NodeTypeFilterOnParentViewWarning(view.as_id()), stacklevel=2)
             elif isinstance(view_filter, HasDataFilter) and data_model_type is DataModelType.solution:
@@ -897,7 +897,9 @@ class _DMSExporter:
                     issues.dms.HasDataFilterOnViewWithReferencesWarning(view.as_id(), list(references)), stacklevel=2
                 )
 
-        return views, node_types
+        return views, dm.NodeApplyList(
+            [dm.NodeApply(space=node.space, external_id=node.external_id) for node in unique_node_types]
+        )
 
     def _create_containers(
         self,
