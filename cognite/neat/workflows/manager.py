@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from cognite.neat.config import Config
 from cognite.neat.workflows import BaseWorkflow
 from cognite.neat.workflows.base import WorkflowDefinition
-from cognite.neat.workflows.model import FlowMessage, InstanceStartMethod, WorkflowState
+from cognite.neat.workflows.model import FlowMessage, InstanceStartMethod, WorkflowState, WorkflowStepDefinition
 from cognite.neat.workflows.steps_registry import StepsRegistry
 from cognite.neat.workflows.tasks import WorkflowTaskBuilder
 
@@ -195,10 +195,21 @@ class WorkflowManager:
         self, workflow_name: str, step_id: str = "", flow_msg: FlowMessage | None = None, sync: bool | None = None
     ) -> WorkflowStartStatus:
         retrieved = self.get_workflow(workflow_name)
+
         if retrieved is None:
             return WorkflowStartStatus(
                 workflow_instance=None, is_success=False, status_text="Workflow not found in registry"
             )
+
+        if self._is_workflow_made_of_mixed_steps(retrieved.workflow_steps):
+            retrieved.state = WorkflowState.FAILED
+            return WorkflowStartStatus(
+                workflow_instance=None,
+                is_success=False,
+                status_text="Workflow consists of both legacy and current steps. "
+                "Please update the workflow to use only current steps.",
+            )
+
         workflow = retrieved
         retrieved_step = workflow.get_trigger_step(step_id)
         if retrieved_step is None:
@@ -269,3 +280,13 @@ class WorkflowManager:
         return WorkflowStartStatus(
             workflow_instance=None, is_success=False, status_text="Unsupported workflow start method"
         )
+
+    def _is_workflow_made_of_mixed_steps(self, steps: list[WorkflowStepDefinition]):
+        legacy_steps = 0
+        current_steps = 0
+        for step in steps:
+            if step.method in self.steps_registry.categorized_steps["legacy"]:
+                legacy_steps += 1
+            if step.method in self.steps_registry.categorized_steps["current"]:
+                current_steps += 1
+        return legacy_steps > 0 and current_steps > 0
