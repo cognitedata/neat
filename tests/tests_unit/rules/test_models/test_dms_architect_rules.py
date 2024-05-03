@@ -741,7 +741,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                             direction="outwards",
                         ),
                     },
-                    filter=dm.filters.Equals(["node", "type"], {"space": "sp_solution", "externalId": "Asset"}),
+                    filter=dm.filters.Equals(["node", "type"], {"space": "sp_enterprise", "externalId": "Asset"}),
                 ),
             ]
         ),
@@ -758,7 +758,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 )
             ]
         ),
-        node_types=dm.NodeApplyList([dm.NodeApply(space="sp_solution", external_id="Asset")]),
+        node_types=dm.NodeApplyList([dm.NodeApply(space="sp_enterprise", external_id="Asset")]),
     )
 
     yield pytest.param(
