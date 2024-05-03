@@ -171,7 +171,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     ),
                 ]
             ),
-            node_types=dm.NodeApplyList([dm.NodeApply(space="my_space", external_id="WindFarm", sources=[])]),
+            node_types=dm.NodeApplyList([dm.NodeApply(space="my_space", external_id="WindFarm")]),
         ),
         id="Two properties, one container, one view",
     )
@@ -605,7 +605,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         ),
         node_types=dm.NodeApplyList(
             [
-                dm.NodeApply(space="my_space", external_id="Activity", sources=[]),
+                dm.NodeApply(space="my_space", external_id="Activity"),
             ]
         ),
     )
@@ -758,7 +758,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 )
             ]
         ),
-        node_types=dm.NodeApplyList([dm.NodeApply(space="sp_solution", external_id="Asset", sources=[])]),
+        node_types=dm.NodeApplyList([dm.NodeApply(space="sp_solution", external_id="Asset")]),
     )
 
     yield pytest.param(

@@ -858,7 +858,7 @@ class _DMSExporter:
                 and (node_space := view.filter._value.get("space"))
                 and (node_ext_id := view.filter._value.get("externalId"))
             ):
-                node_types.append(dm.NodeApply(space=node_space, external_id=node_ext_id, sources=[]))
+                node_types.append(dm.NodeApply(space=node_space, external_id=node_ext_id))
                 if view.as_id() in parent_views:
                     warnings.warn(issues.dms.NodeTypeFilterOnParentViewWarning(view.as_id()), stacklevel=2)
 
