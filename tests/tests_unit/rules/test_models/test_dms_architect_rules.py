@@ -1557,3 +1557,54 @@ class TestDMSRules:
         actual_issues = validation.NeatValidationError.from_pydantic_errors(e.value.errors())
 
         assert sorted(actual_issues) == sorted(expected_issues)
+
+
+class TestDMSExporter:
+    def test_default_filters_using_olav_dms_rules(self, olav_dms_rules: DMSRules) -> None:
+        set_filter = {view.view.as_id() for view in olav_dms_rules.views if view.filter_ is not None}
+        assert not set_filter, f"Expected no filters to be set, but got {set_filter}"
+
+        schema = olav_dms_rules.as_schema()
+        view_by_external_id = {view.external_id: view for view in schema.views}
+
+        wind_turbine = view_by_external_id.get("WindTurbine")
+        assert wind_turbine is not None
+        assert (
+            wind_turbine.filter.dump()
+            == dm.filters.In(
+                ["node", "type"],
+                [{"space": "power", "externalId": "GeneratingUnit"}, {"space": "power", "externalId": "WindTurbine"}],
+            ).dump()
+        )
+
+        wind_farm = view_by_external_id.get("WindFarm")
+        assert wind_farm is not None
+        assert (
+            wind_farm.filter.dump()
+            == dm.filters.In(
+                ["node", "type"],
+                [{"space": "power", "externalId": "EnergyArea"}, {"space": "power", "externalId": "WindFarm"}],
+            ).dump()
+        )
+
+        weather_station = view_by_external_id.get("WeatherStation")
+        assert weather_station is not None
+        assert (
+            weather_station.filter.dump()
+            == dm.filters.HasData(containers=[dm.ContainerId("power_analytics", "WeatherStation")]).dump()
+        )
+
+        power_forecast = view_by_external_id.get("PowerForecast")
+        assert power_forecast is not None
+        assert (
+            power_forecast.filter.dump()
+            == dm.filters.HasData(containers=[dm.ContainerId("power_analytics", "PowerForecast")]).dump()
+        )
+
+        point = view_by_external_id.get("Point")
+        assert point is not None
+        assert point.filter.dump() == dm.filters.HasData(containers=[dm.ContainerId("power", "Point")]).dump()
+
+        polygon = view_by_external_id.get("Polygon")
+        assert polygon is not None
+        assert polygon.filter.dump() == dm.filters.HasData(containers=[dm.ContainerId("power", "Polygon")]).dump()

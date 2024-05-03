@@ -111,7 +111,11 @@ class NodeTypeFilter(DMSFilter):
             )
         else:
             return dm.filters.In(
-                ["node", "type"], [{"space": node.space, "externalId": node.external_id} for node in node_ids]
+                ["node", "type"],
+                [
+                    {"space": node.space, "externalId": node.external_id}
+                    for node in sorted(node_ids, key=lambda node: node.as_tuple())
+                ],
             )
 
 
