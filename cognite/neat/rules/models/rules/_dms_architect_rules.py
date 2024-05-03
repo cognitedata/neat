@@ -871,7 +871,7 @@ class _DMSExporter:
             view.filter = view_filter.as_dms_filter()
 
             if isinstance(view_filter, NodeTypeFilter):
-                node_types.append(view_filter.nodes)
+                node_types.extend(view_filter.nodes)
                 if view.as_id() in parent_views:
                     warnings.warn(issues.dms.NodeTypeFilterOnParentViewWarning(view.as_id()), stacklevel=2)
             elif isinstance(view_filter, HasDataFilter) and data_model_type is DataModelType.solution:
