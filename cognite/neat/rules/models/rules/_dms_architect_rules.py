@@ -852,6 +852,7 @@ class _DMSExporter:
         for view in views:
             ref_containers = sorted(view.referenced_containers(), key=lambda c: c.as_tuple())
             dms_view = dms_view_by_id.get(view.as_id())
+
             has_data = dm.filters.HasData(containers=list(ref_containers)) if ref_containers else None
             if dms_view and isinstance(dms_view.reference, ReferenceEntity):
                 # If the view is a reference, we implement the reference view,

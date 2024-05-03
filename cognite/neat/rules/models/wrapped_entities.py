@@ -1,7 +1,9 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from functools import total_ordering
 from typing import Any, ClassVar, TypeVar
 
+from cognite.client import data_modeling as dm
+from cognite.client.data_classes.data_modeling import ContainerId, NodeId
 from pydantic import BaseModel, model_serializer, model_validator
 
 from cognite.neat.rules.models.entities import ContainerEntity, DMSNodeEntity, Entity
@@ -52,6 +54,10 @@ class WrappedEntity(BaseModel, ABC):
         inner = self.as_tuple()[1:]
         return f"{self.name}({','.join(inner)})"
 
+    @property
+    def is_empty(self) -> bool:
+        return self.inner is None or (isinstance(self.inner, list) and not self.inner)
+
     def dump(self) -> str:
         return str(self)
 
@@ -83,14 +89,45 @@ class WrappedEntity(BaseModel, ABC):
 T_WrappedEntity = TypeVar("T_WrappedEntity", bound=WrappedEntity)
 
 
-class NodeTypeFilter(WrappedEntity):
+class DMSFilter(WrappedEntity):
+    @abstractmethod
+    def as_filter(self, default: Any | None = None) -> dm.filters.Filter:
+        raise NotImplementedError
+
+
+class NodeTypeFilter(DMSFilter):
     name: ClassVar[str] = "nodeType"
     _inner_cls: ClassVar[type[DMSNodeEntity]] = DMSNodeEntity
     inner: DMSNodeEntity | None = None
 
+    def as_filter(self, default: NodeId | None = None) -> dm.Filter:
+        if self.inner is not None:
+            space = self.inner.space
+            external_id = self.inner.external_id
+        elif default is not None:
+            space = default.space
+            external_id = default.external_id
+        else:
+            raise ValueError("Empty nodeType filter, please provide a default node.")
+        return dm.filters.Equals(["node", "type"], {"space": space, "externalId": external_id})
 
-class HasDataFilter(WrappedEntity):
+
+class HasDataFilter(DMSFilter):
     name: ClassVar[str] = "hasData"
     _inner_cls: ClassVar[type[ContainerEntity]] = ContainerEntity
     _support_list: ClassVar[bool] = True
     inner: list[ContainerEntity] | None = None  # type: ignore[assignment]
+
+    def as_filter(self, default: list[ContainerId] | None = None) -> dm.Filter:
+        containers: list[ContainerId]
+        if self.inner:
+            containers = [container.as_id() for container in self.inner]
+        elif default:
+            containers = default
+        else:
+            raise ValueError("Empty hasData filter, please provide a default containers.")
+
+        return dm.filters.HasData(
+            # Sorting to ensure deterministic order
+            containers=sorted(containers, key=lambda container: container.as_tuple())  # type: ignore[union-attr]
+        )
