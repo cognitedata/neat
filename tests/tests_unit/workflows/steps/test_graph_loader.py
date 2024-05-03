@@ -1,14 +1,28 @@
+from pathlib import Path
+from unittest.mock import MagicMock
+
+import pytest
 from cognite.client.data_classes import Asset, AssetList, Label
 from cognite.client.testing import monkeypatch_cognite_client
 
 from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
+from cognite.neat.config import Config
 from cognite.neat.legacy.graph.stores import MemoryStore
 from cognite.neat.legacy.rules.exporters._core.rules2labels import get_labels
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph
 from cognite.neat.workflows.steps.lib.v1.graph_loader import GenerateAssetsFromGraph
 
 
-def test_graph_loader_clean_orphans(solution_knowledge_graph_dirty, transformation_rules, mock_cdf_assets):
+@pytest.fixture
+def config_mock() -> Config:
+    mock = MagicMock(spec=Config)
+    mock.data_store_path = Path("/app/data")
+    return mock
+
+
+def test_graph_loader_clean_orphans(
+    solution_knowledge_graph_dirty, transformation_rules, mock_cdf_assets, config_mock: Config
+):
     with monkeypatch_cognite_client() as client_mock:
 
         def list_assets(data_set_ids: int = 123456, limit: int = -1, labels=None, **_):
@@ -29,7 +43,7 @@ def test_graph_loader_clean_orphans(solution_knowledge_graph_dirty, transformati
             prefixes=solution_knowledge_graph_dirty.namespaces,
         )
     )
-    test_assets_from_graph = GenerateAssetsFromGraph()
+    test_assets_from_graph = GenerateAssetsFromGraph(config_mock)
     test_assets_from_graph.configs = {"assets_cleanup_type": "orphans", "data_set_id": 123456}
     test_assets_from_graph.metrics = NeatMetricsCollector("TestMetrics")
 
@@ -43,7 +57,9 @@ def test_graph_loader_clean_orphans(solution_knowledge_graph_dirty, transformati
     assert "root-node" in assets_external_ids
 
 
-def test_graph_loader_no_orphans_cleanup(solution_knowledge_graph_dirty, transformation_rules, mock_cdf_assets):
+def test_graph_loader_no_orphans_cleanup(
+    solution_knowledge_graph_dirty, transformation_rules, mock_cdf_assets, config_mock: Config
+):
     with monkeypatch_cognite_client() as client_mock:
 
         def list_assets(data_set_ids: int = 123456, limit: int = -1, labels=None, **_):
@@ -64,7 +80,7 @@ def test_graph_loader_no_orphans_cleanup(solution_knowledge_graph_dirty, transfo
             prefixes=solution_knowledge_graph_dirty.namespaces,
         )
     )
-    test_assets_from_graph = GenerateAssetsFromGraph()
+    test_assets_from_graph = GenerateAssetsFromGraph(config_mock)
     test_assets_from_graph.configs = {"assets_cleanup_type": "nothing", "data_set_id": 123456}
     test_assets_from_graph.metrics = NeatMetricsCollector("TestMetrics")
 
