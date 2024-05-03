@@ -427,7 +427,7 @@ class HasDataFilterOnNoPropertiesViewWarning(DMSSchemaWarning):
 @dataclass(frozen=True)
 class NodeTypeFilterOnParentViewWarning(DMSSchemaWarning):
     description = (
-        "Setting a node type filter on a parent view. This is no "
+        "Setting a node type filter on a parent view. This is not "
         "recommended as parent views are typically used for multiple type of nodes."
     )
     fix = "Use a HasData filter instead"
