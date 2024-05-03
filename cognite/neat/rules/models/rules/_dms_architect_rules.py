@@ -1009,7 +1009,7 @@ class _DMSExporter:
             # Has Explicit Filter, use it
             return dms_view.filter_
 
-        if data_model_type is DataModelType.solution and selected_filter_name in [NodeTypeFilter.name, ""]:
+        if data_model_type == DataModelType.solution and selected_filter_name in [NodeTypeFilter.name, ""]:
             if (
                 dms_view
                 and isinstance(dms_view.reference, ReferenceEntity)

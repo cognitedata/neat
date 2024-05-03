@@ -15,7 +15,7 @@ from cognite.neat.rules.models.entities import (
     ViewPropertyEntity,
 )
 
-from ._base import ExtensionCategory, SchemaCompleteness
+from ._base import DataModelType, ExtensionCategory, SchemaCompleteness
 from ._dms_architect_rules import DMSContainer, DMSMetadata, DMSProperty, DMSRules, DMSView
 
 
@@ -60,7 +60,7 @@ class DMSMetadataWrite:
             extension=ExtensionCategory(self.extension),
             space=self.space,
             externalId=self.external_id,
-            dataModelType=self.data_model_type,
+            dataModelType=DataModelType(self.data_model_type),
             creator=self.creator,
             version=self.version,
             name=self.name,
