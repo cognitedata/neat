@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.75.9] - 04-05-24
+### Improved
+- Steps are now categorized as `current`, `legacy`, and `io` steps
+- Workflow fails if one mix `current` and `legacy` steps in the same workflow
+
 ## [0.75.8] - 02-05-24
 ### Fixed
 - `DMSExporter` now correctly exports direct relations with unknown source.
