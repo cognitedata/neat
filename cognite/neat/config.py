@@ -5,7 +5,7 @@ import shutil
 import sys
 from enum import StrEnum
 from pathlib import Path
-from typing import Literal, Self, cast
+from typing import Literal, cast
 
 import yaml
 from pydantic import BaseModel, Field
@@ -13,6 +13,13 @@ from yaml import safe_load
 
 from cognite.neat.constants import EXAMPLE_GRAPHS, EXAMPLE_RULES, EXAMPLE_WORKFLOWS
 from cognite.neat.utils.cdf import InteractiveCogniteClient, ServiceCogniteClient
+
+if sys.version_info >= (3, 11):
+    from enum import StrEnum
+    from typing import Self
+else:
+    from backports.strenum import StrEnum
+    from typing_extensions import Self
 
 LOG_FORMAT = "%(asctime)s.%(msecs)03d %(levelname)-8s %(message)s"
 LOG_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
