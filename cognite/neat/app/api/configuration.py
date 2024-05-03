@@ -94,9 +94,9 @@ def create_neat_app() -> NeatApp:
         config.to_yaml(config_path)
 
     if config.load_examples:
-        copy_examples_to_directory(config.data_store_path, config._dir_suffix)
+        copy_examples_to_directory(config)
     else:
-        create_data_dir_structure(config.data_store_path, config._dir_suffix)
+        create_data_dir_structure(config)
 
     configure_logging(config.log_level, config.log_format)
     logging.info(f" Starting NEAT version {neat.__version__}")

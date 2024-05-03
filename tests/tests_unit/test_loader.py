@@ -1,8 +1,7 @@
 import filecmp
-import os
 from pathlib import Path
 
-from cognite.neat.config import copy_examples_to_directory
+from cognite.neat.config import Config, copy_examples_to_directory
 from cognite.neat.constants import EXAMPLE_GRAPHS, EXAMPLE_RULES, EXAMPLE_WORKFLOWS
 from cognite.neat.legacy.rules.models.rules import Rules
 
@@ -12,15 +11,17 @@ def test_load_excel(transformation_rules: Rules):
 
 
 def test_copy_examples_to_directory(tmp_path: Path):
-    pid = os.getpid()
     target_path = tmp_path / "data"
-    copy_examples_to_directory(target_path)
+    config = Config(
+        data_store_path=target_path,
+    )
+    copy_examples_to_directory(config)
 
-    rapport = filecmp.dircmp(target_path / f"rules-{pid}", EXAMPLE_RULES)
+    rapport = filecmp.dircmp(config.rules_store_path, EXAMPLE_RULES)
     assert not rapport.diff_files
 
-    rapport = filecmp.dircmp(target_path / f"source-graphs-{pid}", EXAMPLE_GRAPHS)
+    rapport = filecmp.dircmp(config.source_graph_path, EXAMPLE_GRAPHS)
     assert not rapport.diff_files
 
-    rapport = filecmp.dircmp(target_path / f"workflows-{pid}", EXAMPLE_WORKFLOWS)
+    rapport = filecmp.dircmp(config.workflows_store_path, EXAMPLE_WORKFLOWS)
     assert not rapport.diff_files
