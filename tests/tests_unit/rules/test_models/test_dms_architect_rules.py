@@ -1605,6 +1605,10 @@ class TestDMSExporter:
         assert point is not None
         assert point.filter.dump() == dm.filters.HasData(containers=[dm.ContainerId("power", "Point")]).dump()
 
+        # Polygon has a NodeType filter in the enterprise model (no container properties)
         polygon = view_by_external_id.get("Polygon")
         assert polygon is not None
-        assert polygon.filter.dump() == dm.filters.HasData(containers=[dm.ContainerId("power", "Polygon")]).dump()
+        assert (
+            polygon.filter.dump()
+            == dm.filters.Equals(["node", "type"], {"space": "power", "externalId": "Polygon"}).dump()
+        )
