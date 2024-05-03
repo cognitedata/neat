@@ -32,6 +32,7 @@ from cognite.neat.rules.models.entities import (
     ViewPropertyEntity,
 )
 from cognite.neat.rules.models.rules._domain_rules import DomainRules
+from cognite.neat.rules.models.wrapped_entities import HasDataFilter, NodeTypeFilter
 
 from ._base import BaseMetadata, BaseRules, ExtensionCategory, RoleTypes, SchemaCompleteness, SheetEntity, SheetList
 from ._dms_schema import DMSSchema, PipelineSchema
@@ -253,7 +254,7 @@ class DMSView(SheetEntity):
     view: ViewEntity = Field(alias="View")
     implements: ViewEntityList | None = Field(None, alias="Implements")
     reference: URLEntity | ReferenceEntity | None = Field(alias="Reference", default=None, union_mode="left_to_right")
-    filter_: Literal["hasData", "nodeType"] | None = Field(None, alias="Filter")
+    filter_: HasDataFilter | NodeTypeFilter | None = Field(None, alias="Filter")
     in_model: bool = Field(True, alias="InModel")
 
     def as_view(self) -> dm.ViewApply:
@@ -862,7 +863,7 @@ class _DMSExporter:
             else:
                 node_type = dm.filters.Equals(["node", "type"], {"space": view.space, "externalId": view.external_id})
             if view.as_id() in parent_views:
-                if dms_view and dms_view.filter_ == "nodeType":
+                if dms_view and dms_view.filter_ and dms_view.filter_.name == "nodeType":
                     warnings.warn(issues.dms.NodeTypeFilterOnParentViewWarning(view.as_id()), stacklevel=2)
                     view.filter = node_type
                     node_types.append(dm.NodeApply(space=view.space, external_id=view.external_id, sources=[]))
@@ -870,15 +871,15 @@ class _DMSExporter:
                     view.filter = has_data
             elif has_data is None:
                 # Child filter without container properties
-                if dms_view and dms_view.filter_ == "hasData":
+                if dms_view and dms_view.filter_ and dms_view.filter_.name == "hasData":
                     warnings.warn(issues.dms.HasDataFilterOnNoPropertiesViewWarning(view.as_id()), stacklevel=2)
                 view.filter = node_type
                 node_types.append(dm.NodeApply(space=view.space, external_id=view.external_id, sources=[]))
             else:
-                if dms_view and (dms_view.filter_ == "hasData" or dms_view.filter_ is None):
+                if dms_view and ((dms_view.filter_ and dms_view.filter_.name == "hasData") or dms_view.filter_ is None):
                     # Default option
                     view.filter = has_data
-                elif dms_view and dms_view.filter_ == "nodeType":
+                elif dms_view and dms_view.filter_ and dms_view.filter_.name == "nodeType":
                     view.filter = node_type
                     node_types.append(dm.NodeApply(space=view.space, external_id=view.external_id, sources=[]))
                 else:
