@@ -13,7 +13,7 @@ class TestWrappedEntities:
             (
                 NodeTypeFilter,
                 "NodeType(subject:person)",
-                NodeTypeFilter(inner=DMSNodeEntity(space="subject", externalId="person")),
+                NodeTypeFilter(inner=[DMSNodeEntity(space="subject", externalId="person")]),
             ),
             (
                 HasDataFilter,
@@ -29,6 +29,16 @@ class TestWrappedEntities:
                     inner=[
                         ContainerEntity(space="space", externalId="container1"),
                         ContainerEntity(space="space", externalId="container2"),
+                    ]
+                ),
+            ),
+            (
+                NodeTypeFilter,
+                "nodeType(space:node1, space:node2)",
+                NodeTypeFilter(
+                    inner=[
+                        DMSNodeEntity(space="space", externalId="node1"),
+                        DMSNodeEntity(space="space", externalId="node2"),
                     ]
                 ),
             ),
