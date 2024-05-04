@@ -1125,6 +1125,7 @@ class _DMSRulesSerializer:
             self.metadata_name = DMSRules.model_fields[self.metadata_name].alias or self.metadata_name
 
         if isinstance(info.exclude, dict):
+            # Just for happy mypy
             exclude = cast(dict, info.exclude)
             self.exclude_properties = exclude.get("properties", {}).get("__all__", set())
             self.exclude_views = exclude.get("views", {}).get("__all__", set()) or set()
