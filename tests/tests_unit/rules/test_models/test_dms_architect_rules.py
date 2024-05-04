@@ -495,6 +495,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 class_="Activity",
                 property_="timeseries",
                 value_type="Timeseries(property=activities)",
+                is_list=True,
                 relation="reverse",
                 view="Activity",
                 view_property="timeseries",
@@ -581,10 +582,11 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     external_id="Activity",
                     version="1",
                     properties={
-                        "timeseries": dm.MultiEdgeConnectionApply(
-                            type=dm.DirectRelationReference(space="my_space", external_id="Timeseries.activities"),
+                        "timeseries": dm.MultiReverseDirectRelationApply(
                             source=dm.ViewId("my_space", "Timeseries", "1"),
-                            direction="inwards",
+                            through=dm.PropertyId(
+                                source=dm.ViewId("my_space", "Timeseries", "1"), property="activities"
+                            ),
                         )
                     },
                     filter=dm.filters.Equals(
