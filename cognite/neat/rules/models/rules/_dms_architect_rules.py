@@ -10,8 +10,11 @@ from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import PropertyType as CognitePropertyType
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex
-from cognite.client.data_classes.data_modeling.views import SingleReverseDirectRelationApply, ViewPropertyApply, \
-    SingleEdgeConnectionApply, ReverseDirectRelationApply
+from cognite.client.data_classes.data_modeling.views import (
+    SingleEdgeConnectionApply,
+    SingleReverseDirectRelationApply,
+    ViewPropertyApply,
+)
 from pydantic import Field, field_serializer, field_validator, model_serializer, model_validator
 from pydantic_core.core_schema import SerializationInfo, ValidationInfo
 from rdflib import Namespace
@@ -777,7 +780,7 @@ class _DMSExporter:
     def _create_edge_type_from_prop(cls, prop: DMSProperty) -> dm.DirectRelationReference:
         if isinstance(prop.reference, ReferenceEntity):
             ref_view_prop = prop.reference.as_view_property_id()
-            return cls._create_edge_type_from_view_id(ref_view_prop.source, ref_view_prop.property)
+            return cls._create_edge_type_from_view_id(cast(dm.ViewId, ref_view_prop.source), ref_view_prop.property)
         else:
             return cls._create_edge_type_from_view_id(prop.view.as_id(), prop.view_property)
 
@@ -907,7 +910,9 @@ class _DMSExporter:
             # HasData or not provided (this is the default)
             return HasDataFilter(inner=[ContainerEntity.from_id(id_) for id_ in ref_containers])
 
-    def _create_view_property(self, prop: DMSProperty, view_properties_by_id: dict[dm.ViewId, list[DMSProperty]]) -> ViewPropertyApply | None:
+    def _create_view_property(
+        self, prop: DMSProperty, view_properties_by_id: dict[dm.ViewId, list[DMSProperty]]
+    ) -> ViewPropertyApply | None:
         if prop.container and prop.container_property:
             container_prop_identifier = prop.container_property
             extra_args: dict[str, Any] = {}
@@ -977,24 +982,28 @@ class _DMSExporter:
             )
             if reverse_prop is None:
                 warnings.warn(
-                    issues.dms.ReverseRelationMissingOtherSideWarning(
-                        source_view_id, prop.view_property
-                    ),
+                    issues.dms.ReverseRelationMissingOtherSideWarning(source_view_id, prop.view_property),
                     stacklevel=2,
                 )
                 return None
 
             if reverse_prop.relation == "edge":
-                inwards_edge_cls: type[dm.EdgeConnectionApply] = dm.MultiEdgeConnectionApply if reverse_prop.is_list in [True, None] else SingleEdgeConnectionApply
+                inwards_edge_cls = (
+                    dm.MultiEdgeConnectionApply if reverse_prop.is_list in [True, None] else SingleEdgeConnectionApply
+                )
                 return inwards_edge_cls(
                     type=self._create_edge_type_from_prop(reverse_prop),
                     source=source_view_id,
-                    name = prop.name,
-                    description = prop.description,
-                    direction = "inwards"
+                    name=prop.name,
+                    description=prop.description,
+                    direction="inwards",
                 )
             elif reverse_prop.relation == "direct":
-                reverse_direct_cls: type[ReverseDirectRelationApply] = dm.MultiReverseDirectRelationApply if reverse_prop.is_list is True else SingleReverseDirectRelationApply
+                reverse_direct_cls = (
+                    dm.MultiReverseDirectRelationApply
+                    if reverse_prop.is_list is True
+                    else SingleReverseDirectRelationApply
+                )
                 return reverse_direct_cls(
                     source=source_view_id,
                     through=source_prop_id,
@@ -1004,15 +1013,17 @@ class _DMSExporter:
             else:
                 # Should have been validated.
                 raise ValueError(
-                        "If this error occurs it is a bug in NEAT, please report"
-                        f"Debug Info, Invalid reverse_prop relation: {prop.model_dump_json()}"
+                    "If this error occurs it is a bug in NEAT, please report"
+                    f"Debug Info, Invalid reverse_prop relation: {prop.model_dump_json()}"
                 )
 
         elif prop.view and prop.view_property and prop.relation:
             warnings.warn(
-                issues.dms.UnsupportedRelationWarning(prop.view.as_id(), prop.view_property, prop.relation or ""), stacklevel=2
+                issues.dms.UnsupportedRelationWarning(prop.view.as_id(), prop.view_property, prop.relation or ""),
+                stacklevel=2,
             )
         return None
+
 
 class _DMSRulesConverter:
     def __init__(self, dms: DMSRules):

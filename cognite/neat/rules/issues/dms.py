@@ -296,7 +296,6 @@ class ChangingViewError(DMSSchemaError):
         return output
 
 
-
 @dataclass(frozen=True)
 class EmptyContainerWarning(DMSSchemaWarning):
     description = "The container is empty"
@@ -337,6 +336,7 @@ class UnsupportedRelationWarning(DMSSchemaWarning):
         output["property"] = self.property
         output["relation"] = self.relation
         return output
+
 
 @dataclass(frozen=True)
 class ReverseRelationMissingOtherSideWarning(DMSSchemaWarning):
