@@ -219,7 +219,7 @@ class DMSProperty(SheetEntity):
 
     @field_validator("value_type", mode="after")
     def relations_value_type(cls, value: DataType | ClassEntity, info: ValidationInfo) -> DataType | ClassEntity:
-        if (relation := info.data["relation"]) is None:
+        if (relation := info.data.get("relation")) is None:
             return value
         if not isinstance(value, ViewEntity | ViewPropertyEntity | DMSUnknownEntity):
             raise ValueError(f"Relations must have a value type that points to another view, got {value}")

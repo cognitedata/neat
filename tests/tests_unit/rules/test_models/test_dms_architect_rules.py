@@ -969,7 +969,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                     class_="Plant",
                     property_="generators",
                     value_type="Generator",
-                    relation="multiedge",
+                    relation="edge",
                     view="Plant",
                     view_property="generators",
                 ),
