@@ -1125,29 +1125,32 @@ class _DMSRulesSerializer:
             self.container_name = DMSRules.model_fields[self.container_name].alias or self.container_name
 
     def clean(self, dumped: dict[str, Any]) -> dict[str, Any]:
-        # Sorting the to get a deterministic order
+        # Sorting to get a deterministic order
         dumped[self.prop_name] = sorted(
-            dumped[self.prop_name], key=lambda p: (p[self.prop_view], p[self.prop_view_property])
+            dumped[self.prop_name]["data"], key=lambda p: (p[self.prop_view], p[self.prop_view_property])
         )
-        dumped[self.view_name] = sorted(dumped[self.view_name], key=lambda v: v[self.view_view])
-        dumped[self.container_name] = sorted(dumped[self.container_name], key=lambda c: c[self.container_container])
+        dumped[self.view_name] = sorted(dumped[self.view_name]["data"], key=lambda v: v[self.view_view])
+        if self.container_name in dumped:
+            dumped[self.container_name] = sorted(
+                dumped[self.container_name]["data"], key=lambda c: c[self.container_container]
+            )
 
         for prop in dumped[self.prop_name]:
             for field_name in self.properties_fields:
                 if value := prop.get(field_name):
                     prop[field_name] = value.removeprefix(self.default_space).removesuffix(self.default_version_wrapped)
-                # Value type can have a property as well
-                dumped[self.prop_value_type] = dumped[self.prop_value_type].replace(self.default_version, "")
+            # Value type can have a property as well
+            prop[self.prop_value_type] = prop[self.prop_value_type].replace(self.default_version, "")
 
         for view in dumped[self.view_name]:
             for field_name in self.views_fields:
                 if value := view.get(field_name):
                     view[field_name] = value.removeprefix(self.default_space).removesuffix(self.default_version_wrapped)
-                if value := view.get(self.view_implements):
-                    view[self.view_implements] = ",".join(
-                        parent.strip().removeprefix(self.default_space).removesuffix(self.default_version_wrapped)
-                        for parent in value.split(",")
-                    )
+            if value := view.get(self.view_implements):
+                view[self.view_implements] = ",".join(
+                    parent.strip().removeprefix(self.default_space).removesuffix(self.default_version_wrapped)
+                    for parent in value.split(",")
+                )
 
         for container in dumped[self.container_name]:
             for field_name in self.containers_fields:
@@ -1155,10 +1158,10 @@ class _DMSRulesSerializer:
                     container[field_name] = value.removeprefix(self.default_space).removesuffix(
                         self.default_version_wrapped
                     )
-                if value := dumped.get(self.container_constraint):
-                    dumped[self.container_constraint] = ",".join(
-                        constraint.strip().removeprefix(self.default_space).removesuffix(self.default_version_wrapped)
-                        for constraint in value.split(",")
-                    )
+            if value := dumped.get(self.container_constraint):
+                dumped[self.container_constraint] = ",".join(
+                    constraint.strip().removeprefix(self.default_space).removesuffix(self.default_version_wrapped)
+                    for constraint in value.split(",")
+                )
 
         return dumped
