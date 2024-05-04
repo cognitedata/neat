@@ -211,25 +211,18 @@ class DMSProperty(SheetEntity):
             raise ValueError("Direct relation must be nullable")
         return value
 
-    @field_validator("container_property", "container")
-    def reverse_direct_relation_has_no_container(cls, value, info: ValidationInfo) -> None:
-        if info.data.get("relation") == "reversedirect" and value is not None:
-            raise ValueError(f"Reverse direct relation must not have container or container property, got {value}")
-        return value
-
     @field_validator("value_type", mode="after")
-    def relations_value_type(cls, value: DataType | ClassEntity, info: ValidationInfo) -> DataType | ClassEntity:
+    def relations_value_type(
+        cls, value: ViewPropertyEntity | ViewEntity | DMSUnknownEntity, info: ValidationInfo
+    ) -> DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity:
         if (relation := info.data.get("relation")) is None:
             return value
-        if not isinstance(value, ViewEntity | ViewPropertyEntity | DMSUnknownEntity):
-            raise ValueError(f"Relations must have a value type that points to another view, got {value}")
-        if relation == "reversedirect" and value.property_ is None:
-            # Todo fix this error message. It have the wrong syntax for how to have a property
-            raise ValueError(
-                "Reverse direct relation must set what it is the reverse property of. "
-                f"Which property in {value.versioned_id} is this the reverse of? Expecting"
-                f"{value.versioned_id}:<property>"
-            )
+        if relation == "direct" and not isinstance(value, ViewEntity | DMSUnknownEntity):
+            raise ValueError(f"Direct relation must have a value type that points to a view, got {value}")
+        elif relation == "edge" and not isinstance(value, ViewEntity):
+            raise ValueError(f"Edge relation must have a value type that points to a view, got {value}")
+        elif relation == "reverse" and not isinstance(value, ViewPropertyEntity):
+            raise ValueError(f"Reverse relation must have a value type that points to a view property, got {value}")
         return value
 
     @field_serializer("value_type", when_used="always")
