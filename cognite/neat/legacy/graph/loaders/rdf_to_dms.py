@@ -15,7 +15,7 @@ from cognite.neat.legacy.rules.exporters._rules2pydantic_models import add_class
 from cognite.neat.legacy.rules.models.rules import Rules
 from cognite.neat.utils.utils import chunker, datetime_utc_now, retry_decorator
 
-from ._base import CogniteLoader, LoadCount, LoadDetails
+from ._base import CogniteLoader
 
 
 class DMSLoader(CogniteLoader[InstanceApply]):
@@ -120,7 +120,7 @@ class DMSLoader(CogniteLoader[InstanceApply]):
         batch_size: int | None = 1000,
         max_retries: int = 1,
         retry_delay: int = 3,
-    ) -> LoadCount | LoadDetails:
+    ) -> None:
         """Uploads nodes to CDF
 
         Args:

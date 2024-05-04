@@ -1,3 +1,4 @@
+import os
 import random
 from typing import Any
 
@@ -89,11 +90,11 @@ class TestAssetLoader:
         to_update_ids = {asset["external_id"] for asset in to_update}
         to_delete = [asset for asset in to_modify if asset["external_id"] not in to_update_ids]
         to_delete_ids = {asset["external_id"] for asset in to_delete}
-        new_store = {}
+        new_store = {os.getpid(): {}}
         for asset in to_modify:
             asset_object = Asset(**asset)
             # Need to be added.
-            new_store[asset_object.external_id] = asset_object
+            new_store[os.getpid()][asset_object.external_id] = asset_object
 
         cognite_client.assets.store = new_store.copy()
 

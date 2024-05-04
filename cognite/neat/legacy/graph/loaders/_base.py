@@ -84,6 +84,6 @@ class CogniteLoader(BaseLoader[T_Output], ABC):
         batch_size: int | None = 1000,
         max_retries: int = 1,
         retry_delay: int = 3,
-    ) -> LoadCount | LoadDetails:
+    ) -> None:
         """Load the graph with data."""
         pass

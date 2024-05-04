@@ -18,7 +18,7 @@ from cognite.neat.legacy.rules.models.rules import Property
 from cognite.neat.utils import remove_namespace
 from cognite.neat.utils.utils import epoch_now_ms
 
-from ._base import CogniteLoader, LoadCount, LoadDetails
+from ._base import CogniteLoader
 
 if sys.version_info >= (3, 11):
     from datetime import UTC
@@ -290,7 +290,7 @@ class AssetLoader(CogniteLoader[AssetResource]):
         batch_size: int | None = 1000,
         max_retries: int = 1,
         retry_delay: int = 3,
-    ) -> LoadCount | LoadDetails:
+    ) -> None:
         raise NotImplementedError
 
     def _load_asset(
