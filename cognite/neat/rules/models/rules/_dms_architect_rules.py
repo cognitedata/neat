@@ -107,9 +107,22 @@ class DMSMetadata(BaseMetadata):
             return value.strip()
         return value
 
+    @field_serializer("schema_", "extension", "data_model_type", when_used="always")
+    @staticmethod
+    def as_string(value: SchemaCompleteness | ExtensionCategory | DataModelType) -> str:
+        return str(value)
+
     @field_validator("schema_", mode="plain")
-    def as_enum(cls, value: str) -> SchemaCompleteness:
+    def as_enum_schema(cls, value: str) -> SchemaCompleteness:
         return SchemaCompleteness(value)
+
+    @field_validator("extension", mode="plain")
+    def as_enum_extension(cls, value: str) -> ExtensionCategory:
+        return ExtensionCategory(value)
+
+    @field_validator("data_model_type", mode="plain")
+    def as_enum_model_type(cls, value: str) -> DataModelType:
+        return DataModelType(value)
 
     @model_validator(mode="before")
     def set_default_view_version_if_missing(cls, values):

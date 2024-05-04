@@ -410,6 +410,18 @@ class DMSSchema:
             )
         return None
 
+    def referenced_spaces(self) -> set[str]:
+        referenced_spaces = {container.space for container in self.containers}
+        referenced_spaces |= {view.space for view in self.views}
+        referenced_spaces |= {container.space for view in self.views for container in view.referenced_containers()}
+        referenced_spaces |= {parent.space for view in self.views for parent in view.implements or []}
+        referenced_spaces |= {node.space for node in self.node_types}
+        referenced_spaces |= {model.space for model in self.data_models}
+        referenced_spaces |= {view.space for model in self.data_models for view in model.views or []}
+        referenced_spaces |= {s.space for s in self.spaces}
+
+        return referenced_spaces
+
 
 @dataclass
 class PipelineSchema(DMSSchema):
