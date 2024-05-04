@@ -9,14 +9,9 @@ import cognite.neat.rules.issues.spreadsheet_file
 from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import ExcelImporter
 from cognite.neat.rules.issues import IssueList
-from cognite.neat.rules.models.rules import DMSRules, InformationRules
+from cognite.neat.rules.models.rules import DMSRules, DomainRules, InformationRules
 from tests.config import DOC_RULES
 from tests.tests_unit.rules.test_importers.constants import EXCEL_IMPORTER_DATA
-
-
-def valid_dms_rules_filepaths():
-    yield pytest.param(DOC_RULES / "cdf-dms-architect-alice.xlsx", DMSRules, id="Alice rules")
-    yield pytest.param(DOC_RULES / "information-analytics-olav.xlsx", InformationRules, id="Olav user rules")
 
 
 def invalid_rules_filepaths():
@@ -89,8 +84,21 @@ def invalid_rules_filepaths():
 
 
 class TestExcelImporter:
-    @pytest.mark.parametrize("filepath, rule_type", valid_dms_rules_filepaths())
-    def test_import_valid_rules(self, filepath: Path, rule_type: DMSRules | InformationRules):
+    @pytest.mark.parametrize(
+        "filepath, rule_type",
+        [
+            pytest.param(DOC_RULES / "cdf-dms-architect-alice.xlsx", DMSRules, id="Alice rules"),
+            pytest.param(DOC_RULES / "information-analytics-olav.xlsx", InformationRules, id="Olav user rules"),
+            pytest.param(DOC_RULES / "expert-wind-energy-jon.xlsx", DomainRules, id="expert-wind-energy-jon"),
+            pytest.param(DOC_RULES / "expert-grid-emma.xlsx", DomainRules, id="expert-grid-emma"),
+            pytest.param(
+                DOC_RULES / "information-architect-david.xlsx", InformationRules, id="information-architect-david"
+            ),
+        ],
+    )
+    def test_import_valid_rules(
+        self, filepath: Path, rule_type: type[DMSRules] | type[InformationRules] | type[DomainRules]
+    ):
         importer = ExcelImporter(filepath)
         rules = importer.to_rules(errors="raise")
         assert isinstance(rules, rule_type)
