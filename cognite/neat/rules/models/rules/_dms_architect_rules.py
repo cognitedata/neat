@@ -575,7 +575,8 @@ class DMSRules(BaseRules):
             else ["class_", "view", "value_type", "container"]
         )
         value_type_name = "Value Type" if info.by_alias else "value_type"
-        for prop in self.properties:
+        # Sorting the properties to make the output deterministic
+        for prop in sorted(self.properties, key=lambda p: (str(p.view), p.property_)):
             dumped = prop.model_dump(**kwargs)
             for field_name in field_names:
                 if value := dumped.get(field_name):
@@ -587,7 +588,7 @@ class DMSRules(BaseRules):
         views = []
         field_names = ["Class", "View", "Implements"] if info.by_alias else ["class_", "view", "implements"]
         implements_name = "Implements" if info.by_alias else "implements"
-        for view in self.views:
+        for view in sorted(self.views, key=lambda v: str(v)):
             dumped = view.model_dump(**kwargs)
             for field_name in field_names:
                 if value := dumped.get(field_name):
@@ -602,7 +603,7 @@ class DMSRules(BaseRules):
         containers = []
         field_names = ["Class", "Container"] if info.by_alias else ["class_", "container"]
         constraint_name = "Constraint" if info.by_alias else "constraint"
-        for container in self.containers or []:
+        for container in sorted(self.containers or [], key=lambda c: str(c.container)):
             dumped = container.model_dump(**kwargs)
             for field_name in field_names:
                 if value := dumped.get(field_name):
