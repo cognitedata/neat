@@ -11,7 +11,7 @@ import cognite.neat.rules.issues.spreadsheet
 from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import DMSImporter
 from cognite.neat.rules.models.data_types import String
-from cognite.neat.rules.models.rules._base import ExtensionCategory, SchemaCompleteness, SheetList
+from cognite.neat.rules.models.rules._base import ExtensionCategory, SheetList
 from cognite.neat.rules.models.rules._dms_architect_rules import (
     DMSContainer,
     DMSProperty,
@@ -1487,7 +1487,9 @@ class TestDMSRules:
         expected_dump = {
             "metadata": {
                 "role": "DMS Architect",
-                "schema_": SchemaCompleteness.partial,
+                "schema_": "partial",
+                "data_model_type": "solution",
+                "extension": "addition",
                 "space": "my_space",
                 "external_id": "my_data_model",
                 "creator": "Anders",
