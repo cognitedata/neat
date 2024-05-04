@@ -47,7 +47,12 @@ class TestDMSImporter:
         assert rules is not None, f"Failed to import rules {issue_str}"
         assert isinstance(rules, DMSRules)
         # This information is lost in the conversion to schema
-        exclude = {"metadata": {"created", "updated"}, "properties": {"__all__": {"reference"}}}
+        exclude = {
+            "metadata": {"created", "updated"},
+            "properties": {"__all__": {"reference"}},
+            "reference": {},
+            "views": {"__all__": {"reference"}},
+        }
         assert rules.model_dump(exclude=exclude) == dms_rules.model_dump(exclude=exclude)
 
 

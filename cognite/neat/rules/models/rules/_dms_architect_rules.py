@@ -1149,7 +1149,9 @@ class _DMSRulesSerializer:
             self.exclude_views = exclude.get("views", {}).get("__all__", set()) or set()
             self.exclude_containers = exclude.get("containers", {}).get("__all__", set()) or set()
             self.metadata_exclude = exclude.get("metadata", set()) or set()
+            self.exclude_top = {k for k, v in exclude.items() if not v}
         else:
+            self.exclude_top = set(info.exclude or {})
             self.exclude_properties = set()
             self.exclude_views = set()
             self.exclude_containers = set()
@@ -1205,4 +1207,6 @@ class _DMSRulesSerializer:
         if self.metadata_exclude:
             for field in self.metadata_exclude:
                 dumped[self.metadata_name].pop(field, None)
+        for field in self.exclude_top:
+            dumped.pop(field, None)
         return dumped

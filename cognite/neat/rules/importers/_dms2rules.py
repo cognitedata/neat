@@ -190,7 +190,7 @@ class DMSImporter(BaseImporter):
         if not properties:
             return None
 
-        if self.schema.data_models == 2:
+        if len(self.schema.data_models) == 2:
             data_model = self.schema.data_models[1]
             data_model_view_ids: set[dm.ViewId] = {
                 view.as_id() if isinstance(view, dm.View | dm.ViewApply) else view for view in data_model.views or []
