@@ -49,8 +49,9 @@ If `otherProperty.relation=direct`, then:
 
 * `isList=true` - The relation is implemented as `multi_reverse_direct_relation`.
 * `isList=false` - The relation is implemented as `single_reverse_direct_relation`.
+
 Otherwise, if the `otherProperty.relation=edge`, then:
-*
+
 * `isList=true` - The relation is implemented as `multi_edge_connection` with direction `inwards`.
 * `isList=false` - The relation is implemented as `single_edge_connection` with direction `inwards`.
 
