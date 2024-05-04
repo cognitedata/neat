@@ -1191,14 +1191,12 @@ class _DMSRulesSerializer:
 
         for container in dumped[self.container_name]:
             for field_name in self.containers_fields:
-                if value := dumped.get(field_name):
-                    container[field_name] = value.removeprefix(self.default_space).removesuffix(
-                        self.default_version_wrapped
-                    )
-            if value := dumped.get(self.container_constraint):
-                dumped[self.container_constraint] = ",".join(
-                    constraint.strip().removeprefix(self.default_space).removesuffix(self.default_version_wrapped)
-                    for constraint in value.split(",")
+                if value := container.get(field_name):
+                    container[field_name] = value.removeprefix(self.default_space)
+
+            if value := container.get(self.container_constraint):
+                container[self.container_constraint] = ",".join(
+                    constraint.strip().removeprefix(self.default_space) for constraint in value.split(",")
                 )
             if self.exclude_containers:
                 for field in self.exclude_containers:
