@@ -554,10 +554,10 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                             container_property_identifier="asset",
                             source=dm.ViewId("my_space", "Asset", "1"),
                         ),
-                        "activities": dm.MultiEdgeConnectionApply(
-                            type=dm.DirectRelationReference(space="my_space", external_id="Timeseries.activities"),
+                        "activities": dm.MappedPropertyApply(
+                            container=dm.ContainerId("my_space", "Timeseries"),
+                            container_property_identifier="activities",
                             source=dm.ViewId("my_space", "Activity", "1"),
-                            direction="outwards",
                         ),
                     },
                     filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "Timeseries")]),
@@ -599,6 +599,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     properties={
                         "name": dm.ContainerProperty(type=dm.Text(), nullable=True),
                         "asset": dm.ContainerProperty(type=dm.DirectRelation(), nullable=True),
+                        "activities": dm.ContainerProperty(type=dm.DirectRelation(is_list=True), nullable=True),
                     },
                 ),
             ]
