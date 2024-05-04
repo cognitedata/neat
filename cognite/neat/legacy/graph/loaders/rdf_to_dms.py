@@ -114,12 +114,18 @@ class DMSLoader(CogniteLoader[InstanceApply]):
                         )
 
     def load_to_cdf(
-        self, client: CogniteClient, batch_size: int | None = 1000, max_retries: int = 1, retry_delay: int = 3
+        self,
+        client: CogniteClient,
+        output: Literal["count", "detailed"],
+        batch_size: int | None = 1000,
+        max_retries: int = 1,
+        retry_delay: int = 3,
     ) -> None:
         """Uploads nodes to CDF
 
         Args:
             client: Instance of CogniteClient
+            output: Output type. Either "count" or "details".
             batch_size: Size of batch. Default to 1000.
             max_retries: Maximum times to retry the upload. Default to 1.
             retry_delay: Time delay before retrying the upload. Default to 3.
@@ -264,7 +270,7 @@ def _micro_batch_push(
     message: str = "Upload",
     max_retries: int = 1,
     retry_delay: int = 3,
-):
+) -> None:
     """Uploads nodes or edges in batches
 
     Args:

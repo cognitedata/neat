@@ -210,15 +210,16 @@ class AssetLoader(CogniteLoader[AssetResource]):
                     )
                     continue
                 else:
-                    for relationship in relationships:
-                        for label in relationship.labels or []:
-                            if label.external_id and label.external_id not in self._loaded_labels:
-                                self._loaded_labels.add(label.external_id)
-                                yield LabelDefinitionWrite(
-                                    name=label.external_id,
-                                    external_id=label.external_id,
-                                    data_set_id=self._label_data_set_id,
-                                )
+                    if self._use_labels:
+                        for relationship in relationships:
+                            for label in relationship.labels or []:
+                                if label.external_id and label.external_id not in self._loaded_labels:
+                                    self._loaded_labels.add(label.external_id)
+                                    yield LabelDefinitionWrite(
+                                        name=label.external_id,
+                                        external_id=label.external_id,
+                                        data_set_id=self._label_data_set_id,
+                                    )
 
                     yield from relationships
 
@@ -283,7 +284,12 @@ class AssetLoader(CogniteLoader[AssetResource]):
                 yield asset_resource
 
     def load_to_cdf(
-        self, client: CogniteClient, batch_size: int | None = 1000, max_retries: int = 1, retry_delay: int = 3
+        self,
+        client: CogniteClient,
+        output: Literal["count", "detailed"],
+        batch_size: int | None = 1000,
+        max_retries: int = 1,
+        retry_delay: int = 3,
     ) -> None:
         raise NotImplementedError
 

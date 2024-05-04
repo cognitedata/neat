@@ -1,7 +1,8 @@
 import logging
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
-from typing import Generic, Literal, TypeVar, overload
+from dataclasses import dataclass, field
+from typing import Any, Generic, Literal, TypeVar, overload
 
 from cognite.client import CogniteClient
 from pydantic_core import ErrorDetails
@@ -12,6 +13,22 @@ from cognite.neat.legacy.graph.transformations.query_generator.sparql import bui
 from cognite.neat.legacy.rules.models import Rules
 
 T_Output = TypeVar("T_Output")
+
+
+@dataclass
+class LoadCount:
+    created: int = 0
+    updated: int = 0
+    decommissioned: int = 0
+    resurrected: int = 0
+
+
+@dataclass
+class LoadDetails:
+    created: set[str] = field(default_factory=set)
+    updated: dict[str, Any] = field(default_factory=dict)
+    decommissioned: set[str] = field(default_factory=set)
+    resurrected: set[str] = field(default_factory=set)
 
 
 class BaseLoader(ABC, Generic[T_Output]):
@@ -61,7 +78,12 @@ class CogniteLoader(BaseLoader[T_Output], ABC):
 
     @abstractmethod
     def load_to_cdf(
-        self, client: CogniteClient, batch_size: int | None = 1000, max_retries: int = 1, retry_delay: int = 3
+        self,
+        client: CogniteClient,
+        output: Literal["count", "detailed"],
+        batch_size: int | None = 1000,
+        max_retries: int = 1,
+        retry_delay: int = 3,
     ) -> None:
         """Load the graph with data."""
         pass
