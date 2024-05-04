@@ -263,9 +263,10 @@ class DMSContainer(SheetEntity):
             if isinstance(constraint_obj, dm.RequiresConstraint):
                 constraints.append(ContainerEntity.from_id(constraint_obj.require))
             # UniquenessConstraint it handled in the properties
+        container_entity = ContainerEntity.from_id(container.as_id())
         return cls(
-            class_=ClassEntity(prefix=container.space, suffix=container.external_id),
-            container=ContainerEntity(space=container.space, externalId=container.external_id),
+            class_=container_entity.as_class(),
+            container=container_entity,
             name=container.name or None,
             description=container.description,
             constraint=constraints or None,
@@ -292,20 +293,17 @@ class DMSView(SheetEntity):
         )
 
     @classmethod
-    def from_view(cls, view: dm.ViewApply, data_model_view_ids: set[dm.ViewId]) -> "DMSView":
+    def from_view(cls, view: dm.ViewApply, in_model: bool) -> "DMSView":
+        view_entity = ViewEntity.from_id(view.as_id())
+        class_entity = view_entity.as_class(skip_version=True)
+
         return cls(
-            class_=ClassEntity(prefix=view.space, suffix=view.external_id),
-            view=ViewEntity(space=view.space, externalId=view.external_id, version=view.version),
+            class_=class_entity,
+            view=view_entity,
             description=view.description,
             name=view.name,
-            implements=[
-                ViewEntity(
-                    space=parent.space, externalId=parent.external_id, version=parent.version or _DEFAULT_VERSION
-                )
-                for parent in view.implements
-            ]
-            or None,
-            in_model=view.as_id() in data_model_view_ids,
+            implements=[ViewEntity.from_id(parent, _DEFAULT_VERSION) for parent in view.implements] or None,
+            in_model=in_model,
         )
 
 
@@ -571,7 +569,7 @@ class DMSRules(BaseRules):
     ) -> dict[str, Any]:
         dumped = cast(dict[str, Any], handler(self, info))
         space, version = self.metadata.space, self.metadata.default_view_version
-        return _DMSRulesSerializer(info.by_alias, space, version).clean(dumped)
+        return _DMSRulesSerializer(info, space, version).clean(dumped)
 
     def as_schema(self, include_pipeline: bool = False, instance_space: str | None = None) -> DMSSchema:
         return _DMSExporter(self, include_pipeline, instance_space).to_schema()
@@ -1082,7 +1080,7 @@ class _DMSRulesSerializer:
     VIEWS_FIELDS: ClassVar[list[str]] = ["class_", "view", "implements"]
     CONTAINERS_FIELDS: ClassVar[list[str]] = ["class_", "container"]
 
-    def __init__(self, by_alias: bool, default_space: str, default_version: str) -> None:
+    def __init__(self, info: SerializationInfo, default_space: str, default_version: str) -> None:
         self.default_space = f"{default_space}:"
         self.default_version = f"version={default_version}"
         self.default_version_wrapped = f"({self.default_version})"
@@ -1093,6 +1091,7 @@ class _DMSRulesSerializer:
         self.prop_name = "properties"
         self.view_name = "views"
         self.container_name = "containers"
+        self.metadata_name = "metadata"
         self.prop_view = "view"
         self.prop_view_property = "view_property"
         self.prop_value_type = "value_type"
@@ -1101,7 +1100,7 @@ class _DMSRulesSerializer:
         self.container_container = "container"
         self.container_constraint = "constraint"
 
-        if by_alias:
+        if info.by_alias:
             self.properties_fields = [
                 DMSProperty.model_fields[field].alias or field for field in self.properties_fields
             ]
@@ -1123,6 +1122,19 @@ class _DMSRulesSerializer:
             self.prop_name = DMSRules.model_fields[self.prop_name].alias or self.prop_name
             self.view_name = DMSRules.model_fields[self.view_name].alias or self.view_name
             self.container_name = DMSRules.model_fields[self.container_name].alias or self.container_name
+            self.metadata_name = DMSRules.model_fields[self.metadata_name].alias or self.metadata_name
+
+        if isinstance(info.exclude, dict):
+            exclude = cast(dict, info.exclude)
+            self.exclude_properties = exclude.get("properties", {}).get("__all__", set())
+            self.exclude_views = exclude.get("views", {}).get("__all__", set()) or set()
+            self.exclude_containers = exclude.get("containers", {}).get("__all__", set()) or set()
+            self.metadata_exclude = exclude.get("metadata", set()) or set()
+        else:
+            self.exclude_properties = set()
+            self.exclude_views = set()
+            self.exclude_containers = set()
+            self.metadata_exclude = set()
 
     def clean(self, dumped: dict[str, Any]) -> dict[str, Any]:
         # Sorting to get a deterministic order
@@ -1141,6 +1153,9 @@ class _DMSRulesSerializer:
                     prop[field_name] = value.removeprefix(self.default_space).removesuffix(self.default_version_wrapped)
             # Value type can have a property as well
             prop[self.prop_value_type] = prop[self.prop_value_type].replace(self.default_version, "")
+            if self.exclude_properties:
+                for field in self.exclude_properties:
+                    prop.pop(field, None)
 
         for view in dumped[self.view_name]:
             for field_name in self.views_fields:
@@ -1151,6 +1166,9 @@ class _DMSRulesSerializer:
                     parent.strip().removeprefix(self.default_space).removesuffix(self.default_version_wrapped)
                     for parent in value.split(",")
                 )
+            if self.exclude_views:
+                for field in self.exclude_views:
+                    view.pop(field, None)
 
         for container in dumped[self.container_name]:
             for field_name in self.containers_fields:
@@ -1163,5 +1181,11 @@ class _DMSRulesSerializer:
                     constraint.strip().removeprefix(self.default_space).removesuffix(self.default_version_wrapped)
                     for constraint in value.split(",")
                 )
+            if self.exclude_containers:
+                for field in self.exclude_containers:
+                    container.pop(field, None)
 
+        if self.metadata_exclude:
+            for field in self.metadata_exclude:
+                dumped[self.metadata_name].pop(field, None)
         return dumped

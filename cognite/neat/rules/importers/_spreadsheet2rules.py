@@ -229,12 +229,6 @@ class ExcelImporter(BaseImporter):
             role=role,
         )
 
-    @classmethod
-    def _return_or_raise(cls, issue_list: IssueList, errors: Literal["raise", "continue"]) -> tuple[None, IssueList]:
-        if errors == "raise":
-            raise issue_list.as_errors()
-        return None, issue_list
-
 
 class GoogleSheetImporter(BaseImporter):
     def __init__(self, sheet_id: str, skiprows: int = 1):
