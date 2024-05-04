@@ -144,7 +144,7 @@ class DMSLoader(CogniteLoader[InstanceApply]):
                 )
 
             create_instances()
-            raise NotImplementedError()
+            return
         logging.info(f"Uploading nodes in batches of {batch_size}")
         for instances in _batched(self.load(stop_on_exception=False), batch_size):
             nodes = [instance for instance in instances if isinstance(instance, NodeApply)]
