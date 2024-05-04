@@ -1,35 +1,26 @@
 """This module is used to generate mock graph data for purposes of testing of NEAT.
+It is a bit ugly and needs some proper refactoring, but it is not a priority at the moment.
 """
+
 import logging
 import random
 import warnings
 from collections import OrderedDict
+from typing import cast
 
 import numpy
 import pandas as pd
-from prometheus_client import Gauge
 from rdflib import RDF, Literal, Namespace, URIRef
 
 from cognite.neat.graph.models import Triple
-from cognite.neat.rules.analysis import (
-    get_class_linkage,
-    get_classes_with_properties,
-    get_defined_classes,
-    get_symmetric_pairs,
-)
-from cognite.neat.rules.exporter._rules2rules import subset_rules
-from cognite.neat.rules.models import Rules
-from cognite.neat.rules.value_types import XSD_VALUE_TYPE_MAPPINGS
+from cognite.neat.rules.analysis import InformationArchitectRulesAnalysis
+from cognite.neat.rules.models.data_types import DataType
+from cognite.neat.rules.models.entities import ClassEntity, EntityTypes
+from cognite.neat.rules.models.rules import DMSRules, InformationRules
+from cognite.neat.rules.models.rules._information_rules import InformationProperty
 from cognite.neat.utils.utils import remove_namespace
 
 from ._base import BaseExtractor
-
-neat_total_processed_mock_triples = Gauge(
-    "neat_total_processed_mock_triples", "Number of processed mock triples", ["state"]
-)
-neat_mock_triples_processing_timing = Gauge(
-    "neat_mock_triples_processing_timing", "Generation of mock knowledge graph timing metrics", ["aggregation"]
-)
 
 
 class MockGraphGenerator(BaseExtractor):
@@ -45,10 +36,33 @@ class MockGraphGenerator(BaseExtractor):
     """
 
     def __init__(
-        self, rules: Rules, class_count: dict, stop_on_exception: bool = False, allow_isolated_classes: bool = True
+        self,
+        rules: InformationRules | DMSRules,
+        class_count: dict[str | ClassEntity, int] | None = None,
+        stop_on_exception: bool = False,
+        allow_isolated_classes: bool = True,
     ):
-        self.rules = rules
-        self.class_count = class_count
+        if isinstance(rules, DMSRules):
+            self.rules = rules.as_information_architect_rules()
+        elif isinstance(rules, InformationRules):
+            self.rules = rules
+        else:
+            raise ValueError("Rules must be of type InformationRules or DMSRules!")
+
+        if not class_count:
+            self.class_count = {
+                class_: 1
+                for class_ in InformationArchitectRulesAnalysis(self.rules).defined_classes(consider_inheritance=True)
+            }
+        elif all(isinstance(key, str) for key in class_count.keys()):
+            self.class_count = {
+                ClassEntity.load(f"{self.rules.metadata.prefix}:{key}"): value for key, value in class_count.items()
+            }
+        elif all(isinstance(key, ClassEntity) for key in class_count.keys()):
+            self.class_count = cast(dict[ClassEntity, int], class_count)
+        else:
+            raise ValueError("Class count keys must be of type str! or ClassEntity! or empty dict!")
+
         self.stop_on_exception = stop_on_exception
         self.allow_isolated_classes = allow_isolated_classes
 
@@ -68,7 +82,10 @@ class MockGraphGenerator(BaseExtractor):
 
 
 def generate_triples(
-    transformation_rules: Rules, class_count: dict, stop_on_exception: bool = False, allow_isolated_classes: bool = True
+    rules: InformationRules,
+    class_count: dict[ClassEntity, int],
+    stop_on_exception: bool = False,
+    allow_isolated_classes: bool = True,
 ) -> list[Triple]:
     """Generate mock triples based on data model defined transformation rules and desired number
     of class instances
@@ -84,12 +101,8 @@ def generate_triples(
         List of RDF triples, represented as tuples `(subject, predicate, object)`, that define data model instances
     """
 
-    # Figure out which classes are defined in the data model and which are not
-    if transformation_rules.metadata.namespace is None:
-        raise ValueError("Namespace must be defined in transformation rules!")
-    namespace = transformation_rules.metadata.namespace
-
-    defined_classes = get_defined_classes(transformation_rules)
+    namespace = rules.metadata.namespace
+    defined_classes = InformationArchitectRulesAnalysis(rules).defined_classes(consider_inheritance=True)
 
     if non_existing_classes := set(class_count.keys()) - defined_classes:
         msg = f"Class count contains classes {non_existing_classes} for which properties are not defined in Data Model!"
@@ -104,17 +117,17 @@ def generate_triples(
                 class_count.pop(class_)
 
     # Subset data model to only classes that are defined in class count
-    transformation_rules = (
-        subset_rules(transformation_rules, set(class_count.keys()), skip_validation=True)
+    rules = (
+        InformationArchitectRulesAnalysis(rules).subset_rules(set(class_count.keys()))
         if defined_classes != set(class_count.keys())
-        else transformation_rules
+        else rules
     )
 
-    class_linkage = get_class_linkage(transformation_rules)
+    class_linkage = InformationArchitectRulesAnalysis(rules).class_linkage()
 
     # Remove one of symmetric pairs from class linkage to maintain proper linking
     # among instances of symmetrically linked classes
-    if sym_pairs := get_symmetric_pairs(transformation_rules):
+    if sym_pairs := InformationArchitectRulesAnalysis(rules).symmetrically_connected_classes():
         class_linkage = _remove_higher_occurring_sym_pair(class_linkage, sym_pairs)
 
     # Remove any of symmetric pairs containing classes that are not present class count
@@ -124,29 +137,32 @@ def generate_triples(
     generation_order = _prettify_generation_order(_get_generation_order(class_linkage))
 
     # Generated simple view of data model
-    class_definitions = _rules_to_dict(transformation_rules)
+    class_property_pairs = InformationArchitectRulesAnalysis(rules).classes_with_properties(consider_inheritance=True)
 
     # pregenerate instance ids for each remaining class
-    instance_ids = {key: [URIRef(namespace[f"{key}-{i}"]) for i in range(value)] for key, value in class_count.items()}
+    instance_ids = {
+        key: [URIRef(namespace[f"{key.suffix}-{i+1}"]) for i in range(value)] for key, value in class_count.items()
+    }
 
     # create triple for each class instance defining its type
     triples: list[Triple] = []
     for class_ in class_count:
         triples += [
-            (class_instance_id, RDF.type, URIRef(namespace[class_])) for class_instance_id in instance_ids[class_]
+            (class_instance_id, RDF.type, URIRef(namespace[str(class_.suffix)]))
+            for class_instance_id in instance_ids[class_]
         ]
 
     # generate triples for connected classes
     for class_ in generation_order:
         triples += _generate_triples_per_class(
-            class_, class_definitions, sym_pairs, instance_ids, namespace, stop_on_exception
+            class_, class_property_pairs, sym_pairs, instance_ids, namespace, stop_on_exception
         )
 
     # generate triples for isolated classes
     if allow_isolated_classes:
         for class_ in set(class_count.keys()) - set(generation_order):
             triples += _generate_triples_per_class(
-                class_, class_definitions, sym_pairs, instance_ids, namespace, stop_on_exception
+                class_, class_property_pairs, sym_pairs, instance_ids, namespace, stop_on_exception
             )
 
     return triples
@@ -186,12 +202,9 @@ def _prettify_generation_order(generation_order: dict, depth: dict | None = None
     return OrderedDict(sorted(depth.items(), key=lambda item: item[1]))
 
 
-def _remove_non_hierarchy_linking(class_linkage: pd.DataFrame) -> pd.DataFrame:
-    """Remove linkage which is not creating asset hierarchy."""
-    return class_linkage[class_linkage.linking_type == "hierarchy"]
-
-
-def _remove_higher_occurring_sym_pair(class_linkage: pd.DataFrame, sym_pairs: set[tuple[str, str]]) -> pd.DataFrame:
+def _remove_higher_occurring_sym_pair(
+    class_linkage: pd.DataFrame, sym_pairs: set[tuple[ClassEntity, ClassEntity]]
+) -> pd.DataFrame:
     """Remove symmetric pair which is higher in occurrence."""
     rows_to_remove = set()
     for source, target in sym_pairs:
@@ -234,11 +247,11 @@ def _remove_non_requested_sym_pairs(class_linkage: pd.DataFrame, class_count: di
 
 
 def _generate_mock_data_property_triples(
-    instance_ids: list[URIRef], property_: str, namespace: Namespace, value_type: str = "string"
+    instance_ids: list[URIRef], property_: str, namespace: Namespace, value_type: DataType
 ) -> list[tuple[URIRef, URIRef, Literal]]:
     """Generates triples for data properties."""
 
-    python_type = XSD_VALUE_TYPE_MAPPINGS[value_type].python
+    python_type = value_type.python
     triples = []
     for id_ in instance_ids:
         if python_type == int:
@@ -247,16 +260,18 @@ def _generate_mock_data_property_triples(
             triples.append((id_, URIRef(namespace[property_]), Literal(numpy.float32(random.uniform(1, 1983)))))
         # generate string
         else:
-            triples.append((id_, URIRef(namespace[property_]), Literal(remove_namespace(id_).replace("-", " "))))
+            triples.append(
+                (id_, URIRef(namespace[property_]), Literal(f"{property_}-{remove_namespace(id_).split('-')[-1]}"))
+            )
     return triples
 
 
 def _generate_mock_object_property_triples(
-    class_: str,
-    property_definition: pd.Series,
-    class_definitions: dict[str, pd.DataFrame],
-    sym_pairs: set[tuple[str, str]],
-    instance_ids: dict[str, list[URIRef]],
+    class_: ClassEntity,
+    property_definition: InformationProperty,
+    class_property_pairs: dict[ClassEntity, list[InformationProperty]],
+    sym_pairs: set[tuple[ClassEntity, ClassEntity]],
+    instance_ids: dict[ClassEntity, list[URIRef]],
     namespace: Namespace,
     stop_on_exception: bool,
 ) -> list[tuple[URIRef, URIRef, URIRef]]:
@@ -269,91 +284,77 @@ def _generate_mock_object_property_triples(
         else:
             msg += (
                 f"Skipping creating triples for property {property_definition.name} "
-                f"of class {class_} which expects values of this type!"
+                f"of class {class_.suffix} which expects values of this type!"
             )
             logging.warning(msg)
             warnings.warn(msg, stacklevel=2)
             return []
 
     # Handling symmetric property
-    symmetric_property = (
-        class_definitions[property_definition.value_type][
-            class_definitions[property_definition.value_type].value_type == class_
-        ].index.values[0]
-        if tuple((class_, property_definition.value_type)) in sym_pairs
-        else None
-    )
+
+    if tuple((class_, property_definition.value_type)) in sym_pairs:
+        symmetric_class_properties = class_property_pairs[cast(ClassEntity, property_definition.value_type)]
+        candidates = list(filter(lambda instance: instance.value_type == class_, symmetric_class_properties))
+        symmetric_property = candidates[0]
+        if len(candidates) > 1:
+            warnings.warn(
+                f"Multiple symmetric properties found for class {property_definition.value_type}! "
+                f"Only one will be used for creating symmetric triples.",
+                stacklevel=2,
+            )
+    else:
+        symmetric_property = None
 
     triples = []
 
     for i, source in enumerate(instance_ids[class_]):
-        target = instance_ids[property_definition.value_type][i % len(instance_ids[property_definition.value_type])]
-        triples += [(URIRef(source), URIRef(namespace[str(property_definition.name)]), URIRef(target))]
+        target = instance_ids[cast(ClassEntity, property_definition.value_type)][
+            i % len(instance_ids[cast(ClassEntity, property_definition.value_type)])
+        ]
+        triples += [(URIRef(source), URIRef(namespace[property_definition.property_]), URIRef(target))]
 
         if symmetric_property:
-            triples += [(URIRef(target), URIRef(namespace[symmetric_property]), URIRef(source))]
+            triples += [(URIRef(target), URIRef(namespace[symmetric_property.property_]), URIRef(source))]
 
-    # remove symmetric property from class definition of downstream class
-    # to avoid asymmetric linking in mock graph
     if symmetric_property:
-        class_definitions[property_definition.value_type].drop(symmetric_property, inplace=True)
+        class_property_pairs[cast(ClassEntity, property_definition.value_type)].remove(symmetric_property)
 
     return triples
 
 
 def _generate_triples_per_class(
-    class_: str,
-    class_definitions: dict[str, pd.DataFrame],
-    sym_pairs: set[tuple[str, str]],
-    instance_ids: dict[str, list[URIRef]],
+    class_: ClassEntity,
+    class_properties_pairs: dict[ClassEntity, list[InformationProperty]],
+    sym_pairs: set[tuple[ClassEntity, ClassEntity]],
+    instance_ids: dict[ClassEntity, list[URIRef]],
     namespace: Namespace,
     stop_on_exception: bool,
 ) -> list[Triple]:
     """Generate triples for a given class."""
     triples: list[Triple] = []
-    for _, property_definition in class_definitions[class_].iterrows():
-        if property_definition.property_type == "DatatypeProperty":
+
+    for property_ in class_properties_pairs[class_]:
+        if property_.type_ == EntityTypes.data_property:
             triples += _generate_mock_data_property_triples(
-                instance_ids[class_], str(property_definition.name), namespace, property_definition.value_type
+                instance_ids[class_],
+                property_.property_,
+                namespace,
+                cast(DataType, property_.value_type),
             )
 
-        elif property_definition.property_type == "ObjectProperty":
+        elif property_.type_ == EntityTypes.object_property:
             triples += _generate_mock_object_property_triples(
-                class_, property_definition, class_definitions, sym_pairs, instance_ids, namespace, stop_on_exception
+                class_,
+                property_,
+                class_properties_pairs,
+                sym_pairs,
+                instance_ids,
+                namespace,
+                stop_on_exception,
             )
 
         else:
-            logging.error(f"Property type {property_definition.property_type} not supported!")
-            raise ValueError(f"Property type {property_definition.property_type} not supported!")
+            logging.error(f"Property type {property_.value_type} not supported!")
+            raise ValueError(f"Property type {property_.value_type} not supported!")
 
     return triples
-
-
-def _rules_to_dict(transformation_rules: Rules) -> dict[str, pd.DataFrame]:
-    """Represent data model as a dictionary of data frames, where each data frame
-    represents properties defined for a given class.
-
-    Args:
-        transformation_rules: Transformation rules defining the data model
-
-    Returns:
-        Simplified representation of the data model
-    """
-
-    data_model: dict[str, pd.DataFrame] = {}
-
-    defined_classes = get_classes_with_properties(transformation_rules)
-
-    for class_ in defined_classes:
-        properties = {}
-        for property_ in defined_classes[class_]:
-            if property_.property_id not in properties:
-                properties[property_.property_id] = {
-                    "property_type": property_.property_type,
-                    "value_type": property_.expected_value_type.suffix,
-                    "min_count": property_.min_count,
-                    "max_count": property_.max_count,
-                }
-
-        data_model[class_] = pd.DataFrame(properties).T
-    return data_model

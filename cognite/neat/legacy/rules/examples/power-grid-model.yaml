@@ -1,0 +1,216 @@
+space: workshop
+externalId: PowerGrid
+description: Demo model from Neat
+name: PowerGrid
+version: "2"
+views:
+  - space: workshop
+    externalId: GeographicalRegion
+    name: GeographicalRegion
+    version: "1"
+    writable: true
+    usedFor: node
+    isGlobal: false
+    properties:
+      name:
+        container:
+          space: workshop
+          externalId: GeographicalRegion
+        containerPropertyIdentifier: name
+        type:
+          list: false
+          collation: ucs_basic
+          type: text
+        nullable: false
+        autoIncrement: false
+        source: null
+        defaultValue: null
+        name: name
+        description: "The name that identifies Greographical
+
+          @name name"
+      subRegions:
+        type:
+          space: workshop
+          externalId: GeographicalRegion.subRegions
+        source:
+          space: workshop
+          externalId: SubGeographicalRegion
+          version: "1"
+          type: view
+        name: subRegions
+        description: null
+        edgeSource: null
+        direction: outwards
+    lastUpdatedTime: 1696712504333
+    createdTime: 1696712504333
+  - space: workshop
+    externalId: SubGeographicalRegion
+    description:
+      "A subset of a geographical region of a power system network model.
+
+      @name SubGeographicalRegion"
+    name: SubGeographicalRegion
+    version: "1"
+    writable: true
+    usedFor: node
+    isGlobal: false
+    properties:
+      name:
+        container:
+          space: workshop
+          externalId: SubGeographicalRegion
+        containerPropertyIdentifier: name
+        type:
+          list: false
+          collation: ucs_basic
+          type: text
+        nullable: false
+        autoIncrement: false
+        source: null
+        defaultValue: null
+        name: name
+        description: "The name that identifies SubGreographical
+
+          @name name"
+      region:
+        container:
+          space: workshop
+          externalId: SubGeographicalRegion
+        containerPropertyIdentifier: region
+        type:
+          container: null
+          type: direct
+          list: false
+          source:
+            space: workshop
+            externalId: GeographicalRegion
+            version: "1"
+        nullable: true
+        autoIncrement: false
+        defaultValue: null
+        name: region
+        description: "Region to which subgeographical region belongs to
+
+          @name region"
+    lastUpdatedTime: 1696712504333
+    createdTime: 1696712504333
+  - space: workshop
+    externalId: Substation
+    description:
+      "A substation is a part of an electrical generation, transmission,
+      and distribution system.
+
+      @name Substation"
+    name: Substation
+    version: "1"
+    writable: true
+    usedFor: node
+    isGlobal: false
+    properties:
+      name:
+        container:
+          space: workshop
+          externalId: Substation
+        containerPropertyIdentifier: name
+        type:
+          list: false
+          collation: ucs_basic
+          type: text
+        nullable: false
+        autoIncrement: false
+        source: null
+        defaultValue: null
+        name: name
+        description: "The name that identifies Substation
+
+          @name name"
+      subGeographicalRegion:
+        container:
+          space: workshop
+          externalId: Substation
+        containerPropertyIdentifier: subGeographicalRegion
+        type:
+          container: null
+          type: direct
+          list: false
+          source:
+            space: workshop
+            externalId: SubGeographicalRegion
+            version: bbe4295878a47f
+        nullable: true
+        autoIncrement: false
+        defaultValue: null
+        name: subGeographicalRegion
+        description: "The subgeographical region containing the substation
+
+          @name subGeographicalRegion"
+    lastUpdatedTime: 1696712504333
+    createdTime: 1696712504333
+  - space: workshop
+    externalId: Terminal
+    name: Terminal
+    version: "1"
+    writable: true
+    usedFor: node
+    isGlobal: false
+    properties:
+      name:
+        container:
+          space: workshop
+          externalId: Terminal
+        containerPropertyIdentifier: name
+        type:
+          list: false
+          collation: ucs_basic
+          type: text
+        nullable: false
+        autoIncrement: false
+        source: null
+        defaultValue: null
+        name: name
+        description: "The name that identifies Terminal
+
+          @name name"
+      aliasName:
+        container:
+          space: workshop
+          externalId: Terminal
+        containerPropertyIdentifier: aliasName
+        type:
+          list: false
+          collation: ucs_basic
+          type: text
+        nullable: true
+        autoIncrement: false
+        source: null
+        defaultValue: null
+        name: aliasName
+        description: "The alternative name that identifies Substation
+
+          @name aliasName"
+      substation:
+        container:
+          space: workshop
+          externalId: Terminal
+        containerPropertyIdentifier: substation
+        type:
+          container: null
+          type: direct
+          list: false
+          source:
+            space: workshop
+            externalId: Substation
+            version: "1"
+        nullable: true
+        autoIncrement: false
+        defaultValue: null
+        name: substation
+        description: "Substation to which terminal belongs to
+
+          @name substation"
+    lastUpdatedTime: 1696712504333
+    createdTime: 1696712504333
+isGlobal: false
+lastUpdatedTime: 1696712506430
+createdTime: 1696712506430

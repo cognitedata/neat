@@ -16,7 +16,7 @@ from cognite.neat.app.api.data_classes.rest import (
 )
 from cognite.neat.app.api.utils.data_mapping import rdf_result_to_api_response
 from cognite.neat.app.api.utils.query_templates import query_templates
-from cognite.neat.graph.transformations import query_generator
+from cognite.neat.legacy.graph.transformations import query_generator
 from cognite.neat.utils.utils import remove_namespace
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
 
@@ -222,7 +222,9 @@ def execute_rule(request: RuleRequest):
         start_time = time.perf_counter()
         rules = cast(RulesData, workflow_context["RulesData"]).rules
         sparql_query = query_generator.build_sparql_query(
-            graph, request.rule, prefixes=rules.prefixes  # type: ignore[arg-type]
+            graph,  # type: ignore[arg-type]
+            request.rule,
+            prefixes=rules.prefixes,
         )
     else:
         logging.error("Unknown rule type")

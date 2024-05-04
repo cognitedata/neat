@@ -15,11 +15,447 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+
+## TBD
+### Added
+- In `DMSRules`, added support for setting containerId and nodeId in `View.Filter`. Earlier, only `nodeType` and
+  `hasData` were supported which always used an implicit `containerId` and `nodeId` respectively. Now, the user can
+  specify the node type and container id(s) by setting `nodeType(my_space:my_node_type)` and
+  `hasData(my_space:my_container_id, my_space:my_other_container_id)`.
+
+## [0.75.9] - 04-05-24
+### Improved
+- Steps are now categorized as `current`, `legacy`, and `io` steps
+- Workflow fails if one mix `current` and `legacy` steps in the same workflow
+
+## [0.75.8] - 02-05-24
+### Fixed
+- `DMSExporter` now correctly exports direct relations with unknown source.
+
+## [0.75.7] - 29-04-24
+### Added
+- `DMSExporter` now supports deletion of data model and data model components
+- `DeleteDataModelFromCDF` added to the step library
+
+## [0.75.6] - 26-04-24
+### Changed
+- All `NEAT` importers does not have `is_reference` parameter in `.to_rules()` method. This has been moved
+  to the `ExcelExporter` `__init__` method. This is because this is the only place where this parameter was used.
+
+### Added
+- `DMSExporter` now supports skipping of export of `node_types`.
+
+### Fixed
+- When importing an `Excel` rules set with a reference model, the `ExcelImporter` would produce the warning
+  `The copy method is deprecated; use the model_copy instead`. This is now fixed.
+
+## [0.75.5] - 24-04-24
+### Fixed
+- Potential of having duplicated spaces are now fixed
+
+## [0.75.4] - 24-04-24
+### Fixed
+- Rendering of correct metadata in UI for information architect
+### Added
+- Added `OntologyToRules` that works with V2 Rules (profiling)
+
+## [0.75.3] - 23-04-24
+### Fixed
+- Names and descriptions were not considered for views and view properties
+
+## [0.75.2] - 23-04-24
+### Fixed
+- Allowing that multiple View properties can map to the same Container property
+
+## [0.75.1] - 23-04-24
+### Fixed
+- No spaces in any of the subfolders of the `neat` package.
+
+## [0.75.0] - 23-04-24
+### Added
+- Added and moved all v1 rules related code base under `legacy` module
+
+## [0.74.0] - 23-04-24
+### Added
+- added UI+api support for RulesV2. Read-only in the release , editable in the next release.
+
+## [0.73.4] - 19-04-24
+### Fixed
+- updated urllib3 to 2.2.1
+
+## [0.73.3] - 19-04-24
+### Fixed
+- updated uvicorn to 0.20.0
+- updated fastapi to 0.110
+
+## [0.73.2] - 19-04-24
+### Fixed
+- updated prometheus-client to 0.20.0
+
+## [0.73.1] - 17-04-24
+### Added
+- Extended DEXPI for schemas 3.3 (no Attibute URI in genericAttributes and text without label parent).
+### Fixed
+- added missing py.typed (to enable mypy in projects using neat, ie docparser)
+
+## [0.73.0] - 17-04-24
+### Added
+- Proper parsing/serialization of `inf`
+- Added `new_model_id` to `ExcelExporter` to allow automatically setting metadata sheet when creating a new model
+- In `DMSRules`, the user can now set `EdgeType` or `HasData` filter.
+- The `DMSExporter` now validates data models wrt to a reference model, when `schema=extended`.
+
+### Fixed
+- In `DMSExporter`, `edge_type` is set correctly when referencing a multiedge property.
+- Updated `cognite-sdk` to `7.37.0`, this broke neat with `ImportError: cannot import name 'ListablePropertyType'...`.
+  This is now fixed.
+
+### Removed
+- The `DMSExporter` no longer has a `standardize_casing` parameter. Neat is no longer opinionated about casing.
+
+## [0.72.3] - 16-04-24
+### Fixed
+- `ExcelImporter` was resetting `role` value to value set in rules instead of keeping value provided as arg
+### Changed
+- Default namespace set to `http://purl.org/cognite/neat#` instead of `http://purl.org/cognite/app#`
+- OwlImporter for rules v2 has `make_compliant` set to False by default
+### Added
+- When creating OWL from rules, prefix will be saved under property `neat:prefix` (hence change of default namespace)
+- When reading OWL if there is `neat:prefix` value will be added to `rules.metadata.prefix`
+- By default we are defaulting OWL properties to min 0 and max 1 occurrence if no occurrence is set
+- Added test for generation of complete rules out of partial rules
+
+## [0.72.2] - 15-04-24
+### Fixed
+- `rules2dms` API route is now producing expected `View` objects to be visualized in CDF
+### Added
+- `publish-rules` API route added allowing publishing rules as DMS Schema components to CDF
+
+
+## [0.72.1] - 11-04-24
+### Fixed
+- rdf:PlainLiteral and rdf:Literal was not resolving as string handled when exporting Rules to DMS schemas, this is now fixed
+- OwlImporter that works with v2 rules was using `XSD_VALUE_TYPE_MAPPINGS` for v1 rules, this is now fixed
+- added missing mapping for reference when converting information architect rules to dms architect rules
+
+## [0.72.0] - 11-04-24
+### Improved
+- Improved garbadge collection process in workflows. Now all resources are properly released after workflow execution or reloading.
+This is expecially critical when working with statfull objects like graph stores or big objects allocated in memory.
+## Removed
+- Removed a lot of old and stale code from workflows engine.
+## Changed
+- Changed CORS policy for UI to allow all origins. This is a temporary solution until it is properly configured in the future.
+
+## [0.71.0] - 10-04-24
+### Added
+- Added `/api/core/rules2dms`
+- Enabled conversion of rules to DMS views and containers
+
+## [0.70.3] - 10-04-24
+### Fixed
+- Bug when importing an OWL ontology while expecting compliant rules did not encounter for dangling classes (classes without a property or parent class). This is now fixed.
+### Improved
+- Handling of xsd types as case insensitive when importing an OWL ontology.
+### Added
+- Handling of rdf:Literals in OWL ontology import as xsd:string
+
+## [0.70.2] - 03-04-24
+### Fixed
+- Bug when exporting an `addition` to of a ruleset in  `DMSExporter` when using the method `.export_to_cdf`
+### Changed
+- Updated the `DMSExporter` to sort views in data model by (`space`, `external_id`).
+
+## [0.70.1] - 03-04-24
+### Added
+- The `DMSExporter` now supports deploying an `addition` extension of a ruleset.
+
+## [0.70.0] - 09-04-24
+### Added
+- Added `/api/core/convert`
+- Enabled OWL importer to produce DMS rules
+
+
+## [0.69.3] - 03-04-24
+### Fixed
+- Validation of `InformationRules` gives a warning if a reference class is used. This is now fixed.
+- Validation of `InformationRules` returns an error if a importing a value type `Unknown`. This is now fixed.
+
+## [0.69.2] - 03-04-24
+### Fixed
+- Fixed issue with `DMSImporter` when importing data models with direct relations without `source` set. This would
+  cause a validation issue. This is now fixed.
+
+## [0.69.1] - 03-04-24
+### Fixed
+- Fixed issue with `DMSImporter` when importing data models with data models that reference views outside the data model.
+  This is now fixed.
+
+## [0.69.0] - 03-04-24
+### Added
+- Experimental support for working with a reference model in the Rules.
+
+### Fixed
+- When using `DMSExporter` with `standardize_casing=False`, the `DMSExporter` would fail to export containers and
+  views. This is now fixed.
+
+### Changed
+- When using any exporter writing to file, the default new line character and encoding of the OS was used. This is now
+  changed to always use `utf-8` encoding and `'\n'` as the new line character. This is for working with **NEAT** in,
+  for example, git-history, across multiple users with different OSes.
+- In the `DMSExporter`, setting `existing_handling=force` will now also force the creation of `Containers` in addition
+  to `Views`.
+
+## [0.68.9] - 03-04-24
+### Added
+- Helper method `from_directory` and `from_zip_file` to `DMSExporter` to load DMS schema from directory or zip file.
+  These methods are the complement of the `export_to_file()` method in `DMSExporter`.
+
+## [0.68.8] - 25-03-24
+### Fixed
+- Remove harsh regex on Expected Value Types in Rules v1 DMS exporter
+
+
+## [0.68.7] - 25-03-24
+### Improved
+- Input for DmsArchitect DMS value types are now case insensitive.
+
+
+## [0.68.6] - 25-03-24
+### Improved
+- Input for InformationArchitect XSD value types are now case insensitive.
+
+
+## [0.68.5] - 22-03-24
+### Improved
+- `ExcelExporter` and `YAMLExporter` now skips the default spaces and version when exporting rules.
+
+## [0.68.4] - 22-03-24
+### Fixed
+- remove_namespace missed check weather namespace is of actual HTTP type
+
+
+## [0.68.3] - 20-03-24
+### Fixed
+- returned functionality that was accidentally removed in 0.68.1 release.
+- removed excessive logging for workflow state endpoint.
+- gracefull handling of transformations that do not return any data.
+
+## [0.68.2] - 21-03-24
+### Added
+
+* Support for exporting DMS schema, in `DMSExporter`, to directory instead of just `.zip`.]
+
+## [0.68.1] - 19-03-24
+### Changed
+
+* Default workflow `Export DMS` now also exports transformations and raw tables.
+
+## [0.68.0] - 19-03-24
+Multiple fixes and features for the upcoming v1.0.0 release.
+## Added
+* YAML (json) Exporter and Importer
+* DMS Rules:
+  * Support for revers direct relations
+  * Views have support for InModel option to exclude views from the data model.
+  * Views have support for Filters (`hasData` and `nodeType`)
+  * List of direct relations are converted to edges.
+* Robustify reading of rules, all extra whitespaces are now stripped.
+* Option for exporting Transformations + Raw Tabels based on DMS rules.
+* Workflows:
+  * `ValidateWorklow` can also be used to covert rules.
+  * Visualization of data model workflows.
+
+
+## Fixed
+* Bugs in the `ExcelImporter`:
+  * It was not releasing the Excel file after reading it.
+  * Warnings were not captured.
+  * Pydantic errors were not captured.
+
+## [0.67.5] - 14-03-24
+## Fixed
+* Replaced obsolete `dataModelID` Metadata filed to `external_id`
+
+
+## [0.67.4] - 14-03-24
+## Fixed
+* Upgrade to `cognite-sdk` `7.28.2` which has fixed bug for retrieving more than 100 data models, containers,
+  views, and spaces.
+
+## [0.67.3] - 13-03-24
+## Fixed
+* `ExcelImporter` now returns rules for the correct role type based on the input.
+
+## [0.67.2] - 13-03-24
+## Added
+- Standardization of casing in DMS exporter
+- In DTDL importer infer data model name and space.
+- Visualization of data model in UI through the new workflow `Visualize Data Model`
+## Changed
+- Deprecation of steps based on the single rule sheet, in favor of role-based rules.
+
+
+## [0.67.1] - 12-03-24
+## Changed
+- Addeded configuraion that controls behaviour of embedded transformation logic in GenerateNodesAndEdgesFromGraph. Now user can disable default transfomation logic (before it was always on) , it is useful when transformation is done in dedicated transformation step.
+
+## [0.67.0] - 07-03-24
+## Fixed
+- Fixed issue with prefixes not being updated during GraphStore (oxi) reinitialization
+- Fixed graph store reset issue for JSON loader
+- Small UI adjustments
+
+## Added
+- Added rules browser to the UI. Now user can browse all rules in UI from local store .
+- Added configurable HTTP headers for `DownloadDataFromRestApiToFile` step. The feature is useful when the API requires specific headers to be set (has been requested by Cognite customer).
+
+## [0.66.1] - 06-03-24
+## Fixed
+- `Import DMS` fails for data models without description. This is now fixed.
+
+## [0.66.0] - 06-03-24
+## Added
+- Multiple experimental workflows `Export DMS`, `Import DMS`, `Validate Solution Model`, and `Validate Rules`
+
+## [0.65.0] - 01-03-24
+## Added
+- Added support for scheduling on given weekdays for time trigger
+
+## [0.64.0] - 21-03-24
+## Added
+- Added functionality to import and export global configuration file to and from CDF
+- Added "latest" flag for workflows in CDF and spreadsheets.
+- Added well formatted context viewer
+
+## Changed
+- Changed the way how workflows and rules loaded to CDF. Labels has been removed and replaced with additional metadata.
+
+## Improved
+- Improved UI around files upload and download. Improved File Uploader step.
+
+## [0.63.0] - 20-02-24
+
+## Added
+- Added option to map edges as temporal solution prior shifting to Rules profiling
+
+
+## [0.62.1] - 14-02-24
+
+## Fixed
+- Issue of `DeleteDMSSchemaComponents` deleting components in all spaces
+- Issue of `ExportRulesToOntology` and `ExportRulesToSHACL` not creating missing folder
+
+## [0.62.0] - 08-02-24
+
+## Added
+- Added `export_rules_to_ontology` workflow
+- `LoadGraphToRdfFile` step to load graph to rdf file
+
+## Fixed
+- Issue of resetting graph for `MemoryStore` when loading graph from file
+- Issue of not respecting add_base_prefix == False
+
+
+## [0.61.0] - 06-02-24
+
+## Added
+- Ability to upload of all spaces components or only ones that are in space defined by `Rules.metadata.space`
+- Ability to remove of all spaces components or only ones that are in space defined by `Rules.metadata.space`
+
+## Improved
+- DMS Schema components upload report add to step `ExportDMSSchemaComponentsToCDF`
+- DMS Schema components removal report add to step `DeleteDMSSchemaComponents`
+- Handling of multiple steps
+
+## Removed
+- `DataModelFromRulesToSourceGraph` it is confusing step and needs more work to be useful
+- Workflows:
+  - `json_to_data_model_rules`
+  - `sheet2cdf`
+  - `skos2cdf`
+
+## Changed
+- Renamed steps:
+  - `LoadTransformationRules` to `ImportExcelToRules`
+  - `InstancesFromRdfFileToSourceGraph` to `ExtractGraphFromRdfFile`
+  - `InstancesFromRulesToSolutionGraph` to `ExtractGraphFromRulesInstanceSheet`
+  - `GraphCapturingSheetToGraph` to `ExtractGraphFromGraphCapturingSheet`
+  - `GenerateMockGraph` to `ExtractGraphFromMockGraph`
+  - `InstancesFromJsonToGraph` to `ExtractGraphFromJsonFile`
+  - `InstancesFromAvevaPiAF` to `ExtractGraphFromAvevaPiAssetFramework`
+  - `DexpiToGraph` to `ExtractGraphFromDexpiFile`
+  - `GenerateCDFAssetsFromGraph` to `GenerateAssetsFromGraph`
+  - `GenerateCDFRelationshipsFromGraph` to `GenerateRelationshipsFromGraph`
+  - `GenerateCDFNodesAndEdgesFromGraph` to `GenerateNodesAndEdgesFromGraph`
+  - `UploadCDFAssets` to `LoadAssetsToCDF`
+  - `UploadCDFRelationships` to `LoadRelationshipsToCDF`
+  - `UploadCDFNodes` to `LoadNodesToCDF`
+  - `UploadCDFEdges` to `LoadEdgesToCDF`
+  - `CreateCDFLabels` to `LoadLabelsToCDF`
+  - `OpenApiToRules` to `ImportOpenApiToRules
+  - `ArbitraryJsonYamlToRules` to `ImportArbitraryJsonYamlToRules`
+  - `GraphToRules` to `ImportGraphToRules`
+  - `OntologyToRules` to `ImportOntologyToRules`
+  - `GraphQLSchemaFromRules` to `ExportGraphQLSchemaFromRules`
+  - `OntologyFromRules` to `ExportOntologyFromRules`
+  - `SHACLFromRules` to `ExportSHACLFromRules`
+  - `GraphCaptureSpreadsheetFromRules` to `ExportRulesToGraphCapturingSheet`
+  - `ExcelFromRules` to `ExportRulesToExcel`
+- Renamed workflows:
+  - `graph_to_asset_hierarchy` to `extract_rdf_graph_generate_assets`
+  - `dexpi2graph` to `extract_dexpi_graph_and_export_rules`
+  - `ontology2data_model` to `import_ontology`
+
+- **Note** this is a breaking change, but since we are on 0. version, we can do this.
+
+
+## [0.60.0] - 30-01-24
+
+## Added
+
+- Configuration for which DMS schema components are to be uploaded to CDF
+- Configuration for which DMS schema components are to be removed to CDF
+- Configuration how to handle existing CDF schema components during upload
+
+## Changed
+- Renamed `UploadDMSDataModel` to `ExportDMSSchemaComponentsToCDF` step. **Note** this is a breaking change, but
+  since we are on 0. version, we can do this.
+- Renamed `DeleteDMSDataModel` to `DeleteDMSSchemaComponents` step. **Note** this is a breaking change, but
+  since we are on 0. version, we can do this.
+- Renamed `ExportDMSDataModel` to `ExportDMSSchemaComponentsToYAML` step. **Note** this is a breaking change, but
+  since we are on 0. version, we can do this.
+- Renamed `DataModel` class to `DMSSchemaComponents` to better reflect the content of the class. **Note** this is a breaking change, but
+  since we are on 0. version, we can do this.
+- Step that waits for human approval timeout set to 1 day
+
+## [0.59.1] - 29-01-24
+
+## Added
+
+- Added pre-cleaning of spaces prior validation
+
+## Fixed
+
+- Fixed restrictive which did not allow multiple occurrence of [.-_]
+
+
+## [0.59.0] - 24-01-24
+
+## Added
+
+- Added `ExportDMSDataModel` to dump data model (views) and containers as YAML
+
+## Improved
+
+- `DMSDataModelFromRules` is now extended such that one can update space/external_id/version of data model
+
+
 ## [0.58.0] - 20-01-24
 
 ## Changed
 
-- `cognite.neat.graph.loaders.rdf_to_dms.rdf2nodes_and_edges` has been replaced by `cognite.nead.graph.loaders.DMSLoader`.
+- `cognite.neat.graph.loaders.rdf_to_dms.rdf2nodes_and_edges` has been replaced by `cognite.neat.graph.loaders.DMSLoader`.
 - Upgrade `cognite-sdk` to `v7`, thus now neat requires `cognite-sdk>=7.13.8`.
 
 ## Added

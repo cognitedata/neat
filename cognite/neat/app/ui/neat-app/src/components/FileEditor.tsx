@@ -62,7 +62,7 @@ export default function FileEditor(props: any) {
 
           // Check the response status
           if (response.ok) {
-            console.log('String data sent successfully as a file.');
+
           } else {
             console.error('Failed to send string data as a file to the API.');
           }
@@ -78,7 +78,7 @@ export default function FileEditor(props: any) {
     }
 
     const onUpload = (fileName:string , hash: string) => {
-        console.log("onUpload",fileName,hash)
+
         loadListOfFiles();
     }
 

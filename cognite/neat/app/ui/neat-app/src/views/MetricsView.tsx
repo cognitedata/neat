@@ -95,7 +95,7 @@ export default function MetricsTable() {
     .then((response) => {
       return response.json();
     }).then((jdata) => {
-      // console.log(text);
+
       // const parsed = parsePrometheusTextFormat(text);
       setData(jdata.prom_metrics);
       console.dir(jdata.prom_metrics);
@@ -104,6 +104,7 @@ export default function MetricsTable() {
   )}
   return (
     <div>
+      <Typography> Metrics : </Typography>
     <TableContainer component={Paper}>
       <Table aria-label="collapsible table">
         <TableHead>

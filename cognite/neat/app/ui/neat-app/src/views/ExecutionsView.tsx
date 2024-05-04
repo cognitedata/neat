@@ -28,7 +28,7 @@ function Row(props: { row: any }) {
 
   const loadExecutionLog = () => {
     setOpen(!open)
-    console.log("run_id: "+row.run_id)
+
 
   }
 

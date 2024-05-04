@@ -12,6 +12,7 @@ import pandas as pd
 from cognite.client import ClientConfig, CogniteClient
 from cognite.client.credentials import CredentialProvider, OAuthClientCredentials, OAuthInteractive, Token
 from cognite.client.exceptions import CogniteDuplicatedError, CogniteReadTimeout
+from pydantic import HttpUrl, TypeAdapter, ValidationError
 from pydantic_core import ErrorDetails
 from pyparsing import Any
 from rdflib import Literal, Namespace
@@ -73,13 +74,11 @@ def _get_cognite_client(config: CogniteClientConfig, credentials: CredentialProv
 
 
 @overload
-def remove_namespace(*URI: URIRef | str, special_separator: str = "#_") -> str:
-    ...
+def remove_namespace(*URI: URIRef | str, special_separator: str = "#_") -> str: ...
 
 
 @overload
-def remove_namespace(*URI: tuple[URIRef | str, ...], special_separator: str = "#_") -> tuple[str, ...]:
-    ...
+def remove_namespace(*URI: tuple[URIRef | str, ...], special_separator: str = "#_") -> tuple[str, ...]: ...
 
 
 def remove_namespace(
@@ -112,10 +111,15 @@ def remove_namespace(
     else:
         raise TypeError(f"URI must be of type URIRef or str, got {type(URI)}")
 
-    output = tuple(
-        u.split(special_separator if special_separator in u else ("#" if "#" in u else "/"))[-1] for u in uris
-    )
-    return output if len(output) > 1 else output[0]
+    output = []
+    for u in uris:
+        try:
+            _ = TypeAdapter(HttpUrl).validate_python(u)
+            output.append(u.split(special_separator if special_separator in u else "#" if "#" in u else "/")[-1])
+        except ValidationError:
+            output.append(str(u))
+
+    return tuple(output) if len(output) > 1 else output[0]
 
 
 def get_namespace(URI: URIRef, special_separator: str = "#_") -> str:
@@ -325,3 +329,24 @@ def _order_expectations_by_type(exceptions: list[dict] | list[ErrorDetails]) -> 
 
 def remove_none_elements_from_set(s):
     return {x for x in s if x is not None}
+
+
+def get_inheritance_path(child: Any, child_parent: dict[Any, list[Any]]) -> list:
+    """Returns the inheritance path for a given child
+
+    Args:
+        child: Child class
+        child_parent: Dictionary of child to parent relationship
+
+    Returns:
+        Inheritance path for a given child
+
+    !!! note "No Circular Inheritance"
+        This method assumes that the child_parent dictionary is a tree and does not contain any cycles.
+    """
+    path = []
+    if child in child_parent:
+        path.extend(child_parent[child])
+        for parent in child_parent[child]:
+            path.extend(get_inheritance_path(parent, child_parent))
+    return path

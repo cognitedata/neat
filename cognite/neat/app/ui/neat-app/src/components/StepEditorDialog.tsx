@@ -10,12 +10,14 @@ import FormControlLabel from "@mui/material/FormControlLabel"
 import MenuItem from "@mui/material/MenuItem"
 import Select from "@mui/material/Select"
 import TextField from "@mui/material/TextField"
-import React, { useEffect, useState } from "react"
+import React, { ChangeEvent, useEffect, useState } from "react"
 import { StepMetadata, StepRegistry, WorkflowDefinition, WorkflowStepDefinition, WorkflowSystemComponent } from "types/WorkflowTypes"
 import { getNeatApiRootUrl } from "./Utils"
 import LocalUploader from "./LocalUploader"
-import { Autocomplete, Box, Container, InputLabel, Link, List, ListItem, ListItemText, Stack, Typography, darken, lighten, styled } from "@mui/material"
+import WarningIcon from '@mui/icons-material/Warning';
+import { Autocomplete, Box, Container, FormGroup, InputLabel, Link, List, ListItem, ListItemText, Stack, Tooltip, Typography, darken, lighten, styled } from "@mui/material"
 import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined';
+import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 import { Height } from "@mui/icons-material"
 
 const GroupHeader = styled('div')(({ theme }) => ({
@@ -48,7 +50,7 @@ export default function StepEditorDialog(props: any)
 
     const handleDialogSave = () => {
         setDialogOpen(false);
-        console.log("handleDialogSave")
+
         console.dir(selectedStep);
         props.onClose(selectedStep,"save");
         setShowStepIdError(false);
@@ -73,7 +75,7 @@ export default function StepEditorDialog(props: any)
         fetch(neatApiRootUrl +'/api/workflow/'+props.workflowName+'/http_trigger/'+selectedStep.id, { method: 'POST', body: runPayload })
         .then(response => response.json())
         .then(data => {
-            console.log('Success:', data);
+
         }).catch((error) => {
             console.error('Error:', error);
         })
@@ -86,7 +88,7 @@ export default function StepEditorDialog(props: any)
       fetch(neatApiRootUrl +'/api/workflow/'+props.workflowName+'/resume/'+selectedStep.id+'/default', { method: 'POST', body: runPayload })
       .then(response => response.json())
       .then(data => {
-          console.log('Success:', data);
+
       }).catch((error) => {
           console.error('Error:', error);
       })
@@ -94,8 +96,8 @@ export default function StepEditorDialog(props: any)
   };
 
     const onUpload = (fileName:string , hash: string) => {
-      console.log("onUpload",fileName,hash)
-      setStatusText("File uplloaded "+fileName)
+
+      setStatusText("File uploaded "+fileName)
     }
 
     useEffect(() => {
@@ -121,7 +123,7 @@ export default function StepEditorDialog(props: any)
 
 
       const handleStepConfigurableChange = (name: string, value: any) => {
-        console.log('handleStepConfigurableChange')
+
         console.dir(selectedStep);
         let updStep= Object.assign({},selectedStep);
         if (selectedStep) {
@@ -134,25 +136,41 @@ export default function StepEditorDialog(props: any)
 
       const updateStepConfigsFromConfigurables = (stepTemplate: StepMetadata, currentStep:WorkflowStepDefinition,loadDefaults:boolean) =>  {
         // Configuring default valus from step template
-        console.log('updateStepConfigsFromConfigurables')
+
         let updStep= Object.assign({},currentStep);
         if (!updStep.configs || loadDefaults) {
           updStep.configs = new Map<string,string>();
+          updStep.complex_configs = new Map<string,Map<string,any>>();
         }
         if(!currentStep?.configs)
           currentStep.configs = new Map<string,string>();
+        if(!currentStep?.complex_configs)
+          currentStep.complex_configs = new Map<string,Map<string,any>>();
         for (let i=0;i<stepTemplate?.configurables.length;i++) {
           let confFromTemplate = stepTemplate?.configurables[i];
-          if (currentStep?.configs[confFromTemplate.name])
-            updStep.configs[confFromTemplate.name] = currentStep?.configs[confFromTemplate.name];
-          else
-            updStep.configs[confFromTemplate.name] = confFromTemplate?.value;
+          if (confFromTemplate.type == "multi_select") {
+            if (currentStep?.complex_configs[confFromTemplate.name] != undefined) {
+              updStep.complex_configs[confFromTemplate.name] = currentStep?.complex_configs[confFromTemplate.name];
+            } else {
+              updStep.complex_configs[confFromTemplate.name] = new Map<string,boolean>();
+              for (let j=0;j<confFromTemplate?.options.length;j++) {
+                updStep.complex_configs[confFromTemplate.name][confFromTemplate?.options[j]] = false;
+              }
+            }
+          }
+          else{
+            if (currentStep?.configs[confFromTemplate.name])
+              updStep.configs[confFromTemplate.name] = currentStep?.configs[confFromTemplate.name];
+            else
+              updStep.configs[confFromTemplate.name] = confFromTemplate?.value;
+          }
+
         }
         return updStep;
       }
 
       const handleStepConfigChange = (name: string, value: any) => {
-        console.log('handleStepConfigChange')
+
         let updStep= Object.assign({},selectedStep);
 
         if (selectedStep) {
@@ -167,6 +185,11 @@ export default function StepEditorDialog(props: any)
                 break;
               case "http_trigger":
                 updStep.trigger = true;
+                break;
+              case "file_uploader":
+                updStep.trigger = true;
+                if( updStep.params["file_type"] == undefined)
+                  updStep.params["file_type"] = "rules"
                 break;
 
               case "start_workflow_task_step":
@@ -218,15 +241,39 @@ export default function StepEditorDialog(props: any)
               case "max_wait_time":
                 updStep.params["max_wait_time"] = value;
                 break;
+              case "wait_timeout":
+                updStep.params["wait_timeout"] = value;
+                break;
+              case "file_upload_type":
+                updStep.params["file_type"] = value;
+                break;
               default:
                 updStep[name] = value;
             }
           }
-          console.log("rendering view")
+
         }
         setSelectedStep(updStep);
       }
 
+
+  function checkboxHandler(configItemName:string,selectedItemName:string,checked:boolean): void {
+
+
+    if (selectedStep) {
+      let updStep= Object.assign({},selectedStep);
+      if (!selectedStep.complex_configs)
+        updStep.complex_configs = new Map<string,Map<string,boolean>>();
+
+      if (selectedStep.complex_configs[configItemName]==undefined)
+        updStep.complex_configs[configItemName] = new Map<string,boolean>( );
+
+      updStep.complex_configs[configItemName][selectedItemName] = checked;
+      console.dir(updStep)
+      setSelectedStep(updStep);
+    }
+
+  }
 
 return (
   <Dialog open={dialogOpen} onClose={handleDialogCancel} fullWidth={true}  maxWidth={"xl"} >
@@ -248,13 +295,12 @@ return (
               variant="outlined"
               onChange={(event) => { handleStepConfigChange("stype", event.target.value) }}
             >
-              <MenuItem value="stdstep">Step from standard library</MenuItem>
-              <MenuItem value="pystep">Python function</MenuItem>
-              <MenuItem value="http_trigger">HTTP trigger</MenuItem>
+              <MenuItem value="stdstep">Step library</MenuItem>
+              <MenuItem value="file_uploader">File uploader</MenuItem>
+              <MenuItem value="http_trigger">Workflow trigger</MenuItem>
+              <MenuItem value="start_workflow_task_step">Multi-workflow trigger</MenuItem>
               <MenuItem value="time_trigger">Time trigger</MenuItem>
               <MenuItem value="wait_for_event">Wait for event</MenuItem>
-              <MenuItem value="start_workflow_task_step">Start workflow</MenuItem>
-              <MenuItem value="file_uploader">File uploader</MenuItem>
             </Select>
           </FormControl>
           <FormControl sx={{ marginTop: 1 }} fullWidth >
@@ -287,7 +333,14 @@ return (
               {selectedStepTemplate && (
               <Box>
               <Stack direction="row" spacing={2}>
-                <Typography sx={{marginRight:7}}> Version : {selectedStepTemplate?.version} </Typography>
+                <Typography sx={{marginRight:7}}>
+                Version : <span style={{ color: selectedStepTemplate?.version.toLowerCase().includes("legacy") ? "red" : "green", fontWeight: selectedStepTemplate?.version.toLowerCase().includes("private-beta") ? "bold" : "bold" }}>{selectedStepTemplate?.version}</span>
+                {selectedStepTemplate?.version.toLowerCase().includes("legacy") && (
+                          <Tooltip title="Caution: This step is legacy step, meaning it can be only used with other legacy steps. We are not supporting it anymore.">
+                            <WarningIcon sx={{ marginLeft: 1, marginBottom: -0.5, color: "orange" }} />
+                          </Tooltip>
+                )}
+                 </Typography>
                 <Link href={selectedStepTemplate?.docs_url} target="_blank"> Extended documentation </Link>
               </Stack>
               <Typography> Description : {selectedStepTemplate?.description} </Typography>
@@ -296,13 +349,26 @@ return (
               <Typography> Configurations : </Typography>
               <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
               {selectedStepTemplate?.configurables.map((item,i)=> (
-                <ListItem>
+                <ListItem  sx={{
+                  backgroundColor: item.label.toLowerCase().includes("warning") ? "yellow" : "inherit"
+                }}>
                   <Box sx={{width:'50vw'}}>
-                  <ListItemText  primary={item.name} secondary={item.label}></ListItemText>
+
+                  <ListItemText
+                    primary={item.name}
+                    secondary={
+                      <Box sx={{ display: "flex", alignItems: "center" }}>
+                        {item.label.toLowerCase().includes("warning") && (
+                          <WarningIcon sx={{ marginRight: 1, color: "orange" }} />
+                        )}
+                        {item.label}
+                      </Box>
+                    }
+                  />
                   </Box>
                   <Box sx={{width:'50vw'}}>
                   <FormControl fullWidth>
-                    {item?.options && selectedStep?.configs[item.name] != undefined && (
+                    {item?.options && selectedStep?.configs[item.name] != undefined  && item?.type != "multi_select"  && (
                     <Select
                       value={ selectedStep?.configs[item.name]}
                       size='small'
@@ -316,6 +382,20 @@ return (
                         ))
                       }
                     </Select> )}
+                    { item?.type == "multi_select" && (
+                        <FormGroup
+                          sx={{ marginBottom: 0 }}
+                        >
+                          {
+                            item?.options && item.options.map((option, i) => (
+                              <FormControlLabel
+                                control={<Checkbox checked = {selectedStep?.complex_configs[item.name][option]} onChange={ (event: ChangeEvent<HTMLInputElement>, checkedv: boolean)=>{ checkboxHandler(item.name,option,checkedv) } } name={option} />}
+                                label={option}
+                              />
+                            ))
+                          }
+                        </FormGroup>
+                    )}
                     {!item?.options && selectedStep?.configs && selectedStep?.configs[item.name] != undefined && item?.type != "password" && (
                       <TextField sx={{ marginTop: 0 }} fullWidth size='small' variant="outlined" value={ selectedStep?.configs[item.name]} onChange={(event) => { handleStepConfigurableChange(item.name, event.target.value) }} />
                     )}
@@ -342,11 +422,36 @@ return (
             {(selectedStep?.stype == "start_workflow_task_step" || selectedStep?.stype == "http_trigger") && (
               <FormControlLabel control={<Checkbox checked={selectedStep?.params["sync"] == "true"} onChange={(event) => { handleStepConfigChange("workflow_sync_run_flag", event.target.checked) }} />} label="Synchronous execution" />
             )}
+             <FormControlLabel control={<Checkbox checked={selectedStep?.enabled} onChange={(event) => { handleStepConfigChange("enabled", event.target.checked) }} />} label="Is step enabled" />
             {(selectedStep?.stype == "file_uploader") && (
-               <LocalUploader fileType="staging" action="start_workflow" onUpload={onUpload} stepId={selectedStep.id} workflowName={props.workflowName} />
+              <Box>
+                <FormControl fullWidth sx={{ marginTop: 2 }}>
+                          <InputLabel id="file_uploader_file_type_label">Select File Type</InputLabel>
+                          <Select sx={{ marginTop: 1 }}
+                          labelId="file_uploader_file_type_label"
+                          id="file_uploader_file_type"
+                          value={selectedStep?.params["file_type"]}
+                            label="Select File Type"
+                          size='small'
+                          variant="outlined"
+                          onChange={(event) => { handleStepConfigChange("file_upload_type", event.target.value) }}
+                        >
+                          <MenuItem value="rules">Rules (Data Model) File</MenuItem>
+                          <MenuItem value="staging">Staging File: Data dump in json/xml/csv format or any other file</MenuItem>
+                          <MenuItem value="source_graph"> Source graph file in RDF format</MenuItem>
+                        </Select>
+                </FormControl>
+                <LocalUploader
+                  fileType={selectedStep?.params["file_type"]}
+                  action="start_workflow"
+                  onUpload={onUpload}
+                  stepId={selectedStep.id}
+                  workflowName={props.workflowName}
+                />
+              </Box>
             )}
 
-            <FormControlLabel control={<Checkbox checked={selectedStep?.enabled} onChange={(event) => { handleStepConfigChange("enabled", event.target.checked) }} />} label="Is step enabled" />
+
             {(selectedStep?.trigger == false) && (
             <TextField sx={{ marginTop: 1 }} id="step-config-max-retries" fullWidth label="Max retries on failure" size='small' type="number" variant="outlined" value={selectedStep?.max_retries} onChange={(event) => { handleStepConfigChange("max_retries", event.target.value) }} />
             )}
@@ -377,10 +482,20 @@ return (
             {(selectedStep?.stype == "http_trigger" || selectedStep?.stype == "wait_for_event") && (
               <TextField sx={{ marginTop: 1 }} value={runPayload} label="Run payload"  size='small' variant="outlined"  onChange={(event)=>setRunPayload(event.target.value)} id="run_payload"> </TextField>
             )}
+             {(selectedStep?.stype == "wait_for_event") && (
+              <TextField sx={{ marginTop: 1 }} value={selectedStep?.params["wait_timeout"]} label="Time (in seconds) the system will wait before it times out and proceeds to next step.Default is 1 month"  size='small' variant="outlined"  onChange={(event) => { handleStepConfigChange("wait_timeout", event.target.value) }}  id="wait_timeout"> </TextField>
+            )}
             {(selectedStep?.stype == "http_trigger" && selectedStep?.params["workflow_start_method"]=="persistent_blocking") && (
               <TextField sx={{ marginTop: 1 }} value={selectedStep?.params["max_wait_time"]}  size='small' variant="outlined"  label="Max blocking wait time" onChange={(event) => { handleStepConfigChange("max_wait_time", event.target.value) }} id="max_wait_time"> </TextField>
             )}
             </FormControl>
+
+            {(selectedStep?.stype == "http_trigger") && (
+              <Button sx={{ marginTop: 5 , width: "100%" , alignItems: 'center',justifyContent: 'center' }}  variant="outlined" size="small" color="success" onClick={handleRunCommand}> <PlayCircleOutlineIcon sx={{marginRight:2}}/> Start workflow </Button>
+            )}
+            {(selectedStep?.stype == "wait_for_event") && (
+                <Button sx={{ marginTop: 5,  width: "100%" , alignItems: 'center',justifyContent: 'center' }}  variant="outlined" size="small" color="success" onClick={handleResumeCommand}> <PlayCircleOutlineIcon sx={{marginRight:2}}/> Resume workflow execution </Button>
+            )}
 
           <Typography> {statusText} </Typography>
 
@@ -390,13 +505,6 @@ return (
           <Button variant="outlined" size="small" disabled={!isConfigurationValid} onClick={handleDialogSave}>Save</Button>
           <Button variant="outlined" size="small" onClick={handleDialogCancel}>Cancel</Button>
           <Button variant="outlined" size="small" color="error" onClick={handleDelete} >Delete</Button>
-          {(selectedStep?.stype == "http_trigger") && (
-              <Button variant="outlined" size="small" color="success" onClick={handleRunCommand}>Run</Button>
-          )}
-          {(selectedStep?.stype == "wait_for_event") && (
-              <Button variant="outlined" size="small" color="success" onClick={handleResumeCommand}>Resume execution</Button>
-          )}
-
         </DialogActions>
       </Dialog>
 )

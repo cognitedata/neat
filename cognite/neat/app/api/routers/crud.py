@@ -7,6 +7,7 @@ import shutil
 from fastapi import APIRouter, UploadFile
 
 from cognite.neat.app.api.configuration import NEAT_APP
+from cognite.neat.config import Config
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.utils import get_file_hash
 
@@ -46,16 +47,24 @@ async def file_upload_handler(
     file_name = ""
     file_version = ""
     if file_type == "file_from_editor":
-        upload_dir = NEAT_APP.workflow_manager.data_store_path / "workflows" / workflow_name
+        upload_dir = NEAT_APP.workflow_manager.config.workflows_store_path / workflow_name
     elif file_type == "workflow":
-        upload_dir = NEAT_APP.workflow_manager.data_store_path / "workflows"
+        upload_dir = NEAT_APP.workflow_manager.config.workflows_store_path
+    elif file_type == "staging":
+        upload_dir = NEAT_APP.workflow_manager.config.staging_path
+    elif file_type == "source_graph":
+        upload_dir = NEAT_APP.workflow_manager.config.source_graph_path
+
     for file in files:
         logging.info(
             f"Uploading file : {file.filename} , workflow : {workflow_name} , step_id {step_id} , action : {action}"
         )
         # save file to disk
         if file.filename:
-            full_path = upload_dir / file.filename
+            if file_type == "global_config":
+                full_path = NEAT_APP.config.data_store_path / "config.yaml"
+            else:
+                full_path = upload_dir / file.filename
             with full_path.open("wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
             file_name = file.filename
@@ -70,13 +79,13 @@ async def file_upload_handler(
         workflow_definition = workflow.get_workflow_definition()
 
         for step in workflow_definition.steps:
-            if step.method == "LoadTransformationRules":
+            if step.method == "ImportExcelToRules":
                 step.configs["file_name"] = file_name
                 step.configs["version"] = ""
 
         NEAT_APP.workflow_manager.save_workflow_to_storage(workflow_name)
 
-    if "start_workflow" in action and file_type == "rules":
+    if "start_workflow" in action and file_type == "rules" or file_type == "staging":
         logging.info("Starting workflow after file upload")
         workflow = NEAT_APP.workflow_manager.get_workflow(workflow_name)
         if workflow is None:
@@ -91,5 +100,13 @@ async def file_upload_handler(
     if action == "install" and file_type == "workflow":
         logging.info("Installing workflow after file upload")
         NEAT_APP.cdf_store.extract_workflow_package(file_name)
+
+    if file_type == "global_config":
+        logging.info("Updating global config and restarting NeatApp")
+        config = Config.from_yaml(full_path)
+        config.data_store_path = NEAT_APP.config.data_store_path
+        NEAT_APP.stop()
+        NEAT_APP.start(config=config)
+        logging.info("NeatApp restarted")
 
     return {"file_name": file_name, "hash": file_version}

@@ -45,9 +45,9 @@ class FlowMessage(BaseModel):
     headers: dict[str, str] | None = None  # The headers of the message
     output_text: str | None = None  # The output text of the step that is captured in the execution log
     error_text: str | None = None  # The error text of the step that is captured in the execution log
-    next_step_ids: list[
-        str
-    ] | None = None  # If set, the workflow will skip default route and go to the next step in the list
+    next_step_ids: list[str] | None = (
+        None  # If set, the workflow will skip default route and go to the next step in the list
+    )
     step_execution_status: StepExecutionStatus = StepExecutionStatus.UNKNOWN  # The status of the step execution
 
 
@@ -91,8 +91,10 @@ class WorkflowStepDefinition(BaseModel):
     ui_config: UIConfig = UIConfig()
     params: dict[str, str] = Field(default_factory=dict)  # System parameters
     configs: dict[str, Any] = Field(default_factory=dict)  # Step configurations
+    complex_configs: dict[str, Any] = Field(default_factory=dict)  # Complex step configurations
     max_retries: int = 0
     retry_delay: int = 3
+    auto_workflow_cleanup: bool = False
 
     @field_validator("configs", "params", mode="before")
     def none_as_empty_dict(cls, value):

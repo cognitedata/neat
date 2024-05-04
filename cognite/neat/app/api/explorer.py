@@ -1,3 +1,5 @@
+import logging
+
 import pkg_resources
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,9 +10,16 @@ from cognite import neat
 from cognite.neat.app.api.asgi.metrics import prometheus_app
 from cognite.neat.app.api.configuration import NEAT_APP, UI_PATH
 from cognite.neat.app.api.context_manager import lifespan
-from cognite.neat.app.api.routers import configuration, crud, data_exploration, metrics, rules, workflows
+from cognite.neat.app.api.routers import configuration, core, crud, data_exploration, metrics, rules, workflows
+from cognite.neat.app.api.utils.logging import EndpointFilter
 
 app = FastAPI(title="Neat", lifespan=lifespan)
+
+# Define excluded endpoints
+EXCLUDED_ENDPOINTS = ["/api/workflow/stats"]
+
+# Add filter to the logger
+logging.getLogger("uvicorn.access").addFilter(EndpointFilter(EXCLUDED_ENDPOINTS))
 
 
 origins = [
@@ -20,7 +29,7 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -39,6 +48,7 @@ app.include_router(workflows.router)
 app.include_router(rules.router)
 app.include_router(crud.router)
 app.include_router(data_exploration.router)
+app.include_router(core.router)
 
 
 # General routes

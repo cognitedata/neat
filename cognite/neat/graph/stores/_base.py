@@ -14,12 +14,11 @@ from rdflib.query import Result, ResultRow
 from cognite.neat.constants import DEFAULT_NAMESPACE, PREFIXES
 from cognite.neat.graph.models import Triple
 from cognite.neat.graph.stores._rdf_to_graph import rdf_file_to_graph
-from cognite.neat.rules.models.rules import Rules
 
 if sys.version_info >= (3, 11):
-    from typing import Self
+    pass
 else:
-    from typing_extensions import Self
+    pass
 
 prom_qsm = Summary("store_query_time_summary", "Time spent processing queries", ["query"])
 prom_sq = Gauge("store_single_query_time", "Time spent processing a single query", ["query"])
@@ -63,26 +62,6 @@ class NeatGraphStoreBase(ABC):
         self.internal_storage_dir_orig: Path | None = None
         self.storage_dirs_to_delete: list[Path] = []
         self.queries = _Queries(self)
-
-    @classmethod
-    def from_rules(cls, rules: Rules) -> Self:
-        """
-        Creates a new instance of NeatGraphStore from TransformationRules and runs the .init_graph() method on it.
-
-        Args:
-            rules: TransformationRules object containing information about the graph store.
-
-        Returns:
-            An instantiated instance of NeatGraphStore
-
-        """
-        if rules.metadata.namespace is None:
-            namespace = DEFAULT_NAMESPACE
-        else:
-            namespace = rules.metadata.namespace
-        store = cls(prefixes=rules.prefixes, namespace=namespace)
-        store.init_graph(base_prefix=rules.metadata.prefix)
-        return store
 
     @abstractmethod
     def _set_graph(self) -> None:
@@ -135,8 +114,8 @@ class NeatGraphStoreBase(ABC):
         logging.info("Adding prefix %s with namespace %s", self.base_prefix, self.namespace)
         logging.info("Graph initialized")
 
-    def reinit_graph(self):
-        """Reinitializes the graph."""
+    def reinitialize_graph(self):
+        """Reinitialize the graph."""
         self.init_graph(
             self.rdf_store_query_url,
             self.rdf_store_update_url,
@@ -145,6 +124,13 @@ class NeatGraphStoreBase(ABC):
             self.returnFormat,
             self.internal_storage_dir,
         )
+
+    def upsert_prefixes(self, prefixes: dict[str, Namespace]) -> None:
+        """Adds prefixes to the graph store."""
+        self.prefixes.update(prefixes)
+        for prefix, namespace in prefixes.items():
+            logging.info("Adding prefix %s with namespace %s", prefix, namespace)
+            self.graph.bind(prefix, namespace)
 
     def close(self) -> None:
         """Closes the graph."""
@@ -167,9 +153,11 @@ class NeatGraphStoreBase(ABC):
             add_base_iri : Add base IRI to graph, by default True
         """
         if add_base_iri:
-            self.graph = rdf_file_to_graph(graph_file, base_namespace=self.namespace, prefixes=self.prefixes)
+            self.graph = rdf_file_to_graph(
+                self.graph, graph_file, base_namespace=self.namespace, prefixes=self.prefixes
+            )
         else:
-            self.graph = rdf_file_to_graph(graph_file, prefixes=self.prefixes)
+            self.graph = rdf_file_to_graph(self.graph, graph_file, prefixes=self.prefixes)
         return None
 
     def get_graph(self) -> Graph:
@@ -189,6 +177,10 @@ class NeatGraphStoreBase(ABC):
         prom_qsm.labels("query").observe(elapsed_time)
         prom_sq.labels("query").set(elapsed_time)
         return result
+
+    def serialize(self, *args, **kwargs):
+        """Serializes the graph."""
+        return self.graph.serialize(*args, **kwargs)
 
     def query_delayed(self, query) -> Iterable[Triple]:
         """Returns the result of the query, but does not execute it immediately.
@@ -264,6 +256,18 @@ class NeatGraphStoreBase(ABC):
         """Prints the triples of the graph."""
         for subj, pred, obj in self.graph:
             logging.info(f"Triple: {subj} {pred} {obj}")
+
+    def diagnostic_report(self):
+        """Returns the dictionary representation graph diagnostic data ."""
+        return {
+            "rdf_store_type": self.rdf_store_type,
+            "base_prefix": self.base_prefix,
+            "namespace": self.namespace,
+            "prefixes": self.prefixes,
+            "internal_storage_dir": self.internal_storage_dir,
+            "rdf_store_query_url": self.rdf_store_query_url,
+            "rdf_store_update_url": self.rdf_store_update_url,
+        }
 
     def add_triples(self, triples: list[Triple] | set[Triple], batch_size: int = 10_000, verbose: bool = False):
         """Adds triples to the graph store in batches.

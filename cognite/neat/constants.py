@@ -7,10 +7,12 @@ from cognite import neat
 PACKAGE_DIRECTORY = Path(neat.__file__).parent
 
 
-EXAMPLE_RULES = PACKAGE_DIRECTORY / "rules" / "examples"
-EXAMPLE_GRAPHS = PACKAGE_DIRECTORY / "graph" / "examples"
+EXAMPLE_RULES = PACKAGE_DIRECTORY / "legacy" / "rules" / "examples"
+EXAMPLE_GRAPHS = PACKAGE_DIRECTORY / "legacy" / "graph" / "examples"
+_OLD_WORKFLOWS = PACKAGE_DIRECTORY / "legacy" / "workflows" / "examples"
 EXAMPLE_WORKFLOWS = PACKAGE_DIRECTORY / "workflows" / "examples"
 
+DEFAULT_NAMESPACE = Namespace("http://purl.org/cognite/neat#")
 
 PREFIXES = {
     "rdf": RDF._NS,
@@ -27,10 +29,10 @@ PREFIXES = {
     "md": Namespace("http://iec.ch/TC57/61970-552/ModelDescription/1#"),
     "pti": Namespace("http://www.pti-us.com/PTI_CIM-schema-cim16#"),
     "tnt": Namespace("http://purl.org/cognite/tnt#"),
-    "neat": Namespace("http://purl.org/cognite/neat#"),
+    "neat": DEFAULT_NAMESPACE,
 }
 
-DEFAULT_NAMESPACE = Namespace("http://purl.org/cognite/app#")
+
 DEFAULT_URI = ""
 
 DEFAULT_DOCS_URL = "https://cognite-neat.readthedocs-hosted.com/en/latest/"

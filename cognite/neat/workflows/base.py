@@ -11,8 +11,8 @@ import yaml
 from cognite.client import ClientConfig, CogniteClient
 from prometheus_client import Gauge
 
-from cognite.neat.app.api.configuration import Config
 from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
+from cognite.neat.config import Config
 from cognite.neat.utils.utils import retry_decorator
 from cognite.neat.workflows import cdf_store, utils
 from cognite.neat.workflows._exceptions import ConfigurationNotSet, InvalidStepOutputException
@@ -45,7 +45,7 @@ class BaseWorkflow:
         self,
         name: str,
         client: CogniteClient,
-        steps_registry: StepsRegistry | None = None,
+        steps_registry: StepsRegistry,
         workflow_steps: list[WorkflowStepDefinition] | None = None,
         default_dataset_id: int | None = None,
     ):
@@ -78,9 +78,10 @@ class BaseWorkflow:
         self.metrics = NeatMetricsCollector(self.name, self.cdf_client)
         self.resume_event = Event()
         self.is_ephemeral = False  # if True, workflow will be deleted after completion
+        self.auto_workflow_cleanup = False
         self.step_classes = None
         self.data: dict[str, DataContract | FlowMessage | CdfStore | CogniteClient | None] = {}
-        self.steps_registry: StepsRegistry = steps_registry or StepsRegistry()
+        self.steps_registry: StepsRegistry = steps_registry
 
     def start(self, sync=False, is_ephemeral=False, **kwargs) -> FlowMessage | None:
         """Starts workflow execution.sync=True will block until workflow is completed and
@@ -134,7 +135,22 @@ class BaseWorkflow:
         timing_metrics.labels(wf_name=self.name, component="workflow", name="workflow").set(self.elapsed_time)
         logging.info(f"Workflow completed in {self.elapsed_time} seconds")
         self.report_workflow_execution()
+        if self.auto_workflow_cleanup:
+            self.cleanup_workflow_context()
         return self.flow_message
+
+    def cleanup_workflow_context(self):
+        """
+        Cleans up the workflow context by closing and deleting graph stores and other structure.
+        It's a for of garbage collection to avoid memory leaks or other issues related to open handlers
+        or allocated resources
+
+        """
+        if "SolutionGraph" in self.data:
+            self.data["SolutionGraph"].graph.close()
+        if "SourceGraph" in self.data:
+            self.data["SourceGraph"].graph.close()
+        self.data.clear()
 
     def get_transition_step(self, transitions: list[str] | None) -> list[WorkflowStepDefinition]:
         return [stp for stp in self.workflow_steps if stp.id in transitions and stp.enabled] if transitions else []
@@ -207,7 +223,7 @@ class BaseWorkflow:
 
     def copy(self) -> "BaseWorkflow":
         """Create a copy of the workflow"""
-        new_instance = self.__class__(self.name, self.cdf_client)
+        new_instance = self.__class__(self.name, self.cdf_client, self.steps_registry)
         new_instance.workflow_steps = self.workflow_steps
         new_instance.configs = self.configs
         new_instance.set_task_builder(self.task_builder)
@@ -288,6 +304,7 @@ class BaseWorkflow:
                         step_configs=step.configs,
                         workflow_id=self.name,
                         workflow_run_id=self.run_id,
+                        step_complex_configs=step.complex_configs,
                     )
 
                 output = method_runner()
@@ -327,7 +344,9 @@ class BaseWorkflow:
                     logging.error(f"Workflow {self.name} is not running , step {step_name} is skipped")
                     raise Exception(f"Workflow {self.name} is not running , step {step_name} is skipped")
                 self.state = WorkflowState.RUNNING_WAITING
-                timeout = float(step.params.get("wait_timeout", "60"))
+                timeout = 3000000.0
+                if step.params.get("wait_timeout"):
+                    timeout = float(step.params["wait_timeout"])
                 # reporting workflow execution before waiting for event
                 logging.info(f"Workflow {self.name} is waiting for event")
                 self.resume_event.wait(timeout=timeout)

@@ -1,6 +1,7 @@
 import logging
 import shutil
 from pathlib import Path
+from typing import cast
 
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
@@ -11,6 +12,7 @@ from cognite.neat.workflows import WorkflowFullStateReport
 from cognite.neat.workflows.base import WorkflowDefinition
 from cognite.neat.workflows.migration.wf_manifests import migrate_wf_manifest
 from cognite.neat.workflows.model import FlowMessage
+from cognite.neat.workflows.steps.data_contracts import SolutionGraph, SourceGraph
 from cognite.neat.workflows.steps.step_model import DataContract
 from cognite.neat.workflows.utils import get_file_hash
 
@@ -35,7 +37,6 @@ def get_workflow_stats(
 ) -> WorkflowFullStateReport | None | dict[str, str]:
     if NEAT_APP.workflow_manager is None:
         return {"error": "NeatApp is not initialized"}
-    logging.info("Hit the get_workflow_stats endpoint")
     workflow = NEAT_APP.workflow_manager.get_workflow(workflow_name)
     if workflow is None:
         raise HTTPException(status_code=404, detail="workflow not found")
@@ -62,8 +63,18 @@ def package_workflow(workflow_name: str):
     if NEAT_APP.cdf_store is None:
         return {"error": "NeatApp is not initialized"}
     package_file = NEAT_APP.cdf_store.package_workflow(workflow_name)
-    hash = get_file_hash(NEAT_APP.config.data_store_path / "workflows" / package_file)
-    return {"package": package_file, "hash": hash}
+    hash_ = get_file_hash(NEAT_APP.config.workflows_store_path / package_file)
+    return {"package": package_file, "hash": hash_}
+
+
+@router.post("/api/workflow/context-cleanup/{workflow_name}")
+def cleanup_workflow_data(workflow_name: str):
+    if NEAT_APP.cdf_store is None:
+        return {"error": "NeatApp is not initialized"}
+    workflow = NEAT_APP.workflow_manager.get_workflow(workflow_name)
+    if workflow is not None:
+        workflow.cleanup_workflow_context()
+    return {"result": "ok"}
 
 
 @router.post("/api/workflow/create")
@@ -103,6 +114,13 @@ def reload_workflows():
     return {"result": "ok", "workflows": NEAT_APP.workflow_manager.get_list_of_workflows()}
 
 
+@router.post("/api/workflow/reload-single-workflow/{workflow_name}")
+def reload_single_workflows(workflow_name: str):
+    NEAT_APP.workflow_manager.load_single_workflow_from_storage(workflow_name)
+    NEAT_APP.triggers_manager.reload_all_triggers()
+    return {"result": "ok", "workflows": NEAT_APP.workflow_manager.get_list_of_workflows()}
+
+
 @router.get("/api/workflow/workflow-definition/{workflow_name}")
 def get_workflow_definition(workflow_name: str):
     if NEAT_APP.workflow_manager is None:
@@ -126,6 +144,9 @@ def get_workflow_src(workflow_name: str, file_name: str):
 def update_workflow_definition(workflow_name: str, request: WorkflowDefinition):
     if NEAT_APP.workflow_manager is None:
         return {"error": "NeatApp is not initialized"}
+    wf = NEAT_APP.workflow_manager.get_workflow(workflow_name)
+    if wf is not None:
+        wf.cleanup_workflow_context()
     NEAT_APP.workflow_manager.update_workflow(workflow_name, request)
     NEAT_APP.workflow_manager.save_workflow_to_storage(workflow_name)
     return {"result": "ok"}
@@ -206,6 +227,10 @@ def get_context_object(workflow_name: str, object_name: str):
     context = workflow.get_context()
     if object_name not in context:
         return {"error": f"Item {object_name} is not found in workflow context"}
+
+    if object_name == "SourceGraph" or object_name == "SolutionGraph":
+        return {"object": cast(SourceGraph | SolutionGraph, context[object_name]).graph.diagnostic_report()}
+
     cobject = context[object_name]
     if isinstance(cobject, DataContract):
         return {"object": cobject.model_dump()}
@@ -224,7 +249,7 @@ async def upload_file(file: UploadFile, workflow_name: str):
     if NEAT_APP.workflow_manager is None or NEAT_APP.workflow_manager.data_store_path is None:
         return JSONResponse(content={"error": "Workflow Manager is not initialized"}, status_code=400)
     try:
-        upload_dir = NEAT_APP.workflow_manager.data_store_path / "workflows" / workflow_name
+        upload_dir = NEAT_APP.workflow_manager.config.workflows_store_path / workflow_name
         # Create a directory to store uploaded files if it doesn't exist
 
         # Define the file path where the uploaded file will be saved

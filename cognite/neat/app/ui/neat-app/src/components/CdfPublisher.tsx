@@ -26,7 +26,7 @@ export default function CdfPublisher(props: any) {
         uploadWorkflowToCdf();
     };
     const handleStepConfigChange = (name: string, value: any) => {
-        console.log('handleStepConfigChange')
+
         data[name] = value;
     }
 

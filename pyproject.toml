@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cognite-neat"
-version = "0.58.0"
+version = "0.75.9"
 readme = "README.md"
 description = "Knowledge graph transformation"
 authors = [
@@ -26,18 +26,21 @@ line-length = 120
 target_version = ['py310']
 include = '\.py$'
 
+[tool.ruff.lint]
+# See https://docs.astral.sh/ruff/rules/ for an overview of ruff rules
+select = ["E", "W", "F", "I", "RUF", "TID", "UP", "B", "FLY", "PTH", "ERA"]
+fixable = ["E", "W", "F", "I", "RUF", "TID", "UP", "B", "FLY", "PTH", "ERA"]
+ignore = []
+
+[tool.ruff.lint.isort]
+known-third-party = ["cognite.client"]
+
 [tool.ruff]
-# See https://beta.ruff.rs/docs/rules for an overview of ruff rules
 line-length = 120
 target-version = "py310"
 exclude = ["examples", "examples-pydantic-v1", "scripts"]
-select = ["E", "W", "F", "I", "RUF", "TID", "UP", "B", "FLY", "PTH", "ERA"]
-fixable = ["E", "W", "F", "I", "RUF", "TID", "UP", "B", "FLY", "PTH", "ERA"]
 fix = true
-ignore = []
 
-[tool.ruff.isort]
-known-third-party = ["cognite.client"]
 
 [tool.mypy]
 explicit_package_bases = true
@@ -60,7 +63,7 @@ rdflib = "*"
 pydantic = "^2"
 PyYAML = "*"
 requests = "*"
-urllib3 = "^1.26"
+urllib3 = "^2"
 openpyxl = "*"
 # Backport from Python 3.11
 exceptiongroup = { version = "^1.1.3", python = "<3.11" }
@@ -68,11 +71,11 @@ exceptiongroup = { version = "^1.1.3", python = "<3.11" }
 typing_extensions = { version = "^4.8", python = "<3.11" }
 tomli = { version = "^2.0.1", python = "<3.11" }
 
-uvicorn = { extras = ["standard"], version = "^0.21.0" }
-prometheus-client = "^0.17.0"
-cognite-sdk = "^7.13.8"
+uvicorn = { extras = ["standard"], version = "^0.29.0" }
+prometheus-client = "^0.20.0"
+cognite-sdk = "^7.37.0"
 deepdiff = "*"
-fastapi = "^0.100"
+fastapi = "^0.110"
 schedule = "^1"
 python-multipart = "^0.0.6"
 oxrdflib = { version = "^0.3.3", optional = true, extras = ["oxigraph"] }
@@ -121,10 +124,13 @@ all = [
 
 [tool.poetry.dev-dependencies]
 twine = "*"
-pytest = "*"
+# Today, 4. March 2024, the latest verson of pytest 8.1 (released yesterday) is not compatible with pytest-regressions
+# This limit should be removed when pytest-regressions is updated to be compatible with pytest 8.1 and beoynd.
+pytest = { version = ">=8.0, <8.1" }
 pytest-cov = "*"
 pytest-notebook = "*"
 pytest-freezegun = "*"
+pytest-xdist = "^3.6.1"
 pre-commit = "*"
 safety = "*"
 bandit = "*"
@@ -141,6 +147,10 @@ types-PyYAML = "^6"
 types-openpyxl = "^3"
 types-requests = "^2"
 types-setuptools = "^68"
+# Temporarily removing cognite-toolkit as we need version 0.1.2 to be released due to the
+# current strict upper bound on cognite-sdk.
+#cognite-toolkit = {git = "https://github.com/cognitedata/cdf-project-templates.git", branch = "main"}
+
 
 [build-system]
 requires = ["poetry>=0.12"]

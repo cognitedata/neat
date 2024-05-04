@@ -1,0 +1,49 @@
+name: 'Neat-CICD-Testing'
+sourceId: '{{source_id}}'
+metadata:
+  origin: 'cdf-project-templates'
+capabilities:
+  - assetsAcl:
+      actions:
+        - READ
+        - WRITE
+      scope:
+        all: {}
+  - timeSeriesAcl:
+      actions:
+        - READ
+        - WRITE
+      scope:
+        all: {}
+  - dataModelsAcl:
+      actions:
+        - READ
+        - WRITE
+      scope:
+        all: {}
+  - dataModelInstancesAcl:
+      actions:
+        - READ
+        - WRITE
+      scope:
+        all: {}
+  - datasetsAcl:
+      actions:
+        - READ
+        - WRITE
+        - OWNER
+      scope:
+        all: {}
+  - rawAcl:
+      actions:
+        - READ
+        - WRITE
+        - LIST
+      scope:
+        all: {}
+  - transformationsAcl:
+      actions:
+        - READ
+        - WRITE
+      scope:
+        all: {}

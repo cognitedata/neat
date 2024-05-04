@@ -7,7 +7,7 @@
 * **Configurables**:
   - *file_path*: workflows/openapi_to_rules/data/data.json
   - *fdm_compatibility_mode*: True
-* **Version**: 0.1.0-alpha
+* **Version**: private-alpha
 * **Docs URL**: [https://cognite-neat.readthedocs-hosted.com/en/latest/](https://cognite-neat.readthedocs-hosted.com/en/latest/)
 * **Source**: cognite
 
@@ -176,7 +176,7 @@
 * **Output**: FlowMessage
 * **Configurables**:
   - *output_file_path*: rules/custom-rules.xlsx
-* **Version**: 0.1.0-alpha
+* **Version**: private-alpha
 * **Docs URL**: [https://cognite-neat.readthedocs-hosted.com/en/latest/](https://cognite-neat.readthedocs-hosted.com/en/latest/)
 * **Source**: cognite
 
@@ -305,7 +305,7 @@
   - *json_object_labels_mapping*:
   - *namespace*: http://purl.org/cognite/neat#
   - *namespace_prefix*: neat
-* **Version**: 0.1.0-alpha
+* **Version**: private-alpha
 * **Docs URL**: [https://cognite-neat.readthedocs-hosted.com/en/latest/](https://cognite-neat.readthedocs-hosted.com/en/latest/)
 * **Source**: cognite
 
@@ -341,7 +341,7 @@
 
 ---
 
-## LoadTransformationRules
+## ExcelToRules
 
 * **Description**: This step loads transformation rules from the file or remote location
 * **Category**: Rules Parser
@@ -385,7 +385,7 @@
 * **Configurables**:
   - *openapi_spec_file_path*: workflows/openapi_to_rules/source_data/openapi.json
   - *fdm_compatibility_mode*: True
-* **Version**: 0.1.0-alpha
+* **Version**: private-alpha
 * **Docs URL**: [https://cognite-neat.readthedocs-hosted.com/en/latest/](https://cognite-neat.readthedocs-hosted.com/en/latest/)
 * **Source**: cognite
 

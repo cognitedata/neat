@@ -5,7 +5,7 @@ import BasicTabs from './MainContainer.tsx';
 import CssBaseline from '@mui/material/CssBaseline';
 
 function App() {
-  window.addEventListener("contextmenu", e => e.preventDefault());
+  // window.addEventListener("contextmenu", e => e.preventDefault());
   return (
     <div >
       <BasicTabs/>

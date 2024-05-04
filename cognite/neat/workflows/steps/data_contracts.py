@@ -4,9 +4,10 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes import Asset, AssetUpdate, Relationship, RelationshipUpdate
 from cognite.client.data_classes.data_modeling import EdgeApply, NodeApply
 
-from cognite.neat.graph.stores import NeatGraphStoreBase
-from cognite.neat.rules.exporter._rules2dms import DataModel
-from cognite.neat.rules.models.rules import Rules
+from cognite.neat.legacy.graph.stores import NeatGraphStoreBase
+from cognite.neat.legacy.rules.exporters._rules2dms import DMSSchemaComponents
+from cognite.neat.legacy.rules.models.rules import Rules
+from cognite.neat.rules.models.rules import DMSRules, DomainRules, InformationRules
 from cognite.neat.workflows.steps.step_model import DataContract
 
 
@@ -19,6 +20,23 @@ class RulesData(DataContract):
     """
 
     rules: Rules
+
+
+class MultiRuleData(DataContract):
+    domain: DomainRules | None = None
+    information: InformationRules | None = None
+    dms: DMSRules | None = None
+
+    @classmethod
+    def from_rules(cls, rules: DomainRules | InformationRules | DMSRules):
+        if isinstance(rules, DomainRules):
+            return cls(domain=rules)
+        elif isinstance(rules, InformationRules):
+            return cls(information=rules)
+        elif isinstance(rules, DMSRules):
+            return cls(dms=rules)
+        else:
+            raise ValueError(f"Unsupported rules type {type(rules)}")
 
 
 class PathData(DataContract):
@@ -111,12 +129,12 @@ class Edges(DataContract):
     edges: list[EdgeApply]
 
 
-class DMSDataModel(DataContract):
+class DMSSchemaComponentsData(DataContract):
     """
-    This represents DMS Data Model.
+    This represents DMS Schema Model.
 
     Args:
-        data_model: DMS data model.
+        components: DMS Schema Components model.
     """
 
-    data_model: DataModel
+    components: DMSSchemaComponents
