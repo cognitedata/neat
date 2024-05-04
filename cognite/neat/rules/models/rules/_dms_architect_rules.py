@@ -314,6 +314,14 @@ class DMSRules(BaseRules):
     containers: SheetList[DMSContainer] | None = Field(None, alias="Containers")
     reference: "DMSRules | None" = Field(None, alias="Reference")
 
+    @field_validator("reference")
+    def check_reference_of_reference(cls, value: "DMSRules | None") -> "DMSRules" | None:
+        if value is None:
+            return None
+        if value.reference is not None:
+            raise ValueError("Reference rules cannot have a reference")
+        return value
+
     @model_validator(mode="after")
     def consistent_container_properties(self) -> "DMSRules":
         container_properties_by_id: dict[tuple[ContainerEntity, str], list[tuple[int, DMSProperty]]] = defaultdict(list)
