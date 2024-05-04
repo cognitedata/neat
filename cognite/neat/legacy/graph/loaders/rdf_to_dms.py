@@ -156,7 +156,6 @@ class DMSLoader(CogniteLoader[InstanceApply]):
             _micro_batch_push(
                 client, edges, batch_size, message="Upload", max_retries=max_retries, retry_delay=retry_delay
             )
-        raise NotImplementedError
 
     def as_nodes_and_edges(
         self, stop_on_exception: bool = False
