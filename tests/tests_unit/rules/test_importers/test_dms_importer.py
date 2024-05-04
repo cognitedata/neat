@@ -45,7 +45,9 @@ class TestDMSImporter:
         rules, issues = dms_importer.to_rules(errors="continue")
         assert len(issues) == 0
         assert isinstance(rules, DMSRules)
-        assert rules.model_dump() == dms_rules.model_dump()
+        # This information is lost in the conversion to schema
+        exclude = {"metadata": {"created", "updated"}, "properties": {"__all__": "reference"}}
+        assert rules.model_dump(exclude=exclude) == dms_rules.model_dump(exclude=exclude)
 
 
 SCHEMA_WITH_DIRECT_RELATION_NONE = DMSSchema()
