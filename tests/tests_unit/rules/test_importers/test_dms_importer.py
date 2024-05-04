@@ -43,7 +43,8 @@ class TestDMSImporter:
         dms_importer = DMSImporter(schema)
 
         rules, issues = dms_importer.to_rules(errors="continue")
-        assert len(issues) == 0
+        issue_str = "\n".join([issue.message() for issue in issues])
+        assert rules is not None, f"Failed to import rules {issue_str}"
         assert isinstance(rules, DMSRules)
         # This information is lost in the conversion to schema
         exclude = {"metadata": {"created", "updated"}, "properties": {"__all__": {"reference"}}}

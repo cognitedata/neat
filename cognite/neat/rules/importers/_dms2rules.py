@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Literal, cast, overload
 
@@ -16,7 +17,7 @@ from cognite.client.utils import ms_to_datetime
 
 from cognite.neat.rules import issues
 from cognite.neat.rules.importers._base import BaseImporter, Rules, _handle_issues
-from cognite.neat.rules.issues import IssueList
+from cognite.neat.rules.issues import IssueList, ValidationIssue
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import (
     ClassEntity,
@@ -38,10 +39,15 @@ from cognite.neat.rules.models.rules._dms_architect_rules import (
 
 
 class DMSImporter(BaseImporter):
-    def __init__(self, schema: DMSSchema, metadata: DMSMetadata | None = None):
+    def __init__(
+        self,
+        schema: DMSSchema,
+        read_issues: Sequence[ValidationIssue] | None = None,
+        metadata: DMSMetadata | None = None,
+    ):
         self.schema = schema
         self.metadata = metadata
-        self.issue_list = IssueList()
+        self.issue_list = IssueList(read_issues)
         self._container_by_id = {container.as_id(): container for container in schema.containers}
 
     @classmethod
@@ -78,17 +84,17 @@ class DMSImporter(BaseImporter):
             description=description,
             default_view_version=data_model.version or "0.1.0",
         )
-        return cls(schema, metadata)
+        return cls(schema, [], metadata)
 
     @classmethod
     def from_directory(cls, directory: str | Path) -> "DMSImporter":
-        return cls(DMSSchema.from_directory(directory))
+        return cls(DMSSchema.from_directory(directory), [])
 
     @classmethod
     def from_zip_file(cls, zip_file: str | Path) -> "DMSImporter":
         if Path(zip_file).suffix != ".zip":
             raise ValueError("File extension is not .zip")
-        return cls(DMSSchema.from_zip(zip_file))
+        return cls(DMSSchema.from_zip(zip_file), [])
 
     @overload
     def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules: ...
@@ -264,16 +270,16 @@ class DMSImporter(BaseImporter):
             self.issue_list.append(issues.importing.FailedToInferValueTypeWarning(str(view_entity), prop_id))
             return None
 
-    def _get_nullable(self, prop: ViewPropertyApply) -> bool:
+    def _get_nullable(self, prop: ViewPropertyApply) -> bool | None:
         if isinstance(prop, dm.MappedPropertyApply):
             return self._container_prop_unsafe(prop).nullable
         else:
-            return False
+            return None
 
     def _get_is_list(self, prop: ViewPropertyApply) -> bool | None:
         if isinstance(prop, dm.MappedPropertyApply):
             return self._container_prop_unsafe(prop).type.is_list
-        elif isinstance(prop, MultiReverseDirectRelationApply | MultiReverseDirectRelationApply):
+        elif isinstance(prop, MultiEdgeConnectionApply | MultiReverseDirectRelationApply):
             return True
         elif isinstance(prop, SingleEdgeConnectionApply | SingleReverseDirectRelationApply):
             return False
@@ -282,9 +288,10 @@ class DMSImporter(BaseImporter):
 
     def _get_default(self, prop: ViewPropertyApply) -> str | None:
         if isinstance(prop, dm.MappedPropertyApply):
-            return str(self._container_prop_unsafe(prop).default_value)
-        else:
-            return None
+            default = self._container_prop_unsafe(prop).default_value
+            if default is not None:
+                return str(default)
+        return None
 
     def _get_index(self, prop: ViewPropertyApply, prop_id) -> list[str] | None:
         if not isinstance(prop, dm.MappedPropertyApply):
