@@ -167,7 +167,7 @@ The spreadsheet templates for the `Rules` object per role are accessible through
     | Name               | Human readable name of the property                                                                                              |                                           | No        |
     | Description        | Short description of the property                                                                                                |                                           | Yes       |
     | Value Type         | Value type that the property can hold. It takes either subset of CDF primitive types (see note below) or a View id (== Class id) | CDF Primitive Types of ViewID/ClassID     | Yes       |
-    | Relation           | Only applies to relationships between classes (== views). It specify how relationship should be implemented in CDF.              | `direct`, `reversedirect`, or `multiedge` | No        |
+    | Relation           | Only applies to relationships between classes (== views). It specify how relationship should be implemented in CDF.              | `direct`, `edge`, or `reverse`            | No        |
     | Nullable           | Used to indicate whether the property is required or not. Only applies to primitive type.                                        |                                           | No        |
     | IsList             | Used to indicate whether the property holds single or multiple values (list). Only applies to primitive types                    |                                           | No        |
     | Default            | Specifies default value for the property.                                                                                        |                                           | No        |
@@ -186,6 +186,9 @@ The spreadsheet templates for the `Rules` object per role are accessible through
 
     !!! tip annotate "Usage"
         More details on **DMS Architect** Profile **Properties sheet**  usage can be found [here](../tutorials/data-modeling-lifecycle/part-1-knowledge-acquisition.md#dms-architect-properties)!
+
+    !!! tip annotate "Details"
+        More details can be found [here](dmsrules.md#properties)!
 
 
 ## Views sheet
