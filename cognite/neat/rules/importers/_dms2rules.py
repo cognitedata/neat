@@ -155,6 +155,8 @@ class DMSImporter(BaseImporter):
 
         metadata = self.metadata or DMSMetadata.from_data_model(data_model)
         metadata.data_model_type = self._infer_data_model_type(metadata.space)
+        if ref_properties:
+            metadata.schema_ = SchemaCompleteness.extended
 
         with _handle_issues(
             self.issue_list,
