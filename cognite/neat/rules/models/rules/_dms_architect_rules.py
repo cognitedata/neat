@@ -678,9 +678,8 @@ class _DMSExporter:
 
     def to_schema(self) -> DMSSchema:
         rules = self.rules
-        container_properties_by_id, view_properties_by_id = self._gather_properties(rules)
-
-        containers = self._create_containers(rules.containers, container_properties_by_id)
+        container_properties_by_id, view_properties_by_id = self._gather_properties()
+        containers = self._create_containers(container_properties_by_id)
 
         views, node_types = self._create_views_with_node_types(
             rules.views, view_properties_by_id, rules.metadata.data_model_type
@@ -916,10 +915,11 @@ class _DMSExporter:
 
     def _create_containers(
         self,
-        dms_container: SheetList[DMSContainer] | None,
         container_properties_by_id: dict[dm.ContainerId, list[DMSProperty]],
     ) -> dm.ContainerApplyList:
-        containers = dm.ContainerApplyList([dms_container.as_container() for dms_container in dms_container or []])
+        containers = dm.ContainerApplyList(
+            [dms_container.as_container() for dms_container in self.rules.containers or []]
+        )
         container_to_drop = set()
         for container in containers:
             container_id = container.as_id()
@@ -935,26 +935,14 @@ class _DMSExporter:
                 else:
                     type_cls = dm.DirectRelation
 
-                prop_id = prop.container_property
-
-                if type_cls is dm.DirectRelation:
-                    container.properties[prop_id] = dm.ContainerProperty(
-                        type=dm.DirectRelation(),
-                        nullable=prop.nullable if prop.nullable is not None else True,
-                        default_value=prop.default,
-                        name=prop.name,
-                        description=prop.description,
-                    )
-                else:
-                    type_: CognitePropertyType
-                    type_ = type_cls(is_list=prop.is_list or False)
-                    container.properties[prop_id] = dm.ContainerProperty(
-                        type=type_,
-                        nullable=prop.nullable if prop.nullable is not None else True,
-                        default_value=prop.default,
-                        name=prop.name,
-                        description=prop.description,
-                    )
+                type_ = type_cls(is_list=prop.is_list or False)
+                container.properties[prop.container_property] = dm.ContainerProperty(
+                    type=type_,
+                    nullable=prop.nullable if prop.nullable is not None else True,
+                    default_value=prop.default,
+                    name=prop.name,
+                    description=prop.description,
+                )
 
             uniqueness_properties: dict[str, set[str]] = defaultdict(set)
             for prop in container_properties:
@@ -987,26 +975,14 @@ class _DMSExporter:
             [container for container in containers if container.as_id() not in container_to_drop]
         )
 
-    def _gather_properties(
-        self, rules: DMSRules
-    ) -> tuple[dict[dm.ContainerId, list[DMSProperty]], dict[dm.ViewId, list[DMSProperty]]]:
+    def _gather_properties(self) -> tuple[dict[dm.ContainerId, list[DMSProperty]], dict[dm.ViewId, list[DMSProperty]]]:
         container_properties_by_id: dict[dm.ContainerId, list[DMSProperty]] = defaultdict(list)
         view_properties_by_id: dict[dm.ViewId, list[DMSProperty]] = defaultdict(list)
-        for prop in rules.properties:
+        for prop in self.rules.properties:
             view_id = prop.view.as_id()
             view_properties_by_id[view_id].append(prop)
 
             if prop.container and prop.container_property:
-                if prop.relation == "direct" and prop.is_list:
-                    warnings.warn(
-                        issues.dms.DirectRelationListWarning(
-                            container_id=prop.container.as_id(),
-                            view_id=prop.view.as_id(),
-                            property=prop.container_property,
-                        ),
-                        stacklevel=2,
-                    )
-                    continue
                 container_id = prop.container.as_id()
                 container_properties_by_id[container_id].append(prop)
 
