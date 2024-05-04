@@ -315,7 +315,7 @@ class DMSRules(BaseRules):
     reference: "DMSRules | None" = Field(None, alias="Reference")
 
     @field_validator("reference")
-    def check_reference_of_reference(cls, value: "DMSRules | None") -> "DMSRules" | None:
+    def check_reference_of_reference(cls, value: "DMSRules | None") -> "DMSRules | None":
         if value is None:
             return None
         if value.reference is not None:
@@ -621,10 +621,10 @@ class _DMSExporter:
         self.include_pipeline = include_pipeline
         self.instance_space = instance_space
         self.rules = rules
-        ref_schema = rules.reference.as_schema() if rules.reference else None
-        if ref_schema:
+        self._ref_schema = rules.reference.as_schema() if rules.reference else None
+        if self._ref_schema:
             # We skip version as that will always be missing in the reference
-            self._ref_views_by_id = {dm.ViewId(view.space, view.external_id): view for view in ref_schema.views}
+            self._ref_views_by_id = {dm.ViewId(view.space, view.external_id): view for view in self._ref_schema.views}
         else:
             self._ref_views_by_id = {}
 
@@ -653,6 +653,16 @@ class _DMSExporter:
         )
         if self.include_pipeline:
             return PipelineSchema.from_dms(output, self.instance_space)
+
+        if self._ref_schema:
+            output.frozen_ids.update(self._ref_schema.node_types.as_ids())
+            output.frozen_ids.update(self._ref_schema.views.as_ids())
+            output.frozen_ids.update(self._ref_schema.containers.as_ids())
+            output.node_types.extend(self._ref_schema.node_types)
+            output.views.extend(self._ref_schema.views)
+            output.containers.extend(self._ref_schema.containers)
+            output.data_models.extend(self._ref_schema.data_models)
+
         return output
 
     def _create_spaces(

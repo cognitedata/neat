@@ -1,4 +1,6 @@
+from collections import Counter
 from collections.abc import Sequence
+from datetime import datetime
 from pathlib import Path
 from typing import Literal, cast, overload
 
@@ -65,26 +67,38 @@ class DMSImporter(BaseImporter):
         if len(data_models) == 0:
             raise ValueError(f"Data model {data_model_id} not found")
         data_model = data_models.latest_version()
+
         schema = DMSSchema.from_data_model(client, data_model)
-        description, creator = DMSMetadata._get_description_and_creator(data_model.description)
 
         created = ms_to_datetime(data_model.created_time)
         updated = ms_to_datetime(data_model.last_updated_time)
 
-        metadata = DMSMetadata(
+        metadata = cls._create_metadata_from_model(data_model, created, updated)
+
+        return cls(schema, [], metadata)
+
+    @classmethod
+    def _create_metadata_from_model(
+        cls,
+        model: dm.DataModel[dm.View] | dm.DataModelApply,
+        created: datetime | None = None,
+        updated: datetime | None = None,
+    ) -> DMSMetadata:
+        description, creator = DMSMetadata._get_description_and_creator(model.description)
+        now = datetime.now().replace(microsecond=0)
+        return DMSMetadata(
             schema_=SchemaCompleteness.complete,
             extension=ExtensionCategory.addition,
-            space=data_model.space,
-            external_id=data_model.external_id,
-            name=data_model.name or data_model.external_id,
-            version=data_model.version or "0.1.0",
-            updated=updated,
-            created=created,
+            space=model.space,
+            external_id=model.external_id,
+            name=model.name or model.external_id,
+            version=model.version or "0.1.0",
+            updated=updated or now,
+            created=created or now,
             creator=creator,
             description=description,
-            default_view_version=data_model.version or "0.1.0",
+            default_view_version=model.version or "0.1.0",
         )
-        return cls(schema, [], metadata)
 
     @classmethod
     def from_directory(cls, directory: str | Path) -> "DMSImporter":
@@ -111,7 +125,7 @@ class DMSImporter(BaseImporter):
             self.issue_list.append(issues.importing.NoDataModelError("No data model found."))
             return self._return_or_raise(self.issue_list, errors)
 
-        if len(self.schema.data_models) > 1:
+        if len(self.schema.data_models) > 2:
             # Creating a DataModelEntity to convert the data model id to a string.
             self.issue_list.append(
                 issues.importing.MultipleDataModelsWarning(
@@ -122,13 +136,18 @@ class DMSImporter(BaseImporter):
         data_model = self.schema.data_models[0]
 
         properties = SheetList[DMSProperty]()
+        ref_properties = SheetList[DMSProperty]()
         for view in self.schema.views:
-            view_entity = ViewEntity.from_id(view.as_id())
+            view_id = view.as_id()
+            view_entity = ViewEntity.from_id(view_id)
             class_entity = view_entity.as_class()
             for prop_id, prop in (view.properties or {}).items():
                 dms_property = self._create_dms_property(prop_id, prop, view_entity, class_entity)
                 if dms_property is not None:
-                    properties.append(dms_property)
+                    if view_id in self.schema.frozen_ids:
+                        ref_properties.append(dms_property)
+                    else:
+                        properties.append(dms_property)
 
         data_model_view_ids: set[dm.ViewId] = {
             view.as_id() if isinstance(view, dm.View | dm.ViewApply) else view for view in data_model.views or []
@@ -140,24 +159,76 @@ class DMSImporter(BaseImporter):
         with _handle_issues(
             self.issue_list,
         ) as future:
-            dms_rules = DMSRules(
+            user_rules = DMSRules(
                 metadata=metadata,
                 properties=properties,
                 containers=SheetList[DMSContainer](
-                    data=[DMSContainer.from_container(container) for container in self.schema.containers]
+                    data=[
+                        DMSContainer.from_container(container)
+                        for container in self.schema.containers
+                        if container.as_id() not in self.schema.frozen_ids
+                    ]
                 ),
                 views=SheetList[DMSView](
                     data=[
                         DMSView.from_view(view, in_model=view.as_id() in data_model_view_ids)
                         for view in self.schema.views
+                        if view.as_id() not in self.schema.frozen_ids
                     ]
                 ),
+                reference=self._create_reference_rules(ref_properties),
             )
 
         if future.result == "failure" or self.issue_list.has_errors:
             return self._return_or_raise(self.issue_list, errors)
 
-        return self._to_output(dms_rules, self.issue_list, errors, role)
+        return self._to_output(user_rules, self.issue_list, errors, role)
+
+    def _create_reference_rules(self, properties: SheetList[DMSProperty]) -> DMSRules | None:
+        if not properties:
+            return None
+
+        if self.schema.data_models == 2:
+            data_model = self.schema.data_models[1]
+            data_model_view_ids: set[dm.ViewId] = {
+                view.as_id() if isinstance(view, dm.View | dm.ViewApply) else view for view in data_model.views or []
+            }
+            metadata = self._create_metadata_from_model(data_model)
+        else:
+            data_model_view_ids = set()
+            now = datetime.now().replace(microsecond=0)
+            space = Counter(prop.view.space for prop in properties).most_common(1)[0][0]
+            metadata = DMSMetadata(
+                schema_=SchemaCompleteness.complete,
+                extension=ExtensionCategory.addition,
+                space=space,
+                external_id="Unknown",
+                version="0.1.0",
+                creator=["Unknown"],
+                created=now,
+                updated=now,
+            )
+
+        metadata.data_model_type = DataModelType.enterprise
+        return DMSRules(
+            metadata=metadata,
+            properties=properties,
+            views=SheetList[DMSView](
+                data=[
+                    DMSView.from_view(view, in_model=not data_model_view_ids or (view.as_id() in data_model_view_ids))
+                    for view in self.schema.views
+                    if view.as_id() in self.schema.frozen_ids
+                ]
+            ),
+            containers=SheetList[DMSContainer](
+                data=[
+                    DMSContainer.from_container(container)
+                    for container in self.schema.containers
+                    if container.as_id() in self.schema.frozen_ids
+                ]
+            ),
+            reference=None,
+        )
 
     def _infer_data_model_type(self, space: str) -> DataModelType:
         if self.schema.referenced_spaces() - {space}:
