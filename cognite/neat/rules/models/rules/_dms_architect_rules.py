@@ -989,7 +989,7 @@ class _DMSExporter:
 
             if reverse_prop.relation == "edge":
                 inwards_edge_cls = (
-                    dm.MultiEdgeConnectionApply if reverse_prop.is_list in [True, None] else SingleEdgeConnectionApply
+                    dm.MultiEdgeConnectionApply if prop.is_list in [True, None] else SingleEdgeConnectionApply
                 )
                 return inwards_edge_cls(
                     type=self._create_edge_type_from_prop(reverse_prop),
@@ -1000,9 +1000,7 @@ class _DMSExporter:
                 )
             elif reverse_prop.relation == "direct":
                 reverse_direct_cls = (
-                    dm.MultiReverseDirectRelationApply
-                    if reverse_prop.is_list is True
-                    else SingleReverseDirectRelationApply
+                    dm.MultiReverseDirectRelationApply if prop.is_list is True else SingleReverseDirectRelationApply
                 )
                 return reverse_direct_cls(
                     source=source_view_id,
