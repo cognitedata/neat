@@ -14,6 +14,7 @@ from cognite.client.data_classes import DatabaseWrite, DatabaseWriteList, Transf
 from cognite.client.data_classes.data_modeling import ViewApply
 from cognite.client.data_classes.transformations.common import Edges, EdgeType, Nodes, ViewInfo
 
+from cognite.neat.rules import issues
 from cognite.neat.rules.issues.dms import (
     ContainerPropertyUsedMultipleTimesError,
     DirectRelationMissingSourceWarning,
@@ -117,7 +118,14 @@ class DMSSchema:
                 resource_type = yaml_file.stem.rsplit(".", 1)[-1]
                 if attr_name := cls._FIELD_NAME_BY_RESOURCE_TYPE.get(resource_type):
                     data.setdefault(attr_name, [])
-                    loaded = yaml.safe_load(yaml_file.read_text())
+
+                    try:
+                        # Using CSafeLoader over safe_load for ~10x speedup
+                        loaded = yaml.CSafeLoader(yaml_file.read_text()).get_data()
+                    except Exception as e:
+                        warnings.warn(issues.fileread.InvalidFileFormatWarning(yaml_file, str(e)), stacklevel=2)
+                        continue
+
                     if isinstance(loaded, list):
                         data[attr_name].extend(loaded)
                     else:
@@ -199,7 +207,12 @@ class DMSSchema:
                     resource_type = filename.stem.rsplit(".", 1)[-1]
                     if attr_name := cls._FIELD_NAME_BY_RESOURCE_TYPE.get(resource_type):
                         data.setdefault(attr_name, [])
-                        loaded = yaml.safe_load(zip_ref.read(file_info).decode())
+                        try:
+                            # Using CSafeLoader over safe_load for ~10x speedup
+                            loaded = yaml.CSafeLoader(zip_ref.read(file_info).decode()).get_data()
+                        except Exception as e:
+                            warnings.warn(issues.fileread.InvalidFileFormatWarning(filename, str(e)), stacklevel=2)
+                            continue
                         if isinstance(loaded, list):
                             data[attr_name].extend(loaded)
                         else:
@@ -237,7 +250,11 @@ class DMSSchema:
     def load(cls, data: str | dict[str, Any]) -> Self:
         if isinstance(data, str):
             # YAML is a superset of JSON, so we can use the same parser
-            data_dict = yaml.safe_load(data)
+            try:
+                # Using CSafeLoader over safe_load for ~10x speedup
+                data_dict = yaml.CSafeLoader(data).get_data()
+            except Exception as e:
+                raise issues.fileread.FailedStringLoadError(".yaml", str(e)) from None
         else:
             data_dict = data
         loaded: dict[str, Any] = {}

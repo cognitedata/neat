@@ -58,7 +58,7 @@ class ValidationIssue(ABC):
 
 
 @dataclass(frozen=True)
-class NeatValidationError(ValidationIssue, ABC):
+class NeatValidationError(ValidationIssue, ABC, Exception):
     def dump(self) -> dict[str, Any]:
         return {"error": type(self).__name__}
 

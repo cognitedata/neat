@@ -22,6 +22,7 @@ __all__ = [
     "MissingParentDefinitionError",
     "MissingIdentifierError",
     "UnsupportedPropertyTypeError",
+    "APIError",
 ]
 
 
@@ -254,6 +255,20 @@ class ModelImportError(NeatValidationError, ABC):
 class NoDataModelError(ModelImportError):
     description = "No data model found.."
     fix = "Check if the data model exists in the source."
+
+    error_message: str
+
+    def message(self) -> str:
+        return self.error_message
+
+    def dump(self) -> dict[str, str]:
+        return {"error_message": self.error_message}
+
+
+@dataclass(frozen=True)
+class APIError(ModelImportError):
+    description = "An error was raised during importing."
+    fix = "No fix is available."
 
     error_message: str
 

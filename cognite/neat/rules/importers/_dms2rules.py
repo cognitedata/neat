@@ -65,10 +65,13 @@ class DMSImporter(BaseImporter):
         """
         data_models = client.data_modeling.data_models.retrieve(data_model_id, inline_views=True)
         if len(data_models) == 0:
-            raise ValueError(f"Data model {data_model_id} not found")
+            return cls(DMSSchema(), [issues.importing.NoDataModelError(f"Data model {data_model_id} not found")])
         data_model = data_models.latest_version()
 
-        schema = DMSSchema.from_data_model(client, data_model)
+        try:
+            schema = DMSSchema.from_data_model(client, data_model)
+        except Exception as e:
+            return cls(DMSSchema(), [issues.importing.APIError(str(e))])
 
         created = ms_to_datetime(data_model.created_time)
         updated = ms_to_datetime(data_model.last_updated_time)
@@ -102,13 +105,20 @@ class DMSImporter(BaseImporter):
 
     @classmethod
     def from_directory(cls, directory: str | Path) -> "DMSImporter":
-        return cls(DMSSchema.from_directory(directory), [])
+        issue_list = IssueList()
+        with _handle_issues(issue_list) as _:
+            schema = DMSSchema.from_directory(directory)
+        # If there were errors during the import, the to_rules
+        return cls(schema, issue_list)
 
     @classmethod
     def from_zip_file(cls, zip_file: str | Path) -> "DMSImporter":
         if Path(zip_file).suffix != ".zip":
-            raise ValueError("File extension is not .zip")
-        return cls(DMSSchema.from_zip(zip_file), [])
+            return cls(DMSSchema(), [issues.fileread.InvalidFileFormatError(Path(zip_file), [".zip"])])
+        issue_list = IssueList()
+        with _handle_issues(issue_list) as _:
+            schema = DMSSchema.from_zip(zip_file)
+        return cls(schema, issue_list)
 
     @overload
     def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules: ...
@@ -121,6 +131,10 @@ class DMSImporter(BaseImporter):
     def to_rules(
         self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
     ) -> tuple[Rules | None, IssueList] | Rules:
+        if self.issue_list.has_errors:
+            # In case there were errors during the import, the to_rules method will return None
+            return self._return_or_raise(self.issue_list, errors)
+
         if len(self.schema.data_models) == 0:
             self.issue_list.append(issues.importing.NoDataModelError("No data model found."))
             return self._return_or_raise(self.issue_list, errors)
