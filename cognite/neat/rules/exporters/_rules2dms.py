@@ -259,7 +259,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
             else:
                 raise ValueError(f"Unsupported existing_handling {self.existing_handling}")
 
-            if not self.suppress_warnings and self._input_rules:
+            if self._input_rules:
                 warning_list = self._validate(loader, items, self._input_rules)
                 issue_list.extend(warning_list)
 
@@ -328,9 +328,27 @@ class DMSExporter(CDFExporter[DMSSchema]):
         if isinstance(loader, DataModelLoader):
             models = cast(DataModelApplyList, items)
             if other_models := self._exist_other_data_models(loader, models):
-                issue_list.append(issues.dms.OtherDataModelsInSpaceWarning(rules.metadata.space, other_models))
+                warning = issues.dms.OtherDataModelsInSpaceWarning(rules.metadata.space, other_models)
+                if not self.suppress_warnings:
+                    warnings.warn(warning, stacklevel=2)
+                issue_list.append(warning)
 
         return issue_list
 
-    def _exist_other_data_models(self, loader: DataModelLoader, models: DataModelApplyList) -> list[DataModelId]:
-        raise NotImplementedError("Not implemented")
+    @classmethod
+    def _exist_other_data_models(cls, loader: DataModelLoader, models: DataModelApplyList) -> list[DataModelId]:
+        if not models:
+            return []
+        space = models[0].space
+        external_id = models[0].external_id
+        try:
+            data_models = loader.client.data_modeling.data_models.list(space=space, limit=25, all_versions=False)
+        except CogniteAPIError as e:
+            warnings.warn(issues.importing.APIWarning(str(e)), stacklevel=2)
+            return []
+        else:
+            return [
+                data_model.as_id()
+                for data_model in data_models
+                if (data_model.space, data_model.external_id) != (space, external_id)
+            ]
