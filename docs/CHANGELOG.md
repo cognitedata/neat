@@ -15,6 +15,12 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## TBD
+### Removed
+[BREAKING]
+- In `DMSRules`, `default_view_version` is no longer supported. Instead, you will now get a warning if view versions
+  are not matching the data model version.
+
 ## [0.77.0] - 04-05-24
 ### Added/Changed
 [BREAKING]
