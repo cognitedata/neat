@@ -4,10 +4,13 @@ from pathlib import Path
 from typing import Literal, TypeAlias, cast
 
 from cognite.client import CogniteClient
-from cognite.client.data_classes._base import CogniteResourceList
+from cognite.client.data_classes._base import CogniteResource, CogniteResourceList
+from cognite.client.data_classes.data_modeling import DataModelApplyList, DataModelId
 from cognite.client.exceptions import CogniteAPIError
 
+from cognite.neat.rules import issues
 from cognite.neat.rules._shared import Rules
+from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models.rules import InformationRules
 from cognite.neat.rules.models.rules._base import ExtensionCategory, SheetList
 from cognite.neat.rules.models.rules._dms_architect_rules import DMSContainer, DMSRules
@@ -43,6 +46,8 @@ class DMSExporter(CDFExporter[DMSSchema]):
         export_pipeline (bool, optional): Whether to export the pipeline. Defaults to False. This means setting
             up transformations, RAW databases and tables to populate the data model.
         instance_space (str, optional): The space to use for the instance. Defaults to None.
+        suppress_warnings (bool, optional): Suppress warnings. Defaults to False.
+
     ... note::
 
         - "fail": If any component already exists, the export will fail.
@@ -59,13 +64,16 @@ class DMSExporter(CDFExporter[DMSSchema]):
         existing_handling: Literal["fail", "skip", "update", "force"] = "update",
         export_pipeline: bool = False,
         instance_space: str | None = None,
+        suppress_warnings: bool = False,
     ):
         self.export_components = {export_components} if isinstance(export_components, str) else set(export_components)
         self.include_space = include_space
         self.existing_handling = existing_handling
         self.export_pipeline = export_pipeline
         self.instance_space = instance_space
+        self.suppress_warnings = suppress_warnings
         self._schema: DMSSchema | None = None
+        self._input_rules: DMSRules | None = None
 
     def export_to_file(self, rules: Rules, filepath: Path) -> None:
         """Export the rules to a file(s).
@@ -149,6 +157,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
             # in case, for example, new properties are added. The validation will catch this.
             schema.frozen_ids.update(set(reference_schema.containers.as_ids()))
             schema.frozen_ids.update(set(reference_schema.node_types.as_ids()))
+        self._input_rules = dms_rules
         return schema
 
     def delete_from_cdf(self, rules: Rules, client: CogniteClient, dry_run: bool = False) -> Iterable[UploadResult]:
@@ -206,6 +215,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
         redeploy_data_model = False
 
         for all_items, loader in to_export:
+            issue_list = IssueList()
             all_item_ids = loader.get_ids(all_items)
             skipped = sum(1 for item_id in all_item_ids if item_id in schema.frozen_ids)
             item_ids = [item_id for item_id in all_item_ids if item_id not in schema.frozen_ids]
@@ -249,6 +259,10 @@ class DMSExporter(CDFExporter[DMSSchema]):
             else:
                 raise ValueError(f"Unsupported existing_handling {self.existing_handling}")
 
+            if not self.suppress_warnings and self._input_rules:
+                warning_list = self._validate(loader, items, self._input_rules)
+                issue_list.extend(warning_list)
+
             error_messages: list[str] = []
             if not dry_run:
                 if to_delete:
@@ -284,6 +298,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
                 failed_created=failed_created,
                 failed_changed=failed_changed,
                 error_messages=error_messages,
+                issues=issue_list,
             )
 
             if loader.resource_name == "views" and (created or changed) and not redeploy_data_model:
@@ -307,3 +322,15 @@ class DMSExporter(CDFExporter[DMSSchema]):
             to_export.append((schema.raw_tables, RawTableLoader(client)))
             to_export.append((schema.transformations, TransformationLoader(client)))
         return schema, to_export
+
+    def _validate(self, loader: ResourceLoader, items: list[CogniteResource], rules: DMSRules) -> IssueList:
+        issue_list = IssueList()
+        if isinstance(loader, DataModelLoader):
+            models = cast(DataModelApplyList, items)
+            if other_models := self._exist_other_data_models(loader, models):
+                issue_list.append(issues.dms.OtherDataModelsInSpaceWarning(rules.metadata.space, other_models))
+
+        return issue_list
+
+    def _exist_other_data_models(self, loader: DataModelLoader, models: DataModelApplyList) -> list[DataModelId]:
+        raise NotImplementedError("Not implemented")

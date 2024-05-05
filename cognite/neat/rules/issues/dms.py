@@ -462,3 +462,47 @@ class HasDataFilterOnViewWithReferencesWarning(DMSSchemaWarning):
         output["view_id"] = self.view_id.dump()
         output["references"] = [view.dump() for view in sorted(self.references, key=lambda x: x.as_tuple())]
         return output
+
+
+@dataclass(frozen=True)
+class OtherDataModelsInSpaceWarning(DMSSchemaWarning):
+    description = "The space contains other data models"
+    fix = "Move the data models to their respective spaces."
+    error_name: ClassVar[str] = "OtherDataModelsInSpaceWarning"
+    space: str
+    data_models: list[dm.DataModelId]
+
+    def message(self) -> str:
+        return (
+            f"The space {self.space} contains data models from other spaces: {self.data_models}. {self.fix}"
+            " It is recommended to only have one data model per space. This avoid potential conflicts and "
+            "makes it easier to manage the data models."
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["space"] = self.space
+        output["data_models"] = [data_model.dump() for data_model in self.data_models]
+        return output
+
+
+@dataclass(frozen=True)
+class SolutionOnTopOfSolutionModelWarning(DMSSchemaWarning):
+    description = "The data model is a solution on top of another solution"
+    fix = "Use the base solution as the data model"
+    error_name: ClassVar[str] = "SolutionOnTopOfSolutionModelWarning"
+    data_model: dm.DataModelId
+    base_data_model: dm.DataModelId
+
+    def message(self) -> str:
+        return (
+            f"The data model {self.data_model} is a solution on top of another solution {self.base_data_model}. "
+            "This is not recommended as it can lead to confusion and errors. It is very hard to maintain a nested "
+            "structure of solution models. Instead, only build solution models on top of enterprise models."
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["data_model"] = self.data_model.dump()
+        output["base_data_model"] = self.base_data_model.dump()
+        return output
