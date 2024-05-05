@@ -325,6 +325,15 @@ class DMSRules(BaseRules):
             raise ValueError("Reference rules cannot have a reference")
         return value
 
+    @field_validator("views")
+    def matching_version(cls, value: SheetList[DMSView], info: ValidationInfo) -> SheetList[DMSView]:
+        if not (metadata := info.data.get("metadata")):
+            return value
+        model_version = metadata.version
+        if different_version := [view.view.as_id() for view in value if view.view.version != model_version]:
+            warnings.warn(issues.dms.ViewModelVersionNotMatching(different_version, model_version), stacklevel=2)
+        return value
+
     @model_validator(mode="after")
     def consistent_container_properties(self) -> "DMSRules":
         container_properties_by_id: dict[tuple[ContainerEntity, str], list[tuple[int, DMSProperty]]] = defaultdict(list)
