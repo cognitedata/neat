@@ -331,7 +331,7 @@ class DMSRules(BaseRules):
             return value
         model_version = metadata.version
         if different_version := [view.view.as_id() for view in value if view.view.version != model_version]:
-            warnings.warn(issues.dms.ViewModelVersionNotMatching(different_version, model_version), stacklevel=2)
+            warnings.warn(issues.dms.ViewModelVersionNotMatchingWarning(different_version, model_version), stacklevel=2)
         return value
 
     @model_validator(mode="after")

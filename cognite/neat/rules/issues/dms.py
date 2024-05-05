@@ -17,7 +17,7 @@ __all__ = [
     "MissingSourceViewError",
     "MissingEdgeViewError",
     "DirectRelationMissingSourceWarning",
-    "ViewModelVersionNotMatching",
+    "ViewModelVersionNotMatchingWarning",
     "DuplicatedViewInDataModelError",
     "ContainerPropertyUsedMultipleTimesError",
     "EmptyContainerWarning",
@@ -203,7 +203,7 @@ class DirectRelationMissingSourceWarning(DMSSchemaWarning):
 
 
 @dataclass(frozen=True)
-class ViewModelVersionNotMatching(DMSSchemaWarning):
+class ViewModelVersionNotMatchingWarning(DMSSchemaWarning):
     description = "The view model version does not match the data model version"
     fix = "Update the view model version to match the data model version"
     error_name: ClassVar[str] = "ViewModelVersionNotMatching"
