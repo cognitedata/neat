@@ -222,8 +222,10 @@ class DMSProperty(SheetEntity):
             raise ValueError(f"Direct relation must have a value type that points to a view, got {value}")
         elif relation == "edge" and not isinstance(value, ViewEntity):
             raise ValueError(f"Edge relation must have a value type that points to a view, got {value}")
-        elif relation == "reverse" and not isinstance(value, ViewPropertyEntity):
-            raise ValueError(f"Reverse relation must have a value type that points to a view property, got {value}")
+        elif relation == "reverse" and not isinstance(value, ViewPropertyEntity | ViewEntity):
+            raise ValueError(
+                f"Reverse relation must have a value type that points to a view or view property, got {value}"
+            )
         return value
 
     @field_serializer("value_type", when_used="always")
@@ -920,58 +922,58 @@ class _DMSExporter:
                 description=prop.description,
             )
         elif prop.relation == "reverse":
+            reverse_prop_id: str | None = None
             if isinstance(prop.value_type, ViewPropertyEntity):
-                source_prop_id = prop.value_type.as_id()
                 source_view_id = prop.value_type.as_view_id()
+                reverse_prop_id = prop.value_type.property_
+            elif isinstance(prop.value_type, ViewEntity):
+                source_view_id = prop.value_type.as_id()
             else:
                 # Should have been validated.
                 raise ValueError(
                     "If this error occurs it is a bug in NEAT, please report"
                     f"Debug Info, Invalid valueType reverse relation: {prop.model_dump_json()}"
                 )
+            reverse_prop: DMSProperty | None = None
+            if reverse_prop_id is not None:
+                reverse_prop = next(
+                    (
+                        prop
+                        for prop in view_properties_by_id.get(source_view_id, [])
+                        if prop.property_ == reverse_prop_id
+                    ),
+                    None,
+                )
 
-            reverse_prop = next(
-                (
-                    prop
-                    for prop in view_properties_by_id.get(source_view_id, [])
-                    if prop.property_ == source_prop_id.property
-                ),
-                None,
-            )
             if reverse_prop is None:
                 warnings.warn(
                     issues.dms.ReverseRelationMissingOtherSideWarning(source_view_id, prop.view_property),
                     stacklevel=2,
                 )
-                return None
 
-            if reverse_prop.relation == "edge":
+            if reverse_prop is None or reverse_prop.relation == "edge":
                 inwards_edge_cls = (
                     dm.MultiEdgeConnectionApply if prop.is_list in [True, None] else SingleEdgeConnectionApply
                 )
                 return inwards_edge_cls(
-                    type=self._create_edge_type_from_prop(reverse_prop),
+                    type=self._create_edge_type_from_prop(reverse_prop or prop),
                     source=source_view_id,
                     name=prop.name,
                     description=prop.description,
                     direction="inwards",
                 )
-            elif reverse_prop.relation == "direct":
+            elif reverse_prop_id and reverse_prop and reverse_prop.relation == "reverse":
                 reverse_direct_cls = (
                     dm.MultiReverseDirectRelationApply if prop.is_list is True else SingleReverseDirectRelationApply
                 )
                 return reverse_direct_cls(
                     source=source_view_id,
-                    through=source_prop_id,
+                    through=dm.PropertyId(source=source_view_id, property=reverse_prop_id),
                     name=prop.name,
                     description=prop.description,
                 )
             else:
-                # Should have been validated.
-                raise ValueError(
-                    "If this error occurs it is a bug in NEAT, please report"
-                    f"Debug Info, Invalid reverse_prop relation: {prop.model_dump_json()}"
-                )
+                return None
 
         elif prop.view and prop.view_property and prop.relation:
             warnings.warn(

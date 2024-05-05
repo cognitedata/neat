@@ -326,9 +326,7 @@ class DMSImporter(BaseImporter):
         elif isinstance(prop, SingleReverseDirectRelationApply | MultiReverseDirectRelationApply):
             return ViewPropertyEntity.from_id(prop.through)
         elif isinstance(prop, SingleEdgeConnectionApply | MultiEdgeConnectionApply) and prop.direction == "inwards":
-            # Todo Warning That this is not supported by NEAT
-            # Todo Reverse lookup
-            return None
+            return ViewEntity.from_id(prop.source)
         elif isinstance(prop, dm.MappedPropertyApply):
             container_prop = self._container_prop_unsafe(cast(dm.MappedPropertyApply, prop))
             if isinstance(container_prop.type, dm.DirectRelation):
