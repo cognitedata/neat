@@ -3,7 +3,7 @@ import sys
 import warnings
 import zipfile
 from collections import Counter, defaultdict
-from dataclasses import dataclass, field, fields
+from dataclasses import Field, dataclass, field, fields
 from pathlib import Path
 from typing import Any, ClassVar, cast
 
@@ -121,7 +121,7 @@ class DMSSchema:
 
                     try:
                         # Using CSafeLoader over safe_load for ~10x speedup
-                        loaded = yaml.CSafeLoader(yaml_file.read_text()).get_data()
+                        loaded = yaml.safe_load(yaml_file.read_text())
                     except Exception as e:
                         warnings.warn(issues.fileread.InvalidFileFormatWarning(yaml_file, str(e)), stacklevel=2)
                         continue
@@ -208,8 +208,7 @@ class DMSSchema:
                     if attr_name := cls._FIELD_NAME_BY_RESOURCE_TYPE.get(resource_type):
                         data.setdefault(attr_name, [])
                         try:
-                            # Using CSafeLoader over safe_load for ~10x speedup
-                            loaded = yaml.CSafeLoader(zip_ref.read(file_info).decode()).get_data()
+                            loaded = yaml.safe_load(zip_ref.read(file_info).decode())
                         except Exception as e:
                             warnings.warn(issues.fileread.InvalidFileFormatWarning(filename, str(e)), stacklevel=2)
                             continue
@@ -247,12 +246,22 @@ class DMSSchema:
                     zip_ref.writestr(f"data_models/nodes/{node.external_id}.node.yaml", node.dump_yaml())
 
     @classmethod
-    def load(cls, data: str | dict[str, list[Any]]) -> Self:
+    def load(cls, data: str | dict[str, list[Any]], context: dict[str, list[Path]] | None = None) -> Self:
+        """Loads a schema from a dictionary or a YAML or JSON formatted string.
+
+        Args:
+            data: The data to load the schema from. This can be a dictionary, a YAML or JSON formatted string.
+            context: This provides linage for where the data was loaded from. This is used in Warnings
+                if a single item fails to load.
+
+        Returns:
+            DMSSchema: The loaded schema.
+        """
+        context = context or {}
         if isinstance(data, str):
             # YAML is a superset of JSON, so we can use the same parser
             try:
-                # Using CSafeLoader over safe_load for ~10x speedup
-                data_dict = yaml.CSafeLoader(data).get_data()
+                data_dict = yaml.safe_load(data)
             except Exception as e:
                 raise issues.fileread.FailedStringLoadError(".yaml", str(e)) from None
             if not isinstance(data_dict, dict) and all(isinstance(v, list) for v in data_dict.values()):
@@ -264,8 +273,35 @@ class DMSSchema:
         loaded: dict[str, Any] = {}
         for attr in fields(cls):
             if items := data_dict.get(attr.name) or data_dict.get(to_camel(attr.name)):
-                loaded[attr.name] = attr.type.load(items)
+                try:
+                    loaded[attr.name] = attr.type.load(items)
+                except Exception as e:
+                    loaded[attr.name] = cls._load_individual_resources(items, attr, str(e), context.get(attr.name, []))
         return cls(**loaded)
+
+    @classmethod
+    def _load_individual_resources(cls, items: list, attr: Field, trigger_error: str, resource_context) -> list[Any]:
+        resources = attr.type([])
+        if not hasattr(attr.type, "_RESOURCE"):
+            warnings.warn(
+                issues.fileread.FailedLoadWarning(Path("UNKNOWN"), attr.type.__name__, trigger_error), stacklevel=2
+            )
+            return resources
+        # Fallback to load individual resources.
+        single_cls = attr.type._RESOURCE
+        for no, item in enumerate(items):
+            try:
+                loaded_instance = single_cls.load(item)
+            except Exception as e:
+                try:
+                    filepath = resource_context[no]
+                except IndexError:
+                    filepath = Path("UNKNOWN")
+                # We use repr(e) instead of str(e) to include the exception type in the warning message
+                warnings.warn(issues.fileread.FailedLoadWarning(filepath, single_cls.__name__, repr(e)), stacklevel=2)
+            else:
+                resources.append(loaded_instance)
+        return resources
 
     def dump(self, camel_case: bool = True, sort: bool = True) -> dict[str, Any]:
         """Dump the schema to a dictionary that can be serialized to JSON.

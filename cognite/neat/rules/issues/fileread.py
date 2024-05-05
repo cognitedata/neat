@@ -9,6 +9,7 @@ __all__ = [
     "InvalidFileFormatWarning",
     "UnsupportedSpecWarning",
     "UnknownItemWarning",
+    "FailedLoadWarning",
     "BugInImporterWarning",
     "FileReadError",
     "FileNotFoundError",
@@ -95,6 +96,26 @@ class UnknownItemWarning(FileReadWarning):
     def dump(self) -> dict[str, str | None]:
         output = super().dump()
         output["reason"] = self.reason
+        return output
+
+
+@dataclass(frozen=True)
+class FailedLoadWarning(FileReadWarning):
+    description = "The file content is invalid"
+    fix = "Check if the file content is valid"
+
+    expected_format: str
+    error_message: str
+
+    def message(self) -> str:
+        return (
+            f"Failed to load {self.filepath.name}. Expected format: {self.expected_format}. Error: {self.error_message}"
+        )
+
+    def dump(self) -> dict[str, str | None]:
+        output = super().dump()
+        output["expected_format"] = self.expected_format
+        output["error_message"] = self.error_message
         return output
 
 
