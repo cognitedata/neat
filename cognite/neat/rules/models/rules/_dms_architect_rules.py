@@ -470,7 +470,7 @@ class DMSRules(BaseRules):
             # Everything is allowed
             return self
         # Is an extension of an existing model.
-        user_schema = self.as_schema()
+        user_schema = self.as_schema(include_ref=False)
         ref_schema = self.reference.as_schema()
         new_containers = {container.as_id(): container for container in user_schema.containers}
         existing_containers = {container.as_id(): container for container in ref_schema.containers}
@@ -581,8 +581,10 @@ class DMSRules(BaseRules):
         space, version = self.metadata.space, self.metadata.default_view_version
         return _DMSRulesSerializer(info, space, version).clean(dumped)
 
-    def as_schema(self, include_pipeline: bool = False, instance_space: str | None = None) -> DMSSchema:
-        return _DMSExporter(self, include_pipeline, instance_space).to_schema()
+    def as_schema(
+        self, include_ref: bool = True, include_pipeline: bool = False, instance_space: str | None = None
+    ) -> DMSSchema:
+        return _DMSExporter(self, include_ref, include_pipeline, instance_space).to_schema()
 
     def as_information_architect_rules(self) -> "InformationRules":
         return _DMSRulesConverter(self).as_information_architect_rules()
@@ -619,7 +621,14 @@ class _DMSExporter:
         instance_space (str): The space to use for the instance. Defaults to None,`Rules.metadata.space` will be used
     """
 
-    def __init__(self, rules: DMSRules, include_pipeline: bool = False, instance_space: str | None = None):
+    def __init__(
+        self,
+        rules: DMSRules,
+        include_ref: bool = True,
+        include_pipeline: bool = False,
+        instance_space: str | None = None,
+    ):
+        self.include_ref = include_ref
         self.include_pipeline = include_pipeline
         self.instance_space = instance_space
         self.rules = rules
@@ -656,7 +665,7 @@ class _DMSExporter:
         if self.include_pipeline:
             return PipelineSchema.from_dms(output, self.instance_space)
 
-        if self._ref_schema:
+        if self._ref_schema and self.include_ref:
             output.frozen_ids.update(self._ref_schema.node_types.as_ids())
             output.frozen_ids.update(self._ref_schema.views.as_ids())
             output.frozen_ids.update(self._ref_schema.containers.as_ids())
