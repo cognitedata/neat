@@ -58,7 +58,7 @@ class ValidationIssue(ABC):
 
 
 @dataclass(frozen=True)
-class NeatValidationError(ValidationIssue, ABC, Exception):
+class NeatValidationError(ValidationIssue, ABC):
     def dump(self) -> dict[str, Any]:
         return {"error": type(self).__name__}
 
@@ -77,6 +77,9 @@ class NeatValidationError(ValidationIssue, ABC, Exception):
             else:
                 all_errors.append(DefaultPydanticError.from_pydantic_error(error))
         return all_errors
+
+    def as_exception(self) -> Exception:
+        return ValueError(self.message())
 
 
 @dataclass(frozen=True)

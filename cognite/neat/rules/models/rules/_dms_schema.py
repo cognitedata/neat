@@ -270,11 +270,11 @@ class DMSSchema:
             try:
                 data_dict = yaml.safe_load(data)
             except Exception as e:
-                raise issues.fileread.FailedStringLoadError(".yaml", str(e)) from None
+                raise issues.fileread.FailedStringLoadError(".yaml", str(e)).as_exception() from None
             if not isinstance(data_dict, dict) and all(isinstance(v, list) for v in data_dict.values()):
                 raise issues.fileread.FailedStringLoadError(
                     "dict[str, list[Any]]", f"Invalid data structure: {type(data)}"
-                ) from None
+                ).as_exception() from None
         else:
             data_dict = data
         loaded: dict[str, Any] = {}
