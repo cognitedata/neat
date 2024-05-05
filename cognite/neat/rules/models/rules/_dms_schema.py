@@ -107,18 +107,19 @@ class DMSSchema:
         The directory is expected to follow the Cognite-Toolkit convention
         where each file is named as `resource_type.resource_name.yaml`.
         """
-        data = cls._read_directory(Path(directory))
-        return cls.load(data)
+        data, context = cls._read_directory(Path(directory))
+        return cls.load(data, context)
 
     @classmethod
-    def _read_directory(cls, directory: Path) -> dict[str, list[Any]]:
+    def _read_directory(cls, directory: Path) -> tuple[dict[str, list[Any]], dict[str, list[Path]]]:
         data: dict[str, Any] = {}
+        context: dict[str, list[Path]] = {}
         for yaml_file in directory.rglob("*.yaml"):
             if "." in yaml_file.stem:
                 resource_type = yaml_file.stem.rsplit(".", 1)[-1]
                 if attr_name := cls._FIELD_NAME_BY_RESOURCE_TYPE.get(resource_type):
                     data.setdefault(attr_name, [])
-
+                    context.setdefault(attr_name, [])
                     try:
                         # Using CSafeLoader over safe_load for ~10x speedup
                         loaded = yaml.safe_load(yaml_file.read_text())
@@ -128,9 +129,11 @@ class DMSSchema:
 
                     if isinstance(loaded, list):
                         data[attr_name].extend(loaded)
+                        context[attr_name].extend([yaml_file] * len(loaded))
                     else:
                         data[attr_name].append(loaded)
-        return data
+                        context[attr_name].append(yaml_file)
+        return data, context
 
     def to_directory(
         self,
@@ -190,12 +193,13 @@ class DMSSchema:
         The ZIP file is expected to follow the Cognite-Toolkit convention
         where each file is named as `resource_type.resource_name.yaml`.
         """
-        data = cls._read_zip(Path(zip_file))
-        return cls.load(data)
+        data, context = cls._read_zip(Path(zip_file))
+        return cls.load(data, context)
 
     @classmethod
-    def _read_zip(cls, zip_file: Path) -> dict[str, list[Any]]:
+    def _read_zip(cls, zip_file: Path) -> tuple[dict[str, list[Any]], dict[str, list[Path]]]:
         data: dict[str, list[Any]] = {}
+        context: dict[str, list[Path]] = {}
         with zipfile.ZipFile(zip_file, "r") as zip_ref:
             for file_info in zip_ref.infolist():
                 if file_info.filename.endswith(".yaml"):
@@ -207,6 +211,7 @@ class DMSSchema:
                     resource_type = filename.stem.rsplit(".", 1)[-1]
                     if attr_name := cls._FIELD_NAME_BY_RESOURCE_TYPE.get(resource_type):
                         data.setdefault(attr_name, [])
+                        context.setdefault(attr_name, [])
                         try:
                             loaded = yaml.safe_load(zip_ref.read(file_info).decode())
                         except Exception as e:
@@ -214,9 +219,11 @@ class DMSSchema:
                             continue
                         if isinstance(loaded, list):
                             data[attr_name].extend(loaded)
+                            context[attr_name].extend([filename] * len(loaded))
                         else:
                             data[attr_name].append(loaded)
-        return data
+                            context[attr_name].append(filename)
+        return data, context
 
     def to_zip(self, zip_file: str | Path, exclude: set[str] | None = None) -> None:
         """Save the schema to a ZIP file as YAML files. This is compatible with the Cognite-Toolkit convention.
@@ -498,18 +505,25 @@ class PipelineSchema(DMSSchema):
             self.databases.extend([DatabaseWrite(name=database) for database in missing])
 
     @classmethod
-    def _read_directory(cls, directory: Path) -> dict[str, list[Any]]:
-        data = super()._read_directory(directory)
+    def _read_directory(cls, directory: Path) -> tuple[dict[str, list[Any]], dict[str, list[Path]]]:
+        data, context = super()._read_directory(directory)
         for yaml_file in directory.rglob("*.yaml"):
             if yaml_file.parent.name in ("transformations", "raw"):
                 attr_name = cls._FIELD_NAME_BY_RESOURCE_TYPE.get(yaml_file.parent.name, yaml_file.parent.name)
                 data.setdefault(attr_name, [])
-                loaded = yaml.safe_load(yaml_file.read_text())
+                context.setdefault(attr_name, [])
+                try:
+                    loaded = yaml.safe_load(yaml_file.read_text())
+                except Exception as e:
+                    warnings.warn(issues.fileread.InvalidFileFormatWarning(yaml_file, str(e)), stacklevel=2)
+                    continue
                 if isinstance(loaded, list):
                     data[attr_name].extend(loaded)
+                    context[attr_name].extend([yaml_file] * len(loaded))
                 else:
                     data[attr_name].append(loaded)
-        return data
+                    context[attr_name].append(yaml_file)
+        return data, context
 
     def to_directory(
         self,
@@ -552,8 +566,8 @@ class PipelineSchema(DMSSchema):
                     zip_ref.writestr(f"raw/{raw_table.name}.yaml", raw_table.dump_yaml())
 
     @classmethod
-    def _read_zip(cls, zip_file: Path) -> dict[str, list[Any]]:
-        data = super()._read_zip(zip_file)
+    def _read_zip(cls, zip_file: Path) -> tuple[dict[str, list[Any]], dict[str, list[Path]]]:
+        data, context = super()._read_zip(zip_file)
         with zipfile.ZipFile(zip_file, "r") as zip_ref:
             for file_info in zip_ref.infolist():
                 if file_info.filename.endswith(".yaml"):
@@ -563,12 +577,19 @@ class PipelineSchema(DMSSchema):
                     if (parent := filepath.parent.name) in ("transformations", "raw"):
                         attr_name = cls._FIELD_NAME_BY_RESOURCE_TYPE.get(parent, parent)
                         data.setdefault(attr_name, [])
-                        loaded = yaml.safe_load(zip_ref.read(file_info).decode())
+                        context.setdefault(attr_name, [])
+                        try:
+                            loaded = yaml.safe_load(zip_ref.read(file_info).decode())
+                        except Exception as e:
+                            warnings.warn(issues.fileread.InvalidFileFormatWarning(filepath, str(e)), stacklevel=2)
+                            continue
                         if isinstance(loaded, list):
                             data[attr_name].extend(loaded)
+                            context[attr_name].extend([filepath] * len(loaded))
                         else:
                             data[attr_name].append(loaded)
-        return data
+                            context[attr_name].append(filepath)
+        return data, context
 
     @classmethod
     def from_dms(cls, schema: DMSSchema, instance_space: str | None = None) -> "PipelineSchema":
