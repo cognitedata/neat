@@ -27,8 +27,6 @@ from pydantic import (
 )
 from pydantic.fields import FieldInfo
 
-from cognite.neat.rules.models.entities import ClassEntity
-
 if sys.version_info >= (3, 11):
     from enum import StrEnum
     from typing import Self
@@ -279,10 +277,6 @@ class BaseRules(RuleModel):
 
 # An sheet entity is either a class or a property.
 class SheetEntity(RuleModel):
-    class_: ClassEntity = Field(alias="Class")
-    name: str | None = Field(alias="Name", default=None)
-    description: str | None = Field(alias="Description", default=None)
-
     @field_validator("*", mode="before")
     def strip_string(cls, value: Any) -> Any:
         if isinstance(value, str):

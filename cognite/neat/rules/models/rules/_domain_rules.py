@@ -23,7 +23,10 @@ class DomainMetadata(BaseMetadata):
 
 
 class DomainProperty(SheetEntity):
+    class_: ClassEntity = Field(alias="Class")
     property_: PropertyType = Field(alias="Property")
+    name: str | None = Field(alias="Name", default=None)
+    description: str | None = Field(alias="Description", default=None)
     value_type: DataType | ClassEntity = Field(alias="Value Type")
     min_count: int | None = Field(alias="Min Count", default=None)
     max_count: int | float | None = Field(alias="Max Count", default=None)
@@ -42,6 +45,8 @@ class DomainProperty(SheetEntity):
 
 
 class DomainClass(SheetEntity):
+    class_: ClassEntity = Field(alias="Class")
+    name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(None, alias="Description")
     parent: ParentEntityList | None = Field(alias="Parent Class")
 
