@@ -345,7 +345,7 @@ class DMSImporter(BaseImporter):
             container_prop = self._container_prop_unsafe(cast(dm.MappedPropertyApply, prop))
             if isinstance(container_prop.type, dm.DirectRelation):
                 if prop.source is None:
-                    self.issue_list.append(issues.importing.UnknownValueTypeWarning(str(view_entity), prop_id))
+                    # The warning is issued when the DMS Rules are created.
                     return DMSUnknownEntity()
                 else:
                     return ViewEntity.from_id(prop.source)

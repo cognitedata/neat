@@ -5,7 +5,7 @@ import pytest
 from cognite.client import data_modeling as dm
 
 from cognite.neat.rules.importers import DMSImporter, ExcelImporter
-from cognite.neat.rules.issues.importing import UnknownValueTypeWarning
+from cognite.neat.rules.issues.dms import DirectRelationMissingSourceWarning
 from cognite.neat.rules.models.rules import DMSRules, DMSSchema, RoleTypes
 from tests.config import DOC_RULES
 
@@ -17,7 +17,7 @@ class TestDMSImporter:
         rules, issues = importer.to_rules(errors="continue")
 
         assert len(issues) == 1
-        assert issues[0] == UnknownValueTypeWarning("neat:OneView(version=1)", "direct")
+        assert issues[0] == DirectRelationMissingSourceWarning(dm.ViewId("neat", "OneView", "1"), "direct")
         dms_rules = cast(DMSRules, rules)
         dump_dms = dms_rules.model_dump()
         assert dump_dms["properties"][0]["value_type"] == "#N/A"

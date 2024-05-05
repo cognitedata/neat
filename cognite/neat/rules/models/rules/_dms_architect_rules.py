@@ -962,7 +962,7 @@ class _DMSExporter:
                     description=prop.description,
                     direction="inwards",
                 )
-            elif reverse_prop_id and reverse_prop and reverse_prop.relation == "reverse":
+            elif reverse_prop_id and reverse_prop and reverse_prop.relation == "direct":
                 reverse_direct_cls = (
                     dm.MultiReverseDirectRelationApply if prop.is_list is True else SingleReverseDirectRelationApply
                 )
