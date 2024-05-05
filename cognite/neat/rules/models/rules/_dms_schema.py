@@ -247,7 +247,7 @@ class DMSSchema:
                     zip_ref.writestr(f"data_models/nodes/{node.external_id}.node.yaml", node.dump_yaml())
 
     @classmethod
-    def load(cls, data: str | dict[str, Any]) -> Self:
+    def load(cls, data: str | dict[str, list[Any]]) -> Self:
         if isinstance(data, str):
             # YAML is a superset of JSON, so we can use the same parser
             try:
@@ -255,6 +255,10 @@ class DMSSchema:
                 data_dict = yaml.CSafeLoader(data).get_data()
             except Exception as e:
                 raise issues.fileread.FailedStringLoadError(".yaml", str(e)) from None
+            if not isinstance(data_dict, dict) and all(isinstance(v, list) for v in data_dict.values()):
+                raise issues.fileread.FailedStringLoadError(
+                    "dict[str, list[Any]]", f"Invalid data structure: {type(data)}"
+                ) from None
         else:
             data_dict = data
         loaded: dict[str, Any] = {}
