@@ -71,7 +71,6 @@ The spreadsheet templates for the `Rules` object per role are accessible through
     | schema      | Indication of schema completeness                                                                         | `complete`, `partial` or `extended` | Yes       |
     | space       | CDF space to which data model belongs                                                                     |                                     | Yes       |
     | externalId  | External id used to uniquely identify data model within a space                                           |                                     | Yes       |
-    | default_view_version | Default version to fall back if no version is provided for views that are part of the data model |                                     | No        |
     | version     | Version of the data model                                                                                 |                                     | Yes       |
     | created     | Date model creation date                                                                                  |                                     | Yes       |
     | updated     | Date model last update date                                                                               |                                     | Yes       |
