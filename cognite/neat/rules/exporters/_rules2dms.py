@@ -115,11 +115,11 @@ class DMSExporter(CDFExporter[DMSSchema]):
         )
         is_new_model = dms_rules.reference is None
         if is_new_model or is_solution_model:
-            return dms_rules.as_schema(True, self.export_pipeline, self.instance_space)
+            return dms_rules.as_schema(False, self.export_pipeline, self.instance_space)
 
         # This is an extension of an existing model.
         reference_rules = cast(DMSRules, dms_rules.reference).model_copy(deep=True)
-        reference_schema = reference_rules.as_schema(self.export_pipeline)
+        reference_schema = reference_rules.as_schema(include_ref=False, include_pipeline=self.export_pipeline)
 
         # Todo Move this to an appropriate location
         # Merging Reference with User Rules

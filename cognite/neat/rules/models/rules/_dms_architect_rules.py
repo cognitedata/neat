@@ -582,7 +582,7 @@ class DMSRules(BaseRules):
         return _DMSRulesSerializer(info, space, version).clean(dumped)
 
     def as_schema(
-        self, include_ref: bool = True, include_pipeline: bool = False, instance_space: str | None = None
+        self, include_ref: bool = False, include_pipeline: bool = False, instance_space: str | None = None
     ) -> DMSSchema:
         return _DMSExporter(self, include_ref, include_pipeline, instance_space).to_schema()
 
