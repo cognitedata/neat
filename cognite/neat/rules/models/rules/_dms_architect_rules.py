@@ -138,6 +138,9 @@ class DMSMetadata(BaseMetadata):
             space=self.space,
         )
 
+    def as_data_model_id(self) -> dm.DataModelId:
+        return dm.DataModelId(space=self.space, external_id=self.external_id, version=self.version)
+
     def as_data_model(self) -> dm.DataModelApply:
         suffix = f"Creator: {', '.join(self.creator)}"
         if self.description:
@@ -318,20 +321,29 @@ class DMSRules(BaseRules):
     reference: "DMSRules | None" = Field(None, alias="Reference")
 
     @field_validator("reference")
-    def check_reference_of_reference(cls, value: "DMSRules | None") -> "DMSRules | None":
+    def check_reference_of_reference(cls, value: "DMSRules | None", info: ValidationInfo) -> "DMSRules | None":
         if value is None:
             return None
         if value.reference is not None:
             raise ValueError("Reference rules cannot have a reference")
+        if value.metadata.data_model_type == DataModelType.solution and (metadata := info.data.get("metadata")):
+            warnings.warn(
+                issues.dms.SolutionOnTopOfSolutionModelWarning(
+                    metadata.as_data_model_id(), value.metadata.as_data_model_id()
+                ),
+                stacklevel=2,
+            )
         return value
 
     @field_validator("views")
-    def matching_version(cls, value: SheetList[DMSView], info: ValidationInfo) -> SheetList[DMSView]:
+    def matching_version_and_space(cls, value: SheetList[DMSView], info: ValidationInfo) -> SheetList[DMSView]:
         if not (metadata := info.data.get("metadata")):
             return value
         model_version = metadata.version
         if different_version := [view.view.as_id() for view in value if view.view.version != model_version]:
             warnings.warn(issues.dms.ViewModelVersionNotMatchingWarning(different_version, model_version), stacklevel=2)
+        if different_space := [view.view.as_id() for view in value if view.view.space != metadata.space]:
+            warnings.warn(issues.dms.ViewModelSpaceNotMatchingWarning(different_space, metadata.space), stacklevel=2)
         return value
 
     @model_validator(mode="after")
