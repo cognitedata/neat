@@ -5,7 +5,7 @@ from typing import Literal, TypeAlias, cast
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes._base import CogniteResource, CogniteResourceList
-from cognite.client.data_classes.data_modeling import DataModelApplyList, DataModelId
+from cognite.client.data_classes.data_modeling import DataModelApply, DataModelId
 from cognite.client.exceptions import CogniteAPIError
 
 from cognite.neat.rules import issues
@@ -73,7 +73,6 @@ class DMSExporter(CDFExporter[DMSSchema]):
         self.instance_space = instance_space
         self.suppress_warnings = suppress_warnings
         self._schema: DMSSchema | None = None
-        self._input_rules: DMSRules | None = None
 
     def export_to_file(self, rules: Rules, filepath: Path) -> None:
         """Export the rules to a file(s).
@@ -157,7 +156,6 @@ class DMSExporter(CDFExporter[DMSSchema]):
             # in case, for example, new properties are added. The validation will catch this.
             schema.frozen_ids.update(set(reference_schema.containers.as_ids()))
             schema.frozen_ids.update(set(reference_schema.node_types.as_ids()))
-        self._input_rules = dms_rules
         return schema
 
     def delete_from_cdf(self, rules: Rules, client: CogniteClient, dry_run: bool = False) -> Iterable[UploadResult]:
@@ -259,9 +257,8 @@ class DMSExporter(CDFExporter[DMSSchema]):
             else:
                 raise ValueError(f"Unsupported existing_handling {self.existing_handling}")
 
-            if self._input_rules:
-                warning_list = self._validate(loader, items, self._input_rules)
-                issue_list.extend(warning_list)
+            warning_list = self._validate(loader, items)
+            issue_list.extend(warning_list)
 
             error_messages: list[str] = []
             if not dry_run:
@@ -323,12 +320,12 @@ class DMSExporter(CDFExporter[DMSSchema]):
             to_export.append((schema.transformations, TransformationLoader(client)))
         return schema, to_export
 
-    def _validate(self, loader: ResourceLoader, items: list[CogniteResource], rules: DMSRules) -> IssueList:
+    def _validate(self, loader: ResourceLoader, items: list[CogniteResource]) -> IssueList:
         issue_list = IssueList()
         if isinstance(loader, DataModelLoader):
-            models = cast(DataModelApplyList, items)
+            models = cast(list[DataModelApply], items)
             if other_models := self._exist_other_data_models(loader, models):
-                warning = issues.dms.OtherDataModelsInSpaceWarning(rules.metadata.space, other_models)
+                warning = issues.dms.OtherDataModelsInSpaceWarning(models[0].space, other_models)
                 if not self.suppress_warnings:
                     warnings.warn(warning, stacklevel=2)
                 issue_list.append(warning)
@@ -336,7 +333,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
         return issue_list
 
     @classmethod
-    def _exist_other_data_models(cls, loader: DataModelLoader, models: DataModelApplyList) -> list[DataModelId]:
+    def _exist_other_data_models(cls, loader: DataModelLoader, models: list[DataModelApply]) -> list[DataModelId]:
         if not models:
             return []
         space = models[0].space
