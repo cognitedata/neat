@@ -1,4 +1,3 @@
-import abc
 import math
 import re
 import sys
@@ -9,7 +8,6 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
 
 from cognite.client import data_modeling as dm
-from cognite.client.data_classes.data_modeling import PropertyType as CognitePropertyType
 from pydantic import Field, field_serializer, field_validator, model_serializer, model_validator
 from pydantic_core.core_schema import SerializationInfo, ValidationInfo
 
@@ -57,19 +55,6 @@ else:
     from typing_extensions import Self
 
 _DEFAULT_VERSION = "1"
-
-# Todo delete the one below, no longer used
-subclasses = list(CognitePropertyType.__subclasses__())
-_PropertyType_by_name: dict[str, type[CognitePropertyType]] = {}
-for subclass in subclasses:
-    subclasses.extend(subclass.__subclasses__())
-    if abc.ABC in subclass.__bases__:
-        continue
-    try:
-        _PropertyType_by_name[subclass._type.casefold()] = subclass
-    except AttributeError:
-        ...
-del subclasses  # cleanup namespace
 
 
 class DMSMetadata(BaseMetadata):
