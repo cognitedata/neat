@@ -5,6 +5,7 @@ from typing import Any, Literal, cast, overload
 
 from pydantic import BaseModel
 
+from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import (
     ClassEntity,
@@ -15,12 +16,11 @@ from cognite.neat.rules.models.entities import (
     ViewPropertyEntity,
 )
 
-from ._base import DataModelType, ExtensionCategory, SchemaCompleteness
-from ._dms_architect_rules import DMSContainer, DMSMetadata, DMSProperty, DMSRules, DMSView
+from ._rules import DMSContainer, DMSMetadata, DMSProperty, DMSRules, DMSView
 
 
 @dataclass
-class DMSMetadataWrite:
+class DMSMetadataInput:
     schema_: Literal["complete", "partial", "extended"]
     space: str
     external_id: str
@@ -34,7 +34,7 @@ class DMSMetadataWrite:
     updated: datetime | str | None = None
 
     @classmethod
-    def load(cls, data: dict[str, Any] | None) -> "DMSMetadataWrite | None":
+    def load(cls, data: dict[str, Any] | None) -> "DMSMetadataInput | None":
         if data is None:
             return None
         _add_alias(data, DMSMetadata)
@@ -69,7 +69,7 @@ class DMSMetadataWrite:
 
 
 @dataclass
-class DMSPropertyWrite:
+class DMSPropertyInput:
     view: str
     view_property: str | None
     value_type: str
@@ -93,16 +93,16 @@ class DMSPropertyWrite:
 
     @classmethod
     @overload
-    def load(cls, data: dict[str, Any]) -> "DMSPropertyWrite": ...
+    def load(cls, data: dict[str, Any]) -> "DMSPropertyInput": ...
 
     @classmethod
     @overload
-    def load(cls, data: list[dict[str, Any]]) -> list["DMSPropertyWrite"]: ...
+    def load(cls, data: list[dict[str, Any]]) -> list["DMSPropertyInput"]: ...
 
     @classmethod
     def load(
         cls, data: dict[str, Any] | list[dict[str, Any]] | None
-    ) -> "DMSPropertyWrite | list[DMSPropertyWrite] | None":
+    ) -> "DMSPropertyInput | list[DMSPropertyInput] | None":
         if data is None:
             return None
         if isinstance(data, list) or (isinstance(data, dict) and isinstance(data.get("data"), list)):
@@ -168,7 +168,7 @@ class DMSPropertyWrite:
 
 
 @dataclass
-class DMSContainerWrite:
+class DMSContainerInput:
     container: str
     class_: str | None = None
     name: str | None = None
@@ -182,16 +182,16 @@ class DMSContainerWrite:
 
     @classmethod
     @overload
-    def load(cls, data: dict[str, Any]) -> "DMSContainerWrite": ...
+    def load(cls, data: dict[str, Any]) -> "DMSContainerInput": ...
 
     @classmethod
     @overload
-    def load(cls, data: list[dict[str, Any]]) -> list["DMSContainerWrite"]: ...
+    def load(cls, data: list[dict[str, Any]]) -> list["DMSContainerInput"]: ...
 
     @classmethod
     def load(
         cls, data: dict[str, Any] | list[dict[str, Any]] | None
-    ) -> "DMSContainerWrite | list[DMSContainerWrite] | None":
+    ) -> "DMSContainerInput | list[DMSContainerInput] | None":
         if data is None:
             return None
         if isinstance(data, list) or (isinstance(data, dict) and isinstance(data.get("data"), list)):
@@ -230,7 +230,7 @@ class DMSContainerWrite:
 
 
 @dataclass
-class DMSViewWrite:
+class DMSViewInput:
     view: str
     class_: str | None = None
     name: str | None = None
@@ -246,14 +246,14 @@ class DMSViewWrite:
 
     @classmethod
     @overload
-    def load(cls, data: dict[str, Any]) -> "DMSViewWrite": ...
+    def load(cls, data: dict[str, Any]) -> "DMSViewInput": ...
 
     @classmethod
     @overload
-    def load(cls, data: list[dict[str, Any]]) -> list["DMSViewWrite"]: ...
+    def load(cls, data: list[dict[str, Any]]) -> list["DMSViewInput"]: ...
 
     @classmethod
-    def load(cls, data: dict[str, Any] | list[dict[str, Any]] | None) -> "DMSViewWrite | list[DMSViewWrite] | None":
+    def load(cls, data: dict[str, Any] | list[dict[str, Any]] | None) -> "DMSViewInput | list[DMSViewInput] | None":
         if data is None:
             return None
         if isinstance(data, list) or (isinstance(data, dict) and isinstance(data.get("data"), list)):
@@ -298,46 +298,46 @@ class DMSViewWrite:
 
 
 @dataclass
-class DMSRulesWrite:
-    metadata: DMSMetadataWrite
-    properties: Sequence[DMSPropertyWrite]
-    views: Sequence[DMSViewWrite]
-    containers: Sequence[DMSContainerWrite] | None = None
-    reference: "DMSRulesWrite | DMSRules | None" = None
+class DMSRulesInput:
+    metadata: DMSMetadataInput
+    properties: Sequence[DMSPropertyInput]
+    views: Sequence[DMSViewInput]
+    containers: Sequence[DMSContainerInput] | None = None
+    reference: "DMSRulesInput | DMSRules | None" = None
 
     @classmethod
     @overload
-    def load(cls, data: dict[str, Any]) -> "DMSRulesWrite": ...
+    def load(cls, data: dict[str, Any]) -> "DMSRulesInput": ...
 
     @classmethod
     @overload
     def load(cls, data: None) -> None: ...
 
     @classmethod
-    def load(cls, data: dict | None) -> "DMSRulesWrite | None":
+    def load(cls, data: dict | None) -> "DMSRulesInput | None":
         if data is None:
             return None
         _add_alias(data, DMSRules)
         return cls(
-            metadata=DMSMetadataWrite.load(data.get("metadata")),  # type: ignore[arg-type]
-            properties=DMSPropertyWrite.load(data.get("properties")),  # type: ignore[arg-type]
-            views=DMSViewWrite.load(data.get("views")),  # type: ignore[arg-type]
-            containers=DMSContainerWrite.load(data.get("containers")) or [],
-            reference=DMSRulesWrite.load(data.get("reference")),
+            metadata=DMSMetadataInput.load(data.get("metadata")),  # type: ignore[arg-type]
+            properties=DMSPropertyInput.load(data.get("properties")),  # type: ignore[arg-type]
+            views=DMSViewInput.load(data.get("views")),  # type: ignore[arg-type]
+            containers=DMSContainerInput.load(data.get("containers")) or [],
+            reference=DMSRulesInput.load(data.get("reference")),
         )
 
-    def as_read(self) -> DMSRules:
+    def as_rules(self) -> DMSRules:
         return DMSRules.model_validate(self.dump())
 
     def dump(self) -> dict[str, Any]:
         default_space = self.metadata.space
         default_version = self.metadata.version
         reference: dict[str, Any] | None = None
-        if isinstance(self.reference, DMSRulesWrite):
+        if isinstance(self.reference, DMSRulesInput):
             reference = self.reference.dump()
         elif isinstance(self.reference, DMSRules):
-            # We need to load through the DMSRulesWrite to set the correct default space and version
-            reference = DMSRulesWrite.load(self.reference.model_dump()).dump()
+            # We need to load through the DMSRulesInput to set the correct default space and version
+            reference = DMSRulesInput.load(self.reference.model_dump()).dump()
 
         return dict(
             Metadata=self.metadata.dump(),

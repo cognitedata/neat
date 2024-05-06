@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from rdflib import OWL, Graph
 
-from cognite.neat.rules.models.rules._base import MatchType
+from cognite.neat.rules.models._base import MatchType
 from cognite.neat.utils.utils import remove_namespace
 
 

@@ -4,7 +4,7 @@ from typing import ClassVar, Literal, cast
 
 from cognite.neat.rules import exporters
 from cognite.neat.rules._shared import DMSRules, InformationRules, Rules
-from cognite.neat.rules.models.rules import RoleTypes
+from cognite.neat.rules.models import RoleTypes
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.data_contracts import CogniteClient, MultiRuleData

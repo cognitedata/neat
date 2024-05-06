@@ -9,10 +9,7 @@ from cognite.client import data_modeling as dm
 
 from cognite.neat.rules import importers
 from cognite.neat.rules.exporters import DMSExporter
-from cognite.neat.rules.models.rules._dms_architect_rules import (
-    DMSRules,
-)
-from cognite.neat.rules.models.rules._dms_schema import PipelineSchema
+from cognite.neat.rules.models.dms import DMSRules, PipelineSchema
 from tests.data import DMS_UNKNOWN_VALUE_TYPE, INFORMATION_UNKNOWN_VALUE_TYPE
 
 

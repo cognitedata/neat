@@ -5,14 +5,13 @@ import pandas as pd
 import pytest
 from cognite.client import data_modeling as dm
 
+from cognite.neat.rules.models import DMSRules, SheetList
 from cognite.neat.rules.models.data_types import DataType, String
-from cognite.neat.rules.models.rules import DMSRules
-from cognite.neat.rules.models.rules._base import SheetList
-from cognite.neat.rules.models.rules._information_rules import (
+from cognite.neat.rules.models.information import (
     InformationClass,
     InformationRules,
-    _InformationRulesConverter,
 )
+from cognite.neat.rules.models.information._converter import _InformationRulesConverter
 from cognite.neat.utils.spreadsheet import read_individual_sheet
 from tests.config import DOC_RULES
 

@@ -8,8 +8,7 @@ from cognite.client import CogniteClient
 from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.issues.dms import MissingContainerError, MissingSpaceError, MissingViewError
 from cognite.neat.rules.issues.formatters import FORMATTER_BY_NAME
-from cognite.neat.rules.models.rules import DMSRules
-from cognite.neat.rules.models.rules._base import SchemaCompleteness
+from cognite.neat.rules.models import DMSRules, SchemaCompleteness
 from cognite.neat.utils import cdf_loaders
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus

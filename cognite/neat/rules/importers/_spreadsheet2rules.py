@@ -13,9 +13,15 @@ from pandas import ExcelFile
 
 from cognite.neat.rules import issues
 from cognite.neat.rules.issues import IssueList
-from cognite.neat.rules.models.rules import RULES_PER_ROLE, DMSRules, DomainRules, InformationRules
-from cognite.neat.rules.models.rules._base import RoleTypes, SchemaCompleteness
-from cognite.neat.rules.models.rules._dms_rules_write import DMSRulesWrite
+from cognite.neat.rules.models import (
+    RULES_PER_ROLE,
+    DMSRules,
+    DomainRules,
+    InformationRules,
+    RoleTypes,
+    SchemaCompleteness,
+)
+from cognite.neat.rules.models.dms import DMSRulesInput
 from cognite.neat.utils.auxiliary import local_import
 from cognite.neat.utils.spreadsheet import SpreadsheetRead, read_individual_sheet
 
@@ -227,7 +233,7 @@ class ExcelImporter(BaseImporter):
         ) as future:
             rules: Rules
             if rules_cls is DMSRules:
-                rules = DMSRulesWrite.load(sheets).as_read()
+                rules = DMSRulesInput.load(sheets).as_rules()
             else:
                 rules = rules_cls.model_validate(sheets)  # type: ignore[attr-defined]
 

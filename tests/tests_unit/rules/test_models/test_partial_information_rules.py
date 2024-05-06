@@ -1,5 +1,5 @@
 from cognite.neat.rules import importers
-from cognite.neat.rules.models.rules._information_rules import InformationRules
+from cognite.neat.rules.models import InformationRules
 from tests.config import PARTIAL_MODEL_TEST_DATA
 
 

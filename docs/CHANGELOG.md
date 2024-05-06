@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## TBD
+### Changed
+- [BREAKING] The subpackage `cognite.neat.rules.models` is reorganized. All imports using this subpackage must be
+  updated.
+
 ## [0.76.1] - 06-05-24
 ### Changed
 - Updated DMS Architect Rules template to fit the new DMS Rules structure

@@ -7,10 +7,10 @@ from typing import Any, cast
 import pandas as pd
 from pydantic import ValidationError
 
+from cognite.neat.rules.models import SchemaCompleteness
+from cognite.neat.rules.models._rdfpath import TransformationRuleType
 from cognite.neat.rules.models.entities import ClassEntity, EntityTypes, ParentClassEntity, ReferenceEntity
-from cognite.neat.rules.models.rdfpath import TransformationRuleType
-from cognite.neat.rules.models.rules._base import SchemaCompleteness
-from cognite.neat.rules.models.rules._information_rules import InformationClass, InformationProperty, InformationRules
+from cognite.neat.rules.models.information import InformationClass, InformationProperty, InformationRules
 from cognite.neat.utils.utils import get_inheritance_path
 
 from ._base import BaseAnalysis, DataModelingScenario
