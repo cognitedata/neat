@@ -161,14 +161,14 @@ The spreadsheet templates for the `Rules` object per role are accessible through
 
     | Column             | Description                                                                                                                      | Predefined Value                          | Mandatory |
     |--------------------|----------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------|-----------|
-    | Class              | Class id that the property is defined for, strongly advise PascalCase usage                                                      |                                           | Yes       |
-    | Property           | Property id, strongly advised to camelCase usage                                                                                 |                                           | Yes       |
+    | Class (linage)     | Class id that the property is defined for, strongly advise PascalCase usage                                                      |                                           | Yes       |
+    | Property (linage)  | Property id, strongly advised to camelCase usage                                                                                 |                                           | Yes       |
     | Name               | Human readable name of the property                                                                                              |                                           | No        |
     | Description        | Short description of the property                                                                                                |                                           | Yes       |
     | Value Type         | Value type that the property can hold. It takes either subset of CDF primitive types (see note below) or a View id (== Class id) | CDF Primitive Types of ViewID/ClassID     | Yes       |
-    | Relation           | Only applies to relationships between classes (== views). It specify how relationship should be implemented in CDF.              | `direct`, `edge`, or `reverse`            | No        |
+    | Connection         | Only applies to relationships between classes (== views). It specify how relationship should be implemented in CDF.              | `direct`, `edge`, or `reverse`            | No        |
     | Nullable           | Used to indicate whether the property is required or not. Only applies to primitive type.                                        |                                           | No        |
-    | IsList             | Used to indicate whether the property holds single or multiple values (list). Only applies to primitive types                    |                                           | No        |
+    | Is List            | Used to indicate whether the property holds single or multiple values (list). Only applies to primitive types                    |                                           | No        |
     | Default            | Specifies default value for the property.                                                                                        |                                           | No        |
     | Reference          | Reference to the source of the property provided as `URI`                                                                        |                                           | No        |
     | Match Type         | The match type between the source entity and the class                                                                           | `exact` or `partial`                      | No        |
@@ -193,15 +193,15 @@ The spreadsheet templates for the `Rules` object per role are accessible through
 ## Views sheet
 This sheet is only used for the DMS/CDF Architect, and it is mandatory. The sheet should have the following columns:
 
-| Column             | Description                                                                                                        | Predefined Value          | Mandatory |
-|--------------------|--------------------------------------------------------------------------------------------------------------------|---------------------------|-----------|
-| Class              | Class id, originally coming from Information Architect sheet, used for linage. strongly advised to PascalCase usage|                           | Yes       |
-| View               | View id, strongly advised to PascalCase usage                                                                      |                           | Yes       |
-| Name               | Human readable name of the view being defined                                                                      |                           | No        |
-| Description        | Short description of the view being defined                                                                        |                           | Yes       |
-| Implements         | List of parent view ids which the view being defined implements                                                    |                           | No        |
-| Filter             | Filter(s) which the view being defined should use                                                                  | `hasData`, `nodeType`, '' | No        |
-| InModel            | Indicates whether the view being defined is a part of the data model                                               | `True`, `False`           | No        |
+| Column         | Description                                                                                                        | Predefined Value          | Mandatory |
+|----------------|--------------------------------------------------------------------------------------------------------------------|---------------------------|-----------|
+| Class (linage) | Class id, originally coming from Information Architect sheet, used for linage. strongly advised to PascalCase usage|                           | Yes       |
+| View           | View id, strongly advised to PascalCase usage                                                                      |                           | Yes       |
+| Name           | Human readable name of the view being defined                                                                      |                           | No        |
+| Description    | Short description of the view being defined                                                                        |                           | Yes       |
+| Implements     | List of parent view ids which the view being defined implements                                                    |                           | No        |
+| Filter         | Filter(s) which the view being defined should use                                                                  | `hasData`, `nodeType`, '' | No        |
+| In Model       | Indicates whether the view being defined is a part of the data model                                               | `True`, `False`           | No        |
 
 
 !!! tip annotate "Usage"
@@ -213,13 +213,13 @@ This sheet is only used for the DMS/CDF Architect, and it is mandatory. The shee
 ## Containers sheet
 This sheet is only used for the DMS/CDF Architect, and it is optional. The sheet should have the following columns:
 
-| Column             | Description                                                                                                        | Predefined Value              | Mandatory |
-|--------------------|--------------------------------------------------------------------------------------------------------------------|-------------------------------|-----------|
-| Class              | Class id, originally coming from Information Architect sheet, used for linage. strongly advised to PascalCase usage|                               | Yes       |
-| Container          | Container id, strongly advised to PascalCase usage                                                                 |                               | Yes       |
-| Name               | Human readable name of the container being defined                                                                 |                               | No        |
-| Description        | Short description of the view being defined                                                                        |                               | No        |
-| Constraint         | Constraint to be applied on the container being defined                                                            |                               | No        |
+| Column         | Description                                                                                                        | Predefined Value              | Mandatory |
+|----------------|--------------------------------------------------------------------------------------------------------------------|-------------------------------|-----------|
+| Class (linage) | Class id, originally coming from Information Architect sheet, used for linage. strongly advised to PascalCase usage|                               | Yes       |
+| Container      | Container id, strongly advised to PascalCase usage                                                                 |                               | Yes       |
+| Name           | Human readable name of the container being defined                                                                 |                               | No        |
+| Description    | Short description of the view being defined                                                                        |                               | No        |
+| Constraint     | Constraint to be applied on the container being defined                                                            |                               | No        |
 
 
 !!! tip annotate "Usage"
