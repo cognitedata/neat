@@ -46,6 +46,8 @@ class DMSSchema:
     views: dm.ViewApplyList = field(default_factory=lambda: dm.ViewApplyList([]))
     containers: dm.ContainerApplyList = field(default_factory=lambda: dm.ContainerApplyList([]))
     node_types: dm.NodeApplyList = field(default_factory=lambda: dm.NodeApplyList([]))
+    last: "DMSSchema | None" = None
+    reference: "DMSSchema | None" = None
     # The frozen ids are parts of the schema that should not be modified or deleted.
     # This is used the exporting the schema.
     frozen_ids: set[dm.ViewId | dm.ContainerId | dm.NodeId] = field(default_factory=set)
