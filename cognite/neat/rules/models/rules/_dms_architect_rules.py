@@ -188,41 +188,41 @@ class DMSMetadata(BaseMetadata):
 
 class DMSProperty(SheetEntity):
     view: ViewEntity = Field(alias="View")
-    view_property: str = Field(alias="ViewProperty")
+    view_property: str = Field(alias="View Property")
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
-    relation: Literal["direct", "edge", "reverse"] | None = Field(None, alias="Relation")
+    connection: Literal["direct", "edge", "reverse"] | None = Field(None, alias="Connection")
     value_type: DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity = Field(alias="Value Type")
     nullable: bool | None = Field(default=None, alias="Nullable")
-    is_list: bool | None = Field(default=None, alias="IsList")
+    is_list: bool | None = Field(default=None, alias="Is List")
     default: str | int | dict | None = Field(None, alias="Default")
     reference: URLEntity | ReferenceEntity | None = Field(default=None, alias="Reference", union_mode="left_to_right")
     container: ContainerEntity | None = Field(None, alias="Container")
-    container_property: str | None = Field(None, alias="ContainerProperty")
+    container_property: str | None = Field(None, alias="Container Property")
     index: StrListType | None = Field(None, alias="Index")
     constraint: StrListType | None = Field(None, alias="Constraint")
-    class_: ClassEntity = Field(alias="Class")
-    property_: PropertyType = Field(alias="Property")
+    class_: ClassEntity = Field(alias="Class (linage)")
+    property_: PropertyType = Field(alias="Property (linage)")
 
     @field_validator("nullable")
     def direct_relation_must_be_nullable(cls, value: Any, info: ValidationInfo) -> None:
-        if info.data.get("relation") == "direct" and value is False:
+        if info.data.get("connection") == "direct" and value is False:
             raise ValueError("Direct relation must be nullable")
         return value
 
     @field_validator("value_type", mode="after")
-    def relations_value_type(
+    def connections_value_type(
         cls, value: ViewPropertyEntity | ViewEntity | DMSUnknownEntity, info: ValidationInfo
     ) -> DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity:
-        if (relation := info.data.get("relation")) is None:
+        if (connection := info.data.get("connection")) is None:
             return value
-        if relation == "direct" and not isinstance(value, ViewEntity | DMSUnknownEntity):
+        if connection == "direct" and not isinstance(value, ViewEntity | DMSUnknownEntity):
             raise ValueError(f"Direct relation must have a value type that points to a view, got {value}")
-        elif relation == "edge" and not isinstance(value, ViewEntity):
-            raise ValueError(f"Edge relation must have a value type that points to a view, got {value}")
-        elif relation == "reverse" and not isinstance(value, ViewPropertyEntity | ViewEntity):
+        elif connection == "edge" and not isinstance(value, ViewEntity):
+            raise ValueError(f"Edge connection must have a value type that points to a view, got {value}")
+        elif connection == "reverse" and not isinstance(value, ViewPropertyEntity | ViewEntity):
             raise ValueError(
-                f"Reverse relation must have a value type that points to a view or view property, got {value}"
+                f"Reverse connection must have a value type that points to a view or view property, got {value}"
             )
         return value
 
@@ -241,7 +241,7 @@ class DMSContainer(SheetEntity):
     description: str | None = Field(alias="Description", default=None)
     reference: URLEntity | ReferenceEntity | None = Field(alias="Reference", default=None, union_mode="left_to_right")
     constraint: ContainerEntityList | None = Field(None, alias="Constraint")
-    class_: ClassEntity = Field(alias="Class")
+    class_: ClassEntity = Field(alias="Class (linage)")
 
     def as_container(self) -> dm.ContainerApply:
         container_id = self.container.as_id()
@@ -283,8 +283,8 @@ class DMSView(SheetEntity):
     implements: ViewEntityList | None = Field(None, alias="Implements")
     reference: URLEntity | ReferenceEntity | None = Field(alias="Reference", default=None, union_mode="left_to_right")
     filter_: HasDataFilter | NodeTypeFilter | None = Field(None, alias="Filter")
-    in_model: bool = Field(True, alias="InModel")
-    class_: ClassEntity = Field(alias="Class")
+    in_model: bool = Field(True, alias="In Model")
+    class_: ClassEntity = Field(alias="Class (linage)")
 
     def as_view(self) -> dm.ViewApply:
         view_id = self.view.as_id()
@@ -917,7 +917,7 @@ class _DMSExporter:
         if prop.container and prop.container_property:
             container_prop_identifier = prop.container_property
             extra_args: dict[str, Any] = {}
-            if prop.relation == "direct":
+            if prop.connection == "direct":
                 if isinstance(prop.value_type, ViewEntity):
                     extra_args["source"] = prop.value_type.as_id()
                 elif isinstance(prop.value_type, DMSUnknownEntity):
@@ -928,11 +928,11 @@ class _DMSExporter:
                         "If this error occurs it is a bug in NEAT, please report"
                         f"Debug Info, Invalid valueType direct: {prop.model_dump_json()}"
                     )
-            elif prop.relation is not None:
+            elif prop.connection is not None:
                 # Should have been validated.
                 raise ValueError(
                     "If this error occurs it is a bug in NEAT, please report"
-                    f"Debug Info, Invalid relation: {prop.model_dump_json()}"
+                    f"Debug Info, Invalid connection: {prop.model_dump_json()}"
                 )
             return dm.MappedPropertyApply(
                 container=prop.container.as_id(),
@@ -941,7 +941,7 @@ class _DMSExporter:
                 description=prop.description,
                 **extra_args,
             )
-        elif prop.relation == "edge":
+        elif prop.connection == "edge":
             if isinstance(prop.value_type, ViewEntity):
                 source_view_id = prop.value_type.as_id()
             else:
@@ -962,7 +962,7 @@ class _DMSExporter:
                 name=prop.name,
                 description=prop.description,
             )
-        elif prop.relation == "reverse":
+        elif prop.connection == "reverse":
             reverse_prop_id: str | None = None
             if isinstance(prop.value_type, ViewPropertyEntity):
                 source_view_id = prop.value_type.as_view_id()
@@ -973,7 +973,7 @@ class _DMSExporter:
                 # Should have been validated.
                 raise ValueError(
                     "If this error occurs it is a bug in NEAT, please report"
-                    f"Debug Info, Invalid valueType reverse relation: {prop.model_dump_json()}"
+                    f"Debug Info, Invalid valueType reverse connection: {prop.model_dump_json()}"
                 )
             reverse_prop: DMSProperty | None = None
             if reverse_prop_id is not None:
@@ -992,7 +992,7 @@ class _DMSExporter:
                     stacklevel=2,
                 )
 
-            if reverse_prop is None or reverse_prop.relation == "edge":
+            if reverse_prop is None or reverse_prop.connection == "edge":
                 inwards_edge_cls = (
                     dm.MultiEdgeConnectionApply if prop.is_list in [True, None] else SingleEdgeConnectionApply
                 )
@@ -1003,7 +1003,7 @@ class _DMSExporter:
                     description=prop.description,
                     direction="inwards",
                 )
-            elif reverse_prop_id and reverse_prop and reverse_prop.relation == "direct":
+            elif reverse_prop_id and reverse_prop and reverse_prop.connection == "direct":
                 reverse_direct_cls = (
                     dm.MultiReverseDirectRelationApply if prop.is_list is True else SingleReverseDirectRelationApply
                 )
@@ -1016,9 +1016,9 @@ class _DMSExporter:
             else:
                 return None
 
-        elif prop.view and prop.view_property and prop.relation:
+        elif prop.view and prop.view_property and prop.connection:
             warnings.warn(
-                issues.dms.UnsupportedRelationWarning(prop.view.as_id(), prop.view_property, prop.relation or ""),
+                issues.dms.UnsupportedConnectionWarning(prop.view.as_id(), prop.view_property, prop.connection or ""),
                 stacklevel=2,
             )
         return None

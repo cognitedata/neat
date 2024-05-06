@@ -77,7 +77,7 @@ class DMSPropertyWrite:
     class_: str | None = None
     name: str | None = None
     description: str | None = None
-    relation: Literal["direct", "edge", "reverse"] | None = None
+    connection: Literal["direct", "edge", "reverse"] | None = None
     nullable: bool | None = None
     is_list: bool | None = None
     default: str | int | dict | None = None
@@ -118,7 +118,7 @@ class DMSPropertyWrite:
             class_=data.get("class_"),
             name=data.get("name"),
             description=data.get("description"),
-            relation=data.get("relation"),
+            connection=data.get("connection"),
             nullable=data.get("nullable"),
             is_list=data.get("is_list"),
             default=data.get("default"),
@@ -143,23 +143,23 @@ class DMSPropertyWrite:
 
         return {
             "View": ViewEntity.load(self.view, space=default_space, version=default_version),
-            "ViewProperty": self.view_property,
+            "View Property": self.view_property,
             "Value Type": value_type,
-            "Property": self.property_ or self.view_property,
-            "Class": ClassEntity.load(self.class_, prefix=default_space, version=default_version)
+            "Property (linage)": self.property_ or self.view_property,
+            "Class (linage)": ClassEntity.load(self.class_, prefix=default_space, version=default_version)
             if self.class_
             else None,
             "Name": self.name,
             "Description": self.description,
-            "Relation": self.relation,
+            "Connection": self.connection,
             "Nullable": self.nullable,
-            "IsList": self.is_list,
+            "Is List": self.is_list,
             "Default": self.default,
             "Reference": self.reference,
             "Container": ContainerEntity.load(self.container, space=default_space, version=default_version)
             if self.container
             else None,
-            "ContainerProperty": self.container_property,
+            "Container Property": self.container_property,
             "Index": self.index,
             "Constraint": self.constraint,
         }
@@ -208,19 +208,21 @@ class DMSContainerWrite:
 
     def dump(self, default_space: str) -> dict[str, Any]:
         container = ContainerEntity.load(self.container, space=default_space)
-        return dict(
-            Container=container,
-            Class=ClassEntity.load(self.class_, prefix=default_space) if self.class_ else container.as_class(),
-            Name=self.name,
-            Description=self.description,
-            Reference=self.reference,
-            Constraint=[
+        return {
+            "Container": container,
+            "Class (linage)": ClassEntity.load(self.class_, prefix=default_space)
+            if self.class_
+            else container.as_class(),
+            "Name": self.name,
+            "Description": self.description,
+            "Reference": self.reference,
+            "Constraint": [
                 ContainerEntity.load(constraint.strip(), space=default_space)
                 for constraint in self.constraint.split(",")
             ]
             if self.constraint
             else None,
-        )
+        }
 
 
 @dataclass
@@ -268,23 +270,23 @@ class DMSViewWrite:
 
     def dump(self, default_space: str, default_version: str) -> dict[str, Any]:
         view = ViewEntity.load(self.view, space=default_space, version=default_version)
-        return dict(
-            View=view,
-            Class=ClassEntity.load(self.class_, prefix=default_space, version=default_version)
+        return {
+            "View": view,
+            "Class (linage)": ClassEntity.load(self.class_, prefix=default_space, version=default_version)
             if self.class_
             else view.as_class(),
-            Name=self.name,
-            Description=self.description,
-            Implements=[
+            "Name": self.name,
+            "Description": self.description,
+            "Implements": [
                 ViewEntity.load(implement, space=default_space, version=default_version)
                 for implement in self.implements.split(",")
             ]
             if self.implements
             else None,
-            Reference=self.reference,
-            Filter=self.filter_,
-            InModel=self.in_model,
-        )
+            "Reference": self.reference,
+            "Filter": self.filter_,
+            "In Model": self.in_model,
+        }
 
 
 @dataclass

@@ -15,16 +15,29 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.76.0] - 06-05-24
 ### Removed
 - [BREAKING] In `DMSRules`, `default_view_version` is no longer supported. Instead, you will now get a warning if view versions
   are not matching the data model version.
 
 ### Added/Changed
+- [BREAKING] The following renaming of columns in `DMSRules`, properties sheet:
+    - `Relation` -> `Connection`
+    - `ViewProperty` -> `View Property`
+    - `ContainerProperty` -> `Container Property`
+    - `IsList` -> `Is List`
+    - `Class` -> `Class (linage)`
+    - `Property` -> `Property (linage)`
+- [BREAKING] The following renaming of columns in `DMSRules`, views sheet:
+    - `InModel` -> `In Model`
+    - `Class` -> `Class (linage)`
+- [BREAKING] The following renaming of columns in `DMSRules`, containers sheet:
+    - `Class` -> `Class (linage)`
 - [BREAKING] Added support for listable direct relations in `DMSRules`. In addition, there is now a complete reimplementation
-  of the `relation` column in the `DMRRules` `properties` sheet.
-- [BREAKING] Relation can now be `direct`, `reverse`, or `edge`. While `multiedge` and `reversedirectc` have been removed.
-  For more details, see the [DMS Rules Details](https://cognite-neat.readthedocs-hosted.com/en/latest/terminology/dmsrules.html#relation)
+  of the `connection` column in the `DMRRules` `properties` sheet.
+- [BREAKING] Connection (former relation) can now be `direct`, `reverse`, or `edge`.
+  While `multiedge` and `reversedirectc` have been removed. For more details,
+  see the [DMS Rules Details](https://cognite-neat.readthedocs-hosted.com/en/latest/terminology/dmsrules.html#relation)
   documentation.
 - In `DMSRules`, added support for setting containerId and nodeId in `View.Filter`. Earlier, only `nodeType` and
   `hasData` were supported which always used an implicit `containerId` and `nodeId` respectively. Now, the user can
