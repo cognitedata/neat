@@ -7,8 +7,8 @@ from cognite.neat.rules.models._base import (
     SheetList,
 )
 from cognite.neat.rules.models.data_types import DataType
-from cognite.neat.rules.models.dms._dms_architect_rules import DMSProperty, DMSRules, DMSView
-from cognite.neat.rules.models.domain_rules import DomainRules
+from cognite.neat.rules.models.dms._rules import DMSProperty, DMSRules, DMSView
+from cognite.neat.rules.models.domain import DomainRules
 from cognite.neat.rules.models.entities import (
     ClassEntity,
     ContainerEntity,
@@ -19,7 +19,7 @@ from cognite.neat.rules.models.entities import (
     ViewPropertyEntity,
 )
 
-from ._information_rules import InformationClass, InformationMetadata, InformationProperty, InformationRules
+from ._rules import InformationClass, InformationMetadata, InformationProperty, InformationRules
 
 
 class _InformationRulesConverter:
@@ -30,7 +30,7 @@ class _InformationRulesConverter:
         raise NotImplementedError("DomainRules not implemented yet")
 
     def as_dms_architect_rules(self, created: datetime | None = None, updated: datetime | None = None) -> "DMSRules":
-        from cognite.neat.rules.models.dms._dms_architect_rules import (
+        from cognite.neat.rules.models.dms._rules import (
             DMSContainer,
             DMSMetadata,
             DMSProperty,
@@ -112,7 +112,7 @@ class _InformationRulesConverter:
     def _as_dms_property(cls, prop: InformationProperty, default_space: str, default_version: str) -> "DMSProperty":
         """This creates the first"""
 
-        from cognite.neat.rules.models.dms._dms_architect_rules import DMSProperty
+        from cognite.neat.rules.models.dms._rules import DMSProperty
 
         # returns property type, which can be ObjectProperty or DatatypeProperty
         value_type: DataType | ViewEntity | ViewPropertyEntity | DMSUnknownEntity

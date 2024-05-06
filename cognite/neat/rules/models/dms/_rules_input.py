@@ -16,7 +16,7 @@ from cognite.neat.rules.models.entities import (
     ViewPropertyEntity,
 )
 
-from ._dms_architect_rules import DMSContainer, DMSMetadata, DMSProperty, DMSRules, DMSView
+from ._rules import DMSContainer, DMSMetadata, DMSProperty, DMSRules, DMSView
 
 
 @dataclass

@@ -1,9 +1,9 @@
-from cognite.neat.rules.models.domain_rules import DomainRules
-from cognite.neat.rules.models.information._information_rules import InformationRules
+from cognite.neat.rules.models.domain import DomainRules
+from cognite.neat.rules.models.information._rules import InformationRules
 
 from ._base import DataModelType, ExtensionCategory, RoleTypes, SchemaCompleteness, SheetEntity, SheetList
-from .dms._dms_architect_rules import DMSRules
-from .dms._dms_schema import DMSSchema
+from .dms._rules import DMSRules
+from .dms._schema import DMSSchema
 
 RULES_PER_ROLE: dict[RoleTypes, type[DomainRules] | type[InformationRules] | type[DMSRules]] = {
     RoleTypes.domain_expert: DomainRules,

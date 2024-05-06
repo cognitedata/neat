@@ -23,8 +23,8 @@ from cognite.neat.rules.models.entities import (
 )
 from cognite.neat.rules.models.wrapped_entities import DMSFilter, HasDataFilter, NodeTypeFilter
 
-from ._dms_architect_rules import DMSMetadata, DMSProperty, DMSRules, DMSView
-from ._dms_schema import DMSSchema, PipelineSchema
+from ._rules import DMSMetadata, DMSProperty, DMSRules, DMSView
+from ._schema import DMSSchema, PipelineSchema
 
 
 class _DMSExporter:

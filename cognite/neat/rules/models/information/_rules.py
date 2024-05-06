@@ -41,7 +41,7 @@ from cognite.neat.rules.models._types import (
     VersionType,
 )
 from cognite.neat.rules.models.data_types import DataType
-from cognite.neat.rules.models.domain_rules import DomainRules
+from cognite.neat.rules.models.domain import DomainRules
 from cognite.neat.rules.models.entities import (
     ClassEntity,
     Entity,
@@ -58,7 +58,7 @@ from cognite.neat.rules.models.entities import (
 )
 
 if TYPE_CHECKING:
-    from cognite.neat.rules.models.dms._dms_architect_rules import DMSRules
+    from cognite.neat.rules.models.dms._rules import DMSRules
 
 
 if sys.version_info >= (3, 11):

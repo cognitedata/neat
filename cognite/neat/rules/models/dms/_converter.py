@@ -7,7 +7,7 @@ from rdflib import Namespace
 from cognite.neat.rules import issues
 from cognite.neat.rules.models._base import SheetList
 from cognite.neat.rules.models.data_types import DataType
-from cognite.neat.rules.models.domain_rules import DomainRules
+from cognite.neat.rules.models.domain import DomainRules
 from cognite.neat.rules.models.entities import (
     ClassEntity,
     ContainerEntity,
@@ -18,9 +18,9 @@ from cognite.neat.rules.models.entities import (
     ViewEntity,
     ViewPropertyEntity,
 )
-from cognite.neat.rules.models.information._information_rules import InformationRules
+from cognite.neat.rules.models.information._rules import InformationRules
 
-from ._dms_architect_rules import DMSProperty, DMSRules, DMSView
+from ._rules import DMSProperty, DMSRules, DMSView
 
 
 class _DMSRulesConverter:
@@ -37,7 +37,7 @@ class _DMSRulesConverter:
         name: str | None = None,
         namespace: Namespace | None = None,
     ) -> "InformationRules":
-        from cognite.neat.rules.models.information._information_rules import (
+        from cognite.neat.rules.models.information._rules import (
             InformationClass,
             InformationMetadata,
             InformationProperty,
