@@ -678,7 +678,7 @@ class _DMSExporter:
         container_properties_by_id, view_properties_by_id = self._gather_properties()
         containers = self._create_containers(container_properties_by_id)
 
-        views, node_types = self._create_views_with_node_types(view_properties_by_id)
+        views, node_types = self._create_views_with_node_types(view_properties_by_id, rules.metadata.data_model_type)
 
         views_not_in_model = {view.view.as_id() for view in rules.views if not view.in_model}
         data_model = rules.metadata.as_data_model()
@@ -722,6 +722,7 @@ class _DMSExporter:
     def _create_views_with_node_types(
         self,
         view_properties_by_id: dict[dm.ViewId, list[DMSProperty]],
+        data_model_type: DataModelType,
     ) -> tuple[dm.ViewApplyList, dm.NodeApplyList]:
         views = dm.ViewApplyList([dms_view.as_view() for dms_view in self.rules.views])
         dms_view_by_id = {dms_view.view.as_id(): dms_view for dms_view in self.rules.views}
@@ -882,16 +883,17 @@ class _DMSExporter:
             ):
                 # No new properties, only reference, reuse the reference filter
                 return DMSFilter.from_dms_filter(ref_view.filter)
-            elif node_ids := {
-                prop.reference.as_node_entity()
-                for prop in dms_properties
-                if isinstance(prop.reference, ReferenceEntity)
-            } | (
-                {dms_view.reference.as_node_entity()}
-                if dms_view and isinstance(dms_view.reference, ReferenceEntity)
-                else set()
-            ):
-                return NodeTypeFilter(inner=list(node_ids))
+            else:
+                referenced_node_ids = {
+                    prop.reference.as_node_entity()
+                    for prop in dms_properties
+                    if isinstance(prop.reference, ReferenceEntity)
+                }
+                if dms_view and isinstance(dms_view.reference, ReferenceEntity):
+                    referenced_node_ids.add(dms_view.reference.as_node_entity())
+                if referenced_node_ids:
+                    return NodeTypeFilter(inner=list(referenced_node_ids))
+
         # Enterprise Model or (Solution + HasData)
         ref_containers = view.referenced_containers()
         if not ref_containers or selected_filter_name == HasDataFilter.name:
