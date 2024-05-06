@@ -188,21 +188,21 @@ class DMSMetadata(BaseMetadata):
 
 class DMSProperty(SheetEntity):
     view: ViewEntity = Field(alias="View")
-    view_property: str = Field(alias="ViewProperty")
+    view_property: str = Field(alias="View Property")
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
-    relation: Literal["direct", "edge", "reverse"] | None = Field(None, alias="Relation")
+    relation: Literal["direct", "edge", "reverse"] | None = Field(None, alias="Connection")
     value_type: DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity = Field(alias="Value Type")
     nullable: bool | None = Field(default=None, alias="Nullable")
-    is_list: bool | None = Field(default=None, alias="IsList")
+    is_list: bool | None = Field(default=None, alias="Is List")
     default: str | int | dict | None = Field(None, alias="Default")
     reference: URLEntity | ReferenceEntity | None = Field(default=None, alias="Reference", union_mode="left_to_right")
     container: ContainerEntity | None = Field(None, alias="Container")
-    container_property: str | None = Field(None, alias="ContainerProperty")
+    container_property: str | None = Field(None, alias="Container Property")
     index: StrListType | None = Field(None, alias="Index")
     constraint: StrListType | None = Field(None, alias="Constraint")
-    class_: ClassEntity = Field(alias="Class")
-    property_: PropertyType = Field(alias="Property")
+    class_: ClassEntity = Field(alias="Class (linage)")
+    property_: PropertyType = Field(alias="Property (linage)")
 
     @field_validator("nullable")
     def direct_relation_must_be_nullable(cls, value: Any, info: ValidationInfo) -> None:
@@ -241,7 +241,7 @@ class DMSContainer(SheetEntity):
     description: str | None = Field(alias="Description", default=None)
     reference: URLEntity | ReferenceEntity | None = Field(alias="Reference", default=None, union_mode="left_to_right")
     constraint: ContainerEntityList | None = Field(None, alias="Constraint")
-    class_: ClassEntity = Field(alias="Class")
+    class_: ClassEntity = Field(alias="Class (linage)")
 
     def as_container(self) -> dm.ContainerApply:
         container_id = self.container.as_id()
@@ -284,7 +284,7 @@ class DMSView(SheetEntity):
     reference: URLEntity | ReferenceEntity | None = Field(alias="Reference", default=None, union_mode="left_to_right")
     filter_: HasDataFilter | NodeTypeFilter | None = Field(None, alias="Filter")
     in_model: bool = Field(True, alias="InModel")
-    class_: ClassEntity = Field(alias="Class")
+    class_: ClassEntity = Field(alias="Class (linage)")
 
     def as_view(self) -> dm.ViewApply:
         view_id = self.view.as_id()
