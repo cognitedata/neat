@@ -68,7 +68,9 @@ The spreadsheet templates for the `Rules` object per role are accessible through
     |-------------|-----------------------------------------------------------------------------------------------------------|-------------------------------------|-----------|
     | role        | The role of the person                                                                                    | `dms expert`                        | Yes       |
     | creator     | Names of data model creators separated with comma                                                         |                                     | Yes       |
+    | dataModelType      | data model type, two options enterprise or solution                                                | `enterprise` or `solution`          | Yes       |
     | schema      | Indication of schema completeness                                                                         | `complete`, `partial` or `extended` | Yes       |
+    | extension   | Indication of schema completeness     | `addition`, `reshape` or `rebuild` | No       |
     | space       | CDF space to which data model belongs                                                                     |                                     | Yes       |
     | externalId  | External id used to uniquely identify data model within a space                                           |                                     | Yes       |
     | version     | Version of the data model                                                                                 |                                     | Yes       |
