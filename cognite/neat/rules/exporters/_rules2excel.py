@@ -120,13 +120,6 @@ class ExcelExporter(BaseExporter[Workbook]):
             else:
                 sheet = workbook.create_sheet(sheet_name)
 
-            # Reorder such that the first column is class + the first field of the subclass
-            # of sheet entity. This is to make the properties/classes/views/containers sheet more readable.
-            # For example, for the properties these that means class, property, name, description
-            # instead of class, name, description, property
-            move = len(SheetEntity.model_fields) - 1  # -1 is for the class field
-            headers = headers[:1] + headers[move : move + 1] + headers[1:move] + headers[move + 1 :]
-
             main_header = self._main_header_by_sheet_name[sheet_name]
             sheet.append([main_header] + [""] * (len(headers) - 1))
             sheet.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(headers))
@@ -150,8 +143,6 @@ class ExcelExporter(BaseExporter[Workbook]):
                         cell.border = Border(left=side, right=side, top=side, bottom=side)
                     fill_color = next(fill_colors)
 
-                # Need to do the same reordering as for the headers above
-                row = row[:1] + row[move : move + 1] + row[1:move] + row[move + 1 :]
                 sheet.append(row)
                 if self._styling_level > 2 and is_properties:
                     for cell in sheet[sheet.max_row]:

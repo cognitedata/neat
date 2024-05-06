@@ -125,6 +125,9 @@ class InformationClass(SheetEntity):
         match_type: The match type of the resource being described and the source entity.
     """
 
+    class_: ClassEntity = Field(alias="Class")
+    name: str | None = Field(alias="Name", default=None)
+    description: str | None = Field(alias="Description", default=None)
     parent: ParentEntityList | None = Field(alias="Parent Class", default=None)
     reference: URLEntity | ReferenceEntity | None = Field(alias="Reference", default=None, union_mode="left_to_right")
     match_type: MatchType | None = Field(alias="Match Type", default=None)
@@ -152,7 +155,10 @@ class InformationProperty(SheetEntity):
               knowledge graph. Defaults to None (no transformation)
     """
 
+    class_: ClassEntity = Field(alias="Class")
     property_: PropertyType = Field(alias="Property")
+    name: str | None = Field(alias="Name", default=None)
+    description: str | None = Field(alias="Description", default=None)
     value_type: DataType | ClassEntity | UnknownEntity = Field(alias="Value Type", union_mode="left_to_right")
     min_count: int | None = Field(alias="Min Count", default=None)
     max_count: int | float | None = Field(alias="Max Count", default=None)
