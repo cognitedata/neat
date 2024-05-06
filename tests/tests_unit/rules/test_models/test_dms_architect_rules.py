@@ -65,7 +65,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     class_="WindFarm",
                     property_="WindTurbines",
                     value_type="WindTurbine",
-                    relation="multiedge",
+                    relation="edge",
                     view="WindFarm",
                     view_property="windTurbines",
                 ),
@@ -253,13 +253,15 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                         "name": dm.MappedPropertyApply(
                             container=dm.ContainerId("my_space", "Asset"), container_property_identifier="name"
                         ),
-                        "windTurbines": dm.MultiEdgeConnectionApply(
-                            type=dm.DirectRelationReference(space="my_space", external_id="WindFarm.windTurbines"),
-                            source=dm.ViewId(space="my_space", external_id="WindTurbine", version="1"),
-                            direction="outwards",
+                        "windTurbines": dm.MappedPropertyApply(
+                            container=dm.ContainerId("my_space", "WindFarm"),
+                            container_property_identifier="windTurbines",
+                            source=dm.ViewId("my_space", "WindTurbine", "1"),
                         ),
                     },
-                    filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "Asset")]),
+                    filter=dm.filters.HasData(
+                        containers=[dm.ContainerId("my_space", "Asset"), dm.ContainerId("my_space", "WindFarm")]
+                    ),
                 ),
                 dm.ViewApply(
                     space="my_space",
@@ -279,7 +281,19 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 dm.ContainerApply(
                     space="my_space",
                     external_id="Asset",
-                    properties={"name": dm.ContainerProperty(type=dm.Text(), nullable=True)},
+                    properties={
+                        "name": dm.ContainerProperty(type=dm.Text(), nullable=True),
+                    },
+                ),
+                dm.ContainerApply(
+                    space="my_space",
+                    external_id="WindFarm",
+                    properties={
+                        "windTurbines": dm.ContainerProperty(
+                            type=dm.DirectRelation(is_list=True),
+                        ),
+                    },
+                    constraints={"my_space_Asset": dm.RequiresConstraint(dm.ContainerId("my_space", "Asset"))},
                 ),
             ]
         ),
@@ -288,7 +302,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         dms_rules,
         expected_schema,
-        id="Property with list of direct relations converted to multiedge",
+        id="Property with list of direct relations",
     )
 
     dms_rules = DMSRulesWrite(
@@ -423,7 +437,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 class_="Asset",
                 property_="timeseries",
                 value_type="Timeseries(property=asset)",
-                relation="reversedirect",
+                relation="reverse",
                 is_list=True,
                 view="Asset",
                 view_property="timeseries",
@@ -442,7 +456,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 class_="Asset",
                 property_="children",
                 value_type="Asset(property=root)",
-                relation="reversedirect",
+                relation="reverse",
                 is_list=True,
                 view="Asset",
                 view_property="children",
@@ -481,7 +495,8 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 class_="Activity",
                 property_="timeseries",
                 value_type="Timeseries(property=activities)",
-                relation="reversedirect",
+                is_list=True,
+                relation="reverse",
                 view="Activity",
                 view_property="timeseries",
             ),
@@ -554,10 +569,10 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                             container_property_identifier="asset",
                             source=dm.ViewId("my_space", "Asset", "1"),
                         ),
-                        "activities": dm.MultiEdgeConnectionApply(
-                            type=dm.DirectRelationReference(space="my_space", external_id="Timeseries.activities"),
+                        "activities": dm.MappedPropertyApply(
+                            container=dm.ContainerId("my_space", "Timeseries"),
+                            container_property_identifier="activities",
                             source=dm.ViewId("my_space", "Activity", "1"),
-                            direction="outwards",
                         ),
                     },
                     filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "Timeseries")]),
@@ -567,10 +582,11 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     external_id="Activity",
                     version="1",
                     properties={
-                        "timeseries": dm.MultiEdgeConnectionApply(
-                            type=dm.DirectRelationReference(space="my_space", external_id="Timeseries.activities"),
+                        "timeseries": dm.MultiReverseDirectRelationApply(
                             source=dm.ViewId("my_space", "Timeseries", "1"),
-                            direction="inwards",
+                            through=dm.PropertyId(
+                                source=dm.ViewId("my_space", "Timeseries", "1"), property="activities"
+                            ),
                         )
                     },
                     filter=dm.filters.Equals(
@@ -599,6 +615,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     properties={
                         "name": dm.ContainerProperty(type=dm.Text(), nullable=True),
                         "asset": dm.ContainerProperty(type=dm.DirectRelation(), nullable=True),
+                        "activities": dm.ContainerProperty(type=dm.DirectRelation(is_list=True), nullable=True),
                     },
                 ),
             ]
@@ -708,7 +725,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 class_="Asset",
                 property_="kinderen",
                 value_type="Asset",
-                relation="multiedge",
+                relation="edge",
                 reference="sp_enterprise:Asset(property=children)",
                 view="Asset",
                 view_property="kinderen",
@@ -890,7 +907,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                     {
                         "class_": "Plant",
                         "property_": "generators",
-                        "relation": "multiedge",
+                        "relation": "edge",
                         "value_type": "Generator",
                         "view": "Plant",
                         "view_property": "generators",
@@ -968,7 +985,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                     class_="Plant",
                     property_="generators",
                     value_type="Generator",
-                    relation="multiedge",
+                    relation="edge",
                     view="Plant",
                     view_property="generators",
                 ),

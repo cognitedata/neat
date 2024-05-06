@@ -10,7 +10,11 @@ from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import PropertyType as CognitePropertyType
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex
-from cognite.client.data_classes.data_modeling.views import SingleReverseDirectRelationApply, ViewPropertyApply
+from cognite.client.data_classes.data_modeling.views import (
+    SingleEdgeConnectionApply,
+    SingleReverseDirectRelationApply,
+    ViewPropertyApply,
+)
 from pydantic import Field, field_serializer, field_validator, model_serializer, model_validator
 from pydantic_core.core_schema import SerializationInfo, ValidationInfo
 from rdflib import Namespace
@@ -188,7 +192,7 @@ class DMSMetadata(BaseMetadata):
 
 class DMSProperty(SheetEntity):
     property_: PropertyType = Field(alias="Property")
-    relation: Literal["direct", "reversedirect", "multiedge"] | None = Field(None, alias="Relation")
+    relation: Literal["direct", "edge", "reverse"] | None = Field(None, alias="Relation")
     value_type: DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity = Field(alias="Value Type")
     nullable: bool | None = Field(default=None, alias="Nullable")
     is_list: bool | None = Field(default=None, alias="IsList")
@@ -207,25 +211,18 @@ class DMSProperty(SheetEntity):
             raise ValueError("Direct relation must be nullable")
         return value
 
-    @field_validator("container_property", "container")
-    def reverse_direct_relation_has_no_container(cls, value, info: ValidationInfo) -> None:
-        if info.data.get("relation") == "reversedirect" and value is not None:
-            raise ValueError(f"Reverse direct relation must not have container or container property, got {value}")
-        return value
-
     @field_validator("value_type", mode="after")
-    def relations_value_type(cls, value: DataType | ClassEntity, info: ValidationInfo) -> DataType | ClassEntity:
-        if (relation := info.data["relation"]) is None:
+    def relations_value_type(
+        cls, value: ViewPropertyEntity | ViewEntity | DMSUnknownEntity, info: ValidationInfo
+    ) -> DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity:
+        if (relation := info.data.get("relation")) is None:
             return value
-        if not isinstance(value, ViewEntity | ViewPropertyEntity | DMSUnknownEntity):
-            raise ValueError(f"Relations must have a value type that points to another view, got {value}")
-        if relation == "reversedirect" and value.property_ is None:
-            # Todo fix this error message. It have the wrong syntax for how to have a property
-            raise ValueError(
-                "Reverse direct relation must set what it is the reverse property of. "
-                f"Which property in {value.versioned_id} is this the reverse of? Expecting"
-                f"{value.versioned_id}:<property>"
-            )
+        if relation == "direct" and not isinstance(value, ViewEntity | DMSUnknownEntity):
+            raise ValueError(f"Direct relation must have a value type that points to a view, got {value}")
+        elif relation == "edge" and not isinstance(value, ViewEntity):
+            raise ValueError(f"Edge relation must have a value type that points to a view, got {value}")
+        elif relation == "reverse" and not isinstance(value, ViewPropertyEntity):
+            raise ValueError(f"Reverse relation must have a value type that points to a view property, got {value}")
         return value
 
     @field_serializer("value_type", when_used="always")
@@ -678,13 +675,10 @@ class _DMSExporter:
 
     def to_schema(self) -> DMSSchema:
         rules = self.rules
-        container_properties_by_id, view_properties_by_id = self._gather_properties(rules)
+        container_properties_by_id, view_properties_by_id = self._gather_properties()
+        containers = self._create_containers(container_properties_by_id)
 
-        containers = self._create_containers(rules.containers, container_properties_by_id)
-
-        views, node_types = self._create_views_with_node_types(
-            rules.views, view_properties_by_id, rules.metadata.data_model_type
-        )
+        views, node_types = self._create_views_with_node_types(view_properties_by_id)
 
         views_not_in_model = {view.view.as_id() for view in rules.views if not view.in_model}
         data_model = rules.metadata.as_data_model()
@@ -727,12 +721,10 @@ class _DMSExporter:
 
     def _create_views_with_node_types(
         self,
-        dms_views: SheetList[DMSView],
         view_properties_by_id: dict[dm.ViewId, list[DMSProperty]],
-        data_model_type: DataModelType,
     ) -> tuple[dm.ViewApplyList, dm.NodeApplyList]:
-        views = dm.ViewApplyList([dms_view.as_view() for dms_view in dms_views])
-        dms_view_by_id = {dms_view.view.as_id(): dms_view for dms_view in dms_views}
+        views = dm.ViewApplyList([dms_view.as_view() for dms_view in self.rules.views])
+        dms_view_by_id = {dms_view.view.as_id(): dms_view for dms_view in self.rules.views}
 
         for view in views:
             view_id = view.as_id()
@@ -740,148 +732,11 @@ class _DMSExporter:
             if not (view_properties := view_properties_by_id.get(view_id)):
                 continue
             for prop in view_properties:
-                view_property: ViewPropertyApply
-                if prop.is_list and prop.relation == "direct":
-                    # This is not yet supported in the CDF API, a warning has already been issued, here we convert it to
-                    # a multi-edge connection.
-                    if isinstance(prop.value_type, ViewEntity):
-                        source_view_id = prop.value_type.as_id()
-                    elif isinstance(prop.value_type, ViewPropertyEntity):
-                        source_view_id = prop.value_type.as_view_id()
-                    else:
-                        raise ValueError(
-                            "Direct relation must have a view as value type. "
-                            "This should have been validated in the rules"
-                        )
-                    view_property = dm.MultiEdgeConnectionApply(
-                        type=dm.DirectRelationReference(
-                            space=source_view_id.space,
-                            external_id=f"{prop.view.external_id}.{prop.view_property}",
-                        ),
-                        source=source_view_id,
-                        direction="outwards",
-                        name=prop.name,
-                        description=prop.description,
-                    )
-                elif prop.container and prop.container_property and prop.view_property:
-                    container_prop_identifier = prop.container_property
-                    extra_args: dict[str, Any] = {}
-                    if prop.relation == "direct" and isinstance(prop.value_type, ViewEntity):
-                        extra_args["source"] = prop.value_type.as_id()
-                    elif isinstance(prop.value_type, DMSUnknownEntity):
-                        extra_args["source"] = None
-                    elif prop.relation == "direct" and not isinstance(prop.value_type, ViewEntity):
-                        raise ValueError(
-                            "Direct relation must have a view as value type. "
-                            "This should have been validated in the rules"
-                        )
-                    view_property = dm.MappedPropertyApply(
-                        container=prop.container.as_id(),
-                        container_property_identifier=container_prop_identifier,
-                        name=prop.name,
-                        description=prop.description,
-                        **extra_args,
-                    )
-                elif prop.view and prop.view_property and prop.relation == "multiedge":
-                    if isinstance(prop.value_type, ViewEntity):
-                        source_view_id = prop.value_type.as_id()
-                    else:
-                        raise ValueError(
-                            "Multiedge relation must have a view as value type. "
-                            "This should have been validated in the rules"
-                        )
-                    if isinstance(prop.reference, ReferenceEntity):
-                        ref_view_prop = prop.reference.as_view_property_id()
-                        edge_type = dm.DirectRelationReference(
-                            space=ref_view_prop.source.space,
-                            external_id=f"{ref_view_prop.source.external_id}.{ref_view_prop.property}",
-                        )
-                    else:
-                        edge_type = dm.DirectRelationReference(
-                            space=source_view_id.space,
-                            external_id=f"{prop.view.external_id}.{prop.view_property}",
-                        )
+                view_property = self._create_view_property(prop, view_properties_by_id)
+                if view_property is not None:
+                    view.properties[prop.view_property] = view_property
 
-                    view_property = dm.MultiEdgeConnectionApply(
-                        type=edge_type,
-                        source=source_view_id,
-                        direction="outwards",
-                        name=prop.name,
-                        description=prop.description,
-                    )
-                elif prop.view and prop.view_property and prop.relation == "reversedirect":
-                    if isinstance(prop.value_type, ViewPropertyEntity):
-                        source_prop_id = prop.value_type.as_id()
-                        source_view_id = cast(dm.ViewId, source_prop_id.source)
-                    else:
-                        raise ValueError(
-                            "Reverse direct relation must have a view as value type. "
-                            "This should have been validated in the rules"
-                        )
-                    source_prop = prop.value_type.property_
-                    if source_prop is None:
-                        raise ValueError(
-                            "Reverse direct relation must set what it is the reverse property of. "
-                            f"Which property in {prop.value_type.versioned_id} is this the reverse of? Expecting "
-                            f"{prop.value_type.versioned_id}:<property>"
-                        )
-                    reverse_prop = next(
-                        (
-                            prop
-                            for prop in view_properties_by_id.get(source_view_id, [])
-                            if prop.property_ == source_prop
-                        ),
-                        None,
-                    )
-                    if reverse_prop and reverse_prop.relation == "direct" and reverse_prop.is_list:
-                        warnings.warn(
-                            issues.dms.ReverseOfDirectRelationListWarning(view_id, prop.property_), stacklevel=2
-                        )
-                        if isinstance(reverse_prop.reference, ReferenceEntity):
-                            ref_view_prop = reverse_prop.reference.as_view_property_id()
-                            edge_type = dm.DirectRelationReference(
-                                space=ref_view_prop.source.space,
-                                external_id=f"{ref_view_prop.source.external_id}.{ref_view_prop.property}",
-                            )
-                        else:
-                            edge_type = dm.DirectRelationReference(
-                                space=source_prop_id.source.space,
-                                external_id=f"{reverse_prop.view.external_id}.{reverse_prop.view_property}",
-                            )
-                        view_property = dm.MultiEdgeConnectionApply(
-                            type=edge_type,
-                            source=source_prop_id.source,  # type: ignore[arg-type]
-                            direction="inwards",
-                            name=prop.name,
-                            description=prop.description,
-                        )
-                    else:
-                        args: dict[str, Any] = dict(
-                            source=source_view_id,
-                            through=dm.PropertyId(source_prop_id.source, source_prop),
-                            description=prop.description,
-                            name=prop.name,
-                        )
-                        reverse_direct_cls: dict[
-                            bool | None,
-                            type[dm.MultiReverseDirectRelationApply] | type[SingleReverseDirectRelationApply],
-                        ] = {
-                            True: dm.MultiReverseDirectRelationApply,
-                            False: SingleReverseDirectRelationApply,
-                            None: dm.MultiReverseDirectRelationApply,
-                        }
-
-                        view_property = reverse_direct_cls[prop.is_list](**args)
-                elif prop.view and prop.view_property and prop.relation:
-                    warnings.warn(
-                        issues.dms.UnsupportedRelationWarning(view_id, prop.view_property, prop.relation), stacklevel=2
-                    )
-                    continue
-                else:
-                    continue
-                prop_id = prop.view_property
-                view.properties[prop_id] = view_property
-
+        data_model_type = self.rules.metadata.data_model_type
         unique_node_types: set[dm.NodeId] = set()
         parent_views = {parent for view in views for parent in view.implements or []}
         for view in views:
@@ -895,7 +750,7 @@ class _DMSExporter:
                 unique_node_types.update(view_filter.nodes)
                 if view.as_id() in parent_views:
                     warnings.warn(issues.dms.NodeTypeFilterOnParentViewWarning(view.as_id()), stacklevel=2)
-            elif isinstance(view_filter, HasDataFilter) and data_model_type is DataModelType.solution:
+            elif isinstance(view_filter, HasDataFilter) and data_model_type == DataModelType.solution:
                 if dms_view and isinstance(dms_view.reference, ReferenceEntity):
                     references = {dms_view.reference.as_view_id()}
                 elif any(True for prop in dms_properties if isinstance(prop.reference, ReferenceEntity)):
@@ -914,12 +769,29 @@ class _DMSExporter:
             [dm.NodeApply(space=node.space, external_id=node.external_id) for node in unique_node_types]
         )
 
+    @classmethod
+    def _create_edge_type_from_prop(cls, prop: DMSProperty) -> dm.DirectRelationReference:
+        if isinstance(prop.reference, ReferenceEntity):
+            ref_view_prop = prop.reference.as_view_property_id()
+            return cls._create_edge_type_from_view_id(cast(dm.ViewId, ref_view_prop.source), ref_view_prop.property)
+        else:
+            return cls._create_edge_type_from_view_id(prop.view.as_id(), prop.view_property)
+
+    @staticmethod
+    def _create_edge_type_from_view_id(view_id: dm.ViewId, property_: str) -> dm.DirectRelationReference:
+        return dm.DirectRelationReference(
+            space=view_id.space,
+            # This is the same convention as used when converting GraphQL to DMS
+            external_id=f"{view_id.external_id}.{property_}",
+        )
+
     def _create_containers(
         self,
-        dms_container: SheetList[DMSContainer] | None,
         container_properties_by_id: dict[dm.ContainerId, list[DMSProperty]],
     ) -> dm.ContainerApplyList:
-        containers = dm.ContainerApplyList([dms_container.as_container() for dms_container in dms_container or []])
+        containers = dm.ContainerApplyList(
+            [dms_container.as_container() for dms_container in self.rules.containers or []]
+        )
         container_to_drop = set()
         for container in containers:
             container_id = container.as_id()
@@ -935,26 +807,14 @@ class _DMSExporter:
                 else:
                     type_cls = dm.DirectRelation
 
-                prop_id = prop.container_property
-
-                if type_cls is dm.DirectRelation:
-                    container.properties[prop_id] = dm.ContainerProperty(
-                        type=dm.DirectRelation(),
-                        nullable=prop.nullable if prop.nullable is not None else True,
-                        default_value=prop.default,
-                        name=prop.name,
-                        description=prop.description,
-                    )
-                else:
-                    type_: CognitePropertyType
-                    type_ = type_cls(is_list=prop.is_list or False)
-                    container.properties[prop_id] = dm.ContainerProperty(
-                        type=type_,
-                        nullable=prop.nullable if prop.nullable is not None else True,
-                        default_value=prop.default,
-                        name=prop.name,
-                        description=prop.description,
-                    )
+                type_ = type_cls(is_list=prop.is_list or False)
+                container.properties[prop.container_property] = dm.ContainerProperty(
+                    type=type_,
+                    nullable=prop.nullable if prop.nullable is not None else True,
+                    default_value=prop.default,
+                    name=prop.name,
+                    description=prop.description,
+                )
 
             uniqueness_properties: dict[str, set[str]] = defaultdict(set)
             for prop in container_properties:
@@ -987,26 +847,14 @@ class _DMSExporter:
             [container for container in containers if container.as_id() not in container_to_drop]
         )
 
-    def _gather_properties(
-        self, rules: DMSRules
-    ) -> tuple[dict[dm.ContainerId, list[DMSProperty]], dict[dm.ViewId, list[DMSProperty]]]:
+    def _gather_properties(self) -> tuple[dict[dm.ContainerId, list[DMSProperty]], dict[dm.ViewId, list[DMSProperty]]]:
         container_properties_by_id: dict[dm.ContainerId, list[DMSProperty]] = defaultdict(list)
         view_properties_by_id: dict[dm.ViewId, list[DMSProperty]] = defaultdict(list)
-        for prop in rules.properties:
+        for prop in self.rules.properties:
             view_id = prop.view.as_id()
             view_properties_by_id[view_id].append(prop)
 
             if prop.container and prop.container_property:
-                if prop.relation == "direct" and prop.is_list:
-                    warnings.warn(
-                        issues.dms.DirectRelationListWarning(
-                            container_id=prop.container.as_id(),
-                            view_id=prop.view.as_id(),
-                            property=prop.container_property,
-                        ),
-                        stacklevel=2,
-                    )
-                    continue
                 container_id = prop.container.as_id()
                 container_properties_by_id[container_id].append(prop)
 
@@ -1055,6 +903,118 @@ class _DMSExporter:
         else:
             # HasData or not provided (this is the default)
             return HasDataFilter(inner=[ContainerEntity.from_id(id_) for id_ in ref_containers])
+
+    def _create_view_property(
+        self, prop: DMSProperty, view_properties_by_id: dict[dm.ViewId, list[DMSProperty]]
+    ) -> ViewPropertyApply | None:
+        if prop.container and prop.container_property:
+            container_prop_identifier = prop.container_property
+            extra_args: dict[str, Any] = {}
+            if prop.relation == "direct":
+                if isinstance(prop.value_type, ViewEntity):
+                    extra_args["source"] = prop.value_type.as_id()
+                elif isinstance(prop.value_type, DMSUnknownEntity):
+                    extra_args["source"] = None
+                else:
+                    # Should have been validated.
+                    raise ValueError(
+                        "If this error occurs it is a bug in NEAT, please report"
+                        f"Debug Info, Invalid valueType direct: {prop.model_dump_json()}"
+                    )
+            elif prop.relation is not None:
+                # Should have been validated.
+                raise ValueError(
+                    "If this error occurs it is a bug in NEAT, please report"
+                    f"Debug Info, Invalid relation: {prop.model_dump_json()}"
+                )
+            return dm.MappedPropertyApply(
+                container=prop.container.as_id(),
+                container_property_identifier=container_prop_identifier,
+                name=prop.name,
+                description=prop.description,
+                **extra_args,
+            )
+        elif prop.relation == "edge":
+            if isinstance(prop.value_type, ViewEntity):
+                source_view_id = prop.value_type.as_id()
+            else:
+                # Should have been validated.
+                raise ValueError(
+                    "If this error occurs it is a bug in NEAT, please report"
+                    f"Debug Info, Invalid valueType edge: {prop.model_dump_json()}"
+                )
+            edge_cls: type[dm.EdgeConnectionApply] = dm.MultiEdgeConnectionApply
+            # If is_list is not set, we default to a MultiEdgeConnection
+            if prop.is_list is False:
+                edge_cls = SingleEdgeConnectionApply
+
+            return edge_cls(
+                type=self._create_edge_type_from_prop(prop),
+                source=source_view_id,
+                direction="outwards",
+                name=prop.name,
+                description=prop.description,
+            )
+        elif prop.relation == "reverse":
+            if isinstance(prop.value_type, ViewPropertyEntity):
+                source_prop_id = prop.value_type.as_id()
+                source_view_id = prop.value_type.as_view_id()
+            else:
+                # Should have been validated.
+                raise ValueError(
+                    "If this error occurs it is a bug in NEAT, please report"
+                    f"Debug Info, Invalid valueType reverse relation: {prop.model_dump_json()}"
+                )
+
+            reverse_prop = next(
+                (
+                    prop
+                    for prop in view_properties_by_id.get(source_view_id, [])
+                    if prop.property_ == source_prop_id.property
+                ),
+                None,
+            )
+            if reverse_prop is None:
+                warnings.warn(
+                    issues.dms.ReverseRelationMissingOtherSideWarning(source_view_id, prop.view_property),
+                    stacklevel=2,
+                )
+                return None
+
+            if reverse_prop.relation == "edge":
+                inwards_edge_cls = (
+                    dm.MultiEdgeConnectionApply if prop.is_list in [True, None] else SingleEdgeConnectionApply
+                )
+                return inwards_edge_cls(
+                    type=self._create_edge_type_from_prop(reverse_prop),
+                    source=source_view_id,
+                    name=prop.name,
+                    description=prop.description,
+                    direction="inwards",
+                )
+            elif reverse_prop.relation == "direct":
+                reverse_direct_cls = (
+                    dm.MultiReverseDirectRelationApply if prop.is_list is True else SingleReverseDirectRelationApply
+                )
+                return reverse_direct_cls(
+                    source=source_view_id,
+                    through=source_prop_id,
+                    name=prop.name,
+                    description=prop.description,
+                )
+            else:
+                # Should have been validated.
+                raise ValueError(
+                    "If this error occurs it is a bug in NEAT, please report"
+                    f"Debug Info, Invalid reverse_prop relation: {prop.model_dump_json()}"
+                )
+
+        elif prop.view and prop.view_property and prop.relation:
+            warnings.warn(
+                issues.dms.UnsupportedRelationWarning(prop.view.as_id(), prop.view_property, prop.relation or ""),
+                stacklevel=2,
+            )
+        return None
 
 
 class _DMSRulesConverter:

@@ -482,16 +482,15 @@ class _InformationRulesConverter:
         else:
             raise ValueError(f"Unsupported value type: {prop.value_type.type_}")
 
-        relation: Literal["direct", "multiedge"] | None = None
+        relation: Literal["direct", "edge", "reverse"] | None = None
         if isinstance(value_type, ViewEntity | ViewPropertyEntity):
-            relation = "multiedge" if prop.is_list else "direct"
+            relation = "edge" if prop.is_list else "direct"
 
         container: ContainerEntity | None = None
         container_property: str | None = None
         is_list: bool | None = prop.is_list
         nullable: bool | None = not prop.is_mandatory
-        if relation == "multiedge":
-            is_list = None
+        if relation == "edge":
             nullable = None
         elif relation == "direct":
             nullable = True

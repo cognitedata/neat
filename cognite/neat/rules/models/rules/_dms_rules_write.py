@@ -80,7 +80,7 @@ class DMSPropertyWrite:
     class_: str | None = None
     name: str | None = None
     description: str | None = None
-    relation: Literal["direct", "reversedirect", "multiedge"] | None = None
+    relation: Literal["direct", "edge", "reverse"] | None = None
     nullable: bool | None = None
     is_list: bool | None = None
     default: str | int | dict | None = None

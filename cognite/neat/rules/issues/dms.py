@@ -19,12 +19,11 @@ __all__ = [
     "DuplicatedViewInDataModelError",
     "DirectRelationMissingSourceWarning",
     "ContainerPropertyUsedMultipleTimesError",
-    "DirectRelationListWarning",
-    "ReverseOfDirectRelationListWarning",
     "EmptyContainerWarning",
     "UnsupportedRelationWarning",
     "MultipleReferenceWarning",
     "HasDataFilterOnNoPropertiesViewWarning",
+    "ReverseRelationMissingOtherSideWarning",
     "NodeTypeFilterOnParentViewWarning",
     "ChangingContainerError",
     "ChangingViewError",
@@ -298,54 +297,6 @@ class ChangingViewError(DMSSchemaError):
 
 
 @dataclass(frozen=True)
-class DirectRelationListWarning(DMSSchemaWarning):
-    description = "The container property is set to a direct relation list, which is not supported by the CDF API"
-    fix = "Make the property into a multiedge connection instead"
-    error_name: ClassVar[str] = "DirectRelationListWarning"
-    view_id: dm.ViewId
-    container_id: dm.ContainerId
-    property: str
-
-    def message(self) -> str:
-        return (
-            f"The property in {self.container_id}.{self.property} is a list of direct relations. "
-            f"This is not supported by the API, so it will be converted to an MultiEdgeConnection on"
-            f"the view {self.view_id}.{self.property} instead"
-        )
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["view_id"] = self.view_id.dump()
-        output["container_id"] = self.container_id.dump()
-        output["property"] = self.property
-        return output
-
-
-@dataclass(frozen=True)
-class ReverseOfDirectRelationListWarning(DMSSchemaWarning):
-    description = (
-        "The view property is set to a reverse of a direct relation list, which is not supported by the CDF API"
-    )
-    fix = "Make the property into a multiedge connection instead"
-    error_name: ClassVar[str] = "ReverseOfDirectRelationListWarning"
-    view_id: dm.ViewId
-    property: str
-
-    def message(self) -> str:
-        return (
-            f"The property pointed to be {self.view_id}.{self.property} is a list of direct relations. "
-            f"This is not supported by the API, so the {self.view_id}.{self.property} "
-            "will be converted from a reverse direct relation to an MultiEdgeConnection instead"
-        )
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["view_id"] = self.view_id.dump()
-        output["property"] = self.property
-        return output
-
-
-@dataclass(frozen=True)
 class EmptyContainerWarning(DMSSchemaWarning):
     description = "The container is empty"
     fix = "Add data to the container"
@@ -384,6 +335,27 @@ class UnsupportedRelationWarning(DMSSchemaWarning):
         output["view_id"] = self.view_id.dump()
         output["property"] = self.property
         output["relation"] = self.relation
+        return output
+
+
+@dataclass(frozen=True)
+class ReverseRelationMissingOtherSideWarning(DMSSchemaWarning):
+    description = "The relation is missing the other side"
+    fix = "Add the other side of the relation"
+    error_name: ClassVar[str] = "ReverseRelationMissingOtherSideWarning"
+    view_id: dm.ViewId
+    property: str
+
+    def message(self) -> str:
+        return (
+            f"The reverse relation specified in {self.view_id}.{self.property} is missing the other side."
+            "This property will be ignored."
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["view_id"] = self.view_id.dump()
+        output["property"] = self.property
         return output
 
 
