@@ -58,7 +58,9 @@ nav:
           - DMS Instances: notebooks/graph-loading-dms-instances.ipynb
   - Terminology:
       - Base Terminology: terminology/base-terminology.md
-      - Rules: terminology/rules.md
+      - Rules:
+          - Overview: terminology/rules.md
+          - DMSRules Details: terminology/dmsrules.md
       - Graph: terminology/graph.md
   - Reference:
       - Legacy:

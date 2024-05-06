@@ -15,13 +15,16 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-
 ## TBD
 ### Added
 - In `DMSRules`, added support for setting containerId and nodeId in `View.Filter`. Earlier, only `nodeType` and
   `hasData` were supported which always used an implicit `containerId` and `nodeId` respectively. Now, the user can
   specify the node type and container id(s) by setting `nodeType(my_space:my_node_type)` and
   `hasData(my_space:my_container_id, my_space:my_other_container_id)`.
+- Introduced, `dataModelType` in `DMSRules` and `InformationRules` to explicitly set the type of data model. This
+  will be used to different types of validation and make the user aware of the type of data model they are working with.
+- In `DMSExporter`, created smart defaults for setting `view.filters`. This is now recommended that the user uses
+  the default values for `view.filters` and only set them explicitly if they now very well what they are doing.
 
 ## [0.75.9] - 04-05-24
 ### Improved

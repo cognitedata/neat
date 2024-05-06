@@ -140,6 +140,11 @@ class ExtensionCategory(StrEnum):
     rebuild = "rebuild"
 
 
+class DataModelType(StrEnum):
+    solution = "solution"
+    enterprise = "enterprise"
+
+
 class RoleTypes(StrEnum):
     domain_expert = "domain expert"
     information_architect = "information architect"

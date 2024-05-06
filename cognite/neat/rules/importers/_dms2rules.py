@@ -19,7 +19,7 @@ from cognite.neat.rules.models.entities import (
     ViewPropertyEntity,
 )
 from cognite.neat.rules.models.rules import DMSRules, DMSSchema, RoleTypes
-from cognite.neat.rules.models.rules._base import ExtensionCategory, SchemaCompleteness
+from cognite.neat.rules.models.rules._base import DataModelType, ExtensionCategory, SchemaCompleteness
 from cognite.neat.rules.models.rules._dms_architect_rules import (
     DMSContainer,
     DMSMetadata,
@@ -197,8 +197,17 @@ class DMSImporter(BaseImporter):
             view.as_id() if isinstance(view, dm.View | dm.ViewApply) else view for view in data_model.views or []
         }
 
+        metadata = self.metadata or DMSMetadata.from_data_model(data_model)
+        if self.schema.referenced_spaces() - {metadata.space}:
+            # If the data model has containers, views, node types in another space
+            # we assume it is a solution model.
+            metadata.data_model_type = DataModelType.solution
+        else:
+            # All containers, views, node types are in the same space as the data model
+            metadata.data_model_type = DataModelType.enterprise
+
         dms_rules = DMSRules(
-            metadata=self.metadata or DMSMetadata.from_data_model(data_model),
+            metadata=metadata,
             properties=properties,
             containers=SheetList[DMSContainer](
                 data=[DMSContainer.from_container(container) for container in self.schema.containers]
