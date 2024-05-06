@@ -211,18 +211,18 @@ class DMSProperty(SheetEntity):
         return value
 
     @field_validator("value_type", mode="after")
-    def relations_value_type(
+    def connections_value_type(
         cls, value: ViewPropertyEntity | ViewEntity | DMSUnknownEntity, info: ValidationInfo
     ) -> DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity:
-        if (relation := info.data.get("connection")) is None:
+        if (connection := info.data.get("connection")) is None:
             return value
-        if relation == "direct" and not isinstance(value, ViewEntity | DMSUnknownEntity):
+        if connection == "direct" and not isinstance(value, ViewEntity | DMSUnknownEntity):
             raise ValueError(f"Direct relation must have a value type that points to a view, got {value}")
-        elif relation == "edge" and not isinstance(value, ViewEntity):
-            raise ValueError(f"Edge relation must have a value type that points to a view, got {value}")
-        elif relation == "reverse" and not isinstance(value, ViewPropertyEntity | ViewEntity):
+        elif connection == "edge" and not isinstance(value, ViewEntity):
+            raise ValueError(f"Edge connection must have a value type that points to a view, got {value}")
+        elif connection == "reverse" and not isinstance(value, ViewPropertyEntity | ViewEntity):
             raise ValueError(
-                f"Reverse relation must have a value type that points to a view or view property, got {value}"
+                f"Reverse connection must have a value type that points to a view or view property, got {value}"
             )
         return value
 
@@ -922,7 +922,7 @@ class _DMSExporter:
                 # Should have been validated.
                 raise ValueError(
                     "If this error occurs it is a bug in NEAT, please report"
-                    f"Debug Info, Invalid relation: {prop.model_dump_json()}"
+                    f"Debug Info, Invalid connection: {prop.model_dump_json()}"
                 )
             return dm.MappedPropertyApply(
                 container=prop.container.as_id(),
@@ -963,7 +963,7 @@ class _DMSExporter:
                 # Should have been validated.
                 raise ValueError(
                     "If this error occurs it is a bug in NEAT, please report"
-                    f"Debug Info, Invalid valueType reverse relation: {prop.model_dump_json()}"
+                    f"Debug Info, Invalid valueType reverse connection: {prop.model_dump_json()}"
                 )
             reverse_prop: DMSProperty | None = None
             if reverse_prop_id is not None:
@@ -1008,7 +1008,7 @@ class _DMSExporter:
 
         elif prop.view and prop.view_property and prop.connection:
             warnings.warn(
-                issues.dms.UnsupportedRelationWarning(prop.view.as_id(), prop.view_property, prop.connection or ""),
+                issues.dms.UnsupportedConnectionWarning(prop.view.as_id(), prop.view_property, prop.connection or ""),
                 stacklevel=2,
             )
         return None

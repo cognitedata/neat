@@ -22,7 +22,7 @@ __all__ = [
     "DuplicatedViewInDataModelError",
     "ContainerPropertyUsedMultipleTimesError",
     "EmptyContainerWarning",
-    "UnsupportedRelationWarning",
+    "UnsupportedConnectionWarning",
     "MultipleReferenceWarning",
     "HasDataFilterOnNoPropertiesViewWarning",
     "ReverseRelationMissingOtherSideWarning",
@@ -363,17 +363,17 @@ class EmptyContainerWarning(DMSSchemaWarning):
 
 
 @dataclass(frozen=True)
-class UnsupportedRelationWarning(DMSSchemaWarning):
-    description = "The relatio type is not supported by neat"
-    fix = "Change the relation to a supported type"
-    error_name: ClassVar[str] = "UnsupportedRelationWarning"
+class UnsupportedConnectionWarning(DMSSchemaWarning):
+    description = "The connection type is not supported by neat"
+    fix = "Change the connection to a supported type"
+    error_name: ClassVar[str] = "UnsupportedConnectionWarning"
     view_id: dm.ViewId
     property: str
-    relation: str
+    connection: str
 
     def message(self) -> str:
         return (
-            f"The relation {self.relation} in {self.view_id}.{self.property} is not supported."
+            f"The connection {self.connection} in {self.view_id}.{self.property} is not supported."
             "This property will be ignored."
         )
 
@@ -381,7 +381,7 @@ class UnsupportedRelationWarning(DMSSchemaWarning):
         output = super().dump()
         output["view_id"] = self.view_id.dump()
         output["property"] = self.property
-        output["relation"] = self.relation
+        output["connection"] = self.connection
         return output
 
 

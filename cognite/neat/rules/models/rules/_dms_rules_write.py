@@ -77,7 +77,7 @@ class DMSPropertyWrite:
     class_: str | None = None
     name: str | None = None
     description: str | None = None
-    relation: Literal["direct", "edge", "reverse"] | None = None
+    connection: Literal["direct", "edge", "reverse"] | None = None
     nullable: bool | None = None
     is_list: bool | None = None
     default: str | int | dict | None = None
@@ -113,12 +113,12 @@ class DMSPropertyWrite:
         return cls(
             view=data.get("view"),  # type: ignore[arg-type]
             view_property=data.get("view_property"),  # type: ignore[arg-type]
-            value_type=data.get("value_type"),  # type: ignore[arg-type]
+            value_type=data["value_type"],  # type: ignore[arg-type]
             property_=data.get("property_"),
             class_=data.get("class_"),
             name=data.get("name"),
             description=data.get("description"),
-            relation=data.get("relation"),
+            connection=data.get("connection"),
             nullable=data.get("nullable"),
             is_list=data.get("is_list"),
             default=data.get("default"),
@@ -151,7 +151,7 @@ class DMSPropertyWrite:
             else None,
             "Name": self.name,
             "Description": self.description,
-            "Relation": self.relation,
+            "Relation": self.connection,
             "Nullable": self.nullable,
             "Is List": self.is_list,
             "Default": self.default,
