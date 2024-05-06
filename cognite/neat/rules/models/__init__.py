@@ -1,6 +1,6 @@
 from ._base import RoleTypes
-from ._dms_architect_rules import DMSRules
-from ._dms_schema import DMSSchema
+from .dms._dms_schema import DMSSchema
+from .dms._dms_architect_rules import DMSRules
 from ._domain_rules import DomainRules
 from ._information_rules import InformationRules
 
