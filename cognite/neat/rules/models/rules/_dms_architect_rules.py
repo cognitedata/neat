@@ -880,16 +880,17 @@ class _DMSExporter:
             ):
                 # No new properties, only reference, reuse the reference filter
                 return DMSFilter.from_dms_filter(ref_view.filter)
-            elif node_ids := {
-                prop.reference.as_node_entity()
-                for prop in dms_properties
-                if isinstance(prop.reference, ReferenceEntity)
-            } | (
-                {dms_view.reference.as_node_entity()}
-                if dms_view and isinstance(dms_view.reference, ReferenceEntity)
-                else set()
-            ):
-                return NodeTypeFilter(inner=list(node_ids))
+            else:
+                referenced_node_ids = {
+                    prop.reference.as_node_entity()
+                    for prop in dms_properties
+                    if isinstance(prop.reference, ReferenceEntity)
+                }
+                if dms_view and isinstance(dms_view.reference, ReferenceEntity):
+                    referenced_node_ids.add(dms_view.reference.as_node_entity())
+                if referenced_node_ids:
+                    return NodeTypeFilter(inner=list(referenced_node_ids))
+
         # Enterprise Model or (Solution + HasData)
         ref_containers = view.referenced_containers()
         if not ref_containers or selected_filter_name == HasDataFilter.name:
