@@ -901,7 +901,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                     {
                         "class_": "Plant",
                         "property_": "generators",
-                        "relation": "edge",
+                        "connection": "edge",
                         "value_type": "Generator",
                         "view": "Plant",
                         "view_property": "generators",
@@ -909,7 +909,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                     {
                         "class_": "Plant",
                         "property_": "reservoir",
-                        "relation": "direct",
+                        "connection": "direct",
                         "value_type": "Reservoir",
                         "container": "Asset",
                         "container_property": "child",
