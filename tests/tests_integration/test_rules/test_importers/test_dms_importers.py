@@ -18,7 +18,7 @@ def alice_rules() -> DMSRules:
 
 @pytest.fixture(scope="session")
 def alice_data_model_id(alice_rules: DMSRules) -> DataModelId:
-    return alice_rules.as_schema().data_models[0].as_id()
+    return alice_rules.metadata.as_data_model_id()
 
 
 class TestDMSImporter:

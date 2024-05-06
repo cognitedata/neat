@@ -11,12 +11,9 @@ import cognite.neat.rules.issues.spreadsheet
 from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import DMSImporter
 from cognite.neat.rules.models.data_types import String
-from cognite.neat.rules.models.rules._base import ExtensionCategory, SheetList
+from cognite.neat.rules.models.rules._base import ExtensionCategory
 from cognite.neat.rules.models.rules._dms_architect_rules import (
-    DMSContainer,
-    DMSProperty,
     DMSRules,
-    DMSView,
 )
 from cognite.neat.rules.models.rules._dms_rules_write import (
     DMSContainerWrite,
@@ -65,7 +62,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     class_="WindFarm",
                     property_="WindTurbines",
                     value_type="WindTurbine",
-                    relation="edge",
+                    connection="edge",
                     view="WindFarm",
                     view_property="windTurbines",
                 ),
@@ -200,7 +197,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 class_="WindFarm",
                 property_="windTurbines",
                 value_type="WindTurbine",
-                relation="direct",
+                connection="direct",
                 is_list=True,
                 container="WindFarm",
                 container_property="windTurbines",
@@ -435,7 +432,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 class_="Asset",
                 property_="timeseries",
                 value_type="Timeseries(property=asset)",
-                relation="reverse",
+                connection="reverse",
                 is_list=True,
                 view="Asset",
                 view_property="timeseries",
@@ -444,7 +441,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 class_="Asset",
                 property_="root",
                 value_type="Asset",
-                relation="direct",
+                connection="direct",
                 container="Asset",
                 container_property="root",
                 view="Asset",
@@ -454,7 +451,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 class_="Asset",
                 property_="children",
                 value_type="Asset(property=root)",
-                relation="reverse",
+                connection="reverse",
                 is_list=True,
                 view="Asset",
                 view_property="children",
@@ -472,7 +469,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 class_="Timeseries",
                 property_="asset",
                 value_type="Asset",
-                relation="direct",
+                connection="direct",
                 container="Timeseries",
                 container_property="asset",
                 view="Timeseries",
@@ -482,7 +479,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 class_="Timeseries",
                 property_="activities",
                 value_type="Activity",
-                relation="direct",
+                connection="direct",
                 is_list=True,
                 container="Timeseries",
                 container_property="activities",
@@ -494,7 +491,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 property_="timeseries",
                 value_type="Timeseries(property=activities)",
                 is_list=True,
-                relation="reverse",
+                connection="reverse",
                 view="Activity",
                 view_property="timeseries",
             ),
@@ -722,7 +719,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 class_="Asset",
                 property_="kinderen",
                 value_type="Asset",
-                relation="edge",
+                connection="edge",
                 reference="sp_enterprise:Asset(property=children)",
                 view="Asset",
                 view_property="kinderen",
@@ -904,7 +901,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                     {
                         "class_": "Plant",
                         "property_": "generators",
-                        "relation": "edge",
+                        "connection": "edge",
                         "value_type": "Generator",
                         "view": "Plant",
                         "view_property": "generators",
@@ -912,7 +909,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                     {
                         "class_": "Plant",
                         "property_": "reservoir",
-                        "relation": "direct",
+                        "connection": "direct",
                         "value_type": "Reservoir",
                         "container": "Asset",
                         "container_property": "child",
@@ -982,7 +979,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                     class_="Plant",
                     property_="generators",
                     value_type="Generator",
-                    relation="edge",
+                    connection="edge",
                     view="Plant",
                     view_property="generators",
                 ),
@@ -990,7 +987,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                     class_="Plant",
                     property_="reservoir",
                     value_type="Reservoir",
-                    relation="direct",
+                    connection="direct",
                     container="Asset",
                     container_property="child",
                     view="Plant",
@@ -1423,30 +1420,11 @@ class TestDMSRules:
 
     def test_alice_to_and_from_DMS(self, alice_rules: DMSRules) -> None:
         schema = alice_rules.as_schema()
-        rules = alice_rules.model_copy()
         recreated_rules = DMSImporter(schema).to_rules(errors="raise")
 
-        # Sorting to avoid order differences
-        recreated_rules.properties = SheetList[DMSProperty](
-            data=sorted(recreated_rules.properties, key=lambda p: (p.class_, p.property_))
-        )
-        rules.properties = SheetList[DMSProperty](data=sorted(rules.properties, key=lambda p: (p.class_, p.property_)))
-        recreated_rules.containers = SheetList[DMSContainer](
-            data=sorted(recreated_rules.containers, key=lambda c: c.container)
-        )
-        rules.containers = SheetList[DMSContainer](data=sorted(rules.containers, key=lambda c: c.container))
-        recreated_rules.views = SheetList[DMSView](data=sorted(recreated_rules.views, key=lambda v: v.view))
-        rules.views = SheetList[DMSView](data=sorted(rules.views, key=lambda v: v.view))
-
-        # Sorting out dates
-        recreated_rules.metadata.created = rules.metadata.created
-        recreated_rules.metadata.updated = rules.metadata.updated
-
-        # Removing source which is lost in the conversion
-        for prop in rules.properties:
-            prop.reference = None
-
-        assert recreated_rules.model_dump() == rules.model_dump()
+        # This information is lost in the conversion
+        exclude = {"metadata": {"created", "updated"}, "properties": {"__all__": {"reference"}}}
+        assert recreated_rules.model_dump(exclude=exclude) == alice_rules.model_dump(exclude=exclude)
 
     @pytest.mark.parametrize("input_rules, expected_schema", rules_schema_tests_cases())
     def test_as_schema(self, input_rules: DMSRulesWrite, expected_schema: DMSSchema) -> None:

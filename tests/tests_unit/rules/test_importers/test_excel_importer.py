@@ -29,7 +29,7 @@ def invalid_rules_filepaths():
         IssueList(
             [
                 validation.spreadsheet.InvalidPropertyError(
-                    column="IsList",
+                    column="Is List",
                     row=4,
                     type="bool_parsing",
                     msg="Input should be a valid boolean, unable to interpret input",

@@ -517,9 +517,9 @@ Using the workflow `To DMS Rules`, Alice will convert the `properties` sheet to 
 nine new columns as well as modify the `Value Type` column. The first row of the `properties` sheet for Alice
 might look as follows (more detail available [here](../../terminology/rules.md#properties-sheet)):
 
-| Class         | Property         | Value Type | Relation | Nullable | IsList | Default | Container   | Container Property | Index | Constraints | View        | View Property |
-|---------------|------------------|-----------|----------|----------|--------|---------|-------------|--------------------|-------|-------------|-------------|---------------|
-| WindTurbine   | name             | Text      |          | False    | False  | Unknown |  PowerAsset | name       | name  |             | WindTurbine | name          |
+| Class (linage) | Property (linage) | Value Type | Connection | Nullable | Is List | Default | Container   | Container Property | Index | Constraints | View        | View Property |
+|----------------|-------------------|------------|------------|----------|---------|---------|-------------|--------------------|-------|-------------|-------------|---------------|
+| WindTurbine    | name              | Text       |            | False    | False   | Unknown |  PowerAsset | name               | name  |             | WindTurbine | name          |
 
 `neat` will fill out all the new columns with suggested values, but Alice can modify them as she sees fit and thus
 she has granular control over how the data should be stored in CDF.
@@ -532,13 +532,13 @@ The columns are as follows:
   `string` type is converted to `Text`. Alice must still check and potentially modify the value types to ensure
   that they are correct. For example, `float` are converted to `float64`, and Alice might decide to change it to
   `float32` if she knows that the values will never be larger than 32 bits.
-* **Relation**: This columns only applies to relationships between entities. It is used to specify how the relationship
+* **Connection**: This columns only applies to relationships between entities. It is used to specify how the relationship
   should be implemented in CDF. For example, if the relationship should be implemented as an edge or as a direct
   relation.
 * **Nullable**: This only applies to primitive types. This column is used to specify whether the property is
   required or not. For example, Alice might decide that the `name` property of a `WindTurbine` is required,
   and she will set the `Nullable` column to `False`.
-* **IsList**: This only applies to primitive types. This column is used to specify whether the property is a list or not.
+* **Is List**: This only applies to primitive types. This column is used to specify whether the property is a list or not.
   For example, say a `WindTurbine` can have multiple timeseries measuring the temperature, Alice might have a property
   called `temperature` that is a list of Timeseries, which means she will set `Value Type` to `TimeSeries` and
   `IsList` to `True`.
@@ -572,7 +572,7 @@ The output of the `To DMS Rules` will produce two new sheets `Container` and `Vi
 to define constraints between the containers. The first three rows of the `Container` sheet for Alice look
 as follows:
 
-| Class          | Container      | Name | Description | Constraint     |
+| Class (linage) | Container      | Name | Description | Constraint     |
 |----------------|----------------|------|-------------|----------------|
 | PowerAsset     | PowerAsset     |      |             |                |
 | GeneratingUnit | GeneratingUnit |      |             | PowerAsset     |
@@ -594,11 +594,11 @@ The `View` sheet is used to define which views implements other views. Implement
 properties from another view. The first three rows of the `View` sheet for Alice look as follows:
 
 
-| Class          | View           | Name | Description    | Implements | Filter | InModel |
-|----------------|----------------|------|----------------|------------|--------|---------|
-| PowerAsset     | PowerAsset     |      |                |            |        | False   |
-| GeneratingUnit | GeneratingUnit |      | PowerAsset     |            |        | True    |
-| WindTurbine    | WindTurbine    |      | GeneratingUnit |            |        | True    |
+| Class (linage) | View           | Name | Description    | Implements | Filter | In Model |
+|----------------|----------------|------|----------------|------------|--------|----------|
+| PowerAsset     | PowerAsset     |      |                |            |        | False    |
+| GeneratingUnit | GeneratingUnit |      | PowerAsset     |            |        | True     |
+| WindTurbine    | WindTurbine    |      | GeneratingUnit |            |        | True     |
 
 
 Interpreting the first three rows, we see that the `GeneratingUnit` view is reusing the properties from the `PowerAsset`
@@ -617,7 +617,7 @@ In addition, there are two more columns in the `View` sheet that are used to def
   or both `hasData, nodeType`. By default, all filters will get a `hasData` filter, this means that the view will
   only show nodes that have properties in the container(s) that the view is mapping to. The `nodeType` filter is used
   to filter on the nodes that have the type set to the same name as the view.
-* **InModel**: This column is used to specify whether the view is part of the model or not. In the example above, Alice
+* **In Model**: This column is used to specify whether the view is part of the model or not. In the example above, Alice
   have decided that `PowerAsset` is not part of the data model by setting the `InModel` column to `False`. This means
   that the view will still be created in CDF, but not be part of the model. The motivation for this is that this
   view is an implementation detail, that should not be exposed to the users of the data model. In the GraphQL

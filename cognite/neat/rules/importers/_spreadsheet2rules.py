@@ -22,7 +22,15 @@ from cognite.neat.utils.spreadsheet import SpreadsheetRead, read_individual_shee
 from ._base import BaseImporter, Rules, _handle_issues
 
 SOURCE_SHEET__TARGET_FIELD__HEADERS = [
-    ("Properties", "Properties", "Class"),
+    (
+        "Properties",
+        "Properties",
+        {
+            RoleTypes.domain_expert: "Property",
+            RoleTypes.information_architect: "Property",
+            RoleTypes.dms_architect: "View Property",
+        },
+    ),
     ("Classes", "Classes", "Class"),
     ("Containers", "Containers", "Container"),
     ("Views", "Views", "View"),
@@ -131,11 +139,15 @@ class SpreadsheetReader:
             )
             return None, read_info_by_sheet
 
-        for source_sheet_name, target_sheet_name, headers in SOURCE_SHEET__TARGET_FIELD__HEADERS:
+        for source_sheet_name, target_sheet_name, headers_input in SOURCE_SHEET__TARGET_FIELD__HEADERS:
             source_sheet_name = self.to_reference_sheet(source_sheet_name) if self._is_reference else source_sheet_name
 
             if source_sheet_name not in excel_file.sheet_names:
                 continue
+            if isinstance(headers_input, dict):
+                headers = headers_input[metadata.role]
+            else:
+                headers = headers_input
 
             try:
                 sheets[target_sheet_name], read_info_by_sheet[source_sheet_name] = read_individual_sheet(

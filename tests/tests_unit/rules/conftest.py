@@ -16,7 +16,7 @@ def alice_spreadsheet() -> dict[str, dict[str, Any]]:
     excel_file = pd.ExcelFile(filepath)
     return {
         "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),
-        "Properties": read_individual_sheet(excel_file, "Properties", False, ["Property"]),
+        "Properties": read_individual_sheet(excel_file, "Properties", False, ["View Property"]),
         "Views": read_individual_sheet(excel_file, "Views", False, ["View"]),
         "Containers": read_individual_sheet(excel_file, "Containers", False, ["Container"]),
     }
