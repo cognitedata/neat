@@ -11,12 +11,9 @@ import cognite.neat.rules.issues.spreadsheet
 from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import DMSImporter
 from cognite.neat.rules.models.data_types import String
-from cognite.neat.rules.models.rules._base import ExtensionCategory, SheetList
+from cognite.neat.rules.models.rules._base import ExtensionCategory
 from cognite.neat.rules.models.rules._dms_architect_rules import (
-    DMSContainer,
-    DMSProperty,
     DMSRules,
-    DMSView,
 )
 from cognite.neat.rules.models.rules._dms_rules_write import (
     DMSContainerWrite,
@@ -1423,30 +1420,11 @@ class TestDMSRules:
 
     def test_alice_to_and_from_DMS(self, alice_rules: DMSRules) -> None:
         schema = alice_rules.as_schema()
-        rules = alice_rules.model_copy()
         recreated_rules = DMSImporter(schema).to_rules(errors="raise")
 
-        # Sorting to avoid order differences
-        recreated_rules.properties = SheetList[DMSProperty](
-            data=sorted(recreated_rules.properties, key=lambda p: (p.class_, p.property_))
-        )
-        rules.properties = SheetList[DMSProperty](data=sorted(rules.properties, key=lambda p: (p.class_, p.property_)))
-        recreated_rules.containers = SheetList[DMSContainer](
-            data=sorted(recreated_rules.containers, key=lambda c: c.container)
-        )
-        rules.containers = SheetList[DMSContainer](data=sorted(rules.containers, key=lambda c: c.container))
-        recreated_rules.views = SheetList[DMSView](data=sorted(recreated_rules.views, key=lambda v: v.view))
-        rules.views = SheetList[DMSView](data=sorted(rules.views, key=lambda v: v.view))
-
-        # Sorting out dates
-        recreated_rules.metadata.created = rules.metadata.created
-        recreated_rules.metadata.updated = rules.metadata.updated
-
-        # Removing source which is lost in the conversion
-        for prop in rules.properties:
-            prop.reference = None
-
-        assert recreated_rules.model_dump() == rules.model_dump()
+        # This information is lost in the conversion
+        exclude = {"metadata": {"created", "updated"}, "properties": {"__all__": {"reference"}}}
+        assert recreated_rules.model_dump(exclude=exclude) == alice_rules.model_dump(exclude=exclude)
 
     @pytest.mark.parametrize("input_rules, expected_schema", rules_schema_tests_cases())
     def test_as_schema(self, input_rules: DMSRulesWrite, expected_schema: DMSSchema) -> None:
