@@ -216,6 +216,8 @@ class ViewModelVersionNotMatchingWarning(DMSSchemaWarning):
             f"{self.data_model_version}. This is not recommended as it easily leads to confusion and errors. "
             f"Views are very cheap and we recommend you update the version of the views to match the data"
             f" model version, irrespective of whether the views have changed or not."
+            " The approach of having same version of model components as the model itself "            
+            " is a globally recognized data modeling practice."                        
         )
 
     def dump(self) -> dict[str, Any]:
