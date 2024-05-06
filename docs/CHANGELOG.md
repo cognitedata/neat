@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.76.1] - 06-05-24
+### Changed
+- Updated DMS Architect Rules template to fit the new DMS Rules structure
+- Update Terminology/Rules to reflect new DMS Rules structure
+
 ## [0.76.0] - 06-05-24
 ### Removed
 - [BREAKING] In `DMSRules`, `default_view_version` is no longer supported. Instead, you will now get a warning if view versions
