@@ -146,9 +146,9 @@ class DMSPropertyWrite:
             "View Property": self.view_property,
             "Value Type": value_type,
             "Property (linage)": self.property_ or self.view_property,
-            "Class (linage)": ClassEntity.load(self.class_, prefix=default_space, version=default_version)
-            if self.class_
-            else None,
+            "Class (linage)": (
+                ClassEntity.load(self.class_, prefix=default_space, version=default_version) if self.class_ else None
+            ),
             "Name": self.name,
             "Description": self.description,
             "Connection": self.connection,
@@ -156,9 +156,11 @@ class DMSPropertyWrite:
             "Is List": self.is_list,
             "Default": self.default,
             "Reference": self.reference,
-            "Container": ContainerEntity.load(self.container, space=default_space, version=default_version)
-            if self.container
-            else None,
+            "Container": (
+                ContainerEntity.load(self.container, space=default_space, version=default_version)
+                if self.container
+                else None
+            ),
             "Container Property": self.container_property,
             "Index": self.index,
             "Constraint": self.constraint,
@@ -210,18 +212,20 @@ class DMSContainerWrite:
         container = ContainerEntity.load(self.container, space=default_space)
         return {
             "Container": container,
-            "Class (linage)": ClassEntity.load(self.class_, prefix=default_space)
-            if self.class_
-            else container.as_class(),
+            "Class (linage)": (
+                ClassEntity.load(self.class_, prefix=default_space) if self.class_ else container.as_class()
+            ),
             "Name": self.name,
             "Description": self.description,
             "Reference": self.reference,
-            "Constraint": [
-                ContainerEntity.load(constraint.strip(), space=default_space)
-                for constraint in self.constraint.split(",")
-            ]
-            if self.constraint
-            else None,
+            "Constraint": (
+                [
+                    ContainerEntity.load(constraint.strip(), space=default_space)
+                    for constraint in self.constraint.split(",")
+                ]
+                if self.constraint
+                else None
+            ),
         }
 
 
@@ -272,17 +276,21 @@ class DMSViewWrite:
         view = ViewEntity.load(self.view, space=default_space, version=default_version)
         return {
             "View": view,
-            "Class (linage)": ClassEntity.load(self.class_, prefix=default_space, version=default_version)
-            if self.class_
-            else view.as_class(),
+            "Class (linage)": (
+                ClassEntity.load(self.class_, prefix=default_space, version=default_version)
+                if self.class_
+                else view.as_class()
+            ),
             "Name": self.name,
             "Description": self.description,
-            "Implements": [
-                ViewEntity.load(implement, space=default_space, version=default_version)
-                for implement in self.implements.split(",")
-            ]
-            if self.implements
-            else None,
+            "Implements": (
+                [
+                    ViewEntity.load(implement, space=default_space, version=default_version)
+                    for implement in self.implements.split(",")
+                ]
+                if self.implements
+                else None
+            ),
             "Reference": self.reference,
             "Filter": self.filter_,
             "In Model": self.in_model,
