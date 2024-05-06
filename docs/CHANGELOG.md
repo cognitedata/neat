@@ -15,17 +15,13 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## [0.77.0] - 04-05-24
+## TBD
 ### Added/Changed
-[BREAKING]
-- Added support for listable direct relations in `DMSRules`. In addition, there is now a complete reimplementation
+- [BREAKING] Added support for listable direct relations in `DMSRules`. In addition, there is now a complete reimplementation
   of the `relation` column in the `DMRRules` `properties` sheet.
-- Relation can now be `direct`, `reverse`, or `edge`. While `multiedge` and `reversedirectc` have been removed.
+- [BREAKING] Relation can now be `direct`, `reverse`, or `edge`. While `multiedge` and `reversedirectc` have been removed.
   For more details, see the [DMS Rules Details](https://cognite-neat.readthedocs-hosted.com/en/latest/terminology/dmsrules.html#relation)
   documentation.
-
-## [0.76.0] - 04-05-24
-### Added
 - In `DMSRules`, added support for setting containerId and nodeId in `View.Filter`. Earlier, only `nodeType` and
   `hasData` were supported which always used an implicit `containerId` and `nodeId` respectively. Now, the user can
   specify the node type and container id(s) by setting `nodeType(my_space:my_node_type)` and
