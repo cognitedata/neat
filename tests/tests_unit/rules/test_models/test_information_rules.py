@@ -11,7 +11,7 @@ from cognite.neat.rules.models.information import (
     InformationClass,
     InformationRules,
 )
-from cognite.neat.rules.models.information._information_rules import _InformationRulesConverter
+from cognite.neat.rules.models.information._converter import _InformationRulesConverter
 from cognite.neat.utils.spreadsheet import read_individual_sheet
 from tests.config import DOC_RULES
 
