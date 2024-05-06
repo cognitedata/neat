@@ -502,7 +502,7 @@ Alice has to modify the `metadata` sheet to include the CDF specific information
 | creator              | Jon, Emma, David, Alice      |
 | created              | 2021-01-01                   |
 | updated              | 2021-01-01                   |
-| default_view_version | 0.1.0                        |
+
 
 First, she adds herself as a creator, and then she adds the `space` and `externalId` columns. The `space`
 column is used to define the space in CDF where the data model should be loaded. The `externalId` column is used

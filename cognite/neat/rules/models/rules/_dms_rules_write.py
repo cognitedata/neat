@@ -32,7 +32,6 @@ class DMSMetadataWrite:
     description: str | None = None
     created: datetime | str | None = None
     updated: datetime | str | None = None
-    default_view_version: str | None = None
 
     @classmethod
     def load(cls, data: dict[str, Any] | None) -> "DMSMetadataWrite | None":
@@ -51,7 +50,6 @@ class DMSMetadataWrite:
             description=data.get("description"),
             created=data.get("created"),
             updated=data.get("updated"),
-            default_view_version=data.get("default_view_version"),
         )
 
     def dump(self) -> dict[str, Any]:
@@ -67,7 +65,6 @@ class DMSMetadataWrite:
             description=self.description,
             created=self.created or datetime.now(),
             updated=self.updated or datetime.now(),
-            default_view_version=self.default_view_version or self.version,
         )
 
 

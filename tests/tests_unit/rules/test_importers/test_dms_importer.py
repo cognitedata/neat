@@ -63,7 +63,7 @@ SCHEMA_WITH_DIRECT_RELATION_NONE.data_models.append(
     dm.DataModelApply(
         space="neat",
         external_id="data_model",
-        version="0.1.0",
+        version="1",
         views=[
             dm.ViewId("neat", "OneView", "1"),
         ],

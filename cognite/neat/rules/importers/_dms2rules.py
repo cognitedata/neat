@@ -100,7 +100,6 @@ class DMSImporter(BaseImporter):
             created=created or now,
             creator=creator,
             description=description,
-            default_view_version=model.version or "0.1.0",
         )
 
     @classmethod

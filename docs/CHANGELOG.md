@@ -16,6 +16,10 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 ## TBD
+### Removed
+- [BREAKING] In `DMSRules`, `default_view_version` is no longer supported. Instead, you will now get a warning if view versions
+  are not matching the data model version.
+
 ### Added/Changed
 - [BREAKING] Added support for listable direct relations in `DMSRules`. In addition, there is now a complete reimplementation
   of the `relation` column in the `DMRRules` `properties` sheet.

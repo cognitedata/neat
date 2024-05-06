@@ -103,8 +103,6 @@ class DMSMetadata(BaseMetadata):
     updated: datetime = Field(
         description=("Date of the data model update"),
     )
-    # MyPy does not account for the field validator below that sets the default value
-    default_view_version: VersionType = Field(None)  # type: ignore[assignment]
 
     @field_validator("*", mode="before")
     def strip_string(cls, value: Any) -> Any:
@@ -128,12 +126,6 @@ class DMSMetadata(BaseMetadata):
     @field_validator("data_model_type", mode="plain")
     def as_enum_model_type(cls, value: str) -> DataModelType:
         return DataModelType(value)
-
-    @model_validator(mode="before")
-    def set_default_view_version_if_missing(cls, values):
-        if "default_view_version" not in values:
-            values["default_view_version"] = values["version"]
-        return values
 
     @field_validator("description", mode="before")
     def nan_as_none(cls, value):
@@ -331,6 +323,15 @@ class DMSRules(BaseRules):
             return None
         if value.reference is not None:
             raise ValueError("Reference rules cannot have a reference")
+        return value
+
+    @field_validator("views")
+    def matching_version(cls, value: SheetList[DMSView], info: ValidationInfo) -> SheetList[DMSView]:
+        if not (metadata := info.data.get("metadata")):
+            return value
+        model_version = metadata.version
+        if different_version := [view.view.as_id() for view in value if view.view.version != model_version]:
+            warnings.warn(issues.dms.ViewModelVersionNotMatchingWarning(different_version, model_version), stacklevel=2)
         return value
 
     @model_validator(mode="after")
@@ -587,7 +588,7 @@ class DMSRules(BaseRules):
         info: SerializationInfo,
     ) -> dict[str, Any]:
         dumped = cast(dict[str, Any], handler(self, info))
-        space, version = self.metadata.space, self.metadata.default_view_version
+        space, version = self.metadata.space, self.metadata.version
         return _DMSRulesSerializer(info, space, version).clean(dumped)
 
     def as_schema(

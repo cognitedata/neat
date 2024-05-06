@@ -16,8 +16,9 @@ __all__ = [
     "MissingParentViewError",
     "MissingSourceViewError",
     "MissingEdgeViewError",
-    "DuplicatedViewInDataModelError",
     "DirectRelationMissingSourceWarning",
+    "ViewModelVersionNotMatchingWarning",
+    "DuplicatedViewInDataModelError",
     "ContainerPropertyUsedMultipleTimesError",
     "EmptyContainerWarning",
     "UnsupportedRelationWarning",
@@ -198,6 +199,31 @@ class DirectRelationMissingSourceWarning(DMSSchemaWarning):
         output = super().dump()
         output["view_id"] = self.view_id
         output["property"] = self.property
+        return output
+
+
+@dataclass(frozen=True)
+class ViewModelVersionNotMatchingWarning(DMSSchemaWarning):
+    description = "The view model version does not match the data model version"
+    fix = "Update the view model version to match the data model version"
+    error_name: ClassVar[str] = "ViewModelVersionNotMatching"
+    view_ids: list[dm.ViewId]
+    data_model_version: str
+
+    def message(self) -> str:
+        return (
+            f"The version in the views {self.view_ids} does not match the version in the data model "
+            f"{self.data_model_version}. This is not recommended as it easily leads to confusion and errors. "
+            f"Views are very cheap and we recommend you update the version of the views to match the data"
+            f" model version, irrespective of whether the views have changed or not."
+            " The approach of having same version of model components as the model itself "
+            " is a globally recognized data modeling practice."
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["view_id"] = [view_id.dump() for view_id in self.view_ids]
+        output["data_model_version"] = self.data_model_version
         return output
 
 

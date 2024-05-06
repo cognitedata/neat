@@ -185,7 +185,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             creator="Anders",
             created="2024-03-16T23:00:00",
             updated="2024-03-16T23:00:00",
-            default_view_version="1",
         ),
         properties=[
             DMSPropertyWrite(
@@ -421,7 +420,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             creator="Anders",
             created="2024-03-17T11:00:00",
             updated="2024-03-17T11:00:00",
-            default_view_version="1",
         ),
         properties=[
             DMSPropertyWrite(
@@ -641,7 +639,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             creator="Anders",
             created="2024-03-17T11:00:00",
             updated="2024-03-17T11:00:00",
-            default_view_version="1",
         ),
         properties=[
             DMSPropertyWrite(
@@ -1513,7 +1510,6 @@ class TestDMSRules:
                 "created": datetime.datetime(2024, 3, 16),
                 "updated": datetime.datetime(2024, 3, 16),
                 "version": "1",
-                "default_view_version": "1",
             },
             "properties": [
                 {
