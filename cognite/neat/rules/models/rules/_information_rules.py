@@ -438,7 +438,7 @@ class _InformationRulesConverter:
         for class_ in self.information.classes:
             properties: list[DMSProperty] = properties_by_class.get(class_.class_.versioned_id, [])
             if not properties or all(
-                isinstance(prop.value_type, ViewPropertyEntity) and prop.relation != "direct" for prop in properties
+                isinstance(prop.value_type, ViewPropertyEntity) and prop.connection != "direct" for prop in properties
             ):
                 classes_without_properties.add(class_.class_.versioned_id)
 
@@ -511,7 +511,7 @@ class _InformationRulesConverter:
             value_type=value_type,
             nullable=nullable,
             is_list=is_list,
-            relation=relation,
+            connection=relation,
             default=prop.default,
             reference=prop.reference,
             container=container,

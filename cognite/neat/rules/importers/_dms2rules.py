@@ -300,7 +300,7 @@ class DMSImporter(BaseImporter):
             property_=prop_id,
             description=prop.description,
             name=prop.name,
-            relation=self._get_relation_type(prop),
+            connection=self._get_relation_type(prop),
             value_type=value_type,
             is_list=self._get_is_list(prop),
             nullable=self._get_nullable(prop),

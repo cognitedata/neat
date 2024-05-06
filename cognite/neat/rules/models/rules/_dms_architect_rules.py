@@ -191,7 +191,7 @@ class DMSProperty(SheetEntity):
     view_property: str = Field(alias="View Property")
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
-    relation: Literal["direct", "edge", "reverse"] | None = Field(None, alias="Connection")
+    connection: Literal["direct", "edge", "reverse"] | None = Field(None, alias="Connection")
     value_type: DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity = Field(alias="Value Type")
     nullable: bool | None = Field(default=None, alias="Nullable")
     is_list: bool | None = Field(default=None, alias="Is List")
@@ -206,7 +206,7 @@ class DMSProperty(SheetEntity):
 
     @field_validator("nullable")
     def direct_relation_must_be_nullable(cls, value: Any, info: ValidationInfo) -> None:
-        if info.data.get("relation") == "direct" and value is False:
+        if info.data.get("connection") == "direct" and value is False:
             raise ValueError("Direct relation must be nullable")
         return value
 
@@ -214,7 +214,7 @@ class DMSProperty(SheetEntity):
     def relations_value_type(
         cls, value: ViewPropertyEntity | ViewEntity | DMSUnknownEntity, info: ValidationInfo
     ) -> DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity:
-        if (relation := info.data.get("relation")) is None:
+        if (relation := info.data.get("connection")) is None:
             return value
         if relation == "direct" and not isinstance(value, ViewEntity | DMSUnknownEntity):
             raise ValueError(f"Direct relation must have a value type that points to a view, got {value}")
@@ -907,7 +907,7 @@ class _DMSExporter:
         if prop.container and prop.container_property:
             container_prop_identifier = prop.container_property
             extra_args: dict[str, Any] = {}
-            if prop.relation == "direct":
+            if prop.connection == "direct":
                 if isinstance(prop.value_type, ViewEntity):
                     extra_args["source"] = prop.value_type.as_id()
                 elif isinstance(prop.value_type, DMSUnknownEntity):
@@ -918,7 +918,7 @@ class _DMSExporter:
                         "If this error occurs it is a bug in NEAT, please report"
                         f"Debug Info, Invalid valueType direct: {prop.model_dump_json()}"
                     )
-            elif prop.relation is not None:
+            elif prop.connection is not None:
                 # Should have been validated.
                 raise ValueError(
                     "If this error occurs it is a bug in NEAT, please report"
@@ -931,7 +931,7 @@ class _DMSExporter:
                 description=prop.description,
                 **extra_args,
             )
-        elif prop.relation == "edge":
+        elif prop.connection == "edge":
             if isinstance(prop.value_type, ViewEntity):
                 source_view_id = prop.value_type.as_id()
             else:
@@ -952,7 +952,7 @@ class _DMSExporter:
                 name=prop.name,
                 description=prop.description,
             )
-        elif prop.relation == "reverse":
+        elif prop.connection == "reverse":
             reverse_prop_id: str | None = None
             if isinstance(prop.value_type, ViewPropertyEntity):
                 source_view_id = prop.value_type.as_view_id()
@@ -982,7 +982,7 @@ class _DMSExporter:
                     stacklevel=2,
                 )
 
-            if reverse_prop is None or reverse_prop.relation == "edge":
+            if reverse_prop is None or reverse_prop.connection == "edge":
                 inwards_edge_cls = (
                     dm.MultiEdgeConnectionApply if prop.is_list in [True, None] else SingleEdgeConnectionApply
                 )
@@ -993,7 +993,7 @@ class _DMSExporter:
                     description=prop.description,
                     direction="inwards",
                 )
-            elif reverse_prop_id and reverse_prop and reverse_prop.relation == "direct":
+            elif reverse_prop_id and reverse_prop and reverse_prop.connection == "direct":
                 reverse_direct_cls = (
                     dm.MultiReverseDirectRelationApply if prop.is_list is True else SingleReverseDirectRelationApply
                 )
@@ -1006,9 +1006,9 @@ class _DMSExporter:
             else:
                 return None
 
-        elif prop.view and prop.view_property and prop.relation:
+        elif prop.view and prop.view_property and prop.connection:
             warnings.warn(
-                issues.dms.UnsupportedRelationWarning(prop.view.as_id(), prop.view_property, prop.relation or ""),
+                issues.dms.UnsupportedRelationWarning(prop.view.as_id(), prop.view_property, prop.connection or ""),
                 stacklevel=2,
             )
         return None
