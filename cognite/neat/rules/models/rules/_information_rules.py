@@ -13,6 +13,16 @@ from rdflib import Namespace
 import cognite.neat.rules.issues.spreadsheet
 from cognite.neat.constants import PREFIXES
 from cognite.neat.rules import exceptions
+from cognite.neat.rules.models._rdfpath import (
+    AllReferences,
+    Hop,
+    RawLookup,
+    SingleProperty,
+    SPARQLQuery,
+    TransformationRuleType,
+    Traversal,
+    parse_rule,
+)
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import (
     ClassEntity,
@@ -31,16 +41,6 @@ from cognite.neat.rules.models.entities import (
     ViewPropertyEntity,
     _UndefinedType,
     _UnknownType,
-)
-from cognite.neat.rules.models.rdfpath import (
-    AllReferences,
-    Hop,
-    RawLookup,
-    SingleProperty,
-    SPARQLQuery,
-    TransformationRuleType,
-    Traversal,
-    parse_rule,
 )
 
 from ._base import (
