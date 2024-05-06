@@ -246,6 +246,20 @@ class FailedToInferValueTypeWarning(ModelImportWarning):
 
 
 @dataclass(frozen=True)
+class APIWarning(ModelImportWarning):
+    description = "An error was raised."
+    fix = "No fix is available."
+
+    error_message: str
+
+    def message(self) -> str:
+        return self.error_message
+
+    def dump(self) -> dict[str, str]:
+        return {"error_message": self.error_message}
+
+
+@dataclass(frozen=True)
 class ModelImportError(NeatValidationError, ABC):
     description = "An error was raised during importing."
     fix = "No fix is available."

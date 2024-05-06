@@ -18,6 +18,7 @@ __all__ = [
     "MissingEdgeViewError",
     "DirectRelationMissingSourceWarning",
     "ViewModelVersionNotMatchingWarning",
+    "ViewModelSpaceNotMatchingWarning",
     "DuplicatedViewInDataModelError",
     "ContainerPropertyUsedMultipleTimesError",
     "EmptyContainerWarning",
@@ -224,6 +225,28 @@ class ViewModelVersionNotMatchingWarning(DMSSchemaWarning):
         output = super().dump()
         output["view_id"] = [view_id.dump() for view_id in self.view_ids]
         output["data_model_version"] = self.data_model_version
+        return output
+
+
+@dataclass(frozen=True)
+class ViewModelSpaceNotMatchingWarning(DMSSchemaWarning):
+    description = "The view model space does not match the data model space"
+    fix = "Update the view model space to match the data model space"
+    error_name: ClassVar[str] = "ViewModelSpaceNotMatching"
+    view_ids: list[dm.ViewId]
+    data_model_space: str
+
+    def message(self) -> str:
+        return (
+            f"The space in the views {self.view_ids} does not match the space in the data model "
+            f"{self.data_model_space}. This is not recommended as it easily leads to confusion and errors. "
+            f"Views are very cheap and we recommend you always have views in the same space as the data model."
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["view_id"] = [view_id.dump() for view_id in self.view_ids]
+        output["data_model_space"] = self.data_model_space
         return output
 
 
@@ -463,4 +486,49 @@ class HasDataFilterOnViewWithReferencesWarning(DMSSchemaWarning):
         output = super().dump()
         output["view_id"] = self.view_id.dump()
         output["references"] = [view.dump() for view in sorted(self.references, key=lambda x: x.as_tuple())]
+        return output
+
+
+@dataclass(frozen=True)
+class OtherDataModelsInSpaceWarning(DMSSchemaWarning):
+    description = "The space contains other data models"
+    fix = "Move the data models to their respective spaces."
+    error_name: ClassVar[str] = "OtherDataModelsInSpaceWarning"
+    space: str
+    data_models: list[dm.DataModelId]
+
+    def message(self) -> str:
+        return (
+            f"The space {self.space} contains data models from other spaces: {self.data_models}. {self.fix}"
+            " It is recommended to only have one data model per space. This avoid potential conflicts and "
+            "makes it easier to manage the data models."
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["space"] = self.space
+        output["data_models"] = [data_model.dump() for data_model in self.data_models]
+        return output
+
+
+@dataclass(frozen=True)
+class SolutionOnTopOfSolutionModelWarning(DMSSchemaWarning):
+    description = "The data model is a solution on top of another solution"
+    fix = "Use the base solution as the data model"
+    error_name: ClassVar[str] = "SolutionOnTopOfSolutionModelWarning"
+    data_model: dm.DataModelId
+    base_data_model: dm.DataModelId
+
+    def message(self) -> str:
+        return (
+            f"The data model {self.data_model} is a solution model on top of another solution {self.base_data_model} "
+            "model. This is not recommended as it can lead to confusion and errors. It is very hard to "
+            "maintain a nested structure of solution models. Instead, only build solution models on "
+            "top of enterprise models."
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["data_model"] = self.data_model.dump()
+        output["base_data_model"] = self.base_data_model.dump()
         return output

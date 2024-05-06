@@ -2,6 +2,8 @@ from abc import ABC
 from dataclasses import dataclass, field
 from functools import total_ordering
 
+from cognite.neat.rules.issues import IssueList
+
 
 @total_ordering
 @dataclass
@@ -32,6 +34,7 @@ class UploadResult(UploadResultCore):
     failed_changed: int = 0
     failed_deleted: int = 0
     error_messages: list[str] = field(default_factory=list)
+    issues: IssueList = field(default_factory=IssueList)
 
     @property
     def total(self) -> int:
