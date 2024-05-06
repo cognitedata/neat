@@ -283,7 +283,7 @@ class DMSView(SheetEntity):
     implements: ViewEntityList | None = Field(None, alias="Implements")
     reference: URLEntity | ReferenceEntity | None = Field(alias="Reference", default=None, union_mode="left_to_right")
     filter_: HasDataFilter | NodeTypeFilter | None = Field(None, alias="Filter")
-    in_model: bool = Field(True, alias="InModel")
+    in_model: bool = Field(True, alias="In Model")
     class_: ClassEntity = Field(alias="Class (linage)")
 
     def as_view(self) -> dm.ViewApply:
