@@ -15,7 +15,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## [0.76.0] - 04-05-24
+## TBD
 ### Added
 - In `DMSRules`, added support for setting containerId and nodeId in `View.Filter`. Earlier, only `nodeType` and
   `hasData` were supported which always used an implicit `containerId` and `nodeId` respectively. Now, the user can
