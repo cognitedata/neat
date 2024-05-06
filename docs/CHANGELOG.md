@@ -21,6 +21,21 @@ Changes are grouped as follows:
 - In `DMSRules`, `default_view_version` is no longer supported. Instead, you will now get a warning if view versions
   are not matching the data model version.
 
+### Changed
+[BREAKING]
+- The following renaming of columns in `DMSRules`, properties sheet:
+    - `Relation` -> `Connection`
+    - `ViewProperty` -> `View Property`
+    - `ContainerProperty` -> `Container Property`
+    - `IsList` -> `Is List`
+    - `Class` -> `Class (linage)`
+    - `Property` -> `Property (linage)`
+- The following renaming of columns in `DMSRules`, views sheet:
+    - `InModel` -> `In Model`
+    - `Class` -> `Class (linage)`
+- The following renaming of columns in `DMSRules`, containers sheet:
+    - `Class` -> `Class (linage)`
+
 ## [0.77.0] - 04-05-24
 ### Added/Changed
 [BREAKING]
