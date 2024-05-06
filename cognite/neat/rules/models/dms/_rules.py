@@ -294,6 +294,7 @@ class DMSRules(BaseRules):
     properties: SheetList[DMSProperty] = Field(alias="Properties")
     views: SheetList[DMSView] = Field(alias="Views")
     containers: SheetList[DMSContainer] | None = Field(None, alias="Containers")
+    last: "DMSRules | None" = Field(None, alias="Last", description="The previous version of the data model")
     reference: "DMSRules | None" = Field(None, alias="Reference")
 
     @field_validator("reference")
