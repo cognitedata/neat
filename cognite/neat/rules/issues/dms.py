@@ -347,10 +347,7 @@ class ReverseRelationMissingOtherSideWarning(DMSSchemaWarning):
     property: str
 
     def message(self) -> str:
-        return (
-            f"The reverse relation specified in {self.view_id}.{self.property} is missing the other side."
-            "This property will be ignored."
-        )
+        return f"The reverse relation specified in {self.view_id}.{self.property} is missing the other side."
 
     def dump(self) -> dict[str, Any]:
         output = super().dump()

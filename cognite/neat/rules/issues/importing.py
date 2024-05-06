@@ -10,11 +10,19 @@ __all__ = [
     "IgnoredComponentWarning",
     "UnknownPropertyWarning",
     "UnknownValueTypeWarning",
+    "MissingContainerWarning",
+    "MissingContainerPropertyWarning",
+    "MultipleDataModelsWarning",
+    "UnknownPropertyTypeWarning",
+    "FailedToInferValueTypeWarning",
+    "UnknownContainerConstraintWarning",
+    "NoDataModelError",
     "ModelImportError",
     "InvalidComponentError",
     "MissingParentDefinitionError",
     "MissingIdentifierError",
     "UnsupportedPropertyTypeError",
+    "APIError",
 ]
 
 
@@ -133,9 +141,142 @@ class UnknownValueTypeWarning(ModelImportWarning):
 
 
 @dataclass(frozen=True)
+class MultipleDataModelsWarning(ModelImportWarning):
+    description = "Multiple data models detected. This is not supported."
+    fix = "Remove the extra data models."
+
+    data_models: list[str]
+
+    def message(self) -> str:
+        return f"Multiple data models detected: {self.data_models}. Will only import the first one."
+
+    def dump(self) -> dict[str, list[str]]:
+        return {"data_models": self.data_models}
+
+
+@dataclass(frozen=True)
+class MissingContainerWarning(ModelImportWarning):
+    description = "Missing container definition."
+    fix = "Add a container definition."
+
+    view_id: str
+    property_: str
+    container_id: str
+
+    def message(self) -> str:
+        return (
+            f"Container '{self.container_id}' is missing. "
+            f"Will skip property '{self.property_}' of view '{self.view_id}'."
+        )
+
+    def dump(self) -> dict[str, str]:
+        return {"view_id": self.view_id, "property": self.property_, "container_id": self.container_id}
+
+
+@dataclass(frozen=True)
+class MissingContainerPropertyWarning(ModelImportWarning):
+    description = "Missing container property definition."
+    fix = "Add a container property definition."
+
+    view_id: str
+    property_: str
+    container_id: str
+
+    def message(self) -> str:
+        return (
+            f"Container '{self.container_id}' is missing property '{self.property_}'. "
+            f"This property will be skipped for view '{self.view_id}'."
+        )
+
+    def dump(self) -> dict[str, str]:
+        return {"view_id": self.view_id, "property": self.property_, "container_id": self.container_id}
+
+
+@dataclass(frozen=True)
+class UnknownPropertyTypeWarning(ModelImportWarning):
+    description = "Unknown property type. This will be ignored in the imports."
+    fix = "Set to a supported property type."
+    view_id: str
+    property_id: str
+    property_type: str
+
+    def message(self) -> str:
+        return (
+            f"Unknown property type '{self.property_type}' for property '{self.property_id}' "
+            f"of view '{self.view_id}'. This will be ignored in the imports."
+        )
+
+    def dump(self) -> dict[str, str]:
+        return {"view_id": self.view_id, "property_id": self.property_id, "property_type": self.property_type}
+
+
+@dataclass(frozen=True)
+class UnknownContainerConstraintWarning(ModelImportWarning):
+    description = "Unknown container constraint. This will be ignored in the imports."
+    fix = "Set to a supported container constraint."
+    container_id: str
+    property_id: str
+    constraint: str
+
+    def message(self) -> str:
+        return (
+            f"Unknown container constraint '{self.constraint}' for property '{self.property_id}' of container "
+            f"'{self.container_id}'. This will be ignored in the imports."
+        )
+
+    def dump(self) -> dict[str, str]:
+        return {"container_id": self.container_id, "property_id": self.property_id, "constraint": self.constraint}
+
+
+@dataclass(frozen=True)
+class FailedToInferValueTypeWarning(ModelImportWarning):
+    description = "Failed to infer value type. This will be ignored in the imports."
+    fix = "Set to a supported value type."
+    view_id: str
+    property_id: str
+
+    def message(self) -> str:
+        return (
+            f"Failed to infer value type for property '{self.property_id}' of view '{self.view_id}'. "
+            f"This will be ignored in the imports."
+        )
+
+    def dump(self) -> dict[str, str]:
+        return {"view_id": self.view_id, "property_id": self.property_id}
+
+
+@dataclass(frozen=True)
 class ModelImportError(NeatValidationError, ABC):
     description = "An error was raised during importing."
     fix = "No fix is available."
+
+
+@dataclass(frozen=True)
+class NoDataModelError(ModelImportError):
+    description = "No data model found.."
+    fix = "Check if the data model exists in the source."
+
+    error_message: str
+
+    def message(self) -> str:
+        return self.error_message
+
+    def dump(self) -> dict[str, str]:
+        return {"error_message": self.error_message}
+
+
+@dataclass(frozen=True)
+class APIError(ModelImportError):
+    description = "An error was raised during importing."
+    fix = "No fix is available."
+
+    error_message: str
+
+    def message(self) -> str:
+        return self.error_message
+
+    def dump(self) -> dict[str, str]:
+        return {"error_message": self.error_message}
 
 
 @dataclass(frozen=True)

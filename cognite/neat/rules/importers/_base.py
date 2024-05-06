@@ -60,6 +60,12 @@ class BaseImporter(ABC):
         else:
             return output, issues
 
+    @classmethod
+    def _return_or_raise(cls, issue_list: IssueList, errors: Literal["raise", "continue"]) -> tuple[None, IssueList]:
+        if errors == "raise":
+            raise issue_list.as_errors()
+        return None, issue_list
+
     def _default_metadata(self):
         return {
             "prefix": "neat",

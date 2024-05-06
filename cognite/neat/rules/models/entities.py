@@ -303,7 +303,9 @@ class ContainerEntity(DMSEntity[ContainerId]):
 class DMSVersionedEntity(DMSEntity[T_ID], ABC):
     version: str
 
-    def as_class(self) -> ClassEntity:
+    def as_class(self, skip_version: bool = False) -> ClassEntity:
+        if skip_version:
+            return ClassEntity(prefix=self.space, suffix=self.external_id)
         return ClassEntity(prefix=self.space, suffix=self.external_id, version=self.version)
 
 
@@ -316,10 +318,13 @@ class ViewEntity(DMSVersionedEntity[ViewId]):
         return ViewId(space=self.space, external_id=self.external_id, version=self.version)
 
     @classmethod
-    def from_id(cls, id: ViewId) -> "ViewEntity":
-        if id.version is None:
+    def from_id(cls, id: ViewId, default_version: str | None = None) -> "ViewEntity":
+        if id.version is not None:
+            return cls(space=id.space, externalId=id.external_id, version=id.version)
+        elif default_version is not None:
+            return cls(space=id.space, externalId=id.external_id, version=default_version)
+        else:
             raise ValueError("Version must be specified")
-        return cls(space=id.space, externalId=id.external_id, version=id.version)
 
 
 class DMSUnknownEntity(DMSEntity[None]):

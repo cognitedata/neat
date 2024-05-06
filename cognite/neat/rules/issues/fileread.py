@@ -9,10 +9,13 @@ __all__ = [
     "InvalidFileFormatWarning",
     "UnsupportedSpecWarning",
     "UnknownItemWarning",
+    "FailedLoadWarning",
     "BugInImporterWarning",
     "FileReadError",
     "FileNotFoundError",
     "FileNotAFileError",
+    "InvalidFileFormatError",
+    "FailedStringLoadError",
 ]
 
 
@@ -97,6 +100,26 @@ class UnknownItemWarning(FileReadWarning):
 
 
 @dataclass(frozen=True)
+class FailedLoadWarning(FileReadWarning):
+    description = "The file content is invalid"
+    fix = "Check if the file content is valid"
+
+    expected_format: str
+    error_message: str
+
+    def message(self) -> str:
+        return (
+            f"Failed to load {self.filepath.name}. Expected format: {self.expected_format}. Error: {self.error_message}"
+        )
+
+    def dump(self) -> dict[str, str | None]:
+        output = super().dump()
+        output["expected_format"] = self.expected_format
+        output["error_message"] = self.error_message
+        return output
+
+
+@dataclass(frozen=True)
 class BugInImporterWarning(FileReadWarning):
     description = "A bug was raised during reading."
     fix = "No fix is available. Contact the neat team on Github"
@@ -141,6 +164,24 @@ class InvalidFileFormatError(FileReadError):
 
     def message(self) -> str:
         return f"{self.filepath} is not in the expected format. Expected format: {self.expected_format}."
+
+
+@dataclass(frozen=True)
+class FailedStringLoadError(NeatValidationError):
+    description = "The file content is invalid"
+    fix = "Check if the file content is valid"
+
+    expected_format: str
+    error_message: str
+
+    def message(self) -> str:
+        return f"Failed to load string. Expected format: {self.expected_format}. Error: {self.error_message}"
+
+    def dump(self) -> dict[str, str | None]:
+        output = super().dump()
+        output["expected_format"] = self.expected_format
+        output["error_message"] = self.error_message
+        return output
 
 
 @dataclass(frozen=True)

@@ -78,6 +78,9 @@ class NeatValidationError(ValidationIssue, ABC):
                 all_errors.append(DefaultPydanticError.from_pydantic_error(error))
         return all_errors
 
+    def as_exception(self) -> Exception:
+        return ValueError(self.message())
+
 
 @dataclass(frozen=True)
 class DefaultPydanticError(NeatValidationError):
