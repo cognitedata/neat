@@ -113,7 +113,7 @@ class DMSPropertyWrite:
         return cls(
             view=data.get("view"),  # type: ignore[arg-type]
             view_property=data.get("view_property"),  # type: ignore[arg-type]
-            value_type=data["value_type"],  # type: ignore[arg-type]
+            value_type=data.get("value_type"),  # type: ignore[arg-type]
             property_=data.get("property_"),
             class_=data.get("class_"),
             name=data.get("name"),
@@ -151,7 +151,7 @@ class DMSPropertyWrite:
             else None,
             "Name": self.name,
             "Description": self.description,
-            "Relation": self.connection,
+            "Connection": self.connection,
             "Nullable": self.nullable,
             "Is List": self.is_list,
             "Default": self.default,
