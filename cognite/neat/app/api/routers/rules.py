@@ -12,7 +12,7 @@ from cognite.neat.legacy.rules import importers as legacy_importers
 from cognite.neat.legacy.rules.models._base import EntityTypes
 from cognite.neat.legacy.rules.models.rules import Class, Classes, Metadata, Properties, Property, Rules
 from cognite.neat.rules import importers
-from cognite.neat.rules.models.rules import RoleTypes
+from cognite.neat.rules.models import RoleTypes
 from cognite.neat.workflows.steps.data_contracts import RulesData
 from cognite.neat.workflows.steps.lib.current.rules_exporter import RulesToExcel
 from cognite.neat.workflows.steps.lib.current.rules_importer import ExcelToRules

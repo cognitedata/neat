@@ -6,7 +6,7 @@ from cognite.client import data_modeling as dm
 
 from cognite.neat.rules.importers import DMSImporter, ExcelImporter
 from cognite.neat.rules.issues.dms import DirectRelationMissingSourceWarning
-from cognite.neat.rules.models.rules import DMSRules, DMSSchema, RoleTypes
+from cognite.neat.rules.models import DMSRules, DMSSchema, RoleTypes
 from tests.config import DOC_RULES
 
 

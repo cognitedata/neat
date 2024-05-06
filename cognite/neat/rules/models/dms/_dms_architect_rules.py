@@ -22,7 +22,24 @@ from rdflib import Namespace
 
 import cognite.neat.rules.issues.spreadsheet
 from cognite.neat.rules import issues
+from cognite.neat.rules.models._base import (
+    BaseMetadata,
+    BaseRules,
+    DataModelType,
+    ExtensionCategory,
+    RoleTypes,
+    SchemaCompleteness,
+    SheetEntity,
+    SheetList,
+)
+from cognite.neat.rules.models._types import (
+    ExternalIdType,
+    PropertyType,
+    StrListType,
+    VersionType,
+)
 from cognite.neat.rules.models.data_types import DataType
+from cognite.neat.rules.models.domain_rules import DomainRules
 from cognite.neat.rules.models.entities import (
     ClassEntity,
     ContainerEntity,
@@ -37,29 +54,12 @@ from cognite.neat.rules.models.entities import (
     ViewEntityList,
     ViewPropertyEntity,
 )
-from cognite.neat.rules.models.rules._domain_rules import DomainRules
 from cognite.neat.rules.models.wrapped_entities import DMSFilter, HasDataFilter, NodeTypeFilter
 
-from ._base import (
-    BaseMetadata,
-    BaseRules,
-    DataModelType,
-    ExtensionCategory,
-    RoleTypes,
-    SchemaCompleteness,
-    SheetEntity,
-    SheetList,
-)
 from ._dms_schema import DMSSchema, PipelineSchema
-from ._types import (
-    ExternalIdType,
-    PropertyType,
-    StrListType,
-    VersionType,
-)
 
 if TYPE_CHECKING:
-    from ._information_rules import InformationRules
+    from cognite.neat.rules.models.information._information_rules import InformationRules
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -68,6 +68,7 @@ else:
 
 _DEFAULT_VERSION = "1"
 
+# Todo delete the one below, no longer used
 subclasses = list(CognitePropertyType.__subclasses__())
 _PropertyType_by_name: dict[str, type[CognitePropertyType]] = {}
 for subclass in subclasses:
@@ -1038,7 +1039,12 @@ class _DMSRulesConverter:
         name: str | None = None,
         namespace: Namespace | None = None,
     ) -> "InformationRules":
-        from ._information_rules import InformationClass, InformationMetadata, InformationProperty, InformationRules
+        from cognite.neat.rules.models.information._information_rules import (
+            InformationClass,
+            InformationMetadata,
+            InformationProperty,
+            InformationRules,
+        )
 
         dms = self.dms.metadata
         prefix = dms.space

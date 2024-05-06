@@ -4,8 +4,8 @@ import re
 from rdflib import Graph, Namespace
 
 from cognite.neat.constants import DEFAULT_NAMESPACE
-from cognite.neat.rules.models.rules._base import RoleTypes, SchemaCompleteness
-from cognite.neat.rules.models.rules._types._base import (
+from cognite.neat.rules.models import RoleTypes, SchemaCompleteness
+from cognite.neat.rules.models._types._base import (
     PREFIX_COMPLIANCE_REGEX,
     VERSION_COMPLIANCE_REGEX,
 )

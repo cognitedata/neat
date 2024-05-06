@@ -10,8 +10,8 @@ from rdflib import DC, DCTERMS, OWL, RDF, RDFS, SKOS, Graph
 
 from cognite.neat.rules.importers._base import BaseImporter, Rules
 from cognite.neat.rules.issues import IssueList
+from cognite.neat.rules.models import InformationRules, RoleTypes
 from cognite.neat.rules.models.data_types import _XSD_TYPES
-from cognite.neat.rules.models.rules import InformationRules, RoleTypes
 
 from ._owl2classes import parse_owl_classes
 from ._owl2metadata import parse_owl_metadata

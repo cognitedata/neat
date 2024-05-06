@@ -5,8 +5,8 @@ import yaml
 
 from cognite.neat.rules import issues
 from cognite.neat.rules.issues import IssueList, NeatValidationError, ValidationIssue
-from cognite.neat.rules.models.rules import RULES_PER_ROLE, DMSRules, RoleTypes
-from cognite.neat.rules.models.rules._dms_rules_write import DMSRulesWrite
+from cognite.neat.rules.models import RULES_PER_ROLE, DMSRules, RoleTypes
+from cognite.neat.rules.models.dms import DMSRulesInput
 
 from ._base import BaseImporter, Rules, _handle_issues
 
@@ -98,7 +98,7 @@ class YAMLImporter(BaseImporter):
         with _handle_issues(issue_list) as future:
             rules: Rules
             if rules_model is DMSRules:
-                rules = DMSRulesWrite.load(self.raw_data).as_read()
+                rules = DMSRulesInput.load(self.raw_data).as_rules()
             else:
                 rules = rules_model.model_validate(self.raw_data)
 

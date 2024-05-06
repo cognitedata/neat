@@ -13,6 +13,18 @@ from rdflib import Namespace
 import cognite.neat.rules.issues.spreadsheet
 from cognite.neat.constants import PREFIXES
 from cognite.neat.rules import exceptions
+from cognite.neat.rules.models._base import (
+    BaseMetadata,
+    DataModelType,
+    ExtensionCategory,
+    ExtensionCategoryType,
+    MatchType,
+    RoleTypes,
+    RuleModel,
+    SchemaCompleteness,
+    SheetEntity,
+    SheetList,
+)
 from cognite.neat.rules.models._rdfpath import (
     AllReferences,
     Hop,
@@ -23,7 +35,15 @@ from cognite.neat.rules.models._rdfpath import (
     Traversal,
     parse_rule,
 )
+from cognite.neat.rules.models._types import (
+    NamespaceType,
+    PrefixType,
+    PropertyType,
+    StrListType,
+    VersionType,
+)
 from cognite.neat.rules.models.data_types import DataType
+from cognite.neat.rules.models.domain_rules import DomainRules
 from cognite.neat.rules.models.entities import (
     ClassEntity,
     ContainerEntity,
@@ -43,29 +63,8 @@ from cognite.neat.rules.models.entities import (
     _UnknownType,
 )
 
-from ._base import (
-    BaseMetadata,
-    DataModelType,
-    ExtensionCategory,
-    ExtensionCategoryType,
-    MatchType,
-    RoleTypes,
-    RuleModel,
-    SchemaCompleteness,
-    SheetEntity,
-    SheetList,
-)
-from ._domain_rules import DomainRules
-from ._types import (
-    NamespaceType,
-    PrefixType,
-    PropertyType,
-    StrListType,
-    VersionType,
-)
-
 if TYPE_CHECKING:
-    from ._dms_architect_rules import DMSProperty, DMSRules
+    from cognite.neat.rules.models.dms._dms_architect_rules import DMSProperty, DMSRules
 
 
 if sys.version_info >= (3, 11):
@@ -398,7 +397,13 @@ class _InformationRulesConverter:
         raise NotImplementedError("DomainRules not implemented yet")
 
     def as_dms_architect_rules(self, created: datetime | None = None, updated: datetime | None = None) -> "DMSRules":
-        from ._dms_architect_rules import DMSContainer, DMSMetadata, DMSProperty, DMSRules, DMSView
+        from cognite.neat.rules.models.dms._dms_architect_rules import (
+            DMSContainer,
+            DMSMetadata,
+            DMSProperty,
+            DMSRules,
+            DMSView,
+        )
 
         info_metadata = self.information.metadata
         default_version = info_metadata.version
@@ -475,7 +480,7 @@ class _InformationRulesConverter:
     def _as_dms_property(cls, prop: InformationProperty, default_space: str, default_version: str) -> "DMSProperty":
         """This creates the first"""
 
-        from ._dms_architect_rules import DMSProperty
+        from cognite.neat.rules.models.dms._dms_architect_rules import DMSProperty
 
         # returns property type, which can be ObjectProperty or DatatypeProperty
         value_type: DataType | ViewEntity | ViewPropertyEntity | DMSUnknownEntity

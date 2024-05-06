@@ -11,10 +11,8 @@ from cognite.client.exceptions import CogniteAPIError
 from cognite.neat.rules import issues
 from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.issues import IssueList
-from cognite.neat.rules.models.rules import InformationRules
-from cognite.neat.rules.models.rules._base import ExtensionCategory, SheetList
-from cognite.neat.rules.models.rules._dms_architect_rules import DMSContainer, DMSRules
-from cognite.neat.rules.models.rules._dms_schema import DMSSchema, PipelineSchema
+from cognite.neat.rules.models import ExtensionCategory, InformationRules, SheetList
+from cognite.neat.rules.models.dms import DMSContainer, DMSRules, DMSSchema, PipelineSchema
 from cognite.neat.utils.cdf_loaders import (
     ContainerLoader,
     DataModelingLoader,

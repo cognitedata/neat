@@ -12,9 +12,8 @@ from cognite.neat.rules.importers._base import BaseImporter, _handle_issues
 from cognite.neat.rules.importers._dtdl2rules.dtdl_converter import _DTDLConverter
 from cognite.neat.rules.importers._dtdl2rules.spec import DTDL_CLS_BY_TYPE_BY_SPEC, DTDLBase, Interface
 from cognite.neat.rules.issues import IssueList, ValidationIssue
-from cognite.neat.rules.models.rules import InformationRules, RoleTypes
-from cognite.neat.rules.models.rules._base import SchemaCompleteness, SheetList
-from cognite.neat.rules.models.rules._information_rules import InformationClass, InformationProperty
+from cognite.neat.rules.models import InformationRules, RoleTypes, SchemaCompleteness, SheetList
+from cognite.neat.rules.models.information import InformationClass, InformationProperty
 from cognite.neat.utils.text import to_pascal
 
 

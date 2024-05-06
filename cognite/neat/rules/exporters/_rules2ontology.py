@@ -11,10 +11,10 @@ from rdflib.collection import Collection as GraphCollection
 from cognite.neat.constants import DEFAULT_NAMESPACE as NEAT_NAMESPACE
 from cognite.neat.rules import exceptions
 from cognite.neat.rules.analysis import InformationArchitectRulesAnalysis
+from cognite.neat.rules.models import DMSRules
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import ClassEntity, EntityTypes
-from cognite.neat.rules.models.rules import DMSRules
-from cognite.neat.rules.models.rules._information_rules import (
+from cognite.neat.rules.models.information import (
     InformationClass,
     InformationMetadata,
     InformationProperty,

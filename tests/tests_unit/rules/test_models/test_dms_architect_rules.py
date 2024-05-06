@@ -10,26 +10,22 @@ from pydantic import ValidationError
 import cognite.neat.rules.issues.spreadsheet
 from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import DMSImporter
+from cognite.neat.rules.models import DMSRules, ExtensionCategory, InformationRules
 from cognite.neat.rules.models.data_types import String
-from cognite.neat.rules.models.rules._base import ExtensionCategory
-from cognite.neat.rules.models.rules._dms_architect_rules import (
-    DMSRules,
+from cognite.neat.rules.models.dms import (
+    DMSContainerInput,
+    DMSMetadataInput,
+    DMSPropertyInput,
+    DMSRulesInput,
+    DMSSchema,
+    DMSViewInput,
 )
-from cognite.neat.rules.models.rules._dms_rules_write import (
-    DMSContainerWrite,
-    DMSMetadataWrite,
-    DMSPropertyWrite,
-    DMSRulesWrite,
-    DMSViewWrite,
-)
-from cognite.neat.rules.models.rules._dms_schema import DMSSchema
-from cognite.neat.rules.models.rules._information_rules import InformationRules
 
 
 def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
-        DMSRulesWrite(
-            metadata=DMSMetadataWrite(
+        DMSRulesInput(
+            metadata=DMSMetadataInput(
                 schema_="complete",
                 space="my_space",
                 external_id="my_data_model",
@@ -40,7 +36,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 updated="2021-01-01T00:00:00",
             ),
             properties=[
-                DMSPropertyWrite(
+                DMSPropertyInput(
                     class_="WindTurbine",
                     property_="name",
                     value_type="text",
@@ -49,7 +45,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     view="Asset",
                     view_property="name",
                 ),
-                DMSPropertyWrite(
+                DMSPropertyInput(
                     class_="WindTurbine",
                     property_="ratedPower",
                     value_type="float64",
@@ -58,7 +54,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     view="WindTurbine",
                     view_property="ratedPower",
                 ),
-                DMSPropertyWrite(
+                DMSPropertyInput(
                     class_="WindFarm",
                     property_="WindTurbines",
                     value_type="WindTurbine",
@@ -68,13 +64,13 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ],
             containers=[
-                DMSContainerWrite(container="Asset", class_="Asset"),
-                DMSContainerWrite(class_="GeneratingUnit", container="GeneratingUnit", constraint="Asset"),
+                DMSContainerInput(container="Asset", class_="Asset"),
+                DMSContainerInput(class_="GeneratingUnit", container="GeneratingUnit", constraint="Asset"),
             ],
             views=[
-                DMSViewWrite("Asset"),
-                DMSViewWrite(view="WindTurbine", implements="Asset"),
-                DMSViewWrite(view="WindFarm"),
+                DMSViewInput("Asset"),
+                DMSViewInput(view="WindTurbine", implements="Asset"),
+                DMSViewInput(view="WindFarm"),
             ],
         ),
         DMSSchema(
@@ -173,8 +169,8 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         id="Two properties, one container, one view",
     )
 
-    dms_rules = DMSRulesWrite(
-        metadata=DMSMetadataWrite(
+    dms_rules = DMSRulesInput(
+        metadata=DMSMetadataInput(
             schema_="complete",
             space="my_space",
             external_id="my_data_model",
@@ -184,7 +180,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             updated="2024-03-16T23:00:00",
         ),
         properties=[
-            DMSPropertyWrite(
+            DMSPropertyInput(
                 class_="WindFarm",
                 property_="name",
                 value_type="text",
@@ -193,7 +189,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 view="WindFarm",
                 view_property="name",
             ),
-            DMSPropertyWrite(
+            DMSPropertyInput(
                 class_="WindFarm",
                 property_="windTurbines",
                 value_type="WindTurbine",
@@ -204,7 +200,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 view="WindFarm",
                 view_property="windTurbines",
             ),
-            DMSPropertyWrite(
+            DMSPropertyInput(
                 class_="WindTurbine",
                 property_="name",
                 value_type="text",
@@ -215,12 +211,12 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             ),
         ],
         views=[
-            DMSViewWrite(view="WindFarm", class_="WindFarm"),
-            DMSViewWrite(view="WindTurbine", class_="WindTurbine"),
+            DMSViewInput(view="WindFarm", class_="WindFarm"),
+            DMSViewInput(view="WindTurbine", class_="WindTurbine"),
         ],
         containers=[
-            DMSContainerWrite(container="Asset", class_="Asset"),
-            DMSContainerWrite(class_="WindFarm", container="WindFarm", constraint="Asset"),
+            DMSContainerInput(container="Asset", class_="Asset"),
+            DMSContainerInput(class_="WindFarm", container="WindFarm", constraint="Asset"),
         ],
     )
     expected_schema = DMSSchema(
@@ -301,8 +297,8 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         id="Property with list of direct relations",
     )
 
-    dms_rules = DMSRulesWrite(
-        metadata=DMSMetadataWrite(
+    dms_rules = DMSRulesInput(
+        metadata=DMSMetadataInput(
             schema_="complete",
             space="my_space",
             external_id="my_data_model",
@@ -312,7 +308,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             updated="2024-03-17T08:30:00",
         ),
         properties=[
-            DMSPropertyWrite(
+            DMSPropertyInput(
                 class_="Asset",
                 property_="name",
                 value_type="text",
@@ -321,7 +317,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 view="Asset",
                 view_property="name",
             ),
-            DMSPropertyWrite(
+            DMSPropertyInput(
                 class_="WindTurbine",
                 property_="maxPower",
                 value_type="float64",
@@ -332,12 +328,12 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             ),
         ],
         views=[
-            DMSViewWrite(view="Asset", class_="Asset", in_model=False),
-            DMSViewWrite(view="WindTurbine", class_="WindTurbine", implements="Asset"),
+            DMSViewInput(view="Asset", class_="Asset", in_model=False),
+            DMSViewInput(view="WindTurbine", class_="WindTurbine", implements="Asset"),
         ],
         containers=[
-            DMSContainerWrite(container="Asset", class_="Asset"),
-            DMSContainerWrite(class_="WindTurbine", container="WindTurbine", constraint="Asset"),
+            DMSContainerInput(container="Asset", class_="Asset"),
+            DMSContainerInput(class_="WindTurbine", container="WindTurbine", constraint="Asset"),
         ],
     )
     expected_schema = DMSSchema(
@@ -407,8 +403,8 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         id="View not in model",
     )
 
-    dms_rules = DMSRulesWrite(
-        metadata=DMSMetadataWrite(
+    dms_rules = DMSRulesInput(
+        metadata=DMSMetadataInput(
             # This is a complete schema, but we do not want to trigger the full validation
             schema_="partial",
             space="my_space",
@@ -419,7 +415,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             updated="2024-03-17T11:00:00",
         ),
         properties=[
-            DMSPropertyWrite(
+            DMSPropertyInput(
                 class_="Asset",
                 property_="name",
                 value_type="text",
@@ -428,7 +424,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 view="Asset",
                 view_property="name",
             ),
-            DMSPropertyWrite(
+            DMSPropertyInput(
                 class_="Asset",
                 property_="timeseries",
                 value_type="Timeseries(property=asset)",
@@ -437,7 +433,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 view="Asset",
                 view_property="timeseries",
             ),
-            DMSPropertyWrite(
+            DMSPropertyInput(
                 class_="Asset",
                 property_="root",
                 value_type="Asset",
@@ -447,7 +443,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 view="Asset",
                 view_property="root",
             ),
-            DMSPropertyWrite(
+            DMSPropertyInput(
                 class_="Asset",
                 property_="children",
                 value_type="Asset(property=root)",
@@ -456,7 +452,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 view="Asset",
                 view_property="children",
             ),
-            DMSPropertyWrite(
+            DMSPropertyInput(
                 class_="Timeseries",
                 property_="name",
                 value_type="text",
@@ -465,7 +461,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 view="Timeseries",
                 view_property="name",
             ),
-            DMSPropertyWrite(
+            DMSPropertyInput(
                 class_="Timeseries",
                 property_="asset",
                 value_type="Asset",
@@ -475,7 +471,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 view="Timeseries",
                 view_property="asset",
             ),
-            DMSPropertyWrite(
+            DMSPropertyInput(
                 class_="Timeseries",
                 property_="activities",
                 value_type="Activity",
@@ -486,7 +482,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 view="Timeseries",
                 view_property="activities",
             ),
-            DMSPropertyWrite(
+            DMSPropertyInput(
                 class_="Activity",
                 property_="timeseries",
                 value_type="Timeseries(property=activities)",
@@ -497,14 +493,14 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             ),
         ],
         views=[
-            DMSViewWrite(view="Asset", class_="Asset"),
-            DMSViewWrite(view="Timeseries", class_="Timeseries"),
-            DMSViewWrite(view="Activity", class_="Activity"),
+            DMSViewInput(view="Asset", class_="Asset"),
+            DMSViewInput(view="Timeseries", class_="Timeseries"),
+            DMSViewInput(view="Activity", class_="Activity"),
         ],
         containers=[
-            DMSContainerWrite(container="Asset", class_="Asset"),
-            DMSContainerWrite(container="Timeseries", class_="Timeseries"),
-            DMSContainerWrite(container="Activity", class_="Activity"),
+            DMSContainerInput(container="Asset", class_="Asset"),
+            DMSContainerInput(container="Timeseries", class_="Timeseries"),
+            DMSContainerInput(container="Activity", class_="Activity"),
         ],
     )
 
@@ -627,8 +623,8 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         id="Multiple relations and reverse relations",
     )
 
-    dms_rules = DMSRulesWrite(
-        metadata=DMSMetadataWrite(
+    dms_rules = DMSRulesInput(
+        metadata=DMSMetadataInput(
             schema_="complete",
             space="my_space",
             external_id="my_data_model",
@@ -638,7 +634,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             updated="2024-03-17T11:00:00",
         ),
         properties=[
-            DMSPropertyWrite(
+            DMSPropertyInput(
                 class_="generating_unit",
                 property_="display_name",
                 value_type="text",
@@ -649,10 +645,10 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             )
         ],
         views=[
-            DMSViewWrite(view="generating_unit", class_="generating_unit", filter_="NodeType(sp_other:wind_turbine)"),
+            DMSViewInput(view="generating_unit", class_="generating_unit", filter_="NodeType(sp_other:wind_turbine)"),
         ],
         containers=[
-            DMSContainerWrite(container="generating_unit", class_="generating_unit"),
+            DMSContainerInput(container="generating_unit", class_="generating_unit"),
         ],
     )
 
@@ -704,8 +700,8 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         id="Explict set NodeType Filter",
     )
 
-    dms_rules = DMSRulesWrite(
-        metadata=DMSMetadataWrite(
+    dms_rules = DMSRulesInput(
+        metadata=DMSMetadataInput(
             schema_="complete",
             space="sp_solution",
             external_id="solution_model",
@@ -715,7 +711,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             updated="2021-01-01T00:00:00",
         ),
         properties=[
-            DMSPropertyWrite(
+            DMSPropertyInput(
                 class_="Asset",
                 property_="kinderen",
                 value_type="Asset",
@@ -726,7 +722,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             ),
         ],
         views=[
-            DMSViewWrite(view="Asset", class_="Asset"),
+            DMSViewInput(view="Asset", class_="Asset"),
         ],
     )
 
@@ -834,8 +830,8 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 ]
             },
         },
-        DMSRulesWrite(
-            metadata=DMSMetadataWrite(
+        DMSRulesInput(
+            metadata=DMSMetadataInput(
                 schema_="partial",
                 space="my_space",
                 external_id="my_data_model",
@@ -845,7 +841,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 updated="2021-01-01T00:00:00",
             ),
             properties=[
-                DMSPropertyWrite(
+                DMSPropertyInput(
                     class_="WindTurbine",
                     property_="name",
                     value_type="text",
@@ -854,7 +850,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                     view="sp_core:Asset(version=1)",
                     view_property="name",
                 ),
-                DMSPropertyWrite(
+                DMSPropertyInput(
                     class_="WindTurbine",
                     property_="ratedPower",
                     value_type="float64",
@@ -865,14 +861,14 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ],
             containers=[
-                DMSContainerWrite(container="sp_core:Asset", class_="Asset"),
-                DMSContainerWrite(class_="GeneratingUnit", container="GeneratingUnit", constraint="sp_core:Asset"),
+                DMSContainerInput(container="sp_core:Asset", class_="Asset"),
+                DMSContainerInput(class_="GeneratingUnit", container="GeneratingUnit", constraint="sp_core:Asset"),
             ],
             views=[
-                DMSViewWrite(view="sp_core:Asset(version=1)"),
-                DMSViewWrite(class_="WindTurbine", view="WindTurbine", implements="sp_core:Asset(version=1)"),
+                DMSViewInput(view="sp_core:Asset(version=1)"),
+                DMSViewInput(class_="WindTurbine", view="WindTurbine", implements="sp_core:Asset(version=1)"),
             ],
-        ).as_read(),
+        ).as_rules(),
         id="Two properties, two containers, two views. Primary data types, no relations.",
     )
 
@@ -955,8 +951,8 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 ]
             },
         },
-        DMSRulesWrite(
-            metadata=DMSMetadataWrite(
+        DMSRulesInput(
+            metadata=DMSMetadataInput(
                 schema_="complete",
                 space="my_space",
                 external_id="my_data_model",
@@ -966,7 +962,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 updated="2021-01-01T00:00:00",
             ),
             properties=[
-                DMSPropertyWrite(
+                DMSPropertyInput(
                     class_="Plant",
                     property_="name",
                     value_type="text",
@@ -975,7 +971,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                     view="Asset",
                     view_property="name",
                 ),
-                DMSPropertyWrite(
+                DMSPropertyInput(
                     class_="Plant",
                     property_="generators",
                     value_type="Generator",
@@ -983,7 +979,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                     view="Plant",
                     view_property="generators",
                 ),
-                DMSPropertyWrite(
+                DMSPropertyInput(
                     class_="Plant",
                     property_="reservoir",
                     value_type="Reservoir",
@@ -993,7 +989,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                     view="Plant",
                     view_property="reservoir",
                 ),
-                DMSPropertyWrite(
+                DMSPropertyInput(
                     class_="Generator",
                     property_="name",
                     value_type="text",
@@ -1002,7 +998,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                     view="Asset",
                     view_property="name",
                 ),
-                DMSPropertyWrite(
+                DMSPropertyInput(
                     class_="Reservoir",
                     property_="name",
                     value_type="text",
@@ -1013,16 +1009,16 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ],
             containers=[
-                DMSContainerWrite(container="Asset", class_="Asset"),
-                DMSContainerWrite(class_="Plant", container="Plant", constraint="Asset"),
+                DMSContainerInput(container="Asset", class_="Asset"),
+                DMSContainerInput(class_="Plant", container="Plant", constraint="Asset"),
             ],
             views=[
-                DMSViewWrite(view="Asset", class_="Asset"),
-                DMSViewWrite(class_="Plant", view="Plant", implements="Asset"),
-                DMSViewWrite(class_="Generator", view="Generator", implements="Asset"),
-                DMSViewWrite(class_="Reservoir", view="Reservoir", implements="Asset"),
+                DMSViewInput(view="Asset", class_="Asset"),
+                DMSViewInput(class_="Plant", view="Plant", implements="Asset"),
+                DMSViewInput(class_="Generator", view="Generator", implements="Asset"),
+                DMSViewInput(class_="Reservoir", view="Reservoir", implements="Asset"),
             ],
-        ).as_read(),
+        ).as_rules(),
         id="Five properties, two containers, four views. Direct relations and Multiedge.",
     )
 
@@ -1266,8 +1262,8 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
 
 
 def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
-    ref_rules = DMSRulesWrite(
-        metadata=DMSMetadataWrite(
+    ref_rules = DMSRulesInput(
+        metadata=DMSMetadataInput(
             schema_="complete",
             space="my_space",
             external_id="my_data_model",
@@ -1277,7 +1273,7 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
             updated="2021-01-01T00:00:00",
         ),
         properties=[
-            DMSPropertyWrite(
+            DMSPropertyInput(
                 class_="WindTurbine",
                 property_="name",
                 value_type="text",
@@ -1288,15 +1284,15 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
             ),
         ],
         containers=[
-            DMSContainerWrite(container="Asset", class_="Asset"),
+            DMSContainerInput(container="Asset", class_="Asset"),
         ],
         views=[
-            DMSViewWrite(view="Asset", class_="Asset"),
+            DMSViewInput(view="Asset", class_="Asset"),
         ],
-    ).as_read()
+    ).as_rules()
 
-    changing_container = DMSRulesWrite(
-        metadata=DMSMetadataWrite(
+    changing_container = DMSRulesInput(
+        metadata=DMSMetadataInput(
             schema_="complete",
             extension="addition",
             space="my_space",
@@ -1307,7 +1303,7 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
             updated="2021-01-01T00:00:00",
         ),
         properties=[
-            DMSPropertyWrite(
+            DMSPropertyInput(
                 class_="WindTurbine",
                 property_="name",
                 value_type="json",
@@ -1318,13 +1314,13 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
             ),
         ],
         containers=[
-            DMSContainerWrite(container="Asset", class_="Asset"),
+            DMSContainerInput(container="Asset", class_="Asset"),
         ],
         views=[
-            DMSViewWrite(view="Asset", class_="Asset"),
+            DMSViewInput(view="Asset", class_="Asset"),
         ],
         reference=ref_rules,
-    ).as_read()
+    ).as_rules()
 
     yield pytest.param(
         changing_container,
@@ -1332,8 +1328,8 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
         id="Addition extension, changing container",
     )
 
-    changing_view = DMSRulesWrite(
-        metadata=DMSMetadataWrite(
+    changing_view = DMSRulesInput(
+        metadata=DMSMetadataInput(
             schema_="complete",
             extension="addition",
             space="my_space",
@@ -1344,7 +1340,7 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
             updated="2021-01-01T00:00:00",
         ),
         properties=[
-            DMSPropertyWrite(
+            DMSPropertyInput(
                 class_="WindTurbine",
                 property_="name",
                 value_type="text",
@@ -1355,13 +1351,13 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
             ),
         ],
         containers=[
-            DMSContainerWrite(container="Asset", class_="Asset"),
+            DMSContainerInput(container="Asset", class_="Asset"),
         ],
         views=[
-            DMSViewWrite(view="Asset", class_="Asset"),
+            DMSViewInput(view="Asset", class_="Asset"),
         ],
         reference=ref_rules,
-    ).as_read()
+    ).as_rules()
 
     yield pytest.param(
         changing_view,
@@ -1380,7 +1376,7 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
 
 class TestDMSRules:
     def test_load_valid_alice_rules(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
-        valid_rules = DMSRulesWrite.load(alice_spreadsheet).as_read()
+        valid_rules = DMSRulesInput.load(alice_spreadsheet).as_rules()
 
         assert isinstance(valid_rules, DMSRules)
 
@@ -1396,7 +1392,7 @@ class TestDMSRules:
 
     @pytest.mark.parametrize("raw, expected_rules", list(valid_rules_tests_cases()))
     def test_load_valid_rules(self, raw: dict[str, dict[str, Any]], expected_rules: DMSRules) -> None:
-        valid_rules = DMSRulesWrite.load(raw).as_read()
+        valid_rules = DMSRulesInput.load(raw).as_rules()
         assert valid_rules.model_dump() == expected_rules.model_dump()
         # testing case insensitive value types
         assert isinstance(valid_rules.properties.data[0].value_type, String)
@@ -1406,7 +1402,7 @@ class TestDMSRules:
         self, raw: dict[str, dict[str, Any]], expected_errors: list[validation.NeatValidationError]
     ) -> None:
         with pytest.raises(ValueError) as e:
-            DMSRulesWrite.load(raw).as_read()
+            DMSRulesInput.load(raw).as_rules()
 
         assert isinstance(e.value, ValidationError)
         validation_errors = e.value.errors()
@@ -1427,8 +1423,8 @@ class TestDMSRules:
         assert recreated_rules.model_dump(exclude=exclude) == alice_rules.model_dump(exclude=exclude)
 
     @pytest.mark.parametrize("input_rules, expected_schema", rules_schema_tests_cases())
-    def test_as_schema(self, input_rules: DMSRulesWrite, expected_schema: DMSSchema) -> None:
-        rules = input_rules.as_read()
+    def test_as_schema(self, input_rules: DMSRulesInput, expected_schema: DMSSchema) -> None:
+        rules = input_rules.as_rules()
         actual_schema = rules.as_schema()
 
         assert actual_schema.spaces.dump() == expected_schema.spaces.dump()
@@ -1446,14 +1442,14 @@ class TestDMSRules:
         assert actual_schema.node_types.dump() == expected_schema.node_types.dump()
 
     def test_alice_as_information(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
-        alice_rules = DMSRulesWrite.load(alice_spreadsheet).as_read()
+        alice_rules = DMSRulesInput.load(alice_spreadsheet).as_rules()
         info_rules = alice_rules.as_information_architect_rules()
 
         assert isinstance(info_rules, InformationRules)
 
     def test_dump_skip_default_space_and_version(self) -> None:
-        dms_rules = DMSRulesWrite(
-            metadata=DMSMetadataWrite(
+        dms_rules = DMSRulesInput(
+            metadata=DMSMetadataInput(
                 schema_="partial",
                 space="my_space",
                 external_id="my_data_model",
@@ -1463,7 +1459,7 @@ class TestDMSRules:
                 updated="2024-03-16",
             ),
             properties=[
-                DMSPropertyWrite(
+                DMSPropertyInput(
                     class_="WindFarm",
                     property_="name",
                     value_type="text",
@@ -1473,9 +1469,9 @@ class TestDMSRules:
                     view_property="name",
                 ),
             ],
-            views=[DMSViewWrite(view="WindFarm", class_="WindFarm", implements="Sourceable,Describable")],
-            containers=[DMSContainerWrite(container="Asset", class_="Asset", constraint="Sourceable,Describable")],
-        ).as_read()
+            views=[DMSViewInput(view="WindFarm", class_="WindFarm", implements="Sourceable,Describable")],
+            containers=[DMSContainerInput(container="Asset", class_="Asset", constraint="Sourceable,Describable")],
+        ).as_rules()
         expected_dump = {
             "metadata": {
                 "role": "DMS Architect",
@@ -1545,7 +1541,7 @@ class TestDMSRules:
         raw["Metadata"]["schema"] = "extended"
 
         with pytest.raises(ValidationError) as e:
-            DMSRulesWrite.load(raw).as_read()
+            DMSRulesInput.load(raw).as_rules()
 
         actual_issues = validation.NeatValidationError.from_pydantic_errors(e.value.errors())
 

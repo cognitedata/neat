@@ -11,7 +11,7 @@ from rdflib import Namespace
 
 from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.issues.base import IssueList, NeatValidationError, ValidationWarning
-from cognite.neat.rules.models.rules import DMSRules, InformationRules, RoleTypes
+from cognite.neat.rules.models import DMSRules, InformationRules, RoleTypes
 
 
 class BaseImporter(ABC):
