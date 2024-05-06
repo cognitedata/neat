@@ -678,7 +678,7 @@ class _DMSExporter:
         container_properties_by_id, view_properties_by_id = self._gather_properties()
         containers = self._create_containers(container_properties_by_id)
 
-        views, node_types = self._create_views_with_node_types(view_properties_by_id, rules.metadata.data_model_type)
+        views, node_types = self._create_views_with_node_types(view_properties_by_id)
 
         views_not_in_model = {view.view.as_id() for view in rules.views if not view.in_model}
         data_model = rules.metadata.as_data_model()
@@ -722,7 +722,6 @@ class _DMSExporter:
     def _create_views_with_node_types(
         self,
         view_properties_by_id: dict[dm.ViewId, list[DMSProperty]],
-        data_model_type: DataModelType,
     ) -> tuple[dm.ViewApplyList, dm.NodeApplyList]:
         views = dm.ViewApplyList([dms_view.as_view() for dms_view in self.rules.views])
         dms_view_by_id = {dms_view.view.as_id(): dms_view for dms_view in self.rules.views}
