@@ -11,6 +11,7 @@ from pydantic import Field, field_serializer, field_validator, model_serializer,
 from pydantic_core.core_schema import SerializationInfo, ValidationInfo
 
 from cognite.neat.rules import issues
+from cognite.neat.rules.issues import MultiValueError
 from cognite.neat.rules.models._base import (
     BaseMetadata,
     BaseRules,
@@ -328,7 +329,7 @@ class DMSRules(BaseRules):
         if issue_list.warnings:
             issue_list.trigger_warnings()
         if issue_list.has_errors:
-            raise issue_list.as_errors()
+            raise MultiValueError([error for error in issue_list if isinstance(error, issues.NeatValidationError)])
         return self
 
     @model_serializer(mode="wrap", when_used="always")
