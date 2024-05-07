@@ -53,13 +53,16 @@ class DMSImporter(BaseImporter):
         read_issues: Sequence[ValidationIssue] | None = None,
         metadata: DMSMetadata | None = None,
     ):
-        self.schema = schema
+        # Calling this root schema to distinguish it from
+        # * User Schema
+        # * Reference Schema
+        self.root_schema = schema
         self.metadata = metadata
         self.issue_list = IssueList(read_issues)
         self._all_containers_by_id = {container.as_id(): container for container in schema.containers}
-        if self.schema.reference:
+        if self.root_schema.reference:
             self._all_containers_by_id.update(
-                {container.as_id(): container for container in self.schema.reference.containers}
+                {container.as_id(): container for container in self.root_schema.reference.containers}
             )
 
     @classmethod
@@ -144,32 +147,36 @@ class DMSImporter(BaseImporter):
             # In case there were errors during the import, the to_rules method will return None
             return self._return_or_raise(self.issue_list, errors)
 
-        if len(self.schema.data_models) == 0:
+        if len(self.root_schema.data_models) == 0:
             self.issue_list.append(issues.importing.NoDataModelError("No data model found."))
             return self._return_or_raise(self.issue_list, errors)
 
         with _handle_issues(
             self.issue_list,
         ) as future:
-            user_rules = DMSRules(**self._create_rule_components(self.schema, self.metadata))
-            if self.schema.reference:
-                user_rules.reference = DMSRules(
+            reference: DMSRules | None = None
+            if ref_schema := self.root_schema.reference:
+                # Reference should always be an enterprise model.
+                reference = DMSRules(
                     **self._create_rule_components(
-                        self.schema.reference, self._create_default_metadata(self.schema.views)
+                        ref_schema, self._create_default_metadata(ref_schema.views), DataModelType.enterprise
                     )
                 )
+            user_rules = DMSRules(**self._create_rule_components(self.root_schema, self.metadata), reference=reference)
 
         if future.result == "failure" or self.issue_list.has_errors:
             return self._return_or_raise(self.issue_list, errors)
 
         return self._to_output(user_rules, self.issue_list, errors, role)
 
-    def _create_rule_components(self, schema: DMSSchema, metadata: DMSMetadata | None = None) -> dict[str, Any]:
+    def _create_rule_components(
+        self, schema: DMSSchema, metadata: DMSMetadata | None = None, data_model_type: DataModelType | None = None
+    ) -> dict[str, Any]:
         if len(schema.data_models) > 2:
             # Creating a DataModelEntity to convert the data model id to a string.
             self.issue_list.append(
                 issues.importing.MultipleDataModelsWarning(
-                    [str(DataModelEntity.from_id(model.as_id())) for model in self.schema.data_models]
+                    [str(DataModelEntity.from_id(model.as_id())) for model in schema.data_models]
                 )
             )
 
@@ -190,6 +197,8 @@ class DMSImporter(BaseImporter):
         }
 
         metadata = metadata or DMSMetadata.from_data_model(data_model)
+        if data_model_type is not None:
+            metadata.data_model_type = data_model_type
         return dict(
             metadata=metadata,
             properties=properties,
@@ -197,9 +206,7 @@ class DMSImporter(BaseImporter):
                 data=[DMSContainer.from_container(container) for container in schema.containers]
             ),
             views=SheetList[DMSView](
-                data=[
-                    DMSView.from_view(view, in_model=view.as_id() in data_model_view_ids) for view in self.schema.views
-                ]
+                data=[DMSView.from_view(view, in_model=view.as_id() in data_model_view_ids) for view in schema.views]
             ),
         )
 
@@ -217,15 +224,6 @@ class DMSImporter(BaseImporter):
             created=now,
             updated=now,
         )
-
-    def _infer_data_model_type(self, space: str) -> DataModelType:
-        if self.schema.referenced_spaces() - {space}:
-            # If the data model has containers, views, node types in another space
-            # we assume it is a solution model.
-            return DataModelType.solution
-        else:
-            # All containers, views, node types are in the same space as the data model
-            return DataModelType.enterprise
 
     def _create_dms_property(
         self, prop_id: str, prop: ViewPropertyApply, view_entity: ViewEntity, class_entity: ClassEntity
