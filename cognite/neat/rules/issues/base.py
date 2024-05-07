@@ -1,4 +1,5 @@
 import sys
+import warnings
 from abc import ABC, abstractmethod
 from collections import UserList
 from collections.abc import Sequence
@@ -181,6 +182,10 @@ class IssueList(UserList[ValidationIssue]):
             "Validation failed",
             [ValueError(issue.message()) for issue in self if isinstance(issue, NeatValidationError)],
         )
+
+    def trigger_warnings(self) -> None:
+        for warning in [issue for issue in self if isinstance(issue, ValidationWarning)]:
+            warnings.warn(warning, stacklevel=2)
 
     def to_pandas(self) -> pd.DataFrame:
         return pd.DataFrame([issue.dump() for issue in self])

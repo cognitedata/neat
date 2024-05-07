@@ -1059,7 +1059,12 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                     },
                 ]
             },
-            "views": {"data": [{"view": "WindTurbine", "class_": "WindTurbine"}]},
+            "views": {
+                "data": [
+                    {"view": "WindTurbine", "class_": "WindTurbine"},
+                    {"view": "sp_core:Asset", "class_": "sp_core:Asset"},
+                ]
+            },
         },
         [
             cognite.neat.rules.issues.spreadsheet.MultiValueTypeError(
@@ -1106,7 +1111,12 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                     },
                 ]
             },
-            "views": {"data": [{"view": "WindTurbine", "class_": "WindTurbine"}]},
+            "views": {
+                "data": [
+                    {"view": "WindTurbine", "class_": "WindTurbine"},
+                    {"view": "sp_core:Asset", "class_": "sp_core:Asset"},
+                ]
+            },
         },
         [
             cognite.neat.rules.issues.spreadsheet.MultiValueIsListError(
@@ -1153,7 +1163,12 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                     },
                 ]
             },
-            "views": {"data": [{"view": "WindTurbine", "class_": "WindTurbine"}]},
+            "views": {
+                "data": [
+                    {"view": "WindTurbine", "class_": "WindTurbine"},
+                    {"view": "sp_core:Asset", "class_": "sp_core:Asset"},
+                ]
+            },
         },
         [
             cognite.neat.rules.issues.spreadsheet.MultiNullableError(
@@ -1200,7 +1215,12 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                     },
                 ]
             },
-            "views": {"data": [{"view": "WindTurbine", "class_": "WindTurbine"}]},
+            "views": {
+                "data": [
+                    {"view": "WindTurbine", "class_": "WindTurbine"},
+                    {"view": "sp_core:Asset", "class_": "sp_core:Asset"},
+                ]
+            },
         },
         [
             cognite.neat.rules.issues.spreadsheet.MultiIndexError(
@@ -1247,7 +1267,12 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                     },
                 ]
             },
-            "views": {"data": [{"view": "WindTurbine", "class_": "WindTurbine"}]},
+            "views": {
+                "data": [
+                    {"view": "WindTurbine", "class_": "WindTurbine"},
+                    {"view": "sp_core:Asset", "class_": "sp_core:Asset"},
+                ]
+            },
         },
         [
             cognite.neat.rules.issues.spreadsheet.MultiUniqueConstraintError(
