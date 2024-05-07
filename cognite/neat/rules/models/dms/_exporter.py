@@ -83,14 +83,8 @@ class _DMSExporter:
         if self.include_pipeline:
             return PipelineSchema.from_dms(output, self.instance_space)
 
-        if self._ref_schema and self.include_ref:
-            output.frozen_ids.update(self._ref_schema.node_types.as_ids())
-            output.frozen_ids.update(self._ref_schema.views.as_ids())
-            output.frozen_ids.update(self._ref_schema.containers.as_ids())
-            output.node_types.extend(self._ref_schema.node_types)
-            output.views.extend(self._ref_schema.views)
-            output.containers.extend(self._ref_schema.containers)
-            output.data_models.extend(self._ref_schema.data_models)
+        if self._ref_schema:
+            output.reference = self._ref_schema
 
         return output
 
