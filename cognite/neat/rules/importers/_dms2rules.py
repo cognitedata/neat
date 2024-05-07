@@ -155,6 +155,7 @@ class DMSImporter(BaseImporter):
             self.issue_list,
         ) as future:
             schema_completeness = SchemaCompleteness.complete
+            data_model_type = DataModelType.enterprise
             reference: DMSRules | None = None
             if ref_schema := self.root_schema.reference:
                 # Reference should always be an enterprise model.
@@ -164,11 +165,10 @@ class DMSImporter(BaseImporter):
                     )
                 )
                 schema_completeness = SchemaCompleteness.extended
+                data_model_type = DataModelType.solution
 
             user_rules = DMSRules(
-                **self._create_rule_components(
-                    self.root_schema, self.metadata, schema_completeness=schema_completeness
-                ),
+                **self._create_rule_components(self.root_schema, self.metadata, data_model_type, schema_completeness),
                 reference=reference,
             )
 
