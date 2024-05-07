@@ -269,6 +269,12 @@ class RulesToExcel(Step):
             options=["input", *RoleTypes.__members__.keys()],
         ),
         Configurable(
+            name="Is Reference",
+            value="False",
+            label="Export rules as reference rules. If provided, the rules will be exported as reference rules. ",
+            options=["True", "False"],
+        ),
+        Configurable(
             name="File path",
             value="",
             label="File path to the generated Excel file.For example: 'staging/exported-rules.xlsx'",
@@ -279,20 +285,20 @@ class RulesToExcel(Step):
         if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
 
+        is_reference = self.configs.get("Is Reference") == "True"
         styling = cast(exporters.ExcelExporter.Style, self.configs.get("Styling", "default"))
         role = self.configs.get("Output role format")
         output_role = None
         if role != "input" and role is not None:
             output_role = RoleTypes[role]
 
-        excel_exporter = exporters.ExcelExporter(styling=styling, output_role=output_role)
+        excel_exporter = exporters.ExcelExporter(styling=styling, output_role=output_role, is_reference=is_reference)
 
         rule_instance: Rules
         if rules.domain:
             rule_instance = rules.domain
         elif rules.information:
             rule_instance = rules.information
-
         elif rules.dms:
             rule_instance = rules.dms
         else:

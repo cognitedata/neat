@@ -20,6 +20,11 @@ Changes are grouped as follows:
 - [BREAKING] The subpackage `cognite.neat.rules.models` is reorganized. All imports using this subpackage must be
   updated.
 
+## [0.76.2] - 06-05-24
+### Fixed
+- Added missing "Is Reference" parameter back to the `ExcelExporter`step.
+
+
 ## [0.76.1] - 06-05-24
 ### Changed
 - Updated DMS Architect Rules template to fit the new DMS Rules structure
