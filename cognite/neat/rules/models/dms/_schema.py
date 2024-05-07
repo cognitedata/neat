@@ -51,9 +51,6 @@ class DMSSchema:
     last: "DMSSchema | None" = None
     # Reference is typically the Enterprise model, while this is the solution model.
     reference: "DMSSchema | None" = None
-    # The frozen ids are parts of the schema that should not be modified or deleted.
-    # This is used the exporting the schema.
-    frozen_ids: set[dm.ViewId | dm.ContainerId | dm.NodeId] = field(default_factory=set)
 
     _FIELD_NAME_BY_RESOURCE_TYPE: ClassVar[dict[str, str]] = {
         "container": "containers",
