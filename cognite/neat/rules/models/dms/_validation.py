@@ -98,6 +98,7 @@ class DMSPostValidation:
                 prop.default = prop.default or default_definition
                 prop.index = prop.index or index_definition
                 prop.constraint = prop.constraint or constraint_definition
+        self.issue_list.extend(errors)
 
     def _referenced_views_and_containers_are_existing(self) -> None:
         # There two checks are done in the same method to raise all the errors at once.
@@ -146,6 +147,7 @@ class DMSPostValidation:
                                 url=None,
                             )
                         )
+        self.issue_list.extend(errors)
 
     def _validate_extension(self) -> None:
         if self.metadata.schema_ is not SchemaCompleteness.extended:
@@ -164,7 +166,6 @@ class DMSPostValidation:
         new_containers = {container.as_id(): container for container in user_schema.containers}
         existing_containers = {container.as_id(): container for container in ref_schema.containers}
 
-        errors: list[issues.NeatValidationError] = []
         for container_id, container in new_containers.items():
             existing_container = existing_containers.get(container_id)
             if not existing_container or existing_container == container:
@@ -175,7 +176,7 @@ class DMSPostValidation:
             changed_attributes, changed_properties = self._changed_attributes_and_properties(
                 new_dumped, existing_dumped
             )
-            errors.append(
+            self.issue_list.append(
                 issues.dms.ChangingContainerError(
                     container_id=container_id,
                     changed_properties=changed_properties or None,
@@ -183,7 +184,7 @@ class DMSPostValidation:
                 )
             )
 
-        if self.metadata.extension is ExtensionCategory.reshape and errors:
+        if self.metadata.extension is ExtensionCategory.reshape and self.issue_list:
             return None
         elif self.metadata.extension is ExtensionCategory.reshape:
             # Reshape allows changes to views
@@ -199,7 +200,7 @@ class DMSPostValidation:
             changed_attributes, changed_properties = self._changed_attributes_and_properties(
                 view.dump(), existing_view.dump()
             )
-            errors.append(
+            self.issue_list.append(
                 issues.dms.ChangingViewError(
                     view_id=view_id,
                     changed_properties=changed_properties or None,
