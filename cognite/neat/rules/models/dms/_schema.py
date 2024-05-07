@@ -356,6 +356,10 @@ class DMSSchema:
         defined_spaces = {space.space for space in self.spaces}
         defined_containers = {container.as_id(): container for container in self.containers}
         defined_views = {view.as_id() for view in self.views}
+        if self.reference:
+            defined_spaces |= {space.space for space in self.reference.spaces}
+            defined_containers |= {container.as_id(): container for container in self.reference.containers}
+            defined_views |= {view.as_id() for view in self.reference.views}
 
         for container in self.containers:
             if container.space not in defined_spaces:
