@@ -154,6 +154,7 @@ class DMSImporter(BaseImporter):
         with _handle_issues(
             self.issue_list,
         ) as future:
+            schema_completeness = SchemaCompleteness.complete
             reference: DMSRules | None = None
             if ref_schema := self.root_schema.reference:
                 # Reference should always be an enterprise model.
@@ -162,7 +163,14 @@ class DMSImporter(BaseImporter):
                         ref_schema, self._create_default_metadata(ref_schema.views), DataModelType.enterprise
                     )
                 )
-            user_rules = DMSRules(**self._create_rule_components(self.root_schema, self.metadata), reference=reference)
+                schema_completeness = SchemaCompleteness.extended
+
+            user_rules = DMSRules(
+                **self._create_rule_components(
+                    self.root_schema, self.metadata, schema_completeness=schema_completeness
+                ),
+                reference=reference,
+            )
 
         if future.result == "failure" or self.issue_list.has_errors:
             return self._return_or_raise(self.issue_list, errors)
@@ -170,7 +178,11 @@ class DMSImporter(BaseImporter):
         return self._to_output(user_rules, self.issue_list, errors, role)
 
     def _create_rule_components(
-        self, schema: DMSSchema, metadata: DMSMetadata | None = None, data_model_type: DataModelType | None = None
+        self,
+        schema: DMSSchema,
+        metadata: DMSMetadata | None = None,
+        data_model_type: DataModelType | None = None,
+        schema_completeness: SchemaCompleteness | None = None,
     ) -> dict[str, Any]:
         if len(schema.data_models) > 2:
             # Creating a DataModelEntity to convert the data model id to a string.
@@ -199,6 +211,8 @@ class DMSImporter(BaseImporter):
         metadata = metadata or DMSMetadata.from_data_model(data_model)
         if data_model_type is not None:
             metadata.data_model_type = data_model_type
+        if schema_completeness is not None:
+            metadata.schema_ = schema_completeness
         return dict(
             metadata=metadata,
             properties=properties,
