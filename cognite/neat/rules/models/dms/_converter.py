@@ -107,7 +107,8 @@ class _DMSRulesConverter:
             metadata=metadata,
             properties=SheetList[InformationProperty](data=properties),
             classes=SheetList[InformationClass](data=classes),
-            reference=self.dms.reference and self.dms.reference.as_information_architect_rules(),  # type: ignore[arg-type]
+            last=self.dms.last.as_information_architect_rules() if self.dms.last else None,
+            reference=self.dms.reference.as_information_architect_rules() if self.dms.reference else None,
         )
 
     @classmethod
