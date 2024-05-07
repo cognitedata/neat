@@ -41,8 +41,8 @@ else:
 
 @dataclass
 class DMSSchema:
-    spaces: dm.SpaceApplyList = field(default_factory=lambda: dm.SpaceApplyList([]))
     data_models: dm.DataModelApplyList = field(default_factory=lambda: dm.DataModelApplyList([]))
+    spaces: dm.SpaceApplyList = field(default_factory=lambda: dm.SpaceApplyList([]))
     views: dm.ViewApplyList = field(default_factory=lambda: dm.ViewApplyList([]))
     containers: dm.ContainerApplyList = field(default_factory=lambda: dm.ContainerApplyList([]))
     node_types: dm.NodeApplyList = field(default_factory=lambda: dm.NodeApplyList([]))
