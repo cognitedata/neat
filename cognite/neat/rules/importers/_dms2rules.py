@@ -56,7 +56,11 @@ class DMSImporter(BaseImporter):
         self.schema = schema
         self.metadata = metadata
         self.issue_list = IssueList(read_issues)
-        self._container_by_id = {container.as_id(): container for container in schema.containers}
+        self._all_containers_by_id = {container.as_id(): container for container in schema.containers}
+        if self.schema.reference:
+            self._all_containers_by_id.update(
+                {container.as_id(): container for container in self.schema.reference.containers}
+            )
 
     @classmethod
     def from_data_model_id(cls, client: CogniteClient, data_model_id: DataModelIdentifier) -> "DMSImporter":
@@ -184,17 +188,12 @@ class DMSImporter(BaseImporter):
                 metadata=metadata,
                 properties=properties,
                 containers=SheetList[DMSContainer](
-                    data=[
-                        DMSContainer.from_container(container)
-                        for container in self.schema.containers
-                        if container.as_id() not in self.schema.frozen_ids
-                    ]
+                    data=[DMSContainer.from_container(container) for container in self.schema.containers]
                 ),
                 views=SheetList[DMSView](
                     data=[
                         DMSView.from_view(view, in_model=view.as_id() in data_model_view_ids)
                         for view in self.schema.views
-                        if view.as_id() not in self.schema.frozen_ids
                     ]
                 ),
                 reference=self._create_reference_rules(ref_properties),
@@ -263,7 +262,7 @@ class DMSImporter(BaseImporter):
     def _create_dms_property(
         self, prop_id: str, prop: ViewPropertyApply, view_entity: ViewEntity, class_entity: ClassEntity
     ) -> DMSProperty | None:
-        if isinstance(prop, dm.MappedPropertyApply) and prop.container not in self._container_by_id:
+        if isinstance(prop, dm.MappedPropertyApply) and prop.container not in self._all_containers_by_id:
             self.issue_list.append(
                 issues.importing.MissingContainerWarning(
                     view_id=str(view_entity),
@@ -274,7 +273,7 @@ class DMSImporter(BaseImporter):
             return None
         if (
             isinstance(prop, dm.MappedPropertyApply)
-            and prop.container_property_identifier not in self._container_by_id[prop.container].properties
+            and prop.container_property_identifier not in self._all_containers_by_id[prop.container].properties
         ):
             self.issue_list.append(
                 issues.importing.MissingContainerPropertyWarning(
@@ -321,7 +320,7 @@ class DMSImporter(BaseImporter):
 
     def _container_prop_unsafe(self, prop: dm.MappedPropertyApply) -> dm.ContainerProperty:
         """This method assumes you have already checked that the container with property exists."""
-        return self._container_by_id[prop.container].properties[prop.container_property_identifier]
+        return self._all_containers_by_id[prop.container].properties[prop.container_property_identifier]
 
     def _get_relation_type(self, prop: ViewPropertyApply) -> Literal["edge", "reverse", "direct"] | None:
         if isinstance(prop, SingleEdgeConnectionApply | MultiEdgeConnectionApply) and prop.direction == "outwards":
@@ -386,7 +385,7 @@ class DMSImporter(BaseImporter):
     def _get_index(self, prop: ViewPropertyApply, prop_id) -> list[str] | None:
         if not isinstance(prop, dm.MappedPropertyApply):
             return None
-        container = self._container_by_id[prop.container]
+        container = self._all_containers_by_id[prop.container]
         index: list[str] = []
         for index_name, index_obj in (container.indexes or {}).items():
             if isinstance(index_obj, BTreeIndex | InvertedIndex) and prop_id in index_obj.properties:
@@ -396,7 +395,7 @@ class DMSImporter(BaseImporter):
     def _get_constraint(self, prop: ViewPropertyApply, prop_id: str) -> list[str] | None:
         if not isinstance(prop, dm.MappedPropertyApply):
             return None
-        container = self._container_by_id[prop.container]
+        container = self._all_containers_by_id[prop.container]
         unique_constraints: list[str] = []
         for constraint_name, constraint_obj in (container.constraints or {}).items():
             if isinstance(constraint_obj, dm.RequiresConstraint):
