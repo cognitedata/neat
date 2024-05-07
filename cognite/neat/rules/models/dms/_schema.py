@@ -41,11 +41,16 @@ else:
 
 @dataclass
 class DMSSchema:
-    spaces: dm.SpaceApplyList = field(default_factory=lambda: dm.SpaceApplyList([]))
     data_models: dm.DataModelApplyList = field(default_factory=lambda: dm.DataModelApplyList([]))
+    spaces: dm.SpaceApplyList = field(default_factory=lambda: dm.SpaceApplyList([]))
     views: dm.ViewApplyList = field(default_factory=lambda: dm.ViewApplyList([]))
     containers: dm.ContainerApplyList = field(default_factory=lambda: dm.ContainerApplyList([]))
     node_types: dm.NodeApplyList = field(default_factory=lambda: dm.NodeApplyList([]))
+    # The last schema is the previous version of the data model. In the case, extension=additio, this
+    # should not be modified.
+    last: "DMSSchema | None" = None
+    # Reference is typically the Enterprise model, while this is the solution model.
+    reference: "DMSSchema | None" = None
     # The frozen ids are parts of the schema that should not be modified or deleted.
     # This is used the exporting the schema.
     frozen_ids: set[dm.ViewId | dm.ContainerId | dm.NodeId] = field(default_factory=set)

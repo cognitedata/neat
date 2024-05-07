@@ -294,6 +294,7 @@ class DMSRules(BaseRules):
     properties: SheetList[DMSProperty] = Field(alias="Properties")
     views: SheetList[DMSView] = Field(alias="Views")
     containers: SheetList[DMSContainer] | None = Field(None, alias="Containers")
+    last: "DMSRules | None" = Field(None, alias="Last", description="The previous version of the data model")
     reference: "DMSRules | None" = Field(None, alias="Reference")
 
     @field_validator("reference")
@@ -320,15 +321,6 @@ class DMSRules(BaseRules):
             warnings.warn(issues.dms.ViewModelVersionNotMatchingWarning(different_version, model_version), stacklevel=2)
         if different_space := [view.view.as_id() for view in value if view.view.space != metadata.space]:
             warnings.warn(issues.dms.ViewModelSpaceNotMatchingWarning(different_space, metadata.space), stacklevel=2)
-        return value
-
-    @field_validator("views")
-    def matching_version(cls, value: SheetList[DMSView], info: ValidationInfo) -> SheetList[DMSView]:
-        if not (metadata := info.data.get("metadata")):
-            return value
-        model_version = metadata.version
-        if different_version := [view.view.as_id() for view in value if view.view.version != model_version]:
-            warnings.warn(issues.dms.ViewModelVersionNotMatchingWarning(different_version, model_version), stacklevel=2)
         return value
 
     @model_validator(mode="after")

@@ -119,7 +119,7 @@ class ExcelExporter(BaseExporter[Workbook]):
 
     def _write_sheets(self, workbook: Workbook, dumped_rules: dict[str, Any], rules: Rules, is_reference: bool = False):
         for sheet_name, headers in rules.headers_by_sheet(by_alias=True).items():
-            if sheet_name in ("Metadata", "prefixes", "Reference", "is_reference"):
+            if sheet_name in ("Metadata", "prefixes", "Reference", "Last"):
                 continue
             if is_reference:
                 sheet = workbook.create_sheet(f"Ref{sheet_name}")
