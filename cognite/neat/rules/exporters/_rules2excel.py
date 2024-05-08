@@ -13,8 +13,10 @@ from openpyxl.worksheet.worksheet import Worksheet
 
 from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.models import (
+    DataModelType,
     DMSRules,
     DomainRules,
+    ExtensionCategory,
     InformationRules,
     RoleTypes,
     SchemaCompleteness,
@@ -108,10 +110,7 @@ class ExcelExporter(BaseExporter[Workbook]):
             dumped_user_rules = {
                 "Metadata": self._create_metadata_sheet_user_rules(rules),
             }
-            dumped_user_rules["Metadata"]["role"] = (
-                self.output_role and self.output_role.value
-            ) or rules.metadata.role.value
-            dumped_user_rules["Metadata"]["schema"] = SchemaCompleteness.extended
+
             if self.dump_as == "last":
                 dumped_last_rules = rules.model_dump(by_alias=True)
                 if rules.reference:
@@ -258,9 +257,9 @@ class ExcelExporter(BaseExporter[Workbook]):
         # Excel does not support timezone in datetime strings
         now_iso = datetime.now().replace(tzinfo=None).isoformat()
         is_info = isinstance(rules, InformationRules)
-        is_dms = not is_info
-        is_extension = self.new_model_id is not None
-        is_solution = is_extension and self.new_model_id != existing_model_id
+        is_dms = isinstance(rules, DMSRules)
+        is_extension = self.new_model_id is not None or rules.reference is not None
+        is_solution = rules.metadata.data_model_type == DataModelType.solution
 
         if is_solution:
             metadata["prefix" if is_info else "space"] = self.new_model_id[0]  # type: ignore[index]
@@ -302,6 +301,11 @@ class ExcelExporter(BaseExporter[Workbook]):
         else:
             metadata["schema"] = SchemaCompleteness.complete.value
 
-        metadata["extension"] = "addition"
+        if is_solution:
+            metadata["dataModelType"] = DataModelType.solution.value
+        else:
+            metadata["dataModelType"] = DataModelType.enterprise.value
 
+        metadata["extension"] = ExtensionCategory.addition.value
+        metadata["role"] = (self.output_role and self.output_role.value) or rules.metadata.role.value
         return metadata
