@@ -77,10 +77,10 @@ class _DMSRulesSerializer:
             dumped[self.prop_name]["data"], key=lambda p: (p[self.prop_view], p[self.prop_view_property])
         )
         dumped[self.view_name] = sorted(dumped[self.view_name]["data"], key=lambda v: v[self.view_view])
-        if self.container_name in dumped:
-            dumped[self.container_name] = sorted(
-                dumped[self.container_name]["data"], key=lambda c: c[self.container_container]
-            )
+        if container_data := dumped.get(self.container_name):
+            dumped[self.container_name] = sorted(container_data["data"], key=lambda c: c[self.container_container])
+        else:
+            dumped.pop(self.container_name, None)
 
         for prop in dumped[self.prop_name]:
             for field_name in self.properties_fields:
@@ -105,7 +105,7 @@ class _DMSRulesSerializer:
                 for field in self.exclude_views:
                     view.pop(field, None)
 
-        for container in dumped[self.container_name]:
+        for container in dumped.get(self.container_name, []):
             for field_name in self.containers_fields:
                 if value := container.get(field_name):
                     container[field_name] = value.removeprefix(self.default_space)
