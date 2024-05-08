@@ -20,6 +20,11 @@ Changes are grouped as follows:
 - [BREAKING] The subpackage `cognite.neat.rules.models` is reorganized. All imports using this subpackage must be
   updated.
 
+### Added
+- Support for exporting/importing `Last` spreadsheets in the `ExcelExporter` and `ExcelImporter`.
+- [BREAKING] As a result of the above, in the `ExcelExporter` the parameter `is_reference` is replaced by `dump_as`.
+  To continue using the old behavior, set `dump_as='reference'`.
+
 ## [0.76.2] - 06-05-24
 ### Fixed
 - Added missing "Is Reference" parameter back to the `ExcelExporter`step.
