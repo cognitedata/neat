@@ -100,24 +100,35 @@ class ExcelExporter(BaseExporter[Workbook]):
         # Remove default sheet named "Sheet"
         workbook.remove(workbook["Sheet"])
 
-        dumped_rules: dict[str, Any]
+        dumped_user_rules: dict[str, Any]
+        dumped_last_rules: dict[str, Any] | None = None
         dumped_reference_rules: dict[str, Any] | None = None
-        if self.dump_as == "reference":
+        if self.dump_as != "user":
             # Writes empty reference sheets
-            dumped_rules = {
+            dumped_user_rules = {
                 "Metadata": self._create_metadata_sheet_user_rules(rules),
             }
-            dumped_rules["Metadata"]["role"] = (
+            dumped_user_rules["Metadata"]["role"] = (
                 self.output_role and self.output_role.value
             ) or rules.metadata.role.value
-            dumped_reference_rules = rules.reference_self().model_dump(by_alias=True)
+            if self.dump_as == "last":
+                dumped_last_rules = rules.model_dump(by_alias=True)
+                if rules.reference:
+                    dumped_reference_rules = rules.reference.model_dump(by_alias=True)
+            elif self.dump_as == "reference":
+                dumped_reference_rules = rules.reference_self().model_dump(by_alias=True)
         else:
-            dumped_rules = rules.model_dump(by_alias=True)
+            dumped_user_rules = rules.model_dump(by_alias=True)
+            if rules.last:
+                dumped_last_rules = rules.last.model_dump(by_alias=True)
             if rules.reference:
                 dumped_reference_rules = rules.reference.model_dump(by_alias=True)
 
-        self._write_metadata_sheet(workbook, dumped_rules["Metadata"])
-        self._write_sheets(workbook, dumped_rules, rules)
+        self._write_metadata_sheet(workbook, dumped_user_rules["Metadata"])
+        self._write_sheets(workbook, dumped_user_rules, rules)
+        if dumped_last_rules:
+            self._write_sheets(workbook, dumped_last_rules, rules, sheet_prefix="Last")
+
         if dumped_reference_rules:
             prefix = "Ref"
             self._write_sheets(workbook, dumped_reference_rules, rules, sheet_prefix=prefix)

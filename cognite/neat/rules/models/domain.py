@@ -55,6 +55,7 @@ class DomainRules(RuleModel):
     metadata: DomainMetadata = Field(alias="Metadata")
     properties: SheetList[DomainProperty] = Field(alias="Properties")
     classes: SheetList[DomainClass] | None = Field(None, alias="Classes")
+    last: "DomainRules | None" = Field(None, alias="Last")
     reference: "DomainRules | None" = Field(None, alias="Reference")
 
     @model_serializer(mode="plain", when_used="always")
