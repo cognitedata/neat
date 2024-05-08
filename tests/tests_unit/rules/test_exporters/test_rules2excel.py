@@ -35,7 +35,7 @@ class TestExcelExporter:
         assert "Classes" in workbook.sheetnames
 
     def test_export_dms_rules_alice_reference(self, alice_rules: DMSRules) -> None:
-        exporter = ExcelExporter(styling="maximal", is_reference=True)
+        exporter = ExcelExporter(styling="maximal", dump_as="reference")
         workbook = exporter.export(alice_rules)
 
         assert "Metadata" in workbook.sheetnames

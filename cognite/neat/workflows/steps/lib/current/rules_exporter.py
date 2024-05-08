@@ -292,7 +292,8 @@ class RulesToExcel(Step):
         if role != "input" and role is not None:
             output_role = RoleTypes[role]
 
-        excel_exporter = exporters.ExcelExporter(styling=styling, output_role=output_role, is_reference=is_reference)
+        dump_as = "reference" if is_reference else "user"
+        excel_exporter = exporters.ExcelExporter(styling=styling, output_role=output_role, dump_as=dump_as)  # type: ignore[arg-type]
 
         rule_instance: Rules
         if rules.domain:

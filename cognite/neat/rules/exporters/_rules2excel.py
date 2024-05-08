@@ -35,11 +35,18 @@ class ExcelExporter(BaseExporter[Workbook]):
         new_model_id: The new model ID to use for the exported spreadsheet. This is only applicable if the input
             rules have 'is_reference' set. If provided, the model ID will be used to automatically create the
             new metadata sheet in the Excel file.
-        is_reference: If True, the rules are considered to be a reference model. The exported Excel file will
-            then contain empty sheets for the main rules and this data model will be dumped to the reference sheets.
-            This is useful when you are building a solution model based on an Enterprise model, then the
-            Enterprise model will serve as the reference model. It is also useful when you are extending an existing
-            model, then the existing model will serve as the reference model. Defaults to False.
+        dump_as: This determines how the rules are written to the Excel file. An Excel file has up to three sets of
+           sheets: user, last, and reference. The user sheets are used for inputting rules from a user. The last sheets
+           are used for the last version of the same model as the user, while the reference sheets are used for
+           the model the user is building on. The options are:
+             * "user": The rules are written to the user sheets. This is used when you want to modify the rules
+                directly and potentially change the model. This is useful when you have imported the data model
+                from outside CDF and you want to modify it before you write it to CDF.
+             * "last": The rules are written to the last sheets. This is used when you want to extend the rules,
+               but have validation that you are not breaking the existing model. This is used when you want to
+               change a model that has already been published to CDF and that model is in production.
+             * "reference": The rules are written to the reference sheets. This is typically used when you want to build
+               a new solution on top of an enterprise model.
 
     The following styles are available:
 
@@ -51,7 +58,7 @@ class ExcelExporter(BaseExporter[Workbook]):
     """
 
     Style = Literal["none", "minimal", "default", "maximal"]
-
+    DumpOptions = Literal["user", "last", "reference"]
     _main_header_by_sheet_name: ClassVar[dict[str, str]] = {
         "Properties": "Definition of Properties per Class",
         "Classes": "Definition of Classes",
@@ -59,21 +66,24 @@ class ExcelExporter(BaseExporter[Workbook]):
         "Containers": "Definition of Containers",
     }
     style_options = get_args(Style)
+    dump_options = get_args(DumpOptions)
 
     def __init__(
         self,
         styling: Style = "default",
         output_role: RoleTypes | None = None,
         new_model_id: tuple[str, str, str] | None = None,
-        is_reference: bool = False,
+        dump_as: DumpOptions = "user",
     ):
         if styling not in self.style_options:
             raise ValueError(f"Invalid styling: {styling}. Valid options are {self.style_options}")
+        if dump_as not in self.dump_options:
+            raise ValueError(f"Invalid dump_as: {dump_as}. Valid options are {self.dump_options}")
         self.styling = styling
         self._styling_level = self.style_options.index(styling)
         self.output_role = output_role
         self.new_model_id = new_model_id
-        self.is_reference = is_reference
+        self.dump_as = dump_as
 
     def export_to_file(self, rules: Rules, filepath: Path) -> None:
         """Exports transformation rules to excel file."""
@@ -92,7 +102,7 @@ class ExcelExporter(BaseExporter[Workbook]):
 
         dumped_rules: dict[str, Any]
         dumped_reference_rules: dict[str, Any] | None = None
-        if self.is_reference:
+        if self.dump_as == "reference":
             # Writes empty reference sheets
             dumped_rules = {
                 "Metadata": self._create_metadata_sheet_user_rules(rules),
