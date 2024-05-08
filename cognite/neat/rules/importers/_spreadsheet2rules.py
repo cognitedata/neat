@@ -92,22 +92,17 @@ class ReadResult:
 
 
 class SpreadsheetReader:
-    def __init__(self, issue_list: IssueList, is_reference: bool = False):
+    def __init__(self, issue_list: IssueList, sheet_prefix: Literal["", "Last", "Ref"] = ""):
         self.issue_list = issue_list
-        self._is_reference = is_reference
+        self._sheet_prefix = sheet_prefix
 
     @property
     def metadata_sheet_name(self) -> str:
-        metadata_name = "Metadata"
-        return self.to_reference_sheet(metadata_name) if self._is_reference else metadata_name
+        return f"{self._sheet_prefix}Metadata"
 
     def sheet_names(self, role: RoleTypes) -> set[str]:
         names = MANDATORY_SHEETS_BY_ROLE[role]
-        return {self.to_reference_sheet(sheet_name) for sheet_name in names} if self._is_reference else names
-
-    @classmethod
-    def to_reference_sheet(cls, sheet_name: str) -> str:
-        return f"Ref{sheet_name}"
+        return {f"{self._sheet_prefix}{sheet_name}" for sheet_name in names}
 
     def read(self, filepath: Path) -> None | ReadResult:
         with pd.ExcelFile(filepath) as excel_file:
@@ -146,7 +141,7 @@ class SpreadsheetReader:
             return None, read_info_by_sheet
 
         for source_sheet_name, target_sheet_name, headers_input in SOURCE_SHEET__TARGET_FIELD__HEADERS:
-            source_sheet_name = self.to_reference_sheet(source_sheet_name) if self._is_reference else source_sheet_name
+            source_sheet_name = f"{self._sheet_prefix}{source_sheet_name}"
 
             if source_sheet_name not in excel_file.sheet_names:
                 continue
@@ -188,7 +183,7 @@ class ExcelImporter(BaseImporter):
             issue_list.append(issues.spreadsheet_file.SpreadsheetNotFoundError(self.filepath))
             return self._return_or_raise(issue_list, errors)
 
-        user_result = SpreadsheetReader(issue_list, is_reference=False).read(self.filepath)
+        user_result = SpreadsheetReader(issue_list).read(self.filepath)
         if user_result is None or issue_list.has_errors:
             return self._return_or_raise(issue_list, errors)
 
@@ -198,7 +193,7 @@ class ExcelImporter(BaseImporter):
             and user_result.role != RoleTypes.domain_expert
             and user_result.schema == SchemaCompleteness.extended
         ):
-            reference_result = SpreadsheetReader(issue_list, is_reference=True).read(self.filepath)
+            reference_result = SpreadsheetReader(issue_list, sheet_prefix="Ref").read(self.filepath)
             if issue_list.has_errors:
                 return self._return_or_raise(issue_list, errors)
 
