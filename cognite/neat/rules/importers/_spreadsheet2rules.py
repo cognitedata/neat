@@ -92,8 +92,11 @@ class ReadResult:
 
 
 class SpreadsheetReader:
-    def __init__(self, issue_list: IssueList, sheet_prefix: Literal["", "Last", "Ref"] = ""):
+    def __init__(
+        self, issue_list: IssueList, metadata: MetadataRaw | None = None, sheet_prefix: Literal["", "Last", "Ref"] = ""
+    ):
         self.issue_list = issue_list
+        self.metadata = metadata
         self._sheet_prefix = sheet_prefix
 
     @property
@@ -106,33 +109,43 @@ class SpreadsheetReader:
 
     def read(self, filepath: Path) -> None | ReadResult:
         with pd.ExcelFile(filepath) as excel_file:
-            if self.metadata_sheet_name not in excel_file.sheet_names:
-                self.issue_list.append(
-                    issues.spreadsheet_file.MetadataSheetMissingOrFailedError(
-                        filepath, sheet_name=self.metadata_sheet_name
-                    )
-                )
-                return None
+            metadata: MetadataRaw | None
+            if self.metadata is not None:
+                metadata = self.metadata
+            else:
+                metadata = self._read_metadata(excel_file, filepath)
+                if metadata is None:
+                    # The reading of metadata failed, so we can't continue
+                    return None
 
-            metadata = MetadataRaw.from_excel(excel_file, self.metadata_sheet_name)
-
-            if not metadata.is_valid(self.issue_list, filepath):
-                return None
-
-            sheets, read_info_by_sheet = self._read_sheets(metadata, excel_file)
+            sheets, read_info_by_sheet = self._read_sheets(excel_file, metadata.role)
             if sheets is None or self.issue_list.has_errors:
                 return None
+            sheets["Metadata"] = dict(metadata)
 
             return ReadResult(sheets, read_info_by_sheet, metadata.role, metadata.schema)
 
+    def _read_metadata(self, excel_file: ExcelFile, filepath: Path) -> MetadataRaw | None:
+        if self.metadata_sheet_name not in excel_file.sheet_names:
+            self.issue_list.append(
+                issues.spreadsheet_file.MetadataSheetMissingOrFailedError(filepath, sheet_name=self.metadata_sheet_name)
+            )
+            return None
+
+        metadata = MetadataRaw.from_excel(excel_file, self.metadata_sheet_name)
+
+        if not metadata.is_valid(self.issue_list, filepath):
+            return None
+        return metadata
+
     def _read_sheets(
-        self, metadata: MetadataRaw, excel_file: ExcelFile
+        self, excel_file: ExcelFile, read_role: RoleTypes
     ) -> tuple[dict[str, dict | list] | None, dict[str, SpreadsheetRead]]:
         read_info_by_sheet: dict[str, SpreadsheetRead] = defaultdict(SpreadsheetRead)
 
-        sheets: dict[str, dict | list] = {"Metadata": dict(metadata)}
+        sheets: dict[str, dict | list] = {}
 
-        expected_sheet_names = self.sheet_names(metadata.role)
+        expected_sheet_names = self.sheet_names(read_role)
 
         if missing_sheets := expected_sheet_names.difference(set(excel_file.sheet_names)):
             self.issue_list.append(
@@ -146,7 +159,7 @@ class SpreadsheetReader:
             if source_sheet_name not in excel_file.sheet_names:
                 continue
             if isinstance(headers_input, dict):
-                headers = headers_input[metadata.role]
+                headers = headers_input[read_role]
             else:
                 headers = headers_input
 
@@ -188,11 +201,7 @@ class ExcelImporter(BaseImporter):
             return self._return_or_raise(issue_list, errors)
 
         reference_result: ReadResult | None = None
-        if (
-            user_result
-            and user_result.role != RoleTypes.domain_expert
-            and user_result.schema == SchemaCompleteness.extended
-        ):
+        if user_result.role != RoleTypes.domain_expert and user_result.schema == SchemaCompleteness.extended:
             reference_result = SpreadsheetReader(issue_list, sheet_prefix="Ref").read(self.filepath)
             if issue_list.has_errors:
                 return self._return_or_raise(issue_list, errors)
