@@ -261,21 +261,25 @@ class ExcelExporter(BaseExporter[Workbook]):
         is_extension = self.new_model_id is not None or rules.reference is not None
         is_solution = rules.metadata.data_model_type == DataModelType.solution
 
-        if is_solution:
+        if is_solution and self.new_model_id:
             metadata["prefix" if is_info else "space"] = self.new_model_id[0]  # type: ignore[index]
             metadata["title" if is_info else "externalId"] = self.new_model_id[1]  # type: ignore[index]
             metadata["version"] = self.new_model_id[2]  # type: ignore[index]
+        elif is_solution:
+            metadata["prefix" if is_info else "space"] = "YOUR_PREFIX"
+            metadata["title" if is_info else "external"] = "YOUR_TITLE"
+            metadata["version"] = "1"
         else:
             metadata["prefix" if is_info else "space"] = existing_model_id[0]
             metadata["title" if is_info else "externalId"] = existing_model_id[1]
             metadata["version"] = existing_model_id[2]
 
-        if is_solution and is_info:
+        if is_solution and is_info and self.new_model_id:
             metadata["namespace"] = f"http://purl.org/{self.new_model_id[0]}/"  # type: ignore[index]
         elif is_info:
             metadata["namespace"] = existing_metadata["namespace"]
 
-        if is_solution and is_dms:
+        if is_solution and is_dms and self.new_model_id:
             metadata["name"] = self.new_model_id[1]  # type: ignore[index]
 
         if is_solution:
