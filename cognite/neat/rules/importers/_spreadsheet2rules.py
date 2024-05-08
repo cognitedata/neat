@@ -201,7 +201,7 @@ class ExcelImporter(BaseImporter):
             return self._return_or_raise(issue_list, errors)
 
         reference_result: ReadResult | None = None
-        if user_result.role != RoleTypes.domain_expert and user_result.schema == SchemaCompleteness.extended:
+        if user_result.schema == SchemaCompleteness.extended:
             reference_result = SpreadsheetReader(issue_list, sheet_prefix="Ref").read(self.filepath)
             if issue_list.has_errors:
                 return self._return_or_raise(issue_list, errors)
@@ -210,24 +210,12 @@ class ExcelImporter(BaseImporter):
             issue_list.append(issues.spreadsheet_file.RoleMismatchError(self.filepath))
             return self._return_or_raise(issue_list, errors)
 
-        if user_result and reference_result:
-            user_result.sheets["reference"] = reference_result.sheets
-            sheets = user_result.sheets
-            original_role = user_result.role
-            read_info_by_sheet = user_result.read_info_by_sheet
+        sheets = user_result.sheets
+        original_role = user_result.role
+        read_info_by_sheet = user_result.read_info_by_sheet
+        if reference_result:
+            sheets["reference"] = reference_result.sheets
             read_info_by_sheet.update(reference_result.read_info_by_sheet)
-        elif user_result:
-            sheets = user_result.sheets
-            original_role = user_result.role
-            read_info_by_sheet = user_result.read_info_by_sheet
-        elif reference_result:
-            sheets = reference_result.sheets
-            original_role = reference_result.role
-            read_info_by_sheet = reference_result.read_info_by_sheet
-        else:
-            raise ValueError(
-                "No rules were generated. This should have been caught earlier. " f"Bug in {type(self).__name__}."
-            )
 
         rules_cls = RULES_PER_ROLE[original_role]
         with _handle_issues(
