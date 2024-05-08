@@ -267,7 +267,7 @@ class ExcelExporter(BaseExporter[Workbook]):
             metadata["version"] = self.new_model_id[2]  # type: ignore[index]
         elif is_solution:
             metadata["prefix" if is_info else "space"] = "YOUR_PREFIX"
-            metadata["title" if is_info else "external"] = "YOUR_TITLE"
+            metadata["title" if is_info else "externalId"] = "YOUR_TITLE"
             metadata["version"] = "1"
         else:
             metadata["prefix" if is_info else "space"] = existing_model_id[0]
