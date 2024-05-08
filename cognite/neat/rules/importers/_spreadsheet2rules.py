@@ -196,26 +196,26 @@ class ExcelImporter(BaseImporter):
             issue_list.append(issues.spreadsheet_file.SpreadsheetNotFoundError(self.filepath))
             return self._return_or_raise(issue_list, errors)
 
-        user_result = SpreadsheetReader(issue_list).read(self.filepath)
-        if user_result is None or issue_list.has_errors:
+        user_read = SpreadsheetReader(issue_list).read(self.filepath)
+        if user_read is None or issue_list.has_errors:
             return self._return_or_raise(issue_list, errors)
 
-        reference_result: ReadResult | None = None
-        if user_result.schema == SchemaCompleteness.extended:
-            reference_result = SpreadsheetReader(issue_list, sheet_prefix="Ref").read(self.filepath)
+        reference_read: ReadResult | None = None
+        if user_read.schema == SchemaCompleteness.extended:
+            reference_read = SpreadsheetReader(issue_list, sheet_prefix="Ref").read(self.filepath)
             if issue_list.has_errors:
                 return self._return_or_raise(issue_list, errors)
 
-        if user_result and reference_result and user_result.role != reference_result.role:
+        if reference_read and user_read.role != reference_read.role:
             issue_list.append(issues.spreadsheet_file.RoleMismatchError(self.filepath))
             return self._return_or_raise(issue_list, errors)
 
-        sheets = user_result.sheets
-        original_role = user_result.role
-        read_info_by_sheet = user_result.read_info_by_sheet
-        if reference_result:
-            sheets["reference"] = reference_result.sheets
-            read_info_by_sheet.update(reference_result.read_info_by_sheet)
+        sheets = user_read.sheets
+        original_role = user_read.role
+        read_info_by_sheet = user_read.read_info_by_sheet
+        if reference_read:
+            sheets["reference"] = reference_read.sheets
+            read_info_by_sheet.update(reference_read.read_info_by_sheet)
 
         rules_cls = RULES_PER_ROLE[original_role]
         with _handle_issues(
