@@ -87,15 +87,27 @@ class MetadataRaw(UserDict):
 class ReadResult:
     sheets: dict[str, dict | list]
     read_info_by_sheet: dict[str, SpreadsheetRead]
-    role: RoleTypes
-    schema: SchemaCompleteness | None
+    metadata: MetadataRaw
+
+    @property
+    def role(self) -> RoleTypes:
+        return self.metadata.role
+
+    @property
+    def schema(self) -> SchemaCompleteness | None:
+        return self.metadata.schema
 
 
 class SpreadsheetReader:
     def __init__(
-        self, issue_list: IssueList, metadata: MetadataRaw | None = None, sheet_prefix: Literal["", "Last", "Ref"] = ""
+        self,
+        issue_list: IssueList,
+        required: bool = True,
+        metadata: MetadataRaw | None = None,
+        sheet_prefix: Literal["", "Last", "Ref"] = "",
     ):
         self.issue_list = issue_list
+        self.required = required
         self.metadata = metadata
         self._sheet_prefix = sheet_prefix
 
@@ -123,13 +135,16 @@ class SpreadsheetReader:
                 return None
             sheets["Metadata"] = dict(metadata)
 
-            return ReadResult(sheets, read_info_by_sheet, metadata.role, metadata.schema)
+            return ReadResult(sheets, read_info_by_sheet, metadata)
 
     def _read_metadata(self, excel_file: ExcelFile, filepath: Path) -> MetadataRaw | None:
         if self.metadata_sheet_name not in excel_file.sheet_names:
-            self.issue_list.append(
-                issues.spreadsheet_file.MetadataSheetMissingOrFailedError(filepath, sheet_name=self.metadata_sheet_name)
-            )
+            if self.required:
+                self.issue_list.append(
+                    issues.spreadsheet_file.MetadataSheetMissingOrFailedError(
+                        filepath, sheet_name=self.metadata_sheet_name
+                    )
+                )
             return None
 
         metadata = MetadataRaw.from_excel(excel_file, self.metadata_sheet_name)
@@ -148,9 +163,10 @@ class SpreadsheetReader:
         expected_sheet_names = self.sheet_names(read_role)
 
         if missing_sheets := expected_sheet_names.difference(set(excel_file.sheet_names)):
-            self.issue_list.append(
-                issues.spreadsheet_file.SheetMissingError(cast(Path, excel_file.io), list(missing_sheets))
-            )
+            if self.required:
+                self.issue_list.append(
+                    issues.spreadsheet_file.SheetMissingError(cast(Path, excel_file.io), list(missing_sheets))
+                )
             return None, read_info_by_sheet
 
         for source_sheet_name, target_sheet_name, headers_input in SOURCE_SHEET__TARGET_FIELD__HEADERS:
@@ -200,8 +216,13 @@ class ExcelImporter(BaseImporter):
         if user_read is None or issue_list.has_errors:
             return self._return_or_raise(issue_list, errors)
 
+        last_read: ReadResult | None = None
         reference_read: ReadResult | None = None
         if user_read.schema == SchemaCompleteness.extended:
+            # Last does not have its own metadata sheet. It is the same as the user's metadata sheet.
+            last_read = SpreadsheetReader(
+                issue_list, required=False, metadata=user_read.metadata, sheet_prefix="Last"
+            ).read(self.filepath)
             reference_read = SpreadsheetReader(issue_list, sheet_prefix="Ref").read(self.filepath)
             if issue_list.has_errors:
                 return self._return_or_raise(issue_list, errors)
@@ -213,6 +234,9 @@ class ExcelImporter(BaseImporter):
         sheets = user_read.sheets
         original_role = user_read.role
         read_info_by_sheet = user_read.read_info_by_sheet
+        if last_read:
+            sheets["last"] = last_read.sheets
+            read_info_by_sheet.update(last_read.read_info_by_sheet)
         if reference_read:
             sheets["reference"] = reference_read.sheets
             read_info_by_sheet.update(reference_read.read_info_by_sheet)
