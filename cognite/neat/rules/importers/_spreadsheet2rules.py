@@ -117,7 +117,7 @@ class SpreadsheetReader:
 
     def sheet_names(self, role: RoleTypes) -> set[str]:
         names = MANDATORY_SHEETS_BY_ROLE[role]
-        return {f"{self._sheet_prefix}{sheet_name}" for sheet_name in names}
+        return {f"{self._sheet_prefix}{sheet_name}" for sheet_name in names if sheet_name != "Metadata"}
 
     def read(self, filepath: Path) -> None | ReadResult:
         with pd.ExcelFile(filepath) as excel_file:
@@ -237,6 +237,9 @@ class ExcelImporter(BaseImporter):
         if last_read:
             sheets["last"] = last_read.sheets
             read_info_by_sheet.update(last_read.read_info_by_sheet)
+            if reference_read:
+                # The last rules will also be validated against the reference rules
+                sheets["last"]["reference"] = reference_read.sheets  # type: ignore[call-overload]
         if reference_read:
             sheets["reference"] = reference_read.sheets
             read_info_by_sheet.update(reference_read.read_info_by_sheet)
