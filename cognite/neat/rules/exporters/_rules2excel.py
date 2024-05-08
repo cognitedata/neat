@@ -119,22 +119,20 @@ class ExcelExporter(BaseExporter[Workbook]):
         self._write_metadata_sheet(workbook, dumped_rules["Metadata"])
         self._write_sheets(workbook, dumped_rules, rules)
         if dumped_reference_rules:
-            self._write_sheets(workbook, dumped_reference_rules, rules, is_reference=True)
-            self._write_metadata_sheet(workbook, dumped_reference_rules["Metadata"], is_reference=True)
+            prefix = "Ref"
+            self._write_sheets(workbook, dumped_reference_rules, rules, sheet_prefix=prefix)
+            self._write_metadata_sheet(workbook, dumped_reference_rules["Metadata"], sheet_prefix=prefix)
 
         if self._styling_level > 0:
             self._adjust_column_widths(workbook)
 
         return workbook
 
-    def _write_sheets(self, workbook: Workbook, dumped_rules: dict[str, Any], rules: Rules, is_reference: bool = False):
+    def _write_sheets(self, workbook: Workbook, dumped_rules: dict[str, Any], rules: Rules, sheet_prefix: str = ""):
         for sheet_name, headers in rules.headers_by_sheet(by_alias=True).items():
             if sheet_name in ("Metadata", "prefixes", "Reference", "Last"):
                 continue
-            if is_reference:
-                sheet = workbook.create_sheet(f"Ref{sheet_name}")
-            else:
-                sheet = workbook.create_sheet(sheet_name)
+            sheet = workbook.create_sheet(f"{sheet_prefix}{sheet_name}")
 
             main_header = self._main_header_by_sheet_name[sheet_name]
             sheet.append([main_header] + [""] * (len(headers) - 1))
@@ -180,17 +178,14 @@ class ExcelExporter(BaseExporter[Workbook]):
                 for cell in sheet["2"]:
                     cell.font = Font(bold=True, size=14)
 
-    def _write_metadata_sheet(self, workbook: Workbook, metadata: dict[str, Any], is_reference: bool = False) -> None:
+    def _write_metadata_sheet(self, workbook: Workbook, metadata: dict[str, Any], sheet_prefix: str = "") -> None:
         # Excel does not support timezone in datetime strings
         if isinstance(metadata.get("created"), datetime):
             metadata["created"] = metadata["created"].replace(tzinfo=None)
         if isinstance(metadata.get("updated"), datetime):
             metadata["updated"] = metadata["updated"].replace(tzinfo=None)
 
-        if is_reference:
-            metadata_sheet = workbook.create_sheet("RefMetadata")
-        else:
-            metadata_sheet = workbook.create_sheet("Metadata")
+        metadata_sheet = workbook.create_sheet(f"{sheet_prefix}Metadata")
         for key, value in metadata.items():
             metadata_sheet.append([key, value])
 
