@@ -111,6 +111,7 @@ class ExcelExporter(BaseExporter[Workbook]):
             dumped_user_rules["Metadata"]["role"] = (
                 self.output_role and self.output_role.value
             ) or rules.metadata.role.value
+            dumped_user_rules["Metadata"]["schema"] = SchemaCompleteness.extended
             if self.dump_as == "last":
                 dumped_last_rules = rules.model_dump(by_alias=True)
                 if rules.reference:
