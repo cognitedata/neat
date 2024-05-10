@@ -212,6 +212,11 @@ class DMSPostValidation:
             )
 
     def _validate_performance(self) -> None:
+        # we can only validate performance on complete schemas due to the need
+        # to access all the container mappings
+        if self.metadata.schema_ is not SchemaCompleteness.complete:
+            return None
+
         dms_schema = self.rules.as_schema()
 
         for view in dms_schema.views:
@@ -221,7 +226,7 @@ class DMSPostValidation:
                 self.issue_list.append(
                     issues.dms.ViewMapsToTooManyContainersWarning(
                         view_id=view.as_id(),
-                        container_ids=list(mapped_containers),
+                        container_ids=mapped_containers,
                     )
                 )
                 if (
@@ -232,7 +237,7 @@ class DMSPostValidation:
                     self.issue_list.append(
                         issues.dms.HasDataFilterAppliedToTooManyContainersWarning(
                             view_id=view.as_id(),
-                            container_ids=list(mapped_containers),
+                            container_ids=mapped_containers,
                         )
                     )
 

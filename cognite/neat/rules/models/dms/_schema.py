@@ -20,6 +20,7 @@ from cognite.neat.rules.issues.dms import (
     DirectRelationMissingSourceWarning,
     DMSSchemaError,
     DuplicatedViewInDataModelError,
+    IncompleteSchemaError,
     MissingContainerError,
     MissingContainerPropertyError,
     MissingEdgeViewError,
@@ -74,11 +75,16 @@ class DMSSchema:
         indexed_implemented_views = {id_: view.implements for id_, view in indexed_views.items()}
         view_inheritance = get_inheritance_path(view_id, indexed_implemented_views)
 
-        return (
-            indexed_views[view_id]
-            .referenced_containers()
-            .union(*[indexed_views[view_id].referenced_containers() for view_id in view_inheritance])
-        )
+        directly_referenced_containers = indexed_views[view_id].referenced_containers()
+        inherited_referenced_containers = set()
+
+        for view_id in view_inheritance:
+            if implemented_view := indexed_views.get(view_id):
+                inherited_referenced_containers |= implemented_view.referenced_containers()
+            else:
+                raise IncompleteSchemaError(missing_component=view_id).as_exception()
+
+        return directly_referenced_containers | inherited_referenced_containers
 
     @classmethod
     def from_model_id(cls, client: CogniteClient, data_model_id: dm.DataModelIdentifier) -> "DMSSchema":

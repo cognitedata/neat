@@ -87,7 +87,7 @@ def invalid_rules_filepaths():
             [
                 cognite.neat.rules.issues.dms.ViewMapsToTooManyContainersWarning(
                     view_id=ViewId(space="neat", external_id="Asset", version="1"),
-                    container_ids=[
+                    container_ids={
                         ContainerId(space="neat", external_id="Asset1"),
                         ContainerId(space="neat", external_id="Asset2"),
                         ContainerId(space="neat", external_id="Asset3"),
@@ -99,11 +99,11 @@ def invalid_rules_filepaths():
                         ContainerId(space="neat", external_id="Asset9"),
                         ContainerId(space="neat", external_id="Asset10"),
                         ContainerId(space="neat", external_id="Asset11"),
-                    ],
+                    },
                 ),
                 cognite.neat.rules.issues.dms.HasDataFilterAppliedToTooManyContainersWarning(
                     view_id=ViewId(space="neat", external_id="Asset", version="1"),
-                    container_ids=[
+                    container_ids={
                         ContainerId(space="neat", external_id="Asset1"),
                         ContainerId(space="neat", external_id="Asset2"),
                         ContainerId(space="neat", external_id="Asset3"),
@@ -115,7 +115,7 @@ def invalid_rules_filepaths():
                         ContainerId(space="neat", external_id="Asset9"),
                         ContainerId(space="neat", external_id="Asset10"),
                         ContainerId(space="neat", external_id="Asset11"),
-                    ],
+                    },
                 ),
             ]
         ),
@@ -153,10 +153,4 @@ class TestExcelImporter:
         expected_issues = sorted(expected_issues)
 
         assert len(issues) == len(expected_issues)
-        if filepath != EXCEL_IMPORTER_DATA / "too_many_containers_per_view.xlsx":
-            assert issues == expected_issues
-        else:
-            for issue, expected_issue in zip(issues, expected_issues, strict=False):
-                assert type(issue) == type(expected_issue)
-                assert issue.view_id == expected_issue.view_id
-                assert set(issue.container_ids) == set(expected_issue.container_ids)
+        assert issues == expected_issues

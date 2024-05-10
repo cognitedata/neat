@@ -9,6 +9,7 @@ from .base import NeatValidationError, ValidationWarning
 __all__ = [
     "DMSSchemaError",
     "DMSSchemaWarning",
+    "IncompleteSchemaError",
     "MissingSpaceError",
     "MissingContainerError",
     "MissingContainerPropertyError",
@@ -40,6 +41,24 @@ class DMSSchemaError(NeatValidationError, ABC): ...
 
 @dataclass(frozen=True)
 class DMSSchemaWarning(ValidationWarning, ABC): ...
+
+
+@dataclass(frozen=True)
+class IncompleteSchemaError(DMSSchemaError):
+    description = "This error is raised when the schema is claimed to be complete but missing some components"
+    fix = "Either provide the missing components or change the schema to partial"
+    missing_component: dm.ContainerId | dm.ViewId
+
+    def message(self) -> str:
+        return (
+            "The data model schema is set to be complete, however, "
+            f"the referred component {self.missing_component} is not preset."
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["missing_component"] = self.missing_component
+        return output
 
 
 @dataclass(frozen=True)
@@ -258,7 +277,7 @@ class ViewMapsToTooManyContainersWarning(DMSSchemaWarning):
     fix = "Try to have as few containers as possible to which the view maps to"
     error_name: ClassVar[str] = "ViewMapsToTooManyContainers"
     view_id: dm.ViewId
-    container_ids: list[dm.ContainerId]
+    container_ids: set[dm.ContainerId]
 
     def message(self) -> str:
         return (
@@ -472,7 +491,7 @@ class HasDataFilterAppliedToTooManyContainersWarning(DMSSchemaWarning):
     fix = "Do not map to more than 10 containers, alternatively to override the filter by using rawFilter"
     error_name: ClassVar[str] = "HasDataFilterAppliedToTooManyContainers"
     view_id: dm.ViewId
-    container_ids: list[dm.ContainerId]
+    container_ids: set[dm.ContainerId]
 
     def message(self) -> str:
         return (
