@@ -217,14 +217,18 @@ class DMSPostValidation:
         for view in dms_schema.views:
             mapped_containers = dms_schema._get_mapped_container_from_view(view.as_id())
 
-            if mapped_containers and len(mapped_containers) > 9:
+            if mapped_containers and len(mapped_containers) > 10:
                 self.issue_list.append(
                     issues.dms.ViewMapsToTooManyContainersWarning(
                         view_id=view.as_id(),
                         container_ids=list(mapped_containers),
                     )
                 )
-                if view.filter and isinstance(view.filter, dm.filters.HasData):
+                if (
+                    view.filter
+                    and isinstance(view.filter, dm.filters.HasData)
+                    and len(view.filter.dump()["hasData"]) > 10
+                ):
                     self.issue_list.append(
                         issues.dms.HasDataFilterAppliedToTooManyContainersWarning(
                             view_id=view.as_id(),
