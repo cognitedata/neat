@@ -13,8 +13,10 @@ from openpyxl.worksheet.worksheet import Worksheet
 
 from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.models import (
+    DataModelType,
     DMSRules,
     DomainRules,
+    ExtensionCategory,
     InformationRules,
     RoleTypes,
     SchemaCompleteness,
@@ -35,11 +37,18 @@ class ExcelExporter(BaseExporter[Workbook]):
         new_model_id: The new model ID to use for the exported spreadsheet. This is only applicable if the input
             rules have 'is_reference' set. If provided, the model ID will be used to automatically create the
             new metadata sheet in the Excel file.
-        is_reference: If True, the rules are considered to be a reference model. The exported Excel file will
-            then contain empty sheets for the main rules and this data model will be dumped to the reference sheets.
-            This is useful when you are building a solution model based on an Enterprise model, then the
-            Enterprise model will serve as the reference model. It is also useful when you are extending an existing
-            model, then the existing model will serve as the reference model. Defaults to False.
+        dump_as: This determines how the rules are written to the Excel file. An Excel file has up to three sets of
+           sheets: user, last, and reference. The user sheets are used for inputting rules from a user. The last sheets
+           are used for the last version of the same model as the user, while the reference sheets are used for
+           the model the user is building on. The options are:
+             * "user": The rules are written to the user sheets. This is used when you want to modify the rules
+                directly and potentially change the model. This is useful when you have imported the data model
+                from outside CDF and you want to modify it before you write it to CDF.
+             * "last": The rules are written to the last sheets. This is used when you want to extend the rules,
+               but have validation that you are not breaking the existing model. This is used when you want to
+               change a model that has already been published to CDF and that model is in production.
+             * "reference": The rules are written to the reference sheets. This is typically used when you want to build
+               a new solution on top of an enterprise model.
 
     The following styles are available:
 
@@ -51,7 +60,7 @@ class ExcelExporter(BaseExporter[Workbook]):
     """
 
     Style = Literal["none", "minimal", "default", "maximal"]
-
+    DumpOptions = Literal["user", "last", "reference"]
     _main_header_by_sheet_name: ClassVar[dict[str, str]] = {
         "Properties": "Definition of Properties per Class",
         "Classes": "Definition of Classes",
@@ -59,21 +68,24 @@ class ExcelExporter(BaseExporter[Workbook]):
         "Containers": "Definition of Containers",
     }
     style_options = get_args(Style)
+    dump_options = get_args(DumpOptions)
 
     def __init__(
         self,
         styling: Style = "default",
         output_role: RoleTypes | None = None,
         new_model_id: tuple[str, str, str] | None = None,
-        is_reference: bool = False,
+        dump_as: DumpOptions = "user",
     ):
         if styling not in self.style_options:
             raise ValueError(f"Invalid styling: {styling}. Valid options are {self.style_options}")
+        if dump_as not in self.dump_options:
+            raise ValueError(f"Invalid dump_as: {dump_as}. Valid options are {self.dump_options}")
         self.styling = styling
         self._styling_level = self.style_options.index(styling)
         self.output_role = output_role
         self.new_model_id = new_model_id
-        self.is_reference = is_reference
+        self.dump_as = dump_as
 
     def export_to_file(self, rules: Rules, filepath: Path) -> None:
         """Exports transformation rules to excel file."""
@@ -90,41 +102,48 @@ class ExcelExporter(BaseExporter[Workbook]):
         # Remove default sheet named "Sheet"
         workbook.remove(workbook["Sheet"])
 
-        dumped_rules: dict[str, Any]
+        dumped_user_rules: dict[str, Any]
+        dumped_last_rules: dict[str, Any] | None = None
         dumped_reference_rules: dict[str, Any] | None = None
-        if self.is_reference:
+        if self.dump_as != "user":
             # Writes empty reference sheets
-            dumped_rules = {
+            dumped_user_rules = {
                 "Metadata": self._create_metadata_sheet_user_rules(rules),
             }
-            dumped_rules["Metadata"]["role"] = (
-                self.output_role and self.output_role.value
-            ) or rules.metadata.role.value
-            dumped_reference_rules = rules.reference_self().model_dump(by_alias=True)
+
+            if self.dump_as == "last":
+                dumped_last_rules = rules.model_dump(by_alias=True)
+                if rules.reference:
+                    dumped_reference_rules = rules.reference.model_dump(by_alias=True)
+            elif self.dump_as == "reference":
+                dumped_reference_rules = rules.reference_self().model_dump(by_alias=True)
         else:
-            dumped_rules = rules.model_dump(by_alias=True)
+            dumped_user_rules = rules.model_dump(by_alias=True)
+            if rules.last:
+                dumped_last_rules = rules.last.model_dump(by_alias=True)
             if rules.reference:
                 dumped_reference_rules = rules.reference.model_dump(by_alias=True)
 
-        self._write_metadata_sheet(workbook, dumped_rules["Metadata"])
-        self._write_sheets(workbook, dumped_rules, rules)
+        self._write_metadata_sheet(workbook, dumped_user_rules["Metadata"])
+        self._write_sheets(workbook, dumped_user_rules, rules)
+        if dumped_last_rules:
+            self._write_sheets(workbook, dumped_last_rules, rules, sheet_prefix="Last")
+
         if dumped_reference_rules:
-            self._write_sheets(workbook, dumped_reference_rules, rules, is_reference=True)
-            self._write_metadata_sheet(workbook, dumped_reference_rules["Metadata"], is_reference=True)
+            prefix = "Ref"
+            self._write_sheets(workbook, dumped_reference_rules, rules, sheet_prefix=prefix)
+            self._write_metadata_sheet(workbook, dumped_reference_rules["Metadata"], sheet_prefix=prefix)
 
         if self._styling_level > 0:
             self._adjust_column_widths(workbook)
 
         return workbook
 
-    def _write_sheets(self, workbook: Workbook, dumped_rules: dict[str, Any], rules: Rules, is_reference: bool = False):
+    def _write_sheets(self, workbook: Workbook, dumped_rules: dict[str, Any], rules: Rules, sheet_prefix: str = ""):
         for sheet_name, headers in rules.headers_by_sheet(by_alias=True).items():
             if sheet_name in ("Metadata", "prefixes", "Reference", "Last"):
                 continue
-            if is_reference:
-                sheet = workbook.create_sheet(f"Ref{sheet_name}")
-            else:
-                sheet = workbook.create_sheet(sheet_name)
+            sheet = workbook.create_sheet(f"{sheet_prefix}{sheet_name}")
 
             main_header = self._main_header_by_sheet_name[sheet_name]
             sheet.append([main_header] + [""] * (len(headers) - 1))
@@ -170,17 +189,14 @@ class ExcelExporter(BaseExporter[Workbook]):
                 for cell in sheet["2"]:
                     cell.font = Font(bold=True, size=14)
 
-    def _write_metadata_sheet(self, workbook: Workbook, metadata: dict[str, Any], is_reference: bool = False) -> None:
+    def _write_metadata_sheet(self, workbook: Workbook, metadata: dict[str, Any], sheet_prefix: str = "") -> None:
         # Excel does not support timezone in datetime strings
         if isinstance(metadata.get("created"), datetime):
             metadata["created"] = metadata["created"].replace(tzinfo=None)
         if isinstance(metadata.get("updated"), datetime):
             metadata["updated"] = metadata["updated"].replace(tzinfo=None)
 
-        if is_reference:
-            metadata_sheet = workbook.create_sheet("RefMetadata")
-        else:
-            metadata_sheet = workbook.create_sheet("Metadata")
+        metadata_sheet = workbook.create_sheet(f"{sheet_prefix}Metadata")
         for key, value in metadata.items():
             metadata_sheet.append([key, value])
 
@@ -241,25 +257,29 @@ class ExcelExporter(BaseExporter[Workbook]):
         # Excel does not support timezone in datetime strings
         now_iso = datetime.now().replace(tzinfo=None).isoformat()
         is_info = isinstance(rules, InformationRules)
-        is_dms = not is_info
-        is_extension = self.new_model_id is not None
-        is_solution = is_extension and self.new_model_id != existing_model_id
+        is_dms = isinstance(rules, DMSRules)
+        is_extension = self.new_model_id is not None or rules.reference is not None
+        is_solution = rules.metadata.data_model_type == DataModelType.solution
 
-        if is_solution:
+        if is_solution and self.new_model_id:
             metadata["prefix" if is_info else "space"] = self.new_model_id[0]  # type: ignore[index]
             metadata["title" if is_info else "externalId"] = self.new_model_id[1]  # type: ignore[index]
             metadata["version"] = self.new_model_id[2]  # type: ignore[index]
+        elif is_solution and self.dump_as == "reference" and rules.reference:
+            metadata["prefix" if is_info else "space"] = "YOUR_PREFIX"
+            metadata["title" if is_info else "externalId"] = "YOUR_TITLE"
+            metadata["version"] = "1"
         else:
             metadata["prefix" if is_info else "space"] = existing_model_id[0]
             metadata["title" if is_info else "externalId"] = existing_model_id[1]
             metadata["version"] = existing_model_id[2]
 
-        if is_solution and is_info:
+        if is_solution and is_info and self.new_model_id:
             metadata["namespace"] = f"http://purl.org/{self.new_model_id[0]}/"  # type: ignore[index]
         elif is_info:
             metadata["namespace"] = existing_metadata["namespace"]
 
-        if is_solution and is_dms:
+        if is_solution and is_dms and self.new_model_id:
             metadata["name"] = self.new_model_id[1]  # type: ignore[index]
 
         if is_solution:
@@ -285,6 +305,11 @@ class ExcelExporter(BaseExporter[Workbook]):
         else:
             metadata["schema"] = SchemaCompleteness.complete.value
 
-        metadata["extension"] = "addition"
+        if is_solution:
+            metadata["dataModelType"] = DataModelType.solution.value
+        else:
+            metadata["dataModelType"] = DataModelType.enterprise.value
 
+        metadata["extension"] = ExtensionCategory.addition.value
+        metadata["role"] = (self.output_role and self.output_role.value) or rules.metadata.role.value
         return metadata

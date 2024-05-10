@@ -303,6 +303,7 @@ class DMSRulesInput:
     properties: Sequence[DMSPropertyInput]
     views: Sequence[DMSViewInput]
     containers: Sequence[DMSContainerInput] | None = None
+    last: "DMSRulesInput | DMSRules | None" = None
     reference: "DMSRulesInput | DMSRules | None" = None
 
     @classmethod
@@ -323,6 +324,7 @@ class DMSRulesInput:
             properties=DMSPropertyInput.load(data.get("properties")),  # type: ignore[arg-type]
             views=DMSViewInput.load(data.get("views")),  # type: ignore[arg-type]
             containers=DMSContainerInput.load(data.get("containers")) or [],
+            last=DMSRulesInput.load(data.get("last")),
             reference=DMSRulesInput.load(data.get("reference")),
         )
 
@@ -338,12 +340,19 @@ class DMSRulesInput:
         elif isinstance(self.reference, DMSRules):
             # We need to load through the DMSRulesInput to set the correct default space and version
             reference = DMSRulesInput.load(self.reference.model_dump()).dump()
+        last: dict[str, Any] | None = None
+        if isinstance(self.last, DMSRulesInput):
+            last = self.last.dump()
+        elif isinstance(self.last, DMSRules):
+            # We need to load through the DMSRulesInput to set the correct default space and version
+            last = DMSRulesInput.load(self.last.model_dump()).dump()
 
         return dict(
             Metadata=self.metadata.dump(),
             Properties=[prop.dump(default_space, default_version) for prop in self.properties],
             Views=[view.dump(default_space, default_version) for view in self.views],
             Containers=[container.dump(default_space) for container in self.containers or []] or None,
+            Last=last,
             Reference=reference,
         )
 

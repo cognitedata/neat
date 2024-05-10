@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Literal
 
 from cognite.neat.rules.models._base import (
+    DataModelType,
     SheetList,
 )
 from cognite.neat.rules.models.data_types import DataType
@@ -45,6 +46,7 @@ class _InformationRulesConverter:
         metadata = DMSMetadata(
             schema_=info_metadata.schema_,
             space=space,
+            data_model_type=DataModelType.solution if self.information.reference else DataModelType.enterprise,
             version=info_metadata.version,
             external_id=info_metadata.name.replace(" ", "_").lower(),
             creator=info_metadata.creator,
