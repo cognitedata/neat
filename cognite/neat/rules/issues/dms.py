@@ -488,7 +488,7 @@ class HasDataFilterOnNoPropertiesViewWarning(DMSSchemaWarning):
 @dataclass(frozen=True)
 class HasDataFilterAppliedToTooManyContainersWarning(DMSSchemaWarning):
     description = "The view filter hasData applied to more than 10 containers this will cause DMS API Error"
-    fix = "Do not map to more than 10 containers, alternatively to override the filter by using rawFilter"
+    fix = "Do not map to more than 10 containers, alternatively override the filter by using rawFilter"
     error_name: ClassVar[str] = "HasDataFilterAppliedToTooManyContainers"
     view_id: dm.ViewId
     container_ids: set[dm.ContainerId]
