@@ -25,6 +25,11 @@ Changes are grouped as follows:
 - [BREAKING] As a result of the above, in the `ExcelExporter` the parameter `is_reference` is replaced by `dump_as`.
   To continue using the old behavior, set `dump_as='reference'`.
 
+## [0.76.3] - 10-05-24
+### Added
+- Added schema validator for performance, specifically if views map to too many containers.
+
+
 ## [0.76.2] - 06-05-24
 ### Fixed
 - Added missing "Is Reference" parameter back to the `ExcelExporter`step.
