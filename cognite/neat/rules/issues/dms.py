@@ -9,6 +9,7 @@ from .base import NeatValidationError, ValidationWarning
 __all__ = [
     "DMSSchemaError",
     "DMSSchemaWarning",
+    "IncompleteSchemaError",
     "MissingSpaceError",
     "MissingContainerError",
     "MissingContainerPropertyError",
@@ -19,12 +20,14 @@ __all__ = [
     "DirectRelationMissingSourceWarning",
     "ViewModelVersionNotMatchingWarning",
     "ViewModelSpaceNotMatchingWarning",
+    "ViewMapsToTooManyContainersWarning",
     "DuplicatedViewInDataModelError",
     "ContainerPropertyUsedMultipleTimesError",
     "EmptyContainerWarning",
     "UnsupportedConnectionWarning",
     "MultipleReferenceWarning",
     "HasDataFilterOnNoPropertiesViewWarning",
+    "HasDataFilterAppliedToTooManyContainersWarning",
     "ReverseRelationMissingOtherSideWarning",
     "NodeTypeFilterOnParentViewWarning",
     "ChangingContainerError",
@@ -38,6 +41,24 @@ class DMSSchemaError(NeatValidationError, ABC): ...
 
 @dataclass(frozen=True)
 class DMSSchemaWarning(ValidationWarning, ABC): ...
+
+
+@dataclass(frozen=True)
+class IncompleteSchemaError(DMSSchemaError):
+    description = "This error is raised when the schema is claimed to be complete but missing some components"
+    fix = "Either provide the missing components or change the schema to partial"
+    missing_component: dm.ContainerId | dm.ViewId
+
+    def message(self) -> str:
+        return (
+            "The data model schema is set to be complete, however, "
+            f"the referred component {self.missing_component} is not preset."
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["missing_component"] = self.missing_component
+        return output
 
 
 @dataclass(frozen=True)
@@ -251,6 +272,28 @@ class ViewModelSpaceNotMatchingWarning(DMSSchemaWarning):
 
 
 @dataclass(frozen=True)
+class ViewMapsToTooManyContainersWarning(DMSSchemaWarning):
+    description = "The view maps to more than 10 containers which impacts read/write performance of data model"
+    fix = "Try to have as few containers as possible to which the view maps to"
+    error_name: ClassVar[str] = "ViewMapsToTooManyContainers"
+    view_id: dm.ViewId
+    container_ids: set[dm.ContainerId]
+
+    def message(self) -> str:
+        return (
+            f"The view {self.view_id} maps to total of {len(self.container_ids)},."
+            "Mapping to more than 10 containers is not recommended and can lead to poor performances."
+            "Re-iterate the data model design to reduce the number of containers to which the view maps to."
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["view_id"] = self.view_id.dump()
+        output["container_ids"] = [container_id.dump() for container_id in self.container_ids]
+        return output
+
+
+@dataclass(frozen=True)
 class ContainerPropertyUsedMultipleTimesError(DMSSchemaError):
     description = "The container property is used multiple times by the same view property"
     fix = "Use unique container properties for when mapping to the same container"
@@ -439,6 +482,28 @@ class HasDataFilterOnNoPropertiesViewWarning(DMSSchemaWarning):
     def dump(self) -> dict[str, Any]:
         output = super().dump()
         output["view_id"] = self.view_id.dump()
+        return output
+
+
+@dataclass(frozen=True)
+class HasDataFilterAppliedToTooManyContainersWarning(DMSSchemaWarning):
+    description = "The view filter hasData applied to more than 10 containers this will cause DMS API Error"
+    fix = "Do not map to more than 10 containers, alternatively override the filter by using rawFilter"
+    error_name: ClassVar[str] = "HasDataFilterAppliedToTooManyContainers"
+    view_id: dm.ViewId
+    container_ids: set[dm.ContainerId]
+
+    def message(self) -> str:
+        return (
+            f"The view {self.view_id} HasData filter applied to total of {len(self.container_ids)},."
+            "Applying HasData filter to more than 10 containers is not recommended and can lead to DMS API error."
+            "Re-iterate the data model design to reduce the number of containers to which the view maps to."
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["view_id"] = self.view_id.dump()
+        output["container_ids"] = [container_id.dump() for container_id in self.container_ids]
         return output
 
 

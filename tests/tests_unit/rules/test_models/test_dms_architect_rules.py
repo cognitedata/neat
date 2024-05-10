@@ -1626,3 +1626,40 @@ class TestDMSExporter:
             polygon.filter.dump()
             == dm.filters.Equals(["node", "type"], {"space": "power", "externalId": "Polygon"}).dump()
         )
+
+
+def test_dms_rules_validation_error():
+    with pytest.raises(ValidationError) as e:
+        dms_rules = DMSRulesInput(
+            metadata=DMSMetadataInput(
+                schema_="complete",
+                space="my_space",
+                external_id="my_data_model",
+                version="1",
+                creator="Anders",
+                created="2024-03-16",
+                updated="2024-03-16",
+            ),
+            properties=[
+                DMSPropertyInput(
+                    class_="WindFarm",
+                    property_="name",
+                    value_type="text",
+                    container="Asset",
+                    container_property="name",
+                    view="WindFarm",
+                    view_property="name",
+                ),
+            ],
+            views=[DMSViewInput(view="WindFarm", class_="WindFarm", implements="Sourceable,Describable")],
+            containers=[DMSContainerInput(container="Asset", class_="Asset", constraint="Sourceable,Describable")],
+        )
+
+        dms_rules.as_rules()
+
+    errors = e.value.errors()
+
+    assert errors[0]["msg"] == (
+        "Value error, The data model schema is set to be complete, however, "
+        "the referred component ViewId(space='my_space', external_id='Sourceable', version='1') is not preset."
+    )
