@@ -23,6 +23,7 @@ from cognite.neat.rules.models.entities import (
 )
 from cognite.neat.rules.models.wrapped_entities import DMSFilter, HasDataFilter, NodeTypeFilter
 
+from ._constants import MAX_HAS_DATA_CONTAINERS
 from ._rules import DMSMetadata, DMSProperty, DMSRules, DMSView
 from ._schema import DMSSchema, PipelineSchema
 
@@ -131,6 +132,15 @@ class _DMSExporter:
             dms_view = dms_view_by_id.get(view.as_id())
             dms_properties = view_properties_by_id.get(view.as_id(), [])
             view_filter = self._create_view_filter(view, dms_view, data_model_type, dms_properties)
+
+            if isinstance(view_filter, HasDataFilter):
+                if len(view_filter.inner or []) > MAX_HAS_DATA_CONTAINERS:
+                    warnings.warn(
+                        issues.dms.HasDataFilterAppliedToTooManyContainersWarning(
+                            view.as_id(), [inner.as_id() for inner in view_filter.inner or []]
+                        ),
+                        stacklevel=2,
+                    )
 
             view.filter = view_filter.as_dms_filter()
 
