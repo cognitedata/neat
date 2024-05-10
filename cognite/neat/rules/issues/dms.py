@@ -254,7 +254,7 @@ class ViewModelSpaceNotMatchingWarning(DMSSchemaWarning):
 
 @dataclass(frozen=True)
 class ViewMapsToTooManyContainersWarning(DMSSchemaWarning):
-    description = "The view maps to more than 9 containers which impacts read/write performance of data model"
+    description = "The view maps to more than 10 containers which impacts read/write performance of data model"
     fix = "Try to have as few containers as possible to which the view maps to"
     error_name: ClassVar[str] = "ViewMapsToTooManyContainers"
     view_id: dm.ViewId
