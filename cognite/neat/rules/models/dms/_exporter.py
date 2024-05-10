@@ -133,6 +133,8 @@ class _DMSExporter:
             dms_properties = view_properties_by_id.get(view.as_id(), [])
             view_filter = self._create_view_filter(view, dms_view, data_model_type, dms_properties)
 
+            view.filter = view_filter.as_dms_filter()
+
             if isinstance(view_filter, HasDataFilter):
                 if len(view_filter.inner or []) > MAX_HAS_DATA_CONTAINERS:
                     warnings.warn(
@@ -141,8 +143,6 @@ class _DMSExporter:
                         ),
                         stacklevel=2,
                     )
-
-            view.filter = view_filter.as_dms_filter()
 
             if isinstance(view_filter, NodeTypeFilter):
                 unique_node_types.update(view_filter.nodes)
