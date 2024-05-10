@@ -1,6 +1,8 @@
 from collections import defaultdict
 from typing import Any
 
+from cognite.client import data_modeling as dm
+
 from cognite.neat.rules import issues
 from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models._base import ExtensionCategory, SchemaCompleteness
@@ -27,6 +29,7 @@ class DMSPostValidation:
         self._referenced_views_and_containers_are_existing()
         self._validate_extension()
         self._validate_schema()
+        self._validate_performance()
         return self.issue_list
 
     def _consistent_container_properties(self) -> None:
@@ -207,6 +210,27 @@ class DMSPostValidation:
                     changed_attributes=changed_attributes or None,
                 )
             )
+
+    def _validate_performance(self) -> None:
+        dms_schema = self.rules.as_schema()
+
+        for view in dms_schema.views:
+            mapped_containers = dms_schema._get_mapped_container_from_view(view.as_id())
+
+            if mapped_containers and len(mapped_containers) > 9:
+                self.issue_list.append(
+                    issues.dms.ViewMapsToTooManyContainersWarning(
+                        view_id=view.as_id(),
+                        container_ids=list(mapped_containers),
+                    )
+                )
+                if view.filter and isinstance(view.filter, dm.filters.HasData):
+                    self.issue_list.append(
+                        issues.dms.HasDataFilterAppliedToTooManyContainersWarning(
+                            view_id=view.as_id(),
+                            container_ids=list(mapped_containers),
+                        )
+                    )
 
     @staticmethod
     def _changed_attributes_and_properties(

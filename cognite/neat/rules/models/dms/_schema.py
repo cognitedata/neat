@@ -32,6 +32,7 @@ from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
 from cognite.neat.utils.cdf_loaders import ViewLoader
 from cognite.neat.utils.cdf_loaders.data_classes import RawTableWrite, RawTableWriteList
 from cognite.neat.utils.text import to_camel
+from cognite.neat.utils.utils import get_inheritance_path
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -59,6 +60,25 @@ class DMSSchema:
         "space": "spaces",
         "node": "node_types",
     }
+
+    def _get_mapped_container_from_view(self, view_id: dm.ViewId) -> set[dm.ContainerId]:
+        # index all views, including ones from reference
+        indexed_views = {
+            **{view.as_id(): view for view in self.views},
+            **({view.as_id(): view for view in self.reference.views} if self.reference else {}),
+        }
+
+        if view_id not in indexed_views:
+            raise ValueError(f"View {view_id} not found")
+
+        indexed_implemented_views = {id_: view.implements for id_, view in indexed_views.items()}
+        view_inheritance = get_inheritance_path(view_id, indexed_implemented_views)
+
+        return (
+            indexed_views[view_id]
+            .referenced_containers()
+            .union(*[indexed_views[view_id].referenced_containers() for view_id in view_inheritance])
+        )
 
     @classmethod
     def from_model_id(cls, client: CogniteClient, data_model_id: dm.DataModelIdentifier) -> "DMSSchema":
