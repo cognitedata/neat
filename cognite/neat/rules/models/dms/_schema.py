@@ -3,6 +3,7 @@ import sys
 import warnings
 import zipfile
 from collections import Counter, defaultdict
+from collections.abc import Sequence
 from dataclasses import Field, dataclass, field, fields
 from pathlib import Path
 from typing import Any, ClassVar, cast
@@ -306,14 +307,20 @@ class DMSSchema:
         loaded: dict[str, Any] = {}
         for attr in fields(cls):
             if items := data_dict.get(attr.name) or data_dict.get(to_camel(attr.name)):
-                try:
-                    loaded[attr.name] = attr.type.load(items)
-                except Exception as e:
-                    loaded[attr.name] = cls._load_individual_resources(items, attr, str(e), context.get(attr.name, []))
-        if "data_models" in loaded and len(loaded["data_models"]) != 1:
-            # Todo Better exception here.
-            raise ValueError("DMSSchema must have exactly one data model")
-        loaded["data_models"] = loaded["data_models"][0]
+                if attr.name == "data_models":
+                    if isinstance(items, list) and len(items) > 1:
+                        warnings.warn(issues.importing.MultipleDataModelsWarning([item.get("externalId", "Unknown") for item in items]), stacklevel=2)
+                    item = items[0] if isinstance(items, list) else items
+                    try:
+                        loaded[attr.name] = dm.DataModelApply.load(item)
+                    except Exception as e:
+                        data_model_file = context.get(attr.name, [Path("UNKNOWN")])[0]
+                        warnings.warn(issues.fileread.FailedLoadWarning(data_model_file, dm.DataModelApply.__name__, str(e)), stacklevel=2)
+                else:
+                    try:
+                        loaded[attr.name] = attr.type.load(items)
+                    except Exception as e:
+                        loaded[attr.name] = cls._load_individual_resources(items, attr, str(e), context.get(attr.name, []))
         return cls(**loaded)
 
     @classmethod
@@ -355,9 +362,12 @@ class DMSSchema:
         cls_fields = sorted(fields(self), key=lambda f: f.name) if sort else fields(self)
         for attr in cls_fields:
             if items := getattr(self, attr.name):
-                items = sorted(items, key=self._to_sortable_identifier) if sort else items
                 key = to_camel(attr.name) if camel_case else attr.name
-                output[key] = [item.dump(camel_case=camel_case) for item in items]
+                if isinstance(items, Sequence):
+                    items = sorted(items, key=self._to_sortable_identifier) if sort else items
+                    output[key] = [item.dump(camel_case=camel_case) for item in items]
+                else:
+                    output[key] = items.dump(camel_case=camel_case)
         return output
 
     @classmethod
