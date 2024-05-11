@@ -231,15 +231,14 @@ def valid_schema_test_cases() -> Iterable[ParameterSet]:
     dms_schema = DMSSchema(
         spaces=dm.SpaceApplyList([dm.SpaceApply(space="my_space")]),
         data_models=dm.DataModelApply(
-                    space="my_space",
-                    external_id="my_data_model",
-                    version="1",
-                    views=[
-                        dm.ViewId("my_space", "my_view1", "1"),
-                        dm.ViewId("my_space", "my_view2", "1"),
-                    ],
-        )
-        ,
+            space="my_space",
+            external_id="my_data_model",
+            version="1",
+            views=[
+                dm.ViewId("my_space", "my_view1", "1"),
+                dm.ViewId("my_space", "my_view2", "1"),
+            ],
+        ),
         containers=dm.ContainerApplyList(
             [
                 dm.ContainerApply(
@@ -296,15 +295,6 @@ def valid_schema_test_cases() -> Iterable[ParameterSet]:
 
 def invalid_raw_str_test_cases() -> Iterable[ParameterSet]:
     raw_str = """
-    data_models:
-        space: my_space
-        externalId: my_data_model
-        version: 1
-        views:
-          - space: my_space
-            externalId: my_view1
-            version: 1
-            type: view
     views:
       - space: my_space
         externalId: my_view1
@@ -313,15 +303,6 @@ def invalid_raw_str_test_cases() -> Iterable[ParameterSet]:
     """
     yield pytest.param(raw_str, {"views": [Path("my_view_file.yaml")]}, [], id="No issues")
     raw_str = """
-    data_models:
-        space: my_space
-        externalId: my_data_model
-        version: 1
-        views:
-          - space: my_space
-            externalId: my_view1
-            version: 1
-            type: view
     views:
       - space: my_space
         external_id: my_view1

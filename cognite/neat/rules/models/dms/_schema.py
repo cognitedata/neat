@@ -44,7 +44,7 @@ else:
 
 @dataclass
 class DMSSchema:
-    data_models: dm.DataModelApply
+    data_models: dm.DataModelApply | None = None
     spaces: dm.SpaceApplyList = field(default_factory=lambda: dm.SpaceApplyList([]))
     views: dm.ViewApplyList = field(default_factory=lambda: dm.ViewApplyList([]))
     containers: dm.ContainerApplyList = field(default_factory=lambda: dm.ContainerApplyList([]))
@@ -188,10 +188,10 @@ class DMSSchema:
                 (data_models / f"{space.space}.space.yaml").write_text(
                     space.dump_yaml(), newline=new_line, encoding=encoding
                 )
-        if "data_models" not in exclude_set:
+        if "data_models" not in exclude_set and self.data_models:
             (data_models / f"{self.data_models.external_id}.datamodel.yaml").write_text(
-                    self.data_models.dump_yaml(), newline=new_line, encoding=encoding
-                )
+                self.data_models.dump_yaml(), newline=new_line, encoding=encoding
+            )
         if "views" not in exclude_set and self.views:
             view_dir = data_models / "views"
             view_dir.mkdir(parents=True, exist_ok=True)
@@ -265,8 +265,10 @@ class DMSSchema:
             if "spaces" not in exclude_set:
                 for space in self.spaces:
                     zip_ref.writestr(f"data_models/{space.space}.space.yaml", space.dump_yaml())
-            if "data_models" not in exclude_set:
-                zip_ref.writestr(f"data_models/{self.data_models.external_id}.datamodel.yaml", self.data_models.dump_yaml())
+            if "data_models" not in exclude_set and self.data_models:
+                zip_ref.writestr(
+                    f"data_models/{self.data_models.external_id}.datamodel.yaml", self.data_models.dump_yaml()
+                )
             if "views" not in exclude_set:
                 for view in self.views:
                     zip_ref.writestr(f"data_models/views/{view.external_id}.view.yaml", view.dump_yaml())
@@ -309,18 +311,28 @@ class DMSSchema:
             if items := data_dict.get(attr.name) or data_dict.get(to_camel(attr.name)):
                 if attr.name == "data_models":
                     if isinstance(items, list) and len(items) > 1:
-                        warnings.warn(issues.importing.MultipleDataModelsWarning([item.get("externalId", "Unknown") for item in items]), stacklevel=2)
+                        warnings.warn(
+                            issues.importing.MultipleDataModelsWarning(
+                                [item.get("externalId", "Unknown") for item in items]
+                            ),
+                            stacklevel=2,
+                        )
                     item = items[0] if isinstance(items, list) else items
                     try:
                         loaded[attr.name] = dm.DataModelApply.load(item)
                     except Exception as e:
                         data_model_file = context.get(attr.name, [Path("UNKNOWN")])[0]
-                        warnings.warn(issues.fileread.FailedLoadWarning(data_model_file, dm.DataModelApply.__name__, str(e)), stacklevel=2)
+                        warnings.warn(
+                            issues.fileread.FailedLoadWarning(data_model_file, dm.DataModelApply.__name__, str(e)),
+                            stacklevel=2,
+                        )
                 else:
                     try:
                         loaded[attr.name] = attr.type.load(items)
                     except Exception as e:
-                        loaded[attr.name] = cls._load_individual_resources(items, attr, str(e), context.get(attr.name, []))
+                        loaded[attr.name] = cls._load_individual_resources(
+                            items, attr, str(e), context.get(attr.name, [])
+                        )
         return cls(**loaded)
 
     @classmethod
@@ -470,20 +482,21 @@ class DMSSchema:
                         )
                     )
 
-        model = self.data_models
-        if model.space not in defined_spaces:
-            errors.add(MissingSpaceError(space=model.space, referred_by=model.as_id()))
+        if self.data_models:
+            model = self.data_models
+            if model.space not in defined_spaces:
+                errors.add(MissingSpaceError(space=model.space, referred_by=model.as_id()))
 
-        view_counts: dict[dm.ViewId, int] = defaultdict(int)
-        for view_id_or_class in model.views or []:
-            view_id = view_id_or_class if isinstance(view_id_or_class, dm.ViewId) else view_id_or_class.as_id()
-            if view_id not in defined_views:
-                errors.add(MissingViewError(referred_by=model.as_id(), view=view_id))
-            view_counts[view_id] += 1
+            view_counts: dict[dm.ViewId, int] = defaultdict(int)
+            for view_id_or_class in model.views or []:
+                view_id = view_id_or_class if isinstance(view_id_or_class, dm.ViewId) else view_id_or_class.as_id()
+                if view_id not in defined_views:
+                    errors.add(MissingViewError(referred_by=model.as_id(), view=view_id))
+                view_counts[view_id] += 1
 
-        for view_id, count in view_counts.items():
-            if count > 1:
-                errors.add(DuplicatedViewInDataModelError(referred_by=model.as_id(), view=view_id))
+            for view_id, count in view_counts.items():
+                if count > 1:
+                    errors.add(DuplicatedViewInDataModelError(referred_by=model.as_id(), view=view_id))
 
         return list(errors)
 
@@ -524,8 +537,9 @@ class DMSSchema:
         referenced_spaces |= {container.space for view in self.views for container in view.referenced_containers()}
         referenced_spaces |= {parent.space for view in self.views for parent in view.implements or []}
         referenced_spaces |= {node.space for node in self.node_types}
-        referenced_spaces |= {self.data_models.space}
-        referenced_spaces |= {view.space for view in self.data_models.views or []}
+        if self.data_models:
+            referenced_spaces |= {self.data_models.space}
+            referenced_spaces |= {view.space for view in self.data_models.views or []}
         referenced_spaces |= {s.space for s in self.spaces}
 
         return referenced_spaces

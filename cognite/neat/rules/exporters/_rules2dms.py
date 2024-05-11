@@ -5,7 +5,7 @@ from typing import Literal, TypeAlias, cast
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes._base import CogniteResource, CogniteResourceList
-from cognite.client.data_classes.data_modeling import DataModelApply, DataModelId
+from cognite.client.data_classes.data_modeling import DataModelApply, DataModelApplyList, DataModelId
 from cognite.client.exceptions import CogniteAPIError
 
 from cognite.neat.rules import issues
@@ -270,7 +270,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
         if self.export_components.intersection({"all", "views"}):
             to_export.append((schema.views, ViewLoader(client, self.existing_handling)))
         if self.export_components.intersection({"all", "data_models"}):
-            to_export.append((schema.data_models, DataModelLoader(client)))
+            to_export.append((DataModelApplyList([schema.data_models]), DataModelLoader(client)))
         if isinstance(schema, PipelineSchema):
             to_export.append((schema.databases, RawDatabaseLoader(client)))
             to_export.append((schema.raw_tables, RawTableLoader(client)))
