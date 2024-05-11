@@ -58,7 +58,7 @@ class TestDMSImporter:
 
 
 SCHEMA_WITH_DIRECT_RELATION_NONE = DMSSchema(
-    data_models=dm.DataModelApply(
+    data_model=dm.DataModelApply(
         space="neat",
         external_id="data_model",
         version="1",

@@ -44,7 +44,7 @@ else:
 
 @dataclass
 class DMSSchema:
-    data_models: dm.DataModelApply | None = None
+    data_model: dm.DataModelApply | None = None
     spaces: dm.SpaceApplyList = field(default_factory=lambda: dm.SpaceApplyList([]))
     views: dm.ViewApplyList = field(default_factory=lambda: dm.ViewApplyList([]))
     containers: dm.ContainerApplyList = field(default_factory=lambda: dm.ContainerApplyList([]))
@@ -58,7 +58,7 @@ class DMSSchema:
     _FIELD_NAME_BY_RESOURCE_TYPE: ClassVar[dict[str, str]] = {
         "container": "containers",
         "view": "views",
-        "datamodel": "data_models",
+        "datamodel": "data_model",
         "space": "spaces",
         "node": "node_types",
     }
@@ -124,7 +124,7 @@ class DMSSchema:
 
         return cls(
             spaces=dm.SpaceApplyList([space]),
-            data_models=data_model_write,
+            data_model=data_model_write,
             views=view_write,
             containers=containers.as_write(),
         )
@@ -188,9 +188,9 @@ class DMSSchema:
                 (data_models / f"{space.space}.space.yaml").write_text(
                     space.dump_yaml(), newline=new_line, encoding=encoding
                 )
-        if "data_models" not in exclude_set and self.data_models:
-            (data_models / f"{self.data_models.external_id}.datamodel.yaml").write_text(
-                self.data_models.dump_yaml(), newline=new_line, encoding=encoding
+        if "data_models" not in exclude_set and self.data_model:
+            (data_models / f"{self.data_model.external_id}.datamodel.yaml").write_text(
+                self.data_model.dump_yaml(), newline=new_line, encoding=encoding
             )
         if "views" not in exclude_set and self.views:
             view_dir = data_models / "views"
@@ -265,9 +265,9 @@ class DMSSchema:
             if "spaces" not in exclude_set:
                 for space in self.spaces:
                     zip_ref.writestr(f"data_models/{space.space}.space.yaml", space.dump_yaml())
-            if "data_models" not in exclude_set and self.data_models:
+            if "data_models" not in exclude_set and self.data_model:
                 zip_ref.writestr(
-                    f"data_models/{self.data_models.external_id}.datamodel.yaml", self.data_models.dump_yaml()
+                    f"data_models/{self.data_model.external_id}.datamodel.yaml", self.data_model.dump_yaml()
                 )
             if "views" not in exclude_set:
                 for view in self.views:
@@ -309,7 +309,7 @@ class DMSSchema:
         loaded: dict[str, Any] = {}
         for attr in fields(cls):
             if items := data_dict.get(attr.name) or data_dict.get(to_camel(attr.name)):
-                if attr.name == "data_models":
+                if attr.name == "data_model":
                     if isinstance(items, list) and len(items) > 1:
                         warnings.warn(
                             issues.importing.MultipleDataModelsWarning(
@@ -482,8 +482,8 @@ class DMSSchema:
                         )
                     )
 
-        if self.data_models:
-            model = self.data_models
+        if self.data_model:
+            model = self.data_model
             if model.space not in defined_spaces:
                 errors.add(MissingSpaceError(space=model.space, referred_by=model.as_id()))
 
@@ -537,9 +537,9 @@ class DMSSchema:
         referenced_spaces |= {container.space for view in self.views for container in view.referenced_containers()}
         referenced_spaces |= {parent.space for view in self.views for parent in view.implements or []}
         referenced_spaces |= {node.space for node in self.node_types}
-        if self.data_models:
-            referenced_spaces |= {self.data_models.space}
-            referenced_spaces |= {view.space for view in self.data_models.views or []}
+        if self.data_model:
+            referenced_spaces |= {self.data_model.space}
+            referenced_spaces |= {view.space for view in self.data_model.views or []}
         referenced_spaces |= {s.space for s in self.spaces}
 
         return referenced_spaces
@@ -651,9 +651,9 @@ class PipelineSchema(DMSSchema):
 
     @classmethod
     def from_dms(cls, schema: DMSSchema, instance_space: str | None = None) -> "PipelineSchema":
-        if not schema.data_models:
+        if not schema.data_model:
             raise ValueError("PipelineSchema must contain at least one data model")
-        first_data_model = schema.data_models
+        first_data_model = schema.data_model
         # The database name is limited to 32 characters
         database_name = first_data_model.external_id[:32]
         instance_space = instance_space or first_data_model.space
@@ -692,7 +692,7 @@ class PipelineSchema(DMSSchema):
 
         return cls(
             spaces=schema.spaces,
-            data_models=schema.data_models,
+            data_model=schema.data_model,
             views=schema.views,
             containers=schema.containers,
             transformations=transformations,

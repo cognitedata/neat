@@ -270,7 +270,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
         if self.export_components.intersection({"all", "views"}):
             to_export.append((schema.views, ViewLoader(client, self.existing_handling)))
         if self.export_components.intersection({"all", "data_models"}):
-            to_export.append((DataModelApplyList([schema.data_models]), DataModelLoader(client)))
+            to_export.append((DataModelApplyList([schema.data_model]), DataModelLoader(client)))
         if isinstance(schema, PipelineSchema):
             to_export.append((schema.databases, RawDatabaseLoader(client)))
             to_export.append((schema.raw_tables, RawTableLoader(client)))
