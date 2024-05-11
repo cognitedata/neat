@@ -40,7 +40,7 @@ class TestDMSImporter:
     def test_import_rules_from_tutorials(self, filepath: Path) -> None:
         dms_rules = cast(DMSRules, ExcelImporter(filepath).to_rules(errors="raise", role=RoleTypes.dms_architect))
         # We must have the reference to be able to convert back to schema
-        schema = dms_rules.as_schema(include_ref=True)
+        schema = dms_rules.as_schema()
         dms_importer = DMSImporter(schema)
 
         rules, issues = dms_importer.to_rules(errors="continue")

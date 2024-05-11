@@ -164,7 +164,7 @@ class DMSPostValidation:
             # Everything is allowed
             return None
         # Is an extension of an existing model.
-        user_schema = self.rules.as_schema(include_ref=False)
+        user_schema = self.rules.as_schema()
         ref_schema = self.rules.reference.as_schema()
         new_containers = {container.as_id(): container for container in user_schema.containers}
         existing_containers = {container.as_id(): container for container in ref_schema.containers}

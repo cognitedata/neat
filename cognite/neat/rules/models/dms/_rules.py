@@ -345,12 +345,10 @@ class DMSRules(BaseRules):
         space, version = self.metadata.space, self.metadata.version
         return _DMSRulesSerializer(info, space, version).clean(dumped)
 
-    def as_schema(
-        self, include_ref: bool = False, include_pipeline: bool = False, instance_space: str | None = None
-    ) -> DMSSchema:
+    def as_schema(self, include_pipeline: bool = False, instance_space: str | None = None) -> DMSSchema:
         from ._exporter import _DMSExporter
 
-        return _DMSExporter(self, include_ref, include_pipeline, instance_space).to_schema()
+        return _DMSExporter(self, include_pipeline, instance_space).to_schema()
 
     def as_information_architect_rules(self) -> "InformationRules":
         from ._converter import _DMSRulesConverter

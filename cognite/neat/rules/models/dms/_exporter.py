@@ -42,11 +42,9 @@ class _DMSExporter:
     def __init__(
         self,
         rules: DMSRules,
-        include_ref: bool = True,
         include_pipeline: bool = False,
         instance_space: str | None = None,
     ):
-        self.include_ref = include_ref
         self.include_pipeline = include_pipeline
         self.instance_space = instance_space
         self.rules = rules

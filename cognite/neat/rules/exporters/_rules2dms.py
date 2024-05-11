@@ -114,9 +114,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
             dms_rules = rules.as_dms_architect_rules()
         else:
             raise ValueError(f"{type(rules).__name__} cannot be exported to DMS")
-        return dms_rules.as_schema(
-            include_ref=True, include_pipeline=self.export_pipeline, instance_space=self.instance_space
-        )
+        return dms_rules.as_schema(include_pipeline=self.export_pipeline, instance_space=self.instance_space)
 
     def delete_from_cdf(self, rules: Rules, client: CogniteClient, dry_run: bool = False) -> Iterable[UploadResult]:
         schema, to_export = self._prepare_schema_and_exporters(rules, client)
