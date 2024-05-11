@@ -81,9 +81,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     )
                 ]
             ),
-            data_models=dm.DataModelApplyList(
-                [
-                    dm.DataModelApply(
+            data_models=            dm.DataModelApply(
                         space="my_space",
                         external_id="my_data_model",
                         version="1",
@@ -94,8 +92,8 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                             dm.ViewId(space="my_space", external_id="WindFarm", version="1"),
                         ],
                     )
-                ]
-            ),
+
+            ,
             views=dm.ViewApplyList(
                 [
                     dm.ViewApply(
@@ -221,9 +219,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     )
     expected_schema = DMSSchema(
         spaces=dm.SpaceApplyList([dm.SpaceApply(space="my_space")]),
-        data_models=dm.DataModelApplyList(
-            [
-                dm.DataModelApply(
+        data_models=dm.DataModelApply(
                     space="my_space",
                     external_id="my_data_model",
                     version="1",
@@ -232,9 +228,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                         dm.ViewId(space="my_space", external_id="WindFarm", version="1"),
                         dm.ViewId(space="my_space", external_id="WindTurbine", version="1"),
                     ],
-                )
-            ]
-        ),
+                ),
         views=dm.ViewApplyList(
             [
                 dm.ViewApply(
@@ -338,9 +332,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     )
     expected_schema = DMSSchema(
         spaces=dm.SpaceApplyList([dm.SpaceApply(space="my_space")]),
-        data_models=dm.DataModelApplyList(
-            [
-                dm.DataModelApply(
+        data_models=dm.DataModelApply(
                     space="my_space",
                     external_id="my_data_model",
                     version="1",
@@ -349,8 +341,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                         dm.ViewId(space="my_space", external_id="WindTurbine", version="1"),
                     ],
                 )
-            ]
-        ),
+       ,
         views=dm.ViewApplyList(
             [
                 dm.ViewApply(
@@ -506,9 +497,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
 
     expected_schema = DMSSchema(
         spaces=dm.SpaceApplyList([dm.SpaceApply(space="my_space")]),
-        data_models=dm.DataModelApplyList(
-            [
-                dm.DataModelApply(
+        data_models=dm.DataModelApply(
                     space="my_space",
                     external_id="my_data_model",
                     version="1",
@@ -519,8 +508,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                         dm.ViewId(space="my_space", external_id="Activity", version="1"),
                     ],
                 )
-            ]
-        ),
+         ,
         views=dm.ViewApplyList(
             [
                 dm.ViewApply(
@@ -654,9 +642,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
 
     expected_schema = DMSSchema(
         spaces=dm.SpaceApplyList([dm.SpaceApply(space="my_space")]),
-        data_models=dm.DataModelApplyList(
-            [
-                dm.DataModelApply(
+        data_models=dm.DataModelApply(
                     space="my_space",
                     external_id="my_data_model",
                     version="1",
@@ -664,9 +650,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     views=[
                         dm.ViewId(space="my_space", external_id="generating_unit", version="1"),
                     ],
-                )
-            ]
-        ),
+                ),
         views=dm.ViewApplyList(
             [
                 dm.ViewApply(
@@ -752,9 +736,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ]
         ),
-        data_models=dm.DataModelApplyList(
-            [
-                dm.DataModelApply(
+        data_models=dm.DataModelApply(
                     space="sp_solution",
                     external_id="solution_model",
                     version="1",
@@ -763,8 +745,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                         dm.ViewId(space="sp_solution", external_id="Asset", version="1"),
                     ],
                 )
-            ]
-        ),
+        ,
         node_types=dm.NodeApplyList([dm.NodeApply(space="sp_enterprise", external_id="Asset")]),
     )
 
