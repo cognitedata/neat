@@ -43,12 +43,12 @@ else:
 
 @dataclass
 class DMSSchema:
-    data_models: dm.DataModelApplyList = field(default_factory=lambda: dm.DataModelApplyList([]))
+    data_models: dm.DataModelApply
     spaces: dm.SpaceApplyList = field(default_factory=lambda: dm.SpaceApplyList([]))
     views: dm.ViewApplyList = field(default_factory=lambda: dm.ViewApplyList([]))
     containers: dm.ContainerApplyList = field(default_factory=lambda: dm.ContainerApplyList([]))
     node_types: dm.NodeApplyList = field(default_factory=lambda: dm.NodeApplyList([]))
-    # The last schema is the previous version of the data model. In the case, extension=additio, this
+    # The last schema is the previous version of the data model. In the case, extension=addition, this
     # should not be modified.
     last: "DMSSchema | None" = None
     # Reference is typically the Enterprise model, while this is the solution model.
@@ -123,7 +123,7 @@ class DMSSchema:
 
         return cls(
             spaces=dm.SpaceApplyList([space]),
-            data_models=dm.DataModelApplyList([data_model_write]),
+            data_models=data_model_write,
             views=view_write,
             containers=containers.as_write(),
         )
@@ -188,9 +188,8 @@ class DMSSchema:
                     space.dump_yaml(), newline=new_line, encoding=encoding
                 )
         if "data_models" not in exclude_set:
-            for model in self.data_models:
-                (data_models / f"{model.external_id}.datamodel.yaml").write_text(
-                    model.dump_yaml(), newline=new_line, encoding=encoding
+            (data_models / f"{self.data_models.external_id}.datamodel.yaml").write_text(
+                    self.data_models.dump_yaml(), newline=new_line, encoding=encoding
                 )
         if "views" not in exclude_set and self.views:
             view_dir = data_models / "views"
@@ -266,8 +265,7 @@ class DMSSchema:
                 for space in self.spaces:
                     zip_ref.writestr(f"data_models/{space.space}.space.yaml", space.dump_yaml())
             if "data_models" not in exclude_set:
-                for model in self.data_models:
-                    zip_ref.writestr(f"data_models/{model.external_id}.datamodel.yaml", model.dump_yaml())
+                zip_ref.writestr(f"data_models/{self.data_models.external_id}.datamodel.yaml", self.data_models.dump_yaml())
             if "views" not in exclude_set:
                 for view in self.views:
                     zip_ref.writestr(f"data_models/views/{view.external_id}.view.yaml", view.dump_yaml())
@@ -312,6 +310,10 @@ class DMSSchema:
                     loaded[attr.name] = attr.type.load(items)
                 except Exception as e:
                     loaded[attr.name] = cls._load_individual_resources(items, attr, str(e), context.get(attr.name, []))
+        if "data_models" in loaded and len(loaded["data_models"]) != 1:
+            # Todo Better exception here.
+            raise ValueError("DMSSchema must have exactly one data model")
+        loaded["data_models"] = loaded["data_models"][0]
         return cls(**loaded)
 
     @classmethod
@@ -458,20 +460,20 @@ class DMSSchema:
                         )
                     )
 
-        for model in self.data_models:
-            if model.space not in defined_spaces:
-                errors.add(MissingSpaceError(space=model.space, referred_by=model.as_id()))
+        model = self.data_models
+        if model.space not in defined_spaces:
+            errors.add(MissingSpaceError(space=model.space, referred_by=model.as_id()))
 
-            view_counts: dict[dm.ViewId, int] = defaultdict(int)
-            for view_id_or_class in model.views or []:
-                view_id = view_id_or_class if isinstance(view_id_or_class, dm.ViewId) else view_id_or_class.as_id()
-                if view_id not in defined_views:
-                    errors.add(MissingViewError(referred_by=model.as_id(), view=view_id))
-                view_counts[view_id] += 1
+        view_counts: dict[dm.ViewId, int] = defaultdict(int)
+        for view_id_or_class in model.views or []:
+            view_id = view_id_or_class if isinstance(view_id_or_class, dm.ViewId) else view_id_or_class.as_id()
+            if view_id not in defined_views:
+                errors.add(MissingViewError(referred_by=model.as_id(), view=view_id))
+            view_counts[view_id] += 1
 
-            for view_id, count in view_counts.items():
-                if count > 1:
-                    errors.add(DuplicatedViewInDataModelError(referred_by=model.as_id(), view=view_id))
+        for view_id, count in view_counts.items():
+            if count > 1:
+                errors.add(DuplicatedViewInDataModelError(referred_by=model.as_id(), view=view_id))
 
         return list(errors)
 
@@ -512,8 +514,8 @@ class DMSSchema:
         referenced_spaces |= {container.space for view in self.views for container in view.referenced_containers()}
         referenced_spaces |= {parent.space for view in self.views for parent in view.implements or []}
         referenced_spaces |= {node.space for node in self.node_types}
-        referenced_spaces |= {model.space for model in self.data_models}
-        referenced_spaces |= {view.space for model in self.data_models for view in model.views or []}
+        referenced_spaces |= {self.data_models.space}
+        referenced_spaces |= {view.space for view in self.data_models.views or []}
         referenced_spaces |= {s.space for s in self.spaces}
 
         return referenced_spaces
