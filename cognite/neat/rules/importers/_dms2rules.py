@@ -85,10 +85,7 @@ class DMSImporter(BaseImporter):
         except Exception as e:
             return cls(DMSSchema(), [issues.importing.APIError(str(e))])
 
-        created = ms_to_datetime(data_model.created_time)
-        updated = ms_to_datetime(data_model.last_updated_time)
-
-        metadata = cls._create_metadata_from_model(data_model, created, updated)
+        metadata = cls._create_metadata_from_model(data_model)
 
         return cls(schema, [], metadata)
 
@@ -96,11 +93,16 @@ class DMSImporter(BaseImporter):
     def _create_metadata_from_model(
         cls,
         model: dm.DataModel[dm.View] | dm.DataModelApply,
-        created: datetime | None = None,
-        updated: datetime | None = None,
     ) -> DMSMetadata:
         description, creator = DMSMetadata._get_description_and_creator(model.description)
-        now = datetime.now().replace(microsecond=0)
+
+        if isinstance(model, dm.DataModel):
+            created = ms_to_datetime(model.created_time)
+            updated = ms_to_datetime(model.last_updated_time)
+        else:
+            now = datetime.now().replace(microsecond=0)
+            created = now
+            updated = now
         return DMSMetadata(
             schema_=SchemaCompleteness.complete,
             extension=ExtensionCategory.addition,
@@ -108,8 +110,8 @@ class DMSImporter(BaseImporter):
             external_id=model.external_id,
             name=model.name or model.external_id,
             version=model.version or "0.1.0",
-            updated=updated or now,
-            created=created or now,
+            updated=updated,
+            created=created,
             creator=creator,
             description=description,
         )

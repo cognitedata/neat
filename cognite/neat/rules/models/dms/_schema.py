@@ -96,7 +96,7 @@ class DMSSchema:
         return cls.from_data_model(client, data_model)
 
     @classmethod
-    def from_data_model(cls, client: CogniteClient, data_model: dm.DataModel) -> "DMSSchema":
+    def from_data_model(cls, client: CogniteClient, data_model: dm.DataModel[dm.View]) -> "DMSSchema":
         views = dm.ViewList(data_model.views)
         container_ids = views.referenced_containers()
         containers = client.data_modeling.containers.retrieve(list(container_ids))
