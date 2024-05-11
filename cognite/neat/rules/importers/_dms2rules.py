@@ -147,7 +147,8 @@ class DMSImporter(BaseImporter):
             # In case there were errors during the import, the to_rules method will return None
             return self._return_or_raise(self.issue_list, errors)
 
-        if len(self.root_schema.data_models) == 0:
+        if not self.root_schema.data_models:
+            # Todo remove this check as this case should be handled by the schema creation.
             self.issue_list.append(issues.importing.NoDataModelError("No data model found."))
             return self._return_or_raise(self.issue_list, errors)
 
@@ -184,15 +185,7 @@ class DMSImporter(BaseImporter):
         data_model_type: DataModelType | None = None,
         schema_completeness: SchemaCompleteness | None = None,
     ) -> dict[str, Any]:
-        if len(schema.data_models) > 2:
-            # Creating a DataModelEntity to convert the data model id to a string.
-            self.issue_list.append(
-                issues.importing.MultipleDataModelsWarning(
-                    [str(DataModelEntity.from_id(model.as_id())) for model in schema.data_models]
-                )
-            )
-
-        data_model = schema.data_models[0]
+        data_model = schema.data_models
 
         properties = SheetList[DMSProperty]()
         for view in schema.views:

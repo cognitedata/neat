@@ -629,7 +629,7 @@ class PipelineSchema(DMSSchema):
     def from_dms(cls, schema: DMSSchema, instance_space: str | None = None) -> "PipelineSchema":
         if not schema.data_models:
             raise ValueError("PipelineSchema must contain at least one data model")
-        first_data_model = schema.data_models[0]
+        first_data_model = schema.data_models
         # The database name is limited to 32 characters
         database_name = first_data_model.external_id[:32]
         instance_space = instance_space or first_data_model.space
