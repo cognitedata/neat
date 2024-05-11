@@ -1453,9 +1453,9 @@ class TestDMSRules:
         actual_schema = rules.as_schema()
 
         assert actual_schema.spaces.dump() == expected_schema.spaces.dump()
-        actual_schema.data_models[0].views = sorted(actual_schema.data_models[0].views, key=lambda v: v.external_id)
-        expected_schema.data_models[0].views = sorted(expected_schema.data_models[0].views, key=lambda v: v.external_id)
-        assert actual_schema.data_models[0].dump() == expected_schema.data_models[0].dump()
+        actual_schema.data_models.views = sorted(actual_schema.data_models.views, key=lambda v: v.external_id)
+        expected_schema.data_models.views = sorted(expected_schema.data_models.views, key=lambda v: v.external_id)
+        assert actual_schema.data_models.dump() == expected_schema.data_models.dump()
         assert actual_schema.containers.dump() == expected_schema.containers.dump()
 
         actual_schema.views = dm.ViewApplyList(sorted(actual_schema.views, key=lambda v: v.external_id))
