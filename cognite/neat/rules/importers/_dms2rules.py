@@ -198,7 +198,10 @@ class DMSImporter(BaseImporter):
                 # Reference should always be an enterprise model.
                 reference = DMSRules(
                     **self._create_rule_components(
-                        ref_model, ref_schema, self._create_default_metadata(ref_schema.views), DataModelType.enterprise
+                        ref_model,
+                        ref_schema,
+                        self.ref_metadata or self._create_default_metadata(ref_schema.views),
+                        DataModelType.enterprise,
                     )
                 )
                 schema_completeness = SchemaCompleteness.extended
