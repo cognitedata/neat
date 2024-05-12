@@ -96,7 +96,12 @@ class DMSSchema:
         return cls.from_data_model(client, data_model)
 
     @classmethod
-    def from_data_model(cls, client: CogniteClient, data_model: dm.DataModel[dm.View]) -> "DMSSchema":
+    def from_data_model(
+        cls,
+        client: CogniteClient,
+        data_model: dm.DataModel[dm.View],
+        reference_model_id: dm.DataModel[dm.ViewId] | None = None,
+    ) -> "DMSSchema":
         views = dm.ViewList(data_model.views)
         container_ids = views.referenced_containers()
         containers = client.data_modeling.containers.retrieve(list(container_ids))
@@ -531,17 +536,25 @@ class DMSSchema:
             )
         return None
 
-    def referenced_spaces(self) -> set[str]:
-        referenced_spaces = {container.space for container in self.containers}
-        referenced_spaces |= {view.space for view in self.views}
-        referenced_spaces |= {container.space for view in self.views for container in view.referenced_containers()}
-        referenced_spaces |= {parent.space for view in self.views for parent in view.implements or []}
+    def referenced_spaces(self, include_indirect_references: bool = True) -> set[str]:
+        """Get the spaces referenced by the schema.
+
+        Args:
+            include_indirect_references (bool): If True, the spaces referenced by as view.implements, and
+                view.referenced_containers will be included in the output.
+        Returns:
+            set[str]: The spaces referenced by the schema.
+        """
+        referenced_spaces = {view.space for view in self.views}
+        referenced_spaces |= {container.space for container in self.containers}
+        if include_indirect_references:
+            referenced_spaces |= {container.space for view in self.views for container in view.referenced_containers()}
+            referenced_spaces |= {parent.space for view in self.views for parent in view.implements or []}
         referenced_spaces |= {node.space for node in self.node_types}
         if self.data_model:
             referenced_spaces |= {self.data_model.space}
             referenced_spaces |= {view.space for view in self.data_model.views or []}
         referenced_spaces |= {s.space for s in self.spaces}
-
         return referenced_spaces
 
 

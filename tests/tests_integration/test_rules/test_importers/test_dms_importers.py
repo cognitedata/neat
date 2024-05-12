@@ -43,14 +43,18 @@ class TestDMSImporter:
 
         assert isinstance(rules, InformationRules)
 
-    def test_import_olav_from_cdf(self, cognite_client: CogniteClient, olav_data_model_id: DataModelId):
-        dms_exporter = DMSImporter.from_data_model_id(cognite_client, olav_data_model_id)
+    def test_import_olav_from_cdf(
+        self, cognite_client: CogniteClient, olav_data_model_id: DataModelId, alice_data_model_id: DataModelId
+    ):
+        dms_exporter = DMSImporter.from_data_model_id(cognite_client, olav_data_model_id, alice_data_model_id)
 
-        assert dms_exporter.root_schema.referenced_spaces() == {
+        assert dms_exporter.root_schema.referenced_spaces(include_indirect_references=False) == {
             olav_data_model_id.space
-        }, "Only the space referenced by the data model should be present in the schema"
+        }, "The direct reference should be the data model space."
 
         rules = dms_exporter.to_rules(errors="raise", role=RoleTypes.dms_architect)
 
         assert isinstance(rules, DMSRules)
+        assert rules.metadata.as_data_model_id() == olav_data_model_id
         assert isinstance(rules.reference, DMSRules)
+        assert rules.reference.metadata.as_data_model_id() == alice_data_model_id

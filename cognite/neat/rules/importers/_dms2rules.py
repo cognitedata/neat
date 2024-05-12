@@ -65,11 +65,18 @@ class DMSImporter(BaseImporter):
             )
 
     @classmethod
-    def from_data_model_id(cls, client: CogniteClient, data_model_id: DataModelIdentifier) -> "DMSImporter":
+    def from_data_model_id(
+        cls,
+        client: CogniteClient,
+        data_model_id: DataModelIdentifier,
+        reference_model_id: DataModelIdentifier | None = None,
+    ) -> "DMSImporter":
         """Create a DMSImporter ready to convert the given data model to rules.
 
         Args:
             client: Instantiated CogniteClient to retrieve data model.
+            reference_model_id: The reference data model to retrieve. This is the data model that
+                the given data model is built on top of, typically, an enterprise data model.
             data_model_id: Data Model to retrieve.
 
         Returns:
