@@ -100,19 +100,45 @@ class DMSSchema:
         cls,
         client: CogniteClient,
         data_model: dm.DataModel[dm.View],
-        reference_model_id: dm.DataModel[dm.ViewId] | None = None,
+        reference_model: dm.DataModel[dm.View] | None = None,
     ) -> "DMSSchema":
+        """Create a schema from a data model.
+
+        If a reference model is provided, the schema will include a reference schema. To determine which views,
+        and containers to put in the reference schema, the following rule is applied:
+
+            If a view or container space is different from the data model space,
+            it will be included in the reference schema.*
+
+        *One exception to this rule is if a view is directly referenced by the data model. In this case, the view will
+        be included in the data model schema, even if the space is different.
+
+        Args:
+            client: The Cognite client used for retrieving components referenced by the data model.
+            data_model: The data model to create the schema from.
+            reference_model: (Optional) The reference model to include in the schema.
+                This is typically the Enterprise model.
+
+        Returns:
+            DMSSchema: The schema created from the data model.
+        """
         views = dm.ViewList(data_model.views)
+
+        data_model_write = data_model.as_write()
+        data_model_write.views = list(views.as_ids())
+
+        if reference_model:
+            views.extend(reference_model.views)
+
         container_ids = views.referenced_containers()
         containers = client.data_modeling.containers.retrieve(list(container_ids))
         cls._append_referenced_containers(client, containers)
 
-        space_read = client.data_modeling.spaces.retrieve(data_model.space)
-        if space_read is None:
-            raise ValueError(f"Space {data_model.space} not found")
-        space = space_read.as_write()
-        data_model_write = data_model.as_write()
-        data_model_write.views = list(views.as_write())
+        space_ids = [data_model.space, reference_model.space] if reference_model else [data_model.space]
+        space_read = client.data_modeling.spaces.retrieve(space_ids)
+        if len(space_read) != len(space_ids):
+            raise ValueError(f"Space(s) {space_read} not found")
+        space_write = space_read.as_write()
 
         view_loader = ViewLoader(client)
         # We need to include parent views in the schema to make sure that the schema is valid.
@@ -127,11 +153,41 @@ class DMSSchema:
         # The ViewLoader as_write method looks up parents and remove properties from them.
         view_write = dm.ViewApplyList([view_loader.as_write(view) for view in views])
 
+        container_write = containers.as_write()
+        user_space = data_model.space
+        if reference_model:
+            user_model_view_ids = set(data_model_write.views)
+            ref_model_write = reference_model.as_write()
+            ref_model_write.views = [view.as_id() for view in reference_model.views]
+
+            ref_views = dm.ViewApplyList(
+                [view for view in view_write if (view.space != user_space) or (view.as_id() not in user_model_view_ids)]
+            )
+            view_write = dm.ViewApplyList(
+                [view for view in view_write if view.space == user_space or view.as_id() in user_model_view_ids]
+            )
+
+            ref_containers = dm.ContainerApplyList(
+                [container for container in container_write if container.space != user_space]
+            )
+            container_write = dm.ContainerApplyList(
+                [container for container in container_write if container.space == user_space]
+            )
+
+            ref_schema: DMSSchema | None = cls(
+                spaces=dm.SpaceApplyList([s for s in space_write if s.space != user_space]),
+                data_model=ref_model_write,
+                views=ref_views,
+                containers=ref_containers,
+            )
+        else:
+            ref_schema = None
         return cls(
-            spaces=dm.SpaceApplyList([space]),
+            spaces=dm.SpaceApplyList([s for s in space_write if s.space == user_space]),
             data_model=data_model_write,
             views=view_write,
-            containers=containers.as_write(),
+            containers=container_write,
+            reference=ref_schema,
         )
 
     @classmethod

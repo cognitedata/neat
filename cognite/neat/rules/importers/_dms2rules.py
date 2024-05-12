@@ -6,7 +6,7 @@ from typing import Any, Literal, cast, overload
 
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
-from cognite.client.data_classes.data_modeling import DataModelIdentifier
+from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex, InvertedIndex
 from cognite.client.data_classes.data_modeling.views import (
     MultiEdgeConnectionApply,
@@ -51,12 +51,14 @@ class DMSImporter(BaseImporter):
         schema: DMSSchema,
         read_issues: Sequence[ValidationIssue] | None = None,
         metadata: DMSMetadata | None = None,
+        ref_metadata: DMSMetadata | None = None,
     ):
         # Calling this root schema to distinguish it from
         # * User Schema
         # * Reference Schema
         self.root_schema = schema
         self.metadata = metadata
+        self.ref_metadata = ref_metadata
         self.issue_list = IssueList(read_issues)
         self._all_containers_by_id = {container.as_id(): container for container in schema.containers}
         if self.root_schema.reference:
@@ -82,19 +84,46 @@ class DMSImporter(BaseImporter):
         Returns:
             DMSImporter: DMSImporter instance
         """
-        data_models = client.data_modeling.data_models.retrieve(data_model_id, inline_views=True)
-        if len(data_models) == 0:
+        data_model_ids = [data_model_id, reference_model_id] if reference_model_id else [data_model_id]
+        data_models = client.data_modeling.data_models.retrieve(data_model_ids, inline_views=True)
+
+        user_models = cls._find_model_in_list(data_models, data_model_id)
+        if len(user_models) == 0:
             return cls(DMSSchema(), [issues.importing.NoDataModelError(f"Data model {data_model_id} not found")])
-        data_model = data_models.latest_version()
+        user_model = user_models.latest_version()
+
+        if reference_model_id:
+            ref_models = cls._find_model_in_list(data_models, reference_model_id)
+            if len(ref_models) == 0:
+                return cls(
+                    DMSSchema(), [issues.importing.NoDataModelError(f"Data model {reference_model_id} not found")]
+                )
+            ref_model: dm.DataModel[dm.View] | None = ref_models.latest_version()
+        else:
+            ref_model = None
 
         try:
-            schema = DMSSchema.from_data_model(client, data_model)
+            schema = DMSSchema.from_data_model(client, user_model, ref_model)
         except Exception as e:
             return cls(DMSSchema(), [issues.importing.APIError(str(e))])
 
-        metadata = cls._create_metadata_from_model(data_model)
+        metadata = cls._create_metadata_from_model(user_model)
+        ref_metadata = cls._create_metadata_from_model(ref_model) if ref_model else None
 
-        return cls(schema, [], metadata)
+        return cls(schema, [], metadata, ref_metadata)
+
+    @classmethod
+    def _find_model_in_list(
+        cls, data_models: dm.DataModelList[dm.View], model_id: DataModelIdentifier
+    ) -> dm.DataModelList[dm.View]:
+        identifier = DataModelId.load(model_id)
+        return dm.DataModelList[dm.View](
+            [
+                model
+                for model in data_models
+                if (model.space, model.external_id) == (identifier.space, identifier.external_id)
+            ]
+        )
 
     @classmethod
     def _create_metadata_from_model(
