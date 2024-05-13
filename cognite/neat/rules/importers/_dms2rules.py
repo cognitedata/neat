@@ -39,7 +39,6 @@ from cognite.neat.rules.models.dms import (
 from cognite.neat.rules.models.entities import (
     ClassEntity,
     ContainerEntity,
-    DataModelEntity,
     DMSUnknownEntity,
     ViewEntity,
     ViewPropertyEntity,
@@ -147,28 +146,30 @@ class DMSImporter(BaseImporter):
             # In case there were errors during the import, the to_rules method will return None
             return self._return_or_raise(self.issue_list, errors)
 
-        if len(self.root_schema.data_models) == 0:
+        if not self.root_schema.data_model:
             self.issue_list.append(issues.importing.NoDataModelError("No data model found."))
             return self._return_or_raise(self.issue_list, errors)
-
+        model = self.root_schema.data_model
         with _handle_issues(
             self.issue_list,
         ) as future:
             schema_completeness = SchemaCompleteness.complete
             data_model_type = DataModelType.enterprise
             reference: DMSRules | None = None
-            if ref_schema := self.root_schema.reference:
+            if (ref_schema := self.root_schema.reference) and (ref_model := ref_schema.data_model):
                 # Reference should always be an enterprise model.
                 reference = DMSRules(
                     **self._create_rule_components(
-                        ref_schema, self._create_default_metadata(ref_schema.views), DataModelType.enterprise
+                        ref_model, ref_schema, self._create_default_metadata(ref_schema.views), DataModelType.enterprise
                     )
                 )
                 schema_completeness = SchemaCompleteness.extended
                 data_model_type = DataModelType.solution
 
             user_rules = DMSRules(
-                **self._create_rule_components(self.root_schema, self.metadata, data_model_type, schema_completeness),
+                **self._create_rule_components(
+                    model, self.root_schema, self.metadata, data_model_type, schema_completeness
+                ),
                 reference=reference,
             )
 
@@ -179,21 +180,12 @@ class DMSImporter(BaseImporter):
 
     def _create_rule_components(
         self,
+        data_model: dm.DataModelApply,
         schema: DMSSchema,
         metadata: DMSMetadata | None = None,
         data_model_type: DataModelType | None = None,
         schema_completeness: SchemaCompleteness | None = None,
     ) -> dict[str, Any]:
-        if len(schema.data_models) > 2:
-            # Creating a DataModelEntity to convert the data model id to a string.
-            self.issue_list.append(
-                issues.importing.MultipleDataModelsWarning(
-                    [str(DataModelEntity.from_id(model.as_id())) for model in schema.data_models]
-                )
-            )
-
-        data_model = schema.data_models[0]
-
         properties = SheetList[DMSProperty]()
         for view in schema.views:
             view_id = view.as_id()

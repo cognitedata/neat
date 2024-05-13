@@ -37,7 +37,7 @@ class TestDMSExporter:
                 counts.update([matches.group(1)])
 
         assert counts["space"] == len(schema.spaces)
-        assert counts["datamodel"] == len(schema.data_models)
+        assert counts["datamodel"] == 1
         assert counts["view"] == len(alice_rules.views)
         assert counts["container"] == len(alice_rules.containers)
         assert counts["node"] == len(schema.node_types)
@@ -56,7 +56,7 @@ class TestDMSExporter:
         table_count = len(list((tmp_path / "raw").rglob("*.yaml")))
 
         assert counts["space"] == len(schema.spaces)
-        assert counts["datamodel"] == len(schema.data_models)
+        assert counts["datamodel"] == 1
         assert counts["view"] == len(schema.views)
         assert counts["container"] == len(schema.containers)
         assert transformation_count == len(schema.transformations)

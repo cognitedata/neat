@@ -40,7 +40,7 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         DMSSchema(
             spaces=dm.SpaceApplyList([my_space]),
-            data_models=dm.DataModelApplyList([data_model]),
+            data_model=data_model,
         ),
         [
             DuplicatedViewInDataModelError(
@@ -100,7 +100,7 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         DMSSchema(
             spaces=dm.SpaceApplyList([my_space]),
-            data_models=dm.DataModelApplyList([data_model]),
+            data_model=data_model,
             views=dm.ViewApplyList([view1, view2]),
             containers=dm.ContainerApplyList([container]),
         ),
@@ -148,7 +148,7 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         DMSSchema(
             spaces=dm.SpaceApplyList([my_space]),
-            data_models=dm.DataModelApplyList([my_data_model]),
+            data_model=my_data_model,
             views=dm.ViewApplyList([view]),
             containers=dm.ContainerApplyList([container]),
         ),
@@ -204,7 +204,7 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         DMSSchema(
             spaces=dm.SpaceApplyList([my_space]),
-            data_models=dm.DataModelApplyList([my_data_model]),
+            data_model=my_data_model,
             views=dm.ViewApplyList([view1, view2]),
         ),
         [
@@ -230,18 +230,14 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
 def valid_schema_test_cases() -> Iterable[ParameterSet]:
     dms_schema = DMSSchema(
         spaces=dm.SpaceApplyList([dm.SpaceApply(space="my_space")]),
-        data_models=dm.DataModelApplyList(
-            [
-                dm.DataModelApply(
-                    space="my_space",
-                    external_id="my_data_model",
-                    version="1",
-                    views=[
-                        dm.ViewId("my_space", "my_view1", "1"),
-                        dm.ViewId("my_space", "my_view2", "1"),
-                    ],
-                )
-            ]
+        data_model=dm.DataModelApply(
+            space="my_space",
+            external_id="my_data_model",
+            version="1",
+            views=[
+                dm.ViewId("my_space", "my_view1", "1"),
+                dm.ViewId("my_space", "my_view2", "1"),
+            ],
         ),
         containers=dm.ContainerApplyList(
             [
@@ -285,7 +281,7 @@ def valid_schema_test_cases() -> Iterable[ParameterSet]:
     pipeline_schema = PipelineSchema(
         # Serializing to ensure that we are copying the object
         spaces=dm.SpaceApplyList.load(dms_schema.spaces.dump()),
-        data_models=dm.DataModelApplyList.load(dms_schema.data_models.dump()),
+        data_model=dm.DataModelApply.load(dms_schema.data_model.dump()),
         containers=dm.ContainerApplyList.load(dms_schema.containers.dump()),
         views=dm.ViewApplyList.load(dms_schema.views.dump()),
         transformations=TransformationWriteList(

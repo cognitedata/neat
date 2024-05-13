@@ -57,10 +57,8 @@ class TestDMSImporter:
         assert rules.model_dump(exclude=exclude) == dms_rules.model_dump(exclude=exclude)
 
 
-SCHEMA_WITH_DIRECT_RELATION_NONE = DMSSchema()
-SCHEMA_WITH_DIRECT_RELATION_NONE.spaces.append(dm.SpaceApply(space="neat"))
-SCHEMA_WITH_DIRECT_RELATION_NONE.data_models.append(
-    dm.DataModelApply(
+SCHEMA_WITH_DIRECT_RELATION_NONE = DMSSchema(
+    data_model=dm.DataModelApply(
         space="neat",
         external_id="data_model",
         version="1",
@@ -69,6 +67,7 @@ SCHEMA_WITH_DIRECT_RELATION_NONE.data_models.append(
         ],
     )
 )
+SCHEMA_WITH_DIRECT_RELATION_NONE.spaces.append(dm.SpaceApply(space="neat"))
 SCHEMA_WITH_DIRECT_RELATION_NONE.containers.append(
     dm.ContainerApply(
         space="neat",

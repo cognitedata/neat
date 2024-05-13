@@ -73,7 +73,7 @@ class _DMSExporter:
 
         output = DMSSchema(
             spaces=spaces,
-            data_models=dm.DataModelApplyList([data_model]),
+            data_model=data_model,
             views=views,
             containers=containers,
             node_types=node_types,

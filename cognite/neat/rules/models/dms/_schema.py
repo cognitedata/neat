@@ -3,6 +3,7 @@ import sys
 import warnings
 import zipfile
 from collections import Counter, defaultdict
+from collections.abc import Sequence
 from dataclasses import Field, dataclass, field, fields
 from pathlib import Path
 from typing import Any, ClassVar, cast
@@ -43,12 +44,12 @@ else:
 
 @dataclass
 class DMSSchema:
-    data_models: dm.DataModelApplyList = field(default_factory=lambda: dm.DataModelApplyList([]))
+    data_model: dm.DataModelApply | None = None
     spaces: dm.SpaceApplyList = field(default_factory=lambda: dm.SpaceApplyList([]))
     views: dm.ViewApplyList = field(default_factory=lambda: dm.ViewApplyList([]))
     containers: dm.ContainerApplyList = field(default_factory=lambda: dm.ContainerApplyList([]))
     node_types: dm.NodeApplyList = field(default_factory=lambda: dm.NodeApplyList([]))
-    # The last schema is the previous version of the data model. In the case, extension=additio, this
+    # The last schema is the previous version of the data model. In the case, extension=addition, this
     # should not be modified.
     last: "DMSSchema | None" = None
     # Reference is typically the Enterprise model, while this is the solution model.
@@ -57,7 +58,7 @@ class DMSSchema:
     _FIELD_NAME_BY_RESOURCE_TYPE: ClassVar[dict[str, str]] = {
         "container": "containers",
         "view": "views",
-        "datamodel": "data_models",
+        "datamodel": "data_model",
         "space": "spaces",
         "node": "node_types",
     }
@@ -123,7 +124,7 @@ class DMSSchema:
 
         return cls(
             spaces=dm.SpaceApplyList([space]),
-            data_models=dm.DataModelApplyList([data_model_write]),
+            data_model=data_model_write,
             views=view_write,
             containers=containers.as_write(),
         )
@@ -187,11 +188,10 @@ class DMSSchema:
                 (data_models / f"{space.space}.space.yaml").write_text(
                     space.dump_yaml(), newline=new_line, encoding=encoding
                 )
-        if "data_models" not in exclude_set:
-            for model in self.data_models:
-                (data_models / f"{model.external_id}.datamodel.yaml").write_text(
-                    model.dump_yaml(), newline=new_line, encoding=encoding
-                )
+        if "data_models" not in exclude_set and self.data_model:
+            (data_models / f"{self.data_model.external_id}.datamodel.yaml").write_text(
+                self.data_model.dump_yaml(), newline=new_line, encoding=encoding
+            )
         if "views" not in exclude_set and self.views:
             view_dir = data_models / "views"
             view_dir.mkdir(parents=True, exist_ok=True)
@@ -265,9 +265,10 @@ class DMSSchema:
             if "spaces" not in exclude_set:
                 for space in self.spaces:
                     zip_ref.writestr(f"data_models/{space.space}.space.yaml", space.dump_yaml())
-            if "data_models" not in exclude_set:
-                for model in self.data_models:
-                    zip_ref.writestr(f"data_models/{model.external_id}.datamodel.yaml", model.dump_yaml())
+            if "data_models" not in exclude_set and self.data_model:
+                zip_ref.writestr(
+                    f"data_models/{self.data_model.external_id}.datamodel.yaml", self.data_model.dump_yaml()
+                )
             if "views" not in exclude_set:
                 for view in self.views:
                     zip_ref.writestr(f"data_models/views/{view.external_id}.view.yaml", view.dump_yaml())
@@ -308,10 +309,30 @@ class DMSSchema:
         loaded: dict[str, Any] = {}
         for attr in fields(cls):
             if items := data_dict.get(attr.name) or data_dict.get(to_camel(attr.name)):
-                try:
-                    loaded[attr.name] = attr.type.load(items)
-                except Exception as e:
-                    loaded[attr.name] = cls._load_individual_resources(items, attr, str(e), context.get(attr.name, []))
+                if attr.name == "data_model":
+                    if isinstance(items, list) and len(items) > 1:
+                        warnings.warn(
+                            issues.importing.MultipleDataModelsWarning(
+                                [item.get("externalId", "Unknown") for item in items]
+                            ),
+                            stacklevel=2,
+                        )
+                    item = items[0] if isinstance(items, list) else items
+                    try:
+                        loaded[attr.name] = dm.DataModelApply.load(item)
+                    except Exception as e:
+                        data_model_file = context.get(attr.name, [Path("UNKNOWN")])[0]
+                        warnings.warn(
+                            issues.fileread.FailedLoadWarning(data_model_file, dm.DataModelApply.__name__, str(e)),
+                            stacklevel=2,
+                        )
+                else:
+                    try:
+                        loaded[attr.name] = attr.type.load(items)
+                    except Exception as e:
+                        loaded[attr.name] = cls._load_individual_resources(
+                            items, attr, str(e), context.get(attr.name, [])
+                        )
         return cls(**loaded)
 
     @classmethod
@@ -353,9 +374,12 @@ class DMSSchema:
         cls_fields = sorted(fields(self), key=lambda f: f.name) if sort else fields(self)
         for attr in cls_fields:
             if items := getattr(self, attr.name):
-                items = sorted(items, key=self._to_sortable_identifier) if sort else items
                 key = to_camel(attr.name) if camel_case else attr.name
-                output[key] = [item.dump(camel_case=camel_case) for item in items]
+                if isinstance(items, Sequence):
+                    items = sorted(items, key=self._to_sortable_identifier) if sort else items
+                    output[key] = [item.dump(camel_case=camel_case) for item in items]
+                else:
+                    output[key] = items.dump(camel_case=camel_case)
         return output
 
     @classmethod
@@ -458,7 +482,8 @@ class DMSSchema:
                         )
                     )
 
-        for model in self.data_models:
+        if self.data_model:
+            model = self.data_model
             if model.space not in defined_spaces:
                 errors.add(MissingSpaceError(space=model.space, referred_by=model.as_id()))
 
@@ -512,8 +537,9 @@ class DMSSchema:
         referenced_spaces |= {container.space for view in self.views for container in view.referenced_containers()}
         referenced_spaces |= {parent.space for view in self.views for parent in view.implements or []}
         referenced_spaces |= {node.space for node in self.node_types}
-        referenced_spaces |= {model.space for model in self.data_models}
-        referenced_spaces |= {view.space for model in self.data_models for view in model.views or []}
+        if self.data_model:
+            referenced_spaces |= {self.data_model.space}
+            referenced_spaces |= {view.space for view in self.data_model.views or []}
         referenced_spaces |= {s.space for s in self.spaces}
 
         return referenced_spaces
@@ -625,9 +651,9 @@ class PipelineSchema(DMSSchema):
 
     @classmethod
     def from_dms(cls, schema: DMSSchema, instance_space: str | None = None) -> "PipelineSchema":
-        if not schema.data_models:
+        if not schema.data_model:
             raise ValueError("PipelineSchema must contain at least one data model")
-        first_data_model = schema.data_models[0]
+        first_data_model = schema.data_model
         # The database name is limited to 32 characters
         database_name = first_data_model.external_id[:32]
         instance_space = instance_space or first_data_model.space
@@ -666,7 +692,7 @@ class PipelineSchema(DMSSchema):
 
         return cls(
             spaces=schema.spaces,
-            data_models=schema.data_models,
+            data_model=schema.data_model,
             views=schema.views,
             containers=schema.containers,
             transformations=transformations,
