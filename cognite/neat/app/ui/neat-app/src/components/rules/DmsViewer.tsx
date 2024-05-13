@@ -219,10 +219,10 @@ export function DMSArchitectPropsRow(props: { row: any, properties: any, views: 
                                         <TableCell><b>Is list</b></TableCell>
                                         <TableCell><b>Default</b></TableCell>
                                         <TableCell><b>Reference</b></TableCell>
-                                        <TableCell><b>Container</b></TableCell>
-                                        <TableCell><b>Container property</b></TableCell>
                                         <TableCell><b>View</b></TableCell>
                                         <TableCell><b>View property</b></TableCell>
+                                        <TableCell><b>Container</b></TableCell>
+                                        <TableCell><b>Container property</b></TableCell>
                                         <TableCell><b>Index</b></TableCell>
                                         <TableCell><b>Constraint</b></TableCell>
                                         <TableCell><b>Actions</b></TableCell>
@@ -253,10 +253,10 @@ export function DMSArchitectPropsRow(props: { row: any, properties: any, views: 
                                             <TableCell>{pr.is_list && (<CheckIcon></CheckIcon>)} {!pr.is_list && (<ClearIcon></ClearIcon>)}</TableCell>
                                             <TableCell>{pr.default}</TableCell>
                                             <TableCell>{pr.reference}</TableCell>
+                                            <TableCell>{pr.view} </TableCell>
+                                            <TableCell>{pr.view_property}</TableCell>
                                             <TableCell>{pr.container}</TableCell>
                                             <TableCell>{pr.container_property}</TableCell>
-                                            <TableCell>{pr.view}</TableCell>
-                                            <TableCell>{pr.view_property}</TableCell>
                                             <TableCell>{pr.index}</TableCell>
                                             <TableCell>{pr.constraint}</TableCell>
                                             <TableCell><Button onClick={() => { props.onEditClick(row, "class_edit"); }}>Edit</Button></TableCell>

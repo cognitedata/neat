@@ -298,8 +298,27 @@ def upsert_rule_property(request: RuleV2PropertyUpsertRequest):
 
     if role == RoleTypes.information_architect:
         request_property = cast(InformationProperty, request.rule_component)
-        # update property or add new one
-        rules.properties.append(request_property)
+        # update if exists otherwise append
+        # existing_property = filter(
+        #     lambda prop: prop.class_ == request.rule_component.class_
+        #     and prop.property_ == request.rule_component.property_,
+        #     rules.properties,
+        # )
+        # if existing_property:
+        #     existing_property = next(existing_property)
+        #     existing_property = request_property
+        # else:
+        #     rules.properties.append(request_property)
+        for prop in rules.properties:
+            logging.info(
+                f"Checking property {prop.property_} , {request_property.property_} and {prop.class_.suffix} , {request_property.class_.suffix}"
+            )
+            if prop.class_.suffix == request_property.class_.suffix and str(prop.property_) == str(request_property.property_):  # type: ignore
+                prop = request_property
+                logging.info(f"Property {prop.property_} updated")
+                break
+        else:
+            rules.properties.append(request_property)
 
     exporters.ExcelExporter().export_to_file(rules=rules, filepath=path)
     return {"rules": rules.model_dump(), "error_text": issues}
