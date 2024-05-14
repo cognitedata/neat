@@ -41,7 +41,7 @@ from cognite.neat.rules.models.entities import (
     ViewEntityList,
     ViewPropertyEntity,
 )
-from cognite.neat.rules.models.wrapped_entities import HasDataFilter, NodeTypeFilter
+from cognite.neat.rules.models.wrapped_entities import HasDataFilter, NodeTypeFilter, RawFilter
 
 from ._schema import DMSSchema
 
@@ -257,7 +257,7 @@ class DMSView(SheetEntity):
     description: str | None = Field(alias="Description", default=None)
     implements: ViewEntityList | None = Field(None, alias="Implements")
     reference: URLEntity | ReferenceEntity | None = Field(alias="Reference", default=None, union_mode="left_to_right")
-    filter_: HasDataFilter | NodeTypeFilter | None = Field(None, alias="Filter")
+    filter_: HasDataFilter | NodeTypeFilter | RawFilter | None = Field(None, alias="Filter")
     in_model: bool = Field(True, alias="In Model")
     class_: ClassEntity = Field(alias="Class (linage)")
 

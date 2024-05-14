@@ -4,7 +4,24 @@ import pytest
 from cognite.client import data_modeling as dm
 
 from cognite.neat.rules.models.entities import ContainerEntity, DMSNodeEntity
-from cognite.neat.rules.models.wrapped_entities import DMSFilter, HasDataFilter, NodeTypeFilter, WrappedEntity
+from cognite.neat.rules.models.wrapped_entities import (
+    DMSFilter,
+    HasDataFilter,
+    NodeTypeFilter,
+    RawFilter,
+    WrappedEntity,
+)
+
+RAW_FILTER_EXAMPLE = """{"and": [
+    {
+      "in": {
+        "property": ["yggdrasil_domain_model", "EntityTypeGroup", "entityType"],
+        "values": ["CFIHOS_00000003"]
+      }
+    }
+  ]}"""
+
+RAW_FILTER_CELL_EXAMPLE = f"""rawFilter({RAW_FILTER_EXAMPLE})"""
 
 
 class TestWrappedEntities:
@@ -42,6 +59,11 @@ class TestWrappedEntities:
                         DMSNodeEntity(space="space", externalId="node2"),
                     ]
                 ),
+            ),
+            (
+                RawFilter,
+                RAW_FILTER_CELL_EXAMPLE,
+                RawFilter(filter=RAW_FILTER_EXAMPLE),
             ),
         ],
     )
