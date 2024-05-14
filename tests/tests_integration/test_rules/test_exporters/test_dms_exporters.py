@@ -214,7 +214,7 @@ class TestDMSExporters:
             "node", space="sp_table_example_data", sources=[table_view.as_id()], limit=-1
         )
         assert len(table_nodes) == len(table_example_data["Table"])
-        item_view = next((view for view in views if view.external_id == "Item"), None)
+        item_view = next((view for view in views.values() if view.external_id == "Item"), None)
         item_nodes = cognite_client.data_modeling.instances.list(
             "node", space="sp_table_example_data", sources=[item_view.as_id()], limit=-1
         )
