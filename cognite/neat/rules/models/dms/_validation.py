@@ -193,8 +193,8 @@ class DMSPostValidation:
             # Reshape allows changes to views
             return None
 
-        new_views = {view.as_id(): view for view in user_schema.views}
-        existing_views = {view.as_id(): view for view in ref_schema.views}
+        new_views = user_schema.views.copy()
+        existing_views = ref_schema.views.copy()
         for view_id, view in new_views.items():
             existing_view = existing_views.get(view_id)
             if not existing_view or existing_view == view:

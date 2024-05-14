@@ -31,11 +31,12 @@ from cognite.neat.rules.issues.dms import (
     MissingViewError,
 )
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
+from cognite.neat.utils.cdf_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
 from cognite.neat.utils.cdf_loaders import ViewLoader
 from cognite.neat.utils.cdf_loaders.data_classes import RawTableWrite, RawTableWriteList
 from cognite.neat.utils.text import to_camel
 from cognite.neat.utils.utils import get_inheritance_path
-from cognite.neat.utils.cdf_classes import NodeApplyDict, ViewApplyDict, SpaceApplyDict, ContainerApplyDict
+
 if sys.version_info >= (3, 11):
     from typing import Self
 else:
@@ -150,9 +151,9 @@ class DMSSchema:
         # as the read format contains all properties from all parents, while the write formate should not contain
         # properties from any parents.
         # The ViewLoader as_write method looks up parents and remove properties from them.
-        view_write = dm.ViewApplyList([view_loader.as_write(view) for view in views])
+        view_write = ViewApplyDict([view_loader.as_write(view) for view in views])
 
-        container_write = containers.as_write()
+        container_write = ContainerApplyDict(containers.as_write())
         user_space = data_model.space
         if reference_model:
             user_model_view_ids = set(data_model_write.views)
@@ -160,17 +161,25 @@ class DMSSchema:
             ref_model_write.views = [view.as_id() for view in reference_model.views]
 
             ref_views = ViewApplyDict(
-                [view for view in view_write if (view.space != user_space) or (view.as_id() not in user_model_view_ids)]
+                [
+                    view
+                    for view_id, view in view_write.items()
+                    if (view.space != user_space) or (view_id not in user_model_view_ids)
+                ]
             )
             view_write = ViewApplyDict(
-                [view for view in view_write if view.space == user_space or view.as_id() in user_model_view_ids]
+                [
+                    view
+                    for view_id, view in view_write.items()
+                    if view.space == user_space or view_id in user_model_view_ids
+                ]
             )
 
             ref_containers = ContainerApplyDict(
-                [container for container in container_write if container.space != user_space]
+                [container for container in container_write.values() if container.space != user_space]
             )
             container_write = ContainerApplyDict(
-                [container for container in container_write if container.space == user_space]
+                [container for container in container_write.values() if container.space == user_space]
             )
 
             ref_schema: DMSSchema | None = cls(
@@ -603,7 +612,9 @@ class DMSSchema:
         referenced_spaces = {view.space for view in self.views.values()}
         referenced_spaces |= {container.space for container in self.containers.values()}
         if include_indirect_references:
-            referenced_spaces |= {container.space for view in self.views.values() for container in view.referenced_containers()}
+            referenced_spaces |= {
+                container.space for view in self.views.values() for container in view.referenced_containers()
+            }
             referenced_spaces |= {parent.space for view in self.views.values() for parent in view.implements or []}
         referenced_spaces |= {node.space for node in self.node_types.values()}
         if self.data_model:

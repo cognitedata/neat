@@ -60,11 +60,9 @@ class DMSImporter(BaseImporter):
         self.metadata = metadata
         self.ref_metadata = ref_metadata
         self.issue_list = IssueList(read_issues)
-        self._all_containers_by_id = {container.as_id(): container for container in schema.containers}
+        self._all_containers_by_id = schema.containers.copy()
         if self.root_schema.reference:
-            self._all_containers_by_id.update(
-                {container.as_id(): container for container in self.root_schema.reference.containers}
-            )
+            self._all_containers_by_id.update(self.root_schema.reference.containers)
 
     @classmethod
     def from_data_model_id(

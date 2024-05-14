@@ -47,7 +47,8 @@ class CogniteResourceDict(dict, MutableMapping[T_ID, T_CogniteResource], ABC):
         self,
         items: Iterable[T_CogniteResource]
         | Iterable[tuple[T_ID, T_CogniteResource]]
-        | Mapping[T_ID, T_CogniteResource] | None = None,
+        | Mapping[T_ID, T_CogniteResource]
+        | None = None,
     ) -> None:
         if isinstance(items, Mapping):
             super().__init__(items)
@@ -129,7 +130,6 @@ class CogniteResourceDict(dict, MutableMapping[T_ID, T_CogniteResource], ABC):
 
     def copy(self) -> "CogniteResourceDict[T_ID, T_CogniteResource]":
         return cast(CogniteResourceDict[T_ID, T_CogniteResource], super().copy())
-
 
 
 T_CogniteResourceDict = TypeVar("T_CogniteResourceDict", bound=CogniteResourceDict)

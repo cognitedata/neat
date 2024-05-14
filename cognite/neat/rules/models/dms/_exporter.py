@@ -22,6 +22,7 @@ from cognite.neat.rules.models.entities import (
     ViewPropertyEntity,
 )
 from cognite.neat.rules.models.wrapped_entities import DMSFilter, HasDataFilter, NodeTypeFilter
+from cognite.neat.utils.cdf_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
 
 from ._rules import DMSMetadata, DMSProperty, DMSRules, DMSView
 from ._schema import DMSSchema, PipelineSchema
@@ -51,7 +52,9 @@ class _DMSExporter:
         self._ref_schema = rules.reference.as_schema() if rules.reference else None
         if self._ref_schema:
             # We skip version as that will always be missing in the reference
-            self._ref_views_by_id = {dm.ViewId(view.space, view.external_id): view for view in self._ref_schema.views}
+            self._ref_views_by_id = {
+                dm.ViewId(view.space, view.external_id): view for view in self._ref_schema.views.values()
+            }
         else:
             self._ref_views_by_id = {}
 
@@ -65,7 +68,7 @@ class _DMSExporter:
         views_not_in_model = {view.view.as_id() for view in rules.views if not view.in_model}
         data_model = rules.metadata.as_data_model()
         data_model.views = sorted(
-            [view_id for view_id in views.as_ids() if view_id not in views_not_in_model],
+            [view_id for view_id in views.keys() if view_id not in views_not_in_model],
             key=lambda v: v.as_tuple(),  # type: ignore[union-attr]
         )
 
@@ -89,31 +92,30 @@ class _DMSExporter:
     def _create_spaces(
         self,
         metadata: DMSMetadata,
-        containers: dm.ContainerApplyList,
-        views: dm.ViewApplyList,
+        containers: ContainerApplyDict,
+        views: ViewApplyDict,
         data_model: dm.DataModelApply,
-    ) -> dm.SpaceApplyList:
-        used_spaces = {container.space for container in containers} | {view.space for view in views}
+    ) -> SpaceApplyDict:
+        used_spaces = {container.space for container in containers.values()} | {view.space for view in views.values()}
         if len(used_spaces) == 1:
             # We skip the default space and only use this space for the data model
             data_model.space = used_spaces.pop()
-            spaces = dm.SpaceApplyList([dm.SpaceApply(space=data_model.space)])
+            spaces = SpaceApplyDict([dm.SpaceApply(space=data_model.space)])
         else:
             used_spaces.add(metadata.space)
-            spaces = dm.SpaceApplyList([dm.SpaceApply(space=space) for space in used_spaces])
-        if self.instance_space and self.instance_space not in {space.space for space in spaces}:
-            spaces.append(dm.SpaceApply(space=self.instance_space, name=self.instance_space))
+            spaces = SpaceApplyDict([dm.SpaceApply(space=space) for space in used_spaces])
+        if self.instance_space and self.instance_space not in spaces:
+            spaces[self.instance_space] = dm.SpaceApply(space=self.instance_space, name=self.instance_space)
         return spaces
 
     def _create_views_with_node_types(
         self,
         view_properties_by_id: dict[dm.ViewId, list[DMSProperty]],
-    ) -> tuple[dm.ViewApplyList, dm.NodeApplyList]:
-        views = dm.ViewApplyList([dms_view.as_view() for dms_view in self.rules.views])
+    ) -> tuple[ViewApplyDict, NodeApplyDict]:
+        views = ViewApplyDict([dms_view.as_view() for dms_view in self.rules.views])
         dms_view_by_id = {dms_view.view.as_id(): dms_view for dms_view in self.rules.views}
 
-        for view in views:
-            view_id = view.as_id()
+        for view_id, view in views.items():
             view.properties = {}
             if not (view_properties := view_properties_by_id.get(view_id)):
                 continue
@@ -124,10 +126,10 @@ class _DMSExporter:
 
         data_model_type = self.rules.metadata.data_model_type
         unique_node_types: set[dm.NodeId] = set()
-        parent_views = {parent for view in views for parent in view.implements or []}
-        for view in views:
-            dms_view = dms_view_by_id.get(view.as_id())
-            dms_properties = view_properties_by_id.get(view.as_id(), [])
+        parent_views = {parent for view in views.values() for parent in view.implements or []}
+        for view_id, view in views.items():
+            dms_view = dms_view_by_id.get(view_id)
+            dms_properties = view_properties_by_id.get(view_id, [])
             view_filter = self._create_view_filter(view, dms_view, data_model_type, dms_properties)
 
             view.filter = view_filter.as_dms_filter()
@@ -151,7 +153,7 @@ class _DMSExporter:
                     issues.dms.HasDataFilterOnViewWithReferencesWarning(view.as_id(), list(references)), stacklevel=2
                 )
 
-        return views, dm.NodeApplyList(
+        return views, NodeApplyDict(
             [dm.NodeApply(space=node.space, external_id=node.external_id) for node in unique_node_types]
         )
 
@@ -174,7 +176,7 @@ class _DMSExporter:
     def _create_containers(
         self,
         container_properties_by_id: dict[dm.ContainerId, list[DMSProperty]],
-    ) -> dm.ContainerApplyList:
+    ) -> ContainerApplyDict:
         containers = dm.ContainerApplyList(
             [dms_container.as_container() for dms_container in self.rules.containers or []]
         )
@@ -229,9 +231,7 @@ class _DMSExporter:
                     for name, const in container.constraints.items()
                     if not (isinstance(const, dm.RequiresConstraint) and const.require in container_to_drop)
                 }
-        return dm.ContainerApplyList(
-            [container for container in containers if container.as_id() not in container_to_drop]
-        )
+        return ContainerApplyDict([container for container in containers if container.as_id() not in container_to_drop])
 
     def _gather_properties(self) -> tuple[dict[dm.ContainerId, list[DMSProperty]], dict[dm.ViewId, list[DMSProperty]]]:
         container_properties_by_id: dict[dm.ContainerId, list[DMSProperty]] = defaultdict(list)
