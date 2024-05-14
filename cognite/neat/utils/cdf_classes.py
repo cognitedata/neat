@@ -1,5 +1,12 @@
 from abc import ABC, abstractmethod
-from collections.abc import Iterable, MutableMapping
+from collections.abc import (
+    ItemsView,
+    Iterable,
+    Iterator,
+    KeysView,
+    MutableMapping,
+    ValuesView,
+)
 from typing import Any, TypeVar, cast, final
 
 import pandas as pd
@@ -74,6 +81,37 @@ class CogniteResourceDict(dict, MutableMapping[T_ID, T_CogniteResource], ABC):
     ) -> "T_CogniteResourceDict":
         resources = (cls._RESOURCE._load(resource) for resource in resource_list)
         return cls({cls._as_id(resource): resource for resource in resources})  # type: ignore[abstract]
+
+    # The below methods are included to make better type hints in the IDE
+    def __getitem__(self, k: T_ID) -> T_CogniteResource:
+        return super().__getitem__(k)
+
+    def __setitem__(self, k: T_ID, v: T_CogniteResource) -> None:
+        super().__setitem__(k, v)
+
+    def __delitem__(self, k: T_ID) -> None:
+        super().__delitem__(k)
+
+    def __iter__(self) -> Iterator[T_ID]:
+        return super().__iter__()
+
+    def keys(self) -> KeysView[T_ID]:  # type: ignore[override]
+        return super().keys()
+
+    def values(self) -> ValuesView[T_CogniteResource]:  # type: ignore[override]
+        return super().values()
+
+    def items(self) -> ItemsView[T_ID, T_CogniteResource]:  # type: ignore[override]
+        return super().items()
+
+    def get(self, __key: T_ID, __default: Any = ...) -> T_CogniteResource:
+        return super().get(__key, __default)
+
+    def pop(self, __key: T_ID, __default: Any = ...) -> T_CogniteResource:
+        return super().pop(__key, __default)
+
+    def popitem(self) -> tuple[T_ID, T_CogniteResource]:
+        return super().popitem()
 
 
 T_CogniteResourceDict = TypeVar("T_CogniteResourceDict", bound=CogniteResourceDict)

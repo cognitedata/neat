@@ -1,3 +1,5 @@
+from cognite.client.data_classes.data_modeling import NodeApply, NodeId
+
 from cognite.neat.utils.cdf_classes import NodeApplyDict
 
 
@@ -13,7 +15,6 @@ class TestCogniteResourceDict:
 
     def test_node_load_dump(self) -> None:
         nodes = NodeApplyDict.load(self.TWO_NODES_RAW)
-
         assert isinstance(nodes, NodeApplyDict)
 
         dumped = nodes.dump()
@@ -32,3 +33,13 @@ class TestCogniteResourceDict:
         dumped = self.TWO_NODES.dump_yaml()
 
         assert dumped == self.TWO_NODES_RAW
+
+    def test_iterate_nodes(self) -> None:
+        node_id = next(iter(self.TWO_NODES))
+        assert isinstance(node_id, NodeId)
+
+    def test_iterate_items(self) -> None:
+        node_id, node = next(iter(self.TWO_NODES.items()))
+
+        assert isinstance(node_id, NodeId)
+        assert isinstance(node, NodeApply)
