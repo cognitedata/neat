@@ -10,24 +10,29 @@ from cognite.client.data_classes.data_modeling import (
     ContainerId,
     DataModelApply,
     DataModelId,
-    DataModelingId,
     NodeApply,
     NodeId,
     SpaceApply,
-    VersionedDataModelingId,
     ViewApply,
     ViewId,
 )
-from cognite.client.data_classes.data_modeling.ids import InstanceId
 from cognite.client.utils._auxiliary import load_yaml_or_json
 from cognite.client.utils._pandas_helpers import (
     convert_nullable_int_cols,
 )
 
-T_ID = TypeVar("T_ID", bound=str | VersionedDataModelingId | DataModelingId | InstanceId)
+T_ID = TypeVar("T_ID")
 
 
+# Inheriting from dict as we are extending it,
+# ref https://stackoverflow.com/questions/7148419/subclass-dict-userdict-dict-or-abc
 class CogniteResourceDict(dict, MutableMapping[T_ID, T_CogniteResource], ABC):
+    """CogniteResource stored in a mapping structure.
+
+    When the .dump() method is called da list (array with .dump_yaml) is returned. Similarly, the
+    .load method expects an iterable of dict or a string in yaml/json format.
+    """
+
     _RESOURCE: type[T_CogniteResource]
 
     @classmethod
@@ -35,14 +40,14 @@ class CogniteResourceDict(dict, MutableMapping[T_ID, T_CogniteResource], ABC):
     def _as_id(cls, resource: T_CogniteResource) -> T_ID:
         raise NotImplementedError
 
-    def dump(self, camel_case: bool = True) -> dict:
-        return {key: value.dump(camel_case) for key, value in self.items()}
+    def dump(self, camel_case: bool = True) -> list[dict[str, Any]]:
+        return [value.dump(camel_case) for value in self.values()]
 
     def dump_yaml(self) -> str:
         return yaml.dump(self.dump(camel_case=True), sort_keys=False)
 
     def to_pandas(self, camel_case: bool = False) -> pd.DataFrame:
-        df = pd.DataFrame(self.dump(camel_case=camel_case).values())
+        df = pd.DataFrame(self.dump(camel_case=camel_case))
         df = convert_nullable_int_cols(df)
         return df
 
@@ -64,7 +69,7 @@ class CogniteResourceDict(dict, MutableMapping[T_ID, T_CogniteResource], ABC):
         resource_list: Iterable[dict[str, Any]],
     ) -> "T_CogniteResourceDict":
         resources = (cls._RESOURCE._load(resource) for resource in resource_list)
-        return cls({cls._as_id(resource): resource for resource in resources})
+        return cls({cls._as_id(resource): resource for resource in resources})  # type: ignore[abstract]
 
 
 T_CogniteResourceDict = TypeVar("T_CogniteResourceDict", bound=CogniteResourceDict)
