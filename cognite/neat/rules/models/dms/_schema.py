@@ -35,7 +35,7 @@ from cognite.neat.utils.cdf_loaders import ViewLoader
 from cognite.neat.utils.cdf_loaders.data_classes import RawTableWrite, RawTableWriteList
 from cognite.neat.utils.text import to_camel
 from cognite.neat.utils.utils import get_inheritance_path
-
+from cognite.neat.utils.cdf_classes import NodeApplyDict, ViewApplyDict, SpaceApplyDict, ContainerApplyDict
 if sys.version_info >= (3, 11):
     from typing import Self
 else:
@@ -45,10 +45,10 @@ else:
 @dataclass
 class DMSSchema:
     data_model: dm.DataModelApply | None = None
-    spaces: dm.SpaceApplyList = field(default_factory=lambda: dm.SpaceApplyList([]))
-    views: dm.ViewApplyList = field(default_factory=lambda: dm.ViewApplyList([]))
-    containers: dm.ContainerApplyList = field(default_factory=lambda: dm.ContainerApplyList([]))
-    node_types: dm.NodeApplyList = field(default_factory=lambda: dm.NodeApplyList([]))
+    spaces: SpaceApplyDict = field(default_factory=SpaceApplyDict)
+    views: ViewApplyDict = field(default_factory=ViewApplyDict)
+    containers: ContainerApplyDict = field(default_factory=ContainerApplyDict)
+    node_types: NodeApplyDict = field(default_factory=NodeApplyDict)
     # The last schema is the previous version of the data model. In the case, extension=addition, this
     # should not be modified.
     last: "DMSSchema | None" = None
