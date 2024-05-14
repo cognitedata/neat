@@ -161,7 +161,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     ),
                 ]
             ),
-            node_types=dm.NodeApplyList([dm.NodeApply(space="my_space", external_id="WindFarm")]),
+            node_types=NodeApplyDict([dm.NodeApply(space="my_space", external_id="WindFarm")]),
         ),
         id="Two properties, one container, one view",
     )
@@ -282,7 +282,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ]
         ),
-        node_types=dm.NodeApplyList([]),
+        node_types=NodeApplyDict([]),
     )
     yield pytest.param(
         dms_rules,
@@ -383,7 +383,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ],
         ),
-        node_types=dm.NodeApplyList([]),
+        node_types=NodeApplyDict([]),
     )
 
     yield pytest.param(
