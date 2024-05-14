@@ -42,8 +42,12 @@ class WrappedEntity(BaseModel, ABC):
             return {"inner": None}
 
         # raw filter case:
-        if match := re.search(r"rawFilter\(([\s\S]*?)\)", data):
-            return {"filter": match.group(1), "inner": None}
+        if cls.__name__ == "RawFilter":
+            if match := re.search(r"rawFilter\(([\s\S]*?)\)", data):
+                return {"filter": match.group(1), "inner": None}
+            else:
+                raise ValueError(f"Cannot parse {cls.name} from {data}. Ill formatted raw filter.")
+
         # nodeType and hasData case:
         elif inner := data[len(cls.name) :].removeprefix("(").removesuffix(")"):
             return {"inner": [cls._inner_cls.load(entry.strip()) for entry in inner.split(",")]}
