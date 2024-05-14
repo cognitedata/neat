@@ -103,3 +103,15 @@ class TestWrappedEntities:
         loaded = DMSFilter.from_dms_filter(filter_)
 
         assert loaded == expected
+
+    def test_has_data_vs_raw_filter(self) -> None:
+        assert (
+            HasDataFilter.load("hasData(space:container1)").as_dms_filter().dump()
+            == RawFilter.load(
+                """rawFilter({"hasData": [{"type": "container",
+                                           "space": "space",
+                                           "externalId": "container1"}]})"""
+            )
+            .as_dms_filter()
+            .dump()
+        )

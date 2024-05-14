@@ -17,7 +17,6 @@ class WrappedEntity(BaseModel, ABC):
     name: ClassVar[str]
     _inner_cls: ClassVar[type[Entity]]
     inner: list[Entity] | None
-    filter: str | None = None
 
     @classmethod
     def load(cls: "type[T_WrappedEntity]", data: Any) -> "T_WrappedEntity":
@@ -91,10 +90,7 @@ class WrappedEntity(BaseModel, ABC):
         return hash(str(self))
 
     def __repr__(self) -> str:
-        if self.filter:
-            return self.filter
-        else:
-            return self.id
+        return self.id
 
 
 T_WrappedEntity = TypeVar("T_WrappedEntity", bound=WrappedEntity)
@@ -129,33 +125,27 @@ class DMSFilter(WrappedEntity):
                     if isinstance(entry, dict) and "space" in entry and "externalId" in entry
                 ]
             )
-        else:
-            return RawFilter(filter=json.dumps(dumped))
 
         raise ValueError(f"Cannot convert {filter._filter_name} to {cls.__name__}")
 
 
 class RawFilter(DMSFilter):
     name: ClassVar[str] = "rawFilter"
-    inner: list[ContainerEntity] | None = None  # type: ignore[assignment]
+    filter: str
+    inner: None = None  # type: ignore[assignment]
 
     def as_dms_filter(self, default: str | None = None) -> dm.Filter:
-        if self.filter:
-            try:
-                return dm.Filter.load(json.loads(self.filter))
-            except json.JSONDecodeError as e:
-                raise ValueError(f"Error loading raw filter: {e}") from e
-        elif default:
-            try:
-                return dm.Filter.load(json.loads(default))
-            except json.JSONDecodeError as e:
-                raise ValueError(f"Error loading default raw filter: {e}") from e
-        else:
-            raise ValueError("Empty raw filter, please provide a raw filter or default filter.")
+        try:
+            return dm.Filter.load(json.loads(self.filter))
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Error loading raw filter: {e}") from e
 
     @property
     def is_empty(self) -> bool:
         return self.filter is None
+
+    def __repr__(self) -> str:
+        return self.filter
 
 
 class NodeTypeFilter(DMSFilter):
@@ -192,7 +182,6 @@ class HasDataFilter(DMSFilter):
     name: ClassVar[str] = "hasData"
     _inner_cls: ClassVar[type[ContainerEntity]] = ContainerEntity
     inner: list[ContainerEntity] | None = None  # type: ignore[assignment]
-    filter: str | None = None
 
     def as_dms_filter(self, default: Collection[ContainerId] | None = None) -> dm.Filter:
         containers: list[ContainerId]
