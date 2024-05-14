@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.77.1] - 14-05-24
+### Added
+- Support for `RawFilters` allow arbitrary filters to be applied to the data model.
+
+
 ## [0.77.0] - 13-05-24
 ### Changed
 - [BREAKING] The subpackage `cognite.neat.rules.models` is reorganized. All imports using this subpackage must be
