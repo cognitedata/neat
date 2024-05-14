@@ -134,7 +134,7 @@ class RawFilter(DMSFilter):
     filter: str
     inner: None = None  # type: ignore[assignment]
 
-    def as_dms_filter(self, default: str | None = None) -> dm.Filter:
+    def as_dms_filter(self) -> dm.Filter:  # type: ignore[override]
         try:
             return dm.Filter.load(json.loads(self.filter))
         except json.JSONDecodeError as e:
