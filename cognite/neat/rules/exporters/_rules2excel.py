@@ -74,8 +74,8 @@ class ExcelExporter(BaseExporter[Workbook]):
         self,
         styling: Style = "default",
         output_role: RoleTypes | None = None,
-        new_model_id: tuple[str, str, str] | None = None,
         dump_as: DumpOptions = "user",
+        new_model_id: tuple[str, str, str] | None = None,
     ):
         if styling not in self.style_options:
             raise ValueError(f"Invalid styling: {styling}. Valid options are {self.style_options}")
