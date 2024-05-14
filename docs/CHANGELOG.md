@@ -15,7 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.77.1] - 14-05-24
+### Added
+- Support for `RawFilters` allow arbitrary filters to be applied to the data model.
+
+## [0.77.0] - 13-05-24
 ### Changed
 - [BREAKING] The subpackage `cognite.neat.rules.models` is reorganized. All imports using this subpackage must be
   updated.
@@ -24,6 +28,8 @@ Changes are grouped as follows:
 - Support for exporting/importing `Last` spreadsheets in the `ExcelExporter` and `ExcelImporter`.
 - [BREAKING] As a result of the above, in the `ExcelExporter` the parameter `is_reference` is replaced by `dump_as`.
   To continue using the old behavior, set `dump_as='reference'`.
+- In the `DMSImporter.from_data_model_id`, now supports setting `reference_model_id` to download a solution model
+  with a reference model.
 
 ## [0.76.3] - 10-05-24
 ### Added
