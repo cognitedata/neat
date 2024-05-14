@@ -51,3 +51,6 @@ class TestCogniteResourceDict:
     def test_instantiate_from_list(self) -> None:
         nodes = NodeApplyDict(list(self.TWO_NODES.values()))
         assert len(nodes) == 2
+
+    def test_is_dict(self) -> None:
+        assert isinstance(self.TWO_NODES, dict)
