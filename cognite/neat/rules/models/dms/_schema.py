@@ -65,22 +65,21 @@ class DMSSchema:
 
     def _get_mapped_container_from_view(self, view_id: dm.ViewId) -> set[dm.ContainerId]:
         # index all views, including ones from reference
-        indexed_views = {
-            **{view.as_id(): view for view in self.views},
-            **({view.as_id(): view for view in self.reference.views} if self.reference else {}),
-        }
+        view_by_id = self.views.copy()
+        if self.reference:
+            view_by_id.update(self.reference.views)
 
-        if view_id not in indexed_views:
+        if view_id not in view_by_id:
             raise ValueError(f"View {view_id} not found")
 
-        indexed_implemented_views = {id_: view.implements for id_, view in indexed_views.items()}
+        indexed_implemented_views = {id_: view.implements for id_, view in view_by_id.items()}
         view_inheritance = get_inheritance_path(view_id, indexed_implemented_views)
 
-        directly_referenced_containers = indexed_views[view_id].referenced_containers()
+        directly_referenced_containers = view_by_id[view_id].referenced_containers()
         inherited_referenced_containers = set()
 
         for view_id in view_inheritance:
-            if implemented_view := indexed_views.get(view_id):
+            if implemented_view := view_by_id.get(view_id):
                 inherited_referenced_containers |= implemented_view.referenced_containers()
             else:
                 raise IncompleteSchemaError(missing_component=view_id).as_exception()
@@ -160,22 +159,22 @@ class DMSSchema:
             ref_model_write = reference_model.as_write()
             ref_model_write.views = [view.as_id() for view in reference_model.views]
 
-            ref_views = dm.ViewApplyList(
+            ref_views = ViewApplyDict(
                 [view for view in view_write if (view.space != user_space) or (view.as_id() not in user_model_view_ids)]
             )
-            view_write = dm.ViewApplyList(
+            view_write = ViewApplyDict(
                 [view for view in view_write if view.space == user_space or view.as_id() in user_model_view_ids]
             )
 
-            ref_containers = dm.ContainerApplyList(
+            ref_containers = ContainerApplyDict(
                 [container for container in container_write if container.space != user_space]
             )
-            container_write = dm.ContainerApplyList(
+            container_write = ContainerApplyDict(
                 [container for container in container_write if container.space == user_space]
             )
 
             ref_schema: DMSSchema | None = cls(
-                spaces=dm.SpaceApplyList([s for s in space_write if s.space != user_space]),
+                spaces=SpaceApplyDict([s for s in space_write if s.space != user_space]),
                 data_model=ref_model_write,
                 views=ref_views,
                 containers=ref_containers,
@@ -183,7 +182,7 @@ class DMSSchema:
         else:
             ref_schema = None
         return cls(
-            spaces=dm.SpaceApplyList([s for s in space_write if s.space == user_space]),
+            spaces=SpaceApplyDict([s for s in space_write if s.space == user_space]),
             data_model=data_model_write,
             views=view_write,
             containers=container_write,
@@ -245,7 +244,7 @@ class DMSSchema:
         data_models = path_dir / "data_models"
         data_models.mkdir(parents=True, exist_ok=True)
         if "spaces" not in exclude_set:
-            for space in self.spaces:
+            for space in self.spaces.values():
                 (data_models / f"{space.space}.space.yaml").write_text(
                     space.dump_yaml(), newline=new_line, encoding=encoding
                 )
@@ -256,21 +255,21 @@ class DMSSchema:
         if "views" not in exclude_set and self.views:
             view_dir = data_models / "views"
             view_dir.mkdir(parents=True, exist_ok=True)
-            for view in self.views:
+            for view in self.views.values():
                 (view_dir / f"{view.external_id}.view.yaml").write_text(
                     view.dump_yaml(), newline=new_line, encoding=encoding
                 )
         if "containers" not in exclude_set and self.containers:
             container_dir = data_models / "containers"
             container_dir.mkdir(parents=True, exist_ok=True)
-            for container in self.containers:
+            for container in self.containers.values():
                 (container_dir / f"{container.external_id}.container.yaml").write_text(
                     container.dump_yaml(), newline=new_line, encoding=encoding
                 )
         if "node_types" not in exclude_set and self.node_types:
             node_dir = data_models / "nodes"
             node_dir.mkdir(parents=True, exist_ok=True)
-            for node in self.node_types:
+            for node in self.node_types.values():
                 (node_dir / f"{node.external_id}.node.yaml").write_text(
                     node.dump_yaml(), newline=new_line, encoding=encoding
                 )
@@ -324,22 +323,22 @@ class DMSSchema:
         exclude_set = exclude or set()
         with zipfile.ZipFile(zip_file, "w") as zip_ref:
             if "spaces" not in exclude_set:
-                for space in self.spaces:
+                for space in self.spaces.values():
                     zip_ref.writestr(f"data_models/{space.space}.space.yaml", space.dump_yaml())
             if "data_models" not in exclude_set and self.data_model:
                 zip_ref.writestr(
                     f"data_models/{self.data_model.external_id}.datamodel.yaml", self.data_model.dump_yaml()
                 )
             if "views" not in exclude_set:
-                for view in self.views:
+                for view in self.views.values():
                     zip_ref.writestr(f"data_models/views/{view.external_id}.view.yaml", view.dump_yaml())
             if "containers" not in exclude_set:
-                for container in self.containers:
+                for container in self.containers.values():
                     zip_ref.writestr(
                         f"data_models/containers{container.external_id}.container.yaml", container.dump_yaml()
                     )
             if "node_types" not in exclude_set:
-                for node in self.node_types:
+                for node in self.node_types.values():
                     zip_ref.writestr(f"data_models/nodes/{node.external_id}.node.yaml", node.dump_yaml())
 
     @classmethod
@@ -461,19 +460,19 @@ class DMSSchema:
 
     def validate(self) -> list[DMSSchemaError]:
         errors: set[DMSSchemaError] = set()
-        defined_spaces = {space.space for space in self.spaces}
-        defined_containers = {container.as_id(): container for container in self.containers}
-        defined_views = {view.as_id() for view in self.views}
+        defined_spaces = self.spaces.copy()
+        defined_containers = self.containers.copy()
+        defined_views = self.views.copy()
         if self.reference:
-            defined_spaces |= {space.space for space in self.reference.spaces}
-            defined_containers |= {container.as_id(): container for container in self.reference.containers}
-            defined_views |= {view.as_id() for view in self.reference.views}
+            defined_spaces |= self.reference.spaces
+            defined_containers |= self.reference.containers
+            defined_views |= self.reference.views
 
-        for container in self.containers:
+        for container in self.containers.values():
             if container.space not in defined_spaces:
                 errors.add(MissingSpaceError(space=container.space, referred_by=container.as_id()))
 
-        for view in self.views:
+        for view in self.views.values():
             view_id = view.as_id()
             if view.space not in defined_spaces:
                 errors.add(MissingSpaceError(space=view.space, referred_by=view_id))
@@ -601,16 +600,16 @@ class DMSSchema:
         Returns:
             set[str]: The spaces referenced by the schema.
         """
-        referenced_spaces = {view.space for view in self.views}
-        referenced_spaces |= {container.space for container in self.containers}
+        referenced_spaces = {view.space for view in self.views.values()}
+        referenced_spaces |= {container.space for container in self.containers.values()}
         if include_indirect_references:
-            referenced_spaces |= {container.space for view in self.views for container in view.referenced_containers()}
-            referenced_spaces |= {parent.space for view in self.views for parent in view.implements or []}
-        referenced_spaces |= {node.space for node in self.node_types}
+            referenced_spaces |= {container.space for view in self.views.values() for container in view.referenced_containers()}
+            referenced_spaces |= {parent.space for view in self.views.values() for parent in view.implements or []}
+        referenced_spaces |= {node.space for node in self.node_types.values()}
         if self.data_model:
             referenced_spaces |= {self.data_model.space}
             referenced_spaces |= {view.space for view in self.data_model.views or []}
-        referenced_spaces |= {s.space for s in self.spaces}
+        referenced_spaces |= {s.space for s in self.spaces.values()}
         return referenced_spaces
 
 
@@ -727,12 +726,12 @@ class PipelineSchema(DMSSchema):
         database_name = first_data_model.external_id[:32]
         instance_space = instance_space or first_data_model.space
         database = DatabaseWrite(name=database_name)
-        parent_views = {parent for view in schema.views for parent in view.implements or []}
-        container_by_id = {container.as_id(): container for container in schema.containers}
+        parent_views = {parent for view in schema.views.values() for parent in view.implements or []}
+        container_by_id = schema.containers.copy()
 
         transformations = TransformationWriteList([])
         raw_tables = RawTableWriteList([])
-        for view in schema.views:
+        for view in schema.views.values():
             if view.as_id() in parent_views:
                 # Skipping parents as they do not have their own data
                 continue

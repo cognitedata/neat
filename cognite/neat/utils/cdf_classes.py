@@ -45,14 +45,16 @@ class CogniteResourceDict(dict, MutableMapping[T_ID, T_CogniteResource], ABC):
 
     def __init__(
         self,
-        items: Iterable[tuple[T_ID, T_CogniteResource]]
-        | Mapping[T_ID, T_CogniteResource]
-        | Iterable[T_CogniteResource],
+        items: Iterable[T_CogniteResource]
+        | Iterable[tuple[T_ID, T_CogniteResource]]
+        | Mapping[T_ID, T_CogniteResource] | None = None,
     ) -> None:
         if isinstance(items, Mapping):
             super().__init__(items)
-        else:
+        elif isinstance(items, Iterable):
             super().__init__(item if isinstance(item, tuple) else (self._as_id(item), item) for item in items)
+        else:
+            super().__init__()
 
     @classmethod
     @abstractmethod
@@ -124,6 +126,10 @@ class CogniteResourceDict(dict, MutableMapping[T_ID, T_CogniteResource], ABC):
 
     def popitem(self) -> tuple[T_ID, T_CogniteResource]:
         return super().popitem()
+
+    def copy(self) -> "CogniteResourceDict[T_ID, T_CogniteResource]":
+        return cast(CogniteResourceDict[T_ID, T_CogniteResource], super().copy())
+
 
 
 T_CogniteResourceDict = TypeVar("T_CogniteResourceDict", bound=CogniteResourceDict)
