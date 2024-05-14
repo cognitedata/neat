@@ -4,6 +4,7 @@ from collections.abc import (
     Iterable,
     Iterator,
     KeysView,
+    Mapping,
     MutableMapping,
     ValuesView,
 )
@@ -41,6 +42,17 @@ class CogniteResourceDict(dict, MutableMapping[T_ID, T_CogniteResource], ABC):
     """
 
     _RESOURCE: type[T_CogniteResource]
+
+    def __init__(
+        self,
+        items: Iterable[tuple[T_ID, T_CogniteResource]]
+        | Mapping[T_ID, T_CogniteResource]
+        | Iterable[T_CogniteResource],
+    ) -> None:
+        if isinstance(items, Mapping):
+            super().__init__(items)
+        else:
+            super().__init__(item if isinstance(item, tuple) else (self._as_id(item), item) for item in items)
 
     @classmethod
     @abstractmethod

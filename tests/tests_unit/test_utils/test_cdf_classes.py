@@ -47,3 +47,7 @@ class TestCogniteResourceDict:
     def test_instantiate_empty(self) -> None:
         empty = NodeApplyDict()
         assert bool(empty) is False
+
+    def test_instantiate_from_list(self) -> None:
+        nodes = NodeApplyDict(list(self.TWO_NODES.values()))
+        assert len(nodes) == 2
