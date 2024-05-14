@@ -198,7 +198,7 @@ class DMSImporter(BaseImporter):
                     **self._create_rule_components(
                         ref_model,
                         ref_schema,
-                        self.ref_metadata or self._create_default_metadata(ref_schema.views),
+                        self.ref_metadata or self._create_default_metadata(list(ref_schema.views.values())),
                         DataModelType.enterprise,
                     )
                 )
@@ -226,8 +226,7 @@ class DMSImporter(BaseImporter):
         schema_completeness: SchemaCompleteness | None = None,
     ) -> dict[str, Any]:
         properties = SheetList[DMSProperty]()
-        for view in schema.views:
-            view_id = view.as_id()
+        for view_id, view in schema.views.items():
             view_entity = ViewEntity.from_id(view_id)
             class_entity = view_entity.as_class()
             for prop_id, prop in (view.properties or {}).items():
@@ -248,10 +247,13 @@ class DMSImporter(BaseImporter):
             metadata=metadata,
             properties=properties,
             containers=SheetList[DMSContainer](
-                data=[DMSContainer.from_container(container) for container in schema.containers]
+                data=[DMSContainer.from_container(container) for container in schema.containers.values()]
             ),
             views=SheetList[DMSView](
-                data=[DMSView.from_view(view, in_model=view.as_id() in data_model_view_ids) for view in schema.views]
+                data=[
+                    DMSView.from_view(view, in_model=view_id in data_model_view_ids)
+                    for view_id, view in schema.views.items()
+                ]
             ),
         )
 

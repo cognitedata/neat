@@ -37,8 +37,14 @@ T_ID = TypeVar("T_ID")
 class CogniteResourceDict(dict, MutableMapping[T_ID, T_CogniteResource], ABC):
     """CogniteResource stored in a mapping structure.
 
-    When the .dump() method is called da list (array with .dump_yaml) is returned. Similarly, the
-    .load method expects an iterable of dict or a string in yaml/json format.
+    The serialization format of the CognitiveResourceDict is a list of dicts, where each dict
+    represents a CognitiveResource.
+
+    This means that the serialization methods .dump() and .load() return a list of dicts and
+    expects a list of dicts respectively.
+
+    In addition, the init method is slightly abused compared to a regular dict by allowing the input to be a
+    list of CognitiveResources.
     """
 
     _RESOURCE: type[T_CogniteResource]
@@ -53,7 +59,7 @@ class CogniteResourceDict(dict, MutableMapping[T_ID, T_CogniteResource], ABC):
         if isinstance(items, Mapping):
             super().__init__(items)
         elif isinstance(items, Iterable):
-            super().__init__(item if isinstance(item, tuple) else (self._as_id(item), item) for item in items)
+            super().__init__(item if isinstance(item, tuple) else (self._as_id(item), item) for item in items)  # type: ignore[arg-type]
         else:
             super().__init__()
 
