@@ -51,6 +51,10 @@ class CogniteResourceDict(dict, MutableMapping[T_ID, T_CogniteResource], ABC):
         df = convert_nullable_int_cols(df)
         return df
 
+    def _repr_html_(self) -> str:
+        # Pretty print the dataframe in Jupyter
+        return self.to_pandas()._repr_html_()  # type: ignore[operator]
+
     @classmethod
     @final
     def load(cls: "type[T_CogniteResourceDict]", resource: Iterable[dict[str, Any]] | str) -> "T_CogniteResourceDict":
