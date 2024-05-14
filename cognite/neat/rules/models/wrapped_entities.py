@@ -138,7 +138,6 @@ class DMSFilter(WrappedEntity):
 class RawFilter(DMSFilter):
     name: ClassVar[str] = "rawFilter"
     inner: list[ContainerEntity] | None = None  # type: ignore[assignment]
-    filter: str | None = None
 
     def as_dms_filter(self, default: str | None = None) -> dm.Filter:
         if self.filter:
@@ -154,12 +153,15 @@ class RawFilter(DMSFilter):
         else:
             raise ValueError("Empty raw filter, please provide a raw filter or default filter.")
 
+    @property
+    def is_empty(self) -> bool:
+        return self.filter is None
+
 
 class NodeTypeFilter(DMSFilter):
     name: ClassVar[str] = "nodeType"
     _inner_cls: ClassVar[type[DMSNodeEntity]] = DMSNodeEntity
     inner: list[DMSNodeEntity] | None = None  # type: ignore[assignment]
-    filter: str | None = None
 
     @property
     def nodes(self) -> list[NodeId]:
