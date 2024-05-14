@@ -15,9 +15,14 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.77.2] - 14-05-24
+### Added
+- Missing warning when `RawFilter` is used to warn users that the usage of this filter is not recommended.
+
+
 ## [0.77.1] - 14-05-24
 ### Added
-- Support for `RawFilters` allow arbitrary filters to be applied to the data model.
+- Support for `RawFilter` allow arbitrary filters to be applied to the data model.
 
 
 ## [0.77.0] - 13-05-24
