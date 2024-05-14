@@ -43,3 +43,7 @@ class TestCogniteResourceDict:
 
         assert isinstance(node_id, NodeId)
         assert isinstance(node, NodeApply)
+
+    def test_instantiate_empty(self) -> None:
+        empty = NodeApplyDict()
+        assert bool(empty) is False
