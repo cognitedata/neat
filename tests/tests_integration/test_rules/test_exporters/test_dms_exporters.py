@@ -208,7 +208,7 @@ class TestDMSExporters:
 
         # Verify data is in the data model
         views = schema.views
-        table_view = next((view for view in views if view.external_id == "Table"), None)
+        table_view = next((view for view in views.values() if view.external_id == "Table"), None)
         assert table_view is not None, "Table view not found"
         table_nodes = cognite_client.data_modeling.instances.list(
             "node", space="sp_table_example_data", sources=[table_view.as_id()], limit=-1
