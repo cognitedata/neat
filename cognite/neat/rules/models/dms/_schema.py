@@ -3,7 +3,6 @@ import sys
 import warnings
 import zipfile
 from collections import Counter, defaultdict
-from collections.abc import Sequence
 from dataclasses import Field, dataclass, field, fields
 from pathlib import Path
 from typing import Any, ClassVar, cast
@@ -31,7 +30,13 @@ from cognite.neat.rules.issues.dms import (
     MissingViewError,
 )
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
-from cognite.neat.utils.cdf_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
+from cognite.neat.utils.cdf_classes import (
+    CogniteResourceDict,
+    ContainerApplyDict,
+    NodeApplyDict,
+    SpaceApplyDict,
+    ViewApplyDict,
+)
 from cognite.neat.utils.cdf_loaders import ViewLoader
 from cognite.neat.utils.cdf_loaders.data_classes import RawTableWrite, RawTableWriteList
 from cognite.neat.utils.text import to_camel
@@ -444,9 +449,13 @@ class DMSSchema:
         for attr in cls_fields:
             if items := getattr(self, attr.name):
                 key = to_camel(attr.name) if camel_case else attr.name
-                if isinstance(items, Sequence):
-                    items = sorted(items, key=self._to_sortable_identifier) if sort else items
-                    output[key] = [item.dump(camel_case=camel_case) for item in items]
+                if isinstance(items, CogniteResourceDict):
+                    if sort:
+                        output[key] = [
+                            item.dump(camel_case) for item in sorted(items.values(), key=self._to_sortable_identifier)
+                        ]
+                    else:
+                        output[key] = items.dump(camel_case)
                 else:
                     output[key] = items.dump(camel_case=camel_case)
         return output
