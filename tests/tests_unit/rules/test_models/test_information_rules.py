@@ -233,7 +233,7 @@ class TestInformationRules:
         assert isinstance(dms_rules, DMSRules)
         schema = dms_rules.as_schema()
 
-        wind_turbine = next((view for view in schema.views if view.external_id == "WindTurbine"), None)
+        wind_turbine = next((view for view in schema.views.values() if view.external_id == "WindTurbine"), None)
         assert wind_turbine is not None
         expected_containers = {
             dm.ContainerId("power", "GeneratingUnit"),
@@ -245,7 +245,7 @@ class TestInformationRules:
         extra = wind_turbine.referenced_containers() - expected_containers
         assert not extra, f"Extra containers: {extra}"
 
-        wind_farm = next((view for view in schema.views if view.external_id == "WindFarm"), None)
+        wind_farm = next((view for view in schema.views.values() if view.external_id == "WindFarm"), None)
         assert wind_farm is not None
         expected_containers = {dm.ContainerId("power", "EnergyArea"), dm.ContainerId("power_analytics", "WindFarm")}
         missing = expected_containers - wind_farm.referenced_containers()
@@ -253,11 +253,11 @@ class TestInformationRules:
         extra = wind_farm.referenced_containers() - expected_containers
         assert not extra, f"Extra containers: {extra}"
 
-        point = next((view for view in schema.views if view.external_id == "Point"), None)
+        point = next((view for view in schema.views.values() if view.external_id == "Point"), None)
         assert point is not None
         assert point.implements == [dm.ViewId("power", "Point", "0.1.0")]
 
-        polygon = next((view for view in schema.views if view.external_id == "Polygon"), None)
+        polygon = next((view for view in schema.views.values() if view.external_id == "Polygon"), None)
         assert polygon is not None
         assert polygon.implements == [dm.ViewId("power", "Polygon", "0.1.0")]
 
