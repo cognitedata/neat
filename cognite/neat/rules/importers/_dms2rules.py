@@ -61,8 +61,10 @@ class DMSImporter(BaseImporter):
         self.ref_metadata = ref_metadata
         self.issue_list = IssueList(read_issues)
         self._all_containers_by_id = schema.containers.copy()
+        self._all_view_ids = set(self.root_schema.views.keys())
         if self.root_schema.reference:
             self._all_containers_by_id.update(self.root_schema.reference.containers)
+            self._all_view_ids.update(self.root_schema.reference.views.keys())
 
     @classmethod
     def from_data_model_id(
@@ -361,7 +363,7 @@ class DMSImporter(BaseImporter):
         elif isinstance(prop, dm.MappedPropertyApply):
             container_prop = self._container_prop_unsafe(cast(dm.MappedPropertyApply, prop))
             if isinstance(container_prop.type, dm.DirectRelation):
-                if prop.source is None:
+                if prop.source is None or prop.source not in self._all_view_ids:
                     # The warning is issued when the DMS Rules are created.
                     return DMSUnknownEntity()
                 else:

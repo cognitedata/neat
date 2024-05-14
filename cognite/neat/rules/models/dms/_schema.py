@@ -157,6 +157,7 @@ class DMSSchema:
         connection_referenced_view_ids = connection_referenced_view_ids - existing_view_ids
         if connection_referenced_view_ids:
             connection_referenced_views = view_loader.retrieve(list(connection_referenced_view_ids))
+            # Todo warning if not all views are found?
             views.extend(connection_referenced_views)
 
         # We need to include parent views in the schema to make sure that the schema is valid.
