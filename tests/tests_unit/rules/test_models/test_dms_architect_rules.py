@@ -20,6 +20,7 @@ from cognite.neat.rules.models.dms import (
     DMSSchema,
     DMSViewInput,
 )
+from cognite.neat.utils.cdf_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
 
 
 def rules_schema_tests_cases() -> Iterable[ParameterSet]:
@@ -74,29 +75,25 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             ],
         ),
         DMSSchema(
-            spaces=dm.SpaceApplyList(
+            spaces=SpaceApplyDict(
                 [
                     dm.SpaceApply(
                         space="my_space",
                     )
                 ]
             ),
-            data_models=dm.DataModelApplyList(
-                [
-                    dm.DataModelApply(
-                        space="my_space",
-                        external_id="my_data_model",
-                        version="1",
-                        description="DMS data model Creator: Alice",
-                        views=[
-                            dm.ViewId(space="my_space", external_id="Asset", version="1"),
-                            dm.ViewId(space="my_space", external_id="WindTurbine", version="1"),
-                            dm.ViewId(space="my_space", external_id="WindFarm", version="1"),
-                        ],
-                    )
-                ]
+            data_model=dm.DataModelApply(
+                space="my_space",
+                external_id="my_data_model",
+                version="1",
+                description="DMS data model Creator: Alice",
+                views=[
+                    dm.ViewId(space="my_space", external_id="Asset", version="1"),
+                    dm.ViewId(space="my_space", external_id="WindTurbine", version="1"),
+                    dm.ViewId(space="my_space", external_id="WindFarm", version="1"),
+                ],
             ),
-            views=dm.ViewApplyList(
+            views=ViewApplyDict(
                 [
                     dm.ViewApply(
                         space="my_space",
@@ -147,7 +144,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     ),
                 ]
             ),
-            containers=dm.ContainerApplyList(
+            containers=ContainerApplyDict(
                 [
                     dm.ContainerApply(
                         space="my_space",
@@ -164,7 +161,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     ),
                 ]
             ),
-            node_types=dm.NodeApplyList([dm.NodeApply(space="my_space", external_id="WindFarm")]),
+            node_types=NodeApplyDict([dm.NodeApply(space="my_space", external_id="WindFarm")]),
         ),
         id="Two properties, one container, one view",
     )
@@ -220,22 +217,18 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         ],
     )
     expected_schema = DMSSchema(
-        spaces=dm.SpaceApplyList([dm.SpaceApply(space="my_space")]),
-        data_models=dm.DataModelApplyList(
-            [
-                dm.DataModelApply(
-                    space="my_space",
-                    external_id="my_data_model",
-                    version="1",
-                    description="Creator: Anders",
-                    views=[
-                        dm.ViewId(space="my_space", external_id="WindFarm", version="1"),
-                        dm.ViewId(space="my_space", external_id="WindTurbine", version="1"),
-                    ],
-                )
-            ]
+        spaces=SpaceApplyDict([dm.SpaceApply(space="my_space")]),
+        data_model=dm.DataModelApply(
+            space="my_space",
+            external_id="my_data_model",
+            version="1",
+            description="Creator: Anders",
+            views=[
+                dm.ViewId(space="my_space", external_id="WindFarm", version="1"),
+                dm.ViewId(space="my_space", external_id="WindTurbine", version="1"),
+            ],
         ),
-        views=dm.ViewApplyList(
+        views=ViewApplyDict(
             [
                 dm.ViewApply(
                     space="my_space",
@@ -268,7 +261,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ]
         ),
-        containers=dm.ContainerApplyList(
+        containers=ContainerApplyDict(
             [
                 dm.ContainerApply(
                     space="my_space",
@@ -289,7 +282,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ]
         ),
-        node_types=dm.NodeApplyList([]),
+        node_types=NodeApplyDict([]),
     )
     yield pytest.param(
         dms_rules,
@@ -337,21 +330,17 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         ],
     )
     expected_schema = DMSSchema(
-        spaces=dm.SpaceApplyList([dm.SpaceApply(space="my_space")]),
-        data_models=dm.DataModelApplyList(
-            [
-                dm.DataModelApply(
-                    space="my_space",
-                    external_id="my_data_model",
-                    version="1",
-                    description="Creator: Anders",
-                    views=[
-                        dm.ViewId(space="my_space", external_id="WindTurbine", version="1"),
-                    ],
-                )
-            ]
+        spaces=SpaceApplyDict([dm.SpaceApply(space="my_space")]),
+        data_model=dm.DataModelApply(
+            space="my_space",
+            external_id="my_data_model",
+            version="1",
+            description="Creator: Anders",
+            views=[
+                dm.ViewId(space="my_space", external_id="WindTurbine", version="1"),
+            ],
         ),
-        views=dm.ViewApplyList(
+        views=ViewApplyDict(
             [
                 dm.ViewApply(
                     external_id="Asset",
@@ -379,7 +368,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ],
         ),
-        containers=dm.ContainerApplyList(
+        containers=ContainerApplyDict(
             [
                 dm.ContainerApply(
                     space="my_space",
@@ -394,7 +383,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ],
         ),
-        node_types=dm.NodeApplyList([]),
+        node_types=NodeApplyDict([]),
     )
 
     yield pytest.param(
@@ -505,23 +494,19 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     )
 
     expected_schema = DMSSchema(
-        spaces=dm.SpaceApplyList([dm.SpaceApply(space="my_space")]),
-        data_models=dm.DataModelApplyList(
-            [
-                dm.DataModelApply(
-                    space="my_space",
-                    external_id="my_data_model",
-                    version="1",
-                    description="Creator: Anders",
-                    views=[
-                        dm.ViewId(space="my_space", external_id="Asset", version="1"),
-                        dm.ViewId(space="my_space", external_id="Timeseries", version="1"),
-                        dm.ViewId(space="my_space", external_id="Activity", version="1"),
-                    ],
-                )
-            ]
+        spaces=SpaceApplyDict([dm.SpaceApply(space="my_space")]),
+        data_model=dm.DataModelApply(
+            space="my_space",
+            external_id="my_data_model",
+            version="1",
+            description="Creator: Anders",
+            views=[
+                dm.ViewId(space="my_space", external_id="Asset", version="1"),
+                dm.ViewId(space="my_space", external_id="Timeseries", version="1"),
+                dm.ViewId(space="my_space", external_id="Activity", version="1"),
+            ],
         ),
-        views=dm.ViewApplyList(
+        views=ViewApplyDict(
             [
                 dm.ViewApply(
                     space="my_space",
@@ -590,7 +575,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ]
         ),
-        containers=dm.ContainerApplyList(
+        containers=ContainerApplyDict(
             [
                 dm.ContainerApply(
                     space="my_space",
@@ -611,7 +596,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ]
         ),
-        node_types=dm.NodeApplyList(
+        node_types=NodeApplyDict(
             [
                 dm.NodeApply(space="my_space", external_id="Activity"),
             ]
@@ -653,21 +638,17 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     )
 
     expected_schema = DMSSchema(
-        spaces=dm.SpaceApplyList([dm.SpaceApply(space="my_space")]),
-        data_models=dm.DataModelApplyList(
-            [
-                dm.DataModelApply(
-                    space="my_space",
-                    external_id="my_data_model",
-                    version="1",
-                    description="Creator: Anders",
-                    views=[
-                        dm.ViewId(space="my_space", external_id="generating_unit", version="1"),
-                    ],
-                )
-            ]
+        spaces=SpaceApplyDict([dm.SpaceApply(space="my_space")]),
+        data_model=dm.DataModelApply(
+            space="my_space",
+            external_id="my_data_model",
+            version="1",
+            description="Creator: Anders",
+            views=[
+                dm.ViewId(space="my_space", external_id="generating_unit", version="1"),
+            ],
         ),
-        views=dm.ViewApplyList(
+        views=ViewApplyDict(
             [
                 dm.ViewApply(
                     space="my_space",
@@ -683,7 +664,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ]
         ),
-        containers=dm.ContainerApplyList(
+        containers=ContainerApplyDict(
             [
                 dm.ContainerApply(
                     space="my_space",
@@ -692,7 +673,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ]
         ),
-        node_types=dm.NodeApplyList([dm.NodeApply(space="sp_other", external_id="wind_turbine")]),
+        node_types=NodeApplyDict([dm.NodeApply(space="sp_other", external_id="wind_turbine")]),
     )
     yield pytest.param(
         dms_rules,
@@ -727,12 +708,12 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     )
 
     expected_schema = DMSSchema(
-        spaces=dm.SpaceApplyList(
+        spaces=SpaceApplyDict(
             [
                 dm.SpaceApply(space="sp_solution"),
             ]
         ),
-        views=dm.ViewApplyList(
+        views=ViewApplyDict(
             [
                 dm.ViewApply(
                     space="sp_solution",
@@ -752,20 +733,16 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ]
         ),
-        data_models=dm.DataModelApplyList(
-            [
-                dm.DataModelApply(
-                    space="sp_solution",
-                    external_id="solution_model",
-                    version="1",
-                    description="Creator: Bob",
-                    views=[
-                        dm.ViewId(space="sp_solution", external_id="Asset", version="1"),
-                    ],
-                )
-            ]
+        data_model=dm.DataModelApply(
+            space="sp_solution",
+            external_id="solution_model",
+            version="1",
+            description="Creator: Bob",
+            views=[
+                dm.ViewId(space="sp_solution", external_id="Asset", version="1"),
+            ],
         ),
-        node_types=dm.NodeApplyList([dm.NodeApply(space="sp_enterprise", external_id="Asset")]),
+        node_types=NodeApplyDict([dm.NodeApply(space="sp_enterprise", external_id="Asset")]),
     )
 
     yield pytest.param(
@@ -1453,17 +1430,19 @@ class TestDMSRules:
         actual_schema = rules.as_schema()
 
         assert actual_schema.spaces.dump() == expected_schema.spaces.dump()
-        actual_schema.data_models[0].views = sorted(actual_schema.data_models[0].views, key=lambda v: v.external_id)
-        expected_schema.data_models[0].views = sorted(expected_schema.data_models[0].views, key=lambda v: v.external_id)
-        assert actual_schema.data_models[0].dump() == expected_schema.data_models[0].dump()
+        actual_schema.data_model.views = sorted(actual_schema.data_model.views, key=lambda v: v.external_id)
+        expected_schema.data_model.views = sorted(expected_schema.data_model.views, key=lambda v: v.external_id)
+        assert actual_schema.data_model.dump() == expected_schema.data_model.dump()
         assert actual_schema.containers.dump() == expected_schema.containers.dump()
 
-        actual_schema.views = dm.ViewApplyList(sorted(actual_schema.views, key=lambda v: v.external_id))
-        expected_schema.views = dm.ViewApplyList(sorted(expected_schema.views, key=lambda v: v.external_id))
+        actual_schema.views = ViewApplyDict(sorted(actual_schema.views.values(), key=lambda v: v.external_id))
+        expected_schema.views = ViewApplyDict(sorted(expected_schema.views.values(), key=lambda v: v.external_id))
         assert actual_schema.views.dump() == expected_schema.views.dump()
 
-        actual_schema.node_types = dm.NodeApplyList(sorted(actual_schema.node_types, key=lambda n: n.external_id))
-        expected_schema.node_types = dm.NodeApplyList(sorted(expected_schema.node_types, key=lambda n: n.external_id))
+        actual_schema.node_types = NodeApplyDict(sorted(actual_schema.node_types.values(), key=lambda n: n.external_id))
+        expected_schema.node_types = NodeApplyDict(
+            sorted(expected_schema.node_types.values(), key=lambda n: n.external_id)
+        )
         assert actual_schema.node_types.dump() == expected_schema.node_types.dump()
 
     def test_alice_as_information(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
@@ -1579,7 +1558,7 @@ class TestDMSExporter:
         assert not set_filter, f"Expected no filters to be set, but got {set_filter}"
 
         schema = olav_dms_rules.as_schema()
-        view_by_external_id = {view.external_id: view for view in schema.views}
+        view_by_external_id = {view.external_id: view for view in schema.views.values()}
 
         wind_turbine = view_by_external_id.get("WindTurbine")
         assert wind_turbine is not None

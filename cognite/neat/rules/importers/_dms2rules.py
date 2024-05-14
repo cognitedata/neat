@@ -6,7 +6,7 @@ from typing import Any, Literal, cast, overload
 
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
-from cognite.client.data_classes.data_modeling import DataModelIdentifier
+from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex, InvertedIndex
 from cognite.client.data_classes.data_modeling.views import (
     MultiEdgeConnectionApply,
@@ -39,7 +39,6 @@ from cognite.neat.rules.models.dms import (
 from cognite.neat.rules.models.entities import (
     ClassEntity,
     ContainerEntity,
-    DataModelEntity,
     DMSUnknownEntity,
     ViewEntity,
     ViewPropertyEntity,
@@ -52,56 +51,92 @@ class DMSImporter(BaseImporter):
         schema: DMSSchema,
         read_issues: Sequence[ValidationIssue] | None = None,
         metadata: DMSMetadata | None = None,
+        ref_metadata: DMSMetadata | None = None,
     ):
         # Calling this root schema to distinguish it from
         # * User Schema
         # * Reference Schema
         self.root_schema = schema
         self.metadata = metadata
+        self.ref_metadata = ref_metadata
         self.issue_list = IssueList(read_issues)
-        self._all_containers_by_id = {container.as_id(): container for container in schema.containers}
+        self._all_containers_by_id = schema.containers.copy()
         if self.root_schema.reference:
-            self._all_containers_by_id.update(
-                {container.as_id(): container for container in self.root_schema.reference.containers}
-            )
+            self._all_containers_by_id.update(self.root_schema.reference.containers)
 
     @classmethod
-    def from_data_model_id(cls, client: CogniteClient, data_model_id: DataModelIdentifier) -> "DMSImporter":
+    def from_data_model_id(
+        cls,
+        client: CogniteClient,
+        data_model_id: DataModelIdentifier,
+        reference_model_id: DataModelIdentifier | None = None,
+    ) -> "DMSImporter":
         """Create a DMSImporter ready to convert the given data model to rules.
 
         Args:
             client: Instantiated CogniteClient to retrieve data model.
+            reference_model_id: The reference data model to retrieve. This is the data model that
+                the given data model is built on top of, typically, an enterprise data model.
             data_model_id: Data Model to retrieve.
 
         Returns:
             DMSImporter: DMSImporter instance
         """
-        data_models = client.data_modeling.data_models.retrieve(data_model_id, inline_views=True)
-        if len(data_models) == 0:
+        data_model_ids = [data_model_id, reference_model_id] if reference_model_id else [data_model_id]
+        data_models = client.data_modeling.data_models.retrieve(data_model_ids, inline_views=True)
+
+        user_models = cls._find_model_in_list(data_models, data_model_id)
+        if len(user_models) == 0:
             return cls(DMSSchema(), [issues.importing.NoDataModelError(f"Data model {data_model_id} not found")])
-        data_model = data_models.latest_version()
+        user_model = user_models.latest_version()
+
+        if reference_model_id:
+            ref_models = cls._find_model_in_list(data_models, reference_model_id)
+            if len(ref_models) == 0:
+                return cls(
+                    DMSSchema(), [issues.importing.NoDataModelError(f"Data model {reference_model_id} not found")]
+                )
+            ref_model: dm.DataModel[dm.View] | None = ref_models.latest_version()
+        else:
+            ref_model = None
 
         try:
-            schema = DMSSchema.from_data_model(client, data_model)
+            schema = DMSSchema.from_data_model(client, user_model, ref_model)
         except Exception as e:
             return cls(DMSSchema(), [issues.importing.APIError(str(e))])
 
-        created = ms_to_datetime(data_model.created_time)
-        updated = ms_to_datetime(data_model.last_updated_time)
+        metadata = cls._create_metadata_from_model(user_model)
+        ref_metadata = cls._create_metadata_from_model(ref_model) if ref_model else None
 
-        metadata = cls._create_metadata_from_model(data_model, created, updated)
+        return cls(schema, [], metadata, ref_metadata)
 
-        return cls(schema, [], metadata)
+    @classmethod
+    def _find_model_in_list(
+        cls, data_models: dm.DataModelList[dm.View], model_id: DataModelIdentifier
+    ) -> dm.DataModelList[dm.View]:
+        identifier = DataModelId.load(model_id)
+        return dm.DataModelList[dm.View](
+            [
+                model
+                for model in data_models
+                if (model.space, model.external_id) == (identifier.space, identifier.external_id)
+            ]
+        )
 
     @classmethod
     def _create_metadata_from_model(
         cls,
         model: dm.DataModel[dm.View] | dm.DataModelApply,
-        created: datetime | None = None,
-        updated: datetime | None = None,
     ) -> DMSMetadata:
         description, creator = DMSMetadata._get_description_and_creator(model.description)
-        now = datetime.now().replace(microsecond=0)
+
+        if isinstance(model, dm.DataModel):
+            created = ms_to_datetime(model.created_time)
+            updated = ms_to_datetime(model.last_updated_time)
+        else:
+            now = datetime.now().replace(microsecond=0)
+            created = now
+            updated = now
         return DMSMetadata(
             schema_=SchemaCompleteness.complete,
             extension=ExtensionCategory.addition,
@@ -109,8 +144,8 @@ class DMSImporter(BaseImporter):
             external_id=model.external_id,
             name=model.name or model.external_id,
             version=model.version or "0.1.0",
-            updated=updated or now,
-            created=created or now,
+            updated=updated,
+            created=created,
             creator=creator,
             description=description,
         )
@@ -147,28 +182,33 @@ class DMSImporter(BaseImporter):
             # In case there were errors during the import, the to_rules method will return None
             return self._return_or_raise(self.issue_list, errors)
 
-        if len(self.root_schema.data_models) == 0:
+        if not self.root_schema.data_model:
             self.issue_list.append(issues.importing.NoDataModelError("No data model found."))
             return self._return_or_raise(self.issue_list, errors)
-
+        model = self.root_schema.data_model
         with _handle_issues(
             self.issue_list,
         ) as future:
             schema_completeness = SchemaCompleteness.complete
             data_model_type = DataModelType.enterprise
             reference: DMSRules | None = None
-            if ref_schema := self.root_schema.reference:
+            if (ref_schema := self.root_schema.reference) and (ref_model := ref_schema.data_model):
                 # Reference should always be an enterprise model.
                 reference = DMSRules(
                     **self._create_rule_components(
-                        ref_schema, self._create_default_metadata(ref_schema.views), DataModelType.enterprise
+                        ref_model,
+                        ref_schema,
+                        self.ref_metadata or self._create_default_metadata(list(ref_schema.views.values())),
+                        DataModelType.enterprise,
                     )
                 )
                 schema_completeness = SchemaCompleteness.extended
                 data_model_type = DataModelType.solution
 
             user_rules = DMSRules(
-                **self._create_rule_components(self.root_schema, self.metadata, data_model_type, schema_completeness),
+                **self._create_rule_components(
+                    model, self.root_schema, self.metadata, data_model_type, schema_completeness
+                ),
                 reference=reference,
             )
 
@@ -179,24 +219,14 @@ class DMSImporter(BaseImporter):
 
     def _create_rule_components(
         self,
+        data_model: dm.DataModelApply,
         schema: DMSSchema,
         metadata: DMSMetadata | None = None,
         data_model_type: DataModelType | None = None,
         schema_completeness: SchemaCompleteness | None = None,
     ) -> dict[str, Any]:
-        if len(schema.data_models) > 2:
-            # Creating a DataModelEntity to convert the data model id to a string.
-            self.issue_list.append(
-                issues.importing.MultipleDataModelsWarning(
-                    [str(DataModelEntity.from_id(model.as_id())) for model in schema.data_models]
-                )
-            )
-
-        data_model = schema.data_models[0]
-
         properties = SheetList[DMSProperty]()
-        for view in schema.views:
-            view_id = view.as_id()
+        for view_id, view in schema.views.items():
             view_entity = ViewEntity.from_id(view_id)
             class_entity = view_entity.as_class()
             for prop_id, prop in (view.properties or {}).items():
@@ -217,10 +247,13 @@ class DMSImporter(BaseImporter):
             metadata=metadata,
             properties=properties,
             containers=SheetList[DMSContainer](
-                data=[DMSContainer.from_container(container) for container in schema.containers]
+                data=[DMSContainer.from_container(container) for container in schema.containers.values()]
             ),
             views=SheetList[DMSView](
-                data=[DMSView.from_view(view, in_model=view.as_id() in data_model_view_ids) for view in schema.views]
+                data=[
+                    DMSView.from_view(view, in_model=view_id in data_model_view_ids)
+                    for view_id, view in schema.views.items()
+                ]
             ),
         )
 

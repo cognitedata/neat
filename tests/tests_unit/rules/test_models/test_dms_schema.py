@@ -23,6 +23,7 @@ from cognite.neat.rules.issues.dms import (
 )
 from cognite.neat.rules.models import DMSSchema
 from cognite.neat.rules.models.dms import PipelineSchema
+from cognite.neat.utils.cdf_classes import ContainerApplyDict, SpaceApplyDict, ViewApplyDict
 from cognite.neat.utils.cdf_loaders.data_classes import RawTableWrite, RawTableWriteList
 
 
@@ -39,8 +40,8 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
     )
     yield pytest.param(
         DMSSchema(
-            spaces=dm.SpaceApplyList([my_space]),
-            data_models=dm.DataModelApplyList([data_model]),
+            spaces=SpaceApplyDict([my_space]),
+            data_model=data_model,
         ),
         [
             DuplicatedViewInDataModelError(
@@ -99,10 +100,10 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
 
     yield pytest.param(
         DMSSchema(
-            spaces=dm.SpaceApplyList([my_space]),
-            data_models=dm.DataModelApplyList([data_model]),
-            views=dm.ViewApplyList([view1, view2]),
-            containers=dm.ContainerApplyList([container]),
+            spaces=SpaceApplyDict([my_space]),
+            data_model=data_model,
+            views=ViewApplyDict([view1, view2]),
+            containers=ContainerApplyDict([container]),
         ),
         [
             MissingContainerError(
@@ -147,10 +148,10 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
 
     yield pytest.param(
         DMSSchema(
-            spaces=dm.SpaceApplyList([my_space]),
-            data_models=dm.DataModelApplyList([my_data_model]),
-            views=dm.ViewApplyList([view]),
-            containers=dm.ContainerApplyList([container]),
+            spaces=SpaceApplyDict([my_space]),
+            data_model=my_data_model,
+            views=ViewApplyDict([view]),
+            containers=ContainerApplyDict([container]),
         ),
         [
             MissingSpaceError(
@@ -203,9 +204,9 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
 
     yield pytest.param(
         DMSSchema(
-            spaces=dm.SpaceApplyList([my_space]),
-            data_models=dm.DataModelApplyList([my_data_model]),
-            views=dm.ViewApplyList([view1, view2]),
+            spaces=SpaceApplyDict([my_space]),
+            data_model=my_data_model,
+            views=ViewApplyDict([view1, view2]),
         ),
         [
             MissingParentViewError(
@@ -229,21 +230,17 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
 
 def valid_schema_test_cases() -> Iterable[ParameterSet]:
     dms_schema = DMSSchema(
-        spaces=dm.SpaceApplyList([dm.SpaceApply(space="my_space")]),
-        data_models=dm.DataModelApplyList(
-            [
-                dm.DataModelApply(
-                    space="my_space",
-                    external_id="my_data_model",
-                    version="1",
-                    views=[
-                        dm.ViewId("my_space", "my_view1", "1"),
-                        dm.ViewId("my_space", "my_view2", "1"),
-                    ],
-                )
-            ]
+        spaces=SpaceApplyDict([dm.SpaceApply(space="my_space")]),
+        data_model=dm.DataModelApply(
+            space="my_space",
+            external_id="my_data_model",
+            version="1",
+            views=[
+                dm.ViewId("my_space", "my_view1", "1"),
+                dm.ViewId("my_space", "my_view2", "1"),
+            ],
         ),
-        containers=dm.ContainerApplyList(
+        containers=ContainerApplyDict(
             [
                 dm.ContainerApply(
                     space="my_space",
@@ -259,7 +256,7 @@ def valid_schema_test_cases() -> Iterable[ParameterSet]:
                 )
             ]
         ),
-        views=dm.ViewApplyList(
+        views=ViewApplyDict(
             [
                 dm.ViewApply(
                     space="my_space",
@@ -284,10 +281,10 @@ def valid_schema_test_cases() -> Iterable[ParameterSet]:
 
     pipeline_schema = PipelineSchema(
         # Serializing to ensure that we are copying the object
-        spaces=dm.SpaceApplyList.load(dms_schema.spaces.dump()),
-        data_models=dm.DataModelApplyList.load(dms_schema.data_models.dump()),
-        containers=dm.ContainerApplyList.load(dms_schema.containers.dump()),
-        views=dm.ViewApplyList.load(dms_schema.views.dump()),
+        spaces=SpaceApplyDict.load(dms_schema.spaces.dump()),
+        data_model=dm.DataModelApply.load(dms_schema.data_model.dump()),
+        containers=ContainerApplyDict.load(dms_schema.containers.dump()),
+        views=ViewApplyDict.load(dms_schema.views.dump()),
         transformations=TransformationWriteList(
             [TransformationWrite(external_id="my_transformation", ignore_null_fields=True, name="My transformation")]
         ),

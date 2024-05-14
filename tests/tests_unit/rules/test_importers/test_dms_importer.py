@@ -40,7 +40,7 @@ class TestDMSImporter:
     def test_import_rules_from_tutorials(self, filepath: Path) -> None:
         dms_rules = cast(DMSRules, ExcelImporter(filepath).to_rules(errors="raise", role=RoleTypes.dms_architect))
         # We must have the reference to be able to convert back to schema
-        schema = dms_rules.as_schema(include_ref=True)
+        schema = dms_rules.as_schema()
         dms_importer = DMSImporter(schema)
 
         rules, issues = dms_importer.to_rules(errors="continue")
@@ -57,10 +57,8 @@ class TestDMSImporter:
         assert rules.model_dump(exclude=exclude) == dms_rules.model_dump(exclude=exclude)
 
 
-SCHEMA_WITH_DIRECT_RELATION_NONE = DMSSchema()
-SCHEMA_WITH_DIRECT_RELATION_NONE.spaces.append(dm.SpaceApply(space="neat"))
-SCHEMA_WITH_DIRECT_RELATION_NONE.data_models.append(
-    dm.DataModelApply(
+SCHEMA_WITH_DIRECT_RELATION_NONE = DMSSchema(
+    data_model=dm.DataModelApply(
         space="neat",
         external_id="data_model",
         version="1",
@@ -69,28 +67,26 @@ SCHEMA_WITH_DIRECT_RELATION_NONE.data_models.append(
         ],
     )
 )
-SCHEMA_WITH_DIRECT_RELATION_NONE.containers.append(
-    dm.ContainerApply(
-        space="neat",
-        external_id="container",
-        properties={"direct": dm.ContainerProperty(type=dm.DirectRelation())},
-    )
+SCHEMA_WITH_DIRECT_RELATION_NONE.spaces["neat"] = dm.SpaceApply(space="neat")
+SCHEMA_WITH_DIRECT_RELATION_NONE.containers[dm.ContainerId("neat", "container")] = dm.ContainerApply(
+    space="neat",
+    external_id="container",
+    properties={"direct": dm.ContainerProperty(type=dm.DirectRelation())},
 )
-SCHEMA_WITH_DIRECT_RELATION_NONE.views.append(
-    dm.ViewApply(
-        space="neat",
-        external_id="OneView",
-        version="1",
-        name="OneView",
-        description="One View",
-        properties={
-            "direct": dm.MappedPropertyApply(
-                container=dm.ContainerId("neat", "container"),
-                container_property_identifier="direct",
-                source=None,
-                name="direct",
-                description="Direction Relation",
-            )
-        },
-    )
+
+SCHEMA_WITH_DIRECT_RELATION_NONE.views[dm.ViewId("neat", "OneView", "1")] = dm.ViewApply(
+    space="neat",
+    external_id="OneView",
+    version="1",
+    name="OneView",
+    description="One View",
+    properties={
+        "direct": dm.MappedPropertyApply(
+            container=dm.ContainerId("neat", "container"),
+            container_property_identifier="direct",
+            source=None,
+            name="direct",
+            description="Direction Relation",
+        )
+    },
 )

@@ -164,10 +164,10 @@ class DMSPostValidation:
             # Everything is allowed
             return None
         # Is an extension of an existing model.
-        user_schema = self.rules.as_schema(include_ref=False)
+        user_schema = self.rules.as_schema()
         ref_schema = self.rules.reference.as_schema()
-        new_containers = {container.as_id(): container for container in user_schema.containers}
-        existing_containers = {container.as_id(): container for container in ref_schema.containers}
+        new_containers = user_schema.containers.copy()
+        existing_containers = ref_schema.containers.copy()
 
         for container_id, container in new_containers.items():
             existing_container = existing_containers.get(container_id)
@@ -193,8 +193,8 @@ class DMSPostValidation:
             # Reshape allows changes to views
             return None
 
-        new_views = {view.as_id(): view for view in user_schema.views}
-        existing_views = {view.as_id(): view for view in ref_schema.views}
+        new_views = user_schema.views.copy()
+        existing_views = ref_schema.views.copy()
         for view_id, view in new_views.items():
             existing_view = existing_views.get(view_id)
             if not existing_view or existing_view == view:
@@ -219,13 +219,13 @@ class DMSPostValidation:
 
         dms_schema = self.rules.as_schema()
 
-        for view in dms_schema.views:
-            mapped_containers = dms_schema._get_mapped_container_from_view(view.as_id())
+        for view_id, view in dms_schema.views.items():
+            mapped_containers = dms_schema._get_mapped_container_from_view(view_id)
 
             if mapped_containers and len(mapped_containers) > 10:
                 self.issue_list.append(
                     issues.dms.ViewMapsToTooManyContainersWarning(
-                        view_id=view.as_id(),
+                        view_id=view_id,
                         container_ids=mapped_containers,
                     )
                 )
@@ -236,7 +236,7 @@ class DMSPostValidation:
                 ):
                     self.issue_list.append(
                         issues.dms.HasDataFilterAppliedToTooManyContainersWarning(
-                            view_id=view.as_id(),
+                            view_id=view_id,
                             container_ids=mapped_containers,
                         )
                     )
