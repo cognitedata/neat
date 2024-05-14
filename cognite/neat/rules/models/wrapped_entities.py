@@ -129,25 +129,6 @@ class DMSFilter(WrappedEntity):
         raise ValueError(f"Cannot convert {filter._filter_name} to {cls.__name__}")
 
 
-class RawFilter(DMSFilter):
-    name: ClassVar[str] = "rawFilter"
-    filter: str
-    inner: None = None  # type: ignore[assignment]
-
-    def as_dms_filter(self) -> dm.Filter:  # type: ignore[override]
-        try:
-            return dm.Filter.load(json.loads(self.filter))
-        except json.JSONDecodeError as e:
-            raise ValueError(f"Error loading raw filter: {e}") from e
-
-    @property
-    def is_empty(self) -> bool:
-        return self.filter is None
-
-    def __repr__(self) -> str:
-        return self.filter
-
-
 class NodeTypeFilter(DMSFilter):
     name: ClassVar[str] = "nodeType"
     _inner_cls: ClassVar[type[DMSNodeEntity]] = DMSNodeEntity
@@ -196,3 +177,22 @@ class HasDataFilter(DMSFilter):
             # Sorting to ensure deterministic order
             containers=sorted(containers, key=lambda container: container.as_tuple())  # type: ignore[union-attr]
         )
+
+
+class RawFilter(DMSFilter):
+    name: ClassVar[str] = "rawFilter"
+    filter: str
+    inner: None = None  # type: ignore[assignment]
+
+    def as_dms_filter(self) -> dm.Filter:  # type: ignore[override]
+        try:
+            return dm.Filter.load(json.loads(self.filter))
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Error loading raw filter: {e}") from e
+
+    @property
+    def is_empty(self) -> bool:
+        return self.filter is None
+
+    def __repr__(self) -> str:
+        return self.filter
