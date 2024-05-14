@@ -67,29 +67,26 @@ SCHEMA_WITH_DIRECT_RELATION_NONE = DMSSchema(
         ],
     )
 )
-SCHEMA_WITH_DIRECT_RELATION_NONE.spaces.append(dm.SpaceApply(space="neat"))
-SCHEMA_WITH_DIRECT_RELATION_NONE.containers.append(
-    dm.ContainerApply(
-        space="neat",
-        external_id="container",
-        properties={"direct": dm.ContainerProperty(type=dm.DirectRelation())},
-    )
+SCHEMA_WITH_DIRECT_RELATION_NONE.spaces["neat"] = dm.SpaceApply(space="neat")
+SCHEMA_WITH_DIRECT_RELATION_NONE.containers[dm.ContainerId("neat", "container")] = dm.ContainerApply(
+    space="neat",
+    external_id="container",
+    properties={"direct": dm.ContainerProperty(type=dm.DirectRelation())},
 )
-SCHEMA_WITH_DIRECT_RELATION_NONE.views.append(
-    dm.ViewApply(
-        space="neat",
-        external_id="OneView",
-        version="1",
-        name="OneView",
-        description="One View",
-        properties={
-            "direct": dm.MappedPropertyApply(
-                container=dm.ContainerId("neat", "container"),
-                container_property_identifier="direct",
-                source=None,
-                name="direct",
-                description="Direction Relation",
-            )
-        },
-    )
+
+SCHEMA_WITH_DIRECT_RELATION_NONE.views[dm.ViewId("neat", "OneView", "1")] = dm.ViewApply(
+    space="neat",
+    external_id="OneView",
+    version="1",
+    name="OneView",
+    description="One View",
+    properties={
+        "direct": dm.MappedPropertyApply(
+            container=dm.ContainerId("neat", "container"),
+            container_property_identifier="direct",
+            source=None,
+            name="direct",
+            description="Direction Relation",
+        )
+    },
 )

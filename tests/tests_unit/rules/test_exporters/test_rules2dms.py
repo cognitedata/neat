@@ -18,10 +18,11 @@ class TestDMSExporter:
         exporter = DMSExporter()
         schema = exporter.export(alice_rules)
 
-        assert schema.views[0].name == "Generating Unit"
-        assert schema.views[0].description == "An asset that is creating power"
-        assert schema.views[0].properties["activePower"].name == "active power"
-        assert schema.views[0].properties["activePower"].description == "Active power of generating unit"
+        first_view = next(iter(schema.views.values()))
+        assert first_view.name == "Generating Unit"
+        assert first_view.description == "An asset that is creating power"
+        assert first_view.properties["activePower"].name == "active power"
+        assert first_view.properties["activePower"].description == "Active power of generating unit"
 
     def test_export_dms_schema_to_zip(self, alice_rules: DMSRules, tmp_path: Path) -> None:
         exporter = DMSExporter()
@@ -77,16 +78,16 @@ class TestImportExportDMS:
         exported = DMSExporter().export(rules)
 
         assert len(exported.views) == 1
-        view = exported.views[0]
-        assert view.as_id() == dm.ViewId("badmodel", "GeneratingUnit", "0.1.0")
-        assert "geoLocation" in view.properties
-        prop = view.properties["geoLocation"]
+        first_view = next(iter(exported.views.values()))
+        assert first_view.as_id() == dm.ViewId("badmodel", "GeneratingUnit", "0.1.0")
+        assert "geoLocation" in first_view.properties
+        prop = first_view.properties["geoLocation"]
         assert isinstance(prop, dm.MappedPropertyApply)
         # This model is missing the value type (is set #N/A in the excel file)
         assert prop.source is None
         assert prop.container == dm.ContainerId("badmodel", "GeneratingUnit")
         assert len(exported.containers) == 1
-        container = exported.containers[0]
+        container = next(iter(exported.containers.values()))
         assert container.as_id() == dm.ContainerId("badmodel", "GeneratingUnit")
         assert "geoLocation" in container.properties
         prop = container.properties["geoLocation"]
