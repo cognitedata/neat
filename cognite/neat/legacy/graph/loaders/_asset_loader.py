@@ -119,12 +119,10 @@ class AssetLoader(CogniteLoader[AssetResource]):
         self._loaded_labels: set[str] = set()
 
     @overload
-    def load(self, stop_on_exception: Literal[True]) -> Iterable[AssetResource]:
-        ...
+    def load(self, stop_on_exception: Literal[True]) -> Iterable[AssetResource]: ...
 
     @overload
-    def load(self, stop_on_exception: Literal[False] = False) -> Iterable[AssetResource | ErrorDetails]:
-        ...
+    def load(self, stop_on_exception: Literal[False] = False) -> Iterable[AssetResource | ErrorDetails]: ...
 
     def load(self, stop_on_exception: bool = False) -> Iterable[AssetResource | ErrorDetails]:
         if self.rules.metadata.namespace is None:
@@ -259,12 +257,10 @@ class AssetLoader(CogniteLoader[AssetResource]):
             )
 
     @overload
-    def load_assets(self, stop_on_exception: Literal[True]) -> Iterable[AssetWrite]:
-        ...
+    def load_assets(self, stop_on_exception: Literal[True]) -> Iterable[AssetWrite]: ...
 
     @overload
-    def load_assets(self, stop_on_exception: Literal[False] = False) -> Iterable[AssetWrite | ErrorDetails]:
-        ...
+    def load_assets(self, stop_on_exception: Literal[False] = False) -> Iterable[AssetWrite | ErrorDetails]: ...
 
     def load_assets(self, stop_on_exception: Literal[True, False] = False) -> Iterable[AssetWrite | ErrorDetails]:
         for asset_resource in self.load(stop_on_exception):
@@ -272,14 +268,12 @@ class AssetLoader(CogniteLoader[AssetResource]):
                 yield asset_resource
 
     @overload
-    def load_relationships(self, stop_on_exception: Literal[True]) -> Iterable[RelationshipWrite]:
-        ...
+    def load_relationships(self, stop_on_exception: Literal[True]) -> Iterable[RelationshipWrite]: ...
 
     @overload
     def load_relationships(
         self, stop_on_exception: Literal[False] = False
-    ) -> Iterable[RelationshipWrite | ErrorDetails]:
-        ...
+    ) -> Iterable[RelationshipWrite | ErrorDetails]: ...
 
     def load_relationships(
         self, stop_on_exception: Literal[True, False] = False
@@ -348,7 +342,8 @@ class AssetLoader(CogniteLoader[AssetResource]):
             A dictionary with property type as key and a list of values as value.
         """
         properties_value_tuples: list[tuple[str, str]] = [
-            remove_namespace(prop, value) for _, prop, value in properties_values  # type: ignore[misc]
+            remove_namespace(prop, value)  # type: ignore[misc]
+            for _, prop, value in properties_values
         ]
         # We add an identifier which will be used as fallback for external_id
         properties_value_tuples.append((self._identifier, remove_namespace(instance_id)))

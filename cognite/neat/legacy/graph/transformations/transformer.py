@@ -1,5 +1,4 @@
-"""Methods to transform Domain Knowledge Graph to App Knowledge Graph
-"""
+"""Methods to transform Domain Knowledge Graph to App Knowledge Graph"""
 
 import logging
 import time

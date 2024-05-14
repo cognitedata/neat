@@ -3,7 +3,7 @@ from typing import Any
 import pandas as pd
 import pytest
 
-from cognite.neat.rules.models.rules._domain_rules import DomainRules
+from cognite.neat.rules.models import DomainRules
 from tests.config import DOC_RULES
 from tests.tests_unit.rules.test_models.utils import read_spreadsheet
 

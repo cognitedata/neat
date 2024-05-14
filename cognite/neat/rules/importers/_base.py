@@ -11,7 +11,7 @@ from rdflib import Namespace
 
 from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.issues.base import IssueList, NeatValidationError, ValidationWarning
-from cognite.neat.rules.models.rules import DMSRules, InformationRules, RoleTypes
+from cognite.neat.rules.models import DMSRules, InformationRules, RoleTypes
 
 
 class BaseImporter(ABC):
@@ -20,21 +20,16 @@ class BaseImporter(ABC):
     """
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None, is_reference: bool = False) -> Rules:
-        ...
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules: ...
 
     @overload
     def to_rules(
-        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None, is_reference: bool = False
-    ) -> tuple[Rules | None, IssueList]:
-        ...
+        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
+    ) -> tuple[Rules | None, IssueList]: ...
 
     @abstractmethod
     def to_rules(
-        self,
-        errors: Literal["raise", "continue"] = "continue",
-        role: RoleTypes | None = None,
-        is_reference: bool = False,
+        self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
     ) -> tuple[Rules | None, IssueList] | Rules:
         """
         Creates `Rules` object from the data for target role.
@@ -48,7 +43,6 @@ class BaseImporter(ABC):
         issues: IssueList,
         errors: Literal["raise", "continue"] = "continue",
         role: RoleTypes | None = None,
-        is_reference: bool = False,
     ) -> tuple[Rules | None, IssueList] | Rules:
         """Converts the rules to the output format."""
 
@@ -61,13 +55,16 @@ class BaseImporter(ABC):
         else:
             raise NotImplementedError(f"Role {role} is not supported for {type(rules).__name__} rules")
 
-        if is_reference:
-            output.is_reference = True
-
         if errors == "raise":
             return output
         else:
             return output, issues
+
+    @classmethod
+    def _return_or_raise(cls, issue_list: IssueList, errors: Literal["raise", "continue"]) -> tuple[None, IssueList]:
+        if errors == "raise":
+            raise issue_list.as_errors()
+        return None, issue_list
 
     def _default_metadata(self):
         return {

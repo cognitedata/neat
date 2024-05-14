@@ -9,7 +9,7 @@ from fastapi import APIRouter, UploadFile
 
 from cognite.neat.app.api.configuration import NEAT_APP
 from cognite.neat.rules import exporters, importers
-from cognite.neat.rules.models.rules import DMSRules, RoleTypes
+from cognite.neat.rules.models import DMSRules, RoleTypes
 
 router = APIRouter()
 
@@ -35,7 +35,7 @@ async def convert_data_model_to_rules(file: UploadFile):
 
     # load as OWL
     elif suffix in [".ttl", ".owl"]:
-        rules, issues = importers.OWLImporter(owl_filepath=temp_filepath).to_rules(role=RoleTypes.dms_architect)
+        rules, issues = importers.OWLImporter(filepath=temp_filepath).to_rules(role=RoleTypes.dms_architect)
 
     # load as YAML
     elif suffix in [".yml", ".yaml"]:

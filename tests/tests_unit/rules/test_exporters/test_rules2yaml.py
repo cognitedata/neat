@@ -2,7 +2,7 @@ from pathlib import Path
 
 from cognite.neat.rules.exporters import YAMLExporter
 from cognite.neat.rules.importers import YAMLImporter
-from cognite.neat.rules.models.rules import DMSRules, DomainRules, InformationRules
+from cognite.neat.rules.models import DMSRules, DomainRules, InformationRules
 
 
 class TestYAMLExporter:

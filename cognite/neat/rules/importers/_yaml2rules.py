@@ -5,7 +5,8 @@ import yaml
 
 from cognite.neat.rules import issues
 from cognite.neat.rules.issues import IssueList, NeatValidationError, ValidationIssue
-from cognite.neat.rules.models.rules import RULES_PER_ROLE, RoleTypes
+from cognite.neat.rules.models import RULES_PER_ROLE, DMSRules, RoleTypes
+from cognite.neat.rules.models.dms import DMSRulesInput
 
 from ._base import BaseImporter, Rules, _handle_issues
 
@@ -45,20 +46,15 @@ class YAMLImporter(BaseImporter):
         return cls(yaml.safe_load(filepath.read_text()), filepaths=[filepath])
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None, is_reference: bool = False) -> Rules:
-        ...
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules: ...
 
     @overload
     def to_rules(
-        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None, is_reference: bool = False
-    ) -> tuple[Rules | None, IssueList]:
-        ...
+        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
+    ) -> tuple[Rules | None, IssueList]: ...
 
     def to_rules(
-        self,
-        errors: Literal["raise", "continue"] = "continue",
-        role: RoleTypes | None = None,
-        is_reference: bool = False,
+        self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
     ) -> tuple[Rules | None, IssueList] | Rules:
         if any(issue for issue in self._read_issues if isinstance(issue, NeatValidationError)) or not self.raw_data:
             if errors == "raise":
@@ -100,11 +96,16 @@ class YAMLImporter(BaseImporter):
         rules_model = RULES_PER_ROLE[role_enum]
 
         with _handle_issues(issue_list) as future:
-            rules = rules_model.model_validate(self.raw_data)
+            rules: Rules
+            if rules_model is DMSRules:
+                rules = DMSRulesInput.load(self.raw_data).as_rules()
+            else:
+                rules = rules_model.model_validate(self.raw_data)
+
         if future.result == "failure":
             if errors == "continue":
                 return None, issue_list
             else:
                 raise issue_list.as_errors()
 
-        return self._to_output(rules, issue_list, errors, role, is_reference)
+        return self._to_output(rules, issue_list, errors, role)

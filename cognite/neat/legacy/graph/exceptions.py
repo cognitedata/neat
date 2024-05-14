@@ -1,5 +1,4 @@
-"""This module contains the definition of validation errors and warnings raised during graph methods
-"""
+"""This module contains the definition of validation errors and warnings raised during graph methods"""
 
 from cognite.neat.constants import DEFAULT_DOCS_URL
 from cognite.neat.exceptions import NeatException

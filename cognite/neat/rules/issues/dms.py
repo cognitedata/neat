@@ -9,6 +9,7 @@ from .base import NeatValidationError, ValidationWarning
 __all__ = [
     "DMSSchemaError",
     "DMSSchemaWarning",
+    "IncompleteSchemaError",
     "MissingSpaceError",
     "MissingContainerError",
     "MissingContainerPropertyError",
@@ -16,15 +17,18 @@ __all__ = [
     "MissingParentViewError",
     "MissingSourceViewError",
     "MissingEdgeViewError",
-    "DuplicatedViewInDataModelError",
     "DirectRelationMissingSourceWarning",
+    "ViewModelVersionNotMatchingWarning",
+    "ViewModelSpaceNotMatchingWarning",
+    "ViewMapsToTooManyContainersWarning",
+    "DuplicatedViewInDataModelError",
     "ContainerPropertyUsedMultipleTimesError",
-    "DirectRelationListWarning",
-    "ReverseOfDirectRelationListWarning",
     "EmptyContainerWarning",
-    "UnsupportedRelationWarning",
+    "UnsupportedConnectionWarning",
     "MultipleReferenceWarning",
     "HasDataFilterOnNoPropertiesViewWarning",
+    "HasDataFilterAppliedToTooManyContainersWarning",
+    "ReverseRelationMissingOtherSideWarning",
     "NodeTypeFilterOnParentViewWarning",
     "ChangingContainerError",
     "ChangingViewError",
@@ -32,13 +36,29 @@ __all__ = [
 
 
 @dataclass(frozen=True)
-class DMSSchemaError(NeatValidationError, ABC):
-    ...
+class DMSSchemaError(NeatValidationError, ABC): ...
 
 
 @dataclass(frozen=True)
-class DMSSchemaWarning(ValidationWarning, ABC):
-    ...
+class DMSSchemaWarning(ValidationWarning, ABC): ...
+
+
+@dataclass(frozen=True)
+class IncompleteSchemaError(DMSSchemaError):
+    description = "This error is raised when the schema is claimed to be complete but missing some components"
+    fix = "Either provide the missing components or change the schema to partial"
+    missing_component: dm.ContainerId | dm.ViewId
+
+    def message(self) -> str:
+        return (
+            "The data model schema is set to be complete, however, "
+            f"the referred component {self.missing_component} is not preset."
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["missing_component"] = self.missing_component
+        return output
 
 
 @dataclass(frozen=True)
@@ -195,12 +215,81 @@ class DirectRelationMissingSourceWarning(DMSSchemaWarning):
     property: str
 
     def message(self) -> str:
-        return f"The source view referred to by {self.view_id}.{self.property} does not exist"
+        return f"The source view referred to by '{self.view_id.external_id}.{self.property}' does not exist."
 
     def dump(self) -> dict[str, Any]:
         output = super().dump()
         output["view_id"] = self.view_id
         output["property"] = self.property
+        return output
+
+
+@dataclass(frozen=True)
+class ViewModelVersionNotMatchingWarning(DMSSchemaWarning):
+    description = "The view model version does not match the data model version"
+    fix = "Update the view model version to match the data model version"
+    error_name: ClassVar[str] = "ViewModelVersionNotMatching"
+    view_ids: list[dm.ViewId]
+    data_model_version: str
+
+    def message(self) -> str:
+        return (
+            f"The version in the views {self.view_ids} does not match the version in the data model "
+            f"{self.data_model_version}. This is not recommended as it easily leads to confusion and errors. "
+            f"Views are very cheap and we recommend you update the version of the views to match the data"
+            f" model version, irrespective of whether the views have changed or not."
+            " The approach of having same version of model components as the model itself "
+            " is a globally recognized data modeling practice."
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["view_id"] = [view_id.dump() for view_id in self.view_ids]
+        output["data_model_version"] = self.data_model_version
+        return output
+
+
+@dataclass(frozen=True)
+class ViewModelSpaceNotMatchingWarning(DMSSchemaWarning):
+    description = "The view model space does not match the data model space"
+    fix = "Update the view model space to match the data model space"
+    error_name: ClassVar[str] = "ViewModelSpaceNotMatching"
+    view_ids: list[dm.ViewId]
+    data_model_space: str
+
+    def message(self) -> str:
+        return (
+            f"The space in the views {self.view_ids} does not match the space in the data model "
+            f"{self.data_model_space}. This is not recommended as it easily leads to confusion and errors. "
+            f"Views are very cheap and we recommend you always have views in the same space as the data model."
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["view_id"] = [view_id.dump() for view_id in self.view_ids]
+        output["data_model_space"] = self.data_model_space
+        return output
+
+
+@dataclass(frozen=True)
+class ViewMapsToTooManyContainersWarning(DMSSchemaWarning):
+    description = "The view maps to more than 10 containers which impacts read/write performance of data model"
+    fix = "Try to have as few containers as possible to which the view maps to"
+    error_name: ClassVar[str] = "ViewMapsToTooManyContainers"
+    view_id: dm.ViewId
+    container_ids: set[dm.ContainerId]
+
+    def message(self) -> str:
+        return (
+            f"The view {self.view_id} maps to total of {len(self.container_ids)},."
+            "Mapping to more than 10 containers is not recommended and can lead to poor performances."
+            "Re-iterate the data model design to reduce the number of containers to which the view maps to."
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["view_id"] = self.view_id.dump()
+        output["container_ids"] = [container_id.dump() for container_id in self.container_ids]
         return output
 
 
@@ -300,54 +389,6 @@ class ChangingViewError(DMSSchemaError):
 
 
 @dataclass(frozen=True)
-class DirectRelationListWarning(DMSSchemaWarning):
-    description = "The container property is set to a direct relation list, which is not supported by the CDF API"
-    fix = "Make the property into a multiedge connection instead"
-    error_name: ClassVar[str] = "DirectRelationListWarning"
-    view_id: dm.ViewId
-    container_id: dm.ContainerId
-    property: str
-
-    def message(self) -> str:
-        return (
-            f"The property in {self.container_id}.{self.property} is a list of direct relations. "
-            f"This is not supported by the API, so it will be converted to an MultiEdgeConnection on"
-            f"the view {self.view_id}.{self.property} instead"
-        )
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["view_id"] = self.view_id.dump()
-        output["container_id"] = self.container_id.dump()
-        output["property"] = self.property
-        return output
-
-
-@dataclass(frozen=True)
-class ReverseOfDirectRelationListWarning(DMSSchemaWarning):
-    description = (
-        "The view property is set to a reverse of a direct relation list, which is not supported by the CDF API"
-    )
-    fix = "Make the property into a multiedge connection instead"
-    error_name: ClassVar[str] = "ReverseOfDirectRelationListWarning"
-    view_id: dm.ViewId
-    property: str
-
-    def message(self) -> str:
-        return (
-            f"The property pointed to be {self.view_id}.{self.property} is a list of direct relations. "
-            f"This is not supported by the API, so the {self.view_id}.{self.property} "
-            "will be converted from a reverse direct relation to an MultiEdgeConnection instead"
-        )
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["view_id"] = self.view_id.dump()
-        output["property"] = self.property
-        return output
-
-
-@dataclass(frozen=True)
 class EmptyContainerWarning(DMSSchemaWarning):
     description = "The container is empty"
     fix = "Add data to the container"
@@ -367,17 +408,17 @@ class EmptyContainerWarning(DMSSchemaWarning):
 
 
 @dataclass(frozen=True)
-class UnsupportedRelationWarning(DMSSchemaWarning):
-    description = "The relatio type is not supported by neat"
-    fix = "Change the relation to a supported type"
-    error_name: ClassVar[str] = "UnsupportedRelationWarning"
+class UnsupportedConnectionWarning(DMSSchemaWarning):
+    description = "The connection type is not supported by neat"
+    fix = "Change the connection to a supported type"
+    error_name: ClassVar[str] = "UnsupportedConnectionWarning"
     view_id: dm.ViewId
     property: str
-    relation: str
+    connection: str
 
     def message(self) -> str:
         return (
-            f"The relation {self.relation} in {self.view_id}.{self.property} is not supported."
+            f"The connection {self.connection} in {self.view_id}.{self.property} is not supported."
             "This property will be ignored."
         )
 
@@ -385,7 +426,25 @@ class UnsupportedRelationWarning(DMSSchemaWarning):
         output = super().dump()
         output["view_id"] = self.view_id.dump()
         output["property"] = self.property
-        output["relation"] = self.relation
+        output["connection"] = self.connection
+        return output
+
+
+@dataclass(frozen=True)
+class ReverseRelationMissingOtherSideWarning(DMSSchemaWarning):
+    description = "The relation is missing the other side"
+    fix = "Add the other side of the relation"
+    error_name: ClassVar[str] = "ReverseRelationMissingOtherSideWarning"
+    view_id: dm.ViewId
+    property: str
+
+    def message(self) -> str:
+        return f"The reverse relation specified in {self.view_id}.{self.property} is missing the other side."
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["view_id"] = self.view_id.dump()
+        output["property"] = self.property
         return output
 
 
@@ -427,9 +486,31 @@ class HasDataFilterOnNoPropertiesViewWarning(DMSSchemaWarning):
 
 
 @dataclass(frozen=True)
+class HasDataFilterAppliedToTooManyContainersWarning(DMSSchemaWarning):
+    description = "The view filter hasData applied to more than 10 containers this will cause DMS API Error"
+    fix = "Do not map to more than 10 containers, alternatively override the filter by using rawFilter"
+    error_name: ClassVar[str] = "HasDataFilterAppliedToTooManyContainers"
+    view_id: dm.ViewId
+    container_ids: set[dm.ContainerId]
+
+    def message(self) -> str:
+        return (
+            f"The view {self.view_id} HasData filter applied to total of {len(self.container_ids)},."
+            "Applying HasData filter to more than 10 containers is not recommended and can lead to DMS API error."
+            "Re-iterate the data model design to reduce the number of containers to which the view maps to."
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["view_id"] = self.view_id.dump()
+        output["container_ids"] = [container_id.dump() for container_id in self.container_ids]
+        return output
+
+
+@dataclass(frozen=True)
 class NodeTypeFilterOnParentViewWarning(DMSSchemaWarning):
     description = (
-        "Setting a node type filter on a parent view. This is no "
+        "Setting a node type filter on a parent view. This is not "
         "recommended as parent views are typically used for multiple type of nodes."
     )
     fix = "Use a HasData filter instead"
@@ -445,4 +526,74 @@ class NodeTypeFilterOnParentViewWarning(DMSSchemaWarning):
     def dump(self) -> dict[str, Any]:
         output = super().dump()
         output["view_id"] = self.view_id.dump()
+        return output
+
+
+@dataclass(frozen=True)
+class HasDataFilterOnViewWithReferencesWarning(DMSSchemaWarning):
+    description = (
+        "Setting a hasData filter on a solution view which reference other containers is not recommended."
+        "This will lead to no nodes being returned when querying the solution view."
+    )
+    fix = "Use a node type filter instead"
+    error_name: ClassVar[str] = "HasDataFilterOnReferencedViewWarning"
+
+    view_id: dm.ViewId
+    references: list[dm.ViewId]
+
+    def message(self) -> str:
+        return (
+            f"Setting a hasData filter on view {self.view_id} which references other views {self.references}. "
+            "This is not recommended as it will lead to no nodes being returned when querying the solution view."
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["view_id"] = self.view_id.dump()
+        output["references"] = [view.dump() for view in sorted(self.references, key=lambda x: x.as_tuple())]
+        return output
+
+
+@dataclass(frozen=True)
+class OtherDataModelsInSpaceWarning(DMSSchemaWarning):
+    description = "The space contains other data models"
+    fix = "Move the data models to their respective spaces."
+    error_name: ClassVar[str] = "OtherDataModelsInSpaceWarning"
+    space: str
+    data_models: list[dm.DataModelId]
+
+    def message(self) -> str:
+        return (
+            f"The space {self.space} contains data models from other spaces: {self.data_models}. {self.fix}"
+            " It is recommended to only have one data model per space. This avoid potential conflicts and "
+            "makes it easier to manage the data models."
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["space"] = self.space
+        output["data_models"] = [data_model.dump() for data_model in self.data_models]
+        return output
+
+
+@dataclass(frozen=True)
+class SolutionOnTopOfSolutionModelWarning(DMSSchemaWarning):
+    description = "The data model is a solution on top of another solution"
+    fix = "Use the base solution as the data model"
+    error_name: ClassVar[str] = "SolutionOnTopOfSolutionModelWarning"
+    data_model: dm.DataModelId
+    base_data_model: dm.DataModelId
+
+    def message(self) -> str:
+        return (
+            f"The data model {self.data_model} is a solution model on top of another solution {self.base_data_model} "
+            "model. This is not recommended as it can lead to confusion and errors. It is very hard to "
+            "maintain a nested structure of solution models. Instead, only build solution models on "
+            "top of enterprise models."
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["data_model"] = self.data_model.dump()
+        output["base_data_model"] = self.base_data_model.dump()
         return output

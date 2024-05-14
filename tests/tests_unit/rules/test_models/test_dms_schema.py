@@ -7,6 +7,7 @@ from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes import DatabaseWrite, DatabaseWriteList, TransformationWrite, TransformationWriteList
 
+from cognite.neat.rules import issues
 from cognite.neat.rules.issues.dms import (
     DirectRelationMissingSourceWarning,
     DMSSchemaError,
@@ -20,7 +21,8 @@ from cognite.neat.rules.issues.dms import (
     MissingSpaceError,
     MissingViewError,
 )
-from cognite.neat.rules.models.rules._dms_schema import DMSSchema, PipelineSchema
+from cognite.neat.rules.models import DMSSchema
+from cognite.neat.rules.models.dms import PipelineSchema
 from cognite.neat.utils.cdf_loaders.data_classes import RawTableWrite, RawTableWriteList
 
 
@@ -38,7 +40,7 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         DMSSchema(
             spaces=dm.SpaceApplyList([my_space]),
-            data_models=dm.DataModelApplyList([data_model]),
+            data_model=data_model,
         ),
         [
             DuplicatedViewInDataModelError(
@@ -98,7 +100,7 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         DMSSchema(
             spaces=dm.SpaceApplyList([my_space]),
-            data_models=dm.DataModelApplyList([data_model]),
+            data_model=data_model,
             views=dm.ViewApplyList([view1, view2]),
             containers=dm.ContainerApplyList([container]),
         ),
@@ -146,7 +148,7 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         DMSSchema(
             spaces=dm.SpaceApplyList([my_space]),
-            data_models=dm.DataModelApplyList([my_data_model]),
+            data_model=my_data_model,
             views=dm.ViewApplyList([view]),
             containers=dm.ContainerApplyList([container]),
         ),
@@ -202,7 +204,7 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         DMSSchema(
             spaces=dm.SpaceApplyList([my_space]),
-            data_models=dm.DataModelApplyList([my_data_model]),
+            data_model=my_data_model,
             views=dm.ViewApplyList([view1, view2]),
         ),
         [
@@ -228,18 +230,14 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
 def valid_schema_test_cases() -> Iterable[ParameterSet]:
     dms_schema = DMSSchema(
         spaces=dm.SpaceApplyList([dm.SpaceApply(space="my_space")]),
-        data_models=dm.DataModelApplyList(
-            [
-                dm.DataModelApply(
-                    space="my_space",
-                    external_id="my_data_model",
-                    version="1",
-                    views=[
-                        dm.ViewId("my_space", "my_view1", "1"),
-                        dm.ViewId("my_space", "my_view2", "1"),
-                    ],
-                )
-            ]
+        data_model=dm.DataModelApply(
+            space="my_space",
+            external_id="my_data_model",
+            version="1",
+            views=[
+                dm.ViewId("my_space", "my_view1", "1"),
+                dm.ViewId("my_space", "my_view2", "1"),
+            ],
         ),
         containers=dm.ContainerApplyList(
             [
@@ -283,7 +281,7 @@ def valid_schema_test_cases() -> Iterable[ParameterSet]:
     pipeline_schema = PipelineSchema(
         # Serializing to ensure that we are copying the object
         spaces=dm.SpaceApplyList.load(dms_schema.spaces.dump()),
-        data_models=dm.DataModelApplyList.load(dms_schema.data_models.dump()),
+        data_model=dm.DataModelApply.load(dms_schema.data_model.dump()),
         containers=dm.ContainerApplyList.load(dms_schema.containers.dump()),
         views=dm.ViewApplyList.load(dms_schema.views.dump()),
         transformations=TransformationWriteList(
@@ -293,6 +291,36 @@ def valid_schema_test_cases() -> Iterable[ParameterSet]:
         raw_tables=RawTableWriteList([RawTableWrite(name="my_raw_table", database="my_database")]),
     )
     yield pytest.param(pipeline_schema, id="Pipeline schema")
+
+
+def invalid_raw_str_test_cases() -> Iterable[ParameterSet]:
+    raw_str = """
+    views:
+      - space: my_space
+        externalId: my_view1
+        version: 1
+        properties: {}
+    """
+    yield pytest.param(raw_str, {"views": [Path("my_view_file.yaml")]}, [], id="No issues")
+    raw_str = """
+    views:
+      - space: my_space
+        external_id: my_view1
+        version: 1
+        properties: {}
+    """
+    yield pytest.param(
+        raw_str,
+        {"views": [Path("my_view_file.yaml")]},
+        [
+            issues.fileread.FailedLoadWarning(
+                filepath=Path("my_view_file.yaml"),
+                expected_format="ViewApply",
+                error_message="KeyError('externalId')",
+            )
+        ],
+        id="Misspelled external_id",
+    )
 
 
 class TestDMSSchema:
@@ -335,3 +363,15 @@ class TestDMSSchema:
         schema.to_zip(tmp_path / "schema.zip")
         loaded_schema = PipelineSchema.from_zip(tmp_path / "schema.zip")
         assert schema.dump() == loaded_schema.dump()
+
+    @pytest.mark.parametrize(
+        "raw_str, context, expected_issues",
+        list(invalid_raw_str_test_cases()),
+    )
+    def test_load_invalid_raw_str(
+        self, raw_str: str, context: dict[str, list[Path]], expected_issues: list[DMSSchemaError | DMSSchemaWarning]
+    ) -> None:
+        with warnings.catch_warnings(record=True) as warning_logger:
+            _ = DMSSchema.load(raw_str, context)
+        actual_warnings = [warning.message for warning in warning_logger]
+        assert sorted(actual_warnings) == sorted(expected_issues)

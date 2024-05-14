@@ -9,15 +9,9 @@ import cognite.neat.rules.issues.spreadsheet_file
 from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import ExcelImporter
 from cognite.neat.rules.issues import IssueList
-from cognite.neat.rules.models.rules import DMSRules, InformationRules
+from cognite.neat.rules.models import DMSRules, DomainRules, InformationRules
 from tests.config import DOC_RULES
 from tests.tests_unit.rules.test_importers.constants import EXCEL_IMPORTER_DATA
-
-
-def valid_dms_rules_filepaths():
-    yield pytest.param(DOC_RULES / "cdf-dms-architect-alice.xlsx", DMSRules, False, id="Alice rules")
-    yield pytest.param(DOC_RULES / "information-analytics-olav.xlsx", InformationRules, False, id="Olav user rules")
-    yield pytest.param(DOC_RULES / "information-analytics-olav.xlsx", InformationRules, True, id="Olav reference rules")
 
 
 def invalid_rules_filepaths():
@@ -35,7 +29,7 @@ def invalid_rules_filepaths():
         IssueList(
             [
                 validation.spreadsheet.InvalidPropertyError(
-                    column="IsList",
+                    column="Is List",
                     row=4,
                     type="bool_parsing",
                     msg="Input should be a valid boolean, unable to interpret input",
@@ -87,13 +81,66 @@ def invalid_rules_filepaths():
         ),
         id="Missing container and view definition",
     )
+    yield pytest.param(
+        EXCEL_IMPORTER_DATA / "too_many_containers_per_view.xlsx",
+        IssueList(
+            [
+                cognite.neat.rules.issues.dms.ViewMapsToTooManyContainersWarning(
+                    view_id=ViewId(space="neat", external_id="Asset", version="1"),
+                    container_ids={
+                        ContainerId(space="neat", external_id="Asset1"),
+                        ContainerId(space="neat", external_id="Asset2"),
+                        ContainerId(space="neat", external_id="Asset3"),
+                        ContainerId(space="neat", external_id="Asset4"),
+                        ContainerId(space="neat", external_id="Asset5"),
+                        ContainerId(space="neat", external_id="Asset6"),
+                        ContainerId(space="neat", external_id="Asset7"),
+                        ContainerId(space="neat", external_id="Asset8"),
+                        ContainerId(space="neat", external_id="Asset9"),
+                        ContainerId(space="neat", external_id="Asset10"),
+                        ContainerId(space="neat", external_id="Asset11"),
+                    },
+                ),
+                cognite.neat.rules.issues.dms.HasDataFilterAppliedToTooManyContainersWarning(
+                    view_id=ViewId(space="neat", external_id="Asset", version="1"),
+                    container_ids={
+                        ContainerId(space="neat", external_id="Asset1"),
+                        ContainerId(space="neat", external_id="Asset2"),
+                        ContainerId(space="neat", external_id="Asset3"),
+                        ContainerId(space="neat", external_id="Asset4"),
+                        ContainerId(space="neat", external_id="Asset5"),
+                        ContainerId(space="neat", external_id="Asset6"),
+                        ContainerId(space="neat", external_id="Asset7"),
+                        ContainerId(space="neat", external_id="Asset8"),
+                        ContainerId(space="neat", external_id="Asset9"),
+                        ContainerId(space="neat", external_id="Asset10"),
+                        ContainerId(space="neat", external_id="Asset11"),
+                    },
+                ),
+            ]
+        ),
+        id="Too many containers per view",
+    )
 
 
 class TestExcelImporter:
-    @pytest.mark.parametrize("filepath, rule_type, is_reference", valid_dms_rules_filepaths())
-    def test_import_valid_rules(self, filepath: Path, rule_type: DMSRules | InformationRules, is_reference: bool):
+    @pytest.mark.parametrize(
+        "filepath, rule_type",
+        [
+            pytest.param(DOC_RULES / "cdf-dms-architect-alice.xlsx", DMSRules, id="Alice rules"),
+            pytest.param(DOC_RULES / "information-analytics-olav.xlsx", InformationRules, id="Olav user rules"),
+            pytest.param(DOC_RULES / "expert-wind-energy-jon.xlsx", DomainRules, id="expert-wind-energy-jon"),
+            pytest.param(DOC_RULES / "expert-grid-emma.xlsx", DomainRules, id="expert-grid-emma"),
+            pytest.param(
+                DOC_RULES / "information-architect-david.xlsx", InformationRules, id="information-architect-david"
+            ),
+        ],
+    )
+    def test_import_valid_rules(
+        self, filepath: Path, rule_type: type[DMSRules] | type[InformationRules] | type[DomainRules]
+    ):
         importer = ExcelImporter(filepath)
-        rules = importer.to_rules(errors="raise", is_reference=is_reference)
+        rules = importer.to_rules(errors="raise")
         assert isinstance(rules, rule_type)
 
     @pytest.mark.parametrize("filepath, expected_issues", invalid_rules_filepaths())
@@ -102,5 +149,8 @@ class TestExcelImporter:
 
         _, issues = importer.to_rules(errors="continue")
 
+        issues = sorted(issues)
+        expected_issues = sorted(expected_issues)
+
         assert len(issues) == len(expected_issues)
-        assert sorted(issues) == sorted(expected_issues)
+        assert issues == expected_issues

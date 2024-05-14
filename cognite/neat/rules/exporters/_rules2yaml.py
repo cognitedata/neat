@@ -6,7 +6,7 @@ from typing import Literal, get_args
 import yaml
 
 from cognite.neat.rules._shared import Rules
-from cognite.neat.rules.models.rules._base import RoleTypes
+from cognite.neat.rules.models import RoleTypes
 
 from ._base import BaseExporter
 

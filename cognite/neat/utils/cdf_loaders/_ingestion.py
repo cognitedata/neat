@@ -81,12 +81,10 @@ class RawTableLoader(ResourceLoader[RawTableID, RawTableWrite, RawTable, RawTabl
         return item.as_id()
 
     @overload
-    def _groupby_database(self, items: Sequence[RawTableWrite]) -> Iterable[tuple[str, Iterable[RawTableWrite]]]:
-        ...
+    def _groupby_database(self, items: Sequence[RawTableWrite]) -> Iterable[tuple[str, Iterable[RawTableWrite]]]: ...
 
     @overload
-    def _groupby_database(self, items: SequenceNotStr[RawTableID]) -> Iterable[tuple[str, Iterable[RawTableID]]]:
-        ...
+    def _groupby_database(self, items: SequenceNotStr[RawTableID]) -> Iterable[tuple[str, Iterable[RawTableID]]]: ...
 
     def _groupby_database(
         self, items: Sequence[RawTableWrite] | SequenceNotStr[RawTableID]

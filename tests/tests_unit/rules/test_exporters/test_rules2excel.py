@@ -1,5 +1,7 @@
+import pytest
+
 from cognite.neat.rules.exporters import ExcelExporter
-from cognite.neat.rules.models.rules import DMSRules, DomainRules, InformationRules
+from cognite.neat.rules.models import DMSRules, DomainRules, InformationRules
 
 
 class TestExcelExporter:
@@ -35,11 +37,8 @@ class TestExcelExporter:
         assert "Classes" in workbook.sheetnames
 
     def test_export_dms_rules_alice_reference(self, alice_rules: DMSRules) -> None:
-        exporter = ExcelExporter(styling="maximal")
-        # Make a copy of the rules to avoid changing the original
-        alice_copy = alice_rules.copy()
-        alice_copy.is_reference = True
-        workbook = exporter.export(alice_copy)
+        exporter = ExcelExporter(styling="maximal", dump_as="reference")
+        workbook = exporter.export(alice_rules)
 
         assert "Metadata" in workbook.sheetnames
         assert "Containers" in workbook.sheetnames
@@ -55,22 +54,42 @@ class TestExcelExporter:
 
         # Two first rows are headers
         reference_count = sum(1 for row in rows[2:] if row.value is not None)
-        assert reference_count >= len(alice_copy.properties)
+        assert reference_count >= len(alice_rules.properties)
 
         rows = next((rows for rows in workbook["RefContainers"].columns if rows[1].value == "Reference"), None)
         assert rows is not None, "Reference column not found in RefContainers sheet"
-        assert sum(1 for row in rows[2:] if row.value is not None) >= len(alice_copy.containers)
+        assert sum(1 for row in rows[2:] if row.value is not None) >= len(alice_rules.containers)
 
         rows = next((rows for rows in workbook["RefViews"].columns if rows[1].value == "Reference"), None)
         assert rows is not None, "Reference column not found in RefViews sheet"
-        assert sum(1 for row in rows[2:] if row.value is not None) >= len(alice_copy.views)
+        assert sum(1 for row in rows[2:] if row.value is not None) >= len(alice_rules.views)
 
-    def test_export_rules_with_reference(self, olav_rules: InformationRules) -> None:
-        exporter = ExcelExporter(styling="maximal")
+    @pytest.mark.parametrize(
+        "dump_as, expected_sheet_names",
+        [
+            ("user", {"Metadata", "Classes", "Properties", "RefMetadata", "RefClasses", "RefProperties"}),
+            (
+                "last",
+                {
+                    "Metadata",
+                    "Classes",
+                    "Properties",
+                    "LastClasses",
+                    "LastProperties",
+                    "RefMetadata",
+                    "RefClasses",
+                    "RefProperties",
+                },
+            ),
+        ],
+    )
+    def test_export_olav_rules_dump_as(
+        self, dump_as: ExcelExporter.DumpOptions, expected_sheet_names: set[str], olav_rules: InformationRules
+    ) -> None:
+        exporter = ExcelExporter(styling="maximal", dump_as=dump_as)
         assert olav_rules.reference is not None, "Olav rules are expected to have a reference set"
-        expected_sheet_names = {"Metadata", "Classes", "Properties", "RefMetadata", "RefClasses", "RefProperties"}
         # Make a copy of the rules to avoid changing the original
-        olav_copy = olav_rules.copy(deep=True)
+        olav_copy = olav_rules.model_copy(deep=True)
 
         workbook = exporter.export(olav_copy)
 

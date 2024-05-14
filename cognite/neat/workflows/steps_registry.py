@@ -9,9 +9,12 @@ from typing import Any
 
 from pydantic import BaseModel
 
-import cognite.neat.workflows.steps.lib
-import cognite.neat.workflows.steps.lib.v1
+# steps
+import cognite.neat.workflows.steps.lib.current
+import cognite.neat.workflows.steps.lib.io
+import cognite.neat.workflows.steps.lib.legacy
 from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
+from cognite.neat.config import Config
 from cognite.neat.exceptions import InvalidWorkFlowError
 from cognite.neat.workflows._exceptions import ConfigurationNotSet
 from cognite.neat.workflows.model import FlowMessage, WorkflowConfigs
@@ -34,26 +37,32 @@ class StepMetadata(BaseModel):
 
 
 class StepsRegistry:
-    def __init__(self, data_store_path: Path | None = None):
+    def __init__(self, config: Config):
+        self.config = config
         self._step_classes: list[type[Step]] = []
-        if data_store_path:
-            self.user_steps_path: Path | None = Path(data_store_path) / "steps"
-        else:
-            self.user_steps_path = None
-        self.data_store_path: str = str(data_store_path)
+        self.user_steps_path: Path = config.data_store_path / "steps"
+        self.data_store_path: str = str(config.data_store_path)
+        self.categorized_steps: dict[str, set] = {"legacy": set(), "current": set(), "io": set()}
 
     def load_step_classes(self):
         if self._step_classes:
             # classes already loaded - no need to reload
             return
-        for name, step_cls in inspect.getmembers(cognite.neat.workflows.steps.lib):
+        for name, step_cls in inspect.getmembers(cognite.neat.workflows.steps.lib.current):
             if inspect.isclass(step_cls):
                 logging.info(f"Loading NEAT step {name}")
                 self._step_classes.append(step_cls)
-        for name, step_cls in inspect.getmembers(cognite.neat.workflows.steps.lib.v1):
+                self.categorized_steps["current"].add(name)
+        for name, step_cls in inspect.getmembers(cognite.neat.workflows.steps.lib.io):
             if inspect.isclass(step_cls):
                 logging.info(f"Loading NEAT step {name}")
                 self._step_classes.append(step_cls)
+                self.categorized_steps["io"].add(name)
+        for name, step_cls in inspect.getmembers(cognite.neat.workflows.steps.lib.legacy):
+            if inspect.isclass(step_cls):
+                logging.info(f"Loading NEAT step {name}")
+                self._step_classes.append(step_cls)
+                self.categorized_steps["legacy"].add(name)
         sys.path.append(str(Path(self.data_store_path) / "workflows"))
         try:
             if self.user_steps_path:
@@ -124,7 +133,7 @@ class StepsRegistry:
             step_complex_configs = {}
         for step_cls in self._step_classes:
             if step_cls.__name__ == step_name:
-                step_obj: Step = step_cls(Path(self.data_store_path))
+                step_obj: Step = step_cls(config=self.config)
                 step_obj.configure(step_configs, step_complex_configs)
                 step_obj.set_flow_context(flow_context)
                 step_obj.set_metrics(metrics)

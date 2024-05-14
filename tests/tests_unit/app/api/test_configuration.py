@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from cognite.neat.app.api.configuration import Config
+from cognite.neat.config import Config
 
 
 def test_dump_and_load_default_config(tmp_path: Path):

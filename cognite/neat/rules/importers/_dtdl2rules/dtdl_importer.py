@@ -12,9 +12,8 @@ from cognite.neat.rules.importers._base import BaseImporter, _handle_issues
 from cognite.neat.rules.importers._dtdl2rules.dtdl_converter import _DTDLConverter
 from cognite.neat.rules.importers._dtdl2rules.spec import DTDL_CLS_BY_TYPE_BY_SPEC, DTDLBase, Interface
 from cognite.neat.rules.issues import IssueList, ValidationIssue
-from cognite.neat.rules.models.rules import InformationRules, RoleTypes
-from cognite.neat.rules.models.rules._base import SchemaCompleteness, SheetList
-from cognite.neat.rules.models.rules._information_rules import InformationClass, InformationProperty
+from cognite.neat.rules.models import InformationRules, RoleTypes, SchemaCompleteness, SheetList
+from cognite.neat.rules.models.information import InformationClass, InformationProperty
 from cognite.neat.utils.text import to_pascal
 
 
@@ -119,20 +118,15 @@ class DTDLImporter(BaseImporter):
         return cls(items, zip_file.stem, read_issues=issues)
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None, is_reference: bool = False) -> Rules:
-        ...
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules: ...
 
     @overload
     def to_rules(
-        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None, is_reference: bool = False
-    ) -> tuple[Rules | None, IssueList]:
-        ...
+        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
+    ) -> tuple[Rules | None, IssueList]: ...
 
     def to_rules(
-        self,
-        errors: Literal["raise", "continue"] = "continue",
-        role: RoleTypes | None = None,
-        is_reference: bool = False,
+        self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
     ) -> tuple[Rules | None, IssueList] | Rules:
         converter = _DTDLConverter(self._read_issues)
 
@@ -161,4 +155,4 @@ class DTDLImporter(BaseImporter):
             else:
                 raise converter.issues.as_errors()
 
-        return self._to_output(rules, converter.issues, errors, role, is_reference)
+        return self._to_output(rules, converter.issues, errors, role)

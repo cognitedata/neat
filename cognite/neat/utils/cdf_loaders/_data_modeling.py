@@ -60,7 +60,9 @@ class DataModelingLoader(
         except CogniteAPIError as e:
             failed_items = {failed.as_id() for failed in e.failed if hasattr(failed, "as_id")}
             to_redeploy = [
-                item for item in items if item.as_id() in failed_items and item.as_id() not in tried_force_deploy  # type: ignore[attr-defined]
+                item
+                for item in items
+                if item.as_id() in failed_items and item.as_id() not in tried_force_deploy  # type: ignore[attr-defined]
             ]
             if not to_redeploy:
                 # Avoid infinite loop
@@ -87,8 +89,10 @@ class SpaceLoader(DataModelingLoader[str, SpaceApply, Space, SpaceApplyList, Spa
     def update(self, items: Sequence[SpaceApply]) -> SpaceList:
         return self.create(items)
 
-    def delete(self, ids: SequenceNotStr[str]) -> list[str]:
-        return self.client.data_modeling.spaces.delete(ids)
+    def delete(self, ids: SequenceNotStr[str] | Sequence[Space | SpaceApply]) -> list[str]:
+        if all(isinstance(item, Space) for item in ids) or all(isinstance(item, SpaceApply) for item in ids):
+            ids = [cast(Space | SpaceApply, item).space for item in ids]
+        return self.client.data_modeling.spaces.delete(cast(SequenceNotStr[str], ids))
 
 
 class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, ViewList]):

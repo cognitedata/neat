@@ -37,8 +37,7 @@ def read_individual_sheet(
     sheet_name: str,
     return_read_info: Literal[True],
     expected_headers: list[str] | None = None,
-) -> tuple[list[dict], SpreadsheetRead]:
-    ...
+) -> tuple[list[dict], SpreadsheetRead]: ...
 
 
 @overload
@@ -47,8 +46,7 @@ def read_individual_sheet(
     sheet_name: str,
     return_read_info: Literal[False] = False,
     expected_headers: list[str] | None = None,
-) -> list[dict]:
-    ...
+) -> list[dict]: ...
 
 
 def read_individual_sheet(

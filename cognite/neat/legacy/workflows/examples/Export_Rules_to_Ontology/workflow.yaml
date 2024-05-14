@@ -1,0 +1,152 @@
+configs: []
+description: null
+implementation_module: null
+name: Export Rules to Ontology
+steps:
+  - complex_configs: {}
+    configs: {}
+    description: null
+    enabled: true
+    id: step_trigger
+    label: Workflow Trigger
+    max_retries: 0
+    method: null
+    params: {}
+    retry_delay: 3
+    stype: http_trigger
+    system_component_id: null
+    transition_to:
+      - step_import_excel_rules
+    trigger: true
+    ui_config:
+      pos_x: 480
+      pos_y: 45
+  - complex_configs: {}
+    configs:
+      file_name: skos-rules.xlsx
+      validation_report_file: rules_validation_report.txt
+      validation_report_storage_dir: rules_validation_report
+      version: ""
+    description: null
+    enabled: true
+    id: step_import_excel_rules
+    label: Import Excel Rules
+    max_retries: 0
+    method: ImportExcelToRules
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+      - step_export_rules_to_ontology
+    trigger: false
+    ui_config:
+      pos_x: 481
+      pos_y: 120
+  - complex_configs: {}
+    configs:
+      ontology_file_path: staging/ontology.ttl
+    description: null
+    enabled: true
+    id: step_export_rules_to_ontology
+    label: Export Rules To Ontology
+    max_retries: 0
+    method: ExportRulesToOntology
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+      - step_export_rules_to_shacle
+    trigger: false
+    ui_config:
+      pos_x: 478
+      pos_y: 191
+  - complex_configs: {}
+    configs:
+      db_server_api_root_url: ""
+      disk_store_dir: ontology-graph-store
+      graph_name: source
+      init_procedure: reset
+      sparql_query_url: ""
+      sparql_update_url: ""
+      store_type: oxigraph
+    description: null
+    enabled: true
+    id: step_configure_graph_store
+    label: Configure Graph Store
+    max_retries: 0
+    method: ConfigureGraphStore
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+      - step_load_ontology_to_graph_store
+    trigger: false
+    ui_config:
+      pos_x: 479
+      pos_y: 383
+  - complex_configs: {}
+    configs:
+      add_base_iri: "True"
+      file_path: staging/ontology.ttl
+      mime_type: text/turtle
+    description: null
+    enabled: true
+    id: step_load_ontology_to_graph_store
+    label: Load Ontology To Graph Store
+    max_retries: 0
+    method: ExtractGraphFromRdfFile
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+      - step_load_shacl_to_graph
+    trigger: false
+    ui_config:
+      pos_x: 479
+      pos_y: 455
+  - complex_configs: {}
+    configs:
+      file_name: shacl.ttl
+      shacl_file_path: staging/shacl.ttl
+      storage_dir: staging
+    description: null
+    enabled: true
+    id: step_export_rules_to_shacle
+    label: Export Rules to Shacl
+    max_retries: 0
+    method: ExportRulesToSHACL
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+      - step_configure_graph_store
+    trigger: false
+    ui_config:
+      pos_x: 480
+      pos_y: 291
+  - complex_configs: {}
+    configs:
+      add_base_iri: "True"
+      file_path: staging/shacl.ttl
+      mime_type: text/turtle
+    description: null
+    enabled: true
+    id: step_load_shacl_to_graph
+    label: Load SHACL to Graph Store
+    max_retries: 0
+    method: ExtractGraphFromRdfFile
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to: []
+    trigger: false
+    ui_config:
+      pos_x: 475
+      pos_y: 542
+system_components: []

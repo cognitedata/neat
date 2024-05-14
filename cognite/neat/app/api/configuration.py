@@ -7,8 +7,7 @@ from cognite.client import CogniteClient
 from fastapi import FastAPI
 
 from cognite import neat
-from cognite.neat.app.api.data_classes.configuration import Config, configure_logging
-from cognite.neat.config import copy_examples_to_directory, create_data_dir_structure
+from cognite.neat.config import Config, configure_logging, copy_examples_to_directory, create_data_dir_structure
 from cognite.neat.constants import PACKAGE_DIRECTORY
 from cognite.neat.utils.cdf import ServiceCogniteClient
 from cognite.neat.utils.utils import get_cognite_client_from_config, get_cognite_client_from_token
@@ -58,11 +57,7 @@ class NeatApp:
 
         self.workflow_manager = WorkflowManager(
             client=self.cdf_client,
-            registry_storage_type=self.config.workflows_store_type,
-            workflows_storage_path=self.config.workflows_store_path,
-            rules_storage_path=self.config.rules_store_path,
-            data_store_path=self.config.data_store_path,
-            data_set_id=self.config.cdf_default_dataset_id,
+            config=self.config,
         )
         self.workflow_manager.load_workflows_from_storage()
         self.triggers_manager = TriggerManager(workflow_manager=self.workflow_manager)
@@ -95,9 +90,9 @@ def create_neat_app() -> NeatApp:
         config.to_yaml(config_path)
 
     if config.load_examples:
-        copy_examples_to_directory(config.data_store_path)
+        copy_examples_to_directory(config)
     else:
-        create_data_dir_structure(config.data_store_path)
+        create_data_dir_structure(config)
 
     configure_logging(config.log_level, config.log_format)
     logging.info(f" Starting NEAT version {neat.__version__}")

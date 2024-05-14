@@ -4,18 +4,18 @@ from typing import Literal, overload
 
 from cognite.neat.exceptions import wrangle_warnings
 from cognite.neat.rules import exceptions
-from cognite.neat.rules.models.rules import InformationRules
-from cognite.neat.rules.models.rules._types._base import DMS_PROPERTY_ID_COMPLIANCE_REGEX, VIEW_ID_COMPLIANCE_REGEX
+from cognite.neat.rules.models import InformationRules
+from cognite.neat.rules.models._types._base import DMS_PROPERTY_ID_COMPLIANCE_REGEX, VIEW_ID_COMPLIANCE_REGEX
 
 
 @overload
-def are_entity_names_dms_compliant(rules: InformationRules, return_report: Literal[True]) -> tuple[bool, list[dict]]:
-    ...
+def are_entity_names_dms_compliant(
+    rules: InformationRules, return_report: Literal[True]
+) -> tuple[bool, list[dict]]: ...
 
 
 @overload
-def are_entity_names_dms_compliant(rules: InformationRules, return_report: Literal[False] = False) -> bool:
-    ...
+def are_entity_names_dms_compliant(rules: InformationRules, return_report: Literal[False] = False) -> bool: ...
 
 
 def are_entity_names_dms_compliant(
@@ -26,7 +26,7 @@ def are_entity_names_dms_compliant(
     flag: bool = True
     with warnings.catch_warnings(record=True) as validation_warnings:
         for class_ in rules.classes:
-            if not re.match(VIEW_ID_COMPLIANCE_REGEX, class_.class_.suffix):
+            if not re.match(VIEW_ID_COMPLIANCE_REGEX, str(class_.class_.suffix)):
                 warnings.warn(
                     exceptions.EntityIDNotDMSCompliant(
                         "Class", class_.class_.versioned_id, f"[Classes/Class/{class_.class_.versioned_id}]"
@@ -38,7 +38,7 @@ def are_entity_names_dms_compliant(
 
         for row, property_ in enumerate(rules.properties):
             # check class id which would resolve as view/container id
-            if not re.match(VIEW_ID_COMPLIANCE_REGEX, property_.class_.suffix):
+            if not re.match(VIEW_ID_COMPLIANCE_REGEX, str(property_.class_.suffix)):
                 warnings.warn(
                     exceptions.EntityIDNotDMSCompliant(
                         "Class", property_.class_.versioned_id, f"[Properties/Class/{row}]"
@@ -66,13 +66,11 @@ def are_entity_names_dms_compliant(
 
 
 @overload
-def are_properties_redefined(rules: InformationRules, return_report: Literal[True]) -> tuple[bool, list[dict]]:
-    ...
+def are_properties_redefined(rules: InformationRules, return_report: Literal[True]) -> tuple[bool, list[dict]]: ...
 
 
 @overload
-def are_properties_redefined(rules: InformationRules, return_report: Literal[False] = False) -> bool:
-    ...
+def are_properties_redefined(rules: InformationRules, return_report: Literal[False] = False) -> bool: ...
 
 
 def are_properties_redefined(rules: InformationRules, return_report: bool = False) -> bool | tuple[bool, list[dict]]:

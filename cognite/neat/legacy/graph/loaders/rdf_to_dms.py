@@ -33,12 +33,10 @@ class DMSLoader(CogniteLoader[InstanceApply]):
         self.add_class_prefix = add_class_prefix
 
     @overload
-    def load(self, stop_on_exception: Literal[True]) -> Iterable[InstanceApply]:
-        ...
+    def load(self, stop_on_exception: Literal[True]) -> Iterable[InstanceApply]: ...
 
     @overload
-    def load(self, stop_on_exception: Literal[False] = False) -> Iterable[InstanceApply | ErrorDetails]:
-        ...
+    def load(self, stop_on_exception: Literal[False] = False) -> Iterable[InstanceApply | ErrorDetails]: ...
 
     def load(self, stop_on_exception: bool = False) -> Iterable[InstanceApply | ErrorDetails]:
         """Load the graph with data."""

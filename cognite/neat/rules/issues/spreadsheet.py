@@ -176,15 +176,18 @@ class InvalidRowUnknownSheetError(InvalidRowError):
     ) -> Self:
         sheet_name, _, row, column, *__ = error["loc"]
         reader = (read_info_by_sheet or {}).get(str(sheet_name), SpreadsheetRead())
-        return cls(
-            column=str(column),
-            row=reader.adjusted_row_number(int(row)),
-            actual_sheet_name=str(sheet_name),
-            type=error["type"],
-            msg=error["msg"],
-            input=error.get("input"),
-            url=str(url) if (url := error.get("url")) else None,
-        )
+        try:
+            return cls(
+                column=str(column),
+                row=reader.adjusted_row_number(int(row)),
+                actual_sheet_name=str(sheet_name),
+                type=error["type"],
+                msg=error["msg"],
+                input=error.get("input"),
+                url=str(url) if (url := error.get("url")) else None,
+            )
+        except ValueError:
+            return DefaultPydanticError.from_pydantic_error(error)  # type: ignore[return-value]
 
     def dump(self) -> dict[str, Any]:
         output = super().dump()

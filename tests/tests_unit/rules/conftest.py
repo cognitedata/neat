@@ -4,7 +4,8 @@ import pandas as pd
 import pytest
 
 from cognite.neat.rules.importers import ExcelImporter
-from cognite.neat.rules.models.rules import DMSRules, DomainRules, InformationRules, RoleTypes
+from cognite.neat.rules.models import DMSRules, DomainRules, InformationRules, RoleTypes
+from cognite.neat.rules.models.dms import DMSRulesInput
 from cognite.neat.utils.spreadsheet import read_individual_sheet
 from tests.config import DOC_RULES
 
@@ -15,7 +16,7 @@ def alice_spreadsheet() -> dict[str, dict[str, Any]]:
     excel_file = pd.ExcelFile(filepath)
     return {
         "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),
-        "Properties": read_individual_sheet(excel_file, "Properties", False, ["Property"]),
+        "Properties": read_individual_sheet(excel_file, "Properties", False, ["View Property"]),
         "Views": read_individual_sheet(excel_file, "Views", False, ["View"]),
         "Containers": read_individual_sheet(excel_file, "Containers", False, ["Container"]),
     }
@@ -23,7 +24,7 @@ def alice_spreadsheet() -> dict[str, dict[str, Any]]:
 
 @pytest.fixture(scope="session")
 def alice_rules(alice_spreadsheet: dict[str, dict[str, Any]]) -> DMSRules:
-    return DMSRules.model_validate(alice_spreadsheet)
+    return DMSRulesInput.load(alice_spreadsheet).as_rules()
 
 
 @pytest.fixture(scope="session")

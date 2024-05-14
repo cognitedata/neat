@@ -1,0 +1,67 @@
+configs: []
+description: null
+implementation_module: null
+name: Validate Rules
+steps:
+-   complex_configs: {}
+    configs:
+        File name: ''
+        Report formatter: BasicHTML
+        Role: infer
+    description: null
+    enabled: true
+    id: step_validate_rules
+    label: Validate Rules
+    max_retries: 0
+    method: ExcelToRules
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+    - step_942973
+    - step_715590
+    trigger: false
+    ui_config:
+        pos_x: 558
+        pos_y: 97
+-   complex_configs: {}
+    configs: {}
+    description: null
+    enabled: true
+    id: step_upload_rules
+    label: Upload Rules Spreadsheets
+    max_retries: 0
+    method: null
+    params:
+        file_type: rules
+    retry_delay: 3
+    stype: file_uploader
+    system_component_id: null
+    transition_to:
+    - step_31642
+    - step_validate_rules
+    trigger: true
+    ui_config:
+        pos_x: 558
+        pos_y: -14
+-   complex_configs: {}
+    configs:
+        Output role format: input
+        Styling: default
+    description: null
+    enabled: true
+    id: step_715590
+    label: Convert Rules
+    max_retries: 0
+    method: RulesToExcel
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to: []
+    trigger: false
+    ui_config:
+        pos_x: 558
+        pos_y: 217
+system_components: []

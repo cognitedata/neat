@@ -63,8 +63,8 @@ def package_workflow(workflow_name: str):
     if NEAT_APP.cdf_store is None:
         return {"error": "NeatApp is not initialized"}
     package_file = NEAT_APP.cdf_store.package_workflow(workflow_name)
-    hash = get_file_hash(NEAT_APP.config.data_store_path / "workflows" / package_file)
-    return {"package": package_file, "hash": hash}
+    hash_ = get_file_hash(NEAT_APP.config.workflows_store_path / package_file)
+    return {"package": package_file, "hash": hash_}
 
 
 @router.post("/api/workflow/context-cleanup/{workflow_name}")
@@ -249,7 +249,7 @@ async def upload_file(file: UploadFile, workflow_name: str):
     if NEAT_APP.workflow_manager is None or NEAT_APP.workflow_manager.data_store_path is None:
         return JSONResponse(content={"error": "Workflow Manager is not initialized"}, status_code=400)
     try:
-        upload_dir = NEAT_APP.workflow_manager.data_store_path / "workflows" / workflow_name
+        upload_dir = NEAT_APP.workflow_manager.config.workflows_store_path / workflow_name
         # Create a directory to store uploaded files if it doesn't exist
 
         # Define the file path where the uploaded file will be saved

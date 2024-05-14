@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Generic, TypeVar
 
 from cognite.neat.rules._shared import Rules
-from cognite.neat.rules.models.rules._types import ClassEntity
+from cognite.neat.rules.models.entities import ClassEntity
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum

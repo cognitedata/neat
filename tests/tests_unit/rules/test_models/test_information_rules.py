@@ -5,14 +5,13 @@ import pandas as pd
 import pytest
 from cognite.client import data_modeling as dm
 
-from cognite.neat.rules.models.rules import DMSRules
-from cognite.neat.rules.models.rules._base import SheetList
-from cognite.neat.rules.models.rules._information_rules import (
+from cognite.neat.rules.models import DMSRules, SheetList
+from cognite.neat.rules.models.data_types import DataType, String
+from cognite.neat.rules.models.information import (
     InformationClass,
     InformationRules,
-    _InformationRulesConverter,
 )
-from cognite.neat.rules.models.rules._types import XSD_VALUE_TYPE_MAPPINGS, XSDValueType
+from cognite.neat.rules.models.information._converter import _InformationRulesConverter
 from cognite.neat.utils.spreadsheet import read_individual_sheet
 from tests.config import DOC_RULES
 
@@ -69,7 +68,7 @@ def case_insensitive_value_types():
                 }
             ],
         },
-        (XSD_VALUE_TYPE_MAPPINGS["string"]),
+        String(),
         id="case_insensitive",
     )
 
@@ -207,7 +206,7 @@ class TestInformationRules:
         assert errors[0]["msg"] == expected_exception
 
     @pytest.mark.parametrize("rules, expected_exception", list(case_insensitive_value_types()))
-    def test_case_insensitivity(self, rules: dict[str, dict[str, Any]], expected_exception: XSDValueType) -> None:
+    def test_case_insensitivity(self, rules: dict[str, dict[str, Any]], expected_exception: DataType) -> None:
         assert InformationRules.model_validate(rules).properties.data[0].value_type == expected_exception
 
     def test_david_as_dms(self, david_spreadsheet: dict[str, dict[str, Any]]) -> None:
@@ -217,7 +216,7 @@ class TestInformationRules:
         assert isinstance(dms_rules, DMSRules)
 
     def test_olav_as_dms(self, olav_rules: InformationRules) -> None:
-        olav_rules_copy = olav_rules.copy(deep=True)
+        olav_rules_copy = olav_rules.model_copy(deep=True)
         # Todo: Remove this line when Olav's Information .xlsx file is available
         new_classes = SheetList[InformationClass](data=[])
         for cls_ in olav_rules_copy.classes:

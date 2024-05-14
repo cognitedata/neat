@@ -18,20 +18,22 @@ from cognite.neat.legacy.rules import importers as legacy_importers
 from cognite.neat.legacy.rules.models._base import EntityTypes
 from cognite.neat.legacy.rules.models.rules import Class, Classes, Metadata, Properties, Property, Rules
 from cognite.neat.rules import exporters, importers
-from cognite.neat.rules.models.rules import RoleTypes
+from cognite.neat.rules.models import RoleTypes
+from cognite.neat.rules.models.domain import DomainMetadata, DomainProperty
 from cognite.neat.workflows.steps.data_contracts import RulesData
-from cognite.neat.workflows.steps.lib.rules_exporter import RulesToExcel
-from cognite.neat.workflows.steps.lib.rules_importer import ExcelToRules
-from cognite.neat.workflows.steps.lib.v1.rules_importer import ImportExcelToRules
+from cognite.neat.workflows.steps.lib.current.rules_exporter import RulesToExcel
+from cognite.neat.workflows.steps.lib.current.rules_importer import ExcelToRules
+from cognite.neat.workflows.steps.lib.legacy.rules_importer import ImportExcelToRules
 from cognite.neat.workflows.utils import get_file_hash
-from cognite.neat.rules.models.rules._information_rules import (
+from cognite.neat.rules.models.information import (
     InformationMetadata,
     InformationProperty,
     InformationClass,
     InformationRules,
 )
+from cognite.neat.rules.models.dms import DMSMetadata, DMSProperty, DMSView, DMSContainer
 
-from cognite.neat.rules.models.rules._base import SchemaCompleteness
+from cognite.neat.rules.models import SchemaCompleteness
 
 router = APIRouter()
 
@@ -239,13 +241,13 @@ def create_new_rule(request: NewRuleV2Request):
     base_model_file_mapping = {
         "cdf_core": "cdf-core-spec.xlsx",
     }
-
+    name = request.name.lower().replace(" ", "_")
     if role == RoleTypes.information_architect:
         metadata = InformationMetadata(
             schema=SchemaCompleteness.complete,
             version="1.0",
             title=request.name,
-            prefix=request.name.lower().replace(" ", "_"),
+            prefix=name,
             description=description,
             created=time.time(),
             updated=time.time(),
@@ -253,6 +255,24 @@ def create_new_rule(request: NewRuleV2Request):
             namespace="http://purl.org/cognite/neat#",
             license="",
         )
+    elif role == RoleTypes.domain_expert:
+        metadata = DomainMetadata(
+            creator="Cognite",
+        )
+    elif role == RoleTypes.dms_architect:
+        metadata = DMSMetadata(
+            schema=SchemaCompleteness.complete,
+            version="1.0",
+            name=name,
+            space=name,
+            description=description,
+            created=time.time(),
+            updated=time.time(),
+            creator="Cognite",
+        )
+    else:
+        return {"error_text": f"Role {role} is not supported"}
+
     rules = InformationRules(metadata=metadata, classes=[], properties=[])
     exporters.ExcelExporter().export_to_file(rules=rules, filepath=path)
     return {
@@ -280,6 +300,14 @@ def upsert_rule_component(request: RuleV2MetadataUpsertRequest):
     if role == RoleTypes.information_architect:
         request_metadata = cast(InformationMetadata, request.rule_component)
         rules.metadata = request_metadata
+    elif role == RoleTypes.domain_expert:
+        request_metadata = cast(DomainMetadata, request.rule_component)
+        rules.metadata = request_metadata
+    elif role == RoleTypes.dms_architect:
+        request_metadata = cast(DMSMetadata, request.rule_component)
+        rules.metadata = request_metadata
+    else:
+        return {"error_text": f"Role {role} is not allowed to update metadata of the rule object"}
     exporters.ExcelExporter().export_to_file(rules=rules, filepath=path)
     return {"rules": rules.model_dump(), "error_text": issues}
 
@@ -298,27 +326,20 @@ def upsert_rule_property(request: RuleV2PropertyUpsertRequest):
 
     if role == RoleTypes.information_architect:
         request_property = cast(InformationProperty, request.rule_component)
-        # update if exists otherwise append
-        # existing_property = filter(
-        #     lambda prop: prop.class_ == request.rule_component.class_
-        #     and prop.property_ == request.rule_component.property_,
-        #     rules.properties,
-        # )
-        # if existing_property:
-        #     existing_property = next(existing_property)
-        #     existing_property = request_property
-        # else:
-        #     rules.properties.append(request_property)
-        for prop in rules.properties:
-            logging.info(
-                f"Checking property {prop.property_} , {request_property.property_} and {prop.class_.suffix} , {request_property.class_.suffix}"
-            )
-            if prop.class_.suffix == request_property.class_.suffix and str(prop.property_) == str(request_property.property_):  # type: ignore
-                prop = request_property
-                logging.info(f"Property {prop.property_} updated")
-                break
-        else:
-            rules.properties.append(request_property)
+    elif role == RoleTypes.domain_expert:
+        request_property = cast(DomainProperty, request.rule_component)
+    elif role == RoleTypes.dms_architect:
+        request_property = cast(DMSProperty, request.rule_component)
+    else:
+        return {"error_text": f"Role {role} is not allowed to update the rule object"}
+
+    for i, prop in enumerate(rules.properties):
+        if prop.class_.suffix == request_property.class_.suffix and str(prop.property_) == str(request_property.property_):  # type: ignore
+            rules.properties.replace(i, request_property)
+            logging.info(f"Property {prop.property_} updated")
+            break
+    else:
+        rules.properties.append(request_property)
 
     exporters.ExcelExporter().export_to_file(rules=rules, filepath=path)
     return {"rules": rules.model_dump(), "error_text": issues}

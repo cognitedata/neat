@@ -15,19 +15,119 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## [0.75.2] - 23-05-24
+## [0.77.0] - 13-05-24
+### Changed
+- [BREAKING] The subpackage `cognite.neat.rules.models` is reorganized. All imports using this subpackage must be
+  updated.
+
+### Added
+- Support for exporting/importing `Last` spreadsheets in the `ExcelExporter` and `ExcelImporter`.
+- [BREAKING] As a result of the above, in the `ExcelExporter` the parameter `is_reference` is replaced by `dump_as`.
+  To continue using the old behavior, set `dump_as='reference'`.
+- In the `DMSImporter.from_data_model_id`, now supports setting `reference_model_id` to download a solution model
+  with a reference model.
+
+## [0.76.3] - 10-05-24
+### Added
+- Added schema validator for performance, specifically if views map to too many containers.
+
+
+## [0.76.2] - 06-05-24
+### Fixed
+- Added missing "Is Reference" parameter back to the `ExcelExporter`step.
+
+
+## [0.76.1] - 06-05-24
+### Changed
+- Updated DMS Architect Rules template to fit the new DMS Rules structure
+- Update Terminology/Rules to reflect new DMS Rules structure
+
+## [0.76.0] - 06-05-24
+### Removed
+- [BREAKING] In `DMSRules`, `default_view_version` is no longer supported. Instead, you will now get a warning if view versions
+  are not matching the data model version.
+
+### Added/Changed
+- [BREAKING] The following renaming of columns in `DMSRules`, properties sheet:
+    - `Relation` -> `Connection`
+    - `ViewProperty` -> `View Property`
+    - `ContainerProperty` -> `Container Property`
+    - `IsList` -> `Is List`
+    - `Class` -> `Class (linage)`
+    - `Property` -> `Property (linage)`
+- [BREAKING] The following renaming of columns in `DMSRules`, views sheet:
+    - `InModel` -> `In Model`
+    - `Class` -> `Class (linage)`
+- [BREAKING] The following renaming of columns in `DMSRules`, containers sheet:
+    - `Class` -> `Class (linage)`
+- [BREAKING] Added support for listable direct relations in `DMSRules`. In addition, there is now a complete reimplementation
+  of the `connection` column in the `DMRRules` `properties` sheet.
+- [BREAKING] Connection (former relation) can now be `direct`, `reverse`, or `edge`.
+  While `multiedge` and `reversedirectc` have been removed. For more details,
+  see the [DMS Rules Details](https://cognite-neat.readthedocs-hosted.com/en/latest/terminology/dmsrules.html#relation)
+  documentation.
+- In `DMSRules`, added support for setting containerId and nodeId in `View.Filter`. Earlier, only `nodeType` and
+  `hasData` were supported which always used an implicit `containerId` and `nodeId` respectively. Now, the user can
+  specify the node type and container id(s) by setting `nodeType(my_space:my_node_type)` and
+  `hasData(my_space:my_container_id, my_space:my_other_container_id)`.
+- Introduced, `dataModelType` in `DMSRules` and `InformationRules` to explicitly set the type of data model. This
+  will be used to different types of validation and make the user aware of the type of data model they are working with.
+- In `DMSExporter`, created smart defaults for setting `view.filters`. This is now recommended that the user uses
+  the default values for `view.filters` and only set them explicitly if they now very well what they are doing.
+
+## [0.75.9] - 04-05-24
+### Improved
+- Steps are now categorized as `current`, `legacy`, and `io` steps
+- Workflow fails if one mix `current` and `legacy` steps in the same workflow
+
+## [0.75.8] - 02-05-24
+### Fixed
+- `DMSExporter` now correctly exports direct relations with unknown source.
+
+## [0.75.7] - 29-04-24
+### Added
+- `DMSExporter` now supports deletion of data model and data model components
+- `DeleteDataModelFromCDF` added to the step library
+
+## [0.75.6] - 26-04-24
+### Changed
+- All `NEAT` importers does not have `is_reference` parameter in `.to_rules()` method. This has been moved
+  to the `ExcelExporter` `__init__` method. This is because this is the only place where this parameter was used.
+
+### Added
+- `DMSExporter` now supports skipping of export of `node_types`.
+
+### Fixed
+- When importing an `Excel` rules set with a reference model, the `ExcelImporter` would produce the warning
+  `The copy method is deprecated; use the model_copy instead`. This is now fixed.
+
+## [0.75.5] - 24-04-24
+### Fixed
+- Potential of having duplicated spaces are now fixed
+
+## [0.75.4] - 24-04-24
+### Fixed
+- Rendering of correct metadata in UI for information architect
+### Added
+- Added `OntologyToRules` that works with V2 Rules (profiling)
+
+## [0.75.3] - 23-04-24
+### Fixed
+- Names and descriptions were not considered for views and view properties
+
+## [0.75.2] - 23-04-24
 ### Fixed
 - Allowing that multiple View properties can map to the same Container property
 
-## [0.75.1] - 23-05-24
+## [0.75.1] - 23-04-24
 ### Fixed
 - No spaces in any of the subfolders of the `neat` package.
 
-## [0.75.0] - 23-05-24
+## [0.75.0] - 23-04-24
 ### Added
 - Added and moved all v1 rules related code base under `legacy` module
 
-## [0.74.0] - 23-05-24
+## [0.74.0] - 23-04-24
 ### Added
 - added UI+api support for RulesV2. Read-only in the release , editable in the next release.
 

@@ -10,23 +10,22 @@ from pydantic import ValidationError
 import cognite.neat.rules.issues.spreadsheet
 from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import DMSImporter
-from cognite.neat.rules.models.rules._base import ExtensionCategory, SchemaCompleteness, SheetList
-from cognite.neat.rules.models.rules._dms_architect_rules import (
-    DMSContainer,
-    DMSMetadata,
-    DMSProperty,
-    DMSRules,
-    DMSView,
+from cognite.neat.rules.models import DMSRules, ExtensionCategory, InformationRules
+from cognite.neat.rules.models.data_types import String
+from cognite.neat.rules.models.dms import (
+    DMSContainerInput,
+    DMSMetadataInput,
+    DMSPropertyInput,
+    DMSRulesInput,
+    DMSSchema,
+    DMSViewInput,
 )
-from cognite.neat.rules.models.rules._dms_schema import DMSSchema
-from cognite.neat.rules.models.rules._information_rules import InformationRules
-from cognite.neat.rules.models.rules._types import DMS_VALUE_TYPE_MAPPINGS, ViewPropEntity
 
 
 def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
-        DMSRules(
-            metadata=DMSMetadata(
+        DMSRulesInput(
+            metadata=DMSMetadataInput(
                 schema_="complete",
                 space="my_space",
                 external_id="my_data_model",
@@ -36,49 +35,43 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 created="2021-01-01T00:00:00",
                 updated="2021-01-01T00:00:00",
             ),
-            properties=SheetList[DMSProperty](
-                data=[
-                    DMSProperty(
-                        class_="WindTurbine",
-                        property_="name",
-                        value_type="text",
-                        container="Asset",
-                        container_property="name",
-                        view="Asset",
-                        view_property="name",
-                    ),
-                    DMSProperty(
-                        class_="WindTurbine",
-                        property_="ratedPower",
-                        value_type="float64",
-                        container="GeneratingUnit",
-                        container_property="ratedPower",
-                        view="WindTurbine",
-                        view_property="ratedPower",
-                    ),
-                    DMSProperty(
-                        class_="WindFarm",
-                        property_="WindTurbines",
-                        value_type=ViewPropEntity(suffix="WindTurbine"),
-                        relation="multiedge",
-                        view="WindFarm",
-                        view_property="windTurbines",
-                    ),
-                ]
-            ),
-            containers=SheetList[DMSContainer](
-                data=[
-                    DMSContainer(container="Asset", class_="Asset"),
-                    DMSContainer(class_="GeneratingUnit", container="GeneratingUnit", constraint="Asset"),
-                ]
-            ),
-            views=SheetList[DMSView](
-                data=[
-                    DMSView(class_="Asset", view="Asset"),
-                    DMSView(class_="WindTurbine", view="WindTurbine", implements=["Asset"]),
-                    DMSView(class_="WindFarm", view="WindFarm"),
-                ]
-            ),
+            properties=[
+                DMSPropertyInput(
+                    class_="WindTurbine",
+                    property_="name",
+                    value_type="text",
+                    container="Asset",
+                    container_property="name",
+                    view="Asset",
+                    view_property="name",
+                ),
+                DMSPropertyInput(
+                    class_="WindTurbine",
+                    property_="ratedPower",
+                    value_type="float64",
+                    container="GeneratingUnit",
+                    container_property="ratedPower",
+                    view="WindTurbine",
+                    view_property="ratedPower",
+                ),
+                DMSPropertyInput(
+                    class_="WindFarm",
+                    property_="WindTurbines",
+                    value_type="WindTurbine",
+                    connection="edge",
+                    view="WindFarm",
+                    view_property="windTurbines",
+                ),
+            ],
+            containers=[
+                DMSContainerInput(container="Asset", class_="Asset"),
+                DMSContainerInput(class_="GeneratingUnit", container="GeneratingUnit", constraint="Asset"),
+            ],
+            views=[
+                DMSViewInput("Asset"),
+                DMSViewInput(view="WindTurbine", implements="Asset"),
+                DMSViewInput(view="WindFarm"),
+            ],
         ),
         DMSSchema(
             spaces=dm.SpaceApplyList(
@@ -88,20 +81,16 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     )
                 ]
             ),
-            data_models=dm.DataModelApplyList(
-                [
-                    dm.DataModelApply(
-                        space="my_space",
-                        external_id="my_data_model",
-                        version="1",
-                        description="DMS data model Creator: Alice",
-                        views=[
-                            dm.ViewId(space="my_space", external_id="Asset", version="1"),
-                            dm.ViewId(space="my_space", external_id="WindTurbine", version="1"),
-                            dm.ViewId(space="my_space", external_id="WindFarm", version="1"),
-                        ],
-                    )
-                ]
+            data_model=dm.DataModelApply(
+                space="my_space",
+                external_id="my_data_model",
+                version="1",
+                description="DMS data model Creator: Alice",
+                views=[
+                    dm.ViewId(space="my_space", external_id="Asset", version="1"),
+                    dm.ViewId(space="my_space", external_id="WindTurbine", version="1"),
+                    dm.ViewId(space="my_space", external_id="WindFarm", version="1"),
+                ],
             ),
             views=dm.ViewApplyList(
                 [
@@ -171,83 +160,72 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     ),
                 ]
             ),
-            node_types=dm.NodeApplyList([dm.NodeApply(space="my_space", external_id="WindFarm", sources=[])]),
+            node_types=dm.NodeApplyList([dm.NodeApply(space="my_space", external_id="WindFarm")]),
         ),
         id="Two properties, one container, one view",
     )
 
-    dms_rules = DMSRules(
-        metadata=DMSMetadata(
+    dms_rules = DMSRulesInput(
+        metadata=DMSMetadataInput(
             schema_="complete",
             space="my_space",
             external_id="my_data_model",
             version="1",
-            creator=["Anders"],
+            creator="Anders",
             created="2024-03-16T23:00:00",
             updated="2024-03-16T23:00:00",
-            default_view_version="1",
         ),
-        properties=SheetList[DMSProperty](
-            data=[
-                DMSProperty(
-                    class_="WindFarm",
-                    property_="name",
-                    value_type="text",
-                    container="Asset",
-                    container_property="name",
-                    view="WindFarm",
-                    view_property="name",
-                ),
-                DMSProperty(
-                    class_="WindFarm",
-                    property_="windTurbines",
-                    value_type="WindTurbine",
-                    relation="direct",
-                    is_list=True,
-                    container="WindFarm",
-                    container_property="windTurbines",
-                    view="WindFarm",
-                    view_property="windTurbines",
-                ),
-                DMSProperty(
-                    class_="WindTurbine",
-                    property_="name",
-                    value_type="text",
-                    container="Asset",
-                    container_property="name",
-                    view="WindTurbine",
-                    view_property="name",
-                ),
-            ]
-        ),
-        views=SheetList[DMSView](
-            data=[
-                DMSView(view="WindFarm", class_="WindFarm"),
-                DMSView(view="WindTurbine", class_="WindTurbine"),
-            ]
-        ),
-        containers=SheetList[DMSContainer](
-            data=[
-                DMSContainer(container="Asset", class_="Asset"),
-                DMSContainer(class_="WindFarm", container="WindFarm", constraint="Asset"),
-            ]
-        ),
+        properties=[
+            DMSPropertyInput(
+                class_="WindFarm",
+                property_="name",
+                value_type="text",
+                container="Asset",
+                container_property="name",
+                view="WindFarm",
+                view_property="name",
+            ),
+            DMSPropertyInput(
+                class_="WindFarm",
+                property_="windTurbines",
+                value_type="WindTurbine",
+                connection="direct",
+                is_list=True,
+                container="WindFarm",
+                container_property="windTurbines",
+                view="WindFarm",
+                view_property="windTurbines",
+            ),
+            DMSPropertyInput(
+                class_="WindTurbine",
+                property_="name",
+                value_type="text",
+                container="Asset",
+                container_property="name",
+                view="WindTurbine",
+                view_property="name",
+            ),
+        ],
+        views=[
+            DMSViewInput(view="WindFarm", class_="WindFarm"),
+            DMSViewInput(view="WindTurbine", class_="WindTurbine"),
+        ],
+        containers=[
+            DMSContainerInput(container="Asset", class_="Asset"),
+            DMSContainerInput(class_="WindFarm", container="WindFarm", constraint="Asset"),
+        ],
     )
     expected_schema = DMSSchema(
         spaces=dm.SpaceApplyList([dm.SpaceApply(space="my_space")]),
-        data_models=dm.DataModelApplyList(
-            [
-                dm.DataModelApply(
-                    space="my_space",
-                    external_id="my_data_model",
-                    version="1",
-                    description="Creator: Anders",
-                    views=[
-                        dm.ViewId(space="my_space", external_id="WindFarm", version="1"),
-                        dm.ViewId(space="my_space", external_id="WindTurbine", version="1"),
-                    ],
-                )
-            ]
+        data_model=dm.DataModelApply(
+            space="my_space",
+            external_id="my_data_model",
+            version="1",
+            description="Creator: Anders",
+            views=[
+                dm.ViewId(space="my_space", external_id="WindFarm", version="1"),
+                dm.ViewId(space="my_space", external_id="WindTurbine", version="1"),
+            ],
         ),
         views=dm.ViewApplyList(
             [
@@ -259,13 +237,15 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                         "name": dm.MappedPropertyApply(
                             container=dm.ContainerId("my_space", "Asset"), container_property_identifier="name"
                         ),
-                        "windTurbines": dm.MultiEdgeConnectionApply(
-                            type=dm.DirectRelationReference(space="my_space", external_id="WindFarm.windTurbines"),
-                            source=dm.ViewId(space="my_space", external_id="WindTurbine", version="1"),
-                            direction="outwards",
+                        "windTurbines": dm.MappedPropertyApply(
+                            container=dm.ContainerId("my_space", "WindFarm"),
+                            container_property_identifier="windTurbines",
+                            source=dm.ViewId("my_space", "WindTurbine", "1"),
                         ),
                     },
-                    filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "Asset")]),
+                    filter=dm.filters.HasData(
+                        containers=[dm.ContainerId("my_space", "Asset"), dm.ContainerId("my_space", "WindFarm")]
+                    ),
                 ),
                 dm.ViewApply(
                     space="my_space",
@@ -285,7 +265,19 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 dm.ContainerApply(
                     space="my_space",
                     external_id="Asset",
-                    properties={"name": dm.ContainerProperty(type=dm.Text(), nullable=True)},
+                    properties={
+                        "name": dm.ContainerProperty(type=dm.Text(), nullable=True),
+                    },
+                ),
+                dm.ContainerApply(
+                    space="my_space",
+                    external_id="WindFarm",
+                    properties={
+                        "windTurbines": dm.ContainerProperty(
+                            type=dm.DirectRelation(is_list=True),
+                        ),
+                    },
+                    constraints={"my_space_Asset": dm.RequiresConstraint(dm.ContainerId("my_space", "Asset"))},
                 ),
             ]
         ),
@@ -294,69 +286,58 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         dms_rules,
         expected_schema,
-        id="Property with list of direct relations converted to multiedge",
+        id="Property with list of direct relations",
     )
 
-    dms_rules = DMSRules(
-        metadata=DMSMetadata(
+    dms_rules = DMSRulesInput(
+        metadata=DMSMetadataInput(
             schema_="complete",
             space="my_space",
             external_id="my_data_model",
             version="1",
-            creator=["Anders"],
+            creator="Anders",
             created="2024-03-17T08:30:00",
             updated="2024-03-17T08:30:00",
-            default_view_version="1",
         ),
-        properties=SheetList[DMSProperty](
-            data=[
-                DMSProperty(
-                    class_="Asset",
-                    property_="name",
-                    value_type="text",
-                    container="Asset",
-                    container_property="name",
-                    view="Asset",
-                    view_property="name",
-                ),
-                DMSProperty(
-                    class_="WindTurbine",
-                    property_="maxPower",
-                    value_type="float64",
-                    container="WindTurbine",
-                    container_property="maxPower",
-                    view="WindTurbine",
-                    view_property="maxPower",
-                ),
-            ],
-        ),
-        views=SheetList[DMSView](
-            data=[
-                DMSView(view="Asset", class_="Asset", in_model=False),
-                DMSView(view="WindTurbine", class_="WindTurbine", implements=["Asset"]),
-            ],
-        ),
-        containers=SheetList[DMSContainer](
-            data=[
-                DMSContainer(container="Asset", class_="Asset"),
-                DMSContainer(class_="WindTurbine", container="WindTurbine", constraint="Asset"),
-            ],
-        ),
+        properties=[
+            DMSPropertyInput(
+                class_="Asset",
+                property_="name",
+                value_type="text",
+                container="Asset",
+                container_property="name",
+                view="Asset",
+                view_property="name",
+            ),
+            DMSPropertyInput(
+                class_="WindTurbine",
+                property_="maxPower",
+                value_type="float64",
+                container="WindTurbine",
+                container_property="maxPower",
+                view="WindTurbine",
+                view_property="maxPower",
+            ),
+        ],
+        views=[
+            DMSViewInput(view="Asset", class_="Asset", in_model=False),
+            DMSViewInput(view="WindTurbine", class_="WindTurbine", implements="Asset"),
+        ],
+        containers=[
+            DMSContainerInput(container="Asset", class_="Asset"),
+            DMSContainerInput(class_="WindTurbine", container="WindTurbine", constraint="Asset"),
+        ],
     )
     expected_schema = DMSSchema(
         spaces=dm.SpaceApplyList([dm.SpaceApply(space="my_space")]),
-        data_models=dm.DataModelApplyList(
-            [
-                dm.DataModelApply(
-                    space="my_space",
-                    external_id="my_data_model",
-                    version="1",
-                    description="Creator: Anders",
-                    views=[
-                        dm.ViewId(space="my_space", external_id="WindTurbine", version="1"),
-                    ],
-                )
-            ]
+        data_model=dm.DataModelApply(
+            space="my_space",
+            external_id="my_data_model",
+            version="1",
+            description="Creator: Anders",
+            views=[
+                dm.ViewId(space="my_space", external_id="WindTurbine", version="1"),
+            ],
         ),
         views=dm.ViewApplyList(
             [
@@ -410,129 +391,119 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         id="View not in model",
     )
 
-    dms_rules = DMSRules(
-        metadata=DMSMetadata(
+    dms_rules = DMSRulesInput(
+        metadata=DMSMetadataInput(
             # This is a complete schema, but we do not want to trigger the full validation
             schema_="partial",
             space="my_space",
             external_id="my_data_model",
             version="1",
-            creator=["Anders"],
+            creator="Anders",
             created="2024-03-17T11:00:00",
             updated="2024-03-17T11:00:00",
-            default_view_version="1",
         ),
-        properties=SheetList[DMSProperty](
-            data=[
-                DMSProperty(
-                    class_="Asset",
-                    property_="name",
-                    value_type="text",
-                    container="Asset",
-                    container_property="name",
-                    view="Asset",
-                    view_property="name",
-                ),
-                DMSProperty(
-                    class_="Asset",
-                    property_="timeseries",
-                    value_type="Timeseries(property=asset)",
-                    relation="reversedirect",
-                    is_list=True,
-                    view="Asset",
-                    view_property="timeseries",
-                ),
-                DMSProperty(
-                    class_="Asset",
-                    property_="root",
-                    value_type="Asset",
-                    relation="direct",
-                    container="Asset",
-                    container_property="root",
-                    view="Asset",
-                    view_property="root",
-                ),
-                DMSProperty(
-                    class_="Asset",
-                    property_="children",
-                    value_type="Asset(property=root)",
-                    relation="reversedirect",
-                    is_list=True,
-                    view="Asset",
-                    view_property="children",
-                ),
-                DMSProperty(
-                    class_="Timeseries",
-                    property_="name",
-                    value_type="text",
-                    container="Timeseries",
-                    container_property="name",
-                    view="Timeseries",
-                    view_property="name",
-                ),
-                DMSProperty(
-                    class_="Timeseries",
-                    property_="asset",
-                    value_type="Asset",
-                    relation="direct",
-                    container="Timeseries",
-                    container_property="asset",
-                    view="Timeseries",
-                    view_property="asset",
-                ),
-                DMSProperty(
-                    class_="Timeseries",
-                    property_="activities",
-                    value_type="Activity",
-                    relation="direct",
-                    is_list=True,
-                    container="Timeseries",
-                    container_property="activities",
-                    view="Timeseries",
-                    view_property="activities",
-                ),
-                DMSProperty(
-                    class_="Activity",
-                    property_="timeseries",
-                    value_type="Timeseries(property=activities)",
-                    relation="reversedirect",
-                    view="Activity",
-                    view_property="timeseries",
-                ),
-            ],
-        ),
-        views=SheetList[DMSView](
-            data=[
-                DMSView(view="Asset", class_="Asset"),
-                DMSView(view="Timeseries", class_="Timeseries"),
-                DMSView(view="Activity", class_="Activity"),
-            ],
-        ),
-        containers=SheetList[DMSContainer](
-            data=[
-                DMSContainer(container="Asset", class_="Asset"),
-                DMSContainer(container="Timeseries", class_="Timeseries"),
-                DMSContainer(container="Activity", class_="Activity"),
-            ],
-        ),
+        properties=[
+            DMSPropertyInput(
+                class_="Asset",
+                property_="name",
+                value_type="text",
+                container="Asset",
+                container_property="name",
+                view="Asset",
+                view_property="name",
+            ),
+            DMSPropertyInput(
+                class_="Asset",
+                property_="timeseries",
+                value_type="Timeseries(property=asset)",
+                connection="reverse",
+                is_list=True,
+                view="Asset",
+                view_property="timeseries",
+            ),
+            DMSPropertyInput(
+                class_="Asset",
+                property_="root",
+                value_type="Asset",
+                connection="direct",
+                container="Asset",
+                container_property="root",
+                view="Asset",
+                view_property="root",
+            ),
+            DMSPropertyInput(
+                class_="Asset",
+                property_="children",
+                value_type="Asset(property=root)",
+                connection="reverse",
+                is_list=True,
+                view="Asset",
+                view_property="children",
+            ),
+            DMSPropertyInput(
+                class_="Timeseries",
+                property_="name",
+                value_type="text",
+                container="Timeseries",
+                container_property="name",
+                view="Timeseries",
+                view_property="name",
+            ),
+            DMSPropertyInput(
+                class_="Timeseries",
+                property_="asset",
+                value_type="Asset",
+                connection="direct",
+                container="Timeseries",
+                container_property="asset",
+                view="Timeseries",
+                view_property="asset",
+            ),
+            DMSPropertyInput(
+                class_="Timeseries",
+                property_="activities",
+                value_type="Activity",
+                connection="direct",
+                is_list=True,
+                container="Timeseries",
+                container_property="activities",
+                view="Timeseries",
+                view_property="activities",
+            ),
+            DMSPropertyInput(
+                class_="Activity",
+                property_="timeseries",
+                value_type="Timeseries(property=activities)",
+                is_list=True,
+                connection="reverse",
+                view="Activity",
+                view_property="timeseries",
+            ),
+        ],
+        views=[
+            DMSViewInput(view="Asset", class_="Asset"),
+            DMSViewInput(view="Timeseries", class_="Timeseries"),
+            DMSViewInput(view="Activity", class_="Activity"),
+        ],
+        containers=[
+            DMSContainerInput(container="Asset", class_="Asset"),
+            DMSContainerInput(container="Timeseries", class_="Timeseries"),
+            DMSContainerInput(container="Activity", class_="Activity"),
+        ],
     )
 
     expected_schema = DMSSchema(
         spaces=dm.SpaceApplyList([dm.SpaceApply(space="my_space")]),
-        data_models=dm.DataModelApplyList(
-            [
-                dm.DataModelApply(
-                    space="my_space",
-                    external_id="my_data_model",
-                    version="1",
-                    description="Creator: Anders",
-                    views=[
-                        dm.ViewId(space="my_space", external_id="Asset", version="1"),
-                        dm.ViewId(space="my_space", external_id="Timeseries", version="1"),
-                        dm.ViewId(space="my_space", external_id="Activity", version="1"),
-                    ],
-                )
-            ]
+        data_model=dm.DataModelApply(
+            space="my_space",
+            external_id="my_data_model",
+            version="1",
+            description="Creator: Anders",
+            views=[
+                dm.ViewId(space="my_space", external_id="Asset", version="1"),
+                dm.ViewId(space="my_space", external_id="Timeseries", version="1"),
+                dm.ViewId(space="my_space", external_id="Activity", version="1"),
+            ],
         ),
         views=dm.ViewApplyList(
             [
@@ -573,10 +544,10 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                             container_property_identifier="asset",
                             source=dm.ViewId("my_space", "Asset", "1"),
                         ),
-                        "activities": dm.MultiEdgeConnectionApply(
-                            type=dm.DirectRelationReference(space="my_space", external_id="Timeseries.activities"),
+                        "activities": dm.MappedPropertyApply(
+                            container=dm.ContainerId("my_space", "Timeseries"),
+                            container_property_identifier="activities",
                             source=dm.ViewId("my_space", "Activity", "1"),
-                            direction="outwards",
                         ),
                     },
                     filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "Timeseries")]),
@@ -586,10 +557,11 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     external_id="Activity",
                     version="1",
                     properties={
-                        "timeseries": dm.MultiEdgeConnectionApply(
-                            type=dm.DirectRelationReference(space="my_space", external_id="Timeseries.activities"),
+                        "timeseries": dm.MultiReverseDirectRelationApply(
                             source=dm.ViewId("my_space", "Timeseries", "1"),
-                            direction="inwards",
+                            through=dm.PropertyId(
+                                source=dm.ViewId("my_space", "Timeseries", "1"), property="activities"
+                            ),
                         )
                     },
                     filter=dm.filters.Equals(
@@ -618,13 +590,14 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     properties={
                         "name": dm.ContainerProperty(type=dm.Text(), nullable=True),
                         "asset": dm.ContainerProperty(type=dm.DirectRelation(), nullable=True),
+                        "activities": dm.ContainerProperty(type=dm.DirectRelation(is_list=True), nullable=True),
                     },
                 ),
             ]
         ),
         node_types=dm.NodeApplyList(
             [
-                dm.NodeApply(space="my_space", external_id="Activity", sources=[]),
+                dm.NodeApply(space="my_space", external_id="Activity"),
             ]
         ),
     )
@@ -634,56 +607,45 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         id="Multiple relations and reverse relations",
     )
 
-    dms_rules = DMSRules(
-        metadata=DMSMetadata(
+    dms_rules = DMSRulesInput(
+        metadata=DMSMetadataInput(
             schema_="complete",
             space="my_space",
             external_id="my_data_model",
             version="1",
-            creator=["Anders"],
+            creator="Anders",
             created="2024-03-17T11:00:00",
             updated="2024-03-17T11:00:00",
-            default_view_version="1",
         ),
-        properties=SheetList[DMSProperty](
-            data=[
-                DMSProperty(
-                    class_="generating_unit",
-                    property_="display_name",
-                    value_type="text",
-                    container="generating_unit",
-                    container_property="display_name",
-                    view="generating_unit",
-                    view_property="display_name",
-                )
-            ]
-        ),
-        views=SheetList[DMSView](
-            data=[
-                DMSView(view="generating_unit", class_="generating_unit"),
-            ],
-        ),
-        containers=SheetList[DMSContainer](
-            data=[
-                DMSContainer(container="generating_unit", class_="generating_unit"),
-            ],
-        ),
+        properties=[
+            DMSPropertyInput(
+                class_="generating_unit",
+                property_="display_name",
+                value_type="text",
+                container="generating_unit",
+                container_property="display_name",
+                view="generating_unit",
+                view_property="display_name",
+            )
+        ],
+        views=[
+            DMSViewInput(view="generating_unit", class_="generating_unit", filter_="NodeType(sp_other:wind_turbine)"),
+        ],
+        containers=[
+            DMSContainerInput(container="generating_unit", class_="generating_unit"),
+        ],
     )
 
     expected_schema = DMSSchema(
         spaces=dm.SpaceApplyList([dm.SpaceApply(space="my_space")]),
-        data_models=dm.DataModelApplyList(
-            [
-                dm.DataModelApply(
-                    space="my_space",
-                    external_id="my_data_model",
-                    version="1",
-                    description="Creator: Anders",
-                    views=[
-                        dm.ViewId(space="my_space", external_id="generating_unit", version="1"),
-                    ],
-                )
-            ]
+        data_model=dm.DataModelApply(
+            space="my_space",
+            external_id="my_data_model",
+            version="1",
+            description="Creator: Anders",
+            views=[
+                dm.ViewId(space="my_space", external_id="generating_unit", version="1"),
+            ],
         ),
         views=dm.ViewApplyList(
             [
@@ -697,7 +659,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                             container_property_identifier="display_name",
                         ),
                     },
-                    filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "generating_unit")]),
+                    filter=dm.filters.Equals(["node", "type"], {"space": "sp_other", "externalId": "wind_turbine"}),
                 ),
             ]
         ),
@@ -710,16 +672,16 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ]
         ),
-        node_types=dm.NodeApplyList([]),
+        node_types=dm.NodeApplyList([dm.NodeApply(space="sp_other", external_id="wind_turbine")]),
     )
     yield pytest.param(
         dms_rules,
         expected_schema,
-        id="No casing standardization",
+        id="Explict set NodeType Filter",
     )
 
-    dms_rules = DMSRules(
-        metadata=DMSMetadata(
+    dms_rules = DMSRulesInput(
+        metadata=DMSMetadataInput(
             schema_="complete",
             space="sp_solution",
             external_id="solution_model",
@@ -728,24 +690,20 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             created="2021-01-01T00:00:00",
             updated="2021-01-01T00:00:00",
         ),
-        properties=SheetList[DMSProperty](
-            data=[
-                DMSProperty(
-                    class_="Asset",
-                    property_="kinderen",
-                    value_type="Asset",
-                    relation="multiedge",
-                    reference="sp_enterprise:Asset(property=children)",
-                    view="Asset",
-                    view_property="kinderen",
-                ),
-            ]
-        ),
-        views=SheetList[DMSView](
-            data=[
-                DMSView(view="Asset", class_="Asset"),
-            ]
-        ),
+        properties=[
+            DMSPropertyInput(
+                class_="Asset",
+                property_="kinderen",
+                value_type="Asset",
+                connection="edge",
+                reference="sp_enterprise:Asset(property=children)",
+                view="Asset",
+                view_property="kinderen",
+            ),
+        ],
+        views=[
+            DMSViewInput(view="Asset", class_="Asset"),
+        ],
     )
 
     expected_schema = DMSSchema(
@@ -770,24 +728,20 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                             direction="outwards",
                         ),
                     },
-                    filter=dm.filters.Equals(["node", "type"], {"space": "sp_solution", "externalId": "Asset"}),
+                    filter=dm.filters.Equals(["node", "type"], {"space": "sp_enterprise", "externalId": "Asset"}),
                 ),
             ]
         ),
-        data_models=dm.DataModelApplyList(
-            [
-                dm.DataModelApply(
-                    space="sp_solution",
-                    external_id="solution_model",
-                    version="1",
-                    description="Creator: Bob",
-                    views=[
-                        dm.ViewId(space="sp_solution", external_id="Asset", version="1"),
-                    ],
-                )
-            ]
+        data_model=dm.DataModelApply(
+            space="sp_solution",
+            external_id="solution_model",
+            version="1",
+            description="Creator: Bob",
+            views=[
+                dm.ViewId(space="sp_solution", external_id="Asset", version="1"),
+            ],
         ),
-        node_types=dm.NodeApplyList([dm.NodeApply(space="sp_solution", external_id="Asset", sources=[])]),
+        node_types=dm.NodeApplyList([dm.NodeApply(space="sp_enterprise", external_id="Asset")]),
     )
 
     yield pytest.param(
@@ -852,51 +806,45 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 ]
             },
         },
-        DMSRules(
-            metadata=DMSMetadata(
+        DMSRulesInput(
+            metadata=DMSMetadataInput(
                 schema_="partial",
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
-                creator=["Anders"],
+                creator="Anders",
                 created="2021-01-01T00:00:00",
                 updated="2021-01-01T00:00:00",
             ),
-            properties=SheetList[DMSProperty](
-                data=[
-                    DMSProperty(
-                        class_="WindTurbine",
-                        property_="name",
-                        value_type="text",
-                        container="sp_core:Asset",
-                        container_property="name",
-                        view="sp_core:Asset",
-                        view_property="name",
-                    ),
-                    DMSProperty(
-                        class_="WindTurbine",
-                        property_="ratedPower",
-                        value_type="float64",
-                        container="GeneratingUnit",
-                        container_property="ratedPower",
-                        view="WindTurbine",
-                        view_property="ratedPower",
-                    ),
-                ]
-            ),
-            containers=SheetList[DMSContainer](
-                data=[
-                    DMSContainer(container="sp_core:Asset", class_="Asset"),
-                    DMSContainer(class_="GeneratingUnit", container="GeneratingUnit", constraint="sp_core:Asset"),
-                ]
-            ),
-            views=SheetList[DMSView](
-                data=[
-                    DMSView(view="sp_core:Asset", class_="Asset"),
-                    DMSView(class_="WindTurbine", view="WindTurbine", implements=["sp_core:Asset"]),
-                ]
-            ),
-        ),
+            properties=[
+                DMSPropertyInput(
+                    class_="WindTurbine",
+                    property_="name",
+                    value_type="text",
+                    container="sp_core:Asset",
+                    container_property="name",
+                    view="sp_core:Asset(version=1)",
+                    view_property="name",
+                ),
+                DMSPropertyInput(
+                    class_="WindTurbine",
+                    property_="ratedPower",
+                    value_type="float64",
+                    container="GeneratingUnit",
+                    container_property="ratedPower",
+                    view="WindTurbine",
+                    view_property="ratedPower",
+                ),
+            ],
+            containers=[
+                DMSContainerInput(container="sp_core:Asset", class_="Asset"),
+                DMSContainerInput(class_="GeneratingUnit", container="GeneratingUnit", constraint="sp_core:Asset"),
+            ],
+            views=[
+                DMSViewInput(view="sp_core:Asset(version=1)"),
+                DMSViewInput(class_="WindTurbine", view="WindTurbine", implements="sp_core:Asset(version=1)"),
+            ],
+        ).as_rules(),
         id="Two properties, two containers, two views. Primary data types, no relations.",
     )
 
@@ -925,7 +873,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                     {
                         "class_": "Plant",
                         "property_": "generators",
-                        "relation": "multiedge",
+                        "connection": "edge",
                         "value_type": "Generator",
                         "view": "Plant",
                         "view_property": "generators",
@@ -933,7 +881,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                     {
                         "class_": "Plant",
                         "property_": "reservoir",
-                        "relation": "direct",
+                        "connection": "direct",
                         "value_type": "Reservoir",
                         "container": "Asset",
                         "container_property": "child",
@@ -979,80 +927,74 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 ]
             },
         },
-        DMSRules(
-            metadata=DMSMetadata(
+        DMSRulesInput(
+            metadata=DMSMetadataInput(
                 schema_="complete",
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
-                creator=["Anders"],
+                creator="Anders",
                 created="2021-01-01T00:00:00",
                 updated="2021-01-01T00:00:00",
             ),
-            properties=SheetList[DMSProperty](
-                data=[
-                    DMSProperty(
-                        class_="Plant",
-                        property_="name",
-                        value_type="text",
-                        container="Asset",
-                        container_property="name",
-                        view="Asset",
-                        view_property="name",
-                    ),
-                    DMSProperty(
-                        class_="Plant",
-                        property_="generators",
-                        value_type=ViewPropEntity(suffix="Generator"),
-                        relation="multiedge",
-                        view="Plant",
-                        view_property="generators",
-                    ),
-                    DMSProperty(
-                        class_="Plant",
-                        property_="reservoir",
-                        value_type=ViewPropEntity(suffix="Reservoir"),
-                        relation="direct",
-                        container="Asset",
-                        container_property="child",
-                        view="Plant",
-                        view_property="reservoir",
-                    ),
-                    DMSProperty(
-                        class_="Generator",
-                        property_="name",
-                        value_type="text",
-                        container="Asset",
-                        container_property="name",
-                        view="Asset",
-                        view_property="name",
-                    ),
-                    DMSProperty(
-                        class_="Reservoir",
-                        property_="name",
-                        value_type="text",
-                        container="Asset",
-                        container_property="name",
-                        view="Asset",
-                        view_property="name",
-                    ),
-                ]
-            ),
-            containers=SheetList[DMSContainer](
-                data=[
-                    DMSContainer(container="Asset", class_="Asset"),
-                    DMSContainer(class_="Plant", container="Plant", constraint="Asset"),
-                ]
-            ),
-            views=SheetList[DMSView](
-                data=[
-                    DMSView(view="Asset", class_="Asset"),
-                    DMSView(class_="Plant", view="Plant", implements=["Asset"]),
-                    DMSView(class_="Generator", view="Generator", implements=["Asset"]),
-                    DMSView(class_="Reservoir", view="Reservoir", implements=["Asset"]),
-                ]
-            ),
-        ),
+            properties=[
+                DMSPropertyInput(
+                    class_="Plant",
+                    property_="name",
+                    value_type="text",
+                    container="Asset",
+                    container_property="name",
+                    view="Asset",
+                    view_property="name",
+                ),
+                DMSPropertyInput(
+                    class_="Plant",
+                    property_="generators",
+                    value_type="Generator",
+                    connection="edge",
+                    view="Plant",
+                    view_property="generators",
+                ),
+                DMSPropertyInput(
+                    class_="Plant",
+                    property_="reservoir",
+                    value_type="Reservoir",
+                    connection="direct",
+                    container="Asset",
+                    container_property="child",
+                    view="Plant",
+                    view_property="reservoir",
+                ),
+                DMSPropertyInput(
+                    class_="Generator",
+                    property_="name",
+                    value_type="text",
+                    container="Asset",
+                    container_property="name",
+                    view="Asset",
+                    view_property="name",
+                ),
+                DMSPropertyInput(
+                    class_="Reservoir",
+                    property_="name",
+                    value_type="text",
+                    container="Asset",
+                    container_property="name",
+                    view="Asset",
+                    view_property="name",
+                ),
+            ],
+            containers=[
+                DMSContainerInput(container="Asset", class_="Asset"),
+                DMSContainerInput(class_="Plant", container="Plant", constraint="Asset"),
+            ],
+            views=[
+                DMSViewInput(view="Asset", class_="Asset"),
+                DMSViewInput(class_="Plant", view="Plant", implements="Asset"),
+                DMSViewInput(class_="Generator", view="Generator", implements="Asset"),
+                DMSViewInput(class_="Reservoir", view="Reservoir", implements="Asset"),
+            ],
+        ).as_rules(),
         id="Five properties, two containers, four views. Direct relations and Multiedge.",
     )
 
@@ -1093,7 +1035,12 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                     },
                 ]
             },
-            "views": {"data": [{"view": "WindTurbine", "class_": "WindTurbine"}]},
+            "views": {
+                "data": [
+                    {"view": "WindTurbine", "class_": "WindTurbine"},
+                    {"view": "sp_core:Asset", "class_": "sp_core:Asset"},
+                ]
+            },
         },
         [
             cognite.neat.rules.issues.spreadsheet.MultiValueTypeError(
@@ -1140,7 +1087,12 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                     },
                 ]
             },
-            "views": {"data": [{"view": "WindTurbine", "class_": "WindTurbine"}]},
+            "views": {
+                "data": [
+                    {"view": "WindTurbine", "class_": "WindTurbine"},
+                    {"view": "sp_core:Asset", "class_": "sp_core:Asset"},
+                ]
+            },
         },
         [
             cognite.neat.rules.issues.spreadsheet.MultiValueIsListError(
@@ -1187,7 +1139,12 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                     },
                 ]
             },
-            "views": {"data": [{"view": "WindTurbine", "class_": "WindTurbine"}]},
+            "views": {
+                "data": [
+                    {"view": "WindTurbine", "class_": "WindTurbine"},
+                    {"view": "sp_core:Asset", "class_": "sp_core:Asset"},
+                ]
+            },
         },
         [
             cognite.neat.rules.issues.spreadsheet.MultiNullableError(
@@ -1234,7 +1191,12 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                     },
                 ]
             },
-            "views": {"data": [{"view": "WindTurbine", "class_": "WindTurbine"}]},
+            "views": {
+                "data": [
+                    {"view": "WindTurbine", "class_": "WindTurbine"},
+                    {"view": "sp_core:Asset", "class_": "sp_core:Asset"},
+                ]
+            },
         },
         [
             cognite.neat.rules.issues.spreadsheet.MultiIndexError(
@@ -1281,7 +1243,12 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                     },
                 ]
             },
-            "views": {"data": [{"view": "WindTurbine", "class_": "WindTurbine"}]},
+            "views": {
+                "data": [
+                    {"view": "WindTurbine", "class_": "WindTurbine"},
+                    {"view": "sp_core:Asset", "class_": "sp_core:Asset"},
+                ]
+            },
         },
         [
             cognite.neat.rules.issues.spreadsheet.MultiUniqueConstraintError(
@@ -1296,77 +1263,65 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
 
 
 def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
-    ref_rules = DMSRules(
-        metadata=DMSMetadata(
+    ref_rules = DMSRulesInput(
+        metadata=DMSMetadataInput(
             schema_="complete",
             space="my_space",
             external_id="my_data_model",
             version="1",
-            creator=["Anders"],
+            creator="Anders",
             created="2021-01-01T00:00:00",
             updated="2021-01-01T00:00:00",
         ),
-        properties=SheetList[DMSProperty](
-            data=[
-                DMSProperty(
-                    class_="WindTurbine",
-                    property_="name",
-                    value_type="text",
-                    container="Asset",
-                    container_property="name",
-                    view="Asset",
-                    view_property="name",
-                ),
-            ]
-        ),
-        containers=SheetList[DMSContainer](
-            data=[
-                DMSContainer(container="Asset", class_="Asset"),
-            ]
-        ),
-        views=SheetList[DMSView](
-            data=[
-                DMSView(view="Asset", class_="Asset"),
-            ]
-        ),
-    )
+        properties=[
+            DMSPropertyInput(
+                class_="WindTurbine",
+                property_="name",
+                value_type="text",
+                container="Asset",
+                container_property="name",
+                view="Asset",
+                view_property="name",
+            ),
+        ],
+        containers=[
+            DMSContainerInput(container="Asset", class_="Asset"),
+        ],
+        views=[
+            DMSViewInput(view="Asset", class_="Asset"),
+        ],
+    ).as_rules()
 
-    changing_container = DMSRules(
-        metadata=DMSMetadata(
+    changing_container = DMSRulesInput(
+        metadata=DMSMetadataInput(
             schema_="complete",
             extension="addition",
             space="my_space",
             external_id="my_data_model",
             version="1",
-            creator=["Anders"],
+            creator="Anders",
             created="2021-01-01T00:00:00",
             updated="2021-01-01T00:00:00",
         ),
-        properties=SheetList[DMSProperty](
-            data=[
-                DMSProperty(
-                    class_="WindTurbine",
-                    property_="name",
-                    value_type="json",
-                    container="Asset",
-                    container_property="name",
-                    view="Asset",
-                    view_property="name",
-                ),
-            ]
-        ),
-        containers=SheetList[DMSContainer](
-            data=[
-                DMSContainer(container="Asset", class_="Asset"),
-            ]
-        ),
-        views=SheetList[DMSView](
-            data=[
-                DMSView(view="Asset", class_="Asset"),
-            ]
-        ),
+        properties=[
+            DMSPropertyInput(
+                class_="WindTurbine",
+                property_="name",
+                value_type="json",
+                container="Asset",
+                container_property="name",
+                view="Asset",
+                view_property="name",
+            ),
+        ],
+        containers=[
+            DMSContainerInput(container="Asset", class_="Asset"),
+        ],
+        views=[
+            DMSViewInput(view="Asset", class_="Asset"),
+        ],
         reference=ref_rules,
-    )
+    ).as_rules()
 
     yield pytest.param(
         changing_container,
@@ -1374,42 +1329,36 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
         id="Addition extension, changing container",
     )
 
-    changing_view = DMSRules(
-        metadata=DMSMetadata(
+    changing_view = DMSRulesInput(
+        metadata=DMSMetadataInput(
             schema_="complete",
             extension="addition",
             space="my_space",
             external_id="my_data_model",
             version="1",
-            creator=["Anders"],
+            creator="Anders",
             created="2021-01-01T00:00:00",
             updated="2021-01-01T00:00:00",
         ),
-        properties=SheetList[DMSProperty](
-            data=[
-                DMSProperty(
-                    class_="WindTurbine",
-                    property_="name",
-                    value_type="text",
-                    container="Asset",
-                    container_property="name",
-                    view="Asset",
-                    view_property="navn",
-                ),
-            ]
-        ),
-        containers=SheetList[DMSContainer](
-            data=[
-                DMSContainer(container="Asset", class_="Asset"),
-            ]
-        ),
-        views=SheetList[DMSView](
-            data=[
-                DMSView(view="Asset", class_="Asset"),
-            ]
-        ),
+        properties=[
+            DMSPropertyInput(
+                class_="WindTurbine",
+                property_="name",
+                value_type="text",
+                container="Asset",
+                container_property="name",
+                view="Asset",
+                view_property="navn",
+            ),
+        ],
+        containers=[
+            DMSContainerInput(container="Asset", class_="Asset"),
+        ],
+        views=[
+            DMSViewInput(view="Asset", class_="Asset"),
+        ],
         reference=ref_rules,
-    )
+    ).as_rules()
 
     yield pytest.param(
         changing_view,
@@ -1417,7 +1366,7 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
         id="Addition extension, changing view",
     )
 
-    changing_container2 = changing_container.copy(deep=True)
+    changing_container2 = changing_container.model_copy(deep=True)
     changing_container2.metadata.extension = ExtensionCategory.reshape
 
     yield pytest.param(
@@ -1428,7 +1377,7 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
 
 class TestDMSRules:
     def test_load_valid_alice_rules(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
-        valid_rules = DMSRules.model_validate(alice_spreadsheet)
+        valid_rules = DMSRulesInput.load(alice_spreadsheet).as_rules()
 
         assert isinstance(valid_rules, DMSRules)
 
@@ -1444,17 +1393,17 @@ class TestDMSRules:
 
     @pytest.mark.parametrize("raw, expected_rules", list(valid_rules_tests_cases()))
     def test_load_valid_rules(self, raw: dict[str, dict[str, Any]], expected_rules: DMSRules) -> None:
-        valid_rules = DMSRules.model_validate(raw)
+        valid_rules = DMSRulesInput.load(raw).as_rules()
         assert valid_rules.model_dump() == expected_rules.model_dump()
         # testing case insensitive value types
-        assert valid_rules.properties.data[0].value_type == DMS_VALUE_TYPE_MAPPINGS["text"]
+        assert isinstance(valid_rules.properties.data[0].value_type, String)
 
     @pytest.mark.parametrize("raw, expected_errors", list(invalid_container_definitions_test_cases()))
     def test_load_inconsistent_container_definitions(
         self, raw: dict[str, dict[str, Any]], expected_errors: list[validation.NeatValidationError]
     ) -> None:
         with pytest.raises(ValueError) as e:
-            DMSRules.model_validate(raw)
+            DMSRulesInput.load(raw).as_rules()
 
         assert isinstance(e.value, ValidationError)
         validation_errors = e.value.errors()
@@ -1468,39 +1417,21 @@ class TestDMSRules:
 
     def test_alice_to_and_from_DMS(self, alice_rules: DMSRules) -> None:
         schema = alice_rules.as_schema()
-        rules = alice_rules.copy()
         recreated_rules = DMSImporter(schema).to_rules(errors="raise")
 
-        # Sorting to avoid order differences
-        recreated_rules.properties = SheetList[DMSProperty](
-            data=sorted(recreated_rules.properties, key=lambda p: (p.class_, p.property_))
-        )
-        rules.properties = SheetList[DMSProperty](data=sorted(rules.properties, key=lambda p: (p.class_, p.property_)))
-        recreated_rules.containers = SheetList[DMSContainer](
-            data=sorted(recreated_rules.containers, key=lambda c: c.container)
-        )
-        rules.containers = SheetList[DMSContainer](data=sorted(rules.containers, key=lambda c: c.container))
-        recreated_rules.views = SheetList[DMSView](data=sorted(recreated_rules.views, key=lambda v: v.view))
-        rules.views = SheetList[DMSView](data=sorted(rules.views, key=lambda v: v.view))
+        # This information is lost in the conversion
+        exclude = {"metadata": {"created", "updated"}, "properties": {"__all__": {"reference"}}}
+        assert recreated_rules.model_dump(exclude=exclude) == alice_rules.model_dump(exclude=exclude)
 
-        # Sorting out dates
-        recreated_rules.metadata.created = rules.metadata.created
-        recreated_rules.metadata.updated = rules.metadata.updated
-
-        # Removing source which is lost in the conversion
-        for prop in rules.properties:
-            prop.reference = None
-
-        assert recreated_rules.model_dump() == rules.model_dump()
-
-    @pytest.mark.parametrize("rules, expected_schema", rules_schema_tests_cases())
-    def test_as_schema(self, rules: DMSRules, expected_schema: DMSSchema) -> None:
+    @pytest.mark.parametrize("input_rules, expected_schema", rules_schema_tests_cases())
+    def test_as_schema(self, input_rules: DMSRulesInput, expected_schema: DMSSchema) -> None:
+        rules = input_rules.as_rules()
         actual_schema = rules.as_schema()
 
         assert actual_schema.spaces.dump() == expected_schema.spaces.dump()
-        actual_schema.data_models[0].views = sorted(actual_schema.data_models[0].views, key=lambda v: v.external_id)
-        expected_schema.data_models[0].views = sorted(expected_schema.data_models[0].views, key=lambda v: v.external_id)
-        assert actual_schema.data_models[0].dump() == expected_schema.data_models[0].dump()
+        actual_schema.data_model.views = sorted(actual_schema.data_model.views, key=lambda v: v.external_id)
+        expected_schema.data_model.views = sorted(expected_schema.data_model.views, key=lambda v: v.external_id)
+        assert actual_schema.data_model.dump() == expected_schema.data_model.dump()
         assert actual_schema.containers.dump() == expected_schema.containers.dump()
 
         actual_schema.views = dm.ViewApplyList(sorted(actual_schema.views, key=lambda v: v.external_id))
@@ -1512,53 +1443,48 @@ class TestDMSRules:
         assert actual_schema.node_types.dump() == expected_schema.node_types.dump()
 
     def test_alice_as_information(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
-        alice_rules = DMSRules.model_validate(alice_spreadsheet)
+        alice_rules = DMSRulesInput.load(alice_spreadsheet).as_rules()
         info_rules = alice_rules.as_information_architect_rules()
 
         assert isinstance(info_rules, InformationRules)
 
     def test_dump_skip_default_space_and_version(self) -> None:
-        dms_rules = DMSRules(
-            metadata=DMSMetadata(
+        dms_rules = DMSRulesInput(
+            metadata=DMSMetadataInput(
                 schema_="partial",
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
-                creator=["Anders"],
+                creator="Anders",
                 created="2024-03-16",
                 updated="2024-03-16",
             ),
-            properties=SheetList[DMSProperty](
-                data=[
-                    DMSProperty(
-                        class_="WindFarm",
-                        property_="name",
-                        value_type="text",
-                        container="Asset",
-                        container_property="name",
-                        view="WindFarm",
-                        view_property="name",
-                    ),
-                ]
-            ),
-            views=SheetList[DMSView](
-                data=[DMSView(view="WindFarm", class_="WindFarm", implements=["Sourceable", "Describable"])]
-            ),
-            containers=SheetList[DMSContainer](
-                data=[DMSContainer(container="Asset", class_="Asset", constraint=["Sourceable", "Describable"])]
-            ),
-        )
+            properties=[
+                DMSPropertyInput(
+                    class_="WindFarm",
+                    property_="name",
+                    value_type="text",
+                    container="Asset",
+                    container_property="name",
+                    view="WindFarm",
+                    view_property="name",
+                ),
+            ],
+            views=[DMSViewInput(view="WindFarm", class_="WindFarm", implements="Sourceable,Describable")],
+            containers=[DMSContainerInput(container="Asset", class_="Asset", constraint="Sourceable,Describable")],
+        ).as_rules()
         expected_dump = {
             "metadata": {
                 "role": "DMS Architect",
-                "schema_": SchemaCompleteness.partial,
+                "schema_": "partial",
+                "data_model_type": "solution",
+                "extension": "addition",
                 "space": "my_space",
                 "external_id": "my_data_model",
                 "creator": "Anders",
                 "created": datetime.datetime(2024, 3, 16),
                 "updated": datetime.datetime(2024, 3, 16),
                 "version": "1",
-                "default_view_version": "1",
             },
             "properties": [
                 {
@@ -1573,7 +1499,6 @@ class TestDMSRules:
             ],
             "views": [{"view": "WindFarm", "class_": "WindFarm", "implements": "Sourceable,Describable"}],
             "containers": [{"container": "Asset", "class_": "Asset", "constraint": "Sourceable,Describable"}],
-            "is_reference": False,
         }
 
         actual_dump = dms_rules.model_dump(exclude_none=True, exclude_unset=True, exclude_defaults=True)
@@ -1581,7 +1506,7 @@ class TestDMSRules:
         assert actual_dump == expected_dump
 
     def test_olav_as_information(self, olav_dms_rules: DMSRules) -> None:
-        info_rules_copy = olav_dms_rules.copy(deep=True)
+        info_rules_copy = olav_dms_rules.model_copy(deep=True)
         # In Olav's Rules, the references are set for traceability. We remove it
         # to test that the references are correctly set in the conversion.
         for prop in info_rules_copy.properties:
@@ -1617,8 +1542,100 @@ class TestDMSRules:
         raw["Metadata"]["schema"] = "extended"
 
         with pytest.raises(ValidationError) as e:
-            DMSRules.model_validate(raw)
+            DMSRulesInput.load(raw).as_rules()
 
         actual_issues = validation.NeatValidationError.from_pydantic_errors(e.value.errors())
 
         assert sorted(actual_issues) == sorted(expected_issues)
+
+
+class TestDMSExporter:
+    def test_default_filters_using_olav_dms_rules(self, olav_dms_rules: DMSRules) -> None:
+        set_filter = {view.view.as_id() for view in olav_dms_rules.views if view.filter_ is not None}
+        assert not set_filter, f"Expected no filters to be set, but got {set_filter}"
+
+        schema = olav_dms_rules.as_schema()
+        view_by_external_id = {view.external_id: view for view in schema.views}
+
+        wind_turbine = view_by_external_id.get("WindTurbine")
+        assert wind_turbine is not None
+        assert (
+            wind_turbine.filter.dump()
+            == dm.filters.In(
+                ["node", "type"],
+                [{"space": "power", "externalId": "GeneratingUnit"}, {"space": "power", "externalId": "WindTurbine"}],
+            ).dump()
+        )
+
+        wind_farm = view_by_external_id.get("WindFarm")
+        assert wind_farm is not None
+        assert (
+            wind_farm.filter.dump()
+            == dm.filters.In(
+                ["node", "type"],
+                [{"space": "power", "externalId": "EnergyArea"}, {"space": "power", "externalId": "WindFarm"}],
+            ).dump()
+        )
+
+        weather_station = view_by_external_id.get("WeatherStation")
+        assert weather_station is not None
+        assert (
+            weather_station.filter.dump()
+            == dm.filters.HasData(containers=[dm.ContainerId("power_analytics", "WeatherStation")]).dump()
+        )
+
+        power_forecast = view_by_external_id.get("PowerForecast")
+        assert power_forecast is not None
+        assert (
+            power_forecast.filter.dump()
+            == dm.filters.HasData(containers=[dm.ContainerId("power_analytics", "PowerForecast")]).dump()
+        )
+
+        point = view_by_external_id.get("Point")
+        assert point is not None
+        assert point.filter.dump() == dm.filters.HasData(containers=[dm.ContainerId("power", "Point")]).dump()
+
+        # Polygon has a NodeType filter in the enterprise model (no container properties)
+        polygon = view_by_external_id.get("Polygon")
+        assert polygon is not None
+        assert (
+            polygon.filter.dump()
+            == dm.filters.Equals(["node", "type"], {"space": "power", "externalId": "Polygon"}).dump()
+        )
+
+
+def test_dms_rules_validation_error():
+    with pytest.raises(ValidationError) as e:
+        dms_rules = DMSRulesInput(
+            metadata=DMSMetadataInput(
+                schema_="complete",
+                space="my_space",
+                external_id="my_data_model",
+                version="1",
+                creator="Anders",
+                created="2024-03-16",
+                updated="2024-03-16",
+            ),
+            properties=[
+                DMSPropertyInput(
+                    class_="WindFarm",
+                    property_="name",
+                    value_type="text",
+                    container="Asset",
+                    container_property="name",
+                    view="WindFarm",
+                    view_property="name",
+                ),
+            ],
+            views=[DMSViewInput(view="WindFarm", class_="WindFarm", implements="Sourceable,Describable")],
+            containers=[DMSContainerInput(container="Asset", class_="Asset", constraint="Sourceable,Describable")],
+        )
+
+        dms_rules.as_rules()
+
+    errors = e.value.errors()
+
+    assert errors[0]["msg"] == (
+        "Value error, The data model schema is set to be complete, however, "
+        "the referred component ViewId(space='my_space', external_id='Sourceable', version='1') is not preset."
+    )

@@ -1,5 +1,4 @@
-"""Exports rules to CDF Data Model Storage (DMS) through cognite-sdk.
-"""
+"""Exports rules to CDF Data Model Storage (DMS) through cognite-sdk."""
 
 import dataclasses
 import sys

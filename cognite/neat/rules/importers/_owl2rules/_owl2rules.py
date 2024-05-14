@@ -10,8 +10,8 @@ from rdflib import DC, DCTERMS, OWL, RDF, RDFS, SKOS, Graph
 
 from cognite.neat.rules.importers._base import BaseImporter, Rules
 from cognite.neat.rules.issues import IssueList
-from cognite.neat.rules.models.rules import InformationRules, RoleTypes
-from cognite.neat.rules.models.rules._types import XSD_VALUE_TYPE_MAPPINGS
+from cognite.neat.rules.models import InformationRules, RoleTypes
+from cognite.neat.rules.models.data_types import _XSD_TYPES
 
 from ._owl2classes import parse_owl_classes
 from ._owl2metadata import parse_owl_metadata
@@ -38,25 +38,20 @@ class OWLImporter(BaseImporter):
 
     """
 
-    def __init__(self, owl_filepath: Path, make_compliant: bool = False):
-        self.owl_filepath = owl_filepath
+    def __init__(self, filepath: Path, make_compliant: bool = False):
+        self.owl_filepath = filepath
         self.make_compliant = make_compliant
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None, is_reference: bool = False) -> Rules:
-        ...
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules: ...
 
     @overload
     def to_rules(
-        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None, is_reference: bool = False
-    ) -> tuple[Rules | None, IssueList]:
-        ...
+        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
+    ) -> tuple[Rules | None, IssueList]: ...
 
     def to_rules(
-        self,
-        errors: Literal["raise", "continue"] = "continue",
-        role: RoleTypes | None = None,
-        is_reference: bool = False,
+        self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
     ) -> tuple[Rules | None, IssueList] | Rules:
         graph = Graph()
         try:
@@ -82,7 +77,7 @@ class OWLImporter(BaseImporter):
             components = make_components_compliant(components)
 
         rules = InformationRules.model_validate(components)
-        return self._to_output(rules, IssueList(), errors, role, is_reference)
+        return self._to_output(rules, IssueList(), errors, role)
 
 
 def make_components_compliant(components: dict) -> dict:
@@ -129,7 +124,7 @@ def _add_missing_value_types(components: dict) -> dict:
         Updated tables with missing properties added to containers
     """
 
-    xsd_types = set(XSD_VALUE_TYPE_MAPPINGS.keys())
+    xsd_types = _XSD_TYPES
     candidate_value_types = {definition["Value Type"] for definition in components["Properties"]} - {
         definition["Class"] for definition in components["Classes"]
     }

@@ -1,5 +1,6 @@
 """In this test module, we are testing that the implementations of issues
 are consistently implemented."""
+
 from abc import ABC
 from dataclasses import fields, is_dataclass
 from pathlib import Path

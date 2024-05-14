@@ -1,14 +1,14 @@
 import logging
 
 from pydantic import BaseModel, field_validator, model_validator
-from cognite.neat.rules.models.rules._domain_rules import DomainMetadata, DomainProperty, DomainClass
-from cognite.neat.rules.models.rules._information_rules import (
+from cognite.neat.rules.models.domain import DomainMetadata, DomainProperty, DomainClass
+from cognite.neat.rules.models.information import (
     InformationMetadata,
     InformationProperty,
     InformationClass,
 )
-from cognite.neat.rules.models.rules._dms_architect_rules import DMSMetadata, DMSProperty, DMSView, DMSContainer
-from cognite.neat.rules.models.rules import RoleTypes
+from cognite.neat.rules.models.dms import DMSMetadata, DMSProperty, DMSView, DMSContainer
+from cognite.neat.rules.models import RoleTypes
 
 
 class QueryRequest(BaseModel):

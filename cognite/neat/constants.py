@@ -9,6 +9,7 @@ PACKAGE_DIRECTORY = Path(neat.__file__).parent
 
 EXAMPLE_RULES = PACKAGE_DIRECTORY / "legacy" / "rules" / "examples"
 EXAMPLE_GRAPHS = PACKAGE_DIRECTORY / "legacy" / "graph" / "examples"
+_OLD_WORKFLOWS = PACKAGE_DIRECTORY / "legacy" / "workflows" / "examples"
 EXAMPLE_WORKFLOWS = PACKAGE_DIRECTORY / "workflows" / "examples"
 
 DEFAULT_NAMESPACE = Namespace("http://purl.org/cognite/neat#")

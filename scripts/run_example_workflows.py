@@ -3,8 +3,9 @@ from pathlib import Path
 
 from cognite.client.testing import monkeypatch_cognite_client
 
-from cognite.neat.constants import EXAMPLE_RULES, EXAMPLE_WORKFLOWS, PACKAGE_DIRECTORY
+from cognite.neat.constants import PACKAGE_DIRECTORY
 from cognite.neat.workflows import WorkflowManager
+from cognite.neat.config import Config, WorkflowsStoreType
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -14,13 +15,15 @@ logging.basicConfig(level=logging.INFO)
 
 def main():
     with monkeypatch_cognite_client() as client:
+        config = Config(
+            workflows_store_type=WorkflowsStoreType.FILE,
+            data_store_path=PACKAGE_DIRECTORY / "legacy",
+            cdf_default_dataset_id=0,
+        )
+
         manager = WorkflowManager(
             client,
-            registry_storage_type="file",
-            workflows_storage_path=EXAMPLE_WORKFLOWS,
-            rules_storage_path=EXAMPLE_RULES,
-            data_storage_path=PACKAGE_DIRECTORY,
-            data_set_id=0,
+            config,
         )
         manager.load_workflows_from_storage()
         result = manager.start_workflow("default", sync=True)

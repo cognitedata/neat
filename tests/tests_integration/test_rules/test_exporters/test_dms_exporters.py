@@ -7,10 +7,9 @@ from cognite.client.data_classes import Row
 
 from cognite.neat.rules.exporters import DMSExporter
 from cognite.neat.rules.importers import ExcelImporter
-from cognite.neat.rules.models.rules import DMSRules, InformationRules, RoleTypes
-from cognite.neat.rules.models.rules._base import SheetList
-from cognite.neat.rules.models.rules._dms_schema import PipelineSchema
-from cognite.neat.rules.models.rules._information_rules import (
+from cognite.neat.rules.models import DMSRules, InformationRules, RoleTypes, SheetList
+from cognite.neat.rules.models.dms import PipelineSchema
+from cognite.neat.rules.models.information import (
     InformationClass,
     InformationMetadata,
     InformationProperty,
