@@ -1,14 +1,11 @@
 import re
 from collections import defaultdict
-from datetime import datetime
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from cognite.neat.rules.models._base import (
-    DataModelType,
     SheetList,
 )
 from cognite.neat.rules.models.data_types import DataType
-from cognite.neat.rules.models.dms._rules import DMSProperty, DMSRules, DMSView
 from cognite.neat.rules.models.domain import DomainRules
 from cognite.neat.rules.models.entities import (
     ClassEntity,
@@ -22,6 +19,9 @@ from cognite.neat.rules.models.entities import (
 
 from ._rules import InformationClass, InformationMetadata, InformationProperty, InformationRules
 
+if TYPE_CHECKING:
+    from cognite.neat.rules.models.dms._rules import DMSMetadata, DMSProperty, DMSRules
+
 
 class _InformationRulesConverter:
     def __init__(self, information: InformationRules):
@@ -30,30 +30,18 @@ class _InformationRulesConverter:
     def as_domain_rules(self) -> DomainRules:
         raise NotImplementedError("DomainRules not implemented yet")
 
-    def as_dms_architect_rules(self, created: datetime | None = None, updated: datetime | None = None) -> "DMSRules":
+    def as_dms_architect_rules(self) -> DMSRules:
         from cognite.neat.rules.models.dms._rules import (
             DMSContainer,
-            DMSMetadata,
             DMSProperty,
             DMSRules,
+            DMSView,
         )
 
         info_metadata = self.information.metadata
         default_version = info_metadata.version
         default_space = self._to_space(info_metadata.prefix)
-        space = self._to_space(info_metadata.prefix)
-
-        metadata = DMSMetadata(
-            schema_=info_metadata.schema_,
-            space=space,
-            data_model_type=DataModelType.solution if self.information.reference else DataModelType.enterprise,
-            version=info_metadata.version,
-            external_id=info_metadata.name.replace(" ", "_").lower(),
-            creator=info_metadata.creator,
-            name=info_metadata.name,
-            created=created or datetime.now(),
-            updated=updated or datetime.now(),
-        )
+        metadata = self._convert_metadata_to_dms(info_metadata)
 
         properties_by_class: dict[str, list[DMSProperty]] = defaultdict(list)
         for prop in self.information.properties:
@@ -112,7 +100,27 @@ class _InformationRulesConverter:
         )
 
     @classmethod
-    def _as_dms_property(cls, prop: InformationProperty, default_space: str, default_version: str) -> "DMSProperty":
+    def _convert_metadata_to_dms(cls, metadata: InformationMetadata) -> DMSMetadata:
+        from cognite.neat.rules.models.dms._rules import (
+            DMSMetadata,
+        )
+
+        space = cls._to_space(metadata.prefix)
+
+        return DMSMetadata(
+            schema_=metadata.schema_,
+            space=space,
+            data_model_type=metadata.data_model_type,
+            version=metadata.version,
+            external_id=metadata.name.replace(" ", "_").lower(),
+            creator=metadata.creator,
+            name=metadata.name,
+            created=metadata.created,
+            updated=metadata.updated,
+        )
+
+    @classmethod
+    def _as_dms_property(cls, prop: InformationProperty, default_space: str, default_version: str) -> DMSProperty:
         """This creates the first"""
 
         from cognite.neat.rules.models.dms._rules import DMSProperty
