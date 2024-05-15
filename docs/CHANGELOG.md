@@ -19,10 +19,14 @@ Changes are grouped as follows:
 ### Improves
 - Information rules are now read using InformationRulesInput data class, replicate the form of DMS rules.
 
-## TBD
+## [0.77.3] - 14-05-24
 ### Fixed
 - When using `DMSExporter` and importing a data model with a view pointing to a view not in the data model,
   it would fail to convert to an `Information` rules. This is now fixed.
+- In the `ExcelExporter`, the `metadata` sheet is now created correctly when you use the arguments `dump_as="last"`,
+  or `dump_as="reference"`, combined with and without `new_model_id`. **[Note]** The order of the `dump_as` and
+  `new_model_id` arguments have switched places. This is to make it more intuitive to use the `ExcelExporter`
+  as `new_model_id` is only relevant if `dump_as` is set to `last` or `reference`.
 
 ## [0.77.2] - 14-05-24
 ### Added

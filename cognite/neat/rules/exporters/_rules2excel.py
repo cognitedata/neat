@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import itertools
-from datetime import datetime
+import json
+from datetime import datetime, timezone
 from pathlib import Path
 from types import GenericAlias
 from typing import Any, ClassVar, Literal, cast, get_args
@@ -14,14 +15,14 @@ from openpyxl.worksheet.worksheet import Worksheet
 from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.models import (
     DataModelType,
-    DMSRules,
-    DomainRules,
     ExtensionCategory,
-    InformationRules,
     RoleTypes,
     SchemaCompleteness,
     SheetEntity,
 )
+from cognite.neat.rules.models.dms import DMSMetadata
+from cognite.neat.rules.models.domain import DomainMetadata
+from cognite.neat.rules.models.information import InformationMetadata
 
 from ._base import BaseExporter
 
@@ -34,9 +35,6 @@ class ExcelExporter(BaseExporter[Workbook]):
             on the different styles.
         output_role: The role to use for the exported spreadsheet. If provided, the rules will be converted to
             this role formate before being written to excel. If not provided, the role from the rules will be used.
-        new_model_id: The new model ID to use for the exported spreadsheet. This is only applicable if the input
-            rules have 'is_reference' set. If provided, the model ID will be used to automatically create the
-            new metadata sheet in the Excel file.
         dump_as: This determines how the rules are written to the Excel file. An Excel file has up to three sets of
            sheets: user, last, and reference. The user sheets are used for inputting rules from a user. The last sheets
            are used for the last version of the same model as the user, while the reference sheets are used for
@@ -49,6 +47,10 @@ class ExcelExporter(BaseExporter[Workbook]):
                change a model that has already been published to CDF and that model is in production.
              * "reference": The rules are written to the reference sheets. This is typically used when you want to build
                a new solution on top of an enterprise model.
+        new_model_id: The new model ID to use for the exported spreadsheet. This is only applicable if the input
+            rules have 'is_reference' set. If provided, the model ID will be used to automatically create the
+            new metadata sheet in the Excel file. The model id is expected to be a tuple of (prefix, title)
+            (space, external_id) for InformationRules and DMSRules respectively.
 
     The following styles are available:
 
@@ -74,8 +76,8 @@ class ExcelExporter(BaseExporter[Workbook]):
         self,
         styling: Style = "default",
         output_role: RoleTypes | None = None,
-        new_model_id: tuple[str, str, str] | None = None,
         dump_as: DumpOptions = "user",
+        new_model_id: tuple[str, str] | None = None,
     ):
         if styling not in self.style_options:
             raise ValueError(f"Invalid styling: {styling}. Valid options are {self.style_options}")
@@ -106,9 +108,11 @@ class ExcelExporter(BaseExporter[Workbook]):
         dumped_last_rules: dict[str, Any] | None = None
         dumped_reference_rules: dict[str, Any] | None = None
         if self.dump_as != "user":
-            # Writes empty reference sheets
+            action = {"last": "update", "reference": "create"}[self.dump_as]
+            metadata_creator = _MetadataCreator(action, self.new_model_id)  # type: ignore[arg-type]
+
             dumped_user_rules = {
-                "Metadata": self._create_metadata_sheet_user_rules(rules),
+                "Metadata": metadata_creator.create(rules.metadata),
             }
 
             if self.dump_as == "last":
@@ -234,82 +238,67 @@ class ExcelExporter(BaseExporter[Workbook]):
                 sheet.column_dimensions[selected_column.column_letter].width = max(current, max_length + 0.5)
         return None
 
-    def _create_metadata_sheet_user_rules(self, rules: Rules) -> dict[str, Any]:
-        metadata: dict[str, Any] = {
-            field_alias: None for field_alias in rules.metadata.model_dump(by_alias=True).keys()
-        }
-        if "creator" in metadata:
-            metadata["creator"] = "YOUR NAME"
 
-        if isinstance(rules, DomainRules):
-            return metadata
-        elif isinstance(rules, DMSRules):
-            existing_model_id = (rules.metadata.space, rules.metadata.external_id, rules.metadata.version)
-        elif isinstance(rules, InformationRules):
-            existing_model_id = (rules.metadata.prefix, rules.metadata.name, rules.metadata.version)
+class _MetadataCreator:
+    creator_name = "<YOUR NAME>"
+
+    def __init__(
+        self,
+        action: Literal["create", "update"],
+        new_model_id: tuple[str, str] | None = None,
+    ):
+        self.action = action
+        self.new_model_id = new_model_id or ("YOUR_PREFIX", "YOUR_TITLE")
+
+    def create(self, metadata: DomainMetadata | InformationMetadata | DMSMetadata) -> dict[str, Any]:
+        now = datetime.now(timezone.utc).replace(microsecond=0, tzinfo=None)
+        if self.action == "update":
+            output = json.loads(metadata.model_dump_json(by_alias=True))
+            # This is the same for Information and DMS
+            output["updated"] = now.isoformat()
+            output["schema"] = SchemaCompleteness.extended.value
+            output["extension"] = ExtensionCategory.addition.value
+            if value := output.get("creator"):
+                output["creator"] = f"{value}, {self.creator_name}"
+            else:
+                output["creator"] = self.creator_name
+            return output
+
+        # Action "create"
+        if isinstance(metadata, DomainMetadata):
+            output = {field_alias: None for field_alias in metadata.model_dump(by_alias=True).keys()}
+            output["role"] = metadata.role.value
+            output["creator"] = self.creator_name
+            return output
+
+        new_metadata = self._create_new_info(now)
+        if isinstance(metadata, DMSMetadata):
+            from cognite.neat.rules.models.information._converter import _InformationRulesConverter
+
+            output_metadata: DMSMetadata | InformationMetadata = _InformationRulesConverter._convert_metadata_to_dms(
+                new_metadata
+            )
+        elif isinstance(metadata, InformationMetadata):
+            output_metadata = new_metadata
         else:
-            raise ValueError(f"Unsupported rules type: {type(rules)}")
-        existing_metadata = rules.metadata.model_dump(by_alias=True)
-        if isinstance(existing_metadata["created"], datetime):
-            metadata["created"] = existing_metadata["created"].replace(tzinfo=None)
-        if isinstance(existing_metadata["updated"], datetime):
-            metadata["updated"] = existing_metadata["updated"].replace(tzinfo=None)
-        # Excel does not support timezone in datetime strings
-        now_iso = datetime.now().replace(tzinfo=None).isoformat()
-        is_info = isinstance(rules, InformationRules)
-        is_dms = isinstance(rules, DMSRules)
-        is_extension = self.new_model_id is not None or rules.reference is not None
-        is_solution = rules.metadata.data_model_type == DataModelType.solution
+            raise ValueError(f"Bug in Neat: Unknown metadata type: {type(metadata)}")
 
-        if is_solution and self.new_model_id:
-            metadata["prefix" if is_info else "space"] = self.new_model_id[0]  # type: ignore[index]
-            metadata["title" if is_info else "externalId"] = self.new_model_id[1]  # type: ignore[index]
-            metadata["version"] = self.new_model_id[2]  # type: ignore[index]
-        elif is_solution and self.dump_as == "reference" and rules.reference:
-            metadata["prefix" if is_info else "space"] = "YOUR_PREFIX"
-            metadata["title" if is_info else "externalId"] = "YOUR_TITLE"
-            metadata["version"] = "1"
-        else:
-            metadata["prefix" if is_info else "space"] = existing_model_id[0]
-            metadata["title" if is_info else "externalId"] = existing_model_id[1]
-            metadata["version"] = existing_model_id[2]
+        created = json.loads(output_metadata.model_dump_json(by_alias=True))
+        created.pop("extension", None)
+        return created
 
-        if is_solution and is_info and self.new_model_id:
-            metadata["namespace"] = f"http://purl.org/{self.new_model_id[0]}/"  # type: ignore[index]
-        elif is_info:
-            metadata["namespace"] = existing_metadata["namespace"]
-
-        if is_solution and is_dms and self.new_model_id:
-            metadata["name"] = self.new_model_id[1]  # type: ignore[index]
-
-        if is_solution:
-            metadata["created"] = now_iso
-        else:
-            metadata["created"] = existing_metadata["created"]
-
-        if is_solution or is_extension:
-            metadata["updated"] = now_iso
-        else:
-            metadata["updated"] = existing_metadata["updated"]
-
-        if is_solution:
-            metadata["creator"] = "YOUR NAME"
-        else:
-            metadata["creator"] = existing_metadata["creator"]
-
-        if not is_solution:
-            metadata["description"] = existing_metadata["description"]
-
-        if is_extension:
-            metadata["schema"] = SchemaCompleteness.extended.value
-        else:
-            metadata["schema"] = SchemaCompleteness.complete.value
-
-        if is_solution:
-            metadata["dataModelType"] = DataModelType.solution.value
-        else:
-            metadata["dataModelType"] = DataModelType.enterprise.value
-
-        metadata["extension"] = ExtensionCategory.addition.value
-        metadata["role"] = (self.output_role and self.output_role.value) or rules.metadata.role.value
-        return metadata
+    def _create_new_info(self, now: datetime) -> InformationMetadata:
+        prefix = self.new_model_id[0]
+        return InformationMetadata(
+            data_model_type=DataModelType.solution,
+            schema_=SchemaCompleteness.extended,
+            extension=ExtensionCategory.addition,
+            prefix=prefix,
+            namespace=f"http://purl.org/neat/{prefix}/",  # type: ignore[arg-type]
+            description=None,
+            version="1",
+            created=now,
+            updated=now,
+            creator=[self.creator_name],
+            name=self.new_model_id[1],
+        )
