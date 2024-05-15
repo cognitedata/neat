@@ -115,7 +115,7 @@ class TestExcelExporter:
 
 
 def metadata_creator_test_cases():
-    now = datetime.now(timezone.utc)
+    now = datetime.now(timezone.utc).replace(microsecond=0, tzinfo=None)
     past_long_ago = now.replace(year=now.year - 10)
     recent_past = now.replace(year=now.year - 1)
     creator = _MetadataCreator(False, "create")
@@ -148,11 +148,13 @@ def metadata_creator_test_cases():
             "space": "sp_solution",
             "externalId": "new_solution",
             "version": "1",
+            "name": None,
+            "description": None,
             "creator": "<YOUR NAME>",
             "created": now.isoformat(),
             "updated": now.isoformat(),
         },
-        id="Create solution model.",
+        id="Create solution model",
     )
     creator = _MetadataCreator(True, "update", None)
 
@@ -160,7 +162,7 @@ def metadata_creator_test_cases():
         creator,
         DMSMetadata(
             data_model_type=DataModelType.solution,
-            schema_=SchemaCompleteness.extended,
+            schema_=SchemaCompleteness.extended.value,
             space="sp_solution",
             external_id="my_solution",
             version="1",
@@ -172,11 +174,14 @@ def metadata_creator_test_cases():
         {
             "role": RoleTypes.dms_architect.value,
             "dataModelType": DataModelType.solution.value,
+            "schema": SchemaCompleteness.extended,
             "extension": ExtensionCategory.addition.value,
             "space": "sp_solution",
             "externalId": "my_solution",
             "version": "1",
-            "creator": "<YOUR NAME>",
+            "name": None,
+            "description": None,
+            "creator": "Bob, <YOUR NAME>",
             "created": past_long_ago.isoformat(),
             "updated": now.isoformat(),
         },
@@ -201,15 +206,18 @@ def metadata_creator_test_cases():
         {
             "role": RoleTypes.dms_architect.value,
             "dataModelType": DataModelType.enterprise.value,
+            "schema": SchemaCompleteness.extended.value,
             "extension": ExtensionCategory.addition.value,
             "space": "sp_enterprise",
             "externalId": "enterprise",
             "version": "1",
+            "name": None,
+            "description": None,
             "creator": "Bob, <YOUR NAME>",
             "created": past_long_ago.isoformat(),
             "updated": now.isoformat(),
         },
-        id="Update enterprise model.",
+        id="Update enterprise model",
     )
 
 

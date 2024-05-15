@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import itertools
-from datetime import datetime
+import json
+from datetime import datetime, timezone
 from pathlib import Path
 from types import GenericAlias
 from typing import Any, ClassVar, Literal, cast, get_args
@@ -250,14 +251,27 @@ class _MetadataCreator:
         self.new_model_id = new_model_id
 
     def create(self, metadata: DomainMetadata | InformationMetadata | DMSMetadata) -> dict[str, str]:
-        output: dict[str, Any] = {field_alias: None for field_alias in metadata.model_dump(by_alias=True).keys()}
+        now_iso = datetime.now(timezone.utc).replace(microsecond=0, tzinfo=None).isoformat()
+        if self.action == "update":
+            output = json.loads(metadata.model_dump_json(by_alias=True))
+            # This is the same for Information and DMS
+            output["updated"] = now_iso
+            output["schema"] = SchemaCompleteness.extended.value
+            output["extension"] = ExtensionCategory.addition.value
+            if value := output.get("creator"):
+                output["creator"] = f"{value}, <YOUR NAME>"
+            else:
+                output["creator"] = "<YOUR NAME>"
+            return output
+
+        # Action "create"
+        output = {field_alias: None for field_alias in metadata.model_dump(by_alias=True).keys()}
         output["role"] = metadata.role.value
         if "creator" in output:
             output["creator"] = "<YOUR NAME>"
-
         if isinstance(metadata, DomainMetadata):
             return output
-        elif isinstance(metadata, DMSMetadata):
+        if isinstance(metadata, DMSMetadata):
             existing_model_id = (metadata.space, metadata.external_id, metadata.version)
         elif isinstance(metadata, InformationMetadata):
             existing_model_id = (metadata.prefix, metadata.name, metadata.version)
