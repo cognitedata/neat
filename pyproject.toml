@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cognite-neat"
-version = "0.77.2"
+version = "0.77.3"
 readme = "README.md"
 description = "Knowledge graph transformation"
 authors = [
@@ -129,7 +129,7 @@ twine = "*"
 pytest = { version = ">=8.0, <8.1" }
 pytest-cov = "*"
 pytest-notebook = "*"
-pytest-freezegun = "*"
+freezegun = "^1.5.1"
 pytest-xdist = "^3.6.1"
 pre-commit = "*"
 safety = "*"
