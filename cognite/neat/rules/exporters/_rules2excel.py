@@ -34,9 +34,6 @@ class ExcelExporter(BaseExporter[Workbook]):
             on the different styles.
         output_role: The role to use for the exported spreadsheet. If provided, the rules will be converted to
             this role formate before being written to excel. If not provided, the role from the rules will be used.
-        new_model_id: The new model ID to use for the exported spreadsheet. This is only applicable if the input
-            rules have 'is_reference' set. If provided, the model ID will be used to automatically create the
-            new metadata sheet in the Excel file.
         dump_as: This determines how the rules are written to the Excel file. An Excel file has up to three sets of
            sheets: user, last, and reference. The user sheets are used for inputting rules from a user. The last sheets
            are used for the last version of the same model as the user, while the reference sheets are used for
@@ -49,6 +46,10 @@ class ExcelExporter(BaseExporter[Workbook]):
                change a model that has already been published to CDF and that model is in production.
              * "reference": The rules are written to the reference sheets. This is typically used when you want to build
                a new solution on top of an enterprise model.
+        new_model_id: The new model ID to use for the exported spreadsheet. This is only applicable if the input
+            rules have 'is_reference' set. If provided, the model ID will be used to automatically create the
+            new metadata sheet in the Excel file. The model id is expected to be a tuple of (prefix, title)
+            (space, external_id) for InformationRules and DMSRules respectively.
 
     The following styles are available:
 
@@ -75,7 +76,7 @@ class ExcelExporter(BaseExporter[Workbook]):
         styling: Style = "default",
         output_role: RoleTypes | None = None,
         dump_as: DumpOptions = "user",
-        new_model_id: tuple[str, str, str] | None = None,
+        new_model_id: tuple[str, str] | None = None,
     ):
         if styling not in self.style_options:
             raise ValueError(f"Invalid styling: {styling}. Valid options are {self.style_options}")
@@ -106,8 +107,8 @@ class ExcelExporter(BaseExporter[Workbook]):
         dumped_last_rules: dict[str, Any] | None = None
         dumped_reference_rules: dict[str, Any] | None = None
         if self.dump_as != "user":
-            action = cast(Literal["create", "update"], {"last": "update", "reference": "create"}[self.dump_as])
-            metadata_creator = _MetadataCreator(rules.reference is not None, action, self.new_model_id)
+            action = {"last": "update", "reference": "create"}[self.dump_as]
+            metadata_creator = _MetadataCreator(rules.reference is not None, action, self.new_model_id)  # type: ignore[arg-type]
 
             dumped_user_rules = {
                 "Metadata": metadata_creator.create(rules.metadata),
@@ -241,9 +242,8 @@ class _MetadataCreator:
     def __init__(
         self,
         has_reference: bool,
-        # We will never get a dump_as "user" as that case does not need to create new metadata
         action: Literal["create", "update"],
-        new_model_id: tuple[str, str, str] | None = None,
+        new_model_id: tuple[str, str] | None = None,
     ):
         self.has_reference = has_reference
         self.action = action
@@ -278,7 +278,7 @@ class _MetadataCreator:
         if is_solution and self.new_model_id:
             output["prefix" if is_info else "space"] = self.new_model_id[0]  # type: ignore[index]
             output["title" if is_info else "externalId"] = self.new_model_id[1]  # type: ignore[index]
-            output["version"] = self.new_model_id[2]  # type: ignore[index]
+            output["version"] = "1"
         elif is_solution and self.action == "create" and self.has_reference:
             output["prefix" if is_info else "space"] = "YOUR_PREFIX"
             output["title" if is_info else "externalId"] = "YOUR_TITLE"
