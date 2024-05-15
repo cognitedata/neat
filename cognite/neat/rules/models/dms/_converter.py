@@ -99,7 +99,7 @@ class _DMSRulesConverter:
         )
 
     @classmethod
-    def _convert_metadata_to_info(cls, metadata: DMSMetadata) -> InformationMetadata:
+    def _convert_metadata_to_info(cls, metadata: DMSMetadata) -> "InformationMetadata":
         from cognite.neat.rules.models.information._rules import InformationMetadata
 
         prefix = metadata.space

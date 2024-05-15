@@ -120,7 +120,7 @@ class _InformationRulesConverter:
         )
 
     @classmethod
-    def _as_dms_property(cls, prop: InformationProperty, default_space: str, default_version: str) -> DMSProperty:
+    def _as_dms_property(cls, prop: InformationProperty, default_space: str, default_version: str) -> "DMSProperty":
         """This creates the first"""
 
         from cognite.neat.rules.models.dms._rules import DMSProperty
