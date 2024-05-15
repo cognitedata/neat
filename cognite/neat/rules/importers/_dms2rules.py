@@ -102,15 +102,17 @@ class DMSImporter(BaseImporter):
         else:
             ref_model = None
 
-        try:
+        issue_list = IssueList()
+        with _handle_issues(issue_list) as result:
             schema = DMSSchema.from_data_model(client, user_model, ref_model)
-        except Exception as e:
-            return cls(DMSSchema(), [issues.importing.APIError(str(e))])
+
+        if result.result == "failure" or issue_list.has_errors:
+            return cls(DMSSchema(), issue_list)
 
         metadata = cls._create_metadata_from_model(user_model)
         ref_metadata = cls._create_metadata_from_model(ref_model) if ref_model else None
 
-        return cls(schema, [], metadata, ref_metadata)
+        return cls(schema, issue_list, metadata, ref_metadata)
 
     @classmethod
     def _find_model_in_list(
