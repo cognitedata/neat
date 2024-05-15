@@ -18,6 +18,7 @@ Changes are grouped as follows:
 ## TBD
 ### Improves
 - Information rules are now read using InformationRulesInput data class, replicate the form of DMS rules.
+- Information rules are now serialized using dedicated serializer class
 
 ## [0.77.3] - 14-05-24
 ### Fixed

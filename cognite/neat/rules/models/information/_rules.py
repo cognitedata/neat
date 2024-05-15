@@ -1,6 +1,7 @@
 import math
 import sys
 import warnings
+from collections.abc import Callable
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
@@ -72,6 +73,7 @@ class InformationMetadata(BaseMetadata):
     data_model_type: DataModelType = Field(DataModelType.solution, alias="dataModelType")
     schema_: SchemaCompleteness = Field(alias="schema")
     extension: ExtensionCategoryType | None = ExtensionCategory.addition
+
     prefix: PrefixType
     namespace: NamespaceType
 
@@ -319,40 +321,15 @@ class InformationRules(RuleModel):
             )
         return self
 
-    @model_serializer(mode="plain", when_used="always")
-    def information_rules_serializer(self, info: SerializationInfo) -> dict[str, Any]:
-        kwargs = vars(info)
-        default_prefix = f"{self.metadata.prefix}:" if self.metadata.prefix else ""
+    # @model_serializer(mode="plain", when_used="always")
+    @model_serializer(mode="wrap", when_used="always")
+    def information_rules_serializer(self, handler: Callable, info: SerializationInfo) -> dict[str, Any]:
+        from ._serializer import _InformationRulesSerializer
 
-        field_names = ["Class", "Value Type"] if info.by_alias else ["class_", "value_type"]
-        properties = []
-        for prop in self.properties:
-            dumped = prop.model_dump(**kwargs)
-            for field_name in field_names:
-                if value := dumped.get(field_name):
-                    dumped[field_name] = value.removeprefix(default_prefix)
-            properties.append(dumped)
+        dumped = cast(dict[str, Any], handler(self, info))
+        prefix = self.metadata.prefix
 
-        field_names = ["Class"] if info.by_alias else ["class_"]
-        classes = []
-        parent_name = "Parent Class" if info.by_alias else "parent"
-        for cls in self.classes:
-            dumped = cls.model_dump(**kwargs)
-            for field_name in field_names:
-                if value := dumped.get(field_name):
-                    dumped[field_name] = value.removeprefix(default_prefix)
-            if value := dumped.get(parent_name):
-                dumped[parent_name] = ",".join(
-                    constraint.strip().removeprefix(default_prefix) for constraint in value.split(",")
-                )
-            classes.append(dumped)
-
-        return {
-            "Metadata" if info.by_alias else "metadata": self.metadata.model_dump(**kwargs),
-            "Classes" if info.by_alias else "classes": classes,
-            "Properties" if info.by_alias else "properties": properties,
-            "prefixes": {key: str(value) for key, value in self.prefixes.items()},
-        }
+        return _InformationRulesSerializer(info, prefix).clean(dumped)
 
     def as_domain_rules(self) -> DomainRules:
         from ._converter import _InformationRulesConverter
@@ -368,9 +345,9 @@ class InformationRules(RuleModel):
         new_self = self.model_copy(deep=True)
         for prop in new_self.properties:
             prop.reference = ReferenceEntity(
-                prefix=prop.class_.prefix
-                if not isinstance(prop.class_.prefix, _UndefinedType)
-                else self.metadata.prefix,
+                prefix=(
+                    prop.class_.prefix if not isinstance(prop.class_.prefix, _UndefinedType) else self.metadata.prefix
+                ),
                 suffix=prop.class_.suffix,
                 version=prop.class_.version,
                 property=prop.property_,
@@ -378,9 +355,9 @@ class InformationRules(RuleModel):
 
         for cls_ in new_self.classes:
             cls_.reference = ReferenceEntity(
-                prefix=cls_.class_.prefix
-                if not isinstance(cls_.class_.prefix, _UndefinedType)
-                else self.metadata.prefix,
+                prefix=(
+                    cls_.class_.prefix if not isinstance(cls_.class_.prefix, _UndefinedType) else self.metadata.prefix
+                ),
                 suffix=cls_.class_.suffix,
                 version=cls_.class_.version,
             )
