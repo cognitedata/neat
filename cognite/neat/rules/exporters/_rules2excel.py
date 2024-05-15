@@ -14,14 +14,14 @@ from openpyxl.worksheet.worksheet import Worksheet
 from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.models import (
     DataModelType,
-    DMSRules,
-    DomainRules,
     ExtensionCategory,
-    InformationRules,
     RoleTypes,
     SchemaCompleteness,
     SheetEntity,
 )
+from cognite.neat.rules.models.dms import DMSMetadata
+from cognite.neat.rules.models.domain import DomainMetadata
+from cognite.neat.rules.models.information import InformationMetadata
 
 from ._base import BaseExporter
 
@@ -106,9 +106,12 @@ class ExcelExporter(BaseExporter[Workbook]):
         dumped_last_rules: dict[str, Any] | None = None
         dumped_reference_rules: dict[str, Any] | None = None
         if self.dump_as != "user":
-            # Writes empty reference sheets
+            metadata_creator = _MetadataSheetCreator(
+                rules.reference is not None, self.output_role, self.dump_as, self.new_model_id
+            )
+
             dumped_user_rules = {
-                "Metadata": self._create_metadata_sheet_user_rules(rules),
+                "Metadata": metadata_creator.create(rules.metadata),
             }
 
             if self.dump_as == "last":
@@ -234,82 +237,94 @@ class ExcelExporter(BaseExporter[Workbook]):
                 sheet.column_dimensions[selected_column.column_letter].width = max(current, max_length + 0.5)
         return None
 
-    def _create_metadata_sheet_user_rules(self, rules: Rules) -> dict[str, Any]:
-        metadata: dict[str, Any] = {
-            field_alias: None for field_alias in rules.metadata.model_dump(by_alias=True).keys()
-        }
-        if "creator" in metadata:
-            metadata["creator"] = "YOUR NAME"
 
-        if isinstance(rules, DomainRules):
-            return metadata
-        elif isinstance(rules, DMSRules):
-            existing_model_id = (rules.metadata.space, rules.metadata.external_id, rules.metadata.version)
-        elif isinstance(rules, InformationRules):
-            existing_model_id = (rules.metadata.prefix, rules.metadata.name, rules.metadata.version)
+class _MetadataSheetCreator:
+    def __init__(
+        self,
+        has_reference: bool,
+        output_role: RoleTypes | None = None,
+        dump_as: ExcelExporter.DumpOptions = "user",
+        new_model_id: tuple[str, str, str] | None = None,
+    ):
+        self.has_reference = has_reference
+        self.output_role = output_role
+        self.dump_as = dump_as
+        self.new_model_id = new_model_id
+
+    def create(self, metadata: DomainMetadata | InformationMetadata | DMSMetadata) -> dict[str, str]:
+        output: dict[str, Any] = {field_alias: None for field_alias in metadata.model_dump(by_alias=True).keys()}
+        if "creator" in output:
+            output["creator"] = "YOUR NAME"
+
+        if isinstance(metadata, DomainMetadata):
+            return output
+        elif isinstance(metadata, DMSMetadata):
+            existing_model_id = (metadata.space, metadata.external_id, metadata.version)
+        elif isinstance(metadata, InformationMetadata):
+            existing_model_id = (metadata.prefix, metadata.name, metadata.version)
         else:
-            raise ValueError(f"Unsupported rules type: {type(rules)}")
-        existing_metadata = rules.metadata.model_dump(by_alias=True)
+            raise ValueError(f"Unsupported rules type: {metadata.role.value}")
+        existing_metadata = metadata.model_dump(by_alias=True)
         if isinstance(existing_metadata["created"], datetime):
-            metadata["created"] = existing_metadata["created"].replace(tzinfo=None)
+            output["created"] = existing_metadata["created"].replace(tzinfo=None)
         if isinstance(existing_metadata["updated"], datetime):
-            metadata["updated"] = existing_metadata["updated"].replace(tzinfo=None)
+            output["updated"] = existing_metadata["updated"].replace(tzinfo=None)
         # Excel does not support timezone in datetime strings
         now_iso = datetime.now().replace(tzinfo=None).isoformat()
-        is_info = isinstance(rules, InformationRules)
-        is_dms = isinstance(rules, DMSRules)
-        is_extension = self.new_model_id is not None or rules.reference is not None
-        is_solution = rules.metadata.data_model_type == DataModelType.solution
+        is_info = isinstance(metadata, InformationMetadata)
+        is_dms = isinstance(metadata, DMSMetadata)
+        is_extension = self.new_model_id is not None or self.has_reference
+        is_solution = metadata.data_model_type == DataModelType.solution
 
         if is_solution and self.new_model_id:
-            metadata["prefix" if is_info else "space"] = self.new_model_id[0]  # type: ignore[index]
-            metadata["title" if is_info else "externalId"] = self.new_model_id[1]  # type: ignore[index]
-            metadata["version"] = self.new_model_id[2]  # type: ignore[index]
-        elif is_solution and self.dump_as == "reference" and rules.reference:
-            metadata["prefix" if is_info else "space"] = "YOUR_PREFIX"
-            metadata["title" if is_info else "externalId"] = "YOUR_TITLE"
-            metadata["version"] = "1"
+            output["prefix" if is_info else "space"] = self.new_model_id[0]  # type: ignore[index]
+            output["title" if is_info else "externalId"] = self.new_model_id[1]  # type: ignore[index]
+            output["version"] = self.new_model_id[2]  # type: ignore[index]
+        elif is_solution and self.dump_as == "reference" and self.has_reference:
+            output["prefix" if is_info else "space"] = "YOUR_PREFIX"
+            output["title" if is_info else "externalId"] = "YOUR_TITLE"
+            output["version"] = "1"
         else:
-            metadata["prefix" if is_info else "space"] = existing_model_id[0]
-            metadata["title" if is_info else "externalId"] = existing_model_id[1]
-            metadata["version"] = existing_model_id[2]
+            output["prefix" if is_info else "space"] = existing_model_id[0]
+            output["title" if is_info else "externalId"] = existing_model_id[1]
+            output["version"] = existing_model_id[2]
 
         if is_solution and is_info and self.new_model_id:
-            metadata["namespace"] = f"http://purl.org/{self.new_model_id[0]}/"  # type: ignore[index]
+            output["namespace"] = f"http://purl.org/{self.new_model_id[0]}/"  # type: ignore[index]
         elif is_info:
-            metadata["namespace"] = existing_metadata["namespace"]
+            output["namespace"] = existing_metadata["namespace"]
 
         if is_solution and is_dms and self.new_model_id:
-            metadata["name"] = self.new_model_id[1]  # type: ignore[index]
+            output["name"] = self.new_model_id[1]  # type: ignore[index]
 
         if is_solution:
-            metadata["created"] = now_iso
+            output["created"] = now_iso
         else:
-            metadata["created"] = existing_metadata["created"]
+            output["created"] = existing_metadata["created"]
 
         if is_solution or is_extension:
-            metadata["updated"] = now_iso
+            output["updated"] = now_iso
         else:
-            metadata["updated"] = existing_metadata["updated"]
+            output["updated"] = existing_metadata["updated"]
 
         if is_solution:
-            metadata["creator"] = "YOUR NAME"
+            output["creator"] = "YOUR NAME"
         else:
-            metadata["creator"] = existing_metadata["creator"]
+            output["creator"] = existing_metadata["creator"]
 
         if not is_solution:
-            metadata["description"] = existing_metadata["description"]
+            output["description"] = existing_metadata["description"]
 
         if is_extension:
-            metadata["schema"] = SchemaCompleteness.extended.value
+            output["schema"] = SchemaCompleteness.extended.value
         else:
-            metadata["schema"] = SchemaCompleteness.complete.value
+            output["schema"] = SchemaCompleteness.complete.value
 
         if is_solution:
-            metadata["dataModelType"] = DataModelType.solution.value
+            output["dataModelType"] = DataModelType.solution.value
         else:
-            metadata["dataModelType"] = DataModelType.enterprise.value
+            output["dataModelType"] = DataModelType.enterprise.value
 
-        metadata["extension"] = ExtensionCategory.addition.value
-        metadata["role"] = (self.output_role and self.output_role.value) or rules.metadata.role.value
-        return metadata
+        output["extension"] = ExtensionCategory.addition.value
+        output["role"] = (self.output_role and self.output_role.value) or metadata.role.value
+        return output
