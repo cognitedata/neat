@@ -29,6 +29,7 @@ from cognite.neat.rules.issues.dms import (
     MissingSourceViewError,
     MissingSpaceError,
     MissingViewError,
+    MissingViewInModelWarning,
 )
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
 from cognite.neat.utils.cdf_classes import (
@@ -156,8 +157,14 @@ class DMSSchema:
             connection_referenced_view_ids |= cls._connection_references(view)
         connection_referenced_view_ids = connection_referenced_view_ids - existing_view_ids
         if connection_referenced_view_ids:
+            warnings.warn(
+                MissingViewInModelWarning(data_model.as_id(), connection_referenced_view_ids), UserWarning, stacklevel=2
+            )
             connection_referenced_views = view_loader.retrieve(list(connection_referenced_view_ids))
-            # Todo warning if not all views are found?
+            if failed := connection_referenced_view_ids - set(connection_referenced_views.as_ids()):
+                warnings.warn(
+                    issues.importing.FailedImportWarning({repr(v) for v in failed}), UserWarning, stacklevel=2
+                )
             views.extend(connection_referenced_views)
 
         # We need to include parent views in the schema to make sure that the schema is valid.
