@@ -237,7 +237,7 @@ class DMSViewInput:
     description: str | None = None
     implements: str | None = None
     reference: str | None = None
-    filter_: Literal["hasData", "nodeType"] | None = None
+    filter_: Literal["hasData", "nodeType", "rawFilter"] | None = None
     in_model: bool = True
 
     @classmethod

@@ -527,6 +527,26 @@ class HasDataFilterAppliedToTooManyContainersWarning(DMSSchemaWarning):
 
 
 @dataclass(frozen=True)
+class RawFilterAppliedToViewWarning(DMSSchemaWarning):
+    description = "Raw filter is applied to a view, which is against the neat data modeling lifecycle."
+    fix = "Do not use raw filter, instead use HasData filter or nodeType filter or change the data model design."
+    error_name: ClassVar[str] = "RawFilterAppliedToView"
+    view_id: dm.ViewId
+
+    def message(self) -> str:
+        return (
+            f"RawFilter applied to the view {self.view_id}."
+            " The usage of RawFilter is against the neat team recommendations and the neat data modeling lifecycle."
+            " When opting for raw filter, the user is responsible for any errors that arise in neat."
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["view_id"] = self.view_id.dump()
+        return output
+
+
+@dataclass(frozen=True)
 class NodeTypeFilterOnParentViewWarning(DMSSchemaWarning):
     description = (
         "Setting a node type filter on a parent view. This is not "

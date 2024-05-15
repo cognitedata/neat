@@ -8,6 +8,7 @@ from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models._base import ExtensionCategory, SchemaCompleteness
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import ContainerEntity
+from cognite.neat.rules.models.wrapped_entities import RawFilter
 
 from ._rules import DMSProperty, DMSRules
 
@@ -25,6 +26,7 @@ class DMSPostValidation:
         self.issue_list = IssueList()
 
     def validate(self) -> IssueList:
+        self._validate_best_practices()
         self._consistent_container_properties()
         self._referenced_views_and_containers_are_existing()
         self._validate_extension()
@@ -240,6 +242,15 @@ class DMSPostValidation:
                             container_ids=mapped_containers,
                         )
                     )
+
+    def _validate_best_practices(self) -> None:
+        for view in self.views:
+            if view.filter_ and isinstance(view.filter_, RawFilter):
+                self.issue_list.append(
+                    issues.dms.RawFilterAppliedToViewWarning(
+                        view_id=view.view.as_id(),
+                    )
+                )
 
     @staticmethod
     def _changed_attributes_and_properties(

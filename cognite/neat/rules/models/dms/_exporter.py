@@ -133,7 +133,6 @@ class _DMSExporter:
             view_filter = self._create_view_filter(view, dms_view, data_model_type, dms_properties)
 
             view.filter = view_filter.as_dms_filter()
-
             if isinstance(view_filter, NodeTypeFilter):
                 unique_node_types.update(view_filter.nodes)
                 if view.as_id() in parent_views:
@@ -254,6 +253,7 @@ class _DMSExporter:
         dms_properties: list[DMSProperty],
     ) -> DMSFilter:
         selected_filter_name = (dms_view and dms_view.filter_ and dms_view.filter_.name) or ""
+
         if dms_view and dms_view.filter_ and not dms_view.filter_.is_empty:
             # Has Explicit Filter, use it
             return dms_view.filter_

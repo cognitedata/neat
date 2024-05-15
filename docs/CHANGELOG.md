@@ -22,6 +22,16 @@ Changes are grouped as follows:
 - When using `DMSExporter` and importing a data model with a view pointing to a view not in the data model,
   it would fail to convert to an `Information` rules. This is now fixed.
 
+## [0.77.2] - 14-05-24
+### Added
+- Missing warning when `RawFilter` is used to warn users that the usage of this filter is not recommended.
+
+
+## [0.77.1] - 14-05-24
+### Added
+- Support for `RawFilter` allow arbitrary filters to be applied to the data model.
+
+
 ## [0.77.0] - 13-05-24
 ### Changed
 - [BREAKING] The subpackage `cognite.neat.rules.models` is reorganized. All imports using this subpackage must be
