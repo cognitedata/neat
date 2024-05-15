@@ -106,9 +106,7 @@ class ExcelExporter(BaseExporter[Workbook]):
         dumped_last_rules: dict[str, Any] | None = None
         dumped_reference_rules: dict[str, Any] | None = None
         if self.dump_as != "user":
-            metadata_creator = _MetadataCreator(
-                rules.reference is not None, self.output_role, self.dump_as, self.new_model_id
-            )
+            metadata_creator = _MetadataCreator(rules.reference is not None, self.dump_as, self.new_model_id)
 
             dumped_user_rules = {
                 "Metadata": metadata_creator.create(rules.metadata),
@@ -242,19 +240,19 @@ class _MetadataCreator:
     def __init__(
         self,
         has_reference: bool,
-        output_role: RoleTypes | None = None,
-        dump_as: ExcelExporter.DumpOptions = "user",
+        # We will never get a dump_as "user" as that case does not need to create new metadata
+        dump_as: Literal["last", "reference"],
         new_model_id: tuple[str, str, str] | None = None,
     ):
         self.has_reference = has_reference
-        self.output_role = output_role
         self.dump_as = dump_as
         self.new_model_id = new_model_id
 
     def create(self, metadata: DomainMetadata | InformationMetadata | DMSMetadata) -> dict[str, str]:
         output: dict[str, Any] = {field_alias: None for field_alias in metadata.model_dump(by_alias=True).keys()}
+        output["role"] = metadata.role.value
         if "creator" in output:
-            output["creator"] = "YOUR NAME"
+            output["creator"] = "<YOUR NAME>"
 
         if isinstance(metadata, DomainMetadata):
             return output
@@ -326,5 +324,4 @@ class _MetadataCreator:
             output["dataModelType"] = DataModelType.enterprise.value
 
         output["extension"] = ExtensionCategory.addition.value
-        output["role"] = (self.output_role and self.output_role.value) or metadata.role.value
         return output
