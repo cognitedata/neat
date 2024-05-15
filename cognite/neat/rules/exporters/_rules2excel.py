@@ -240,6 +240,8 @@ class ExcelExporter(BaseExporter[Workbook]):
 
 
 class _MetadataCreator:
+    creator_name = "<YOUR NAME>"
+
     def __init__(
         self,
         has_reference: bool,
@@ -248,95 +250,57 @@ class _MetadataCreator:
     ):
         self.has_reference = has_reference
         self.action = action
-        self.new_model_id = new_model_id
+        self.new_model_id = new_model_id or ("YOUR_PREFIX", "YOUR_TITLE")
 
-    def create(self, metadata: DomainMetadata | InformationMetadata | DMSMetadata) -> dict[str, str]:
-        now_iso = datetime.now(timezone.utc).replace(microsecond=0, tzinfo=None).isoformat()
+    def create(self, metadata: DomainMetadata | InformationMetadata | DMSMetadata) -> dict[str, Any]:
+        now = datetime.now(timezone.utc).replace(microsecond=0, tzinfo=None)
         if self.action == "update":
             output = json.loads(metadata.model_dump_json(by_alias=True))
             # This is the same for Information and DMS
-            output["updated"] = now_iso
+            output["updated"] = now.isoformat()
             output["schema"] = SchemaCompleteness.extended.value
             output["extension"] = ExtensionCategory.addition.value
             if value := output.get("creator"):
-                output["creator"] = f"{value}, <YOUR NAME>"
+                output["creator"] = f"{value}, {self.creator_name}"
             else:
-                output["creator"] = "<YOUR NAME>"
+                output["creator"] = self.creator_name
             return output
 
         # Action "create"
-        output = {field_alias: None for field_alias in metadata.model_dump(by_alias=True).keys()}
-        output["role"] = metadata.role.value
-        if "creator" in output:
-            output["creator"] = "<YOUR NAME>"
         if isinstance(metadata, DomainMetadata):
+            output = {field_alias: None for field_alias in metadata.model_dump(by_alias=True).keys()}
+            output["role"] = metadata.role.value
+            output["creator"] = self.creator_name
             return output
+
+        new_metadata = self._create_new_info(now)
         if isinstance(metadata, DMSMetadata):
-            existing_model_id = (metadata.space, metadata.external_id, metadata.version)
+            from cognite.neat.rules.models.information._converter import _InformationRulesConverter
+
+            output_metadata: DMSMetadata | InformationMetadata = _InformationRulesConverter._convert_metadata_to_dms(
+                new_metadata
+            )
         elif isinstance(metadata, InformationMetadata):
-            existing_model_id = (metadata.prefix, metadata.name, metadata.version)
+            output_metadata = new_metadata
         else:
-            raise ValueError(f"Unsupported rules type: {metadata.role.value}")
-        existing_metadata = metadata.model_dump(by_alias=True)
-        if isinstance(existing_metadata["created"], datetime):
-            output["created"] = existing_metadata["created"].replace(tzinfo=None)
-        if isinstance(existing_metadata["updated"], datetime):
-            output["updated"] = existing_metadata["updated"].replace(tzinfo=None)
-        # Excel does not support timezone in datetime strings
-        now_iso = datetime.now().replace(tzinfo=None).isoformat()
-        is_info = isinstance(metadata, InformationMetadata)
-        is_dms = isinstance(metadata, DMSMetadata)
-        is_extension = self.new_model_id is not None or self.has_reference
-        is_solution = metadata.data_model_type == DataModelType.solution
+            raise ValueError(f"Bug in Neat: Unknown metadata type: {type(metadata)}")
 
-        if is_solution and self.new_model_id:
-            output["prefix" if is_info else "space"] = self.new_model_id[0]  # type: ignore[index]
-            output["title" if is_info else "externalId"] = self.new_model_id[1]  # type: ignore[index]
-            output["version"] = "1"
-        elif is_solution and self.action == "create" and self.has_reference:
-            output["prefix" if is_info else "space"] = "YOUR_PREFIX"
-            output["title" if is_info else "externalId"] = "YOUR_TITLE"
-            output["version"] = "1"
-        else:
-            output["prefix" if is_info else "space"] = existing_model_id[0]
-            output["title" if is_info else "externalId"] = existing_model_id[1]
-            output["version"] = existing_model_id[2]
+        created = json.loads(output_metadata.model_dump_json(by_alias=True))
+        created.pop("extension", None)
+        return created
 
-        if is_solution and is_info and self.new_model_id:
-            output["namespace"] = f"http://purl.org/{self.new_model_id[0]}/"  # type: ignore[index]
-        elif is_info:
-            output["namespace"] = existing_metadata["namespace"]
-
-        if is_solution and is_dms and self.new_model_id:
-            output["name"] = self.new_model_id[1]  # type: ignore[index]
-
-        if is_solution:
-            output["created"] = now_iso
-        else:
-            output["created"] = existing_metadata["created"]
-
-        if is_solution or is_extension:
-            output["updated"] = now_iso
-        else:
-            output["updated"] = existing_metadata["updated"]
-
-        if is_solution:
-            output["creator"] = "YOUR NAME"
-        else:
-            output["creator"] = existing_metadata["creator"]
-
-        if not is_solution:
-            output["description"] = existing_metadata["description"]
-
-        if is_extension:
-            output["schema"] = SchemaCompleteness.extended.value
-        else:
-            output["schema"] = SchemaCompleteness.complete.value
-
-        if is_solution:
-            output["dataModelType"] = DataModelType.solution.value
-        else:
-            output["dataModelType"] = DataModelType.enterprise.value
-
-        output["extension"] = ExtensionCategory.addition.value
-        return output
+    def _create_new_info(self, now: datetime) -> InformationMetadata:
+        prefix = self.new_model_id[0]
+        return InformationMetadata(
+            data_model_type=DataModelType.solution,
+            schema_=SchemaCompleteness.extended,
+            extension=ExtensionCategory.addition,
+            prefix=prefix,
+            namespace=f"http://purl.org/{prefix}/",  # type: ignore[arg-type]
+            description=None,
+            version="1",
+            created=now,
+            updated=now,
+            creator=[self.creator_name],
+            name=self.new_model_id[1],
+        )

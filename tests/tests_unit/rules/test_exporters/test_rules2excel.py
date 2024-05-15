@@ -145,10 +145,11 @@ def metadata_creator_test_cases():
         {
             "role": RoleTypes.dms_architect.value,
             "dataModelType": DataModelType.solution.value,
+            "schema": SchemaCompleteness.extended.value,
             "space": "sp_solution",
             "externalId": "new_solution",
             "version": "1",
-            "name": None,
+            "name": "new_solution",
             "description": None,
             "creator": "<YOUR NAME>",
             "created": now.isoformat(),
