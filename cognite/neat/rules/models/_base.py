@@ -38,6 +38,12 @@ else:
 METADATA_VALUE_MAX_LENGTH = 5120
 
 
+def _add_alias(data: dict[str, Any], base_model: type[BaseModel]) -> None:
+    for field_name, field_ in base_model.model_fields.items():
+        if field_name not in data and field_.alias in data:
+            data[field_name] = data[field_.alias]
+
+
 def replace_nan_floats_with_default(values: dict, model_fields: dict[str, FieldInfo]) -> dict:
     output = {}
     for field_name, value in values.items():
