@@ -1,8 +1,8 @@
 import pytest
-
+from datetime import datetime, timezone
 from cognite.neat.rules.exporters import ExcelExporter
 from cognite.neat.rules.exporters._rules2excel import _MetadataCreator
-from cognite.neat.rules.models import DMSRules, DomainRules, InformationRules, RoleTypes
+from cognite.neat.rules.models import DMSRules, DomainRules, InformationRules, RoleTypes, DataModelType, SchemaCompleteness, ExtensionCategory
 from cognite.neat.rules.models.dms import DMSMetadata
 from cognite.neat.rules.models.domain import DomainMetadata
 from cognite.neat.rules.models.information import InformationMetadata
@@ -109,7 +109,35 @@ def metadata_creator_test_cases():
         creator,
         DomainMetadata(creator="Alice"),
         {"role": RoleTypes.domain_expert.value, "creator": "<YOUR NAME>"},
-        id="Domain metadata.",
+        id="Domain metadata, create without reference",
+    )
+    now = datetime.now(timezone.utc)
+
+    creator = _MetadataCreator(False , "create", ("sp_solution", "new_solution"))
+
+    yield pytest.param(
+        creator,
+        DMSMetadata(
+            data_model_type=DataModelType.enterprise,
+            schema_=SchemaCompleteness.complete,
+            space="sp_enterprise",
+            external_id="enterprise",
+            version="1",
+            creator=["Bob"],
+            created=now,
+            updated=now,
+        ),
+        {
+            "role": RoleTypes.dms_architect.value,
+            "dataModelType": DataModelType.solution.value,
+            "space": "sp_solution",
+            "externalId": "new_solution",
+            "version": "1",
+            "creator": "<YOUR NAME>",
+            "created": now.isoformat(),
+            "updated": now.isoformat(),
+        },
+        id="Create solution metadata."
     )
 
 
