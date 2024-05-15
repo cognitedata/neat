@@ -1,6 +1,5 @@
 import warnings
-from datetime import datetime
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from rdflib import Namespace
 
@@ -20,7 +19,10 @@ from cognite.neat.rules.models.entities import (
 )
 from cognite.neat.rules.models.information._rules import InformationRules
 
-from ._rules import DMSProperty, DMSRules, DMSView
+from ._rules import DMSMetadata, DMSProperty, DMSRules, DMSView
+
+if TYPE_CHECKING:
+    from cognite.neat.rules.models.information._rules import InformationMetadata
 
 
 class _DMSRulesConverter:
@@ -32,31 +34,16 @@ class _DMSRulesConverter:
 
     def as_information_architect_rules(
         self,
-        created: datetime | None = None,
-        updated: datetime | None = None,
-        name: str | None = None,
-        namespace: Namespace | None = None,
     ) -> "InformationRules":
         from cognite.neat.rules.models.information._rules import (
             InformationClass,
-            InformationMetadata,
             InformationProperty,
             InformationRules,
         )
 
         dms = self.dms.metadata
-        prefix = dms.space
 
-        metadata = InformationMetadata(
-            schema_=dms.schema_,
-            prefix=prefix,
-            namespace=namespace or Namespace(f"https://purl.orgl/neat/{prefix}/"),
-            version=dms.version,
-            name=name or dms.name or "Missing name",
-            creator=dms.creator,
-            created=dms.created or created or datetime.now(),
-            updated=dms.updated or updated or datetime.now(),
-        )
+        metadata = self._convert_metadata_to_info(dms)
 
         classes = [
             InformationClass(
@@ -109,6 +96,23 @@ class _DMSRulesConverter:
             classes=SheetList[InformationClass](data=classes),
             last=self.dms.last.as_information_architect_rules() if self.dms.last else None,
             reference=self.dms.reference.as_information_architect_rules() if self.dms.reference else None,
+        )
+
+    @classmethod
+    def _convert_metadata_to_info(cls, metadata: DMSMetadata) -> InformationMetadata:
+        from cognite.neat.rules.models.information._rules import InformationMetadata
+
+        prefix = metadata.space
+        return InformationMetadata(
+            schema_=metadata.schema_,
+            prefix=prefix,
+            namespace=Namespace(f"https://purl.orgl/neat/{prefix}/"),
+            version=metadata.version,
+            description=metadata.description,
+            name=metadata.name or metadata.external_id,
+            creator=metadata.creator,
+            created=metadata.created,
+            updated=metadata.updated,
         )
 
     @classmethod

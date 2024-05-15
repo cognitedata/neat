@@ -30,7 +30,7 @@ class _InformationRulesConverter:
     def as_domain_rules(self) -> DomainRules:
         raise NotImplementedError("DomainRules not implemented yet")
 
-    def as_dms_architect_rules(self) -> DMSRules:
+    def as_dms_architect_rules(self) -> "DMSRules":
         from cognite.neat.rules.models.dms._rules import (
             DMSContainer,
             DMSProperty,
@@ -100,7 +100,7 @@ class _InformationRulesConverter:
         )
 
     @classmethod
-    def _convert_metadata_to_dms(cls, metadata: InformationMetadata) -> DMSMetadata:
+    def _convert_metadata_to_dms(cls, metadata: InformationMetadata) -> "DMSMetadata":
         from cognite.neat.rules.models.dms._rules import (
             DMSMetadata,
         )
