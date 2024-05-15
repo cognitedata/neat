@@ -1,5 +1,6 @@
 from abc import ABC
 from dataclasses import dataclass
+from typing import Any
 
 from .base import NeatValidationError, ValidationWarning
 
@@ -23,6 +24,7 @@ __all__ = [
     "MissingIdentifierError",
     "UnsupportedPropertyTypeError",
     "APIError",
+    "FailedImportWarning",
 ]
 
 
@@ -257,6 +259,20 @@ class APIWarning(ModelImportWarning):
 
     def dump(self) -> dict[str, str]:
         return {"error_message": self.error_message}
+
+
+@dataclass(frozen=True)
+class FailedImportWarning(ModelImportWarning):
+    description = "Failed to import part of the model."
+    fix = "No fix is available."
+
+    identifier: set[str]
+
+    def message(self) -> str:
+        return f"Failed to import: {self.identifier}. This will be skipped."
+
+    def dump(self) -> dict[str, Any]:
+        return {"identifier": list(self.identifier)}
 
 
 @dataclass(frozen=True)

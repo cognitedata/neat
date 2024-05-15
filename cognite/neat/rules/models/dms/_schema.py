@@ -12,6 +12,7 @@ from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes import DatabaseWrite, DatabaseWriteList, TransformationWrite, TransformationWriteList
 from cognite.client.data_classes.data_modeling import ViewApply
+from cognite.client.data_classes.data_modeling.views import ReverseDirectRelation
 from cognite.client.data_classes.transformations.common import Edges, EdgeType, Nodes, ViewInfo
 
 from cognite.neat.rules import issues
@@ -28,6 +29,7 @@ from cognite.neat.rules.issues.dms import (
     MissingSourceViewError,
     MissingSpaceError,
     MissingViewError,
+    MissingViewInModelWarning,
 )
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
 from cognite.neat.utils.cdf_classes import (
@@ -146,8 +148,26 @@ class DMSSchema:
         space_write = space_read.as_write()
 
         view_loader = ViewLoader(client)
-        # We need to include parent views in the schema to make sure that the schema is valid.
+
         existing_view_ids = set(views.as_ids())
+
+        # We need to include all views the edges/direct relations are pointing to have a complete schema.
+        connection_referenced_view_ids: set[dm.ViewId] = set()
+        for view in views:
+            connection_referenced_view_ids |= cls._connection_references(view)
+        connection_referenced_view_ids = connection_referenced_view_ids - existing_view_ids
+        if connection_referenced_view_ids:
+            warnings.warn(
+                MissingViewInModelWarning(data_model.as_id(), connection_referenced_view_ids), UserWarning, stacklevel=2
+            )
+            connection_referenced_views = view_loader.retrieve(list(connection_referenced_view_ids))
+            if failed := connection_referenced_view_ids - set(connection_referenced_views.as_ids()):
+                warnings.warn(
+                    issues.importing.FailedImportWarning({repr(v) for v in failed}), UserWarning, stacklevel=2
+                )
+            views.extend(connection_referenced_views)
+
+        # We need to include parent views in the schema to make sure that the schema is valid.
         parent_view_ids = {parent for view in views for parent in view.implements or []}
         parents = view_loader.retrieve_all_parents(list(parent_view_ids - existing_view_ids))
         views.extend([parent for parent in parents if parent.as_id() not in existing_view_ids])
@@ -202,6 +222,21 @@ class DMSSchema:
             containers=container_write,
             reference=ref_schema,
         )
+
+    @classmethod
+    def _connection_references(cls, view: dm.View) -> set[dm.ViewId]:
+        view_ids: set[dm.ViewId] = set()
+        for prop in (view.properties or {}).values():
+            if isinstance(prop, dm.MappedProperty) and isinstance(prop.type, dm.DirectRelation):
+                if prop.source:
+                    view_ids.add(prop.source)
+            elif isinstance(prop, dm.EdgeConnection):
+                view_ids.add(prop.source)
+                if prop.edge_source:
+                    view_ids.add(prop.edge_source)
+            elif isinstance(prop, ReverseDirectRelation):
+                view_ids.add(prop.source)
+        return view_ids
 
     @classmethod
     def from_directory(cls, directory: str | Path) -> Self:

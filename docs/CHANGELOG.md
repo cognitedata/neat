@@ -15,6 +15,13 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+
+
+## TBD
+### Fixed
+- When using `DMSExporter` and importing a data model with a view pointing to a view not in the data model,
+  it would fail to convert to an `Information` rules. This is now fixed.
+
 ## [0.77.2] - 14-05-24
 ### Added
 - Missing warning when `RawFilter` is used to warn users that the usage of this filter is not recommended.

@@ -61,8 +61,10 @@ class DMSImporter(BaseImporter):
         self.ref_metadata = ref_metadata
         self.issue_list = IssueList(read_issues)
         self._all_containers_by_id = schema.containers.copy()
+        self._all_view_ids = set(self.root_schema.views.keys())
         if self.root_schema.reference:
             self._all_containers_by_id.update(self.root_schema.reference.containers)
+            self._all_view_ids.update(self.root_schema.reference.views.keys())
 
     @classmethod
     def from_data_model_id(
@@ -100,15 +102,17 @@ class DMSImporter(BaseImporter):
         else:
             ref_model = None
 
-        try:
+        issue_list = IssueList()
+        with _handle_issues(issue_list) as result:
             schema = DMSSchema.from_data_model(client, user_model, ref_model)
-        except Exception as e:
-            return cls(DMSSchema(), [issues.importing.APIError(str(e))])
+
+        if result.result == "failure" or issue_list.has_errors:
+            return cls(DMSSchema(), issue_list)
 
         metadata = cls._create_metadata_from_model(user_model)
         ref_metadata = cls._create_metadata_from_model(ref_model) if ref_model else None
 
-        return cls(schema, [], metadata, ref_metadata)
+        return cls(schema, issue_list, metadata, ref_metadata)
 
     @classmethod
     def _find_model_in_list(
@@ -361,7 +365,7 @@ class DMSImporter(BaseImporter):
         elif isinstance(prop, dm.MappedPropertyApply):
             container_prop = self._container_prop_unsafe(cast(dm.MappedPropertyApply, prop))
             if isinstance(container_prop.type, dm.DirectRelation):
-                if prop.source is None:
+                if prop.source is None or prop.source not in self._all_view_ids:
                     # The warning is issued when the DMS Rules are created.
                     return DMSUnknownEntity()
                 else:
