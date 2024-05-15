@@ -15,7 +15,9 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-
+## TBD
+### Improves
+- Information rules are now read using InformationRulesInput data class, replicate the form of DMS rules.
 
 ## TBD
 ### Fixed
