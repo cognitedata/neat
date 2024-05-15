@@ -1,8 +1,18 @@
-import pytest
 from datetime import datetime, timezone
+
+import pytest
+from freezegun import freeze_time
+
 from cognite.neat.rules.exporters import ExcelExporter
 from cognite.neat.rules.exporters._rules2excel import _MetadataCreator
-from cognite.neat.rules.models import DMSRules, DomainRules, InformationRules, RoleTypes, DataModelType, SchemaCompleteness, ExtensionCategory
+from cognite.neat.rules.models import (
+    DataModelType,
+    DMSRules,
+    DomainRules,
+    InformationRules,
+    RoleTypes,
+    SchemaCompleteness,
+)
 from cognite.neat.rules.models.dms import DMSMetadata
 from cognite.neat.rules.models.domain import DomainMetadata
 from cognite.neat.rules.models.information import InformationMetadata
@@ -104,16 +114,17 @@ class TestExcelExporter:
 
 
 def metadata_creator_test_cases():
+    now = datetime.now(timezone.utc)
     creator = _MetadataCreator(False, "create")
     yield pytest.param(
         creator,
         DomainMetadata(creator="Alice"),
+        now,
         {"role": RoleTypes.domain_expert.value, "creator": "<YOUR NAME>"},
         id="Domain metadata, create without reference",
     )
-    now = datetime.now(timezone.utc)
 
-    creator = _MetadataCreator(False , "create", ("sp_solution", "new_solution"))
+    creator = _MetadataCreator(False, "create", ("sp_solution", "new_solution"))
 
     yield pytest.param(
         creator,
@@ -127,6 +138,7 @@ def metadata_creator_test_cases():
             created=now,
             updated=now,
         ),
+        now,
         {
             "role": RoleTypes.dms_architect.value,
             "dataModelType": DataModelType.solution.value,
@@ -137,18 +149,20 @@ def metadata_creator_test_cases():
             "created": now.isoformat(),
             "updated": now.isoformat(),
         },
-        id="Create solution metadata."
+        id="Create solution metadata.",
     )
 
 
 class TestMetadataCreator:
-    @pytest.mark.parametrize("creator, metadata, expected", list(metadata_creator_test_cases()))
+    @pytest.mark.parametrize("creator, metadata, now, expected", list(metadata_creator_test_cases()))
     def test_create(
         self,
         creator: _MetadataCreator,
+        now: datetime,
         metadata: DomainMetadata | InformationMetadata | DMSMetadata,
         expected: dict[str, str],
     ):
-        actual = creator.create(metadata)
+        with freeze_time(now):
+            actual = creator.create(metadata)
 
         assert actual == expected
