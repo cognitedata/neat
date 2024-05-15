@@ -106,7 +106,7 @@ class ExcelExporter(BaseExporter[Workbook]):
         dumped_last_rules: dict[str, Any] | None = None
         dumped_reference_rules: dict[str, Any] | None = None
         if self.dump_as != "user":
-            metadata_creator = _MetadataSheetCreator(
+            metadata_creator = _MetadataCreator(
                 rules.reference is not None, self.output_role, self.dump_as, self.new_model_id
             )
 
@@ -238,7 +238,7 @@ class ExcelExporter(BaseExporter[Workbook]):
         return None
 
 
-class _MetadataSheetCreator:
+class _MetadataCreator:
     def __init__(
         self,
         has_reference: bool,

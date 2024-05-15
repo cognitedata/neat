@@ -1,7 +1,11 @@
 import pytest
 
 from cognite.neat.rules.exporters import ExcelExporter
-from cognite.neat.rules.models import DMSRules, DomainRules, InformationRules
+from cognite.neat.rules.exporters._rules2excel import _MetadataCreator
+from cognite.neat.rules.models import DMSRules, DomainRules, InformationRules, RoleTypes
+from cognite.neat.rules.models.dms import DMSMetadata
+from cognite.neat.rules.models.domain import DomainMetadata
+from cognite.neat.rules.models.information import InformationMetadata
 
 
 class TestExcelExporter:
@@ -97,3 +101,26 @@ class TestExcelExporter:
         assert not missing, f"Missing sheets: {missing}"
         extra = set(workbook.sheetnames) - expected_sheet_names
         assert not extra, f"Extra sheets: {extra}"
+
+
+def metadata_creator_test_cases():
+    creator = _MetadataCreator(False)
+    yield pytest.param(
+        creator,
+        DomainMetadata(creator="Alice"),
+        {"role": RoleTypes.domain_expert.value, "creator": "<YOUR NAME>"},
+        id="Domain metadata.",
+    )
+
+
+class TestMetadataCreator:
+    @pytest.mark.parametrize("creator, metadata, expected", list(metadata_creator_test_cases()))
+    def test_create(
+        self,
+        creator: _MetadataCreator,
+        metadata: DomainMetadata | InformationMetadata | DMSMetadata,
+        expected: dict[str, str],
+    ):
+        actual = creator.create(metadata)
+
+        assert actual == expected
