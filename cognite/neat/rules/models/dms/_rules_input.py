@@ -3,9 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Literal, cast, overload
 
-from pydantic import BaseModel
-
-from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness
+from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness, _add_alias
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import (
     ClassEntity,
@@ -44,8 +42,9 @@ class DMSMetadataInput:
             external_id=data.get("external_id"),  # type: ignore[arg-type]
             creator=data.get("creator"),  # type: ignore[arg-type]
             version=data.get("version"),  # type: ignore[arg-type]
-            extension=data.get("extension", "addition"),
-            data_model_type=data.get("data_model_type", "solution"),
+            # safeguard from empty cell, i.e. if key provided by value None
+            extension=data.get("extension", "addition") or "addition",
+            data_model_type=data.get("data_model_type", "solution") or "solution",
             name=data.get("name"),
             description=data.get("description"),
             created=data.get("created"),
@@ -355,9 +354,3 @@ class DMSRulesInput:
             Last=last,
             Reference=reference,
         )
-
-
-def _add_alias(data: dict[str, Any], base_model: type[BaseModel]) -> None:
-    for field_name, field_ in base_model.model_fields.items():
-        if field_name not in data and field_.alias in data:
-            data[field_name] = data[field_.alias]

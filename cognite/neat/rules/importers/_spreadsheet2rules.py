@@ -22,6 +22,7 @@ from cognite.neat.rules.models import (
     SchemaCompleteness,
 )
 from cognite.neat.rules.models.dms import DMSRulesInput
+from cognite.neat.rules.models.information import InformationRulesInput
 from cognite.neat.utils.auxiliary import local_import
 from cognite.neat.utils.spreadsheet import SpreadsheetRead, read_individual_sheet
 
@@ -253,6 +254,8 @@ class ExcelImporter(BaseImporter):
             rules: Rules
             if rules_cls is DMSRules:
                 rules = DMSRulesInput.load(sheets).as_rules()
+            elif rules_cls is InformationRules:
+                rules = InformationRulesInput.load(sheets).as_rules()
             else:
                 rules = rules_cls.model_validate(sheets)  # type: ignore[attr-defined]
 
