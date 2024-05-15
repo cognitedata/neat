@@ -109,7 +109,7 @@ class ExcelExporter(BaseExporter[Workbook]):
         dumped_reference_rules: dict[str, Any] | None = None
         if self.dump_as != "user":
             action = {"last": "update", "reference": "create"}[self.dump_as]
-            metadata_creator = _MetadataCreator(rules.reference is not None, action, self.new_model_id)  # type: ignore[arg-type]
+            metadata_creator = _MetadataCreator(action, self.new_model_id)  # type: ignore[arg-type]
 
             dumped_user_rules = {
                 "Metadata": metadata_creator.create(rules.metadata),
@@ -244,11 +244,9 @@ class _MetadataCreator:
 
     def __init__(
         self,
-        has_reference: bool,
         action: Literal["create", "update"],
         new_model_id: tuple[str, str] | None = None,
     ):
-        self.has_reference = has_reference
         self.action = action
         self.new_model_id = new_model_id or ("YOUR_PREFIX", "YOUR_TITLE")
 

@@ -118,7 +118,7 @@ def metadata_creator_test_cases():
     now = datetime.now(timezone.utc).replace(microsecond=0, tzinfo=None)
     past_long_ago = now.replace(year=now.year - 10)
     recent_past = now.replace(year=now.year - 1)
-    creator = _MetadataCreator(False, "create")
+    creator = _MetadataCreator("create")
     yield pytest.param(
         creator,
         DomainMetadata(creator="Alice"),
@@ -127,7 +127,7 @@ def metadata_creator_test_cases():
         id="Domain metadata, create without reference",
     )
 
-    creator = _MetadataCreator(False, "create", ("sp_solution", "new_solution"))
+    creator = _MetadataCreator("create", ("sp_solution", "new_solution"))
 
     yield pytest.param(
         creator,
@@ -157,13 +157,13 @@ def metadata_creator_test_cases():
         },
         id="Create solution model",
     )
-    creator = _MetadataCreator(True, "update", None)
+    creator = _MetadataCreator("update", None)
 
     yield pytest.param(
         creator,
         DMSMetadata(
             data_model_type=DataModelType.solution,
-            schema_=SchemaCompleteness.extended.value,
+            schema_=SchemaCompleteness.extended,
             space="sp_solution",
             external_id="my_solution",
             version="1",
@@ -175,7 +175,7 @@ def metadata_creator_test_cases():
         {
             "role": RoleTypes.dms_architect.value,
             "dataModelType": DataModelType.solution.value,
-            "schema": SchemaCompleteness.extended,
+            "schema": SchemaCompleteness.extended.value,
             "extension": ExtensionCategory.addition.value,
             "space": "sp_solution",
             "externalId": "my_solution",
@@ -189,7 +189,7 @@ def metadata_creator_test_cases():
         id="Update solution model",
     )
 
-    creator = _MetadataCreator(False, "update", None)
+    creator = _MetadataCreator("update", None)
 
     yield pytest.param(
         creator,
