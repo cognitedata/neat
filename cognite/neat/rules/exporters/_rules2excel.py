@@ -294,7 +294,7 @@ class _MetadataCreator:
             schema_=SchemaCompleteness.extended,
             extension=ExtensionCategory.addition,
             prefix=prefix,
-            namespace=f"http://purl.org/{prefix}/",  # type: ignore[arg-type]
+            namespace=f"http://purl.org/neat/{prefix}/",  # type: ignore[arg-type]
             description=None,
             version="1",
             created=now,
