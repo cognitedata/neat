@@ -104,7 +104,7 @@ class TestExcelExporter:
 
 
 def metadata_creator_test_cases():
-    creator = _MetadataCreator(False, "reference")
+    creator = _MetadataCreator(False, "create")
     yield pytest.param(
         creator,
         DomainMetadata(creator="Alice"),

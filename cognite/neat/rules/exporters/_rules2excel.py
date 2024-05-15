@@ -106,7 +106,8 @@ class ExcelExporter(BaseExporter[Workbook]):
         dumped_last_rules: dict[str, Any] | None = None
         dumped_reference_rules: dict[str, Any] | None = None
         if self.dump_as != "user":
-            metadata_creator = _MetadataCreator(rules.reference is not None, self.dump_as, self.new_model_id)
+            action = cast(Literal["create", "update"], {"last": "update", "reference": "create"}[self.dump_as])
+            metadata_creator = _MetadataCreator(rules.reference is not None, action, self.new_model_id)
 
             dumped_user_rules = {
                 "Metadata": metadata_creator.create(rules.metadata),
@@ -241,11 +242,11 @@ class _MetadataCreator:
         self,
         has_reference: bool,
         # We will never get a dump_as "user" as that case does not need to create new metadata
-        dump_as: Literal["last", "reference"],
+        action: Literal["create", "update"],
         new_model_id: tuple[str, str, str] | None = None,
     ):
         self.has_reference = has_reference
-        self.dump_as = dump_as
+        self.action = action
         self.new_model_id = new_model_id
 
     def create(self, metadata: DomainMetadata | InformationMetadata | DMSMetadata) -> dict[str, str]:
@@ -278,7 +279,7 @@ class _MetadataCreator:
             output["prefix" if is_info else "space"] = self.new_model_id[0]  # type: ignore[index]
             output["title" if is_info else "externalId"] = self.new_model_id[1]  # type: ignore[index]
             output["version"] = self.new_model_id[2]  # type: ignore[index]
-        elif is_solution and self.dump_as == "reference" and self.has_reference:
+        elif is_solution and self.action == "create" and self.has_reference:
             output["prefix" if is_info else "space"] = "YOUR_PREFIX"
             output["title" if is_info else "externalId"] = "YOUR_TITLE"
             output["version"] = "1"
