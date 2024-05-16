@@ -1,7 +1,8 @@
 # Data Modeling Lifecycle through Expert Elicitation: Building an Enterprise Data Model
 
 This tutorial demonstrates the usage of `neat` through out the entire data modeling lifecycle producing an Enterprise Data Model in Cognite Data Fusion (CDF).
-The data modeling lifecycle is based on the so-called [Expert Elicitation](https://en.wikipedia.org/wiki/Expert_elicitation), and represents the recommended way of building enterprise data models.
+The data modeling lifecycle is based on the so-called [Expert Elicitation](https://en.wikipedia.org/wiki/Expert_elicitation),
+and represents the recommended way of building enterprise data models.
 
 
 ## Introduction
@@ -11,7 +12,8 @@ units are partially overlapping, both in concepts and data. Lots of the value in
 taking data from different sources and making them easily accessible and understandable for all domain experts and all business units, as
 this unlocks the potential for cross-domain insights.
 
-The expert elicitation is the process of distilling the domain expert knowledge and turning it into a shared knowledge artifact such as an Enterprise Data Model (covering the entire suite of use-cases and domains and business units).
+The expert elicitation is the process of distilling the domain expert knowledge and turning it into a shared knowledge
+artifact such as an Enterprise Data Model (covering the entire suite of use-cases and domains and business units).
 `neat` has been designed to facilitate this process by providing a way to iterate on and developed the enterprise data model.
 
 ## Use Case
@@ -32,11 +34,16 @@ We have purposely simplified the domains to make it easier to follow this tutori
 ## Wind Farm Operation Expert: Jon
 
 ### Gathering Knowledge
-In `neat`, knowledge is captured in statements (i.e. sentences). A statement is a simple fact about a thing (e.g. wind turbine). In this tutorial, we will collect statements that describe the properties of physical objects that constitute an operational wind farm connected to an electrical grid. We purposely use spreadsheets to
-collect these statements due to their inclusive nature (anyone knows how to use them). This is important, as we want to enable collaborative data modeling experience among domain experts, information architect and CDF experts.
+In `neat`, knowledge is captured in statements (i.e. sentences). A statement is a simple fact about a thing (e.g. wind turbine).
+In this tutorial, we will collect statements that describe the properties of physical objects that constitute an
+operational wind farm connected to an electrical grid. We purposely use spreadsheets to
+collect these statements due to their inclusive nature (anyone knows how to use them). This is important, as we want to
+enable collaborative data modeling experience among domain experts, information architect and CDF experts.
 
 <a id="domain-expert-properties"></a>
-We will start with a wind turbine. For example, Jon might say that a wind turbine has a `name`, a `location`, `manufacturer`, `ratedPower`, `hubHeight`, `actualPower` and `arrayCableConnection`. These are all statements. In `neat`, we capture these statements in a spreadsheet format. We refer to a set of
+We will start with a wind turbine. For example, Jon might say that a wind turbine has a `name`, a `location`,
+`manufacturer`, `ratedPower`, `hubHeight`, `actualPower` and `arrayCableConnection`. These are all statements.
+In `neat`, we capture these statements in a spreadsheet format. We refer to a set of
 statements as `Properties`. The `Properties` sheet looks as follows for a domain expert like Jon :
 
 | Class       | Property           | Description     | Value Type  | Min Count  | Max Count  |
@@ -60,22 +67,28 @@ statements as `Properties`. The `Properties` sheet looks as follows for a domain
 Details on the `Properties` sheet can be found [here](../../terminology/rules.md#properties-sheet).
 
 In each row of the `Properties` sheet, Jon will define a statement. For example, the first row says that a
-`WindTurbine` has a `name`. In addition, Jon can add a `description`, i.e., a human-readable explanation of what a particular property means. The three next columns help the information architect, David, to understand how to model the data. First, we have the
+`WindTurbine` has a `name`. In addition, Jon can add a `description`, i.e., a human-readable explanation of what a
+particular property means. The three next columns help the information architect, David, to understand how to model the data. First, we have the
 `Value Type` column, which specify what type of data this statement is about. Is this a number, an on/off value, text,
 or something else? In this case, the `name`, `location`, and `manufacturer` are all strings, meaning they are
 expected to be text. The `Min Count` and `Max Count` columns specify how many data points are expected for each of these properties. In the
-first row, we see that a `WindTurbine` is expected to have exactly one `name`. Sames goes for the `location` and `manufacturer`. However, for `lifeExpectancy`, we see that it is optional, as the `Min Count` is 0. Also, `lifeExpectancy` is an integer, as it is expected to be a whole number.
+first row, we see that a `WindTurbine` is expected to have exactly one `name`. Same goes for the `location` and `manufacturer`.
+However, for `lifeExpectancy`, we see that it is optional, as the `Min Count` is 0. Also, `lifeExpectancy` is an
+integer, as it is expected to be a whole number.
 
 <a id="value-type-anchor"></a>
 !!! warning annotate "Value Types"
-    The `Value Type` column is used to specify the type of the value that the property can hold. It takes either XSD type (`float`, `boolean`, `string`, etc) extended with additional types (`timeseries`, `file`, `sequence` and `json`) or a class defined in the `Classes` sheet (complex types).
+    The `Value Type` column is used to specify the type of the value that the property can hold. It takes either XSD
+    type (`float`, `boolean`, `string`, etc) extended with additional types (`timeseries`, `file`, `sequence` and `json`)
+    or a class defined in the `Classes` sheet (complex types).
 
 
 In the similar fashion, Jon defines the properties for `WindFarm`, `Substation` and `ExportCable` in the `Properties` sheet.
 
 In addition to the `Properties` sheet, `neat` also requires `Metadata` sheet as well.
 <a id="domain-expert-metadata-anchor"></a>
-In case of domain expert the `Metadata` sheet only requires `role` and `creator` to be set, where `role` represent the role a person has in modeling of the enterprise data model and `creator` is the name of the person from whom we are acquiring knowledge to create the model.
+In case of domain expert the `Metadata` sheet only requires `role` and `creator` to be set, where `role` represent the
+role a person has in modeling of the enterprise data model and `creator` is the name of the person from whom we are acquiring knowledge to create the model.
 For Jon the `Metadata` sheet looks as follows:
 
 |         |               |
@@ -85,8 +98,11 @@ For Jon the `Metadata` sheet looks as follows:
 
 Details on the `Metadata` sheet can be found [here](../../terminology/rules.md#metadata-sheet).
 
-
-Optionally, domain experts can also define classes in the `classes` sheet. Classes are used to group properties that define a thing (e.g., a real-life object). For example, a `WindTurbine` is a class, and the set of properties for a class defines what it means to be a member of that class. However, as it is optional, Jon skips this sheet, and leaves it to the information architect, David, to define that for him. Details on the `Classes` sheet can be found [here](../../terminology/rules.md#classes-sheet).
+Optionally, domain experts can also define classes in the `classes` sheet. Classes are used to group properties
+that define a thing (e.g., a real-life object). For example, a `WindTurbine` is a class, and the set
+of properties for a class defines what it means to be a member of that class. However, as it is optional,
+Jon skips this sheet, and leaves it to the information architect, David, to define that for him.
+Details on the `Classes` sheet can be found [here](../../terminology/rules.md#classes-sheet).
 
 Download Jon's spreadsheet from [here](../../artifacts/rules/expert-wind-energy-jon.xlsx).
 
@@ -96,7 +112,10 @@ When Jon has defined all the statements, he can validate the sheet using `neat`.
 statements are correctly defined and that there are no inconsistencies. For example, that all properties
 are using valid characters in their names.
 
-To validate his sheet, Jon opens the `neat` UI and selects the `Validate Rules` workflow, uploads his sheet, which will trigger the validation process. The validation process will output a report with any errors and warnings. Jon can then go back to his sheet and fix any issues that are reported. See the video below for a step-by-step guide on how to validate a sheet in `neat`:
+To validate his sheet, Jon opens the `neat` UI and selects the `Validate Rules` workflow, uploads his sheet,
+which will trigger the validation process. The validation process will output a report with any errors and warnings.
+Jon can then go back to his sheet and fix any issues that are reported.
+See the video below for a step-by-step guide on how to validate a sheet in `neat`:
 
 <iframe width="840" height="472" src="https://www.youtube.com/embed/G2g_90qjcIU?si=V3q_umDrFrPtJRKo" title="Rules Validation Workflow" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
