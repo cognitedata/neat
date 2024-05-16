@@ -455,7 +455,7 @@ generation of mock graph based on the data model described in spreadsheets, and 
 desired number of instances per class defined in the data model.
 
 David selects `Visualize Data Model Using Mock Graph` which has been configured to create
-following mock graph, which is part `Generate Mock Graph` step:
+the following mock graph, which is part `Generate Mock Graph` step:
 
 ```JSON
 {"WindTurbine" : 10,
@@ -471,7 +471,7 @@ following mock graph, which is part `Generate Mock Graph` step:
 "ElectricCarCharger" : 1}
 ```
 
-David uses following style to color nodes in `Graph Explorer`:
+David uses the following style to color nodes in `Graph Explorer`:
 
 
 ```JSON
@@ -492,7 +492,7 @@ The whole process of running this workflow is shown in the video below:
 3. Add source column to the `Properties` sheet.
 4. Add `Match Type` column to the `Properties` sheet.
 5. Find overlapping concepts and prompt domain experts for clarification.
-6. Add all classes to the `classes` sheet.
+6. Add all classes to the `Classes` sheet.
 
 **Information Architect usage of `neat`**:
 
