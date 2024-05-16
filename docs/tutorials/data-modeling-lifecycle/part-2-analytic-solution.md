@@ -20,10 +20,23 @@ workflow, and then clicks on the `Import DMS` step. This opens the modal with th
 Olav selects the following options:
 
 * **Data model id**: This is the id of the enterprise model. Olav finds this ID by login into CDF.
+* **Reference data model id** This can be ignored for now. This is used when you want to update a solution
+  model to also download the enterprise model the solution model is built on.
 * **Report formatter**: This is used in the validation of the model. The enterprise model should be valid,
   so this is likely not needed.
 * **Role**: This is which format Olav wants to download the model. He selects `information_architect`. This is
   because he wants to focus in the modeling and not the implementation of the model.
+
+Furthermore, Olav clicks on the `Create Excel Sheet` step which opens a modal with the configuration for the export
+
+<img src="../../artifacts/figs/life_cycle_download_reference_model_analytic_solution_model_export.png" height="300">
+
+* **Styling**: `maximal`. This is how the exported Excel document is styled, Olav selects `maximal` as this is
+  makes the model easier to read.
+* **Output role format**: `intput`. This is the same as the role format in the `Import DMS` step. Olav
+  just set it to `input` as this will use the same format as he selected in the `Import DMS` step.
+* **Dump Format**: This tells **NEAT** how to write the Excel document. Olav selects `reference`
+  as he is using the downloaded Enterprise model as a reference for the new solution model he is building.
 
 After clicking `Save` and `Save Workflow`, Olav runs the workflow by clicking `Start Workflow`. The workflow
 will execute and Olav can download the exported model by clicking `exported_rules_information_architect.xlsx`.
