@@ -24,9 +24,6 @@ Olav selects the following options:
   so this is likely not needed.
 * **Role**: This is which format Olav wants to download the model. He selects `information_architect`. This is
   because he wants to focus in the modeling and not the implementation of the model.
-* **Reference**: This is whether the imported model should be used as a reference model. Olav sets this to
-  true as the enterprise model is a reference model. This means that the enterprise model will not be changed
-  and that the solution model will be built on top of the enterprise model.
 
 After clicking `Save` and `Save Workflow`, Olav runs the workflow by clicking `Start Workflow`. The workflow
 will execute and Olav can download the exported model by clicking `exported_rules_information_architect.xlsx`.
@@ -40,7 +37,7 @@ The downloaded spreadsheet contains six sheets:
   (see definition of headings [here](../../terminology/rules.md#properties-sheet))
 * **Classes**: This contains the classes for the new solution model, and will only have headings
   (see definition of headings [here](../../terminology/rules.md#classes-sheet))
-* **RefProperties**: This will be all the properties from the enterprise model that Olav can use to lookup
+* **RefProperties**: This will be all the properties from the enterprise model that Olav can use to look up
   what properties he wants to use in the solution model. In addition, this will be used in the validation
   of the solution model.
 * **RefClasses**: This will be all the classes from the enterprise model. Similar to the `RefProperties`,
@@ -55,22 +52,23 @@ Olav starts by setting up the metadata for the solution model. He opens the `Met
 and fills in the following information:
 
 
-|             |                                                       |
-|-------------|-------------------------------------------------------|
-| role        | information architect                                 |
-| creator     | Olav                                                  |
-| namespace   | http://purl.org/cognite/power_analytic                |
-| prefix      | power_analytic                                        |
-| schema      | extended                                              |
-| created     | 2024-03-26                                            |
-| updated     | 2024-02-09                                            |
-| version     | 0.1.0                                                 |
-| title       | Power Forecast Model                                  |
-| description | Solution model for WindFarm power production forecast |
+|               |                                                       |
+|---------------|-------------------------------------------------------|
+| role          | information architect                                 |
+| creator       | Olav                                                  |
+| dataModelType | solution                                              |
+| namespace     | http://purl.org/cognite/power_analytic                |
+| prefix        | power_analytic                                        |
+| schema        | extended                                              |
+| created       | 2024-03-26                                            |
+| updated       | 2024-02-09                                            |
+| version       | 0.1.0                                                 |
+| title         | Power Forecast Model                                  |
+| description   | Solution model for WindFarm power production forecast |
 
-The most important part of the metadata sheet is the `prefix` and `schema`. The `prefix` is used differentiate
-the solution model from the enterprise model. If Olav set the `prefix` to the same as the enterprise model, this
-would mean that this is an extension of the enterprise model and not a new model. The `schema` is used to
+The most important part of the metadata sheet is the `dataModelType`, `prefix` and `schema`. The `dataModelType`
+is used to tell neat what type of model this is, which has impact on the validation. The `prefix` is should be
+different from the enterprise model, as each data model should have its own namespace. The `schema` is used to
 tell **NEAT** that this model is an extension of the enterprise model and that it should be validated against it.
 
 For more information on the metadata sheet, see [here](../../terminology/rules.md#metadata-sheet).
@@ -123,7 +121,7 @@ for the `geoLocation` of the `WindTurbine` and `WindFarm`.
 
 Olav copies over all the properties from the enterprise model to the solution model. He then removes
 the rows that are not needed for the new solution model. The `Properties` spreadsheet will now look as follows
-(only the most relevant columns shown here):
+(only the most relevant columns are shown here):
 
 | Class       | Property       | Value Type  | ... | Reference                                  |
 |-------------|----------------|-------------|-----|--------------------------------------------|
@@ -159,7 +157,8 @@ model. In addition, he writes up `WindTurbine` and `WindFarm`. The `Classes` spr
 
 Notice that both the `Properties` and `Classes` sheets have a `Reference` column. This column is used to tell **NEAT**
 that the property or class is coming from the enterprise model. This is used in the validation of the solution model,
-as well as when creating the implementation of the solution model.
+as well as when creating an out-of-the-box implementation of the solution model, see
+[Implementing the Solution Model](#implementing-the-solution-model) for more information.
 
 If we look at the `Class` spreadsheet, we notice that `GeoLocation`, `Point`, and `Polygon` have a reference to the
 enterprise model. This is because these three classes are exact copies from the enterprise model, meaning that they
@@ -167,8 +166,8 @@ will have the exact same properties as in the enterprise model. This is why Olav
 properties for these classes.
 
 The `WindTurbine` and `WindFarm` classes do not have a reference to the enterprise model, even though the enterprise
-model have a `WindTurbine` and `EnergyArea` class. This is because the `WindTurbine`and `EnergyArea` classes in this
-solution model are not the same as the `WindTurbine` and `EnergyArea` classes in the enterprise model. Olav has
+model has a `WindTurbine` and `EnergyArea` class. This is because the `WindTurbine`and `EnergyArea` classes in this
+solution model are different from the `WindTurbine` and `EnergyArea` classes in the enterprise model. Olav has
 already removed the inheritance used in the enterprise model for these classes by moving the properties from
 `GeneratingUnit` and `EnergyArea` to `WindTurbine` and `WindFarm`. In addition, as we will see in the next section,
 Olav will add new properties to the `WindTurbine` and `WindFarm` classes that are not in the enterprise model.
@@ -182,18 +181,18 @@ of the wind turbines.
 Olav chose to model the weather data as a `WeatherStation`. The `WeatherStation` concept will look
 as follows:
 
-| Class            | Property              | Value Type   |
-|------------------|-----------------------|--------------|
-| WeatherStation  | name                  | string       |
-| WeatherStation  | type                  | string       |
-| WeatherStation  | source                | string       |
-| WeatherStation  | geoLocation           | Point        |
-| WeatherStation  | windSpeed             | timeseries   |
-| WeatherStation  | windFromDirection     | timeseries   |
-| WeatherStation  | airTemperature        | timeseries   |
-| WeatherStation  | airPressureAtSeaLevel | timeseries   |
-| WeatherStation  | relativeHumidity      | timeseries   |
-| WeatherStation  | cloudAreaFraction     | timeseries   |
+| Class             | Property              | Value Type   |
+|-------------------|-----------------------|--------------|
+| WeatherStation    | name                  | string       |
+| WeatherStation    | type                  | string       |
+| WeatherStation    | source                | string       |
+| WeatherStation    | geoLocation           | Point        |
+| WeatherStation    | windSpeed             | timeseries   |
+| WeatherStation    | windFromDirection     | timeseries   |
+| WeatherStation    | airTemperature        | timeseries   |
+| WeatherStation    | airPressureAtSeaLevel | timeseries   |
+| WeatherStation    | relativeHumidity      | timeseries   |
+| WeatherStation    | cloudAreaFraction     | timeseries   |
 
 The advantage of this concept is that it can be used both for historical weather data and forecasted weather data.
 
@@ -250,7 +249,7 @@ In addition, Olav adds `lowPowerForecast`, `highPowerForecast`, and `expectedPow
 | WindFarm      | highPowerForecast     | timeseries | 0         | 1         |     |                                 |
 | WindFarm      | expectedPowerForecast | timeseries | 0         | 1         |     |                                 |
 
-Similar to the `min`, `medium`, and `max` properties, the `low`, `high`, and `expected` properties will be added
+Similar to the `min`, `medium`, and `max` properties, the `low`, `high`, and `expected` properties will likely be added
 back to the enterprise model.
 
 Notice that for all the new properties that Olav has added, the `Reference` column is empty. This is because these
