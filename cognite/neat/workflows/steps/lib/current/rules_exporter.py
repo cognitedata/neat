@@ -269,10 +269,19 @@ class RulesToExcel(Step):
             options=["input", *RoleTypes.__members__.keys()],
         ),
         Configurable(
-            name="Is Reference",
-            value="False",
-            label="Export rules as reference rules. If provided, the rules will be exported as reference rules. ",
-            options=["True", "False"],
+            name="Dump Format",
+            value="user",
+            label="How to dump the rules to the Excel file.\n"
+            "'user' - just as is.\n'reference' - enterprise model used as basis for a solution model\n"
+            "'last' - used when updating a data model.",
+            options=list(exporters.ExcelExporter.dump_options),
+        ),
+        Configurable(
+            name="New Data Model ID",
+            value="",
+            label="If you chose Dump Format 'reference', the provided ID will be use in the new medata sheet. "
+            "Expected format 'sp_space:my_external_id'.",
+            options=list(exporters.ExcelExporter.dump_options),
         ),
         Configurable(
             name="File path",
@@ -285,15 +294,29 @@ class RulesToExcel(Step):
         if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
 
-        is_reference = self.configs.get("Is Reference") == "True"
+        dump_format = self.configs.get("Dump Format", "user")
         styling = cast(exporters.ExcelExporter.Style, self.configs.get("Styling", "default"))
         role = self.configs.get("Output role format")
         output_role = None
         if role != "input" and role is not None:
             output_role = RoleTypes[role]
 
-        dump_as = "reference" if is_reference else "user"
-        excel_exporter = exporters.ExcelExporter(styling=styling, output_role=output_role, dump_as=dump_as)  # type: ignore[arg-type]
+        new_model_str = self.configs.get("New Data Model ID")
+        new_model_id: tuple[str, str] | None = None
+        if new_model_str and ":" in new_model_str:
+            new_model_id = tuple(new_model_str.split(":", 1))  # type: ignore[assignment]
+        elif new_model_str:
+            return FlowMessage(
+                error_text="New Data Model ID must be in the format 'sp_space:my_external_id'!",
+                step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
+            )
+
+        excel_exporter = exporters.ExcelExporter(
+            styling=styling,
+            output_role=output_role,
+            dump_as=dump_format,  # type: ignore[arg-type]
+            new_model_id=new_model_id,
+        )
 
         rule_instance: Rules
         if rules.domain:

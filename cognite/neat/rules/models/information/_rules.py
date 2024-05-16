@@ -99,6 +99,8 @@ class InformationMetadata(BaseMetadata):
             "typically information architects are considered as contributors."
         ),
     )
+    license: str | None = None
+    rights: str | None = None
 
     @model_validator(mode="after")
     def extension_none_but_schema_extend(self) -> Self:

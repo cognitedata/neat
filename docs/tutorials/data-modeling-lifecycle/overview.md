@@ -1,12 +1,8 @@
 # Overview
 
-!!! warning annotate "Warning"
-
-    This set of tutorials are work in progress, and there might be minor changes to the completed ones while others
-    are being developed. We appreciate your understanding and patience.
-
 In this set of tutorials, we will walk you through the data modeling lifecycle and how **NEAT** can assist in the
-different tasks involved in the lifecycle. But first, let's understand what data modeling is and why it is important.
+different tasks involved in building and maintaining data models. But first, let's understand what data modeling
+is and why it is important.
 
 Ultimately, the goal of data modeling is to use data to aid decision-making. To achieve this, a company
 needs to coordinate between multiple different people and departments. A set of data models can be used as
@@ -35,3 +31,16 @@ different people with different roles can work together to achieve the goal of b
 - **[Analytic Solution](./part-2-analytic-solution.md)**: In this tutorial, you will learn how to build a solution model
   for a forecasting use case. The solution model is using a subset of the enterprise model and, in addition, adds
   new concepts that are needed for the forecasting use case.
+
+- **[Extending Enterprise Model](./part-3-extending-enterprise-model.md)**: In this tutorial, you will learn how to extend
+  the enterprise model while keeping the existing model intact. In this tutorial, we will add new concepts discovered
+  during the implementation of the forecasting use case.
+
+- (Planned)**[Extending Solution Model](./part-4-extending-solution-model.md)**: In this tutorial, you will learn how
+  to extend the solution model while keeping the existing model intact. In this tutorial, we will add new concepts
+  discovered during the implementation of the forecasting use case.
+
+- (Planned)**[Business Solution Model](./part-5-business-solution-model.md)**: In this tutorial, you will learn how to
+  use the Enterprise Model to build a Solution Model for a business case. This data model will only use a subset
+  of the Enterprise Model and not add any new concepts. It is intended for a business user that only needs to select
+  the part of the Enterprise Model that is relevant for their business case.
