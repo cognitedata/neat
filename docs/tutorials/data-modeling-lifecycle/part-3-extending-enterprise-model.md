@@ -1,11 +1,5 @@
 # Extending the Enterprise Model
 
-!!! warning annotate "Warning"
-
-    This tutorial is work in progress, and there might be minor changes to the completed ones while others
-    are being developed. We appreciate your understanding and patience.
-
-
 This tutorial demonstrates how to extend the Enterprise model. Extending a model means changing it
 by adding, reshaping, or removing any of its elements **after it has been put in production**.
 
@@ -39,14 +33,14 @@ inconsistencies between the models and ultimately enable silos in the organizati
 Instead, Svein Harald suggests that they extend the enterprise model with the relevant part of the forecast solution
 model. He explains that even though this will be a slightly slower process as more clarification and discussion will likely
 be required. It is exactly this clarification and discussion that breaks down the silos in the organization and aligns
-the departments to obtain a shared understanding of the data and the models. Olav understands the point and eagerly
+the departments to get a shared understanding of the data and the models. Olav understands the point and eagerly
 agrees to work with Svein Harald to extend the enterprise model.
 
 ## How to Extend the Enterprise Model?
 
 When extending the Enterprise model, it is important to try to avoid doing changes that will require changes in the
 solution models and use cases that are built on top of the enterprise model. In `Acme Corporation`, there are already
-10 solution models powering 25 use cases that are built on top of the enterprise model. If the Enterprise model changes
+10 solution models powering 25 use cases that are built on top of the enterprise model. If the enterprise model changes
 such that these must be updated, it will be very costly for the organization.
 
 **NEAT** provides three ways to extend any data model depending on the impact of the changes:
@@ -101,13 +95,16 @@ The downloaded spreadsheet contains six sheets:
   (see definition of headings [here](../../terminology/rules.md#properties-sheet))
 * **Classes**: This contains the classes for the changes, and will only have headings
   (see definition of headings [here](../../terminology/rules.md#classes-sheet))
-* **RefProperties**: (READ ONLY) This will be all the properties from the enterprise model that Svein Harald can use to lookup
-  what properties he wants to use in the solution model. In addition, this will be used in the validation
-  of the solution model.
-* **RefClasses**: (READ ONLY) This will be all the classes from the current enterprise model. Similar to the `RefProperties`,
-  this will be used to look up, and will be validated
-  against.
-* **RefMetadata**: (READ ONLY) This will be the metadata from the current Enterprise model.
+* **LastProperties**: (READ-ONLY) This will be all the properties from the enterprise model that Svein Harald can use to
+  look up what properties he wants to use in the solution model. In addition, this will be used in the validation
+  to ensure that the new changes do break the existing model.
+* **LastClasses**: (READ-ONLY) This will be all the classes from the current enterprise model. Similar to the `LastProperties`,
+  this will be used to look up, and will be validated against.
+* **LastMetadata**: (READ-ONLY) This will be the metadata from the current Enterprise model.
+
+**Node** The **Last** sheets are used by **NEAT** to validate against depending on the `extension` in the `Metadata`
+sheet. In addition, it is used by **NEAT** when deploying to CDF to know which views and containers can be deleted
+safely and which should be kept.
 
 ## Setting up the Metadata for the Extension
 
@@ -115,24 +112,25 @@ Svein Harald starts by setting up the metadata for the extension. He opens the `
 and fills in the following information:
 
 
-|             |                                |
-|-------------|--------------------------------|
-| role        | information architect          |
-| creator     | Svein Harald, Olav             |
-| namespace   | http://purl.org/cognite/power  |
-| prefix      | power                          |
-| schema      | extended                       |
-| extension   | addition                       |
-| created     | 2024-03-26                     |
-| updated     | 2024-04-07                     |
-| version     | 0.1.0                          |
-| title       | Power to Consumer Data Model   |
-| description |                                |
+|               |                               |
+|---------------|-------------------------------|
+| role          | information architect         |
+| creator       | Svein Harald, Olav            |
+| dataModelType | enterprise                    |
+| namespace     | http://purl.org/cognite/power |
+| prefix        | power                         |
+| schema        | extended                      |
+| extension     | addition                      |
+| created       | 2024-03-26                    |
+| updated       | 2024-04-07                    |
+| version       | 0.1.0                         |
+| title         | Power to Consumer Data Model  |
+| description   |                               |
 
 The most important part of the metadata sheet is the `prefix`, `schema` and `extension`. The `prefix` is the same as
 the `prefix` in the enterprise model and `schema` is set to `extension`. This is used to tell **NEAT** that this
 is an extension of the enterprise model. In addition, the `extension` is set to `addition` this tells **NEAT** what
-kind of extension this is and thus how it should be validated. This way Svein Harald and Olav can be sure that they
+kind of extension this is and thus how it should be validated. This way, Svein Harald and Olav can be sure that they
 are not doing a reshaping or rebuilding of the enterprise model by accident.
 
 For more information on the metadata sheet, see [here](../../terminology/rules.md#metadata-sheet).
@@ -146,12 +144,12 @@ model from the forecast solution model.
 Note here that Svein Harald and Olav are here following a conservative principle of including the bare minimum of
 what is needed by the trading department. This is to keep the complexity of the Enterprise model down. In addition, if
 they had included the `TimeseriesForecast` and `WeatherStation` in the enterprise model now, but later decided they
-actually needed these in the Enterprise model, however, slightly modified, they would have to do a reshape, or
+actually needed these in the Enterprise model, however, slightly modified, they would have to do a reshaping, or
 even rebuilding, of the model, which could be costly. Now, they have more flexibility if they later decide they need
 these in the Enterprise model later. A good rule of thumb is to have a concrete use case for including a concept in the
 Enterprise model.
 
-Olav have gathered the following six properties from the forecast solution model that he wants to include in the
+Olav has gathered the following six properties from the forecast solution model that he wants to include in the
 enterprise model:
 
 | Class       | Property              | Value Type | Min Count | Max Count | ... | Reference |
@@ -207,8 +205,8 @@ should add `named` and `description` properties to the `TimeseriesForecastProduc
 when he makes a decision based on the forecast, he first needs to be confident in the forecast. Olav asks what
 criteria Lars uses to determine whether he is confident in a forecast, and learns that the input data to the forecast
 is one of the most important factors. Furthermore, Olav wonders whether he should include a `confidence` property
-in the `TimeseriesForecastProduct`. Lars does not have a statical backgound, and explains that `confidence` becomes
-a very abstract concept for him. He instead explains that he is very happy with the three different timeseries
+in the `TimeseriesForecastProduct`. Lars does not have a statical background, and explains that `confidence` becomes
+a very abstract concept for him. He instead explains that he is happy with the three different timeseries
 `low`, `expected`, and `high` as they give him a good understanding of the forecast and the uncertainty.
 
 Olav goes back to Svein Harald, and together they add the following properties to the `Properties` sheet:
@@ -227,7 +225,7 @@ Lars that this is a good way to capture the input data to the forecast.
 
 ## Updating the Spreadsheet (Download Svein Harald's Information spreadsheet)
 
-The finshied spreadsheet with the extension of the Enterprise model is now done.
+The finished spreadsheet with the extension of the Enterprise model is now done.
 
 You can download it [here](../../artifacts/rules/information-addition-svein-harald.xlsx).
 
@@ -245,7 +243,7 @@ spreadsheet by clicking `exported_rules_DMS_Architect.xlsx`.
 
 **NEAT** has given a good out-of-the-box suggestion for how to implement the extension model. However, to ensure that
 the solution model is well aligned with the existing Enterprise model and is performant, Svein Harald
-asks the DMS solution architect, Alice, to help him as he is not an expert in the implementation of the model.
+asks the DMS solution architect, Alice, for help.
 
 Alice and Svein Harald have a discussion about the new concepts. Alice suggests that they should add an index to the
 `name` and `sources` properties in the `TimeseriesForecastProduct` to ensure that the queries are performant.
