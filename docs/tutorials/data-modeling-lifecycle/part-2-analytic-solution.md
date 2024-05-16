@@ -21,7 +21,7 @@ Olav selects the following options:
 
 * **Data model id**: This is the id of the enterprise model. Olav finds this ID by login into CDF.
 * **Reference data model id** This can be ignored for now. This is used when you want to update a solution
-  model to also download the enterprise model the solution model is built on.
+  model to also download the enterprise model that the solution model is built on.
 * **Report formatter**: This is used in the validation of the model. The enterprise model should be valid,
   so this is likely not needed.
 * **Role**: This is which format Olav wants to download the model. He selects `information_architect`. This is
@@ -33,7 +33,7 @@ Furthermore, Olav clicks on the `Create Excel Sheet` step which opens a modal wi
 
 * **Styling**: `maximal`. This is how the exported Excel document is styled, Olav selects `maximal` as this is
   makes the model easier to read.
-* **Output role format**: `intput`. This is the same as the role format in the `Import DMS` step. Olav
+* **Output role format**: `input`. This is the same as the role format in the `Import DMS` step. Olav
   just set it to `input` as this will use the same format as he selected in the `Import DMS` step.
 * **Dump Format**: This tells **NEAT** how to write the Excel document. Olav selects `reference`
   as he is using the downloaded Enterprise model as a reference for the new solution model he is building.
@@ -70,7 +70,7 @@ and fills in the following information:
 | role          | information architect                                 |
 | creator       | Olav                                                  |
 | dataModelType | solution                                              |
-| namespace     | http://purl.org/cognite/power_analytic                |
+| namespace     | http://purl.org/cognite/power_analytic/                |
 | prefix        | power_analytic                                        |
 | schema        | extended                                              |
 | created       | 2024-03-26                                            |
@@ -80,8 +80,8 @@ and fills in the following information:
 | description   | Solution model for WindFarm power production forecast |
 
 The most important part of the metadata sheet is the `dataModelType`, `prefix` and `schema`. The `dataModelType`
-is used to tell neat what type of model this is, which has impact on the validation. The `prefix` is should be
-different from the enterprise model, as each data model should have its own namespace. The `schema` is used to
+is used to tell neat what type of model this is, which has impact on the validation. The `prefix` and `namespace` should be
+different from the enterprise model, as each data model should have unique prefix and namespace. The `schema` is used to
 tell **NEAT** that this model is an extension of the enterprise model and that it should be validated against it.
 
 For more information on the metadata sheet, see [here](../../terminology/rules.md#metadata-sheet).

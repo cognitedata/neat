@@ -111,7 +111,7 @@ The downloaded spreadsheet contains six sheets:
   this will be used to look up, and will be validated against.
 * **LastMetadata**: (READ-ONLY) This will be the metadata from the current Enterprise model.
 
-**Node** The **Last** sheets are used by **NEAT** to validate against depending on the `extension` in the `Metadata`
+**Note** The **Last** sheets are used by **NEAT** for validations, which are dependent the `extension` configuration in the `Metadata`
 sheet. In addition, it is used by **NEAT** when deploying to CDF to know which views and containers can be deleted
 safely and which should be kept.
 
