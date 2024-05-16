@@ -1,6 +1,6 @@
 import logging
 
-from pydantic import BaseModel, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from cognite.neat.rules.models.domain import DomainMetadata, DomainProperty, DomainClass
 from cognite.neat.rules.models.information import (
     InformationMetadata,
@@ -97,23 +97,23 @@ class NewRuleV2Request(BaseModel):
 class RuleV2MetadataUpsertRequest(BaseModel):
     role: RoleTypes
     rule_file: str
-    rule_component: DomainMetadata | InformationMetadata | DMSMetadata
+    rule_component: InformationMetadata | DomainMetadata | DMSMetadata = Field(union_mode="left_to_right")
 
 
 class RuleV2PropertyUpsertRequest(BaseModel):
     role: RoleTypes
     rule_file: str
-    rule_component: DomainProperty | InformationProperty | DMSProperty
+    rule_component: InformationProperty | DomainProperty | DMSProperty = Field(union_mode="left_to_right")
 
 
 class RulesV2ClassUpsertRequest(BaseModel):
     role: RoleTypes
     rule_file: str
-    rule_component: DomainClass | InformationClass
+    rule_component: InformationClass | DomainClass = Field(union_mode="left_to_right")
 
 
 class RulesV2DMSComponentsUpsertRequest(BaseModel):
     role: RoleTypes
     rule_file: str
     rule_component_name: str
-    rule_component: DMSView | DMSContainer
+    rule_component: DMSView | DMSContainer = Field(union_mode="left_to_right")

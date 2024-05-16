@@ -1,0 +1,23 @@
+
+export const valueTypesBaseline = [
+  { name: "string", description: "simple string", category: "Basic types" },
+  { name: "integer", description: "integer number", category: "Basic types" },
+  { name: "boolean", description: "", category: "Basic types" },
+  { name: "float", description: "float number", category: "Basic types" },
+  { name: "date", description: "", category: "Basic types" },
+  { name: "langString", description: "", category: "Advanced types" },
+  { name: "long", description: "", category: "Advanced types" },
+  { name: "nonPositiveInteger", description: "It represents an number that must be zero or positive number", category: "Advanced types" },
+  { name: "nonNegativeInteger", description: "It It represents an number that must be zero or negative number ", category: "Advanced types" },
+  { name: "negativeInteger", description: "", category: "Advanced types" },
+  { name: "double", description: "", category: "Advanced types" },
+  { name: "anyURI", description: "", category: "Advanced types" },
+  { name: "normalizedString", description: "", category: "Advanced types" },
+  { name: "token", description: "", category: "Advanced types" },
+  { name: "dateTime", description: "", category: "Advanced types" },
+  { name: "dateTimeStamp", description: "", category: "Advanced types" },
+  { name: "timeseries", description: "It represents reference to timeseries.For instance CDF timeseries", category: "Complex types" },
+  { name: "file", description: "It represents refernce to a file.For instance CDF file", category: "Complex types" },
+  { name: "sequence", description: "It represents reference to CDF sequence", category: "Complex types" },
+  { name: "json", description: "json object", category: "Complex types" },
+];

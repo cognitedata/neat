@@ -14,6 +14,7 @@ import { Alert, AlertTitle, Box, Button, Collapse, Dialog, DialogActions, Dialog
 import { Autocomplete, Container, FormGroup, InputLabel, Link, List, ListItem, ListItemText, Stack, Tooltip, darken, lighten, styled } from "@mui/material"
 import { Image } from '@mui/icons-material';
 import { JsonViewer } from '@textea/json-viewer'
+import { valueTypesBaseline } from './LookupLists';
 
 const GroupHeader = styled('div')(({ theme }) => ({
     position: 'sticky',
@@ -35,28 +36,17 @@ export function InformationArchitectRulesViewer(props: any) {
     const [selectedTab, setSelectedTab] = React.useState(0);
     const [editorOpen, setEditorOpen] = React.useState(false);
     const [editorData, setEditorData] = React.useState({});
+    const [tableContainerKey, setTableContainerKey] = React.useState(0); // Add state for the key
 
     const handlePropertyEdit = (data: any) => {
-        // merge data with existing properties
-        // const newProperties = [...rules.properties];
-        // const index = newProperties.findIndex((f: any) => (f.property_ == data.property_ && f.class_ == data.class_));
-        // if (index > -1) {
-        //     newProperties[index] = data;
-        // } else {
-        //     newProperties.push(data);
-        // }
-        // rules.properties = newProperties;
-        const newRules = { ...rules };
-
-        setRules(newRules);
+        setRules(data.rules);
         setEditorOpen(false);
+        setTableContainerKey(prevKey => prevKey + 1); // Update the key to trigger redraw
     }
 
     React.useEffect(() => {
         setRules(props.rules);
     }, [props.rules]);
-
-
 
     return (
         <React.Fragment>
@@ -77,7 +67,7 @@ export function InformationArchitectRulesViewer(props: any) {
                 <InformationMetadataTable metadata={rules.metadata} />
             )}
             {selectedTab === 1 && (
-                <TableContainer component={Paper}>
+                <TableContainer component={Paper} key={tableContainerKey}>
                     <InformationArchitectDataModelPropertyEditor data={editorData} classes={rules.classes} fileName={props.fileName} open={editorOpen} onSaved={handlePropertyEdit} onClose={() => { setEditorOpen(false) }} />
                     <Table aria-label="collapsible table">
                         <TableHead>
@@ -96,9 +86,7 @@ export function InformationArchitectRulesViewer(props: any) {
                             {rules.classes?.map((row: any) => (
                                 <React.Fragment>
                                     <InformationArchitectPropsRow row={row} properties={rules.properties} onEditClick={(data, action) => { setEditorData(data); setEditorOpen(true); }} />
-
                                 </React.Fragment>
-
                             ))}
                         </TableBody>
                     </Table>
@@ -136,6 +124,7 @@ export function InformationArchitectRulesViewer(props: any) {
 
 export function InformationMetadataTable(props: any) {
     const metadata = props.metadata;
+    const [editorOpen, setEditorOpen] = React.useState(false);
     return (
         <Box sx={{ marginTop: 5 }}>
             <TableContainer component={Paper}>
@@ -148,6 +137,10 @@ export function InformationMetadataTable(props: any) {
                         <TableRow>
                             <TableCell><b>Role</b></TableCell>
                             <TableCell>{metadata?.role}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableCell><b>Data model type</b></TableCell>
+                            <TableCell>{metadata?.data_model_type}</TableCell>
                         </TableRow>
                         <TableRow>
                             <TableCell><b>Schema state</b></TableCell>
@@ -196,8 +189,157 @@ export function InformationMetadataTable(props: any) {
                     </TableBody>
                 </Table>
             </TableContainer>
+            <Button variant="outlined" size="small" color="success" style={{ margin: 5 }} onClick={() => setEditorOpen(true)}>Edit</Button>
+            <InformationArchitectMetadataEditor data={metadata} open={editorOpen} onSaved={(data: any) => { props.onSaved(data); setEditorOpen(false) }} onClose={() => { setEditorOpen(false) }} />
         </Box>
     );
+}
+
+export function InformationArchitectMetadataEditor(props: any) {
+    const neatApiRootUrl = getNeatApiRootUrl();
+    const [dialogOpen, setDialogOpen] = React.useState(false);
+    const [data, setData] = React.useState<any>({});
+    const [roles, setRoles] = React.useState(["information architect", "domain expert", "DMS Architect"]);
+    const [schemas, setSchemas] = React.useState(["complete", "partial", "extended"]);
+    const [extensions, setExtensions] = React.useState(["", "addition", "reshape", "rebuild"]);
+    const [valueTypes, setValueTypes] = React.useState<any>(valueTypesBaseline);
+
+    React.useEffect(() => {
+        setData(props.data);
+        setDialogOpen(props.open);
+    }, [props.data, props.open]);
+
+    const handleSave = () => {
+        const request = { role: "information architect", rule_file: props.fileName, rule_component: data };
+        fetch(neatApiRootUrl + '/api/rules/metadata/upsert', { method: 'POST', body: JSON.stringify(request), headers: { 'Content-Type': 'application/json' } })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                props.onSaved(data);
+            }).catch((error) => {
+                console.error('Error:', error);
+            })
+        setDialogOpen(false);
+    };
+
+    const handleDialogClose = () => {
+        setDialogOpen(false);
+        if (props.onClose) {
+            props.onClose();
+        }
+    };
+
+    const handleConfigChange = (key: string, value: any) => {
+        setData({ ...data, [key]: value });
+    }
+
+    return (
+        <React.Fragment>
+            <Dialog open={dialogOpen} onClose={handleDialogClose} fullWidth={true} maxWidth="xl" >
+                <DialogTitle>Metadata editor</DialogTitle>
+                <DialogContent sx={{ height: '90vh' }}>
+                    <FormControl sx={{ marginTop: 1 }} fullWidth >
+                        <TextField sx={{ marginTop: 1 }} fullWidth label="Title" size='small' variant="outlined" value={data?.name} onChange={(event) => { handleConfigChange("name", event.target.value) }} />
+                        <FormControl sx={{ marginTop: 1 }} fullWidth >
+                            <InputLabel id="data-model-type-label">Data model type</InputLabel>
+                            <Select
+                                labelId="data-model-type-label"
+                                id="data-model-type"
+                                value={data?.data_model_type}
+                                label="Data model type"
+                                size='small'
+                                onChange={(event) => { handleConfigChange("data_model_type", event.target.value) }}
+                            >
+                                <MenuItem value="solution">
+                                    Solution
+                                </MenuItem>
+                                <MenuItem value="enterprise">
+                                    Enterprise
+                                </MenuItem>
+                            </Select>
+                        </FormControl>
+                        <FormControl sx={{ marginTop: 1 }} fullWidth >
+                            <InputLabel id="role-label">Role</InputLabel>
+                            <Select
+                                labelId="role-label"
+                                id="role"
+                                value={data?.role}
+                                label="Role"
+                                size='small'
+                                onChange={(event) => { handleConfigChange("role", event.target.value) }}
+                            >
+                                <MenuItem value="information architect">
+                                    Information architect
+                                </MenuItem>
+                                <MenuItem value="domain expert">
+                                    Domain expert
+                                </MenuItem>
+                                <MenuItem value="DMS Architect">
+                                    DMS Architect
+                                </MenuItem>
+                            </Select>
+                        </FormControl>
+                        <FormControl sx={{ marginTop: 1 }} fullWidth >
+                            <InputLabel id="schema-label">Schema state</InputLabel>
+                            <Select
+                                labelId="schema-label"
+                                id="schema"
+                                size='small'
+                                value={data?.schema_}
+                                label="Schema state"
+                                onChange={(event) => { handleConfigChange("schema_", event.target.value) }}
+                            >
+                                <MenuItem value="complete">
+                                    complete
+                                </MenuItem>
+                                <MenuItem value="partial">
+                                    partial
+                                </MenuItem>
+                                <MenuItem value="extended">
+                                    extended
+                                </MenuItem>
+                            </Select>
+                        </FormControl>
+                        <FormControl sx={{ marginTop: 1 }} fullWidth >
+                            <InputLabel id="extension-label">Extension</InputLabel>
+                            <Select
+                                labelId="extension-label"
+                                id="schema"
+                                size='small'
+                                value={data?.extension}
+                                label="Schema state"
+                                onChange={(event) => { handleConfigChange("extension", event.target.value) }}
+                            >
+                                <MenuItem value="addition">
+                                    addition
+                                </MenuItem>
+                                <MenuItem value="reshape">
+                                    reshape
+                                </MenuItem>
+                                <MenuItem value="rebuild">
+                                    rebuild
+                                </MenuItem>
+                            </Select>
+                        </FormControl>
+                        <TextField sx={{ marginTop: 1 }} fullWidth label="Description" size='small' variant="outlined" value={data?.description} onChange={(event) => { handleConfigChange("description", event.target.value) }} />
+                        <TextField sx={{ marginTop: 1 }} fullWidth label="Namespace" size='small' variant="outlined" value={data?.namespace} onChange={(event) => { handleConfigChange("namespace", event.target.value) }} />
+                        <TextField sx={{ marginTop: 1 }} fullWidth label="Prefix" size='small' variant="outlined" value={data?.prefix} onChange={(event) => { handleConfigChange("prefix", event.target.value) }} />
+                        <TextField sx={{ marginTop: 1 }} fullWidth label="Version" size='small' variant="outlined" value={data?.version} onChange={(event) => { handleConfigChange("version", event.target.value) }} />
+                        <TextField sx={{ marginTop: 1 }} fullWidth label="Created at" size='small' variant="outlined" value={data?.created} onChange={(event) => { handleConfigChange("created", event.target.value) }} />
+                        <TextField sx={{ marginTop: 1 }} fullWidth label="Updated at" size='small' variant="outlined" value={data?.updated} onChange={(event) => { handleConfigChange("updated", event.target.value) }} />
+                        <TextField sx={{ marginTop: 1 }} fullWidth label="Creator" size='small' variant="outlined" value={data?.creator} onChange={(event) => { handleConfigChange("creator", event.target.value) }} />
+                        <TextField sx={{ marginTop: 1 }} fullWidth label="License" size='small' variant="outlined" value={data?.license} onChange={(event) => { handleConfigChange("license", event.target.value) }} />
+                        <TextField sx={{ marginTop: 1 }} fullWidth label="Rights" size='small' variant="outlined" value={data?.rights} onChange={(event) => { handleConfigChange("rights", event.target.value) }} />
+                    </FormControl>
+                    {/* <JsonViewer value={data} /> */}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleSave}>Save</Button>
+                    <Button onClick={handleDialogClose}>Close</Button>
+                </DialogActions>
+            </Dialog>
+        </React.Fragment>
+    )
 }
 
 /*
@@ -217,34 +359,7 @@ props.data =
   "rule": null,
   "comment": null
 }
-
-Supported value types:
-The following XSD types are supported: boolean, float, double ,integer ,nonPositiveInteger ,nonNegativeInteger ,negativeInteger ,long ,string ,langString ,anyURI ,normalizedString ,token ,dateTime ,dateTimeStamp and date. In addition to the subset of XSD types, the following value types are supported: timeseries, file , sequence and json
-
 */
-
-const valueTypesBaseline = [
-    { name: "string", description: "simple string", category: "Basic types" },
-    { name: "integer", description: "integer number", category: "Basic types" },
-    { name: "boolean", description: "", category: "Basic types" },
-    { name: "float", description: "float number", category: "Basic types" },
-    { name: "date", description: "", category: "Basic types" },
-    { name: "langString", description: "", category: "Advanced types" },
-    { name: "long", description: "", category: "Advanced types" },
-    { name: "nonPositiveInteger", description: "It represents an number that must be zero or positive number", category: "Advanced types" },
-    { name: "nonNegativeInteger", description: "It It represents an number that must be zero or negative number ", category: "Advanced types" },
-    { name: "negativeInteger", description: "", category: "Advanced types" },
-    { name: "double", description: "", category: "Advanced types" },
-    { name: "anyURI", description: "", category: "Advanced types" },
-    { name: "normalizedString", description: "", category: "Advanced types" },
-    { name: "token", description: "", category: "Advanced types" },
-    { name: "dateTime", description: "", category: "Advanced types" },
-    { name: "dateTimeStamp", description: "", category: "Advanced types" },
-    { name: "timeseries", description: "It represents reference to timeseries.For instance CDF timeseries", category: "Complex types" },
-    { name: "file", description: "It represents refernce to a file.For instance CDF file", category: "Complex types" },
-    { name: "sequence", description: "It represents reference to CDF sequence", category: "Complex types" },
-    { name: "json", description: "json object", category: "Complex types" },
-];
 
 export default function InformationArchitectDataModelPropertyEditor(props: any) {
     const neatApiRootUrl = getNeatApiRootUrl();
@@ -259,7 +374,6 @@ export default function InformationArchitectDataModelPropertyEditor(props: any) 
     }, [props.data, props.open, props.classes]);
 
     const handleSave = () => {
-        // send new rules to the server
         const request = { role: "information architect", rule_file: props.fileName, rule_component: data };
         fetch(neatApiRootUrl + '/api/rules/property/upsert', { method: 'POST', body: JSON.stringify(request), headers: { 'Content-Type': 'application/json' } })
             .then(response => response.json())

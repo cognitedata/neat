@@ -314,6 +314,7 @@ def upsert_rule_component(request: RuleV2MetadataUpsertRequest):
 
 @router.post("/api/rules/property/upsert")
 def upsert_rule_property(request: RuleV2PropertyUpsertRequest):
+    logging.info(f"Upserting rule property of type {request.rule_component.__class__.__name__}")
     role = RoleTypes(request.role)
     rules_file = Path(request.rule_file)
     if str(rules_file.parent) == ".":
