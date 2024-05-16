@@ -191,7 +191,6 @@ class DMSToRules(Step):
             label="The ID of the Reference Data Model to import. Written at 'my_space:my_data_model(version=1)'. "
             "This is typically an enterprise data model when you want to import a solution model",
             type="string",
-            required=True,
         ),
         Configurable(
             name="Report formatter",
