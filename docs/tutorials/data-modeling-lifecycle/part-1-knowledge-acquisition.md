@@ -535,18 +535,19 @@ For details on designing of containers see [here](https://docs.cognite.com/cdf/d
 
 Alice has to modify the `metadata` sheet to include the CDF specific information.
 
-|                      |                              |
-|----------------------|------------------------------|
-| role                 | dms architect                |
-| schema               | complete                     |
-| space                | sp_power                     |
-| name                 | Power to Consumer Data Model |
-| description          |                              |
-| externalId           | power_enterprise_model       |
-| version              | 1                            |
-| creator              | Jon, Emma, David, Alice      |
-| created              | 2021-01-01                   |
-| updated              | 2021-01-01                   |
+|               |                              |
+|---------------|------------------------------|
+| role          | dms architect                |
+| schema        | complete                     |
+| dataModelType | enterprise                   |
+| space         | sp_power                     |
+| name          | Power to Consumer Data Model |
+| description   |                              |
+| externalId    | power_enterprise_model       |
+| version       | 1                            |
+| creator       | Jon, Emma, David, Alice      |
+| created       | 2021-01-01                   |
+| updated       | 2021-01-01                   |
 
 
 First, she adds herself as a creator, and then she adds the `space` and `externalId` columns. The `space`
@@ -562,9 +563,9 @@ Using the workflow `To DMS Rules`, Alice will convert the `properties` sheet to 
 nine new columns as well as modify the `Value Type` column. The first row of the `properties` sheet for Alice
 might look as follows (more detail available [here](../../terminology/rules.md#properties-sheet)):
 
-| Class (linage) | Property (linage) | Value Type | Connection | Nullable | Is List | Default | Container   | Container Property | Index | Constraints | View        | View Property |
-|----------------|-------------------|------------|------------|----------|---------|---------|-------------|--------------------|-------|-------------|-------------|---------------|
-| WindTurbine    | name              | Text       |            | False    | False   | Unknown |  PowerAsset | name               | name  |             | WindTurbine | name          |
+| View        | View Property   | Value Type | Connection | Nullable | Is List | Default | Container   | Container Property | Index | Constraints | Class (linage) | Property (linage) |
+|-------------|-----------------|------------|------------|----------|---------|---------|-------------|--------------------|-------|-------------|----------------|-------------------|
+| WindTurbine | name            | Text       |            | False    | False   | Unknown |  PowerAsset | name               | name  |             | WindTurbine    | name              |
 
 `neat` will fill out all the new columns with suggested values, but Alice can modify them as she sees fit and thus
 she has granular control over how the data should be stored in CDF.
@@ -577,14 +578,15 @@ The columns are as follows:
   `string` type is converted to `Text`. Alice must still check and potentially modify the value types to ensure
   that they are correct. For example, `float` are converted to `float64`, and Alice might decide to change it to
   `float32` if she knows that the values will never be larger than 32 bits.
-* **Connection**: This columns only applies to relationships between entities. It is used to specify how the relationship
-  should be implemented in CDF. For example, if the relationship should be implemented as an edge or as a direct
-  relation.
-* **Nullable**: This only applies to primitive types. This column is used to specify whether the property is
+* **Connection**: This column only applies to connection between entities. It is used to specify how the connection
+  should be implemented in CDF. For example, if the connection should be implemented as an edge or as a direct
+  relation. It can also be used to use the reverse direction.
+* **Nullable**: This only applies to primitive types (not connections). This column is used to specify whether the property is
   required or not. For example, Alice might decide that the `name` property of a `WindTurbine` is required,
   and she will set the `Nullable` column to `False`.
-* **Is List**: This only applies to primitive types. This column is used to specify whether the property is a list or not.
-  For example, say a `WindTurbine` can have multiple timeseries measuring the temperature, Alice might have a property
+* **Is List**: This column is used to specify whether the property is a list or not. For connections, it is used to
+  specify if there can be multiple connections.  For example, say a `WindTurbine` can have multiple
+* timeseries measuring the temperature, Alice might have a property
   called `temperature` that is a list of Timeseries, which means she will set `Value Type` to `TimeSeries` and
   `IsList` to `True`.
 * **Default**: This column is used to specify a default value. For example, Alice might decide that the `name` property
@@ -610,6 +612,17 @@ The columns are as follows:
   that the `name` property of a `WindTurbine` should be part of a view called `WindTurbine`.
 * **View Property**: This column is used to specify what the property should be called in the view.
 
+#### Linage from Information Spreadsheet
+* **Class (linage)**: This column is the same as the class column in the Information Sheet from David. It is kept to
+  make it clear how the properties are related to the classes in the Information Sheet from David.
+* **Property (linage)**: This column is the same as the property column in the Information Sheet from David. It is kept
+  to make it clear how the properties are related to the properties in the Information Sheet from David.
+
+A typical use case were these columns become useful is when Alice decides to rename a property and/or class to comply
+with the requirements of CDF. In this case, she can use the `Class (linage)` and `Property (linage)` columns to
+keep track of the original names.
+
+
 <a id="dms-architect-containers-sheet"></a>
 ### The <code>Container</code> Sheet
 
@@ -617,11 +630,11 @@ The output of the `To DMS Rules` will produce two new sheets `Container` and `Vi
 to define constraints between the containers. The first three rows of the `Container` sheet for Alice look
 as follows:
 
-| Class (linage) | Container      | Name | Description | Constraint     |
-|----------------|----------------|------|-------------|----------------|
-| PowerAsset     | PowerAsset     |      |             |                |
-| GeneratingUnit | GeneratingUnit |      |             | PowerAsset     |
-| WindTurbine    | WindTurbine    |      |             | GeneratingUnit |
+| Container      | Name | Description | Reference | Constraint     | Class (linage) |
+|----------------|------|-------------|-----------|----------------|----------------|
+| PowerAsset     |      |             |           |                | PowerAsset     |
+| GeneratingUnit |      |             |           | PowerAsset     | GeneratingUnit |
+| WindTurbine    |      |             |           | GeneratingUnit | WindTurbine    |
 
 
 Interpreting the first three rows, we see that all entries in the `GeneratingUnit` container must have a corresponding
@@ -639,12 +652,12 @@ The `View` sheet is used to define which views implements other views. Implement
 properties from another view. The first three rows of the `View` sheet for Alice look as follows:
 
 
-| Class (linage) | View           | Name | Description    | Implements | Filter | In Model |
-|----------------|----------------|------|----------------|------------|--------|----------|
-| PowerAsset     | PowerAsset     |      |                |            |        | False    |
-| GeneratingUnit | GeneratingUnit |      | PowerAsset     |            |        | True     |
-| WindTurbine    | WindTurbine    |      | GeneratingUnit |            |        | True     |
-
+| View           | Name | Description    | Implements | Reference | Filter | In Model | Class (linage) |
+|----------------|------|----------------|------------|-----------|--------|----------|----------------|
+| PowerAsset     |      |                |            |           |        | False    | PowerAsset     |
+| GeneratingUnit |      | PowerAsset     |            |           |        | True     | GeneratingUnit |
+| WindTurbine    |      | GeneratingUnit |            |           |        | True     | WindTurbine    |
+|
 
 Interpreting the first three rows, we see that the `GeneratingUnit` view is reusing the properties from the `PowerAsset`
 view, and the `WindTurbine` view is reusing the properties from the `GeneratingUnit` view. It is the hierarchy of views
@@ -658,16 +671,16 @@ is the `Class`, such that it is clear how the views are related to the classes i
 
 In addition, there are two more columns in the `View` sheet that are used to define the view:
 
-* **Filter**: This used to control which filter the view should use. This can be empty, `hasData`, `nodeType`
-  or both `hasData, nodeType`. By default, all filters will get a `hasData` filter, this means that the view will
-  only show nodes that have properties in the container(s) that the view is mapping to. The `nodeType` filter is used
-  to filter on the nodes that have the type set to the same name as the view.
-* **In Model**: This column is used to specify whether the view is part of the model or not. In the example above, Alice
-  have decided that `PowerAsset` is not part of the data model by setting the `InModel` column to `False`. This means
-  that the view will still be created in CDF, but not be part of the model. The motivation for this is that this
+* **Filter**: This used to control which filter the view should use. This can be empty, `hasData`, `nodeType`. This is
+  one of the more complex parts of the data model implementation, and it is recommended to leave this empty which
+  will use the **neat** default filter unless you know what you are doing. See
+  [View Filter](../../terminology/dmsrules.md#filter) for more information.
+* **In Model**: This column is used to specify whether the view is part of the model or not. In the example above,
+  Alice have decided that `PowerAsset` is not part of the data model by setting the `InModel` column to `False`.
+  This means that the view will still be created in CDF, but not be part of the model. The motivation for this is that this
   view is an implementation detail, that should not be exposed to the users of the data model. In the GraphQL
   representation of the model, having the `PowerAsset` will show links to all assets. This can clutter the model,
-  and thus Alice remove it.
+  and thus Alice removes it.
 
 Details on the `Views` sheet can be found [here](../../terminology/rules.md#views-sheet).
 
@@ -678,7 +691,7 @@ Download Alice's spreadsheet from [here](../../artifacts/rules/cdf-dms-architect
 
 Like Jon, Emma, and David, Alice will validate her sheet using the `neat` UI, using the same workflow `Validate Rules`.
 Note that since Alice has set her role as `dms architect` in the `metadata` sheet, the validation from `neat` will be
-suited for the DMSExported. Meaning that it will check that the rules can exported to CDF in a DMS format.
+suited for the DMSExported. Meaning that it will check that the rules can be exported to CDF in a DMS format.
 
 
 ### Exporting Data Model to YAML
@@ -686,7 +699,8 @@ suited for the DMSExported. Meaning that it will check that the rules can export
 Once Alice has validated her sheet, she can export it to YAML. This is done by using the `Export DMS` workflow in
 the `neat` UI. This will generate a YAML file that can be used to load the data model into CDF.
 
-This is useful if she wants to give the data model to `cognite-toolkit` which can then govern the data model in CDF.
+This is useful if she wants to give the data model to [cognite-toolkit](https://developer.cognite.com/sdks/toolkit/)
+which can then govern the data model in CDF.
 
 The workflow for exporting the data model to YAML is the same as for exporting it to CDF. See the next section
 for the step-by-step guide.
@@ -716,7 +730,7 @@ that would have been uploaded to CDF (as she is running in dry run mode). In add
 with the components in YAML format inside. The content of this zip file is compatible with a module in the
 `cognite-toolkit`.
 
-After inspecting the report and zip file, Alice is happy wiht the results. She then opens the `Export Data Model to CDF`
+After inspecting the report and zip file, Alice is happy with the results. She then opens the `Export Data Model to CDF`
 and changes the `Dry Run` to `False`. She then clicks the `Save` button, and uploads the spreadsheet again. This time
 the data model will be uploaded to CDF.
 
@@ -728,7 +742,7 @@ The process of validating and exporting DMS Rules as DMS Data model is also show
 
 **DMS Architect Task.**
 
-1. Add metadata about CDF to `metadata` sheet.
+1. Add metadata about CDF to `Metadata` sheet.
 2. Add columns to `Properties` sheet for how the data should be stored in Data Modeling containers.
 3. Select which properties should be indexed for fast search.
 4. Define dependencies between data by defining Data Modeling views.
