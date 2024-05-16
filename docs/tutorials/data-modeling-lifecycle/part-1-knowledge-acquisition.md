@@ -135,7 +135,10 @@ See the video below for a step-by-step guide on how to validate a sheet in `neat
 ## Grid Analysis Expert: Emma
 
 ### Gathering Knowledge
-Similarly to Jon, Emma will define a set of statements in a spreadsheet. As being more meticulous and keen to go one step further she will also fill in `Classes` sheet. Like in case of Jon, she starts with `Properties` sheet. She defines some similar statements as Jon, but also adds completely new ones. This is expected as there are overlaps between in our case the power production and power transmission domains.
+Similarly to Jon, Emma will define a set of statements in a spreadsheet. As being more meticulous and keen
+to go one step further, she will also fill in `Classes` sheet. Like in case of Jon, she starts with `Properties` sheet.
+She defines some similar statements as Jon, but also adds completely new ones. This is expected as there are overlaps
+between in our case the power production and power transmission domains.
 
 For example, she defines
 `Substation` has a `name`, a `location`, and a `voltage`. In addition, she might define that a `Substation` has
@@ -167,10 +170,10 @@ The `Properties` sheet for Emma might look as follows:
 | Consumer      | type                     |             | string               | 1         | 1         |
 
 
-
-
-
-As mentioned earlier, Emma also abstracts classes from `Properties` sheet and puts them in `Classes` sheet to have a better overview of her domain, de-cluttered from properties. To differentiate between `CurrentTransformer` and `VoltageTransformer` she also adds a `Parent Class` column to the `Classes` sheet, indicating that these two classes are indeed a specialization of `Transformer`. The `Classes` sheet for Emma might look as follows:
+As mentioned earlier, Emma also abstracts classes from `Properties` sheet and puts them in `Classes` sheet to have a
+better overview of her domain, de-cluttered from properties. To differentiate between `CurrentTransformer` and
+`VoltageTransformer` she also adds a `Parent Class` column to the `Classes` sheet,
+indicating that these two classes are indeed a specialization of `Transformer`. The `Classes` sheet for Emma might look as follows:
 
 
 | Class              | Description                                         | Parent Class       |
@@ -220,7 +223,11 @@ Download Emma's spreadsheet from [here](../../artifacts/rules/expert-grid-emma.x
 ### Creating the Shared Data Model
 
 Once Jon and Emma have defined their statements, David will combine the two sheets into a single sheet. This is
-done by copying the statements from Jon and Emma into a single sheet and making a tough decision on how to combine them to produce the enterprise data model. For example, if Jon and Emma have defined the same property in different ways, David will have to decide which definition to use. In certain situations additional classes and properties will have to be added to connect two domains. This is a trade-off, as he might have to prompt Jon and Emma for clarification, or he might have to make a decision based on his own knowledge.
+done by copying the statements from Jon and Emma into a single sheet and making a tough decision on how to combine
+them to produce the enterprise data model. For example, if Jon and Emma have defined the same property in different ways,
+David will have to decide which definition to use. In certain situations, additional classes and properties will have
+to be added to connect two domains. This is a trade-off, as he might have to prompt Jon and Emma for clarification,
+or he might have to make a decision based on his own knowledge.
 
 <a id="information-architect-classes-sheet"></a>
 Let start with `Classes` sheet and investigate outcome of merging Jon's and Emma's classes:
@@ -255,13 +262,23 @@ Let start with `Classes` sheet and investigate outcome of merging Jon's and Emma
 | VoltageTransformer     |             |                        |                                                      |            |
 
 
+There are couple of things that David done. First of all, he uses the principle of subclassing to create a class specialization to satisfy
+both Jon's and Emma's definitions. For example, he created a `WindTurbine` class that is a subclass of `GeneratingUnit`.
+This is done by adding a `Parent Class` column to the `Classes` sheet. By doing this, he enables adding additional types of generating
+units in the future. In the same fashion, he also created a `WindFarm` class that is a subclass of `EnergyArea`, basically connecting
+the two domains and allowing for other types of energy areas to be defined in the future. We see the similar approach with
+`Substation`, `Transmission`, `EnergyConsumer`, and `Point`. By subclassing we enable the possibility to inherit properties from the parent class,
+avoiding the need to define the same properties for each subclass, which we will see in the `Properties` sheet.
 
-There are couple of things that David done. First of all, he use principle of sub-classing to create a class specialization in order to satisfy both Jon's and Emma's definitions. For example, he created a `WindTurbine` class that is a subclass of `GeneratingUnit`. This is done by adding a `Parent Class` column to the `Classes` sheet. By doing this, he enable adding additional types of generating units in the future. In the same fashion, he also created a `WindFarm` class that is a subclass of `EnergyArea`, basically connecting the two domains and allowing for other types of energy areas to be defined in the future. We see the similar approach with `Substation`, `Transmission`, `EnergyConsumer`, and `Point`. By sub-classing we enable the possibility to inherit properties from the parent class, avoiding the need to define the same properties for each subclass, which we will see in the `Properties` sheet.
-
-In addition, David also added a `Reference` and `Match Type` columns to the `Classes` sheet. The `Reference` column is used to specify where the statement comes from, or what standard that matches the statement. The `Match Type` column tells whether the source is partially or fully matching the statement. We see that David did a great work linking the enterprise data model to existing standards, such as the CIM standard for energy areas and energy consumers. This is a good practice, as it sets the knowledge into a broader context, allowing for easier integration with other systems and standards. In other words, David did not fall into a trap of reinventing the wheel, but rather leveraged existing standards to define the enterprise data model (what a smart guy!).
+In addition, David also added a `Reference` and `Match Type` columns to the `Classes` sheet. The `Reference` column
+is used to specify where the statement comes from, or what standard that matches the statement. The `Match Type` column
+tells whether the source is partially or fully matching the statement. We see that David did a great work linking the
+enterprise data model to existing standards, such as the CIM standard for energy areas and energy consumers. This is a good
+practice, as it sets the knowledge into a broader context, allowing for easier integration with other systems and standards.
+In other words, David did not fall into a trap of reinventing the wheel, but rather leveraged existing standards to define the enterprise data model (what a smart guy!).
 
 <a id="information-architect-properties"></a>
-Let's now move to the `Properties` sheet. David will also combined and uplifted the `Properties` sheets from Jon and Emma:
+Let's now move to the `Properties` sheet. David will also combine and uplifted the `Properties` sheets from Jon and Emma:
 
 
 | Class                  | Property             | Description | Value Type         | Min Count | Max Count | Reference                                        | Match Type |
@@ -322,12 +339,20 @@ Let's now move to the `Properties` sheet. David will also combined and uplifted 
 | DisconnectSwitch       | maxCapacity          |             | float              |         0 |         1 |                                                  |            |
 
 
-Observe that we are using same range of value types as in case for [domain experts](#value-type-anchor).
+Observe that we are using the same range of value types as in case for [domain experts](#value-type-anchor).
 
-Here we see how inheritance and proper modeling of classes pays off. Instead of repeating properties from `GeneratingUnit` for `WindTurbine`, David only needs to define the properties specific only to `WindTurbine`. This is because `WindTurbine` is a subclass of `GeneratingUnit`, and thus inherits all the properties from `GeneratingUnit`. This is a good practice, as it reduces the amount of work needed to define the enterprise data model. In addition, it also makes the enterprise data model more consistent, as the same properties are used for similar things.
+Here we see how inheritance and proper modeling of classes pays off. Instead of repeating properties from `GeneratingUnit`
+for `WindTurbine`, David only needs to define the properties specific only to `WindTurbine`. This is because `WindTurbine`
+is a subclass of `GeneratingUnit`, and thus inherits all the properties from `GeneratingUnit`. This is a good practice,
+as it reduces the amount of work needed to define the enterprise data model. In addition, it also makes the enterprise
+data model more consistent, as the same properties are used for similar things.
 
-
-Let's now have a look at statements for `OffshoreSubstation`, in `Classes` sheet David stated that `OffshoreSubstation` is a subclass of `Substation`, and in `Properties` sheet he only needs specialized type of values two properties take in order to make this class a specific subclass of `Substation`. This is a good example of how inheritance can be used to reduce the amount of work needed to define the enterprise data model. Similar like in the case of `Classes` sheet David also added a `Reference` and `Match Type` columns to link the enterprise data model to existing standards, in this case to definition of properties coming from different standards.
+Let's now have a look at statements for `OffshoreSubstation`, in `Classes` sheet David stated that `OffshoreSubstation`
+is a subclass of `Substation`, and in `Properties` sheet he only needs specialized type of values two properties take
+to make this class a specific subclass of `Substation`. This is a good example of how inheritance can be used to
+reduce the amount of work needed to define the enterprise data model. Similar like in the case of `Classes` sheet David
+also added a `Reference` and `Match Type` columns to link the enterprise data model to existing standards,
+in this case to definition of properties coming from different standards.
 
 <a id="information-architect-metadata-sheet"></a>
 In addition, David will needs to update a `metadata` sheet, he is adding :
@@ -335,16 +360,17 @@ In addition, David will needs to update a `metadata` sheet, he is adding :
 - `namespace` : a globally unique identifier for the enterprise data model
 - `prefix` : a short name that can be used to reference the namespace in various downstream systems
 - `create` : a date when the enterprise data model was created
-- `schema` : a indication of schema completeness, which can be either one of the following:
+- `dataModelType`: an indication of the type of the data model, which can be either one of the following:
+    - `enterprise` - the data model is used to represent the entire domain
+    - `solution` - the data model is used to represent a specific solution
+- `schema` : an indication of schema completeness, which can be either one of the following:
     -  `complete` - the data model is entirely defined in the spreadsheets
     -  `partial` - the data model is defined within several spreadsheets
-    -  `extended` - data model is defined in spreadsheets and external sources (ontology, CDF, etc.)
+    -  `extended` - data model is defined in spreadsheets and reference sheet. This is used for Solution Models.
 - `updated` : a date when the enterprise data model was last updated
 - `version` : a version of the enterprise data model
 - `title` : a title of the enterprise data model
 - `description` : a human-readable explanation of what the enterprise data model is about
-- `license` : a license of the enterprise data model, basically in what way it can be used
-- `rights` : rights of the enterprise data model, basically who has the right to use it
 
 He is adding him self as a co-creator as well. The `metadata` sheet for David might look as follows:
 
