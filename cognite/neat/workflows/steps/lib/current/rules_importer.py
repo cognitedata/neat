@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import ClassVar
 
 from cognite.client import CogniteClient
+from cognite.client.data_classes.data_modeling import DataModelId
 
 from cognite.neat.rules import importers
 from cognite.neat.rules.issues.formatters import FORMATTER_BY_NAME
@@ -185,6 +186,14 @@ class DMSToRules(Step):
             required=True,
         ),
         Configurable(
+            name="Reference data model id",
+            value="",
+            label="The ID of the Reference Data Model to import. Written at 'my_space:my_data_model(version=1)'. "
+            "This is typically an enterprise data model when you want to import a solution model",
+            type="string",
+            required=True,
+        ),
+        Configurable(
             name="Report formatter",
             value=next(iter(FORMATTER_BY_NAME.keys())),
             label="The format of the report for the validation of the rules",
@@ -214,8 +223,19 @@ class DMSToRules(Step):
                 f"or 'my_space:my_data_model', failed to parse space from {datamodel_id_str}"
             )
             return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
+        ref_datamodel_str = self.configs.get("Reference data model id")
+        ref_model_id: DataModelId | None = None
+        if ref_datamodel_str is not None:
+            ref_model = DataModelEntity.load(ref_datamodel_str)
+            if isinstance(ref_model, DMSUnknownEntity):
+                error_text = (
+                    f"Reference data model id should be in the format 'my_space:my_data_model(version=1)' "
+                    f"or 'my_space:my_data_model', failed to parse space from {ref_datamodel_str}"
+                )
+                return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
+            ref_model_id = ref_model.as_id()
 
-        dms_importer = importers.DMSImporter.from_data_model_id(cdf_client, datamodel_entity.as_id())
+        dms_importer = importers.DMSImporter.from_data_model_id(cdf_client, datamodel_entity.as_id(), ref_model_id)
 
         # if role is None, it will be inferred from the rules file
         role = self.configs.get("Role")
