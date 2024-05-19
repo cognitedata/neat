@@ -134,6 +134,12 @@ class TestExcelImporter:
             pytest.param(
                 DOC_RULES / "information-architect-david.xlsx", InformationRules, id="information-architect-david"
             ),
+            pytest.param(DOC_RULES / "dms-analytics-olav.xlsx", DMSRules, id="dms-analytics-olav"),
+            pytest.param(
+                DOC_RULES / "information-addition-svein-harald.xlsx",
+                InformationRules,
+                id="Svein Harald Enterprise Extension Information",
+            ),
         ],
     )
     def test_import_valid_rules(
