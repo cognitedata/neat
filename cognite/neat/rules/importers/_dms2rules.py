@@ -109,7 +109,7 @@ class DMSImporter(BaseImporter):
         if result.result == "failure" or issue_list.has_errors:
             return cls(DMSSchema(), issue_list)
 
-        metadata = cls._create_metadata_from_model(user_model)
+        metadata = cls._create_metadata_from_model(user_model, has_reference=ref_model is not None)
         ref_metadata = cls._create_metadata_from_model(ref_model) if ref_model else None
 
         return cls(schema, issue_list, metadata, ref_metadata)
@@ -131,6 +131,7 @@ class DMSImporter(BaseImporter):
     def _create_metadata_from_model(
         cls,
         model: dm.DataModel[dm.View] | dm.DataModelApply,
+        has_reference: bool = False,
     ) -> DMSMetadata:
         description, creator = DMSMetadata._get_description_and_creator(model.description)
 
@@ -143,6 +144,7 @@ class DMSImporter(BaseImporter):
             updated = now
         return DMSMetadata(
             schema_=SchemaCompleteness.complete,
+            data_model_type=DataModelType.solution if has_reference else DataModelType.enterprise,
             extension=ExtensionCategory.addition,
             space=model.space,
             external_id=model.external_id,
