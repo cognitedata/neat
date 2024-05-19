@@ -156,6 +156,12 @@ class TestExcelImporter:
                 RoleTypes.dms_architect,
                 id="Svein Harald Enterprise Extension Information",
             ),
+            pytest.param(
+                DOC_RULES / "dms-addition-svein-harald.xlsx",
+                DMSRules,
+                RoleTypes.information_architect,
+                id="Svein Harald Enterprise Extension DMS",
+            ),
         ],
     )
     def test_import_valid_rules(
