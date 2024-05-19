@@ -5,7 +5,7 @@ from cognite.client import data_modeling as dm
 
 from cognite.neat.rules import issues
 from cognite.neat.rules.issues import IssueList
-from cognite.neat.rules.models._base import ExtensionCategory, SchemaCompleteness
+from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import ContainerEntity
 from cognite.neat.rules.models.wrapped_entities import RawFilter
@@ -27,8 +27,9 @@ class DMSPostValidation:
         self.issue_list = IssueList()
 
     def validate(self) -> IssueList:
-        self._validate_best_practices()
+        self._validate_raw_filter()
         self._consistent_container_properties()
+
         self._referenced_views_and_containers_are_existing()
         if self.metadata.schema_ is SchemaCompleteness.extended:
             self._validate_extension()
@@ -131,6 +132,11 @@ class DMSPostValidation:
                 )
         if self.metadata.schema_ is SchemaCompleteness.complete:
             defined_containers = {container.container.as_id() for container in self.containers or []}
+            if self.metadata.data_model_type == DataModelType.solution and self.rules.reference:
+                defined_containers |= {
+                    container.container.as_id() for container in self.rules.reference.containers or []
+                }
+
             for prop_no, prop in enumerate(self.properties):
                 if prop.container and (container_id := prop.container.as_id()) not in defined_containers:
                     errors.append(
@@ -237,7 +243,7 @@ class DMSPostValidation:
                         )
                     )
 
-    def _validate_best_practices(self) -> None:
+    def _validate_raw_filter(self) -> None:
         for view in self.views:
             if view.filter_ and isinstance(view.filter_, RawFilter):
                 self.issue_list.append(

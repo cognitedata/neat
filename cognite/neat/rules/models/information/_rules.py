@@ -303,6 +303,8 @@ class InformationRules(RuleModel):
 
         if self.metadata.schema_ == SchemaCompleteness.complete:
             defined_classes = {str(class_.class_) for class_ in self.classes}
+            if self.metadata.data_model_type == DataModelType.solution and self.reference:
+                defined_classes |= {str(class_.class_) for class_ in self.reference.classes}
             referred_classes = {str(property_.class_) for property_ in self.properties} | {
                 str(parent) for class_ in self.classes for parent in class_.parent or []
             }
