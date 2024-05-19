@@ -169,8 +169,9 @@ class DMSPostValidation:
             # Everything is allowed
             return None
         user_schema = self.rules.as_schema()
-        last_schema = self.rules.last.as_schema()
         new_containers = user_schema.containers.copy()
+
+        last_schema = self.rules.last.as_schema()
         existing_containers = last_schema.containers.copy()
 
         for container_id, container in new_containers.items():
