@@ -8,7 +8,7 @@ from cognite.client.data_classes import Row
 from cognite.neat.rules.exporters import DMSExporter
 from cognite.neat.rules.importers import ExcelImporter
 from cognite.neat.rules.models import DMSRules, InformationRules, RoleTypes, SheetList
-from cognite.neat.rules.models.dms import PipelineSchema
+from cognite.neat.rules.models.dms import DMSRulesInput, PipelineSchema
 from cognite.neat.rules.models.information import (
     InformationClass,
     InformationMetadata,
@@ -30,6 +30,15 @@ def alice_rules() -> DMSRules:
 @pytest.fixture(scope="session")
 def olav_dms_rules() -> DMSRules:
     filepath = DOC_RULES / "dms-analytics-olav.xlsx"
+
+    excel_importer = ExcelImporter(filepath)
+
+    return excel_importer.to_rules(errors="raise", role=RoleTypes.dms_architect)
+
+
+@pytest.fixture(scope="session")
+def svein_harald_dms_rules() -> DMSRules:
+    filepath = DOC_RULES / "dms-addition-svein-harald.xlsx"
 
     excel_importer = ExcelImporter(filepath)
 
@@ -234,6 +243,38 @@ class TestDMSExporters:
         rules: DMSRules = olav_dms_rules
 
         exporter = DMSExporter(existing_handling="force")
+
+        uploaded = exporter.export_to_cdf(rules, cognite_client, dry_run=False)
+        uploaded_by_name = {entity.name: entity for entity in uploaded}
+
+        assert uploaded_by_name["containers"].total == len(rules.containers)
+        assert uploaded_by_name["containers"].failed == 0
+
+        assert uploaded_by_name["views"].total == len(rules.views)
+        assert uploaded_by_name["views"].failed == 0
+
+        assert uploaded_by_name["data_models"].total == 1
+        assert uploaded_by_name["data_models"].failed == 0
+
+        assert uploaded_by_name["spaces"].total == 1
+        assert uploaded_by_name["spaces"].failed == 0
+
+    def test_export_svein_harald_dms_to_cdf(
+        self, cognite_client: CogniteClient, svein_harald_dms_rules: DMSRules
+    ) -> None:
+        # We change the space to avoid conflicts with Alice's rules in the previous test
+        dumped = svein_harald_dms_rules.model_dump(by_alias=True)
+        new_space = "power_update"
+        dumped["Metadata"]["space"] = new_space
+        dumped["Last"]["Metadata"]["space"] = new_space
+        rules = DMSRulesInput.load(dumped).as_rules()
+        schema = rules.as_schema()
+        assert schema.referenced_spaces(include_indirect_references=True) == {new_space}
+        exporter = DMSExporter(existing_handling="force")
+        # First, we ensure that the previous version of the data model is deployed
+        uploaded = list(exporter.export_to_cdf(rules.last, cognite_client, dry_run=False))
+        failed = [entity for entity in uploaded if entity.failed]
+        assert not failed, f"Failed to deploy previous version of the data model: {failed}"
 
         uploaded = exporter.export_to_cdf(rules, cognite_client, dry_run=False)
         uploaded_by_name = {entity.name: entity for entity in uploaded}

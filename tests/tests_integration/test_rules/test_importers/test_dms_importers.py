@@ -1,9 +1,11 @@
+from typing import cast
+
 import pytest
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import DataModelId
 
 from cognite.neat.rules.importers import DMSImporter, ExcelImporter
-from cognite.neat.rules.models import DataModelType, DMSRules, InformationRules, RoleTypes
+from cognite.neat.rules.models import DMSRules, RoleTypes
 from tests.config import DOC_RULES
 
 
@@ -36,13 +38,35 @@ def olav_data_model_id(olav_rules: DMSRules) -> DataModelId:
 
 
 class TestDMSImporter:
-    def test_import_alice_from_cdf(self, cognite_client: CogniteClient, alice_data_model_id: DataModelId):
+    def test_import_alice_from_cdf(
+        self, cognite_client: CogniteClient, alice_data_model_id: DataModelId, alice_rules: DMSRules
+    ):
         dms_exporter = DMSImporter.from_data_model_id(cognite_client, alice_data_model_id)
+        expected = {
+            "properties": sorted(
+                [(prop.view.as_id(), prop.view_property) for prop in alice_rules.properties],
+                key=lambda x: (*x[0].as_tuple(), x[1]),
+            ),
+            "views": sorted({view.view.as_id() for view in alice_rules.views}, key=lambda x: x.as_tuple()),
+            "containers": sorted(
+                {container.container.as_id() for container in alice_rules.containers}, key=lambda x: x.as_tuple()
+            ),
+        }
 
-        rules = dms_exporter.to_rules(errors="raise", role=RoleTypes.information_architect)
+        imported = cast(DMSRules, dms_exporter.to_rules(errors="raise", role=RoleTypes.dms_architect))
 
-        assert isinstance(rules, InformationRules)
-        assert rules.metadata.data_model_type is DataModelType.enterprise
+        actual = {
+            "properties": sorted(
+                [(prop.view.as_id(), prop.view_property) for prop in imported.properties],
+                key=lambda x: (*x[0].as_tuple(), x[1]),
+            ),
+            "views": sorted({view.view.as_id() for view in imported.views}, key=lambda x: x.as_tuple()),
+            "containers": sorted(
+                {container.container.as_id() for container in imported.containers}, key=lambda x: x.as_tuple()
+            ),
+        }
+
+        assert actual == expected
 
     def test_import_olav_from_cdf(
         self, cognite_client: CogniteClient, olav_data_model_id: DataModelId, alice_data_model_id: DataModelId
