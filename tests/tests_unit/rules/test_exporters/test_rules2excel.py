@@ -91,6 +91,7 @@ class TestExcelExporter:
                     "Properties",
                     "LastClasses",
                     "LastProperties",
+                    "LastMetadata",
                     "RefMetadata",
                     "RefClasses",
                     "RefProperties",
@@ -145,7 +146,7 @@ def metadata_creator_test_cases():
         {
             "role": RoleTypes.dms_architect.value,
             "dataModelType": DataModelType.solution.value,
-            "schema": SchemaCompleteness.extended.value,
+            "schema": SchemaCompleteness.complete.value,
             "space": "sp_solution",
             "externalId": "new_solution",
             "version": "1",

@@ -146,10 +146,11 @@ class DMSMetadata(BaseMetadata):
         return description, creator
 
     @classmethod
-    def from_data_model(cls, data_model: dm.DataModelApply) -> "DMSMetadata":
+    def from_data_model(cls, data_model: dm.DataModelApply, has_reference: bool) -> "DMSMetadata":
         description, creator = cls._get_description_and_creator(data_model.description)
         return cls(
             schema_=SchemaCompleteness.complete,
+            data_model_type=DataModelType.solution if has_reference else DataModelType.enterprise,
             space=data_model.space,
             name=data_model.name or None,
             description=description,
