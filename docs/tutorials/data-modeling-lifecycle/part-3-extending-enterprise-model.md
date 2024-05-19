@@ -256,7 +256,11 @@ asks the DMS solution architect, Alice, for help.
 
 Alice and Svein Harald have a discussion about the new concepts. Alice suggests that they should add an index to the
 `name` and `sources` properties in the `TimeseriesForecastProduct` to ensure that the queries are performant.
-Svein Harald agrees and they add index to the `name` and `sources` properties in the `Properties` sheet.
+Svein Harald agrees, and they add index to the `name` and `sources` properties in the `Properties` sheet.
+
+In addition, Alice ensures that the new property `powerForecast` in the `EnergyArea` and `GeneratingUnit` views are
+in new containers `EnergyArea2` and `GeneratingUnit2` respectively. This is because Svein Harald is doing an addition
+to the Enterprise model, and changing the existing containers would be a rebuild of the model.
 
 After the implementation is done, Alice validates the solution model by running the `Validate Rules` workflow with
 the new spreadsheet as input. The validation is successful, and the extension model is ready to be deployed.
