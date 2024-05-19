@@ -62,6 +62,7 @@ nav:
           - Overview: terminology/rules.md
           - DMSRules Details: terminology/dmsrules.md
       - Graph: terminology/graph.md
+  - Data Modeling Principles: data-modeling-principles.md
   - Reference:
       - Legacy:
           - Rules:
