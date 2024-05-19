@@ -230,10 +230,7 @@ class ExcelImporter(BaseImporter):
 
         last_read: ReadResult | None = None
         if any(sheet_name.startswith("Last") for sheet_name in user_reader.seen_sheets):
-            # Last does not have its own metadata sheet. It is the same as the user's metadata sheet
-            last_read = SpreadsheetReader(
-                issue_list, required=False, metadata=user_read.metadata, sheet_prefix="Last"
-            ).read(self.filepath)
+            last_read = SpreadsheetReader(issue_list, required=False, sheet_prefix="Last").read(self.filepath)
         reference_read: ReadResult | None = None
         if any(sheet_name.startswith("Ref") for sheet_name in user_reader.seen_sheets):
             reference_read = SpreadsheetReader(issue_list, sheet_prefix="Ref").read(self.filepath)

@@ -111,8 +111,9 @@ class DMSPostValidation:
         self.issue_list.extend(errors)
 
     def _referenced_views_and_containers_are_existing(self) -> None:
-        # There two checks are done in the same method to raise all the errors at once.
         defined_views = {view.view.as_id() for view in self.views}
+        if self.metadata.schema_ is SchemaCompleteness.extended and self.rules.last:
+            defined_views |= {view.view.as_id() for view in self.rules.last.views}
 
         errors: list[issues.NeatValidationError] = []
         for prop_no, prop in enumerate(self.properties):
