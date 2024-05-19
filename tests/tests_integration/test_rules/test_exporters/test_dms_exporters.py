@@ -129,7 +129,7 @@ def table_example_data() -> dict[str, list[Row]]:
 
 
 class TestDMSExporters:
-    def test_export_to_cdf_dry_run(self, cognite_client: CogniteClient, alice_rules: DMSRules):
+    def test_export_alice_to_cdf_dry_run(self, cognite_client: CogniteClient, alice_rules: DMSRules):
         rules: DMSRules = alice_rules
 
         exporter = DMSExporter()
@@ -142,7 +142,7 @@ class TestDMSExporters:
         assert uploaded_by_name["data_models"].total == 1
         assert uploaded_by_name["spaces"].total == 1
 
-    def test_export_to_cdf(self, cognite_client: CogniteClient, alice_rules: DMSRules):
+    def test_export_alice_to_cdf(self, cognite_client: CogniteClient, alice_rules: DMSRules):
         rules: DMSRules = alice_rules
 
         exporter = DMSExporter(existing_handling="force")
