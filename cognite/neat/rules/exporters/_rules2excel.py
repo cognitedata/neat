@@ -291,7 +291,7 @@ class _MetadataCreator:
         prefix = self.new_model_id[0]
         return InformationMetadata(
             data_model_type=DataModelType.solution,
-            schema_=SchemaCompleteness.extended,
+            schema_=SchemaCompleteness.complete,
             extension=ExtensionCategory.addition,
             prefix=prefix,
             namespace=f"http://purl.org/neat/{prefix}/",  # type: ignore[arg-type]
