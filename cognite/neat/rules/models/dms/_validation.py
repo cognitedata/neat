@@ -11,6 +11,7 @@ from cognite.neat.rules.models.entities import ContainerEntity
 from cognite.neat.rules.models.wrapped_entities import RawFilter
 
 from ._rules import DMSProperty, DMSRules
+from ._schema import DMSSchema
 
 
 class DMSPostValidation:
@@ -29,9 +30,13 @@ class DMSPostValidation:
         self._validate_best_practices()
         self._consistent_container_properties()
         self._referenced_views_and_containers_are_existing()
-        self._validate_extension()
-        self._validate_schema()
-        self._validate_performance()
+        if self.metadata.schema_ is SchemaCompleteness.extended:
+            self._validate_extension()
+        if self.metadata.schema_ is SchemaCompleteness.partial:
+            return self.issue_list
+        dms_schema = self.rules.as_schema()
+        self.issue_list.extend(dms_schema.validate())
+        self._validate_filter(dms_schema)
         return self.issue_list
 
     def _consistent_container_properties(self) -> None:
@@ -157,19 +162,15 @@ class DMSPostValidation:
     def _validate_extension(self) -> None:
         if self.metadata.schema_ is not SchemaCompleteness.extended:
             return None
-        if not self.rules.reference:
-            raise ValueError("The schema is set to 'extended', but no reference rules are provided to validate against")
-        is_solution = self.metadata.space != self.rules.reference.metadata.space
-        if is_solution:
-            return None
+        if not self.rules.last:
+            raise ValueError("The schema is set to 'extended', but no last rules are provided to validate against")
         if self.metadata.extension is ExtensionCategory.rebuild:
             # Everything is allowed
             return None
-        # Is an extension of an existing model.
         user_schema = self.rules.as_schema()
-        ref_schema = self.rules.reference.as_schema()
+        last_schema = self.rules.last.as_schema()
         new_containers = user_schema.containers.copy()
-        existing_containers = ref_schema.containers.copy()
+        existing_containers = last_schema.containers.copy()
 
         for container_id, container in new_containers.items():
             existing_container = existing_containers.get(container_id)
@@ -189,14 +190,12 @@ class DMSPostValidation:
                 )
             )
 
-        if self.metadata.extension is ExtensionCategory.reshape and self.issue_list:
-            return None
-        elif self.metadata.extension is ExtensionCategory.reshape:
+        if self.metadata.extension is ExtensionCategory.reshape:
             # Reshape allows changes to views
             return None
 
         new_views = user_schema.views.copy()
-        existing_views = ref_schema.views.copy()
+        existing_views = last_schema.views.copy()
         for view_id, view in new_views.items():
             existing_view = existing_views.get(view_id)
             if not existing_view or existing_view == view:
@@ -213,14 +212,7 @@ class DMSPostValidation:
                 )
             )
 
-    def _validate_performance(self) -> None:
-        # we can only validate performance on complete schemas due to the need
-        # to access all the container mappings
-        if self.metadata.schema_ is not SchemaCompleteness.complete:
-            return None
-
-        dms_schema = self.rules.as_schema()
-
+    def _validate_filter(self, dms_schema: DMSSchema) -> None:
         for view_id, view in dms_schema.views.items():
             mapped_containers = dms_schema._get_mapped_container_from_view(view_id)
 
@@ -264,36 +256,3 @@ class DMSPostValidation:
         existing_properties = existing_dumped.get("properties", {})
         changed_properties = [prop for prop in new_properties if new_properties[prop] != existing_properties.get(prop)]
         return changed_attributes, changed_properties
-
-    def _validate_schema(self) -> None:
-        if self.metadata.schema_ is SchemaCompleteness.partial:
-            return None
-        elif self.metadata.schema_ is SchemaCompleteness.complete:
-            rules: DMSRules = self.rules
-        elif self.metadata.schema_ is SchemaCompleteness.extended:
-            if not self.rules.reference:
-                raise ValueError(
-                    "The schema is set to 'extended', but no reference rules are provided to validate against"
-                )
-            # This is an extension of the reference rules, we need to merge the two
-            rules = self.rules.model_copy(deep=True)
-            rules.properties.extend(self.rules.reference.properties.data)
-            existing_views = {view.view.as_id() for view in rules.views}
-            rules.views.extend([view for view in self.rules.reference.views if view.view.as_id() not in existing_views])
-            if rules.containers and self.rules.reference.containers:
-                existing_containers = {container.container.as_id() for container in rules.containers.data}
-                rules.containers.extend(
-                    [
-                        container
-                        for container in self.rules.reference.containers
-                        if container.container.as_id() not in existing_containers
-                    ]
-                )
-            elif not rules.containers and self.rules.reference.containers:
-                rules.containers = self.rules.reference.containers
-        else:
-            raise ValueError("Unknown schema completeness")
-
-        schema = rules.as_schema()
-        errors = schema.validate()
-        self.issue_list.extend(errors)

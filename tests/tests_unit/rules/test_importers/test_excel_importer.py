@@ -9,7 +9,7 @@ import cognite.neat.rules.issues.spreadsheet_file
 from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import ExcelImporter
 from cognite.neat.rules.issues import IssueList
-from cognite.neat.rules.models import DMSRules, DomainRules, InformationRules
+from cognite.neat.rules.models import DMSRules, DomainRules, InformationRules, RoleTypes
 from tests.config import DOC_RULES
 from tests.tests_unit.rules.test_importers.constants import EXCEL_IMPORTER_DATA
 
@@ -125,29 +125,51 @@ def invalid_rules_filepaths():
 
 class TestExcelImporter:
     @pytest.mark.parametrize(
-        "filepath, rule_type",
+        "filepath, rule_type, convert_to",
         [
-            pytest.param(DOC_RULES / "cdf-dms-architect-alice.xlsx", DMSRules, id="Alice rules"),
-            pytest.param(DOC_RULES / "information-analytics-olav.xlsx", InformationRules, id="Olav user rules"),
-            pytest.param(DOC_RULES / "expert-wind-energy-jon.xlsx", DomainRules, id="expert-wind-energy-jon"),
-            pytest.param(DOC_RULES / "expert-grid-emma.xlsx", DomainRules, id="expert-grid-emma"),
             pytest.param(
-                DOC_RULES / "information-architect-david.xlsx", InformationRules, id="information-architect-david"
+                DOC_RULES / "cdf-dms-architect-alice.xlsx", DMSRules, RoleTypes.information_architect, id="Alice rules"
             ),
-            pytest.param(DOC_RULES / "dms-analytics-olav.xlsx", DMSRules, id="dms-analytics-olav"),
+            pytest.param(
+                DOC_RULES / "information-analytics-olav.xlsx",
+                InformationRules,
+                RoleTypes.dms_architect,
+                id="Olav user rules",
+            ),
+            pytest.param(DOC_RULES / "expert-wind-energy-jon.xlsx", DomainRules, None, id="expert-wind-energy-jon"),
+            pytest.param(DOC_RULES / "expert-grid-emma.xlsx", DomainRules, None, id="expert-grid-emma"),
+            pytest.param(
+                DOC_RULES / "information-architect-david.xlsx",
+                InformationRules,
+                RoleTypes.dms_architect,
+                id="information-architect-david",
+            ),
+            pytest.param(
+                DOC_RULES / "dms-analytics-olav.xlsx",
+                DMSRules,
+                RoleTypes.information_architect,
+                id="dms-analytics-olav",
+            ),
             pytest.param(
                 DOC_RULES / "information-addition-svein-harald.xlsx",
                 InformationRules,
+                RoleTypes.dms_architect,
                 id="Svein Harald Enterprise Extension Information",
             ),
         ],
     )
     def test_import_valid_rules(
-        self, filepath: Path, rule_type: type[DMSRules] | type[InformationRules] | type[DomainRules]
+        self,
+        filepath: Path,
+        rule_type: type[DMSRules] | type[InformationRules] | type[DomainRules],
+        convert_to: RoleTypes | None,
     ):
         importer = ExcelImporter(filepath)
         rules = importer.to_rules(errors="raise")
         assert isinstance(rules, rule_type)
+        if convert_to is not None:
+            converted = importer._to_output(rules, IssueList(), errors="raise", role=convert_to)
+            assert converted.metadata.role is convert_to
 
     @pytest.mark.parametrize("filepath, expected_issues", invalid_rules_filepaths())
     def test_import_invalid_rules(self, filepath: Path, expected_issues: IssueList):
