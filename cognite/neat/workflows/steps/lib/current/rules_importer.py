@@ -187,7 +187,7 @@ class DMSToRules(Step):
         ),
         Configurable(
             name="Reference data model id",
-            value=None,
+            value="",
             label="The ID of the Reference Data Model to import. Written at 'my_space:my_data_model(version=1)'. "
             "This is typically an enterprise data model when you want to import a solution model",
             type="string",
@@ -222,9 +222,9 @@ class DMSToRules(Step):
                 f"or 'my_space:my_data_model', failed to parse space from {datamodel_id_str}"
             )
             return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
-        ref_datamodel_str = self.configs.get("Reference data model id")
+        ref_datamodel_str = self.configs.get("Reference data model id", "")
         ref_model_id: DataModelId | None = None
-        if ref_datamodel_str is not None:
+        if ref_datamodel_str:
             ref_model = DataModelEntity.load(ref_datamodel_str)
             if isinstance(ref_model, DMSUnknownEntity):
                 error_text = (
