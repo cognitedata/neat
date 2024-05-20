@@ -93,7 +93,7 @@ Furthermore, he clicks on the `Create Excel Sheet` step which opens a modal with
   as he is updating the model, and thus wants the model he downloaded to be in the Last sheets.
 
 After clicking `Save` and `Save Workflow`, Svein Harald runs the workflow by clicking `Start Workflow`. The workflow
-will execute and SveinHarald can download the exported model by clicking `exported_rules_information_architect.xlsx`.
+will execute and Svein Harald can download the exported model by clicking `exported_rules_information_architect.xlsx`.
 Note that `rules` is the **NEAT** representation of a data model.
 
 The downloaded spreadsheet contains six sheets:
