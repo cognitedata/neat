@@ -37,7 +37,7 @@ class _DMSRulesSerializer:
                 DMSProperty.model_fields[field].alias or field for field in self.properties_fields
             ]
             self.views_fields = [DMSView.model_fields[field].alias or field for field in self.views_fields]
-            self.container_fields = [
+            self.containers_fields = [
                 DMSContainer.model_fields[field].alias or field for field in self.containers_fields
             ]
             self.prop_view = DMSProperty.model_fields[self.prop_view].alias or self.prop_view

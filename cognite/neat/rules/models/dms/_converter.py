@@ -105,6 +105,8 @@ class _DMSRulesConverter:
         prefix = metadata.space
         return InformationMetadata(
             schema_=metadata.schema_,
+            data_model_type=metadata.data_model_type,
+            extension=metadata.extension,
             prefix=prefix,
             namespace=Namespace(f"https://purl.orgl/neat/{prefix}/"),
             version=metadata.version,

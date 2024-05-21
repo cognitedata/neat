@@ -86,7 +86,8 @@ class _DMSExporter:
 
         if self._ref_schema:
             output.reference = self._ref_schema
-
+        if self.rules.last:
+            output.last = self.rules.last.as_schema()
         return output
 
     def _create_spaces(

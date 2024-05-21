@@ -516,10 +516,11 @@ class DMSSchema:
         defined_spaces = self.spaces.copy()
         defined_containers = self.containers.copy()
         defined_views = self.views.copy()
-        if self.reference:
-            defined_spaces |= self.reference.spaces
-            defined_containers |= self.reference.containers
-            defined_views |= self.reference.views
+        for other_schema in [self.reference, self.last]:
+            if other_schema:
+                defined_spaces |= other_schema.spaces
+                defined_containers |= other_schema.containers
+                defined_views |= other_schema.views
 
         for container in self.containers.values():
             if container.space not in defined_spaces:

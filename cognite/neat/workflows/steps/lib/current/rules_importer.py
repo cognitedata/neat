@@ -187,7 +187,7 @@ class DMSToRules(Step):
         ),
         Configurable(
             name="Reference data model id",
-            value="",
+            value=None,
             label="The ID of the Reference Data Model to import. Written at 'my_space:my_data_model(version=1)'. "
             "This is typically an enterprise data model when you want to import a solution model",
             type="string",

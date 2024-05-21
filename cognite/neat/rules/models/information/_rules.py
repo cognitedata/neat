@@ -109,6 +109,18 @@ class InformationMetadata(BaseMetadata):
             return self
         return self
 
+    @field_validator("schema_", mode="plain")
+    def as_enum_schema(cls, value: str) -> SchemaCompleteness:
+        return SchemaCompleteness(value)
+
+    @field_validator("extension", mode="plain")
+    def as_enum_extension(cls, value: str) -> ExtensionCategory:
+        return ExtensionCategory(value)
+
+    @field_validator("data_model_type", mode="plain")
+    def as_enum_model_type(cls, value: str) -> DataModelType:
+        return DataModelType(value)
+
 
 class InformationClass(SheetEntity):
     """
@@ -291,6 +303,8 @@ class InformationRules(RuleModel):
 
         if self.metadata.schema_ == SchemaCompleteness.complete:
             defined_classes = {str(class_.class_) for class_ in self.classes}
+            if self.metadata.data_model_type == DataModelType.solution and self.reference:
+                defined_classes |= {str(class_.class_) for class_ in self.reference.classes}
             referred_classes = {str(property_.class_) for property_ in self.properties} | {
                 str(parent) for class_ in self.classes for parent in class_.parent or []
             }

@@ -277,3 +277,33 @@ class TestInformationRulesConverter:
         actual_space = _InformationRulesConverter._to_space(prefix)
 
         assert actual_space == expected_space
+
+    def test_svein_harald_information_as_dms(self, svein_harald_information_rules: InformationRules) -> None:
+        expected = {
+            "ArrayCable": {"PowerLine"},
+            "DistributionLine": {"PowerLine"},
+            "DistributionSubstation": {"Substation"},
+            "ElectricCarCharger": {"EnergyConsumer"},
+            "ExportCable": {"PowerLine"},
+            "MultiLineString": {"GeoLocation"},
+            "OffshoreSubstation": {"Substation"},
+            "OnshoreSubstation": {"TransmissionSubstation"},
+            "Point": {"GeoLocation"},
+            "Polygon": {"GeoLocation"},
+            "Transmission": {"PowerLine"},
+            "TransmissionSubstation": {"Substation"},
+            "WindFarm": {"EnergyArea"},
+            "WindTurbine": {"GeneratingUnit"},
+        }
+
+        dms_rules = svein_harald_information_rules.as_dms_architect_rules()
+
+        assert isinstance(dms_rules, DMSRules)
+        assert dms_rules.last is not None
+        actual = {
+            view.view.external_id: {parent.external_id for parent in view.implements}
+            for view in dms_rules.last.views
+            if view.implements
+        }
+
+        assert actual == expected

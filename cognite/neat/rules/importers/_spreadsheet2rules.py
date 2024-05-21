@@ -111,10 +111,18 @@ class SpreadsheetReader:
         self.required = required
         self.metadata = metadata
         self._sheet_prefix = sheet_prefix
+        self._seen_files: set[Path] = set()
+        self._seen_sheets: set[str] = set()
 
     @property
     def metadata_sheet_name(self) -> str:
         return f"{self._sheet_prefix}Metadata"
+
+    @property
+    def seen_sheets(self) -> set[str]:
+        if not self._seen_files:
+            raise ValueError("No files have been read yet.")
+        return self._seen_sheets
 
     def sheet_names(self, role: RoleTypes) -> set[str]:
         names = MANDATORY_SHEETS_BY_ROLE[role]
@@ -122,6 +130,8 @@ class SpreadsheetReader:
 
     def read(self, filepath: Path) -> None | ReadResult:
         with pd.ExcelFile(filepath) as excel_file:
+            self._seen_files.add(filepath)
+            self._seen_sheets.update(map(str, excel_file.sheet_names))
             metadata: MetadataRaw | None
             if self.metadata is not None:
                 metadata = self.metadata
@@ -213,20 +223,20 @@ class ExcelImporter(BaseImporter):
             issue_list.append(issues.spreadsheet_file.SpreadsheetNotFoundError(self.filepath))
             return self._return_or_raise(issue_list, errors)
 
-        user_read = SpreadsheetReader(issue_list).read(self.filepath)
+        user_reader = SpreadsheetReader(issue_list)
+        user_read = user_reader.read(self.filepath)
         if user_read is None or issue_list.has_errors:
             return self._return_or_raise(issue_list, errors)
 
         last_read: ReadResult | None = None
+        if any(sheet_name.startswith("Last") for sheet_name in user_reader.seen_sheets):
+            last_read = SpreadsheetReader(issue_list, required=False, sheet_prefix="Last").read(self.filepath)
         reference_read: ReadResult | None = None
-        if user_read.schema == SchemaCompleteness.extended:
-            # Last does not have its own metadata sheet. It is the same as the user's metadata sheet.
-            last_read = SpreadsheetReader(
-                issue_list, required=False, metadata=user_read.metadata, sheet_prefix="Last"
-            ).read(self.filepath)
+        if any(sheet_name.startswith("Ref") for sheet_name in user_reader.seen_sheets):
             reference_read = SpreadsheetReader(issue_list, sheet_prefix="Ref").read(self.filepath)
-            if issue_list.has_errors:
-                return self._return_or_raise(issue_list, errors)
+
+        if issue_list.has_errors:
+            return self._return_or_raise(issue_list, errors)
 
         if reference_read and user_read.role != reference_read.role:
             issue_list.append(issues.spreadsheet_file.RoleMismatchError(self.filepath))
