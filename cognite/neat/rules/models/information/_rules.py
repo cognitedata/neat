@@ -2,7 +2,7 @@ import math
 import sys
 import warnings
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, ClassVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
 
 from pydantic import Field, field_serializer, field_validator, model_validator
 from pydantic.main import IncEx
@@ -338,6 +338,7 @@ class InformationRules(BaseRules):
 
     def dump(
         self,
+        mode: Literal["python", "json"] = "python",
         by_alias: bool = False,
         exclude: IncEx = None,
         exclude_none: bool = False,
@@ -347,7 +348,14 @@ class InformationRules(BaseRules):
     ) -> dict[str, Any]:
         from ._serializer import _InformationRulesSerializer
 
-        dumped = self.model_dump(by_alias=by_alias, exclude=exclude)
+        dumped = self.model_dump(
+            mode=mode,
+            by_alias=by_alias,
+            exclude=exclude,
+            exclude_none=exclude_none,
+            exclude_unset=exclude_unset,
+            exclude_defaults=exclude_defaults,
+        )
         prefix = self.metadata.prefix
         return _InformationRulesSerializer(by_alias, prefix).clean(dumped)
 

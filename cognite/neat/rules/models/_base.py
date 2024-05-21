@@ -9,7 +9,7 @@ import sys
 import types
 from collections.abc import Callable, Iterator
 from functools import wraps
-from typing import Annotated, Any, ClassVar, Generic, TypeAlias, TypeVar
+from typing import Annotated, Any, ClassVar, Generic, Literal, TypeAlias, TypeVar
 
 import pandas as pd
 from pydantic import (
@@ -264,6 +264,7 @@ class BaseRules(RuleModel):
 
     def dump(
         self,
+        mode: Literal["python", "json"] = "python",
         by_alias: bool = False,
         exclude: IncEx = None,
         exclude_none: bool = False,
@@ -276,6 +277,7 @@ class BaseRules(RuleModel):
         This is used in the Exporters to dump rules in the required format.
         """
         return self.model_dump(
+            mode=mode,
             by_alias=by_alias,
             exclude=exclude,
             exclude_none=exclude_none,

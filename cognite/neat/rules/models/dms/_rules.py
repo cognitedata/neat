@@ -336,6 +336,7 @@ class DMSRules(BaseRules):
 
     def dump(
         self,
+        mode: Literal["python", "json"] = "python",
         by_alias: bool = False,
         exclude: IncEx = None,
         exclude_none: bool = False,
@@ -346,6 +347,7 @@ class DMSRules(BaseRules):
         from ._serializer import _DMSRulesSerializer
 
         dumped = self.model_dump(
+            mode=mode,
             by_alias=by_alias,
             exclude=exclude,
             exclude_none=exclude_none,
