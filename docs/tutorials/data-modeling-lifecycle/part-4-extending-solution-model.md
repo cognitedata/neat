@@ -63,7 +63,35 @@ configuration in the `Metadata` sheet.
 
 ## Extending the Solution Model
 
+Olav starts by setting up the metadata for the extension. He opens the `Metadata` sheet in the spreadsheet,
+it looks like this:
+
+|               |                      |
+|---------------|----------------------|
+| role          | DMS Architect        |
+| dataModelType | solution             |
+| schema        | extended             |
+| extension     | rebuild              |
+| space         | power_analytics      |
+| name          | Power Forecast Model |
+| description   |                      |
+| externalId    | power_forecast_model |
+| creator       | Olav                 |
+| created       | 2024-03-26           |
+| updated       | 2024-04-07           |
+| version       | 0.1.0                |
+
+Olav has done one change to the metadata, he has set the `extension` to `rebuild` (from `addition`). This is because
+Olav wants to completely remake the solution model to utilize the enterprise model, and he is ok with
+losing data in the current solution model as that was just a prototype.
+
+
+
 ## Updating the Spreadsheet (Download Olav's DMS Updated spreadsheet)
+
+The finished spreadsheet with the extension of the analytic solution model can be found
+[here](../../artifacts/figs/dms_rebuild_olav.xlsx).
+
 
 ## Deploying the Extension
 
