@@ -3,6 +3,8 @@ from collections import defaultdict
 from typing import TYPE_CHECKING, Literal
 
 from cognite.neat.rules.models._base import (
+    ExtensionCategory,
+    SchemaCompleteness,
     SheetList,
 )
 from cognite.neat.rules.models.data_types import DataType
@@ -25,7 +27,20 @@ if TYPE_CHECKING:
 
 class _InformationRulesConverter:
     def __init__(self, information: InformationRules):
-        self.information = information
+        self.rules = information
+        self.is_addition = (
+            self.rules.metadata.schema_ is SchemaCompleteness.extended
+            and self.rules.metadata.extension is ExtensionCategory.addition
+        )
+        self.is_reshape = (
+            self.rules.metadata.schema_ is SchemaCompleteness.extended
+            and self.rules.metadata.extension is ExtensionCategory.reshape
+        )
+        if self.rules.last:
+            self.last_classes = {class_.class_: class_ for class_ in self.rules.last.classes}
+        else:
+            self.last_classes = {}
+        self._created_classes_from: dict[ClassEntity, ClassEntity] = {}
 
     def as_domain_rules(self) -> DomainRules:
         raise NotImplementedError("DomainRules not implemented yet")
@@ -38,13 +53,13 @@ class _InformationRulesConverter:
             DMSView,
         )
 
-        info_metadata = self.information.metadata
+        info_metadata = self.rules.metadata
         default_version = info_metadata.version
         default_space = self._to_space(info_metadata.prefix)
         metadata = self._convert_metadata_to_dms(info_metadata)
 
         properties_by_class: dict[str, list[DMSProperty]] = defaultdict(list)
-        for prop in self.information.properties:
+        for prop in self.rules.properties:
             properties_by_class[prop.class_.versioned_id].append(
                 self._as_dms_property(prop, default_space, default_version)
             )
@@ -58,11 +73,11 @@ class _InformationRulesConverter:
                 reference=cls_.reference,
                 implements=self._get_view_implements(cls_, info_metadata),
             )
-            for cls_ in self.information.classes
+            for cls_ in self.rules.classes
         ]
 
         classes_without_properties: set[str] = set()
-        for class_ in self.information.classes:
+        for class_ in self.rules.classes:
             properties: list[DMSProperty] = properties_by_class.get(class_.class_.versioned_id, [])
             if not properties or all(
                 isinstance(prop.value_type, ViewPropertyEntity) and prop.connection != "direct" for prop in properties
@@ -70,7 +85,16 @@ class _InformationRulesConverter:
                 classes_without_properties.add(class_.class_.versioned_id)
 
         containers: list[DMSContainer] = []
-        for class_ in self.information.classes:
+        classes = list(self.rules.classes)
+        for new_class_entity, created_from in self._created_classes_from.items():
+            # We create new classes in case metadata is set to addition or reshape
+            # and the class was present in the last schema to avoid creating
+            # a changed container and instead create a new one.
+            created_class = self.last_classes[created_from].copy(deep=True)
+            created_class.class_ = new_class_entity
+            classes.append(created_class)
+
+        for class_ in classes:
             if class_.class_.versioned_id in classes_without_properties:
                 continue
             containers.append(
@@ -95,8 +119,8 @@ class _InformationRulesConverter:
             ),
             views=SheetList[DMSView](data=views),
             containers=SheetList[DMSContainer](data=containers),
-            last=self.information.last.as_dms_architect_rules() if self.information.last else None,
-            reference=self.information.reference.as_dms_architect_rules() if self.information.reference else None,
+            last=self.rules.last.as_dms_architect_rules() if self.rules.last else None,
+            reference=self.rules.reference.as_dms_architect_rules() if self.rules.reference else None,
         )
 
     @classmethod
@@ -119,8 +143,7 @@ class _InformationRulesConverter:
             updated=metadata.updated,
         )
 
-    @classmethod
-    def _as_dms_property(cls, prop: InformationProperty, default_space: str, default_version: str) -> "DMSProperty":
+    def _as_dms_property(self, prop: InformationProperty, default_space: str, default_version: str) -> "DMSProperty":
         """This creates the first"""
 
         from cognite.neat.rules.models.dms._rules import DMSProperty
@@ -148,9 +171,9 @@ class _InformationRulesConverter:
             nullable = None
         elif relation == "direct":
             nullable = True
-            container, container_property = cls._get_container(prop, default_space)
+            container, container_property = self._get_container(prop, default_space)
         else:
-            container, container_property = cls._get_container(prop, default_space)
+            container, container_property = self._get_container(prop, default_space)
 
         return DMSProperty(
             class_=prop.class_,
@@ -179,13 +202,20 @@ class _InformationRulesConverter:
             prefix = f"{prefix[:-1]}1"
         return prefix
 
-    @classmethod
-    def _get_container(cls, prop: InformationProperty, default_space: str) -> tuple[ContainerEntity, str]:
+    def _get_container(self, prop: InformationProperty, default_space: str) -> tuple[ContainerEntity, str]:
         if isinstance(prop.reference, ReferenceEntity):
             return (
                 prop.reference.as_container_entity(default_space),
                 prop.reference.property_ or prop.property_,
             )
+        elif (self.is_addition or self.is_reshape) and prop.class_ in self.last_classes:
+            # We need to create a new container for the property, as we cannot change
+            # the existing container in the last schema
+            class_entity = prop.class_.copy()
+            class_entity.suffix = self._bump_suffix(class_entity.suffix)
+            if class_entity not in self._created_classes_from:
+                self._created_classes_from[class_entity] = prop.class_
+            return class_entity.as_container_entity(default_space), prop.property_
         else:
             return prop.class_.as_container_entity(default_space), prop.property_
 
@@ -201,3 +231,12 @@ class _InformationRulesConverter:
 
         implements.extend([parent.as_view_entity(metadata.prefix, metadata.version) for parent in cls_.parent or []])
         return implements
+
+    @staticmethod
+    def _bump_suffix(suffix: str) -> str:
+        suffix_number = re.search(r"\d+$", suffix)
+
+        if suffix_number:
+            return suffix[: suffix_number.start()] + str(int(suffix_number.group()) + 1)
+        else:
+            return f"{suffix}2"
