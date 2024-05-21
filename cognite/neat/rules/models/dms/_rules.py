@@ -334,17 +334,11 @@ class DMSRules(BaseRules):
             raise MultiValueError([error for error in issue_list if isinstance(error, issues.NeatValidationError)])
         return self
 
-    @model_serializer(mode="wrap", when_used="always")
-    def dms_rules_serialization(
-        self,
-        handler: Callable,
-        info: SerializationInfo,
-    ) -> dict[str, Any]:
+    def dump(self, by_alias: bool = False, as_reference: bool = False) -> dict[str, Any]:
         from ._serializer import _DMSRulesSerializer
-
-        dumped = cast(dict[str, Any], handler(self, info))
+        dumped = self.model_dump(by_alias=by_alias)
         space, version = self.metadata.space, self.metadata.version
-        return _DMSRulesSerializer(info, space, version).clean(dumped)
+        return _DMSRulesSerializer(by_alias, space, version).clean(dumped)
 
     def as_schema(self, include_pipeline: bool = False, instance_space: str | None = None) -> DMSSchema:
         from ._exporter import _DMSExporter

@@ -22,7 +22,7 @@ from cognite.neat.rules.models._base import (
     RuleModel,
     SchemaCompleteness,
     SheetEntity,
-    SheetList,
+    SheetList, BaseRules,
 )
 from cognite.neat.rules.models._rdfpath import (
     AllReferences,
@@ -263,7 +263,7 @@ class InformationProperty(SheetEntity):
         return self.max_count != 1
 
 
-class InformationRules(RuleModel):
+class InformationRules(BaseRules):
     metadata: InformationMetadata = Field(alias="Metadata")
     properties: SheetList[InformationProperty] = Field(alias="Properties")
     classes: SheetList[InformationClass] = Field(alias="Classes")
@@ -337,15 +337,11 @@ class InformationRules(RuleModel):
             )
         return self
 
-    # @model_serializer(mode="plain", when_used="always")
-    @model_serializer(mode="wrap", when_used="always")
-    def information_rules_serializer(self, handler: Callable, info: SerializationInfo) -> dict[str, Any]:
+    def dump(self, by_alias: bool = False, as_reference: bool = False) -> dict[str, Any]:
         from ._serializer import _InformationRulesSerializer
-
-        dumped = cast(dict[str, Any], handler(self, info))
+        dumped = self.model_dump(by_alias=by_alias)
         prefix = self.metadata.prefix
-
-        return _InformationRulesSerializer(info, prefix).clean(dumped)
+        return _InformationRulesSerializer(by_alias, prefix).clean(dumped)
 
     def as_domain_rules(self) -> DomainRules:
         from ._converter import _InformationRulesConverter

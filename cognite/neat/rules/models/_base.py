@@ -219,6 +219,7 @@ class RuleModel(BaseModel):
         return headers_by_sheet
 
 
+
 class URL(BaseModel):
     url: HttpUrl
 
@@ -259,26 +260,17 @@ class BaseRules(RuleModel):
 
     Args:
         metadata: Data model metadata
-        classes: Classes defined in the data model
-        properties: Class properties defined in the data model with accompanying transformation rules
-                    to transform data from source to target representation
-        prefixes: Prefixes used in the data model. Defaults to PREFIXES
-        instances: Instances defined in the data model. Defaults to None
         validators_to_skip: List of validators to skip. Defaults to []
     """
 
     metadata: BaseMetadata
 
-    @abstractmethod
-    def reference_self(self) -> Self:
-        """
-        Returns a copy of the rules with reference fields set to itself
+    def dump(self, by_alias: bool = False, as_reference: bool = False) -> dict[str, Any]:
+        """Dump the model to a dictionary.
 
-        For example, if the rules have a property with a reference field, then
-        the reference field will be set to the property itself. This is used when
-        exporting a reference model.
+        This is used in the Exporters to dump rules in the required format.
         """
-        raise NotImplementedError
+        return self.model_dump(by_alias=by_alias)
 
 
 # An sheet entity is either a class or a property.
