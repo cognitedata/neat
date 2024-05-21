@@ -51,7 +51,7 @@ class TestDMSImporter:
         exclude = {
             "metadata": {"created", "updated"},
             "properties": {"data": {"__all__": {"reference"}}},
-            "reference": {},
+            "reference": {"__all__"},
             "views": {"data": {"__all__": {"reference"}}},
         }
         assert rules.dump(exclude=exclude) == dms_rules.dump(exclude=exclude)
