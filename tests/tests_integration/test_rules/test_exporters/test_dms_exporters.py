@@ -264,7 +264,7 @@ class TestDMSExporters:
         self, cognite_client: CogniteClient, svein_harald_dms_rules: DMSRules
     ) -> None:
         # We change the space to avoid conflicts with Alice's rules in the previous test
-        dumped = svein_harald_dms_rules.model_dump(by_alias=True)
+        dumped = svein_harald_dms_rules.dump(by_alias=True)
         new_space = "power_update"
         dumped["Metadata"]["space"] = new_space
         dumped["Last"]["Metadata"]["space"] = new_space
@@ -294,7 +294,7 @@ class TestDMSExporters:
 
     def test_export_olav_updated_dms_to_cdf(self, cognite_client: CogniteClient, olav_dms_rules: DMSRules) -> None:
         # We change the space to avoid conflicts with Olav's not-updated rules in the previous test
-        dumped = olav_dms_rules.model_dump(by_alias=True)
+        dumped = olav_dms_rules.dump(by_alias=True)
         new_enterprise_space = "power_update"
         new_solution_space = "power_analytics_update"
         dumped["Metadata"]["space"] = new_solution_space
@@ -314,6 +314,8 @@ class TestDMSExporters:
                 container["Reference"] = container["Reference"].replace("power", new_enterprise_space)
             if container["Constraint"]:
                 container["Constraint"] = container["Constraint"].replace("power", new_enterprise_space)
+            container["Container"] = container["Container"].replace("power", new_enterprise_space)
+            container["Class (linage)"] = container["Class (linage)"].replace("power", new_enterprise_space)
 
         rules = DMSRulesInput.load(dumped).as_rules()
         schema = rules.as_schema()

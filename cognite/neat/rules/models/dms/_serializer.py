@@ -11,11 +11,10 @@ class _DMSRulesSerializer:
     VIEWS_FIELDS: ClassVar[list[str]] = ["class_", "view", "implements"]
     CONTAINERS_FIELDS: ClassVar[list[str]] = ["class_", "container"]
 
-    def __init__(self, by_alias: bool, as_reference: bool, default_space: str, default_version: str) -> None:
+    def __init__(self, by_alias: bool, default_space: str, default_version: str) -> None:
         self.default_space = f"{default_space}:"
         self.default_version = f"version={default_version}"
         self.default_version_wrapped = f"({self.default_version})"
-        self.as_reference = as_reference
 
         self.properties_fields = self.PROPERTIES_FIELDS
         self.views_fields = self.VIEWS_FIELDS
@@ -57,7 +56,7 @@ class _DMSRulesSerializer:
             self.container_name = DMSRules.model_fields[self.container_name].alias or self.container_name
             self.metadata_name = DMSRules.model_fields[self.metadata_name].alias or self.metadata_name
 
-    def clean(self, dumped: dict[str, Any]) -> dict[str, Any]:
+    def clean(self, dumped: dict[str, Any], as_reference: bool) -> dict[str, Any]:
         # Sorting to get a deterministic order
         dumped[self.prop_name] = sorted(
             dumped[self.prop_name]["data"], key=lambda p: (p[self.prop_view], p[self.prop_view_property])
@@ -69,7 +68,7 @@ class _DMSRulesSerializer:
             dumped.pop(self.container_name, None)
 
         for prop in dumped[self.prop_name]:
-            if self.as_reference:
+            if as_reference:
                 view_entity = cast(ViewEntity, ViewEntity.load(prop[self.prop_view]))
                 prop[self.reference] = str(
                     ReferenceEntity(
@@ -86,7 +85,7 @@ class _DMSRulesSerializer:
             prop[self.prop_value_type] = prop[self.prop_value_type].replace(self.default_version, "")
 
         for view in dumped[self.view_name]:
-            if self.as_reference:
+            if as_reference:
                 view[self.reference] = view[self.view_view]
             for field_name in self.views_fields:
                 if value := view.get(field_name):
@@ -98,7 +97,7 @@ class _DMSRulesSerializer:
                 )
 
         for container in dumped.get(self.container_name, []):
-            if self.as_reference:
+            if as_reference:
                 container[self.reference] = container[self.container_container]
             else:
                 # If we are dumping as reference, we want to keep the default_space

@@ -355,7 +355,16 @@ class DMSRules(BaseRules):
             exclude_defaults=exclude_defaults,
         )
         space, version = self.metadata.space, self.metadata.version
-        return _DMSRulesSerializer(by_alias, as_reference, space, version).clean(dumped)
+        serializer = _DMSRulesSerializer(by_alias, space, version)
+        clean = serializer.clean(dumped, as_reference)
+        last = "Last" if by_alias else "last"
+        if last_dump := clean.get(last):
+            clean[last] = serializer.clean(last_dump, False)
+        reference = "Reference" if by_alias else "reference"
+        if self.reference and (ref_dump := clean.get(reference)):
+            space, version = self.reference.metadata.space, self.reference.metadata.version
+            clean[reference] = _DMSRulesSerializer(by_alias, space, version).clean(ref_dump, True)
+        return clean
 
     def as_schema(self, include_pipeline: bool = False, instance_space: str | None = None) -> DMSSchema:
         from ._exporter import _DMSExporter
