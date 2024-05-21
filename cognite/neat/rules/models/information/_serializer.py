@@ -1,6 +1,7 @@
 from typing import Any, ClassVar
 
 from cognite.neat.rules.models import InformationRules
+from cognite.neat.rules.models.entities import ClassEntity, ReferenceEntity
 from cognite.neat.rules.models.information import InformationClass, InformationProperty
 
 
@@ -23,6 +24,7 @@ class _InformationRulesSerializer:
         self.prop_property = "property_"
         self.prop_class = "class_"
 
+        self.reference = "Reference" if by_alias else "reference"
         if by_alias:
             self.properties_fields = [
                 InformationProperty.model_fields[field].alias or field for field in self.properties_fields
@@ -36,7 +38,7 @@ class _InformationRulesSerializer:
             self.prop_property = InformationProperty.model_fields[self.prop_property].alias or self.prop_property
             self.prop_class = InformationProperty.model_fields[self.prop_class].alias or self.prop_class
 
-    def clean(self, dumped: dict[str, Any]) -> dict[str, Any]:
+    def clean(self, dumped: dict[str, Any], as_reference: bool) -> dict[str, Any]:
         # Sorting to get a deterministic order
         dumped[self.prop_name] = sorted(
             dumped[self.prop_name]["data"], key=lambda p: (p[self.prop_class], p[self.prop_property])
@@ -44,11 +46,21 @@ class _InformationRulesSerializer:
         dumped[self.class_name] = sorted(dumped[self.class_name]["data"], key=lambda v: v[self.prop_class])
 
         for prop in dumped[self.prop_name]:
+            if as_reference:
+                class_entity = ClassEntity.load(prop[self.prop_class])
+                prop[self.reference] = str(
+                    ReferenceEntity(
+                        prefix=str(class_entity.prefix), suffix=class_entity.suffix, property=prop[self.prop_property]
+                    )
+                )
+
             for field_name in self.properties_fields:
                 if value := prop.get(field_name):
                     prop[field_name] = value.removeprefix(self.default_prefix)
 
         for class_ in dumped[self.class_name]:
+            if as_reference:
+                class_[self.reference] = class_[self.prop_class]
             for field_name in self.classes_fields:
                 if value := class_.get(field_name):
                     class_[field_name] = value.removeprefix(self.default_prefix)

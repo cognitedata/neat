@@ -53,7 +53,6 @@ from cognite.neat.rules.models.entities import (
     Unknown,
     UnknownEntity,
     URLEntity,
-    _UndefinedType,
     _UnknownType,
 )
 
@@ -357,7 +356,16 @@ class InformationRules(BaseRules):
             exclude_defaults=exclude_defaults,
         )
         prefix = self.metadata.prefix
-        return _InformationRulesSerializer(by_alias, prefix).clean(dumped)
+        serializer = _InformationRulesSerializer(by_alias, prefix)
+        cleaned = serializer.clean(dumped, as_reference)
+        last = "Last" if by_alias else "last"
+        if last_dump := cleaned.get(last):
+            cleaned[last] = serializer.clean(last_dump, False)
+        reference = "Reference" if by_alias else "reference"
+        if self.reference and (ref_dump := cleaned.get(reference)):
+            prefix = self.reference.metadata.prefix
+            cleaned[reference] = _InformationRulesSerializer(by_alias, prefix).clean(ref_dump, True)
+        return cleaned
 
     def as_domain_rules(self) -> DomainRules:
         from ._converter import _InformationRulesConverter
@@ -368,26 +376,3 @@ class InformationRules(BaseRules):
         from ._converter import _InformationRulesConverter
 
         return _InformationRulesConverter(self).as_dms_architect_rules()
-
-    def reference_self(self) -> "InformationRules":
-        new_self = self.model_copy(deep=True)
-        for prop in new_self.properties:
-            prop.reference = ReferenceEntity(
-                prefix=(
-                    prop.class_.prefix if not isinstance(prop.class_.prefix, _UndefinedType) else self.metadata.prefix
-                ),
-                suffix=prop.class_.suffix,
-                version=prop.class_.version,
-                property=prop.property_,
-            )
-
-        for cls_ in new_self.classes:
-            cls_.reference = ReferenceEntity(
-                prefix=(
-                    cls_.class_.prefix if not isinstance(cls_.class_.prefix, _UndefinedType) else self.metadata.prefix
-                ),
-                suffix=cls_.class_.suffix,
-                version=cls_.class_.version,
-            )
-
-        return new_self
