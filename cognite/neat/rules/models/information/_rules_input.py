@@ -154,6 +154,7 @@ class InformationClassInput:
     name: str | None = None
     description: str | None = None
     comment: str | None = None
+    parent: str | None = None
     reference: str | None = None
     match_type: str | None = None
 
@@ -184,6 +185,7 @@ class InformationClassInput:
             name=data.get("name", None),
             description=data.get("description", None),
             comment=data.get("comment", None),
+            parent=data.get("parent", None),
             reference=data.get("reference", None),
             match_type=data.get("match_type", None),
         )
@@ -196,6 +198,7 @@ class InformationClassInput:
             "Comment": self.comment,
             "Reference": self.reference,
             "Match Type": self.match_type,
+            "Parent Class": self.parent,
         }
 
 

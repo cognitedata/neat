@@ -17,7 +17,7 @@ class TestDTDLImporter:
         expected_issues = IssueList(
             [
                 cognite.neat.rules.issues.importing.MissingIdentifierError(component_type="Object"),
-                cognite.neat.rules.issues.spreadsheet.ClassNoPropertiesNoParentsWarning(
+                cognite.neat.rules.issues.spreadsheet.ClassNoPropertiesNoParentError(
                     ["example_grid_transmission:baseReceiver(version=1)"]
                 ),
             ]
