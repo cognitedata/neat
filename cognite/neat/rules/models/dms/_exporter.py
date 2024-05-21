@@ -1,5 +1,6 @@
 import warnings
 from collections import defaultdict
+from collections.abc import Sequence
 from typing import Any, cast
 
 from cognite.client.data_classes import data_modeling as dm
@@ -11,7 +12,7 @@ from cognite.client.data_classes.data_modeling.views import (
 )
 
 from cognite.neat.rules import issues
-from cognite.neat.rules.models._base import DataModelType
+from cognite.neat.rules.models._base import DataModelType, SheetList
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import (
     ContainerEntity,
@@ -60,17 +61,44 @@ class _DMSExporter:
 
     def to_schema(self) -> DMSSchema:
         rules = self.rules
-        container_properties_by_id, view_properties_by_id = self._gather_properties()
+        container_properties_by_id, view_properties_by_id = self._gather_properties(list(self.rules.properties))
+        if self.rules.last:
+            # If the last rules are present, we need to include the properties from the last rules as well
+            # to create complete containers and views.
+            self._update_with_properties(container_properties_by_id, view_properties_by_id, self.rules.last.properties)
+
         containers = self._create_containers(container_properties_by_id)
 
         views, node_types = self._create_views_with_node_types(view_properties_by_id)
 
+        last_schema: DMSSchema | None = None
+        if self.rules.last:
+            last_schema = self.rules.last.as_schema()
+            # Remove the views that are in the current model, last + current should equal the full model
+            # without any duplicates
+            last_schema.views = ViewApplyDict(
+                {view_id: view for view_id, view in last_schema.views.items() if view_id not in views}
+            )
+            last_schema.containers = ContainerApplyDict(
+                {
+                    container_id: container
+                    for container_id, container in last_schema.containers.items()
+                    if container_id not in containers
+                }
+            )
+
         views_not_in_model = {view.view.as_id() for view in rules.views if not view.in_model}
+        if rules.last:
+            views_not_in_model.update({view.view.as_id() for view in rules.last.views if not view.in_model})
+
         data_model = rules.metadata.as_data_model()
-        data_model.views = sorted(
-            [view_id for view_id in views.keys() if view_id not in views_not_in_model],
-            key=lambda v: v.as_tuple(),  # type: ignore[union-attr]
-        )
+
+        data_model_views = [view_id for view_id in views if view_id not in views_not_in_model]
+        if last_schema:
+            data_model_views.extend([view_id for view_id in last_schema.views if view_id not in views_not_in_model])
+
+        # Sorting to ensure deterministic order
+        data_model.views = sorted(data_model_views, key=lambda v: v.as_tuple())  # type: ignore[union-attr]
 
         spaces = self._create_spaces(rules.metadata, containers, views, data_model)
 
@@ -86,8 +114,8 @@ class _DMSExporter:
 
         if self._ref_schema:
             output.reference = self._ref_schema
-        if self.rules.last:
-            output.last = self.rules.last.as_schema()
+        if last_schema:
+            output.last = last_schema
         return output
 
     def _create_spaces(
@@ -113,8 +141,13 @@ class _DMSExporter:
         self,
         view_properties_by_id: dict[dm.ViewId, list[DMSProperty]],
     ) -> tuple[ViewApplyDict, NodeApplyDict]:
-        views = ViewApplyDict([dms_view.as_view() for dms_view in self.rules.views])
-        dms_view_by_id = {dms_view.view.as_id(): dms_view for dms_view in self.rules.views}
+        input_views = list(self.rules.views)
+        if self.rules.last:
+            modified_views = [v for v in self.rules.last.views if v.view.as_id() in view_properties_by_id]
+            input_views.extend(modified_views)
+
+        views = ViewApplyDict([dms_view.as_view() for dms_view in input_views])
+        dms_view_by_id = {dms_view.view.as_id(): dms_view for dms_view in input_views}
 
         for view_id, view in views.items():
             view.properties = {}
@@ -177,9 +210,14 @@ class _DMSExporter:
         self,
         container_properties_by_id: dict[dm.ContainerId, list[DMSProperty]],
     ) -> ContainerApplyDict:
-        containers = dm.ContainerApplyList(
-            [dms_container.as_container() for dms_container in self.rules.containers or []]
-        )
+        containers = list(self.rules.containers or [])
+        if self.rules.last:
+            modified_containers = [
+                c for c in self.rules.last.containers or [] if c.container.as_id() in container_properties_by_id
+            ]
+            containers.extend(modified_containers)
+
+        containers = dm.ContainerApplyList([dms_container.as_container() for dms_container in containers])
         container_to_drop = set()
         for container in containers:
             container_id = container.as_id()
@@ -233,10 +271,13 @@ class _DMSExporter:
                 }
         return ContainerApplyDict([container for container in containers if container.as_id() not in container_to_drop])
 
-    def _gather_properties(self) -> tuple[dict[dm.ContainerId, list[DMSProperty]], dict[dm.ViewId, list[DMSProperty]]]:
+    @staticmethod
+    def _gather_properties(
+        properties: Sequence[DMSProperty],
+    ) -> tuple[dict[dm.ContainerId, list[DMSProperty]], dict[dm.ViewId, list[DMSProperty]]]:
         container_properties_by_id: dict[dm.ContainerId, list[DMSProperty]] = defaultdict(list)
         view_properties_by_id: dict[dm.ViewId, list[DMSProperty]] = defaultdict(list)
-        for prop in self.rules.properties:
+        for prop in properties:
             view_id = prop.view.as_id()
             view_properties_by_id[view_id].append(prop)
 
@@ -245,6 +286,23 @@ class _DMSExporter:
                 container_properties_by_id[container_id].append(prop)
 
         return container_properties_by_id, view_properties_by_id
+
+    @classmethod
+    def _update_with_properties(
+        cls,
+        container_properties_by_id: dict[dm.ContainerId, list[DMSProperty]],
+        view_properties_by_id: dict[dm.ViewId, list[DMSProperty]],
+        properties: SheetList[DMSProperty],
+    ) -> None:
+        selected_properties = [prop for prop in properties if prop.view.as_id() in view_properties_by_id]
+        last_container_properties_by_id, last_view_properties_by_id = cls._gather_properties(selected_properties)
+        for container_id, properties in last_container_properties_by_id.items():
+            if container_id in container_properties_by_id:
+                # Only add the container properties that are not already present
+                container_properties_by_id[container_id].extend(properties)
+        for view_id, properties in last_view_properties_by_id.items():
+            # We know that all the views are present due to the check above
+            view_properties_by_id[view_id].extend(properties)
 
     def _create_view_filter(
         self,
@@ -291,8 +349,9 @@ class _DMSExporter:
             # HasData or not provided (this is the default)
             return HasDataFilter(inner=[ContainerEntity.from_id(id_) for id_ in ref_containers])
 
+    @classmethod
     def _create_view_property(
-        self, prop: DMSProperty, view_properties_by_id: dict[dm.ViewId, list[DMSProperty]]
+        cls, prop: DMSProperty, view_properties_by_id: dict[dm.ViewId, list[DMSProperty]]
     ) -> ViewPropertyApply | None:
         if prop.container and prop.container_property:
             container_prop_identifier = prop.container_property
@@ -336,7 +395,7 @@ class _DMSExporter:
                 edge_cls = SingleEdgeConnectionApply
 
             return edge_cls(
-                type=self._create_edge_type_from_prop(prop),
+                type=cls._create_edge_type_from_prop(prop),
                 source=source_view_id,
                 direction="outwards",
                 name=prop.name,
@@ -377,7 +436,7 @@ class _DMSExporter:
                     dm.MultiEdgeConnectionApply if prop.is_list in [True, None] else SingleEdgeConnectionApply
                 )
                 return inwards_edge_cls(
-                    type=self._create_edge_type_from_prop(reverse_prop or prop),
+                    type=cls._create_edge_type_from_prop(reverse_prop or prop),
                     source=source_view_id,
                     name=prop.name,
                     description=prop.description,
