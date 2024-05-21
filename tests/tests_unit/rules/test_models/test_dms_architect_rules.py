@@ -1606,6 +1606,44 @@ class TestDMSExporter:
             == dm.filters.Equals(["node", "type"], {"space": "power", "externalId": "Polygon"}).dump()
         )
 
+    def test_svein_harald_as_schema(self, svein_harald_dms_rules: DMSRules) -> None:
+        expected_views = {"GeneratingUnit", "EnergyArea", "TimeseriesForecastProduct"}
+        expected_model_views = expected_views | {
+            "ArrayCable",
+            "CircuitBreaker",
+            "CurrentTransformer",
+            "DisconnectSwitch",
+            "DistributionLine",
+            "DistributionSubstation",
+            "ElectricCarCharger",
+            "EnergyArea",
+            "EnergyConsumer",
+            "ExportCable",
+            "GeneratingUnit",
+            "GeoLocation",
+            "Meter",
+            "MultiLineString",
+            "OffshoreSubstation",
+            "OnshoreSubstation",
+            "Point",
+            "Polygon",
+            "PowerLine",
+            "Substation",
+            "Transmission",
+            "TransmissionSubstation",
+            "VoltageLevel",
+            "VoltageTransformer",
+            "WindFarm",
+            "WindTurbine",
+        }
+
+        schema = svein_harald_dms_rules.as_schema()
+
+        actual_views = {view.external_id for view in schema.views}
+        assert actual_views == expected_views
+        actual_model_views = {view.external_id for view in schema.data_model.views}
+        assert actual_model_views == expected_model_views
+
 
 def test_dms_rules_validation_error():
     with pytest.raises(ValidationError) as e:
