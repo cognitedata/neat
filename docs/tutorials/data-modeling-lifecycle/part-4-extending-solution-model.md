@@ -85,12 +85,17 @@ Olav has done one change to the metadata, he has set the `extension` to `rebuild
 Olav wants to completely remake the solution model to utilize the enterprise model, and he is ok with
 losing data in the current solution model as that was just a prototype.
 
+Next, Olav copies over all the properties, views, and containers from the `Last` sheets to the corresponding
+sheets in the spreadsheet. Even though it is not going to be an exact copy, it is a good starting point. In addition,
+he goes to the reference sheets and copies over the `TimeseriesForecastProduct` row from the `RefViews` sheet to the
+`Views` sheet in the spreadsheet.
+
 
 
 ## Updating the Spreadsheet (Download Olav's DMS Updated spreadsheet)
 
 The finished spreadsheet with the extension of the analytic solution model can be found
-[here](../../artifacts/figs/dms_rebuild_olav.xlsx).
+[here](../../artifacts/rules/dms_rebuild_olav.xlsx).
 
 
 ## Deploying the Extension
