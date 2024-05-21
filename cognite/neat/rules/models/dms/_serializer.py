@@ -1,7 +1,8 @@
-from typing import Any, ClassVar
+from typing import Any, ClassVar, cast
 
 from cognite.neat.rules.models import DMSRules
 from cognite.neat.rules.models.dms import DMSContainer, DMSProperty, DMSView
+from cognite.neat.rules.models.entities import ReferenceEntity, ViewEntity
 
 
 class _DMSRulesSerializer:
@@ -10,10 +11,11 @@ class _DMSRulesSerializer:
     VIEWS_FIELDS: ClassVar[list[str]] = ["class_", "view", "implements"]
     CONTAINERS_FIELDS: ClassVar[list[str]] = ["class_", "container"]
 
-    def __init__(self, by_alias: bool, default_space: str, default_version: str) -> None:
+    def __init__(self, by_alias: bool, as_reference: bool, default_space: str, default_version: str) -> None:
         self.default_space = f"{default_space}:"
         self.default_version = f"version={default_version}"
         self.default_version_wrapped = f"({self.default_version})"
+        self.as_reference = as_reference
 
         self.properties_fields = self.PROPERTIES_FIELDS
         self.views_fields = self.VIEWS_FIELDS
@@ -29,6 +31,7 @@ class _DMSRulesSerializer:
         self.view_implements = "implements"
         self.container_container = "container"
         self.container_constraint = "constraint"
+        self.reference = "Reference" if by_alias else "reference"
 
         if by_alias:
             self.properties_fields = [
@@ -66,6 +69,16 @@ class _DMSRulesSerializer:
             dumped.pop(self.container_name, None)
 
         for prop in dumped[self.prop_name]:
+            if self.as_reference:
+                view_entity = cast(ViewEntity, ViewEntity.load(prop[self.prop_view]))
+                prop[self.reference] = str(
+                    ReferenceEntity(
+                        prefix=view_entity.prefix,
+                        suffix=view_entity.suffix,
+                        version=view_entity.version,
+                        property=prop[self.prop_view_property],
+                    )
+                )
             for field_name in self.properties_fields:
                 if value := prop.get(field_name):
                     prop[field_name] = value.removeprefix(self.default_space).removesuffix(self.default_version_wrapped)
@@ -73,6 +86,8 @@ class _DMSRulesSerializer:
             prop[self.prop_value_type] = prop[self.prop_value_type].replace(self.default_version, "")
 
         for view in dumped[self.view_name]:
+            if self.as_reference:
+                view[self.reference] = view[self.view_view]
             for field_name in self.views_fields:
                 if value := view.get(field_name):
                     view[field_name] = value.removeprefix(self.default_space).removesuffix(self.default_version_wrapped)
@@ -83,12 +98,16 @@ class _DMSRulesSerializer:
                 )
 
         for container in dumped.get(self.container_name, []):
-            for field_name in self.containers_fields:
-                if value := container.get(field_name):
-                    container[field_name] = value.removeprefix(self.default_space)
+            if self.as_reference:
+                container[self.reference] = container[self.container_container]
+            else:
+                # If we are dumping as reference, we want to keep the default_space
+                for field_name in self.containers_fields:
+                    if value := container.get(field_name):
+                        container[field_name] = value.removeprefix(self.default_space)
 
-            if value := container.get(self.container_constraint):
-                container[self.container_constraint] = ",".join(
-                    constraint.strip().removeprefix(self.default_space) for constraint in value.split(",")
-                )
+                if value := container.get(self.container_constraint):
+                    container[self.container_constraint] = ",".join(
+                        constraint.strip().removeprefix(self.default_space) for constraint in value.split(",")
+                    )
         return dumped

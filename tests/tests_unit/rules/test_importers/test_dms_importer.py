@@ -50,9 +50,9 @@ class TestDMSImporter:
         # This information is lost in the conversion to schema
         exclude = {
             "metadata": {"created", "updated"},
-            "properties": {"__all__": {"reference"}},
+            "properties": {"data": {"__all__": {"reference"}}},
             "reference": {},
-            "views": {"__all__": {"reference"}},
+            "views": {"data": {"__all__": {"reference"}}},
         }
         assert rules.model_dump(exclude=exclude) == dms_rules.model_dump(exclude=exclude)
 

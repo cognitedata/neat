@@ -49,9 +49,9 @@ if TYPE_CHECKING:
     from cognite.neat.rules.models.information._rules import InformationRules
 
 if sys.version_info >= (3, 11):
-    from typing import Self
+    pass
 else:
-    from typing_extensions import Self
+    pass
 
 _DEFAULT_VERSION = "1"
 
@@ -355,7 +355,7 @@ class DMSRules(BaseRules):
             exclude_defaults=exclude_defaults,
         )
         space, version = self.metadata.space, self.metadata.version
-        return _DMSRulesSerializer(by_alias, space, version).clean(dumped)
+        return _DMSRulesSerializer(by_alias, as_reference, space, version).clean(dumped)
 
     def as_schema(self, include_pipeline: bool = False, instance_space: str | None = None) -> DMSSchema:
         from ._exporter import _DMSExporter
@@ -371,19 +371,3 @@ class DMSRules(BaseRules):
         from ._converter import _DMSRulesConverter
 
         return _DMSRulesConverter(self).as_domain_rules()
-
-    def reference_self(self) -> Self:
-        new_rules = self.model_copy(deep=True)
-        for prop in new_rules.properties:
-            prop.reference = ReferenceEntity(
-                prefix=prop.view.prefix, suffix=prop.view.suffix, version=prop.view.version, property=prop.property_
-            )
-        view: DMSView
-        for view in new_rules.views:
-            view.reference = ReferenceEntity(
-                prefix=view.view.prefix, suffix=view.view.suffix, version=view.view.version
-            )
-        container: DMSContainer
-        for container in new_rules.containers or []:
-            container.reference = ReferenceEntity(prefix=container.container.prefix, suffix=container.container.suffix)
-        return new_rules
