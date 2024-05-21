@@ -25,6 +25,7 @@ from pydantic import (
     model_validator,
 )
 from pydantic.fields import FieldInfo
+from pydantic.main import IncEx
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -261,12 +262,26 @@ class BaseRules(RuleModel):
 
     metadata: BaseMetadata
 
-    def dump(self, by_alias: bool = False, as_reference: bool = False) -> dict[str, Any]:
+    def dump(
+        self,
+        by_alias: bool = False,
+        exclude: IncEx = None,
+        exclude_none: bool = False,
+        exclude_unset: bool = False,
+        exclude_defaults: bool = False,
+        as_reference: bool = False,
+    ) -> dict[str, Any]:
         """Dump the model to a dictionary.
 
         This is used in the Exporters to dump rules in the required format.
         """
-        return self.model_dump(by_alias=by_alias)
+        return self.model_dump(
+            by_alias=by_alias,
+            exclude=exclude,
+            exclude_none=exclude_none,
+            exclude_unset=exclude_unset,
+            exclude_defaults=exclude_defaults,
+        )
 
 
 # An sheet entity is either a class or a property.

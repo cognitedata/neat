@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 from cognite.client import data_modeling as dm
 from pydantic import Field, field_serializer, field_validator, model_validator
+from pydantic.main import IncEx
 from pydantic_core.core_schema import ValidationInfo
 
 from cognite.neat.rules import issues
@@ -333,10 +334,24 @@ class DMSRules(BaseRules):
             raise MultiValueError([error for error in issue_list if isinstance(error, issues.NeatValidationError)])
         return self
 
-    def dump(self, by_alias: bool = False, as_reference: bool = False) -> dict[str, Any]:
+    def dump(
+        self,
+        by_alias: bool = False,
+        exclude: IncEx = None,
+        exclude_none: bool = False,
+        exclude_unset: bool = False,
+        exclude_defaults: bool = False,
+        as_reference: bool = False,
+    ) -> dict[str, Any]:
         from ._serializer import _DMSRulesSerializer
 
-        dumped = self.model_dump(by_alias=by_alias)
+        dumped = self.model_dump(
+            by_alias=by_alias,
+            exclude=exclude,
+            exclude_none=exclude_none,
+            exclude_unset=exclude_unset,
+            exclude_defaults=exclude_defaults,
+        )
         space, version = self.metadata.space, self.metadata.version
         return _DMSRulesSerializer(by_alias, space, version).clean(dumped)
 

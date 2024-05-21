@@ -116,17 +116,17 @@ class ExcelExporter(BaseExporter[Workbook]):
             }
 
             if self.dump_as == "last":
-                dumped_last_rules = rules.model_dump(by_alias=True)
+                dumped_last_rules = rules.dump(by_alias=True)
                 if rules.reference:
-                    dumped_reference_rules = rules.reference.model_dump(by_alias=True)
+                    dumped_reference_rules = rules.reference.dump(by_alias=True, as_reference=True)
             elif self.dump_as == "reference":
-                dumped_reference_rules = rules.reference_self().model_dump(by_alias=True)
+                dumped_reference_rules = rules.dump(by_alias=True, as_reference=True)
         else:
-            dumped_user_rules = rules.model_dump(by_alias=True)
+            dumped_user_rules = rules.dump(by_alias=True)
             if rules.last:
-                dumped_last_rules = rules.last.model_dump(by_alias=True)
+                dumped_last_rules = rules.last.dump(by_alias=True)
             if rules.reference:
-                dumped_reference_rules = rules.reference.model_dump(by_alias=True)
+                dumped_reference_rules = rules.reference.dump(by_alias=True, as_reference=True)
 
         self._write_metadata_sheet(workbook, dumped_user_rules["Metadata"])
         self._write_sheets(workbook, dumped_user_rules, rules)

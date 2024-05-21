@@ -9,8 +9,8 @@ from cognite.neat.rules.models.entities import ClassEntity, ParentEntityList
 
 from ._base import (
     BaseMetadata,
+    BaseRules,
     RoleTypes,
-    RuleModel,
     SheetEntity,
     SheetList,
 )
@@ -51,7 +51,7 @@ class DomainClass(SheetEntity):
     parent: ParentEntityList | None = Field(alias="Parent Class")
 
 
-class DomainRules(RuleModel):
+class DomainRules(BaseRules):
     metadata: DomainMetadata = Field(alias="Metadata")
     properties: SheetList[DomainProperty] = Field(alias="Properties")
     classes: SheetList[DomainClass] | None = Field(None, alias="Classes")

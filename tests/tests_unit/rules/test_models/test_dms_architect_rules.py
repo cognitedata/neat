@@ -1421,8 +1421,8 @@ class TestDMSRules:
         recreated_rules = DMSImporter(schema).to_rules(errors="raise")
 
         # This information is lost in the conversion
-        exclude = {"metadata": {"created", "updated"}, "properties": {"__all__": {"reference"}}}
-        assert recreated_rules.model_dump(exclude=exclude) == alice_rules.model_dump(exclude=exclude)
+        exclude = {"metadata": {"created", "updated"}, "properties": {"data": {"__all__": {"reference"}}}}
+        assert recreated_rules.dump(exclude=exclude) == alice_rules.dump(exclude=exclude)
 
     @pytest.mark.parametrize("input_rules, expected_schema", rules_schema_tests_cases())
     def test_as_schema(self, input_rules: DMSRulesInput, expected_schema: DMSSchema) -> None:
@@ -1504,7 +1504,7 @@ class TestDMSRules:
             "containers": [{"container": "Asset", "class_": "Asset", "constraint": "Sourceable,Describable"}],
         }
 
-        actual_dump = dms_rules.model_dump(exclude_none=True, exclude_unset=True, exclude_defaults=True)
+        actual_dump = dms_rules.dump(exclude_none=True, exclude_unset=True, exclude_defaults=True)
 
         assert actual_dump == expected_dump
 

@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from pydantic import Field, field_serializer, field_validator, model_validator
+from pydantic.main import IncEx
 from rdflib import Namespace
 
 import cognite.neat.rules.issues.spreadsheet
@@ -335,10 +336,18 @@ class InformationRules(BaseRules):
             )
         return self
 
-    def dump(self, by_alias: bool = False, as_reference: bool = False) -> dict[str, Any]:
+    def dump(
+        self,
+        by_alias: bool = False,
+        exclude: IncEx = None,
+        exclude_none: bool = False,
+        exclude_unset: bool = False,
+        exclude_defaults: bool = False,
+        as_reference: bool = False,
+    ) -> dict[str, Any]:
         from ._serializer import _InformationRulesSerializer
 
-        dumped = self.model_dump(by_alias=by_alias)
+        dumped = self.model_dump(by_alias=by_alias, exclude=exclude)
         prefix = self.metadata.prefix
         return _InformationRulesSerializer(by_alias, prefix).clean(dumped)
 
