@@ -21,14 +21,14 @@ concepts `Space`, `Data Model` and `View`.
 
 ## Best Practices
 
-0. Establish a data governance team that will ensure implementation of the best practices
-1. Create one main data model, the Enterprise Data Model, that is shared across the organization.
-2. Each business area can create one or more specific data models based on the Enterprise Data Model, called
+1. Establish a data governance team that will ensure implementation of the best practices
+2. Create one main data model, the Enterprise Data Model, that is shared across the organization.
+3. Each business area can create one or more specific data models based on the Enterprise Data Model, called
    Solution Data Models.
-3. Solution Data Models should always be referencing the Enterprise Data Model, not another Solution Model.
-4. All data models are kept in its own `Space`, thus data models do not share the same `Space`.
-5. All `View`s of a data models have the same version and `Space` as the data model.
-6. Keep the Enterprise Data Model as small as possible, but not smaller.
+4. Solution Data Models should always be referencing the Enterprise Data Model, not another Solution Model.
+5. All data models are kept in its own `Space`, thus data models do not share the same `Space`.
+6. All `View`s of a data models have the same version and `Space` as the data model.
+7. Keep the Enterprise Data Model as small as possible, but not smaller.
 
 ## Justification
 
@@ -55,6 +55,11 @@ resulting in solving critical business questions.
 The principle of parsimony is a fundamental principle in science and engineering. It states that a model should be
 as simple as possible, but not simpler. In the case of an Enterprise Data Model, it should contain all shared
 concepts across the organization, but no concepts that are only relevant for a single business area.
+
+### Establish a data governance team
+This follows from the principle of cooperation. This team should be cross-functional and have representatives
+from all relevant parts of the organization. This is important to ensure that the Enterprise Data Model
+has a solid anchoring in the organization such that it will be used and maintained.
 
 ### Create one main data model, the Enterprise Data Model
 
