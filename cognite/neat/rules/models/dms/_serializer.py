@@ -24,6 +24,7 @@ class _DMSRulesSerializer:
         self.container_name = "containers"
         self.metadata_name = "metadata"
         self.prop_view = "view"
+        self.prop_container = "container"
         self.prop_view_property = "view_property"
         self.prop_value_type = "value_type"
         self.view_view = "view"
@@ -41,6 +42,7 @@ class _DMSRulesSerializer:
                 DMSContainer.model_fields[field].alias or field for field in self.containers_fields
             ]
             self.prop_view = DMSProperty.model_fields[self.prop_view].alias or self.prop_view
+            self.prop_container = DMSProperty.model_fields[self.prop_container].alias or self.prop_container
             self.prop_view_property = DMSProperty.model_fields[self.prop_view_property].alias or self.prop_view_property
             self.prop_value_type = DMSProperty.model_fields[self.prop_value_type].alias or self.prop_value_type
             self.view_view = DMSView.model_fields[self.view_view].alias or self.view_view
@@ -79,6 +81,10 @@ class _DMSRulesSerializer:
                     )
                 )
             for field_name in self.properties_fields:
+                if as_reference and field_name == self.prop_container:
+                    # When dumping as reference, the container should keep the default space for easy copying
+                    # over to user sheets.
+                    continue
                 if value := prop.get(field_name):
                     prop[field_name] = value.removeprefix(self.default_space).removesuffix(self.default_version_wrapped)
             # Value type can have a property as well
@@ -99,14 +105,12 @@ class _DMSRulesSerializer:
         for container in dumped.get(self.container_name, []):
             if as_reference:
                 container[self.reference] = container[self.container_container]
-            else:
-                # If we are dumping as reference, we want to keep the default_space
-                for field_name in self.containers_fields:
-                    if value := container.get(field_name):
-                        container[field_name] = value.removeprefix(self.default_space)
+            for field_name in self.containers_fields:
+                if value := container.get(field_name):
+                    container[field_name] = value.removeprefix(self.default_space)
 
-                if value := container.get(self.container_constraint):
-                    container[self.container_constraint] = ",".join(
-                        constraint.strip().removeprefix(self.default_space) for constraint in value.split(",")
-                    )
+            if value := container.get(self.container_constraint):
+                container[self.container_constraint] = ",".join(
+                    constraint.strip().removeprefix(self.default_space) for constraint in value.split(",")
+                )
         return dumped
