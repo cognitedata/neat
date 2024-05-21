@@ -2,13 +2,12 @@ import math
 import re
 import sys
 import warnings
-from collections.abc import Callable
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 from cognite.client import data_modeling as dm
-from pydantic import Field, field_serializer, field_validator, model_serializer, model_validator
-from pydantic_core.core_schema import SerializationInfo, ValidationInfo
+from pydantic import Field, field_serializer, field_validator, model_validator
+from pydantic_core.core_schema import ValidationInfo
 
 from cognite.neat.rules import issues
 from cognite.neat.rules.issues import MultiValueError
@@ -336,6 +335,7 @@ class DMSRules(BaseRules):
 
     def dump(self, by_alias: bool = False, as_reference: bool = False) -> dict[str, Any]:
         from ._serializer import _DMSRulesSerializer
+
         dumped = self.model_dump(by_alias=by_alias)
         space, version = self.metadata.space, self.metadata.version
         return _DMSRulesSerializer(by_alias, space, version).clean(dumped)

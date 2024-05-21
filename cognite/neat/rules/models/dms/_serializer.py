@@ -1,6 +1,4 @@
-from typing import Any, ClassVar, cast
-
-from pydantic_core.core_schema import SerializationInfo
+from typing import Any, ClassVar
 
 from cognite.neat.rules.models import DMSRules
 from cognite.neat.rules.models.dms import DMSContainer, DMSProperty, DMSView
@@ -12,7 +10,7 @@ class _DMSRulesSerializer:
     VIEWS_FIELDS: ClassVar[list[str]] = ["class_", "view", "implements"]
     CONTAINERS_FIELDS: ClassVar[list[str]] = ["class_", "container"]
 
-    def __init__(self, info: SerializationInfo, default_space: str, default_version: str) -> None:
+    def __init__(self, by_alias: bool, default_space: str, default_version: str) -> None:
         self.default_space = f"{default_space}:"
         self.default_version = f"version={default_version}"
         self.default_version_wrapped = f"({self.default_version})"
@@ -32,7 +30,7 @@ class _DMSRulesSerializer:
         self.container_container = "container"
         self.container_constraint = "constraint"
 
-        if info.by_alias:
+        if by_alias:
             self.properties_fields = [
                 DMSProperty.model_fields[field].alias or field for field in self.properties_fields
             ]
@@ -56,21 +54,6 @@ class _DMSRulesSerializer:
             self.container_name = DMSRules.model_fields[self.container_name].alias or self.container_name
             self.metadata_name = DMSRules.model_fields[self.metadata_name].alias or self.metadata_name
 
-        if isinstance(info.exclude, dict):
-            # Just for happy mypy
-            exclude = cast(dict, info.exclude)
-            self.exclude_properties = exclude.get("properties", {}).get("__all__", set())
-            self.exclude_views = exclude.get("views", {}).get("__all__", set()) or set()
-            self.exclude_containers = exclude.get("containers", {}).get("__all__", set()) or set()
-            self.metadata_exclude = exclude.get("metadata", set()) or set()
-            self.exclude_top = {k for k, v in exclude.items() if not v}
-        else:
-            self.exclude_top = set(info.exclude or {})
-            self.exclude_properties = set()
-            self.exclude_views = set()
-            self.exclude_containers = set()
-            self.metadata_exclude = set()
-
     def clean(self, dumped: dict[str, Any]) -> dict[str, Any]:
         # Sorting to get a deterministic order
         dumped[self.prop_name] = sorted(
@@ -88,9 +71,6 @@ class _DMSRulesSerializer:
                     prop[field_name] = value.removeprefix(self.default_space).removesuffix(self.default_version_wrapped)
             # Value type can have a property as well
             prop[self.prop_value_type] = prop[self.prop_value_type].replace(self.default_version, "")
-            if self.exclude_properties:
-                for field in self.exclude_properties:
-                    prop.pop(field, None)
 
         for view in dumped[self.view_name]:
             for field_name in self.views_fields:
@@ -101,9 +81,6 @@ class _DMSRulesSerializer:
                     parent.strip().removeprefix(self.default_space).removesuffix(self.default_version_wrapped)
                     for parent in value.split(",")
                 )
-            if self.exclude_views:
-                for field in self.exclude_views:
-                    view.pop(field, None)
 
         for container in dumped.get(self.container_name, []):
             for field_name in self.containers_fields:
@@ -114,13 +91,4 @@ class _DMSRulesSerializer:
                 container[self.container_constraint] = ",".join(
                     constraint.strip().removeprefix(self.default_space) for constraint in value.split(",")
                 )
-            if self.exclude_containers:
-                for field in self.exclude_containers:
-                    container.pop(field, None)
-
-        if self.metadata_exclude:
-            for field in self.metadata_exclude:
-                dumped[self.metadata_name].pop(field, None)
-        for field in self.exclude_top:
-            dumped.pop(field, None)
         return dumped

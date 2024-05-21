@@ -7,7 +7,6 @@ from __future__ import annotations
 import math
 import sys
 import types
-from abc import abstractmethod
 from collections.abc import Callable, Iterator
 from functools import wraps
 from typing import Annotated, Any, ClassVar, Generic, TypeAlias, TypeVar
@@ -29,10 +28,8 @@ from pydantic.fields import FieldInfo
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
-    from typing import Self
 else:
     from backports.strenum import StrEnum
-    from typing_extensions import Self
 
 
 METADATA_VALUE_MAX_LENGTH = 5120
@@ -217,7 +214,6 @@ class RuleModel(BaseModel):
                 if field_name != "validators_to_skip"
             ]
         return headers_by_sheet
-
 
 
 class URL(BaseModel):

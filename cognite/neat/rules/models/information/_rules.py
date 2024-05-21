@@ -1,12 +1,10 @@
 import math
 import sys
 import warnings
-from collections.abc import Callable
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
-from pydantic import Field, field_serializer, field_validator, model_serializer, model_validator
-from pydantic_core.core_schema import SerializationInfo
+from pydantic import Field, field_serializer, field_validator, model_validator
 from rdflib import Namespace
 
 import cognite.neat.rules.issues.spreadsheet
@@ -14,15 +12,15 @@ from cognite.neat.constants import PREFIXES
 from cognite.neat.rules import exceptions
 from cognite.neat.rules.models._base import (
     BaseMetadata,
+    BaseRules,
     DataModelType,
     ExtensionCategory,
     ExtensionCategoryType,
     MatchType,
     RoleTypes,
-    RuleModel,
     SchemaCompleteness,
     SheetEntity,
-    SheetList, BaseRules,
+    SheetList,
 )
 from cognite.neat.rules.models._rdfpath import (
     AllReferences,
@@ -339,6 +337,7 @@ class InformationRules(BaseRules):
 
     def dump(self, by_alias: bool = False, as_reference: bool = False) -> dict[str, Any]:
         from ._serializer import _InformationRulesSerializer
+
         dumped = self.model_dump(by_alias=by_alias)
         prefix = self.metadata.prefix
         return _InformationRulesSerializer(by_alias, prefix).clean(dumped)
