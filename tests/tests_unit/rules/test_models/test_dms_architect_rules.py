@@ -1356,14 +1356,14 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
             DMSContainerInput(container="Asset", class_="Asset"),
         ],
         views=[
-            DMSViewInput(view="Asset", class_="Asset"),
+            DMSViewInput(view="Asset", class_="Asset", description="Change not allowed"),
         ],
         last=last_rules,
     ).as_rules()
 
     yield pytest.param(
         changing_view,
-        [validation.dms.ChangingViewError(dm.ViewId("my_space", "Asset", "1"), ["navn"])],
+        [validation.dms.ChangingViewError(dm.ViewId("my_space", "Asset", "1"), None, ["description"])],
         id="Addition extension, changing view",
     )
 
@@ -1541,7 +1541,7 @@ class TestDMSRules:
 
     @pytest.mark.parametrize("rules, expected_issues", list(invalid_extended_rules_test_cases()))
     def test_load_invalid_extended_rules(self, rules: DMSRules, expected_issues: list[validation.ValidationIssue]):
-        raw = rules.model_dump(by_alias=True)
+        raw = rules.dump(by_alias=True)
         raw["Metadata"]["schema"] = "extended"
 
         with pytest.raises(ValidationError) as e:

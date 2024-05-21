@@ -212,7 +212,10 @@ class DMSPostValidation:
             changed_attributes, changed_properties = self._changed_attributes_and_properties(
                 view.dump(), existing_view.dump()
             )
-            if all(changed_prop not in (existing_view.properties or {}) for changed_prop in changed_properties):
+            existing_properties = existing_view.properties or {}
+            changed_properties = [prop for prop in changed_properties if prop in existing_properties]
+
+            if not changed_attributes and not changed_properties:
                 # Only added new properties, no problem
                 continue
             self.issue_list.append(

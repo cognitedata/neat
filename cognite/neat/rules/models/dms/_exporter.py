@@ -12,7 +12,7 @@ from cognite.client.data_classes.data_modeling.views import (
 )
 
 from cognite.neat.rules import issues
-from cognite.neat.rules.models._base import DataModelType, SheetList
+from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness, SheetList
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import (
     ContainerEntity,
@@ -62,10 +62,14 @@ class _DMSExporter:
     def to_schema(self) -> DMSSchema:
         rules = self.rules
         container_properties_by_id, view_properties_by_id = self._gather_properties(list(self.rules.properties))
-        if self.rules.last:
+        is_addition = (
+            rules.metadata.schema_ is SchemaCompleteness.extended
+            and rules.metadata.extension is ExtensionCategory.addition
+        )
+        if rules.last and is_addition:
             # If the last rules are present, we need to include the properties from the last rules as well
             # to create complete containers and views.
-            self._update_with_properties(container_properties_by_id, view_properties_by_id, self.rules.last.properties)
+            self._update_with_properties(container_properties_by_id, view_properties_by_id, rules.last.properties)
 
         containers = self._create_containers(container_properties_by_id)
 
@@ -88,13 +92,13 @@ class _DMSExporter:
             )
 
         views_not_in_model = {view.view.as_id() for view in rules.views if not view.in_model}
-        if rules.last:
+        if rules.last and is_addition:
             views_not_in_model.update({view.view.as_id() for view in rules.last.views if not view.in_model})
 
         data_model = rules.metadata.as_data_model()
 
         data_model_views = [view_id for view_id in views if view_id not in views_not_in_model]
-        if last_schema:
+        if last_schema and is_addition:
             data_model_views.extend([view_id for view_id in last_schema.views if view_id not in views_not_in_model])
 
         # Sorting to ensure deterministic order
@@ -143,7 +147,12 @@ class _DMSExporter:
     ) -> tuple[ViewApplyDict, NodeApplyDict]:
         input_views = list(self.rules.views)
         if self.rules.last:
-            modified_views = [v for v in self.rules.last.views if v.view.as_id() in view_properties_by_id]
+            existing = {view.view.as_id() for view in input_views}
+            modified_views = [
+                v
+                for v in self.rules.last.views
+                if v.view.as_id() in view_properties_by_id and v.view.as_id() not in existing
+            ]
             input_views.extend(modified_views)
 
         views = ViewApplyDict([dms_view.as_view() for dms_view in input_views])
@@ -212,8 +221,11 @@ class _DMSExporter:
     ) -> ContainerApplyDict:
         containers = list(self.rules.containers or [])
         if self.rules.last:
+            existing = {container.container.as_id() for container in containers}
             modified_containers = [
-                c for c in self.rules.last.containers or [] if c.container.as_id() in container_properties_by_id
+                c
+                for c in self.rules.last.containers or []
+                if c.container.as_id() in container_properties_by_id and c.container.as_id() not in existing
             ]
             containers.extend(modified_containers)
 
@@ -292,17 +304,23 @@ class _DMSExporter:
         cls,
         container_properties_by_id: dict[dm.ContainerId, list[DMSProperty]],
         view_properties_by_id: dict[dm.ViewId, list[DMSProperty]],
-        properties: SheetList[DMSProperty],
+        last_properties: SheetList[DMSProperty],
     ) -> None:
-        selected_properties = [prop for prop in properties if prop.view.as_id() in view_properties_by_id]
+        selected_properties = [prop for prop in last_properties if prop.view.as_id() in view_properties_by_id]
         last_container_properties_by_id, last_view_properties_by_id = cls._gather_properties(selected_properties)
+
         for container_id, properties in last_container_properties_by_id.items():
             if container_id in container_properties_by_id:
-                # Only add the container properties that are not already present
-                container_properties_by_id[container_id].extend(properties)
+                # Only add the container properties that are not already present, and do not overwrite.
+                existing = {prop.container_property for prop in container_properties_by_id[container_id]}
+                container_properties_by_id[container_id].extend(
+                    [prop for prop in properties if prop.container_property not in existing]
+                )
+
         for view_id, properties in last_view_properties_by_id.items():
             # We know that all the views are present due to the check above
-            view_properties_by_id[view_id].extend(properties)
+            existing = {prop.view_property for prop in view_properties_by_id[view_id]}
+            view_properties_by_id[view_id].extend([prop for prop in properties if prop.view_property not in existing])
 
     def _create_view_filter(
         self,
