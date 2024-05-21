@@ -41,7 +41,7 @@ class DMSPostValidation:
             return self.issue_list
         dms_schema = self.rules.as_schema()
         self.issue_list.extend(dms_schema.validate())
-        self._validate_filter(dms_schema)
+        self._validate_performance(dms_schema)
         return self.issue_list
 
     def _consistent_container_properties(self) -> None:
@@ -231,7 +231,7 @@ class DMSPostValidation:
                 )
             )
 
-    def _validate_filter(self, dms_schema: DMSSchema) -> None:
+    def _validate_performance(self, dms_schema: DMSSchema) -> None:
         for view_id, view in dms_schema.views.items():
             mapped_containers = dms_schema._get_mapped_container_from_view(view_id)
 
