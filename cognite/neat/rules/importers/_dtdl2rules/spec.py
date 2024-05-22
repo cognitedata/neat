@@ -316,7 +316,7 @@ class Interface(DTDLBase):
     def select_content_type(cls, value: Any, info) -> Any:
         if not isinstance(value, list):
             return value
-        context = info.data.get("context", cls.default_context)
+        context = info.data.get("@context", cls.default_context)
         spec_version = context.rsplit(";", maxsplit=1)[1]
         try:
             cls_by_type = DTDL_CLS_BY_TYPE_BY_SPEC[spec_version]
