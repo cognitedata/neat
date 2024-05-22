@@ -60,6 +60,7 @@ nav:
       - Base Terminology: terminology/base-terminology.md
       - Rules:
           - Overview: terminology/rules.md
+          - Model Validation: terminology/rules-validation.md
           - DMSRules Details: terminology/dmsrules.md
       - Graph: terminology/graph.md
   - Reference:
