@@ -11,6 +11,7 @@ def test_partial_to_complete_mode():
     rules1.classes.data += rules2.classes.data + rules3.classes.data
     rules1.properties.data += rules2.properties.data + rules3.properties.data
     rules1.metadata.schema_ = "complete"
+    rules1.metadata.data_model_type = "enterprise"
 
     rules_merged = InformationRules(**rules1.model_dump())
 

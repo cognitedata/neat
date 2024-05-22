@@ -15,11 +15,12 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.77.4] - 22-05-24
 ### Improves
 - Information rules are now read using InformationRulesInput data class, replicate the form of DMS rules.
 - Information rules are now serialized using dedicated serializer class
-
+- Information rules are now validated using dedicated validator class
+- Defaulting to "enterprise" data model type and "partial" schema completeness set to avoid validation error on import
 ### Fixed
 - Fixed bug in `ExcelImporter` when importing a data model with a last spreadsheet and no reference model.
   This would trigger an error `RefMetadata sheet is missing or it failed` even though the

@@ -1,6 +1,5 @@
 import math
 import sys
-import warnings
 from collections.abc import Callable
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar, cast
@@ -9,9 +8,9 @@ from pydantic import Field, field_serializer, field_validator, model_serializer,
 from pydantic_core.core_schema import SerializationInfo
 from rdflib import Namespace
 
-import cognite.neat.rules.issues.spreadsheet
 from cognite.neat.constants import PREFIXES
-from cognite.neat.rules import exceptions
+from cognite.neat.rules import exceptions, issues
+from cognite.neat.rules.issues.base import MultiValueError
 from cognite.neat.rules.models._base import (
     BaseMetadata,
     DataModelType,
@@ -45,17 +44,14 @@ from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.domain import DomainRules
 from cognite.neat.rules.models.entities import (
     ClassEntity,
-    Entity,
     EntityTypes,
     ParentClassEntity,
     ParentEntityList,
     ReferenceEntity,
     Undefined,
-    Unknown,
     UnknownEntity,
     URLEntity,
     _UndefinedType,
-    _UnknownType,
 )
 
 if TYPE_CHECKING:
@@ -70,8 +66,8 @@ else:
 
 class InformationMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.information_architect
-    data_model_type: DataModelType = Field(DataModelType.solution, alias="dataModelType")
-    schema_: SchemaCompleteness = Field(alias="schema")
+    data_model_type: DataModelType = Field(DataModelType.enterprise, alias="dataModelType")
+    schema_: SchemaCompleteness = Field(SchemaCompleteness.partial, alias="schema")
     extension: ExtensionCategoryType | None = ExtensionCategory.addition
 
     prefix: PrefixType
@@ -298,46 +294,16 @@ class InformationRules(RuleModel):
         return self
 
     @model_validator(mode="after")
-    def validate_schema_completeness(self) -> Self:
-        # update expected_value_types
+    def post_validation(self) -> "InformationRules":
+        from ._validation import InformationPostValidation
 
-        if self.metadata.schema_ == SchemaCompleteness.complete:
-            defined_classes = {str(class_.class_) for class_ in self.classes}
-            if self.metadata.data_model_type == DataModelType.solution and self.reference:
-                defined_classes |= {str(class_.class_) for class_ in self.reference.classes}
-            referred_classes = {str(property_.class_) for property_ in self.properties} | {
-                str(parent) for class_ in self.classes for parent in class_.parent or []
-            }
-            referred_types = {
-                str(property_.value_type)
-                for property_ in self.properties
-                if isinstance(property_.value_type, Entity)
-                and not isinstance(property_.value_type.suffix, _UnknownType)
-            }
-            if not referred_classes.issubset(defined_classes) or not referred_types.issubset(defined_classes):
-                missing_classes = referred_classes.difference(defined_classes).union(
-                    referred_types.difference(defined_classes)
-                )
-                raise exceptions.IncompleteSchema(missing_classes).to_pydantic_custom_error()
-
+        issue_list = InformationPostValidation(self).validate()
+        if issue_list.warnings:
+            issue_list.trigger_warnings()
+        if issue_list.has_errors:
+            raise MultiValueError([error for error in issue_list if isinstance(error, issues.NeatValidationError)])
         return self
 
-    @model_validator(mode="after")
-    def validate_class_has_properties_or_parent(self) -> Self:
-        defined_classes = {class_.class_ for class_ in self.classes if class_.reference is None}
-        referred_classes = {property_.class_ for property_ in self.properties if property_.class_.suffix is not Unknown}
-        has_parent_classes = {class_.class_ for class_ in self.classes if class_.parent}
-        missing_classes = defined_classes.difference(referred_classes) - has_parent_classes
-        if missing_classes:
-            warnings.warn(
-                cognite.neat.rules.issues.spreadsheet.ClassNoPropertiesNoParentsWarning(
-                    [missing.versioned_id for missing in missing_classes]
-                ),
-                stacklevel=2,
-            )
-        return self
-
-    # @model_serializer(mode="plain", when_used="always")
     @model_serializer(mode="wrap", when_used="always")
     def information_rules_serializer(self, handler: Callable, info: SerializationInfo) -> dict[str, Any]:
         from ._serializer import _InformationRulesSerializer

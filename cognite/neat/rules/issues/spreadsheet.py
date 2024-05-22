@@ -10,7 +10,7 @@ from pydantic_core import ErrorDetails
 
 from cognite.neat.utils.spreadsheet import SpreadsheetRead
 
-from .base import DefaultPydanticError, MultiValueError, NeatValidationError, ValidationWarning
+from .base import DefaultPydanticError, MultiValueError, NeatValidationError
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -27,7 +27,7 @@ __all__ = [
     "InvalidRowUnknownSheetError",
     "NonExistingContainerError",
     "NonExistingViewError",
-    "ClassNoPropertiesNoParentsWarning",
+    "ClassNoPropertiesNoParentError",
     "InconsistentContainerDefinitionError",
     "MultiValueTypeError",
     "MultiValueIsListError",
@@ -239,7 +239,26 @@ class NonExistingViewError(InvalidPropertyError):
 
 
 @dataclass(frozen=True)
-class ClassNoPropertiesNoParentsWarning(ValidationWarning):
+class PropertiesDefinedForUndefinedClassesError(NeatValidationError):
+    description = "Properties are defined for undefined classes."
+    fix = "Make sure to define class in the Classes sheet."
+
+    classes: list[str]
+
+    def dump(self) -> dict[str, list[str]]:
+        output = super().dump()
+        output["classes"] = self.classes
+        return output
+
+    def message(self) -> str:
+        return (
+            f"Classes {', '.join(self.classes)} have properties assigned to them, but"
+            " they are not defined in the Classes sheet."
+        )
+
+
+@dataclass(frozen=True)
+class ClassNoPropertiesNoParentError(NeatValidationError):
     description = "Class has no properties and no parents."
     fix = "Check if the class should have properties or parents."
 
@@ -252,8 +271,44 @@ class ClassNoPropertiesNoParentsWarning(ValidationWarning):
 
     def message(self) -> str:
         if len(self.classes) > 1:
-            return f"Classes {', '.join(self.classes)} have no properties and no parents. This may be a mistake."
-        return f"Class {self.classes[0]} has no properties and no parents. This may be a mistake."
+            return f"Classes {', '.join(self.classes)} have no direct or inherited properties. This may be a mistake."
+        return f"Class {self.classes[0]} have no direct or inherited properties. This may be a mistake."
+
+
+@dataclass(frozen=True)
+class ParentClassesNotDefinedError(NeatValidationError):
+    description = "Parent classes are not defined."
+    fix = "Check if the parent classes are defined in Classes sheet."
+
+    classes: list[str]
+
+    def dump(self) -> dict[str, list[str]]:
+        output = super().dump()
+        output["classes"] = self.classes
+        return output
+
+    def message(self) -> str:
+        if len(self.classes) > 1:
+            return f"Parent classes {', '.join(self.classes)} are not defined. This may be a mistake."
+        return f"Parent classes {', '.join(self.classes[0])} are not defined. This may be a mistake."
+
+
+@dataclass(frozen=True)
+class ValueTypeNotDefinedError(NeatValidationError):
+    description = "Value types referred by properties are not defined in Rules."
+    fix = "Make sure that all value types are defined in Rules."
+
+    value_types: list[str]
+
+    def dump(self) -> dict[str, list[str]]:
+        output = super().dump()
+        output["classes"] = self.value_types
+        return output
+
+    def message(self) -> str:
+        if len(self.value_types) > 1:
+            return f"Value types {', '.join(self.value_types)} are not defined. This may be a mistake."
+        return f"Value types {', '.join(self.value_types[0])} are not defined. This may be a mistake."
 
 
 @dataclass(frozen=True)
