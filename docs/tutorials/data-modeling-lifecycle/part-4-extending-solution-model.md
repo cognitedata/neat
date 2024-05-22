@@ -151,7 +151,13 @@ The finished spreadsheet with the extension of the analytic solution model can b
 [here](../../artifacts/rules/dms_rebuild_olav.xlsx).
 
 ## Deploying the Rebuilt Solution Model
+Olav deploys the rebuilt solution model by selecting the `Export DMS` workflow. He deactivates the `Export Transformations`
+step by removing the dotted line connecting it from the `Export Data Model to CDF` step. This is because he does not
+need to create any transformations for populating the new solution model.
 
+<img src="../../artifacts/figs/life_cycle_analitic_solution_export_dms.png" height="300">
+
+Olav then runs the workflow and his solution model is successfully deployed to CDF.
 
 ## Summary
 
@@ -159,4 +165,4 @@ The finished spreadsheet with the extension of the analytic solution model can b
 
 1. Download the solution model with the enterprise model.
 2. Validate extension against existing solution model.
-3. Deploy the extension.
+3. Deploy the rebuilt solution model.
