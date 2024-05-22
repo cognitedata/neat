@@ -41,11 +41,11 @@ this also means that there must be a `LastProperties` sheet in the Excel file.
 
 How **NEAT** interprets the properties in the `Properties` sheet depends on the `metadata.extension` field in the `View`.
 
-### <code>metadata.extension=addition</code>
+### <code>metadata.extension=addition</code> - Combine Properties
 
-The properties are added to the existing properties in the `LastProperties` sheet. For example,
+The properties are added to the existing properties in the `LastProperties ` sheet. For example,
 if you have the following `Properties` sheet and the classes `EnergyArea` and `GeneratingUnit` are
-in the `LastProperties` sheet. Then, these properties will be combined to create the classes
+in the `LastProperties` sheet. Then, these properties will be **combined** to create the classes
 `EnergyArea` and `GeneratingUnit`.
 
 | Class                     | Property      | Value Type                | Min Count | Max Count  |
@@ -54,11 +54,11 @@ in the `LastProperties` sheet. Then, these properties will be combined to create
 |                           |               |                           |           |            |
 | GeneratingUnit            | powerForecast | TimeseriesForecastProduct | 0         | 1          |
 
-### <code>metadata.extension=reshape/rebuild</code>
+### <code>metadata.extension=reshape/rebuild</code> - Replace Properties
 
 The properties in the `Properties` sheet will replace the properties in the `LastProperties` sheet. For example,
 if you have the following `Properties` sheet and the classes `EnergyArea` and `GeneratingUnit` are
-in the `LastProperties` sheet. Then, these properties will replace the properties in the `LastProperties` sheet.
+in the `LastProperties` sheet. Then, these properties will **replace** the properties in the `LastProperties` sheet.
 
 | Class                     | Property      | Value Type                | Min Count | Max Count  |
 |---------------------------|---------------|---------------------------|-----------|------------|
