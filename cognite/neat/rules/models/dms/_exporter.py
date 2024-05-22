@@ -12,7 +12,7 @@ from cognite.client.data_classes.data_modeling.views import (
 )
 
 from cognite.neat.rules import issues
-from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness, SheetList
+from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import (
     ContainerEntity,
@@ -75,12 +75,34 @@ class _DMSExporter:
     def to_schema(self) -> DMSSchema:
         rules = self.rules
         container_properties_by_id, view_properties_by_id = self._gather_properties(list(self.rules.properties))
+
+        # If we are reshaping or rebuilding, and there are no properties in the current rules, we will
+        # include those properties from the last rules.
+        if rules.last and (self.is_reshape or self.is_rebuild):
+            selected_views = {view.view for view in rules.views}
+            selected_properties = [
+                prop
+                for prop in rules.last.properties
+                if prop.view in selected_views and prop.view.as_id() not in view_properties_by_id
+            ]
+            self._update_with_properties(
+                selected_properties, container_properties_by_id, view_properties_by_id, include_new_containers=True
+            )
+
         # We need to include the properties from the last rules as well to create complete containers and view
         # depending on the type of extension.
         if rules.last and self.is_addition:
-            self._update_with_properties(rules.last.properties, container_properties_by_id, view_properties_by_id)
+            selected_properties = [
+                prop for prop in rules.last.properties if (prop.view.as_id() in view_properties_by_id)
+            ]
+            self._update_with_properties(selected_properties, container_properties_by_id, view_properties_by_id)
         elif rules.last and (self.is_reshape or self.is_rebuild):
-            self._update_with_properties(rules.last.properties, container_properties_by_id, None)
+            selected_properties = [
+                prop
+                for prop in rules.last.properties
+                if prop.container and prop.container.as_id() in container_properties_by_id
+            ]
+            self._update_with_properties(selected_properties, container_properties_by_id, None)
 
         containers = self._create_containers(container_properties_by_id)
 
@@ -313,29 +335,24 @@ class _DMSExporter:
     @classmethod
     def _update_with_properties(
         cls,
-        last_properties: SheetList[DMSProperty],
+        selected_properties: Sequence[DMSProperty],
         container_properties_by_id: dict[dm.ContainerId, list[DMSProperty]],
         view_properties_by_id: dict[dm.ViewId, list[DMSProperty]] | None,
+        include_new_containers: bool = False,
     ) -> None:
         view_properties_by_id = view_properties_by_id or {}
-        selected_properties = [
-            prop
-            for prop in last_properties
-            if (prop.view.as_id() in view_properties_by_id)
-            or (prop.container and (prop.container.as_id() in container_properties_by_id))
-        ]
         last_container_properties_by_id, last_view_properties_by_id = cls._gather_properties(selected_properties)
 
         for container_id, properties in last_container_properties_by_id.items():
-            if container_id in container_properties_by_id:
-                # Only add the container properties that are not already present, and do not overwrite.
-                existing = {prop.container_property for prop in container_properties_by_id[container_id]}
+            # Only add the container properties that are not already present, and do not overwrite.
+            if (container_id in container_properties_by_id) or include_new_containers:
+                existing = {prop.container_property for prop in container_properties_by_id.get(container_id, [])}
                 container_properties_by_id[container_id].extend(
                     [prop for prop in properties if prop.container_property not in existing]
                 )
+
         if view_properties_by_id:
             for view_id, properties in last_view_properties_by_id.items():
-                # We know that all the views are present due to the check above
                 existing = {prop.view_property for prop in view_properties_by_id[view_id]}
                 view_properties_by_id[view_id].extend(
                     [prop for prop in properties if prop.view_property not in existing]

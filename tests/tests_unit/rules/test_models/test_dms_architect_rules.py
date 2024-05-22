@@ -1664,6 +1664,10 @@ class TestDMSExporter:
         assert actual_model_views == expected_views
         actual_containers = {container.external_id for container in schema.containers}
         assert actual_containers == expected_containers
+        missing_properties = {
+            view_id for view_id, view in schema.views.items() if not view.properties and not view.implements
+        }
+        assert not missing_properties, f"Missing properties for views: {missing_properties}"
 
 
 def test_dms_rules_validation_error():
