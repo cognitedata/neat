@@ -3,10 +3,10 @@
 ## Properties
 
 ### Connection
-Connection are used to specify how nodes are connected. When implementing a connection, you have two options:
+Connections are used to specify how nodes are connected. When implementing a connection, you have two options:
 
-* Direct relation - This is cheap in terms of storage and query time.
-* Edge connection - This is more flexible, but more expensive in terms of storage and query time.
+* Direct relation—This is cheap in terms of storage and query time.
+* Edge connection—This is more flexible, but more expensive in terms of storage and query time.
 
 To get more details on the difference between the two, see the
 [see the data modeling documentation](https://docs.cognite.com/cdf/dm/dm_concepts/dm_spaces_instances#direct-relations-vs-edges).
@@ -43,7 +43,7 @@ If `connection=edge`, then:
 * `isList=true` - The connection is implemented as `multi_edge_connection` with direction `outwards`.
 * `isList=false` - The connection is implemented as `single_edge_connection` with direction `outwards`.
 
-If `relation=reverse` the implementations depends on the relation of the other property.
+If `relation=reverse` the implementation depends on the relation of the other property.
 
 If `otherProperty.connection=direct`, then:
 

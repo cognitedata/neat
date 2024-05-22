@@ -1,23 +1,32 @@
 # Rules
-`Rules` is the core object in NEAT, which contains semantic data model definitions and optionally instructions on how to create the data model instances (aka, populate data model). This object is typically serialized as an spreadsheet file (Excel) which provides simple and intuitive way to create a semantic data model. The spreadsheet obeys specific template, which represents the `Rules` object. The template is designed to be user friendly and to provide a simple way to define a semantic data model, offering a familiar environment for users who are not familiar with semantic data modeling.
+`Rules` is the core object in NEAT, which contains semantic data model definitions and optionally instructions on how
+to create the data model instances (aka, populate data model). This object is typically serialized as a spreadsheet
+file (Excel) which provides a simple and intuitive way to create a semantic data model. The spreadsheet obeys specific
+template, which represents the `Rules` object. The template is designed to be user-friendly and to provide a simple
+way to define a semantic data model, offering a familiar environment for users who are not
+familiar with semantic data modeling.
 
-To lower the entry barrier for the users, `Rules` are designed to be as simple as possible and profiled based on the role that a person has in the data modeling process. Consider consulting [the data modeling lifecycle tutorial](../tutorials/data-modeling-lifecycle/overview.md) for more detail on the process. The profiles are:
+To lower the entry barrier for the users, `Rules` are designed to be as simple as possible and profiled based on the
+role that a person has in the data modeling process. Consider consulting [the data modeling lifecycle tutorial](../tutorials/data-modeling-lifecycle/overview.md)
+for more detail on the process. The profiles are:
 
 - Domain Expert
 - Information Architect
 - DMS CDF Architect
 
-The amount of details that are requested from the user grows with the role that the user has in the data modeling process. Accordingly we will dive into the details of the `Rules` object per role in the following sections, which will be presented through the spreadsheet serialization of the `Rules` object.
+The level of details that are requested from the user grows with the role that the user has in the data modeling process.
+Accordingly, we will dive into the details of the `Rules` object per role in the following sections,
+which will be presented through the spreadsheet serialization of the `Rules` object.
 
-`Rules` are composed of the following sheets, which based on the role (profile) are mandatory and/or optional or require various level of details:
+`Rules` are composed of the following sheets, which based on the role (profile) are mandatory and/or optional
+or require various levels of details:
 
-- `Metadata`: contains metadata about the data model
-- `Classes`: contains the high level definition of the classes that are part of the semantic data model (no properties)
+- `Metadata`: contains metadata about the data model and how **NEAT** should validate it.
+- `Classes`: contains the high-level definition of the classes that are part of the semantic data model (no properties)
 - `Properties`: contains the definition of the properties per class
 - `Views`: contains the definition of the CDF views that represent semantic data model serialization in CDF
 - `Containers`: contains the definition of the CDF containers that are physical storage for data written/read in/from views
 - `Prefixes`: contains the definition of the prefixes that are used in the semantic data model
-
 
 The spreadsheet templates for the `Rules` object per role are accessible through the following links:
 
@@ -25,6 +34,16 @@ The spreadsheet templates for the `Rules` object per role are accessible through
 - [Information Architect Rules Template](../artifacts/rules/information-architect-rules-template.xlsx)
 - [DMS CDF Architect Rules Template](../artifacts/rules/dms-architect-rules-template.xlsx)
 
+In addition, a semantic data model may relate to other semantic data models, for example, a previous iteration
+of the same data model or a data model that is the basis for the current data model. In such cases, there will be
+multiple sets of `Rules` objects. In a spreadsheet serialization, the different `Rules` object are distinguished by
+a prefix in the sheet name. The following prefixes are used:
+
+* **No prefix**: The main `Rules`, object often referred to as the `user` or `current` `Rules` object.
+* **`Last`**: The previous iteration of the `user` `Rules` object.
+* **`Ref`**: (short for Reference) A `Rules` object that is referenced by the `user` `Rules` object.
+
+For more information about how these different `Rules` objects are used, see the [Rules Validation](rules-validation.md).
 
 ## Metadata sheet
 
@@ -42,20 +61,22 @@ The spreadsheet templates for the `Rules` object per role are accessible through
 
 === "Information Architect Profile"
 
-    | Field       | Description                                                      | Predefined Value                    | Mandatory |
-    |-------------|------------------------------------------------------------------|-------------------------------------|-----------|
-    | role        | The role of the person                                           | `domain expert`                     | Yes       |
-    | creator     | Names of data model creators separated with comma                |                                     | Yes       |
-    | schema      | Indication of the data model completeness                        | `complete`, `partial` or `extended` | Yes       |
-    | namespace   | Data model namespace provided as URI                             |                                     | Yes       |
-    | prefix      | Data model prefix which is used as a short form of the namespace |                                     | Yes       |
-    | version     | Version of the data model                                        |                                     | Yes       |
-    | created     | Date model creation date                                         |                                     | Yes       |
-    | updated     | Date model last update date                                      |                                     | Yes       |
-    | title       | Title of the data model                                          |                                     | No        |
-    | description | Short description of the data model                              |                                     | No        |
-    | license     | License of the data model                                        |                                     | No        |
-    | rights      | Usage right of the data model                                    |                                     | No        |
+    | Field         | Description                                                      | Predefined Value                    | Mandatory |
+    |---------------|------------------------------------------------------------------|-------------------------------------|-----------|
+    | role          | The role of the person                                           | `domain expert`                     | Yes       |
+    | creator       | Names of data model creators separated with comma                |                                     | Yes       |
+    | schema        | Indication of the data model completeness                        | `complete`, `partial` or `extended` | Yes       |
+    | dataModelType | data model type, two options enterprise or solution              | `enterprise` or `solution`          | Yes       |
+    | extension     | Only relevant if schema=exented, indicates type of extension     | `addition`, `reshape` or `rebuild`  | No        |
+    | namespace     | Data model namespace provided as URI                             |                                     | Yes       |
+    | prefix        | Data model prefix which is used as a short form of the namespace |                                     | Yes       |
+    | version       | Version of the data model                                        |                                     | Yes       |
+    | created       | Date model creation date                                         |                                     | Yes       |
+    | updated       | Date model last update date                                      |                                     | Yes       |
+    | title         | Title of the data model                                          |                                     | No        |
+    | description   | Short description of the data model                              |                                     | No        |
+    | license       | License of the data model                                        |                                     | No        |
+    | rights        | Usage right of the data model                                    |                                     | No        |
 
     !!! tip annotate "Usage"
         More details on **Information Architect** Profile **Metadata sheet** usage can be found [here](../tutorials/data-modeling-lifecycle/part-1-knowledge-acquisition.md#information-architect-metadata-sheet)!
@@ -64,23 +85,30 @@ The spreadsheet templates for the `Rules` object per role are accessible through
 
 === "DMS CDF Architect Profile"
 
-    | Field       | Description                                                                                               | Predefined Value                    | Mandatory |
-    |-------------|-----------------------------------------------------------------------------------------------------------|-------------------------------------|-----------|
-    | role        | The role of the person                                                                                    | `dms expert`                        | Yes       |
-    | creator     | Names of data model creators separated with comma                                                         |                                     | Yes       |
-    | dataModelType      | data model type, two options enterprise or solution                                                | `enterprise` or `solution`          | Yes       |
-    | schema      | Indication of schema completeness                                                                         | `complete`, `partial` or `extended` | Yes       |
-    | extension   | Indication of schema completeness     | `addition`, `reshape` or `rebuild` | No       |
-    | space       | CDF space to which data model belongs                                                                     |                                     | Yes       |
-    | externalId  | External id used to uniquely identify data model within a space                                           |                                     | Yes       |
-    | version     | Version of the data model                                                                                 |                                     | Yes       |
-    | created     | Date model creation date                                                                                  |                                     | Yes       |
-    | updated     | Date model last update date                                                                               |                                     | Yes       |
-    | name        | Name  of the data model                                                                                   |                                     | No        |
-    | description | Short description of the data model                                                                       |                                     | No        |
+    | Field         | Description                                                     | Predefined Value                    | Mandatory |
+    |---------------|-----------------------------------------------------------------|-------------------------------------|-----------|
+    | role          | The role of the person                                          | `dms expert`                        | Yes       |
+    | creator       | Names of data model creators separated with comma               |                                     | Yes       |
+    | dataModelType | data model type, two options enterprise or solution             | `enterprise` or `solution`          | Yes       |
+    | schema        | Indication of schema completeness                               | `complete`, `partial` or `extended` | Yes       |
+    | extension     | Only relevant if schema=exented, indicates type of extension.   | `addition`, `reshape` or `rebuild`  | No        |
+    | space         | CDF space to which data model belongs                           |                                     | Yes       |
+    | externalId    | External id used to uniquely identify data model within a space |                                     | Yes       |
+    | version       | Version of the data model                                       |                                     | Yes       |
+    | created       | Date model creation date                                        |                                     | Yes       |
+    | updated       | Date model last update date                                     |                                     | Yes       |
+    | name          | Name  of the data model                                         |                                     | No        |
+    | description   | Short description of the data model                             |                                     | No        |
 
     !!! tip annotate "Usage"
         More details on **DMS Architect** Profile **Metadata sheet**  usage can be found [here](../tutorials/data-modeling-lifecycle/part-1-knowledge-acquisition.md#changing-the-metadata-sheet)!
+
+!!! tip annotate "Usage"
+    For a more detailed explanation of the `dataModelType`, `schema` and `extension` see [Rules Validation](rules-validation.md).
+
+!!! tip annotate "Usage"
+    In addition, the `schema` and `extension` controls how [excel rules are inputted](rules-excel-input.md).
+
 
 ## Classes sheet
 
