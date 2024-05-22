@@ -19,7 +19,7 @@ class InformationMetadataInput:
     namespace: str
     version: str
     creator: str
-    data_model_type: Literal["solution", "enterprise"] = "solution"
+    data_model_type: Literal["solution", "enterprise"] = "enterprise"
     extension: Literal["addition", "reshape", "rebuild"] = "addition"
     name: str | None = None
     description: str | None = None
@@ -34,9 +34,9 @@ class InformationMetadataInput:
             return None
         _add_alias(data, InformationMetadata)
         return cls(
-            data_model_type=data.get("data_model_type", "solution") or "solution",
-            extension=data.get("extension") or "addition",
-            schema_=data.get("schema_"),  # type: ignore[arg-type]
+            data_model_type=data.get("data_model_type", "enterprise"),
+            extension=data.get("extension", "addition"),
+            schema_=data.get("schema_", "partial"),  # type: ignore[arg-type]
             version=data.get("version"),  # type: ignore[arg-type]
             namespace=data.get("namespace"),  # type: ignore[arg-type]
             prefix=data.get("prefix"),  # type: ignore[arg-type]
@@ -257,7 +257,6 @@ class InformationRulesInput:
         elif isinstance(self.last, InformationRules):
             # We need to load through the InformationRulesInput to set the correct default space and version
             last = InformationRulesInput.load(self.last.model_dump()).dump()
-
         return dict(
             Metadata=self.metadata.dump(),
             Properties=[prop.dump(default_prefix) for prop in self.properties],

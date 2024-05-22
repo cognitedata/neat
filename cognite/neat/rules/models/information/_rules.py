@@ -66,8 +66,8 @@ else:
 
 class InformationMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.information_architect
-    data_model_type: DataModelType = Field(DataModelType.solution, alias="dataModelType")
-    schema_: SchemaCompleteness = Field(alias="schema")
+    data_model_type: DataModelType = Field(DataModelType.enterprise, alias="dataModelType")
+    schema_: SchemaCompleteness = Field(SchemaCompleteness.partial, alias="schema")
     extension: ExtensionCategoryType | None = ExtensionCategory.addition
 
     prefix: PrefixType
