@@ -268,7 +268,7 @@ class DMSView(SheetEntity):
         if implements is None and isinstance(self.reference, ReferenceEntity):
             # Fallback to the reference if no implements are provided
             parent = self.reference.as_view_id()
-            if parent != view_id:
+            if (parent.space, parent.external_id) != (view_id.space, view_id.external_id):
                 implements = [parent]
 
         return dm.ViewApply(
