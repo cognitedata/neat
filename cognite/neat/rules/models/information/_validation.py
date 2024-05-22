@@ -4,10 +4,7 @@ from typing import cast
 from cognite.neat.rules import issues
 from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models._base import DataModelType, SchemaCompleteness
-from cognite.neat.rules.models.entities import (
-    ClassEntity,
-    EntityTypes,
-)
+from cognite.neat.rules.models.entities import ClassEntity, EntityTypes, UnknownEntity
 from cognite.neat.utils.utils import get_inheritance_path
 
 from ._rules import InformationRules
@@ -51,10 +48,10 @@ class InformationPostValidation:
         if classes_without_properties := defined_classes.difference(referred_classes):
             for class_ in classes_without_properties:
                 # USE CASE: class has no direct properties and no parents
-                if not class_parent_pairs.get(class_, None):
+                if class_ not in class_parent_pairs:
                     dangling_classes.add(class_)
                 # USE CASE: class has no direct properties and no parents with properties
-                elif class_parent_pairs.get(class_, None) and not any(
+                elif class_ not in class_parent_pairs and not any(
                     parent in referred_classes for parent in get_inheritance_path(class_, class_parent_pairs)
                 ):
                     dangling_classes.add(class_)
@@ -101,8 +98,8 @@ class InformationPostValidation:
                 )
 
     def _referenced_value_types_exist(self) -> None:
-        # needs to be complete for this validation to pass
-        defined_classes = {class_.class_ for class_ in self.classes}
+        # adding UnknownEntity to the set of defined classes to handle the case where a property references an unknown
+        defined_classes = {class_.class_ for class_ in self.classes} | {UnknownEntity()}
         referred_object_types = {
             property_.value_type
             for property_ in self.rules.properties
@@ -132,11 +129,31 @@ class InformationPostValidation:
     def _class_parent_pairs(self) -> dict[ClassEntity, list[ClassEntity]]:
         class_subclass_pairs: dict[ClassEntity, list[ClassEntity]] = {}
 
-        classes = (
-            self.rules.classes.data + cast(InformationRules, self.rules.last).classes.data
-            if self.metadata.schema_ == SchemaCompleteness.extended
-            else self.rules.classes.data
-        )
+        classes = self.rules.model_copy(deep=True).classes.data
+
+        # USE CASE: Solution model being extended (user + last + reference = complete)
+        if (
+            self.metadata.schema_ == SchemaCompleteness.extended
+            and self.metadata.data_model_type == DataModelType.solution
+        ):
+            classes += (
+                cast(InformationRules, self.rules.last).model_copy(deep=True).classes.data
+                + cast(InformationRules, self.rules.reference).model_copy(deep=True).classes.data
+            )
+
+        # USE CASE: Solution model being created from scratch (user + reference = complete)
+        elif (
+            self.metadata.schema_ == SchemaCompleteness.complete
+            and self.metadata.data_model_type == DataModelType.solution
+        ):
+            classes += cast(InformationRules, self.rules.reference).model_copy(deep=True).classes.data
+
+        # USE CASE: Enterprise model being extended (user + last = complete)
+        elif (
+            self.metadata.schema_ == SchemaCompleteness.extended
+            and self.metadata.data_model_type == DataModelType.enterprise
+        ):
+            classes += cast(InformationRules, self.rules.last).model_copy(deep=True).classes.data
 
         for class_ in classes:
             class_subclass_pairs[class_.class_] = []
