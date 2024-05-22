@@ -21,6 +21,7 @@ nav:
           - Knowledge Acquisition: tutorials/data-modeling-lifecycle/part-1-knowledge-acquisition.md
           - Analytic Solution: tutorials/data-modeling-lifecycle/part-2-analytic-solution.md
           - Extending Enterprise Model: tutorials/data-modeling-lifecycle/part-3-extending-enterprise-model.md
+          - Extending Solution Model: tutorials/data-modeling-lifecycle/part-4-extending-solution-model.md
           - User Personas: tutorials/data-modeling-lifecycle/user-personas.md
       - Workflows:
           - Overview: tutorials/workflows/overview.md
