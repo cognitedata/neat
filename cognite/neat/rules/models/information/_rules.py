@@ -95,6 +95,8 @@ class InformationMetadata(BaseMetadata):
             "typically information architects are considered as contributors."
         ),
     )
+    license: str | None = None
+    rights: str | None = None
 
     @model_validator(mode="after")
     def extension_none_but_schema_extend(self) -> Self:
@@ -102,6 +104,18 @@ class InformationMetadata(BaseMetadata):
             self.extension = ExtensionCategory.addition
             return self
         return self
+
+    @field_validator("schema_", mode="plain")
+    def as_enum_schema(cls, value: str) -> SchemaCompleteness:
+        return SchemaCompleteness(value)
+
+    @field_validator("extension", mode="plain")
+    def as_enum_extension(cls, value: str) -> ExtensionCategory:
+        return ExtensionCategory(value)
+
+    @field_validator("data_model_type", mode="plain")
+    def as_enum_model_type(cls, value: str) -> DataModelType:
+        return DataModelType(value)
 
 
 class InformationClass(SheetEntity):

@@ -20,6 +20,11 @@ Changes are grouped as follows:
 - Information rules are now read using InformationRulesInput data class, replicate the form of DMS rules.
 - Information rules are now serialized using dedicated serializer class
 
+### Fixed
+- Fixed bug in `ExcelImporter` when importing a data model with a last spreadsheet and no reference model.
+  This would trigger an error `RefMetadata sheet is missing or it failed` even though the
+  ReferenceMetadata sheet is not needed.
+
 ## [0.77.3] - 14-05-24
 ### Fixed
 - When using `DMSExporter` and importing a data model with a view pointing to a view not in the data model,

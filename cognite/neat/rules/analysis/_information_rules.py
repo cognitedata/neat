@@ -352,7 +352,7 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
 
         rules = cast(InformationRules, self.rules.reference if use_reference else self.rules)
 
-        if not rules.metadata.schema_ is not SchemaCompleteness.complete:
+        if rules.metadata.schema_ is not SchemaCompleteness.complete:
             raise ValueError("Rules are not complete cannot perform reduction!")
         class_as_dict = self.as_class_dict()
         class_parents_pairs = self.class_parent_pairs()

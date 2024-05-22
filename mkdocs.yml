@@ -80,6 +80,7 @@ nav:
                   - Rules: reference/legacy/workflows/steps/rules.md
                   - Graph: reference/legacy/workflows/steps/graph.md
           - Exceptions: reference/legacy/exceptions.md
+  - Data Modeling Principles: data-modeling-principles.md
   - Changelog​: CHANGELOG.md
 
 markdown_extensions:

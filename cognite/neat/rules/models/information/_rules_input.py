@@ -7,7 +7,7 @@ from rdflib import Namespace
 
 from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness, _add_alias
 from cognite.neat.rules.models.data_types import DataType
-from cognite.neat.rules.models.entities import ClassEntity, Unknown, UnknownEntity
+from cognite.neat.rules.models.entities import ClassEntity, ParentClassEntity, Unknown, UnknownEntity
 
 from ._rules import InformationClass, InformationMetadata, InformationProperty, InformationRules
 
@@ -25,6 +25,8 @@ class InformationMetadataInput:
     description: str | None = None
     created: datetime | str | None = None
     updated: datetime | str | None = None
+    license: str | None = None
+    rights: str | None = None
 
     @classmethod
     def load(cls, data: dict[str, Any] | None) -> "InformationMetadataInput | None":
@@ -43,6 +45,8 @@ class InformationMetadataInput:
             description=data.get("description"),
             created=data.get("created"),
             updated=data.get("updated"),
+            license=data.get("license"),
+            rights=data.get("rights"),
         )
 
     def dump(self) -> dict[str, Any]:
@@ -198,7 +202,11 @@ class InformationClassInput:
             "Comment": self.comment,
             "Reference": self.reference,
             "Match Type": self.match_type,
-            "Parent Class": self.parent,
+            "Parent Class": (
+                [ParentClassEntity.load(parent, prefix=default_prefix) for parent in self.parent.split(",")]
+                if self.parent
+                else None
+            ),
         }
 
 

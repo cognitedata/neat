@@ -1264,7 +1264,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
 
 
 def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
-    ref_rules = DMSRulesInput(
+    last_rules = DMSRulesInput(
         metadata=DMSMetadataInput(
             schema_="complete",
             space="my_space",
@@ -1321,7 +1321,7 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
         views=[
             DMSViewInput(view="Asset", class_="Asset"),
         ],
-        reference=ref_rules,
+        last=last_rules,
     ).as_rules()
 
     yield pytest.param(
@@ -1358,7 +1358,7 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
         views=[
             DMSViewInput(view="Asset", class_="Asset"),
         ],
-        reference=ref_rules,
+        last=last_rules,
     ).as_rules()
 
     yield pytest.param(

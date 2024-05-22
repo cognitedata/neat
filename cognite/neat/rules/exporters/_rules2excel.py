@@ -132,11 +132,11 @@ class ExcelExporter(BaseExporter[Workbook]):
         self._write_sheets(workbook, dumped_user_rules, rules)
         if dumped_last_rules:
             self._write_sheets(workbook, dumped_last_rules, rules, sheet_prefix="Last")
+            self._write_metadata_sheet(workbook, dumped_last_rules["Metadata"], sheet_prefix="Last")
 
         if dumped_reference_rules:
-            prefix = "Ref"
-            self._write_sheets(workbook, dumped_reference_rules, rules, sheet_prefix=prefix)
-            self._write_metadata_sheet(workbook, dumped_reference_rules["Metadata"], sheet_prefix=prefix)
+            self._write_sheets(workbook, dumped_reference_rules, rules, sheet_prefix="Ref")
+            self._write_metadata_sheet(workbook, dumped_reference_rules["Metadata"], sheet_prefix="Ref")
 
         if self._styling_level > 0:
             self._adjust_column_widths(workbook)
@@ -291,7 +291,7 @@ class _MetadataCreator:
         prefix = self.new_model_id[0]
         return InformationMetadata(
             data_model_type=DataModelType.solution,
-            schema_=SchemaCompleteness.extended,
+            schema_=SchemaCompleteness.complete,
             extension=ExtensionCategory.addition,
             prefix=prefix,
             namespace=f"http://purl.org/neat/{prefix}/",  # type: ignore[arg-type]

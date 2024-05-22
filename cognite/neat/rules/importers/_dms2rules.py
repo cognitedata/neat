@@ -109,7 +109,7 @@ class DMSImporter(BaseImporter):
         if result.result == "failure" or issue_list.has_errors:
             return cls(DMSSchema(), issue_list)
 
-        metadata = cls._create_metadata_from_model(user_model)
+        metadata = cls._create_metadata_from_model(user_model, has_reference=ref_model is not None)
         ref_metadata = cls._create_metadata_from_model(ref_model) if ref_model else None
 
         return cls(schema, issue_list, metadata, ref_metadata)
@@ -131,6 +131,7 @@ class DMSImporter(BaseImporter):
     def _create_metadata_from_model(
         cls,
         model: dm.DataModel[dm.View] | dm.DataModelApply,
+        has_reference: bool = False,
     ) -> DMSMetadata:
         description, creator = DMSMetadata._get_description_and_creator(model.description)
 
@@ -143,6 +144,7 @@ class DMSImporter(BaseImporter):
             updated = now
         return DMSMetadata(
             schema_=SchemaCompleteness.complete,
+            data_model_type=DataModelType.solution if has_reference else DataModelType.enterprise,
             extension=ExtensionCategory.addition,
             space=model.space,
             external_id=model.external_id,
@@ -202,16 +204,21 @@ class DMSImporter(BaseImporter):
                     **self._create_rule_components(
                         ref_model,
                         ref_schema,
-                        self.ref_metadata or self._create_default_metadata(list(ref_schema.views.values())),
+                        self.ref_metadata
+                        or self._create_default_metadata(list(ref_schema.views.values()), is_ref=True),
                         DataModelType.enterprise,
                     )
                 )
-                schema_completeness = SchemaCompleteness.extended
                 data_model_type = DataModelType.solution
 
             user_rules = DMSRules(
                 **self._create_rule_components(
-                    model, self.root_schema, self.metadata, data_model_type, schema_completeness
+                    model,
+                    self.root_schema,
+                    self.metadata,
+                    data_model_type,
+                    schema_completeness,
+                    has_reference=reference is not None,
                 ),
                 reference=reference,
             )
@@ -228,6 +235,7 @@ class DMSImporter(BaseImporter):
         metadata: DMSMetadata | None = None,
         data_model_type: DataModelType | None = None,
         schema_completeness: SchemaCompleteness | None = None,
+        has_reference: bool = False,
     ) -> dict[str, Any]:
         properties = SheetList[DMSProperty]()
         for view_id, view in schema.views.items():
@@ -242,7 +250,7 @@ class DMSImporter(BaseImporter):
             view.as_id() if isinstance(view, dm.View | dm.ViewApply) else view for view in data_model.views or []
         }
 
-        metadata = metadata or DMSMetadata.from_data_model(data_model)
+        metadata = metadata or DMSMetadata.from_data_model(data_model, has_reference)
         if data_model_type is not None:
             metadata.data_model_type = data_model_type
         if schema_completeness is not None:
@@ -262,12 +270,13 @@ class DMSImporter(BaseImporter):
         )
 
     @classmethod
-    def _create_default_metadata(cls, views: Sequence[dm.View | dm.ViewApply]) -> DMSMetadata:
+    def _create_default_metadata(cls, views: Sequence[dm.View | dm.ViewApply], is_ref: bool = False) -> DMSMetadata:
         now = datetime.now().replace(microsecond=0)
         space = Counter(view.space for view in views).most_common(1)[0][0]
         return DMSMetadata(
             schema_=SchemaCompleteness.complete,
             extension=ExtensionCategory.addition,
+            data_model_type=DataModelType.enterprise if is_ref else DataModelType.solution,
             space=space,
             external_id="Unknown",
             version="0.1.0",

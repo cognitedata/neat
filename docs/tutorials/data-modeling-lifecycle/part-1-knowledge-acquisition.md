@@ -1,7 +1,8 @@
 # Data Modeling Lifecycle through Expert Elicitation: Building an Enterprise Data Model
 
 This tutorial demonstrates the usage of `neat` through out the entire data modeling lifecycle producing an Enterprise Data Model in Cognite Data Fusion (CDF).
-The data modeling lifecycle is based on the so-called [Expert Elicitation](https://en.wikipedia.org/wiki/Expert_elicitation), and represents the recommended way of building enterprise data models.
+The data modeling lifecycle is based on the so-called [Expert Elicitation](https://en.wikipedia.org/wiki/Expert_elicitation),
+and represents the recommended way of building enterprise data models.
 
 
 ## Introduction
@@ -11,7 +12,8 @@ units are partially overlapping, both in concepts and data. Lots of the value in
 taking data from different sources and making them easily accessible and understandable for all domain experts and all business units, as
 this unlocks the potential for cross-domain insights.
 
-The expert elicitation is the process of distilling the domain expert knowledge and turning it into a shared knowledge artifact such as an Enterprise Data Model (covering the entire suite of use-cases and domains and business units).
+The expert elicitation is the process of distilling the domain expert knowledge and turning it into a shared knowledge
+artifact such as an Enterprise Data Model (covering the entire suite of use-cases and domains and business units).
 `neat` has been designed to facilitate this process by providing a way to iterate on and developed the enterprise data model.
 
 ## Use Case
@@ -32,11 +34,16 @@ We have purposely simplified the domains to make it easier to follow this tutori
 ## Wind Farm Operation Expert: Jon
 
 ### Gathering Knowledge
-In `neat`, knowledge is captured in statements (i.e. sentences). A statement is a simple fact about a thing (e.g. wind turbine). In this tutorial, we will collect statements that describe the properties of physical objects that constitute an operational wind farm connected to an electrical grid. We purposely use spreadsheets to
-collect these statements due to their inclusive nature (anyone knows how to use them). This is important, as we want to enable collaborative data modeling experience among domain experts, information architect and CDF experts.
+In `neat`, knowledge is captured in statements (i.e. sentences). A statement is a simple fact about a thing (e.g. wind turbine).
+In this tutorial, we will collect statements that describe the properties of physical objects that constitute an
+operational wind farm connected to an electrical grid. We purposely use spreadsheets to
+collect these statements due to their inclusive nature (anyone knows how to use them). This is important, as we want to
+enable collaborative data modeling experience among domain experts, information architect and CDF experts.
 
 <a id="domain-expert-properties"></a>
-We will start with a wind turbine. For example, Jon might say that a wind turbine has a `name`, a `location`, `manufacturer`, `ratedPower`, `hubHeight`, `actualPower` and `arrayCableConnection`. These are all statements. In `neat`, we capture these statements in a spreadsheet format. We refer to a set of
+We will start with a wind turbine. For example, Jon might say that a wind turbine has a `name`, a `location`,
+`manufacturer`, `ratedPower`, `hubHeight`, `actualPower` and `arrayCableConnection`. These are all statements.
+In `neat`, we capture these statements in a spreadsheet format. We refer to a set of
 statements as `Properties`. The `Properties` sheet looks as follows for a domain expert like Jon :
 
 | Class       | Property           | Description     | Value Type  | Min Count  | Max Count  |
@@ -60,22 +67,28 @@ statements as `Properties`. The `Properties` sheet looks as follows for a domain
 Details on the `Properties` sheet can be found [here](../../terminology/rules.md#properties-sheet).
 
 In each row of the `Properties` sheet, Jon will define a statement. For example, the first row says that a
-`WindTurbine` has a `name`. In addition, Jon can add a `description`, i.e., a human-readable explanation of what a particular property means. The three next columns help the information architect, David, to understand how to model the data. First, we have the
+`WindTurbine` has a `name`. In addition, Jon can add a `description`, i.e., a human-readable explanation of what a
+particular property means. The three next columns help the information architect, David, to understand how to model the data. First, we have the
 `Value Type` column, which specify what type of data this statement is about. Is this a number, an on/off value, text,
 or something else? In this case, the `name`, `location`, and `manufacturer` are all strings, meaning they are
 expected to be text. The `Min Count` and `Max Count` columns specify how many data points are expected for each of these properties. In the
-first row, we see that a `WindTurbine` is expected to have exactly one `name`. Sames goes for the `location` and `manufacturer`. However, for `lifeExpectancy`, we see that it is optional, as the `Min Count` is 0. Also, `lifeExpectancy` is an integer, as it is expected to be a whole number.
+first row, we see that a `WindTurbine` is expected to have exactly one `name`. Same goes for the `location` and `manufacturer`.
+However, for `lifeExpectancy`, we see that it is optional, as the `Min Count` is 0. Also, `lifeExpectancy` is an
+integer, as it is expected to be a whole number.
 
 <a id="value-type-anchor"></a>
 !!! warning annotate "Value Types"
-    The `Value Type` column is used to specify the type of the value that the property can hold. It takes either XSD type (`float`, `boolean`, `string`, etc) extended with additional types (`timeseries`, `file`, `sequence` and `json`) or a class defined in the `Classes` sheet (complex types).
+    The `Value Type` column is used to specify the type of the value that the property can hold. It takes either XSD
+    type (`float`, `boolean`, `string`, etc) extended with additional types (`timeseries`, `file`, `sequence` and `json`)
+    or a class defined in the `Classes` sheet (complex types).
 
 
 In the similar fashion, Jon defines the properties for `WindFarm`, `Substation` and `ExportCable` in the `Properties` sheet.
 
 In addition to the `Properties` sheet, `neat` also requires `Metadata` sheet as well.
 <a id="domain-expert-metadata-anchor"></a>
-In case of domain expert the `Metadata` sheet only requires `role` and `creator` to be set, where `role` represent the role a person has in modeling of the enterprise data model and `creator` is the name of the person from whom we are acquiring knowledge to create the model.
+In case of domain expert the `Metadata` sheet only requires `role` and `creator` to be set, where `role` represent the
+role a person has in modeling of the enterprise data model and `creator` is the name of the person from whom we are acquiring knowledge to create the model.
 For Jon the `Metadata` sheet looks as follows:
 
 |         |               |
@@ -85,8 +98,11 @@ For Jon the `Metadata` sheet looks as follows:
 
 Details on the `Metadata` sheet can be found [here](../../terminology/rules.md#metadata-sheet).
 
-
-Optionally, domain experts can also define classes in the `classes` sheet. Classes are used to group properties that define a thing (e.g., a real-life object). For example, a `WindTurbine` is a class, and the set of properties for a class defines what it means to be a member of that class. However, as it is optional, Jon skips this sheet, and leaves it to the information architect, David, to define that for him. Details on the `Classes` sheet can be found [here](../../terminology/rules.md#classes-sheet).
+Optionally, domain experts can also define classes in the `classes` sheet. Classes are used to group properties
+that define a thing (e.g., a real-life object). For example, a `WindTurbine` is a class, and the set
+of properties for a class defines what it means to be a member of that class. However, as it is optional,
+Jon skips this sheet, and leaves it to the information architect, David, to define that for him.
+Details on the `Classes` sheet can be found [here](../../terminology/rules.md#classes-sheet).
 
 Download Jon's spreadsheet from [here](../../artifacts/rules/expert-wind-energy-jon.xlsx).
 
@@ -96,7 +112,10 @@ When Jon has defined all the statements, he can validate the sheet using `neat`.
 statements are correctly defined and that there are no inconsistencies. For example, that all properties
 are using valid characters in their names.
 
-To validate his sheet, Jon opens the `neat` UI and selects the `Validate Rules` workflow, uploads his sheet, which will trigger the validation process. The validation process will output a report with any errors and warnings. Jon can then go back to his sheet and fix any issues that are reported. See the video below for a step-by-step guide on how to validate a sheet in `neat`:
+To validate his sheet, Jon opens the `neat` UI and selects the `Validate Rules` workflow, uploads his sheet,
+which will trigger the validation process. The validation process will output a report with any errors and warnings.
+Jon can then go back to his sheet and fix any issues that are reported.
+See the video below for a step-by-step guide on how to validate a sheet in `neat`:
 
 <iframe width="840" height="472" src="https://www.youtube.com/embed/G2g_90qjcIU?si=V3q_umDrFrPtJRKo" title="Rules Validation Workflow" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
@@ -116,7 +135,10 @@ To validate his sheet, Jon opens the `neat` UI and selects the `Validate Rules` 
 ## Grid Analysis Expert: Emma
 
 ### Gathering Knowledge
-Similarly to Jon, Emma will define a set of statements in a spreadsheet. As being more meticulous and keen to go one step further she will also fill in `Classes` sheet. Like in case of Jon, she starts with `Properties` sheet. She defines some similar statements as Jon, but also adds completely new ones. This is expected as there are overlaps between in our case the power production and power transmission domains.
+Similarly to Jon, Emma will define a set of statements in a spreadsheet. As being more meticulous and keen
+to go one step further, she will also fill in `Classes` sheet. Like in case of Jon, she starts with `Properties` sheet.
+She defines some similar statements as Jon, but also adds completely new ones. This is expected as there are overlaps
+between in our case the power production and power transmission domains.
 
 For example, she defines
 `Substation` has a `name`, a `location`, and a `voltage`. In addition, she might define that a `Substation` has
@@ -148,10 +170,10 @@ The `Properties` sheet for Emma might look as follows:
 | Consumer      | type                     |             | string               | 1         | 1         |
 
 
-
-
-
-As mentioned earlier, Emma also abstracts classes from `Properties` sheet and puts them in `Classes` sheet to have a better overview of her domain, de-cluttered from properties. To differentiate between `CurrentTransformer` and `VoltageTransformer` she also adds a `Parent Class` column to the `Classes` sheet, indicating that these two classes are indeed a specialization of `Transformer`. The `Classes` sheet for Emma might look as follows:
+As mentioned earlier, Emma also abstracts classes from `Properties` sheet and puts them in `Classes` sheet to have a
+better overview of her domain, de-cluttered from properties. To differentiate between `CurrentTransformer` and
+`VoltageTransformer` she also adds a `Parent Class` column to the `Classes` sheet,
+indicating that these two classes are indeed a specialization of `Transformer`. The `Classes` sheet for Emma might look as follows:
 
 
 | Class              | Description                                         | Parent Class       |
@@ -201,7 +223,11 @@ Download Emma's spreadsheet from [here](../../artifacts/rules/expert-grid-emma.x
 ### Creating the Shared Data Model
 
 Once Jon and Emma have defined their statements, David will combine the two sheets into a single sheet. This is
-done by copying the statements from Jon and Emma into a single sheet and making a tough decision on how to combine them to produce the enterprise data model. For example, if Jon and Emma have defined the same property in different ways, David will have to decide which definition to use. In certain situations additional classes and properties will have to be added to connect two domains. This is a trade-off, as he might have to prompt Jon and Emma for clarification, or he might have to make a decision based on his own knowledge.
+done by copying the statements from Jon and Emma into a single sheet and making a tough decision on how to combine
+them to produce the enterprise data model. For example, if Jon and Emma have defined the same property in different ways,
+David will have to decide which definition to use. In certain situations, additional classes and properties will have
+to be added to connect two domains. This is a trade-off, as he might have to prompt Jon and Emma for clarification,
+or he might have to make a decision based on his own knowledge.
 
 <a id="information-architect-classes-sheet"></a>
 Let start with `Classes` sheet and investigate outcome of merging Jon's and Emma's classes:
@@ -236,13 +262,23 @@ Let start with `Classes` sheet and investigate outcome of merging Jon's and Emma
 | VoltageTransformer     |             |                        |                                                      |            |
 
 
+There are couple of things that David done. First of all, he uses the principle of subclassing to create a class specialization to satisfy
+both Jon's and Emma's definitions. For example, he created a `WindTurbine` class that is a subclass of `GeneratingUnit`.
+This is done by adding a `Parent Class` column to the `Classes` sheet. By doing this, he enables adding additional types of generating
+units in the future. In the same fashion, he also created a `WindFarm` class that is a subclass of `EnergyArea`, basically connecting
+the two domains and allowing for other types of energy areas to be defined in the future. We see the similar approach with
+`Substation`, `Transmission`, `EnergyConsumer`, and `Point`. By subclassing we enable the possibility to inherit properties from the parent class,
+avoiding the need to define the same properties for each subclass, which we will see in the `Properties` sheet.
 
-There are couple of things that David done. First of all, he use principle of sub-classing to create a class specialization in order to satisfy both Jon's and Emma's definitions. For example, he created a `WindTurbine` class that is a subclass of `GeneratingUnit`. This is done by adding a `Parent Class` column to the `Classes` sheet. By doing this, he enable adding additional types of generating units in the future. In the same fashion, he also created a `WindFarm` class that is a subclass of `EnergyArea`, basically connecting the two domains and allowing for other types of energy areas to be defined in the future. We see the similar approach with `Substation`, `Transmission`, `EnergyConsumer`, and `Point`. By sub-classing we enable the possibility to inherit properties from the parent class, avoiding the need to define the same properties for each subclass, which we will see in the `Properties` sheet.
-
-In addition, David also added a `Reference` and `Match Type` columns to the `Classes` sheet. The `Reference` column is used to specify where the statement comes from, or what standard that matches the statement. The `Match Type` column tells whether the source is partially or fully matching the statement. We see that David did a great work linking the enterprise data model to existing standards, such as the CIM standard for energy areas and energy consumers. This is a good practice, as it sets the knowledge into a broader context, allowing for easier integration with other systems and standards. In other words, David did not fall into a trap of reinventing the wheel, but rather leveraged existing standards to define the enterprise data model (what a smart guy!).
+In addition, David also added a `Reference` and `Match Type` columns to the `Classes` sheet. The `Reference` column
+is used to specify where the statement comes from, or what standard that matches the statement. The `Match Type` column
+tells whether the source is partially or fully matching the statement. We see that David did a great work linking the
+enterprise data model to existing standards, such as the CIM standard for energy areas and energy consumers. This is a good
+practice, as it sets the knowledge into a broader context, allowing for easier integration with other systems and standards.
+In other words, David did not fall into a trap of reinventing the wheel, but rather leveraged existing standards to define the enterprise data model (what a smart guy!).
 
 <a id="information-architect-properties"></a>
-Let's now move to the `Properties` sheet. David will also combined and uplifted the `Properties` sheets from Jon and Emma:
+Let's now move to the `Properties` sheet. David will also combine and uplifted the `Properties` sheets from Jon and Emma:
 
 
 | Class                  | Property             | Description | Value Type         | Min Count | Max Count | Reference                                        | Match Type |
@@ -303,12 +339,20 @@ Let's now move to the `Properties` sheet. David will also combined and uplifted 
 | DisconnectSwitch       | maxCapacity          |             | float              |         0 |         1 |                                                  |            |
 
 
-Observe that we are using same range of value types as in case for [domain experts](#value-type-anchor).
+Observe that we are using the same range of value types as in case for [domain experts](#value-type-anchor).
 
-Here we see how inheritance and proper modeling of classes pays off. Instead of repeating properties from `GeneratingUnit` for `WindTurbine`, David only needs to define the properties specific only to `WindTurbine`. This is because `WindTurbine` is a subclass of `GeneratingUnit`, and thus inherits all the properties from `GeneratingUnit`. This is a good practice, as it reduces the amount of work needed to define the enterprise data model. In addition, it also makes the enterprise data model more consistent, as the same properties are used for similar things.
+Here we see how inheritance and proper modeling of classes pays off. Instead of repeating properties from `GeneratingUnit`
+for `WindTurbine`, David only needs to define the properties specific only to `WindTurbine`. This is because `WindTurbine`
+is a subclass of `GeneratingUnit`, and thus inherits all the properties from `GeneratingUnit`. This is a good practice,
+as it reduces the amount of work needed to define the enterprise data model. In addition, it also makes the enterprise
+data model more consistent, as the same properties are used for similar things.
 
-
-Let's now have a look at statements for `OffshoreSubstation`, in `Classes` sheet David stated that `OffshoreSubstation` is a subclass of `Substation`, and in `Properties` sheet he only needs specialized type of values two properties take in order to make this class a specific subclass of `Substation`. This is a good example of how inheritance can be used to reduce the amount of work needed to define the enterprise data model. Similar like in the case of `Classes` sheet David also added a `Reference` and `Match Type` columns to link the enterprise data model to existing standards, in this case to definition of properties coming from different standards.
+Let's now have a look at statements for `OffshoreSubstation`, in `Classes` sheet David stated that `OffshoreSubstation`
+is a subclass of `Substation`, and in `Properties` sheet he only needs specialized type of values two properties take
+to make this class a specific subclass of `Substation`. This is a good example of how inheritance can be used to
+reduce the amount of work needed to define the enterprise data model. Similar like in the case of `Classes` sheet David
+also added a `Reference` and `Match Type` columns to link the enterprise data model to existing standards,
+in this case to definition of properties coming from different standards.
 
 <a id="information-architect-metadata-sheet"></a>
 In addition, David will needs to update a `metadata` sheet, he is adding :
@@ -316,16 +360,17 @@ In addition, David will needs to update a `metadata` sheet, he is adding :
 - `namespace` : a globally unique identifier for the enterprise data model
 - `prefix` : a short name that can be used to reference the namespace in various downstream systems
 - `create` : a date when the enterprise data model was created
-- `schema` : a indication of schema completeness, which can be either one of the following:
+- `dataModelType`: an indication of the type of the data model, which can be either one of the following:
+    - `enterprise` - the data model is used to represent the entire domain
+    - `solution` - the data model is used to represent a specific solution
+- `schema` : an indication of schema completeness, which can be either one of the following:
     -  `complete` - the data model is entirely defined in the spreadsheets
     -  `partial` - the data model is defined within several spreadsheets
-    -  `extended` - data model is defined in spreadsheets and external sources (ontology, CDF, etc.)
+    -  `extended` - data model is defined in spreadsheets and reference sheet. This is used for Solution Models.
 - `updated` : a date when the enterprise data model was last updated
 - `version` : a version of the enterprise data model
 - `title` : a title of the enterprise data model
 - `description` : a human-readable explanation of what the enterprise data model is about
-- `license` : a license of the enterprise data model, basically in what way it can be used
-- `rights` : rights of the enterprise data model, basically who has the right to use it
 
 He is adding him self as a co-creator as well. The `metadata` sheet for David might look as follows:
 
@@ -410,7 +455,7 @@ generation of mock graph based on the data model described in spreadsheets, and 
 desired number of instances per class defined in the data model.
 
 David selects `Visualize Data Model Using Mock Graph` which has been configured to create
-following mock graph, which is part `Generate Mock Graph` step:
+the following mock graph, which is part `Generate Mock Graph` step:
 
 ```JSON
 {"WindTurbine" : 10,
@@ -426,7 +471,7 @@ following mock graph, which is part `Generate Mock Graph` step:
 "ElectricCarCharger" : 1}
 ```
 
-David uses following style to color nodes in `Graph Explorer`:
+David uses the following style to color nodes in `Graph Explorer`:
 
 
 ```JSON
@@ -447,7 +492,7 @@ The whole process of running this workflow is shown in the video below:
 3. Add source column to the `Properties` sheet.
 4. Add `Match Type` column to the `Properties` sheet.
 5. Find overlapping concepts and prompt domain experts for clarification.
-6. Add all classes to the `classes` sheet.
+6. Add all classes to the `Classes` sheet.
 
 **Information Architect usage of `neat`**:
 
@@ -490,18 +535,19 @@ For details on designing of containers see [here](https://docs.cognite.com/cdf/d
 
 Alice has to modify the `metadata` sheet to include the CDF specific information.
 
-|                      |                              |
-|----------------------|------------------------------|
-| role                 | dms architect                |
-| schema               | complete                     |
-| space                | sp_power                     |
-| name                 | Power to Consumer Data Model |
-| description          |                              |
-| externalId           | power_enterprise_model       |
-| version              | 1                            |
-| creator              | Jon, Emma, David, Alice      |
-| created              | 2021-01-01                   |
-| updated              | 2021-01-01                   |
+|               |                              |
+|---------------|------------------------------|
+| role          | dms architect                |
+| schema        | complete                     |
+| dataModelType | enterprise                   |
+| space         | sp_power                     |
+| name          | Power to Consumer Data Model |
+| description   |                              |
+| externalId    | power_enterprise_model       |
+| version       | 1                            |
+| creator       | Jon, Emma, David, Alice      |
+| created       | 2021-01-01                   |
+| updated       | 2021-01-01                   |
 
 
 First, she adds herself as a creator, and then she adds the `space` and `externalId` columns. The `space`
@@ -517,9 +563,9 @@ Using the workflow `To DMS Rules`, Alice will convert the `properties` sheet to 
 nine new columns as well as modify the `Value Type` column. The first row of the `properties` sheet for Alice
 might look as follows (more detail available [here](../../terminology/rules.md#properties-sheet)):
 
-| Class (linage) | Property (linage) | Value Type | Connection | Nullable | Is List | Default | Container   | Container Property | Index | Constraints | View        | View Property |
-|----------------|-------------------|------------|------------|----------|---------|---------|-------------|--------------------|-------|-------------|-------------|---------------|
-| WindTurbine    | name              | Text       |            | False    | False   | Unknown |  PowerAsset | name               | name  |             | WindTurbine | name          |
+| View        | View Property   | Value Type | Connection | Nullable | Is List | Default | Container   | Container Property | Index | Constraints | Class (linage) | Property (linage) |
+|-------------|-----------------|------------|------------|----------|---------|---------|-------------|--------------------|-------|-------------|----------------|-------------------|
+| WindTurbine | name            | Text       |            | False    | False   | Unknown |  PowerAsset | name               | name  |             | WindTurbine    | name              |
 
 `neat` will fill out all the new columns with suggested values, but Alice can modify them as she sees fit and thus
 she has granular control over how the data should be stored in CDF.
@@ -532,14 +578,15 @@ The columns are as follows:
   `string` type is converted to `Text`. Alice must still check and potentially modify the value types to ensure
   that they are correct. For example, `float` are converted to `float64`, and Alice might decide to change it to
   `float32` if she knows that the values will never be larger than 32 bits.
-* **Connection**: This columns only applies to relationships between entities. It is used to specify how the relationship
-  should be implemented in CDF. For example, if the relationship should be implemented as an edge or as a direct
-  relation.
-* **Nullable**: This only applies to primitive types. This column is used to specify whether the property is
+* **Connection**: This column only applies to connection between entities. It is used to specify how the connection
+  should be implemented in CDF. For example, if the connection should be implemented as an edge or as a direct
+  relation. It can also be used to use the reverse direction.
+* **Nullable**: This only applies to primitive types (not connections). This column is used to specify whether the property is
   required or not. For example, Alice might decide that the `name` property of a `WindTurbine` is required,
   and she will set the `Nullable` column to `False`.
-* **Is List**: This only applies to primitive types. This column is used to specify whether the property is a list or not.
-  For example, say a `WindTurbine` can have multiple timeseries measuring the temperature, Alice might have a property
+* **Is List**: This column is used to specify whether the property is a list or not. For connections, it is used to
+  specify if there can be multiple connections.  For example, say a `WindTurbine` can have multiple
+* timeseries measuring the temperature, Alice might have a property
   called `temperature` that is a list of Timeseries, which means she will set `Value Type` to `TimeSeries` and
   `IsList` to `True`.
 * **Default**: This column is used to specify a default value. For example, Alice might decide that the `name` property
@@ -565,6 +612,17 @@ The columns are as follows:
   that the `name` property of a `WindTurbine` should be part of a view called `WindTurbine`.
 * **View Property**: This column is used to specify what the property should be called in the view.
 
+#### Linage from Information Spreadsheet
+* **Class (linage)**: This column is the same as the class column in the Information Sheet from David. It is kept to
+  make it clear how the properties are related to the classes in the Information Sheet from David.
+* **Property (linage)**: This column is the same as the property column in the Information Sheet from David. It is kept
+  to make it clear how the properties are related to the properties in the Information Sheet from David.
+
+A typical use case were these columns become useful is when Alice decides to rename a property and/or class to comply
+with the requirements of CDF. In this case, she can use the `Class (linage)` and `Property (linage)` columns to
+keep track of the original names.
+
+
 <a id="dms-architect-containers-sheet"></a>
 ### The <code>Container</code> Sheet
 
@@ -572,11 +630,11 @@ The output of the `To DMS Rules` will produce two new sheets `Container` and `Vi
 to define constraints between the containers. The first three rows of the `Container` sheet for Alice look
 as follows:
 
-| Class (linage) | Container      | Name | Description | Constraint     |
-|----------------|----------------|------|-------------|----------------|
-| PowerAsset     | PowerAsset     |      |             |                |
-| GeneratingUnit | GeneratingUnit |      |             | PowerAsset     |
-| WindTurbine    | WindTurbine    |      |             | GeneratingUnit |
+| Container      | Name | Description | Reference | Constraint     | Class (linage) |
+|----------------|------|-------------|-----------|----------------|----------------|
+| PowerAsset     |      |             |           |                | PowerAsset     |
+| GeneratingUnit |      |             |           | PowerAsset     | GeneratingUnit |
+| WindTurbine    |      |             |           | GeneratingUnit | WindTurbine    |
 
 
 Interpreting the first three rows, we see that all entries in the `GeneratingUnit` container must have a corresponding
@@ -594,12 +652,12 @@ The `View` sheet is used to define which views implements other views. Implement
 properties from another view. The first three rows of the `View` sheet for Alice look as follows:
 
 
-| Class (linage) | View           | Name | Description    | Implements | Filter | In Model |
-|----------------|----------------|------|----------------|------------|--------|----------|
-| PowerAsset     | PowerAsset     |      |                |            |        | False    |
-| GeneratingUnit | GeneratingUnit |      | PowerAsset     |            |        | True     |
-| WindTurbine    | WindTurbine    |      | GeneratingUnit |            |        | True     |
-
+| View           | Name | Description    | Implements | Reference | Filter | In Model | Class (linage) |
+|----------------|------|----------------|------------|-----------|--------|----------|----------------|
+| PowerAsset     |      |                |            |           |        | False    | PowerAsset     |
+| GeneratingUnit |      | PowerAsset     |            |           |        | True     | GeneratingUnit |
+| WindTurbine    |      | GeneratingUnit |            |           |        | True     | WindTurbine    |
+|
 
 Interpreting the first three rows, we see that the `GeneratingUnit` view is reusing the properties from the `PowerAsset`
 view, and the `WindTurbine` view is reusing the properties from the `GeneratingUnit` view. It is the hierarchy of views
@@ -613,16 +671,16 @@ is the `Class`, such that it is clear how the views are related to the classes i
 
 In addition, there are two more columns in the `View` sheet that are used to define the view:
 
-* **Filter**: This used to control which filter the view should use. This can be empty, `hasData`, `nodeType`
-  or both `hasData, nodeType`. By default, all filters will get a `hasData` filter, this means that the view will
-  only show nodes that have properties in the container(s) that the view is mapping to. The `nodeType` filter is used
-  to filter on the nodes that have the type set to the same name as the view.
-* **In Model**: This column is used to specify whether the view is part of the model or not. In the example above, Alice
-  have decided that `PowerAsset` is not part of the data model by setting the `InModel` column to `False`. This means
-  that the view will still be created in CDF, but not be part of the model. The motivation for this is that this
+* **Filter**: This used to control which filter the view should use. This can be empty, `hasData`, `nodeType`. This is
+  one of the more complex parts of the data model implementation, and it is recommended to leave this empty which
+  will use the **neat** default filter unless you know what you are doing. See
+  [View Filter](../../terminology/dmsrules.md#filter) for more information.
+* **In Model**: This column is used to specify whether the view is part of the model or not. In the example above,
+  Alice have decided that `PowerAsset` is not part of the data model by setting the `InModel` column to `False`.
+  This means that the view will still be created in CDF, but not be part of the model. The motivation for this is that this
   view is an implementation detail, that should not be exposed to the users of the data model. In the GraphQL
   representation of the model, having the `PowerAsset` will show links to all assets. This can clutter the model,
-  and thus Alice remove it.
+  and thus Alice removes it.
 
 Details on the `Views` sheet can be found [here](../../terminology/rules.md#views-sheet).
 
@@ -633,7 +691,7 @@ Download Alice's spreadsheet from [here](../../artifacts/rules/cdf-dms-architect
 
 Like Jon, Emma, and David, Alice will validate her sheet using the `neat` UI, using the same workflow `Validate Rules`.
 Note that since Alice has set her role as `dms architect` in the `metadata` sheet, the validation from `neat` will be
-suited for the DMSExported. Meaning that it will check that the rules can exported to CDF in a DMS format.
+suited for the DMSExported. Meaning that it will check that the rules can be exported to CDF in a DMS format.
 
 
 ### Exporting Data Model to YAML
@@ -641,7 +699,8 @@ suited for the DMSExported. Meaning that it will check that the rules can export
 Once Alice has validated her sheet, she can export it to YAML. This is done by using the `Export DMS` workflow in
 the `neat` UI. This will generate a YAML file that can be used to load the data model into CDF.
 
-This is useful if she wants to give the data model to `cognite-toolkit` which can then govern the data model in CDF.
+This is useful if she wants to give the data model to [cognite-toolkit](https://developer.cognite.com/sdks/toolkit/)
+which can then govern the data model in CDF.
 
 The workflow for exporting the data model to YAML is the same as for exporting it to CDF. See the next section
 for the step-by-step guide.
@@ -671,7 +730,7 @@ that would have been uploaded to CDF (as she is running in dry run mode). In add
 with the components in YAML format inside. The content of this zip file is compatible with a module in the
 `cognite-toolkit`.
 
-After inspecting the report and zip file, Alice is happy wiht the results. She then opens the `Export Data Model to CDF`
+After inspecting the report and zip file, Alice is happy with the results. She then opens the `Export Data Model to CDF`
 and changes the `Dry Run` to `False`. She then clicks the `Save` button, and uploads the spreadsheet again. This time
 the data model will be uploaded to CDF.
 
@@ -683,7 +742,7 @@ The process of validating and exporting DMS Rules as DMS Data model is also show
 
 **DMS Architect Task.**
 
-1. Add metadata about CDF to `metadata` sheet.
+1. Add metadata about CDF to `Metadata` sheet.
 2. Add columns to `Properties` sheet for how the data should be stored in Data Modeling containers.
 3. Select which properties should be indexed for fast search.
 4. Define dependencies between data by defining Data Modeling views.
