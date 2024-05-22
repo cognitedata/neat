@@ -39,7 +39,7 @@ of the same data model or a data model that is the basis for the current data mo
 multiple sets of `Rules` objects. In a spreadsheet serialization, the different `Rules` object are distinguished by
 a prefix in the sheet name. The following prefixes are used:
 
-* **No prefix**: The main `Rules` object often referred to as the `user` `Rules` object.
+* **No prefix**: The main `Rules`, object often referred to as the `user` or `current` `Rules` object.
 * **`Last`**: The previous iteration of the `user` `Rules` object.
 * **`Ref`**: (short for Reference) A `Rules` object that is referenced by the `user` `Rules` object.
 

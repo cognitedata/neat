@@ -47,7 +47,8 @@ How **NEAT** interprets the properties in the `Properties` sheet depends on the 
 The properties are added to the existing properties in the `LastProperties ` sheet. For example,
 if you have the following `Properties` sheet and the classes `EnergyArea` and `GeneratingUnit` are
 in the `LastProperties` sheet. Then, these properties will be **combined** to create the classes
-`EnergyArea` and `GeneratingUnit`.
+`EnergyArea` and `GeneratingUnit`. Meaning the current version that is being build will have these
+classes extended by two additional properties.
 
 | Class                     | Property      | Value Type                | Min Count | Max Count  |
 |---------------------------|---------------|---------------------------|-----------|------------|
@@ -60,6 +61,8 @@ in the `LastProperties` sheet. Then, these properties will be **combined** to cr
 The properties in the `Properties` sheet will replace the properties in the `LastProperties` sheet. For example,
 if you have the following `Properties` sheet and the classes `EnergyArea` and `GeneratingUnit` are
 in the `LastProperties` sheet. Then, these properties will **replace** the properties in the `LastProperties` sheet.
+This means `EnergyArea` and `GeneratingUnit` will have completely new definition based only on the
+properties defined in the `user` sheet.
 
 | Class                     | Property      | Value Type                | Min Count | Max Count  |
 |---------------------------|---------------|---------------------------|-----------|------------|
