@@ -1,7 +1,8 @@
 # Rules Validation
 
-**NEAT** supports the validation of the consistency of a `Rule` object. This includes checking the `Rule` object
-against previous iteration and another `Rule` object that is the basis for the current `Rule` object.
+**NEAT** supports the validation of the consistency of a `Rule` object as a whole. This includes
+checking the `Rule` object against previous iteration and another `Rule` object
+that is the basis for the current `Rule` object.
 
 There are three fields in the `Metadata` of a `Rule` object that tells **NEAT** how to validate the `Rule` object:
 
