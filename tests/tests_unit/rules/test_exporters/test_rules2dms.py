@@ -10,7 +10,7 @@ from cognite.client import data_modeling as dm
 from cognite.neat.rules import importers
 from cognite.neat.rules.exporters import DMSExporter
 from cognite.neat.rules.models.dms import DMSRules, PipelineSchema
-from tests.data import DMS_UNKNOWN_VALUE_TYPE
+from tests.data import DMS_UNKNOWN_VALUE_TYPE, INFORMATION_UNKNOWN_VALUE_TYPE
 
 
 class TestDMSExporter:
@@ -69,6 +69,7 @@ class TestImportExportDMS:
         "filepath",
         [
             pytest.param(DMS_UNKNOWN_VALUE_TYPE, id="DMS source"),
+            pytest.param(INFORMATION_UNKNOWN_VALUE_TYPE, id="Information source"),
         ],
     )
     def test_import_excel_export_dms(self, filepath: Path) -> None:
