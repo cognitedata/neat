@@ -22,14 +22,14 @@ class InformationPostValidation:
         self.issue_list = IssueList()
 
     def validate(self) -> IssueList:
+        if self.metadata.schema_ == SchemaCompleteness.partial:
+            return self.issue_list
+
         if self.metadata.data_model_type == DataModelType.solution and not self.rules.reference:
             raise ValueError("Reference data model is missing")
 
         if self.metadata.schema_ == SchemaCompleteness.extended and not self.rules.last:
             raise ValueError("Last version is missing")
-
-        if self.metadata.schema_ == SchemaCompleteness.partial:
-            return self.issue_list
 
         self._dangling_classes()
         self._referenced_parent_classes_exist()
