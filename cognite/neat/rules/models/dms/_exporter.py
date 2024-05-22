@@ -59,17 +59,28 @@ class _DMSExporter:
         else:
             self._ref_views_by_id = {}
 
-    def to_schema(self) -> DMSSchema:
-        rules = self.rules
-        container_properties_by_id, view_properties_by_id = self._gather_properties(list(self.rules.properties))
-        is_addition = (
+        self.is_addition = (
             rules.metadata.schema_ is SchemaCompleteness.extended
             and rules.metadata.extension is ExtensionCategory.addition
         )
-        if rules.last and is_addition:
-            # If the last rules are present, we need to include the properties from the last rules as well
-            # to create complete containers and views.
-            self._update_with_properties(container_properties_by_id, view_properties_by_id, rules.last.properties)
+        self.is_reshape = (
+            rules.metadata.schema_ is SchemaCompleteness.extended
+            and rules.metadata.extension is ExtensionCategory.reshape
+        )
+        self.is_rebuild = (
+            rules.metadata.schema_ is SchemaCompleteness.extended
+            and rules.metadata.extension is ExtensionCategory.rebuild
+        )
+
+    def to_schema(self) -> DMSSchema:
+        rules = self.rules
+        container_properties_by_id, view_properties_by_id = self._gather_properties(list(self.rules.properties))
+        # We need to include the properties from the last rules as well to create complete containers and view
+        # depending on the type of extension.
+        if rules.last and self.is_addition:
+            self._update_with_properties(rules.last.properties, container_properties_by_id, view_properties_by_id)
+        elif rules.last and (self.is_reshape or self.is_rebuild):
+            self._update_with_properties(rules.last.properties, container_properties_by_id, None)
 
         containers = self._create_containers(container_properties_by_id)
 
@@ -92,13 +103,13 @@ class _DMSExporter:
             )
 
         views_not_in_model = {view.view.as_id() for view in rules.views if not view.in_model}
-        if rules.last and is_addition:
+        if rules.last and self.is_addition:
             views_not_in_model.update({view.view.as_id() for view in rules.last.views if not view.in_model})
 
         data_model = rules.metadata.as_data_model()
 
         data_model_views = [view_id for view_id in views if view_id not in views_not_in_model]
-        if last_schema and is_addition:
+        if last_schema and self.is_addition:
             data_model_views.extend([view_id for view_id in last_schema.views if view_id not in views_not_in_model])
 
         # Sorting to ensure deterministic order
@@ -302,11 +313,17 @@ class _DMSExporter:
     @classmethod
     def _update_with_properties(
         cls,
-        container_properties_by_id: dict[dm.ContainerId, list[DMSProperty]],
-        view_properties_by_id: dict[dm.ViewId, list[DMSProperty]],
         last_properties: SheetList[DMSProperty],
+        container_properties_by_id: dict[dm.ContainerId, list[DMSProperty]],
+        view_properties_by_id: dict[dm.ViewId, list[DMSProperty]] | None,
     ) -> None:
-        selected_properties = [prop for prop in last_properties if prop.view.as_id() in view_properties_by_id]
+        view_properties_by_id = view_properties_by_id or {}
+        selected_properties = [
+            prop
+            for prop in last_properties
+            if (prop.view.as_id() in view_properties_by_id)
+            or (prop.container and (prop.container.as_id() in container_properties_by_id))
+        ]
         last_container_properties_by_id, last_view_properties_by_id = cls._gather_properties(selected_properties)
 
         for container_id, properties in last_container_properties_by_id.items():
@@ -316,11 +333,13 @@ class _DMSExporter:
                 container_properties_by_id[container_id].extend(
                     [prop for prop in properties if prop.container_property not in existing]
                 )
-
-        for view_id, properties in last_view_properties_by_id.items():
-            # We know that all the views are present due to the check above
-            existing = {prop.view_property for prop in view_properties_by_id[view_id]}
-            view_properties_by_id[view_id].extend([prop for prop in properties if prop.view_property not in existing])
+        if view_properties_by_id:
+            for view_id, properties in last_view_properties_by_id.items():
+                # We know that all the views are present due to the check above
+                existing = {prop.view_property for prop in view_properties_by_id[view_id]}
+                view_properties_by_id[view_id].extend(
+                    [prop for prop in properties if prop.view_property not in existing]
+                )
 
     def _create_view_filter(
         self,

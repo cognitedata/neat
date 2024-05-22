@@ -1644,6 +1644,27 @@ class TestDMSExporter:
         actual_model_views = {view.external_id for view in schema.data_model.views}
         assert actual_model_views == expected_model_views
 
+    def test_olav_rebuild_as_schema(self, olav_rebuild_dms_rules: DMSRules) -> None:
+        expected_views = {
+            "Point",
+            "Polygon",
+            "PowerForecast",
+            "WeatherStation",
+            "WindFarm",
+            "WindTurbine",
+            "TimeseriesForecastProduct",
+        }
+        expected_containers = {"PowerForecast", "WeatherStation"}
+
+        schema = olav_rebuild_dms_rules.as_schema()
+
+        actual_views = {view.external_id for view in schema.views}
+        assert actual_views == expected_views
+        actual_model_views = {view.external_id for view in schema.data_model.views}
+        assert actual_model_views == expected_views
+        actual_containers = {container.external_id for container in schema.containers}
+        assert actual_containers == expected_containers
+
 
 def test_dms_rules_validation_error():
     with pytest.raises(ValidationError) as e:

@@ -94,7 +94,12 @@ def svein_harald_information_rules() -> InformationRules:
 
 
 @pytest.fixture(scope="session")
-def svein_harald_dms_rules() -> InformationRules:
+def svein_harald_dms_rules() -> DMSRules:
     return ExcelImporter(DOC_RULES / "dms-addition-svein-harald.xlsx").to_rules(
         errors="raise", role=RoleTypes.dms_architect
     )
+
+
+@pytest.fixture(scope="session")
+def olav_rebuild_dms_rules() -> DMSRules:
+    return ExcelImporter(DOC_RULES / "dms_rebuild_olav.xlsx").to_rules(errors="raise", role=RoleTypes.dms_architect)
