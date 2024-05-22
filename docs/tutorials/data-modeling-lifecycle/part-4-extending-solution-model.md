@@ -8,6 +8,7 @@ tutorial will be an extension of the [Analytic Solution Model](./part-2-analytic
 with the Enterprise Data Model from [Extending an Enterprise Data Model](./part-3-extending-enterprise-model).
 
 ## Introduction
+
 After getting the core concepts from his analytic solution model into the Enterprise Data Model, Olav
 wants to update his solution model to utilize the concepts from the Enterprise Data Model. This will enable
 him to write his timeseries forecast which can then be utilized by the trading department.
@@ -21,7 +22,7 @@ workflow, and then clicks on the `Import DMS` step. This opens the modal with th
 
 Olav selects the following options:
 
-* **Data model id**: This is the Id of the current analytic solution model.
+* **Data model id**: This is the ID of the current analytic solution model.
 * **Reference data model id** This is the ID of the enterprise model that the solution model is based.
 * **Report formatter**: This is used in the validation of the model. The current solution model should be valid,
   so this is likely not needed.
@@ -39,13 +40,14 @@ Furthermore, he clicks on the `Create Excel Sheet` step which opens a modal with
   as he is updating the model, and thus wants the model he downloaded to be in the Last sheets.
 
 After clicking `Save` and `Save Workflow`, Olav runs the workflow by clicking `Start Workflow`. The workflow
-will execute and Olav can download the exported model by clicking `exported_rules_dms?architect.xlsx`.
+will execute and Olav can download the exported model by clicking `exported_rules_dms_architect.xlsx`.
 Note that `rules` is the **NEAT** representation of a data model.
 
 The downloaded spreadsheet contains three sets of sheets, user, last and reference. The user sheet does
-not have any prefix and are the followingØ
+not have any prefix and are the following:
 
-* **Metadata**: This contains the metadata for extended solution model, and will only have headings
+* **Metadata**: This contains the metadata for extended solution model, this is prefilled based on the
+  the configuration Olav selected in the `Import DMS` step.
   (see definition of headings [here](../../terminology/rules.md#metadata-sheet))
 * **Properties**: This contains the properties for the changes, and will only have headings
   (see definition of headings [here](../../terminology/rules.md#properties-sheet))
@@ -61,13 +63,14 @@ and represent the enterprise model that the solution model is based on.
 **Note** The **Last** and **Ref** sheets are used by **NEAT** for validation, and are dependent on the `extension`
 configuration in the `Metadata` sheet.
 
-## Extending the Solution Model
+## Rebuilding the Solution Model
 
 Olav starts by setting up the metadata for the extension. He opens the `Metadata` sheet in the spreadsheet,
 it looks like this:
 
+
 |               |                      |
-|---------------|----------------------|
+| ------------- | -------------------- |
 | role          | DMS Architect        |
 | dataModelType | solution             |
 | schema        | extended             |
@@ -85,20 +88,70 @@ Olav has done one change to the metadata, he has set the `extension` to `rebuild
 Olav wants to completely remake the solution model to utilize the enterprise model, and he is ok with
 losing data in the current solution model as that was just a prototype.
 
-Next, Olav copies over all the properties, views, and containers from the `Last` sheets to the corresponding
-sheets in the spreadsheet. Even though it is not going to be an exact copy, it is a good starting point. In addition,
-he goes to the reference sheets and copies over the `TimeseriesForecastProduct` row from the `RefViews` sheet to the
-`Views` sheet in the spreadsheet.
+Next, Olav copies over all views from the `Last` sheets to the `Views` sheet in the spreadsheet. In addition, Olav
+wants to use the new `TimeseriesForecastProduct` from the enterprise model in his solution model. He goes to the
+`RefViews` sheet and copies over the `TimeseriesForecastProduct` row to the `Views` sheet in the spreadsheet.
+This gives him the following views in the spreadsheet:
 
 
+| Class                     | Implements    | ... | Reference                                      |
+| ------------------------- | ------------- | --- | ---------------------------------------------- |
+| Point                     | power:Point   |     |                                                |
+| Polygon                   | power:Polygon |     |                                                |
+| PowerForecast             |               |     |                                                |
+| WeatherStation            |               |     |                                                |
+| WindFarm                  |               |     |                                                |
+| WindTurbine               |               |     |                                                |
+| TimeseriesForecastProduct |               |     | power:TimeseriesForecastProduct(version=0.1.0) |
+
+Looking at the different views, Olav wants to have `Point`, `Polygon` and `TimeseriesForecastProduct`
+from the Enterprise model unchanged. Furthermore, he also wants to keep the `PowerForecast` and `WeatherStation`
+unchanged from the last version of the solution model. However, he wants to update the `WindFarm` and `WindTurbine`
+with the new properties from the enterprise model.
+
+To implement this, Olav can leave the `Point`, `Polygon`, and `TimeseriesForecastProduct` views as they are,
+as these have a reference (or implements) their respective enterprise views. Furthermore, as Olav has set
+the `extension` to `rebuild`, **NEAT** will use the `Last` sheets to create the `PowerForecast` and `WeatherStation`
+views as long as these have **no** properties in the `Properties` sheet. For the views Olav wants to change, `WindFarm` and
+`WindTurbine`, he needs to list **all** the properties he wants for these views the `Properties` sheet. This is how
+**NEAT** knows what properties to keep, modify or remove.
+
+Olav copies over the `WindFarm` and `WindTurbine` properties from the `LastProperties` to the `Properties` sheet. He
+then replaces the `low`, `expected` and `highPowerForecast` properties with the `powerForecast` property from the
+`RefProperties` sheet for the `WindFarm`. Similarly, he replaces the `min`, `medium`, and `maxPowerForecast` with the
+`powerForecast` property from the `RefProperties` sheet for the `WindTurbine`. This gives him the following
+properties in the spreadsheet:
+
+| View        | View Property       | Connection | Value Type                | Reference                                                   | Container             | Container Property |
+| ----------- | ------------------- | ---------- | ------------------------- |-------------------------------------------------------------|-----------------------| ------------------ |
+| WindFarm    | geoLocation         | direct     | Polygon                   |                                                             | power:EnergyArea      | geoLocation        |
+| WindFarm    | name                |            | text                      |                                                             | power:EnergyArea      | name               |
+| WindFarm    | weatherForecasts    | edge       | WeatherStation            |                                                             |                       |                    |
+| WindFarm    | weatherObservations | edge       | WeatherStation            |                                                             |                       |                    |
+| WindFarm    | powerForecast       | direct     | TimeseriesForecastProduct | power:EnergyArea(version=0.1.0,property=powerForecast)      | power:EnergyArea2     | powerForecast      |
+| WindFarm    | windTurbines        | edge       | WindTurbine               |                                                             |                       |                    |
+|             |                     |            |                           |                                                             |                       |                    |
+| WindTurbine | activePower         |            | timeseries                |                                                             | power:GeneratingUnit  | activePower        |
+| WindTurbine | geoLocation         | direct     | Point                     |                                                             | power:GeneratingUnit  | geoLocation        |
+| WindTurbine | hubHeight           |            | float64                   |                                                             | power:WindTurbine     | hubHeight          |
+| WindTurbine | lifeExpectancy      |            | int32                     |                                                             | power:WindTurbine     | lifeExpectancy     |
+| WindTurbine | manufacturer        |            | text                      |                                                             | power:WindTurbine     | manufacturer       |
+| WindTurbine | powerForecast       | direct     | TimeseriesForecastProduct | power:GeneratingUnit(version=0.1.0,property=powerForecast)  | power:GeneratingUnit2 | powerForecast      |
+| WindTurbine | name                |            | text                      |                                                             | power:GeneratingUnit  | name               |
+| WindTurbine | powerForecasts      | edge       | PowerForecast             |                                                             |                       |                    |
+| WindTurbine | ratedPower          |            | float64                   |                                                             | power:WindTurbine     | ratedPower         |
+| WindTurbine | type                |            | text                      |                                                             | power:GeneratingUnit  | type               |
+
+Looking through the properties, Olav notices that the new `powerForecast` property makes the need for an extra container
+for the `WindFarm` and `WindTurbine` is not needed. Thus, he leaves the `Containers` sheet empty.
 
 ## Updating the Spreadsheet (Download Olav's DMS Updated spreadsheet)
 
 The finished spreadsheet with the extension of the analytic solution model can be found
 [here](../../artifacts/rules/dms_rebuild_olav.xlsx).
 
+## Deploying the Rebuilt Solution Model
 
-## Deploying the Extension
 
 ## Summary
 
