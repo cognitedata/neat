@@ -1,7 +1,8 @@
 # Rules Excel Input
 
 In the case, you have `Reference` and/or `Last` sheets in your Excel file, there are a few simplifications built
-into **NEAT** to make it easier to enter the data model.
+into **NEAT** to make it easier to enter the data model as well as make it clearer what is changed compared to the
+`Reference` and `Last` objects.
 
 ## Exact Copying Classes or Views
 

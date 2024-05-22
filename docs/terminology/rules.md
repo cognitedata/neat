@@ -106,6 +106,9 @@ For more information about how these different `Rules` objects are used, see the
 !!! tip annotate "Usage"
     For a more detailed explanation of the `dataModelType`, `schema` and `extension` see [Rules Validation](rules-validation.md).
 
+!!! tip annotate "Usage"
+    In addition, the `schema` and `extension` controls how [excel rules are inputted](rules-excel-input.md).
+
 
 ## Classes sheet
 
