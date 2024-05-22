@@ -34,14 +34,36 @@ const GroupItems = styled('ul')({
 export function InformationArchitectRulesViewer(props: any) {
     const [rules, setRules] = React.useState<any>({})
     const [selectedTab, setSelectedTab] = React.useState(0);
-    const [editorOpen, setEditorOpen] = React.useState(false);
+    const [propsEditorOpen, setPropsEditorOpen] = React.useState(false);
+    const [classEditorOpen, setClassEditorOpen] = React.useState(false);
     const [editorData, setEditorData] = React.useState({});
+
     const [tableContainerKey, setTableContainerKey] = React.useState(0); // Add state for the key
 
     const handlePropertyEdit = (data: any) => {
         setRules(data.rules);
-        setEditorOpen(false);
+        setPropsEditorOpen(false);
         setTableContainerKey(prevKey => prevKey + 1); // Update the key to trigger redraw
+    }
+
+    const handleClassEdit = (data: any) => {
+        setRules(data.rules);
+        setClassEditorOpen(false);
+        setTableContainerKey(prevKey => prevKey + 1); // Update the key to trigger redraw
+    }
+
+    const handleMetadataEdit = (data: any) => {
+        setRules(data.rules);
+    }
+
+    const onEditClick = (data: any, action: any) => {
+        if (action === "prop_edit") {
+            setEditorData(data);
+            setPropsEditorOpen(true);
+        } else if (action === "class_edit") {
+            setEditorData(data);
+            setClassEditorOpen(true);
+        }
     }
 
     React.useEffect(() => {
@@ -64,11 +86,11 @@ export function InformationArchitectRulesViewer(props: any) {
                 <Tab label="Transformations" />
             </Tabs>
             {selectedTab === 0 && rules.metadata && (
-                <InformationMetadataTable metadata={rules.metadata} />
+                <InformationMetadataTable metadata={rules.metadata} fileName={props.fileName} onSaved={handleMetadataEdit} />
             )}
             {selectedTab === 1 && (
                 <TableContainer component={Paper} key={tableContainerKey}>
-                    <InformationArchitectDataModelPropertyEditor data={editorData} classes={rules.classes} fileName={props.fileName} open={editorOpen} onSaved={handlePropertyEdit} onClose={() => { setEditorOpen(false) }} />
+                    <InformationArchitectDataModelPropertyEditor data={editorData} classes={rules.classes} fileName={props.fileName} open={propsEditorOpen} onSaved={handlePropertyEdit} onClose={() => { setPropsEditorOpen(false) }} />
                     <Table aria-label="collapsible table">
                         <TableHead>
                             <TableRow>
@@ -85,12 +107,13 @@ export function InformationArchitectRulesViewer(props: any) {
                         <TableBody>
                             {rules.classes?.map((row: any) => (
                                 <React.Fragment>
-                                    <InformationArchitectPropsRow row={row} properties={rules.properties} onEditClick={(data, action) => { setEditorData(data); setEditorOpen(true); }} />
+                                    <InformationArchitectPropsRow row={row} properties={rules.properties} onEditClick={onEditClick} />
                                 </React.Fragment>
                             ))}
                         </TableBody>
                     </Table>
-                    <Button variant="outlined" size="small" color="success" style={{ margin: 5 }} onClick={() => setEditorOpen(true)}>Add new class</Button>
+                    <InformationArchitectClassEditor data={editorData} fileName={props.fileName} open={classEditorOpen} onSaved={handleClassEdit} onClose={() => { setClassEditorOpen(false) }} />
+                    <Button variant="outlined" size="small" color="success" style={{ margin: 5 }} onClick={() => setClassEditorOpen(true)}>Add new class</Button>
                 </TableContainer>
             )}
             {selectedTab == 2 && (
@@ -190,7 +213,7 @@ export function InformationMetadataTable(props: any) {
                 </Table>
             </TableContainer>
             <Button variant="outlined" size="small" color="success" style={{ margin: 5 }} onClick={() => setEditorOpen(true)}>Edit</Button>
-            <InformationArchitectMetadataEditor data={metadata} open={editorOpen} onSaved={(data: any) => { props.onSaved(data); setEditorOpen(false) }} onClose={() => { setEditorOpen(false) }} />
+            <InformationArchitectMetadataEditor data={metadata} fileName={props.fileName} open={editorOpen} onSaved={(data: any) => { props.onSaved(data); setEditorOpen(false) }} onClose={() => { setEditorOpen(false) }} />
         </Box>
     );
 }
@@ -199,10 +222,6 @@ export function InformationArchitectMetadataEditor(props: any) {
     const neatApiRootUrl = getNeatApiRootUrl();
     const [dialogOpen, setDialogOpen] = React.useState(false);
     const [data, setData] = React.useState<any>({});
-    const [roles, setRoles] = React.useState(["information architect", "domain expert", "DMS Architect"]);
-    const [schemas, setSchemas] = React.useState(["complete", "partial", "extended"]);
-    const [extensions, setExtensions] = React.useState(["", "addition", "reshape", "rebuild"]);
-    const [valueTypes, setValueTypes] = React.useState<any>(valueTypesBaseline);
 
     React.useEffect(() => {
         setData(props.data);
@@ -360,6 +379,65 @@ props.data =
   "comment": null
 }
 */
+
+export function InformationArchitectClassEditor(props: any) {
+    const neatApiRootUrl = getNeatApiRootUrl();
+    const [dialogOpen, setDialogOpen] = React.useState(false);
+    const [data, setData] = React.useState<any>({});
+
+    React.useEffect(() => {
+        setData(props.data);
+        setDialogOpen(props.open);
+    }, [props.data, props.open]);
+
+    const handleSave = () => {
+        const request = { role: "information architect", rule_file: props.fileName, rule_component: data };
+        fetch(neatApiRootUrl + '/api/rules/class/upsert', { method: 'POST', body: JSON.stringify(request), headers: { 'Content-Type': 'application/json' } })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                props.onSaved(data);
+            }).catch((error) => {
+                console.error('Error:', error);
+            })
+        setDialogOpen(false);
+    };
+
+    const handleDialogClose = () => {
+        setDialogOpen(false);
+        if (props.onClose) {
+            props.onClose();
+        }
+    };
+
+    const handleConfigChange = (key: string, value: any) => {
+        setData({ ...data, [key]: value });
+    }
+
+    return (
+        <React.Fragment>
+            <Dialog open={dialogOpen} onClose={handleDialogClose} fullWidth={true} maxWidth="xl" >
+                <DialogTitle>Class editor</DialogTitle>
+                <DialogContent sx={{ height: '90vh' }}>
+                    <FormControl sx={{ marginTop: 2 }} fullWidth >
+                        <TextField sx={{ marginTop: 1 }} fullWidth label="Class Id" size='small' variant="outlined" value={data?.class_} onChange={(event) => { handleConfigChange("class_", event.target.value) }} />
+                        <TextField sx={{ marginTop: 1 }} fullWidth label="Name" size='small' variant="outlined" value={data?.name} onChange={(event) => { handleConfigChange("name", event.target.value) }} />
+                        <TextField sx={{ marginTop: 1 }} fullWidth label="Description" size='small' variant="outlined" value={data?.description} onChange={(event) => { handleConfigChange("description", event.target.value) }} />
+                        <TextField sx={{ marginTop: 1 }} fullWidth label="Parent" size='small' variant="outlined" value={data?.parent} onChange={(event) => { handleConfigChange("parent", event.target.value) }} />
+                        <TextField sx={{ marginTop: 1 }} fullWidth label="Reference" size='small' variant="outlined" value={data?.reference} onChange={(event) => { handleConfigChange("reference", event.target.value) }} />
+                        <TextField sx={{ marginTop: 1 }} fullWidth label="Match type" size='small' variant="outlined" value={data?.match_type} onChange={(event) => { handleConfigChange("match_type", event.target.value) }} />
+                        <TextField sx={{ marginTop: 1 }} fullWidth label="Comment" size='small' variant="outlined" value={data?.comment} onChange={(event) => { handleConfigChange("comment", event.target.value) }} />
+                    </FormControl>
+                    {/* <JsonViewer value={data} /> */}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleSave}>Save</Button>
+                    <Button onClick={handleDialogClose}>Close</Button>
+                </DialogActions>
+            </Dialog>
+        </React.Fragment>
+    )
+}
 
 export default function InformationArchitectDataModelPropertyEditor(props: any) {
     const neatApiRootUrl = getNeatApiRootUrl();
