@@ -264,13 +264,20 @@ class DMSView(SheetEntity):
 
     def as_view(self) -> dm.ViewApply:
         view_id = self.view.as_id()
+        implements = [parent.as_id() for parent in self.implements or []] or None
+        if implements is None and isinstance(self.reference, ReferenceEntity):
+            # Fallback to the reference if no implements are provided
+            parent = self.reference.as_view_id()
+            if parent != view_id:
+                implements = [parent]
+
         return dm.ViewApply(
             space=view_id.space,
             external_id=view_id.external_id,
             version=view_id.version or _DEFAULT_VERSION,
             name=self.name or None,
             description=self.description,
-            implements=[parent.as_id() for parent in self.implements or []] or None,
+            implements=implements,
             properties={},
         )
 
